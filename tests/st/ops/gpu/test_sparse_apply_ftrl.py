@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -85,9 +86,7 @@ def dyn_case():
         assert out[i].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparse_apply_ftrl_dyn():
     """
     Feature: test SparseApplyFtrl in PyNative and Graph modes.
@@ -100,9 +99,7 @@ def test_sparse_apply_ftrl_dyn():
     dyn_case()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ftrl():
     gradient = Tensor(np.ones([3, 3, 3]).astype(np.float32))
     indices = Tensor([0, 1, 2], mstype.int32)
@@ -126,9 +123,7 @@ def test_ftrl():
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ftrl_sparse_int64_ind():
     gradient = Tensor(np.ones([2, 3, 3]).astype(np.float32))
     indices = Tensor([0, 2], mstype.int64)
@@ -150,9 +145,7 @@ def test_ftrl_sparse_int64_ind():
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ftrl_half():
     gradient = Tensor(np.ones([3, 3, 3]).astype(np.float16))
     indices = Tensor([0, 1, 2], mstype.int32)
@@ -176,9 +169,7 @@ def test_ftrl_half():
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ftrl_sparse_half_int64_ind():
     gradient = Tensor(np.ones([2, 3, 3]).astype(np.float16))
     indices = Tensor([0, 2], mstype.int64)
@@ -200,9 +191,7 @@ def test_ftrl_sparse_half_int64_ind():
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ftrl_half_return_output():
     gradient = Tensor(np.ones([3, 3, 3]).astype(np.float16))
     indices = Tensor([0, 1, 2], mstype.int32)

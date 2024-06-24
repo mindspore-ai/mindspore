@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -31,9 +32,7 @@ class Net(nn.Cell):
         return self.ops(x, y)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_fp32():
     x0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
     y0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float32)
@@ -85,9 +84,7 @@ def test_net_fp32():
     assert out.shape == expect.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_fp16():
     x0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float16)
     y0_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.float16)
@@ -139,9 +136,7 @@ def test_net_fp16():
     assert out.shape == expect.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_int32():
     x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.int32)
     y1_np = np.random.randint(1, 5, (2, 1, 4, 4)).astype(np.int32)
@@ -157,9 +152,7 @@ def test_net_int32():
     assert out.shape == expect.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_int64():
     x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.int64)
     y1_np = np.random.randint(1, 5, (2, 1, 4, 4)).astype(np.int64)
@@ -175,9 +168,7 @@ def test_net_int64():
     assert out.shape == expect.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_float64():
     """
     Feature: ALL To ALL
@@ -197,9 +188,7 @@ def test_net_float64():
     assert out.shape == expect.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_int16():
     x1_np = np.random.randint(1, 5, (2, 3, 4, 4)).astype(np.int16)
     y1_np = np.random.randint(1, 5, (2, 1, 4, 4)).astype(np.int16)
@@ -241,9 +230,7 @@ def test_less_equal_tensor_api():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_less_equal_functional_tensor_modes():
     """
     Feature: test less_equal functional and tensor APIs in PyNative and Graph modes.

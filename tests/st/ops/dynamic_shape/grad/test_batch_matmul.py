@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore
@@ -29,9 +30,7 @@ class NetBatchMatMul(nn.Cell):
         return self.batchmatmul(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_batch_matmul_dynamic_shape():
     """
     Feature: BatchMatMul Grad DynamicShape.
@@ -46,9 +45,7 @@ def test_batch_matmul_dynamic_shape():
     test_dynamic.test_dynamic_grad_net(inputs, False)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_batch_matmul_dynamic_rank():
     """
     Feature: BatchMatMul Grad DynamicShape.

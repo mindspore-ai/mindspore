@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import math
 import numpy as np
@@ -32,9 +33,7 @@ class Net(nn.Cell):
         return self.loss(predict, target, weight, pos_weight)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reduction_none_testcases():
     # fp32 + both modes
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -70,9 +69,7 @@ def test_reduction_none_testcases():
     np.testing.assert_almost_equal(expected, output.asnumpy(), decimal=3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reduction_mean_testcases():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     loss = Net("mean")
@@ -86,9 +83,7 @@ def test_reduction_mean_testcases():
     assert math.isclose(output.asnumpy().tolist(), expected, abs_tol=0.00001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reduction_sum_testcases():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     loss = Net("sum")

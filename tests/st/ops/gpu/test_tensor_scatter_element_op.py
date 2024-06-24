@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -68,9 +69,7 @@ class TestTensorScatterElements(nn.Cell):
         return self.scatter_elements(self.input_x, self.indices, self.updates)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.int32])
 @pytest.mark.parametrize('index_dtype', [np.int32, np.int64])
 @pytest.mark.parametrize('axis', [0, 1, -1])
@@ -94,9 +93,7 @@ def test_scatter_elements(dtype, index_dtype, axis, reduction):
     assert np.allclose(ms_output.asnumpy(), np_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float32])
 @pytest.mark.parametrize('index_dtype', [np.int32])
 @pytest.mark.parametrize('axis', [0])

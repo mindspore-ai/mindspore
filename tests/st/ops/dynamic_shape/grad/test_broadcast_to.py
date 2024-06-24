@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -28,10 +29,7 @@ class NetBroadcastTo(nn.Cell):
         return self.op(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_shape_broadcast_to():
     """
     Feature: BroadcastTo Grad DynamicShape.
@@ -44,10 +42,7 @@ def test_dynamic_shape_broadcast_to():
     test_dynamic.test_dynamic_grad_net(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_rank_broadcast_to():
     """
     Feature: BroadcastTo Grad DynamicRank.

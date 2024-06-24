@@ -65,9 +65,7 @@ def dynamic_gru_v2_grad_test():
     assert output[0].asnumpy().shape == x.asnumpy().shape
 
 
-@pytest.mark.levle1
-@pytest.mark.platform_arm_ascend
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test_dynamic_gru_v2_grad():
     """
     Feature: test DynamicGRUV2 Grad ops in ascend.

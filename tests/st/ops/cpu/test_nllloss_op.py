@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 """test NLLLoss forward and backward"""
 
@@ -56,9 +57,7 @@ target = Tensor(np.array([1, 0, 4]).astype(np.int32))
 weight = Tensor(np.array([0.2, 0.3, 0.1, 0.15, 0.25]).astype(np_type))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_NLLLoss_none():
     """
     Feature: test nlllosss op with reduction none.
@@ -84,9 +83,7 @@ def test_NLLLoss_none():
     assert np.allclose(net(logits, target, weight)[0].asnumpy(), expect_dx)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_NLLLoss_sum():
     """
     Feature: test nlllosss op with reduction sum.
@@ -112,9 +109,7 @@ def test_NLLLoss_sum():
     assert np.allclose(net(logits, target, weight)[0].asnumpy(), expect_dx)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_NLLLoss_mean():
     """
     Feature: test nllloss op with reduction mean.

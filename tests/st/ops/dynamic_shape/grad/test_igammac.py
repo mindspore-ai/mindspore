@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,10 +32,7 @@ class IgammacNet(nn.Cell):
         return self.igammac(a, x)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_shape_igammac():
     """
     Feature: Igammac Grad DynamicShape.
@@ -49,10 +47,7 @@ def test_dynamic_shape_igammac():
         [Tensor(a_np), Tensor(x_np)], False)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_rank_igammac():
     """
     Feature: Igammac Grad DynamicShape.

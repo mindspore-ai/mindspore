@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -44,9 +45,7 @@ class GatherDGradNet(nn.Cell):
         return self.grad(x, index)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_grad_graph_int32_fp32():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = Tensor(np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]), ms.float32)
@@ -64,9 +63,7 @@ def test_gather_grad_graph_int32_fp32():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_grad_graph_int64_fp32():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = Tensor(np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]), ms.float32)
@@ -84,9 +81,7 @@ def test_gather_grad_graph_int64_fp32():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_grad_graph_int32_fp16():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = Tensor(np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]), ms.float16)
@@ -104,9 +99,7 @@ def test_gather_grad_graph_int32_fp16():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_grad_graph_int64_fp16():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = Tensor(np.array([[1, 1, 1, 1, 1], [1, 1, 1, 1, 1]]), ms.float16)
@@ -124,9 +117,7 @@ def test_gather_grad_graph_int64_fp16():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_grad_pynative_int32_fp32():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x = Tensor(np.zeros((2, 5)), ms.float32)
@@ -143,9 +134,7 @@ def test_gather_grad_pynative_int32_fp32():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_grad_pynative_int64_fp32():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x = Tensor(np.zeros((2, 5)), ms.float32)
@@ -161,9 +150,7 @@ def test_gather_grad_pynative_int64_fp32():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_grad_pynative_int32_fp16():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x = Tensor(np.zeros((2, 5)), ms.float16)
@@ -179,9 +166,7 @@ def test_gather_grad_pynative_int32_fp16():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_grad_pynative_int64_fp16():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x = Tensor(np.zeros((2, 5)), ms.float16)
@@ -197,9 +182,7 @@ def test_gather_grad_pynative_int64_fp16():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gatherd_grad_dynamic_shape():
     """
     Feature: dynamic shape support of GatherDGrad.

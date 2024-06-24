@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -84,10 +85,7 @@ def compare_with_numpy(func, input_x, indices, updates):
     np.testing.assert_array_almost_equal(pynative_output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.float16, mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -104,8 +102,6 @@ def test_tensor_scatter_arithmetic_small_float(func, data_type, index_type):
     compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.int32, mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -122,10 +118,7 @@ def test_tensor_scatter_arithmetic_small_int(func, data_type, index_type):
     compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.int32, mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -150,10 +143,7 @@ def test_tensor_scatter_arithmetic_multi_dims(func, data_type, index_type):
     compare_with_numpy(func, input_x, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -174,10 +164,7 @@ def test_tensor_scatter_arithmetic_function_op(func, data_type, index_type):
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -202,10 +189,7 @@ def test_tensor_scatter_arithmetic_tensor_op(func, data_type, index_type):
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])

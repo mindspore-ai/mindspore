@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -22,9 +23,7 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 np.random.seed(1)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_asinh_fp32():
     """
     Feature: asinh kernel
@@ -37,9 +36,7 @@ def test_asinh_fp32():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-4, 1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_asinh_fp16():
     """
     Feature: asinh kernel
@@ -64,9 +61,7 @@ def test_asinh_forward_tensor_api(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_asinh_forward_float32_tensor_api():
     """
     Feature: test asinh forward tensor api.
@@ -79,9 +74,7 @@ def test_asinh_forward_float32_tensor_api():
     test_asinh_forward_tensor_api(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_asinh_fp64():
     """
     Feature: asinh kernel
@@ -94,9 +87,7 @@ def test_asinh_fp64():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-5, 1e-5)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_asinh_complex64():
     """
     Feature: asinh kernel
@@ -109,9 +100,7 @@ def test_asinh_complex64():
     assert np.allclose(output_ms.asnumpy(), output_np, 1e-3, 1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_asinh_complex128():
     """
     Feature: asinh kernel

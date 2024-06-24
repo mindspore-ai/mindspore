@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -32,9 +33,7 @@ class Net(nn.Cell):
         return self.ops(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('data_shape', [(10, 10), (3, 4, 5)])
 @pytest.mark.parametrize('data_type',
                          [np.int8, np.int16, np.int32, np.int64, np.float16,
@@ -68,9 +67,7 @@ class DynamicShapeNet(nn.Cell):
         return real_x, self.nonzero(real_x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dyn_net():
     """
     Feature: NonZero

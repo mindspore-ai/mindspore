@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -38,12 +39,7 @@ def dyn_grad_func(dtype=np.float16, is_dynamic_rank=False):
     test_dynamic.test_dynamic_grad_net(inputs, is_dynamic_rank=is_dynamic_rank)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_bcewithlogitsloss_dynamic_shape():
     """
     Feature: Test the bprop process of BCEWithLogitsLoss in PyNative modee with dynamic shape inputs
@@ -54,10 +50,7 @@ def test_bcewithlogitsloss_dynamic_shape():
     dyn_grad_func(is_dynamic_rank=False)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_bcewithlogitsloss_dynamic_rank():
     """
     Feature: Test the bprop process of BCEWithLogitsLoss in PyNative mode with dynamic rank inputs

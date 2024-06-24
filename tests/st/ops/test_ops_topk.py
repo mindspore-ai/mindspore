@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 from mindspore import ops
@@ -49,9 +50,7 @@ def topk_backward_func(x, k, dim=-1, largest=True, issorted=True):
     return ops.grad(topk_forward_func, (0, 1, 2, 3, 4))(x, k, dim, largest, issorted)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_forward0(context_mode):
     """
@@ -72,9 +71,7 @@ def test_ops_topk_ext_forward0(context_mode):
     assert output1.asnumpy().shape == (7, 8, 3)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_forward1(context_mode):
     """
@@ -96,9 +93,7 @@ def test_ops_topk_ext_forward1(context_mode):
 
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_forward2(context_mode):
     """
@@ -119,9 +114,7 @@ def test_ops_topk_ext_forward2(context_mode):
     assert output1.asnumpy().shape == (3, 8, 9)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_backward0(context_mode):
     """
@@ -139,9 +132,7 @@ def test_ops_topk_ext_backward0(context_mode):
     assert output.asnumpy().shape == (7, 8, 9)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_backward1(context_mode):
     """
@@ -159,9 +150,7 @@ def test_ops_topk_ext_backward1(context_mode):
     assert output.asnumpy().shape == (7, 8, 9)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_backward2(context_mode):
     """
@@ -179,9 +168,7 @@ def test_ops_topk_ext_backward2(context_mode):
     assert output.asnumpy().shape == (7, 8, 9)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_topk_ext_dynamic_shape():
     """
     Feature: pyboost function.

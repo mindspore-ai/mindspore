@@ -1,3 +1,4 @@
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 from mindspore import nn
@@ -16,10 +17,7 @@ class NetSegmentMean(nn.Cell):
         return self.segmentmean(x, segment_ids)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_segment_mean_shape():
     """
     Feature: SegmentMean Grad DynamicShape.
@@ -33,10 +31,7 @@ def test_dynamic_segment_mean_shape():
     test_dynamic.test_dynamic_grad_net([x, segment_ids])
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_segment_mean_rank():
     """
     Feature: SegmentMean Grad DynamicRank.

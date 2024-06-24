@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -116,9 +117,7 @@ def vmap_case_nested():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_masked_select_vmap_gpu():
     """
     Feature: test MaskedSelect vmap on GPU.
@@ -129,9 +128,7 @@ def test_masked_select_vmap_gpu():
     vmap_case()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_masked_select_vmap_nested_gpu():
     """
     Feature: test MaskedSelect vmap nested on GPU.
@@ -142,9 +139,7 @@ def test_masked_select_vmap_nested_gpu():
     vmap_case_nested()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedselect():
     """
     Feature: MaskedSelect
@@ -157,9 +152,7 @@ def test_maskedselect():
     assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedselect_dynamic_shape():
     """
     Feature: test MaskedSelect dynamic shape on GPU
@@ -172,9 +165,7 @@ def test_maskedselect_dynamic_shape():
     assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedselect_bool_type():
     """
     Feature: test MaskedSelect bool type on GPU
@@ -189,9 +180,7 @@ def test_maskedselect_bool_type():
     assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedselect_complex64_type():
     """
     Feature: test MaskedSelect complex64 type on GPU
@@ -206,9 +195,7 @@ def test_maskedselect_complex64_type():
     assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedselect_complex128_type():
     """
     Feature: test MaskedSelect complex128 type on GPU.
@@ -223,9 +210,7 @@ def test_maskedselect_complex128_type():
     assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedselect_func():
     """
     Feature: MaskedSelect functional interface
@@ -238,9 +223,7 @@ def test_maskedselect_func():
     assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedselect_tensor():
     """
     Feature: MaskedSelect tensor interface

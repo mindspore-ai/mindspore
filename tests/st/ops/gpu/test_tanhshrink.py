@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.nn as nn
@@ -27,9 +28,7 @@ class Net(nn.Cell):
         return self.tanhshrink(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tanhshrink_normal():
     """
     Feature: Tanhshrink
@@ -43,9 +42,7 @@ def test_tanhshrink_normal():
     assert np.array_equal(output, expected_output)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_tanhshrink_negative():
     """
     Feature: Tanhshrink
@@ -59,9 +56,7 @@ def test_tanhshrink_negative():
     assert np.array_equal(output, expected_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tanhshrink_zeros():
     """
     Feature: Tanhshrink

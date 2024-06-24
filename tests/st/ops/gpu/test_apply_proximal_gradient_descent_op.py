@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore.context as context
@@ -30,9 +31,7 @@ class Net(nn.Cell):
         return self.apply_proximal_gradient_descent(self.var, alpha, l1, l2, delta)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_apply_proximal_gradient_descent_float32():
     """
     Feature: ApplyProximalGradientDescent gpu kernel

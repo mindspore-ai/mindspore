@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -151,9 +152,7 @@ def np_quant_int4_pergroup_data_gen(channel_in, channel_out, group_num):
     return np_quant_fp16_data, np_quant_int4_data, antiquant_scale, antiquant_offset
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_weight_quant_1p(mode):
     """
@@ -189,9 +188,7 @@ def test_ms_int4_weight_quant_1p(mode):
     np.testing.assert_allclose(fact, expect, rtol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_weight_quant_perchannel_1p(mode):
     """
@@ -226,9 +223,7 @@ def test_ms_int4_weight_quant_perchannel_1p(mode):
     np.testing.assert_allclose(fact, expect, rtol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_ckpt_save_and_load(mode):
     """
@@ -273,9 +268,7 @@ def test_ms_int4_ckpt_save_and_load(mode):
     np.testing.assert_equal(expect, fact)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['GE', 'KBK'])
 def test_ms_int4_mindir_save_and_load(mode):
     """
@@ -320,8 +313,6 @@ def test_ms_int4_mindir_save_and_load(mode):
     np.testing.assert_equal(expect, fact)
 
 
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', ['pynative', 'GE', 'KBK'])
 def test_ms_int4_weight_quant_pergroup_1p_GE(mode):
     """

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -33,9 +34,7 @@ class Net(nn.Cell):
         return self.ctc(inputs, sequence_length)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ctc_greedy_deocder_float32():
     """
     Feature: CTCGreedyDecoder gpu op
@@ -61,9 +60,7 @@ def test_ctc_greedy_deocder_float32():
     assert np.array_equal(output[3].asnumpy(), out_expect3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ctc_greedy_deocder_float64():
     """
     Feature: CTCGreedyDecoder gpu op
@@ -88,9 +85,7 @@ def test_ctc_greedy_deocder_float64():
     assert np.array_equal(output[2].asnumpy(), out_expect2)
     assert np.array_equal(output[3].asnumpy(), out_expect3)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ctc_greedy_deocder_float64_with_sequence_length_out_range():
     """
     Feature: CTCGreedyDecoder gpu op

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -37,9 +38,7 @@ class Net(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparseapplyadagradopv2_fp32():
     """
     Feature: SparseApplyAdagrad gpu op
@@ -79,9 +78,7 @@ def test_sparseapplyadagradopv2_fp32():
     assert np.allclose(accum_out.asnumpy(), expect_accum, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparseapplyadagradopv2_fp16():
     """
     Feature: SparseApplyAdagradV2 cpu op
@@ -100,9 +97,7 @@ def test_sparseapplyadagradopv2_fp16():
     assert np.all(accum_out.asnumpy() == expect_accum)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparseapplyadagradopv2_update_slot_false():
     """
     Feature: SparseApplyAdagradV2 gpu op
@@ -121,9 +116,7 @@ def test_sparseapplyadagradopv2_update_slot_false():
     assert np.all(accum_out.asnumpy() == expect_accum)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparseapplyadagradv2_dtype_not_supported():
     """
     Feature: SparseApplyAdagradV2 gpu op
@@ -139,9 +132,7 @@ def test_sparseapplyadagradv2_dtype_not_supported():
         sparse_apply_adagrad_v2(var, accum, gradient, indices)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparseapplyadagradv2_dynamic_shape_support():
     """
     Feature: SparseApplyAdagradV2 gpu op

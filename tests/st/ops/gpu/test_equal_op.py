@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -63,9 +64,7 @@ class NetGreaterEqual(Cell):
         return self.greater_equal(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_equal():
     x0_np = np.arange(24).reshape((4, 3, 2)).astype(np.float32)
     x0 = Tensor(x0_np)
@@ -139,9 +138,7 @@ def test_equal():
         print('test [%d/%d] passed!' % (i, len(x)))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_notequal():
     x0 = Tensor(np.array([[1.2, 1], [1, 0]]).astype(np.float32))
     y0 = Tensor(np.array([[1, 2]]).astype(np.float32))
@@ -186,9 +183,7 @@ def test_notequal():
         print('test [%d/%d] passed!' % (i, len(x)))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_greaterqual():
     x0 = Tensor(np.array([[1.2, 1], [1, 0]]).astype(np.float32))
     y0 = Tensor(np.array([[1, 2], [1, 2]]).astype(np.float32))
@@ -237,9 +232,7 @@ def test_greaterqual():
         print('test [%d/%d] passed!' % (i, len(x)))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_equal_dynamic_shape():
     x0_np = np.arange(24).reshape((4, 3, 2)).astype(np.float32)
     x0 = Tensor(x0_np)
@@ -267,9 +260,7 @@ def test_equal_tensor_api():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_equal_tensor_modes():
     """
     Feature: test equal tensor API in PyNative and Graph modes.

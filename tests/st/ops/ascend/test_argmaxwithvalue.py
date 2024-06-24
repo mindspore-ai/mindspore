@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -42,10 +43,8 @@ def get_output(x, axis, keep_dims):
     return [t.asnumpy() for t in out]
 
 
-@pytest.mark.level1
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argmax_with_value(mode):
     """
     Feature: Test primitive argmaxwithvalue operator.

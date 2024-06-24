@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -32,9 +33,7 @@ class Net(nn.Cell):
         return self.op(indices, values, shape)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net_graph():
     '''
     Feature: SparseSoftmax gpu TEST (GRAPH_MODE).
@@ -51,9 +50,7 @@ def test_net_graph():
     np.testing.assert_almost_equal(output.asnumpy(), expect, decimal=6)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_pynative():
     '''
     Feature: SparseSoftmax gpu TEST (PYNATIVE_MODE).

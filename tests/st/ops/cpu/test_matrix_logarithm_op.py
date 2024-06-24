@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
@@ -42,9 +43,7 @@ def dyn_case():
     assert y.asnumpy().shape == (2, 2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_logarithm_dyn():
     """
     Feature: test MatrixLogarithm in cpu.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -32,10 +33,7 @@ class Net(nn.Cell):
     def construct(self, x, y):
         return self.tuple_to_tensor(x), self.scalar_to_tensor(y)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_seq_to_tensor0():
     """
     Feature: test xxToTensor.
@@ -51,10 +49,7 @@ def test_seq_to_tensor0():
     assert np.allclose(res_x.asnumpy(), expect_x0, 1.e-4, 1.e-4, equal_nan=True)
     assert np.allclose(res_y.asnumpy(), expect_y0, 1.e-4, 1.e-4, equal_nan=True)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_seq_to_tensor1():
     """
     Feature: test xxToTensor.
@@ -79,10 +74,7 @@ class Net1(nn.Cell):
     def construct(self, x, y):
         return self.tuple_to_tensor(x, mstype.int64), self.scalar_to_tensor(y, mstype.int64)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_seq_to_tensor2():
     """
     Feature: test xxToTensor.
@@ -107,10 +99,7 @@ class Net2(nn.Cell):
     def construct(self, x, y):
         return self.tuple_to_tensor(x, mstype.float32), self.scalar_to_tensor(y, mstype.float32)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_seq_to_tensor3():
     """
     Feature: test xxToTensor.

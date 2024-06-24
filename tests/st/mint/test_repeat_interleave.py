@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore as ms
@@ -52,10 +53,7 @@ def repeat_interleave_backward(input_tensor, repeats, dim, output_size=None):
     input_grad = ops.grad(repeat_interleave_forward)(input_tensor, repeats, dim, output_size)
     return input_grad
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dim', [0, None])
 def test_repeat_interleave_forward_int(mode, dim):
@@ -74,10 +72,7 @@ def test_repeat_interleave_forward_int(mode, dim):
         output = (jit(repeat_interleave_forward, jit_config=JitConfig(jit_level="O0")))(Tensor(x), repeats, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dim', [0, None])
 def test_repeat_interleave_backward_int(mode, dim):
@@ -96,10 +91,7 @@ def test_repeat_interleave_backward_int(mode, dim):
         output = (jit(repeat_interleave_backward, jit_config=JitConfig(jit_level="O0")))(Tensor(x), repeats, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dim', [None, 1])
 def test_repeat_interleave_forward_tensor(mode, dim):
@@ -124,9 +116,7 @@ def test_repeat_interleave_forward_tensor(mode, dim):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
     np.testing.assert_allclose(output2.asnumpy(), expect, rtol=1e-3)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dim', [None, 1])
 def test_repeat_interleave_backward_tensor(mode, dim):
@@ -153,9 +143,7 @@ def test_repeat_interleave_backward_tensor(mode, dim):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
     np.testing.assert_allclose(output2.asnumpy(), expect, rtol=1e-3)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dim', [None, 1])
 def test_repeat_interleave_bfloat16(mode, dim):
@@ -178,10 +166,7 @@ def test_repeat_interleave_bfloat16(mode, dim):
             Tensor(x, dtype=ms.bfloat16), Tensor(repeats), dim)
     assert np.allclose(output.float().asnumpy(), expect, 0.004, 0.004)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_repeat_interleave_dynamic_shape_int():
     """
     Feature: Test dynamic shape.
@@ -197,9 +182,7 @@ def test_repeat_interleave_dynamic_shape_int():
     TEST_OP(repeat_interleave_forward, [[input_case1, repeats1, dim1], [input_case2, repeats2, dim2]],
             '', disable_yaml_check=True, disable_mode=['GRAPH_MODE'])
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_repeat_interleave_dynamic_shape_tensor():
     """
     Feature: Test dynamic shape.

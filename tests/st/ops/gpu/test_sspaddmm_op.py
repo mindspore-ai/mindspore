@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -34,9 +35,7 @@ class SspaddmmNet(nn.Cell):
                              x2_values, x2_shape, x3_dense, alpha, beta)
 
 
-@pytest.mark.levle0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test_sspaddmm_dyn():
     """
     Feature: test  Sspaddmm ops in gpu.
@@ -75,9 +74,7 @@ def test_sspaddmm_dyn():
         assert out[i].asnumpy().shape == expect_shapes[i]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sspaddmm_input_int32():
     """
     Feature: Sspaddmm gpu TEST.
@@ -113,9 +110,7 @@ def test_sspaddmm_input_int32():
                        0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sspaddmm_input_int64():
     """
     Feature: Sspaddmm gpu TEST.

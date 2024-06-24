@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 
@@ -27,9 +28,7 @@ def forward_func(input_x, segment_ids, num_segments):
     return ops.unsorted_segment_sum(input_x, segment_ids, num_segments)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_unsortedsegmentsum(context_mode):
     """
@@ -37,7 +36,7 @@ def test_unsortedsegmentsum(context_mode):
     Description: test unsortedsegmentsum
     Expectation: match to np benchmark.
     """
-    context.set_context(mode=context_mode, device_target="Ascend")
+    context.set_context(mode=context_mode)
     input_x = Tensor([1, 2, 3, 4], ms.float64)
     segment_ids = Tensor([0, 0, 1, 2], ms.int32)
     num_segments = 4

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import scipy as osp
@@ -74,9 +75,7 @@ class DeterminantVMapNet(nn.Cell):
         return vmap(self.net, self.in_axes, self.out_axes)(input_x)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_shape", [(4, 4), (5, 5)])
 @pytest.mark.parametrize("data_type", [np.float32, np.float64, np.complex64, np.complex128])
 def test_matrix_determinant(data_shape, data_type):
@@ -99,9 +98,7 @@ def test_matrix_determinant(data_shape, data_type):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_shape", [(4, 4), (5, 5)])
 @pytest.mark.parametrize("data_type", [np.float32, np.float64, np.complex64, np.complex128])
 def test_log_matrix_determinant(data_shape, data_type):
@@ -126,9 +123,7 @@ def test_log_matrix_determinant(data_shape, data_type):
     np.testing.assert_allclose(output[1].asnumpy(), benchmark_output[1], rtol=error, atol=error)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_determinant_dy_shape():
     """
     Feature: Test MatrixDeterMinant DynamicShape.
@@ -155,9 +150,7 @@ def test_matrix_determinant_dy_shape():
     np.testing.assert_allclose(benchmark_output, ms_result.asnumpy(), rtol=loss, atol=loss)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_log_matrix_determinant_dy_shape():
     """
     Feature: Test LogMatrixDeterMinant DynamicShape.
@@ -187,9 +180,7 @@ def test_log_matrix_determinant_dy_shape():
     np.testing.assert_allclose(ms_result[1].asnumpy(), benchmark_output[1], rtol=loss, atol=loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_determinant_vmap():
     """
     Feature: test MatrixDeterMinant vmap on GPU.
@@ -213,9 +204,7 @@ def test_matrix_determinant_vmap():
     assert np.allclose(ms_result.asnumpy(), benchmark_output, rtol=loss, atol=loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_log_matrix_determinant_vmap():
     """
     Feature: test logMatrixDeterMinant vmap on GPU.

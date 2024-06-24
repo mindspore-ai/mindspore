@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -35,9 +36,7 @@ def tan(nptype):
     np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tan_float16():
     """
     Feature: test_tan_float16
@@ -47,9 +46,7 @@ def test_tan_float16():
     tan(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tan_float32():
     """
     Feature: test_tan_float32
@@ -59,9 +56,7 @@ def test_tan_float32():
     tan(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tan_float64():
     """
     Feature: test_tan_float64
@@ -71,9 +66,7 @@ def test_tan_float64():
     tan(np.float64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tan_tensor_func_check():
     """
     Feature: test_tan_tensor_func_check.
@@ -91,9 +84,7 @@ def test_tan_tensor_func_check():
     np.testing.assert_allclose(output_ms.asnumpy(), output_np, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tan_functional_func_check():
     """
     Feature: test_tan_functional_func_check.
@@ -122,9 +113,7 @@ class DynamicShapeTanNet(nn.Cell):
         return self.tan_func(data)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tan_dy_shape():
     """
     Feature: test_tan_dy_shape.
@@ -149,9 +138,7 @@ def tan_graph(x):
     return P.Tan()(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tan_vmap():
     """
     Feature: test tan vmap.

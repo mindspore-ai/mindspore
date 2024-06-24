@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,9 +32,7 @@ class Slice(nn.Cell):
         return self.slice(x, (0, 1, 0), (2, 1, 3))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_slice():
     x = Tensor(
         np.array([[[1, -1, 1], [2, -2, 2]], [[3, -3, 3], [4, -4, 4]], [[5, -5, 5], [6, -6, 6]]]).astype(np.float32))
@@ -55,9 +54,7 @@ class SliceNet(nn.Cell):
         return self.slice(x, (0, 11, 0, 0), (32, 7, 224, 224))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_slice_4d():
     x_np = np.random.randn(32, 24, 224, 224).astype(np.float32)
     output_np = x_np[:, 11:18, :, :]
@@ -79,9 +76,7 @@ class Slice5DNet(nn.Cell):
         return self.slice(x, (0, 11, 1, 2, 3), (32, 7, 14, 10, 221))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_slice_5d():
     x_np = np.random.randn(32, 32, 24, 224, 224).astype(np.float32)
     output_np = x_np[:, 11:18, 1:15, 2:12, 3:224]
@@ -94,9 +89,7 @@ def test_slice_5d():
     assert (output_ms.asnumpy() == output_np).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_slice_float64():
     x = Tensor(
         np.array([[[1, -1, 1], [2, -2, 2]], [[3, -3, 3], [4, -4, 4]], [[5, -5, 5], [6, -6, 6]]]).astype(np.float64))

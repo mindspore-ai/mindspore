@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -92,10 +93,7 @@ def test_fold_tensor_api():
     assert output.shape == expected_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fold_functional_api_with_invalid_output_size():
     """
     Feature: test fold tensor API with invalid output size.
@@ -109,10 +107,7 @@ def test_fold_functional_api_with_invalid_output_size():
         F.fold(x, output_size, kernel_size=2, dilation=2, padding=2, stride=2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fold_tensor_functional_api_modes():
     """
     Feature: test fold tensor and functional APIs for different modes.

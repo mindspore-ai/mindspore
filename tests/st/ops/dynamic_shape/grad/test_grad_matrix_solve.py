@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import mindspore as ms
@@ -29,9 +30,7 @@ class NetMatrixSolve(nn.Cell):
         return self.sol(matrix, rhs)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bprop_matrix_solve_dynamic_shape():
     """
     Features: ensure that matrix_solve can support [dynamic shape] while undergoing its gradient backprogation(bprop)
@@ -45,9 +44,7 @@ def test_bprop_matrix_solve_dynamic_shape():
     test_dynamic.test_dynamic_grad_net([x, rhs])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bprop_matrix_solve_dynamic_rank():
     """
     Features: ensure that matrix_solve can support [dynamic rank] while undergoing its gradient backprogation(bprop)

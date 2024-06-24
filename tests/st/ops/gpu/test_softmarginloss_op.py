@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -68,9 +69,7 @@ def softmarginloss_testset():
                     expect_mean, expect_sum, epsilons[i])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_softmarginloss_graph():
     """
     Feature: SoftMarginLoss
@@ -81,9 +80,7 @@ def test_softmarginloss_graph():
     softmarginloss_testset()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_soft_margin_loss_pynative():
     """
     Feature: SoftMarginLoss

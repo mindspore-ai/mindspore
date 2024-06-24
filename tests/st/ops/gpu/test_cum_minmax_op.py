@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -60,9 +61,7 @@ def cum_minmax_compare(op, x, expected, axis, data_type, is_vmap=False):
     assert np.allclose(output[1].asnumpy(), expected[1])
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.uint8, np.int8, np.int32, np.float16])
 def test_cummin_multi_dims(data_type):
     """
@@ -86,9 +85,7 @@ def test_cummin_multi_dims(data_type):
     cum_minmax_compare(op, x, cummin_output, axis, data_type)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.uint8, np.uint32, np.int8, np.int32, np.int64, np.float16, np.float32])
 def test_cummax_multi_dims(data_type):
     """
@@ -114,9 +111,7 @@ def test_cummax_multi_dims(data_type):
     cum_minmax_compare(op, x, cummax_output, axis, data_type)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_cumminmax_nan(data_type):
     """
@@ -145,9 +140,7 @@ class VmapNet(nn.Cell):
         return self.ops(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cummin_vmap_net():
     """
     Feature: Support vmap for Cummin operator.
@@ -170,9 +163,7 @@ def test_cummin_vmap_net():
     cum_minmax_compare(op, x, cummin_output, axis, np.float32, is_vmap=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cummax_vmap_net():
     """
     Feature: Support vmap for Cummax operator.

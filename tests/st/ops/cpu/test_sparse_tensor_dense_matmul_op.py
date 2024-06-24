@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -52,9 +53,7 @@ def judge_result_correct(result, expect):
     assert np.allclose(result, expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparse_tensor_dense_mul_dyn():
     """
     Feature: test SparseTensorDenseMul op in cpu.
@@ -79,9 +78,7 @@ def test_sparse_tensor_dense_mul_dyn():
     assert out.asnumpy().shape == expect_out_shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_tensor_dense_matmul_no_transpose():
     indices_np = np.array([[0, 0], [1, 1], [2, 2], [2, 3]], np.int64)
     values_np = np.array([2, 3, 4, 5], np.float16)
@@ -109,9 +106,7 @@ def test_sparse_tensor_dense_matmul_no_transpose():
     judge_result_correct(grad_ms[2].asnumpy(), expect_dense_grad)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_tensor_dense_matmul_transpose_a():
     indices_np = np.array([[0, 0], [1, 1], [2, 0], [2, 2], [3, 1], [3, 2]],
                           np.int32)
@@ -142,9 +137,7 @@ def test_sparse_tensor_dense_matmul_transpose_a():
     judge_result_correct(grad_ms[2].asnumpy(), expect_dense_grad)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_tensor_dense_matmul_transpose_b():
     indices_np = np.array([[0, 0], [1, 1], [2, 0], [2, 2], [3, 1], [3, 2]],
                           np.int64)
@@ -174,9 +167,7 @@ def test_sparse_tensor_dense_matmul_transpose_b():
     judge_result_correct(grad_ms[2].asnumpy(), expect_dense_grad)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_tensor_dense_matmul_transpose_all():
     indices_np = np.array([[0, 0], [1, 1], [2, 2], [2, 3]], np.int64)
     values_np = np.array([2, 3, 4, 5], np.int64)

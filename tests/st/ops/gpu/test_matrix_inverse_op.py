@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 from numpy.linalg import inv
@@ -35,9 +36,7 @@ class NetMatrixInverse(nn.Cell):
         return self.matrix_inverse(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_inverse():
     x0_np = np.random.uniform(-2, 2, (3, 4, 4)).astype(np.float32)
     x0 = Tensor(x0_np)
@@ -59,9 +58,7 @@ def test_matrix_inverse():
     assert output0.shape == expect0.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_complex_matrix_inverse():
     """
     Feature: test MatrixInverse in complex.

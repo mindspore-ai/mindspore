@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 from mindspore import context, Tensor
@@ -28,9 +29,7 @@ class NetCropAndResizeGradBoxes(nn.Cell):
         return self.op(grads, images, boxes, box_index)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("image_type", [np.uint8, np.uint16, np.int8, np.int16, np.int32, np.int64, np.float16,
                                         np.float32, np.float64])
 def test_crop_and_resize_grad_boxes_float32(image_type):
@@ -74,9 +73,7 @@ def test_crop_and_resize_grad_boxes_float32(image_type):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("image_type", [np.uint8, np.uint16, np.int8, np.int16, np.int32, np.int64, np.float16,
                                         np.float32, np.float64])
 def test_crop_and_resize_grad_boxes_float64(image_type):

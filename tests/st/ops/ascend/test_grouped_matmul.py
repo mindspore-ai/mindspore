@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from tests.mark_utils import arg_mark
+
 import numpy as np
 import pytest
 
@@ -78,10 +80,7 @@ class GroupedMatmulNet(Cell):
         out = self.gmm(x, weight, bias, scale, offset, antiquant_scale, antiquant_offset, group_list)
         return out
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_emptytensor_case0(mode):
     """
@@ -128,10 +127,7 @@ def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_emptytensor_case0(mode)
     np.testing.assert_allclose(except1, res[1].asnumpy(), rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_case1(mode):
     """
@@ -172,10 +168,7 @@ def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_case1(mode):
     np.testing.assert_allclose(except1, res[1].asnumpy(), rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x6d_w2d_splititem0_grouptypeneg1_none_case2(mode):
     """
@@ -216,10 +209,7 @@ def test_grouped_matmul_x6d_w2d_splititem0_grouptypeneg1_none_case2(mode):
     np.testing.assert_allclose(except1, res[1].asnumpy(), rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x2d_w2d_b1d_splititem0_grouptypeneg1_none_case3(mode):
     """
@@ -263,10 +253,7 @@ def test_grouped_matmul_x2d_w2d_b1d_splititem0_grouptypeneg1_none_case3(mode):
     np.testing.assert_allclose(except1, res[1].asnumpy(), rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x2d_w3d_splititem3_grouptype0_none_case4(mode):
     """
@@ -303,10 +290,7 @@ def test_grouped_matmul_x2d_w3d_splititem3_grouptype0_none_case4(mode):
     np.testing.assert_allclose(except_np, res[0].asnumpy(), rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x2d_w3d_b2d_splititem3_grouptype0_none_case5(mode):
     """
@@ -347,10 +331,7 @@ def test_grouped_matmul_x2d_w3d_b2d_splititem3_grouptype0_none_case5(mode):
     np.testing.assert_allclose(except_np, res[0].asnumpy(), rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_a16w8_case6(mode):
     """

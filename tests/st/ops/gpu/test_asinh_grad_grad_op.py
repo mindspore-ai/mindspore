@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -44,9 +45,6 @@ class NetAsinhGradGrad(nn.Cell):
         return backward_net(y, grad, dout)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def asinh_grad_grad_base(dtype, loss):
     np.random.seed(1)
     shape = (4, 2)
@@ -72,15 +70,11 @@ def asinh_grad_grad_base(dtype, loss):
     assert np.allclose(dgrad_ms.asnumpy(), dgrad_np, loss, loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_asinh_grad_grad_float16():
     asinh_grad_grad_base(np.float16, 1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_asinh_grad_grad_float32():
     asinh_grad_grad_base(np.float32, 1e-4)

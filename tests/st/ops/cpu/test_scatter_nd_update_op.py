@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -26,9 +27,7 @@ from mindspore.ops import operations as P
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_op1(dtype):
     """
@@ -58,9 +57,7 @@ def test_op1(dtype):
                        np.array(expect, dtype=dtype))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.int32, np.int64])
 def test_op2(dtype):
     """
@@ -90,9 +87,7 @@ def test_op2(dtype):
                        np.array(expect, dtype=dtype))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.int32, np.int64])
 def test_op3(dtype):
     """
@@ -126,9 +121,7 @@ def test_op3(dtype):
     assert np.allclose(output.asnumpy(), np.array(expect, dtype=dtype))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_op4(dtype):
     """
@@ -156,9 +149,7 @@ def test_op4(dtype):
     assert np.allclose(out.asnumpy(), np.array(expect, dtype=dtype))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_op5(dtype):
     """
@@ -184,9 +175,7 @@ def test_op5(dtype):
         scatter_nd_update(indices, update)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_nd_update_dyn_shape():
     """
     Feature: op dynamic shape

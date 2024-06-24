@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -41,9 +42,7 @@ class TwoTensorsMinimum(Cell):
         return self.min(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_minimum_constScalar_tensor_int():
     x = Tensor(np.array([[2, 3, 4], [100, 200, 300]]).astype(np.int32))
     expect = [[2, 3, 4], [20, 20, 20]]
@@ -54,9 +53,7 @@ def test_minimum_constScalar_tensor_int():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_minimum_two_tensors_Not_Broadcast_int():
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(3, 4, 5).astype(np.int32) * prop
@@ -69,9 +66,7 @@ def test_minimum_two_tensors_Not_Broadcast_int():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_minimum_two_tensors_Broadcast_int():
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(3, 4, 5).astype(np.int32) * prop
@@ -84,9 +79,7 @@ def test_minimum_two_tensors_Broadcast_int():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_minimum_two_tensors_Broadcast_oneDimension_int():
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(3).astype(np.int32) * prop
@@ -99,9 +92,7 @@ def test_minimum_two_tensors_Broadcast_oneDimension_int():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_minimum_two_tensors_notBroadcast_all_oneDimension_int():
     x = Tensor(np.array([[2]]).astype(np.int32))
     y = Tensor(np.array([[100]]).astype(np.int32))
@@ -113,9 +104,7 @@ def test_minimum_two_tensors_notBroadcast_all_oneDimension_int():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_minimum_two_tensors_notBroadcast_float32():
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(3, 4, 5).astype(np.float32) * prop
@@ -131,9 +120,7 @@ def test_minimum_two_tensors_notBroadcast_float32():
     assert output.shape == expect.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_minimum_two_tensors_notBroadcast_float16():
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(3, 4, 5).astype(np.float16) * prop
@@ -149,9 +136,7 @@ def test_minimum_two_tensors_notBroadcast_float16():
     assert output.shape == expect.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_minimum_two_tensors_Broadcast_float16():
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(3, 4, 5).astype(np.float16) * prop
@@ -167,9 +152,7 @@ def test_minimum_two_tensors_Broadcast_float16():
     assert output.shape == expect.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_minimum_two_tensors_notBroadcast_float64():
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(3, 4, 1).astype(np.float64) * prop
@@ -185,9 +168,7 @@ def test_minimum_two_tensors_notBroadcast_float64():
     assert output.shape == expect.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_minimum_two_tensors_functional_int8():
     """
     Feature: test minimum on cpu in graph mode
@@ -209,9 +190,7 @@ class MinimumTensorNet(Cell):
         return x.minimum(y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_minimum_two_tensors_tensor_graph_uint16():
     """
     Feature: test minimum on cpu in graph mode
@@ -229,9 +208,7 @@ def test_minimum_two_tensors_tensor_graph_uint16():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_minimum_two_tensors_tensor_pynative_uint8():
     """
     Feature: test minimum on cpu in pynative mode

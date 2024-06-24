@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -52,9 +53,7 @@ def numpy_apply_ftrl(var, accum, linear, grad, lr=0.001, l1=0.0, l2=0.0, lr_powe
     return expected_out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_apply_ftrl(data_type):
     """
@@ -102,9 +101,7 @@ class FtrlNetVmap(nn.Cell):
         return self.vmap_ftrl(self.var, self.accum, self.linear, grad, lr, l1, l2, lr_power)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_apply_ftrl_op_vmap():
     """
     Feature: ApplyFtrl cpu kernel
@@ -152,9 +149,7 @@ class FtrlNetVmap2(nn.Cell):
         return self.vmap_ftrl(self.var, self.accum, self.linear, grad, lr, l1, l2, lr_power)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_apply_ftrl_op_vmap2():
     """
     Feature: ApplyFtrl cpu kernel

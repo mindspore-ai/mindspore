@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -35,9 +36,7 @@ class TruncateMod(nn.Cell):
         return res
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_truncatemod_output_diff_types():
     """
     Feature: TruncateMod cpu op
@@ -86,9 +85,7 @@ def test_truncatemod_output_diff_types():
     assert out.shape == exp.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_truncatemod_output_broadcasting():
     """
     Feature: TruncateMod cpu op
@@ -106,9 +103,7 @@ def test_truncatemod_output_broadcasting():
     assert out.shape == exp.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_truncatemod_output_broadcasting_scalar():
     """
     Feature: TruncateMod cpu op
@@ -126,9 +121,7 @@ def test_truncatemod_output_broadcasting_scalar():
     assert out.shape == exp.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_truncatemod_dtype_not_supported():
     """
     Feature: TruncateMod cpu op
@@ -142,9 +135,7 @@ def test_truncatemod_dtype_not_supported():
         _ = TruncateMod()(input_x, input_y).asnumpy()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_truncatemod_cannot_broadcast():
     """
     Feature: TruncateMod cpu op
@@ -158,9 +149,7 @@ def test_truncatemod_cannot_broadcast():
         _ = TruncateMod()(input_x, input_y).asnumpy()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_vmap_truncate_mod():
     """
     Feature: TruncateMod cpu op vmap feature.

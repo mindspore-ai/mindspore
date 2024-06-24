@@ -1,3 +1,4 @@
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.nn as nn
@@ -15,9 +16,7 @@ class Net(nn.Cell):
         return self.hsvtorgb(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net_float16():
     """
     Feature: None
@@ -33,9 +32,7 @@ def test_net_float16():
     assert np.allclose(output.asnumpy(), expected, 1e-3, 1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net_float32():
     """
     Feature: None
@@ -51,9 +48,7 @@ def test_net_float32():
     assert np.allclose(output.asnumpy(), expected, 1e-4, 1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net_float64():
     """
     Feature: None

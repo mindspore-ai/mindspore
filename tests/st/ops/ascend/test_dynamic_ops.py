@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -222,10 +223,7 @@ class HSwishNet(nn.Cell):
         return self.hswish(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_layernorm():
     """
     Feature: Test LayerNorm and its backward. The input shape is dynamic.
@@ -241,10 +239,7 @@ def test_dynamic_layernorm():
     common_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_conv2d():
     """
     Feature: Test Conv2d and its backward. The input shape is dynamic.
@@ -259,10 +254,7 @@ def test_dynamic_conv2d():
     common_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_dropout():
     """
     Feature: Test Dropout and its backward.
@@ -283,10 +275,7 @@ def test_dynamic_dropout():
     assert gradients[0][0].shape == (batch_size, 49, 256)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_reducesum1():
     """
     Feature: Test ReduceSum and its backward. The input shape is dynamic.
@@ -306,10 +295,7 @@ def test_dynamic_reducesum1():
     assert gradients[0][0].shape == (batch_size, 49, 51)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_reducesum2():
     """
     Feature: Test ReduceSum and its backward. The input shape is dynamic.
@@ -331,10 +317,7 @@ def test_dynamic_reducesum2():
     assert compare(gradients, gradients_cmp)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_add1():
     """
     Feature: Test Add and its backward. The input shape is dynamic.
@@ -358,10 +341,7 @@ def test_dynamic_add1():
     assert compare(gradients, gradients_cmp)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_add2():
     """
     Feature: Test Add and its backward. The input shape is dynamic.
@@ -387,10 +367,7 @@ def test_dynamic_add2():
 
 
 @pytest.mark.skip(reason='Operator Shape is not support in backend yet.')
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_tensor_shape_value_infer():
     """
     Feature: Test shape tensor infer mechanism.
@@ -409,10 +386,7 @@ def test_tensor_shape_value_infer():
     assert res == ((64, 16, -1), (32, 32, -1))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_softmax():
     """
     Feature: Test Softmax and its backward. The input shape is dynamic.
@@ -428,10 +402,7 @@ def test_dynamic_softmax():
 
 
 @pytest.mark.skip(reason="his bug")
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_batchnorm():
     """
     Feature: Test Batchnorm2D and its backward. The input shape is dynamic.
@@ -446,10 +417,7 @@ def test_dynamic_batchnorm():
     common_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_square_sum_all():
     """
     Feature: Test SquareSumAll. The input shape is dynamic.
@@ -473,11 +441,8 @@ def test_dynamic_square_sum_all():
     assert compare(out, out_expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('dtype', [np.float32])
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_hswish(dtype):
     """
     Feature: Test HSwish and its backward. The input shape is dynamic.
@@ -491,10 +456,7 @@ def test_dynamic_hswish(dtype):
     common_func(dynamic_range, input_shape, dtype, net)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_reshape():
     """
     Feature: dynamic shape for reshape

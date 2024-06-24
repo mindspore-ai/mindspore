@@ -8,6 +8,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -27,9 +28,7 @@ class RandomPoissonTEST(nn.Cell):
         return self.random_poisson(shape, rate)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_random_poisson_op_case1():
     """
     Feature: Random poisson gpu kernel
@@ -55,9 +54,7 @@ def test_random_poisson_op_case1():
         assert np.all(output.asnumpy() == expect_result.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_random_poisson_op_case2():
     """
     Feature: Random poisson gpu kernel

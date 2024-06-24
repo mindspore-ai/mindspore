@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -35,9 +36,7 @@ class NetExpm1(nn.Cell):
         return self.expm1(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_expm1_dshape():
     """
     Feature: Test expm1 dynamic shape.
@@ -53,9 +52,7 @@ def test_expm1_dshape():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_expm1_op():
     x = np.random.rand(3, 8).astype(np.float32)
     y = np.random.rand(3, 8).astype(np.float16)
@@ -84,9 +81,7 @@ def test_expm1_tensor_api():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_expm1_tensor_modes():
     """
     Feature: test expm1 tensor API in PyNative and Graph modes.

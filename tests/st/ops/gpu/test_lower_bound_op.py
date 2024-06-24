@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -32,9 +33,7 @@ class NetLowerBound(nn.Cell):
         return self.lowerbound(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lowerbound_2d_input_int32_output_int32():
     """
     Feature: LowerBound gpu TEST.
@@ -52,9 +51,7 @@ def test_lowerbound_2d_input_int32_output_int32():
     assert (z_ms.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lowerbound_2d_input_float32_output_int64():
     """
     Feature: LowerBound gpu TEST.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,9 +32,7 @@ class SqueezeNet(Cell):
         return self.squeeze(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("data_type",
                          [np.bool, np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64,
                           np.uint64, np.float16, np.float32, np.float64, np.complex64, np.complex128])
@@ -52,9 +51,7 @@ def test_squeeze(data_type):
     assert np.all(output.asnumpy() == x.squeeze())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_func():
     """
     Feature: Test Squeeze CPU.
@@ -72,9 +69,7 @@ def test_func():
     assert np.all(output.asnumpy() == x.squeeze(0))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_tensor():
     """
     Feature: Test Squeeze CPU.
@@ -92,9 +87,7 @@ def test_tensor():
     assert np.all(output.asnumpy() == x.squeeze(0))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_squeeze_vmap():
     """
     Feature: Test Squeeze CPU vmap.

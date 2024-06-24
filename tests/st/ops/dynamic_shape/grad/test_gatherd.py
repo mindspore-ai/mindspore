@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore
@@ -31,12 +32,7 @@ class NetGatherD(nn.Cell):
         return self.op(x, dim, index)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_gatherd_dynamic_shape():
     """
     Feature: GatherD Grad DynamicShape.
@@ -59,10 +55,7 @@ def test_gatherd_dynamic_shape():
     test_dynamic.test_dynamic_grad_net(inputs, False)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_gatherd_dynamic_rank():
     """
     Feature: GatherD Grad DynamicShape.
@@ -85,10 +78,7 @@ def test_gatherd_dynamic_rank():
     test_dynamic.test_dynamic_grad_net(inputs, True)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_gatherd_int_dim_dynamic_rank():
     """
     Feature: GatherD Grad DynamicShape.

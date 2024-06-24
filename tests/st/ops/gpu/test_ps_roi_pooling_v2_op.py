@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 """
 Test PSROIPooling.
 """
@@ -106,9 +107,7 @@ def _ps_roi_pooling_case(data_type, mode, x_size_adjust=None):
         atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_dynamic_shape():
     """
     Feature: PSROIPooling op.
@@ -170,9 +169,7 @@ def test_ps_roi_pooling_dynamic_shape():
         atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_mind_ir():
     """
     Feature: PSROIPooling op.
@@ -219,9 +216,7 @@ def test_ps_roi_pooling_mind_ir():
         atol=ALL_CLOSE_CRITERION, rtol=ALL_CLOSE_CRITERION)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_graph_mode():
     """
     Feature: PSROIPooling op.
@@ -233,9 +228,7 @@ def test_ps_roi_pooling_graph_mode():
         mode=CTX_MODE)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_x_1_shape_wrong():
     """
     Feature: PSROIPooling op.
@@ -249,9 +242,7 @@ def test_ps_roi_pooling_x_1_shape_wrong():
     )
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_pynative_mode():
     """
     Feature: PSROIPooling op.
@@ -263,9 +254,7 @@ def test_ps_roi_pooling_pynative_mode():
         mode=ms.context.PYNATIVE_MODE)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_spatial_scale_attr_type_wrong():
     """
     Feature: PSROIPooling op.
@@ -275,9 +264,7 @@ def test_ps_roi_pooling_spatial_scale_attr_type_wrong():
     _check_attr_validation(arg_name="spatial_scale", arg_value=object())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_spatial_scale_attr_range_wrong():
     """
     Feature: PSROIPooling op.
@@ -287,9 +274,7 @@ def test_ps_roi_pooling_spatial_scale_attr_range_wrong():
     _check_attr_validation(arg_name="spatial_scale", arg_value=-0.15)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_group_size_attr_type_wrong():
     """
     Feature: PSROIPooling op.
@@ -299,9 +284,7 @@ def test_ps_roi_pooling_group_size_attr_type_wrong():
     _check_attr_validation(arg_name="group_size", arg_value=7.1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_group_size_attr_range_wrong():
     """
     Feature: PSROIPooling op.
@@ -311,9 +294,7 @@ def test_ps_roi_pooling_group_size_attr_range_wrong():
     _check_attr_validation(arg_name="group_size", arg_value=-1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_output_dim_attr_type_wrong():
     """
     Feature: PSROIPooling op.
@@ -323,9 +304,7 @@ def test_ps_roi_pooling_output_dim_attr_type_wrong():
     _check_attr_validation(arg_name="output_dim", arg_value=7.1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_output_dim_attr_range_wrong():
     """
     Feature: PSROIPooling op.
@@ -354,9 +333,7 @@ def _check_attr_validation(arg_name, arg_value):
         assert False
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_input_args_num():
     """
     Feature: PSROIPooling op.
@@ -396,9 +373,7 @@ def test_ps_roi_pooling_input_args_num():
         assert False, "Expected ValueError to occur, but it does not occur."
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_input_type_unsupported1():
     """
     Feature: PSROIPooling op.
@@ -434,9 +409,7 @@ def test_ps_roi_pooling_input_type_unsupported1():
         assert False, "Expected TypeError to occur, but it does not occur."
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_input_type_unsupported2():
     """
     Feature: PSROIPooling op.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -52,9 +53,7 @@ def dyn_case():
         assert out[i].asnumpy().shape == expect_shapes[i]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_coalesce_dyn():
     """
     Feature: Coalesce function.
@@ -67,9 +66,7 @@ def test_coalesce_dyn():
     dyn_case()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_coalesce_fp32():
     """
     Feature: Coalesce function.
@@ -89,9 +86,7 @@ def test_coalesce_fp32():
     assert np.array_equal(y_shape, expect_shape)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_coalesce_fp16():
     """
     Feature: Coalesce function.
@@ -111,9 +106,7 @@ def test_coalesce_fp16():
     assert np.array_equal(y_shape, expect_shape)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_coalesce_fp64():
     """
     Feature: Coalesce function.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,10 +32,7 @@ class NetSqueeze(nn.Cell):
         return self.squeeze(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_squeeze_shape():
     """
     Feature: Squeeze Grad DynamicShape.
@@ -47,10 +45,7 @@ def test_dynamic_squeeze_shape():
     test_dynamic.test_dynamic_grad_net(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_squeeze_rank():
     """
     Feature: Squeeze Grad DynamicRank.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 from mindspore import ops
@@ -46,9 +47,7 @@ def clamp_backward_func(x, min_, max_):
     return ops.grad(clamp_forward_func, (0, 1, 2))(x, min_, max_)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_clamp_forward0(context_mode):
     """
@@ -66,9 +65,7 @@ def test_ops_clamp_forward0(context_mode):
     assert output.asnumpy().shape == (2, 3, 4, 5)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_clamp_forward1(context_mode):
     """
@@ -86,9 +83,7 @@ def test_ops_clamp_forward1(context_mode):
     assert output.asnumpy().shape == (2, 3, 4, 5)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_clamp_forward2(context_mode):
     """
@@ -106,9 +101,7 @@ def test_ops_clamp_forward2(context_mode):
     assert output.asnumpy().shape == (2, 3, 4, 5)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_clamp_backward0(context_mode):
     """
@@ -126,9 +119,7 @@ def test_ops_clamp_backward0(context_mode):
     assert output.asnumpy().shape == (2, 3, 4)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_clamp_backward1(context_mode):
     """
@@ -146,9 +137,7 @@ def test_ops_clamp_backward1(context_mode):
     assert output.asnumpy().shape == (2, 3, 4)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_clamp_backward2(context_mode):
     """
@@ -166,9 +155,7 @@ def test_ops_clamp_backward2(context_mode):
     assert output.asnumpy().shape == (2, 3, 4)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_clamp_min_max_tensor_dynamic_shape():
     """
     Feature: pyboost function.
@@ -187,9 +174,7 @@ def test_ops_clamp_min_max_tensor_dynamic_shape():
     TEST_OP(test_cell, [[x1, min1, max1], [x2, min2, max2]], '', disable_yaml_check=True, disable_mode=['GRAPH_MODE'])
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_clamp_min_max_scalar_dynamic_shape():
     """
     Feature: pyboost function.

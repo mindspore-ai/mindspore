@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -30,9 +31,7 @@ class Net(nn.Cell):
         return self.uniform(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_double():
     """
     Feature: Uniform cpu TEST.
@@ -46,9 +45,7 @@ def test_uniform_double():
     assert y.shape == (3, 4)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_float():
     """
     Feature: Uniform cpu TEST.
@@ -62,9 +59,7 @@ def test_uniform_float():
     assert y.shape == (3, 4)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_half():
     """
     Feature: Uniform cpu TEST.
@@ -78,9 +73,7 @@ def test_uniform_half():
     assert y.shape == (3, 4)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_int32_input_error():
     """
     Feature: Uniform cpu TEST.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -45,9 +46,7 @@ class Grad(nn.Cell):
         return self.grad(self.network)(x, grad, dout)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("fp_type, error_magnitude, mode", [
     (np.float16, 1.0e-3, context.PYNATIVE_MODE),
     (np.float32, 1.0e-6, context.PYNATIVE_MODE),

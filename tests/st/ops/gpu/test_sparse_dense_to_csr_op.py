@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 from scipy.sparse import csr_matrix
@@ -71,13 +72,11 @@ class DenseToCSRNet(nn.Cell):
         return self.to_csr(x, indices)
 
 
-@pytest.mark.level1
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('indicetype, datatype', [("int32", "float32"),
                                                   ("int32", "float64"),
                                                   ("int32", "complex64"),
                                                   ("int32", "complex128")])
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_2d_dense_to_csr(indicetype, datatype):
     """
     Feature: Test 2D dense tensor to csr tensor.
@@ -91,13 +90,11 @@ def test_2d_dense_to_csr(indicetype, datatype):
     compare_res(out, expected)
 
 
-@pytest.mark.level1
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('indicetype, datatype', [("int32", "float32"),
                                                   ("int32", "float64"),
                                                   ("int32", "complex64"),
                                                   ("int32", "complex128")])
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_3d_dense_to_csr(indicetype, datatype):
     """
     Feature: Test 3D dense tensor to csr tensor.

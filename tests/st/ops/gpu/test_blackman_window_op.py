@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import torch
 import pytest
@@ -76,9 +77,7 @@ def blackman_window_pynative(periodic, dtype, loss):
     assert np.allclose(blackman_window_output.asnumpy(), blackman_window_expect.numpy().astype(nptype), loss, loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_blackman_window_graph_int32_true_float32():
     """
     Feature: ALL To ALL
@@ -88,9 +87,7 @@ def test_blackman_window_graph_int32_true_float32():
     blackman_window(periodic=True, dtype="float32", loss=1.0e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_blackman_window_pynative_int64_false_float64():
     """
     Feature: ALL To ALL
@@ -114,9 +111,7 @@ def test_blackman_window_functional():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_blackman_window_functional_modes():
     """
     Feature: test blackman_window functional API in PyNative and Graph modes.

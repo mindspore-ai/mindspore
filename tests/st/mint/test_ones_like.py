@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 # pylint: disable=unused-variable
 import pytest
 import numpy as np
@@ -31,10 +32,7 @@ def ones_like_backward_func(input_tensor, dtype=None):
     return input_grad
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['GE', 'pynative', 'KBK'])
 def test_ones_like_forward(mode):
     """
@@ -55,10 +53,7 @@ def test_ones_like_forward(mode):
     np.testing.assert_allclose(y.asnumpy(), expect_y, rtol=1e-5)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_ones_like_backward(mode):
     """
@@ -79,10 +74,7 @@ def test_ones_like_backward(mode):
     np.testing.assert_allclose(input_grad.asnumpy(), expect_grad, rtol=1e-5)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ones_like_dynamic_shape():
     """
     Feature: Test ones_like with dynamic shape in graph mode.

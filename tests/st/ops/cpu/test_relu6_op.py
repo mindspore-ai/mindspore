@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -40,9 +41,7 @@ class NetReLU6Grad(nn.Cell):
     def construct(self, x, dy):
         return self.relu6_grad(dy, x)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_relu6():
     x = Tensor(np.array([[[[-1, 1, 10],
                            [5.9, 6.1, 6],
@@ -55,9 +54,7 @@ def test_relu6():
     output = relu6(x)
     assert (output.asnumpy() == expect).all()
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_relu6_grad():
     x = Tensor(np.array([[[[-1, 1, 10],
                            [5.9, 6.1, 6],

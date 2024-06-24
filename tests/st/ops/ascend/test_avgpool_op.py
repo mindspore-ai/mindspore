@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -34,8 +35,6 @@ def test_avg_pool1d_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_avg_pool1d_forward_float32_functional():
     """
     Feature: test avg_pool1d forward.
@@ -60,8 +59,6 @@ def test_avg_pool2d_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_avg_pool2d_forward_float32_functional():
     """
     Feature: test avg_pool2d forward.
@@ -86,8 +83,6 @@ def test_avg_pool3d_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_avg_pool3d_forward_float32_functional():
     """
     Feature: test avg_pool3d forward.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,12 +32,7 @@ class NetArgMaxWithValue(nn.Cell):
         return self.op(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_shape_arg_max_with_value():
     """
     Feature: ArgMaxWithValue Grad DynamicShape.
@@ -49,12 +45,7 @@ def test_dynamic_shape_arg_max_with_value():
     test_dynamic.test_dynamic_grad_net(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_rank_arg_max_with_value():
     """
     Feature: ArgMaxWithValue Grad DynamicRank.
@@ -67,9 +58,7 @@ def test_dynamic_rank_arg_max_with_value():
     test_dynamic.test_dynamic_grad_net(x, True)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_rank_arg_max_with_value_neg_axis():
     """
     Feature: ArgMaxWithValue Grad DynamicRank.

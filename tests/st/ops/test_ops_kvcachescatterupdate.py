@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -53,9 +54,7 @@ def expect_func(var, indices, updates, axis):
     return output
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_kvcachescatterupdate_forward_mode():
     """
     Feature: Test kv_cache_scatter_update with static shape in GE.
@@ -76,9 +75,7 @@ def test_kvcachescatterupdate_forward_mode():
     assert np.allclose(output.shape, expect_shape)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_scatter_value():
     """
     Feature: Test kv_cache_scatter_update with static shape in GE.
@@ -99,9 +96,7 @@ def test_scatter_value():
     assert np.allclose(output.asnumpy(), expect_value)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_dynamic():
     """
     Feature: test kv_cache_scatter_update

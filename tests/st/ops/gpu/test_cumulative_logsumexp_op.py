@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -76,9 +77,7 @@ def cumulative_logsumexp(nptype, loss):
     assert output[2].shape == expect2.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cumulative_logsumexp_float16():
     """
     Feature: Test CumulativeLogsumexp.
@@ -88,9 +87,7 @@ def test_cumulative_logsumexp_float16():
     cumulative_logsumexp(np.float16, 1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cumulative_logsumexp_float32():
     """
     Feature: Test CumulativeLogsumexp.
@@ -100,9 +97,7 @@ def test_cumulative_logsumexp_float32():
     cumulative_logsumexp(np.float32, 1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cumulative_logsumexp_float64():
     """
     Feature: Test CumulativeLogsumexp.

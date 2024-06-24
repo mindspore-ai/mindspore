@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 
 from mindspore import context
@@ -95,9 +96,7 @@ def test_grad_fast_gelu_input_10240_1024():
     input_shape = [10240, 1024]
     fast_gelu_backward_cmp(input_shape)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_grad_fast_gelu_input_10240_1024_bf16():
     """
     Feature: test fast_gelu_grad functional API.

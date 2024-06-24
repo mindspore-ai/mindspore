@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore
@@ -49,10 +50,7 @@ def tensor_scatter_max_min_dynamic_shape(is_dyn_rank=False):
     test_dynamic_min.test_dynamic_grad_net(x, is_dyn_rank)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_tensor_scatter_max_min_dynamic_shape():
     """
     Feature: TensorScatterMax/Min Grad DynamicShape.
@@ -63,10 +61,7 @@ def test_tensor_scatter_max_min_dynamic_shape():
     tensor_scatter_max_min_dynamic_shape()
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_tensor_scatter_max_min_dynamic_rank():
     """
     Feature: TensorScatterMax/Min Grad DynamicShape.

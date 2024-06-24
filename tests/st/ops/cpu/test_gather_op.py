@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -32,9 +33,7 @@ class NetGatherV2_axis0(nn.Cell):
     def construct(self, params, indices):
         return self.gatherv2(params, indices, 0)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_gatherv2_axis0():
     x = Tensor(np.arange(3 * 2 * 2).reshape(3, 2, 2), mstype.float32)
     indices = Tensor(np.array([1, 2]), mstype.int32)
@@ -58,9 +57,7 @@ class NetGatherV2_axis1(nn.Cell):
     def construct(self, params, indices):
         return self.gatherv2(params, indices, 1)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_gatherv2_axis1():
     x = Tensor(np.arange(2 * 3 * 2).reshape(2, 3, 2), mstype.float32)
     indices = Tensor(np.array([1, 2]), mstype.int32)
@@ -84,9 +81,7 @@ class NetGatherV2_axisN1(nn.Cell):
     def construct(self, params, indices):
         return self.gatherv2(params, indices, -1)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_gatherv2_axisN1():
     x = Tensor(np.arange(2 * 2 * 3).reshape(2, 2, 3), mstype.float32)
     indices = Tensor(np.array([1, 2]), mstype.int32)
@@ -107,9 +102,7 @@ def cal_vmap_gather(x, indices, axis):
     return P.Gather()(x, indices, axis)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_vmap_basic():
     """
     Feature: gather vmap test on cpu.
@@ -128,9 +121,7 @@ def test_gather_vmap_basic():
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_vmap_negative_axis():
     """
     Feature: gather vmap test on cpu.
@@ -154,9 +145,7 @@ def test_gather_vmap_negative_axis():
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_vmap_with_inaxes():
     """
     Feature: gather vmap test on cpu.
@@ -183,9 +172,7 @@ def test_gather_vmap_with_inaxes():
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_vmap_indices_outofbound():
     """
     Feature: gather vmap test on cpu.
@@ -206,9 +193,7 @@ def test_gather_vmap_indices_outofbound():
     assert "For 'Gather', the 'input_indices' should be in the range" in str(info.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_vmap_xdim_is_none():
     """
     Feature: gather vmap test on cpu.
@@ -228,9 +213,7 @@ def test_gather_vmap_xdim_is_none():
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_vmap_idim_is_none():
     """
     Feature: gather vmap test on cpu.
@@ -250,9 +233,7 @@ def test_gather_vmap_idim_is_none():
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_vmap_nested():
     """
     Feature: gather vmap test on cpu.
@@ -281,9 +262,7 @@ def test_gather_vmap_nested():
     assert np.allclose(outputs.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("data_type", [np.uint64, np.uint16, np.int64, np.complex64, np.complex128])
 def test_gather_tensor(data_type):
     """
@@ -313,9 +292,7 @@ def test_gather_tensor(data_type):
     np.allclose(out.asnumpy(), y_expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("data_type", [np.uint64, np.uint16, np.int64, np.complex64, np.complex128])
 def test_gather_tensor_out_of_bound(data_type):
     """
@@ -333,9 +310,7 @@ def test_gather_tensor_out_of_bound(data_type):
     assert "For 'Gather', the 'input_indices' should be in the range" in str(info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("data_type", [np.uint64, np.uint16, np.int64, np.complex64, np.complex128])
 def test_gather_tensor_8d(data_type):
     """

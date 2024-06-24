@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -38,9 +39,7 @@ def addcmul_test(is_dyn_rank):
     tester.test_dynamic_grad_net([a, x1, x2, v], is_dyn_rank)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_addcmul_dyn_shape():
     """
     Feature: Addcmul Grad DynamicShape.
@@ -51,9 +50,7 @@ def test_addcmul_dyn_shape():
     addcmul_test(False)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_addcmul_dyn_rank():
     """
     Feature: Addcmul Grad DynamicShape.

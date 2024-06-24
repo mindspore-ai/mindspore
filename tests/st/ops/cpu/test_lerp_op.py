@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -117,9 +118,7 @@ def lerp_np_bencmark(start, end, weight):
     return result
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("data_shape", [(4,), (3, 4), (4, 5, 7)])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_lerp(data_shape, data_type):
@@ -144,9 +143,7 @@ def test_lerp(data_shape, data_type):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_lerp_dy_shape(data_type):
     """
@@ -175,9 +172,7 @@ def test_lerp_dy_shape(data_type):
     np.testing.assert_allclose(np_result, ms_result.asnumpy(), rtol=loss, atol=loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lerp_vmap_cpu():
     """
     Feature: test Lerp vmap on CPU.

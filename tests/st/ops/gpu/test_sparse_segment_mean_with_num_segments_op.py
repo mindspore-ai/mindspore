@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -41,9 +42,7 @@ def sparse_segment_mean_with_num_segments_numpy(x, indices, segment_ids, num_seg
     return output
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('data_type, index_type, error', [(np.float16, np.int32, 1e-3),
                                                           (np.float32, np.int32, 1e-4), (np.float64, np.int64, 1e-5)])
 def test_net(data_type, index_type, error):

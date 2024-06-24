@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -32,9 +33,7 @@ class NetExp(nn.Cell):
         return self.exp(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_exp():
     x0_np = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)
     x1_np = np.random.uniform(-2, 2, 1).astype(np.float32)
@@ -56,9 +55,7 @@ def test_exp():
     assert np.all(diff1 < error1)
     assert output1.shape == expect1.shape
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_exp_dyn():
     """
     Feature: dynamic shape operator Exp on CPU

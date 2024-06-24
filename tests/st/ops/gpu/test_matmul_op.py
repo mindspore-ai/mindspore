@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import os
 
@@ -56,9 +57,7 @@ class MatMulComposite(nn.Cell):
         return self.matmul(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_MatMul_dynamic():
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -77,9 +76,7 @@ def test_MatMul_dynamic():
     np.testing.assert_array_almost_equal(output2.asnumpy(), expect2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matmul_float64():
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -91,9 +88,7 @@ def test_matmul_float64():
     expect = np.matmul(x, y)
     np.testing.assert_array_almost_equal(output.asnumpy(), expect)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matmul_composite():
 
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
@@ -120,9 +115,7 @@ def test_matmul_composite():
         np.testing.assert_array_almost_equal(output.asnumpy(), expect, decimal=4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_matmul_tensor_api_modes(mode):
     """
@@ -143,9 +136,7 @@ def test_matmul_tensor_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_matmul_tensor_core(mode):
     """
@@ -173,9 +164,7 @@ def test_matmul_tensor_core(mode):
     assert np.abs(out_ms_fp32 - out_ms_tf32).mean() < 0.005
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_matmul_dtypes():
     """
     Feature: Test matmul dtypes.
@@ -209,9 +198,7 @@ def test_matmul_dtypes():
         del os.environ['MS_DISABLE_KERNEL_BACKOFF']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_matmul_fp16():
     """
     Feature: Test matmul fp16 results.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -44,11 +45,7 @@ class MatMulGradCell(Cell):
         return self.matmul_grad(x, y)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize("shape1, shape2, output_shape1, output_shape2", [
     [[9], [9], (), (9,)],
@@ -79,11 +76,7 @@ def test_ops(context_mode, shape1, shape2, output_shape1, output_shape2):
     assert output1.shape == output_shape2
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize("shape1, shape2", [
     [[231, 768], [768, 2304]],
@@ -106,9 +99,7 @@ def test_ops_f16(context_mode, shape1, shape2):
     allclose_nparray(output.asnumpy(), np.matmul(x, y), 1e-3, 1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize("shape1, shape2", [
     [[12288, 320], [320, 2560]],
@@ -130,10 +121,7 @@ def test_ops_bf16(context_mode, shape1, shape2):
     allclose_nparray(output.float().asnumpy(), np.matmul(x, y), 4e-3, 4e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_dynamic():
     """
     Feature: ops.matmul
@@ -148,9 +136,7 @@ def test_ops_dynamic():
     TEST_OP(matmul, [[x1, y1], [x2, y2]], '', disable_yaml_check=True)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_mix_dynamic_shape():
     """
     Feature: ops.matmul

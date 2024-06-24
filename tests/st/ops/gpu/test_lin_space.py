@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -34,9 +35,7 @@ class LinSpaceNet(Cell):
         return output
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lin_space_1():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     start_np = 5
@@ -51,9 +50,7 @@ def test_lin_space_1():
     assert np.allclose(result_ms, result_np)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lin_shape_2():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     start_np = -25
@@ -68,9 +65,7 @@ def test_lin_shape_2():
     assert np.allclose(result_ms, result_np)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lin_shape_3():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     start_np = 25
@@ -84,9 +79,7 @@ def test_lin_shape_3():
     assert np.allclose(result_ms, result_np)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lin_shape_4():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     start_np = -25.3
@@ -100,9 +93,7 @@ def test_lin_shape_4():
     assert np.allclose(result_ms, result_np)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lin_space_dynamic_shape_1():
     """
     Feature: ALL To ALL
@@ -124,9 +115,7 @@ def test_lin_space_dynamic_shape_1():
     assert np.allclose(result_ms, result_np)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lin_space_dynamic_shape_2():
     """
     Feature: ALL To ALL

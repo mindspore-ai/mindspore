@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import collections
 import numpy as np
 import pytest
@@ -138,9 +139,7 @@ def dynamic_rank_impl(input_x, input_n, axis):
     return res
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_tensor_unstack_dynamic_shape_float32():
     """
     Feature: test sequence unstack op
@@ -158,9 +157,7 @@ def test_seq_tensor_unstack_dynamic_shape_float32():
     allclose_nparray_sequence(res, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_tensor_unstack_dynamic_shape_float64():
     """
     Feature: test sequence unstack op
@@ -178,9 +175,7 @@ def test_seq_tensor_unstack_dynamic_shape_float64():
     allclose_nparray_sequence(res, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_tensor_unstack_dynamic_shape_int32():
     """
     Feature: test sequence unstack op
@@ -198,9 +193,7 @@ def test_seq_tensor_unstack_dynamic_shape_int32():
     allclose_nparray_sequence(res, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_tensor_unstack_dynamic_rank_int32():
     """
     Feature: test sequence unstack op
@@ -221,9 +214,7 @@ def test_seq_tensor_unstack_dynamic_rank_int32():
     allclose_nparray_sequence(res_n, y_n)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_tensor_unstack_dynamic_rank_float32():
     """
     Feature: test sequence unstack op
@@ -244,9 +235,7 @@ def test_seq_tensor_unstack_dynamic_rank_float32():
     allclose_nparray_sequence(res_n, y_n)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_tensor_unstack_dynamic_rank_float64():
     """
     Feature: test sequence unstack op
@@ -267,9 +256,7 @@ def test_seq_tensor_unstack_dynamic_rank_float64():
     allclose_nparray_sequence(res_n, y_n)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_tensor_unstack0():
     """
     Feature: test sequence unstack op
@@ -288,9 +275,7 @@ def test_seq_tensor_unstack0():
     allclose_nparray_sequence(res, y)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_seq_tensor_unstack1():
     """
     Feature: test sequence unstack op
@@ -309,9 +294,7 @@ def test_seq_tensor_unstack1():
     allclose_nparray_sequence(res, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_in_seq_grad_other():
     """
     Feature: test sequence unstack grad op

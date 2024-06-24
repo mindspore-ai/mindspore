@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -45,10 +46,7 @@ class Net(nn.Cell):
         return self.hswish(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net():
     """
     Feature: Monitor the accuracy of hswish operator.
@@ -104,10 +102,7 @@ def generate_test_cases(np_type, mode):
     judge_result_correct(output[0].asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_hardswish_forward_and_backward():
     """
     Feature: Monitor the accuracy of hswish operator.
@@ -127,10 +122,7 @@ def np_all_close_with_loss(out, expect):
 
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_hswish_vmap(dtype, shape=(100, 2)):
     """
@@ -161,10 +153,7 @@ def test_hswish_vmap(dtype, shape=(100, 2)):
     assert np_all_close_with_loss(output_vmap.asnumpy(), output_manually.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_hswish_grad_vmap(dtype, shape=(100, 2)):
     """

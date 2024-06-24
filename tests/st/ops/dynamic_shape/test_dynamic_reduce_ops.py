@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -123,9 +124,7 @@ def dyn_axis_case(data_type):
     np.testing.assert_allclose(prod_dyn.asnumpy(), prod_np, rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("axis", [0, 1, 2])
 @pytest.mark.parametrize("data_type", [np.float32, np.float64, np.int32, np.int64, np.uint32, np.uint64])
 def test_dynamic_reduce(axis, data_type):
@@ -140,9 +139,7 @@ def test_dynamic_reduce(axis, data_type):
     dyn_case(axis, data_type)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float32, np.float64, np.int32, np.int64, np.uint32, np.uint64])
 def test_dynamic_axis_reduce(data_type):
     """
@@ -156,10 +153,7 @@ def test_dynamic_axis_reduce(data_type):
     dyn_axis_case(data_type)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_dynamic_axis_reduce_ascend(data_type):
     """

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -56,9 +57,7 @@ def crop_and_resize_test(is_dyn_rank):
 
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_crop_and_resize_dyn_shape():
     """
     Feature: CropAndResize Grad DynamicShape.
@@ -68,9 +67,7 @@ def test_crop_and_resize_dyn_shape():
     crop_and_resize_test(False)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_crop_and_resize_dyn_rank():
     """
     Feature: CropAndResize Grad DynamicShape.

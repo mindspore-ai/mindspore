@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 """test BatchNorm forward and backward dynamic shape"""
 
@@ -54,9 +55,7 @@ class Grad(Cell):
         return gout
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_batchnorm_training_nchw_dynamic_shape():
     """
     Feature: test batchnorm op in traning mode and nchw input data on cpu.
@@ -96,9 +95,7 @@ def test_batchnorm_training_nchw_dynamic_shape():
     assert grad[4].asnumpy().shape == (channel,)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_batchnorm_not_training_nhwc_dynamic_shape():
     """
     Feature: test batchnorm op not in traning mode and nhcw input data on gpu.

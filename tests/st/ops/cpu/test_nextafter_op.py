@@ -1,3 +1,4 @@
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore
@@ -32,9 +33,7 @@ def nextafter_pynative(x1, x2):
     return out_msp
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nextafter_float64_graph():
     """
     Feature: ALL To ALL
@@ -48,9 +47,7 @@ def test_nextafter_float64_graph():
     assert out_msp.asnumpy() == out_tf
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nextafter_float64_pynative():
     """
     Feature: ALL To ALL
@@ -64,9 +61,7 @@ def test_nextafter_float64_pynative():
     assert out_msp.asnumpy() == out_tf
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nextafter_cpu_dynamic_shape():
     """
     Feature: test nextafter op in cpu.

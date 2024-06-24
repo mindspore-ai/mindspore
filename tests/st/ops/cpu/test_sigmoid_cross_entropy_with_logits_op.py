@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -32,9 +33,7 @@ class NetSigmoidCrossEntropyWithLogits(nn.Cell):
         return self.loss(logits, labels)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sigmoid_cross_entropy_with_logits_dynamic_shape():
     """
     Feature: test SigmoidCrossEntropyWithLogits op in cpu.
@@ -58,9 +57,7 @@ def test_sigmoid_cross_entropy_with_logits_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sigmoid_cross_entropy_with_logits():
     logits = Tensor(
         np.array([[1, 1, 2], [1, 2, 1], [2, 1, 1]]).astype(np.float32))

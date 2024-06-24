@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -29,9 +30,7 @@ class NetCosh(nn.Cell):
         return ops.cosh(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8),
                                         (np.complex64, 1.e-5), (np.complex128, 1.e-8)])
 def test_cosh_graph(dtype, tol):
@@ -49,9 +48,7 @@ def test_cosh_graph(dtype, tol):
     assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8),
                                         (np.complex64, 1.e-5), (np.complex128, 1.e-8)])
 def test_cosh_py(dtype, tol):
@@ -68,9 +65,7 @@ def test_cosh_py(dtype, tol):
     assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cosh_dynamic_shape():
     """
     Feature: test test_cosh_dynamic_shape dynamic_shape feature.
@@ -92,9 +87,7 @@ def test_cosh_dynamic_shape():
     assert np.allclose(output.asnumpy(), expect, atol=tol, rtol=tol)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.e-3), (np.float32, 1.e-5), (np.float64, 1.e-8)])
 def test_vmap_cosh(dtype, tol):
     """

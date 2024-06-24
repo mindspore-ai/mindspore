@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 """ test control ops """
 import numpy as np
 import pytest
@@ -26,9 +27,7 @@ grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_switch_layer_with_single_prim():
     """
     Feature: SwitchLayer
@@ -54,9 +53,7 @@ def test_switch_layer_with_single_prim():
     grad_all(net)(index, Tensor(np.full([128, 96], 0.6, dtype=np.float32)))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_switch_layer_with_index_out_of_range():
     """
     Feature: SwitchLayer

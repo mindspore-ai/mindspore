@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import mindspore
 import mindspore.context as context
@@ -51,9 +52,7 @@ def assign_add_forward_test(ms_type, np_type):
         np.testing.assert_array_almost_equal(output_np, expected, decimal=6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_assign_add_forward_fp32(mode):
     """
@@ -65,9 +64,7 @@ def test_assign_add_forward_fp32(mode):
     assign_add_forward_test(mindspore.float32, np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_assign_add_forward_bf16(mode):
     """

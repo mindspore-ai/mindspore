@@ -1,3 +1,4 @@
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.nn as nn
@@ -21,9 +22,7 @@ class Net(nn.Cell):
         return self.bias_add1(self.bias_add(x, b), c)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_bias_add1():
     x = np.ones([2, 2]).astype(np.float16)
     b = np.array([1, 1]).astype(np.float16)
@@ -57,9 +56,7 @@ class Net2(nn.Cell):
         return self.bias_add1(self.bias_add(x, b), c)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bias_add2():
     x = np.ones([2, 2]).astype(np.float32)
     a = np.array([1, 1]).astype(np.float32)
@@ -92,9 +89,7 @@ class MomentumNet(nn.Cell):
         return output
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_momentum():
     epoch = 1
     net = MomentumNet()

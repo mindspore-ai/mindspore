@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -32,10 +33,7 @@ class NetReduceAny(nn.Cell):
         return self.reduceany(x, self.axis)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_reduceany_shape():
     """
     Feature: ReduceAny Grad DynamicShape.
@@ -48,10 +46,7 @@ def test_dynamic_reduceany_shape():
     test_dynamic.test_dynamic_grad_net(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_reduceany_rank():
     """
     Feature: ReduceAny Grad DynamicRank.

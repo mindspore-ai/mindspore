@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 from tests.st.utils import test_utils
@@ -55,10 +56,7 @@ def do_test_chunk_forward(mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", ['GE', 'pynative', 'KBK'])
 def test_chunk_forward_with_minus_dim(mode):
     """
@@ -139,10 +137,7 @@ def test_chunk_backward(mode):
     assert grad.asnumpy().shape == x.shape
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_chunk_forward_dynamic_shape(context_mode):
     """
@@ -178,10 +173,7 @@ def test_chunk_forward_dynamic_shape(context_mode):
             _ = test_cell(input_tensor, chunks, dims)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_chunk_forward_dynamic_rank(context_mode):
     """
@@ -200,10 +192,7 @@ def test_chunk_forward_dynamic_rank(context_mode):
         _ = test_cell(input_tensor, chunks, dims)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_chunk_backward_dynamic_shape(context_mode):
     """
@@ -228,10 +217,7 @@ def test_chunk_backward_dynamic_shape(context_mode):
     assert np.allclose(out.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_chunk_backward_dynamic_rank(context_mode):
     """
@@ -250,10 +236,7 @@ def test_chunk_backward_dynamic_rank(context_mode):
         _ = test_cell(input_tensor, chunks, dims)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_chunk_forward_mutable(context_mode):
     """
@@ -280,13 +263,7 @@ def test_chunk_forward_mutable(context_mode):
 
 '''
 # Dynamic length tuple output is not support for now
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_f_chunk_dynamic(mode):
     """

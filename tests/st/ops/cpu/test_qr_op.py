@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as onp
 import scipy as osp
@@ -87,7 +88,6 @@ class QRNet(nn.Cell):
         return q, r
 
 
-@pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('a_shape', [(9, 6), (6, 9)])
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 @pytest.mark.parametrize('mode', ['full', 'r', 'economic'])

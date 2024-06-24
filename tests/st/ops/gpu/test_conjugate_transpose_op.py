@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 from mindspore import Tensor, complex64
@@ -19,9 +20,7 @@ from mindspore.ops.operations import array_ops as P
 import mindspore.common.dtype as ms
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conjugate_transpose_bool_3x3():
     """
     Feature:  ConjugateTranspose 2 input and 1 output.
@@ -38,9 +37,7 @@ def test_conjugate_transpose_bool_3x3():
     np.testing.assert_almost_equal(conjugate_transpose_ms_out, expected_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conjugate_transpose_float64_3x3():
     """
     Feature:  ConjugateTranspose 2 input and 1 output.
@@ -57,9 +54,7 @@ def test_conjugate_transpose_float64_3x3():
     np.testing.assert_almost_equal(conjugate_transpose_ms_out, expected_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conjugate_transpose_float32_4x4():
     """
     Feature:  ConjugateTranspose 2 input and 1 output.
@@ -77,9 +72,7 @@ def test_conjugate_transpose_float32_4x4():
     np.testing.assert_almost_equal(conjugate_transpose_ms_out, expected_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conjugate_transpose_int32_2x2x2():
     """
     Feature:  ConjugateTranspose 2 input and 1 output.
@@ -97,9 +90,7 @@ def test_conjugate_transpose_int32_2x2x2():
     np.testing.assert_almost_equal(conjugate_transpose_ms_out, expected_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conjugate_transpose_zero_rank():
     """
     Feature:  ConjugateTranspose input with zero rank.

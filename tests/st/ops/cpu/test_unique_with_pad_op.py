@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -50,9 +51,7 @@ def dyn_case():
         assert out[i].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_dyn():
     """
     Feature: test uniquewithpad in cpu.
@@ -65,9 +64,7 @@ def test_net_dyn():
     dyn_case()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_int32():
     """
     Feature: test uniquewithpad in cpu.
@@ -84,9 +81,7 @@ def test_net_int32():
     assert (output[1].asnumpy() == expect_idx_result).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_float32():
     """
     Feature: test uniquewithpad in cpu.
@@ -103,9 +98,7 @@ def test_net_float32():
     assert (output[1].asnumpy() == expect_idx_result).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_unique_with_pad_dynamic_shape():
     """
     Feature: uniquewithpad dynamic shape test in cpu.
@@ -124,9 +117,7 @@ def test_unique_with_pad_dynamic_shape():
     assert (output[1].asnumpy() == expect_idx_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_with_pad_vmap():
     """
     Feature: uniquewithpad vmap test in cpu.
@@ -152,9 +143,7 @@ def test_unique_with_pad_vmap():
     assert np.allclose(outputs[1].asnumpy(), expect1)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_int64():
     """
     Feature: test uniquewithpad in cpu.

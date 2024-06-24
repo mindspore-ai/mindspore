@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.nn as nn
@@ -50,9 +51,7 @@ base_expect_log_probs[1, 3, 5] = -FLT_MAX
 base_expect_log_probs[1, 4, 8] = -FLT_MAX
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net():
     """
     Feature: test NoRepeatNGram on GPU.
@@ -69,9 +68,7 @@ def test_net():
     assert np.array_equal(expect_log_probs, output.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_dynamic_shape():
     """
     Feature: test NoRepeatNGram dynamic shape on GPU.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -46,9 +47,7 @@ def run_net(datatype, input_tensors, output_tensors):
     assert output1.dtype == inp1.dtype
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_square_sum_all_dynamic_shape():
     """
     Feature: test SquareSumAll cpu op.
@@ -72,9 +71,7 @@ def test_square_sum_all_dynamic_shape():
     assert out_y.asnumpy().shape == expect_out_y_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 @pytest.mark.parametrize('input_tensors, output_tensors',
                          [([[1, 2, 4], [0, 1, -1]], [21, 2]),
@@ -89,9 +86,7 @@ def test_cpu(dtype, input_tensors, output_tensors):
     run_net(dtype, input_tensors, output_tensors)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cpu_exception_dtype_diff():
     """
     Feature: SquareSumAll cpu op.
@@ -106,9 +101,7 @@ def test_cpu_exception_dtype_diff():
         _ = net(inp0, inp1)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cpu_exception_dtype_not_support():
     """
     Feature: SquareSumAll cpu op.
@@ -123,9 +116,7 @@ def test_cpu_exception_dtype_not_support():
         _ = net(inp0, inp1)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cpu_exception_shape_diff():
     """
     Feature: SquareSumAll cpu op.
@@ -140,9 +131,7 @@ def test_cpu_exception_shape_diff():
         _ = net(inp0, inp1)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cpu_float16():
     """
     Feature: SquareSumAll cpu op.
@@ -160,9 +149,7 @@ def test_cpu_float16():
     assert output1.asnumpy() == expect1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_vmap_square_sum_all():
     """
     Feature: SquareSumAll cpu op vmap feature.

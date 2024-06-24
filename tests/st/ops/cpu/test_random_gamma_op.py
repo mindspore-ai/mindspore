@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -52,9 +53,7 @@ class RandomGammaDR(nn.Cell):
         return F.random_gamma(outshape, outalpha, seed), outshape, outalpha
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_rank():
     """
     Feature: RandomGamma cpu kernel for dynamic rank
@@ -75,9 +74,7 @@ def test_dynamic_rank():
     assert (output.shape == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("dtype", [ms.float64, ms.float32, ms.float16])
 def test_random_gamma_op(dtype):
     """
@@ -110,9 +107,7 @@ def test_random_gamma_op(dtype):
     print(output)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("dtype", [ms.float64, ms.float32, ms.float16])
 def test_random_gamma_functional(dtype):
     """

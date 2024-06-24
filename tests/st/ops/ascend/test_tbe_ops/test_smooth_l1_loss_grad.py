@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -46,10 +47,7 @@ def smoothl1loss_grad(beta):
     return grad(Tensor(prediction), Tensor(target), Tensor(sens))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_smoothl1loss_grad_no_reduce():
     """
     Feature: SmoothL1LossGrad cpu kernel.
@@ -98,10 +96,7 @@ def smoothl1loss_grad_2(beta, reduction):
     return grad(Tensor(prediction), Tensor(target), Tensor(sens))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("reduction", ['mean', 'sum'])
 def test_smoothl1loss_grad_sum(reduction):
     """

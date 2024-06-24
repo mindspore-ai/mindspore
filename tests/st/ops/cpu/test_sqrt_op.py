@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -40,9 +41,7 @@ class Net(nn.Cell):
         return self.ops(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_sqrt(dtype):
     """
@@ -61,9 +60,7 @@ def test_sqrt(dtype):
     assert out.shape == y_expect.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_sqrt_grad(dtype):
     """
@@ -89,9 +86,7 @@ def test_sqrt_grad(dtype):
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_sqrt_dy_shape(dtype):
     """
@@ -115,9 +110,7 @@ def test_sqrt_dy_shape(dtype):
     np.testing.assert_allclose(benchmark_output, ms_result.asnumpy(), rtol=loss, atol=loss)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_sqrt_grad_dy_shape(dtype):
     """

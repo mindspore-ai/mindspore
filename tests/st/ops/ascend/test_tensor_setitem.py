@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 """ test_tensor_setitem """
 import pytest
 import numpy as np
 from mindspore import Tensor
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_slice_by_bool_broadcast():
     """
     Feature: Tensor-setitem-by-bool support broadcast.
@@ -40,10 +38,7 @@ def test_tensor_slice_by_bool_broadcast():
     assert np.allclose(data_tensor.asnumpy(), data_np)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_slice_by_bool_nan():
     """
     Feature: Tensor-setitem-by-bool support nan.

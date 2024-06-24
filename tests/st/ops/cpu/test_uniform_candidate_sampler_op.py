@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -71,9 +72,7 @@ def uniform_candidate_sampler_hit(x, num_true, num_sampled, unique, range_max, s
     return out1, out2, out3
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_candidate_sampler_unique_1_true():
     """
     Feature: UniformCandidateSampler cpu kernel
@@ -91,9 +90,7 @@ def test_uniform_candidate_sampler_unique_1_true():
     np.testing.assert_array_equal(ms3, expected_3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_candidate_sampler_not_unique_1_true():
     """
     Feature: UniformCandidateSampler cpu kernel
@@ -111,9 +108,7 @@ def test_uniform_candidate_sampler_not_unique_1_true():
     np.testing.assert_array_equal(ms3, expected_3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_candidate_sampler_unique_2_true():
     """
     Feature: UniformCandidateSampler cpu kernel
@@ -132,9 +127,7 @@ def test_uniform_candidate_sampler_unique_2_true():
     np.testing.assert_array_equal(ms3, expected_3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_candidate_sampler_not_unique_2_true():
     """
     Feature: UniformCandidateSampler cpu kernel
@@ -154,9 +147,7 @@ def test_uniform_candidate_sampler_not_unique_2_true():
     np.testing.assert_array_equal(ms3, expected_3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_candidate_sampler_large():
     """
     Feature: UniformCandidateSampler cpu kernel
@@ -178,9 +169,7 @@ def test_uniform_candidate_sampler_large():
     np.testing.assert_array_equal(ms3, expected_3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_candidate_sampler_large_random():
     """
     Feature: UniformCandidateSampler cpu kernel
@@ -198,9 +187,7 @@ def test_uniform_candidate_sampler_large_random():
     np.testing.assert_array_equal(ms3, expected_3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_candidate_sampler_large_random_int64_input():
     """
     Feature: UniformCandidateSampler cpu kernel
@@ -218,9 +205,7 @@ def test_uniform_candidate_sampler_large_random_int64_input():
     np.testing.assert_array_equal(ms3, expected_3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_candidate_sampler_unique_1_true_hit():
     """
     Feature: UniformCandidateSampler cpu kernel
@@ -234,9 +219,7 @@ def test_uniform_candidate_sampler_unique_1_true_hit():
     np.testing.assert_array_equal(ms1.asnumpy(), expected_1.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_uniform_candidate_sampler_unique_1_true_no_hit():
     """
     Feature: UniformCandidateSampler cpu kernel

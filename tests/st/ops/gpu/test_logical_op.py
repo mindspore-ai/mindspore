@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -54,9 +55,7 @@ x = np.array([True, False, False]).astype(np.bool)
 y = np.array([False]).astype(np.bool)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_logicaland():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     logicaland = NetAnd()
@@ -69,9 +68,7 @@ def test_logicaland():
     assert np.all(output.asnumpy() == np.logical_and(x, y))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_logicalor():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     logicalor = NetOr()
@@ -84,9 +81,7 @@ def test_logicalor():
     assert np.all(output.asnumpy() == np.logical_or(x, y))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("dtype", [np.bool_])
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_logicalnot(dtype, mode):
@@ -102,9 +97,7 @@ def test_logicalnot(dtype, mode):
     assert np.allclose(output.asnumpy(), np.logical_not(input_x), 1.0e-3, 1.0e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_logical_and_tensor_api_modes(mode):
     """
@@ -120,9 +113,7 @@ def test_logical_and_tensor_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_logical_not_tensor_api_modes(mode):
     """
@@ -137,9 +128,7 @@ def test_logical_not_tensor_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_logical_or_tensor_api_modes(mode):
     """

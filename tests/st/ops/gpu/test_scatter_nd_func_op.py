@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -122,9 +123,7 @@ def compare_scatter_nd_func(func, inputx, indices, updates):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 @pytest.mark.parametrize('data_type',
                          [mstype.uint8, mstype.int8, mstype.uint16, mstype.int16, mstype.uint32, mstype.int32,
@@ -143,9 +142,7 @@ def test_scatter_nd_func_small(func, data_type, index_type):
     compare_scatter_nd_func(func, inputx, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_nd_func_small_update():
     """
     Feature: ALL To ALL
@@ -159,9 +156,7 @@ def test_scatter_nd_func_small_update():
     compare_scatter_nd_func("update", inputx, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 @pytest.mark.parametrize('data_type',
                          [mstype.uint8, mstype.int8, mstype.uint16, mstype.int16, mstype.uint32, mstype.int32,
@@ -188,9 +183,7 @@ def test_scatter_nd_func_multi_dims(func, data_type, index_type):
     compare_scatter_nd_func(func, inputx, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['update', 'add', 'mul', 'max'])
 @pytest.mark.parametrize('data_type', [mstype.uint8])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -222,9 +215,7 @@ def test_scatter_nd_func_indices_out_of_range(func, data_type, index_type):
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 @pytest.mark.parametrize('data_type',
                          [mstype.uint8, mstype.int8, mstype.uint16, mstype.int16, mstype.uint32, mstype.int32,
@@ -243,9 +234,7 @@ def test_scatter_nd_func_one_value(func, data_type, index_type):
     compare_scatter_nd_func(func, inputx, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('data_type', [mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int64])
 def test_scatter_nd_div_division_by_zero(data_type, index_type):
@@ -263,9 +252,7 @@ def test_scatter_nd_div_division_by_zero(data_type, index_type):
     compare_scatter_nd_func('div', inputx, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("func_name", ['update', 'add', 'sub', 'div', 'mul', 'max', 'min'])
 def test_scatter_nd_dy_shape(func_name):
     """
@@ -293,9 +280,7 @@ def test_scatter_nd_dy_shape(func_name):
     np.testing.assert_allclose(np_result, ms_result.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min', 'max', 'mul'])
 def test_scatter_func_indices_vmap(func):
     """
@@ -320,9 +305,7 @@ def test_scatter_func_indices_vmap(func):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['add', 'sub', 'div', 'min', 'max', 'mul'])
 def test_scatter_func_update_vmap(func):
     """

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,9 +32,7 @@ class Net(nn.Cell):
 
 
 #euclideannorm op will be deleted soon since ops.norm has same functionality.
-#@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+#@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("data_type1", [
     np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float16, np.float32,
     np.float64, np.complex64, np.complex128
@@ -61,9 +60,7 @@ def test_euclideannorm_graph(data_type1, data_type2):
     assert np.allclose(output, expect, rtol=loss, atol=loss)
 
 
-#@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+#@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("data_type1", [
     np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64, np.float16, np.float32,
     np.float64, np.complex64, np.complex128
@@ -88,9 +85,7 @@ def test_euclideannorm_pynative(data_type1, data_type2):
     assert np.allclose(output, expect, rtol=loss, atol=loss)
 
 
-#@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+#@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("data_type1", [np.complex64, np.complex128])
 @pytest.mark.parametrize("data_type2", [np.int32, np.int64])
 def test_euclideannorm_complex_keep_dims(data_type1, data_type2):
@@ -113,9 +108,7 @@ def test_euclideannorm_complex_keep_dims(data_type1, data_type2):
     assert np.allclose(output, expect, rtol=loss, atol=loss)
 
 
-#@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+#@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_euclideannorm_same_axes_with_input():
     """
     Feature: EuclideanNorm

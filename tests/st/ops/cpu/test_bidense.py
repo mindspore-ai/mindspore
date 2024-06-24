@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 
@@ -34,9 +35,7 @@ class Net(nn.Cell):
         return self.bidense(x1, x2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net():
     """
     Feature: Assert BiDense output shape
@@ -51,9 +50,7 @@ def test_net():
     assert output.shape == (128, 40)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net_nd():
     """
     Feature: Assert BiDense output shape for n-dimensional input
@@ -68,9 +65,7 @@ def test_net_nd():
     assert output.shape == (128, 4, 40)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net_1d():
     """
     Feature: Assert BiDense output shape for 1-dimensional input
@@ -85,9 +80,7 @@ def test_net_1d():
     assert output.shape == (40,)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_int8_inputs():
     """
     Feature: Bidense with int8 inputs.

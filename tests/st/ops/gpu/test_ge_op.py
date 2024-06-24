@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -36,9 +37,7 @@ class GreaterEqualFunc(nn.Cell):
         return ops.ge(*inputs)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.int8, np.int16, np.int32, np.int64, np.float16, np.float32, np.float64])
 def test_greater_equal_op_dtype_1(mode, dtype):
@@ -60,9 +59,7 @@ def test_greater_equal_op_dtype_1(mode, dtype):
     assert np.allclose(outputs.asnumpy(), [False, True, True])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64])
 def test_greater_equal_op_dtype_2(mode, dtype):
@@ -84,9 +81,7 @@ def test_greater_equal_op_dtype_2(mode, dtype):
     assert np.allclose(outputs.asnumpy(), [False, True, True])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.bool])
 def test_greater_equal_op_dtype_3(mode, dtype):
@@ -108,9 +103,7 @@ def test_greater_equal_op_dtype_3(mode, dtype):
     assert np.allclose(outputs.asnumpy(), [False, True, True])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_greater_equal_op_functional(mode):
     """
@@ -130,9 +123,7 @@ def test_greater_equal_op_functional(mode):
     assert np.allclose(outputs.asnumpy(), [False, True, True])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_greater_equal_op_tensor(mode):
     """

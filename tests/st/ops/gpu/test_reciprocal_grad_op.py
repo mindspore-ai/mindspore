@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,9 +32,7 @@ class NetReciprocalGrad(nn.Cell):
         return self.grad(y, dy)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reciprocal_grad_float32():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     y = Tensor(np.array([[[[-1, 1, 12],
@@ -64,9 +63,7 @@ def test_reciprocal_grad_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reciprocal_grad_float16():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     y = Tensor(np.array([[0.01, 0.2, 0.22],

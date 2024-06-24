@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -48,9 +49,7 @@ class NetGatherDGrad(nn.Cell):
         return self.grad(self.network)(inputx, index)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gatherd_grad_fp32():
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(5, 5, 5).astype(np.float32) * prop
@@ -65,9 +64,7 @@ def test_gatherd_grad_fp32():
     print(output_grad.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gatherd_grad_fp16():
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(5, 5, 5).astype(np.float16) * prop
@@ -82,9 +79,7 @@ def test_gatherd_grad_fp16():
     print(output_grad.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gatherd_grad_int32():
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(5, 5, 5).astype(np.int32) * prop
@@ -99,9 +94,7 @@ def test_gatherd_grad_int32():
     print(output_grad.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_gatherd_grad_checkresult():
     x = np.array([[[-146.76097, 119.84371], [91.22607, -166.12923]],
                   [[37.67479, -8.696029], [43.804962, -23.369316]]], np.float32)
@@ -119,9 +112,7 @@ def test_gatherd_grad_checkresult():
     assert np.all(np.abs(output.asnumpy() - expect) < error)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_gatherd_grad_dynamic_shape():
     """
     Feature: dynamic shape support of GatherDGrad.

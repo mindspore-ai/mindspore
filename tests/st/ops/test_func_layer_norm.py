@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -41,10 +42,7 @@ def layer_norm_forward_func_np(input_x, normalized_shape, gamma, beta, eps=1e-7)
     x_norm = (input_x - mean_np) / np.sqrt(var_np + eps)
     return gamma * x_norm + beta
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_ops_layer_norm_forward(mode):
     """
@@ -63,10 +61,7 @@ def test_ops_layer_norm_forward(mode):
     assert np.allclose(output.asnumpy(), expect_output, atol=1e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_ops_layer_norm_ext_backward(mode):
     """
@@ -90,10 +85,7 @@ def test_ops_layer_norm_ext_backward(mode):
     assert np.allclose(grad_gamma.asnumpy(), expect_grad_gamma, rtol=1e-6, atol=1e-6)
     assert np.allclose(grad_beta.asnumpy(), expect_grad_beta, rtol=1e-6, atol=1e-6)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_layer_norm_ext_vmap(mode):
     """
@@ -120,9 +112,7 @@ def test_layer_norm_ext_vmap(mode):
                                 [-1.22474468, 0., 1.22474468]]]).astype(np.float32)
     assert np.allclose(outputs.asnumpy(), expect_outputs, rtol=1e-6, atol=1e-6)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_layer_norm_ext_dyn():
     """
     Feature: test layer_norm_ext function.

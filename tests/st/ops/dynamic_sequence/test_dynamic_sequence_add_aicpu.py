@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 # pylint: disable=ungrouped-imports
 # pylint: disable=unused-import
 import os
@@ -48,10 +49,7 @@ class NetAddOffset(nn.Cell):
         return self.seq_add_offset(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_add_aicpu():
     """
     Feature: test aicpu sequence_add op
@@ -66,10 +64,7 @@ def test_seq_add_aicpu():
     assert res == expect
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_add_offset_aicpu():
     """
     Feature: test aicpu sequence_add_offset op
@@ -84,10 +79,7 @@ def test_seq_add_offset_aicpu():
     assert res == expect
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_add_grad_aicpu():
     """
     Feature: test aicpu sequence add grad op
@@ -106,10 +98,7 @@ def test_seq_add_grad_aicpu():
     print("grad out = ", grad_func(input_x, input_y, dout))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_add_grad_other_aicpu():
     """
     Feature: test aicpu sequence add grad op

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -32,11 +33,7 @@ class PolygammaNet(nn.Cell):
         return self.polygamma(a, x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_polygamma_1d_a_1_int64_float16():
     """
     Feature: Polygamma
@@ -52,9 +49,7 @@ def test_polygamma_1d_a_1_int64_float16():
     assert np.allclose(z_ms.asnumpy(), expect.astype(np.float16), 0.001, 0.001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_polygamma_1d_a_1_int64_float32():
     """
     Feature: Polygamma
@@ -70,9 +65,7 @@ def test_polygamma_1d_a_1_int64_float32():
     assert np.allclose(z_ms.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_polygamma_1d_a_1_int64_float64():
     """
     Feature: Polygamma
@@ -88,9 +81,7 @@ def test_polygamma_1d_a_1_int64_float64():
     assert np.allclose(z_ms.asnumpy(), expect, 0.00001, 0.00001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_polygamma_1d_a_2_int64_float16():
     """
     Feature: Polygamma
@@ -106,9 +97,7 @@ def test_polygamma_1d_a_2_int64_float16():
     assert np.allclose(z_ms.asnumpy(), expect.astype(np.float16), 0.001, 0.001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_polygamma_1d_a_2_int64_float32():
     """
     Feature: Polygamma
@@ -124,9 +113,7 @@ def test_polygamma_1d_a_2_int64_float32():
     assert np.allclose(z_ms.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_polygamma_1d_a_2_int64_float64():
     """
     Feature: Polygamma

@@ -32,9 +32,7 @@ class NetFloorDiv(nn.Cell):
         return self.floordiv(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64, np.int8, np.int16, np.int32,
                                    np.int64, np.uint8, np.uint16, np.uint32, np.uint64])
 def testtype_floor_div_int_float(dtype):
@@ -53,9 +51,7 @@ def testtype_floor_div_int_float(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 @pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
 def testtype_floor_div_complex(dtype):
     """

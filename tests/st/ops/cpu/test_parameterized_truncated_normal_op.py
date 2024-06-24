@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -31,9 +32,7 @@ class ParameterizedTruncatedNormalTEST(nn.Cell):
         return self.parameterized_truncated_normal(shape, mean, stdevs, minvals, maxvals)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_parameterized_truncated_normal_op_case1():
     """
     Feature: ParameterizedTruncatedNormal cpu kernel
@@ -62,9 +61,7 @@ def test_parameterized_truncated_normal_op_case1():
         assert not (output0.asnumpy() == output1.asnumpy()).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_parameterized_truncated_normal_op_case2():
     """
     Feature: ParameterizedTruncatedNormal cpu kernel

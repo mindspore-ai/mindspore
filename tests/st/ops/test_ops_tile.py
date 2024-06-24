@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 """Test Tile."""
 
@@ -40,11 +41,7 @@ def tile_backward_func(x, multiplies):
     return ops.grad(tile_forward_func, (0,))(x, multiplies)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_tile_forward(mode):
     """
@@ -75,11 +72,7 @@ def test_tile_forward(mode):
     assert np.allclose(out3.asnumpy(), expect3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_tile_backward(mode):
     """
@@ -107,11 +100,7 @@ def test_tile_backward(mode):
     assert np.allclose(grads3.asnumpy(), expect3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_tile_vmap(mode):
     """
@@ -130,11 +119,7 @@ def test_tile_vmap(mode):
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tile_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -147,11 +132,7 @@ def test_tile_dynamic():
     TEST_OP(tile_func, [[input_case1, (2, 3, 2, 3)], [input_case2, (3, 2, 3, 2)]], 'tile')
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dyn_mode", ["dyn_shape", "dyn_rank"])
 def test_tile_forward_dyn(mode, dyn_mode):
@@ -182,11 +163,7 @@ def test_tile_forward_dyn(mode, dyn_mode):
     assert np.allclose(out2.asnumpy(), expect2)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE])  # ms.context.GRAPH_MODE has runtime heterogeneous bug.
 @pytest.mark.parametrize("dyn_mode", ["dyn_shape", "dyn_rank"])
 def test_tile_backward_dyn(mode, dyn_mode):
@@ -215,11 +192,7 @@ def test_tile_backward_dyn(mode, dyn_mode):
     assert np.allclose(grads2.asnumpy(), expect2)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 @pytest.mark.parametrize('is_fwd', [True, False])
 def test_tile_dynamic_len(mode, is_fwd):

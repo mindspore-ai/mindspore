@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -34,9 +35,7 @@ class Net(nn.Cell):
         return self.population_count(x0)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test16_net():
     x = Tensor(np.array([13, 65]), mstype.int16)
     pc = Net()
@@ -46,9 +45,7 @@ def test16_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test8_net():
     x = Tensor(np.array([13, 65]), mstype.int8)
     pc = Net()
@@ -58,9 +55,7 @@ def test8_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_vmap_population_count():
     """
     Feature: PopulationCount cpu op vmap feature.

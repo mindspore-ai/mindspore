@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -106,9 +107,7 @@ def tensor_scatter_np_benchmark(np_func, input_x, indices, updates):
     return result
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func_name', ["update", "min", "max", "add", "sub", "mul", "div"])
 @pytest.mark.parametrize('input_data_type', [np.float16, np.float32, np.float64, np.int8, np.int32])
 @pytest.mark.parametrize('index_data_type', [np.int32, np.int64])
@@ -134,9 +133,7 @@ def test_tensor_scatter(func_name, input_data_type, index_data_type):
     np.testing.assert_allclose(out.asnumpy(), expected, rtol=1e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("func_name", ["mul", "div"])
 def test_scatter_nd_dy_shape(func_name):
     """
@@ -164,9 +161,7 @@ def test_scatter_nd_dy_shape(func_name):
     np.testing.assert_allclose(np_result, ms_result.asnumpy(), atol=1e-6, rtol=1e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("func_name", ["mul", "div"])
 def test_tensor_scatter_mul_func_indices_vmap(func_name):
     """
@@ -191,9 +186,7 @@ def test_tensor_scatter_mul_func_indices_vmap(func_name):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, atol=1e-6, rtol=1e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("func_name", ["mul", "div"])
 def test_scatter_func_update_vmap(func_name):
     """

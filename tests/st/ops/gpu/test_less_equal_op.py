@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -33,9 +34,7 @@ class Net(Cell):
         return self.lessequal(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lessequal():
     x = Tensor(np.array([[1, 2, 3]]).astype(np.float32))
     y = Tensor(np.array([[2, 2, 2]]).astype(np.float32))
@@ -112,9 +111,7 @@ def test_less_equal_tensor_api():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_less_equal_functional_tensor_modes():
     """
     Feature: test less_equal functional and tensor APIs in PyNative and Graph modes.

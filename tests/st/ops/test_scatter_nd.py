@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import tests.st.utils.test_utils as test_utils
@@ -35,11 +36,7 @@ def scatter_nd_vmap_func(indices, updates, shape):
     return ops.vmap(scatter_nd_forward_func, in_axes=(0, 0, None), out_axes=0)(indices, updates, shape)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int64, np.int32, np.int16, np.int8])
 @pytest.mark.parametrize("indices_type", [np.int64, np.int32])
@@ -59,11 +56,7 @@ def test_scatter_nd_op_forward_1(context_mode, data_type, indices_type):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int64, np.int32, np.int16, np.int8])
 @pytest.mark.parametrize("indices_type", [np.int64, np.int32])
@@ -83,11 +76,7 @@ def test_scatter_nd_op_forward_2(context_mode, data_type, indices_type):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int64, np.int32, np.int16, np.int8])
 @pytest.mark.parametrize("indices_type", [np.int64, np.int32])
@@ -109,11 +98,7 @@ def test_scatter_nd_op_backward_1(context_mode, data_type, indices_type):
     np.testing.assert_allclose(grad_out_1.asnumpy(), expect_out_1, rtol=1e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int64, np.int32, np.int16, np.int8])
 @pytest.mark.parametrize("indices_type", [np.int64, np.int32])
@@ -135,11 +120,7 @@ def test_scatter_nd_op_backward_2(context_mode, data_type, indices_type):
     np.testing.assert_allclose(grad_out_1.asnumpy(), expect_out_1, rtol=1e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.int32])
 @pytest.mark.parametrize("indices_type", [np.int32])
@@ -162,11 +143,7 @@ def test_scatter_nd_op_vmap(context_mode, data_type, indices_type):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [ms.float32, ms.int64])
 @pytest.mark.parametrize("indices_type", [ms.int64, ms.int32])
@@ -198,11 +175,7 @@ def test_scatter_nd_op_dynamic_shape(context_mode, data_type, indices_type):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [ms.float32, ms.int64])
 @pytest.mark.parametrize("indices_type", [ms.int64, ms.int32])
@@ -234,11 +207,7 @@ def test_scatter_nd_op_dynamic_rank(context_mode, data_type, indices_type):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_scatter_nd_op_1d_shape(context_mode):
@@ -256,11 +225,7 @@ def test_scatter_nd_op_1d_shape(context_mode):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-6)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_scatter_nd_exception(context_mode):

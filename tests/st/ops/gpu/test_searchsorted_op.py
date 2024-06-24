@@ -1,3 +1,4 @@
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore
@@ -37,9 +38,7 @@ def search_sorted_pynative(loss):
     assert np.allclose(output.asnumpy(), expect, loss, loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_search_sorted_graph_int32():
     """
     Feature: ALL To ALL
@@ -49,9 +48,7 @@ def test_search_sorted_graph_int32():
     search_sorted(loss=1.0e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_search_sorted_pynative_int32():
     """
     Feature: ALL To ALL

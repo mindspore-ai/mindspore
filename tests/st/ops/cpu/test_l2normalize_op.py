@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -34,9 +35,7 @@ class Net(Cell):
         return self.norm(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_l2normalize_float32():
     x = np.arange(20 * 20 * 20 * 20).astype(np.float32).reshape(20, 20, 20, 20)
     expect = x / np.sqrt(np.sum(x ** 2, axis=0, keepdims=True))
@@ -50,9 +49,7 @@ def test_l2normalize_float32():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_l2normalize_float16():
     x = np.arange(96).astype(np.float16).reshape(2, 3, 4, 4)
     expect = x / np.sqrt(np.sum(x ** 2, axis=0, keepdims=True))
@@ -66,9 +63,7 @@ def test_l2normalize_float16():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_l2normalize_axis():
     axis = -2
     x = np.arange(96).astype(np.float32).reshape(2, 3, 4, 4)
@@ -83,9 +78,7 @@ def test_l2normalize_axis():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_l2normalize_epsilon():
     axis = -1
     epsilon = 900000.0
@@ -101,9 +94,7 @@ def test_l2normalize_epsilon():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_l2normalize_dynamic_shape_float32():
     """
     Feature: l2normalize operation dynamic shape test

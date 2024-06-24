@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -158,9 +159,7 @@ class BatchNormNet(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_bachnorm():
     """
     Feature: Test BatchNorm and its backward.
@@ -190,9 +189,7 @@ class ReshapeNet(nn.Cell):
         return ops.Reshape()(x, shape_of_y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_reshape():
     """
     Feature: Test Reshape.
@@ -227,9 +224,7 @@ class ReduceSumInputAxisNet(nn.Cell):
         return self.reduce(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_reduce_sum_input_axis():
     """
     Feature: Test ReduceSum with axis is input.
@@ -264,9 +259,7 @@ class NopNet(nn.Cell):
         return ops.sub(y1, x1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_nop():
     """
     Feature: Test Nop.
@@ -299,9 +292,7 @@ class ReduceSumNet(nn.Cell):
         return self.reduce(x, self.axis)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_reduce_sum():
     """
     Feature: Test ReduceSum and its backward.
@@ -329,9 +320,7 @@ class AddNet(nn.Cell):
         return ops.add(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_add():
     """
     Feature: Test add and its backward.
@@ -406,9 +395,7 @@ class ResizeNearestNeighbor(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_batchnorm():
     """
     Feature: Test Dynamic batchnorm and its backward. The input shape is dynamic.
@@ -422,9 +409,7 @@ def test_dynamic_batchnorm():
     comm_func(dynamic_range, input_shape, data_type, net, output_compare_idx=0)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_batchnorm2():
     """
     Feature: Test Dynamic batchnorm and its backward. The input shape is dynamic.
@@ -438,9 +423,7 @@ def test_dynamic_batchnorm2():
     comm_func(dynamic_range, input_shape, data_type, net, output_compare_idx=0)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_maxpool1():
     """
     Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
@@ -454,9 +437,7 @@ def test_dynamic_maxpool1():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_maxpool2():
     """
     Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
@@ -470,9 +451,7 @@ def test_dynamic_maxpool2():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_maxpool3():
     """
     Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
@@ -486,9 +465,7 @@ def test_dynamic_maxpool3():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_maxpool4():
     """
     Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
@@ -502,9 +479,7 @@ def test_dynamic_maxpool4():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_sigmoid_cross_entropy_with_logits():
     """
     Feature: Test Dynamic SigmoidCrossEntropyWithLogits and its backward. The input shape is dynamic.
@@ -518,9 +493,7 @@ def test_dynamic_sigmoid_cross_entropy_with_logits():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_sigmoid_cross_entropy_with_logits_grad():
     """
     Feature: Test Dynamic SigmoidCrossEntropyWithLogitsGrad and its backward. The input shape is dynamic.
@@ -534,9 +507,7 @@ def test_dynamic_sigmoid_cross_entropy_with_logits_grad():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_sigmoid_grad():
     """
     Feature: Test Dynamic SigmoidGrad and its backward. The input shape is dynamic.
@@ -550,9 +521,7 @@ def test_dynamic_sigmoid_grad():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_resize_nearest_neighbor():
     """
     Feature: Test Dynamic ResizeNearestNeighbor and its backward. The input shape is dynamic.
@@ -566,9 +535,7 @@ def test_dynamic_resize_nearest_neighbor():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_resize_nearest_neighbor_grad():
     """
     Feature: Test Dynamic ResizeNearestNeighborGrad and its backward. The input shape is dynamic.

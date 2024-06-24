@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -39,9 +40,7 @@ class Net(nn.Cell):
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_select_float32():
     cond = np.array([[True, False], [True, False]]).astype(np.bool)
     x = np.array([[1.2, 1], [1, 0]]).astype(np.float32)
@@ -56,9 +55,7 @@ def test_select_float32():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_select_float16():
     cond = np.array([[True, False], [True, False]]).astype(np.bool)
     x = np.array([[1.2, 1], [1, 0]]).astype(np.float16)
@@ -73,9 +70,7 @@ def test_select_float16():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_select_int32():
     cond = np.array([[True, False], [True, False]]).astype(np.bool)
     x = np.array([[12, 1], [1, 0]]).astype(np.int32)
@@ -90,9 +85,7 @@ def test_select_int32():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_functional_select_scalar():
     """
     Feature: Test functional select operator. Support x or y is a int/float.
@@ -111,9 +104,7 @@ def test_functional_select_scalar():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_functional_select_broadcast():
     """
     Feature: Test functional select operator support broadcast input.
@@ -130,9 +121,7 @@ def test_functional_select_broadcast():
     assert ret.shape == (5, 5, 65, 54, 12, 5, 2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_functional_select_type_error():
     """
     Feature: Functional select support scalar.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -44,9 +45,7 @@ class NetConv3d(nn.Cell):
         return self.conv(x, w)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('algo', ["normal", "performance"])
 @pytest.mark.parametrize('conv_allow_tf32', [True, False])
 def test_conv3d_dshape_1(algo, conv_allow_tf32):
@@ -68,9 +67,7 @@ def test_conv3d_dshape_1(algo, conv_allow_tf32):
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv3d_dshape_2():
     """
     Feature: Test conv3d dynamic shape.
@@ -89,9 +86,7 @@ def test_conv3d_dshape_2():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv3d():
     x = Tensor(np.arange(1 * 3 * 3 * 3 * 3).reshape(1, 3, 3, 3, 3).astype(np.float32))
     w = Tensor(np.arange(4 * 3 * 2 * 2 * 2).reshape(4, 3, 2, 2, 2).astype(np.float32))
@@ -156,9 +151,7 @@ class MSGradNet(nn.Cell):
         return output
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv3d_grad():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     dtype = np.float32
@@ -206,9 +199,7 @@ def test_conv3d_grad():
     assert np.allclose(net.cv1.weight.asnumpy(), w_exp, atol=1.0e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv3d_vmap():
     """
     Feature: Conv3D op

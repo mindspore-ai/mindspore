@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 from functools import reduce
 import numpy as np
@@ -49,10 +50,7 @@ def run_case():
     assert np.allclose(expect.asnumpy(), output.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_slice_grad():
     """
     Feature: aicpu SliceGrad
