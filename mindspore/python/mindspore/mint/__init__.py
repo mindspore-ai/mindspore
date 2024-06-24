@@ -423,30 +423,30 @@ def sqrt(input):
     r"""
     Returns sqrt of a tensor element-wise.
 
-        .. math::
+    .. math::
 
-            out_{i} = \sqrt{x_{input}}
+        out_{i} = \sqrt{x_{input}}
 
-        Args:
-            input (Tensor): The input tensor with a dtype of number.Number.
+    Args:
+        input (Tensor): The input tensor with a dtype of number.Number.
 
-        Returns:
-            Tensor, has the same shape as the `input`.
+    Returns:
+        Tensor, has the same shape as the `input`.
 
-        Raises:
-            TypeError: If `input` is not a Tensor.
+    Raises:
+        TypeError: If `input` is not a Tensor.
 
-        Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
-        Examples:
-            >>> import mindspore
-            >>> import numpy as np
-            >>> from mindspore import Tensor, mint
-            >>> input = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
-            >>> output = mint.sqrt(input)
-            >>> print(output)
-            [1. 2. 3.]
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, mint
+        >>> input = Tensor(np.array([1.0, 4.0, 9.0]), mindspore.float32)
+        >>> output = mint.sqrt(input)
+        >>> print(output)
+        [1. 2. 3.]
     """
     return sqrt_ext(input)
 
