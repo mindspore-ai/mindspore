@@ -91,7 +91,7 @@ bool HasCellShard(const FuncGraphPtr &func_graph) {
   AnfNodePtr ret = func_graph->get_return();
   std::vector<AnfNodePtr> all_nodes = DeepScopedGraphSearch(ret);
   for (auto &node : all_nodes) {
-    if (IsPrimitiveCNode(node, prim::kPrimShard)) {
+    if (IsPrimitiveCNode(node, prim::kPrimShard) || IsPrimitiveCNode(node, prim::kPrimReshard)) {
       return true;
     }
   }

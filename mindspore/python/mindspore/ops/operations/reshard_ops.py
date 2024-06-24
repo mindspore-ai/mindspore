@@ -15,6 +15,7 @@
 """Operators for reshard."""
 from mindspore.ops.primitive import Primitive, prim_attr_register
 
+
 class Reshard(Primitive):
     r"""
     Reshard the tensor by the given in_layout and out_layout, which can precisely
