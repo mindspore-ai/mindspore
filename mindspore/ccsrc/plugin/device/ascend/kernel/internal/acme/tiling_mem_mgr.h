@@ -35,46 +35,57 @@ enum MemoryType : int {
   kMemoryOneOff,
 };
 
+struct Slot {
+  size_t offset_{0};
+  size_t length_{0};
+};
+
 class TilingMemPool {
  public:
-  TilingMemPool(size_t block_size, size_t block_num) : block_size_(block_size), block_num_(block_num) {
-    total_size_ = block_size * block_num;
-  }
+  TilingMemPool(size_t block_size, size_t block_num);
   virtual ~TilingMemPool();
   virtual int Init();
 
-  std::pair<MemoryType, void *> Malloc(size_t size);
-  void Free(MemoryType mem_type, void *addr);
-
-  void Free(void *addr);
   size_t GetAlignedSize(size_t size);
+
+  void *Malloc(size_t size);
+  void Free(void *addr, size_t size);
+  void Rearrange();
+
+  void SetName(const std::string &name) { name_ = name; }
+
+  std::string GetName() const { return name_; }
 
  protected:
   virtual void *MallocInner(size_t size) { return nullptr; }
   virtual void FreeInner(void *addr) {}
 
  private:
-  inline std::pair<MemoryType, void *> MallocOneOffMem(size_t size) {
+  inline void *MallocOneOffMem(size_t size) {
     auto addr = MallocInner(size);
     MS_EXCEPTION_IF_NULL(addr);
-    return std::make_pair(kMemoryOneOff, addr);
+    return addr;
   }
+
+  inline size_t RoundAdd(size_t idx) { return (idx + 1) % block_num_; }
+
+  inline size_t RoundSub(size_t idx) { return (idx + block_num_ - 1) % block_num_; }
 
   size_t block_size_{0};
   size_t block_num_{0};
   size_t total_size_{0};
   int8_t *mem_base_ptr_{nullptr};
-  size_t offset{0};
-  std::atomic<bool> pool_mem_created_{false};
-  std::atomic<size_t> offset_{0};
+
+  std::vector<Slot> mem_slots_;
+  size_t head_{0};
+  size_t tail_{0};
+  std::string name_;
 };
 
 class TilingMemPoolHost : public TilingMemPool {
  public:
-  TilingMemPoolHost(size_t block_size, size_t block_num) : TilingMemPool(block_size, block_num) {}
+  TilingMemPoolHost(size_t block_size, size_t block_num);
   ~TilingMemPoolHost() override = default;
-
-  int Init() override;
 
  protected:
   void *MallocInner(size_t size) override;
@@ -83,10 +94,8 @@ class TilingMemPoolHost : public TilingMemPool {
 
 class TilingMemPoolDevice : public TilingMemPool {
  public:
-  TilingMemPoolDevice(size_t block_size, size_t block_num) : TilingMemPool(block_size, block_num) {}
+  TilingMemPoolDevice(size_t block_size, size_t block_num);
   ~TilingMemPoolDevice() override = default;
-
-  int Init() override;
 
  protected:
   void *MallocInner(size_t size) override;
@@ -103,9 +112,9 @@ class TilingMemMgr {
     return mgr;
   }
 
-  void CopySync(void *host_ptr, void *device_ptr, size_t size);
+  void CopyAsync(void *host_ptr, void *device_ptr, size_t size);
 
-  void CopySyncD2H(void *host_ptr, void *device_ptr, size_t size);
+  void CopyAsyncD2H(void *host_ptr, void *device_ptr, size_t size);
 
   TilingMemPoolHost pool_host_{kTilingMemPoolBlockSize, kTilingMemPoolHostBlockNum};
   TilingMemPoolDevice pool_device_{kTilingMemPoolBlockSize, kTilingMemPoolDeviceBlockNum};
