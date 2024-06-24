@@ -471,16 +471,11 @@ void MsContext::SetJitLevel(const std::string &jit_level) const {
 }
 
 std::string MsContext::GetJitLevel() const {
+  static bool first_call = true;
   static const auto env_var = common::GetEnv("GRAPH_OP_RUN");
   if (env_var == "1") {
     return kAttrJitLevelO0;
   } else if (env_var == "0") {
-    return kAttrJitLevelO2;
-  }
-
-  // If use rank table startup method, set jit level to O2.
-  if (!common::UseDynamicCluster() && !common::GetEnv("RANK_TABLE_FILE").empty()) {
-    MS_LOG(WARNING) << "Set jit level to O2 for rank table startup method.";
     return kAttrJitLevelO2;
   }
 
@@ -505,9 +500,21 @@ std::string MsContext::GetJitLevel() const {
   }
 
   if (mode == kPynativeMode && jit_level == kAttrJitLevelO2) {
-    MS_LOG(WARNING) << "Pynative mode can not set jit_level to O2, use O0 instead.";
-    return kAttrJitLevelO0;
+    if (first_call) {
+      MS_LOG(WARNING) << "Pynative mode can not set jit_level to O2, use O0 instead.";
+    }
+    jit_level = kAttrJitLevelO0;
   }
+
+  // If use rank table startup method, set jit level to O2.
+  if (!common::UseDynamicCluster() && !common::GetEnv("RANK_TABLE_FILE").empty() && jit_level != kAttrJitLevelO2) {
+    if (first_call) {
+      MS_LOG(WARNING) << "Set jit level to O2 for rank table startup method.";
+    }
+    jit_level = kAttrJitLevelO2;
+  }
+  first_call = false;
+
   return jit_level;
 }
 
