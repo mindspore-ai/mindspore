@@ -52,10 +52,11 @@ class _RecomputeCell(Cell):
 
     def __init__(self, block):
         """Initialize Recompute cell."""
-        super(_RecomputeCell, self).__init__()
+        super(_RecomputeCell, self).__init__(auto_prefix=False)
         self.args = []
         self.kwargs = []
         self.wrap_cell = _WrapCell(block)
+
         self.net = block
         self.internal_params = []
         self.save_rng_state = False

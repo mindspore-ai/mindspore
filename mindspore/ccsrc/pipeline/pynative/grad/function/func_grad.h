@@ -108,7 +108,7 @@ class GraphRoot : public BackwardNode {
 
 class FakeBackwardNode : public BackwardNode {
  public:
-  explicit FakeBackwardNode(const string &name) : BackwardNode(name) {}
+  explicit FakeBackwardNode(const string &name, size_t output_size = 1) : BackwardNode(name, output_size) {}
   ~FakeBackwardNode() override = default;
   ValuePtrList CallBackward(const ValuePtrList &grads) override {
     MS_LOG(EXCEPTION) << "Illegal primitive " << name() << "'s bprop not defined";

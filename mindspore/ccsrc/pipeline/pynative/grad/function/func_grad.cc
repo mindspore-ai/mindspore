@@ -575,7 +575,7 @@ BackwardNodePtr FuncGrad::BuildHookBackwardNode(const PrimitivePtr &prim, const 
 BackwardNodePtr FuncGrad::BuildFakeBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatten_inputs,
                                                 const OpGradInfoPtr &op_grad_info) {
   MS_EXCEPTION_IF_NULL(prim);
-  auto fn = std::make_shared<FakeBackwardNode>(prim->name());
+  auto fn = std::make_shared<FakeBackwardNode>(prim->name(), op_grad_info->output_size);
   fn->UpdateNextEdges(flatten_inputs);
   return fn;
 }
