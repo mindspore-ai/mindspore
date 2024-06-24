@@ -21,7 +21,7 @@ from .optimizer_utils import FakeNet, build_network, default_fc1_weight_rprop, d
     no_default_fc1_weight_rprop, no_default_fc1_bias_rprop, default_group_fc1_weight_rprop, default_group_fc1_bias_rprop
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -42,7 +42,7 @@ def test_default_rprop(mode):
     assert np.allclose(cells.prev[1].asnumpy(), default_fc1_bias_rprop, atol=1.e-2)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
@@ -63,7 +63,7 @@ def test_no_default_rprop(mode):
     assert np.allclose(cells.prev[1].asnumpy(), no_default_fc1_bias_rprop, atol=1.e-2)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
