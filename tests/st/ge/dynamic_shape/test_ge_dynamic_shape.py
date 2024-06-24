@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore import Tensor, nn, context
 import mindspore.ops.operations as P
+from tests.mark_utils import arg_mark
 
 
 class DynNet(nn.Cell):
@@ -52,10 +52,7 @@ def dyn_basic():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ge_dyn_shape():
     """
     Feature: convert ge graph

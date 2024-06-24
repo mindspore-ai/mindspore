@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import tests.st.ge.ge_test_utils as utils
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_gradient_args():
     """
     Feature: for DynamicBroadcastGradientArgs op
@@ -29,10 +26,7 @@ def test_broadcast_gradient_args():
     utils.run_testcase('broadcast_gradient_args')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv2d_backprop_filter():
     """
     Feature: for Conv2DBackpropFilter op
@@ -42,10 +36,7 @@ def test_conv2d_backprop_filter():
     utils.run_testcase('conv2d_backprop_filter')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv2d_backprop_input():
     """
     Feature: for Conv2DBackpropInput op
@@ -55,10 +46,7 @@ def test_conv2d_backprop_input():
     utils.run_testcase('conv2d_backprop_input')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv2d_transpose():
     """
     Feature: for Conv2DTranspose op
@@ -68,10 +56,7 @@ def test_conv2d_transpose():
     utils.run_testcase('conv2d_transpose')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_broadcast_to():
     """
     Feature: for DynamicBroadcastTo op
@@ -81,10 +66,7 @@ def test_dynamic_broadcast_to():
     utils.run_testcase('dynamic_broadcast_to')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique():
     """
     Feature: for Unique op

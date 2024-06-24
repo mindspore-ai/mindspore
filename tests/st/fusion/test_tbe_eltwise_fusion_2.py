@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -42,10 +42,7 @@ class Net(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net():
     x = np.random.randn(32, 10).astype(np.float32)
     y = np.random.randn(10).astype(np.float32)

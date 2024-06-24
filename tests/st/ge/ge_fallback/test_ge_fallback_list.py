@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import tests.st.ge.ge_test_utils as utils
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_return_constant_list():
     """
     Feature: Return list in graph
@@ -29,10 +26,7 @@ def test_return_constant_list():
     utils.run_testcase('ge_fallback_list', 'test_return_constant_list')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_return_constant_list_2():
     """
     Feature: Return list in graph
@@ -43,10 +37,7 @@ def test_return_constant_list_2():
 
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_return_constant_list_3():
     """
     Feature: Return list in graph
@@ -56,10 +47,7 @@ def test_return_constant_list_3():
     utils.run_testcase('ge_fallback_list', 'test_return_constant_list_3')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_return_make_list_node():
     """
     Feature: Return list in graph
@@ -69,10 +57,7 @@ def test_return_make_list_node():
     utils.run_testcase('ge_fallback_list', 'test_return_make_list_node')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_return_list_with_nest():
     """
     Feature: Return list in graph
@@ -82,10 +67,7 @@ def test_return_list_with_nest():
     utils.run_testcase('ge_fallback_list', 'test_return_list_with_nest')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_return_make_list_with_nest():
     """
     Feature: Return list in graph
@@ -95,10 +77,7 @@ def test_return_make_list_with_nest():
     utils.run_testcase('ge_fallback_list', 'test_return_make_list_with_nest')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_return_buildin_list_func():
     """
     Feature: Return list in graph
@@ -108,10 +87,7 @@ def test_return_buildin_list_func():
     utils.run_testcase('ge_fallback_list', 'test_return_buildin_list_func')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_return_list_from_third_party():
     """
     Feature: Return list in graph

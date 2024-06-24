@@ -12,24 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import mindspore as ms
 from mindspore import ops, context
 import numpy as np
 import os
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(
+    plat_marks=["platform_ascend"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="unessential",
+)
 def test_pynative_multi_stream_vmm():
     """
     Feature: Pynative Multi-stream VMM.
     Description: Pynative Multi-stream VMM.
     Expectation: No exception.
     """
-    os.environ['MS_ALLOC_CONF'] = "enable_vmm:true"
+    os.environ["MS_ALLOC_CONF"] = "enable_vmm:true"
     context.set_context(mode=context.PYNATIVE_MODE)
 
     x = ms.Tensor(np.random.randn(256, 1024, 1024), dtype=ms.float32)
@@ -46,17 +48,19 @@ def test_pynative_multi_stream_vmm():
     ms.hal.synchronize()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(
+    plat_marks=["platform_ascend"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="unessential",
+)
 def test_pynative_single_stream_vmm():
     """
     Feature: Pynative Single-stream VMM.
     Description: Pynative Single-stream VMM.
     Expectation: No exception.
     """
-    os.environ['MS_ALLOC_CONF'] = "enable_vmm:true"
+    os.environ["MS_ALLOC_CONF"] = "enable_vmm:true"
     context.set_context(mode=context.PYNATIVE_MODE)
 
     x = ms.Tensor(np.random.randn(256, 1024, 1024), dtype=ms.float32)

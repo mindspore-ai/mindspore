@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
 import mindspore.common.dtype as mstype
 from mindspore import Tensor, nn
+from tests.mark_utils import arg_mark
 
 
 class ReshapeNet(nn.Cell):
@@ -34,10 +34,7 @@ class ReshapeNet(nn.Cell):
         return y
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reshape():
     """
     Feature: convert ge graph

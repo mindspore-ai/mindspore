@@ -12,17 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 from ge_test_utils import run_testcase
+from tests.mark_utils import arg_mark
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
+@arg_mark(
+    plat_marks=["platform_ascend", "platform_ascend910b"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="unessential",
+)
 def test_ge_graph_mode_with_jit_level():
     """
     Description: Graph Mode jit_level with GE.
     Expectation: Run by ge_device_context when jit_level.
     """
-    run_testcase('ge_graph_mode_jit_level')
+    run_testcase("ge_graph_mode_jit_level")

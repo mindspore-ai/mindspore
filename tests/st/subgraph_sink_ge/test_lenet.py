@@ -15,7 +15,6 @@
 import os
 import time
 import random
-import pytest
 import numpy as np
 
 import mindspore.nn as nn
@@ -28,6 +27,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.common import set_seed
 from mindspore._extends import cell_attr_register
+from tests.mark_utils import arg_mark
 
 
 def seed_set():
@@ -163,10 +163,7 @@ def train_ascend_lenet():
     return loss
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ascend_lenet_cell():
     """
     Feature: test ge ascend lenet with cell reuse.
@@ -182,10 +179,7 @@ def test_ascend_lenet_cell():
     assert loss_output.asnumpy() > 0.003
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ascend_lenet_no_cell():
     """
     Feature: test ge ascend lenet with no cell reuse.
