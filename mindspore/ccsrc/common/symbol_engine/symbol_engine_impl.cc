@@ -637,7 +637,11 @@ AbstractBasePtrList SymbolEngineImpl::ExtractInputsAbstract(const CNodePtr &cnod
                          auto abs = node->abstract();
                          if (abs == nullptr) {
                            if (node->isa<ValueNode>()) {
-                             abs = node->cast_ptr<ValueNode>()->value()->ToAbstract();
+                             auto vnode = node->cast_ptr<ValueNode>();
+                             MS_EXCEPTION_IF_NULL(vnode);
+                             MS_EXCEPTION_IF_NULL(vnode->value());
+                             abs = vnode->value()->ToAbstract();
+                             MS_EXCEPTION_IF_NULL(abs);
                              node->set_abstract(abs);
                              MS_LOG(DEBUG) << "Set new abstract for input node " << node->DebugString();
                            } else {

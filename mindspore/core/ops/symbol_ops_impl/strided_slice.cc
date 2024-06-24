@@ -107,7 +107,6 @@ SymbolPtr StridedSlice::GetSlicingLengthForPositiveStrides(IntSymbolPtr start, I
     return GenVInt();
   }
   end = Emit(std::make_shared<ScalarMin>(end, x_dim))->as_sptr<IntSymbol>();
-
   if ((*start) >= (*end)) {
     return kSym0;
   }
@@ -144,7 +143,6 @@ SymbolPtr StridedSlice::GetSlicingLengthForNegativeStrides(IntSymbolPtr start, I
     return GenVInt();
   }
   end = Emit(std::make_shared<ScalarMax>(end, min_end))->as_sptr<IntSymbol>();
-
   if ((*start) <= (*end)) {
     return kSym0;
   }
