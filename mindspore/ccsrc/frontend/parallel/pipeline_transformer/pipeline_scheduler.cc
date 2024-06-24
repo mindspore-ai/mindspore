@@ -739,8 +739,8 @@ void InterleavedScheduler::Reorder() {
     return;
   }
   offset_ = LongToSize(micro_size_ % stage_num_);
-  bias_ = LongToSize((stage_num_ + SizeToLong(offset_)) * (chunk_num_ - 1) + (stage_num_ - stage_ - 1) * 2);
-  is_even_stage_ = stage_ % 2 == 0;
+  bias_ = LongToSize((stage_num_ + SizeToLong(offset_)) * (chunk_num_ - 1) + (stage_num_ - stage_ - 1) * INT64_TWO);
+  is_even_stage_ = stage_ % INT64_TWO == 0;
   if (micro_size_ < stage_num_) {
     MS_LOG(EXCEPTION) << "For 1F1B Scheduler, MicroBatch num must be larger or equal than StageNum, but got MicroBatch:"
                       << micro_size_ << " StageNum:" << stage_num_;

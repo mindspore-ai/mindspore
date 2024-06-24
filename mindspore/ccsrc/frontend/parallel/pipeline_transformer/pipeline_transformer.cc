@@ -1073,6 +1073,12 @@ AnfNodePtr PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const A
     if (enable_share_cell_ || !is_train_) {
       auto recv_tensor = TensorConstructUtils::CreateZerosTensor(kFloat16, {1});
       recv_input = {NewValueNode(recv_tensor)};
+    } else {
+      if (virtual_param_ == nullptr) {
+        MS_LOG(EXCEPTION)
+          << "For Pipeline Parallel, each stage must have at least one parameter that needs to be trained, but stage: "
+          << stage_ << " has none.";
+      }
     }
   }
   auto recv = CreateCNodeByInputsAndAttr(graph, RECEIVE, RECEIVE, recv_input, attrs);
