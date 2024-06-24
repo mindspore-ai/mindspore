@@ -35,6 +35,7 @@ void SliceExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
   auto step = transform::ConvertKernelTensor<int64_t>(inputs[kIndex4]);
 
   shape_ = inputs[0]->GetShapeVector();
+  dim = dim < 0 ? dim + shape_.size() : dim;
   auto length_value = end - start;
   start = start < 0 ? start + shape_[dim] : start;
   end = start + length_value;
@@ -51,11 +52,18 @@ bool SliceExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const std
   auto step = transform::ConvertKernelTensor<int64_t>(inputs[kIndex4]);
 
   auto length_value = end - start;
+  dim = dim < 0 ? dim + shape_.size() : dim;
   start = start < 0 ? start + shape_[dim] : start;
   end = start + length_value;
 
   ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], dim, start, end, step, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  if (start == end) {
+    auto output_shape = shape_;
+    output_shape[dim] = 0;
+    outputs[kIndex0]->SetShapeVector(output_shape);
+  } else {
+    RunOp(stream_ptr, workspace);
+  }
   return true;
 }
 
