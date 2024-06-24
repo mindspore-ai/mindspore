@@ -1872,7 +1872,6 @@ def test_eager_erase_dvpp_exception():
         img = vision.Erase(1, 4, 20, 30, (1., 1., 1.)).device("Ascend")(img)
     assert "The length of value should be the same as the value of channel" in str(error_info.value)
 
-
     # the device(device_target) is invalid
     with pytest.raises(TypeError) as error_info:
         _ = vision.Erase(10, 10, 10, 10).device(123)

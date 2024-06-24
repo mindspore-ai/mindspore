@@ -51,6 +51,20 @@ Status DvppEraseOp::Compute(const std::shared_ptr<DeviceTensorAscend910B> &input
   int32_t input_w = size[kWidthIndex];
   RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppEraseOp, "input"));
 
+  if (input->GetType() == DataType::DE_FLOAT32) {
+    for (const float &val : value_) {
+      if (val > 1.) {
+        std::string error = "When The input data is float32, the range of value should be [0, 1]";
+        RETURN_STATUS_UNEXPECTED(error);
+      }
+    }
+  }
+
+  if (input->GetShape().AsVector()[kChannelIndexNHWC] != value_.size()) {
+    std::string error = "The length of value should be the same as the value of channel";
+    RETURN_STATUS_UNEXPECTED(error);
+  }
+
   APP_ERROR ret = AclAdapter::GetInstance().DvppErase(input, output, top_, left_, height_, width_, value_);
   if (ret != APP_ERR_OK) {
     std::string error = "DvppErase: Error in dvpp processing: " + std::to_string(ret);

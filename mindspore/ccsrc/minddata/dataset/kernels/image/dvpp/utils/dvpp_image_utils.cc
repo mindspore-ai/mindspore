@@ -1071,6 +1071,7 @@ APP_ERROR DvppErase(const std::shared_ptr<DeviceTensorAscend910B> &input,
     for (const float &val : value) {
       if (val > 1.) {
         MS_LOG(ERROR) << "When The input data is float32, the range of value should be [0, 1]";
+        return APP_ERR_DVPP_ERASE_FAIL;
       }
     }
   }
@@ -1080,9 +1081,9 @@ APP_ERROR DvppErase(const std::shared_ptr<DeviceTensorAscend910B> &input,
   DataType type = input->GetType();
 
   // create fill vector
-  std::vector<float> value_one;
   if (input->GetShape().AsVector()[kChannelIndexNHWC] != value.size()) {
     MS_LOG(ERROR) << "The length of value should be the same as the value of channel";
+    return APP_ERR_DVPP_ERASE_FAIL;
   }
   aclFloatArray *acl_value = aclCreateFloatArray(value.data(), value.size());
   if (acl_value == nullptr) {
