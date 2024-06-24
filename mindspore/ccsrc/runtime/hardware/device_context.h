@@ -325,6 +325,8 @@ class BACKEND_EXPORT DeviceResManager {
 
   std::shared_ptr<SwapManager> swap_manager_{nullptr};
 
+  std::mutex device_events_mutex_;
+
   DeviceEventPtrList device_events_{};
 
   std::shared_ptr<MemoryManager> mem_manager_{nullptr};

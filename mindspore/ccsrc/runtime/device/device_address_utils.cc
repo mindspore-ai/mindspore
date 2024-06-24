@@ -1319,7 +1319,7 @@ device::DeviceAddressPtr DeviceAddressUtils::ConvertContiguousDeviceAddress(
 
 void DeviceAddressUtils::GetCrossStreamAddressInfoFromInput(
   size_t op_stream_id, std::vector<std::pair<uint32_t, void *>> *cross_stream_addresses,
-  const tensor::TensorPtr &tensor) {
+  const tensor::BaseTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   if (tensor->device_address() == nullptr) {
     return;

@@ -1073,6 +1073,7 @@ DeviceEventPtr GPUDeviceResManager::CreateEventWithFlag(bool enable_timing, bool
     (blocking ? cudaEventBlockingSync : cudaEventDefault) | (enable_timing ? cudaEventDefault : cudaEventDisableTiming);
   auto event = std::make_shared<GpuEvent>(flag);
   MS_EXCEPTION_IF_NULL(event);
+  std::lock_guard<std::mutex> lock(device_events_mutex_);
   device_events_.push_back(event);
   return event;
 }
