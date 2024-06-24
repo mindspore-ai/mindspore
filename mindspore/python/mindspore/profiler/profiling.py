@@ -2007,7 +2007,7 @@ class Profiler:
         host_dir = os.path.join(self._output_path, 'host_info')
         host_dir = validate_and_normalize_path(host_dir)
         if not os.path.exists(host_dir):
-            logger.error("Host info directory: %s not exist.", host_dir)
+            logger.warning("Host info directory: %s not exist.", host_dir)
             return
         csv_file_name = 'host_info_' + str(self._rank_id) + '.csv'
         json_file_name = 'timeline_' + str(self._rank_id) + '.json'
