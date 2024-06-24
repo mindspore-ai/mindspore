@@ -22,6 +22,7 @@
 #include "kernel/pyboost/pyboost_utils.h"
 #include "runtime/device/device_address_utils.h"
 #include "kernel/pyboost/op_runner.h"
+#include "runtime/pipeline/pipeline.h"
 
 namespace mindspore {
 namespace kernel {
@@ -35,7 +36,7 @@ tensor::BaseTensorPtr NonZeroAscendCustomize(const std::shared_ptr<OpRunner> &op
   // set address
   PyBoostUtils::PrepareOpInputs(device_context, op->stream_id(), input_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitForward();
 
   // exec aclnnNonzero
   const auto &outputs = op->outputs();
