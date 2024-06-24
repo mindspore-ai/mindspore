@@ -75,7 +75,7 @@ Status StackExtInfo::GetAttrs() {
     const int64_t dim = SizeToLong(inputs_shape_[0].size());
     axis = axis + dim;
   }
-  axis_ = axis;
+  axis_ = LongToSize(axis);
   return SUCCESS;
 }
 
