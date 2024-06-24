@@ -10,12 +10,14 @@ mindspore.communication.comm_func.P2POp
         - `tensor` 入参不会被最后的结果原地修改。
 
     参数：
-        - **op** (Union[str, function]) - 对于字符串类型，只允许'isend'和'irecv'。
-                                          对于函数类型，只允许 ``comm_func.isend`` 和 ``comm_func.irecv`` 函数。
+        - **op** (Union[str, function]) - 对于字符串类型，只允许'isend'和'irecv'。 对于函数类型，只允许 ``comm_func.isend`` 和 ``comm_func.irecv`` 函数。
         - **tensor** (Union[Tensor, Tuple(int)]) - 用于发送或接收的张量。 如果是 `op` 是'irecv'，可以传入接收张量的形状。
         - **peer** (int) - 发送或接收的远程设备的全局编号。
-        - **tag** (int) - 当前暂不支持。 默认值：0
-        - **recv_dtype** (mindspore.dtype) - 表示接收张量的数据类型。 当 `tensor` 传入的是张量的形状时，该入参必须要配置。默认值：``None``。
+        - **group** (str，可选) - 工作的通信组，默认值： ``GlobalComm.WORLD_COMM_GROUP`` （即Ascend平台为 ``"hccl_world_group"`` ，GPU平台为 ``"nccl_world_group"`` ）。
+        - **tag** (int，可选) - 当前暂不支持。 默认值：0。
+
+    关键字参数：
+        - **recv_dtype** (mindspore.dtype，可选) - 表示接收张量的数据类型。 当 `tensor` 传入的是张量的形状时，该入参必须要配置。默认值：``None``。
 
     返回：
         `P2POp` 对象。
