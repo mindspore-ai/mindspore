@@ -15,16 +15,9 @@
  */
 
 #include "ops/ops_func_impl/reflection_pad_3d.h"
-#include <map>
-#include <vector>
-#include <memory>
-#include <string>
-#include <utility>
 #include "ops/op_utils.h"
-#include "ops/op_name.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
-#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace ops {
