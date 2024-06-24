@@ -318,7 +318,7 @@ void FusedInferAttentionScoreInfo::InferOptionalTensorMap() {
     }
     if (pse_shift_rank_ == kRank4) {
       optional_tensor_map_[ops::kFusedInferAttentionScoreInputPseShiftIndex] = {
-        dev_matrix_batch_dim_, dev_matrix_n1_dim_, -1, dev_matrix_s1_dim_};
+        dev_matrix_batch_dim_, dev_matrix_n1_dim_, dev_matrix_s1_dim_, -1};
     }
   }
 
@@ -560,35 +560,11 @@ void FusedInferAttentionScoreInfo::ReplaceNodeInputOrAttrs() {
 
 void FusedInferAttentionScoreInfo::SplitKVSequenceGraph(const Group &group, GenerateGraph *gen_g,
                                                         AnfNodePtr *fused_attention_score, AnfNodePtr *output) {
-  *fused_attention_score = gen_g->PushBack({gen_g->NewOpInst(FUSED_INFER_ATTENTION_SCORE),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node(),
-                                            gen_g->virtual_input_node()});
+  vector<AnfNodePtr> fias_op_inputs = {gen_g->NewOpInst(FUSED_INFER_ATTENTION_SCORE)};
+  for (size_t i = 0; i < kIndex28; ++i) {
+    fias_op_inputs.emplace_back(gen_g->virtual_input_node());
+  }
+  *fused_attention_score = gen_g->PushBack(fias_op_inputs);
   auto attention_out = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *fused_attention_score,
                                         CreatInt64Imm(ops::kFusedInferAttentionScoreOutputAttentionOutIndex)});
   auto softmax_max_lse = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), *fused_attention_score,
@@ -670,21 +646,10 @@ Status FusedInferAttentionScoreInfo::ComputeReplaceGraphForSplitKVSeq(const CNod
   AnfNodePtr output_maketuple;
   SplitKVSequenceGraph(group, &gen_g, &fused_attention_score, &output_maketuple);
 
-  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {
-    std::make_pair(fused_attention_score, kIndex1),  std::make_pair(fused_attention_score, kIndex2),
-    std::make_pair(fused_attention_score, kIndex3),  std::make_pair(fused_attention_score, kIndex4),
-    std::make_pair(fused_attention_score, kIndex5),  std::make_pair(fused_attention_score, kIndex6),
-    std::make_pair(fused_attention_score, kIndex7),  std::make_pair(fused_attention_score, kIndex8),
-    std::make_pair(fused_attention_score, kIndex9),  std::make_pair(fused_attention_score, kIndex10),
-    std::make_pair(fused_attention_score, kIndex11), std::make_pair(fused_attention_score, kIndex12),
-    std::make_pair(fused_attention_score, kIndex13), std::make_pair(fused_attention_score, kIndex14),
-    std::make_pair(fused_attention_score, kIndex15), std::make_pair(fused_attention_score, kIndex16),
-    std::make_pair(fused_attention_score, kIndex17), std::make_pair(fused_attention_score, kIndex18),
-    std::make_pair(fused_attention_score, kIndex19), std::make_pair(fused_attention_score, kIndex20),
-    std::make_pair(fused_attention_score, kIndex21), std::make_pair(fused_attention_score, kIndex22),
-    std::make_pair(fused_attention_score, kIndex23), std::make_pair(fused_attention_score, kIndex24),
-    std::make_pair(fused_attention_score, kIndex25), std::make_pair(fused_attention_score, kIndex26),
-    std::make_pair(fused_attention_score, kIndex27), std::make_pair(fused_attention_score, kIndex28)};
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes;
+  for (int i = 0; i < static_cast<int>(kIndex28); ++i) {
+    input_nodes.emplace_back(std::make_pair(fused_attention_score, i + 1));
+  }
 
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
     std::make_pair(input_nodes, output_maketuple));
