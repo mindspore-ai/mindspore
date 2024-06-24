@@ -831,16 +831,15 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
 
 bool ForwardExecutor::CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
-  // If not have amp strategy, try get from cell stack
-  if (!GetMixprecisionTypeFromStrategy(op_run_info)) {
-    const auto &cur_cell = forward_cell_stack_.top();
-    MS_EXCEPTION_IF_NULL(cur_cell);
-    MixedPrecisionType mix_type = cur_cell->GetMixedPrecisionType();
-    if (mix_type == kNotSet) {
-      return true;
-    }
-    op_run_info->mix_type = mix_type;
+  // get mix_type from Cell stack
+  const auto &cur_cell = forward_cell_stack_.top();
+  MS_EXCEPTION_IF_NULL(cur_cell);
+  MixedPrecisionType mix_type = cur_cell->GetMixedPrecisionType();
+  if (mix_type == kNotSet) {
+    // get mix_precision_type from amp strategy stack
+    return !GetMixprecisionTypeFromStrategy(op_run_info);
   }
+  op_run_info->mix_type = mix_type;
   return false;
 }
 

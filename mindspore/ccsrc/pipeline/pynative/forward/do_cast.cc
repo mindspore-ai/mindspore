@@ -131,14 +131,17 @@ ValuePtr CastOperation::DoParamMixPrecisionCast(const FrontendOpRunInfoPtr &op_r
   MS_EXCEPTION_IF_NULL(is_cast);
   MS_EXCEPTION_IF_NULL(v);
   auto dst_dtype = kFloat16;
-  if (op_run_info->mix_precision_type == nullptr) {
-    if (op_run_info->mix_type == kFP32) {
-      dst_dtype = kFloat32;
-    } else if (op_run_info->mix_type == kBF16) {
-      dst_dtype = kBFloat16;
-    }
+
+  if (op_run_info->mix_type == kFP32) {
+    dst_dtype = kFloat32;
+  } else if (op_run_info->mix_type == kFP16) {
+    dst_dtype = kFloat16;
+  } else if (op_run_info->mix_type == kBF16) {
+    dst_dtype = kBFloat16;
   } else {
-    dst_dtype = op_run_info->mix_precision_type;
+    if (op_run_info->mix_precision_type != nullptr) {
+      dst_dtype = op_run_info->mix_precision_type;
+    }
   }
 
   const auto &tensor = v->cast<tensor::BaseTensorPtr>();
