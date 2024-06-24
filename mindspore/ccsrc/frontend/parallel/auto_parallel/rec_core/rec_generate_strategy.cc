@@ -720,12 +720,12 @@ Strategies PrepareRmsNorm(const std::shared_ptr<OperatorInfo> &op, Dimensions ba
   auto inputs = op->inputs_shape();
   auto input = inputs[0];
   Shape strategy_in_process = Shape(input.size(), 1);
+  int64_t devices = SizeToLong(g_device_manager->DeviceNum());
 
   if (parallel::ParallelContext::GetInstance()->pipeline_stage_split_num() == 0) {
     MS_LOG(EXCEPTION) << "divisors cannot be 0!";
   }
-  int64_t max_cut =
-    g_device_manager->DeviceNum() / parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
+  int64_t max_cut = devices / parallel::ParallelContext::GetInstance()->pipeline_stage_split_num();
   strategy_in_process[0] = input[0] < max_cut ? input[0] : max_cut;
 
   auto gamma = inputs[1];
