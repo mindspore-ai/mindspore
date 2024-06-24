@@ -58,6 +58,13 @@ class LeNet5(nn.Cell):
         return x
 
 
+def remove_ckpt(file_name):
+    """remove ckpt."""
+    if os.path.exists(file_name) and file_name.endswith(".ckpt"):
+        os.chmod(file_name, stat.S_IWRITE)
+        os.remove(file_name)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
@@ -84,6 +91,8 @@ def test_save_load_checkpoint_with_bf16_graph(mode):
     param_dict = ms.load_checkpoint("./lenet.ckpt")
     ms.save_checkpoint(param_dict, "./lenet_dict.ckpt")
     output_param_dict1 = ms.load_checkpoint("./lenet_dict.ckpt")
+    remove_ckpt("./lenet.ckpt")
+    remove_ckpt("./lenet_dict.ckpt")
     assert 'conv2.weight' in output_param_dict1
     assert output_param_dict1["conv2.weight"].dtype == ms.bfloat16
     assert 'conv1.weight' not in output_param_dict1
@@ -93,6 +102,7 @@ def test_save_load_checkpoint_with_bf16_graph(mode):
     ms.save_checkpoint(param_list, "./lenet_list.ckpt",
                        choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
     output_param_dict2 = ms.load_checkpoint("./lenet_list.ckpt")
+    remove_ckpt("./lenet_list.ckpt")
     assert 'conv2.weight' in output_param_dict2
     assert output_param_dict2["conv2.weight"].dtype == ms.bfloat16
     assert 'conv1.weight' not in output_param_dict2
@@ -104,20 +114,14 @@ def test_save_load_checkpoint_with_bf16_graph(mode):
     append_dict = {"lr": lr_tensor, "lr_parameter": lr_parameter}
     ms.save_checkpoint(empty_list, "./lenet_empty_list.ckpt", append_dict=append_dict)
     output_empty_list = ms.load_checkpoint("./lenet_empty_list.ckpt")
+    remove_ckpt("./lenet_empty_list.ckpt")
     assert "lr" in output_empty_list
     assert output_empty_list["lr"].dtype == ms.bfloat16
     assert "lr_parameter" in output_empty_list
     assert output_empty_list["lr_parameter"].dtype == ms.bfloat16
 
-    file_list = os.listdir(os.getcwd())
-    ckpt_list = [k for k in file_list if k.endswith(".ckpt")]
-    for file_name in ckpt_list:
-        if os.path.exists(file_name):
-            os.chmod(file_name, stat.S_IWRITE)
-            os.remove(file_name)
 
-
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend910b_training
@@ -143,6 +147,8 @@ def test_save_load_checkpoint_with_bf16_pynative(mode):
     param_dict = ms.load_checkpoint("./lenet_1.ckpt")
     ms.save_checkpoint(param_dict, "./lenet_dict_1.ckpt")
     output_param_dict1 = ms.load_checkpoint("./lenet_dict_1.ckpt")
+    remove_ckpt("./lenet_1.ckpt")
+    remove_ckpt("./lenet_dict_1.ckpt")
     assert 'conv2.weight' in output_param_dict1
     assert output_param_dict1["conv2.weight"].dtype == ms.bfloat16
     assert 'conv1.weight' not in output_param_dict1
@@ -152,6 +158,7 @@ def test_save_load_checkpoint_with_bf16_pynative(mode):
     ms.save_checkpoint(param_list, "./lenet_list_1.ckpt",
                        choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
     output_param_dict2 = ms.load_checkpoint("./lenet_list_1.ckpt")
+    remove_ckpt("./lenet_list_1.ckpt")
     assert 'conv2.weight' in output_param_dict2
     assert output_param_dict2["conv2.weight"].dtype == ms.bfloat16
     assert 'conv1.weight' not in output_param_dict2
@@ -163,20 +170,14 @@ def test_save_load_checkpoint_with_bf16_pynative(mode):
     append_dict = {"lr": lr_tensor, "lr_parameter": lr_parameter}
     ms.save_checkpoint(empty_list, "./lenet_empty_list_1.ckpt", append_dict=append_dict)
     output_empty_list = ms.load_checkpoint("./lenet_empty_list_1.ckpt")
+    remove_ckpt("./lenet_empty_list_1.ckpt")
     assert "lr" in output_empty_list
     assert output_empty_list["lr"].dtype == ms.bfloat16
     assert "lr_parameter" in output_empty_list
     assert output_empty_list["lr_parameter"].dtype == ms.bfloat16
 
-    file_list = os.listdir(os.getcwd())
-    ckpt_list = [k for k in file_list if k.endswith(".ckpt")]
-    for file_name in ckpt_list:
-        if os.path.exists(file_name):
-            os.chmod(file_name, stat.S_IWRITE)
-            os.remove(file_name)
 
-
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_arm_ascend910b_training
@@ -191,18 +192,13 @@ def test_save_load_checkpoint_with_bf16_pynative_accuracy(mode):
     """
     context.set_context(mode=mode)
     net = LeNet5()
-    ms.save_checkpoint(net, "./lenet_acc.ckpt")
-    output_param_dict = ms.load_checkpoint("./lenet_acc.ckpt")
+    file_name = "./lenet_acc.ckpt"
+    ms.save_checkpoint(net, file_name)
+    output_param_dict = ms.load_checkpoint(file_name)
+    remove_ckpt(file_name)
     for _, param in net.parameters_and_names():
         assert param.name in output_param_dict
         assert np.allclose(param.float().asnumpy(), output_param_dict[param.name].float().asnumpy())
-
-    file_list = os.listdir(os.getcwd())
-    ckpt_list = [k for k in file_list if k.endswith(".ckpt")]
-    for file_name in ckpt_list:
-        if os.path.exists(file_name):
-            os.chmod(file_name, stat.S_IWRITE)
-            os.remove(file_name)
 
 
 @pytest.mark.level0
