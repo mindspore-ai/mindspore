@@ -26,6 +26,7 @@ namespace mindspore {
 namespace kernel {
 internal::OpParamPtr InternalInferenceMultiMatmulBase::CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                                                      const std::vector<KernelTensor *> &outputs) {
+  const size_t kSizeNum2 = 2;
   auto param_ptr = std::make_shared<internal::OpParam>();
   param_ptr->opId = internal::OpId::MatmulQkv;
   bool transpose_a = false;
@@ -33,7 +34,7 @@ internal::OpParamPtr InternalInferenceMultiMatmulBase::CreateOpParam(const std::
   auto n_lens = primitive_->GetAttr("n_lens");
   MS_EXCEPTION_IF_NULL(n_lens);
   auto n_list = GetValue<std::vector<int64_t>>(n_lens);
-  if (n_list.size() == 2) {
+  if (n_list.size() == kSizeNum2) {
     n_list.push_back(0);
   }
   bool with_bias = primitive_->HasAttr("with_bias") ? GetValue<bool>(primitive_->GetAttr("with_bias")) : false;
@@ -73,16 +74,16 @@ MS_INTERNAL_KERNEL_FACTORY_REG(MatmulSplitOut2, InternalMatmulSplitOut2);
 REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(MatmulSplitOut2, INPUT_NUM_2, INDEX_0, INDEX_1);
 REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(MatmulSplitOut2, OUTPUT_NUM_2, INDEX_0, INDEX_1);
 
-// QuantBatchMatmulSplitOut3
-class InternalQuantBatchMatmulSplitOut3 : public InternalInferenceMultiMatmulBase {
+// QuantbatchmatmulSplitOut3
+class InternalQuantbatchmatmulSplitOut3 : public InternalInferenceMultiMatmulBase {
  public:
-  InternalQuantBatchMatmulSplitOut3() : InternalInferenceMultiMatmulBase("InternalQuantBatchMatmulSplitOut3") {}
-  ~InternalQuantBatchMatmulSplitOut3() = default;
+  InternalQuantbatchmatmulSplitOut3() : InternalInferenceMultiMatmulBase("InternalQuantbatchmatmulSplitOut3") {}
+  ~InternalQuantbatchmatmulSplitOut3() = default;
 };
 
-MS_INTERNAL_KERNEL_FACTORY_REG(QuantBatchMatmulSplitOut3, InternalQuantBatchMatmulSplitOut3);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(QuantBatchMatmulSplitOut3, INPUT_NUM_4, INDEX_0, INDEX_1, INDEX_3, INDEX_4);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(QuantBatchMatmulSplitOut3, OUTPUT_NUM_3, INDEX_0, INDEX_1, INDEX_2);
+MS_INTERNAL_KERNEL_FACTORY_REG(QuantbatchmatmulSplitOut3, InternalQuantbatchmatmulSplitOut3);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(QuantbatchmatmulSplitOut3, INPUT_NUM_4, INDEX_0, INDEX_1, INDEX_3, INDEX_4);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(QuantbatchmatmulSplitOut3, OUTPUT_NUM_3, INDEX_0, INDEX_1, INDEX_2);
 
 // MatmulBiasSplitOut2
 class InternalMatmulBiasSplitOut2 : public InternalInferenceMultiMatmulBase {
@@ -106,27 +107,27 @@ MS_INTERNAL_KERNEL_FACTORY_REG(MatmulBiasSplitSiluOut2, InternalMatmulBiasSplitS
 REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(MatmulBiasSplitSiluOut2, INPUT_NUM_3, INDEX_0, INDEX_1, INDEX_3);
 REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(MatmulBiasSplitSiluOut2, OUTPUT_NUM_2, INDEX_0, INDEX_1);
 
-// QuantBatchMatmulSplitOut2
-class InternalQuantBatchMatmulSplitOut2 : public InternalInferenceMultiMatmulBase {
+// QuantbatchmatmulSplitOut2
+class InternalQuantbatchmatmulSplitOut2 : public InternalInferenceMultiMatmulBase {
  public:
-  InternalQuantBatchMatmulSplitOut2() : InternalInferenceMultiMatmulBase("InternalQuantBatchMatmulSplitOut2") {}
-  ~InternalQuantBatchMatmulSplitOut2() = default;
+  InternalQuantbatchmatmulSplitOut2() : InternalInferenceMultiMatmulBase("InternalQuantbatchmatmulSplitOut2") {}
+  ~InternalQuantbatchmatmulSplitOut2() = default;
 };
 
-MS_INTERNAL_KERNEL_FACTORY_REG(QuantBatchMatmulSplitOut2, InternalQuantBatchMatmulSplitOut2);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(QuantBatchMatmulSplitOut2, INPUT_NUM_4, INDEX_0, INDEX_1, INDEX_3, INDEX_4);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(QuantBatchMatmulSplitOut2, OUTPUT_NUM_2, INDEX_0, INDEX_1);
+MS_INTERNAL_KERNEL_FACTORY_REG(QuantbatchmatmulSplitOut2, InternalQuantbatchmatmulSplitOut2);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(QuantbatchmatmulSplitOut2, INPUT_NUM_4, INDEX_0, INDEX_1, INDEX_3, INDEX_4);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(QuantbatchmatmulSplitOut2, OUTPUT_NUM_2, INDEX_0, INDEX_1);
 
-// QuantBatchMatmulSplitSiluOut2
-class InternalQuantBatchMatmulSplitSiluOut2 : public InternalInferenceMultiMatmulBase {
+// QuantbatchmatmulSplitSiluOut2
+class InternalQuantbatchmatmulSplitSiluOut2 : public InternalInferenceMultiMatmulBase {
  public:
-  InternalQuantBatchMatmulSplitSiluOut2() : InternalInferenceMultiMatmulBase("InternalQuantBatchMatmulSplitSiluOut2") {}
-  ~InternalQuantBatchMatmulSplitSiluOut2() = default;
+  InternalQuantbatchmatmulSplitSiluOut2() : InternalInferenceMultiMatmulBase("InternalQuantbatchmatmulSplitSiluOut2") {}
+  ~InternalQuantbatchmatmulSplitSiluOut2() = default;
 };
 
-MS_INTERNAL_KERNEL_FACTORY_REG(QuantBatchMatmulSplitSiluOut2, InternalQuantBatchMatmulSplitSiluOut2);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(QuantBatchMatmulSplitSiluOut2, INPUT_NUM_4, INDEX_0, INDEX_1, INDEX_3, INDEX_4);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(QuantBatchMatmulSplitSiluOut2, OUTPUT_NUM_2, INDEX_0, INDEX_1);
+MS_INTERNAL_KERNEL_FACTORY_REG(QuantbatchmatmulSplitSiluOut2, InternalQuantbatchmatmulSplitSiluOut2);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(QuantbatchmatmulSplitSiluOut2, INPUT_NUM_4, INDEX_0, INDEX_1, INDEX_3, INDEX_4);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(QuantbatchmatmulSplitSiluOut2, OUTPUT_NUM_2, INDEX_0, INDEX_1);
 
 // MatmulBiasSplitOut3
 class InternalMatmulBiasSplitOut3 : public InternalInferenceMultiMatmulBase {
