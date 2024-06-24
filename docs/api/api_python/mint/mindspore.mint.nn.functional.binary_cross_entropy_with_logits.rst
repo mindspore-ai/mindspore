@@ -1,7 +1,7 @@
 mindspore.mint.nn.functional.binary_cross_entropy_with_logits
 =============================================================
 
-.. py:function:: mindspore.mint.nn.functional.binary_cross_entropy_with_logits(input, target, weight, reduction, pos_weight)
+.. py:function:: mindspore.mint.nn.functional.binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean', pos_weight=None)
 
     输入经过sigmoid激活函数后作为预测值， `binary_cross_entropy_with_logits` 计算预测值和目标值之间的二值交叉熵损失。与 `mindspore.ops.binary_cross_entropy_with_logits` 功能一致。
 
@@ -50,7 +50,6 @@ mindspore.mint.nn.functional.binary_cross_entropy_with_logits
           - ``'mean'``：计算输出元素的加权平均值。
           - ``'sum'``：计算输出元素的总和。
         - **pos_weight** (Tensor, 可选) - 指定正类的权重。是一个长度等于分类数的向量。支持广播，使其shape与 `target` 的shape保持一致。数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。默认值：``None`` ，此时 `pos_weight` 等价于值为 ``1`` 的Tensor。
-
 
     返回：
         Tensor或Scalar，如果 `reduction` 为 ``'none'`` ，则为shape和数据类型与输入 `target` 相同的Tensor。否则，输出为Scalar。
