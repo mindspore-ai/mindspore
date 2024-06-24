@@ -68,6 +68,14 @@ inline bool InputDataNoNeedCopy(const AnfNodePtr &input_node, DeviceTensor *inpu
 
 void UpdateRefCountWithOnlyDependShape(const CNodePtr &kernel, size_t input_index, const AnfNodePtr &node,
                                        size_t output_index) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
+  if (enable_infer_boost) {
+    UpdateRefCount(node, output_index, false);
+    return;
+  }
+
   // Shape depend kernel should not increase ref count.
   const auto &only_depend_shape_attr = common::AnfAlgo::GetCNodePrimitiveAttr(kernel, kAttrOnlyDependShape);
   if (only_depend_shape_attr != nullptr) {
