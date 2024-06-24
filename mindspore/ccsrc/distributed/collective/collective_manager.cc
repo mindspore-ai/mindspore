@@ -584,10 +584,13 @@ bool CollectiveManager::AssignLocalRank() {
 
 bool CollectiveManager::CreateSimulationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks) {
   // Set local rank id to 0 and local group size to 8 in simulation mode. These two values should not affect compiling.
+  uint32_t local_rank = 0;
+  uint32_t local_rank_size = 8;
   MS_LOG(WARNING) << "Create dummy communication group with group name: " << group_name
                   << ", group ranks: " << group_ranks << ". Real group size: 1.";
-  RETURN_IF_FALSE_WITH_LOG(dummy_comm_lib_instance_->CreateCommunicationGroup(group_name, group_ranks, 0, 8),
-                           "Failed to create dummy communication group " + group_name);
+  RETURN_IF_FALSE_WITH_LOG(
+    dummy_comm_lib_instance_->CreateCommunicationGroup(group_name, group_ranks, local_rank, local_rank_size),
+    "Failed to create dummy communication group " + group_name);
 
   std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   // If this is Ascend backend and uses host collective(OpenMPI or Dynamic Cluster/msrun), initialize real HCCL
@@ -596,8 +599,9 @@ bool CollectiveManager::CreateSimulationGroup(const std::string &group_name, con
     MS_LOG(WARNING) << "Create Ascend communication group with group name: " << group_name
                     << ", group ranks: " << group_ranks
                     << ". Real HCCL communicator will be initialized with group size 1.";
-    RETURN_IF_FALSE_WITH_LOG(device_comm_lib_instance_->CreateCommunicationGroup(group_name, group_ranks, 0, 8),
-                             "Failed to create dummy device communication group " + group_name);
+    RETURN_IF_FALSE_WITH_LOG(
+      device_comm_lib_instance_->CreateCommunicationGroup(group_name, group_ranks, local_rank, local_rank_size),
+      "Failed to create dummy device communication group " + group_name);
 
     CommunicationGroupPtr group = device_comm_lib_instance_->GetGroup(group_name);
     size_t root_info_size = 0;

@@ -81,7 +81,9 @@ def _is_local_ip(ip_address):
         # We use socket module to get local ip address.
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect((ip_address, 0))
-        return s.getsockname()[0] == ip_address
+        current_ip = s.getsockname()[0]
+        s.close()
+        return current_ip == ip_address
 
     addr_infos = json.loads(addr_info_str)
     for info in addr_infos:
