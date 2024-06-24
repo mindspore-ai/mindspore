@@ -36,6 +36,8 @@ void CheckMatrixInverseExtShape(const ShapeVector &input_shape, const std::strin
     MS_CHECK_VALUE(input_shape[input_rank - kNumber1] == input_shape[input_rank - kNumber2],
                    "For 'MatrixInverseExt', the last two dimensions should be same");
   }
+
+  MS_CHECK_VALUE(input_rank <= 6, "For 'MatrixInverseExt', the input tensor cannot be larger than 6 dimensions.");
 }
 
 BaseShapePtr MatrixInverseExtFuncImpl::InferShape(const PrimitivePtr &primitive,
