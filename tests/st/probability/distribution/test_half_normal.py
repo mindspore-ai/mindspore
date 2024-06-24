@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """test cases for HalfNormal distribution"""
-import pytest
 import numpy as np
 from scipy import stats
 import mindspore.context as context
@@ -21,6 +20,7 @@ import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import Tensor
+from tests.mark_utils import arg_mark
 
 
 class LogProb(nn.Cell):
@@ -47,9 +47,8 @@ class LogProb2(nn.Cell):
         return self.n.log_prob(x_, loc, scale)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_log_likelihood():
     """
     Feature: HalfNormal distribution
@@ -83,9 +82,8 @@ def test_log_likelihood():
     assert (np.abs(output2[~np.isinf(output2)] - expected[~np.isinf(expected)]) < tol).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_log_likelyhood_pynative():
     """
     Feature: HalfNormal distribution

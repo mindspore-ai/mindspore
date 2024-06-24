@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -22,6 +21,8 @@ from mindspore.common.parameter import Parameter, ParameterTuple
 import mindspore.common.dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.nn.reinforcement._tensors_queue import TensorsQueue
+
+from tests.mark_utils import arg_mark
 
 
 class TensorsQueueNet(nn.Cell):
@@ -42,6 +43,7 @@ class TensorsQueueNet(nn.Cell):
 
 class SourceNet(nn.Cell):
     '''Source net'''
+
     def __init__(self):
         super(SourceNet, self).__init__()
         self.a = Parameter(Tensor(0.5, mstype.float32), name="a")
@@ -53,9 +55,7 @@ class SourceNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_tensorsqueue_gpu():
     """
     Feature: TensorsQueue gpu TEST.
@@ -81,9 +81,8 @@ def test_tensorsqueue_gpu():
     assert np.allclose(ans[2].asnumpy(), [2.0])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential')
 def test_tensorsqueue_cpu():
     """
     Feature: TensorsQueue cpu TEST.

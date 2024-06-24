@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import time
-import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor
@@ -23,7 +22,7 @@ import mindspore.ops as ops
 import mindspore.context as context
 
 from gnngraph_dataset import GraphDataset, GatherNet, CSRReduceSumNet
-
+from tests.mark_utils import arg_mark
 
 DATASET_PATH = "/home/workspace/mindspore_dataset/cora/cora_mr/cora_v2_with_mask.npz"
 DROPOUT = 0.5
@@ -123,9 +122,7 @@ class DataNet(ms.nn.Cell):
                         self.n_nodes, self.indptr, self.indices)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gcn_csr():
     """
     Feature: Test GCN model with CSR optimizations.

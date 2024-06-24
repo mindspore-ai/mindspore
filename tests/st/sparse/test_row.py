@@ -14,12 +14,13 @@
 # ============================================================================
 """smoke tests for RowTensor operations"""
 
-import pytest
 import numpy as np
 
 from mindspore import Tensor, nn, context
 from mindspore.common.sparse_tensor import RowTensorInner
 from mindspore.common import dtype as mstype
+
+from tests.mark_utils import arg_mark
 
 
 def compare_row(row1, row2):
@@ -30,12 +31,8 @@ def compare_row(row1, row2):
     assert row1.dense_shape == row2.dense_shape
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_make_row():
     """
     Feature: Test RowTensor Constructor in Graph and PyNative.
@@ -55,11 +52,8 @@ def test_make_row():
     compare_row(row1, row2)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
+          essential_mark='unessential')
 def test_row_tensor_with_control_if():
     """
     Feature: Test RowTensor in if.

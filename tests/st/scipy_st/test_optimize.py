@@ -27,6 +27,8 @@ from mindspore import context, nn
 from mindspore.common import Tensor
 from mindspore.scipy.optimize.line_search import line_search as msp_line_search
 from mindspore.scipy.optimize import linear_sum_assignment
+
+from tests.mark_utils import arg_mark
 from tests.st.scipy_st.utils import match_array
 
 
@@ -62,10 +64,8 @@ def matyas(np):
     return func
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float32])
 @pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2))])
 def test_bfgs1(dtype, func_x0):
@@ -83,10 +83,8 @@ def test_bfgs1(dtype, func_x0):
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float32])
 @pytest.mark.parametrize('func_x0', [(himmelblau, onp.zeros(2))])
 def test_bfgs2(dtype, func_x0):
@@ -104,10 +102,8 @@ def test_bfgs2(dtype, func_x0):
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float32])
 @pytest.mark.parametrize('func_x0', [(matyas, onp.ones(2))])
 def test_bfgs3(dtype, func_x0):
@@ -125,10 +121,8 @@ def test_bfgs3(dtype, func_x0):
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float64])
 @pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2))])
 def test_bfgs4(dtype, func_x0):
@@ -146,10 +140,8 @@ def test_bfgs4(dtype, func_x0):
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float64])
 @pytest.mark.parametrize('func_x0', [(himmelblau, onp.zeros(2))])
 def test_bfgs5(dtype, func_x0):
@@ -167,10 +159,8 @@ def test_bfgs5(dtype, func_x0):
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float64])
 @pytest.mark.parametrize('func_x0', [(matyas, onp.ones(2))])
 def test_bfgs6(dtype, func_x0):
@@ -188,10 +178,8 @@ def test_bfgs6(dtype, func_x0):
     match_array(ms_res.x.asnumpy(), scipy_res.x, error=5, err_msg=str(ms_res))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 def test_bfgs_fixes4594(dtype):
     """
@@ -210,10 +198,8 @@ def test_bfgs_fixes4594(dtype):
     onp.testing.assert_allclose(results.asnumpy(), onp.zeros(n, dtype=dtype), rtol=1e-6, atol=1e-6)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 @pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2)), (rosenbrock, onp.zeros(300))])
 def test_bfgs_graph(dtype, func_x0):
@@ -264,10 +250,8 @@ def _scalar_func_3(np):
     return f, fprime
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('maxiter, func, x, p', [(10, _scalar_func_1, 0., 1.),
                                                  (10, _scalar_func_2, 0., 1.),
                                                  (10, _scalar_func_3, 0., 1.)])
@@ -312,10 +296,8 @@ def _line_func_2(np, *args):
     return f, fprime
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('maxiter, func, x, p',
                          [(10, _line_func_1, [1.13689136, 0.09772497, 0.58295368, -0.39944903, 0.37005589],
                            [-1.30652685, 1.65813068, -0.11816405, -0.6801782, 0.66638308]),
@@ -350,10 +332,8 @@ def test_line_search(maxiter, func, x, p):
     match_array(msp_res.f_k, osp_res[3], error=5)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('maxiter, func, x, p',
                          [(10, _line_func_1, [1.13689136, 0.09772497, 0.58295368, -0.39944903, 0.37005589],
                            [-1.30652685, 1.65813068, -0.11816405, -0.6801782, 0.66638308])])
@@ -384,10 +364,8 @@ def test_line_search_graph(maxiter, func, x, p):
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float32])
 @pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2))])
 def test_lbfgs1(dtype, func_x0):
@@ -408,10 +386,8 @@ def test_lbfgs1(dtype, func_x0):
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float32])
 @pytest.mark.parametrize('func_x0', [(himmelblau, onp.zeros(2))])
 def test_lbfgs2(dtype, func_x0):
@@ -432,10 +408,8 @@ def test_lbfgs2(dtype, func_x0):
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float32])
 @pytest.mark.parametrize('func_x0', [(matyas, onp.ones(2))])
 def test_lbfgs3(dtype, func_x0):
@@ -456,10 +430,8 @@ def test_lbfgs3(dtype, func_x0):
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float64])
 @pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2))])
 def test_lbfgs4(dtype, func_x0):
@@ -480,10 +452,8 @@ def test_lbfgs4(dtype, func_x0):
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float64])
 @pytest.mark.parametrize('func_x0', [(himmelblau, onp.zeros(2))])
 def test_lbfgs5(dtype, func_x0):
@@ -504,10 +474,8 @@ def test_lbfgs5(dtype, func_x0):
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float64])
 @pytest.mark.parametrize('func_x0', [(matyas, onp.ones(2))])
 def test_lbfgs6(dtype, func_x0):
@@ -528,10 +496,8 @@ def test_lbfgs6(dtype, func_x0):
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 def test_lbfgs_fixes4594(dtype):
     """
@@ -552,10 +518,8 @@ def test_lbfgs_fixes4594(dtype):
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 @pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2)), (rosenbrock, onp.zeros(300))])
 def test_lbfgs_graph(dtype, func_x0):
@@ -577,12 +541,8 @@ def test_lbfgs_graph(dtype, func_x0):
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('cost_matrix_type', [ms.float16, ms.float32, ms.float64, ms.bool_, ms.int16, ms.int32,
                                               ms.int64, ms.int8, ms.uint16, ms.uint32, ms.uint64, ms.uint8])
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

@@ -23,12 +23,11 @@ import mindspore.ops.operations as P
 
 from .sparse_utils import compare_csr, get_csr_tensor, csr_add, get_csr_components, get_csr_from_scalar, \
     forward_grad_net
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_while_tensor_as_condition_forward_and_backward():
     """
     Feature: Test CSRTensor in while.
@@ -60,10 +59,8 @@ def test_while_tensor_as_condition_forward_and_backward():
 
 
 @pytest.mark.skip(reason="Sparse tensor can not run renormalize")
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_control_flow_while_if_continue_not_relevant_gt():
     """
     Feature: Test CSRTensor in while.
@@ -103,10 +100,8 @@ def test_control_flow_while_if_continue_not_relevant_gt():
     assert isinstance(grad_graph[0], CSRTensor)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_control_flow_for_while_return_in_while_no():
     """
     Feature: Test CSRTensor in while.
@@ -141,10 +136,8 @@ def test_control_flow_for_while_return_in_while_no():
     assert isinstance(grad_graph[1], CSRTensor)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_control_flow_for_enumerate_if_continue():
     """
     Feature: Test CSRTensor in while.
@@ -183,10 +176,8 @@ def test_control_flow_for_enumerate_if_continue():
     assert isinstance(grad_graph[0], CSRTensor)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_multi_csr_in_if_else():
     """
     Feature: Test multiple CSRTensors in if-else.
