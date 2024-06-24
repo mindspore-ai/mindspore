@@ -25,4 +25,4 @@ rsqrt:
             >>> input = ms.Tensor([-0.0370,  0.2970,  1.5420, -0.9105])
             >>> output = ops.rsqrt(input)
             >>> print(output)
-            [       nan 1.8349396  0.80530024        nan]
+            [       nan 1.8349396  0.8053002        nan]

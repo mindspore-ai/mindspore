@@ -33,4 +33,4 @@ erfinv:
         >>> input = Tensor(np.array([0, 0.5, -0.9]), mindspore.float32)
         >>> output = ops.erfinv(input)
         >>> print(output)
-        [ 0.          0.47695306 -1.1630805 ]
+        [ 0.          0.47693613 -1.1630869 ]
