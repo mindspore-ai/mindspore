@@ -3079,11 +3079,10 @@ def softmax_ext(input, dim=None, dtype=None):
         >>> print(output)
         [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]
     """
-
+    dim = -1 if dim is None else dim
     if not isinstance(dim, int):
         type_dim = type(dim).__name__
         raise TypeError(f" the type of 'dim' must be 'int', but got '{dim}' with type '{type_dim}'.")
-    dim = -1 if dim is None else dim
     if dtype is not None:
         input = ops.cast(input, dtype)
     softmax_ = _get_cache_prim(P.Softmax)(dim)

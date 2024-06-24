@@ -27,7 +27,18 @@ REG_BPROP_BUILDER("ResizeBicubic").SetUnusedInputs({i1, i4}).SetBody(BODYFUNC(ib
   auto align_corners = ib->GetInput(kIndex2);
   auto half_pixel_centers = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex5);
+  // ResizeBicubicGrad do not support fp16 on ascend platform
+  auto type_id = ib->GetDtypeId(dout);
+  if (type_id == TypeId::kNumberTypeFloat16) {
+    dout = ib->Cast(dout, kFloat32);
+    images = ib->Cast(images, kFloat32);
+  } else if (type_id == TypeId::kNumberTypeFloat64) {
+    dout = ib->Cast(dout, kFloat32);
+  }
   auto dx = ib->Emit("ResizeBicubicGrad", {dout, images, align_corners, half_pixel_centers});
+  if (type_id == TypeId::kNumberTypeFloat16) {
+    dx = ib->Cast(dx, type_id);
+  }
   return {dx, ib->OutZeros(size), ib->OutZeros(align_corners), ib->OutZeros(half_pixel_centers)};
 });
 

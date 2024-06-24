@@ -255,6 +255,12 @@ template CUDA_LIB_EXPORT cudaError_t CalResizeBicubicGrad<float, float>(
   const float *input, const int n, const int c, const int grad_h, const int grad_w, const int origin_h,
   const int origin_w, const float h_scale, const float w_scale, float *work, float *output, bool half_pixel_centers,
   const uint32_t &device_id, cudaStream_t cuda_stream);
+
+template CUDA_LIB_EXPORT cudaError_t CalResizeBicubicGrad<float, double>(
+  const float *input, const int n, const int c, const int grad_h, const int grad_w, const int origin_h,
+  const int origin_w, const float h_scale, const float w_scale, float *work, double *output, bool half_pixel_centers,
+  const uint32_t &device_id, cudaStream_t cuda_stream);
+
 template CUDA_LIB_EXPORT cudaError_t CalResizeBicubicGrad<double, double>(
   const double *input, const int n, const int c, const int grad_h, const int grad_w, const int origin_h,
   const int origin_w, const float h_scale, const float w_scale, float *work, double *output, bool half_pixel_centers,
