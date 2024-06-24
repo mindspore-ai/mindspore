@@ -387,7 +387,7 @@ TypePtr IncreFlashAttentionInferType(const PrimitivePtr &prim, const std::vector
       (void)CheckAndConvertUtils::CheckTensorTypeSame(pse_shift_types, pse_shift_valid_types, op_name);
     }
     std::map<std::string, TypePtr> atten_mask_types;
-    const std::set<TypePtr> atten_mask_valid_types = {kFloat16, kBool};
+    const std::set<TypePtr> atten_mask_valid_types = {kBool, kInt8, kUInt8};
     if (!IsOptionalInputNone(input_args[kIncreFlashAttentionInputAttnMaskIndex])) {
       (void)atten_mask_types.emplace("attn_mask", input_args[kIncreFlashAttentionInputAttnMaskIndex]->GetType());
       (void)CheckAndConvertUtils::CheckTensorTypeSame(atten_mask_types, atten_mask_valid_types, op_name);
