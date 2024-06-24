@@ -13,13 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import os
+from tests.mark_utils import arg_mark
 
-import pytest
 
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
 def test_msrun_pfa_info_sparse_mode0_8p():
     '''
     Feature: extract communication subgraphs and reuse them to replace original communication ops under GRAPH mode.

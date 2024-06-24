@@ -13,12 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
+from tests.mark_utils import arg_mark
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 def test_msrun_comm_subgraph_8p():
     '''
     Feature: extract communication subgraphs and reuse them to replace original communication ops under GRAPH mode.

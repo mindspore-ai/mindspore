@@ -13,12 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_gpu"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 def test_sit_multifieldembeddinglookup_parallel():
     cmd = "mpirun -n 8 pytest -s multifieldembeddinglookup_parallel.py > multifieldembeddinglookup.log 2>&1"
     ret = os.system(cmd)

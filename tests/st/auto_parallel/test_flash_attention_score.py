@@ -12,13 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import os
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.env_single
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 def test_ops_flash_attention_score_tnd():
     """
     Feature: Test the accuracy of TND query when cutting out.

@@ -19,6 +19,8 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
+from tests.mark_utils import arg_mark
+
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
@@ -54,6 +56,7 @@ class Net2(nn.Cell):
         return c, a
 
 
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
 def test_net():
     x = np.random.randn(2, 3, 3, 4).astype(np.float32)
     y = np.random.randn(2, 3, 3, 4).astype(np.float32)

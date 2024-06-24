@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -21,6 +20,7 @@ from mindspore import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -80,10 +80,7 @@ def train(net, data, label):
     assert np.all(diff < 1.e-6)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
 def test_lenet():
     data = Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([32]).astype(np.int32))
