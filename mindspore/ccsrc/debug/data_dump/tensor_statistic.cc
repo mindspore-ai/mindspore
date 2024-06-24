@@ -97,12 +97,14 @@ void DumpKernelTensorStats(const DeviceContext *device_context, vector<device::D
   uint32_t rank_id = GetRankId();
   string filename = GenerateDumpPath(graph_id, rank_id) + "/" + kCsvFileName;
   CsvWriter csv;
-  if (!csv.OpenFile(filename, csv_header)) {
-    MS_LOG(WARNING) << "filename is " << filename;
-    MS_LOG(WARNING) << "Open statistic dump file failed, skipping current statistics";
-    return;
-  }
   auto valid_index = GetValidDumpIndex(node, tensors.size(), is_input);
+  if (!valid_index.empty()) {
+    if (!csv.OpenFile(filename, csv_header)) {
+      MS_LOG(WARNING) << "filename is " << filename;
+      MS_LOG(WARNING) << "Open statistic dump file failed, skipping current statistics";
+      return;
+    }
+  }
   for (auto i : valid_index) {
     auto tensor = tensors[i]->kernel_tensor().get();
     DumpTensorInfo tensor_info(device_context, tensor, is_input, i, node_name, node_type);
