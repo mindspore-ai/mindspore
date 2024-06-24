@@ -392,7 +392,7 @@ def ones(size, *, dtype=None):
             it must be a 0-D or 1-D Tensor with int32 or int64 dtypes.
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`): The specified type of output tensor. If `dtype` is ``None`` ,
+        dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is ``None`` ,
             `mindspore.float32` will be used. Default: ``None`` .
 
     Returns:

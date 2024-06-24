@@ -18,8 +18,8 @@ mindspore.mint.nn.functional.softplus
 
           - Ascend：float16、float32、bfloat16。
 
-        - **beta** (number.Number ，可选) - softplus函数中的缩放参数。默认值：``1`` 。
-        - **threshold** (number.Number ，可选) - 为了数值稳定性，softplus函数转换为线性函数的阈值参数。默认值：``20`` 。
+        - **beta** (number.Number，可选) - softplus函数中的缩放参数。默认值：``1`` 。
+        - **threshold** (number.Number，可选) - 为了数值稳定性，softplus函数转换为线性函数的阈值参数。默认值：``20`` 。
 
     返回：
         Tensor，其数据类型和shape与 `input` 相同。

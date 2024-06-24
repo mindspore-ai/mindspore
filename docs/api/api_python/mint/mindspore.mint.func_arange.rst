@@ -20,7 +20,7 @@ mindspore.mint.arange
           如果 `start` 、 `end` 和 `step` 中包含float，则输出Tensor的dtype为float32。
 
     返回：
-        一维张量，如果设置了`dtype`参数，则会被cast成该类型的Tensor，有可能因此损失精度。
+        一维张量，如果设置了 `dtype` 参数，则会被cast成该类型的Tensor，有可能因此损失精度。
 
     异常：
         - **TypeError** - `start` ， `end` 和 `step` 不是int或float类型。

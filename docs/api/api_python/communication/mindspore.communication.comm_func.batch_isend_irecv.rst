@@ -20,7 +20,7 @@ mindspore.communication.comm_func.batch_isend_irecv
         当 `P2POp` 为发送时， 相应位置的结果是没有意义的张量。
         当 `P2POp` 为接收时， 相应位置的结果是从其他设备接收到的张量。
 
-    异常:
+    异常：
         - **TypeError** - `p2p_op_list` 中不全是 `P2POp` 类型。
 
     样例：

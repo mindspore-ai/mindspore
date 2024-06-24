@@ -19,7 +19,7 @@ mindspore.communication.comm_func.all_to_all_single_with_output_shape
     返回：
         从远端设备接收分块并合并的张量。如果从其他设备接收的张量为空，它将返回一个没有实际意义的值为0的张量。
 
-    异常:
+    异常：
         - **TypeError** - `tensor` 不是张量类型。
         - **TypeError** - `output_shape` 不是元组或者张量类型。
 
