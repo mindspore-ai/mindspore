@@ -32,7 +32,7 @@ from mindspore.ops.primitive import PrimitiveWithCheck
 from mindspore.ops.primitive import prim_attr_register
 from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6, Dense, Tanh,
                              Elu, Sigmoid, Softmax, SoftplusExt, HSwish, HSigmoid, AvgPool, BiasAdd,
-                             NLLLoss, OneHot, GeLU, FastGeLU, PReLU,
+                             NLLLoss, OneHot, GeLU, FastGeLU, PReLU, RmsNorm,
                              GridSampler3D, GridSampler2D, LayerNorm, LayerNormExt, HShrink, AdamWeightDecay, Dropout,
                              ApplyRotaryPosEmb, PagedAttention, PagedAttentionMask, ReshapeAndCache,
                              FlashAttentionScore, Embedding, UpsampleNearest1D, UpsampleNearest2D,
@@ -9755,43 +9755,6 @@ class IncreFlashAttention(Primitive):
                                         "dequant_scale1", "quant_scale1", "dequant_scale2", "quant_scale2",
                                         "quant_offset2", "antiquant_scale", "antiquant_offset", "block_table"],
                                 outputs=["attention_out"])
-
-
-class RmsNorm(Primitive):
-    r"""
-    The RmsNorm operator is a normalization operation, and its formula is:
-
-    .. math::
-        y=\frac{x_i}{\sqrt{\frac{1}{n}}\sum_{i=1}^{n}{ x_i^2}+\varepsilon  }\gamma_i
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Args:
-        epsilon (float): prevent division by 0, default value is `1e-6`
-
-    Inputs:
-        - **input_x** (Tensor) - Input data of RmsNorm, support data type: float16, float32, bfloat16.
-        - **gamma** (Tensor) - Support data type: float16, float32, bfloat16.
-
-    Outputs:
-        - **y** (Tensor) - Has the same type and shape with `input_x`.
-        - **rstd** (Tensor) - Has the same type with `input_x`, used by gradient calculation.
-
-    Raises:
-        TypeError: If data type of `input_x` is not one of the following: float16, float32, bfloat16.
-        TypeError: If data type of `gamma` is not one of the following: float16, float32, bfloat16.
-        TypeError: If data type of "input_x" is not the same with the data type of "gamma"
-
-    Supported Platforms:
-        ``Ascend``
-    """
-
-    @prim_attr_register
-    def __init__(self, epsilon=1e-6):
-        """Initialize Dense."""
-        validator.check_value_type("epsilon", epsilon, [float], self.name)
-        self.init_prim_io_names(inputs=['x', 'gamma'], outputs=["y", "rstd"])
 
 
 class AllFinite(Primitive):

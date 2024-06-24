@@ -2879,18 +2879,20 @@ REG_BPROP_BUILDER("FlashAttentionScore").SetBody((BODYFUNC(ib) {
           g_scale_value, g_pre_tokens, g_next_tokens,     g_inner_precise,    g_input_layout, g_sparse_mode};
 }));
 
-REG_BPROP_BUILDER("RmsNorm").SetBody((BODYFUNC(ib) {
+REG_BPROP_BUILDER("RmsNorm").SetUnusedInputs({i2}).SetBody((BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto gamma = ib->GetInput(kIndex1);
-  auto out = ib->GetInput(kIndex2);
-  auto dout = ib->GetInput(kIndex3);
+  auto eps = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex4);
   auto rstd = ib->TupleGetItem(out, kIndex1);
   auto dy = ib->TupleGetItem(dout, kIndex0);
 
   auto grad = ib->Emit("RmsNormGrad", {dy, x, rstd, gamma});
   auto dx = ib->TupleGetItem(grad, kIndex0);
-  auto dgamma = ib->TupleGetItem(grad, kIndex1);
-  return {dx, dgamma};
+  auto dgamma_raw = ib->TupleGetItem(grad, kIndex1);
+  auto dgamma = ib->Cast(dgamma_raw, ib->GetDtype(gamma));
+  return {dx, dgamma, ib->OutZeros(eps)};
 }));
 
 REG_BPROP_BUILDER("AvgPool2D").SetBody((BODYFUNC(ib) {

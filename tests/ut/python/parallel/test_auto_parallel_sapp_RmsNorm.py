@@ -48,7 +48,7 @@ def test_auto_parallel_sapp_RmsNorm():
 
     x = Tensor(np.ones([8, 320]), dtype=ms.float32)
     y = Tensor(np.ones([320, 409600]), dtype=ms.float32)
-    w = Tensor(np.ones([16, 64, 32]), dtype=ms.float32)
+    w = Tensor(np.ones([64, 409600]), dtype=ms.float32)
 
     net = RmsNormNet(w)
     optimizer = Momentum(net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -59,4 +59,4 @@ def test_auto_parallel_sapp_RmsNorm():
     strategies = _cell_graph_executor._get_shard_strategy(train_net)
     for (k, v) in strategies.items():
         if re.search('RmsNorm-op0', k) is not None:
-            assert v == [[8, 1], [8, 1]]
+            assert v == [[8, 1], [1]]

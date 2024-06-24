@@ -118,6 +118,10 @@ inline bool IsShapeEmpty(const ShapeVector &shape) {
   return shape.size() == kOne && shape[0] == kZero;
 }
 
+inline bool IsShapeNone(const ShapeVector &shape) {
+  return std::any_of(shape.begin(), shape.end(), [](const auto &dim) { return dim == 0; });
+}
+
 // use for the op with the constraint that output shape must be same as input shape
 inline ShapeVector InferOutShapeSameAsInShape(const ShapeArray &input_shapes) {
   ShapeVector out_shape{};

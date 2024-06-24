@@ -28,10 +28,9 @@
 namespace mindspore {
 namespace parallel {
 Status RmsNormInfo::GetAttrs() {
-  // RmsNorm always run in last dim
-  int64_t dim = SizeToLong(inputs_shape_[0].size());
-  // begin_norm_axis_ will be the last axis
-  begin_norm_axis_ = LongToSize(dim) - 1;
+  size_t x_rank = inputs_shape_[0].size();
+  size_t gamma_rank = inputs_shape_[1].size();
+  begin_norm_axis_ = x_rank - gamma_rank;
   return SUCCESS;
 }
 
@@ -54,6 +53,13 @@ Status RmsNormInfo::CheckStrategy(const StrategyPtr &strategy) {
   for (size_t i = begin_norm_axis_; i < input_strategy.size(); ++i) {
     if (input_strategy[i] != NO_SPLIT_STRATEGY) {
       MS_LOG(ERROR) << name_ << ": Invalid input strategy " << ShapeToString(input_strategy);
+      return FAILED;
+    }
+  }
+  for (size_t i = 0; i < gamma_strategy.size(); ++i) {
+    if (gamma_strategy[i] != NO_SPLIT_STRATEGY) {
+      MS_LOG(ERROR) << name_
+                    << ": Invalid gamma strategy. Gamma can not be split, but got: " << ShapeToString(gamma_strategy);
       return FAILED;
     }
   }
@@ -294,7 +300,8 @@ Status RmsNormInfo::ComputeReplaceGraphForInterleaved(const CNodePtr &cnode) {
   std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(virtual_converter_begin, 1)};
   for (int64_t i = 0; i < interleaved_num; ++i) {
     auto tuple_get_item = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), virtual_converter_begin, CreatInt64Imm(i)});
-    auto rmsnorm = gen_g.PushBack({gen_g.NewOpInst(prim_name_), tuple_get_item, gen_g.virtual_input_node()});
+    auto rmsnorm = gen_g.PushBack(
+      {gen_g.NewOpInst(prim_name_), tuple_get_item, gen_g.virtual_input_node(), CreateFP32Imm(DEFAULT_EPS)});
     input_nodes.push_back(std::make_pair(rmsnorm, kIndexTwo));
     virtual_converter_end_inputs_vector.push_back(rmsnorm);
   }

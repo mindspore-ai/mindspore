@@ -51,6 +51,7 @@ Neural Network
     mindspore.ops.max_unpool1d
     mindspore.ops.max_unpool2d
     mindspore.ops.max_unpool3d
+    mindspore.ops.rms_norm
     mindspore.ops.unfold
 
 

@@ -75,7 +75,7 @@ class Net(nn.Cell):
 
 
 x = Tensor(np.ones([128, 16, 32]), dtype=ms.float32)
-gamma = Tensor(np.ones([16, 32]), dtype=ms.float32)
+gamma = Tensor(np.ones([32]), dtype=ms.float32)
 
 
 def test_layout_layernorm_base():
@@ -86,11 +86,11 @@ def test_layout_layernorm_base():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
     layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
-    layout1 = (layout("dp", "sp", "None"), layout("sp", "None"))
+    layout1 = (layout("dp", "sp", "None"), layout("None"))
     net = Net(gamma, layout1)
     phase = compile_net(net, x)
     validator = ParallelValidator(net, phase)
-    assert validator.check_parameter_shape('gamma', [8, 32])
+    assert validator.check_parameter_shape('gamma', [32])
 
 
 def test_layout_layernorm_multi_shard():
@@ -101,11 +101,11 @@ def test_layout_layernorm_multi_shard():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     layout = Layout((2, 2, 2, 2), ("dp", "sp", "vp", "mp"))
-    layout1 = (layout(("dp", "mp"), "sp", "None"), layout("sp", "None"))
+    layout1 = (layout(("dp", "mp"), "sp", "None"), layout("None"))
     net = Net(gamma, layout1)
     phase = compile_net(net, x)
     validator = ParallelValidator(net, phase)
-    assert validator.check_parameter_shape('gamma', [8, 32])
+    assert validator.check_parameter_shape('gamma', [32])
 
 
 def test_layout_layernorm_multi_shard1():
@@ -116,11 +116,11 @@ def test_layout_layernorm_multi_shard1():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     layout = Layout((2, 2, 2, 2), ("dp", "sp", "vp", "mp"))
-    layout1 = (layout("dp", ("sp", "mp"), "None"), layout(("sp", "mp"), "None"))
+    layout1 = (layout("dp", ("sp", "mp"), "None"), layout("None"))
     net = Net(gamma, layout1)
     phase = compile_net(net, x)
     validator = ParallelValidator(net, phase)
-    assert validator.check_parameter_shape('gamma', [4, 32])
+    assert validator.check_parameter_shape('gamma', [32])
 
 
 def test_layout_layernorm_out_check():
@@ -131,7 +131,7 @@ def test_layout_layernorm_out_check():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     layout = Layout((2, 2, 2, 2), ("dp", "sp", "vp", "mp"))
-    layout1 = (layout(("dp", "mp"), "sp", "None"), layout("sp", "None"))
+    layout1 = (layout(("dp", "mp"), "sp", "None"), layout("None"))
     out_layout = (layout(("dp", "mp"), "sp", "None"), layout(("dp", "mp"), "sp", "None"))
     net = Net(gamma, layout1, out_layout=out_layout)
     with pytest.raises(RuntimeError):
@@ -146,8 +146,8 @@ def test_layout_layernorm_multi_shard_with_grad():
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=16, global_rank=0)
     layout = Layout((2, 2, 2, 2), ("dp", "sp", "vp", "mp"))
-    layout1 = (layout(("dp", "mp"), "sp", "None"), layout("sp", "None"))
+    layout1 = (layout(("dp", "mp"), "sp", "None"), layout("None"))
     net = GradWrap(NetWithLoss(Net(gamma, layout1)))
     phase = compile_net(net, x)
     validator = ParallelValidator(net, phase)
-    assert validator.check_parameter_shape('network.network.gamma', [8, 32])
+    assert validator.check_parameter_shape('network.network.gamma', [32])

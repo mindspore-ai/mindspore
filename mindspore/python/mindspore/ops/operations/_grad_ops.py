@@ -34,7 +34,7 @@ from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad, AsinGrad, 
                              GatherDGradV2, ResizeBilinearGrad, ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
                              SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad, GridSampler2DGrad,
                              ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad, ResizeNearestNeighborGrad, LayerNormGrad,
-                             HShrinkGrad, LayerNormGradGrad, SiLUGrad, MaximumGrad, MaximumGradGrad,
+                             HShrinkGrad, LayerNormGradGrad, SiLUGrad, MaximumGrad, MaximumGradGrad, RmsNormGrad,
                              FlashAttentionScoreGrad, UpsampleTrilinear3DGrad, UpsampleNearest3DGrad,
                              BinaryCrossEntropyGrad)
 
@@ -3050,20 +3050,3 @@ class WKVGrad(Primitive):
         """Initialize WKVGrad."""
         self.init_prim_io_names(inputs=["time_first", "time_decay", "key", "value", "gy"],
                                 outputs=["gw", "gu", "gk", "gv"])
-
-
-class RmsNormGrad(Primitive):
-    r"""
-    Calculates the gradient of RmsNorm operation.
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Supported Platforms:
-        ``Ascend``
-    """
-
-    @prim_attr_register
-    def __init__(self):
-        """Initialize RmsNormGrad."""
-        self.init_prim_io_names(inputs=["dy", "x", "rstd", "gamma"],
-                                outputs=["dx", "dgamma"])
