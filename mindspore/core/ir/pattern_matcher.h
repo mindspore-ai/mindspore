@@ -826,6 +826,10 @@ class PConstant : public PBase<PConstant<T> > {
         return nullptr;
       }
       auto tensor_out_shape = tensor_3_abstract->shape()->shape();
+      // if dynamic, return nullptr
+      if (std::any_of(tensor_out_shape.begin(), tensor_out_shape.end(), [](int64_t i) { return i < 0; })) {
+        return nullptr;
+      }
       size_t data_out_size =
         LongToSize(std::accumulate(tensor_out_shape.begin(), tensor_out_shape.end(), 1, std::multiplies<int64_t>()));
       if ((tensor_ptr_1->DataSize() > 1) && (tensor_ptr_1->DataSize() != data_out_size)) {

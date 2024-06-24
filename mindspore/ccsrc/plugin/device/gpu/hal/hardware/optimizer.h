@@ -51,7 +51,6 @@
 #include "plugin/device/gpu/optimizer/concat_outputs_for_all_gather.h"
 #include "backend/common/pass/getitem_tuple.h"
 #include "plugin/device/gpu/optimizer/matmul_biasadd_fusion.h"
-#include "plugin/device/gpu/optimizer/bce_with_logits_loss_fusion.h"
 #include "plugin/device/gpu/optimizer/insert_cast_gpu.h"
 #include "plugin/device/gpu/optimizer/neighbor_exchange_v2_fusion.h"
 #include "plugin/device/gpu/optimizer/bias_dropout_add_fusion.h"

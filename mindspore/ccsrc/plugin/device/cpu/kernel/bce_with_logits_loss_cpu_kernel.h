@@ -25,7 +25,6 @@
 
 namespace mindspore {
 namespace kernel {
-enum ReductionType { kNone, kMean, kSum };
 class BCEWithLogitsLossCpuKernelMod : public NativeCpuKernelMod,
                                       public MatchKernelHelper<BCEWithLogitsLossCpuKernelMod> {
  public:
@@ -66,7 +65,8 @@ class BCEWithLogitsLossCpuKernelMod : public NativeCpuKernelMod,
   ShapeVector input_label_shape_;
   ShapeVector input_weight_shape_;
   ShapeVector input_post_weight_shape_;
-  ReductionType reduction_{kNone};
+  size_t weight_workspace_index_ = 0;
+  size_t pos_weight_workspace_index_ = 0;
 };
 }  // namespace kernel
 }  // namespace mindspore

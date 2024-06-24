@@ -78,6 +78,10 @@ class BCEWithLogitsLossKernelMod : public NativeGpuKernelMod {
   ShapeVector weight_shape_;
   ShapeVector pos_weight_shape_;
   size_t type_id_size_{0};
+  size_t weight_workspace_index_ = 0;
+  size_t pos_weight_workspace_index_ = 0;
+  size_t output_tmp_index_ = 0;
+  size_t reduce_workspace_index_ = 0;
 };
 }  // namespace kernel
 }  // namespace mindspore

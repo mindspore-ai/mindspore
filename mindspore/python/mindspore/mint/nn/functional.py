@@ -220,6 +220,102 @@ from mindspore.ops.function.math_func import tanh
 # 99
 
 # 100
+from mindspore.ops.function import binary_cross_entropy_with_logits as bce_with_logits
+def binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean', pos_weight=None):
+    r"""
+    Adds sigmoid activation function to `input` as logits, and uses this logits to compute binary cross entropy
+    between the logits and the target.
+    Consistent with the function of `mindspore.ops.binary_cross_entropy_with_logits` .
+
+    Sets input `input` as :math:`X`, input `target` as :math:`Y`, input `weight` as :math:`W`, output as :math:`L`.
+    Then,
+
+    .. math::
+
+        \begin{array}{ll} \\
+            p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}} \\
+            L_{ij} = -[Y_{ij}log(p_{ij}) + (1 - Y_{ij})log(1 - p_{ij})]
+        \end{array}
+
+    :math:`i` indicates the :math:`i^{th}` sample, :math:`j` indicates the category. Then,
+
+    .. math::
+        \ell(x, y) = \begin{cases}
+        L, & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
+
+    :math:`\ell` indicates the method of calculating the loss. There are three methods:
+    the first method is to provide the loss value directly,
+    the second method is to calculate the average value of all losses,
+    and the third method is to calculate the sum of all losses.
+
+    This operator will multiply the output by the corresponding weight.
+    The tensor :math:`weight` assigns different weights to each piece of data in the batch,
+    and the tensor :math:`pos\_weight` adds corresponding weights to the positive examples of each category.
+
+    In addition, it can trade off recall and precision by adding weights to positive examples.
+    In the case of multi-label classification the loss can be described as:
+
+    .. math::
+        \begin{array}{ll} \\
+            p_{ij,c} = sigmoid(X_{ij,c}) = \frac{1}{1 + e^{-X_{ij,c}}} \\
+            L_{ij,c} = -[P_{c}Y_{ij,c} * log(p_{ij,c}) + (1 - Y_{ij,c})log(1 - p_{ij,c})]
+        \end{array}
+
+    where c is the class number (c>1 for multi-label binary classification, c=1 for single-label binary classification),
+    n is the number of the sample in the batch and :math:`P_c` is the weight of the positive answer for the class c.
+    :math:`P_c>1` increases the recall, :math:`P_c<1` increases the precision.
+
+    Args:
+        input (Tensor): Input `input` with shape :math:`(N, *)` where :math:`*` means, any number
+          of additional dimensions. The data type must be float16, float32 or bfloat16(only Atlas A2 series products
+          are supported).
+        target (Tensor): Ground truth label, has the same shape as `input`.
+          The data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
+        weight (Tensor, optional): A rescaling weight applied to the loss of each batch element. It can be
+          broadcast to a tensor with shape of `input`. Data type must be float16, float32 or bfloat16(only
+          Atlas A2 series products are supported).
+          Default: ``None``, `weight` is a Tensor whose value is ``1``.
+        reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+            ``'sum'`` . Default: ``'mean'`` .
+
+            - ``'none'``: no reduction will be applied.
+            - ``'mean'``: compute and return the weighted mean of elements in the output.
+            - ``'sum'``: the output elements will be summed.
+        pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
+          number of classes. It can be broadcast to a tensor with shape of `input`.
+          Data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
+          Default: ``None``, it equals to `pos_weight` is a Tensor whose value is ``1``.
+
+    Returns:
+        Tensor or Scalar, if `reduction` is ``'none'``, it's a tensor with the same shape and type as input `input`.
+        Otherwise, the output is a Scalar.
+
+    Raises:
+        TypeError: If input `input`, `target`, `weight`, `pos_weight` is not Tensor.
+        TypeError: If data type of input `reduction` is not string.
+        ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `input`.
+        ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, mint
+        >>> input = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mindspore.float32)
+        >>> target = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mindspore.float32)
+        >>> weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
+        >>> pos_weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
+        >>> output = mint.nn.functional.binary_cross_entropy_with_logits(input, target, weight, pos_weight)
+        >>> print(output)
+        0.3463612
+    """
+    return bce_with_logits(input, target, weight, pos_weight, reduction)
+
 
 def one_hot(tensor, num_classes=-1):
     return one_hot_ext(tensor, num_classes)
@@ -234,7 +330,7 @@ __all__ = [
     'conv_transpose2d',
     'max_pool2d',
     # 1
-
+    'binary_cross_entropy_with_logits',
     # 2
 
     # 3

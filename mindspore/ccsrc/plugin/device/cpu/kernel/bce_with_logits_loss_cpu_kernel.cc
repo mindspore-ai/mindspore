@@ -24,7 +24,7 @@
 #include "mindspore/core/ops/nn_ops.h"
 #include "plugin/device/cpu/kernel/nnacl/fp32/bce_with_logits_loss_fp32.h"
 #include "plugin/device/cpu/kernel/nnacl/op_base.h"
-#include "mindspore/core/ops/bce_with_logits_loss.h"
+#include "mindapi/base/types.h"
 
 namespace mindspore {
 namespace kernel {
@@ -41,21 +41,7 @@ bool BCEWithLogitsLossCpuKernelMod::Init(const std::vector<KernelTensor *> &inpu
     MS_LOG(ERROR) << "For 'BCEWithLogitsLoss', it's kernel name invalid, got " << kernel_name_;
     return false;
   }
-  const auto reduction = GetValue<std::string>(primitive_->GetAttr(ops::kReduction));
-  if (reduction == NONE) {
-    reduction_ = kNone;
-    is_reduction_ = false;
-  } else if (reduction == MEAN) {
-    reduction_ = kMean;
-    is_reduction_ = true;
-  } else if (reduction == SUM) {
-    reduction_ = kSum;
-    is_reduction_ = true;
-  } else {
-    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'reduction' must be 'none', 'mean', or 'sum', but got "
-                  << reduction;
-    return false;
-  }
+
   return MatchKernelFunc(kernel_name_, inputs, outputs);
 }
 
@@ -68,8 +54,6 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   input_logits_shape_ = inputs.at(kIndex0)->GetShapeVector();
   input_size_ = SizeOf(input_logits_shape_);
   input_label_shape_ = inputs.at(kIndex1)->GetShapeVector();
-  input_weight_shape_ = inputs.at(kIndex2)->GetShapeVector();
-  input_post_weight_shape_ = inputs.at(kIndex3)->GetShapeVector();
 
   thread_num_ = std::min(input_size_, pool_->GetKernelThreadNum());
   // The output_size_list_ should be clear and reset.
@@ -77,7 +61,8 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
   workspace_size_list_.clear();
   size_t unit_byte_size = GetTypeByte(TypeIdToType(outputs.at(kIndex0)->dtype_id()));
   size_t input_byte_size = input_size_ * unit_byte_size;
-  if (reduction_ == kNone) {
+  auto reduction = inputs[kIndex4]->GetValueWithCheck<int64_t>();
+  if (reduction == Reduction::NONE) {
     // The output is a Tensor in ReductionType none.
     (void)output_size_list_.emplace_back(input_byte_size);
   } else {
@@ -85,6 +70,26 @@ int BCEWithLogitsLossCpuKernelMod::Resize(const std::vector<KernelTensor *> &inp
     (void)output_size_list_.emplace_back(unit_byte_size);
     (void)workspace_size_list_.emplace_back(thread_num_ * unit_byte_size);
   }
+  auto weight_type = inputs[kIndex2]->GetType();
+  MS_EXCEPTION_IF_NULL(weight_type);
+  if (weight_type->isa<TypeNone>()) {
+    weight_workspace_index_ = workspace_size_list_.size();
+    (void)workspace_size_list_.emplace_back(input_byte_size);
+    input_weight_shape_ = inputs.at(kIndex0)->GetShapeVector();  // ones_like logits in launch
+  } else {
+    input_weight_shape_ = inputs.at(kIndex2)->GetShapeVector();
+  }
+
+  auto pos_weight_type = inputs[kIndex3]->GetType();
+  MS_EXCEPTION_IF_NULL(pos_weight_type);
+  if (pos_weight_type->isa<TypeNone>()) {
+    pos_weight_workspace_index_ = workspace_size_list_.size();
+    (void)workspace_size_list_.emplace_back(input_byte_size);
+    input_post_weight_shape_ = inputs.at(kIndex0)->GetShapeVector();  // ones_like logits in launch
+  } else {
+    input_post_weight_shape_ = inputs.at(kIndex3)->GetShapeVector();
+  }
+
   is_broadcast_ = input_post_weight_shape_ != input_label_shape_ || input_weight_shape_ != input_label_shape_;
   return KRET_OK;
 }
@@ -160,8 +165,51 @@ bool BCEWithLogitsLossCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
                                                  const std::vector<KernelTensor *> &outputs) {
   logits_ = inputs.at(kIndex0)->device_ptr();
   label_ = inputs.at(kIndex1)->device_ptr();
-  weight_ = inputs.at(kIndex2)->device_ptr();
-  post_weight_ = inputs.at(kIndex3)->device_ptr();
+  auto weight_type = inputs[kIndex2]->GetType();
+  MS_EXCEPTION_IF_NULL(weight_type);
+  if (weight_type->isa<TypeNone>()) {
+    // weight_ = ones_like(logits)
+    auto output_addr = reinterpret_cast<float *>(workspace[weight_workspace_index_]->device_ptr());
+    size_t output_size = workspace[weight_workspace_index_]->size() / sizeof(float);
+    auto task = [this, output_addr](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        output_addr[i] = static_cast<float>(1);
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
+    weight_ = output_addr;
+  } else {
+    weight_ = inputs.at(kIndex2)->device_ptr();
+  }
+
+  auto pos_weight_type = inputs[kIndex3]->GetType();
+  MS_EXCEPTION_IF_NULL(pos_weight_type);
+  if (pos_weight_type->isa<TypeNone>()) {
+    // post_weight_ = ones_like(logits)
+    auto output_addr = reinterpret_cast<float *>(workspace[pos_weight_workspace_index_]->device_ptr());
+    size_t output_size = workspace[pos_weight_workspace_index_]->size() / sizeof(float);
+    auto task = [this, output_addr](size_t start, size_t end) {
+      for (size_t i = start; i < end; i++) {
+        output_addr[i] = static_cast<float>(1);
+      }
+    };
+    ParallelLaunchAutoSearch(task, output_size, this, &parallel_search_info_);
+    post_weight_ = output_addr;
+  } else {
+    post_weight_ = inputs.at(kIndex3)->device_ptr();
+  }
+
+  auto reduction = inputs[kIndex4]->GetValueWithCheck<int64_t>();
+  if (reduction == Reduction::NONE) {
+    is_reduction_ = false;
+  } else if (reduction == Reduction::MEAN || reduction == Reduction::REDUCTION_SUM) {
+    is_reduction_ = true;
+  } else {
+    MS_LOG(ERROR) << "For '" << kernel_name_ << "', the 'reduction' must be 'none', 'mean', or 'sum', but got "
+                  << reduction;
+    return false;
+  }
+
   if (is_reduction_) {
     reduction_output_ = workspace.at(kIndex0)->device_ptr();
   }
@@ -177,7 +225,7 @@ bool BCEWithLogitsLossCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
     for (size_t i = 0; i < thread_num_; ++i) {
       output[0] += reduction_output[i];
     }
-    if (reduction_ == kMean) {
+    if (reduction == Reduction::MEAN) {
       output[0] = output[0] / static_cast<float>(input_size_);
     }
   }
@@ -189,8 +237,9 @@ const std::vector<std::pair<KernelAttr, KernelRunFunc>> &BCEWithLogitsLossCpuKer
     {KernelAttr()
        .AddInputAttr(kNumberTypeFloat32)
        .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeFloat32)
-       .AddInputAttr(kNumberTypeFloat32)
+       .AddOptionalInputAttr(kNumberTypeFloat32)
+       .AddOptionalInputAttr(kNumberTypeFloat32)
+       .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)
        .AddOutputAttr(kNumberTypeFloat32),
      &BCEWithLogitsLossCpuKernelMod::LaunchKernel},
   };

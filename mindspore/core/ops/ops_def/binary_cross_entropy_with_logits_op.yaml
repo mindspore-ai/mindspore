@@ -1,0 +1,28 @@
+#operator binary_cross_entropy_with_logits
+binary_cross_entropy_with_logits:
+  args:
+    logits:
+      dtype: tensor
+    label:
+      dtype: tensor
+    weight:
+      dtype: tensor
+      default: None
+    posWeight:
+      dtype: tensor
+      default: None
+    reduction:
+      dtype: int
+      default: "'mean'"
+      arg_handler: str_to_enum
+      prim_init: True
+  returns:
+    out:
+      dtype: tensor
+  class:
+    name: BCEWithLogitsLoss
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: BinaryCrossEntropyWithLogitsAscend

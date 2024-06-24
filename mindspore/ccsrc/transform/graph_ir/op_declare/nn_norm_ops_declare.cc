@@ -77,6 +77,7 @@ REG_ADPT_DESC(SigmoidCrossEntropyWithLogitsGrad, kNameSigmoidCrossEntropyWithLog
 INPUT_MAP(SigmoidCrossEntropyWithLogitsV2) = {
   {1, INPUT_DESC(predict)}, {2, INPUT_DESC(target)}, {3, INPUT_DESC(weight)}, {4, INPUT_DESC(pos_weight)}};
 ATTR_MAP(SigmoidCrossEntropyWithLogitsV2) = {{"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+INPUT_ATTR_MAP(SigmoidCrossEntropyWithLogitsV2) = {{5, ATTR_DESC(reduction, AnyTraits<GEReduction>())}};
 OUTPUT_MAP(SigmoidCrossEntropyWithLogitsV2) = {{0, OUTPUT_DESC(loss)}};
 REG_ADPT_DESC(BCEWithLogitsLoss, kNameSigmoidCrossEntropyWithLogitsV2, ADPT_DESC(SigmoidCrossEntropyWithLogitsV2))
 REG_ADPT_DESC(SigmoidCrossEntropyWithLogitsV2, kSigmoidCrossEntropyWithLogitsV2OpName,

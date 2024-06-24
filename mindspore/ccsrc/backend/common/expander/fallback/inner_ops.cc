@@ -20,6 +20,7 @@
 #include "include/common/utils/utils.h"
 #include "utils/shape_utils.h"
 #include "utils/check_convert_utils.h"
+#include "mindapi/base/types.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {
@@ -113,6 +114,33 @@ REG_FALLBACK_BUILDER("VmapUnstackAssign").SetBody(BODYFUNC(ib) {
   // the VmapStackAssign's output shape is always [1], and dtype is kInt32.
   auto result = ib->Depend(ib->Tensor(std::vector<int>{0}, kInt32), res_tuple);
   return {result};
+});
+
+REG_FALLBACK_BUILDER("BinaryCrossEntropyWithLogitsBackward").SetBody(BODYFUNC(ib) {
+  // dout, input, target, weight, posweight, reduction
+  auto dout = ib->GetInput(kIndex0);
+  auto predict = ib->GetInput(kIndex1);
+  auto target = ib->GetInput(kIndex2);
+  auto weight = ib->GetInput(kIndex3);
+  auto pos_weight = ib->GetInput(kIndex4);
+  auto reduction = ib->GetInput(kIndex5);
+  auto sigmoid_input = ib->Emit("Sigmoid", {predict});
+  auto t = ib->Mul(target, pos_weight);
+  auto dx =
+    ib->Mul(ib->Sub(ib->Mul(ib->Sub(ib->Add(t, ib->Tensor(1, ib->GetDtype(t))), target), sigmoid_input), t), dout);
+  dx = ib->Mul(dx, weight);
+
+  auto reduction_value = reduction->BuildValue();
+  auto reduction_int_value = ops::GetScalarValue<int64_t>(reduction_value);
+  if (reduction_int_value == Reduction::MEAN) {
+    if (IsDynamic(ib->GetShape(dx))) {
+      auto res = ib->DynSize(dx, ib->GetDtype(dx));
+      dx = ib->RealDiv(dx, res);
+    } else {
+      dx = ib->RealDiv(dx, ib->Tensor(ib->GetSize(dx), ib->GetDtype(dx)));
+    }
+  }
+  return {dx};
 });
 
 REG_FALLBACK_BUILDER("Contiguous").SetBody(BODYFUNC(ib) { return {ib->GetInput(kIndex0)}; });
