@@ -46,23 +46,28 @@ BaseShapePtr SliceExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto input_end_value = input_end_value_opt.value();
   auto x_rank = SizeToLong(input_x_shape.size());
 
-  if (input_begin_value > input_end_value) {
-    MS_EXCEPTION(ValueError) << "For Slice, the end must be no greater than start.";
-  }
-
-  MS_CHECK_VALUE(axis_value >= -x_rank && axis_value < x_rank, "For primitive [SliceExt]: dim exceed range");
+  MS_CHECK_VALUE(axis_value >= -x_rank && axis_value < x_rank, "dim value error. dim:" + std::to_string(axis_value) +
+                                                                 ", dim should be in [" + std::to_string(-x_rank) +
+                                                                 ", " + std::to_string(x_rank) + ").");
   axis_value = axis_value < 0 ? axis_value + x_rank : axis_value;
 
   auto x_axis_size = input_x_shape[axis_value];
 
-  if (input_x_shape[axis_value] == abstract::Shape::kShapeDimAny) {
+  if (x_axis_size == abstract::Shape::kShapeDimAny) {
     return std::make_shared<abstract::TensorShape>(input_x_shape);
   }
 
-  MS_CHECK_VALUE(input_begin_value >= -x_axis_size && input_begin_value <= x_axis_size,
-                 "For primitive [SliceExt]: start exceed range");
   auto input_length = input_end_value - input_begin_value;
+
+  MS_CHECK_VALUE(input_begin_value >= -x_axis_size && input_begin_value <= x_axis_size,
+                 "For primitive [SliceExt]: start value error, start: " + std::to_string(input_begin_value) +
+                   ", start should be in [" + std::to_string(-x_axis_size) + ", " + std::to_string(x_axis_size) + "].");
   input_begin_value = input_begin_value < 0 ? input_begin_value + x_axis_size : input_begin_value;
+  auto max_length = x_axis_size - input_begin_value;
+  MS_CHECK_VALUE(input_length >= 0 && input_length <= max_length,
+                 "length value error. length: " + std::to_string(input_length) + ", length should be in [0, " +
+                   std::to_string(max_length) + "].");
+
   input_end_value = input_begin_value + input_length;
   MS_CHECK_VALUE(input_end_value >= -x_axis_size && input_end_value <= x_axis_size,
                  "For primitive [SliceExt]: end exceed range");
