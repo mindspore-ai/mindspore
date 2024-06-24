@@ -120,7 +120,6 @@ AnfNodePtr InsertNoOpForOutput(const FuncGraphPtr &func_graph, const AnfNodePtr 
       kernel_graph->ReplaceNode(ret_input, depend_op);
     }
     common::AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), return_node);
-
   } else {
     auto depend = return_node->input(1);
     MS_EXCEPTION_IF_NULL(depend);
