@@ -2574,7 +2574,8 @@ def _check_shm_usage(num_worker, queue_size, in_rowsize, out_rowsize):
     when training in parallel mode.
     """
     threshold_ratio = 0.8
-    if platform.system().lower() not in {"windows", "darwin"}:
+    # Verify available size only when using static shared memory on Linux
+    if platform.system().lower() not in {"windows", "darwin"} and in_rowsize != -1 and out_rowsize != -1:
         device_num = _get_device_num()
         # In the cluster, _get_device_num indicates the number of the entire cluster. The maximum number of cards
         # on the ascend server is 8.

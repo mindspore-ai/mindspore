@@ -23,11 +23,13 @@
 #include "minddata/dataset/util/status.h"
 
 namespace mindspore::dataset {
+std::string GenerateShmName();
+
 class SharedMem {
  public:
   SharedMem() = delete;
 
-  explicit SharedMem(const std::string &name = "", bool create = false, size_t size = 0);
+  explicit SharedMem(const std::string &name, bool create, int fd, size_t size);
 
   ~SharedMem();
 
@@ -35,23 +37,18 @@ class SharedMem {
 
   std::string Name() const;
 
+  int32_t Fd() const;
+
   size_t Size() const;
 
-  void Incref();
-
-  int Decref();
-
-  Status Close();
-
-  Status Unlink();
+  void Close();
 
  private:
   std::string name_;
-  int32_t fd_ = -1;
-  void *buf_ = nullptr;
-  uint32_t flags_ = O_RDWR;
-  mode_t mode_ = 0600;
-  size_t size_ = 0;
+  bool create_;
+  int32_t fd_;
+  size_t size_;
+  void *buf_;
 };
 }  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_SHARED_MEM_H_

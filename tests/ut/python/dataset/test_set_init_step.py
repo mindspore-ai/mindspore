@@ -317,5 +317,7 @@ if __name__ == "__main__":
     test_init_step_with_non_mappable_source(fast_recovery_mode=True, shuffle=True)
     test_init_step_with_mappable_source(fast_recovery_mode=True, shuffle=True)
     test_init_step_with_non_mappable_generator(fast_recovery_mode=True, shuffle=True)
+    test_init_step_with_non_mappable_generator_with_len()
     test_init_step_with_mappable_generator(fast_recovery_mode=True, shuffle=True)
+    test_init_step_with_mind_dataset(fast_recovery_mode=True, shuffle=True)
     test_getter(init_step=0)
