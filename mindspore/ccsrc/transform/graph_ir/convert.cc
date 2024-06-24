@@ -456,9 +456,9 @@ DfGraphPtr GenExampleGraph(const std::string &name) {
   data.set_attr_index(0);
   data.update_input_desc_x(desc_data);
   data.update_output_desc_y(desc_data);
-  auto add = ge::op::Add("add").set_input_x1(data).set_input_x2(data);
+  auto abs = ge::op::Abs("abs").set_input_x(data);
   std::vector<Operator> inputs{data};
-  std::vector<Operator> outputs{add};
+  std::vector<Operator> outputs{abs};
   graph->SetInputs(inputs);
   graph->SetOutputs(outputs);
   return graph;
