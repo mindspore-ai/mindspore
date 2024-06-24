@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore as ms
@@ -107,9 +108,7 @@ def test_ops_narrow_forward_case01(context_mode):
     np.testing.assert_allclose(output_grad.asnumpy(), expect_grad, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_narrow_backward_dynamic_shape():
     """
     Feature: pyboost function.

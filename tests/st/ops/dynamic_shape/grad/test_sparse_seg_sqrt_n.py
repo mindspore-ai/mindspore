@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -37,10 +38,7 @@ def grad_dyn_case(is_dynamic_rank):
     test_dynamic.test_dynamic_grad_net((x, indices, segment_ids), is_dynamic_rank)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_grad_dynamic_shape():
     """
     Feature: test SparseSegmentSqrtN dynamic shape.
@@ -51,10 +49,7 @@ def test_grad_dynamic_shape():
     grad_dyn_case(False)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_grad_dynamic_rank():
     """
     Feature: test SparseSegmentSqrtN dynamic rank.

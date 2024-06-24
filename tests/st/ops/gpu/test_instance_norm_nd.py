@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -97,9 +98,7 @@ class Expected3d(nn.Cell):
         return F.reshape(self.ops(F.reshape(x, (1, -1, shape[2], shape[3], shape[4]))), shape)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("shape", [(8, 4, 5)])
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_instancenorm_1d(shape, data_type):
@@ -129,9 +128,7 @@ def test_instancenorm_1d(shape, data_type):
     assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("shape", [(8, 4, 3, 4)])
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_instancenorm_2d(shape, data_type):
@@ -161,9 +158,7 @@ def test_instancenorm_2d(shape, data_type):
     assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("shape", [(8, 4, 3, 4, 7)])
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_instancenorm_3d(shape, data_type):
@@ -193,9 +188,7 @@ def test_instancenorm_3d(shape, data_type):
     assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_instancenorm_2d_dynamic_shape():
     """
     Feature: InstanceNorm 2D operator with dynamic shape.
@@ -229,9 +222,7 @@ def test_instancenorm_2d_dynamic_shape():
     assert np.allclose(result[0].asnumpy(), expected[0].asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_instancenorm_vmap():
     """
     Feature: test InstanceNorm operator with vmap.
@@ -286,9 +277,7 @@ def test_instancenorm_vmap():
     assert np.allclose(vmap_updated_moving_variance.asnumpy(), for_updated_moving_variance.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_instancenorm_grad_vmap():
     """
     Feature: test InstanceNormGrad operator with vmap.

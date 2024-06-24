@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,9 +32,7 @@ class ResizeBilinearGradNet(nn.Cell):
         return self.rb1(dy, size)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_resize_bilinear_grad_align_corners():
     """
     Feature: test ResizeBilinearGrad op
@@ -69,9 +68,7 @@ def test_resize_bilinear_grad_align_corners():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_resize_bilinear_grad():
     """
     Feature: test ResizeBilinearGrad op
@@ -103,9 +100,7 @@ def test_resize_bilinear_grad():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_resize_bilinear_grad_half_pixel_centers():
     """
     Feature: Test ResizeBilinearGrad on GPU.
@@ -141,9 +136,7 @@ def test_resize_bilinear_grad_half_pixel_centers():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_resize_bilinear_grad_dtype(mode, dtype):

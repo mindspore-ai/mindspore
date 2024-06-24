@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -46,9 +47,7 @@ class NetUniqueDynamic(nn.Cell):
         return x_unique, x_idx, x_split
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_1d():
     x = Tensor(np.array([4, 5, 1, 2, 3, 3, 4, 5]).astype(np.float32))
     exp_output = np.array([1, 2, 3, 4, 5]).astype(np.float32)
@@ -60,9 +59,7 @@ def test_unique_1d():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_1d_float():
     x = Tensor(np.array([0.4, 0.5, 1.23, 2.2, 12.43, 12.43, 0.4, 0.5]).astype(np.float32))
     exp_output = np.array([0.4, 0.5, 1.23, 2.2, 12.43]).astype(np.float32)
@@ -74,9 +71,7 @@ def test_unique_1d_float():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_1d_sorted():
     x = Tensor(np.array([1, 1, 2, 4, 4, 4, 7, 8, 8]).astype(np.float32))
     exp_output = np.array([1, 2, 4, 7, 8]).astype(np.float32)
@@ -88,9 +83,7 @@ def test_unique_1d_sorted():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_zeros():
     x = Tensor(np.zeros(1000).astype(np.float32))
     exp_output = np.zeros(1).astype(np.float32)
@@ -102,9 +95,7 @@ def test_unique_zeros():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_large():
     x_np1 = np.arange(100)
     x_np2 = np.arange(100, 200)
@@ -120,9 +111,7 @@ def test_unique_large():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_1d_half():
     x = Tensor(np.array([0.4, 0.5, 1.23, 2.2, 12.43, 12.43, 0.4, 0.5]).astype(np.float16))
     exp_output = np.array([0.4, 0.5, 1.23, 2.2, 12.43]).astype(np.float16)
@@ -134,9 +123,7 @@ def test_unique_1d_half():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_1d_sorted_half():
     x = Tensor(np.array([1, 1, 2, 4, 4, 4, 7, 8, 8]).astype(np.float16))
     exp_output = np.array([1, 2, 4, 7, 8]).astype(np.float16)
@@ -148,9 +135,7 @@ def test_unique_1d_sorted_half():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_zeros_half():
     x = Tensor(np.zeros(1000).astype(np.float16))
     exp_output = np.zeros(1).astype(np.float16)
@@ -162,9 +147,7 @@ def test_unique_zeros_half():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_large_half():
     x_np1 = np.arange(100)
     x_np2 = np.arange(100, 200)
@@ -180,9 +163,7 @@ def test_unique_large_half():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_1d_int32():
     x = Tensor(np.array([4, 5, 1, 2, 3, 3, 4, 5]).astype(np.int32))
     exp_output = np.array([1, 2, 3, 4, 5]).astype(np.int32)
@@ -194,9 +175,7 @@ def test_unique_1d_int32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_1d_sorted_int32():
     x = Tensor(np.array([1, 1, 2, 4, 4, 4, 7, 8, 8]).astype(np.int32))
     exp_output = np.array([1, 2, 4, 7, 8]).astype(np.int32)
@@ -208,9 +187,7 @@ def test_unique_1d_sorted_int32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_zeros_int32():
     x = Tensor(np.zeros(1000).astype(np.int32))
     exp_output = np.zeros(1).astype(np.int32)
@@ -222,9 +199,7 @@ def test_unique_zeros_int32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_large_int32():
     x_np1 = np.arange(100)
     x_np2 = np.arange(100, 200)
@@ -240,9 +215,7 @@ def test_unique_large_int32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_dynamic():
     x = Tensor(np.array([4, 5, 1, 2, 3, 3, 4, 5, 6]).astype(np.float32))
     expt_unique = np.array([1, 2, 3, 4, 5, 6]).astype(np.float32)
@@ -269,9 +242,7 @@ def test_unique_dynamic():
         assert (out.asnumpy() == expt_split2[i]).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_1d_int64():
     x = Tensor(np.array([4, 5, 1, 2, 3, 3, 4, 5]).astype(np.int64))
     exp_output = np.array([1, 2, 3, 4, 5]).astype(np.int64)
@@ -285,9 +256,7 @@ def test_unique_1d_int64():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_1d_sorted_int64():
     x = Tensor(np.array([1, 1, 2, 4, 4, 4, 7, 8, 8]).astype(np.int64))
     exp_output = np.array([1, 2, 4, 7, 8]).astype(np.int64)
@@ -299,9 +268,7 @@ def test_unique_1d_sorted_int64():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_zeros_int64():
     x = Tensor(np.zeros(1000).astype(np.int64))
     exp_output = np.zeros(1).astype(np.int64)
@@ -313,9 +280,7 @@ def test_unique_zeros_int64():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_large_int64():
     x_np1 = np.arange(100)
     x_np2 = np.arange(100, 200)

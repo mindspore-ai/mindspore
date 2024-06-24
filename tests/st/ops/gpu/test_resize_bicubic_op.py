@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import mindspore.nn as nn
@@ -34,9 +35,7 @@ class NetResizeBicubic(nn.Cell):
         return self.resize_bicubic(images, size)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_resize_bicubic_graph():
     """
     Feature: test operations running in graph mode
@@ -61,9 +60,7 @@ def test_resize_bicubic_graph():
         assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_resize_bicubic_pynative():
     """
     Feature: test operations in result and output type

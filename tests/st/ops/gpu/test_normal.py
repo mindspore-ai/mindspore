@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -33,9 +34,7 @@ class Net(nn.Cell):
     def construct(self, mean, stddev):
         return C.normal(self.shape, mean, stddev, self.seed)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_normal_1D_numpy():
     """
     Feature: normal
@@ -52,9 +51,7 @@ def test_net_normal_1D_numpy():
     assert output.shape == (3, 2, 4)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_normal_1D():
     """
     Feature: normal
@@ -69,9 +66,7 @@ def test_net_normal_1D():
     output = net(mean, stddev)
     assert output.shape == (3, 2, 4)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_normal_ND():
     """
     Feature: normal

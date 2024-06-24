@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import mindspore.context as context
 import mindspore as ms
@@ -49,9 +50,7 @@ class SparseDenseCwiseDivNet(nn.Cell):
         return self.op(x1_indices, x1_values, x1_shape, x2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparse_dense_add_dyn():
     """
     Feature: test SparseDenseCwiseAdd op in cpu.
@@ -76,9 +75,7 @@ def test_sparse_dense_add_dyn():
     assert out.asnumpy().shape == expect_out_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparse_dense_mul_dyn():
     """
     Feature: test SparseDenseCwiseMul op in cpu.
@@ -103,9 +100,7 @@ def test_sparse_dense_mul_dyn():
     assert out.asnumpy().shape == expect_out_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.skip(reason="Have issues")
 def test_sparse_dense_div_dyn():
     """

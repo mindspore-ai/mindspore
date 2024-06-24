@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import random
 from functools import reduce
@@ -34,9 +35,7 @@ class NetArgmin(nn.Cell):
         return self.argmin(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argmin_1d():
     """
     Feature: None
@@ -54,9 +53,7 @@ def test_argmin_1d():
         assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argmin_2d():
     """
     Feature: None
@@ -82,9 +79,7 @@ def test_argmin_2d():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_argmin_high_dims():
     """
     Feature: None
@@ -106,9 +101,7 @@ def test_argmin_high_dims():
             assert (ms_output.asnumpy() == np_output).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_argmin_functional():
     """
     Feature: test ops.argmin.
@@ -131,9 +124,7 @@ def test_argmin_functional():
     assert np.all(out_dim_1_keepdim.asnumpy() == np.array([[1], [0], [1]]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_argmin_tensor():
     """
     Feature: test tensor.argmin.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore as ms
@@ -66,9 +67,7 @@ def vmap_tensor_case():
     assert np.allclose(expect, outputs.asnumpy(), 1.e-4, 1.e-7)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fill_v2_dyn():
     """
     Feature: test FillV2 dynamic shape in gpu.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import random
 from functools import reduce
@@ -46,8 +47,6 @@ class DynRankNet(nn.Cell):
         return res
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_argmax_1d():
     """
     Feature: Test argmax functional api.
@@ -64,8 +63,6 @@ def test_argmax_1d():
         assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
 def test_argmax_2d():
     """
     Feature: Test argmax functional api.
@@ -91,8 +88,6 @@ def test_argmax_2d():
         assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_argmax_high_dims():
     """
     Feature: Test argmax functional api.
@@ -118,8 +113,6 @@ class ArgmaxFuncNet(nn.Cell):
         return F.argmax(x, dim=-1)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_functional_argmax(mode):
     """
@@ -135,8 +128,6 @@ def test_functional_argmax(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_argmax_dynamic_shape():
     """
     Feature: test ops.argmax.
@@ -166,8 +157,6 @@ def test_argmax_dynamic_shape():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
 def test_argmax_support_types():
     """
     Feature: test ops.Argmax.
@@ -235,8 +224,6 @@ def test_argmax_support_types():
     assert out2_uint64 == 1 and out2_uint64.dtype == mstype.int64
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
 def test_argmax_functional():
     """
     Feature: test ops.argmax.

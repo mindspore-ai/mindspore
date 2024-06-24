@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -46,9 +47,7 @@ class Grad(Cell):
         return gout
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_train_forward_backward():
     x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float32)
     expect_output = np.array([[[[5, 6, 7, 7],
@@ -96,9 +95,7 @@ def test_train_forward_backward():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool_with_argmax_2d():
     x = Tensor(np.array([[[
         [0, 1, 2, 3, -4, -5],
@@ -150,9 +147,7 @@ def test_maxpool_with_argmax_2d():
     assert (index2.asnumpy() == expect__index_result2).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool_with_argmax_2d_fp16():
     x = Tensor(np.array([[[
         [0, 1, 2, 3, -4, -5],
@@ -204,9 +199,7 @@ def test_maxpool_with_argmax_2d_fp16():
     assert (index2.asnumpy() == expect__index_result2).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool_with_argmax_2d_dynaimic_shape():
     """
     Feature: test dynamic shape of maxpool_with_argmax

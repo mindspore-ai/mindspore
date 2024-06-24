@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -53,9 +54,7 @@ class SoftShrinkNet(nn.Cell):
         return self.soft_shrink(input_x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 @pytest.mark.parametrize("data_shape", [(3, 4), (4, 5, 6, 7)])
 @pytest.mark.parametrize("lambd", [0.5])
@@ -76,9 +75,7 @@ def test_soft_shrink(dtype, data_shape, lambd):
     np.testing.assert_array_almost_equal(output.asnumpy(), benchmark_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_soft_shrink_functional_check():
     """
     Feature: test_soft_shrink_functional_check.
@@ -107,9 +104,7 @@ class DynamicShapeSoftShrinkNet(nn.Cell):
         return self.soft_shrink_op(data)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_soft_shrink_dy_shape():
     """
     Feature: test_soft_shrink_dy_shape.
@@ -139,9 +134,7 @@ class ShapeSoftShrinkGradNet(nn.Cell):
         return self.soft_shrink_grad_op(in_x, grad)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_soft_shrink_grad_ds_shape():
     """
     Feature: test_soft_shrink_dy_shape.
@@ -167,9 +160,7 @@ def soft_shrink_graph(x):
     return P.SoftShrink()(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_soft_shrink_vmap():
     """
     Feature: test tan vmap.

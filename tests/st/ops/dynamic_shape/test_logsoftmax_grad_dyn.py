@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import mindspore as ms
 from mindspore import ops as P
@@ -70,9 +71,7 @@ def case_logsoftmax_grad_dyn(mode, device_target):
     assert np.allclose(dyn_rank_out, static_out, 1e-3, 1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_logsoftmax_grad_dyn_gpu():
     """
     Feature: Test LogSoftmaxGrad op on GPU.
@@ -82,9 +81,7 @@ def test_logsoftmax_grad_dyn_gpu():
     case_logsoftmax_grad_dyn(context.GRAPH_MODE, "GPU")
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_logsoftmax_grad_dyn_cpu():
     """
     Feature: Test LogSoftmaxGrad op on CPU.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -72,9 +73,7 @@ def get_dy_shape(real_shape):
     return part_shape_list
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("reduction", ["none", "mean", "sum"])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_bce_with_logits_loss(reduction, data_type):
@@ -100,9 +99,7 @@ def test_bce_with_logits_loss(reduction, data_type):
     np.testing.assert_allclose(benchmark, output.asnumpy(), rtol=loss, atol=loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("reduction", ["none", "mean", "sum"])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_bce_with_logits_loss_vmap_cpu(reduction, data_type):
@@ -139,9 +136,7 @@ def test_bce_with_logits_loss_vmap_cpu(reduction, data_type):
     np.testing.assert_allclose(benchmark, output.asnumpy(), rtol=loss, atol=loss)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("reduction", ["none", "mean", "sum"])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_bce_with_logits_loss_dy_shape(reduction, data_type):

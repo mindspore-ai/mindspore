@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 """
 Test PromptKVCache plugin custom ops.
 """
@@ -103,9 +104,7 @@ def create_np_inputs(cache, update, batch_index):
     return cache.asnumpy(), update.asnumpy(), batch_index.asnumpy()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @test_utils.run_test_with_On
 def test_prompt_k_v_cache_net():
     """

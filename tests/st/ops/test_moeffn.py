@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore.nn as nn
@@ -114,9 +115,7 @@ expect = np.array([[12.805, 9.766, 8.98, 12.16],
                    [11.49, 12.05, 12.41, 14.17],
                    [9.82, 9.91, 10.79, 12.32]])
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ffn_forward_net():
     """
     Feature: Test moeffn in kbk and pynative mode.
@@ -129,9 +128,7 @@ def test_ffn_forward_net():
 
     assert np.allclose(output.asnumpy(), expect, rtol=1e-1)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ffn_forward_mode(mode):
     """
@@ -148,9 +145,7 @@ def test_ffn_forward_mode(mode):
         output = (jit(ffn_forward_func, jit_config=JitConfig(jit_level="O2")))(x, w1, w2, expert_tokens, bias1, bias2)
     assert np.allclose(output.asnumpy(), expect, rtol=1e-1)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ffn_forward_value():
     """
     Feature: Test moeffn in kbk and pynative mode.
@@ -162,9 +157,7 @@ def test_ffn_forward_value():
     assert np.allclose(output.asnumpy(), expect, rtol=1e-1)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ffn_forward_shape():
     """
     Feature: Test moeffn in kbk and pynative mode.

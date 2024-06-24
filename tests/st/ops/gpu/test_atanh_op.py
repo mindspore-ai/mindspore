@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -26,9 +27,7 @@ def atanh(x):
     return 0.5 * np.log((1. + x) / (1. - x))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_atanh_fp64():
     """
     Feature: Gpu Atanh kernel.
@@ -43,9 +42,7 @@ def test_atanh_fp64():
     assert np.allclose(output_ms.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_atanh_fp32():
     """
     Feature: Gpu Atanh kernel.
@@ -60,9 +57,7 @@ def test_atanh_fp32():
     assert np.allclose(output_ms.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_atanh_fp16():
     """
     Feature: Gpu Atanh kernel.
@@ -77,9 +72,7 @@ def test_atanh_fp16():
     assert np.allclose(output_ms.asnumpy(), expect, 1e-3, 1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_atanh_complex64():
     """
     Feature: Gpu Atanh kernel.
@@ -94,9 +87,7 @@ def test_atanh_complex64():
     assert np.allclose(output_ms.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_atanh_complex128():
     """
     Feature: Gpu Atanh kernel.
@@ -123,9 +114,7 @@ def test_atanh_forward_tensor_api(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_atanh_forward_float32_tensor_api():
     """
     Feature: test atanh forward tensor api.

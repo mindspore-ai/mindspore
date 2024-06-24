@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -32,9 +33,7 @@ class Net(nn.Cell):
         return self.extractimagepatches(input_tensor)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_extract_image_patches_valid():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = Net([1, 1, 2, 4], [1, 1, 7, 5], [1, 1, 2, 1], "valid")
@@ -63,9 +62,7 @@ def test_extract_image_patches_valid():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_extract_image_patches_same():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = Net([1, 1, 5, 2], [1, 1, 8, 2], [1, 1, 3, 3], "same")
@@ -84,9 +81,7 @@ def test_extract_image_patches_same():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_extract_image_patches_dynamic_shape():
     """
     Feature: test dynamic shape of extract_image_patches

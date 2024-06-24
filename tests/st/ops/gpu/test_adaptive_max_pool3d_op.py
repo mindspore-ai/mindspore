@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -66,9 +67,7 @@ class RankDynamicNet(nn.Cell):
         return out, in_x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_rank_dynamic():
     """
     Feature: test rank dynamic shape.
@@ -86,9 +85,7 @@ def test_rank_dynamic():
     assert (dyn_output[1].asnumpy() == output[1].asnumpy()).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net_4d():
     """
     Feature: test 4d input shape.
@@ -103,9 +100,7 @@ def test_net_4d():
     assert output[0].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_net_5d():
     """
     Feature: test 5d input shape.
@@ -120,9 +115,7 @@ def test_net_5d():
     assert output[0].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net_dynamic_shape():
     """
     Feature: test dyname shape.
@@ -138,9 +131,7 @@ def test_net_dynamic_shape():
     assert output[0].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_net_vmap():
     """
     Feature: test vmap function.

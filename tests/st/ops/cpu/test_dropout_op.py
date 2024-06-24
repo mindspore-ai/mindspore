@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -35,9 +36,7 @@ class Net(nn.Cell):
         return self.dropout(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net():
     x = np.random.randn(3, 3, 4).astype(np.float32)
     dropout = Net()
@@ -56,9 +55,7 @@ class Net1(nn.Cell):
         return self.dropout(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net1():
     x = np.arange(0, 16).reshape(2, 2, 4).astype(np.float32)
     dropout = Net1()
@@ -77,9 +74,7 @@ class Net2(nn.Cell):
         return self.dropout(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net2():
     x = np.arange(0, 12).reshape(3, 4).astype(np.float16)
     dropout = Net2()
@@ -98,9 +93,7 @@ class Net3(nn.Cell):
         return self.dropout(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net3():
     """
     Feature: test dropout mask diff by diff step.
@@ -115,9 +108,7 @@ def test_net3():
     assert np.allclose(output1.asnumpy(), output2.asnumpy()) is False
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_op2():
     """
     Feature: test Dropout2D.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import ctypes
 import pytest
@@ -516,9 +517,7 @@ def net_forward_test(inputs: list):
         assert ifa_result.shape == (B, N, 1, D)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_incre_flash_attention_bsh_fwd():
     """
     Feature: Test functional ifa operator.
@@ -535,9 +534,7 @@ def test_incre_flash_attention_bsh_fwd():
     net_forward_test(inputs)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_incre_flash_attention_bnsd_fwd():
     """
     Feature: Test functional ifa operator.
@@ -554,9 +551,7 @@ def test_incre_flash_attention_bnsd_fwd():
     net_forward_test(inputs)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_incre_flash_attention_bsh_fwd_paged_attention():
     """
     Feature: Test functional ifa operator of paged attention.
@@ -573,9 +568,7 @@ def test_incre_flash_attention_bsh_fwd_paged_attention():
     net_forward_test(inputs)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_incre_flash_attention_bnsd_fwd_paged_attention():
     """
     Feature: Test functional ifa operator of paged attention.

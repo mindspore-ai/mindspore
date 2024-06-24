@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import math
@@ -85,9 +86,7 @@ class FusedInferAttentionScoreFunc(nn.Cell):
                         block_table, query_padding_size, kv_padding_size)
         return out
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_pfa_bsh_fwd(context_mode):
     """
@@ -131,9 +130,7 @@ def test_fused_infer_attention_score_pfa_bsh_fwd(context_mode):
     np.testing.assert_allclose(fias_result_att.asnumpy(), pfa_attention_out.asnumpy(), rtol=5e-3, atol=5e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_pfa_bnsd_fwd(context_mode):
     """
@@ -175,9 +172,7 @@ def test_fused_infer_attention_score_pfa_bnsd_fwd(context_mode):
     np.testing.assert_allclose(attention_out.asnumpy(), fias_result_att.asnumpy(), rtol=5e-3, atol=5e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_bnsd_incre(context_mode):
     """
@@ -218,9 +213,7 @@ def test_fused_infer_attention_score_bnsd_incre(context_mode):
     assert fias_result_att.shape == ifa_out.shape
     np.testing.assert_allclose(fias_result_att.asnumpy(), ifa_out.asnumpy(), rtol=5e-3, atol=5e-3)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_bnsd_incre_antiquant(context_mode):
     """
@@ -265,9 +258,7 @@ def test_fused_infer_attention_score_bnsd_incre_antiquant(context_mode):
     assert fias_result_att.shape == ifa_out.shape
     np.testing.assert_allclose(fias_result_att.asnumpy(), ifa_out.asnumpy(), rtol=5e-3, atol=5e-3)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_bsh_incre(context_mode):
     """
@@ -305,9 +296,7 @@ def test_fused_infer_attention_score_bsh_incre(context_mode):
     assert fias_result_att.shape == ifa_out.shape
     np.testing.assert_allclose(fias_result_att.asnumpy(), ifa_out.asnumpy(), rtol=5e-3, atol=5e-3)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_bsh_incre_antiquant(context_mode):
     """
@@ -351,9 +340,7 @@ def test_fused_infer_attention_score_bsh_incre_antiquant(context_mode):
     assert fias_result_att.shape == ifa_out.shape
     np.testing.assert_allclose(fias_result_att.asnumpy(), ifa_out.asnumpy(), rtol=5e-3, atol=5e-3)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_pfa_bnsd_fwd_dynamic(context_mode):
     """

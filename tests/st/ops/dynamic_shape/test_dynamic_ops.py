@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import mindspore as ms
 from mindspore import ops as P
@@ -34,11 +35,7 @@ class Net(nn.Cell):
         return x
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_strided_slice_feed_input_dynamic():
     """
     Feature: Test StridedSlice for dynamic shape in feed mode.
@@ -62,11 +59,7 @@ def test_strided_slice_feed_input_dynamic():
     assert (np.abs(out.asnumpy() - expect) < tol).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_strided_slice_feed_output_dynamic():
     """
     Feature: Test StridedSlice for dynamic shape in feed mode.

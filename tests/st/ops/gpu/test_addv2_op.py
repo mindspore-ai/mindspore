@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -19,9 +20,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import math_ops as P
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_addv2_fp32():
     """
     Feature: Returns the add of the  tensor
@@ -37,9 +36,7 @@ def test_addv2_fp32():
     assert (output.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_addv2_complex64():
     """
     Feature: Returns the add of the  tensor
@@ -57,9 +54,7 @@ def test_addv2_complex64():
     assert (output.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_addv2_uint8():
     """
     Feature: Returns the add of the  tensor

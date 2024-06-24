@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -32,9 +33,7 @@ class Net_Pool_Grad(nn.Cell):
         return self.maxpool_grad_fun(x, dy, index)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool2d_grad():
     x = Tensor(np.array([[[
         [0, 1, 2, 3, 4, 5],
@@ -74,9 +73,7 @@ def test_maxpool2d_grad():
     assert np.allclose(expect_result, output.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool2d_grad_fp16():
     x = Tensor(np.array([[[
         [0, 1, 2, 3, 4, 5],
@@ -116,9 +113,7 @@ def test_maxpool2d_grad_fp16():
     assert np.allclose(expect_result, output.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool2d_grad_dynamic_shape():
     """
     Feature: test dynamic shape of max_pool grad

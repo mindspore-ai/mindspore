@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -54,9 +55,7 @@ class DynamicShapeNet(nn.Cell):
         return self.apply_gradient_descent(self.var, alpha, delta)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_apply_gradient_descent_dynamic_shape():
     """
     Feature: test ApplyGradientDescent dynamic_shape feature.
@@ -86,9 +85,7 @@ def test_apply_gradient_descent_dynamic_shape():
     assert outputs.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_apply_gradient_descent_float32():
     """
     Feature: ApplyGradientDescent cpu op.
@@ -111,9 +108,7 @@ def test_apply_gradient_descent_float32():
     run_net(var, alpha, delta, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_apply_gradient_descent_float16():
     """
     Feature: ApplyGradientDescent cpu op.
@@ -145,9 +140,7 @@ class VmapNet(nn.Cell):
         return self.apply_gradient_descent(var, alpha, delta)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_vmap_apply_gradient_descent():
     """
     Feature: ApplyGradientDescent cpu op vmap.

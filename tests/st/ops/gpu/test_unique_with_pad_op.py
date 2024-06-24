@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -36,9 +37,7 @@ class NetUniqueWithPad(nn.Cell):
         return x_unique, x_idx
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_with_pad_int32():
     """
     Feature: test uniquewithpad in gpu.
@@ -55,9 +54,7 @@ def test_unique_with_pad_int32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_with_pad_int64():
     """
     Feature: test uniquewithpad in gpu.
@@ -74,9 +71,7 @@ def test_unique_with_pad_int64():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_with_pad_float32():
     """
     Feature: test uniquewithpad in gpu.
@@ -92,9 +87,7 @@ def test_unique_with_pad_float32():
     assert (x_idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_with_pad_dynamic_shape():
     """
     Feature: uniquewithpad dynamic shape test in gpu.
@@ -113,9 +106,7 @@ def test_unique_with_pad_dynamic_shape():
     assert (output[1].asnumpy() == expect_idx_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_with_pad_vmap():
     """
     Feature: uniquewithpad vmap test in gpu.

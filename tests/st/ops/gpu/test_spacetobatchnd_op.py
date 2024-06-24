@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -53,9 +54,7 @@ def space_to_batch_nd_test_case(nptype, block_size=2, input_shape=(1, 1, 4, 4)):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_space_to_batch_nd_graph():
     """
     Feature: test SpaceToBatchND function interface.
@@ -66,9 +65,7 @@ def test_space_to_batch_nd_graph():
     space_to_batch_nd_test_case(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_space_to_batch_nd_pynative():
     """
     Feature: test SpaceToBatchND function interface.

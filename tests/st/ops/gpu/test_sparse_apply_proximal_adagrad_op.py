@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -48,9 +49,7 @@ def add_testcase(var, accum, lr, l1, l2, grad, indices):
     return net(grad, indices)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dyn_shape():
     """
     Feature: test SparseApplyProximalAdagrad ops in gpu.
@@ -77,9 +76,7 @@ def test_dyn_shape():
     assert output2.asnumpy().shape == expect_shapes[1]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_small_shape_input_update():
     var = Tensor(np.arange(9).reshape(3, 3).astype(np.float32))
     accum = Tensor(np.zeros(9).reshape(3, 3).astype(np.float32))
@@ -97,9 +94,7 @@ def test_small_shape_input_update():
     np.testing.assert_array_almost_equal(net.accum.data.asnumpy(), expect2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_parameter_lr_l1_l2():
     var = Tensor(np.arange(9).reshape(3, 3).astype(np.float32))
     accum = Tensor(np.zeros(9).reshape(3, 3).astype(np.float32))
@@ -115,9 +110,7 @@ def test_parameter_lr_l1_l2():
     np.testing.assert_array_almost_equal(output2.asnumpy(), expect2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_with_np_arange():
     var = Tensor(np.arange(9).reshape(3, 3).astype(np.float32))
     accum = Tensor(np.arange(63, 72).reshape(3, 3).astype(np.float32))
@@ -136,9 +129,7 @@ def test_with_np_arange():
     np.testing.assert_array_almost_equal(output2.asnumpy(), expect2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_large_shape():
     var = Tensor(np.arange(24).reshape((2, 3, 4)).astype(np.float32))
     accum = Tensor(np.arange(34, 58).reshape((2, 3, 4)).astype(np.float32))

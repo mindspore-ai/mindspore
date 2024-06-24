@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -36,9 +37,7 @@ class Net(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparseapplyadagradop_fp32():
     """
     Feature: SparseApplyAdagrad cpu op
@@ -57,9 +56,7 @@ def test_sparseapplyadagradop_fp32():
     assert np.all(accum_out.asnumpy() == expect_accum)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparseapplyadagradop_update_slot_false():
     """
     Feature: SparseApplyAdagrad cpu op
@@ -79,9 +76,7 @@ def test_sparseapplyadagradop_update_slot_false():
     assert np.all(accum_out.asnumpy() == expect_accum)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparseapplyadagrad_dtype_not_supported():
     """
     Feature: SparseApplyAdagrad cpu op
@@ -97,9 +92,7 @@ def test_sparseapplyadagrad_dtype_not_supported():
         sparse_apply_adagrad(var, accum, gradient, indices)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_vmap_sparseapplyadagradop():
     """
     Feature: Vmap feature on SparseApplyAdagrad cpu op

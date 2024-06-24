@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 
@@ -23,9 +24,7 @@ from mindspore import Tensor
 from mindspore.ops.composite import GradOperation
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pad_basic():
     """
     Test array is being padded with 0's
@@ -51,9 +50,7 @@ def test_pad_basic():
     np.testing.assert_array_equal(y_test, test_arr_expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pad_row():
     """
     Test correct row padding
@@ -82,9 +79,7 @@ def test_pad_row():
     np.testing.assert_equal(y_test_2[:, :, 3:, :], test_arr_2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pad_column():
     """
     Test correct column padding
@@ -113,9 +108,7 @@ def test_pad_column():
     np.testing.assert_equal(y_test_2[:, :, :, 6:-1], test_arr_2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pad_3d_pad():
     """
     Test full 3d padding, with all 3 input types
@@ -171,9 +164,7 @@ class Net(nn.Cell):
         return self.pad(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pad_3d_backprop():
     """
     Confirm correct 3d padding backprop
@@ -210,9 +201,7 @@ def test_pad_3d_backprop():
     np.testing.assert_array_equal(dx, expected_dx)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pad_error_cases():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 

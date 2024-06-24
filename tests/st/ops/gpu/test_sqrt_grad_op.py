@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -30,9 +31,7 @@ class NetSqrtGrad(nn.Cell):
         return self.sqrt_grad(x, dx)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sqrt_grad():
     """
     Feature: ALL To ALL
@@ -57,9 +56,7 @@ def test_sqrt_grad():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_sqrt_grad_dy_shape(dtype):
     """

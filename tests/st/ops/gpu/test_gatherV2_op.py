@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -32,9 +33,7 @@ class GatherNet(nn.Cell):
         return self.gather(x, indices, 1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather0():
     x = Tensor(np.arange(2 * 3 * 4 * 5, dtype=np.float32).reshape(2, 3, 4, 5))
     indices = Tensor(np.ones((2, 2, 4, 5), dtype='i4'))
@@ -856,9 +855,7 @@ class GatherNet1(nn.Cell):
         return self.gather(x, indices, -1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather1():
     x = Tensor(np.arange(2 * 3 * 4 * 5, dtype=np.float32).reshape(2, 3, 4, 5))
     indices = Tensor(np.array([1, 3, 4], dtype='i4'))
@@ -910,9 +907,7 @@ class GatherNet2(nn.Cell):
         return self.gather(x, indices, 0)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather2():
     x = Tensor(np.array([[4., 5., 4., 1., 5.],
                          [4., 9., 5., 6., 4.],
@@ -959,9 +954,7 @@ class GatherNetDynamic(nn.Cell):
         return self.gather(x, indices, self.axis)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gatherV2_dyn_ab():
     """
     Tests for Dynamic shape with both inputs dynamic
@@ -990,9 +983,7 @@ def test_gatherV2_dyn_ab():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gatherV2_dyn_a():
     """
     Tests for Dynamic shape with only first input dynamic
@@ -1066,9 +1057,7 @@ def test_gatherV2_dyn_a():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gatherV2_dyn_b():
     """
     Tests for Dynamic shape with only second input dynamic
@@ -1137,9 +1126,7 @@ def test_gatherV2_dyn_b():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather1_float64():
     x = Tensor(np.arange(2 * 3 * 4 * 5, dtype=np.float64).reshape(2, 3, 4, 5))
     indices = Tensor(np.array([1, 3, 4], dtype='i4'))
@@ -1182,9 +1169,7 @@ def test_gather1_float64():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather1_int32():
     x = Tensor(np.arange(2 * 3 * 4 * 5, dtype=np.int32).reshape(2, 3, 4, 5))
     indices = Tensor(np.array([1, 3, 4], dtype='i4'))
@@ -1227,9 +1212,7 @@ def test_gather1_int32():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather1_int16():
     x = Tensor(np.arange(2 * 3 * 4 * 5, dtype=np.int16).reshape(2, 3, 4, 5))
     indices = Tensor(np.array([1, 3, 4], dtype='i4'))
@@ -1272,9 +1255,7 @@ def test_gather1_int16():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather1_int8():
     x = Tensor(np.arange(2 * 3 * 4 * 5, dtype=np.int8).reshape(2, 3, 4, 5))
     indices = Tensor(np.array([1, 3, 4], dtype='i4'))
@@ -1317,9 +1298,7 @@ def test_gather1_int8():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather1_uint8():
     x = Tensor(np.arange(2 * 3 * 4 * 5, dtype=np.uint8).reshape(2, 3, 4, 5))
     indices = Tensor(np.array([1, 3, 4], dtype='i4'))
@@ -1362,9 +1341,7 @@ def test_gather1_uint8():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather1_bool():
     x = Tensor(np.array([[0, 1, 1, 0], [1, 0, 0, 0], [1, 0, 1, 0]], dtype=np.bool))
     indices = Tensor(np.array(([1, 2]), dtype='i4'))
@@ -1376,9 +1353,7 @@ def test_gather1_bool():
     assert np.all(expect == output.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.uint64, np.uint16, np.int64, np.complex64, np.complex128])
 def test_gather_tensor(data_type):
     """
@@ -1408,9 +1383,7 @@ def test_gather_tensor(data_type):
     np.allclose(out.asnumpy(), y_expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("data_type", [np.uint64, np.uint16, np.int64, np.complex64, np.complex128])
 def test_gather_tensor_outofbound(data_type):
     """

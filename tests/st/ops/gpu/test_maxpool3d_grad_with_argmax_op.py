@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -54,9 +55,7 @@ class DynamicShapeMaxPool3DGradWithArgmaxNet(Cell):
         return self.net(x, dy, mask)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool3d_grad_withargmax_float32():
     """
     Feature: Test MaxPool3DGradWithArgmax.
@@ -85,9 +84,7 @@ def test_maxpool3d_grad_withargmax_float32():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool3d_grad_withargmax_float16():
     """
     Feature: Test MaxPool3DGradWithArgmax.
@@ -116,9 +113,7 @@ def test_maxpool3d_grad_withargmax_float16():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool3d_grad_withargmax_vmap():
     """
     Feature: Test vmap.
@@ -136,9 +131,7 @@ def test_maxpool3d_grad_withargmax_vmap():
     assert out.shape == (1, 1, 1, 3, 4, 3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_maxpool3d_grad_with_argmax():
     """
     Feature: MaxPool3DGradWithArgmax dynamic test.

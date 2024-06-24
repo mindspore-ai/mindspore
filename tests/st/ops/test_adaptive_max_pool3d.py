@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.nn as nn
@@ -19,11 +20,7 @@ from mindspore import Tensor
 from mindspore import ops
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_nn_adaptivemaxpool3d_with_int_oputput_size():
     """
     Feature: test nn.AdaptiveMaxPool3d
@@ -38,11 +35,7 @@ def test_nn_adaptivemaxpool3d_with_int_oputput_size():
     assert np.allclose(output.asnumpy(), expected_result)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_f_adaptivemaxpool3d_with_int_oputput_size():
     """
     Feature: test ops.adaptive_max_pool3d

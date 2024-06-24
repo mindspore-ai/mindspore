@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -69,9 +70,7 @@ def benchmark(diagonal, expect, align="RIGHT_LEFT", k=None, num_rows=None, num_c
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=error, atol=error)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_shape", [(8,)])
 @pytest.mark.parametrize("data_type", [np.int32, np.int64, np.float32, np.float64])
 def test_matrix_diag_v1(data_shape, data_type):
@@ -86,9 +85,7 @@ def test_matrix_diag_v1(data_shape, data_type):
     benchmark(diagonal, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.uint32, np.uint64, np.int8, np.int16])
 def test_matrix_diag_v3_1(data_type):
     """
@@ -139,9 +136,7 @@ def test_matrix_diag_v3_1(data_type):
     benchmark(diagonal, expect, k=k)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.uint8, np.uint16])
 def test_matrix_diag_v3_2(data_type):
     """
@@ -178,9 +173,7 @@ def test_matrix_diag_v3_2(data_type):
     benchmark(diagonal, expect, k=-1, num_rows=3, padding_value=9)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float16])
 def test_matrix_diag_v3_vmap(data_type):
     """

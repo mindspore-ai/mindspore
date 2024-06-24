@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -174,9 +175,7 @@ class DequantBMMCell(Cell):
         return self.dbmm(x1, x2, self.scale, self.offset, bias)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_weight_quant_bmm_cell_as_antiquant_1p(mode):
     """
@@ -204,9 +203,7 @@ def test_weight_quant_bmm_cell_as_antiquant_1p(mode):
     np.testing.assert_allclose(fact, expect, rtol=3e-2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_quant_batch_matmul_with_bias_correction(mode):
     """

@@ -31,9 +31,7 @@ class LuUnpackNet(nn.Cell):
         return self.lu_unpack(LU_data, LU_pivots)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test_lu_unpack_float32_int64():
     """
     Feature: ALL To ALL
@@ -53,9 +51,7 @@ def test_lu_unpack_float32_int64():
     assert np.allclose(a_u.numpy(), my_a_u.asnumpy(), atol=my_atol)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test_lu_unpack_float64_int32():
     """
     Feature: ALL To ALL
@@ -75,9 +71,7 @@ def test_lu_unpack_float64_int32():
     assert np.allclose(a_u.numpy(), my_a_u.asnumpy(), atol=my_atol)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test_lu_unpack_float64_int16():
     """
     Feature: ALL To ALL
@@ -97,9 +91,7 @@ def test_lu_unpack_float64_int16():
     assert np.allclose(a_u.numpy(), my_a_u.asnumpy(), atol=my_atol)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test_lu_unpack_input_error():
     """
     Feature: ALL To ALL

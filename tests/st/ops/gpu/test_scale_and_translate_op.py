@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 from mindspore import context, Tensor
@@ -28,9 +29,7 @@ class NetScaleAndTranslate(nn.Cell):
         return self.op(images, size, scale, translation)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scale_and_translate_lanczos3_true_graph_mode():
     """
     Feature: Test ScaleAndTranslate.
@@ -72,9 +71,7 @@ def test_scale_and_translate_lanczos3_true_graph_mode():
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scale_and_translate_lanczos1_true_pynative_mode():
     """
     Feature: Test ScaleAndTranslate.

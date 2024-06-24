@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import os
 import stat
@@ -128,9 +129,7 @@ class NetReduceAll(nn.Cell):
         return self.op(x, self.axis)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_reduce_any_onnx():
     """
     Feature: test ReduceAll op in cpu.
@@ -156,9 +155,7 @@ def test_reduce_any_onnx():
     os.remove(file)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_reduce_all_onnx():
     """
     Feature: test ReduceAll op in cpu.
@@ -184,9 +181,7 @@ def test_reduce_all_onnx():
     os.remove(file)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reduce():
     """
     /// Feature: Reduce
@@ -253,9 +248,7 @@ def test_reduce():
     assert (output[17].asnumpy() == 0.0).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reduce_logic():
     """
     /// Feature: Reduce logic
@@ -290,9 +283,7 @@ def test_reduce_logic():
     assert (output[7].asnumpy() == expect_any_4).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reduce_prod():
     """
     /// Feature: Reduce prod

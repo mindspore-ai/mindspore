@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -42,9 +43,7 @@ class NetConv3dTranspose(nn.Cell):
         return self.conv_trans(x, w)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv3dtranspose_dshape_1():
     """
     Feature: Test conv3dtranspose dynamic shape.
@@ -63,9 +62,7 @@ def test_conv3dtranspose_dshape_1():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv3dtranspose_dshape_2():
     """
     Feature: Test conv3dtranspose dynamic shape.
@@ -84,9 +81,7 @@ def test_conv3dtranspose_dshape_2():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv3d_transpose():
     """
     Feature: Test conv3dtranspose.
@@ -114,9 +109,7 @@ def test_conv3d_transpose():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv3d_transpose_vmap():
     """
     Feature: Conv3DTranspose op

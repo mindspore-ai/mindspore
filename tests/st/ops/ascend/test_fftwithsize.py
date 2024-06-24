@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -28,10 +29,7 @@ def irfft_forward_func(x, signal_ndim, inverse, real, norm='backward', onesided=
 def irfft_backward_func(x, signal_ndim, inverse, real, norm='backward', onesided=True, signal_sizes=()):
     return ops.grad(irfft_forward_func, (0,))(x, signal_ndim, inverse, real, norm, onesided, signal_sizes)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fft_with_size_irfft(mode):
     """
@@ -49,10 +47,7 @@ def test_fft_with_size_irfft(mode):
     assert output.shape == (10, 3, 3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fft_with_size_irfft_signal_sizes(mode):
     """

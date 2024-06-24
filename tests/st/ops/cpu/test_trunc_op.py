@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -36,9 +37,7 @@ class Net(nn.Cell):
         return self.trunc(x0)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test16_net():
     x = Tensor(np.array([1.2, -2.6, 5.0, 2.8, 0.2, -1.0, 2, -1.3, -0.4]), mstype.float16)
     uniq = Net()
@@ -48,9 +47,7 @@ def test16_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test32_net():
     x = Tensor(np.array([1.2, -2.6, 5.0, 2.8, 0.2, -1.0, 2, -1.3, -0.4]), mstype.float32)
     uniq = Net()
@@ -60,9 +57,7 @@ def test32_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def testint8_net():
     x = Tensor(np.array([1, -2, 5, 2, 0, -1, 2, -1, -0]), mstype.int8)
     uniq = Net()
@@ -72,9 +67,7 @@ def testint8_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def testuint8_net():
     x = Tensor(np.array([1, 5, 2, 0]), mstype.uint8)
     uniq = Net()
@@ -84,9 +77,7 @@ def testuint8_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def testint32_net():
     x = Tensor(np.array([1, -2, 5, 2, 0, -1, 2, -1, -0]), mstype.int32)
     uniq = Net()
@@ -96,9 +87,7 @@ def testint32_net():
     assert (output.asnumpy() == expect_x_result).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_vmap_trunc():
     """
     Feature: Trunc cpu op vmap feature.
@@ -120,9 +109,7 @@ def test_vmap_trunc():
     assert np.array_equal(out_manual.asnumpy(), out_vmap.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_trunc_tensor_api_modes(mode):
     """

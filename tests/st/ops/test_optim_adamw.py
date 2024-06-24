@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import torch
@@ -173,10 +174,7 @@ def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
         assert np.array(data_expected).shape == np.array(data_me).shape
 
 
-@pytest.mark.level3
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_basic(mode):
     """
@@ -191,10 +189,7 @@ def test_adamw_basic(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level3
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_basic_amsgrad(mode):
     """
@@ -209,10 +204,7 @@ def test_adamw_basic_amsgrad(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level3
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_basic_maximize(mode):
     """
@@ -227,10 +219,7 @@ def test_adamw_basic_maximize(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level3
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_group(mode):
     """
@@ -243,10 +232,7 @@ def test_adamw_group(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level3
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_lr_dynamic(mode):
     """
@@ -259,10 +245,7 @@ def test_adamw_lr_dynamic(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level3
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_adamw_group_lr_dynamic(mode):
     """
@@ -275,10 +258,7 @@ def test_adamw_group_lr_dynamic(mode):
     fact.result_cmp()
 
 
-@pytest.mark.level3
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_adamw_group_lr_dynamic_change_param(mode):
     """

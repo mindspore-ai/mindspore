@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -33,9 +34,7 @@ def sparse_matrix_nnz(nptype1, nptype2):
     assert np.allclose(output_ms.asnumpy(), output_expect, rtol=0, atol=0)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_matrix_nnz_int32_float32():
     """
     Feature: SparseMatrixNNZ op.
@@ -45,9 +44,7 @@ def test_sparse_matrix_nnz_int32_float32():
     sparse_matrix_nnz(np.int32, np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_matrix_nnz_int64_float64():
     """
     Feature: SparseMatrixNNZ op.
@@ -57,9 +54,7 @@ def test_sparse_matrix_nnz_int64_float64():
     sparse_matrix_nnz(np.int64, np.float64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_matrix_nnz_int64_int32():
     """
     Feature: SparseMatrixNNZ op.

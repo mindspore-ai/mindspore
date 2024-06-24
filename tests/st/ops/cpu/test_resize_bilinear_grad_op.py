@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -100,9 +101,7 @@ def test_resize_bilinear_grad_align_corner_false():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.float16, np.float32, np.float64])
 def test_resize_bilinear_grad_dtype(mode, dtype):
@@ -124,8 +123,6 @@ def test_resize_bilinear_grad_dtype(mode, dtype):
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu_training
 def test_resize_bilinear_grad_half_pixel_centers():
     """
     Feature: Test ResizeBilinearGrad on CPU.

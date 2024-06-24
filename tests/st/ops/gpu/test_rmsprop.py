@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -81,9 +82,7 @@ def rmspropcented_numpy(variable, gradients, mean_gradients, mean_square, moment
     return variable, gradients, mean_gradients, mean_square, moment
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_rmsprop():
     learning_rate, decay, momentum, epsilon, centered = [0.5, 0.8, 0.9, 1e-3, True]
 
@@ -142,9 +141,7 @@ def test_rmsprop():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_rmspropcenter():
     learning_rate, decay, momentum, epsilon, centered = [0.1, 0.3, 0.9, 1.0, False]
 

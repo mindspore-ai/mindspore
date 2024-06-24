@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -58,9 +59,7 @@ class TestNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net():
     """
     Feature: FusedSparseAdam
@@ -86,9 +85,7 @@ def test_net():
     assert np.all(net.var.data.asnumpy() == expect_var)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_adam_invalid_input_shape_var_m_not_match():
     """
     Feature: FusedSparseAdam
@@ -111,9 +108,7 @@ def test_fused_sparse_adam_invalid_input_shape_var_m_not_match():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_adam_invalid_input_shape_var_v_not_match():
     """
     Feature: FusedSparseAdam
@@ -136,9 +131,7 @@ def test_fused_sparse_adam_invalid_input_shape_var_v_not_match():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_adam_invalid_input_shape_grad_indices_not_match():
     """
     Feature: FusedSparseAdam
@@ -161,9 +154,7 @@ def test_fused_sparse_adam_invalid_input_shape_grad_indices_not_match():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_adam_invalid_input_shape_indices_rank_invalid():
     """
     Feature: FusedSparseAdam
@@ -186,9 +177,7 @@ def test_fused_sparse_adam_invalid_input_shape_indices_rank_invalid():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_adam_invalid_input_shape_grad_rank_invalid():
     """
     Feature: FusedSparseAdam
@@ -211,9 +200,7 @@ def test_fused_sparse_adam_invalid_input_shape_grad_rank_invalid():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_adam_invalid_input_shape_indices_grad_not_match():
     """
     Feature: FusedSparseAdam
@@ -236,9 +223,7 @@ def test_fused_sparse_adam_invalid_input_shape_indices_grad_not_match():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_adam_invalid_input_type_indices_invalid():
     """
     Feature: FusedSparseAdam
@@ -261,9 +246,7 @@ def test_fused_sparse_adam_invalid_input_type_indices_invalid():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_adam_invalid_input_type_indices_invalid2():
     """
     Feature: FusedSparseAdam
@@ -285,9 +268,7 @@ def test_fused_sparse_adam_invalid_input_type_indices_invalid2():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_adam_invalid_input_type_gradient_invalid():
     """
     Feature: FusedSparseAdam
@@ -309,9 +290,7 @@ def test_fused_sparse_adam_invalid_input_type_gradient_invalid():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_adam_dynamic():
     """
     Feature: FusedSparseAdam

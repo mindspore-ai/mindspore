@@ -1,3 +1,4 @@
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -16,9 +17,7 @@ class NetResizeArea(nn.Cell):
         return self.resize_area(images, size)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_resize_area_float16():
     """
     Feature: Input type of float16
@@ -50,9 +49,7 @@ def test_resize_area_float16():
                            equal_nan=False)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_resize_area_float32():
     """
     Feature: Input type of float32

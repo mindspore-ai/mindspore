@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 """test embedding"""
 
@@ -27,10 +28,7 @@ def embedding_func(input_x, weight, padding_idx=None, max_norm=None, norm_type=2
     """embedding_func"""
     return ops.embedding(input_x, weight, padding_idx, max_norm=max_norm, norm_type=norm_type)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_embedding_static_shape():
     """
     Feature: static shape of embedding.
@@ -87,10 +85,7 @@ def test_embedding_static_shape():
     assert np.allclose(weight.asnumpy(), expect_w, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_embedding_dynamic_shape():
     """
     Feature: dynamic shape of embedding.
@@ -105,10 +100,7 @@ def test_embedding_dynamic_shape():
             disable_input_check=True, disable_yaml_check=True)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_embedding_grad():
     """
     Feature: grad of embedding.
@@ -196,10 +188,7 @@ def test_embedding_grad():
     assert np.allclose(ms_out.asnumpy(), expect_out4, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_embedding_nn_api():
     """
     Feature: nn.extend.Embedding.

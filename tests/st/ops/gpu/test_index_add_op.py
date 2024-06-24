@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -36,9 +37,7 @@ class NetIndexAdd(nn.Cell):
         return z
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add():
     """
     Feature: test IndexAdd forward.
@@ -118,9 +117,7 @@ def index_add_forward(nptype):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_float16():
     """
     Feature: test IndexAdd forward.
@@ -133,9 +130,7 @@ def test_index_add_float16():
     index_add_forward(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_int32():
     """
     Feature: test IndexAdd forward.
@@ -148,9 +143,7 @@ def test_index_add_int32():
     index_add_forward(np.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_int8():
     """
     Feature: test IndexAdd forward.
@@ -163,9 +156,7 @@ def test_index_add_int8():
     index_add_forward(np.int8)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_uint8():
     """
     Feature: test IndexAdd forward.
@@ -178,9 +169,7 @@ def test_index_add_uint8():
     index_add_forward(np.uint8)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_float64():
     """
     Feature: test IndexAdd forward.
@@ -193,9 +182,7 @@ def test_index_add_float64():
     index_add_forward(np.float64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_int16():
     """
     Feature: test IndexAdd forward.
@@ -208,9 +195,7 @@ def test_index_add_int16():
     index_add_forward(np.int16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_invalid_inputs():
     """
     Feature: test IndexAdd invalid inputs.
@@ -289,9 +274,7 @@ def index_add_grad_with_type(nptype):
     np.testing.assert_array_equal(ygrad.asnumpy(), expect_ygrad)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_grad_float64():
     """
     Feature: test IndexAdd backward.
@@ -304,9 +287,7 @@ def test_index_add_grad_float64():
     index_add_grad_with_type(np.float64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_grad_float32():
     """
     Feature: test IndexAdd backward.
@@ -319,9 +300,7 @@ def test_index_add_grad_float32():
     index_add_grad_with_type(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_grad_float16():
     """
     Feature: test IndexAdd backward.
@@ -334,9 +313,7 @@ def test_index_add_grad_float16():
     index_add_grad_with_type(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_grad_int32():
     """
     Feature: test IndexAdd backward.
@@ -349,9 +326,7 @@ def test_index_add_grad_int32():
     index_add_grad_with_type(np.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_grad_int16():
     """
     Feature: test IndexAdd backward.
@@ -364,9 +339,7 @@ def test_index_add_grad_int16():
     index_add_grad_with_type(np.int16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_grad_int8():
     """
     Feature: test IndexAdd backward.
@@ -379,9 +352,7 @@ def test_index_add_grad_int8():
     index_add_grad_with_type(np.int8)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_grad_uint8():
     """
     Feature: test IndexAdd backward.
@@ -394,9 +365,7 @@ def test_index_add_grad_uint8():
     index_add_grad_with_type(np.uint8)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_dynamic():
     """
     Feature: test IndexAdd dynamic shape.
@@ -422,9 +391,7 @@ def test_index_add_dynamic():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_index_add_tensor_api_modes(mode):
     """

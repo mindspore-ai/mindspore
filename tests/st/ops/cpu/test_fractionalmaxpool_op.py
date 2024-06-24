@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -70,10 +71,7 @@ class NetFractionalMaxPoolGradOverlapping(nn.Cell):
                                              col_pooling_sequence)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_fractionalmaxpool_graph():
     """
     Feature: FractionalMaxPool
@@ -131,10 +129,7 @@ def test_fractionalmaxpool_graph():
         assert np.allclose(output_grad_y, expect_output_grad_y)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_fractionalmaxpool_pynative_dynamic():
     """
     Feature: FractionalMaxPool
@@ -188,10 +183,7 @@ def test_fractionalmaxpool_pynative_dynamic():
         assert np.allclose(output_col_pooling_sequence, expect_output_col_pooling_sequence)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_fractionalmaxpool_pynative():
     """
     Feature: FractionalMaxPool

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -118,9 +119,7 @@ def compare_with_numpy(func, lock, input_x, indices, updates):
     np.testing.assert_array_almost_equal(pynative_output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('lock', [True, False])
 @pytest.mark.parametrize('func', ['mul', 'sub', 'add', 'div'])
 @pytest.mark.parametrize('data_type', [mstype.float32, mstype.float64])
@@ -138,9 +137,7 @@ def test_scatter_nd_small_float(lock, func, data_type, index_type):
     compare_with_numpy(func, lock, input_x, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('lock', [True, False])
 @pytest.mark.parametrize('func', ['mul', 'sub', 'add', 'div'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
@@ -158,9 +155,7 @@ def test_scatter_nd_small_int(lock, func, data_type, index_type):
     compare_with_numpy(func, lock, input_x, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('lock', [True, False])
 @pytest.mark.parametrize('func', ['mul', 'sub', 'add', 'div'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
@@ -186,9 +181,7 @@ def test_scatter_nd_multi_dims(lock, func, data_type, index_type):
     compare_with_numpy(func, lock, input_x, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('lock', [True, False])
 @pytest.mark.parametrize('func', ['mul', 'sub', 'add', 'div'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
@@ -220,9 +213,7 @@ def test_scatter_nd_indices_out_of_range(lock, func, data_type, index_type):
         _ = TestScatterNdNet(func, lock, input_x, indices, updates)()
         _pynative_executor.sync()
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('lock', [True, False])
 @pytest.mark.parametrize('func', ['mul', 'sub', 'add', 'div'])
 @pytest.mark.parametrize('data_type', [mstype.int8, mstype.int16, mstype.int32, mstype.int64])
@@ -240,9 +231,7 @@ def test_scatter_nd_one_value(lock, func, data_type, index_type):
     compare_with_numpy(func, lock, input_x, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('lock', [True])
 @pytest.mark.parametrize('func', ['mul', 'sub', 'add', 'div'])
 @pytest.mark.parametrize('data_type', [mstype.int64])
@@ -260,9 +249,7 @@ def test_scatter_nd_lock(lock, func, data_type, index_type):
     compare_with_numpy(func, lock, input_x, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("func_name", ["add", "sub"])
 def test_scatter_nd_dy_shape(func_name):
     """
@@ -289,9 +276,7 @@ def test_scatter_nd_dy_shape(func_name):
     np.testing.assert_allclose(np_result, ms_result.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('data_type', [mstype.int64])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_scatter_nd_div_division_by_zero(data_type, index_type):
@@ -309,9 +294,7 @@ def test_scatter_nd_div_division_by_zero(data_type, index_type):
     compare_with_numpy('div', False, input_x, indices, updates)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul'])
 def test_scatter_func_indices_vmap(func):
     """
@@ -336,9 +319,7 @@ def test_scatter_func_indices_vmap(func):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['add', 'sub', 'div', 'mul'])
 def test_scatter_func_update_vmap(func):
     """

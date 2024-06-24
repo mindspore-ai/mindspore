@@ -45,9 +45,7 @@ def dyn_case():
     assert output.asnumpy().shape == (3, 1)
 
 
-@pytest.mark.levle0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test_tridiagonal_solve_dyn():
     """
     Feature: test TridiagonalSolve ops in cpu.

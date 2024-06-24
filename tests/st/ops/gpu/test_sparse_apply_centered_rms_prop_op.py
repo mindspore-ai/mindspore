@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -33,9 +34,7 @@ class SparseApplyCenteredRMSPropNet(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_apply_centered_rms_prop_graph_1():
     """
     Feature: Test whether the output of Var calculated by mindspore and tensorflow are equal.
@@ -64,9 +63,7 @@ def test_sparse_apply_centered_rms_prop_graph_1():
         sparse_apply_centered_rms_prop_expected_output, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_apply_centered_rms_prop_graph_2():
     """
     Feature: Test whether the output of Var calculated by mindspore and tensorflow are equal.

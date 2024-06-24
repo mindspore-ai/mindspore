@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 
@@ -30,9 +31,7 @@ class NetSparseTensorToCSRSparseMatrix(nn.Cell):
         return self.op(x_indices, x_values, x_dense_shape)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparse_tensor_to_csr_sparse_matrix_dyn():
     """
     Feature: test SparseTensorToCSRSparseMatrix ops in cpu.

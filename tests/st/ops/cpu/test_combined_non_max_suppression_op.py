@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -62,9 +63,7 @@ def dyn_case():
         assert out[i].asnumpy().shape == expect_shapes[i]
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_combined_non_max_suppression_dyn():
     """
     Feature: test CombinedNonMaxSuppression in PyNative and Graph modes.

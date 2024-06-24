@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -45,9 +46,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_softplus_grad_1d_fp32():
     x = np.array([0.58401114, 0.68800163, 0.9760397, 0.14702141, 0.46563736, 0.9607501,
                   0.14567593, 0.12261796, 0.37054458, 0.46421242]).astype(np.float32)
@@ -64,9 +63,7 @@ def test_softplus_grad_1d_fp32():
     assert np.allclose(output[0].asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_softplus_grad_3d_fp16():
     np.random.seed(42)
     x_np = np.random.randn(5, 3, 6).astype(np.float16)
@@ -78,9 +75,7 @@ def test_softplus_grad_3d_fp16():
     assert np.allclose(output[0].asnumpy(), expect, rtol=1e-2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_softplus_grad_7d_fp32():
     np.random.seed(20)
     x_np = np.random.randn(5, 3, 6, 3, 4, 5, 6).astype(np.float32)

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -37,9 +38,7 @@ def repeat_elements(x, rep, axis):
     return repeat_elements_net(Tensor(x.astype(np.int32))).asnumpy()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_1d_one_element_rep_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1)
@@ -49,9 +48,7 @@ def test_repeat_elements_1d_one_element_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_1d_one_element_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1)
@@ -65,9 +62,7 @@ def test_repeat_elements_1d_one_element_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_1d_rep_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(24)
@@ -77,9 +72,7 @@ def test_repeat_elements_1d_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_1d_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(24)
@@ -89,9 +82,7 @@ def test_repeat_elements_1d_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_2d_one_element_rep_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1).reshape(1, 1)
@@ -105,9 +96,7 @@ def test_repeat_elements_2d_one_element_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_2d_one_element_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1).reshape(1, 1)
@@ -121,9 +110,7 @@ def test_repeat_elements_2d_one_element_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_2d_rep_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(24).reshape(12, 2)
@@ -137,9 +124,7 @@ def test_repeat_elements_2d_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_2d_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(24).reshape(8, 3)
@@ -153,9 +138,7 @@ def test_repeat_elements_2d_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_3d_one_element_rep_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1).reshape(1, 1, 1)
@@ -173,9 +156,7 @@ def test_repeat_elements_3d_one_element_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_3d_one_element_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1).reshape(1, 1, 1)
@@ -193,9 +174,7 @@ def test_repeat_elements_3d_one_element_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_3d_rep_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(60).reshape(6, 2, 5)
@@ -213,9 +192,7 @@ def test_repeat_elements_3d_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_3d_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(60).reshape(3, 4, 5)
@@ -233,9 +210,7 @@ def test_repeat_elements_3d_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_4d_one_element_rep_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1).reshape(1, 1, 1, 1)
@@ -257,9 +232,7 @@ def test_repeat_elements_4d_one_element_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_4d_one_element_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1).reshape(1, 1, 1, 1)
@@ -281,9 +254,7 @@ def test_repeat_elements_4d_one_element_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_4d_rep_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(24).reshape(4, 3, 2, 1)
@@ -305,9 +276,7 @@ def test_repeat_elements_4d_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_4d_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(24).reshape(2, 2, 2, 3)
@@ -329,9 +298,7 @@ def test_repeat_elements_4d_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_5d_one_element_rep_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1).reshape(1, 1, 1, 1, 1)
@@ -357,9 +324,7 @@ def test_repeat_elements_5d_one_element_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_5d_one_element_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1).reshape(1, 1, 1, 1, 1)
@@ -385,9 +350,7 @@ def test_repeat_elements_5d_one_element_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_5d_rep_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(224).reshape(8, 2, 1, 7, 2)
@@ -413,9 +376,7 @@ def test_repeat_elements_5d_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_5d_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(224).reshape(1, 7, 4, 4, 2)
@@ -441,9 +402,7 @@ def test_repeat_elements_5d_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_large_one_element_rep_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1).reshape(1, 1, 1, 1, 1, 1, 1, 1)
@@ -481,9 +440,7 @@ def test_repeat_elements_large_one_element_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_large_one_element_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1).reshape(1, 1, 1, 1, 1, 1)
@@ -513,9 +470,7 @@ def test_repeat_elements_large_one_element_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_large_rep_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1152).reshape(2, 3, 4, 8, 1, 1, 2, 3)
@@ -553,9 +508,7 @@ def test_repeat_elements_large_rep_1():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_large_rep_many():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1152).reshape(4, 3, 4, 2, 4, 3)
@@ -585,9 +538,7 @@ def test_repeat_elements_large_rep_many():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_half():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(1152).astype(np.float16).reshape(4, 3, 4, 2, 4, 3)
@@ -617,9 +568,7 @@ def test_repeat_elements_half():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_net_multi_use():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -643,9 +592,7 @@ def test_repeat_elements_net_multi_use():
     np.testing.assert_array_equal(np_out, ms_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_repeat_elements_invalid_input():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.arange(64).reshape(2, 2, 2, 2, 2, 2)

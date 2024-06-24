@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -36,9 +37,7 @@ class Net(nn.Cell):
     def construct(self, x):
         return C.multinomial(x, self.sample, self.replacement, self.seed)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_multinomial_exception1():
     """
     Feature: test Multinomial exception case.
@@ -52,9 +51,7 @@ def test_multinomial_exception1():
     except RuntimeError:
         assert True
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_multinomial__exception2():
     """
     Feature: test Multinomial exception case.
@@ -68,9 +65,7 @@ def test_multinomial__exception2():
     except RuntimeError:
         assert True
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_multinomial():
     """
     Feature: test Multinomial common call.
@@ -102,9 +97,7 @@ def multinomial(prob, num_sample):
     return P.Multinomial(seed=5, seed2=6)(prob, num_sample)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_multinomial_vmap():
     """
     Feature: test Multinomial vmap feature.

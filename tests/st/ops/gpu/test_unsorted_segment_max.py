@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -35,9 +36,7 @@ class UnsortedSegmentMaxNet(nn.Cell):
         return self.unsorted_segment_max(data, ids, self.num_segments)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_1d_int32():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     input_x = Tensor([1, 2, 3, 4], mstype.int32)
@@ -49,9 +48,7 @@ def test_1d_int32():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_2d_int32():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     input_x = Tensor([[1, 2, 3, 4],
@@ -68,9 +65,7 @@ def test_2d_int32():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_3d_float16_int64():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     input_x = Tensor(np.arange(
@@ -107,9 +102,7 @@ def test_3d_float16_int64():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_3d_float32_int64():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     input_x = Tensor(np.arange(
@@ -136,9 +129,7 @@ def test_3d_float32_int64():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_3d_single_init():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     input_x = Tensor(np.arange(
@@ -224,9 +215,7 @@ class UnsortedSegmentMaxDynNet(nn.Cell):
         return self.unsorted_segment_max(data, ids, self.num_segments)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_3d_float32_dyn_ab():
     """
     Tests for Dynamic shape with both inputs dynamic
@@ -262,9 +251,7 @@ def test_3d_float32_dyn_ab():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_3d_single_init_dyn_a():
     """
     Tests for Dynamic shape with first input dynamic
@@ -334,9 +321,7 @@ def test_3d_single_init_dyn_a():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_3d_single_init_dyn_b():
     """
     Tests for Dynamic shape with second input dynamic
@@ -406,9 +391,7 @@ def test_3d_single_init_dyn_b():
     np.testing.assert_array_almost_equal(output, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_1d_int32_dynamic_shape():
     """
     Feature: UnsortedSegmentMax operation dynamic shape test

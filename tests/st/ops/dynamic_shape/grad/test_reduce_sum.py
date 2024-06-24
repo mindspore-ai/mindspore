@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -41,10 +42,7 @@ class NetReduceSumOther(nn.Cell):
         return self.reducesum(x, axis)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_reducesum_shape():
     """
     Feature: ReduceSum Grad DynamicShape.
@@ -57,10 +55,7 @@ def test_dynamic_reducesum_shape():
     test_dynamic.test_dynamic_grad_net(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_reducesum_rank():
     """
     Feature: ReduceSum Grad DynamicRank.
@@ -73,10 +68,7 @@ def test_dynamic_reducesum_rank():
     test_dynamic.test_dynamic_grad_net(x, True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_reducesum_shape_for_dynamic_axis():
     """
     Feature: ReduceSum Grad DynamicShape.

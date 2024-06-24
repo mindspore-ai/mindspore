@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -46,10 +47,7 @@ def grad_partial_dyn_case(is_dynamic_rank):
     test_dynamic.test_dynamic_grad_net([Tensor(x), Tensor(y), Tensor(z)], is_dynamic_rank)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_grad_dynamic_shape():
     """
     Feature: test Lerp grad dynamic shape.
@@ -64,10 +62,7 @@ def test_grad_dynamic_shape():
     grad_partial_dyn_case(False)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_grad_dynamic_rank():
     """
     Feature: test Lerp grad dynamic rank.
@@ -83,10 +78,7 @@ def test_grad_dynamic_rank():
 
 
 @pytest.mark.skip(reason="Ascend does not support dynamic shape")
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_ascend_grad_dynamic_shape():
     """
     Feature: test Lerp grad dynamic rank on Ascend.
@@ -102,10 +94,7 @@ def test_ascend_grad_dynamic_shape():
 
 
 @pytest.mark.skip(reason="Ascend does not support dynamic shape")
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_ascend_grad_dynamic_rank():
     """
     Feature: test Lerp grad dynamic rank on Ascend.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -24,9 +25,7 @@ from mindspore import Tensor
 from mindspore.ops.composite import GradOperation
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_mirror_pad():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -75,9 +74,7 @@ class Net(nn.Cell):
         return self.pad(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_mirror_pad_backprop():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_arr_in = [[[[1, 2, 3], [4, 5, 6], [7, 8, 9]]]]  # size -> 3*3
@@ -92,9 +89,7 @@ def test_mirror_pad_backprop():
     np.testing.assert_array_almost_equal(dx, expected_dx)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_mirror_pad_fwd_back_4d_int32_reflect():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     # set constants
@@ -132,9 +127,7 @@ def test_mirror_pad_fwd_back_4d_int32_reflect():
     np.testing.assert_array_equal(dx_value_expected, dx_value_obtained)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_mirror_pad_fwd_back_4d_int32_symm():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     # set constants
@@ -172,9 +165,7 @@ def test_mirror_pad_fwd_back_4d_int32_symm():
     np.testing.assert_array_equal(dx_value_expected, dx_value_obtained)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_mirror_pad_dynamic():
     """
     Feature: test dynamic shape of mirror_pad
@@ -211,9 +202,7 @@ def test_mirror_pad_dynamic():
     np.testing.assert_equal(np.array(test2_arr_exp), y_test_2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_mirror_pad_grad_dynamic_shape():
     """
     Feature: dynamic shape support of MirrorPadGrad.

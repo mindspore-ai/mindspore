@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -40,9 +41,7 @@ suport_type_list = [np.bool_, np.int8, np.int16, np.int32, np.int64, np.uint8, n
 mode_list = [context.PYNATIVE_MODE, context.GRAPH_MODE]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
 @pytest.mark.parametrize('dtype', suport_type_list)
 @pytest.mark.parametrize('mode', mode_list)
@@ -67,9 +66,7 @@ def test_bitwise_and(shape, dtype, mode):
     assert np.allclose(outputs_func.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
 @pytest.mark.parametrize('dtype', suport_type_list)
 @pytest.mark.parametrize('mode', mode_list)
@@ -94,9 +91,7 @@ def test_bitwise_or(shape, dtype, mode):
     assert np.allclose(outputs_func.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6), (3, 4, 5, 6, 2)])
 @pytest.mark.parametrize('dtype', suport_type_list)
 @pytest.mark.parametrize('mode', mode_list)
@@ -132,9 +127,7 @@ class NetBitwiseGPU(nn.Cell):
         return out_and, out_or, out_xor
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', mode_list)
 def test_bitwise_bool(mode):
     """

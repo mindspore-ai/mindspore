@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore.nn as nn
@@ -33,9 +34,7 @@ class CeluTEST(nn.Cell):
         return self.celu(x)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_celu_op(data_type):
     """
@@ -57,9 +56,7 @@ def test_celu_op(data_type):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_celu_func(data_type):
     """
@@ -80,9 +77,7 @@ def test_celu_func(data_type):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=error)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_celu_vmap():
     """
     Feature: celu gpu kernel.

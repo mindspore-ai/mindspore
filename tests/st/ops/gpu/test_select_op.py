@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -33,9 +34,7 @@ class Net(nn.Cell):
         return self.select(cond_op, input_x, input_y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("dtype", [np.bool_, np.int8, np.int16, np.int32, np.int64,
                                    np.uint8, np.uint16, np.uint32, np.uint64,
                                    np.float16, np.float32, np.float64,
@@ -59,8 +58,6 @@ def test_select(dtype, mode):
     assert np.allclose(output.numpy(), expect, error_tol, error_tol)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_functional_select_scalar():
     """
     Feature: Test functional select operator. Support x or y is a int/float.
@@ -89,9 +86,7 @@ def select_ops_fn(condition, x, y):
     return ops.select(condition, x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_select_input_tensor():
     """
     Feature: Test tensor select interface.
@@ -107,9 +102,7 @@ def test_tensor_select_input_tensor():
     assert np.all(output2.asnumpy() == np.array([2, 2]))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_select_input_number():
     """
     Feature: Test tensor select interface.
@@ -125,9 +118,7 @@ def test_tensor_select_input_number():
     assert np.all(output2.asnumpy() == np.array([2, 5]))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_select_fn_vmap():
     """
     Feature: Test select function interface with interface.
@@ -145,9 +136,7 @@ def test_select_fn_vmap():
     assert np.all(output2.asnumpy() == np.array([[2, 5], [3, 1]]))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_select_tensor_vmap():
     """
     Feature: Test select tensor interface with interface.

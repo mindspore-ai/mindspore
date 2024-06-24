@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -46,10 +47,7 @@ def index_add_forward(nptype):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_float32():
     """
     Feature: test IndexAdd forward.
@@ -62,10 +60,7 @@ def test_index_add_float32():
     index_add_forward(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_float16():
     """
     Feature: test IndexAdd forward.
@@ -78,10 +73,7 @@ def test_index_add_float16():
     index_add_forward(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_int32():
     """
     Feature: test IndexAdd forward.
@@ -94,10 +86,7 @@ def test_index_add_int32():
     index_add_forward(np.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_int8():
     """
     Feature: test IndexAdd forward.
@@ -110,10 +99,7 @@ def test_index_add_int8():
     index_add_forward(np.int8)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_uint8():
     """
     Feature: test IndexAdd forward.
@@ -166,10 +152,7 @@ def index_add_grad_with_type(nptype):
     np.testing.assert_array_equal(ygrad.asnumpy(), expect_ygrad)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_grad_float32():
     """
     Feature: test IndexAdd backward.
@@ -182,10 +165,7 @@ def test_index_add_grad_float32():
     index_add_grad_with_type(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_grad_float16():
     """
     Feature: test IndexAdd backward.
@@ -198,10 +178,7 @@ def test_index_add_grad_float16():
     index_add_grad_with_type(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_grad_int32():
     """
     Feature: test IndexAdd backward.
@@ -214,10 +191,7 @@ def test_index_add_grad_int32():
     index_add_grad_with_type(np.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_grad_int8():
     """
     Feature: test IndexAdd backward.
@@ -230,10 +204,7 @@ def test_index_add_grad_int8():
     index_add_grad_with_type(np.int8)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_grad_uint8():
     """
     Feature: test IndexAdd backward.
@@ -246,10 +217,7 @@ def test_index_add_grad_uint8():
     index_add_grad_with_type(np.uint8)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_dynamic_y():
     """
     Feature: test IndexAdd dynamic shape.
@@ -270,10 +238,7 @@ def test_index_add_dynamic_y():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_add_dynamic_indices():
     """
     Feature: test IndexAdd dynamic shape.
@@ -294,10 +259,7 @@ def test_index_add_dynamic_indices():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_index_add_tensor_api_modes(mode):
     """

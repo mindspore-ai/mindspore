@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -48,9 +49,7 @@ def getu(a_lu, pivots):
     return a_lu_torch.grad
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lu_unpack_grad_graph_float():
     """
     Feature: LuUnpackGrad gpu TEST.
@@ -76,9 +75,7 @@ def test_lu_unpack_grad_graph_float():
     assert np.allclose(a_u_torch, torch.tensor(u_grad_mindspore.asnumpy()), atol=loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lu_unpack_grad_pynative_float():
     """
     Feature: LuUnpackGrad gpu TEST.
@@ -104,9 +101,7 @@ def test_lu_unpack_grad_pynative_float():
     assert np.allclose(a_u_torch, torch.tensor(u_grad_mindspore.asnumpy()), atol=loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lu_unpack_grad_pynative_float_error():
     """
     Feature: LuUnpackGrad gpu TEST.

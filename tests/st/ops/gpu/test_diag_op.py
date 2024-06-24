@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -93,9 +94,7 @@ def diag_with_dynamic_shape(dtype):
         assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_diag_1d_float16():
     """
     Feature: Diag op.
@@ -105,9 +104,7 @@ def test_diag_1d_float16():
     diag_1d(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_diag_1d_float32():
     """
     Feature: Diag op.
@@ -117,9 +114,7 @@ def test_diag_1d_float32():
     diag_1d(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_diag_2d_int32():
     """
     Feature: Diag op.
@@ -129,9 +124,7 @@ def test_diag_2d_int32():
     diag_2d(np.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_diag_2d_int64():
     """
     Feature: Diag op.
@@ -141,9 +134,7 @@ def test_diag_2d_int64():
     diag_2d(np.int64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_diag_with_dynamic_shape():
     """
     Feature: Diag op with dynamic shape.
@@ -153,9 +144,7 @@ def test_diag_with_dynamic_shape():
     diag_with_dynamic_shape(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_diag_functional():
     """
     Feature: Diag op with functional interface.
@@ -171,9 +160,7 @@ def test_diag_functional():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_diag_tensor():
     """
     Feature: Diag op with tensor interface.
@@ -189,9 +176,7 @@ def test_diag_tensor():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_diag_vmap():
     """
     Feature: Diag op vmap.

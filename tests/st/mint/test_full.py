@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 # pylint: disable=unused-variable
 import pytest
 import numpy as np
@@ -52,10 +53,7 @@ def full_backward_func(size, fill_value, dtype=None):
     return size_grad, value_grad
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['GE', 'pynative', 'KBK'])
 def test_full_forward(mode):
     """
@@ -78,10 +76,7 @@ def test_full_forward(mode):
     np.testing.assert_allclose(y.asnumpy(), expect_y, rtol=1e-5)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK']) # GE is unsupported for now.
 def test_full_backward(mode):
     """
@@ -106,10 +101,7 @@ def test_full_backward(mode):
     assert value_grad.shape == ()
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_full_dynamic_shape():
     """
     Feature: Test full with dynamic shape in graph mode.
@@ -133,10 +125,7 @@ def test_full_dynamic_shape():
             disable_yaml_check=True, disable_grad=True)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_full_forward_dynamic_rank(context_mode):
     """

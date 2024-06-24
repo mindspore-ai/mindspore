@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 """smoke tests for SparseMatrixSoftmax"""
 
 import numpy as np
@@ -46,10 +47,7 @@ def create_csr_tensor():
     return logits
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_ops_sparse_matrix_softmax_vs_nn_softmax_int32():
     """
     Feature: Test function sparse_matrix_softmax.
@@ -79,10 +77,7 @@ def test_ops_sparse_matrix_softmax_vs_nn_softmax_int32():
     assert np.all(weights - c[4] < eps)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_ops_sparse_matrix_softmax_vs_nn_softmax_int64():
     """
     Feature: Test function sparse_matrix_softmax.
@@ -111,10 +106,7 @@ def test_ops_sparse_matrix_softmax_vs_nn_softmax_int64():
     assert np.all(weights - c[4] < eps)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_sparse_matrix_softmax_vs_nn_softmax_fp32():
     """
     Feature: Test function sparse_matrix_softmax.
@@ -142,10 +134,7 @@ def test_ops_sparse_matrix_softmax_vs_nn_softmax_fp32():
     assert np.all(weights - c[4] < eps)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_function_sparse_matrix_softmax_vs_nn_softmax():
     """
     Feature: Test function sparse_matrix_softmax.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore.nn as nn
@@ -35,9 +36,7 @@ class ApplyProximalAdagradTEST(nn.Cell):
         return self.apply_proximal_adagrad(self.var, self.accum, lr, l1, l2, grad)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_apply_proximal_adagrad_op(data_type):
     """
@@ -86,9 +85,7 @@ class AdgradNetVmap(nn.Cell):
         return self.vmap_adagrad(self.var, self.accum, lr, l1, l2, grad)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_apply_proximal_adagrad_op_vmap():
     """
     Feature: ApplyProximalAdagrad GPU kernel
@@ -139,9 +136,7 @@ class AdgradNetVmap2(nn.Cell):
         return self.vmap_adagrad(self.var, self.accum, lr, l1, l2, grad)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_apply_proximal_adagrad_op_vmap2():
     """
     Feature: ApplyProximalAdagrad GPU kernel

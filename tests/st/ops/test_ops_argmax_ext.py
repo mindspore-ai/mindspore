@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore as ms
@@ -50,9 +51,7 @@ def GenInputData(np_data_type, shape=(3, 4, 5)):
     data = np.arange(size).reshape(*shape).astype(np_data_type)
     return Tensor(data)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_argmax_ext_forward(context_mode):
     """
@@ -69,9 +68,7 @@ def test_ops_argmax_ext_forward(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_argmax_ext_backward(context_mode):
     """
@@ -87,10 +84,7 @@ def test_ops_argmax_ext_backward(context_mode):
     expect = generate_expect_backward_output(x, dim, keepdim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_argmax_ext_dynamic_shape():
     """
     Feature: Test argmax with dynamic shape in graph mode.

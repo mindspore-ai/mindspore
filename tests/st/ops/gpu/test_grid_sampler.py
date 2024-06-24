@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -101,9 +102,7 @@ def run_net3d(dtype):
     assert np.all(np.abs(diff_out) < error_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gridsampler2d():
     """
     Feature: GridSampler2D op.
@@ -116,9 +115,7 @@ def test_gridsampler2d():
     run_net2d(np.float64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gridsampler3d():
     """
     Feature: GridSampler3D op.
@@ -131,9 +128,7 @@ def test_gridsampler3d():
     run_net3d(np.float64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gridsampler2d_neg_input():
     """
     Feature: GridSampler2D op.
@@ -161,9 +156,7 @@ def test_gridsampler2d_neg_input():
     assert np.all(np.abs(diff_out) < error_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gridsampler3d_neg_input():
     """
     Feature: GridSampler3D op.
@@ -195,9 +188,7 @@ def test_gridsampler3d_neg_input():
     assert np.all(np.abs(diff_out) < error_out)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_vmap_grid_sampler_2d():
     """
     Feature: GridSampler2D GPU op vmap feature.
@@ -258,9 +249,7 @@ def test_vmap_grid_sampler_2d():
     assert np.all(abs(out_vmap.asnumpy() - expect) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_vmap_grid_sampler_3d():
     """
     Feature: GridSampler3D GPU op vmap feature.

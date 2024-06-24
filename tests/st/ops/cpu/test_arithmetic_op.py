@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import os
 import stat
 import numpy as np
@@ -72,9 +73,7 @@ class FloorModNet(nn.Cell):
         return self.floor_mod(x, y)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sub():
     """
     Feature: ALL To ALL
@@ -97,9 +96,7 @@ def test_sub():
     assert np.all(output.asnumpy() == expect_output)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_div():
     """
     Feature: ALL To ALL
@@ -211,9 +208,7 @@ def test_div():
     assert output8.shape == expect8.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_floor_div():
     """
     Feature: ALL To ALL
@@ -292,9 +287,7 @@ def test_floor_div():
     assert output5.shape == expect5.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_floor_div_cpu_dynamic_shape():
     """
     Feature: test FloorDiv op in cpu.
@@ -313,9 +306,7 @@ def test_floor_div_cpu_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_mod():
     """
     Feature: ALL To ALL
@@ -412,9 +403,7 @@ def test_mod():
     assert output6.shape == expect6.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_mod_cpu_dynamic_shape():
     """
     Feature: test Mod op in cpu.
@@ -433,9 +422,7 @@ def test_mod_cpu_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_floor_mod():
     """
     Feature: ALL To ALL
@@ -532,9 +519,7 @@ def test_floor_mod():
     assert output6.shape == expect6.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_floor_mod_cpu_dynamic_shape():
     """
     Feature: test FloorMod op in cpu.
@@ -553,9 +538,7 @@ def test_floor_mod_cpu_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
 def test_dynamic_sub(dtype):
     """
@@ -583,9 +566,7 @@ def test_dynamic_sub(dtype):
     np.testing.assert_allclose(benchmark_output, ms_result.asnumpy(), rtol=loss, atol=loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_floordiv_cpu_onnx():
     """
     Feature: test FloorDiv op in cpu.
@@ -612,9 +593,7 @@ def test_floordiv_cpu_onnx():
     os.remove(filename)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_floormod_cpu_onnx():
     """
     Feature: test FloorMod op in cpu.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore
@@ -35,9 +36,7 @@ class PromptFlashAttention(nn.Cell):
                         input_layout=input_layout, num_key_value_heads=num_key_value_heads, sparse_mode=sparse_mode)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_prompt_flash_attention_bsh_fwd():
     """
     Feature: test PromptFlashAttention forward in Graph modes.
@@ -61,9 +60,7 @@ def test_prompt_flash_attention_bsh_fwd():
     assert attention_out.shape == (B, S, Q_H)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_prompt_flash_attention_bnsd_fwd():
     """
     Feature: test PromptFlashAttention forward in Graph modes.
@@ -86,9 +83,7 @@ def test_prompt_flash_attention_bnsd_fwd():
     assert attention_out.shape == (B, Q_N, S, D)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_prompt_flash_attention_bnsd_mod2_fwd():
     """
     Feature: test PromptFlashAttention forward in Graph modes.

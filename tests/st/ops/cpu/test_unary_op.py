@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -21,9 +22,7 @@ from mindspore.ops import operations as P
 from mindspore import dtype as mstype
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_graph_conj():
     """
     Feature: ALL TO ALL
@@ -38,9 +37,7 @@ def test_graph_conj():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_pynative_conj():
     """
     Feature: ALL TO ALL
@@ -55,9 +52,7 @@ def test_pynative_conj():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_graph_real():
     """
     Feature: ALL TO ALL
@@ -72,9 +67,7 @@ def test_graph_real():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_pynative_real():
     """
     Feature: ALL TO ALL
@@ -89,9 +82,7 @@ def test_pynative_real():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_graph_imag():
     """
     Feature: ALL TO ALL
@@ -106,9 +97,7 @@ def test_graph_imag():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_pynative_imag():
     """
     Feature: ALL TO ALL
@@ -126,9 +115,7 @@ def test_pynative_imag():
 
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_graph_ceil():
     """
     Feature: ALL TO ALL
@@ -143,9 +130,7 @@ def test_graph_ceil():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_pynative_ceil():
     """
     Feature: ALL TO ALL

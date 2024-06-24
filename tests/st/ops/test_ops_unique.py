@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 from mindspore.mint import unique
@@ -35,9 +36,7 @@ def unique_forward_func_dynamic(inputx, is_sorted=True, dim=1):
     return unique(inputx, is_sorted, True, True, dim)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_ops_unique_forward_dim_None(mode):
     """
@@ -85,9 +84,7 @@ def test_ops_unique_forward_dim_None(mode):
     np.testing.assert_allclose(inverse4.asnumpy(), expect_inverse4, rtol=1e-3)
     np.testing.assert_allclose(counts4.asnumpy(), expect_counts4, rtol=1e-3)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_ops_unique_forward_with_dim(mode):
     """
@@ -131,9 +128,7 @@ def test_ops_unique_forward_with_dim(mode):
 
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_unique_dynamic_shape():
     """
     Feature: pyboost function.

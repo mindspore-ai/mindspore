@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 """test embedding_lookup dynamic shape"""
 
@@ -36,9 +37,7 @@ class Net(nn.Cell):
         return self.embedding(param, index, self.offset)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_embedding_look_up0():
     """
     Feature: test embedding_lookup op

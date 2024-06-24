@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -35,11 +36,7 @@ def divnonan_test(is_dyn_rank):
     tester.test_dynamic_grad_net([x, y], is_dyn_rank)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_divnonan_dyn_shape():
     """
     Feature: DivNoNan Grad DynamicShape.
@@ -50,11 +47,7 @@ def test_divnonan_dyn_shape():
     divnonan_test(False)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_divnonan_dyn_rank():
     """
     Feature: DivNoNan Grad DynamicShape.

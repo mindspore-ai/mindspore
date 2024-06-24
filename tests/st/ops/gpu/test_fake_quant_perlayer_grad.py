@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -32,9 +33,7 @@ class Net(nn.Cell):
         return self.op(dout, x, minq, maxq)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad1():
     # WithArgsGradient RegularRange
     dout = np.random.uniform(-1, 1, size=[6]).astype('float32')
@@ -53,9 +52,7 @@ def test_fake_quant_grad1():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad2():
     # WithArgsGradient NarrowRange
     dout = np.random.uniform(-1, 1, size=[6]).astype('float32')
@@ -74,9 +71,7 @@ def test_fake_quant_grad2():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad3():
     # WithArgsGradient_4Bits_RegularRange
     dout = np.random.uniform(-1, 1, size=[6]).astype('float32')
@@ -95,9 +90,7 @@ def test_fake_quant_grad3():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad4():
     # WithArgsGradient_4Bits_NarrowRange
     dout = np.random.uniform(-1, 1, size=[6]).astype('float32')
@@ -116,9 +109,7 @@ def test_fake_quant_grad4():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad5():
     # FakeQuantWithMinMaxVarsGradient
     dout = np.random.uniform(-1, 1, size=[6]).astype('float32')
@@ -137,9 +128,7 @@ def test_fake_quant_grad5():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad6():
     # WithVarsGradient_RegularRange
     dout = np.random.uniform(-1, 1, size=[6]).astype('float32')
@@ -158,9 +147,7 @@ def test_fake_quant_grad6():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad7():
     # WithVarsGradient_NarrowRange
     dout = np.random.uniform(-1, 1, size=[6]).astype('float32')
@@ -179,9 +166,7 @@ def test_fake_quant_grad7():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad8():
     # WithVarsGradient_4Bits_RegularRange
     dout = np.random.uniform(-1, 1, size=[6]).astype('float32')
@@ -200,9 +185,7 @@ def test_fake_quant_grad8():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad9():
     # WithVarsGradient_4Bits_NarrowRange
     dout = np.random.uniform(-1, 1, size=[6]).astype('float32')

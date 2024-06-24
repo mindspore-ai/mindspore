@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -37,9 +38,7 @@ class Net(nn.Cell):
         return self.apply_adadelta(self.var, self.accum, self.accum_update, lr, rho, epsilon, grad)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_apply_adadelta():
     """
     Feature: Adadelta cpu kernel
@@ -87,9 +86,7 @@ class AdadeltaNetVmap(nn.Cell):
         return self.vmap_adagrad(self.var, self.accum, self.accum_update, lr, rho, epsilon, grad)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_apply_adadelta_vmap():
     """
     Feature: Adadelta cpu kernel
@@ -149,9 +146,7 @@ class AdadeltaNetVmap2(nn.Cell):
         return self.vmap_adagrad(self.var, self.accum, self.accum_update, lr, rho, epsilon, grad)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_apply_adadelta_vmap2():
     """
     Feature: Adadelta cpu kernel

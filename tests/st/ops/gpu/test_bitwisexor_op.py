@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -30,9 +31,7 @@ class NetBitwiseXor(nn.Cell):
         return self.bitwisexor(x1, x2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bitwisexor_graph():
     """
     Description: What input in what scene
@@ -51,9 +50,7 @@ def test_bitwisexor_graph():
         assert np.all(abs(result_expect - result) < eps)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bitwisexor_graph1():
     """
     Description: What input in what scene
@@ -72,9 +69,7 @@ def test_bitwisexor_graph1():
         assert np.all(abs(result_expect - result) < eps)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bitwisexor_graph2():
     """
     Description: What input in what scene

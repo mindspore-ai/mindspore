@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 
 """test where"""
@@ -49,10 +50,7 @@ class Add_LayerNorm(nn.Cell):
         return y, meanOut, rstdOut, res
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('tensor_type', [mstype.float32, mstype.float16, mstype.bfloat16])
 def test_add_layer_norm(tensor_type):
     """
@@ -84,10 +82,7 @@ def test_add_layer_norm(tensor_type):
     os.unsetenv("MS_DISABLE_INTERNAL_KERNELS_LIST")
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('tensor_type', [mstype.float32, mstype.float16, mstype.bfloat16])
 def test_add_layer_norm_dynamic_shape(tensor_type):
     """

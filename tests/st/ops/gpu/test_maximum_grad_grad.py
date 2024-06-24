@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -64,9 +65,7 @@ class MaximumGradGradVMapNet(Cell):
         return vmap(self.net, self.in_axes, self.out_axes)(x1, x2, dx1, dx2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maximum_grad_grad_random():
     """
     Feature: Test MaximumGradGrad.
@@ -95,9 +94,7 @@ def test_maximum_grad_grad_random():
     assert np.allclose(result[2].asnumpy(), np_result[2], rtol=loss, atol=loss, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maximum_grad_grad_broadcast():
     """
     Feature: Test MaximumGradGrad.
@@ -124,9 +121,7 @@ def test_maximum_grad_grad_broadcast():
     assert np.allclose(benchmark_result[2].asnumpy(), result[2].asnumpy(), rtol=loss, atol=loss, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_maximum_grad_grad_dy_shape(data_type):
     """
@@ -161,9 +156,7 @@ def test_maximum_grad_grad_dy_shape(data_type):
     assert np.allclose(result[2].asnumpy(), np_result[2], rtol=loss, atol=loss, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maximum_grad_grad_vmap():
     """
     Feature: test MaximumGradGrad vmap on GPU.

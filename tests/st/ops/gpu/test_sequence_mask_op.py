@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -26,9 +27,7 @@ def sequence_mask(x, maxlen):
     return C.sequence_mask(Tensor(x.astype(np.int32)), maxlen)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sequence_mask_1d():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     a = np.array([2, 3, 1])
@@ -40,9 +39,7 @@ def test_sequence_mask_1d():
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sequence_mask_2d():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     a = np.array([[0, 1, 3, 2], [1, 4, 4, 2]])
@@ -59,9 +56,7 @@ def test_sequence_mask_2d():
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sequence_mask_3d():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     a = np.array([[[2, 2], [1, 1]],
@@ -76,9 +71,7 @@ def test_sequence_mask_3d():
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sequence_mask_maxlen_1():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     a = np.array([[[0, 1], [1, 1]],
@@ -93,9 +86,7 @@ def test_sequence_mask_maxlen_1():
     np.testing.assert_array_equal(expected_out.asnumpy(), ms_out.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sequence_mask_dynamic():
     class SequenceMaskDynamicNet1(nn.Cell):
         def __init__(self, maxlen):
@@ -155,9 +146,7 @@ def sequence_mask_optional(x):
     return C.sequence_mask(Tensor(x.astype(np.int32)))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sequence_mask_optional_maxlen():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     a = np.array([2, 3, 1])

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -69,9 +70,7 @@ class ReduceAny(nn.Cell):
                 P.ReduceAny(self.keep_dims3)(self.x3, self.axis3))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ReduceAny():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     reduce_any = ReduceAny()
@@ -113,9 +112,7 @@ class ReduceAnyDynamic(nn.Cell):
         return self.reduceany(dynamic_x, self.axis)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reduce_any_dynamic():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net1 = ReduceAnyDynamic(Tensor(x_1), axis_1)

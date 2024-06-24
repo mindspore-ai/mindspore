@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,9 +32,7 @@ class NetNthElement(nn.Cell):
         return self.nth_element(x, k)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nth_element_1d():
     """
     Feature: test nth_element to find the t-th item in 1D input
@@ -52,9 +51,7 @@ def test_nth_element_1d():
         assert (y.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_nth_element_2d():
     """
     Feature: test nth_element to find the t-th item in 2D input

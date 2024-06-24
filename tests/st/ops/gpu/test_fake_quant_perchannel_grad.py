@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -33,9 +34,7 @@ class Net(nn.Cell):
         return self.op(dout, x, minq, maxq)
 
 
-@pytest.mark.level
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test_fake_quant_grad1():
     # WithVarsPerChannelDim1GradientNudgedDown_ZeroMinAndMax
     dout = np.random.uniform(-1, 1, size=[4]).astype('float32')
@@ -55,9 +54,7 @@ def test_fake_quant_grad1():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad2():
     # WithVarsPerChannelDim1GradientNudgedDown_RegularRange
     dout = np.random.uniform(-1, 1, size=[4]).astype('float32')
@@ -77,9 +74,7 @@ def test_fake_quant_grad2():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad3():
     # WithVarsPerChannelDim1GradientNudgedDown_NarrowRange
     dout = np.random.uniform(-1, 1, size=[4]).astype('float32')
@@ -99,9 +94,7 @@ def test_fake_quant_grad3():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad4():
     # WithVarsPerChannelDim1GradientNudgedUp_RegularRange
     dout = np.random.uniform(-1, 1, size=[4]).astype('float32')
@@ -121,9 +114,7 @@ def test_fake_quant_grad4():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad5():
     # WithVarsPerChannelDim1GradientNudgedUp_NarrowRange
     dout = np.random.uniform(-1, 1, size=[4]).astype('float32')
@@ -143,9 +134,7 @@ def test_fake_quant_grad5():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad6():
     # WithVarsPerChannelDim2GradientNudgedDown_RegularRange
     read_dout = np.random.uniform(-1, 1, size=[3, 2]).astype('float32')
@@ -169,9 +158,7 @@ def test_fake_quant_grad6():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad7():
     # WithVarsPerChannelDim2GradientNudgedDown_NarrowRange
     read_dout = np.random.uniform(-1, 1, size=[3, 2]).astype('float32')
@@ -195,9 +182,7 @@ def test_fake_quant_grad7():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad8():
     # WithVarsPerChannelDim2GradientNudgedUp_RegularRange
     read_dout = np.random.uniform(-1, 1, size=[3, 2]).astype('float32')
@@ -221,9 +206,7 @@ def test_fake_quant_grad8():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad9():
     # WithVarsPerChannelDim2GradientNudgedUp_NarrowRange
     read_dout = np.random.uniform(-1, 1, size=[3, 2]).astype('float32')
@@ -247,9 +230,7 @@ def test_fake_quant_grad9():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad10():
     # WithVarsPerChannelDim4GradientNudgedDown_RegularRange
     read_dout = np.random.uniform(-1, 1, size=[4, 3, 2, 1]).astype('float32')
@@ -279,9 +260,7 @@ def test_fake_quant_grad10():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad11():
     # WithVarsPerChannelDim4GradientNudgedDown_NarrowRange
     read_dout = np.random.uniform(-1, 1, size=[4, 3, 2, 1]).astype('float32')
@@ -309,9 +288,7 @@ def test_fake_quant_grad11():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad12():
     # WithVarsPerChannelDim4GradientNudgedUp_RegularRange
     read_dout = np.random.uniform(-1, 1, size=[4, 3, 2, 1]).astype('float32')
@@ -341,9 +318,7 @@ def test_fake_quant_grad12():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant_grad13():
     # WithVarsPerChannelDim4GradientNudgedUp_NarrowRange
     read_dout = np.random.uniform(-1, 1, size=[4, 3, 2, 1]).astype('float32')

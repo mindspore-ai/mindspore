@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -30,9 +31,7 @@ class SparseDenseCwisediv(Cell):
         return self.sparsedensecwisediv(x1_indices, x1_values, x1_shape, x2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_dense_cwise_div():
     """
     Feature:  SparseDenseCwiseDiv 4 inputs and 1 output.

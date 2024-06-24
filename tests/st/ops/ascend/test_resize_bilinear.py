@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -45,10 +46,7 @@ def case():
     assert np.allclose(output.asnumpy(), expected_output, 1e-3, 1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_resize_bilinear_ascend():
     """
     Feature: Test bilinear on ascend.
@@ -87,10 +85,7 @@ def case_grad():
     assert np.allclose(output[0][0].asnumpy(), expect, 1e-4, 1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_resize_bilinear_grad_ascend():
     """
     Feature: Test ResizeBilinearGrad on ascend.

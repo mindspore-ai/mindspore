@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+from tests.mark_utils import arg_mark
 
 import math
 import pytest
@@ -88,10 +89,7 @@ class LSTMWeightBias():
         return w_ih_list, w_hh_list, b_ih_list, b_hh_list
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sit_lstm_forward_input_3_32_32_is_32_hs_16():
     input_s = 32
     hidden_s = 16
@@ -133,10 +131,7 @@ def test_sit_lstm_forward_input_3_32_32_is_32_hs_16():
     assert np.allclose(cy.asnumpy(), cy_pynative.asnumpy(), 0.002, 0.002)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sit_lstm_grad_input_3_32_32_is_32_hs_16():
     input_s = 32
     hidden_s = 16

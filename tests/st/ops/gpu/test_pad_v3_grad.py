@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -43,9 +44,7 @@ class PadV3GradDynamicRankNet(nn.Cell):
         return self.padv3_grad(reduce_out, paddings)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_padv3grad_circular_3d():
     """
     Feature: test PadV3Grad
@@ -63,9 +62,7 @@ def test_padv3grad_circular_3d():
     np.testing.assert_almost_equal(expect, output.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_padv3grad_circular_4d():
     """
     Feature: test PadV3Grad
@@ -83,9 +80,7 @@ def test_padv3grad_circular_4d():
     np.testing.assert_almost_equal(expect, output.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_padv3grad_circular_5d():
     """
     Feature: test PadV3Grad
@@ -104,9 +99,7 @@ def test_padv3grad_circular_5d():
     np.testing.assert_almost_equal(expect, output.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_padv3grad_circular_3d_dynamic_rank():
     """
     Feature: test PadV3Grad with dynamic rank

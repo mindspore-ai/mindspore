@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -31,9 +32,7 @@ class SparseReorder(Cell):
         return self.sparse_reorder(indices, values, shape)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_reorder_int16():
     """
     Feature: SparseReorder
@@ -55,9 +54,7 @@ def test_sparse_reorder_int16():
     assert np.allclose(y_values, expect_y_values, ertol_loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_reorder_int32():
     """
     Feature: SparseReorder

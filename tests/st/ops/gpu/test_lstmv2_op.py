@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -60,8 +61,6 @@ def get_weights_from_lstm(lstm_nn, has_bias):
     return weights
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 @pytest.mark.parametrize("has_bias", [True, False])
 @pytest.mark.parametrize("is_train", [True, False])
 @pytest.mark.parametrize("dtype", [ms.float16, ms.float32])
@@ -96,8 +95,6 @@ def test_lstmv2_op(has_bias, is_train, dtype):
     assert np.allclose(me_cy.asnumpy(), expect_cy.asnumpy(), rtol, atol)
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_lstmv2_op_float64_exception():
     """
     Feature: test LSTMV2 with using float64

@@ -1,3 +1,4 @@
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -31,9 +32,7 @@ def nextafter_pynative(x1, x2):
     return out_msp
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nextafter_float64_graph():
     """
     Feature: ALL To ALL
@@ -47,9 +46,7 @@ def test_nextafter_float64_graph():
     assert out_msp.asnumpy() == out_tf
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nextafter_float32_graph():
     """
     Feature: ALL To ALL
@@ -63,9 +60,7 @@ def test_nextafter_float32_graph():
     assert (out_msp.asnumpy() == out_tf).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nextafter_float64_pynative():
     """
     Feature: ALL To ALL
@@ -79,9 +74,7 @@ def test_nextafter_float64_pynative():
     assert out_msp.asnumpy() == out_tf
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nextafter_float32_pynative():
     """
     Feature: ALL To ALL

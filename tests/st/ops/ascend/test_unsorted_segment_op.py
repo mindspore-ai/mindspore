@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -82,10 +83,7 @@ def unsorted_segment_arith_expected(func, x, segment_ids, num_segments):
     return result
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 def test_unsorted_segment_op(func):
     """
@@ -126,10 +124,7 @@ class TestUnsortedSegmentArithmeticNet(nn.Cell):
         return self.func(x, segment_ids, self.num_segments)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', ['min', 'max', 'sum'])
 def test_unsorted_segment_op_dynamic_shape(func):
     """

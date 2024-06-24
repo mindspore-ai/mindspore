@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -30,9 +31,7 @@ class MatrixTriangularSolveTEST(nn.Cell):
         return self.matrix_triangular_solve(matrix, rhs)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_triangular_solve_op_case1():
     """
     Feature: MatrixTriangularSolve GPU operator.
@@ -65,9 +64,7 @@ def test_matrix_triangular_solve_op_case1():
         assert np.allclose(output.asnumpy(), expect_result.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_triangular_solve_op_case2():
     """
     Feature: MatrixTriangularSolve GPU operator.
@@ -100,9 +97,7 @@ def test_matrix_triangular_solve_op_case2():
         assert np.allclose(output.asnumpy(), expect_result.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_triangular_solve_op_case3():
     """
     Feature: MatrixTriangularSolve GPU operator.
@@ -135,9 +130,7 @@ def test_matrix_triangular_solve_op_case3():
         assert np.allclose(output.asnumpy(), expect_result.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_triangular_solve_op_case4():
     """
     Feature: MatrixTriangularSolve GPU operator.

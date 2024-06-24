@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -35,9 +36,7 @@ class OpNetWrapper(nn.Cell):
         return self.op(*inputs)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_case1_basic_func():
     op = P.GatherNd()
     op_wrapper = OpNetWrapper(op)
@@ -50,9 +49,7 @@ def test_case1_basic_func():
     assert np.allclose(outputs.asnumpy(), np.array(expected))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_case2_indices_to_matrix():
     op = P.GatherNd()
     op_wrapper = OpNetWrapper(op)
@@ -65,9 +62,7 @@ def test_case2_indices_to_matrix():
     assert np.allclose(outputs.asnumpy(), np.array(expected))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_case3_indices_to_3d_tensor():
     op = P.GatherNd()
     op_wrapper = OpNetWrapper(op)
@@ -81,9 +76,7 @@ def test_case3_indices_to_3d_tensor():
     assert np.allclose(outputs.asnumpy(), np.array(expected))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_case4():
     op = P.GatherNd()
     op_wrapper = OpNetWrapper(op)
@@ -97,9 +90,7 @@ def test_case4():
     assert np.allclose(outputs.asnumpy(), np.array(expected))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_case5():
     op = P.GatherNd()
     op_wrapper = OpNetWrapper(op)
@@ -113,9 +104,7 @@ def test_case5():
     assert np.allclose(outputs.asnumpy(), np.array(expected))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_case6():
     op = P.GatherNd()
     op_wrapper = OpNetWrapper(op)
@@ -129,9 +118,7 @@ def test_case6():
     assert np.allclose(outputs.asnumpy(), np.array(expected))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_case7():
     op = P.GatherNd()
     op_wrapper = OpNetWrapper(op)
@@ -145,9 +132,7 @@ def test_case7():
     assert np.allclose(outputs.asnumpy(), np.array(expected))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_case8():
     op = P.GatherNd()
     op_wrapper = OpNetWrapper(op)
@@ -161,9 +146,7 @@ def test_case8():
     assert np.allclose(outputs.asnumpy(), np.array(expected))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_case9():
     op = P.GatherNd()
     op_wrapper = OpNetWrapper(op)
@@ -177,9 +160,7 @@ def test_case9():
     assert np.allclose(outputs.asnumpy(), np.array(expected))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_nd_vmap():
     """
     Feature: gather_nd vmap test on cpu.

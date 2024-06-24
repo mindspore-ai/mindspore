@@ -1,3 +1,4 @@
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import time
@@ -18,10 +19,7 @@ def find_npy_files(folder_path):
     return result
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize(
     "dtype",
     [
@@ -70,10 +68,7 @@ def test_net(dtype, mode):
     assert np.allclose(out, np.load(name2file["x"]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_net_bool(mode):
     """
@@ -112,10 +107,7 @@ def test_net_bool(mode):
     assert np.allclose(out, np.load(name2file["out"]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensordump_when_jit(mode):
     """

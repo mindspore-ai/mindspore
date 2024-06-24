@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -117,9 +118,7 @@ class ReduceMax(nn.Cell):
                 P.ReduceMax(self.keep_dims8)(self.x8, self.axis8))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ReduceMax():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     reduce_max = ReduceMax()
@@ -196,9 +195,7 @@ class ReduceMaxDynamic(nn.Cell):
         dynamic_x = self.test_dynamic(self.x)
         return self.reducemax(dynamic_x, self.axis)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reduce_max_dynamic():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net1 = ReduceMaxDynamic(Tensor(x_1), axis_1)
@@ -224,9 +221,7 @@ class ReduceMaxTypeNet(nn.Cell):
     def construct(self):
         return P.ReduceMax(self.keep_dims0)(self.x0, self.axis0)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reduce_max_float64():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     net = ReduceMaxTypeNet(np.float64)

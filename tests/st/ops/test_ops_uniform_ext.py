@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -35,9 +36,7 @@ class UniformExtCell(Cell):
         return self.uniform(x, from_, to, seed, offset)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [
     mindspore.PYNATIVE_MODE,
     mindspore.GRAPH_MODE
@@ -97,10 +96,7 @@ def test_basic(context_mode):
     assert not np.allclose(output1, output2, rtol=rtol)
     assert not np.allclose(expect1, expect2, rtol=rtol)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_op():
     """
     Feature: TEST_OP

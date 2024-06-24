@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -35,9 +36,7 @@ class NetMaxPoolGradGradWithArgmax(nn.Cell):
         return self.maxpool_grad_grad_argmax_fun(x, grad, argmax)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("argmax_type", [np.int32, np.int64])
 def test_maxpool_grad_grad_argmax_fp16(argmax_type):
     """
@@ -62,9 +61,7 @@ def test_maxpool_grad_grad_argmax_fp16(argmax_type):
     assert np.allclose(output.asnumpy(), expect_result)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("argmax_type", [np.int32, np.int64])
 def test_maxpool_grad_grad_argmax_fp32(argmax_type):
     """

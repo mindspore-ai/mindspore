@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore
@@ -47,9 +48,7 @@ def dyn_case():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_nd_dyn_cpu():
     """
     Feature: test GatherNd dynamic shape on CPU.
@@ -62,10 +61,7 @@ def test_gather_nd_dyn_cpu():
     dyn_case()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_nd_dyn_ascend():
     """
     Feature: test GatherNd dynamic shape on Ascend.
@@ -78,9 +74,7 @@ def test_gather_nd_dyn_ascend():
     dyn_case()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_nd_dyn_gpu():
     """
     Feature: test GatherNd dynamic shape on GPU.

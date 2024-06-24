@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import sys
 import pytest
@@ -47,9 +48,7 @@ class PriorityReplayBuffer(nn.Cell):
         return self.destroy_op()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_priority_replay_buffer_ops():
     """
     Feature: PriorityReplayBuffer used in Reinforcement Learning.
@@ -98,9 +97,7 @@ def test_priority_replay_buffer_ops():
     prb.destroy()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_priority_replay_buffer_with_priority_ops():
     """
     Feature: PriorityReplayBuffer used in Reinforcement Learning.

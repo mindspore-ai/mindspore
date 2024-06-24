@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -31,9 +32,7 @@ class Quantile(Cell):
         return self.quantile(x, q)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.skip(reason="I6NEX6, I6NEJF")
 def test_quantile_fp32():
     """
@@ -56,9 +55,7 @@ def test_quantile_fp32():
     assert np.allclose(output, expect_output, ertol_loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.skip(reason="I6NEX6, I6NEJF")
 def test_quantile_fp64():
     """
