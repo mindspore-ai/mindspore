@@ -56,7 +56,6 @@ BaseShapePtr BinaryCrossEntropyFuncImpl::InferShape(const PrimitivePtr &primitiv
     }
   }
   auto reduction = GetScalarValue<int64_t>(input_args[kInputIndex3]->GetValue());
-
   if (reduction.has_value() && static_cast<Reduction>(reduction.value()) == Reduction::NONE) {
     return input_shape_ptr->Clone();
   }

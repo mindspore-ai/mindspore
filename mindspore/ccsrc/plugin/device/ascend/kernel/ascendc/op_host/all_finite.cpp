@@ -77,7 +77,6 @@ void ElewiseTailTiling(AllFiniteTilingDataLocal *tiling, const uint32_t total_nu
     /* tail core ub count */
     ElewiseTailUbTiling(aligned_factor, max_ub_factor, tiling->tail_block_count, tiling->tail_block_ub_num,
                         tiling->tail_block_ub_loop, tiling->tail_block_ub_tail, tiling->tail_block_ub_real);
-
   } else {
     tiling->block_dim = 1;
     tiling->tail_block_count = total_num;
