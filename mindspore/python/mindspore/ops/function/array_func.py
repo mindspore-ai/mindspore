@@ -283,7 +283,7 @@ def arange_ext(start=0, end=None, step=1, *, dtype=None):
     `step` up to but not including `end`.
 
     Args:
-        start (Union[float, int], optional): The start of the interval.
+        start (Union[float, int], optional): The start of the interval. Default: ``0`` .
         end (Union[float, int], optional): The end of the interval, exclusive.
             Default: ``None`` . If ``None`` , it defaults to the value of `start`, and 0 is used as the starting value.
         step (Union[float, int], optional): The step size with which the array element increments. Default: ``1`` .
@@ -326,11 +326,11 @@ def arange_ext(start=0, end=None, step=1, *, dtype=None):
         [7 5 3]
         >>> print(output.dtype)
         Int64
-        >>> output = ops.arange_ext(ms.Tensor(12.0, dtype=ms.float64), 2, ms.Tensor(-1.0, dtype=ms.float32))
+        >>> output = ops.arange_ext(12, 2, -1, dtype=ms.bfloat16))
         >>> print(output)
         [12. 11. 10.  9.  8.  7.  6.  5.  4.  3.]
         >>> print(output.dtype)
-        Float32
+        BFloat16
     """
     if end is None:
         start, end = 0, start
