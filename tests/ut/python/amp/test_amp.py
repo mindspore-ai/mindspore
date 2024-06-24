@@ -12,8 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from mindspore import ops
+import pytest
+import numpy as np
+import mindspore as ms
+from mindspore import ops, nn, Parameter, Tensor
 from mindspore.common import dtype as mstype
+from mindspore.train.amp import auto_mixed_precision
 from mindspore._c_expression import amp as amp_c
 from mindspore._c_expression.amp import pop_amp_strategy, push_amp_strategy, create_amp_strategy, \
     get_curr_amp_strategy, AmpStrategy, AmpLevel, PrimCastStrategy, PrimCastStrategyInfo
@@ -141,3 +145,98 @@ def test_modify_amp_list():
     assert amp_c.SetDtypeList == [("NormExt", [0])]
     assert amp_c.AutoPromoteList == [("Addcdiv", []), ("Cross", []), ("Dot", []), ("GridSampler2D", []),
                                      ("GridSampler3D", []), ("IndexPut", []), ("BiasAdd", [])]
+
+
+class MatmulNet(nn.Cell):
+
+    def __init__(self):
+        super().__init__()
+        self.param = Parameter(Tensor(np.ones([1, 1]), dtype=ms.float16))
+        self.matmul = ops.MatMul()
+
+    def construct(self, x):
+        return self.matmul(x, self.param)
+
+
+def test_amp_auto_white_list():
+    """
+    Feature: auto mixed precision auto mode.
+    Description: test if prim in white list(Matmul) can run in fp16.
+    Expectation: success.
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    input_data = Tensor(np.ones([1, 1]), dtype=ms.float32)
+
+    net = MatmulNet()
+    with pytest.raises(TypeError):
+        net(input_data)
+
+    net = auto_mixed_precision(net, "auto")
+    out = net(input_data)
+    assert out.dtype == ms.float32
+    out_matmul = net._backbone(input_data)
+    assert out_matmul.dtype == ms.float16
+
+
+class LogNet(nn.Cell):
+
+    def __init__(self):
+        super().__init__()
+        self.log = ops.Log()
+
+    def construct(self, x):
+        return self.log(x)
+
+
+def test_amp_auto_black_list():
+    """
+    Feature: auto mixed precision auto mode.
+    Description: test if prim in black list(Log) can run in fp16.
+    Expectation: success.
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    input_data = Tensor(np.ones([1, 1]), dtype=ms.float32)
+    net = LogNet()
+    net = auto_mixed_precision(net, "auto")
+    out = net(input_data)
+    assert out.dtype == ms.float32
+    out_matmul = net._backbone(input_data)
+    assert out_matmul.dtype == ms.float32
+
+
+class BiasAddNet(nn.Cell):
+
+    def __init__(self):
+        super().__init__()
+        self.param = Parameter(Tensor([1, 2, 3], dtype=ms.float16))
+        self.biasadd = ops.BiasAdd()
+
+    def construct(self, x):
+        return self.biasadd(x, self.param)
+
+
+def test_amp_auto_promote():
+    """
+    Feature: auto mixed precision auto mode.
+    Description: test if prim in promote list(BiasAdd) can run in fp16/fp32.
+    Expectation: success.
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    # promote with fp16
+    input_fp16 = Tensor(np.ones([3, 3]), dtype=ms.float16)
+    net = BiasAddNet()
+    net = auto_mixed_precision(net, "auto")
+    out = net(input_fp16)
+    assert out.dtype == ms.float32
+    out_matmul = net._backbone(input_fp16)
+    assert out_matmul.dtype == ms.float16
+    # promote with fp32
+    input_fp32 = Tensor(np.ones([3, 3]), dtype=ms.float32)
+    net2 = BiasAddNet()
+    with pytest.raises(TypeError):
+        net2(input_fp32)
+    net2 = auto_mixed_precision(net2, "auto")
+    out2 = net2(input_fp32)
+    assert out2.dtype == ms.float32
+    out_matmul2 = net2._backbone(input_fp32)
+    assert out_matmul2.dtype == ms.float32
