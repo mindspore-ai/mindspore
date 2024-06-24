@@ -85,6 +85,7 @@ class MatMul : public MatMulBase {
 
  private:
   Status ComputeNDTPReplaceGraph(const CNodePtr &cnode);
+  int64_t GetAllGatherDim(size_t all_gather_tensor_axis, const TensorLayout &input_layout, size_t tensor_index);
   AnfNodePtr ComputePreAllGatherGraph(const CNodePtr &cnode, GenerateGraph *gen_g,
                                       const std::vector<Group> &device_group_list, int64_t all_gather_tensor_axis,
                                       const AnfNodePtr &all_gather_node, bool transpose);
