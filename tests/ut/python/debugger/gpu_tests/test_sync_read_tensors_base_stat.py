@@ -118,12 +118,27 @@ class TestOfflineReadTensorBaseStat:
         with open(golden_file) as f:
             expected_list = json.load(f)
 
+        def inf_nan_to_str(x):
+            if np.isposinf(x):
+                return "inf"
+            if np.isneginf(x):
+                return "-inf"
+            if np.isnan(x):
+                return "nan"
+            return x
+
         for x, (tensor_info_item, tensor_base, tensor_stat) in enumerate(zip(tensor_info,
                                                                              tensor_base_data_list,
                                                                              tensor_stat_data_list)):
             test_id = "test"+ str(test_index + x + 1)
             expect_tensor = expected_list[x + test_index][test_id]
             actual_tensor = write_tensor_stat_to_json(tensor_info_item, tensor_base, tensor_stat)
+
+            actual_tensor_stat = actual_tensor["tensor_stat_info"]
+            actual_tensor_stat["max_vaue"] = inf_nan_to_str(actual_tensor_stat["max_vaue"])
+            actual_tensor_stat["min_value"] = inf_nan_to_str(actual_tensor_stat["min_value"])
+            actual_tensor_stat["avg_value"] = inf_nan_to_str(actual_tensor_stat["avg_value"])
+
             assert actual_tensor == expect_tensor
 
     def print_read_tensors(self, tensor_info, tensor_base_data_list, tensor_stat_data_list, test_index, is_print):
