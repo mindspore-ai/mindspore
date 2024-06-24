@@ -395,9 +395,13 @@ class P2POp:
         tensor(Union[Tensor, Tuple(int)]): tensor for sending/receiving or receive tensor shape
                                            when `op` is ``"irecv"``.
         peer(int): remote global rank for send/receive.
-        tag(int): currently not supported yet. default: ``0``.
-        recv_dtype(mindspore.dtype): when `tensor` is a tuple shape, this arg will be used and has
-                                     to be configured. default: ``None``
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
+            means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
+        tag(int, optional): currently not supported yet. default: ``0``.
+
+    Keyword Args:
+        recv_dtype (mindspore.dtype, optional): when `tensor` is a tuple shape, this arg will be used and has
+                                               to be configured. default: ``None``
 
     Returns:
         P2POp Object.
