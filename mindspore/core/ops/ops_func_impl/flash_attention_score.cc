@@ -329,7 +329,13 @@ TypePtr FlashAttentionScoreFuncImpl::InferType(const PrimitivePtr &prim,
   }
   if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputAttnMaskIndex])) {
     auto attn_mask_type = input_args[kFlashAttentionScoreInputAttnMaskIndex]->GetType();
-    CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8, kBool}, op_name);
+    std::set attn_mask_valid_types = {kUInt8, kBool};
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    if (ms_context->IsEnableInferBoost()) {
+      (void)attn_mask_valid_types.emplace(kFloat16);
+    }
+    CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, attn_mask_valid_types, op_name);
   }
 
   auto keep_prob_value_ptr = input_args[kFlashAttentionScoreInputKeepProbIndex]->GetValue();
