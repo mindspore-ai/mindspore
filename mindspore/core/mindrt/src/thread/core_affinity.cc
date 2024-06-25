@@ -217,7 +217,8 @@ int GetMaxFrequency(int core_id) {
 
 float CoreAffinity::GetServerFrequency() {
   float max_freq = -1.0f;
-#if defined(__APPLE__) || defined(__MACOSX) || defined(_MSC_VER) || defined(_WIN32)
+#if defined(__APPLE__) || defined(__MACOSX) || defined(_MSC_VER) || defined(_WIN32) || defined(ANDROID) || \
+  defined(__ANDROID__)
   return max_freq;  // MHz
 #else
   // The CPU cores in the server of the numa architecture are the same.
