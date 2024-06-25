@@ -32,6 +32,7 @@
 #include "backend/common/somas/somas_stream.h"
 #include "backend/common/somas/somas_tensor.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/backend/mem_reuse/mem_tracker.h"
 #include "include/common/debug/common.h"
 #include "include/common/debug/anf_ir_dump.h"
 #ifdef ENABLE_DUMP_IR
@@ -55,6 +56,7 @@ constexpr auto kNopNodeRealInputIndex = 1;
 constexpr auto kZeroAlignSize = 1;
 constexpr auto kBias = 5;
 constexpr auto kProcessNum = 16;
+constexpr auto kNodesThreshold = 100000;
 
 constexpr auto kGraphId = "graph_id";
 constexpr auto kHashId = "hash_id";
@@ -162,6 +164,12 @@ bool Somas::Assign(const session::KernelGraph &graph) {
   InitSomasModel(graph);
   MS_LOG(INFO) << "End Initialize SOMAS Model";
 
+  if (nodes_list_.size() > kNodesThreshold) {
+    MS_LOG(WARNING) << "The number of nodes in the graph is too large, the SOMAS algorithm may be slow. Please use "
+                       "export MS_DEV_RUNTIME_CONF=\"inline:false\", the number of nodes: "
+                    << nodes_list_.size();
+  }
+
   if (tensors_list_.empty()) {
     MS_LOG(INFO) << "No Somas Tensor in graph " << graph.graph_id();
     return true;
@@ -227,9 +235,6 @@ std::pair<bool, std::string> Somas::GetDebugConfig() const {
   auto save_graphs_path = context_ptr->GetSaveGraphsPath();
   if (save_graphs_path.empty()) {
     save_graphs_path = ".";
-  }
-  if (common::GetEnv("MS_MEMORY_STATISTIC") == "2") {
-    enable_save_graphs = true;
   }
   return std::make_pair(enable_save_graphs, save_graphs_path);
 }
@@ -2001,7 +2006,8 @@ void Somas::DumpParameters(std::ostringstream &oss) const {
 
 void Somas::DumpSomasModelInfo(const string &tag, uint32_t graph_id) const {
 #ifndef ENABLE_SECURITY
-  if (save_debug_info_) {
+  bool force_dump = device::tracker::MemTrackerManager::GetInstance().IsEnabled() && tag == "somas_tensor_offset";
+  if (save_debug_info_ || force_dump) {
     std::string file_path =
       GetSaveGraphsPathName("/" + device_name_ + "_" + tag + "_" + std::to_string(graph_id) + ".ir", debug_info_path_);
     (void)Common::SaveStringToFile(file_path, SomasInfo());
