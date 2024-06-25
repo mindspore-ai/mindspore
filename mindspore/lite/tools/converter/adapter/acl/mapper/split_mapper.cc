@@ -71,7 +71,7 @@ STATUS SplitMapper::Mapper(const CNodePtr &cnode) {
       dst_prim->AddAttr("size_splits", size_splits_value);
     }
     if (size_splits_value == nullptr) {
-      int status = AddIntAttrToInput(func_graph, cnode, dst_prim, ops::kAxis, false);
+      int status = AddIntAttrToInput(func_graph, cnode, src_prim, ops::kAxis, false);
       if (status != RET_OK) {
         MS_LOG(ERROR) << "Add axis constant value to input failed.";
         return RET_ERROR;
