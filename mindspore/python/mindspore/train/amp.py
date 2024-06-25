@@ -807,9 +807,10 @@ def get_black_list():
 def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=mstype.float16):
     """
     Custom mixed precision by setting whitelist or blacklist.
-    When the `white_list` is provided, primitives and cells in `white_list` will perform the precision conversion.
-    When the `black_list` is provided, cells that are not in `black_list` will perform the pereision conversion.
-    Only one of `white_list` and `black_list` should be provided.
+    When only `white_list` is provided, primitives and cells in `white_list` will perform the precision conversion.
+    When only `black_list` is provided, cells that are not in `black_list` will perform the pereision conversion.
+    When both `white_list` and `black_list` are provided, inputs of primitives in `white_list` will be converted to
+    `dtype`, and inputs of primitives in `black_list` will be converted to float32.
 
     Note:
         - Repeatedly calling mixed-precision interfaces, such as `custom_mixed_precision` and `auto_mixed_precision`,
@@ -817,7 +818,6 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=m
         - If interfaces like `Model` and `build_train_network` is used to train the network which is converted by
           mixed-precision interfaces such as `custom_mixed_precision` and `auto_mixed_precision`, `amp_level`
           need to be configured to ``O0`` to avoid the duplicated accuracy conversion.
-        - Primitives for blacklist is not support yet.
 
     Args:
         network (Cell): Definition of the network.
@@ -835,7 +835,6 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=m
         TypeError: The network type is not Cell.
         ValueError: Neither `white_list` nor `black_list` is provided.
         ValueError: If `dtype` is not one of ``mstype.float16`` , ``mstype.bfloat16`` .
-        ValueError: Both `white_list` and `black_list` are provided.
 
     Examples:
         >>> from mindspore import amp, nn
@@ -852,23 +851,30 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=m
     if white_list is None and black_list is None:
         raise ValueError("For custom_mixed_precision, one of white_list and black_list must be provided.")
 
-    if white_list is not None and black_list is not None:
-        raise ValueError("For custom_mixed_precision, the white_list or black_list cannot be provided "
-                         "at the same time, please provide one or the other.")
-
     if dtype not in (mstype.float16, mstype.bfloat16):
         raise ValueError(f"The dtype should be one of (mstype.float16, mstype.bfloat16), but got {dtype}.")
 
-    if white_list is not None:
+    if white_list is not None and black_list is None:
         _list_check(white_list, "white_list")
         network = _auto_mixed_precision_rewrite(network, dtype, white_list=white_list)
-    else:
+    elif white_list is None and black_list is not None:
         _list_check(black_list, "black_list")
         if MS_AMP_BY_REWRITE:
             network = _auto_mixed_precision_rewrite(network, dtype, black_list=black_list)
         else:
             network = _auto_black_list(network, black_list, dtype)
             network = _OutputTo32(network)
+    else:
+        white_list = [(prim.__name__, AMP_PRIM_ARG_TABLE[prim]) for prim in white_list \
+                      if issubclass(prim, Primitive)]
+        black_list = [(prim.__name__, AMP_PRIM_ARG_TABLE[prim]) for prim in black_list \
+                      if issubclass(prim, Primitive)]
+        # set amp_strategy attribute for the object
+        amp_strategy = create_amp_strategy(AmpLevel.AmpAuto, dtype, white_list, black_list)
+        setattr(network, "amp_strategy", amp_strategy)
+        # set amp_strategy context decorator for the object
+        network = _set_amp_decorator(network, AmpLevel.AmpAuto, dtype, white_list, black_list)
+        network = _OutputTo32(network)
     return network
 
 

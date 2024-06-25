@@ -17,7 +17,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import ops, nn, Parameter, Tensor
 from mindspore.common import dtype as mstype
-from mindspore.train.amp import auto_mixed_precision
+from mindspore.train.amp import auto_mixed_precision, custom_mixed_precision
 from mindspore._c_expression import amp as amp_c
 from mindspore._c_expression.amp import pop_amp_strategy, push_amp_strategy, create_amp_strategy, \
     get_curr_amp_strategy, AmpStrategy, AmpLevel, PrimCastStrategy, PrimCastStrategyInfo
@@ -289,3 +289,31 @@ def test_amp_auto_promote():
     assert out2.dtype == ms.float32
     out_matmul2 = net_func2._backbone(input_fp32)  # pylint: disable=protected-access
     assert out_matmul2.dtype == ms.float32
+
+
+def test_amp_custom_white_black_list():
+    """
+    Feature: custom mixed precision with two lists.
+    Description: test if prim in custom white/black list(Matmul) can run in fp16/fp32.
+    Expectation: success.
+    """
+    ms.set_context(mode=ms.PYNATIVE_MODE)
+    input_data = Tensor(np.ones([1, 1]), dtype=ms.float32)
+    # test prim in white list
+    net1 = MatmulNet()
+    white_list = [ops.MatMul]
+    black_list = []
+    net1 = custom_mixed_precision(net1, white_list=white_list, black_list=black_list, dtype=ms.float16)
+    out = net1(input_data)
+    assert out.dtype == ms.float32
+    out_matmul = net1._backbone(input_data)  # pylint: disable=protected-access
+    assert out_matmul.dtype == ms.float16
+    # test prim in black list
+    net2 = MatmulNet()
+    white_list = []
+    black_list = [ops.MatMul]
+    net2 = custom_mixed_precision(net2, white_list=white_list, black_list=black_list, dtype=ms.float16)
+    out = net2(input_data)
+    assert out.dtype == ms.float32
+    out_matmul = net2._backbone(input_data)  # pylint: disable=protected-access
+    assert out_matmul.dtype == ms.float32
