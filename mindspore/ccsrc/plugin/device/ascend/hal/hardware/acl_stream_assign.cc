@@ -33,6 +33,8 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 namespace {
+constexpr uint32_t kEventThreshold = 60000;
+
 void SetForSwitchInline(const NotNull<KernelGraphPtr> &kernel_graph, const CNodePtr &send_cnode,
                         const CNodePtr &recv_cnode, const AnfNodePtr &pre_node, const AnfNodePtr &next_node) {
   if (pre_node == nullptr || next_node == nullptr) {
@@ -144,6 +146,12 @@ void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) 
     }
   }
   InsertEventForNonTaskSink(kernel_graph);
+  auto event_num = AscendStreamMng::GetInstance().cur_event_num();
+  if (event_num > kEventThreshold) {
+    MS_LOG(WARNING) << "The number of events is " << event_num
+                    << ", which may cause the event resources on device are exhausted. Please use export "
+                       "MS_DEV_RUNTIME_CONF=\"inline:false\".";
+  }
 }
 
 void AclStreamAssign::GenKernelIoExecInfoMap(
