@@ -14,7 +14,6 @@
 # ============================================================================
 import sys
 import os
-import pytest
 import tempfile
 import shutil
 import time
@@ -22,6 +21,7 @@ import numpy as np
 import mindspore as ms
 import mindspore.ops as ops
 from mindspore import Tensor
+from tests.mark_utils import arg_mark
 from dump_test_utils import generate_dump_json, check_dump_structure
 
 ms.set_context(mode=0, device_target='Ascend')
@@ -45,10 +45,7 @@ def run_exception_net():
     return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_exception_dump():
     """
     Feature: Test exception dump.

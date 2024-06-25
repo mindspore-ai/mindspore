@@ -14,7 +14,6 @@
 # ============================================================================
 import os
 import glob
-import pytest
 import json
 import mindspore.context as context
 import tempfile
@@ -25,6 +24,7 @@ from mindspore import JitConfig, Tensor, nn
 from mindspore.ops import operations as P
 from pathlib import Path
 import numpy as np
+from tests.mark_utils import arg_mark
 from dump_test_utils import generate_dump_json
 
 
@@ -38,10 +38,7 @@ def check_kernel_args_dump(dump_file_path):
     assert net_args.get("transpose_b") == "False"
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_e2e_dump_save_kernel_args_true():
     """
     Feature: kbyk dump support kernel args.

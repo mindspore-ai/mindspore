@@ -18,7 +18,6 @@ import sys
 import tempfile
 import glob
 import shutil
-import pytest
 import numpy as np
 
 import mindspore.nn as nn
@@ -28,6 +27,7 @@ from mindspore.common.initializer import TruncatedNormal
 from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+from tests.mark_utils import arg_mark
 from tests.security_utils import security_off_wrap
 from dump_test_utils import generate_dump_json, check_dump_structure
 
@@ -131,10 +131,7 @@ def run_trans_flag(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @security_off_wrap
 def test_ascend_kernel_by_kernel_lenet():
     """

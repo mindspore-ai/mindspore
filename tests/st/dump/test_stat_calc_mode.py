@@ -15,7 +15,6 @@
 import os
 import glob
 import csv
-import pytest
 import mindspore.context as context
 import tempfile
 import time
@@ -24,6 +23,7 @@ import json
 
 from mindspore import JitConfig, Tensor, nn
 from pathlib import Path
+from tests.mark_utils import arg_mark
 from dump_test_utils import generate_statistic_dump_json
 
 e2e_dump_dict = {
@@ -110,10 +110,7 @@ def check_statistic_device_dump(dump_file_path):
                 check_statistic_l2_value(tensor, 8.6023)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_kbk_stat_calc_mode_dump():
     """
     Feature: kbyk statistic dump support device calc.
@@ -145,10 +142,7 @@ def test_kbk_stat_calc_mode_dump():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_kbk_stat_calc_mode_l2_dump():
     """
     Feature: kbyk statistic dump support host l2 value dump.
@@ -184,10 +178,7 @@ def test_kbk_stat_calc_mode_l2_dump():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_kbk_stat_calc_mode_l2_dump_device():
     """
     Feature: kbyk statistic dump support device l2 value dump.
