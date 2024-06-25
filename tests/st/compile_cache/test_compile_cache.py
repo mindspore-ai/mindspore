@@ -485,7 +485,7 @@ def test_compile_cache_run_two_cells_once():
     run_two_cells_networks_once("run_lenet_two_cells.py", "./lenet_two_cells", "lenet_two_cells.txt")
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single

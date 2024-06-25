@@ -24,7 +24,7 @@ import pytest
 class TestLlamaParallelPredict:
     """A test class for testing pipeline."""
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_arm_ascend910b_training
     @pytest.mark.env_single
     def test_predict(self):
@@ -43,7 +43,7 @@ class TestLlamaParallelPredict:
         os.system(f"grep -E 'ERROR|error' {sh_path}/msrun_log/worker_7.log -C 3")
         assert ret == 0
 
-    @pytest.mark.level0
+    @pytest.mark.level1
     @pytest.mark.platform_arm_ascend910b_training
     @pytest.mark.env_single
     def test_predict_bf16(self):
