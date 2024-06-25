@@ -115,8 +115,8 @@ int64_t FallbackIRBuilder::GetSize(const NodePtr &node) const {
   auto shape = GetShape(node);
   return std::accumulate(shape.begin(), shape.end(), 1LL, std::multiplies<int64_t>());
 }
-
-DEF_PURE_SHAPE_CALC(g_dyn_size)
+// DEF_PURE_SHAPE_CALC's name cannot be same now
+DEF_PURE_SHAPE_CALC(g_dyn_size_2)
   .SetCalc([](const ShapeArray &inputs) -> ShapeArray { return {{abstract::ShapeSize(inputs.at(0))}}; })
   .SetInfer([](const ShapeArray &, const HashSet<size_t> &) -> ShapeVector { return {1}; });
 
@@ -124,7 +124,7 @@ NodePtr FallbackIRBuilder::DynSize(const NodePtr &node) {
   if (!IsDynamic(GetShape(node))) {
     return Tensor(GetSize(node), kInt64);
   }
-  return SequenceToTensor(ShapeCalc(g_dyn_size, {node})[0]);
+  return SequenceToTensor(ShapeCalc(g_dyn_size_2, {node})[0]);
 }
 
 NodePtr FallbackIRBuilder::DynSize(const NodePtr &node, const TypePtr &type) {
