@@ -177,10 +177,7 @@ void ConvertBFloat16::CastInput(const CNodePtr &cnode, size_t input_idx, const F
   input_idx += 1;
   auto input_node = cnode->input(input_idx);
   TypeId target_input_type = kNumberTypeFloat32;
-  if (input_node->isa<Parameter>()) {
-    auto new_input = GetCastedInput(input_node, target_input_type, func_graph);
-    cnode->set_input(input_idx, new_input);
-  } else if (input_node->isa<ValueNode>()) {
+  if (input_node->isa<ValueNode>()) {
     auto value_node = input_node->cast<ValueNodePtr>();
     auto new_input = CastTensor(value_node);
     cnode->set_input(input_idx, new_input);
@@ -191,14 +188,8 @@ void ConvertBFloat16::CastInput(const CNodePtr &cnode, size_t input_idx, const F
     auto new_input = GetCastedInput(cast_node->input(1), target_input_type, func_graph);
     cnode->set_input(input_idx, new_input);
   } else {
-    auto cb = Callback::Instance();
-    MS_EXCEPTION_IF_NULL(cb);
-    auto cur_input_type = cb->GetOutputType(input_node, 0);
-    if (cur_input_type != target_input_type) {
-      MS_LOG(EXCEPTION) << "For node " << cnode->fullname_with_scope() << ", input[" << input_idx
-                        << "]'s data type should already be updated to " << TypeIdToString(target_input_type)
-                        << ", but got: " << TypeIdToString(cur_input_type);
-    }
+    auto new_input = GetCastedInput(input_node, target_input_type, func_graph);
+    cnode->set_input(input_idx, new_input);
   }
 }
 
