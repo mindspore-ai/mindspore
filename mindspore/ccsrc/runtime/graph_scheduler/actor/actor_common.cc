@@ -655,7 +655,7 @@ static size_t actor_index = 0;
 std::string GetActorIdByKernel(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (actor_ids.find(node.get()) == actor_ids.end()) {
-    MS_LOG(WARNING) << "Failed to get actor id by node:" << node->fullname_with_scope();
+    MS_LOG(INFO) << "Cannot get actor id by node:" << node->fullname_with_scope();
     return node->fullname_with_scope();
   }
   return actor_ids[node.get()];
