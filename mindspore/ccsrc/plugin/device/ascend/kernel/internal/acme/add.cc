@@ -28,6 +28,6 @@ acme::AcmeOpPtr AcmeAdd::CreateKernel(acme::InputsImmutableInfoList inputs_ii,
   return acme::CreateAddOp(inputs_ii, outputs_ii);
 }
 
-MS_ACME_KERNEL_FACTORY_REG(Add, AcmeAdd);
+// MS_ACME_KERNEL_FACTORY_REG(Add, AcmeAdd);
 }  // namespace kernel
 }  // namespace mindspore
