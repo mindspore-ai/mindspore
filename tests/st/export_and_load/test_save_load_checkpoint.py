@@ -39,7 +39,6 @@ class LeNet5(nn.Cell):
             self.fc2 = nn.Dense(120, 84, weight_init=Normal(0.02))
             self.fc3 = nn.Dense(84, num_class, weight_init=Normal(0.02))
 
-
     def construct(self, x):
         '''
         Forward network.
@@ -57,6 +56,13 @@ class LeNet5(nn.Cell):
         x = self.relu(self.fc2(x))
         x = self.fc3(x)
         return x
+
+
+def remove_ckpt(file_name):
+    """remove ckpt."""
+    if os.path.exists(file_name) and file_name.endswith(".ckpt"):
+        os.chmod(file_name, stat.S_IWRITE)
+        os.remove(file_name)
 
 
 @pytest.mark.level0
@@ -82,6 +88,8 @@ def test_ops_save_checkpoint(mode):
     param_dict = ms.load_checkpoint("./lenet.ckpt")
     ms.save_checkpoint(param_dict, "./lenet_dict.ckpt")
     output_param_dict1 = ms.load_checkpoint("./lenet_dict.ckpt")
+    remove_ckpt("./lenet.ckpt")
+    remove_ckpt("./lenet_dict.ckpt")
     assert 'conv2.weight' in output_param_dict1
     assert 'conv1.weight' not in output_param_dict1
     assert 'fc1.bias' not in output_param_dict1
@@ -90,6 +98,7 @@ def test_ops_save_checkpoint(mode):
     ms.save_checkpoint(param_list, "./lenet_list.ckpt",
                        choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
     output_param_dict2 = ms.load_checkpoint("./lenet_list.ckpt")
+    remove_ckpt("./lenet_list.ckpt")
     assert 'conv2.weight' in output_param_dict2
     assert 'conv1.weight' not in output_param_dict2
     assert 'fc1.bias' not in output_param_dict2
@@ -98,14 +107,8 @@ def test_ops_save_checkpoint(mode):
     append_dict = {"lr": 0.01}
     ms.save_checkpoint(empty_list, "./lenet_empty_list.ckpt", append_dict=append_dict)
     output_empty_list = ms.load_checkpoint("./lenet_empty_list.ckpt")
+    remove_ckpt("./lenet_empty_list.ckpt")
     assert "lr" in output_empty_list
-
-    file_list = os.listdir(os.getcwd())
-    ckpt_list = [k for k in file_list if k.endswith(".ckpt")]
-    for file_name in ckpt_list:
-        if os.path.exists(file_name):
-            os.chmod(file_name, stat.S_IWRITE)
-            os.remove(file_name)
 
 
 @pytest.mark.level0
@@ -125,12 +128,7 @@ def test_load_checkpoint_async(mode):
                        choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
     output_param_dict_fu = load_checkpoint_async("./lenet.ckpt")
     output_param_dict = output_param_dict_fu.result()
-    file_list = os.listdir(os.getcwd())
-    ckpt_list = [k for k in file_list if k.endswith(".ckpt")]
-    for file_name in ckpt_list:
-        if os.path.exists(file_name):
-            os.chmod(file_name, stat.S_IWRITE)
-            os.remove(file_name)
+    remove_ckpt("./lenet.ckpt")
 
     assert 'conv2.weight' in output_param_dict
     assert 'conv1.weight' not in output_param_dict
