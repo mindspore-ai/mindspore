@@ -420,6 +420,7 @@ def ones(size, *, dtype=None):
 def permute(input, dims):
     return permute_ext(input, dims)
 
+
 def split(tensor, split_size_or_sections, dim=0):
     """
     Splits the Tensor into chunks along the given dim.
@@ -459,6 +460,7 @@ def split(tensor, split_size_or_sections, dim=0):
          Tensor(shape=[3], dtype=Float32, value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
     """
     return split_ext(tensor, split_size_or_sections, dim)
+
 
 def sqrt(input):
     r"""
