@@ -664,6 +664,8 @@ class AssignParser(Parser):
         if method_object is not None:
             if inspect.ismethod(method_object):
                 self.process_class_method(func_scope_name, func_name, method_object)
+            elif isinstance(inspect.getattr_static(self.stree.get_origin_network(), func_name), staticmethod):
+                self.insert_callfunction_node(func_scope_name, func_name, None, None, False)
             else:
                 self.process_function(func_scope_name, func_name, method_object, False)
             return
