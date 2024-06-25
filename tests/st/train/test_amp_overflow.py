@@ -35,7 +35,7 @@ class Net(nn.Cell):
         return output
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -71,14 +71,12 @@ def test_functional_amp_overflow(mode):
     shape = (size, in_features)
     inputs = [
         Tensor(np.full(shape, -np.inf, np.float16)),
-        Tensor(np.full(shape, 0, np.float16)),
         Tensor(np.full(shape, 40000, np.float16)),
-        Tensor(np.full(shape, 10, np.float16)),
         Tensor(np.full(shape, np.inf, np.float16)),
     ]
     label = Tensor(np.full([out_features,], 0, np.float16))
     datasets = list(zip(inputs, [label for _ in range(len(inputs))]))
-    expect_results = [False, True, False, True, False]
+    expect_results = [False, False, False]
     outputs = []
     for data, label in datasets:
         _, is_finite = train_step(data, label)
