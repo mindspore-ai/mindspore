@@ -313,6 +313,62 @@ def add(input, other, *, alpha=1):
 
 
 def any(input, dim=None, keepdim=False):
+    r"""
+    Reduces a dimension of `input` by the "logical OR" of all elements in the dimension, by default. And also can
+    reduce a dimension of `input` along the `dim`. Determine whether the dimensions of the output and input are the
+    same by controlling `keep_dims`.
+
+    Note:
+        The `dim` with tensor type is only used for compatibility with older versions and is not recommended.
+
+    Args:
+        input (Tensor): Input Tensor, has the shape :math:`(N, *)` where :math:`*` means,
+            any number of additional dimensions.
+        dim (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce.
+            Suppose the rank of `input` is r, `dim` must be in the range [-rank(input), rank(input)).
+            Default: ``None`` , all dimensions are reduced.
+        keep_dims (bool, optional): If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default : ``False`` .
+
+    Returns:
+        Tensor, the dtype is bool.
+
+        - If `dim` is ``None`` , and `keep_dims` is ``False`` ,
+          the output is a 0-D Tensor representing the "logical OR" of all elements in the input Tensor.
+        - If `dim` is int, such as 2, and `keep_dims` is ``False`` ,
+          the shape of output is :math:`(input_1, input_3, ..., input_R)`.
+        - If `dim` is tuple(int), such as (2, 3), and `keep_dims` is ``False`` ,
+          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
+        - If `dim` is 1-D Tensor, such as [2, 3], and `keep_dims` is ``False`` ,
+          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
+
+    Raises:
+        TypeError: If `keep_dims` is not a bool.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `dim` is not one of the following: int, tuple, list or Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, mint
+        >>> x = Tensor(np.array([[True, False], [True, True]]))
+        >>> # case 1: Reduces a dimension by the "logical OR" of all elements in the dimension.
+        >>> output = mint.any(x, keep_dims=True)
+        >>> print(output)
+        [[ True]]
+        >>> print(output.shape)
+        (1, 1)
+        >>> # case 2: Reduces a dimension along dim 0.
+        >>> output = mint.any(x, dim=0)
+        >>> print(output)
+        [ True True]
+        >>> # case 3: Reduces a dimension along dim 1.
+        >>> output = mint.any(x, dim=1)
+        >>> print(output)
+        [ True True]
+    """
     return any_ext(input, dim, keepdim)
 
 

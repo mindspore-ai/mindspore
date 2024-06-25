@@ -184,7 +184,7 @@ def one_hot(tensor, num_classes):
     Args:
         tensor (Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
             Data type must be int32 or int64.
-        num_classes (Union[int, Tensor]): A scalar defining the depth of the one-hot dimension.
+        num_classes (int): A scalar defining the depth of the one-hot dimension.
 
     Returns:
         Tensor, one-hot tensor.

@@ -15,6 +15,7 @@ Tensor
     mindspore.mint.eye
     mindspore.mint.ones
     mindspore.mint.ones_like
+    mindspore.mint.one_hot
     mindspore.mint.zeros
     mindspore.mint.zeros_like
 
@@ -27,6 +28,7 @@ Tensor
     :template: classtemplate.rst
 
     mindspore.mint.arange
+    mindspore.mint.broadcast_to
     mindspore.mint.cat
     mindspore.mint.index_select
     mindspore.mint.scatter_add
@@ -93,6 +95,26 @@ Tensor
     mindspore.mint.sqrt
     mindspore.mint.sub
     mindspore.mint.tanh
+
+Reduction 函数
+^^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.any
+
+比较函数
+^^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.greater_equal
 
 
 Reduction运算
