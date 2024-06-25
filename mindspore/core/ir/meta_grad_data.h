@@ -20,7 +20,6 @@
 #include <memory>
 #include <utility>
 #include <map>
-#include <vector>
 #include <string>
 #include "ir/anf.h"
 #include "include/common/utils/utils.h"
@@ -38,6 +37,7 @@ using VariableWeakPtr = std::weak_ptr<pynative::autograd::Variable>;
 class AutoGradMetaData {
  public:
   AutoGradMetaData() = default;
+  AutoGradMetaData(size_t op_index, const InputType input_type) : op_index_(op_index), input_type_(input_type) {}
   AutoGradMetaData(const VariablePtr &variable, const ParameterPtr &parameter,
                    const InputType input_type = InputType::kConstant)
       : variable_(variable), parameter_(parameter), input_type_(input_type) {}
@@ -69,10 +69,10 @@ class AutoGradMetaData {
   ParameterWeakPtr parameter_;
   // Weakptr to k_node for tensor
   AnfNodeWeakPtr k_node_;
-  // Type of grad tensor
-  InputType input_type_{InputType::kUnkown};
   // Optional for op output, represent index of op in execute order.
   size_t op_index_{0};
+  // Type of grad tensor
+  InputType input_type_{InputType::kUnkown};
   // Index of op output tensors.
   size_t output_index_{0};
   bool is_register_hook_{false};

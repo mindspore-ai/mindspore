@@ -34,6 +34,7 @@ void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info, bool is_jit
   }
   MS_EXCEPTION_IF_NULL(op_run_info);
   op_run_info->op_grad_info->op_info.clear();
+  op_run_info->op_grad_info->op_index = op_index_;
   op_run_info->op_grad_info->op_info += op_run_info->base_op_run_info.op_name + "-" + std::to_string(op_index_);
   ++op_index_;
 }

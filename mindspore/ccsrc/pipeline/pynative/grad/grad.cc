@@ -272,7 +272,7 @@ std::string GetWeightsObjIdsByWeights(const py::object &weights) {
   };
 
   std::string weights_obj_id;
-  auto append_weights_info = [&weights_obj_id, is_require_grad](const py::object &obj) {
+  auto append_weights_info = [&weights_obj_id, &is_require_grad](const py::object &obj) {
     const auto &v = PyNativeAlgo::DataConvert::PyObjToValue(obj);
     if (is_require_grad(v)) {
       (void)weights_obj_id.append("_").append(PyNativeAlgo::Common::GetIdByValue(v));
@@ -714,7 +714,8 @@ bool GradExecutor::GetTopCellDynamicFlag(const InputArgsInfoPtr &input_args_info
                     }
                     return false;
                   })) {
-    MS_LOG(DEBUG) << "Get dynamic shape from pipeline top cell with obj_id_with_grad_order " << obj_id_with_grad_order;
+    MS_LOG(DEBUG) << "Get dynamic shape from already run top cell with obj_id_with_grad_order "
+                  << obj_id_with_grad_order;
     return true;
   }
 
@@ -776,8 +777,8 @@ void GradExecutor::MakeNewTopCell(const InputArgsInfoPtr &input_args_info) {
   top_cell_->set_has_bprop_cut_op(input_args_info->has_custom_bprop);
   top_cell_->set_grad_first(grad_first_);
   grad_first_ = false;
-  MS_LOG(DEBUG) << "New top graph, fg ptr " << fg.get() << ", top cell ptr " << top_cell_.get()
-                << " with input args id " << top_cell_->input_args_id();
+  MS_LOG(DEBUG) << "New top cell, fg ptr " << fg.get() << ", top cell ptr " << top_cell_.get() << " with input args id "
+                << top_cell_->input_args_id();
 
   if (new_top_cell_is_pipeline_top_cell) {
     pipeline_top_cell_map_[input_args_info->already_run_cell_id].emplace_back(top_cell_);
@@ -921,6 +922,7 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
     op_grad_info->input_value = {input_args_info->out_value};
     op_grad_info->input_abs = {
       PyNativeAlgo::Common::SetAbstractValueToAnyValue(input_args_info->out_value->ToAbstract())};
+    op_grad_info->op_index = top_cell_->op_index();
     dynamic_shape()->CheckNodeDynamic(top_cell_, op_grad_info);
   }
 
@@ -976,10 +978,10 @@ void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info,
     (void)op_run_info->op_grad_info->input_abs.emplace_back(
       PyNativeAlgo::Common::SetAbstractValueToAnyValue(value->ToAbstract()));
     op_run_info->op_grad_info->input_value_grad_type[i] =
-      PyNativeAlgo::Common::SetValueGradInfo(value, top_cell(), InputType::kConstant);
+      PyNativeAlgo::Common::SetValueGradInfo(value, top_cell_, InputType::kConstant);
   }
   op_run_info->op_grad_info->output_size = PyNativeAlgo::Common::GetValueSize(op_run_info->real_out);
-  (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, nullptr, InputType::kOpOutput);
+  (void)PyNativeAlgo::Common::SetValueGradInfo(op_run_info->real_out, top_cell_, InputType::kOpOutput);
   DoOpGrad(op_run_info);
   RecordForwardGraph(op_run_info);
 }
@@ -1568,16 +1570,24 @@ py::object GradExecutor::CheckAlreadyRun(const prim::GradOperationPtr &grad, con
   // Use flag: grad_first_ for distinguish this two scenarios. If scenarios 1 is taked, grad_first_ will not take
   // effect, otherwise, it works.
   bool neee_increase_grad_order = NeedIncreaseGradOrder(obj_id);
-  // Include weight param size and required grad flag
-  std::string grad_hash_id_str;
+
+  // Include grad position
+  std::string grad_position;
   if (!py::isinstance<py::none>(grad_hash_id)) {
-    grad_hash_id_str = std::string(py::str(grad_hash_id));
+    grad_position = std::string(py::str(grad_hash_id));
   }
 
-  std::string weights_obj_id = GetWeightsObjIdsByWeights(weights);
-  grad_operation_ = std::to_string(static_cast<int>(grad->get_all_)) +
-                    std::to_string(static_cast<int>(grad->get_by_list_)) +
-                    std::to_string(static_cast<int>(grad->sens_param_)) + grad_hash_id_str + weights_obj_id;
+  // Include weights id
+  // Taking the two times derivative of the a same network, the weights in the grad(net, xxx) api, xxx first time passed
+  // as param1, and the second time passed as param2. Except for this difference, everything else is the same.
+  // At this point, the cell id is consistent, and the forward process is also exactly the same. If the weight ID does
+  // not participate in the comparison, it will not be able to distinguish between these two different derivative
+  // calculations
+  const auto &weights_obj_id = GetWeightsObjIdsByWeights(weights);
+
+  // Include grad operation
+  grad_operation_ = std::to_string(grad->get_all_) + std::to_string(grad->get_by_list_) +
+                    std::to_string(grad->sens_param_) + grad_position + weights_obj_id;
 
   auto input_args_id = GetInputArgsId(args);
   // Under the condition that the stack is empty (forward process completed or no forward process),
@@ -1732,7 +1742,7 @@ void GradExecutor::MakeNestedCnode(bool has_custom_bprop, const std::vector<Valu
   op_run_info->requires_grad = true;
   op_run_info->op_grad_info->input_value = forward_args;
   op_run_info->input_size = forward_args.size();
-  auto out_value = PyNativeAlgo::DataConvert::BaseRefToValue(out, true, true);
+  auto out_value = PyNativeAlgo::DataConvert::BaseRefToValue(out, true, true, top_cell_->op_index());
   // Get output values
   if (has_custom_bprop && !out_value->isa<ValueSequence>()) {
     std::vector<ValuePtr> out_v{out_value};

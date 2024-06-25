@@ -729,15 +729,14 @@ compile::MindRTBackendPtr ForwardExecutor::GetMindRtBackend(const string &cur_de
   const auto iter = mindrt_backends_.find(cur_device_target);
   if (iter != mindrt_backends_.end()) {
     return iter->second;
-  } else {
-    auto ms_context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(ms_context);
-    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    auto backend = std::make_shared<compile::MindRTBackend>("ms", cur_device_target, device_id);
-    MS_EXCEPTION_IF_NULL(backend);
-    mindrt_backends_[cur_device_target] = backend;
-    return backend;
   }
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto backend = std::make_shared<compile::MindRTBackend>("ms", cur_device_target, device_id);
+  MS_EXCEPTION_IF_NULL(backend);
+  mindrt_backends_[cur_device_target] = backend;
+  return backend;
 }
 
 ValuePtr ForwardExecutor::RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_run_info,
@@ -746,9 +745,8 @@ ValuePtr ForwardExecutor::RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_
 #ifndef ENABLE_TEST
   if (IsVmOp(op_run_info->base_op_run_info.op_name)) {
     return RunOpInVM(op_run_info);
-  } else {
-    return RunOpInMs(op_run_info, backend_op_run_info);
   }
+  return RunOpInMs(op_run_info, backend_op_run_info);
 #else
   return RunOpInVM(op_run_info);
 #endif
@@ -773,7 +771,7 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
     auto result_v = ConstructOutputInVM(result);
     if (op_run_info->requires_grad) {
       op_run_info->op_grad_info->output_size = result.size();
-      (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, nullptr, InputType::kOpOutput);
+      (void)PyNativeAlgo::Common::SetValueGradInfo(result_v, grad()->top_cell(), InputType::kOpOutput);
     }
     MS_LOG(DEBUG) << "RunOpInVM end";
     return result_v;
@@ -970,7 +968,8 @@ ValuePtr ForwardExecutor::RunOpInMsInner(const FrontendOpRunInfoPtr &op_run_info
   bool is_out_sequence = (op_run_info->base_op_run_info.abstract == nullptr ||
                           op_run_info->base_op_run_info.abstract->isa<abstract::AbstractSequence>());
   const auto &result_v =
-    PyNativeAlgo::DataConvert::VectorRefToValue(outputs, op_run_info->requires_grad, is_out_sequence);
+    PyNativeAlgo::DataConvert::VectorRefToValue(outputs, op_run_info->requires_grad, is_out_sequence,
+                                                op_run_info->requires_grad ? grad()->top_cell()->op_index() : 0);
   MS_LOG(DEBUG) << "RunOpInMs end";
   return result_v;
 }

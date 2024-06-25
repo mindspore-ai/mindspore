@@ -1534,21 +1534,20 @@ ValuePtr DataConvert::PyObjToValue(const py::object &obj, bool stub) {
   return converted_ret;
 }
 
-ValuePtr DataConvert::BaseRefToValue(const BaseRef &value, bool requires_grad, bool is_out_sequence) {
+ValuePtr DataConvert::BaseRefToValue(const BaseRef &value, bool requires_grad, bool is_out_sequence, size_t op_index) {
   MS_EXCEPTION_IF_NULL(value);
   ValuePtr ret;
   if (utils::isa<tensor::BaseTensorPtr>(value)) {
     auto t = utils::cast<tensor::BaseTensorPtr>(value);
     if (requires_grad) {
-      t->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-      t->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
+      t->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>(op_index, InputType::kOpOutput));
     }
     ret = t;
   } else if (utils::isa<ValuePtr>(value)) {
     ret = utils::cast<ValuePtr>(value);
   } else if (utils::isa<VectorRef>(value)) {
     auto vec_ref = utils::cast<VectorRef>(value);
-    ret = VectorRefToValue(vec_ref, requires_grad, is_out_sequence);
+    ret = VectorRefToValue(vec_ref, requires_grad, is_out_sequence, op_index);
   } else if (utils::isa<int>(value)) {
     ret = MakeValue(utils::cast<int>(value));
   } else if (utils::isa<float>(value)) {
@@ -1563,16 +1562,17 @@ ValuePtr DataConvert::BaseRefToValue(const BaseRef &value, bool requires_grad, b
   return ret;
 }
 
-ValuePtr DataConvert::VectorRefToValue(const VectorRef &vec_ref, bool requires_grad, bool is_out_sequence) {
+ValuePtr DataConvert::VectorRefToValue(const VectorRef &vec_ref, bool requires_grad, bool is_out_sequence,
+                                       size_t op_index) {
   MS_EXCEPTION_IF_NULL(vec_ref);
 
   size_t value_size = vec_ref.size();
   if (value_size == 1 && !is_out_sequence) {
-    return BaseRefToValue(vec_ref[0], requires_grad, is_out_sequence);
+    return BaseRefToValue(vec_ref[0], requires_grad, is_out_sequence, op_index);
   }
   std::vector<ValuePtr> v_list(value_size);
   for (size_t i = 0; i < value_size; ++i) {
-    v_list[i] = BaseRefToValue(vec_ref[i], requires_grad, is_out_sequence);
+    v_list[i] = BaseRefToValue(vec_ref[i], requires_grad, is_out_sequence, op_index);
   }
   return std::make_shared<ValueTuple>(v_list);
 }
@@ -1706,8 +1706,8 @@ void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const ker
     if (op->output_abs() != nullptr || op->output_value_simple_info() != nullptr) {
       // Set auto grad meta data for op output
       if (op_run_info->requires_grad) {
-        op->outputs()[0]->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-        op->outputs()[0]->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
+        op->outputs()[0]->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>(
+          Common::GetPyNativeExecutor()->grad_executor()->top_cell()->op_index(), InputType::kOpOutput));
       }
       op_run_info->real_out = op->outputs()[0];
       return;
@@ -1719,8 +1719,8 @@ void PyBoost::MakeOutputValue(const FrontendOpRunInfoPtr &op_run_info, const ker
     MS_EXCEPTION_IF_NULL(output_tensor);
     // Set auto grad meta data for op outputs
     if (op_run_info->requires_grad) {
-      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>());
-      output_tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
+      output_tensor->set_auto_grad_meta_data(std::make_shared<AutoGradMetaData>(
+        Common::GetPyNativeExecutor()->grad_executor()->top_cell()->op_index(), InputType::kOpOutput));
     }
     output_values[i] = output_tensor;
   }

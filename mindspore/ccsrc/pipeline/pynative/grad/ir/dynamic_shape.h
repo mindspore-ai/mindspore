@@ -29,7 +29,7 @@ namespace pynative {
 
 struct NodeInfo {
   // Is parameter or input or op's output
-  InputType grad_type;
+  InputType grad_type{InputType::kConstant};
   // Just op output tensor has op_index
   size_t op_index{0};
   // For scalar compare
@@ -54,16 +54,20 @@ struct ValueCompareInfo {
 };
 
 struct DynamicDetectNodeInfo {
-  explicit DynamicDetectNodeInfo(PrimitivePtr op_prim, std::string graph_phase, bool is_value_compare = true)
-      : op_prim(std::move(op_prim)), graph_phase(graph_phase), is_value_compare(is_value_compare) {}
-  DynamicDetectNodeInfo(PrimitivePtr op_prim, std::string graph_phase, abstract::AbstractBasePtrList input_abs,
-                        abstract::AbstractBasePtr out_abs)
+  explicit DynamicDetectNodeInfo(PrimitivePtr op_prim, std::string graph_phase, size_t op_index,
+                                 bool is_value_compare = true)
+      : op_prim(std::move(op_prim)), graph_phase(graph_phase), op_index(op_index), is_value_compare(is_value_compare) {}
+  DynamicDetectNodeInfo(PrimitivePtr op_prim, std::string graph_phase, size_t op_index,
+                        abstract::AbstractBasePtrList input_abs, abstract::AbstractBasePtr out_abs)
       : op_prim(std::move(op_prim)),
         graph_phase(graph_phase),
+        op_index(op_index),
         abs_compare_info(std::move(input_abs), std::move(out_abs)) {}
 
   PrimitivePtr op_prim{nullptr};
   std::string graph_phase;
+  // op or jit execute index
+  size_t op_index{0};
   bool is_value_compare{false};
   AbsCompareInfo abs_compare_info;
   ValueCompareInfo value_compare_info;
@@ -82,10 +86,9 @@ class NodeDynamicDetect {
   bool IsNeedSaveDynamicDetectNodes(const TopCellInfoPtr &top_cell, bool use_dynamic_shape_process);
 
  private:
-  bool IsNodeDynamic(const TopCellInfoPtr &top_cell, const ValuePtrList &inputs, const DynamicDetectNodeInfoPtr &node,
-                     size_t node_idx);
+  bool IsNodeDynamic(const TopCellInfoPtr &top_cell, const ValuePtrList &inputs, const DynamicDetectNodeInfoPtr &node);
   void SaveDynamicDetectNodeInfoInFirstTime(const TopCellInfoPtr &top_cell, const ValuePtrList &inputs,
-                                            const DynamicDetectNodeInfoPtr &node, size_t node_idx);
+                                            const DynamicDetectNodeInfoPtr &node);
 
   CellIdWithDynamicNodesMap cell_id_with_dynamic_detect_nodes_;
 };
@@ -154,10 +157,10 @@ class DynamicShape {
     }
     DynamicDetectNodeInfoPtr node_info;
     if (op_grad_info->output_value_simple_info != nullptr) {
-      node_info = std::make_shared<DynamicDetectNodeInfo>(op_grad_info->op_prim, graph_phase);
+      node_info = std::make_shared<DynamicDetectNodeInfo>(op_grad_info->op_prim, graph_phase, op_grad_info->op_index);
     } else {
-      node_info = std::make_shared<DynamicDetectNodeInfo>(op_grad_info->op_prim, graph_phase, op_grad_info->input_abs,
-                                                          op_grad_info->out_abs);
+      node_info = std::make_shared<DynamicDetectNodeInfo>(op_grad_info->op_prim, graph_phase, op_grad_info->op_index,
+                                                          op_grad_info->input_abs, op_grad_info->out_abs);
     }
     top_cell->CheckBpropCutNode(op_grad_info->op_prim);
     node_dynamic_detect_ptr_->CheckNodeDynamic(top_cell, op_grad_info->input_value, node_info);

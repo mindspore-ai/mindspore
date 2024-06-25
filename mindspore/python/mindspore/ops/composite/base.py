@@ -30,7 +30,7 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     SequenceSliceGetItem_, ListSliceSetItem_, VmapOperation_, TaylorOperation_, ListPop_, \
     ListClear_, ListReverse_, ListExtend_, DictClear_, DictHasKey_, DictUpdate_, DictFromKeys_, \
     ZerosLike_, TensorIndexGetitem_, TensorIndexSetitem_, ListAdd_, DictSetItem_, \
-    HandleBoolTensor_, PreSetitemByTuple_, StarredGetItem_,\
+    HandleBoolTensor_, PreSetitemByTuple_, StarredGetItem_, \
     StarredUnpack_, StarredUnpackMerge_, IterConverter_, HasNext_, Next_, MSContext
 from mindspore.common import dtype as mstype
 from mindspore.common.api import jit, _pynative_executor, _wrap_func
@@ -346,9 +346,11 @@ class GradOperation(GradOperation_):
         self.grad_position = (0,)
 
     def __call__(self, fn, weights=None):
-        weights_id = _get_grad_weights_id(weights)
-        if self.grad_fn is not None and self.fn == fn and self.weights_id == weights_id:
-            return self.grad_fn
+        weights_id = ''
+        if context.get_context("mode") == context.GRAPH_MODE:
+            weights_id = _get_grad_weights_id(weights)
+            if self.grad_fn is not None and self.fn == fn and self.weights_id == weights_id:
+                return self.grad_fn
         grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param)
         # If calling Grad in GRAPH_MODE or calling Grad in functions decorated with 'jit', do grad in GRAPH_MODE
         # If calling Grad in pure PYNATIVE_MODE do grad in PYNATIVE_MODE
@@ -554,10 +556,12 @@ class _Grad(GradOperation_):
         self.weights_id = None
 
     def __call__(self, fn, weights=None, grad_position=0):
-        weights_id = _get_grad_weights_id(weights)
-        if self.grad_fn is not None and self.fn == fn and self.grad_position == grad_position and \
-                self.weights_id == weights_id:
-            return self.grad_fn
+        weights_id = ''
+        if context.get_context("mode") == context.GRAPH_MODE:
+            weights_id = _get_grad_weights_id(weights)
+            if self.grad_fn is not None and self.fn == fn and self.grad_position == grad_position and \
+                    self.weights_id == weights_id:
+                return self.grad_fn
 
         def aux_fn(*args):
             outputs = fn(*args)
@@ -963,6 +967,7 @@ class _ListAppend(ListAppend_):
     Args:
         name (str): The name of the metafuncgraph object.
     """
+
     # `__init__` method removed entirely
     def __call__(self, *args):
         pass

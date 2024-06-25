@@ -75,7 +75,11 @@ struct OpGradInfo {
   // bprop graph
   bool need_do_forward_output_replace{true};
 
+  // op output size
   size_t output_size;
+
+  // op index
+  size_t op_index;
   std::string op_info;
 
   PrimitivePtr op_prim{nullptr};
