@@ -13,12 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
 def test_split_ref_without_optim():
     """
     Feature: Graph partition.
@@ -37,9 +35,7 @@ def test_split_ref_without_optim():
     assert return_code == 0
 
 
-@pytest.mark.level3
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level3', card_mark='allcards', essential_mark='unessential')
 def test_split_optim():
     """
     Feature: Graph partition.

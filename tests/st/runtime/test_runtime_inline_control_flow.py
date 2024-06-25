@@ -18,12 +18,9 @@ from mindspore.common.parameter import Parameter
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_single_if():
     """
     Feature: Contrtol flow inline.
@@ -46,10 +43,7 @@ def test_single_if():
     assert ret2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_return_parameter():
     """
     Feature: Contrtol flow inline.
@@ -69,10 +63,7 @@ def test_return_parameter():
     assert ret1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_return_param_untail_call():
     """
     Feature: Contrtol flow inline.
@@ -98,10 +89,7 @@ def test_return_param_untail_call():
     assert ret1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_return_valuenode():
     """
     Feature: Contrtol flow inline.
@@ -119,10 +107,7 @@ def test_return_valuenode():
     assert ret1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_return_input():
     """
     Feature: Contrtol flow inline.
@@ -140,10 +125,7 @@ def test_return_input():
     assert ret1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_value_node_output_in_single_branch():
     """
     Feature: Contrtol flow inline.
@@ -168,10 +150,7 @@ def test_value_node_output_in_single_branch():
     assert ret3
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_diff_ref_count_in_branch():
     """
     Feature: Contrtol flow inline.
@@ -203,10 +182,7 @@ def test_diff_ref_count_in_branch():
     assert ret2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_branch_kernel_backoff():
     """
     Feature: Contrtol flow inline.
@@ -233,10 +209,7 @@ def test_branch_kernel_backoff():
     assert ret3[0][0]
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_update_parameter():
     """
     Feature: Contrtol flow inline.
@@ -263,10 +236,7 @@ def test_update_parameter():
     assert ret3
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_update_and_return_parameter():
     """
     Feature: Contrtol flow inline.
@@ -296,10 +266,7 @@ def test_update_and_return_parameter():
     assert ret3
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_return_switch_input_in_branch():
     """
     Feature: Contrtol flow inline.
@@ -329,10 +296,7 @@ def test_return_switch_input_in_branch():
     assert ret3
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_return_switch_input():
     """
     Feature: Contrtol flow inline.
@@ -362,10 +326,7 @@ def test_return_switch_input():
     assert ret3
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_tuple_args_to_dynamic_tuple_para():
     """
     Feature: Contrtol flow inline.
@@ -390,10 +351,7 @@ def test_tuple_args_to_dynamic_tuple_para():
     assert ret3
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_tuple_input_to_switch():
     """
     Feature: Contrtol flow inline.
@@ -420,10 +378,7 @@ def test_tuple_input_to_switch():
     assert ret3[0]
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_tuple_input_to_switch():
     """
     Feature: Contrtol flow inline.
@@ -447,10 +402,7 @@ def test_dynamic_tuple_input_to_switch():
     assert ret3
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_return_condition():
     """
     Feature: Contrtol flow inline.
@@ -474,10 +426,7 @@ def test_return_condition():
     assert ret3
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_return_include_other_output():
     """
     Feature: Contrtol flow inline.
@@ -506,10 +455,7 @@ def test_return_include_other_output():
     assert ret3
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_branch_output_include_refnode_with_dynamic_shape():
     """
     Feature: Contrtol flow inline.
@@ -534,10 +480,7 @@ def test_branch_output_include_refnode_with_dynamic_shape():
     assert ret3[0][0]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_branch_output_include_refnode_true():
     """
     Feature: Contrtol flow inline.
@@ -561,10 +504,7 @@ def test_branch_output_include_refnode_true():
     assert ret3.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_branch_output_include_refnode_false():
     """
     Feature: Contrtol flow inline.
@@ -592,10 +532,7 @@ def test_branch_output_include_refnode_false():
     assert ret3.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_branch_output_include_refnode_output_ref():
     """
     Feature: Contrtol flow inline.
@@ -622,10 +559,7 @@ def test_branch_output_include_refnode_output_ref():
     assert ret3.shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_branch_output_include_refnode_twice():
     """
     Feature: Contrtol flow inline.
@@ -656,10 +590,7 @@ def test_branch_output_include_refnode_twice():
     assert ret3.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_include_dynamic_shape():
     """
     Feature: Contrtol flow inline.
@@ -688,10 +619,7 @@ def test_include_dynamic_shape():
     assert ret3[0]
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_control_arrow_from_switch_to_gather():
     """
     Feature: Contrtol flow inline.
@@ -719,10 +647,7 @@ def test_control_arrow_from_switch_to_gather():
     assert ret3
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_branch_only_u_input():
     """
     Feature: Contrtol flow inline.
@@ -744,10 +669,7 @@ def test_branch_only_u_input():
     assert ret1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_branch_u_input_and_input():
     """
     Feature: Contrtol flow inline.
@@ -769,10 +691,7 @@ def test_branch_u_input_and_input():
     assert ret1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_branch_output_real_tuple():
     """
     Feature: Contrtol flow inline.
@@ -798,10 +717,7 @@ def test_branch_output_real_tuple():
     assert ret2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_branch_output_dynamic_tuple():
     """
     Feature: Contrtol flow inline.
@@ -824,10 +740,7 @@ def test_branch_output_dynamic_tuple():
     assert ret1[0]
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_if_after_if():
     """
     Feature: Contrtol flow inline.
@@ -852,10 +765,7 @@ def test_if_after_if():
     assert ret2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_if_in_if():
     """
     Feature: Contrtol flow inline.
@@ -880,10 +790,7 @@ def test_if_in_if():
     assert ret2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_output_ref_of_parameter():
     """
     Feature: Contrtol flow inline.
@@ -908,10 +815,7 @@ def test_output_ref_of_parameter():
     assert ret2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_gather_switch_gather_output():
     """
     Feature: Contrtol flow inline.
@@ -936,10 +840,7 @@ def test_gather_switch_gather_output():
     assert ret1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_if_in_if_directly():
     """
     Feature: Contrtol flow inline.
@@ -966,10 +867,7 @@ def test_if_in_if_directly():
     assert ret2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_lazy_inline():
     """
     Feature: Switch inline with lazy inline.

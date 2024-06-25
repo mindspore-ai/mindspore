@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import pytest
+from tests.mark_utils import arg_mark
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -30,9 +31,7 @@ class Net(nn.Cell):
         return self.ops(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='allcards', essential_mark='essential')
 def test_hal_device_gpu():
     """
     Feature: Hal device api.
@@ -66,10 +65,7 @@ def test_hal_device_gpu():
     assert not get_arch_list("CPU")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
 def test_hal_device_ascend():
     """
     Feature: Hal device api.
@@ -97,9 +93,8 @@ def test_hal_device_ascend():
     print("Device name is", get_device_name(dev_cnt - 1))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_device_cpu():
     """
     Feature: Hal device api.
@@ -116,9 +111,6 @@ def test_hal_device_cpu():
 
 
 @pytest.mark.skip("PyNative cases need to be extracted to a single file.")
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
 def test_hal_device_pynative():
     """
     Feature: Hal device api.

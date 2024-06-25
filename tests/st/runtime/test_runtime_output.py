@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import pytest
 import numpy as np
 from mindspore import context, nn, Tensor, jit, ops
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
 class NetValueNodeWithDepend(nn.Cell):
@@ -41,9 +41,8 @@ class NetSubGraphOutputWithLoad(nn.Cell):
         return output
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_value_node_with_depend():
     """
     Feature: Runtime special output.
@@ -57,10 +56,8 @@ def test_value_node_with_depend():
     assert output == [5, 0, 7, 8]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_subgraph_output_with_load():
     """
     Feature: Runtime special subgraph output.
@@ -77,9 +74,8 @@ def test_subgraph_output_with_load():
     assert (output1 == output2).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_runtime_heter():
     """
     Feature: Runtime heter.
@@ -101,9 +97,7 @@ def test_runtime_heter():
     assert ret
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @test_utils.run_test_with_On
 def test_runtime_fallback_heter():
     """
@@ -122,9 +116,7 @@ def test_runtime_fallback_heter():
     assert ret
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_runtime_value_tuple_output():
     """
     Feature: Runtime tuple output to make tuple.

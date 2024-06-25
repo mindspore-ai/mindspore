@@ -12,17 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import mindspore.context as context
 from mindspore import Tensor, ops, grad, jit
 import mindspore as ms
 import numpy as np
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_simple_stream():
     """
     Feature: Hal stream api.
@@ -38,10 +36,8 @@ def test_hal_simple_stream():
     s1.synchronize()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_set_stream():
     """
     Feature: Hal stream api.
@@ -57,10 +53,8 @@ def test_hal_set_stream():
     assert ms.hal.current_stream() == s1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_stream_query():
     """
     Feature: Hal stream api.
@@ -78,10 +72,8 @@ def test_hal_stream_query():
     s1.synchronize()
     assert s1.query()
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_wait_stream():
     """
     Feature: Hal stream api.
@@ -105,10 +97,8 @@ def test_hal_wait_stream():
     assert np.allclose(ops.mm(b, b).numpy(), c.numpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_wait_event():
     """
     Feature: Hal stream api.
@@ -135,10 +125,8 @@ def test_hal_wait_event():
     assert np.allclose(ops.mm(b, b).asnumpy(), c.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_synchronize():
     """
     Feature: Hal stream api.
@@ -160,10 +148,8 @@ def test_hal_synchronize():
     ms.hal.synchronize()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_jit_stream():
     """
     Feature: Hal stream api.
@@ -191,10 +177,8 @@ def test_hal_jit_stream():
     assert np.allclose(d.asnumpy(), ops.mm((a + 2), b).asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_grad_stream():
     """
     Feature: Hal stream api.
@@ -215,10 +199,8 @@ def test_hal_grad_stream():
     assert np.allclose(grad_fn(a).asnumpy(), grad_a.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_get_stream():
     """
     Feature: Hal stream api.
@@ -234,10 +216,8 @@ def test_hal_get_stream():
     s1.record_event()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_multi_streams():
     """
     Feature: Hal stream api.
@@ -272,10 +252,8 @@ def test_hal_multi_streams():
     assert np.allclose(ops.matmul(b, b).asnumpy(), c.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_none_streams():
     """
     Feature: Hal stream api.
@@ -289,10 +267,8 @@ def test_hal_none_streams():
     assert is_curr_stream_same is True
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_record_stream():
     """
     Feature: Hal record stream.

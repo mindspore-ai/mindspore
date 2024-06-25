@@ -13,13 +13,11 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level2',
+          card_mark='allcards', essential_mark='unessential')
 def test_pynative_hccl_allreduce_8p():
     """
     Feature: 'msrun' launch utility.
