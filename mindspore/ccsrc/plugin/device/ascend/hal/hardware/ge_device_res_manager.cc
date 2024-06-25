@@ -125,8 +125,6 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address, uint32_t 
   if (runtime_instance_ != nullptr) {
     runtime_instance_->SetContext();
   }
-  auto size =
-    address->type_id() == kObjectTypeString ? address->GetSize() + sizeof(ge::StringHead) : address->GetSize();
   void *device_ptr = nullptr;
 
   if (stream_id == UINT32_MAX) {
@@ -136,8 +134,8 @@ bool GeDeviceResManager::AllocateMemory(DeviceAddress *const &address, uint32_t 
   if (swap_manager_ != nullptr) {
     device_ptr = swap_manager_->AllocDeviceMemory(address->GetSize(), stream_id);
   } else {
-    device_ptr =
-      mem_manager_->MallocMemFromMemPool(size, address->from_persistent_mem(), address->need_recycle(), stream_id);
+    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(),
+                                                    address->need_recycle(), stream_id);
   }
 
   if (!device_ptr) {

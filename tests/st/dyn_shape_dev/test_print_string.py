@@ -325,3 +325,42 @@ def test_print_to_file():
 
     assert os.path.exists(print_file)
     os.system(f'rm -rf {print_path}')
+
+
+@security_off_wrap
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_kbk_control_flow_print_string():
+    """
+    Feature: Test print string in control flow.
+    Description: Print string in control flow, and verify print result.
+    Expectation: No exception and result is correct.
+    """
+    ms.set_context(mode=ms.GRAPH_MODE)
+    ms.set_context(jit_level='O0')
+
+    class Net(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.print = P.Print()
+
+        def construct(self, x, y):
+            print('network_with_CONTrolZ_flow_0.npy')
+            if y > 0:
+                print('network_with_CONTrolZ_flow_0.npy')
+            return x, y
+
+    cap = Capture()
+    with capture(cap):
+        net = Net()
+        input_x = Tensor(np.random.uniform(0.0, 2.0, size=[2, 1]).astype(np.int8))
+        _, out = net(input_x, Tensor([1]))
+        assert out.asnumpy() == 1
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = ['network_with_CONTrolZ_flow_0.npy']
+    check_output(cap.output, patterns)

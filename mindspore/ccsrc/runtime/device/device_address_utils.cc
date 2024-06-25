@@ -53,6 +53,12 @@ device::DeviceAddressPtr CreateDeviceAddressForScalarAndString(const DeviceConte
     auto value = GetValue<std::string>(node_value);
     // Allocate one more byte to '/0'
     size_t tensor_size = value.size() + 1;
+    if (device_context->device_context_key().device_name_ == kAscendDevice) {
+      // size of ge::StringHead which defined in Ascend/latest.aarch64-linux/include/types.h
+      constexpr size_t GE_STRING_HEAD_SIZE = 16;
+      // NOTE: on Ascend, string type need a head of type ge::StringHead
+      tensor_size += GE_STRING_HEAD_SIZE;
+    }
     const auto &kernel_tensor = AnfAlgo::CreateOutputKernelTensorWithDeviceInfo(
       {value_node, 0}, nullptr, tensor_size, kOpFormat_DEFAULT, kObjectTypeString, ShapeVector(),
       device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
