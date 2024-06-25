@@ -62,16 +62,17 @@ static const std::set<AObject::Type> kMsSupportedType = {
   AObject::kTypeNone, AObject::kTypeString, AObject::kTypeTensor,
 };
 
-MemPool<AbstractObjectBase> AbstractObjectBase::aobject_mem_pool_(__FILE__, __LINE__, "AObject");
+std::vector<AbstractObjectBase::Resource *> AbstractObjectBase::Resource::weak_this_;
 bool AbstractObjectBase::trace_flag_ = false;
 
-AObjectSourceScope::AObjectSourceScope() {
-  // can't reentrant
+AbstractObjectBase::Resource::Resource() : pool_(__FILE__, __LINE__, "AObject") {
+  MS_EXCEPTION_IF_CHECK_FAIL(weak_this_.empty(), "can't reentrant");
+  weak_this_.push_back(this);
 }
-
-AObjectSourceScope::~AObjectSourceScope() {
-  // release the resource
-  AbstractObjectBase::aobject_mem_pool_.Clear(__FILE__, __LINE__);
+AbstractObjectBase::Resource::~Resource() {
+  MS_EXCEPTION_IF_CHECK_FAIL(weak_this_.size() == 1, "can't reentrant");
+  Release();
+  weak_this_.pop_back();
 }
 
 // exact equal check
@@ -260,41 +261,42 @@ AbstractObjectBase::Type AbstractObjectBase::GetMsType(PyTypeObject *tp) {
 }
 
 AObject *AbstractObjectBase::MakeAObject(AObject::Type type, PyTypeObject *tp, PyObject *o, RecMap *m) {
+  MS_EXCEPTION_IF_CHECK_FAIL(Resource::Current() != nullptr, "can't take resource");
   MS_EXCEPTION_IF_CHECK_FAIL(tp == nullptr || o == nullptr || Py_TYPE(o) == tp, "check type match value");
   py::object h = py::cast<py::object>(o);
   AObject *res;
   switch (type) {
     case kTypeStubTensor:
     case kTypeTensor:
-      res = aobject_mem_pool_.New<AbstractTensor>(h, type == kTypeStubTensor);
+      res = Resource::Current()->pool()->New<AbstractTensor>(h, type == kTypeStubTensor);
       break;
     case kTypeType:
-      res = aobject_mem_pool_.New<AbstractType>(h);
+      res = Resource::Current()->pool()->New<AbstractType>(h);
       break;
     case kTypeString:
-      res = aobject_mem_pool_.New<AbstractSequence>(kTypeString, h);
+      res = Resource::Current()->pool()->New<AbstractSequence>(kTypeString, h);
       break;
     case kTypeNNCellList:
-      res = aobject_mem_pool_.New<AbstractSequence>(kTypeNNCellList, h);
+      res = Resource::Current()->pool()->New<AbstractSequence>(kTypeNNCellList, h);
       break;
     case kTypeList:
-      res = aobject_mem_pool_.New<AbstractList>(h, m);
+      res = Resource::Current()->pool()->New<AbstractList>(h, m);
       break;
     case kTypeTuple:
-      res = aobject_mem_pool_.New<AbstractTuple>(h, m);
+      res = Resource::Current()->pool()->New<AbstractTuple>(h, m);
       break;
     case kTypeDict:
-      res = aobject_mem_pool_.New<AbstractDict>(h, m);
+      res = Resource::Current()->pool()->New<AbstractDict>(h, m);
       break;
     case kTypeAnyValue:
       if (tp == nullptr) {
-        res = aobject_mem_pool_.New<AbstractObjectBase>(kTypeAnyValue);
+        res = Resource::Current()->pool()->New<AbstractObjectBase>(kTypeAnyValue);
         break;
       }
     /* fall-through */
     default:
       // known type
-      res = aobject_mem_pool_.New<AbstractObject>(type, h);
+      res = Resource::Current()->pool()->New<AbstractObject>(type, h);
       break;
   }
   res->SetTypeObject(o == nullptr ? tp : Py_TYPE(o));
@@ -1493,6 +1495,18 @@ py::object TensorInferBinary(const AbstractBasePtr &left, const AbstractBasePtr 
   auto dtype = dtype_ptr->type_id();
   auto tensor = std::make_shared<mindspore::tensor::Tensor>(dtype, shape);
   return py::cast(tensor);
+}
+
+py::object AbstractTensor::Binary(int op, const py::object &l_tensor, const py::object &r_tensor) {
+  auto left = PyObjectToAbstract(l_tensor);
+  auto right = PyObjectToAbstract(r_tensor);
+  auto res = TensorInferBinary(left, right, op);
+  if (CheckAdapterTensor(l_tensor)) {
+    res = ConvertToAdapterTensor(res);
+  } else {
+    res = ConvertToMsTensor(res);
+  }
+  return res;
 }
 
 AObject *AbstractTensor::Binary(AObject *other, int op) {
