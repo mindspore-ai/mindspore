@@ -101,6 +101,8 @@ class CustomOOC():
 
     def generate_compile_project(self):
         """generate compile project by msopgen"""
+        if os.path.exists(self.custom_project) and os.path.isdir(self.custom_project):
+            shutil.rmtree(self.custom_project)
         command = ['msopgen', '-h']
         result = subprocess.run(command, shell=False, stderr=subprocess.STDOUT)
         if result.returncode != 0:
