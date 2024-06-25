@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_NODE_CHECK_H_
-#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_NODE_CHECK_H_
+#ifndef MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_SWAP_DP_ALLREDUCE_REDUCESCATTER_H_
+#define MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_SWAP_DP_ALLREDUCE_REDUCESCATTER_H_
 
-#include "ir/primitive.h"
+#include "ir/anf.h"
 
 namespace mindspore {
 namespace parallel {
-bool IsInBatchParallelBlackList(const PrimitivePtr &prim);
-bool IsFromParallelOptimizerRs(const AnfNodePtr &node);
-bool IsFromGradMirrorAR(const AnfNodePtr &node);
+// Automatically insert duplicated recomputed nodes.
+void SwapDpAllreduceReduceScatter(const FuncGraphPtr &graph);
 }  // namespace parallel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_NODE_CHECK_H_
+#endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_PASS_SWAP_DP_ALLREDUCE_REDUCESCATTER_H_
