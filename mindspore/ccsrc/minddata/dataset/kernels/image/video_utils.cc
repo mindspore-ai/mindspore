@@ -691,7 +691,14 @@ Status AVDecodeVisualFrame(struct AudioVisual *avinfo, std::shared_ptr<Tensor> *
   int src_offset = linesize;
   int target_offset = width * channels;
   for (i = 0; i < height; i++) {
-    memcpy(target_address, src_address, target_offset);
+    if (target_offset < SECUREC_MEM_MAX_LEN) {
+      int ret_code = memcpy_s(target_address, target_offset, src_address, target_offset);
+      CHECK_FAIL_RETURN_UNEXPECTED(
+        ret_code == EOK, "Failed to copy data into tensor, memcpy_s errorno: " + std::to_string(ret_code) + ".");
+    } else {
+      auto ret_code = std::memcpy(target_address, src_address, target_offset);
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == target_address, "Failed to copy data into tensor.");
+    }
     src_address += src_offset;
     target_address += target_offset;
   }
