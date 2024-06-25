@@ -14,7 +14,6 @@
 # ============================================================================
 
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -23,6 +22,7 @@ from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
 class LeNet(nn.Cell):
@@ -51,10 +51,8 @@ class LeNet(nn.Cell):
         return output
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @test_utils.run_test_with_On
 def test_lenet():
     """

@@ -12,18 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import mindspore.context as context
 from mindspore import Tensor, ops
 import mindspore as ms
 import numpy as np
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @test_utils.run_test_with_On
 def test_hal_event_args():
     """
@@ -38,10 +36,8 @@ def test_hal_event_args():
     assert ev2 is not None
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_event_elapsed_time():
     """
     Feature: Hal event api.
@@ -63,10 +59,8 @@ def test_hal_event_elapsed_time():
     assert elapsed_time > 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_event_wait():
     """
     Feature: Hal event api.
@@ -98,10 +92,8 @@ def test_hal_event_wait():
     assert np.allclose(ops.matmul(b, b).asnumpy(), c.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_event_sync():
     """
     Feature: Hal event sync.
