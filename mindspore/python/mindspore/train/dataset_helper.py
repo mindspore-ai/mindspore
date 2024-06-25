@@ -250,23 +250,25 @@ def connect_network_with_dataset(network, dataset_helper):
         if not is_dynamic:
             dataset_shapes = _auto_dynamic_shape.auto_dynamic_generate_compile_args(dataset_shapes, True)
         key = str(dataset_types) + str(dataset_shapes)
-        _auto_dynamic_shape.update_phase_and_compile_args(dataset_shapes, key, True, aux)
-        if hasattr(aux, '__network_manage__') and key in aux.__network_manage__:
-            network = aux.__network_manage__[key]
-        else:
-            if _need_to_full():
-                device_num = _get_device_num() // _get_pipeline_stages()
-                dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
 
-            network = _generate_dataset_sink_mode_net(
-                network, dataset_shapes, dataset_types, queue_name)
-            if hasattr(aux, '__network_manage__'):
-                aux.__network_manage__ = aux.__network_manage__
+        if hasattr(aux, "__shape_type__") and aux.__shape_type__ != key:
+            _auto_dynamic_shape.update_phase_and_compile_args(dataset_shapes, key, True, aux)
+            if hasattr(aux, '__network_manage__') and key in aux.__network_manage__:
+                network = aux.__network_manage__[key]
             else:
-                aux.__network_manage__ = dict()
-            aux.__network_manage__[key] = network
-        network.add_flags(sink_mode=True)
-        return network
+                if _need_to_full():
+                    device_num = _get_device_num() // _get_pipeline_stages()
+                    dataset_shapes = _to_full_shapes(dataset_shapes, device_num)
+
+                network = _generate_dataset_sink_mode_net(
+                    network, dataset_shapes, dataset_types, queue_name)
+                if hasattr(aux, '__network_manage__'):
+                    aux.__network_manage__ = aux.__network_manage__
+                else:
+                    aux.__network_manage__ = dict()
+                aux.__network_manage__[key] = network
+            network.add_flags(sink_mode=True)
+            return network
 
     if hasattr(aux, '__sink_network__'):
         network = aux.__sink_network__
@@ -277,6 +279,8 @@ def connect_network_with_dataset(network, dataset_helper):
             network = _generate_network_with_dataset(
                 network, dataset_helper, queue_name)
             aux.__sink_network__ = network
+            dataset_types, dataset_shapes = dataset_helper.types_shapes()
+            aux.__shape_type__ = str(dataset_types) + str(dataset_shapes)
 
     if _dynamic_sink_data(dataset, dataset_iter) and _dynamic_sink_exception_scenario(dataset_iter, is_dynamic):
         dataset_helper.get_data_info()
