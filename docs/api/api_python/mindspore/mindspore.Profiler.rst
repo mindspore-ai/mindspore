@@ -45,9 +45,9 @@ mindspore.Profiler
           - "time": 只记录host侧时间戳。
           - "memory": 只记录host侧内存占用情况。
           - None: 不记录host信息。
-        - **host_stack** (bool, 可选) -（Ascend）表示是否收集框架host侧调用栈的数据，使用此参数时， `op_time` 必须设置成 ``True`` 。默认值： ``True`` 。
+        - **host_stack** (bool, 可选) - （Ascend）表示是否收集框架host侧调用栈的数据，使用此参数时， `op_time` 必须设置成 ``True`` 。默认值： ``True`` 。
         - **data_simplification** (bool, 可选) - （仅限Ascend）是否开启数据精简，开启后将在导出性能数据后删除FRAMEWORK目录数据以及其他多余数据，仅保留profiler的交付件以及PROF_XXX目录下的原始性能数据，以节省空间。默认值: ``True`` 。
-        - **host_stack** (bool, 可选) -（Ascend）表示是否收集框架host侧调用栈的数据，默认值： ``True`` 。
+        - **host_stack** (bool, 可选) - （Ascend）表示是否收集框架host侧调用栈的数据，默认值： ``True`` 。
 
     异常：
         - **RuntimeError** - 当CANN的版本与MindSpore版本不匹配时，生成的ascend_job_id目录结构MindSpore无法解析。
