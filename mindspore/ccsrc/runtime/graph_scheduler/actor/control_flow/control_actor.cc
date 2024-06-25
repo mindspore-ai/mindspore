@@ -545,10 +545,10 @@ void CheckDeviceAddressConsist(OpContext<DeviceTensor> *const context, const std
   const auto &device_name = addr_list[0]->device_name();
   for (size_t i = 1; i < addr_list.size(); ++i) {
     MS_EXCEPTION_IF_NULL(addr_list[i]);
-    if (size != addr_list[i]->GetSize() || device_name != addr_list[i]->device_name() ||
-        type != addr_list[i]->type_id()) {
-      MS_LOG(ERROR) << "Failed to merge two device address, addr1 size:" << size << " shape:" << shape
-                    << " device name:" << device_name << " type:" << type << " addr2 size:" << addr_list[i]->GetSize()
+    if (size != addr_list[i]->GetSize() || type != addr_list[i]->type_id()) {
+      MS_LOG(ERROR) << "Failed to merge two device address, addr1:" << addr_list[0] << " size:" << size
+                    << " shape:" << shape << " device name:" << device_name << " type:" << type
+                    << " addr2:" << addr_list[i] << " size:" << addr_list[i]->GetSize()
                     << " shape:" << addr_list[i]->host_shape() << " device name:" << addr_list[i]->device_name()
                     << " type" << addr_list[i]->type_id() << " for actor:" << actor_name;
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "Failed to merge two device address");
@@ -635,8 +635,18 @@ void ControlActor::MergeDeviceAddress(OpContext<DeviceTensor> *const context,
         }
       }
     }
-
-    if (!tmp_device_tensor->SyncDeviceToDevice(addr_list[i])) {
+    bool ret = false;
+    if (addr_list[i]->device_name() == addr_list[0]->device_name()) {
+      ret = tmp_device_tensor->SyncDeviceToDevice(addr_list[i]);
+    } else if (addr_list[0]->device_name() == kCPUDevice) {
+      ret = addr_list[i]->SyncDeviceToHost(addr_list[i]->GetSize(), tmp_device_tensor->GetMutablePtr());
+    } else if (addr_list[i]->device_name() == kCPUDevice) {
+      ret = tmp_device_tensor->SyncHostToDevice(addr_list[i]->GetSize(), addr_list[i]->GetMutablePtr());
+    } else {
+      MS_LOG(ERROR) << "Invalid device name for addr1:" << addr_list[0] << " name:" << addr_list[0]->device_name()
+                    << " and addr2:" << addr_list[i] << " name:" << addr_list[i]->device_name();
+    }
+    if (!ret) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Sync device to device failed.");
     }
     tmp_device_tensor->set_ptr((reinterpret_cast<char *>(tmp_device_tensor->GetMutablePtr())) +
