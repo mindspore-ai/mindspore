@@ -51,13 +51,13 @@ def test_cat_dynamic_shape():
     Expectation: the result match with expect.
     """
     ms.set_context(mode=ms.GRAPH_MODE)
-    input_x = [ms.Tensor(shape=(None, None), dtype=ms.float32) for _ in range(2)]
+    input_x = ms.mutable([ms.Tensor(shape=(None, None), dtype=ms.float32) for _ in range(2)])
     axis = ms.mutable(input_data=1, dynamic_len=False)
     net = CatNet()
     net.set_inputs(input_x, axis)
 
-    inputs2 = [[ms.Tensor(np.random.randn(3, 8), dtype=ms.float32) for _ in range(2)], ms.mutable(0)]
-    inputs3 = [[ms.Tensor(np.random.randn(12, 6), dtype=ms.float32) for _ in range(2)], ms.mutable(-1)]
+    inputs2 = [ms.mutable([ms.Tensor(np.random.randn(3, 8), dtype=ms.float32) for _ in range(2)]), ms.mutable(0)]
+    inputs3 = [ms.mutable([ms.Tensor(np.random.randn(12, 6), dtype=ms.float32) for _ in range(2)]), ms.mutable(-1)]
     for (x, axis) in [inputs2, inputs3]:
         out_ms = net(x, axis)
         tensors = [torch.from_numpy(i.asnumpy()) for i in x]

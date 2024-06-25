@@ -55,6 +55,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "include/common/utils/convert_utils_py.h"
 #include "include/common/utils/python_utils.h"
+#include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/shape_utils.h"
 #include "utils/info.h"
@@ -445,6 +446,101 @@ void ResetId(const ResourcePtr &resource) {
     }
   }
 }
+
+void CheckShapeConsistency(const abstract::ShapePtr &compile_shape, const abstract::ShapePtr &args_shape, size_t index,
+                           const std::string &target_str) {
+  MS_EXCEPTION_IF_NULL(compile_shape);
+  MS_EXCEPTION_IF_NULL(args_shape);
+  if (*compile_shape == *args_shape) {
+    return;
+  }
+
+  auto compile_shape_vec = compile_shape->shape();
+  auto args_shape_vec = args_shape->shape();
+
+  if (!IsDynamicRank(compile_shape_vec)) {
+    if (!args_shape_vec.empty() && compile_shape_vec.size() != args_shape_vec.size()) {
+      MS_EXCEPTION(ValueError) << "For " << target_str << " and tuple(list) in " << target_str << ", the dims of "
+                               << index + 1 << "th input must be the same as expected, "
+                               << "but got expected: " << compile_shape_vec.size()
+                               << ", and input: " << args_shape_vec.size() << "!";
+    }
+
+    for (size_t i = 0; i < compile_shape_vec.size(); ++i) {
+      if (compile_shape_vec[i] == abstract::Shape::kShapeDimAny || compile_shape_vec[i] == args_shape_vec[i]) {
+        continue;
+      }
+      MS_EXCEPTION(ValueError) << "For " << target_str << " and tuple(list) in " << target_str << ", the shape of "
+                               << index + 1 << "th input must be the same as expected, "
+                               << "but got expected: " << compile_shape_vec[i] << ", and input: " << args_shape_vec[i]
+                               << "!";
+    }
+  }
+}
+
+void CheckAbstractConsistency(const AbstractBasePtrList &compile_abstracts, const AbstractBasePtrList &args_abstracts,
+                              const std::string &target_str, bool dynamic_len = false) {
+  if (!dynamic_len && compile_abstracts.size() != args_abstracts.size()) {
+    MS_EXCEPTION(ValueError) << "For " << target_str << " and tuple(list) in " << target_str
+                             << ", the length of input must be equal to expected one, but got expected: "
+                             << compile_abstracts.size() << " and input: " << args_abstracts.size() << "!";
+  }
+  if (dynamic_len && compile_abstracts.empty()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "For " << target_str << ", the dynamic_len compile arguments should not be empty!";
+  }
+
+  for (size_t i = 0; i < args_abstracts.size(); ++i) {
+    auto compile_abs = dynamic_len ? compile_abstracts[0] : compile_abstracts[i];
+    auto args_abs = args_abstracts[i];
+    auto is_compile_var = compile_abs->BuildValue()->ContainsValueAny();
+    auto is_args_var = args_abs->BuildValue()->ContainsValueAny();
+    if (is_compile_var != is_args_var) {
+      MS_EXCEPTION(TypeError) << "For " << target_str << " or tuple(list) in " << target_str << ", the " << i + 1
+                              << "th should be " << (is_compile_var ? "mutable" : "static") << " one, but got "
+                              << (is_args_var ? "mutable" : "static") << "!";
+    }
+
+    if (is_compile_var) {
+      if (compile_abs->isa<abstract::AbstractTensor>() && args_abs->isa<abstract::AbstractTensor>()) {
+        auto compile_tensor = compile_abs->cast<abstract::AbstractTensorPtr>();
+        auto args_tensor = args_abs->cast<abstract::AbstractTensorPtr>();
+
+        // Check shape's consistency.
+        auto compile_shape = compile_tensor->shape();
+        auto args_shape = args_tensor->shape();
+        CheckShapeConsistency(compile_shape, args_shape, i, target_str);
+
+        auto compile_element = compile_tensor->element();
+        auto args_element = args_tensor->element();
+        if (!common::IsEqual(compile_element, args_element)) {
+          MS_EXCEPTION(TypeError) << "For " << target_str << " or tuple(list) in " << target_str << ", the " << i + 1
+                                  << "th type should be " << compile_tensor->BuildType()->ToString() << ", but got "
+                                  << args_tensor->BuildType()->ToString() << "!";
+        }
+        continue;
+      } else if (compile_abs->isa<abstract::AbstractSequence>() && args_abs->isa<abstract::AbstractSequence>()) {
+        auto compile_sequence = compile_abs->cast<abstract::AbstractSequencePtr>();
+        auto args_sequence = args_abs->cast<abstract::AbstractSequencePtr>();
+        CheckAbstractConsistency(compile_sequence->elements(), args_sequence->elements(), target_str,
+                                 compile_sequence->dynamic_len());
+        continue;
+      } else {
+        if (!common::IsEqual(compile_abs, args_abs)) {
+          MS_EXCEPTION(ValueError) << "For " << target_str << " or tuple(list) in " << target_str << ", the " << i + 1
+                                   << "th should be" << compile_abs->ToString() << ", but got " << args_abs->ToString()
+                                   << "!";
+        }
+        continue;
+      }
+    } else {
+      if (!common::IsEqual(compile_abs, args_abs)) {
+        MS_EXCEPTION(ValueError) << "For " << target_str << " or tuple(list) in " << target_str << ", the " << i + 1
+                                 << "th should be" << compile_abs->ToString() << ", but got " << args_abs->ToString()
+                                 << "!";
+      }
+    }
+  }
+}
 }  // namespace
 
 std::string GetObjDesc(const py::object &source) {
@@ -477,6 +573,41 @@ void CheckArgsValid(const py::object &source, const py::tuple &args) {
                    << py::str(args[i]) << "'.";
     }
   }
+}
+
+void GraphExecutorPy::CheckArgumentsConsistency(const py::tuple &compile_args, const py::tuple &args_list,
+                                                const py::object &target) {
+  if ((!py::isinstance<py::str>(target))) {
+    MS_EXCEPTION(TypeError) << "The `target` must be string!";
+  }
+  std::string target_str = py::cast<std::string>(target);
+  if (compile_args.size() != args_list.size()) {
+    MS_EXCEPTION(ValueError) << "For " << target_str
+                             << ", the length of input must be equal to expected one, but got expected: "
+                             << compile_args.size() << " and input: " << args_list.size() << "!";
+  }
+
+  AbstractBasePtrList compile_abstracts;
+  compile_abstracts.reserve(compile_args.size());
+  AbstractBasePtrList args_abstracts;
+  args_abstracts.reserve(compile_args.size());
+  for (size_t i = 0; i < compile_args.size(); ++i) {
+    ValuePtr compile_args_converted = nullptr;
+    if (!parse::ConvertData(compile_args[i], &compile_args_converted)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "ConvertData for " << i << "th compiling argument failed, the argument type is "
+                                 << compile_args[i].get_type() << ", value is '" << py::str(compile_args[i]) << "'.";
+    }
+    compile_abstracts.push_back(ArgsToAbstract(compile_args[i], compile_args_converted));
+
+    ValuePtr args_converted = nullptr;
+    if (!parse::ConvertData(args_list[i], &args_converted)) {
+      MS_LOG(INTERNAL_EXCEPTION) << "ConvertData for " << i << "th input argument failed, the argument type is "
+                                 << args_list[i].get_type() << ", value is '" << py::str(args_list[i]) << "'.";
+    }
+    args_abstracts.push_back(ArgsToAbstract(args_list[i], args_converted));
+  }
+
+  CheckAbstractConsistency(compile_abstracts, args_abstracts, target_str, false);
 }
 
 py::object GraphExecutorPy::GenerateArgumentsKey(const py::object &obj, const py::tuple &args, const py::dict &kwargs,

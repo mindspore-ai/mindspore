@@ -91,24 +91,38 @@ def test_dyn_tuple_case(mode):
     net_s = NetTuple()
     out_s = net_s((x1, x2), axis)
 
-    net_d1 = NetTuple()
-    net_d1.set_inputs(ms.mutable((x1_dyn, x2_dyn)), axis)
-    out_d1 = net_d1((x1, x2), axis)
-    assert np.allclose(out_s.asnumpy(), out_d1.asnumpy())
+    try:
+        net_d1 = NetTuple()
+        net_d1.set_inputs(ms.mutable((x1_dyn, x2_dyn)), axis)
+        net_d1((x1, x2), axis)
+        assert False, "should be a exception"
+    except Exception:  # pylint: disable=broad-except
+        pass
 
-    net_d2 = NetTuple()
-    net_d2.set_inputs((x1_dyn, x2_dyn), axis)
-    out_d2 = net_d2((x1, x2), axis)
-    assert np.allclose(out_s.asnumpy(), out_d2.asnumpy())
+    try:
+        net_d2 = NetTuple()
+        net_d2.set_inputs((x1_dyn, x2_dyn), axis)
+        net_d2(ms.mutable(x1, x2), axis)
+        assert False, "should be a exception"
+    except Exception:  # pylint: disable=broad-except
+        pass
+
+    try:
+        net_d2 = NetTuple()
+        net_d2.set_inputs((x1_dyn, x2_dyn), axis)
+        net_d2((x1, x2), axis)
+        assert False, "should be a exception"
+    except Exception:  # pylint: disable=broad-except
+        pass
 
     net_d3 = NetTuple()
     net_d3.set_inputs(ms.mutable((x1_dyn, x2_dyn)), axis)
-    out_d3 = net_d3([x1, x2], axis)
+    out_d3 = net_d3(ms.mutable([x1, x2]), axis)
     assert np.allclose(out_s.asnumpy(), out_d3.asnumpy())
 
     net_d4 = NetTuple()
-    net_d4.set_inputs([x1_dyn, x2_dyn], axis)
-    out_d4 = net_d4([x1, x2], axis)
+    net_d4.set_inputs(ms.mutable([x1_dyn, x2_dyn]), axis)
+    out_d4 = net_d4(ms.mutable([x1, x2]), axis)
     assert np.allclose(out_s.asnumpy(), out_d4.asnumpy())
 
 

@@ -34,7 +34,7 @@ from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache
 from mindspore.common.api import _generate_branch_control_input, _convert_python_data, _get_args_for_run_predict
-from mindspore.common.api import _process_dyn_args, _generate_dyn_compile_args, _check_compile_consistency
+from mindspore.common.api import _process_dyn_args, _generate_dyn_compile_args
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations import Cast
@@ -962,8 +962,6 @@ class Cell(Cell_):
         if not kwargs:
             self._dynamic_shape_inputs = inputs
             self._check_construct_args(*inputs)
-            # TODO(tronzhang): It may error for no actually args here. So just set in fullmode,
-            #                  which means that incremental mode is lacking dynamic input.
             if context._get_mode() == context.PYNATIVE_MODE:
                 _pynative_executor.set_dynamic_input(self, *self._dynamic_shape_inputs)
         else:
@@ -1039,7 +1037,7 @@ class Cell(Cell_):
         if self._dynamic_shape_inputs is not None:
             logger.debug("Compiled Graph with dynamic shape")
             compile_args = _generate_dyn_compile_args(args, self._dynamic_shape_inputs)
-            _check_compile_consistency(compile_args, args, "set_inputs")
+            _cell_graph_executor._graph_executor.check_argument_consistency(compile_args, args, "set_inputs")
             self._check_parameter_consistency(compile_args, args)
             Validator.check_symbolic_shape(compile_args, args)
             self.saved_dynamic_shape = compile_args

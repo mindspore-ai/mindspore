@@ -407,24 +407,6 @@ def _is_dyn_args_fullmode(dyn_args):
     return False
 
 
-def _process_sequence(args):
-    """Convert the argument to mutable if it is tuple or list and containing dynamic element."""
-    new_args = []
-    for elem in args:
-        if not isinstance(elem, (list, tuple)):
-            new_args.append(elem)
-            continue
-        should_convert_mutable = False
-        for inner_elem in elem:
-            if not isinstance(inner_elem, Tensor):
-                continue
-            if is_shape_unknown(inner_elem.shape):
-                should_convert_mutable = True
-                break
-        new_args.append(elem if not should_convert_mutable else mutable(tuple(elem)))
-    return new_args
-
-
 def _process_dyn_args(fn, dyn_args):
     """Process the dynamic arguments, return the necessary data for latter processing.
 
@@ -446,9 +428,9 @@ def _process_dyn_args(fn, dyn_args):
     args_sig = inspect.signature(fn)
     if _is_dyn_args_fullmode(dyn_args):
         if not isinstance(dyn_args, (list, tuple)):
-            temp_dyn_args = _process_sequence((dyn_args,))
+            temp_dyn_args = (dyn_args,)
         else:
-            temp_dyn_args = _process_sequence(dyn_args)
+            temp_dyn_args = dyn_args
 
         # If dyn_args is fullmode, it should be apply directly.
         args_sig_parameters = list(args_sig.parameters.values())
@@ -502,8 +484,8 @@ def _generate_dyn_compile_args(compile_args, dyn_args):
         return compile_args
     if _is_dyn_args_fullmode(dyn_args):
         if not isinstance(dyn_args, (list, tuple)):
-            return _process_sequence((dyn_args,))
-        return _process_sequence(dyn_args)
+            return (dyn_args,)
+        return dyn_args
     arg_specified_infos = dyn_args.get(ARG_SPECIFIED, None)
     if arg_specified_infos is None:
         raise RuntimeError("For dict mode, a key with \"%s\" should exist, but got %s!" %
@@ -511,100 +493,7 @@ def _generate_dyn_compile_args(compile_args, dyn_args):
     new_compile_args = list(compile_args)
     for index, arg in arg_specified_infos:
         new_compile_args[index] = arg
-    return _process_sequence(new_compile_args)
-
-
-def _is_tensor_like(target):
-    """A target is act like a tensor, it maybe a tensor."""
-    if hasattr(target, "shape") and hasattr(target, "dtype") and hasattr(target, "dim"):
-        return True
-    return False
-
-
-def _check_tensor_consistency(set_input, net_input, index, msg_target):
-    """
-    Check if tensor is correctly set for dynamic shape.
-
-    Args:
-        set_input (Tensor): Tensor set for dynamic shape.
-        net_input (Tensor): Input tensor of the Cell object.
-        index (int): Tensor index for set inputs.
-        msg_target (str): Target
-    """
-    if not isinstance(net_input, (Tensor, CSRTensor, COOTensor)) and not _is_tensor_like(net_input):
-        raise TypeError(
-            f"For {msg_target} and tuple(list) in {msg_target}, the type of {index + 1}th input must be Tensor, "
-            f"but got {type(net_input)}.")
-    set_input_const = hasattr(set_input, "const_arg") and getattr(set_input, "const_arg")
-    if set_input_const and id(set_input) != id(net_input):
-        raise TypeError(
-            f"For {msg_target} and tuple(list) in {msg_target}, the {index + 1}th input must be the same "
-            f"const tensor as expected, but got expected: {set_input} and input: {net_input}.")
-    if set_input.dtype != net_input.dtype:
-        raise TypeError(
-            f"For {msg_target} and tuple(list) in {msg_target}, the dtype of {index + 1}th input must be the same "
-            f"as expected, but got expected: {set_input.dtype} and input: {net_input.dtype}.")
-    if -2 not in set_input.shape:
-        if net_input.dim() != 0 and set_input.dim() != net_input.dim():
-            raise ValueError(
-                f"For {msg_target} and tuple(list) in {msg_target}, the dims of {index + 1}th input must be the "
-                f"same as expected, but got expected: {set_input.dim()} and input: "
-                f"{net_input.dim()}.")
-        if not all([ele1 in (-1, ele2) for ele1, ele2 in zip(set_input.shape, net_input.shape)]):
-            raise ValueError(
-                f"For {msg_target} and tuple(list) in {msg_target}, the shape of {index + 1}th input must be the "
-                f"same as expected, but got expected: {set_input.shape} and input: "
-                f"{net_input.shape}.")
-
-
-def _check_compile_consistency(set_inputs, net_inputs, msg_target="expected"):
-    """
-    Check if the actual inputs are consistent with the compilation.
-
-    Args:
-        set_inputs (tuple): The inputs used for compilation.
-        net_inputs (tuple): The actual inputs.
-    """
-    if not getattr(set_inputs, '__ms_dynamic_len__', False):
-        set_inputs_len = len(set_inputs)
-        net_inputs_len = len(net_inputs)
-        if set_inputs_len != net_inputs_len:
-            raise ValueError(f"For {msg_target} and tuple(list) in {msg_target}, the length of input must be equal "
-                             f"to expected one, but got expected: {set_inputs_len} and input: {net_inputs_len}.")
-    for index, (set_input, net_input) in enumerate(zip(set_inputs, net_inputs)):
-        if isinstance(set_input, (Tensor, CSRTensor, COOTensor)) or _is_tensor_like(set_input):
-            if isinstance(set_input, PythonTensor) and set_input.const_arg and id(set_input) != id(net_input):
-                raise ValueError(
-                    f"For {msg_target} and tuple(list) in {msg_target}, the value of {index + 1}th input must "
-                    f"be the same as network's input, but got {msg_target}: {set_input} and network's input: "
-                    f"{net_input}.")
-            _check_tensor_consistency(set_input, net_input, index, msg_target)
-        elif isinstance(set_input, (tuple, list)):
-            if not isinstance(net_input, (tuple, list)):
-                raise TypeError(
-                    f"For {msg_target}, the {index + 1}th input must be tuple or list, but got {type(net_input)}.")
-            _check_compile_consistency(set_input, net_input)
-        else:
-            if type(set_input) != type(net_input):  # pylint: disable=unidiomatic-typecheck
-                raise TypeError(
-                    f"For {msg_target} and tuple(list) in {msg_target}, the {index + 1}th input type of "
-                    f"{msg_target} or tuple(list) in {msg_target} must be equal, but got {msg_target}: "
-                    f"{type(set_input)} and network's input: {type(net_input)}.")
-            if not getattr(set_input, "__ms_mutable__", False):
-                if set_input != net_input:
-                    raise ValueError(
-                        f"For {msg_target} and tuple(list) in {msg_target}, the value of {index + 1}th input must "
-                        f"be the same as network's input, but got {msg_target}: {set_input} and network's input: "
-                        f"{net_input}.")
-            else:
-                if not hasattr(set_input, "__ms_origin_object__"):
-                    raise RuntimeError(
-                        f"For {msg_target} and tuple(list) in {msg_target}, the {index + 1}th should have "
-                        f"\"__ms_origin_object__\", but loss.")
-                if not getattr(net_input, "__ms_mutable__", False) or not hasattr(net_input, "__ms_origin_object__"):
-                    raise RuntimeError(
-                        f"For {msg_target} and tuple(list) in {msg_target}, the {index + 1}th should "
-                        f"be a valid mutable one, but got {net_input}({type(net_input)})")
+    return tuple(new_compile_args)
 
 
 class _MindsporeFunctionExecutor:
@@ -813,6 +702,7 @@ class _MindsporeFunctionExecutor:
             if len(compile_args) != len(args_list):
                 raise ValueError(f"The number of actual input tensors: {len(args_list)} is not equal to the number of "
                                  f"dynamic shape tensors: {len(compile_args)}.")
+            self._graph_executor.check_argument_consistency(compile_args, args_list, "input_signature")
             Validator.check_symbolic_shape(compile_args, args_list)
 
         # Case: If dynamic shape tensors have been assigned to `input_signature`, they are preferred as compile args.
@@ -828,7 +718,7 @@ class _MindsporeFunctionExecutor:
                                    f"be 'sens' and added it to compile args.")
                     compile_args.append(args_list[-1])
                 compile_args = tuple(compile_args)
-                _check_compile_consistency(compile_args, args_list, "input_signature")
+                self._graph_executor.check_argument_consistency(compile_args, args_list, "input_signature")
                 if self.obj is not None:
                     _pynative_executor.set_dynamic_input(self.obj, *compile_args)
                 else:
@@ -2136,6 +2026,7 @@ def flops_collection(phase='train'):
         >>> ms.ms_memory_recycle()
     """
     return _cell_graph_executor.flops_collection(phase)
+
 
 _cell_graph_executor = _CellGraphExecutor()
 _pynative_executor = _PyNativeExecutor()
