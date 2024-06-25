@@ -57,7 +57,7 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
 }  // namespace
 
 const BaseRef AddRmsNormFusion::DefinePattern() const {
-  VectorRef add_rms_norm = VectorRef({prim::kPrimRmsNorm, VectorRef({prim::kPrimAdd, x1_, x2_}), gamma_});
+  VectorRef add_rms_norm = VectorRef({prim::kPrimRmsNorm, VectorRef({prim::kPrimAdd, x1_, x2_}), gamma_, eps_});
   return add_rms_norm;
 }
 
@@ -80,8 +80,8 @@ const AnfNodePtr AddRmsNormFusion::Process(const FuncGraphPtr &graph, const AnfN
   auto x1 = utils::cast<AnfNodePtr>((*equiv)[x1_]);
   auto x2 = utils::cast<AnfNodePtr>((*equiv)[x2_]);
   auto gamma = utils::cast<AnfNodePtr>((*equiv)[gamma_]);
+  auto eps = utils::cast<AnfNodePtr>((*equiv)[eps_]);
 
-  auto value_str = GetCNodePrimitive(node)->GetAttr("epsilon");
   auto tensor_add = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   MS_EXCEPTION_IF_NULL(tensor_add);
 
@@ -97,8 +97,7 @@ const AnfNodePtr AddRmsNormFusion::Process(const FuncGraphPtr &graph, const AnfN
   add_result_shapes.push_back(AnfAlgo::GetOutputDetailShape(tensor_add, 0));
 
   auto prim = std::make_shared<Primitive>("AddRmsNorm");
-  prim->set_attr("epsilon", value_str);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x1, x2, gamma};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x1, x2, gamma, eps};
   auto add_rms_norm = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add_rms_norm);
 

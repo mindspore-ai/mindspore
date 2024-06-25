@@ -235,7 +235,7 @@ from mindspore.ops.function.math_func import tanh
 # 100
 
 # 122
-from mindspore.ops.extend import baddbmm as baddbmm_ext
+
 # 176
 from mindspore.ops.function.math_func import atan2_ext as atan2
 from mindspore.ops.function.math_func import arctan2_ext as arctan2
@@ -370,10 +370,6 @@ def any(input, dim=None, keepdim=False):
         [ True True]
     """
     return any_ext(input, dim, keepdim)
-
-
-def baddbmm(input, batch1, batch2, *, beta=1, alpha=1):
-    return baddbmm_ext(input, batch1, batch2, beta, alpha)
 
 
 def cat(tensors, dim=0):

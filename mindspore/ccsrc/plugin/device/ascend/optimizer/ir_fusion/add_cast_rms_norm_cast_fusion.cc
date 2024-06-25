@@ -95,6 +95,7 @@ const AnfNodePtr AddCastRmsNormCastFusion::Process(const FuncGraphPtr &graph, co
   auto x1 = utils::cast<AnfNodePtr>((*equiv)[x1_]);
   auto x2 = utils::cast<AnfNodePtr>((*equiv)[x2_]);
   auto gamma = utils::cast<AnfNodePtr>((*equiv)[gamma_]);
+  auto eps = utils::cast<AnfNodePtr>((*equiv)[eps_]);
 
   auto tuple_get_item_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(node), 0);
   auto rms_norm_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_get_item_node), 0);
@@ -105,7 +106,6 @@ const AnfNodePtr AddCastRmsNormCastFusion::Process(const FuncGraphPtr &graph, co
 
   auto cast_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(rms_norm_node), 0);
   auto tensor_add = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(cast_node), 0);
-  auto value_str = GetCNodePrimitive(rms_norm_node)->GetAttr("epsilon");
   MS_EXCEPTION_IF_NULL(tensor_add);
 
   auto shape1 = common::AnfAlgo::GetPrevNodeOutputInferShape(tensor_add, 0);
@@ -115,8 +115,7 @@ const AnfNodePtr AddCastRmsNormCastFusion::Process(const FuncGraphPtr &graph, co
   }
 
   auto prim = std::make_shared<Primitive>("AddRmsNorm");
-  prim->set_attr("epsilon", value_str);
-  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x1, x2, gamma};
+  std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x1, x2, gamma, eps};
   auto add_rms_norm = graph->NewCNode(inputs);
   MS_EXCEPTION_IF_NULL(add_rms_norm);
 
