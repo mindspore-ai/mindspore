@@ -4,7 +4,6 @@ import tempfile
 import argparse
 import shutil
 from unittest.mock import patch
-import mindspore.custom_compiler.setup as setup
 from mindspore.custom_compiler.setup import CustomOOC, get_config
 
 
@@ -153,29 +152,16 @@ def test_install_custom():
 class TestAscendCCompile():
     def setup(self):
         script_path, _ = os.path.split(__file__)
-        src_dir = script_path + "/../../../../mindspore/ccsrc/plugin/device/ascend/hal/custom_compiler"
-        dest_dir = script_path + "/../../../../mindspore/python/mindspore/custom_compiler"
-        for item in os.listdir(src_dir):
-            src_item = os.path.join(src_dir, item)
-            dest_item = os.path.join(dest_dir, item)
-            if os.path.exists(dest_item):
-                continue
-            if os.path.isdir(src_item):
-                shutil.copytree(src_item, dest_item)
-            else:
-                shutil.copy2(src_item, dest_item)
+        self.dest_dir = script_path + "/../../../../mindspore/python/mindspore/custom_compiler"
+        self.custom_project = os.path.join(self.dest_dir, 'CustomProject')
+        cmake_preset = os.path.join(script_path, "CMakePresets.json")
+        os.makedirs(self.custom_project, exist_ok=True)
+        os.makedirs(os.path.join(self.custom_project, "op_host"), exist_ok=True)
+        os.makedirs(os.path.join(self.custom_project, "op_kernel"), exist_ok=True)
+        shutil.copy(cmake_preset, self.custom_project)
 
     def teardown(self):
-        script_path, _ = os.path.split(__file__)
-        dst_path = script_path + "/../../../../mindspore/python/mindspore/custom_compiler"
-        for item in os.listdir(dst_path):
-            if item == "setup.py":
-                continue
-            file_name = os.path.join(dst_path, item)
-            if os.path.isdir(file_name):
-                shutil.rmtree(file_name)
-            else:
-                os.remove(file_name)
+        shutil.rmtree(self.custom_project)
 
     def test_compile_config(self):
         """
@@ -188,8 +174,7 @@ class TestAscendCCompile():
                                             vendor_name="test_case")
             custom_ooc = CustomOOC(input_args)
             custom_ooc.compile_config()
-            dir_path, _ = os.path.split(setup.__file__)
-            with open(os.path.join(dir_path, 'CMakePresets.json'), 'r', encoding='utf-8') as f:
+            with open(os.path.join(self.custom_project, 'CMakePresets.json'), 'r', encoding='utf-8') as f:
                 data = json.load(f)
             assert data['configurePresets'][0]["cacheVariables"]["ASCEND_CANN_PACKAGE_PATH"]["value"] == temp_dir
             assert data['configurePresets'][0]["cacheVariables"]["ASCEND_COMPUTE_UNIT"]["value"] == "ascend310p"

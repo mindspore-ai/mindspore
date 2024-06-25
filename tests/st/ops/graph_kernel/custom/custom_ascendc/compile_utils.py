@@ -45,6 +45,6 @@ def compile_custom_run(workspace_dir):
     command = [
         'cd ' + dst_compiler_path + '; python setup.py -o' + op_host_path + ' -k' + op_kernel_path]
     result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
-    run_files = glob.glob(workspace_dir + '/custom_compiler/build_out/*.run')
+    run_files = glob.glob(workspace_dir + '/custom_compiler/CustomProject/build_out/*.run')
     assert result.returncode == 0
     assert len(run_files) == 1
