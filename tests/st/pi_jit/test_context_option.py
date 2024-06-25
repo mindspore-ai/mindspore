@@ -15,12 +15,10 @@
 ''' test context option '''
 from mindspore import Tensor, jit
 import mindspore as ms
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_initial_tensor_body_ref():
     """
     Feature: While specialize.
@@ -48,13 +46,13 @@ def test_initial_tensor_body_ref():
     test_net(input_a, input_b)
 
     @jit(mode="PIJit")
-    def test_grad_net(a, b):
+    def func(a, b):
         return ms.ops.grad(test_net)(a, b)
 
     input_a = Tensor([2])
     input_b = Tensor([6])
-    res = jit(mode="PIJit", fn=test_grad_net)(input_a, input_b)
-    except_res = jit(mode="PSJit", fn=test_grad_net)(input_a, input_b)
+    res = jit(mode="PIJit", fn=func)(input_a, input_b)
+    except_res = jit(mode="PSJit", fn=func)(input_a, input_b)
 
     ms.context.set_context(precompile_only=False, mode=ms.context.PYNATIVE_MODE)
     assert res == except_res

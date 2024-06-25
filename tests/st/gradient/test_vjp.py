@@ -19,6 +19,7 @@ import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn.grad import Vjp
+from tests.mark_utils import arg_mark
 
 
 class SingleInputNet(nn.Cell):
@@ -31,9 +32,7 @@ class MultipleInputsOutputNet(nn.Cell):
         return 2*x, y**3
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_vjp_single_input_graph(mode):
     """
@@ -53,9 +52,7 @@ def test_vjp_single_input_graph(mode):
 
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_vjp_multiple_inputs_default_v_graph(mode):
     """

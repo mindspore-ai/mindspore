@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -42,11 +43,13 @@ class NetFunc(nn.Cell):
         return self.unique(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unqiue():
+    """
+    Feature: Dynamic shape.
+    Description: Test dynamic shape ops.
+    Expectation: No exception.
+    """
     x = Tensor(np.array([1, 1, 2, 2, 3, 3]), mstype.int32)
     unique = Net()
     output = unique(x)
@@ -56,10 +59,7 @@ def test_unqiue():
     assert (output[1].asnumpy() == expect2).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unqiue_func_1d():
     """
     Feature: Test unique function
@@ -75,10 +75,7 @@ def test_unqiue_func_1d():
     assert (output[1].asnumpy() == expect2).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unqiue_func_2d():
     """
     Feature: Test unique function

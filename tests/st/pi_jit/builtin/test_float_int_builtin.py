@@ -1,6 +1,7 @@
 import pytest
 from mindspore import jit, context
 from ..share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
 def convert_numbers_to_float_and_int(val1, val2):
@@ -27,9 +28,7 @@ def ms_fallback_float_and_int_empty():
     return float(), int()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [fallback_float_and_int])
 @pytest.mark.parametrize('ms_func', [ms_fallback_float_and_int])
 def test_int_float_conversion_with_args(func, ms_func):
@@ -45,9 +44,7 @@ def test_int_float_conversion_with_args(func, ms_func):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [fallback_float_and_int_empty])
 @pytest.mark.parametrize('ms_func', [ms_fallback_float_and_int_empty])
 def test_int_float_conversion_no_args(func, ms_func):

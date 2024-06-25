@@ -20,12 +20,11 @@ from mindspore import dtype as mstype
 from mindspore.common import Tensor
 from mindspore.common.api import jit
 from mindspore import context
+from tests.mark_utils import arg_mark
 
 
 @pytest.mark.skip(reason="pynative mode has an incorrect result")
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_vmap_with_tuple_input():
     """
     Feature: vmap

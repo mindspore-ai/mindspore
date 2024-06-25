@@ -6,7 +6,7 @@ import mindspore.ops.operations as P
 import mindspore.ops.functional as F
 import numpy as np
 from .ctrl_factory import CtrlFactory
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class CtrlWhileIfReturn(Cell):
@@ -24,9 +24,7 @@ class CtrlWhileIfReturn(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_if_return_not_relevant_gt():
     '''
     TEST_SUMMARY:
@@ -62,9 +60,7 @@ class CtrlWhileReturnIn(Cell):
         return s
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_return():
     '''
     TEST_SUMMARY:
@@ -94,9 +90,7 @@ class CtrlWhileCast(Cell):
         return loop
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_return_cast():
     '''
     TEST_SUMMARY:
@@ -128,9 +122,7 @@ class CtrlOnceReturn(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_once_return():
     '''
     TEST_SUMMARY:
@@ -162,9 +154,7 @@ class CtrlWhileReturnInIf(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_return_in_if():
     '''
     TEST_SUMMARY:
@@ -197,9 +187,7 @@ class CtrlWhileReturnInElif(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_return_in_elif():
     '''
     TEST_SUMMARY:
@@ -234,9 +222,7 @@ class CtrlElifReturnOnce(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_once_elif_return():
     '''
     TEST_SUMMARY:
@@ -272,9 +258,7 @@ class CtrlIfReturnElse(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_else_return_in_if():
     '''
     TEST_SUMMARY:
@@ -312,9 +296,7 @@ class CtrlWhileElseReturnInElif(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_else_elif_return():
     '''
     TEST_SUMMARY:
@@ -358,9 +340,7 @@ class CtrlWhileReturnInIfElif(Cell):
         return self.square(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_return_func():
     '''
     TEST_SUMMARY:
@@ -397,9 +377,7 @@ class CtrlWhileReturnInIfElse(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_return_in_if_else():
     '''
     TEST_SUMMARY:
@@ -436,9 +414,7 @@ class CtrlWhileReturnInElifElse(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_return_in_elif_else():
     '''
     TEST_SUMMARY:
@@ -477,9 +453,7 @@ class CtrlWhile2ElifReturnInElif(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_2elif_return_in_elif():
     '''
     TEST_SUMMARY:
@@ -518,9 +492,7 @@ class CtrlWhile2ElifReturnInElse(Cell):
         return t
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_2elif_return_in_else():
     '''
     TEST_SUMMARY:
@@ -559,9 +531,7 @@ class CtrlWhile2ElifBInIfElif(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_2elif_return_in_ifelif():
     '''
     TEST_SUMMARY:
@@ -601,9 +571,7 @@ class CtrlWhile2ElifReturnIfElif(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_2elif_return_in_if_elif_usef():
     '''
     TEST_SUMMARY:
@@ -641,9 +609,7 @@ class CtrlWhile2ElifReturnInIfElse(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_2elif_return_in_if_else():
     '''
     TEST_SUMMARY:
@@ -681,9 +647,7 @@ class CtrlWhile2ElifReturnInElifElse(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_2elif_return_in_elif_else():
     '''
     TEST_SUMMARY:

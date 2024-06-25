@@ -5,7 +5,7 @@ from mindspore.ops import operations as P
 from mindspore import context, jit
 from mindspore.common.parameter import Parameter
 from ..share.utils import match_array
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class CtrlForReturnWhileX(Cell):
@@ -26,9 +26,7 @@ class CtrlForReturnWhileX(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_while_return_in_for_x():
     """
     Feature: PIJit
@@ -64,9 +62,7 @@ class CtrlForReturnWhile(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_while_return_in_for():
     """
     Feature: PIJit
@@ -102,9 +98,7 @@ class CtrlForWhileReturnOne(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_for_param_return_in_for():
     """
     Feature: PIJit
@@ -142,9 +136,7 @@ class CtrlForWhileReturnAdd(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_by_while_return_no_param():
     """
     Feature: PIJit
@@ -181,9 +173,7 @@ class CtrlForWhileReturnX(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_by_while_return_in_while_x():
     """
     Feature: PIJit
@@ -219,9 +209,7 @@ class CtrlForWhileReturn(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_while_return_in_while():
     """
     Feature: PIJit
@@ -258,9 +246,7 @@ class CtrlForWhileReturnP(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_while_return_in_while_param():
     """
     Feature: PIJit
@@ -297,9 +283,7 @@ class CtrlForWhileReturnN(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_while_return_in_while_no():
     """
     Feature: PIJit

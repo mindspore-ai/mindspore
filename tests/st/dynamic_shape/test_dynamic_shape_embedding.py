@@ -17,6 +17,7 @@ import pytest
 import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.nn import TrainOneStepCell, WithLossCell
+from tests.mark_utils import arg_mark
 
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -35,9 +36,12 @@ class NetWithEmbeddingLookUp(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_sit_embedding_lookup_net():
+    """
+    Feature: Dynamic shape.
+    Description: Test dynamic shape ops.
+    Expectation: No exception.
+    """
     indices = Tensor(np.array([0, 1, 2]).astype(np.int32))
     label = Tensor(np.random.randn(3, 8).astype(np.float32))
 

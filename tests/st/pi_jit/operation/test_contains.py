@@ -2,6 +2,7 @@ import pytest
 from mindspore import numpy as np
 from mindspore import Tensor, jit, context
 from ..share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
 @jit(mode="PIJit")
@@ -66,9 +67,7 @@ def common_test_case(func, ms_func, a, b, error=0, type_check='array'):
     match_array(res, ms_res, error=error, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func, ms_func', [(in_contains, jit_in_contains), (not_in_contains, jit_not_in_contains)])
 @pytest.mark.parametrize('a', [1])
 @pytest.mark.parametrize('b', [[1, 2, 3], {1: 1, 2: 2}, (1, 2, 3)])
@@ -81,9 +80,7 @@ def test_in_not_in(func, ms_func, a, b):
     common_test_case(func, ms_func, a, b)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func, ms_func', [(in_contains, jit_in_contains), (not_in_contains, jit_not_in_contains)])
 @pytest.mark.parametrize('a', [Tensor(np.ones((2, 3)).astype(np.float32))])
 @pytest.mark.parametrize('b', [Tensor(np.array([[1, 2, 3], [4, 5, 6]], dtype='float32'))])
@@ -100,9 +97,7 @@ def test_tensor_in_list(func, ms_func, a, b):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func, ms_func', [(in_contains_string, jit_in_contains_string),
                                            (not_in_contains_string, jit_not_in_contains_string)])
 def test_string_in_not_in(func, ms_func):

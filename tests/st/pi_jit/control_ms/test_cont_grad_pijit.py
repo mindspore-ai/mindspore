@@ -7,15 +7,14 @@ from mindspore import nn, jit
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 
 grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_with_const_param_grad():
     """
     Feature: Get container with grad from abstract.
@@ -55,9 +54,7 @@ def test_while_with_const_param_grad():
     assert np.allclose(graph_output[1].asnumpy(), expect_two, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_with_variable_grad():
     """
     Feature: Get container with grad from abstract.
@@ -97,9 +94,7 @@ def test_while_with_variable_grad():
     assert np.allclose(graph_output[1].asnumpy(), expect_two, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_with_param_forward():
     """
     Feature: Get container with grad from abstract.
@@ -135,9 +130,7 @@ def test_while_with_param_forward():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_endless_case():
     """
     Feature: Get container with grad from abstract.
@@ -172,9 +165,7 @@ def test_while_endless_case():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_with_param_grad():
     """
     Feature: Get container with grad from abstract.
@@ -219,9 +210,7 @@ def test_while_with_param_grad():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_with_param_forward_with_const_branch():
     """
     Feature: Get container with grad from abstract.
@@ -261,9 +250,7 @@ def test_while_with_param_forward_with_const_branch():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_opt_endless():
     """
     Feature: Get container with grad from abstract.
@@ -316,9 +303,7 @@ def test_while_opt_endless():
     assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_no_while_call():
     """
     Feature: Get container with grad from abstract.
@@ -356,9 +341,7 @@ def test_no_while_call():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_with_param_grad_with_const_branch():
     """
     Feature: Get container with grad from abstract.
@@ -407,9 +390,7 @@ def test_while_with_param_grad_with_const_branch():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_for_while_with_param_grad_with_const_branch():
     """
     Feature: Get container with grad from abstract.
@@ -461,9 +442,7 @@ def test_for_while_with_param_grad_with_const_branch():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_for_while_with_param_grad_basic():
     """
     Feature: Get container with grad from abstract.
@@ -511,9 +490,7 @@ def test_for_while_with_param_grad_basic():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_for_while_with_param_grad_normal():
     """
     Feature: Get container with grad from abstract.
@@ -561,9 +538,7 @@ def test_for_while_with_param_grad_normal():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_with_param_basic_grad():
     """
     Feature: Get container with grad from abstract.
@@ -608,9 +583,7 @@ def test_while_with_param_basic_grad():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_while_with_param_basic_grad_mul():
     """
     Feature: Get container with grad from abstract.
@@ -655,9 +628,7 @@ def test_while_with_param_basic_grad_mul():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_with_param_basic_grad_two():
     """
     Feature: Get container with grad from abstract.
@@ -707,9 +678,7 @@ def test_while_with_param_basic_grad_two():
     assert np.allclose(graph_output[1].asnumpy(), expect2, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_with_param_basic_grad_three():
     """
     Feature: Get container with grad from abstract.
@@ -762,9 +731,7 @@ def test_while_with_param_basic_grad_three():
     assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_with_param_grad_not_enter_while():
     """
     Feature: Get container with grad from abstract.
@@ -807,9 +774,7 @@ def test_while_with_param_grad_not_enter_while():
     assert np.allclose(graph_output[0].asnumpy(), 1, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_param_if_by_if_grad_inputs():
     """
     Feature: Get container with grad from abstract.
@@ -857,9 +822,7 @@ def test_with_param_if_by_if_grad_inputs():
     assert np.allclose(graph_output[2].asnumpy(), expect3, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_param_if_by_if_grad_parameter():
     """
     Feature: Get container with grad from abstract.
@@ -905,9 +868,7 @@ def test_with_param_if_by_if_grad_parameter():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_param_if_by_if_grad_param_excute_null():
     """
     Feature: Get container with grad from abstract.
@@ -951,9 +912,7 @@ def test_with_param_if_by_if_grad_param_excute_null():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_if_by_if_return_inside_grad():
     """
     Feature: Get container with grad from abstract.
@@ -999,9 +958,7 @@ def test_if_by_if_return_inside_grad():
     assert np.allclose(graph_output[0].asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_if_by_if_forward():
     """
     Feature: Get container with grad from abstract.
@@ -1046,9 +1003,7 @@ def test_if_by_if_forward():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_if_by_if_forward_use_namespace():
     """
     Feature: Get container with grad from abstract.
@@ -1093,9 +1048,7 @@ def test_if_by_if_forward_use_namespace():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_if_by_if_forward_use_global_op():
     """
     Feature: Get container with grad from abstract.
@@ -1145,9 +1098,7 @@ def test_if_by_if_forward_use_global_op():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_for_with_if_by_if_forward():
     """
     Feature: Get container with grad from abstract.
@@ -1184,9 +1135,7 @@ def test_for_with_if_by_if_forward():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_for_with_if_by_if_forward_namespace():
     """
     Feature: Get container with grad from abstract.
@@ -1225,9 +1174,7 @@ def test_for_with_if_by_if_forward_namespace():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_if_by_if_forward_const_branch_inner():
     """
     Feature: Get container with grad from abstract.
@@ -1277,9 +1224,7 @@ def test_if_by_if_forward_const_branch_inner():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_if_by_if_forward_all_const_branch():
     """
     Feature: Get container with grad from abstract.
@@ -1329,9 +1274,7 @@ def test_if_by_if_forward_all_const_branch():
     assert np.allclose(graph_output.asnumpy(), expect, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_if_const_grad():
     """
     Feature: Get container with grad from abstract.
@@ -1370,9 +1313,7 @@ def test_if_const_grad():
     net(a, b)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_if_by_if_const_grad():
     """
     Feature: Get container with grad from abstract.
@@ -1415,9 +1356,7 @@ def test_if_by_if_const_grad():
     net(a, b)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_const_grad():
     """
     Feature: Get container with grad from abstract.
@@ -1454,9 +1393,7 @@ def test_while_const_grad():
     net(a, b)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_if_by_while_const_grad():
     """
     Feature: Get container with grad from abstract.

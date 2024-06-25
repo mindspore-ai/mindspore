@@ -13,13 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """Test graph sequence operation with nested or irregular input/output"""
-import pytest
 from mindspore import Tensor, jit, context
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sequence_compare_with_operation():
     """
     Feature: Enable sequence operations with nested or irregular inputs.

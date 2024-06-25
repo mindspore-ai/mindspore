@@ -5,11 +5,10 @@ from mindspore.common import dtype as mstype
 from ..share.ops.primitive.slice_ops import SliceFactory
 from ..share.ops.primitive.slice_ops import SliceMock
 from ..dynamic_shape_operations.slice import DynamicShapeSliceFactory
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_n1024x1270_0x0_4x4():
     """
     Feature: ALL TO ALL
@@ -24,9 +23,7 @@ def test_p_slice_input_n1024x1270_0x0_4x4():
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_8x32x6_0x28x0_8x4x6():
     """
     Feature: ALL TO ALL
@@ -40,9 +37,7 @@ def test_p_slice_input_8x32x6_0x28x0_8x4x6():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_2d():
     """
     Feature: ALL TO ALL
@@ -56,9 +51,7 @@ def test_p_slice_input_2d():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_3d():
     """
     Feature: ALL TO ALL
@@ -72,9 +65,7 @@ def test_p_slice_input_3d():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_0d_fp64():
     """
     Feature: ALL TO ALL
@@ -89,9 +80,7 @@ def test_p_slice_input_0d_fp64():
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_0d_dtype_complex64():
     """
     Feature: ALL TO ALL
@@ -108,9 +97,7 @@ def test_p_slice_input_0d_dtype_complex64():
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_5d_dtype_complex64_begin_size_shape_larger_than_input_x():
     """
     Feature: ALL TO ALL
@@ -127,9 +114,7 @@ def test_p_slice_input_5d_dtype_complex64_begin_size_shape_larger_than_input_x()
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_begin_bool():
     """
     Feature: ALL TO ALL
@@ -144,9 +129,7 @@ def test_p_slice_begin_bool():
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_begin_int():
     """
     Feature: ALL TO ALL
@@ -161,9 +144,7 @@ def test_p_slice_begin_int():
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_begin_list():
     """
     Feature: ALL TO ALL
@@ -178,9 +159,7 @@ def test_p_slice_begin_list():
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_size_bool():
     """
     Feature: ALL TO ALL
@@ -195,9 +174,7 @@ def test_p_slice_size_bool():
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_size_list():
     """
     Feature: ALL TO ALL
@@ -212,9 +189,7 @@ def test_p_slice_size_list():
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_size_int():
     """
     Feature: ALL TO ALL
@@ -229,9 +204,7 @@ def test_p_slice_size_int():
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_4d_dtype_float16():
     """
     Feature: ALL TO ALL
@@ -245,9 +218,7 @@ def test_p_slice_input_4d_dtype_float16():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_5d_dtype_float32():
     """
     Feature: ALL TO ALL
@@ -261,9 +232,7 @@ def test_p_slice_input_5d_dtype_float32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_shape_2x32x112x112x48_begin_1x2x3x4x5_size_1x10x1x20x40_fp32():
     """
     Feature: ALL TO ALL
@@ -280,9 +249,7 @@ def test_p_slice_shape_2x32x112x112x48_begin_1x2x3x4x5_size_1x10x1x20x40_fp32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_5d_dtype_fp16():
     """
     Feature: ALL TO ALL
@@ -296,9 +263,7 @@ def test_p_slice_input_5d_dtype_fp16():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_5d_dtype_fp64():
     """
     Feature: ALL TO ALL
@@ -312,9 +277,7 @@ def test_p_slice_input_5d_dtype_fp64():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_5d_dtype_int64():
     """
     Feature: ALL TO ALL
@@ -328,9 +291,7 @@ def test_p_slice_input_5d_dtype_int64():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_5d_dtype_int32():
     """
     Feature: ALL TO ALL
@@ -344,9 +305,7 @@ def test_p_slice_input_5d_dtype_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_5d_dtype_int16():
     """
     Feature: ALL TO ALL
@@ -360,9 +319,7 @@ def test_p_slice_input_5d_dtype_int16():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_6d_dtype_int64():
     """
     Feature: ALL TO ALL
@@ -376,9 +333,7 @@ def test_p_slice_input_6d_dtype_int64():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_input_dtype_int32():
     """
     Feature: ALL TO ALL
@@ -392,9 +347,7 @@ def test_p_slice_input_dtype_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_slice_size_greater_than_input():
     """
     Feature: ALL TO ALL
@@ -409,9 +362,7 @@ def test_p_slice_size_greater_than_input():
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_p_slice_input_3d():
     """
     Feature: ALL TO ALL
@@ -426,9 +377,7 @@ def test_dynamic_shape_p_slice_input_3d():
     fact.forward_dynamic_shape_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_p_slice_input_5d():
     """
     Feature: ALL TO ALL
@@ -443,9 +392,7 @@ def test_dynamic_shape_p_slice_input_5d():
     fact.forward_dynamic_shape_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_p_slice_input_7d():
     """
     Feature: ALL TO ALL
@@ -460,9 +407,7 @@ def test_dynamic_shape_p_slice_input_7d():
     fact.forward_dynamic_shape_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_p_slice_2d_fp32():
     """
     Feature: ALL TO ALL

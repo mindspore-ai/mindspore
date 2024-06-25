@@ -3,11 +3,10 @@ import pytest
 from mindspore import Tensor
 from ..share.ops.primitive.cos_ops import CosMock
 from ..dynamic_shape_operations.cos import CosDynamicShapeFactory
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_cos_input_64x3125():
     '''
     Description: cos算子测试，inputa_shape=(64, 3125)
@@ -20,9 +19,7 @@ def test_p_cos_input_64x3125():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_cos_input_shape():
     '''
     Description: cos算子测试，inputa_shape=1D--->6D
@@ -47,9 +44,7 @@ def test_p_cos_input_shape():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_cos_input_shape_6d():
     '''
     Description: cos算子测试，inputa_shape 6D
@@ -62,9 +57,7 @@ def test_p_cos_input_shape_6d():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_p_cos_input_float32():
     '''
     Description: Cos算子正反向dynamic shape测试,input_shape=(3, 5, 8, 10, 5), dtype=np.float32
@@ -77,9 +70,7 @@ def test_dynamic_shape_p_cos_input_float32():
     fact.forward_dynamic_shape_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_p_cos_input_float16():
     '''
     Description: Cos算子正反向dynamic shape测试,input_shape=(3, 4, 5), dtype=np.float16
@@ -92,9 +83,7 @@ def test_dynamic_shape_p_cos_input_float16():
     fact.forward_dynamic_shape_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_p_cos_float32():
     '''
     Description: test cos with dynamic shape input, dtype=float32
@@ -108,9 +97,7 @@ def test_dynamic_shape_p_cos_float32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_p_cos_float16():
     '''
     Description: test cos with dynamic shape input, dtype=float16

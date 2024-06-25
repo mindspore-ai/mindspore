@@ -1,11 +1,9 @@
 from ..share.ops.primitive.invert_ops import InvertFactory
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_256():
     """
     Feature: Ops.
@@ -17,9 +15,7 @@ def test_p_invert_input_256():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_256x256():
     """
     Feature: Ops.
@@ -31,9 +27,7 @@ def test_p_invert_input_256x256():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_128x8x1():
     """
     Feature: Ops.
@@ -45,9 +39,7 @@ def test_p_invert_input_128x8x1():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_32x16x8x4():
     """
     Feature: Ops.
@@ -59,9 +51,7 @@ def test_p_invert_input_32x16x8x4():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_32x8x16x8x32():
     """
     Feature: Ops.
@@ -73,9 +63,7 @@ def test_p_invert_input_32x8x16x8x32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_8x8x16x32x8x16():
     """
     Feature: Ops.
@@ -87,9 +75,7 @@ def test_p_invert_input_8x8x16x32x8x16():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_8x2x4x128x1x16x7():
     """
     Feature: Ops.
@@ -101,9 +87,7 @@ def test_p_invert_input_8x2x4x128x1x16x7():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_8x2x4x128x1x16x7_int8():
     """
     Feature: Ops.
@@ -115,9 +99,7 @@ def test_p_invert_input_8x2x4x128x1x16x7_int8():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_8x8x16x32x8x16_uint8():
     """
     Feature: Ops.
@@ -129,9 +111,7 @@ def test_p_invert_input_8x8x16x32x8x16_uint8():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_8x2x4x128x1x16x7_int64():
     """
     Feature: Ops.
@@ -143,9 +123,7 @@ def test_p_invert_input_8x2x4x128x1x16x7_int64():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_8x8x16x32x8x16_uint64():
     """
     Feature: Ops.
@@ -157,9 +135,7 @@ def test_p_invert_input_8x8x16x32x8x16_uint64():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_2x2_int32():
     """
     Feature: Ops.
@@ -171,9 +147,7 @@ def test_p_invert_input_2x2_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_invert_input_2x2_uint32():
     """
     Feature: Ops.

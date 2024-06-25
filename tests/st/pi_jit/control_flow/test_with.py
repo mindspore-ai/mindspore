@@ -2,8 +2,8 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore import jit
 from mindspore._c_expression import get_code_extra
-import pytest
 import dis
+from tests.mark_utils import arg_mark
 
 def fibonacci():
     a, b = 0, 1
@@ -61,9 +61,7 @@ class TestWithContext_2:
         test_value += 1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_case_1():
     """
     Feature: Test with syntax
@@ -85,9 +83,7 @@ def test_with_case_1():
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_case_2():
     """
     Feature: Test with syntax
@@ -113,9 +109,7 @@ def test_with_case_2():
     assert flag
     assert expected == res
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_case_3():
     """
     Feature: Test with syntax
@@ -136,9 +130,7 @@ def test_with_case_3():
     assert expected == res
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_case_4():
     """
     Feature: Test with syntax
@@ -159,9 +151,7 @@ def test_with_case_4():
     assert expected == res
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_case_5():
     """
     Feature: Test with syntax
@@ -185,9 +175,7 @@ def test_with_case_5():
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_case_6():
     """
     Feature: Test with syntax
@@ -216,9 +204,7 @@ def test_with_case_6():
     assert expected == res
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_case_7():
     """
     Feature: Test with syntax
@@ -244,9 +230,7 @@ def test_with_case_7():
     assert jcr["code"]["call_count_"] > 0
     assert expected == res
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_case_8():
     """
     Feature: Test with syntax
@@ -274,9 +258,7 @@ def test_with_case_8():
     assert expected == res
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_case_9():
     """
     Feature: Test with syntax
@@ -308,9 +290,7 @@ def test_with_case_9():
     assert expected == res
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_case_10():
     """
     Feature: Test with syntax

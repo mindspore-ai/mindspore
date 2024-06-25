@@ -14,18 +14,16 @@
 # ============================================================================
 """test grad for dict in PIJit and pynative mode"""
 import numpy as np
-import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 import mindspore.ops as ops
 from mindspore.ops.composite import GradOperation
 from mindspore import Tensor, jit
 from mindspore import dtype as mstype
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_backward_return_dict():
     """
     Feature: Grad for dict.
@@ -64,9 +62,7 @@ def test_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_forward_contain_make_dict_and_dict_getitem():
     """
     Feature: Grad for dict.
@@ -105,9 +101,7 @@ def test_forward_contain_make_dict_and_dict_getitem():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_forward_return_dict():
     """
     Feature: Grad for dict.
@@ -145,9 +139,7 @@ def test_forward_return_dict():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_forward_return_dict_backward_return_dict():
     """
     Feature: Grad for dict.
@@ -187,9 +179,7 @@ def test_forward_return_dict_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_forward_contain_make_dict_and_dict_getitem_backward_return_dict():
     """
     Feature: Grad for dict.
@@ -230,9 +220,7 @@ def test_forward_contain_make_dict_and_dict_getitem_backward_return_dict():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict1():
     """
     Feature: Grad for dict.
@@ -274,9 +262,7 @@ def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict1():
     assert np.allclose(output['a'].asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_forward_contain_make_dict_and_dict_setitem_backward_return_dict2():
     """
     Feature: Grad for dict.

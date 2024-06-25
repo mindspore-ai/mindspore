@@ -1,7 +1,7 @@
 import numpy as np
-import pytest
 import mindspore as ms
 from mindspore import ops
+from tests.mark_utils import arg_mark
 
 
 def greater_equal_forward_func(x, y):
@@ -12,9 +12,7 @@ def greater_equal_backward_func(x, y):
     return ops.grad(greater_equal_forward_func, (0,))(x, y)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_greater_equal_forward():
     """
     Feature: Ops.
@@ -29,9 +27,7 @@ def test_greater_equal_forward():
     assert np.allclose(out.asnumpy(), expect_out)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_greater_equal_backward():
     """
     Feature: Auto grad.

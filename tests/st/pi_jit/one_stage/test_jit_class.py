@@ -18,6 +18,7 @@ import numpy as np
 from mindspore import Tensor
 from mindspore import context
 from mindspore.common.api import jit, jit_class
+from tests.mark_utils import arg_mark
 
 cfg = {
     "replace_nncell_by_construct": True,
@@ -39,9 +40,7 @@ class UserDefinedNet:
         return self.val + x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_create_jit_class_instance():
     """
     Feature: One stage basic operation.
@@ -58,9 +57,7 @@ def test_create_jit_class_instance():
     assert ret == 1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_create_jit_class_instance_2():
     """
     Feature: One stage basic operation.
@@ -77,9 +74,7 @@ def test_create_jit_class_instance_2():
     assert ret == (1, 2, 3, 4)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_create_jit_class_instance_3():
     """
     Feature: One stage basic operation.
@@ -97,9 +92,7 @@ def test_create_jit_class_instance_3():
 
 
 @pytest.mark.skip(reason="Fix after adjust guard for getattr")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_call_jit_class_method():
     """
     Feature: One stage basic operation.
@@ -116,9 +109,7 @@ def test_call_jit_class_method():
     assert ret == 2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_call_jit_class_method_2():
     """
     Feature: One stage basic operation.
@@ -135,9 +126,7 @@ def test_call_jit_class_method_2():
     assert np.all(ret.asnumpy() == np.array([2, 2, 2]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_create_jit_class_in_subgraph():
     """
     Feature: One stage basic operation.
@@ -157,9 +146,7 @@ def test_create_jit_class_in_subgraph():
     assert ret == 1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_create_jit_class_in_subgraph_2():
     """
     Feature: One stage basic operation.
@@ -186,9 +173,7 @@ class UserDefinedTuple(tuple):
 
 
 @pytest.mark.skip(reason="Jit handle instance with subclass of tuple wrong, fix later")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_create_subclass_tuple_jit_class():
     """
     Feature: One stage basic operation.
@@ -204,9 +189,7 @@ def test_create_subclass_tuple_jit_class():
     assert foo()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_create_subclass_tuple_jit_class_2():
     """
     Feature: One stage basic operation.

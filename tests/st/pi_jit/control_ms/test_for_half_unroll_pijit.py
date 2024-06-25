@@ -19,11 +19,10 @@ import mindspore.context as context
 from mindspore import Tensor, jit
 from mindspore.nn import Cell
 from mindspore._extends.parse import compile_config
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_for_half_unroll_basic():
     """
     Feature: Half unroll compile optimization for for statement.
@@ -52,9 +51,7 @@ def test_for_half_unroll_basic():
     assert res == 25
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_for_half_unroll_if():
     """
     Feature: Half unroll compile optimization for for statement.

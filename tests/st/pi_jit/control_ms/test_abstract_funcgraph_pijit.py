@@ -1,15 +1,13 @@
-import pytest
 from mindspore.nn import Cell
 from mindspore.common import Tensor, dtype
 import mindspore.ops.operations as P
 import mindspore.ops.functional as F
 from mindspore import jit, context
 import numpy as np
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_watch_get_func_graphs_from_abstract():
     """
     Feature: Get func_graph from abstract.

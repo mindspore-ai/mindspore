@@ -17,9 +17,9 @@ import pytest
 import mindspore as ms
 from mindspore import nn
 from mindspore import ops
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.platform_x86_cpu
 def test_mutable_scalar_input():
     """
     Feature: Operator test.

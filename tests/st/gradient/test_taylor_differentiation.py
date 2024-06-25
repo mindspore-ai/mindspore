@@ -20,6 +20,7 @@ import mindspore.context as context
 from mindspore import ops
 from mindspore import Tensor
 from mindspore.ops.functional import jet, derivative
+from tests.mark_utils import arg_mark
 
 
 class MultipleInputSingleOutputNet(nn.Cell):
@@ -81,12 +82,8 @@ class SingleInputSingleOutputWithScalarNet(nn.Cell):
         return out * 3
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jet_single_input_single_output_graph_mode(mode):
     """
@@ -105,12 +102,8 @@ def test_jet_single_input_single_output_graph_mode(mode):
     assert np.allclose(out_primals.asnumpy(), expected_primals, atol=1.e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jet_single_input_single_output_with_scalar_graph_mode(mode):
     """
@@ -130,12 +123,8 @@ def test_jet_single_input_single_output_with_scalar_graph_mode(mode):
     assert np.allclose(out_primals.asnumpy(), expected_primals, atol=1.e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_derivative_single_input_single_output_graph_mode(mode):
     """
@@ -154,12 +143,8 @@ def test_derivative_single_input_single_output_graph_mode(mode):
     assert np.allclose(out_series.asnumpy(), expected_series, atol=1.e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jet_multiple_input_single_output_graph_mode(mode):
     """
@@ -178,12 +163,8 @@ def test_jet_multiple_input_single_output_graph_mode(mode):
     assert np.allclose(out_series.asnumpy(), expected_series, atol=1.e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_derivative_multiple_input_single_output_graph_mode(mode):
     """
@@ -202,12 +183,8 @@ def test_derivative_multiple_input_single_output_graph_mode(mode):
     assert np.allclose(out_series.asnumpy(), expected_series, atol=1.e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jet_construct_graph_mode(mode):
     """
@@ -237,12 +214,8 @@ def test_jet_construct_graph_mode(mode):
     assert np.allclose(out_series.asnumpy(), expected_series, atol=1.e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_derivative_construct_graph_mode(mode):
     """
@@ -276,9 +249,7 @@ def test_derivative_construct_graph_mode(mode):
     assert np.allclose(out_series[1].asnumpy(), expected_series_y, atol=1.e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jet_function_graph_mode(mode):
     """

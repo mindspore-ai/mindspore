@@ -1,11 +1,9 @@
 import numpy as np
-import pytest
 from ..share.ops.primitive.inplaceadd_ops import InplaceAddFactory
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_inplaceadd_input_3d_all():
     """
     Feature: Ops.
@@ -18,9 +16,7 @@ def test_p_inplaceadd_input_3d_all():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_inplaceadd_input_3d_indices_int():
     """
     Feature: Ops.
@@ -32,9 +28,7 @@ def test_p_inplaceadd_input_3d_indices_int():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_inplaceadd_input_4d_indices_all():
     """
     Feature: Ops.
@@ -47,9 +41,7 @@ def test_p_inplaceadd_input_4d_indices_all():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_inplaceadd_input_5d_7d():
     """
     Feature: Ops.
@@ -69,9 +61,7 @@ def test_p_inplaceadd_input_5d_7d():
                              dtype1=np.float64, dtype2=np.float64)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_inplaceadd_input_1d():
     """
     Feature: Ops.
@@ -83,9 +73,7 @@ def test_p_inplaceadd_input_1d():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_inplaceadd_indices_repeat():
     """
     Feature: Ops.

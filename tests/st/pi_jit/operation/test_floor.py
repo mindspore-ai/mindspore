@@ -3,11 +3,10 @@ from mindspore import Tensor
 import mindspore.ops.operations as op
 import numpy as np
 import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_floor_input_1d_fp16():
     """
     Description:
@@ -22,9 +21,7 @@ def test_p_floor_input_1d_fp16():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_floor_input_2d_fp32():
     """
     Description:
@@ -39,9 +36,7 @@ def test_p_floor_input_2d_fp32():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_floor_input_3d_fp16():
     """
     Description:
@@ -56,9 +51,7 @@ def test_p_floor_input_3d_fp16():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_floor_input_4d_fp32():
     """
     Description:
@@ -73,9 +66,7 @@ def test_p_floor_input_4d_fp32():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_floor_input_5d_fp16():
     """
     Description:
@@ -90,9 +81,7 @@ def test_p_floor_input_5d_fp16():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_floor_input_6d_fp32():
     """
     Description:
@@ -107,9 +96,7 @@ def test_p_floor_input_6d_fp32():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_floor_input_7d_fp16():
     """
     Description:
@@ -124,9 +111,7 @@ def test_p_floor_input_7d_fp16():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_floor_input_512_512_fp16():
     """
     Description:

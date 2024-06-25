@@ -19,6 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -33,10 +34,13 @@ class Net(nn.Cell):
         return self.pad_and_shift(x, y, self.shift_idx)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pad_and_shift_cpu():
+    """
+    Feature: Dynamic shape.
+    Description: Test dynamic shape ops.
+    Expectation: No exception.
+    """
     x = Tensor(np.array([9, 13, -1, -1, -1, -1, -1, -1]), mstype.int32)
     y = Tensor(np.array([0, 3, 5]), mstype.int32)
     net = Net()

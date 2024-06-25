@@ -18,6 +18,7 @@ import numpy
 import types
 from mindspore import Tensor, jit
 from mindspore._c_expression import get_code_extra
+from tests.mark_utils import arg_mark
 
 
 cfg = {
@@ -26,9 +27,7 @@ cfg = {
 }
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_code_generator_with_complete_graph():
     """
     Feature: One stage code generate.
@@ -65,9 +64,7 @@ def test_code_generator_with_complete_graph():
     assert isinstance(graph_phase, str) and isinstance(new_code, types.CodeType)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_code_generator_with_exception():
     """
     Feature: One stage code generate.

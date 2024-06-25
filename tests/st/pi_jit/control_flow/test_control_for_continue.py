@@ -6,7 +6,7 @@ from mindspore.ops import operations as P
 from mindspore import context, jit
 from mindspore.common.parameter import Parameter
 from ..share.utils import match_array
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class CtrlForContinueRange1(Cell):
@@ -23,9 +23,7 @@ class CtrlForContinueRange1(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_range_1_10_3_continue():
     """
     Feature: PIJit
@@ -58,9 +56,7 @@ class CtrlForContinueRange2(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_range_4_n8_n4_continue():
     """
     Feature: PIJit
@@ -93,9 +89,7 @@ class CtrlForContinueRange3(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_range_n5_5_2_continue():
     """
     Feature: PIJit
@@ -128,9 +122,7 @@ class CtrlForContinueRange4(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_range_n2_n8_n2_continue():
     """
     Feature: PIJit
@@ -169,9 +161,7 @@ class CtrlForEnumerateIfContinue(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_enumerate_if_continue():
     """
     Feature: PIJit
@@ -217,9 +207,7 @@ class CtrlForContinueElifElse(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_continue_in_elif_else():
     """
     Feature: PIJit

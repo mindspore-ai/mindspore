@@ -19,6 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -34,10 +35,13 @@ class Net(nn.Cell):
         return self.map_uniform(x, self.per_group_size, self.group_num)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_map_uniform():
+    """
+    Feature: Dynamic shape.
+    Description: Test dynamic shape ops.
+    Expectation: No exception.
+    """
     x = Tensor(np.array([0, 1, 2, 3, 4, 5, 6, 7]), mstype.int32)
     net = Net()
     output = net(x)

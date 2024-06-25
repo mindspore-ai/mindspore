@@ -20,6 +20,7 @@ from mindspore.train import DatasetHelper, connect_network_with_dataset
 import mindspore.dataset as ds
 import mindspore as ms
 from mindspore.common.initializer import One
+from tests.mark_utils import arg_mark
 
 
 def _exec_preprocess(network, is_train, dataset, dataset_sink_mode, sink_size=1, epoch_num=1, dataset_helper=None):
@@ -74,8 +75,6 @@ class Net(nn.Cell):
         return x1, x2, x3, x4, x5
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_getnext_dynamic_pipeline_ascend():
     """
     Feature: sink one step of dynamic data sink.
@@ -122,8 +121,7 @@ def test_getnext_sink_size_dynamic_pipeline():
         for output, (_, last_input) in zip(outputs, last_inputs):
             assert output.shape == last_input.shape
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_getnext_sink_size_dynamic_pipeline_ascend():
     """
     Feature: arbitrary sink size of dynamic data sink.
@@ -133,9 +131,7 @@ def test_getnext_sink_size_dynamic_pipeline_ascend():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_getnext_sink_size_dynamic_pipeline()
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_getnext_sink_size_dynamic_pipeline_gpu():
     """
     Feature: arbitrary sink size of dynamic data sink.

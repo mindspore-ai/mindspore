@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-import pytest
 import numpy as np
 
 import mindspore.nn as nn
 from mindspore import context, jit
 from mindspore.common.tensor import Tensor
 from mindspore.train.serialization import export, load
+from tests.mark_utils import arg_mark
 
 
 class SingleWhileNet(nn.Cell):
@@ -29,9 +29,7 @@ class SingleWhileNet(nn.Cell):
         y += 2 * x
         return y
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_jit_function_while():
     """
     Features: Control flow.

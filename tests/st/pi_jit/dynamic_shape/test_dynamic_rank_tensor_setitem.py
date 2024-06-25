@@ -3,7 +3,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common import Tensor
 import numpy as np
 from .test_dynamic_rank_tensor_getitem import IndexFactory
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class Net1(Cell):
@@ -17,9 +17,7 @@ class Net1(Cell):
         return out * self.n
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_rank_setitem_ellipsis():
     '''
     Description:

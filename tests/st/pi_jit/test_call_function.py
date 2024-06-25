@@ -17,6 +17,7 @@ import pytest
 from mindspore import numpy as np
 from mindspore import Tensor, jit, context
 from .share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
 def func(x, k=1):
@@ -76,9 +77,7 @@ def python_test6(x):
 
 
 @pytest.mark.skip
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('python_func', [python_test1])
 @pytest.mark.parametrize('jit_func', [jit_test1])
 @pytest.mark.parametrize('x', [Tensor(np.ones((2, 3)).astype(np.float32))])
@@ -94,9 +93,7 @@ def test_call_function1(python_func, jit_func, x):
     ms_res = jit_func(x)
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('python_func', [python_test2])
 @pytest.mark.parametrize('jit_func', [jit_test2])
 @pytest.mark.parametrize('x', [Tensor(np.ones((2, 3)).astype(np.float32))])
@@ -113,9 +110,7 @@ def test_call_function2(python_func, jit_func, x):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 @pytest.mark.skip
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('python_func', [python_test3])
 @pytest.mark.parametrize('jit_func', [jit_test3])
 @pytest.mark.parametrize('x', [Tensor(np.ones((2, 3)).astype(np.float32))])
@@ -133,9 +128,7 @@ def test_call_function3(python_func, jit_func, x):
 
 
 @pytest.mark.skip
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('python_func', [python_test4])
 @pytest.mark.parametrize('jit_func', [jit_test4])
 @pytest.mark.parametrize('x', [Tensor(np.ones((2, 3)).astype(np.float32))])
@@ -152,9 +145,7 @@ def test_call_function4(python_func, jit_func, x):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 @pytest.mark.skip
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('python_func', [python_test5])
 @pytest.mark.parametrize('jit_func', [jit_test5])
 @pytest.mark.parametrize('x', [Tensor(np.ones((2, 3)).astype(np.float32))])
@@ -171,9 +162,7 @@ def test_call_function5(python_func, jit_func, x):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 @pytest.mark.skip
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('python_func', [python_test6])
 @pytest.mark.parametrize('jit_func', [jit_test6])
 @pytest.mark.parametrize('x', [Tensor(np.ones((2, 3)).astype(np.float32))])

@@ -2,6 +2,7 @@ import pytest
 import mindspore as ms
 from mindspore import nn, jit
 import numpy as np
+from tests.mark_utils import arg_mark
 
 
 class TestCellListInsertNet(nn.Cell):
@@ -16,12 +17,7 @@ class TestCellListInsertNet(nn.Cell):
         return len(self.cell_list)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_celllist_insert_method_boundary_cond(mode):
     """
@@ -51,13 +47,7 @@ class EmbeddedCellDictNet(nn.Cell):
                 x = net(x)
         return x
 
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_celllist_embed_celldict_case(mode):
     """

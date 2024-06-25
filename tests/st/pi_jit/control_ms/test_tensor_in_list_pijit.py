@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """test cell tensor in list with PIJit and pynative mode"""
-import pytest
 
 from mindspore import nn, Tensor
 from mindspore import dtype as mstype
 from mindspore import jit, context
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -33,9 +33,7 @@ class Net(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_tensor_in_list():
     """
     Feature:  tensor list.

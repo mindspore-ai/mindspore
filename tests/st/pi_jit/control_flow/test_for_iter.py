@@ -18,6 +18,7 @@ import dis
 import sys
 from mindspore import jit, Tensor
 from mindspore._c_expression import get_code_extra
+from tests.mark_utils import arg_mark
 
 
 def for_range(x):
@@ -62,9 +63,7 @@ def for_mix_with_sideeffect(x):
     return list(z)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [for_range, for_enumerate, for_mix, for_zip])
 @pytest.mark.parametrize('param', [1, Tensor([1])])
 def test_for_iter_unrolling(func, param):
@@ -83,9 +82,7 @@ def test_for_iter_unrolling(func, param):
     assert excepted == result
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [for_mix_with_sideeffect])
 @pytest.mark.parametrize('param', [1, Tensor([1])])
 def test_not_implement_for_iter(func, param):

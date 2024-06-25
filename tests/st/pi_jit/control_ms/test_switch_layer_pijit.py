@@ -14,13 +14,13 @@
 # ============================================================================
 """test cell with switch layer in PIJit and pynative mode"""
 import numpy as np
-import pytest
 
 import mindspore.context as context
 from mindspore import Tensor, nn
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore import jit
+from tests.mark_utils import arg_mark
 
 
 class CaseNet(nn.Cell):
@@ -40,9 +40,7 @@ class CaseNet(nn.Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_switch_layer_pi():
     """
     Feature: Switch layer.
@@ -101,9 +99,7 @@ class AddFuncNet(nn.Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_switch_layer_add_func_in_construct():
     """
     Feature: Switch layer.

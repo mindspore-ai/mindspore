@@ -22,6 +22,7 @@ from mindspore.ops import GradOperation, grad, get_grad
 from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore import jit
+from tests.mark_utils import arg_mark
 
 
 class GradOperationNet(nn.Cell):
@@ -106,9 +107,7 @@ def check_grad_with_ids_result(output, expect):
             "expect must be Tensor or tuple, but got {}.".format(type(expect)))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_default_single_input(mode):
     """
@@ -134,9 +133,7 @@ def test_grad_operation_default_single_input(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_default_multiple_inputs(mode):
     """
@@ -163,9 +160,7 @@ def test_grad_operation_default_multiple_inputs(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_default_no_input(mode):
     """
@@ -190,9 +185,7 @@ def test_grad_operation_default_no_input(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_single_input(mode):
     """
@@ -218,9 +211,7 @@ def test_grad_operation_single_input(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_multiple_inputs(mode):
     """
@@ -247,9 +238,7 @@ def test_grad_operation_multiple_inputs(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_no_input(mode):
     """
@@ -275,9 +264,7 @@ def test_grad_operation_no_input(mode):
 
 
 @pytest.mark.skip(reason="grad parameter shouldn't be list or tuple ref tensor, SymbolicKey error")
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_single_param(mode):
     """
@@ -303,9 +290,7 @@ def test_grad_operation_single_param(mode):
     check_grad_result(out, expect_graph)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_single_param_tuple(mode):
     """
@@ -329,9 +314,7 @@ def test_grad_operation_single_param_tuple(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_multiple_params(mode):
     """
@@ -357,9 +340,7 @@ def test_grad_operation_multiple_params(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_no_param(mode):
     """
@@ -379,9 +360,7 @@ def test_grad_operation_no_param(mode):
 
 
 @pytest.mark.skip(reason="grad parameter shouldn't be list or tuple ref tensor, SymbolicKey error")
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_single_input_and_single_param(mode):
     """
@@ -407,9 +386,7 @@ def test_grad_operation_single_input_and_single_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_single_input_and_single_param_tuple(mode):
     """
@@ -433,9 +410,7 @@ def test_grad_operation_single_input_and_single_param_tuple(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_single_input_and_multiple_params(mode):
     """
@@ -462,9 +437,7 @@ def test_grad_operation_single_input_and_multiple_params(mode):
 
 
 @pytest.mark.skip(reason="grad parameter shouldn't be list or tuple ref tensor, SymbolicKey error")
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_multiple_inputs_and_single_param(mode):
     """
@@ -491,9 +464,7 @@ def test_grad_operation_multiple_inputs_and_single_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_multiple_inputs_and_single_param_tuple(mode):
     """
@@ -518,9 +489,7 @@ def test_grad_operation_multiple_inputs_and_single_param_tuple(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_multiple_inputs_and_multiple_params(mode):
     """
@@ -549,9 +518,7 @@ def test_grad_operation_multiple_inputs_and_multiple_params(mode):
 
 
 @pytest.mark.skip(reason="grad parameter shouldn't be list or tuple ref tensor, SymbolicKey error")
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_no_input_and_single_param(mode):
     """
@@ -576,9 +543,7 @@ def test_grad_operation_no_input_and_single_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_no_input_and_single_param_tuple(mode):
     """
@@ -601,9 +566,7 @@ def test_grad_operation_no_input_and_single_param_tuple(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_no_input_and_multiple_params(mode):
     """
@@ -628,9 +591,7 @@ def test_grad_operation_no_input_and_multiple_params(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_single_input_and_no_param(mode):
     """
@@ -649,9 +610,7 @@ def test_grad_operation_single_input_and_no_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_multiple_inputs_and_no_param(mode):
     """
@@ -671,9 +630,7 @@ def test_grad_operation_multiple_inputs_and_no_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_no_input_and_no_param(mode):
     """
@@ -691,9 +648,7 @@ def test_grad_operation_no_input_and_no_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_single_input_and_none_param(mode):
     """
@@ -712,9 +667,7 @@ def test_grad_operation_single_input_and_none_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_multiple_inputs_and_none_param(mode):
     """
@@ -734,9 +687,7 @@ def test_grad_operation_multiple_inputs_and_none_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_no_input_and_none_param(mode):
     """
@@ -755,9 +706,7 @@ def test_grad_operation_no_input_and_none_param(mode):
 
 
 @pytest.mark.skip
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_int_position(mode):
     """
@@ -784,9 +733,7 @@ def test_grad_int_position(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_tuple_position(mode):
     """
@@ -814,9 +761,7 @@ def test_grad_tuple_position(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_none_position(mode):
     """
@@ -840,9 +785,7 @@ def test_grad_none_position(mode):
         grad(Net(w), grad_position=None, weights=None)(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_constant_tensor(mode):
     """
@@ -860,9 +803,7 @@ def test_grad_constant_tensor(mode):
     assert out == ()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_int_position_and_single_param(mode):
     """
@@ -890,9 +831,7 @@ def test_grad_int_position_and_single_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_int_position_and_single_param_tuple(mode):
     """
@@ -918,9 +857,7 @@ def test_grad_int_position_and_single_param_tuple(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_int_position_and_multiple_params(mode):
     """
@@ -948,9 +885,7 @@ def test_grad_int_position_and_multiple_params(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_int_position_and_no_param(mode):
     """
@@ -971,9 +906,7 @@ def test_grad_int_position_and_no_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_tuple_position_and_single_param(mode):
     """
@@ -1002,9 +935,7 @@ def test_grad_tuple_position_and_single_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_tuple_position_and_single_param_tuple(mode):
     """
@@ -1031,9 +962,7 @@ def test_grad_tuple_position_and_single_param_tuple(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_tuple_position_and_multiple_params(mode):
     """
@@ -1063,9 +992,7 @@ def test_grad_tuple_position_and_multiple_params(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_tuple_position_and_no_param(mode):
     """
@@ -1087,9 +1014,7 @@ def test_grad_tuple_position_and_no_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_none_position_and_single_param(mode):
     """
@@ -1117,9 +1042,7 @@ def test_grad_none_position_and_single_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_none_position_and_single_param_tuple(mode):
     """
@@ -1146,9 +1069,7 @@ def test_grad_none_position_and_single_param_tuple(mode):
 
 
 @pytest.mark.skip
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_none_position_and_multiple_params(mode):
     """
@@ -1176,9 +1097,7 @@ def test_grad_none_position_and_multiple_params(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_none_position_and_no_param(mode):
     """
@@ -1199,9 +1118,7 @@ def test_grad_none_position_and_no_param(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_empty_position_and_single_param(mode):
     """
@@ -1228,9 +1145,7 @@ def test_grad_empty_position_and_single_param(mode):
         grad(net, grad_position=(), weights=net.trainable_params()[0])(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_empty_position_and_single_param_tuple(mode):
     """
@@ -1255,9 +1170,7 @@ def test_grad_empty_position_and_single_param_tuple(mode):
         grad(net, grad_position=(), weights=net.trainable_params())(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_empty_position_and_multiple_params(mode):
     """
@@ -1284,9 +1197,7 @@ def test_grad_empty_position_and_multiple_params(mode):
         grad(net, grad_position=(), weights=net.trainable_params())(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_empty_position_and_no_param(mode):
     """
@@ -1307,9 +1218,7 @@ def test_grad_empty_position_and_no_param(mode):
 
 
 @pytest.mark.skip
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_hypermap_control_flow(mode):
     """
@@ -1337,9 +1246,7 @@ def test_grad_operation_hypermap_control_flow(mode):
 
 
 @pytest.mark.skip
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_operation_dynamic_shape(mode):
     """
@@ -1364,9 +1271,7 @@ def test_grad_operation_dynamic_shape(mode):
     check_grad_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_int_position_with_ids(mode):
     """
@@ -1393,9 +1298,7 @@ def test_grad_int_position_with_ids(mode):
     check_grad_with_ids_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_tuple_position_with_ids(mode):
     """
@@ -1423,9 +1326,7 @@ def test_grad_tuple_position_with_ids(mode):
     check_grad_with_ids_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_constant_tensor_with_ids(mode):
     """
@@ -1443,9 +1344,7 @@ def test_grad_constant_tensor_with_ids(mode):
     assert out == ()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_int_position_and_single_param_with_ids(mode):
     """
@@ -1473,9 +1372,7 @@ def test_grad_int_position_and_single_param_with_ids(mode):
     check_grad_with_ids_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_int_position_and_single_param_tuple_with_ids(mode):
     """
@@ -1501,9 +1398,7 @@ def test_grad_int_position_and_single_param_tuple_with_ids(mode):
     check_grad_with_ids_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_int_position_and_multiple_params_with_ids(mode):
     """
@@ -1532,9 +1427,7 @@ def test_grad_int_position_and_multiple_params_with_ids(mode):
     check_grad_with_ids_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_tuple_position_and_single_param_with_ids(mode):
     """
@@ -1564,9 +1457,7 @@ def test_grad_tuple_position_and_single_param_with_ids(mode):
     check_grad_with_ids_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_tuple_position_and_single_param_tuple_with_ids(mode):
     """
@@ -1594,9 +1485,7 @@ def test_grad_tuple_position_and_single_param_tuple_with_ids(mode):
     check_grad_with_ids_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_grad_tuple_position_and_multiple_params_with_ids(mode):
     """
@@ -1626,9 +1515,7 @@ def test_grad_tuple_position_and_multiple_params_with_ids(mode):
     check_grad_with_ids_result(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_get_grad_by_position(mode):
     """
@@ -1667,9 +1554,7 @@ def test_get_grad_by_position(mode):
     assert np.allclose(grad_out.asnumpy(), expect_grad_input)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_construct_get_grad_by_parameter(mode):
     """

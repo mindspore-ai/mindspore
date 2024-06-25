@@ -16,6 +16,7 @@
 from mindspore import Tensor, jit, context
 from mindspore.common import dtype as mstype
 import pytest
+from tests.mark_utils import arg_mark
 
 
 #@jit(mode="PIJit")
@@ -40,9 +41,7 @@ def const_branch(y):
     return 2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_const_branch():
     """
     Feature: control flow .
@@ -59,9 +58,7 @@ def test_const_branch():
     assert "join" in str(exc.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net():
     """
     Feature: control flow .

@@ -4,6 +4,7 @@ import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore import Tensor, jit, context, Parameter
 from mindspore.ops import composite as C
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -39,9 +40,7 @@ class CustomLoss(nn.Cell):
         return loss, gradients
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('Net1', [Net])
 @pytest.mark.parametrize('CustomLoss1', [CustomLoss])
 @pytest.mark.parametrize('x', [Tensor(np.array([[1.0], [2.0], [3.0]]), mstype.float32)])
