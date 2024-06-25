@@ -447,7 +447,6 @@ Status MatMul::CheckNDTPInputLayout(const TensorLayout &a_in_layout, const Tenso
 
   auto a_tensor_map = a_in_layout.tensor_map_before();
   auto b_tensor_map = b_in_layout.tensor_map_before();
-
   if (a_tensor_map.size() < kSizeTwo || b_tensor_map.size() < kSizeTwo) {
     MS_LOG(ERROR) << "The size of input_tensor_map for matmul are " << a_tensor_map.size() << " and "
                   << b_tensor_map.size() << ", which should not be less than 2";
@@ -1102,27 +1101,11 @@ Status MatMul::ComputeNDTPReplaceGraph(const CNodePtr &cnode) {
   if (transpose_b_) {
     all_gather_tensor_axis1 += kIndex1;
   }
-  auto all_gather_tensor_axis_map = input_layout0.tensor_map_before()[all_gather_tensor_axis];
-  auto all_gather_tensor_axis_map1 = input_layout1.tensor_map_before()[all_gather_tensor_axis1];
-  int64_t all_gather_dim0;  // left input all gather device dim.
-  int64_t all_gather_dim1;  // right input (weight) all gather device dim.
-  if (three_d_tp_) {
-    all_gather_dim0 = all_gather_tensor_axis_map[kIndex1] == -1
-                        ? -1
-                        : SizeToLong(input_layout0.device_arrangement_origin().array().size() - kIndex1) -
-                            all_gather_tensor_axis_map[kIndex1];
-    all_gather_dim1 = all_gather_tensor_axis_map1[kIndex0] == -1
-                        ? -1
-                        : SizeToLong(input_layout1.device_arrangement_origin().array().size() - kIndex1) -
-                            all_gather_tensor_axis_map1[kIndex0];
-  } else {
-    all_gather_dim0 =
-      all_gather_tensor_axis_map[kIndex0] == -1
-        ? -1
-        : SizeToLong(input_layout0.device_arrangement_origin().array().size() - 1) -
-            all_gather_tensor_axis_map[kIndex0];  // 2D-WS doesn't allow a axis to be divided more than once.
-    all_gather_dim1 = -1;
-  }
+  int64_t all_gather_dim0 =
+    GetAllGatherDim(all_gather_tensor_axis, input_layout0, kIndex0);  // left input all gather device dim.
+  int64_t all_gather_dim1 =
+    GetAllGatherDim(all_gather_tensor_axis1, input_layout1, kIndex1);  // right input (weight) all gather device dim.
+
   std::vector<Group> x_group_list;
   if (all_gather_dim0 != -1) {
     if (CreateGroupByDimWithDevMatrix(&device_matrix, all_gather_dim0, &x_group_list) != SUCCESS) {
@@ -1137,7 +1120,10 @@ Status MatMul::ComputeNDTPReplaceGraph(const CNodePtr &cnode) {
     }
   }
   bool z_flag = !z_group_list.empty();
-  AnfNodePtr matmul_left_input, matmul_right_input, x_all_gather, z_all_gather;
+  AnfNodePtr matmul_left_input;
+  AnfNodePtr matmul_right_input;
+  AnfNodePtr x_all_gather;
+  AnfNodePtr z_all_gather;
   if (x_flag) {
     OperatorAttrs all_gather_attrs;
     Attr attr_group = std::make_pair(GROUP, MakeValue(x_group_list[kIndex0].name()));
@@ -1182,6 +1168,32 @@ Status MatMul::ComputeNDTPReplaceGraph(const CNodePtr &cnode) {
   return SUCCESS;
 }
 
+int64_t MatMul::GetAllGatherDim(size_t all_gather_tensor_axis, const TensorLayout &input_layout, size_t tensor_index) {
+  auto all_gather_tensor_axis_map = input_layout.tensor_map_before()[all_gather_tensor_axis];
+
+  if (tensor_index == kIndex0) {
+    if (three_d_tp_) {
+      return all_gather_tensor_axis_map[kIndex1] == -1
+               ? -1
+               : SizeToLong(input_layout.device_arrangement_origin().array().size() - kIndex1) -
+                   all_gather_tensor_axis_map[kIndex1];
+    } else {
+      return all_gather_tensor_axis_map[kIndex0] == -1
+               ? -1
+               : SizeToLong(input_layout.device_arrangement_origin().array().size() - 1) -
+                   all_gather_tensor_axis_map[kIndex0];  // 2D-WS doesn't allow a axis to be divided more than once.
+    }
+  } else {
+    if (three_d_tp_) {
+      return all_gather_tensor_axis_map[kIndex0] == -1
+               ? -1
+               : SizeToLong(input_layout.device_arrangement_origin().array().size() - kIndex1) -
+                   all_gather_tensor_axis_map[kIndex0];
+    }
+  }
+  return -1;
+}
+
 AnfNodePtr MatMul::ComputePreAllGatherGraph(const CNodePtr &cnode, GenerateGraph *gen_g,
                                             const std::vector<Group> &device_group_list, int64_t all_gather_tensor_axis,
                                             const AnfNodePtr &all_gather_node, bool transpose) {
@@ -1189,16 +1201,16 @@ AnfNodePtr MatMul::ComputePreAllGatherGraph(const CNodePtr &cnode, GenerateGraph
   // The gather dim of the All Gather ops is 0 by default, but we need it to gather in the `all_gather_tensor_axis`,
   // so the tensor should be split in the 0 dim and concat to the  `all_gather_tensor_axis` dim
   if (IsPrimitiveCNode(cnode, prim::kPrimBatchMatMul) || transpose) {
-    int64_t split_count = device_group_list[0].GetDevicesList().size();
+    size_t split_count = device_group_list[0].GetDevicesList().size();
     int64_t split_axis = kIndex0;
     Attr split_axis_attr = std::make_pair(AXIS, MakeValue(split_axis));
-    Attr split_count_attr = std::make_pair(OUTPUT_NUM, MakeValue(split_count));
+    Attr split_count_attr = std::make_pair(OUTPUT_NUM, MakeValue(SizeToLong(split_count)));
     OperatorAttrs split_attrs = {split_axis_attr, split_count_attr};
     auto split = gen_g->PushBack({gen_g->NewOpInst(SPLIT, split_attrs), all_gather_node});
     // tuple get item
     std::vector<AnfNodePtr> make_tuple_inputs;
     make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
-    for (int64_t i = 0; i < split_count; ++i) {
+    for (int64_t i = 0; i < SizeToLong(split_count); ++i) {
       auto tuple_get_item = gen_g->PushBack({gen_g->NewOpInst(TUPLE_GETITEM), split, CreatInt64Imm(i)});
       make_tuple_inputs.push_back(tuple_get_item);
     }
@@ -1247,10 +1259,10 @@ AnfNodePtr MatMul::ComputePostMatMulGraph(const CNodePtr &cnode, GenerateGraph *
     OperatorAttrs attrs = {attr_op, attr_group};
     if (IsPrimitiveCNode(cnode, prim::kPrimBatchMatMul)) {
       // transpose the 0th dim and the wanted scatter dim of the tensor.
-      int64_t tensor_array_size_before = input_layout.tensor_shape_before().array().size();
+      size_t tensor_array_size_before = input_layout.tensor_shape_before().array().size();
       std::vector<int64_t> t1;
-      t1.resize(tensor_array_size_before);
-      for (int i = 0; i < tensor_array_size_before; ++i) {
+      t1.resize(SizeToLong(tensor_array_size_before));
+      for (int64_t i = 0; i < SizeToLong(tensor_array_size_before); ++i) {
         t1[i] = i;
       }
       std::swap(t1[kIndex0], t1[scatter_tensor_axis]);

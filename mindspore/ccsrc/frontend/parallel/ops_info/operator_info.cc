@@ -1241,33 +1241,8 @@ Status OperatorInfo::CreateGroupByDim(size_t axis, std::vector<Group> *group) {
   CheckGlobalDeviceManager();
   int64_t rank = g_device_manager->global_rank();
   DeviceMatrix dev_matrix(rank, stage_device_list_, dev_matrix_shape_);
-  RankList group_devices;
-  if (dev_matrix.GetDevicesAlongDim(SizeToUlong(axis), &group_devices) != SUCCESS) {
-    return FAILED;
-  }
 
-  if (group_devices.size() == 1) {
-    MS_LOG(INFO) << name_ << ": The dev size is 1, no need to create group.";
-    return SUCCESS;
-  }
-  if (is_auto_parallel_) {
-    if (g_device_manager->CheckDeviceList(group_devices) != SUCCESS) {
-      MS_LOG(INFO) << name_ << ": Try to create communication group : " << group_devices
-                   << " failed in auto parallel mode, "
-                      "this error can be ignored in parallel strategies searching step";
-      return FAILED;
-    }
-    return SUCCESS;
-  }
-  Group g;
-  if (g_device_manager->CreateGroup(group_devices, &g) != SUCCESS) {
-    MS_LOG(ERROR) << name_ << ": Create communication group by dim failed, the rank_list is: " << group_devices
-                  << ", the input strategy is " << strategy_->GetInputDim()
-                  << ", the full_name of node is: " << cnode_->fullname_with_scope();
-    return FAILED;
-  }
-  group->push_back(g);
-  return SUCCESS;
+  return CreateGroupByDimWithDevMatrix(&dev_matrix, axis, group);
 }
 
 Status OperatorInfo::CreateGroupByDimWithDevMatrix(DeviceMatrix *dev_matrix, size_t axis, std::vector<Group> *group) {
