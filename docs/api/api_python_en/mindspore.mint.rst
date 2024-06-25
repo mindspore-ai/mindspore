@@ -127,6 +127,7 @@ Comparison Operations
     mindspore.mint.greater
     mindspore.mint.gt
     mindspore.mint.greater_equal
+    mindspore.mint.isclose
     mindspore.mint.le
     mindspore.mint.less
     mindspore.mint.less_equal
@@ -298,12 +299,6 @@ Dropout functions
 Distance functions
 ^^^^^^^^^^^^^^^^^^^
 
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.isclose
 
 
 
