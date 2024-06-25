@@ -2130,9 +2130,9 @@ def inverse_ext(input):
         Tensor, has the same type and shape as input `input`.
 
     Raises:
-        TypeError: If `input` is not a Tensor.
         ValueError: If the size of the last two dimensions of `input` is not the same.
-        ValueError: If the dimension of `input` is euqal 1.
+        ValueError: If `input` is not empty and its dimensions are less than 2.
+        ValueError: If the dimensions of `input` are larger than 6.
 
     Supported Platforms:
         ``Ascend``
