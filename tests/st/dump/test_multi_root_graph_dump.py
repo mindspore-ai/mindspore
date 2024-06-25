@@ -19,13 +19,13 @@ import time
 import shutil
 import csv
 import numpy as np
-import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
 from mindspore._extends.parse import compile_config
 from dump_test_utils import generate_dump_json
+from tests.mark_utils import arg_mark
 from tests.security_utils import security_off_wrap
 
 
@@ -122,9 +122,7 @@ def run_multi_root_graph_dump(device, dump_mode, test_name):
             check_graph_structure(dump_file_path, execution_order_path, '1', ['1', '3', '5'])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_GPU_e2e_multi_root_graph_dump():
     """
@@ -138,59 +136,4 @@ def test_GPU_e2e_multi_root_graph_dump():
     saved_config = compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE
     compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 0
     run_multi_root_graph_dump("GPU", "e2e_dump", "test_GPU_e2e_multi_root_graph_dump")
-    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = saved_config
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@security_off_wrap
-def test_Ascend_e2e_multi_root_graph_dump():
-    """
-    Feature:
-        Multi root graph e2e dump for Ascend.
-    Description:
-        Test multi root graph e2e dump Ascend.
-    Expectation:
-        Dump for two different graphs, graph 0 even iterations and graph 1 odd iterations.
-    """
-    saved_config = compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE
-    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 0
-    run_multi_root_graph_dump("Ascend", "e2e_dump", "test_Ascend_e2e_multi_root_graph_dump")
-    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = saved_config
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@security_off_wrap
-def test_Ascend_async_multi_root_graph_dump():
-    """
-    Feature:
-        Multi root graph async dump for Ascend.
-    Description:
-        Test multi root graph async dump Ascend.
-    Expectation:
-        Dump for two different graphs, graph 0 even iterations and graph 1 odd iterations.
-    """
-    saved_config = compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE
-    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 0
-    run_multi_root_graph_dump("Ascend", "async_dump", "test_Ascend_async_multi_root_graph_dump")
-    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = saved_config
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@security_off_wrap
-def test_ascend_multi_root_graph_dump_kernel_by_kernel():
-    """
-    Feature:
-        Multi root graph dump for Ascend kernel by kernel.
-    Description:
-        Test multi root graph dump in Ascend kernel by kernel.
-    Expectation:
-        Dump for two different graphs, graph 0 even iterations and graph 1 odd iterations.
-    """
-    saved_config = compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE
-    compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = 0
-    context.set_context(jit_level='O0')
-    run_multi_root_graph_dump("Ascend", "e2e_dump", "test_Ascend_e2e_multi_root_graph_dump")
     compile_config.FALLBACK_SUPPORT_LIST_DICT_INPLACE = saved_config

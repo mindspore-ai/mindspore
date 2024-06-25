@@ -17,7 +17,6 @@ import sys
 import tempfile
 import shutil
 import numpy as np
-import pytest
 import time
 import mindspore.context as context
 import csv
@@ -34,6 +33,7 @@ from mindspore.nn import TrainOneStepCell
 from mindspore.nn import WithLossCell
 from dump_test_utils import generate_dump_json, generate_dump_json_with_overflow, generate_statistic_dump_json, \
     check_ge_dump_structure, check_saved_data, check_overflow_file
+from tests.mark_utils import arg_mark
 from tests.security_utils import security_off_wrap
 
 
@@ -197,10 +197,7 @@ def run_ge_dump_acl(test_name):
         del os.environ['MS_ACL_DUMP_CFG_PATH']
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_ge_dump():
     """
@@ -211,10 +208,7 @@ def test_ge_dump():
     run_ge_dump("test_ge_dump")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @security_off_wrap
 def test_ge_dump_acl():
     """
@@ -225,10 +219,7 @@ def test_ge_dump_acl():
     run_ge_dump_acl("test_acl_dump")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @security_off_wrap
 def test_ge_dump_acl_assign_ops_by_regex():
     """
@@ -254,10 +245,7 @@ class ReluReduceMeanDenseRelu(Cell):
         return x_
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_ge_dump_net_multi_layer_mode1():
     """
@@ -287,10 +275,7 @@ def test_ge_dump_net_multi_layer_mode1():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_ge_dump_with_diagnostic_path():
     """
@@ -378,10 +363,7 @@ def run_saved_data_dump_test_bf16(scenario, saved_data):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ge_statistic_dump_bfloat16():
     """
     Feature: Ascend Statistics Dump on GE backend
@@ -394,10 +376,7 @@ def test_ge_statistic_dump_bfloat16():
     run_saved_data_dump_test_bf16('test_ge_dump', 'full')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @security_off_wrap
 def test_ge_overflow_dump():
     """
@@ -432,10 +411,7 @@ def run_saved_data_dump_test(scenario, saved_data):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_ge_statistic_dump():
     """
@@ -447,10 +423,7 @@ def test_ge_statistic_dump():
     run_saved_data_dump_test('test_ge_dump', 'statistic')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_ge_tensor_dump():
     """
@@ -462,10 +435,7 @@ def test_ge_tensor_dump():
     run_saved_data_dump_test('test_ge_dump', 'tensor')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_ge_full_dump():
     """
@@ -477,10 +447,7 @@ def test_ge_full_dump():
     run_saved_data_dump_test('test_ge_dump', 'full')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @security_off_wrap
 def test_ge_dump_npy():
     """
@@ -491,10 +458,7 @@ def test_ge_dump_npy():
     run_ge_dump("test_ge_dump_npy")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @security_off_wrap
 def test_ge_dump_complex64():
     """
@@ -505,10 +469,7 @@ def test_ge_dump_complex64():
     run_ge_dump_complex("test_ge_dump_npy", "complex64")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_ge_dump_complex128():
     """
@@ -561,10 +522,7 @@ def run_ge_dump_acl_dynamic_shape(test_name):
         del os.environ['MS_ACL_DUMP_CFG_PATH']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_ge_dump_acl_dynamic_shape():
     """

@@ -17,13 +17,13 @@ import tempfile
 import time
 import shutil
 import numpy as np
-import pytest
 from mindspore import context, Model, nn
 from mindspore.nn import SoftmaxCrossEntropyWithLogits, Accuracy
 from mindspore.common import set_seed
 from mindspore.common.initializer import Normal
 import mindspore.dataset as ds
 from dump_test_utils import generate_dump_json, check_ge_dump_structure
+from tests.mark_utils import arg_mark
 from tests.security_utils import security_off_wrap
 
 set_seed(1)
@@ -96,10 +96,7 @@ def run_async_dump(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_async_dump_dataset_sink():
     """
