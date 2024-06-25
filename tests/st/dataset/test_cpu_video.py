@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 
 from mindspore.dataset import vision
+from tests.mark_utils import arg_mark
 
 
 filename = "/home/workspace/mindspore_dataset/video_file/final_output.avi"
@@ -33,9 +33,7 @@ def check_mindspore_opencv_data(mindspore_data, video_path, audio_path, error_ra
     assert np.allclose(mindspore_data[1], cv_audio_output, error_rate_limit, error_rate_limit)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_acc_read_video():
     """
     Feature: read_video
@@ -46,9 +44,7 @@ def test_acc_read_video():
     check_mindspore_opencv_data(mindspore_output, read_video_video_path, read_video_audio_path)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_acc_decode_video():
     """
     Feature: DecodeVideo op

@@ -14,7 +14,7 @@
 # ============================================================================
 import time
 import numpy as np
-import pytest
+
 from mindspore import context, nn, Tensor
 from mindspore import log as logger
 from mindspore.common.api import _cell_graph_executor
@@ -22,8 +22,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 import mindspore.dataset as de
 from mindspore.dataset.vision import transforms as c_vision
-from mindspore.dataset.transforms import transforms as c_trans
-
+from tests.mark_utils import arg_mark
 
 DATA_DIR = "/home/workspace/mindspore_dataset/cifar-10-verify-bin"
 
@@ -126,10 +125,7 @@ def op_network_with_step_num(dataset, step_num):
     return op_network_with_epoch(net_with_dataset, step_num)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_tdt_produce_beyond_consume():
     """
     Feature: Test dataset sink mode.
@@ -149,10 +145,7 @@ def test_tdt_produce_beyond_consume():
     assert iter_num == 10
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_tdt_consume_beyond_produce():
     """
     Feature: Test dataset sink mode.

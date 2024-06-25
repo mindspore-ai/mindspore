@@ -22,11 +22,10 @@ import pytest
 import numpy as np
 
 import mindspore.dataset as ds
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("num_epochs", (-1, 10))
 @pytest.mark.skip(reason="I6UY43")
 def test_release_generator_dataset_iter(num_epochs):
