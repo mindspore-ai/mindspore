@@ -147,6 +147,13 @@ const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const An
     return nullptr;
   }
 
+  auto x_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 0);
+  auto gamma_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 1);
+  auto beta_dtype = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, 2);
+  if (x_dtype != gamma_dtype || x_dtype != beta_dtype) {
+    return nullptr;
+  }
+
   std::vector<TypeId> add_result_types;
   std::vector<BaseShapePtr> add_result_shapes;
   add_result_types.push_back(common::AnfAlgo::GetOutputInferDataType(tensor_add, 0));

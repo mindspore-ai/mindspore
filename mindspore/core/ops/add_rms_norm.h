@@ -32,9 +32,11 @@ class MIND_API AddRmsNorm : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AddRmsNorm);
   /// \brief Constructor.
-  AddRmsNorm() : BaseOperator(kNameAddRmsNorm) { InitIOName({"x", "y", "gamma"}, {"output", "rstd", "add_result"}); }
+  AddRmsNorm() : BaseOperator(kNameAddRmsNorm) {
+    InitIOName({"x", "y", "gamma", "eps"}, {"output", "rstd", "add_result"});
+  }
   explicit AddRmsNorm(const std::string k_name) : BaseOperator(k_name) {
-    InitIOName({"x", "y", "gamma"}, {"output", "rstd", "add_result"});
+    InitIOName({"x", "y", "gamma", "eps"}, {"output", "rstd", "add_result"});
   }
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.AddRmsNorm for the inputs.
   void Init() const {}

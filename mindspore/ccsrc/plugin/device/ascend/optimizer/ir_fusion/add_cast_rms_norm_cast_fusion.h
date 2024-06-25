@@ -28,6 +28,7 @@ class AddCastRmsNormCastFusion : public PatternProcessPass {
     x1_ = std::make_shared<Var>();
     x2_ = std::make_shared<Var>();
     gamma_ = std::make_shared<Var>();
+    eps_ = std::make_shared<Var>();
   }
   ~AddCastRmsNormCastFusion() override = default;
   const BaseRef DefinePattern() const override;
@@ -37,6 +38,7 @@ class AddCastRmsNormCastFusion : public PatternProcessPass {
   VarPtr x1_;
   VarPtr x2_;
   VarPtr gamma_;
+  VarPtr eps_;
 };
 }  // namespace opt
 }  // namespace mindspore

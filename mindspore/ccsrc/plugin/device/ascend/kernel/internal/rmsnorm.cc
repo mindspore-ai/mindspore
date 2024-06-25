@@ -29,15 +29,9 @@ internal::OpParamPtr InternalRmsNorm::CreateOpParam(const std::vector<KernelTens
   internal::NormParam rmsnorm_param;
   param_ptr->opId = internal::OpId::RmsNorm;
 
-  if (primitive_->HasAttr("epsilon")) {
-    auto value_str = primitive_->GetAttr("epsilon");
-    MS_EXCEPTION_IF_NULL(value_str);
-
-    rmsnorm_param.normType = internal::NormParam::RMS_NORM_FORWARD;
-    float epsilon = GetValue<float>(value_str);
-    rmsnorm_param.epsilon = epsilon;
-    rmsnorm_param.inGamma = true;
-  }
+  rmsnorm_param.normType = internal::NormParam::RMS_NORM_FORWARD;
+  rmsnorm_param.epsilon = inputs[kIndex2]->GetValueWithCheck<float>();
+  rmsnorm_param.inGamma = true;
 
   param_ptr->specificParam = rmsnorm_param;
   return param_ptr;

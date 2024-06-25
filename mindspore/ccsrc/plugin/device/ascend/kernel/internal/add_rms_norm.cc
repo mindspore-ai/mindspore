@@ -25,10 +25,7 @@ internal::OpParamPtr InternalAddRmsNorm::CreateOpParam(const std::vector<KernelT
   // setup param from inputs
   internal::AddRmsNormParam op_param;
 
-  auto value_str = primitive_->GetAttr("epsilon");
-  MS_EXCEPTION_IF_NULL(value_str);
-  float epsilon = GetValue<float>(value_str);
-  op_param.eps = epsilon;
+  op_param.eps = inputs[kIndex3]->GetValueWithCheck<float>();
 
   param_ptr->specificParam = op_param;
   param_ptr->opId = internal::OpId::AddRmsNorm;
