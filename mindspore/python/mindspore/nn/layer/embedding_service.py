@@ -520,7 +520,7 @@ class EmbeddingService:
         optimizer = self._table_to_optimizer.get(table_id)
         if optimizer is None:
             return
-        if optimizer == "adagrad" or optimizer == "ftrl":
+        if optimizer in ["adagrad", "ftrl"]:
             if optimizer_param is not None:
                 self._ps_table_id_to_optimizer_params[table_id].append(optimizer_param)
             else:
