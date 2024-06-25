@@ -70,7 +70,7 @@ const BaseRef AddCastRmsNormCastFusion::DefinePattern() const {
   VarPtr x0 = std::make_shared<Var>();
   VarPtr x1 = std::make_shared<Var>();
   VectorRef add_cast = VectorRef({prim::kPrimCast, VectorRef({prim::kPrimAdd, x1_, x2_}), x0});
-  VectorRef add_cast_rms_norm = VectorRef({prim::kPrimRmsNorm, add_cast, gamma_});
+  VectorRef add_cast_rms_norm = VectorRef({prim::kPrimRmsNorm, add_cast, gamma_, eps_});
   VectorRef tuple_get_item_0 = VectorRef({prim::kPrimTupleGetItem, add_cast_rms_norm, index0});
   VectorRef add_cast_rms_norm_cast = VectorRef({prim::kPrimCast, tuple_get_item_0, x1});
   return add_cast_rms_norm_cast;
