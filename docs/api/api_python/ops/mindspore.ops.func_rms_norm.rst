@@ -15,11 +15,11 @@ mindspore.ops.rms_norm
     参数：
         - **x** (Tensor) - RmsNorm的输入, 支持的数据类型为: float16、float32、bfloat16。
         - **gamma** (Tensor) - 可训练参数（:math:`\gamma`），支持的数据类型: float16、float32、bfloat16。
-        - **epsilon** (float, 可选) - 一个介于0和1之间的浮点值，用于避免除零。默认值： ``1e-6`` 。
+        - **epsilon** (float, 可选) - 一个取值范围为(0, 1]的浮点值，用于避免除零。默认值： ``1e-6`` 。
 
     返回：
-        - **y** (Tensor) - 归一化后的Tensor，shape和数据类型与 `x` 相同。
-        - **rstd** (Tensor) - float类型的Tensor，表示输入数据标准差的倒数，用于反向梯度计算。
+        - Tensor，归一化后的结果，shape和数据类型与 `x` 相同。
+        - Tensor，类型为float，表示输入数据标准差的倒数，用于反向梯度计算。
 
     异常：
         - **TypeError** - `x` 的数据类型不是float16、float32、bfloat16中的一种。

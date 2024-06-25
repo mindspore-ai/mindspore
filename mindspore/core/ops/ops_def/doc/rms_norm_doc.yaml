@@ -7,18 +7,18 @@ rms_norm:
             y=\frac{x_i}{\sqrt{\frac{1}{n}}\sum_{i=1}^{n}{ x_i^2}+\varepsilon  }\gamma_i
 
         .. warning::
-            This is an experimental API that is subject to change or deletion. This API is only supported in Atlas A2 training
-                series for now.
+            This is an experimental API that is subject to change or deletion. This API is only supported in Atlas A2
+            training series for now.
 
         Args:
             x (Tensor): Input data of RmsNorm. Support data type: float16, float32, bfloat16.
             gamma (Tensor): Learnable parameter :math:`\gamma` . Support data type: float16, float32, bfloat16.
-            epsilon (float, optional): A float number to prevent division by 0. The value is between 0 and 1, default value
-                is `1e-6`.
+            epsilon (float, optional): A float number ranged in (0, 1] to prevent division by 0. Default value is `1e-6`.
 
         Returns:
-            - y, a tensor denotes the normalized input, has the same type and shape as `x`.
-            - rstd, a float tensor denotes the reciprocal of the input standard deviation, used by gradient calculation.
+            - Tensor, denotes the normalized result, has the same type and shape as `x`.
+            - Tensor, with the float data type, denotes the reciprocal of the input standard deviation, used by gradient
+            calculation.
 
         Raises:
             TypeError: If data type of `x` is not one of the following: float16, float32, bfloat16.
