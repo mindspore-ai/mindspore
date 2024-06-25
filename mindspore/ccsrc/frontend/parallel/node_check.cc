@@ -20,6 +20,7 @@
 #include <string>
 
 #include "frontend/parallel/ops_info/ops_utils.h"
+#include "mindspore/core/ops/other_ops.h"
 
 namespace mindspore {
 namespace parallel {
@@ -28,6 +29,28 @@ const std::set<std::string> BATCH_PARALLEL_BLACK_LIST = {STACK, TENSOR_SCATTER_U
 bool IsInBatchParallelBlackList(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
   return (BATCH_PARALLEL_BLACK_LIST.find(prim->name()) != BATCH_PARALLEL_BLACK_LIST.end());
+}
+
+bool IsFromParallelOptimizerRs(const AnfNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimReduceScatter)) {
+    return false;
+  }
+  auto prim = GetCNodePrimitive(node->cast<CNodePtr>());
+  if (prim->instance_name().find("grad_parallel_optimizer") == std::string::npos) {
+    return false;
+  }
+  return true;
+}
+
+bool IsFromGradMirrorAR(const AnfNodePtr &node) {
+  if (!IsPrimitiveCNode(node, prim::kPrimAllReduce)) {
+    return false;
+  }
+  auto prim = GetCNodePrimitive(node->cast<CNodePtr>());
+  if (prim->instance_name().find("grad_mirror") == std::string::npos) {
+    return false;
+  }
+  return true;
 }
 }  // namespace parallel
 }  // namespace mindspore
