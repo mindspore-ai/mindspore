@@ -53,6 +53,26 @@ def get_output_backward(reduction):
               "none": [input_grad_none, target_grad_none]}
     return output[reduction]
 
+def get_output_forward_none(reduction):
+    output_mean = np.array([1.1606])
+    output_sum = np.array([10.4455])
+    output_none = np.array([[1.87666, 0.40078, 1.4012], [0.24846, 1.16315, 1.48369], [0.71519, 0.5322, 2.62417]])
+    output = {"mean": output_mean, "sum": output_sum, "none": output_none}
+    return output[reduction]
+
+def get_output_backward_none(reduction):
+    input_grad_sum = np.array([[-6.5317, 1.493, 4.062], [1.282, 3.2, -4.41], [2.043, -1.702, 13.793]])
+    input_grad_mean = np.array([[-0.7257, 0.1659, 0.4514], [0.1425, 0.3555, -0.4899], [0.227, -0.1892, 1.5325]])
+    input_grad_none = np.array([[-6.5317, 1.493, 4.062], [1.282, 3.2, -4.41], [2.043, -1.702, 13.793]])
+    target_grad_sum = np.array([[1.710, 0.707, -1.1184], [1.2656, -0.7885, 1.226], [-0.0436, -0.353, -2.5489]])
+    target_grad_mean = np.array([[0.1901, 0.0786, -0.1243], [0.1406, -0.0876, 0.1363], [-0.00485, -0.0392, -0.2832]])
+    target_grad_none = np.array([[1.710, 0.707, -1.1184], [1.2656, -0.7885, 1.226], [-0.0436, -0.353, -2.5489]])
+    output = {"mean": [input_grad_mean, target_grad_mean],
+              "sum": [input_grad_sum, target_grad_sum],
+              "none": [input_grad_none, target_grad_none]}
+    return output[reduction]
+
+
 @test_utils.run_with_cell
 def binary_cross_entropy_forward_func(inputx, target, weight=None, reduction="mean"):
     return binary_cross_entropy(inputx, target, weight, reduction)
@@ -80,6 +100,43 @@ def test_ops_binary_cross_entropy_normal(mode, reduction):
     inputx, target, weight = get_input()
     expect_forward = get_output_forward(reduction)
     expect_backward = get_output_backward(reduction)
+    if mode == "pynative":
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+        output_forward = binary_cross_entropy_forward_func(inputx, target, weight, reduction)
+        output_backward = binary_cross_entropy_backward_func(inputx, target, weight, reduction)
+
+    elif mode == "KBK":
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+        op_froward = ms.jit(binary_cross_entropy_forward_func, jit_config=ms.JitConfig(jit_level="O0"))
+        output_forward = op_froward(inputx, target, weight, reduction)
+        op_backward = ms.jit(binary_cross_entropy_backward_func, jit_config=ms.JitConfig(jit_level="O0"))
+        output_backward = op_backward(inputx, target, weight, reduction)
+    else:
+        ms.context.set_context(mode=ms.GRAPH_MODE)
+        output_forward = binary_cross_entropy_forward_func(inputx, target, weight, reduction)
+        output_backward = binary_cross_entropy_backward_func(inputx, target, weight, reduction)
+    np.testing.assert_allclose(output_forward.asnumpy(), expect_forward, rtol=1e-3)
+    np.testing.assert_allclose(output_backward[0].asnumpy(), expect_backward[0], rtol=1e-3)
+    np.testing.assert_allclose(output_backward[1].asnumpy(), expect_backward[1], rtol=1e-3)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize("mode", ["pynative", "KBK", "graph"])
+@pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
+def test_ops_binary_cross_entropy_weight_none(mode, reduction):
+    """
+    Feature: pyboost function.
+    Description: test function binary_cross_entropy backward.
+    Expectation: expect correct result.
+    """
+    inputx, target, weight = get_input()
+    weight = None
+    expect_forward = get_output_forward_none(reduction)
+    expect_backward = get_output_backward_none(reduction)
     if mode == "pynative":
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
         output_forward = binary_cross_entropy_forward_func(inputx, target, weight, reduction)

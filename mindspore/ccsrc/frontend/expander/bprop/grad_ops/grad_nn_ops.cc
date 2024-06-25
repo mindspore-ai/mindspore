@@ -826,9 +826,13 @@ REG_BPROP_BUILDER("BinaryCrossEntropy").SetUnusedInputs({i4}).SetBody(BODYFUNC(i
   auto reduction = ib->GetInput(kIndex3);
   auto dout = ib->GetInput(kIndex5);
   auto dx = ib->Emit("BinaryCrossEntropyGrad", {x, y, dout, weight, reduction});
-  NodePtr dy;
+  NodePtr dy = nullptr;
   if (y->need_compute_grad_out()) {
-    dy = ib->Mul(ib->Mul(ib->Sub(ib->Log(ib->Sub(ib->Tensor(1, ib->GetDtype(x)), x)), ib->Log(x)), dout), weight);
+    bool weight_type_none = ib->GetDtype(weight)->isa<TypeNone>();
+    dy = ib->Mul(ib->Sub(ib->Log(ib->Sub(ib->Tensor(1, ib->GetDtype(x)), x)), ib->Log(x)), dout);
+    if (!weight_type_none) {
+      dy = ib->Mul(dy, weight);
+    }
     auto reduction_value = GetValue<int64_t>(reduction->BuildValue());
     if (reduction_value == 1) {
       if (IsDynamic(ib->GetShape(dx))) {
