@@ -66,9 +66,9 @@ static std::map<std::string, int> ms_op_key_to_internel_op_id = {
   {"MatmulBiasSplitOut3", internal::OpId::MatmulQkv},
   {"MatmulBiasSplitSiluOut2", internal::OpId::MatmulQkv},
   {"MatmulSplitSiluOut2", internal::OpId::MatmulQkv},
-  {"QuantBatchMatmulSplitOut2", internal::OpId::MatmulQkv},
-  {"QuantBatchMatmulSplitOut3", internal::OpId::MatmulQkv},
-  {"QuantBatchMatmulSplitSiluOut2", internal::OpId::MatmulQkv},
+  {"QuantbatchmatmulSplitOut2", internal::OpId::MatmulQkv},
+  {"QuantbatchmatmulSplitOut3", internal::OpId::MatmulQkv},
+  {"QuantbatchmatmulSplitSiluOut2", internal::OpId::MatmulQkv},
 };
 
 class InternalKernelMod : public KernelMod {

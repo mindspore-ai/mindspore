@@ -20,6 +20,7 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <set>
 
 #include "plugin/device/ascend/optimizer/ir_fusion/inference_weight_preprocess_utils.h"
 #include "include/backend/optimizer/pass.h"
@@ -49,17 +50,21 @@ class InferenceMatmulSplitFusion : public Pass {
   bool CheckMatMulDataFormat(const CNodePtr &matmul_cnode) const;
   size_t GetSplitSizeLen(const CNodePtr &split_cnode) const;
   PrimitivePtr CreateMatmulSplitPrim(const CNodePtr &split_cnode, size_t split_size_len, const std::string &) const;
+  CNodePtr CreateGetItemNode(const FuncGraphPtr &func_graph, const CNodePtr &split_cnode,
+                             const CNodePtr &matmul_split_cnode, const CNodePtr &silu_cnode,
+                             const size_t output_index) const;
   CNodePtr CreateMatmulSplitNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const std::string &) const;
   CNodePtr CreateMatmulBiasAddSplitNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const std::string &) const;
-  CNodePtr CreateQuantBatchMatMulSplitNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+  CNodePtr CreateQuantbatchmatmulSplitNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                            const std::string &) const;
   CNodePtr CreateMatmulSplitSiluNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const std::string &) const;
   CNodePtr CreateMatmulBiasAddSplitSiluNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                             const std::string &) const;
-  CNodePtr CreateQuantBatchMatMulSplitSiluNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+  CNodePtr CreateQuantbatchmatmulSplitSiluNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                const std::string &) const;
   bool enable_fusion_silu = false;
+  mutable std::set<CNodePtr> visited_cnodes;
 
  protected:
   AnfNodePtr Process(const std::string &pattern_name, const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
@@ -69,23 +74,23 @@ class InferenceMatmulSplitFusion : public Pass {
   const std::string kPrimNameMatmulBiasSplitOut2 = "MatmulBiasSplitOut2";
   const std::string kPrimNameMatmulBiasSplitOut3 = "MatmulBiasSplitOut3";
   const std::string kPrimNameMatmulBiasSplitSiluOut2 = "MatmulBiasSplitSiluOut2";
-  const std::string kPrimNameQuantBatchMatmulSplitOut2 = "QuantBatchMatmulSplitOut2";
-  const std::string kPrimNameQuantBatchMatmulSplitOut3 = "QuantBatchMatmulSplitOut3";
-  const std::string kPrimNameQuantBatchMatmulSplitSiluOut2 = "QuantBatchMatmulSplitSiluOut2";
+  const std::string kPrimNameQuantbatchmatmulSplitOut2 = "QuantbatchmatmulSplitOut2";
+  const std::string kPrimNameQuantbatchmatmulSplitOut3 = "QuantbatchmatmulSplitOut3";
+  const std::string kPrimNameQuantbatchmatmulSplitSiluOut2 = "QuantbatchmatmulSplitSiluOut2";
 
   const std::string kPatternNameMatMulSplit = "MatmulSplit";
   const std::string kPatternNameMatMulSplitSilu = "MatmulSplitSilu";
   const std::string kPatternNameMatMulBiasAddSplit = "MatmulBiasAddSplit";
   const std::string kPatternNameMatMulBiasAddSplitSilu = "MatmulBiasAddSplitSilu";
-  const std::string kPatternNameQuantBatchMatmulSplit = "QuantBatchMatmulSplit";
-  const std::string kPatternNameQuantBatchMatmulSplitSilu = "QuantBatchMatmulSplitSilu";
+  const std::string kPatternNameQuantbatchmatmulSplit = "QuantbatchmatmulSplit";
+  const std::string kPatternNameQuantbatchmatmulSplitSilu = "QuantbatchmatmulSplitSilu";
 
   std::map<size_t, std::map<std::string, std::string>> PatternPrimMap = {
     {
       kMatmulQkvSplitSizeLen,
       {{kPatternNameMatMulSplit, kPrimNameMatmulSplitOut3},
        {kPatternNameMatMulBiasAddSplit, kPrimNameMatmulBiasSplitOut3},
-       {kPatternNameQuantBatchMatmulSplit, kPrimNameQuantBatchMatmulSplitOut3}},
+       {kPatternNameQuantbatchmatmulSplit, kPrimNameQuantbatchmatmulSplitOut3}},
     },
 
     {kMatmulFfnSplitSizeLen,
@@ -93,8 +98,8 @@ class InferenceMatmulSplitFusion : public Pass {
       {kPatternNameMatMulSplitSilu, kPrimNameMatmulSplitSiluOut2},
       {kPatternNameMatMulBiasAddSplit, kPrimNameMatmulBiasSplitOut2},
       {kPatternNameMatMulBiasAddSplitSilu, kPrimNameMatmulBiasSplitSiluOut2},
-      {kPatternNameQuantBatchMatmulSplit, kPrimNameQuantBatchMatmulSplitOut2},
-      {kPatternNameQuantBatchMatmulSplitSilu, kPrimNameQuantBatchMatmulSplitSiluOut2}}}};
+      {kPatternNameQuantbatchmatmulSplit, kPrimNameQuantbatchmatmulSplitOut2},
+      {kPatternNameQuantbatchmatmulSplitSilu, kPrimNameQuantbatchmatmulSplitSiluOut2}}}};
 };
 }  // namespace opt
 }  // namespace mindspore
