@@ -72,7 +72,6 @@ ShapeArray SortExtFuncImpl::InferShape(const PrimitivePtr &primitive, const Valu
   const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
   auto x_shape_vector = x_tensor->shape();
-
   if (x_shape_vector.empty() || (x_shape_vector.size() == 1 && x_shape_vector[0] == 0)) {
     return {x_shape_vector, x_shape_vector};
   }

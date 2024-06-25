@@ -45,14 +45,17 @@ tensor::BaseTensorPtr RandLikeExtAscendCustomize(const std::shared_ptr<OpRunner>
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, tensor_tensor, seed_imm, offset_imm]() {
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
+    constexpr double from_imm = 0.0;
+    constexpr double to_imm = 1.0;
     // Malloc for input tensors
     PyBoostUtils::MallocOpInputs(device_context, tensor_tensor);
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
-    LAUNCH_ACLNN(aclnnInplaceUniform, device_context, op->stream_id(), outputs[0], 0., 1., seed_imm, offset_imm);
+    LAUNCH_ACLNN(aclnnInplaceUniform, device_context, op->stream_id(), outputs[kIndex0], from_imm, to_imm, seed_imm,
+                 offset_imm);
   }));
-  return outputs[0];
+  return outputs[kIndex0];
 }
 }  // namespace pyboost
 }  // namespace kernel

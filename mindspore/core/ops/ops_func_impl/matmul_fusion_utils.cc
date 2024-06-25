@@ -47,13 +47,15 @@ BaseShapePtr MatmulFusionUtils::InferenceMultiMatmulInferShape(const PrimitivePt
                  CheckAndConvertUtils::FormatCommMsg("For '" + primitive->name() + "', op must have attr 'n_lens'."));
 
   std::vector<int64_t> n_len_list = GetValue<std::vector<int64_t>>(primitive->GetAttr("n_lens"));
+  constexpr size_t kSize2 = 2;
+  constexpr size_t kSize3 = 3;
   MS_CHECK_VALUE(
-    (n_len_list.size() == 2 || n_len_list.size() == 3),
+    (n_len_list.size() == kSize2 || n_len_list.size() == kSize3),
     CheckAndConvertUtils::FormatCommMsg("For '" + primitive->name() + "', attr 'n_lens' must have 2 or 3 value."));
 
   ShapeVector output_0_shape = {m, n_len_list[0]};
   ShapeVector output_1_shape = {m, n_len_list[1]};
-  if (shape_vec.size() == 3) {
+  if (shape_vec.size() == kSize3) {
     output_0_shape = {shape_vec[0], shape_vec[1], n_len_list[0]};
     output_1_shape = {shape_vec[0], shape_vec[1], n_len_list[1]};
   }
@@ -61,9 +63,9 @@ BaseShapePtr MatmulFusionUtils::InferenceMultiMatmulInferShape(const PrimitivePt
   std::vector<BaseShapePtr> shape_lists;
   (void)shape_lists.emplace_back(std::make_shared<abstract::TensorShape>(output_0_shape));
   (void)shape_lists.emplace_back(std::make_shared<abstract::TensorShape>(output_1_shape));
-  if (n_len_list.size() == 3) {
+  if (n_len_list.size() == kSize3) {
     ShapeVector output_2_shape = {m, n_len_list[2]};
-    if (shape_vec.size() == 3) {
+    if (shape_vec.size() == kSize3) {
       output_2_shape = {shape_vec[0], shape_vec[1], n_len_list[2]};
     }
     (void)shape_lists.emplace_back(std::make_shared<abstract::TensorShape>(output_2_shape));
@@ -82,9 +84,11 @@ TuplePtr MatmulFusionUtils::InferenceMultiMatmulInferType(const PrimitivePtr &pr
   MS_CHECK_VALUE(primitive->HasAttr("n_lens"),
                  CheckAndConvertUtils::FormatCommMsg("For '" + primitive->name() + "', op must have attr 'n_lens'."));
   std::vector<int64_t> n_len_list = GetValue<std::vector<int64_t>>(primitive->GetAttr("n_lens"));
-  if (n_len_list.size() == 3) {
+  constexpr size_t kSize2 = 2;
+  constexpr size_t kSize3 = 3;
+  if (n_len_list.size() == kSize3) {
     return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, x_type, x_type});
-  } else if (n_len_list.size() == 2) {
+  } else if (n_len_list.size() == kSize2) {
     return std::make_shared<Tuple>(std::vector<TypePtr>{x_type, x_type});
   } else {
     MS_EXCEPTION(ValueError) << "n_lens's size must be 2 or 3 but got " << n_len_list.size();

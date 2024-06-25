@@ -47,10 +47,12 @@ tensor::BaseTensorPtr RandExtAscendCustomize(const std::shared_ptr<OpRunner> &op
 
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
-
-    LAUNCH_ACLNN(aclnnInplaceUniform, device_context, op->stream_id(), outputs[0], 0., 1., seed_imm, offset_imm);
+    constexpr double from_imm = 0.0;
+    constexpr double to_imm = 1.0;
+    LAUNCH_ACLNN(aclnnInplaceUniform, device_context, op->stream_id(), outputs[kIndex0], from_imm, to_imm, seed_imm,
+                 offset_imm);
   }));
-  return outputs[0];
+  return outputs[kIndex0];
 }
 }  // namespace pyboost
 }  // namespace kernel

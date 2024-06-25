@@ -38,7 +38,7 @@ bool CheckRank(const ShapeVector &shape, int64_t rank) {
     return true;
   }
 
-  int64_t existing = shape.size();
+  int64_t existing = static_cast<int64_t>(shape.size());
   if (existing != rank) {
     MS_LOG(ERROR) << "rank[" << existing << "] must be [" << rank << "]";
     return false;

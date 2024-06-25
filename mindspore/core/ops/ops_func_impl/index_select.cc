@@ -42,7 +42,6 @@ BaseShapePtr IndexSelectFuncImpl::InferShape(const PrimitivePtr &primitive,
 
   auto output_shape = input_shape;
   auto index_shape = input_args[kIndex2]->GetShape()->GetShapeVector();
-
   if (MS_LIKELY(!IsDynamicRank(index_shape))) {
     MS_CHECK_VALUE(index_shape.size() == 1, "For 'IndexSelect', the dimension of 'index' must be 1, but got " +
                                               std::to_string(index_shape.size()) + ".");
