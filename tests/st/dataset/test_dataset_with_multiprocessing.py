@@ -31,6 +31,7 @@ import mindspore.dataset.transforms as transforms
 from mindspore.train.callback import Callback, LossMonitor
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.train.metrics import Accuracy
+from tests.mark_utils import arg_mark
 
 
 ms.set_seed(1)
@@ -159,10 +160,8 @@ def set_parameter(config):
     ms.set_context(mode=ms.PYNATIVE_MODE, device_target=config.device_target, save_graphs=False)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
 @pytest.mark.skip(reason="to be adjust case")
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_network_dataset_with_multiprocessing_without_fd_leak():
     """
     Feature: Network with dataset which use multiprocessing to process data
@@ -196,7 +195,8 @@ def test_network_dataset_with_multiprocessing_without_fd_leak():
     model.train(3, train_dataset, callbacks=cb, dataset_sink_mode=True)
 
 
-@pytest.mark.level1
+@pytest.mark.skip(reason="to be adjust case")
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_only_dataset_with_multiprocessing_without_fd_leak():
     """
     Feature: Only create dataset with iterator

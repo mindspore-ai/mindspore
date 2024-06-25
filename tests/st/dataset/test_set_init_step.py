@@ -20,6 +20,7 @@ import mindspore.dataset as ds
 import mindspore.nn as nn
 from mindspore import Callback, context, ops
 from mindspore.train import Model
+from tests.mark_utils import arg_mark
 
 
 class SaveLossCallback(Callback):
@@ -154,9 +155,8 @@ class TestBreakpointTraining:
                 for index, loss in enumerate(retrain_loss):
                     np.testing.assert_array_equal(np.array(loss), expected_loss[index + skip_loss_count])
 
-    @pytest.mark.level0
-    @pytest.mark.platform_x86_cpu
-    @pytest.mark.env_onecard
+
+    @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
     @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
     @pytest.mark.parametrize("sink_mode", (False, True))
     def test_set_init_step_cpu(self, mode, sink_mode):
@@ -170,10 +170,9 @@ class TestBreakpointTraining:
         dataset_size = 20
         self.validate_retrain_loss_equal_to_normal_train(mode, "CPU", sink_mode, dataset_size, init_step)
 
-    @pytest.mark.level0
-    @pytest.mark.platform_x86_gpu_training
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.env_onecard
+
+    @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0',
+              card_mark='onecard', essential_mark='essential')
     @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
     @pytest.mark.parametrize("sink_mode_and_size", ((False, -1), (True, -1), (True, 10)))
     def test_set_init_step_device(self, mode, sink_mode_and_size: tuple):
@@ -188,9 +187,9 @@ class TestBreakpointTraining:
         sink_mode, sink_size = sink_mode_and_size
         self.validate_retrain_loss_equal_to_normal_train(mode, "DEVICE", sink_mode, dataset_size, init_step, sink_size)
 
-    @pytest.mark.level0
-    @pytest.mark.platform_x86_cpu
-    @pytest.mark.env_onecard
+
+    @arg_mark(plat_marks=['cpu_linux'], level_mark='level0',
+              card_mark='onecard', essential_mark='essential')
     @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
     @pytest.mark.parametrize("sink_mode", (False, True))
     def test_set_init_step_at_intermediate_step_cpu(self, mode, sink_mode):
@@ -205,10 +204,9 @@ class TestBreakpointTraining:
         dataset_size = 20
         self.validate_retrain_loss_equal_to_normal_train(mode, "CPU", sink_mode, dataset_size, init_step)
 
-    @pytest.mark.level0
-    @pytest.mark.platform_x86_gpu_training
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.env_onecard
+
+    @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0',
+              card_mark='onecard', essential_mark='essential')
     @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
     @pytest.mark.parametrize("sink_mode_and_size", ((False, -1), (True, -1), (True, 10)))
     def test_set_init_step_at_intermediate_step_device(self, mode, sink_mode_and_size: tuple):

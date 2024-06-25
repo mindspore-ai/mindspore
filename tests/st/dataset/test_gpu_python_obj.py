@@ -21,6 +21,7 @@ from mindspore.train import Model
 import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.common import Tensor
+from tests.mark_utils import arg_mark
 
 # pylint: disable=no-value-for-parameter
 
@@ -65,10 +66,7 @@ def create_model():
     return model_
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@pytest.mark.forked
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("needs_batch", (False, True))
 def test_python_dict_in_pipeline(needs_batch):
     """

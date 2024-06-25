@@ -18,12 +18,12 @@ This is the test module for mindrecord
 import os
 import platform
 from io import BytesIO
-import pytest
 from PIL import Image
 
 import mindspore.dataset as ds
 import mindspore.dataset.vision as vision
 from mindspore.mindrecord import FileWriter
+from tests.mark_utils import arg_mark
 
 def add_and_remove_cv_file(mindrecord):
     """add/remove cv file"""
@@ -77,9 +77,8 @@ def write_read_mindrecord(mindrecord):
         count += 1
     assert count == 100
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['cpu_windows'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_chinese_path_on_windows():
     """
     Feature: test chinese path on windows platform
@@ -149,9 +148,8 @@ def test_chinese_path_on_windows():
     os.chdir(current_pwd)
     add_and_remove_cv_file(dir_path + mindrecord_path)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['cpu_windows'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_backslash_path_on_windows():
     """
     Feature: test path on windows platform which contains both slash and backslash

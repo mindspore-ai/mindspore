@@ -22,6 +22,7 @@ from mindspore.common import set_seed
 from mindspore.ops import operations as P
 from mindspore.parallel._recovery_context import _get_recovery_context_func_map
 from mindspore.train import Model, Callback
+from tests.mark_utils import arg_mark
 
 set_seed(1)
 
@@ -73,13 +74,10 @@ class MyCallback(Callback):
             dataset._reset(self.reset_point * self.dataset_size, self.dataset_size)  # pylint: disable=W0212
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("fast_recovery", (False, True))
 @pytest.mark.parametrize("num_parallel_workers", (1, 4))
 @pytest.mark.parametrize("python_multiprocessing", (False, True))
-@pytest.mark.forked
 def test_dataset_reset_sink(fast_recovery, num_parallel_workers, python_multiprocessing):
     """
     Feature: Dataset recovery
