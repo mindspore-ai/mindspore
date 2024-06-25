@@ -329,7 +329,7 @@ TypePtr FlashAttentionScoreFuncImpl::InferType(const PrimitivePtr &prim,
   }
   if (!IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputAttnMaskIndex])) {
     auto attn_mask_type = input_args[kFlashAttentionScoreInputAttnMaskIndex]->GetType();
-    CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8, kBool, kFloat16}, op_name);
+    CheckAndConvertUtils::CheckTensorTypeValid("attn_mask", attn_mask_type, {kUInt8, kBool}, op_name);
   }
 
   auto keep_prob_value_ptr = input_args[kFlashAttentionScoreInputKeepProbIndex]->GetValue();
