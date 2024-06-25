@@ -16,7 +16,7 @@
 
 BASEPATH=$(cd "$(dirname $0)" || exit; pwd)
 get_version() {
-    VERSION_STR=$(cat ${BASEPATH}/../../../../../version.txt)
+    VERSION_STR=$(cat ${BASEPATH}/../../../../version.txt)
 }
 get_version
 MODEL_DOWNLOAD_URL="https://download.mindspore.cn/model_zoo/official/lite/quick_start/mobilenetv2.ms"

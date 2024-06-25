@@ -154,16 +154,6 @@ int QuickStart(int argc, const char **argv) {
     std::cout << std::endl;
   }
 
-  // user need free input data and output data
-  for (auto &input : inputs) {
-    free(input.MutableData());
-    input.SetData(nullptr);
-  }
-  for (auto &output : outputs) {
-    free(output.MutableData());
-    output.SetData(nullptr);
-  }
-
   // Delete model runner.
   delete model_runner;
   return mindspore::kSuccess;
