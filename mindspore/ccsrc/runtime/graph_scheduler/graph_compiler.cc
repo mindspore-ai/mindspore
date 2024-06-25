@@ -85,10 +85,10 @@ void SetSummaryNodesRefCount(const KernelGraph *graph) {
 }
 
 bool EnableBackendCompileCache(const FuncGraphPtr &func_graph, const device::DeviceType &device_type) {
-  if (!CompileCacheEnable()) {
+  auto &context = CompileCacheContext::GetInstance();
+  if (!context.enable_compile_cache()) {
     return false;
   }
-  auto &context = CompileCacheContext::GetInstance();
   if (context.FrontGraph() != func_graph) {
     return false;
   }
@@ -657,7 +657,8 @@ GraphId GraphCompiler::CompileWholeGraphForGraphRunMode(const FuncGraphPtr &func
   if (!func_graph->has_flag(kFlagPyNativeRunInGraph)) {
     graph_id = CompileGraphImpl(root_graph, device_context);
   }
-  if (CompileCacheEnable()) {
+  auto &context = CompileCacheContext::GetInstance();
+  if (context.enable_compile_cache()) {
     CompileCacheContext::GetInstance().Clear();
   }
 

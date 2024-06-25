@@ -133,6 +133,7 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   void set_compile_cache_dep_files(const py::list &compile_cache_dep_files) {
     compile_cache_dep_files_ = compile_cache_dep_files;
   }
+  void set_enable_compile_cache(bool enable_compile_cache);
   void set_weights_values(const py::dict &weights) { weights_ = weights; }
 #ifdef ENABLE_DEBUGGER
   void TerminateDebugger();
