@@ -114,7 +114,6 @@ def test_elu_backward(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_elu_vmap(mode):
     """
@@ -137,7 +136,6 @@ def test_elu_vmap(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_cpu
 def test_elu_dynamic_shape_testop():
     """
     Feature: Test elu with dynamic shape in graph mode using TEST_OP.
