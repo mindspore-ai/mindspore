@@ -18,7 +18,7 @@ rms_norm:
         Returns:
             - Tensor, denotes the normalized result, has the same type and shape as `x`.
             - Tensor, with the float data type, denotes the reciprocal of the input standard deviation, used by gradient
-            calculation.
+              calculation.
 
         Raises:
             TypeError: If data type of `x` is not one of the following: float16, float32, bfloat16.

@@ -22,7 +22,7 @@ mindspore.communication.comm_func.P2POp
     返回：
         `P2POp` 对象。
 
-    异常:
+    异常：
         - **ValueError** - 当 `op` 不是与'isend'和'irecv'相关的字符串或函数。
         - **TypeError** - 当 `tensor` 不是张量或者元组类型。
         - **NotImplementedError** - 当 `tag` 入参不为0。

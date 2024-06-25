@@ -1,7 +1,7 @@
 mindspore.ops.rms_norm
 ========================
 
-.. py:function:: mindspore.ops.rms_norm(x, gamma, eps=1e-6)
+.. py:function:: mindspore.ops.rms_norm(x, gamma, epsilon=1e-6)
 
     RmsNorm(Root Mean Square Layer Normalization)即均方根标准化。与LayerNorm相比，其保留了缩放不变性，而舍弃了平移不变性。
     其公式如下：
