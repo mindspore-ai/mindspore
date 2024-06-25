@@ -36,12 +36,12 @@ mindspore.mint.optim.AdamW
         \end{aligned}
 
     .. warning::
-        - 这是一个实验性的优化器接口，需要和 `LRScheduler <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.experimental.html#lrscheduler%E7%B1%BB>`_ 
+        - 这是一个实验性的优化器接口，需要和 `LRScheduler <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore.experimental.html#lrscheduler%E7%B1%BB>`_ 下的动态学习率接口配合使用。
         - 对于Ascend，仅Atlas A2以上平台支持。
 
     参数：
         - **params** (Union[list(Parameter), list(dict)]) - 网络参数的列表或指定了参数组的列表。
-        - **lr** (Union[float, Tensor], 可选) - 学习率。默认值：``1e-3``。
+        - **lr** (float, 可选) - 学习率。默认值：``1e-3``。
         - **betas** (Tuple[float, float], 可选) - 动量矩阵的指数衰减率。默认值：``(0.9, 0.999)``。
         - **eps** (float, 可选) - 加在分母上的值，以确保数值稳定。必须大于0。默认值：``1e-8``。
         - **weight_decay** (float, 可选) - 权重衰减（L2 penalty）。默认值：``1e-2``。
@@ -54,7 +54,7 @@ mindspore.mint.optim.AdamW
         - **gradients** (tuple[Tensor], 可选) - 网络权重的梯度。
 
     异常：
-        - **ValueError** - 学习率不是int、float或Tensor。
+        - **ValueError** - 学习率不是float。
         - **ValueError** - 学习率小于0。
         - **ValueError** - `eps` 小于0。
         - **ValueError** - `betas` 范围不在[0, 1)之间。
