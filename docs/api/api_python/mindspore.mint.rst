@@ -67,6 +67,8 @@ Tensor
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.gather
+    mindspore.mint.permute
     mindspore.mint.repeat_interleave
 
 逐元素运算
@@ -252,6 +254,7 @@ mindspore.mint.nn.functional
 
     mindspore.mint.nn.functional.batch_norm
     mindspore.mint.nn.functional.dropout
+    mindspore.mint.nn.functional.embedding
     mindspore.mint.nn.functional.grid_sample
     mindspore.mint.nn.functional.group_norm
     mindspore.mint.nn.functional.layer_norm

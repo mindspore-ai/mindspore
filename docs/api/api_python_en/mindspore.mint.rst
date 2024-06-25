@@ -70,6 +70,8 @@ Math Operations
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.gather
+    mindspore.mint.permute
     mindspore.mint.repeat_interleave
 
 Pointwise Operations
@@ -235,6 +237,7 @@ Neural Network Layer Functions
 
     mindspore.mint.nn.functional.batch_norm
     mindspore.mint.nn.functional.dropout
+    mindspore.mint.nn.functional.embedding
     mindspore.mint.nn.functional.grid_sample
     mindspore.mint.nn.functional.group_norm
     mindspore.mint.nn.functional.layer_norm

@@ -48,7 +48,7 @@ def gather(input, dim, index):
         index (Tensor): The index tensor, with int32 or int64 data type. An valid `index` should be:
 
             - `index.rank == input.rank`;
-            - `index.shape[axis] <= input.shape[axis]` where axis goes through all dimensions of `input` except `dim`;
+            - for `axis != dim`, `index.shape[axis] <= input.shape[axis]`;
             - the value of `index` is in range `[-input.shape[dim], input.shape[dim])`.
 
     Returns:
@@ -72,7 +72,7 @@ def gather(input, dim, index):
         >>> output = ops.extend.gather(input, 1, index)
         >>> print(output)
         [[-0.1 -0.1]
-        [ 0.5  0.5]]
+         [0.5   0.5]]
     """
     return gather_d_op(input, dim, index)
 
