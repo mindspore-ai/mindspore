@@ -1420,6 +1420,42 @@ bool SetModeForControlFlow(const FuncGraphPtr &func_graph, const std::vector<Anf
   return true;
 }
 
+void ProcessCanNotInline(const FuncGraphPtr &func_graph, const std::shared_ptr<MsContext> &context_ptr) {
+  auto graphs = func_graph->func_graphs_used_total();
+  (void)graphs.insert(func_graph);
+  bool exist_while =
+    std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
+  if (exist_while && context_ptr->CellReuseLevel() == CellReuseLevel::kLazyInline) {
+    MS_LOG(INFO) << "Set no inline because graph has while.";
+    context_ptr->SetCellReuseLevel(CellReuseLevel::kNoInline);
+  }
+
+  auto cant_inline_cell_reuse = [](const FuncGraphPtr &fg) -> bool {
+    if (!fg->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+      return false;
+    }
+    MS_LOG(INFO) << "Cell reuse graph: " << fg->ToString();
+    // cell reuse func graph has switch
+    if (!fg->switch_nodes().empty()) {
+      MS_LOG(INFO) << "Set no inline because cell reuse graph has switch, " << fg->ToString();
+      return true;
+    }
+    // cell reuse sub graph has switch or cell reuse
+    for (auto &sub_graph : fg->func_graphs_used_total()) {
+      if (!sub_graph->switch_nodes().empty() || sub_graph->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+        MS_LOG(INFO) << "Set no inline because cell reuse sub graph has switch or nested cell reuse, "
+                     << sub_graph->ToString();
+        return true;
+      }
+    }
+    return false;
+  };
+  if (std::any_of(graphs.cbegin(), graphs.cend(), cant_inline_cell_reuse)) {
+    MS_LOG(INFO) << "Set no inline because cell reuse graph has switch or nested cell reuse.";
+    context_ptr->SetCellReuseLevel(CellReuseLevel::kNoInline);
+  }
+}
+
 void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, std::string *kbk_reason) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
@@ -1431,16 +1467,7 @@ void SetRunMode(const FuncGraphPtr &func_graph, compile::Backend *backend_ptr, s
     context_ptr->set_param<bool>(MS_CTX_ENABLE_LOOP_SINK, enable_loop_sink);
     backend_ptr->set_is_multi_graph_sink(is_multi_graph_sink);
   };
-
-  auto graphs = func_graph->func_graphs_used_total();
-  (void)graphs.insert(func_graph);
-  bool exist_while =
-    std::any_of(graphs.cbegin(), graphs.cend(), [](const FuncGraphPtr &fg) { return fg->recursive(); });
-  if (exist_while && context_ptr->CellReuseLevel() == CellReuseLevel::kLazyInline) {
-    MS_LOG(INFO) << "Set no inline because graph has while.";
-    context_ptr->SetCellReuseLevel(CellReuseLevel::kNoInline);
-  }
-
+  ProcessCanNotInline(func_graph, context_ptr);
   auto jit_level = pipeline::GetJitLevel();
   func_graph->set_attr(kAttrJitLevel, MakeValue<std::string>(jit_level));
   auto jit_config = PhaseManager::GetInstance().jit_config();
