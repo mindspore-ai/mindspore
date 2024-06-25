@@ -123,6 +123,35 @@ ShapeVector BroadCastInferShape(const std::string &op_name, const ValuePtrList &
   return broadcast_shape;
 }
 
+bool IsBroadcastable(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape) {
+  if (x_shape == y_shape) {
+    return true;
+  }
+
+  if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
+    return true;
+  }
+
+  if (x_shape.size() < y_shape.size()) {
+    return false;
+  }
+
+  auto miss = x_shape.size() - y_shape.size();
+  for (size_t i = 0; i < y_shape.size(); i++) {
+    if (x_shape[miss + i] == y_shape[i]) {
+      continue;
+    }
+    if (x_shape[miss + i] == -1) {
+      continue;
+    }
+    if (y_shape[i] == -1 || y_shape[i] == 1) {
+      continue;
+    }
+    return false;
+  }
+  return true;
+}
+
 BaseShapePtr EltwiseGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(input_args[0]);
   MS_EXCEPTION_IF_NULL(input_args[1]);

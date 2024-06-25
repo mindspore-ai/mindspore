@@ -191,6 +191,7 @@ std::vector<int64_t> CalBroadCastShape(const std::vector<int64_t> &x_shape, cons
                                        const std::string &op_y_name = "input2");
 abstract::ShapePtr BroadCastInferShape(const std::string &op_name,
                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+bool IsBroadcastable(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape);
 ShapeVector BroadCastInferShape(const std::string &op_name, const ValuePtrList &input_values);
 BaseShapePtr EltwiseGradInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 TypePtr EltwiseGradInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
