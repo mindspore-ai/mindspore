@@ -434,6 +434,91 @@ def cat(tensors, dim=0):
 
 
 def mean(input, dim=None, keepdim=False, *, dtype=None):
+    r"""
+    Reduces all dimension of a tensor by averaging all elements in the dimension, by default.
+    And reduce a dimension of `input` along the specified `dim`. `keepdim`
+    determines whether the dimensions of the output and input are the same.
+
+    Note:
+        The `dim` with tensor type is only used for compatibility with older versions and is not recommended.
+
+    Args:
+        input (Tensor[Number]): The input tensor. The dtype of the tensor to be reduced is number.
+            :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
+        dim (Union[int, tuple(int), list(int), Tensor]): The dimensions to reduce. Default: ``None`` ,
+            reduce all dimensions. Only constant value is allowed. Assume the rank of `input` is r,
+            and the value range is [-r,r).
+        keepdim (bool): If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default: ``False`` .
+
+    Keyword Args:
+        dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. Default: ``None`` .
+
+    Returns:
+        Tensor, has the same data type as the `input`.
+
+        - If `dim` is ``None`` , and `keepdim` is ``False`` ,
+          the output is a 0-D tensor representing the product of all elements in the input tensor.
+        - If `dim` is int, set as 1, and `keepdim` is ``False`` ,
+          the shape of output is :math:`(input_0, input_2, ..., input_R)`.
+        - If `dim` is tuple(int), set as (1, 2), and `keepdim` is ``False`` ,
+          the shape of output is :math:`(input_0, input_3, ..., input_R)`.
+        - If `dim` is 1-D Tensor, set as [1, 2], and `keepdim` is ``False`` ,
+          the shape of output is :math:`(input_0, input_3, ..., input_R)`.
+
+    Raises:
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `dim` is not one of the following: int, tuple, list or Tensor.
+        TypeError: If `keepdim` is not a bool.
+        ValueError: If `dim` is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, mint
+        >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
+        >>> output = mint.mean(x, 1, keep_dims=True)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 1, 5, 6)
+        >>> # case 1: Reduces a dimension by averaging all elements in the dimension.
+        >>> x = Tensor(np.array([[[2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2]],
+        ... [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
+        ... [[6, 6, 6, 6, 6, 6], [8, 8, 8, 8, 8, 8], [10, 10, 10, 10, 10, 10]]]),
+        ... mindspore.float32)
+        >>> output = mint.mean(x)
+        >>> print(output)
+        5.0
+        >>> print(output.shape)
+        ()
+        >>> # case 2: Reduces a dimension along the axis 0
+        >>> output = mint.mean(x, 0, True)
+        >>> print(output)
+        [[[4. 4. 4. 4. 4. 4.]
+        [5. 5. 5. 5. 5. 5.]
+        [6. 6. 6. 6. 6. 6.]]]
+        >>> # case 3: Reduces a dimension along the axis 1
+        >>> output = mint.mean(x, 1, True)
+        >>> print(output)
+        [[[2. 2. 2. 2. 2. 2.]]
+        [[5. 5. 5. 5. 5. 5.]]
+        [[8. 8. 8. 8. 8. 8.]]]
+        >>> # case 4: Reduces a dimension along the axis 2
+        >>> output = mint.mean(x, 2, True)
+        >>> print(output)
+        [[[ 2.]
+        [ 2.]
+        [ 2.]]
+        [[ 4.]
+        [ 5.]
+        [ 6.]]
+        [[ 6.]
+        [ 8.]
+        [10.]]]
+        """
     return mean_ext(input, axis=dim, keep_dims=keepdim, dtype=dtype)
 
 
@@ -697,7 +782,7 @@ __all__ = [
     # 22
 
     # 23
-    'mean',
+
     # 24
 
     # 25
