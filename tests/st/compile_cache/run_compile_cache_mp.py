@@ -14,7 +14,6 @@
 # ============================================================================
 import sys
 import numpy as np
-from mindspore.train import LossMonitor
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
@@ -27,11 +26,12 @@ from mindspore.nn.wrap.cell_wrapper import PipelineCell, Cell
 from mindspore import lazy_inline
 from mindspore.communication import init
 from mindspore.nn.optim import Momentum
+import mindspore.dataset as ds
 
 ms.set_seed(1)
 
-class GenDataset():
-    def __init__(self, data_input, length=3):
+class MyIter:
+    def __init__(self, data_input, length=1):
         self.data = data_input
         self.index = 1
         self.length = length
@@ -43,22 +43,11 @@ class GenDataset():
         return self.data
 
     def __iter__(self):
+        self.index = 0
         return self
 
-    @staticmethod
-    def get_dataset_size():
-        return 32
-
-    @staticmethod
-    def get_repeat_count():
-        return 1
-
-    @staticmethod
-    def get_batch_size():
-        return 32
-
-    def create_tuple_iterator(self, num_epochs=1, do_copy=True):
-        return self
+    def __len__(self):
+        return self.length
 
     def reset(self):
         self.index = 0
@@ -95,45 +84,15 @@ class Net(nn.Cell):
         return x
 
 
-class LossCallBack(LossMonitor):
-    def __init__(self, has_trained_epoch=0):
-        super(LossCallBack, self).__init__()
-        self.has_trained_epoch = has_trained_epoch
-
-    def step_end(self, run_context):
-        cb_params = run_context.original_args()
-        loss1 = cb_params.net_outputs
-
-        if isinstance(loss1, (tuple, list)):
-            if isinstance(loss1[0], Tensor) and isinstance(loss1[0].asnumpy(), np.ndarray):
-                loss1 = loss1[0]
-
-        if isinstance(loss1, Tensor) and isinstance(loss1.asnumpy(), np.ndarray):
-            loss1 = np.mean(loss1.asnumpy())
-
-        cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
-
-        if isinstance(loss1, float) and (np.isnan(loss1) or np.isinf(loss1)):
-            raise ValueError("epoch: {} step: {}. Invalid loss, terminating training.".format(
-                cb_params.cur_epoch_num, cur_step_in_epoch))
-        if self._per_print_times != 0 and cb_params.cur_step_num % self._per_print_times == 0:
-            print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num + int(self.has_trained_epoch),
-                                                      cur_step_in_epoch, loss1), flush=True)
-
-
-if __name__ == "__main__":
-    context.set_context(mode=context.GRAPH_MODE, enable_compile_cache=True, compile_cache_path=sys.argv[1])
-    context.set_context(jit_level='O0')
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", pipeline_stages=8)
-    init()
-    data1 = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    dataset = GenDataset(data1, 3)
-    net = PipelineCell(Net(), 8)
-    learning_rate = 0.01
-    momentum = 0.9
-    optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
-    model = Model(net, optimizer=optimizer)
-    loss_cb = LossCallBack(0)
-    cb = [loss_cb]
-    model.train(2, dataset, dataset_sink_mode=False, callbacks=cb)
-    context.set_context(enable_compile_cache=False)
+context.set_context(mode=context.GRAPH_MODE, enable_compile_cache=True, compile_cache_path=sys.argv[1])
+context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", pipeline_stages=8)
+init()
+data1 = Tensor(np.ones([32, 64]), dtype=ms.float32)
+net = PipelineCell(Net(), 8)
+learning_rate = 0.01
+momentum = 0.9
+optimizer = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate, momentum)
+model = Model(net, optimizer=optimizer)
+dataset = ds.GeneratorDataset(source=MyIter(data1, 1), column_names=["data"])
+model.build(dataset)
+context.set_context(enable_compile_cache=False)

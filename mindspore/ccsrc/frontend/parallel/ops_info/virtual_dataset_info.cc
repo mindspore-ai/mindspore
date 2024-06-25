@@ -31,42 +31,52 @@
 
 namespace mindspore {
 namespace parallel {
-Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
-  std::vector<std::vector<int64_t>> squashed_stra;
-  std::vector<std::vector<int64_t>> squashed_shape;
-  if (strategy == nullptr) {
+
+Status VirtualDatasetInfo::GetSquashedStrategyAndShape(const StrategyPtr &stra,
+                                                       std::vector<std::vector<int64_t>> *squashed_stra,
+                                                       std::vector<std::vector<int64_t>> *squashed_shape) {
+  if (stra == nullptr) {
     MS_LOG(ERROR) << name_ << ": The strategy is null.";
     return FAILED;
   }
   if (inputs_shape_new_.empty()) {
-    squashed_stra = strategy->GetInputDim();
-    squashed_shape = inputs_shape_;
-    if (squashed_stra.empty()) {
+    *squashed_stra = stra->GetInputDim();
+    *squashed_shape = inputs_shape_;
+    if (squashed_stra->empty()) {
       MS_LOG(ERROR) << name_ << ": Strategy size must be larger than 1.";
       return FAILED;
     }
   } else {
-    if (!strategy->HasTupleInTupleStrategy()) {
+    if (!stra->HasTupleInTupleStrategy()) {
       MS_LOG(ERROR) << name_ << ": The strategy must be tuple in tuple.";
       return FAILED;
     }
-    NewStrategies stra = strategy->GetInputNewDim();
-    if (stra.empty()) {
+    NewStrategies new_stra = stra->GetInputNewDim();
+    if (new_stra.empty()) {
       MS_LOG(ERROR) << name_ << ": Strategy size must be larger than 1.";
       return FAILED;
     }
     // Squash shapevalue and shapelist into one vector
     // ((1,2), ((1,2), (1,2))) -> ((1,2), (1,2), (1,2))
-    for (size_t i = 0; i < stra.size(); ++i) {
-      if (stra[i]->is_list() != inputs_shape_new_[i]->is_list()) {
+    for (size_t i = 0; i < new_stra.size(); ++i) {
+      if (new_stra[i]->is_list() != inputs_shape_new_[i]->is_list()) {
         MS_LOG(ERROR) << name_ << ": The strategy and shape must be both list or both value.";
         return FAILED;
       }
       auto shape_element = inputs_shape_new_[i]->GetAllElements();
-      auto stra_element = stra[i]->GetAllElements();
-      squashed_stra.insert(squashed_stra.end(), stra_element.begin(), stra_element.end());
-      squashed_shape.insert(squashed_shape.end(), shape_element.begin(), shape_element.end());
+      auto stra_element = new_stra[i]->GetAllElements();
+      squashed_stra->insert(squashed_stra->end(), stra_element.begin(), stra_element.end());
+      squashed_shape->insert(squashed_shape->end(), shape_element.begin(), shape_element.end());
     }
+  }
+  return SUCCESS;
+}
+
+Status VirtualDatasetInfo::CheckStrategy(const StrategyPtr &strategy) {
+  std::vector<std::vector<int64_t>> squashed_stra;
+  std::vector<std::vector<int64_t>> squashed_shape;
+  if (GetSquashedStrategyAndShape(strategy, &squashed_stra, &squashed_shape) != SUCCESS) {
+    return FAILED;
   }
   if (CheckStrategyByVector(squashed_stra, squashed_shape) != SUCCESS) {
     return FAILED;

@@ -230,10 +230,10 @@ Status FusedInferAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) 
       MS_LOG(ERROR) << name_ << ": The strategy and shape must be both list or both value.";
       return FAILED;
     }
-    auto shape_element = inputs_shape_new_[i]->GetAllElements();
-    auto stra_element = stra[i]->GetAllElements();
-    squashed_stra.insert(squashed_stra.end(), stra_element.begin(), stra_element.end());
-    squashed_shape.insert(squashed_shape.end(), shape_element.begin(), shape_element.end());
+    auto shape_ele = inputs_shape_new_[i]->GetAllElements();
+    auto stra_ele = stra[i]->GetAllElements();
+    squashed_stra.insert(squashed_stra.end(), stra_ele.begin(), stra_ele.end());
+    squashed_shape.insert(squashed_shape.end(), shape_ele.begin(), shape_ele.end());
   }
   if (CheckStrategyByVector(squashed_stra, squashed_shape) != SUCCESS) {
     return FAILED;

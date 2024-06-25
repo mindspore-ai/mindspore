@@ -10,4 +10,4 @@ rank_table_path=$4
 export RANK_TABLE_FILE=$rank_table_path
 export GLOG_v=2
 
-msrun --worker_num=8 --local_worker_num=8 python $file_name $cache_path
+msrun --worker_num=8 --local_worker_num=8 $file_name $cache_path

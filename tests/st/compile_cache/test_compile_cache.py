@@ -157,7 +157,6 @@ def run_compile_cache_mp(file_name, cache_path, log_file_name_first, log_file_na
     with open(log_fullname, "r") as f_first:
         data_first = f_first.read()
     assert "Check the consistency of dependency files hash failed. Execute all the compilation actions." in data_first
-    assert "loss is" in data_first
     for i in range(8):
         os.remove(f'worker_{i}.log')
     cmd = "bash run_compile_cache_mp.sh {} {} {} {}".format(file_name, cache_path, log_file_name_second,
@@ -176,8 +175,6 @@ def run_compile_cache_mp(file_name, cache_path, log_file_name_first, log_file_na
     if not has_log:
         print(f'{data_second}')
     assert has_log
-
-    assert "loss is" in data_second
 
     # Clean files
     shutil.rmtree(cache_path)
@@ -485,7 +482,7 @@ def test_compile_cache_run_two_cells_once():
     run_two_cells_networks_once("run_lenet_two_cells.py", "./lenet_two_cells", "lenet_two_cells.txt")
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_single

@@ -114,6 +114,8 @@ class TensorRedistribution {
   Status ComputePermuteCost(double input_size, const Shape &attrs);
   RedistributionOpListPtr InferTensorRedistributionOperatorListUnExpand(bool is_cost_model = false);
   Status MakeFromToLayout(const TensorLayout &from, const TensorLayout &to);
+  Status OperatorListIsEmpty(ConstructOperator *constructor, OperatorVector *const operator_vector,
+                             OutPutInfoVector *const output_info_vector);
   RedistributionLayoutTransfer layout_transfer_;
   AssembledDynamicDimsMapping dynamic_dim_mapping_;
   TensorLayout from_origin_no_assembled_;
