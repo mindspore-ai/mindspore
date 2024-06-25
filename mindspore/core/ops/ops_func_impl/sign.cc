@@ -1,5 +1,5 @@
 /**
- * Copyright 2021 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "ops/sign.h"
+#include "ops/ops_func_impl/sign.h"
 
 #include <memory>
 #include <set>
@@ -53,42 +53,22 @@ abstract::ShapePtr SignInferShape(const PrimitivePtr &primitive, const std::vect
 }
 
 TypePtr SignInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kFloat64, kInt32, kInt64, kComplex64, kComplex128};
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32,   kFloat64,    kInt32,
+                                         kInt64,   kComplex64, kComplex128, kBFloat16};
   auto x_type = input_args[0]->GetType();
   (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, valid_types, primitive->name());
   return x_type;
 }
 }  // namespace
 
-MIND_API_OPERATOR_IMPL(Sign, BaseOperator);
-AbstractBasePtr SignInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) {
-  MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t input_num = 1;
-  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
-
-  auto infer_type = SignInferType(primitive, input_args);
-  auto infer_shape = SignInferShape(primitive, input_args);
-  return abstract::MakeAbstract(infer_shape, infer_type);
+BaseShapePtr SignFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                      const std::vector<AbstractBasePtr> &input_args) const {
+  return SignInferShape(primitive, input_args);
 }
 
-// AG means auto generated
-class MIND_API AGSignInfer : public abstract::OpInferBase {
- public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive,
-                          const std::vector<AbstractBasePtr> &input_args) const override {
-    return SignInferShape(primitive, input_args);
-  }
+TypePtr SignFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  return SignInferType(primitive, input_args);
+}
 
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    return SignInferType(primitive, input_args);
-  }
-  AbstractBasePtr InferShapeAndType(const abstract::AnalysisEnginePtr &engine, const PrimitivePtr &primitive,
-                                    const std::vector<AbstractBasePtr> &input_args) const override {
-    return SignInfer(engine, primitive, input_args);
-  }
-};
-
-REGISTER_PRIMITIVE_OP_INFER_IMPL(Sign, prim::kPrimSign, AGSignInfer, false);
 }  // namespace ops
 }  // namespace mindspore

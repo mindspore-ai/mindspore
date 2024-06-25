@@ -26,7 +26,7 @@
 #include "ops/softplus.h"
 #include "ops/selu.h"
 #include "ops/ops_func_impl/hswish.h"
-#include "ops/sign.h"
+#include "ops/ops_func_impl/sign.h"
 #include "nnacl/op_base.h"
 #include "src/common/log_util.h"
 #include "ops/op_utils.h"
