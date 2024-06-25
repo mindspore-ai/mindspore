@@ -1,7 +1,7 @@
 mindspore.ops.Send
 ==================
 
-.. py:class:: mindspore.ops.Send(sr_tag, dest_rank, group=GlobalComm.WORLD_COMM_GROUP)
+.. py:class:: mindspore.ops.Send(sr_tag, dest_rank, group=GlobalComm.WORLD_COMM_GROUP, group_back=GlobalComm.WORLD_COMM_GROUP)
 
     发送张量到指定线程。
 
