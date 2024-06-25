@@ -13,14 +13,13 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
 import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
-from tests.st.utils import test_utils
 from tests.st.pynative.utils import GradOfAllParams, GradOfFirstInput
+from tests.mark_utils import arg_mark
 
 ms.set_context(mode=ms.PYNATIVE_MODE)
 
@@ -42,9 +41,10 @@ def net(x, y):
     return ms.grad(hook_test, grad_position=(0, 1))(x, y)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tensor_backward_hook_with_op_output():
     """
     Feature: Test tensor backward hook feature
@@ -63,9 +63,10 @@ def hook_test_input(x):
     return y1 + y2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tensor_backward_hook_with_net_input():
     """
     Feature: Test tensor backward hook feature
@@ -94,9 +95,10 @@ class Net(nn.Cell):
         return y + z
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tensor_backward_hook_with_weight():
     """
     Feature: Test tensor backward hook feature
@@ -130,9 +132,10 @@ class NetRemove(nn.Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tensor_backward_hook_handle_remove():
     """
     Feature: Test tensor backward hook feature
@@ -146,11 +149,10 @@ def test_tensor_backward_hook_handle_remove():
     assert np.allclose(output[0].asnumpy(), Tensor(np.array([1, 2, 3])).astype(np.float32).asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
-@test_utils.run_test_with_On
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tensor_hook_with_reduce_scatter():
     """
     Feature: mpi run 8P case of 'reduce_scatter' communication operator for pynative tensor hook.

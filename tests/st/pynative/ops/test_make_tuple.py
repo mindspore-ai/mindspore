@@ -13,10 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """ test_make_tuple """
-import pytest
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
+from tests.mark_utils import arg_mark
 
 
 # pylint: disable=unused-argument
@@ -29,10 +29,10 @@ class Net(nn.Cell):
         return ms.ops.make_tuple(x, y)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_make_tuple():
     """
     Feature: Unify the dynamic mode and the static mode.

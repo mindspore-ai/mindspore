@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test_pynative_layernorm_input_and_argmaxwithvalue """
-import pytest
 import numpy as np
 import mindspore.ops.operations as op
 from mindspore import Tensor, context
@@ -21,6 +20,7 @@ from mindspore.nn import LayerNorm, Cell
 from mindspore.common import ParameterTuple
 from mindspore.ops.composite import GradOperation
 from mindspore.train import Model
+from tests.mark_utils import arg_mark
 
 class _Grad(Cell):
     def __init__(self, grad, network, wrt_params=False, real_inputs_count=None):
@@ -220,32 +220,38 @@ def argmaxwithvalue_input():
     fact.forward_cmp()
     fact.grad_cmp()
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_layernorm_input_ascend():
     context.set_context(device_target="Ascend")
     layernorm_input()
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_layernorm_input_gpu():
     context.set_context(device_target="GPU")
     layernorm_input()
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_argmaxwithvalue_input_ascend():
     context.set_context(device_target="Ascend")
     argmaxwithvalue_input()
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_argmaxwithvalue_input_gpu():
     context.set_context(device_target="GPU")
     argmaxwithvalue_input()

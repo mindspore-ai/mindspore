@@ -14,7 +14,6 @@
 # ============================================================================
 """ test_loss_scale """
 import numpy as np
-import pytest
 import mindspore.nn as nn
 from mindspore import context
 from mindspore import Tensor, Parameter
@@ -27,6 +26,7 @@ from mindspore.common import dtype as mstype
 from mindspore.train import Model
 from mindspore.nn.optim import Lamb
 from mindspore.train.loss_scale_manager import DynamicLossScaleManager
+from tests.mark_utils import arg_mark
 
 def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
@@ -145,10 +145,11 @@ class MSELoss(nn.Cell):
         diff = data - label
         return self.reduce_mean(self.square(diff), get_axis(diff))
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_loss_scale_fp16_lr_overflow():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
@@ -168,10 +169,10 @@ def test_loss_scale_fp16_lr_overflow():
     assert output_1[0].asnumpy() == output_2[0].asnumpy()
     assert output_1[1].asnumpy() == output_2[1].asnumpy() == True
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_loss_scale_fp16_lr_overflow_set_sense_scale():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
@@ -193,10 +194,10 @@ def test_loss_scale_fp16_lr_overflow_set_sense_scale():
     assert output_1[0].asnumpy() == output_2[0].asnumpy()
     assert output_1[1].asnumpy() == output_2[1].asnumpy() == True
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_loss_scale_fp16_model_train_overflow():
     dataset_types = (np.float32, np.float32)
     dataset_shapes = ((16, 16), (16, 16))
@@ -211,10 +212,10 @@ def test_loss_scale_fp16_model_train_overflow():
     model = Model(net, loss_fn=loss, optimizer=optimizer, metrics=None, loss_scale_manager=scale_manager)
     model.train(2, dataset, dataset_sink_mode=False)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_loss_scale_fp16_opt_rmsprop_overflow():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))
@@ -232,10 +233,10 @@ def test_loss_scale_fp16_opt_rmsprop_overflow():
     assert output_1[0].asnumpy() == output_2[0].asnumpy()
     assert output_1[1].asnumpy() == output_2[1].asnumpy() == True
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_loss_scale_fp16_overflow():
     inputs = Tensor(np.ones([16, 16]).astype(np.float32))
     label = Tensor(np.zeros([16, 16]).astype(np.float32))

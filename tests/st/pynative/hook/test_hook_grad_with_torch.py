@@ -14,13 +14,13 @@
 # ============================================================================
 """ test_hook_grad_with_torch """
 import numpy as np
-import pytest
 import mindspore.nn as nn
 from mindspore.ops import GradOperation
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from tests.st.pynative.utils import GradOfAllInputs
 from tests.st.pynative.utils import GradOfFirstInput, GradOfAllInputsAndParams
+from tests.mark_utils import arg_mark
 import torch
 import torch.nn as pynn
 
@@ -165,9 +165,10 @@ class MENet2(nn.Cell):
         return output
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_bprop_compara_with_pytorch():
     """
     Feature: Test custom bprop nested grad feature
@@ -197,9 +198,10 @@ def test_bprop_compara_with_pytorch():
         assert np.allclose(inputs.grad, input_grad.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_bprop_with_weight():
     """
     Feature: Test custom bprop with weight feature
@@ -236,9 +238,10 @@ class MEMul1WithUsedMap(nn.Cell):
         return (grads,)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_bprop_used_map():
     """
     Feature: Test custom bprop with used map

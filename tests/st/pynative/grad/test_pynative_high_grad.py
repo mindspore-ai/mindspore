@@ -13,13 +13,13 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore import jit
 from tests.st.pynative.utils import GradOfFirstInput, GradOfAllInputs, HighGrad
+from tests.mark_utils import arg_mark
 
 
 class OneInputBprop(nn.Cell):
@@ -65,9 +65,10 @@ class TwoInputBprop(nn.Cell):
         return x * 5, y * 8
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_highgrad_one_input_sec_grad():
     """
     Feature: Test high grad feature
@@ -82,9 +83,10 @@ def test_highgrad_one_input_sec_grad():
     assert (dxdx.asnumpy() == np.array([5, 5]).astype(np.float32)).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_highgrad_one_input_third_grad():
     """
     Feature: Test high grad feature
@@ -98,9 +100,10 @@ def test_highgrad_one_input_third_grad():
     assert (third_grad.asnumpy() == np.array([0, 0]).astype(np.float32)).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_highgrad_two_input_sec_grad():
     """
     Feature: Test high grad feature
@@ -124,9 +127,10 @@ def test_highgrad_two_input_sec_grad():
     assert (dydy.asnumpy() == np.array([8, 8]).astype(np.float32)).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_ms_function_highgrad_one_input_sec_grad():
     """
     Feature: Test ms_function high grad feature

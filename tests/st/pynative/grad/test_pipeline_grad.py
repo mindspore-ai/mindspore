@@ -14,7 +14,6 @@
 # ============================================================================
 """ test_bprop """
 import numpy as np
-import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
@@ -22,6 +21,7 @@ from mindspore.common import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 from tests.st.pynative.utils import GradOfAllParams, GradOfAllInputs, HighGrad
+from tests.mark_utils import arg_mark
 
 
 def setup_module():
@@ -40,9 +40,10 @@ class Net(nn.Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_network_pipeline_set_grad():
     """
     Feature: Test pipeline_grad
@@ -80,9 +81,10 @@ def test_network_pipeline_set_grad():
         assert np.allclose(output3[1].asnumpy(), Tensor(np.array([7, 8, 9])).astype(np.float32).asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_network_pipeline_set_grad_mix_order():
     """
     Feature: Test pipeline_grad
@@ -120,9 +122,10 @@ def test_network_pipeline_set_grad_mix_order():
         assert np.allclose(output3[1].asnumpy(), Tensor(np.array([7, 8, 9])).astype(np.float32).asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_network_pipeline_grad_first():
     """
     Feature: Test pipeline_grad
@@ -156,9 +159,10 @@ def test_network_pipeline_grad_first():
         assert np.allclose(output3[1].asnumpy(), Tensor(np.array([7, 8, 9])).astype(np.float32).asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_network_pipeline_with_high_grad():
     """
     Feature: Test pipeline_grad
@@ -207,9 +211,10 @@ class OneInputBprop(nn.Cell):
         return (5 * x,)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_network_pipeline_with_bprop():
     """
     Feature: Test pipeline_grad
@@ -258,9 +263,10 @@ class MEMul1(nn.Cell):
         return tuple(grads)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_network_pipeline_with_bprop_high_grad():
     """
     Feature: Test pipeline_grad
@@ -292,9 +298,10 @@ def test_network_pipeline_with_bprop_high_grad():
                            0.001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_network_pipeline_mix_other_grad_bprop():
     """
     Feature: Test pipeline_grad
@@ -344,9 +351,10 @@ def test_network_pipeline_mix_other_grad_bprop():
         assert np.allclose(output3[1].asnumpy(), Tensor(np.array([7, 8, 9])).astype(np.float32).asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_network_pipeline_mix_other_forward_and_grad():
     """
     Feature: Test pipeline_grad
@@ -389,9 +397,10 @@ def test_network_pipeline_mix_other_forward_and_grad():
         assert np.allclose(output4[1].asnumpy(), Tensor(np.array([3, 5, 6])).astype(np.float32).asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_network_pipeline_same_input():
     """
     Feature: Test pipeline_grad
@@ -429,9 +438,10 @@ def test_network_pipeline_same_input():
         assert np.allclose(output3[1].asnumpy(), Tensor(np.array([7, 8, 9])).astype(np.float32).asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_network_pipeline_forward_and_backward_with_different_input():
     """
     Feature: Test pipeline_grad

@@ -19,6 +19,7 @@ import pytest
 from mindspore import Tensor, context
 from mindspore import dtype as mstype
 from mindspore.common.api import _pynative_executor
+from tests.mark_utils import arg_mark
 
 
 def setup_module():
@@ -26,10 +27,10 @@ def setup_module():
 
 
 # GPU: does not supported op "FloorMod"
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tesnsor_augassign_by_slice():
     input_np_3d = np.arange(120).reshape(4, 5, 6).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)
@@ -74,11 +75,10 @@ def test_tesnsor_augassign_by_slice():
         _pynative_executor.sync()
 
 
-# GPU: does not supported op "FloorMod"
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tesnsor_augassign_by_ellipsis():
     input_np_3d = np.arange(24).reshape(2, 3, 4).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)
@@ -135,11 +135,10 @@ def test_tesnsor_augassign_by_ellipsis():
     assert np.allclose(input_tensor_3d.asnumpy(), input_np_3d, 0.0001, 0.0001)
 
 
-# GPU: does not supported op "FloorMod"
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tesnsor_augassign_by_bool():
     input_np_3d = np.arange(120).reshape(4, 5, 6).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)
@@ -205,11 +204,10 @@ def test_tesnsor_augassign_by_bool():
         _pynative_executor.sync()
 
 
-# GPU: does not supported op "FloorMod"
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tesnsor_augassign_by_number():
     input_np_1d = np.arange(4).astype(np.float32)
     input_tensor_1d = Tensor(input_np_1d, mstype.float32)
@@ -330,11 +328,10 @@ def test_tesnsor_augassign_by_number():
         _pynative_executor.sync()
 
 
-# GPU: does not supported op "FloorMod"
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tesnsor_augassign_by_tensor():
     input_np_3d = np.arange(120).reshape(4, 5, 6).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)
@@ -439,11 +436,10 @@ def test_tesnsor_augassign_by_tensor():
     assert np.allclose(input_tensor_3d.asnumpy(), input_np_3d, 0.0001, 0.0001)
 
 
-# GPU: does not supported op "FloorMod"
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tesnsor_augassign_by_list():
     input_np_3d = np.arange(120).reshape(4, 5, 6).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)
@@ -618,11 +614,10 @@ def test_tesnsor_augassign_by_list():
         _pynative_executor.sync()
 
 
-# GPU: does not supported op "FloorMod"
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tesnsor_augassign_by_tuple():
     input_np_3d = np.arange(120).reshape(4, 5, 6).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)

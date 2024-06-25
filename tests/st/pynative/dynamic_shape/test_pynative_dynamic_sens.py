@@ -15,12 +15,12 @@
 
 import platform
 import numpy as np
-import pytest
 
 import mindspore as ms
 from mindspore import nn
 from mindspore import ops
 from mindspore import context, Tensor
+from tests.mark_utils import arg_mark
 
 
 class NetInner(nn.Cell):
@@ -93,12 +93,10 @@ class CmpNet(nn.Cell):
         return x
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_dyn_shape_output_without_user_sens():
     """
     Feature: PyNative dynamic shape out with no user sens input.
@@ -137,12 +135,10 @@ def test_pynative_dyn_shape_output_without_user_sens():
     assert np.allclose(grad[1].asnumpy(), net_cmp_grad[1].asnumpy(), 0.00001, 0.00001)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_dyn_shape_output_with_user_sens():
     """
     Feature: PyNative dynamic shape out with user sens input.

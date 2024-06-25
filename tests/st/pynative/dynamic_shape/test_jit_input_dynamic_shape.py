@@ -19,7 +19,7 @@ from mindspore.common import Tensor
 from mindspore.common import dtype
 from mindspore.common import jit
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
 d = Tensor(shape=[None, None], dtype=dtype.float32)
@@ -82,9 +82,10 @@ class ShapeAdd(Cell):
         return x.shape + y.shape + self.eps
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_dynamic_shape_jit_shape_add():
     """
     Feature: Jit call graph
@@ -115,9 +116,10 @@ class EmptyLess(Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_dynamic_rank_shape_lt():
     """
     Feature: Jit call graph
@@ -149,9 +151,10 @@ class ListEQ(Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_dynamic_rank_shape_list_eq():
     """
     Feature: Jit call graph
@@ -181,9 +184,10 @@ class ListLt(Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_set_inputs_shape_list_lt():
     """
     Feature: Jit call graph
@@ -214,9 +218,10 @@ class ListInsert(Cell):
         return xshape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_set_inputs_shape_list_insert():
     """
     Feature: Jit call graph
@@ -242,9 +247,10 @@ class NegStepSlice(Cell):
         return xshape[::step]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_set_inputs_shape_neg_step_slice():
     """
     Feature: Jit call graph
@@ -270,9 +276,10 @@ class SliceNegStep(Cell):
         return xshape[1:0:step]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_set_inputs_shape_slice_neg_step():
     """
     Feature: Jit call graph
@@ -303,9 +310,10 @@ class InTuple(Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_set_inputs_shape_in_tuple():
     """
     Feature: Jit call graph
@@ -331,9 +339,10 @@ class TupleIndex(Cell):
         return idx
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_set_inputs_shape_tuple_index():
     """
     Feature: Jit call graph
@@ -360,9 +369,10 @@ class SliceNeg(Cell):
         return xshape[a:b]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_set_inputs_shape_slice_neg():
     """
     Feature: Jit call graph
@@ -387,9 +397,10 @@ class GetItemNeg(Cell):
         return xshape[self.n]
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_set_inputs_shape_getitem_neg():
     """
     Feature: Jit call graph
@@ -415,9 +426,10 @@ class TupleMulInt(Cell):
         return xshape * t
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_set_inputs_shape_tuple_mul_int():
     """
     Feature: Jit call graph

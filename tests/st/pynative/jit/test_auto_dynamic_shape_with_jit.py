@@ -15,12 +15,12 @@
 
 import platform
 import numpy as np
-import pytest
 
 from mindspore import nn
 from mindspore import ops
 from mindspore import context, Tensor
 from mindspore import jit
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -116,12 +116,10 @@ class CmpNet(nn.Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_auto_dynamic_shape_with_inner_jit():
     """
     Feature: PyNative auto dynamic shape.
@@ -159,12 +157,10 @@ def test_pynative_auto_dynamic_shape_with_inner_jit():
     assert np.allclose(grad[1].asnumpy(), cmp_grad[1].asnumpy(), 0.00001, 0.00001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_auto_dynamic_shape_with_outer_jit():
     """
     Feature: PyNative auto dynamic shape.

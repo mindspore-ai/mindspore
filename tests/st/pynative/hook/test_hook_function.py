@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
 import mindspore.nn as nn
 import mindspore.ops.operations as P
 from mindspore.ops import composite as C
 from mindspore import context, Tensor
 from mindspore.common.api import jit
+from tests.mark_utils import arg_mark
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -56,12 +56,10 @@ class MsFuncVarHook(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_var_hook_forward():
     input_x = Tensor(np.random.randn(2, 2).astype(np.float32))
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -73,12 +71,10 @@ def test_var_hook_forward():
     assert np.allclose(out1.asnumpy(), out2.asnumpy(), 0.00001, 0.00001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_var_hook_grad():
     input_x = Tensor(np.random.randn(2, 2).astype(np.float32))
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -123,12 +119,10 @@ class MsFuncCellHook(nn.Cell):
         return x
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_cell_hook_forward():
     input_x = Tensor(np.random.randn(2, 2).astype(np.float32))
     context.set_context(mode=context.PYNATIVE_MODE)
@@ -140,10 +134,10 @@ def test_cell_hook_forward():
     assert np.allclose(out1.asnumpy(), out2.asnumpy(), 0.00001, 0.00001)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_cell_hook_grad():
     input_x = Tensor(np.random.randn(2, 2).astype(np.float32))
     context.set_context(mode=context.PYNATIVE_MODE)

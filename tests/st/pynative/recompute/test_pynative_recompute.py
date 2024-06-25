@@ -15,7 +15,6 @@
 
 import random
 import numpy as np
-import pytest
 
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
@@ -34,6 +33,7 @@ from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.wrap.cell_wrapper import WithLossCell
 from mindspore import ops
 from mindspore import recompute
+from tests.mark_utils import arg_mark
 random.seed(1)
 np.random.seed(1)
 ds.config.set_seed(1)
@@ -385,9 +385,10 @@ class GradWrap(Cell):
         return grad_by_list(self.network, weights)(x, label)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_resnet50_recompute_with_hook_and_mixed_precision():
     """
     Feature: Recompute with block, and set mix precision and backward hook
@@ -460,9 +461,10 @@ class Block(Cell):
         return transpose4
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_net_normal_recompute():
     """
     Feature: Recompute with normal block
@@ -500,9 +502,10 @@ class OuterBlock(Cell):
         return self.block(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_net_normal_recompute_function():
     """
     Feature: Recompute function with normal block
@@ -533,9 +536,10 @@ def test_net_normal_recompute_function():
     grad_net(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_net_normal_recompute_sequential_cell():
     """
     Feature: Recompute function with normal block
@@ -559,9 +563,10 @@ def test_net_normal_recompute_sequential_cell():
     grad_net(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_net_normal_recompute_not_tensor_input():
     """
     Feature: Recompute function with normal block
@@ -587,9 +592,10 @@ def test_net_normal_recompute_not_tensor_input():
     grad_net(x, None, (y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_net_recompute_not_tensor_input():
     """
     Feature: Recompute function with normal block
