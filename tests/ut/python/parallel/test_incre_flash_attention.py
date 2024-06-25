@@ -53,7 +53,7 @@ def generate_inputs(
     query = Tensor(np.ones(q_shape, dtype=dtype))
     key = Tensor(np.ones(kv_shape, dtype=dtype))
     value = Tensor(np.ones(kv_shape, dtype=dtype))
-    attn_mask = Tensor(np.ones(attn_mask_shape, dtype=dtype)) if attn_mask else None
+    attn_mask = Tensor(np.ones(attn_mask_shape, dtype=np.bool_)) if attn_mask else None
     actual_seq_lengths = (
         Tensor(np.ones((B,), dtype=np.int64)) if actual_seq_lengths else None
     )

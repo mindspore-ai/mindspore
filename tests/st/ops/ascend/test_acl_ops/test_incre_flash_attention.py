@@ -59,7 +59,7 @@ def test_incre_flash_attention_bsh_fwd():
     key = mutable((Tensor(np.ones([B, S, H]), dtype=mstype.float16),))
     value = mutable((Tensor(np.ones([B, S, H]), dtype=mstype.float16),))
     padding_mask = Tensor(np.ones([B, 1, 1, S]), dtype=mstype.float16)
-    attn_mask = Tensor(np.ones([B, 1, 1, S]), dtype=mstype.float16)
+    attn_mask = Tensor(np.ones([B, 1, 1, S]), dtype=mstype.bool_)
     actual_seq_lengths = [S] * B
     asl_tensor = Tensor(actual_seq_lengths, dtype=mstype.int64)
 
