@@ -20,6 +20,7 @@ from mindspore import Tensor
 from mindspore.ops.auto_generate import abs
 from mindspore import ops
 from mindspore import context
+from tests.mark_utils import arg_mark
 
 @test_utils.run_with_cell
 def abs_forward_func(x):
@@ -34,10 +35,11 @@ def abs_backward_func(x):
 def abs_dyn_shape_func(x):
     return abs(x)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode',
                          [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_abs_forward(mode):
@@ -55,10 +57,10 @@ def test_abs_forward(mode):
     assert np.allclose(output.asnumpy(), [1, 0, 0])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode',
                          [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_abs_backward(mode):
@@ -76,10 +78,10 @@ def test_abs_backward(mode):
     assert np.allclose(output.asnumpy(), [1.0, 0, 0])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode',
                          [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_abs_vmap(mode):
@@ -95,10 +97,10 @@ def test_abs_vmap(mode):
     assert np.allclose(output.asnumpy(), [[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode',
                          [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_abs_dynamic_shape(mode):
@@ -117,10 +119,10 @@ def test_abs_dynamic_shape(mode):
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode',
                          [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_abs_dynamic_rank(mode):

@@ -14,7 +14,6 @@
 # ============================================================================
 """ test_pynative_hook_grad """
 import numpy as np
-import pytest
 import mindspore.nn as nn
 import mindspore.ops.operations as P
 from mindspore import context
@@ -22,6 +21,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops.composite import GradOperation
 from mindspore import ops as OP
 from tests.st.pynative.utils import GradOfAllInputs
+from tests.mark_utils import arg_mark
 
 
 class MetaFactory:
@@ -403,154 +403,163 @@ def pynative_hook_child_cell_record_grad():
         assert False
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_diff_hook_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_diff_hook()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_diff_hook_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_diff_hook()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_outermost_cell_not_change_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_outermost_cell_not_change_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_outermost_cell_not_change_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_outermost_cell_not_change_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_all_cell_record_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_all_cell_record_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_all_cell_record_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_all_cell_record_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_mul_change_input_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_mul_change_input_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_mul_change_input_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_mul_change_input_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_mul2_change_input_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_mul2_change_input_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_mul2_change_input_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_mul2_change_input_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_outermost_cell_change_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_outermost_cell_change_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_outermost_cell_change_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_outermost_cell_change_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_outermost_cell_record_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_outermost_cell_record_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_outermost_cell_record_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_outermost_cell_record_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_bprop_outermost_cell_record_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_bprop_outermost_cell_record_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_bprop_outermost_cell_record_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_bprop_outermost_cell_record_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_child_cell_record_grad_ascend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     pynative_hook_child_cell_record_grad()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_child_cell_record_grad_gpu():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     pynative_hook_child_cell_record_grad()
@@ -579,9 +588,10 @@ class HookNet(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_backward_hook_normal():
     """
     Feature: Test hook grad feature
@@ -622,9 +632,10 @@ def hook_wrapper():
     return hook_fn
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_hookbackward_should_two_zero():
     """
     Feature: Test hook backward feature

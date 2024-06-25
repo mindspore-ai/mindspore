@@ -18,6 +18,7 @@ import mindspore
 from mindspore import ops
 import mindspore.nn as nn
 from mindspore import Parameter, Tensor, _no_grad
+from tests.mark_utils import arg_mark
 
 
 class Network(nn.Cell):
@@ -88,9 +89,10 @@ class NestedNetWork2(nn.Cell):
         return k
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_no_grad_with_parameter():
     """
     Feature: Test no grad feature
@@ -106,9 +108,10 @@ def test_no_grad_with_parameter():
     np.testing.assert_almost_equal(gradients.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_no_grad_with_nested_network():
     """
     Feature: Test no grad feature
@@ -124,9 +127,10 @@ def test_no_grad_with_nested_network():
     np.testing.assert_almost_equal(gradients.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_no_grad_decorator():
     """
     Feature: Test no grad feature
@@ -142,9 +146,10 @@ def test_no_grad_decorator():
     np.testing.assert_almost_equal(gradients.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_no_grad_exception():
     """
     Feature: Test no grad feature

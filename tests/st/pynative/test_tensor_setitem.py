@@ -19,6 +19,7 @@ import pytest
 from mindspore import Tensor, context, ops
 from mindspore.nn import Cell
 from mindspore import dtype as mstype
+from tests.mark_utils import arg_mark
 
 
 def setup_module():
@@ -75,11 +76,10 @@ class SetitemGradNet(Cell):
         return gradient_func(x, y)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_setitem_grad():
     """
     Feature: Test setitem grad
@@ -97,11 +97,10 @@ def test_setitem_grad():
     assert np.array_equal(output[1].asnumpy(), y_grad)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_setitem_by_list():
     x = np.ones((2, 3, 4), dtype=np.float32)
 
@@ -113,11 +112,10 @@ def test_setitem_by_list():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_setitem_with_sequence():
     x = np.ones((2, 3, 4), dtype=np.float32)
 
@@ -130,11 +128,10 @@ def test_setitem_with_sequence():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_setitem_dtype():
     x = np.ones((2, 3, 4), dtype=np.float32)
 
@@ -147,11 +144,10 @@ def test_setitem_dtype():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_setitem_by_tuple_with_int():
     x = np.arange(24).reshape(2, 3, 4).astype(np.float32)
 
@@ -165,11 +161,10 @@ def test_setitem_by_tuple_with_int():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_setitem_by_tuple_with_list():
     x = np.arange(24).reshape(2, 3, 4).astype(np.float32)
 
@@ -183,11 +178,10 @@ def test_setitem_by_tuple_with_list():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_setitem_by_nested_unit_list():
     x = np.arange(24).reshape(2, 3, 4).astype(np.float32)
 
@@ -199,11 +193,10 @@ def test_setitem_by_nested_unit_list():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_setitem_with_broadcast():
     x = np.arange(2*3*4*5*6).reshape(2, 3, 4, 5, 6).astype(np.float32)
     v1 = np.full((1, 4, 5), -1).tolist()
@@ -218,11 +211,10 @@ def test_setitem_with_broadcast():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_setitem_mul_by_scalar():
     x = np.ones((4, 5), dtype=np.float32)
 
@@ -233,11 +225,10 @@ def test_setitem_mul_by_scalar():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_setitem_by_slice():
     x = np.ones((3, 4, 5), dtype=np.float32)
 
@@ -255,11 +246,10 @@ def test_setitem_by_slice():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_setitem_by_tuple_of_slices():
     x = np.ones((3, 4, 5), dtype=np.float32)
 
@@ -279,12 +269,10 @@ class TensorItemSetWithNumber(Cell):
         return ret
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_itemset_with_number():
     net = TensorItemSetWithNumber()
     input_1d_np = np.array([1]).astype(np.float32)
@@ -315,11 +303,10 @@ class TensorItemSetByItemWithNumber(Cell):
         return ret
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_setitem_dim_expand():
     x = np.ones((2, 3, 4), dtype=np.float32)
     def cases(x):
@@ -331,11 +318,10 @@ def test_setitem_dim_expand():
     setup_testcase(x, cases)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_itemset_by_number_with_number():
     net = TensorItemSetByItemWithNumber()
     input_1d_np = np.array([1]).astype(np.float32)
@@ -385,11 +371,10 @@ def test_itemset_by_number_with_number():
         net(input_3d_ms, index_np_4, value_np_2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_itemset_by_tuple_with_number():
     net = TensorItemSetByItemWithNumber()
     input_1d_np = np.array([1]).astype(np.float32)

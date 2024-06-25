@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
 import torch
 import mindspore
@@ -21,6 +20,7 @@ from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore import context
 from mindspore.ops.operations import math_ops as MP
+from tests.mark_utils import arg_mark
 
 
 class NetTest(Cell):
@@ -36,10 +36,10 @@ class NetTest(Cell):
         return self.sinc(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_and_graph_mixed_run():
     """
     Feature: test pynative and graph mixed run

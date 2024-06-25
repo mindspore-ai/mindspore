@@ -14,7 +14,6 @@
 # ============================================================================
 import time
 import numpy as np
-import pytest
 
 import mindspore
 import mindspore.nn as nn
@@ -26,6 +25,7 @@ from mindspore.nn.wrap.cell_wrapper import WithLossCell
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 np.random.seed(1)
 
@@ -128,12 +128,10 @@ class GradWrap(nn.Cell):
         return grad_by_list(self.network, weights)(x, label)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_ascend_pynative_lenet():
     context.set_context(mode=context.PYNATIVE_MODE)
     np.random.seed(42)
@@ -167,12 +165,10 @@ def test_ascend_pynative_lenet():
     assert np.allclose(loss_output.asnumpy(), 0.00183057, rtol=1e-5, atol=1e-5)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_lenet_with_new_interface():
     context.set_context(mode=context.PYNATIVE_MODE)
 

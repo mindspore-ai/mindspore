@@ -26,6 +26,7 @@ from mindspore.nn import WithLossCell
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.common.initializer import TruncatedNormal
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
@@ -163,10 +164,10 @@ class Ms_Cell_Change_Shape(nn.Cell):
         return dout
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_lenet_train_hook_function_print_and_save_grad():
     hook = test_custom_hook_function_base()
     function = hook.test_custom_hook_function(custom_hook_function_print_and_save_grad,
@@ -187,10 +188,10 @@ def test_pynative_lenet_train_hook_function_print_and_save_grad():
     assert success
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_custom_bprop_and_Cell_MulAdd():
     custom_cell = test_custom_cell_base()
     mul_add = custom_cell.test_custom_cell_function(MulAdd())
@@ -200,10 +201,10 @@ def test_pynative_custom_bprop_and_Cell_MulAdd():
            (Tensor(1.0, mstype.float32), Tensor(2.0, mstype.float32))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_custom_bprop_and_cell_ms_cell_change_shape():
     """
     Feature: Custom bprop
@@ -219,10 +220,10 @@ def test_pynative_custom_bprop_and_cell_ms_cell_change_shape():
     assert "should have the same shape as the 0th arg" in str(ex.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_custom_bprop_and_Cell_Ms_Cell():
     """
     Feature: Custom bprop
@@ -316,10 +317,10 @@ class LeNet(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_hook():
     """
     Feature: Hook for auto diff.

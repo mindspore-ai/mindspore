@@ -16,7 +16,6 @@
 import os
 
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.dataset as ds
@@ -35,6 +34,7 @@ from mindspore.common.initializer import TruncatedNormal
 from mindspore.train.callback._callback import _handle_loss
 from mindspore.common import JitConfig
 from mindspore.common import set_seed
+from tests.mark_utils import arg_mark
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
@@ -190,9 +190,10 @@ class CustomCallback(Callback):
         assert np.allclose(self.except_loss[cb_params.cur_step_num - 1], loss)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_set_inputs_cell_before_top_cell_unknown_shape():
     """
     Feature: PyNative Unknown shape
@@ -223,9 +224,10 @@ def test_set_inputs_cell_before_top_cell_unknown_shape():
     model.train(1, ds_train, callbacks=[CustomCallback()], dataset_sink_mode=True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_set_inputs_cell_after_top_cell_unknown_shape():
     """
     Feature: PyNative Unknown shape

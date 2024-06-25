@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
@@ -25,6 +24,7 @@ from mindspore import dtype as mstype
 import mindspore.context as context
 import mindspore.ops.functional as F
 from tests.st.pynative.utils import GradOfDefault
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -42,11 +42,10 @@ def conv_bn_relu(x):
     return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_call_single_func():
     """
     Feature: Jit
@@ -77,11 +76,10 @@ class CellConvBnReLU(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_call_single_cell():
     """
     Feature: Jit
@@ -139,11 +137,10 @@ class CellCallSingleCell(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_cell_call_cell():
     """
     Feature: Jit
@@ -199,11 +196,10 @@ class CallSameFunc(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_call_same_func():
     """
     Feature: Jit
@@ -234,12 +230,10 @@ def test_call_same_func():
     assert np.allclose(grad_second[1][3].asnumpy(), -84.6, 0.1, 0.1)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_jit():
     """
     Feature: Jit
@@ -294,12 +288,10 @@ def test_pynative_jit():
     assert np.allclose(out_a[1][0].asnumpy(), out_b[1][0].asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_jit_mix_execute():
     """
     Feature: PyNative jit.
@@ -323,12 +315,10 @@ def test_pynative_jit_mix_execute():
     assert output == 8
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_jit_empty_graph():
     """
     Feature: PyNative jit.
@@ -358,11 +348,10 @@ def test_pynative_jit_empty_graph():
     assert output.asnumpy() == 10
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_jit_control_flow_if_break():
     """
     Feature: PyNative jit.
@@ -398,12 +387,10 @@ def test_pynative_jit_control_flow_if_break():
     assert (output.asnumpy() == z.asnumpy() * 4).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_jit_with_dynamic_shape():
     """
     Feature: PyNative jit.
@@ -420,10 +407,10 @@ def test_pynative_jit_with_dynamic_shape():
     assert (output[0].asnumpy() == np.array([1, 2, 3, 5])).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_jit_with_tuple_inputs():
     """
     Feature: PyNative jit.
@@ -450,12 +437,10 @@ def test_pynative_jit_with_tuple_inputs():
     assert (out[0].asnumpy() == np.ones([2, 2]) + 1).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_jit_with_optional_inputs():
     """
     Feature: PyNative jit.
@@ -474,12 +459,10 @@ def test_pynative_jit_with_optional_inputs():
     assert foo(x=a, y=4).asnumpy() == 7
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_jit_with_args_inputs():
     """
     Feature: PyNative jit.
@@ -495,12 +478,10 @@ def test_pynative_jit_with_args_inputs():
     assert foo(x, 1, 2).asnumpy() == 6
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_jit_with_kwargs_inputs():
     """
     Feature: PyNative jit.
@@ -517,9 +498,10 @@ def test_pynative_jit_with_kwargs_inputs():
     assert foo(x, **data).asnumpy() == [4]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_ms_vmap_cell_list():
     """
     Feature: PyNative jit.
@@ -571,11 +553,10 @@ def test_ms_vmap_cell_list():
     assert np.all(output_grad.asnumpy() == expect_grad)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_control_flow_for_in_while_return_in_for_param():
     """
     Feature: PyNative jit.
@@ -612,9 +593,10 @@ def test_control_flow_for_in_while_return_in_for_param():
     assert expect_grad == ms_grad
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_jit_pyexecute():
     """
     Feature: PyNative jit.

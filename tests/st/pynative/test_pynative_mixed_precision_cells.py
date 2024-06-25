@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test_pynative_mixed_precision_cells """
-import pytest
 import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
@@ -22,6 +21,7 @@ from mindspore import context
 from mindspore.nn import Cell
 from mindspore.nn import ReLU
 from mindspore.common.tensor import Tensor
+from tests.mark_utils import arg_mark
 
 class MetaFactory:
     def __init__(self):
@@ -146,47 +146,56 @@ def mixed_precision_multiples_cell_03():
 
     allclose_nparray(graph_output_03.asnumpy(), pynative_output_03.asnumpy(), 0.001, 0.001)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_mixed_precision_multiples_cell_ascend_01():
     context.set_context(device_target="Ascend")
     mixed_precision_multiples_cell_01()
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_mixed_precision_multiples_cell_gpu_01():
     context.set_context(device_target="GPU")
     mixed_precision_multiples_cell_01()
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_mixed_precision_multiples_cell_ascend_02():
     context.set_context(device_target="Ascend")
     mixed_precision_multiples_cell_02()
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_mixed_precision_multiples_cell_gpu_02():
     context.set_context(device_target="GPU")
     mixed_precision_multiples_cell_02()
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_mixed_precision_multiples_cell_ascend_03():
     context.set_context(device_target="Ascend")
     mixed_precision_multiples_cell_03()
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_mixed_precision_multiples_cell_gpu_03():
     context.set_context(device_target="GPU")
     mixed_precision_multiples_cell_03()

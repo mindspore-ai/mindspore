@@ -16,11 +16,11 @@
 import inspect
 from functools import wraps
 
-import pytest
 from mindspore import nn
 import mindspore as ms
 from mindspore import Tensor, ops
 import numpy as np
+from tests.mark_utils import arg_mark
 
 ms.set_context(jit_syntax_level=ms.STRICT)
 
@@ -121,12 +121,10 @@ def run_test_func(test_func):
     return wrapper
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_base_tensor_data_converter():
     """
     Feature: test base-tensor convert

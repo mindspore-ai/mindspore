@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 from mindspore.ops.primitive import constexpr
 from mindspore.common.api import jit
+from tests.mark_utils import arg_mark
 
 
 def _temp_func():
@@ -38,9 +38,10 @@ def run_in_pyhon(func):
     return func is None
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_constexpr():
     """
     Feature: test const expr
