@@ -832,15 +832,17 @@ ValuePtr ForwardExecutor::RunOpInVM(const FrontendOpRunInfoPtr &op_run_info) con
 bool ForwardExecutor::CellNotSetMixedPrecision(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   // get mix_type from Cell stack
-  const auto &cur_cell = forward_cell_stack_.top();
-  MS_EXCEPTION_IF_NULL(cur_cell);
-  MixedPrecisionType mix_type = cur_cell->GetMixedPrecisionType();
-  if (mix_type == kNotSet) {
-    // get mix_precision_type from amp strategy stack
-    return !GetMixprecisionTypeFromStrategy(op_run_info);
+  if (!IsFirstCell()) {
+    const auto &cur_cell = forward_cell_stack_.top();
+    MS_EXCEPTION_IF_NULL(cur_cell);
+    MixedPrecisionType mix_type = cur_cell->GetMixedPrecisionType();
+    if (mix_type != kNotSet) {
+      op_run_info->mix_type = mix_type;
+      return false;
+    }
   }
-  op_run_info->mix_type = mix_type;
-  return false;
+  // get mix_precision_type from amp strategy stack
+  return !GetMixprecisionTypeFromStrategy(op_run_info);
 }
 
 void ForwardExecutor::ExecuteLazyTask() const {

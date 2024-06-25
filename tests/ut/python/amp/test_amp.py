@@ -158,6 +158,11 @@ class MatmulNet(nn.Cell):
         return self.matmul(x, self.param)
 
 
+def func_matmul(x):
+    y = Tensor(np.ones([1, 1]), dtype=ms.float16)
+    return ops.MatMul()(x, y)
+
+
 def test_amp_auto_white_list():
     """
     Feature: auto mixed precision auto mode.
@@ -166,7 +171,7 @@ def test_amp_auto_white_list():
     """
     ms.set_context(mode=ms.PYNATIVE_MODE)
     input_data = Tensor(np.ones([1, 1]), dtype=ms.float32)
-
+    # test with net
     net = MatmulNet()
     with pytest.raises(TypeError):
         net(input_data)
@@ -174,7 +179,17 @@ def test_amp_auto_white_list():
     net = auto_mixed_precision(net, "auto")
     out = net(input_data)
     assert out.dtype == ms.float32
-    out_matmul = net._backbone(input_data)
+    out_matmul = net._backbone(input_data)  # pylint: disable=protected-access
+    assert out_matmul.dtype == ms.float16
+    # test with func
+    with pytest.raises(TypeError):
+        out = func_matmul(input_data)
+        _ = out.asnumpy()
+
+    net_func = auto_mixed_precision(func_matmul, "auto")
+    out = net_func(input_data)
+    assert out.dtype == ms.float32
+    out_matmul = net_func._backbone(input_data)  # pylint: disable=protected-access
     assert out_matmul.dtype == ms.float16
 
 
@@ -188,6 +203,10 @@ class LogNet(nn.Cell):
         return self.log(x)
 
 
+def func_log(x):
+    return ops.Log()(x)
+
+
 def test_amp_auto_black_list():
     """
     Feature: auto mixed precision auto mode.
@@ -196,11 +215,18 @@ def test_amp_auto_black_list():
     """
     ms.set_context(mode=ms.PYNATIVE_MODE)
     input_data = Tensor(np.ones([1, 1]), dtype=ms.float32)
+    # test with net
     net = LogNet()
     net = auto_mixed_precision(net, "auto")
     out = net(input_data)
     assert out.dtype == ms.float32
-    out_matmul = net._backbone(input_data)
+    out_matmul = net._backbone(input_data)  # pylint: disable=protected-access
+    assert out_matmul.dtype == ms.float32
+    # test with func
+    net_func = auto_mixed_precision(func_log, "auto")
+    out = net_func(input_data)
+    assert out.dtype == ms.float32
+    out_matmul = net_func._backbone(input_data)  # pylint: disable=protected-access
     assert out_matmul.dtype == ms.float32
 
 
@@ -215,6 +241,11 @@ class BiasAddNet(nn.Cell):
         return self.biasadd(x, self.param)
 
 
+def func_biasadd(x):
+    y = Tensor([1, 2, 3], dtype=ms.float16)
+    return ops.BiasAdd()(x, y)
+
+
 def test_amp_auto_promote():
     """
     Feature: auto mixed precision auto mode.
@@ -224,19 +255,37 @@ def test_amp_auto_promote():
     ms.set_context(mode=ms.PYNATIVE_MODE)
     # promote with fp16
     input_fp16 = Tensor(np.ones([3, 3]), dtype=ms.float16)
+    # test with net
     net = BiasAddNet()
     net = auto_mixed_precision(net, "auto")
     out = net(input_fp16)
     assert out.dtype == ms.float32
-    out_matmul = net._backbone(input_fp16)
+    out_matmul = net._backbone(input_fp16)  # pylint: disable=protected-access
     assert out_matmul.dtype == ms.float16
+    # test with func
+    net_func = auto_mixed_precision(func_biasadd, "auto")
+    out = net_func(input_fp16)
+    assert out.dtype == ms.float32
+    out_matmul = net_func._backbone(input_fp16)  # pylint: disable=protected-access
+    assert out_matmul.dtype == ms.float16
+
     # promote with fp32
     input_fp32 = Tensor(np.ones([3, 3]), dtype=ms.float32)
+    # test with net
     net2 = BiasAddNet()
     with pytest.raises(TypeError):
         net2(input_fp32)
     net2 = auto_mixed_precision(net2, "auto")
     out2 = net2(input_fp32)
     assert out2.dtype == ms.float32
-    out_matmul2 = net2._backbone(input_fp32)
+    out_matmul2 = net2._backbone(input_fp32)  # pylint: disable=protected-access
+    assert out_matmul2.dtype == ms.float32
+    # test with func
+    with pytest.raises(TypeError):
+        out = func_biasadd(input_fp32)
+        _ = out.asnumpy()
+    net_func2 = auto_mixed_precision(func_biasadd, "auto")
+    out2 = net_func2(input_fp32)
+    assert out2.dtype == ms.float32
+    out_matmul2 = net_func2._backbone(input_fp32)  # pylint: disable=protected-access
     assert out_matmul2.dtype == ms.float32
