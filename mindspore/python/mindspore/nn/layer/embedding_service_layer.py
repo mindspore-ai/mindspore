@@ -193,7 +193,7 @@ class EsEmbeddingLookup(nn.Cell):
             self.mask_zero = 0
             self.padding_key = 0
             self.padding_key_mask = 1
-        if (self.optimizer_mode == "adam") or (self.optimizer_mode == "ftrl") or (self.optimizer_mode == "adagrad"):
+        if self.optimizer_mode in ["adam", "ftrl", "adagrad"]:
             self.backward_int_params = ([self.global_step], [self.mask_zero],
                                         [self.padding_key], [self.padding_key_mask])
         else:
