@@ -15,12 +15,33 @@
 import numpy as np
 import pytest
 import mindspore as ms
-import mindspore.nn as nn
 from mindspore import Tensor, ops
+from mindspore.mint import greater
+from tests.st.utils import test_utils
+from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
-class GreaterNet(nn.Cell):
-    def construct(self, x, y):
-        return ops.greater(x, y)
+
+def generate_random_input(shape, dtype):
+    return np.random.randn(*shape).astype(dtype)
+
+
+def generate_expect_forward_output(x, y):
+    return np.greater(x, y)
+
+
+@test_utils.run_with_cell
+def greater_forward_func(x, y):
+    return greater(x, y)
+
+
+@test_utils.run_with_cell
+def greater_backward_func(x, y):
+    return ops.grad(greater_forward_func)(x, y)
+
+
+@test_utils.run_with_cell
+def greater_vmap_func(x, y):
+    return ops.vmap(greater_forward_func, in_axes=0, out_axes=0)(x, y)
 
 
 @pytest.mark.level0
@@ -30,40 +51,44 @@ class GreaterNet(nn.Cell):
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_greater_op(mode):
+def test_greater_op_normal(mode):
     """
-    Feature: test notequal op
-    Description: test notequal run by pyboost
-    Expectation: expect correct forward result.
+    Feature: pyboost function.
+    Description: test function greater run forward and backward.
+    Expectation: expect correct result.
     """
     ms.set_context(mode=mode)
-    x = Tensor(np.array([1, 2]).astype(np.float32))
-    y = Tensor(np.array([2, 1]).astype(np.float32))
-    net = GreaterNet()
-    output = net(x, y)
-    assert np.allclose(output.asnumpy(), [False, True])
+    x = generate_random_input((1, 2, 3, 4), np.float32)
+    y = generate_random_input((1, 2, 3, 4), np.float32)
+    output = greater_forward_func(ms.Tensor(x), ms.Tensor(y))
+    expect = generate_expect_forward_output(x, y)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+    x2 = Tensor(np.array([1, 2]).astype(np.float32))
+    y2 = Tensor(np.array([2, 1]).astype(np.float32))
+    output2 = greater_backward_func(ms.Tensor(x2), ms.Tensor(y2))
+    expect2 = np.array([0., 0., 0.]).astype(np.float32)
+    assert np.allclose(output2[0].asnumpy(), expect2, rtol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_greater_op_backward(mode):
+def test_greater_op_forward_case01(mode):
     """
-    Feature: test notequal op
-    Description: test notequal run by pyboost
-    Expectation: expect correct forward result.
+    Feature: pyboost function.
+    Description: test function greater run forward add cases.
+    Expectation: expect correct result.
     """
     ms.set_context(mode=mode)
-    x = Tensor(np.array([1, 2]).astype(np.float32))
-    y = Tensor(np.array([2, 1]).astype(np.float32))
-    net = GreaterNet()
-    grads = ops.grad(net)(x, y)
-    expect_out = np.array([0., 0., 0.]).astype(np.float32)
-    assert np.allclose(grads[0].asnumpy(), expect_out, rtol=1e-4)
+    x = Tensor(np.array([24]).astype(np.float32))
+    y = Tensor(np.array([1]).astype(np.float32))
+    output = greater_forward_func(x, y)
+    assert np.allclose(output.asnumpy(), [True])
 
 
 @pytest.mark.level1
@@ -75,64 +100,33 @@ def test_greater_op_backward(mode):
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_greater_op_vmap(mode):
     """
-    Feature: test notequal op
-    Description: test notequal run by pyboost
-    Expectation: expect correct forward result.
+    Feature: pyboost function.
+    Description: test greater run vamp.
+    Expectation: expect correct result.
     """
     ms.set_context(mode=mode)
-    x = Tensor(np.array([[1, 2, 3], [3, 2, 1]]).astype(np.float32))
-    y = Tensor(np.array([[2, 2, 2], [2, 2, 2]]).astype(np.float32))
-    net = GreaterNet()
-    out = ops.vmap(net, in_axes=0, out_axes=0)(x, y)
-    expect_out = np.array([[False, False, True], [True, False, False]]).astype(np.bool)
-    np.testing.assert_array_equal(out.asnumpy(), expect_out)
+    x = generate_random_input((2, 3, 4, 5), np.float32)
+    y = generate_random_input((2, 3, 4, 5), np.float32)
+    output = greater_vmap_func(ms.Tensor(x), ms.Tensor(y))
+    expect_out = generate_expect_forward_output(x, y)
+    np.testing.assert_array_equal(output.asnumpy(), expect_out)
 
 
 @pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_greater_op_dynamic_shape(mode):
-    """
-    Feature: test notequal op
-    Description: test notequal run by pyboost
-    Expectation: expect correct forward result.
-    """
-    ms.context.set_context(mode=mode)
-    x_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
-    y_dyn = ms.Tensor(shape=[None], dtype=ms.float32)
-    x = Tensor(np.array([1, 2, 4]).astype(np.float32))
-    y = Tensor(np.array([2, 4, 3]).astype(np.float32))
-    net = GreaterNet()
-    expect_out = net(x, y)
-    net.set_inputs(x_dyn, y_dyn)
-    output = net(x, y)
-    np.testing.assert_allclose(output.asnumpy(), expect_out.asnumpy(), rtol=1e-4)
-
-
-@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_greater_op_dynamic_rank(mode):
+@pytest.mark.platform_arm_ascend_training
+def test_greater_op_dynamic_shape():
     """
-    Feature: test notequal op
-    Description: test notequal run by pyboost
-    Expectation: expect correct forward result.
+    Feature: pyboost function..
+    Description: test function greater with dynamic shape and dynamic rank.
+    Expectation: expect correct result.
     """
-    ms.context.set_context(mode=mode)
-    x = Tensor(np.random.randn(10, 2, 20, 59, 19), ms.float32)
-    y = Tensor(np.random.randn(10, 2, 20, 59, 19), ms.float32)
-    x_dyn = Tensor(shape=None, dtype=x.dtype)
-    y_dyn = Tensor(shape=None, dtype=y.dtype)
-    net = GreaterNet()
-    expect_out = net(x, y)
-    net.set_inputs(x_dyn, y_dyn)
-    output = net(x, y)
-    np.testing.assert_allclose(output.asnumpy(), expect_out.asnumpy(), rtol=1e-4)
+    x1 = generate_random_input((2, 3, 4, 5), np.float32)
+    y1 = generate_random_input((2, 3, 4, 5), np.float32)
+    x2 = generate_random_input((3, 4, 5, 6, 7), np.float32)
+    y2 = generate_random_input((3, 4, 5, 6, 7), np.float32)
+
+    TEST_OP(greater_forward_func
+            , [[ms.Tensor(x1), ms.Tensor(y1)], [ms.Tensor(x2), ms.Tensor(y2)]], 'greater')

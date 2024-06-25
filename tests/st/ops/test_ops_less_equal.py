@@ -16,7 +16,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops
-from mindspore.ops.auto_generate import less_equal
+from mindspore.mint import less_equal
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 import tests.st.utils.test_utils as test_utils
@@ -58,7 +58,27 @@ def test_ops_less_equal_forward(context_mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    x, other = generate_random_input((2, 3, 4, 5), np.float32)
+    x, other = generate_random_input((8192, 2048), np.float32)
+    output = less_equal_forward_func(ms.Tensor(x), ms.Tensor(other))
+    expect = generate_expect_forward_output(x, other)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_less_equal_forward_case01(context_mode):
+    """
+    Feature: pyboost function.
+    Description: test function less_equal forward.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    x = np.array(1.0)
+    other = np.random.randn(8192).astype(np.float32)
     output = less_equal_forward_func(ms.Tensor(x), ms.Tensor(other))
     expect = generate_expect_forward_output(x, other)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)

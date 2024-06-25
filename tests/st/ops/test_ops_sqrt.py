@@ -18,6 +18,7 @@ import mindspore as ms
 from mindspore import ops
 from mindspore.ops import sqrt
 from tests.st.utils import test_utils
+from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 
 def generate_random_input(shape, dtype):
@@ -53,17 +54,23 @@ def sqrt_vmap_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_sqrt_forward(context_mode):
+def test_ops_sqrt_normal(context_mode):
     """
     Feature: pyboost function.
-    Description: test function sqrt forward.
+    Description: test function sqrt forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
+    x = generate_random_input((64, 32, 1), np.float32)
     output = sqrt_forward_func(ms.Tensor(x))
     expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+    x2 = generate_random_input((2, 3, 4, 5), np.float32)
+    output2 = sqrt_backward_func(ms.Tensor(x2))
+    expect2 = generate_expect_backward_output(x2)
+    np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-3)
+
 
 
 @pytest.mark.level1
@@ -72,16 +79,16 @@ def test_ops_sqrt_forward(context_mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_sqrt_backward(context_mode):
+def test_ops_sqrt_forward_case01(context_mode):
     """
     Feature: pyboost function.
-    Description: test function sqrt backward.
+    Description: test function sqrt forward add cases.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
-    output = sqrt_backward_func(ms.Tensor(x))
-    expect = generate_expect_backward_output(x)
+    x = generate_random_input((1), np.float32)
+    output = sqrt_forward_func(ms.Tensor(x))
+    expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
@@ -109,101 +116,14 @@ def test_ops_sqrt_vmap(context_mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_sqrt_forward_dynamic_shape(context_mode):
+def test_ops_sqrt_dynamic_shape():
     """
     Feature: pyboost function.
-    Description: test function sqrt forward with dynamic shape.
-    Expectation: expect correct result.
+    Description: test function sqrt with dynamic shape and dynamic rank.
+    Expectation: return the correct value.
     """
-    ms.context.set_context(mode=context_mode)
-    x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(sqrt_forward_func)
-    test_cell.set_inputs(x_dyn)
     x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_forward_output(x1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_forward_output(x2)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    x2 = generate_random_input((3, 4, 5, 6, 7), np.float32)
 
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_sqrt_forward_dynamic_rank(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function sqrt forward with dynamic rank.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(sqrt_forward_func)
-    test_cell.set_inputs(x_dyn)
-    x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_forward_output(x1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_forward_output(x2)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_sqrt_backward_dynamic_shape(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function sqrt backward with dynamic shape.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(sqrt_backward_func)
-    test_cell.set_inputs(x_dyn)
-    x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_backward_output(x1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_backward_output(x2)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_sqrt_backward_dynamic_rank(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function sqrt backward with dynamic rank.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(sqrt_backward_func)
-    test_cell.set_inputs(x_dyn)
-    x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_backward_output(x1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_backward_output(x2)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    
+    TEST_OP(sqrt_forward_func,
+            [[ms.Tensor(x1)], [ms.Tensor(x2)]], 'sqrt')
