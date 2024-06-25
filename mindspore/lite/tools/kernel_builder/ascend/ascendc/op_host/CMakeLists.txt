@@ -1,5 +1,6 @@
 set(BUILD_INC_910A_DIR ${ASCEND_PATH}/latest/include)
 set(SECUREC_INC_DIR ${TOP_DIR}/third_party/securec/include)
+add_compile_options(-fstack-protector-all -D_FORTIFY_SOURCE=2 -O2)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
