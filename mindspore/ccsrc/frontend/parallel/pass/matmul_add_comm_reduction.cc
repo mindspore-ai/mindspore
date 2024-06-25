@@ -222,7 +222,7 @@ void HandleNodeBiasAdd(const AnfNodePtr &comm_node, const AnfNodePtr &add_node_i
   mindspore::tensor::TensorPtr tensor_ptr =
     std::make_shared<mindspore::tensor::Tensor>(rank_size, bias_dtype_ele->GetType());
   auto const_node = NewValueNode(MakeValue(tensor_ptr));
-  const_node->set_abstract(bias_node_abstract);
+  const_node->set_abstract(const_node->value()->ToAbstract());
 
   auto mul_prim = NewValueNode(prim::kPrimMul);
   auto cur_prim = GetValueNode<PrimitivePtr>(mul_prim);
@@ -259,7 +259,7 @@ void HandleNodePullUp(const AnfNodePtr &add_node, const std::vector<AnfNodePtr> 
     auto manager = graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
     auto add_cnode = add_node->cast<CNodePtr>();
-    HandleNodeBiasAdd(each_node, add_cnode->input(index));
+    HandleNodeBiasAdd(each_node, add_cnode->input(index + 1));
     (void)manager->Replace(each_node, pre_node);
     MS_LOG(INFO) << "For comm reduction, pull up node next to comm node, node is: " << pre_node->DebugString();
     if ((*comm_node_map).find(add_node) == (*comm_node_map).end()) {
