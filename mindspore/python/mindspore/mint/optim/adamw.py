@@ -86,15 +86,15 @@ class AdamW(Optimizer):
        \end{aligned}
 
     .. warning::
-        This is an experimental optimizer API that is subject to change.
-        This module must be used with lr scheduler module in `LRScheduler Class
-        <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
-        For Ascend, it is only supported on platforms above Atlas A2.
+        - This is an experimental optimizer API that is subject to change.
+          This module must be used with lr scheduler module in `LRScheduler Class
+          <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
+        - For Ascend, it is only supported on platforms above Atlas A2.
 
     Args:
         params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
             parameter groups.
-        lr (Union[float, Tensor], optional): learning rate. Default: ``1e-3``.
+        lr (float, optional): learning rate. Default: ``1e-3``.
         betas (Tuple[float, float], optional): The exponential decay rate for the moment estimations.
             Default: ``(0.9, 0.999)``.
         eps (float, optional): term added to the denominator to improve
@@ -110,7 +110,7 @@ class AdamW(Optimizer):
         - **gradients** (tuple[Tensor]) - The gradients of `params`.
 
     Raises:
-        ValueError: If the learning rate is not int, float or Tensor.
+        ValueError: If the learning rate is not float.
         ValueError: If the learning rate is less than 0.
         ValueError: If the `eps` is less than 0.
         ValueError: If the `betas` not in the range of [0, 1).
