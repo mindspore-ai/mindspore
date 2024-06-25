@@ -4,7 +4,7 @@ from mindspore.common import Tensor
 import mindspore.ops.operations as P
 from mindspore import context, jit
 from ..share.utils import allclose_nparray
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class CtrlWhileContinueInElse(Cell):
@@ -45,9 +45,7 @@ class CtrlWhile2ElifContinueInIf(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_2elif_continue_in_if():
     '''
     Description: test control flow, 2elif in while, continue in if

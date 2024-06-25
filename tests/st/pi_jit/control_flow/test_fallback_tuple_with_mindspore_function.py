@@ -18,19 +18,18 @@ import mindspore.nn as nn
 from mindspore import jit, Tensor, context
 from mindspore.ops import Primitive
 import pytest
+from tests.mark_utils import arg_mark
 
 
 @pytest.mark.skip
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fallback_tuple_with_mindspore_function():
     """
     Feature: JIT Fallback
     Description: Test fallback when local input has tuple with mindspore function type, such as Cell, Primitive.
     Expectation: No exception.
     """
-    def test_isinstance(a, base_type):
+    def isinstance_fn(a, base_type):
         mro = type(a).mro()
         for i in base_type:
             if i in mro:
@@ -39,15 +38,13 @@ def test_fallback_tuple_with_mindspore_function():
 
     @jit(mode="PIJit")
     def foo():
-        return test_isinstance(np.array(1), (np.ndarray, nn.Cell, Primitive))
+        return isinstance_fn(np.array(1), (np.ndarray, nn.Cell, Primitive))
 
     context.set_context(mode=context.PYNATIVE_MODE)
     assert foo()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_prune_if_in_while():
     """
     Feature: JIT Fallback

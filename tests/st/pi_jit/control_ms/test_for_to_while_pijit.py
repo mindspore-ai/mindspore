@@ -5,15 +5,14 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore import jit
+from tests.mark_utils import arg_mark
 
 
 grad_all = C.GradOperation(get_all=True)
 
 
 # Although we don't transform for to while any more, we keep this test case.
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_single_for_01():
     """
     Feature: Get single for from abstract.

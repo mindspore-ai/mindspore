@@ -6,6 +6,7 @@ from mindspore.common.initializer import Normal
 from mindspore import context, Tensor, jit
 from mindspore import numpy as np
 from ..share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
 cfg = {
@@ -114,9 +115,7 @@ def ms_func_lenet(x):
     return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [method_lenet])
 @pytest.mark.parametrize('ms_func', [ms_method_lenet])
 @pytest.mark.parametrize('x', [Tensor(np.ones((32, 1, 32, 32)).astype(np.float32) * 0.01)])
@@ -135,9 +134,7 @@ def test_method_lenet(func, ms_func, x):
     match_array(res.asnumpy(), ms_res.asnumpy(), error=6, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [func_lenet])
 @pytest.mark.parametrize('ms_func', [ms_func_lenet])
 @pytest.mark.parametrize('x', [Tensor(np.ones((32, 1, 32, 32)).astype(np.float32) * 0.01)])

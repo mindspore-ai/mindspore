@@ -6,7 +6,7 @@ from mindspore.ops import operations as P
 from mindspore import context, jit
 from mindspore.common.parameter import Parameter
 from ..share.utils import match_array
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class CtrlForInIfBC(Cell):
@@ -33,9 +33,7 @@ class CtrlForInIfBC(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_in_if_continue_break():
     """
     Feature: PIJit
@@ -79,9 +77,7 @@ class CtrlForInIfBR(Cell):
         return res
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_in_if_return_break():
     """
     Feature: PIJit
@@ -127,9 +123,7 @@ class CtrlForInIfBCR(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_in_if_break_continue_return():
     """
     Feature: PIJit
@@ -172,9 +166,7 @@ class CtrlWhileInIfCR(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_if_continue_return():
     """
     Feature: PIJit
@@ -222,9 +214,7 @@ class CtrlWhileInIfBCR(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_if_break_continue_return():
     """
     Feature: PIJit

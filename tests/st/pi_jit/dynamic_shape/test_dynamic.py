@@ -6,6 +6,7 @@ from mindspore.common import dtype
 from mindspore.common import Tensor
 import numpy as np
 import pytest
+from tests.mark_utils import arg_mark
 
 
 class DynamicFactory:
@@ -30,9 +31,7 @@ class Net7(Cell):
 
 
 @pytest.mark.skip
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_frontend_optimize():
     '''
     TEST_SUMMARY:

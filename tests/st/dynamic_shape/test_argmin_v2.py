@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.operations.array_ops import ArgminV2
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -40,8 +41,6 @@ class ArgMinV2DynatimicShape(nn.Cell):
         return y
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_argmin_v2_base():
     """
     Feature: Test ArgminV2 op in with dynamic shape input.

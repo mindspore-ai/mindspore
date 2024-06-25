@@ -1,12 +1,10 @@
 import numpy as np
-import pytest
 from ..share.ops.primitive.abs_ops import AbsFactory
 from ..dynamic_shape_operations.abs import AbsDynamicShapeMock
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_abs_input_1():
     """
     Description:
@@ -22,9 +20,7 @@ def test_p_abs_input_1():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_abs_input_1x1():
     """
     Description:
@@ -40,9 +36,7 @@ def test_p_abs_input_1x1():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_abs_input_256x256x256():
     """
     Description:
@@ -59,9 +53,7 @@ def test_p_abs_input_256x256x256():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_abs_input_1x1x1x1():
     """
     Description:
@@ -78,9 +70,7 @@ def test_p_abs_input_1x1x1x1():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_abs_input_32x2x16x8():
     """
     Description:
@@ -97,9 +87,7 @@ def test_p_abs_input_32x2x16x8():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_abs_input_1x1x1x1x1():
     """
     Description:
@@ -116,9 +104,7 @@ def test_p_abs_input_1x1x1x1x1():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_abs_input_32x8x16x8x32():
     """
     Description:
@@ -135,9 +121,7 @@ def test_p_abs_input_32x8x16x8x32():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_abs_input_32x8_dtype_fp16():
     """
     Description:
@@ -154,9 +138,7 @@ def test_p_abs_input_32x8_dtype_fp16():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_p_abs_4d_float32():
     """
     Description:
@@ -172,9 +154,7 @@ def test_dynamic_shape_p_abs_4d_float32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_p_abs_3d_float32():
     """
     Description:
@@ -190,9 +170,7 @@ def test_dynamic_shape_p_abs_3d_float32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_p_abs_6d_float16():
     """
     Description:

@@ -19,6 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.ops import operations as P
 from mindspore import dtype as mstype
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -47,10 +48,8 @@ class StridedSliceDynamicRank(nn.Cell):
         return self.stridedslice(x, begin, end, strides)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level2', card_mark='onecard',
+          essential_mark='unessential')
 def test_stridedslice_dynamic_shape():
     """
     Feature: Dynamic shape.
@@ -67,10 +66,8 @@ def test_stridedslice_dynamic_shape():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_stridedslice_dynamic_rank():
     """
     Feature: Dynamic rank.

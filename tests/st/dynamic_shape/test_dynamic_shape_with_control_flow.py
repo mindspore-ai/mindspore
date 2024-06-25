@@ -22,6 +22,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore import Parameter
+from tests.mark_utils import arg_mark
 
 
 class UniqueIf(nn.Cell):
@@ -54,9 +55,7 @@ class UniqueWhile(nn.Cell):
         return self.shape(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_if():
     """
     Feature: Dynamic shape for control flow.
@@ -71,9 +70,7 @@ def test_unique_if():
     assert x_shape == 5
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_while():
     """
     Feature: Dynamic shape for control flow.

@@ -7,6 +7,7 @@ from mindspore.common import dtype as ms
 from mindspore.common import Parameter
 import mindspore.ops.operations as P
 from ..share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
 class CtrlWhileBC(Cell):
@@ -30,9 +31,7 @@ class CtrlWhileBC(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_break_continue():
     """
     TEST_SUMMARY:
@@ -70,9 +69,7 @@ class CtrlWhileBR(Cell):
         return y
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_break_return():
     """
     TEST_SUMMARY:
@@ -110,9 +107,7 @@ class CtrlWhileCR(Cell):
         return y
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_continue_return():
     """
     TEST_SUMMARY:
@@ -152,9 +147,7 @@ class CtrlWhileBCR(Cell):
         return y
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_continue_return_break():
     """
     TEST_SUMMARY:
@@ -193,9 +186,7 @@ class CtrlForBC(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_break_continue():
     """
     TEST_SUMMARY:
@@ -238,9 +229,7 @@ class CtrlForCR(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_continue_return():
     """
     TEST_SUMMARY:
@@ -285,9 +274,7 @@ class CtrlForBCR(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_continue_break_return():
     """
     TEST_SUMMARY:

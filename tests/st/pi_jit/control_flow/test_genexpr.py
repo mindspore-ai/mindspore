@@ -17,11 +17,10 @@ import pytest
 import types
 from mindspore import jit
 from mindspore._c_expression import get_code_extra
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_listcomp():
     """
     Feature: Generator expression unrolling
@@ -42,9 +41,7 @@ def test_listcomp():
     assert isinstance(x[1], types.GeneratorType)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("x", [(1, 2, 3), (1, 1, 1, 1)])
 def test_genexpr(x):
     """

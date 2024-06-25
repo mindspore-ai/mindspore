@@ -27,15 +27,14 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vjp
 from mindspore.ops.function.grad.grad_func import custom_vjp
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
 
 grad_all = C.GradOperation(get_all=True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_custom_vjp_mul_add():
     """
     Features: Custom function bprop
@@ -61,9 +60,7 @@ def test_custom_vjp_mul_add():
     assert grads[1] == Tensor(4, dtype=ms.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_custom_vjp_inline_mul_add():
     """
     Features: Custom function bprop
@@ -94,9 +91,7 @@ def test_custom_vjp_inline_mul_add():
     assert grads[1] == Tensor(6, dtype=ms.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_custom_vjp_with_no_bprop():
     """
     Features: Custom function bprop
@@ -116,9 +111,7 @@ def test_custom_vjp_with_no_bprop():
     assert grads[1] == Tensor(1, dtype=ms.int32)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_custom_vjp_bprop_in_fn_2():
     """
     Features: Custom function bprop
@@ -155,9 +148,7 @@ def test_custom_vjp_bprop_in_fn_2():
     assert (grads[1].asnumpy() == np.zeros([2, 2]).astype(np.float32)).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_custom_vjp_bprop_in_fn3():
     """
     Features: Custom function bprop
@@ -198,9 +189,7 @@ def test_custom_vjp_bprop_in_fn3():
     assert (grads[1].asnumpy() == np.array([[5, 5], [5, 5]]).astype(np.float32)).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_custom_vjp_one_input_bprop():
     """
     Features: Custom function bprop
@@ -224,9 +213,7 @@ def test_custom_vjp_one_input_bprop():
     assert (grads[0].asnumpy() == np.array([5, 5]).astype(np.float32)).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_custom_vjp_inline_bprop_two_input():
     """
     Features: Custom function bprop
@@ -258,9 +245,7 @@ def test_custom_vjp_inline_bprop_two_input():
     assert len(grads) == 2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_custom_vjp_inline_bprop_multi_input():
     """
     Features: Custom function bprop
@@ -316,9 +301,7 @@ def test_custom_vjp_inline_bprop_multi_input():
     assert len(grads) == 2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_custom_vjp_fn_with_net():
     """
     Features: Custom function bprop
@@ -366,9 +349,7 @@ def test_custom_vjp_fn_with_net():
     assert np.allclose(out[1].asnumpy(), expect_dy)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_custom_vjp_forward_net_call_fn():
     """
     Feature: Custom function bprop

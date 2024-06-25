@@ -3,6 +3,7 @@ from mindspore import numpy as np
 from mindspore import Tensor, jit, context
 import mindspore.ops as ops
 from .share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
 def func_impl(a, b):
@@ -43,9 +44,7 @@ tensor_params = [
 ]
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func, ms_func', [(func_with_anotion, ms_func_with_anotion)])
 @pytest.mark.parametrize('x, y', [(tensor_params[0][0], tensor_params[0][1])])
 def test_forward(func, ms_func, x, y):
@@ -61,9 +60,7 @@ def test_forward(func, ms_func, x, y):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func, ms_func', [(func_with_anotion, ms_func_with_anotion)])
 @pytest.mark.parametrize('x, y', [(tensor_params[0][0], tensor_params[0][1])])
 def test_forward2(func, ms_func, x, y):
@@ -79,9 +76,7 @@ def test_forward2(func, ms_func, x, y):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func, ms_func', [(grad_func, ms_grad_func)])
 @pytest.mark.parametrize('x, y, z', tensor_params)
 def test_backward(func, ms_func, x, y, z):
@@ -97,9 +92,7 @@ def test_backward(func, ms_func, x, y, z):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func, ms_func', [(grad_func, ms_grad_func)])
 @pytest.mark.parametrize('x, y, z', tensor_params)
 def test_backward2(func, ms_func, x, y, z):

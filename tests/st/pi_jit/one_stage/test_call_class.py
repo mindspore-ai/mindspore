@@ -18,15 +18,14 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.common.api import jit
 from ..share.utils import match_array, assert_executed_by_graph_mode
+from tests.mark_utils import arg_mark
 
 cfg = {
     "compile_by_trace": True,
 }
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_create_tensor():
     """
     Feature: One stage basic operation.
@@ -48,9 +47,7 @@ def test_create_tensor():
     assert_executed_by_graph_mode(fn)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_create_tensor_list():
     """
     Feature: One stage basic operation.

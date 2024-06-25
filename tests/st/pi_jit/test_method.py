@@ -3,6 +3,7 @@ import numpy as np
 from mindspore import Tensor, jit, context
 import mindspore.ops as ops
 from .share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
 class ExpandDimsTest():
@@ -19,9 +20,7 @@ class ExpandDimsTest():
         return self.expandDims(input_x, self.axis)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('input_x', [Tensor(np.ones((2, 2, 2, 2)).astype(np.float32))])
 def test_method_annotation(input_x):
     """

@@ -5,7 +5,7 @@ from mindspore.common import Tensor
 import mindspore.ops.operations as P
 import numpy as np
 from .ctrl_factory import CtrlFactory
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class CtrlWhileInWhileBC(Cell):
@@ -33,9 +33,7 @@ class CtrlWhileInWhileBC(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_while_in_if_break_continue():
     '''
     TEST_SUMMARY:
@@ -81,9 +79,7 @@ class CtrlWhileInWhileCB(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_if_continue_break():
     '''
     TEST_SUMMARY:
@@ -128,9 +124,7 @@ class CtrlWhileInWhileBR(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_while_break_return():
     '''
     TEST_SUMMARY:
@@ -175,9 +169,7 @@ class CtrlWhileInWhileRB(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_while_return_break():
     '''
     TEST_SUMMARY:
@@ -220,9 +212,7 @@ class CtrlWhileInWhileCR(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_while_continue_return():
     '''
     TEST_SUMMARY:

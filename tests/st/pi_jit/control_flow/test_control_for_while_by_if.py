@@ -6,7 +6,7 @@ from mindspore.ops import operations as P
 from mindspore import context, jit
 from mindspore.common.parameter import Parameter
 from ..share.utils import match_array
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class CtrlWhilebyIfBR(Cell):
@@ -31,9 +31,7 @@ class CtrlWhilebyIfBR(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_by_if_break_return():
     """
     Feature: PIJit
@@ -78,9 +76,7 @@ class CtrlWhilebyIfCR(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_by_if_continue_return():
     """
     Feature: PIJit

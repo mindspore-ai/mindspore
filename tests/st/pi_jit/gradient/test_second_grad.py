@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import jit, Tensor, nn, ops, context
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -17,9 +18,7 @@ class Net(nn.Cell):
         return out1, out2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('x_train', [Tensor(np.array([3.1415926]), dtype=ms.float32)])
 @pytest.mark.parametrize('y_train', [Tensor(np.array([3.1415926]), dtype=ms.float32)])
 @pytest.mark.parametrize('Net1', [Net])

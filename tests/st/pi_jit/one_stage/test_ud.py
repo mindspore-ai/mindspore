@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from math import cos
 from mindspore import Tensor, context
 from mindspore.common.api import jit
+from tests.mark_utils import arg_mark
 
 cfg = {
     "replace_nncell_by_construct": True,
@@ -31,9 +32,7 @@ cfg = {
 }
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_return_dict():
     """
     Feature: One stage basic operation.
@@ -54,9 +53,7 @@ def test_return_dict():
     assert ret == {"1": Tensor([2]), "2": Tensor([3])}
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_return_dict_2():
     """
     Feature: One stage basic operation.
@@ -77,9 +74,7 @@ def test_return_dict_2():
 
 
 @pytest.mark.skip(reason="CodeHook for one stage failed")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_break_in_subgraph():
     """
     Feature: One stage basic operation.
@@ -109,9 +104,7 @@ def test_break_in_subgraph():
     assert not ret
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_break_in_subgraph_2():
     """
     Feature: One stage basic operation.
@@ -134,9 +127,7 @@ def test_break_in_subgraph_2():
     assert np.allclose(ret.asnumpy(), 5.5524473)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_break_in_subgraph_3():
     """
     Feature: One stage basic operation.
@@ -159,9 +150,7 @@ def test_break_in_subgraph_3():
     assert np.allclose(ret.asnumpy(), 5.5524473)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.skip
 def test_break_with_control_flow():
     """
@@ -182,9 +171,7 @@ def test_break_with_control_flow():
 
 
 @pytest.mark.skip(reason="Random error occurs when run whole files")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_break_with_control_flow_2():
     """
     Feature: One stage basic operation.
@@ -206,9 +193,7 @@ def test_break_with_control_flow_2():
     assert np.all(ret[1].asnumpy() == np.array([2, 3, 4]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_break_with_same_value():
     """
     Feature: One stage basic operation.
@@ -230,9 +215,7 @@ def test_break_with_same_value():
     assert ret[3] == int
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ud_collect_capture_output():
     """
     Feature: Enable sequence operations with nested or irregular inputs.
@@ -254,9 +237,7 @@ def test_ud_collect_capture_output():
 
 
 @pytest.mark.skip # One-stage will fix it later
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_after_for_in_if_4():
     """
     Feature: PIJit

@@ -18,6 +18,7 @@ from mindspore.nn import Cell
 from mindspore import jit
 import pytest
 from .share.utils import match_array
+from tests.mark_utils import arg_mark
 
 config = {
     "replace_nncell_by_construct": True,
@@ -26,9 +27,7 @@ config = {
 }
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_try_block():
     """
     Feature:
@@ -58,9 +57,7 @@ def test_try_block():
     assert a == b
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_try_block_2():
     """
     Feature:
@@ -84,9 +81,7 @@ def test_try_block_2():
     assert np.all(ret.asnumpy() == np.array([2, 4, 6]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_try_block_3():
     """
     Feature:
@@ -112,9 +107,7 @@ def test_try_block_3():
     assert np.all(ret.asnumpy() == np.array([3, 5, 7]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_try_block_4():
     """
     Feature:
@@ -140,9 +133,7 @@ def test_try_block_4():
     assert np.all(ret.asnumpy() == np.array([3, 5, 7]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_block():
     """
     Feature:
@@ -188,9 +179,7 @@ def test_with_block():
     assert a == b
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_kw_inline():
     """
     Feature:
@@ -220,9 +209,7 @@ def test_kw_inline():
     assert a == b
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cell_free():
     """
     Feature:
@@ -253,9 +240,7 @@ def test_cell_free():
     assert res1 == res2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_branch():
     """
     Feature:
@@ -291,9 +276,7 @@ def test_branch():
     assert r4 is None
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('a', [1])
 def test_break_at_loop(a):
     """
@@ -323,9 +306,7 @@ def test_break_at_loop(a):
     assert r1 == r2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('a', [numpy.rand(10)])
 @pytest.mark.parametrize('b', [numpy.rand(10)])
 def test_toy_example(a, b):
@@ -350,9 +331,7 @@ def test_toy_example(a, b):
     match_array(r1, r2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('param', [int, 1, print])
 def test_stack_restore(param):
     """
@@ -387,9 +366,7 @@ def test_stack_restore(param):
 
 
 @pytest.mark.skip(reason="guard fix later")
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('c', [(1, 2), [1, 2], "12", {'a': 1, 'b': 2}, Tensor([[1], [2]])])
 def test_unpack(c):
     """
@@ -412,9 +389,7 @@ def test_unpack(c):
     assert r1 == r2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_unpack2():
     """
     Feature:

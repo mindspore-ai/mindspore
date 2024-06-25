@@ -16,11 +16,10 @@
 import pytest
 import numpy as np
 from mindspore import Tensor, jit, context
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_after_if_tensor():
     """
     Feature: PIJit
@@ -45,9 +44,7 @@ def test_while_after_if_tensor():
     assert res == 11
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_after_if_tensor_2():
     """
     Feature: PIJit
@@ -76,9 +73,7 @@ def test_while_after_if_tensor_2():
     assert res_z == 1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_while_after_if_numpy():
     """
     Feature: PIJit
@@ -103,9 +98,7 @@ def test_while_after_if_numpy():
     assert (res.asnumpy() == [-3, -4]).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_after_if_numpy_2():
     """
     Feature: PIJit

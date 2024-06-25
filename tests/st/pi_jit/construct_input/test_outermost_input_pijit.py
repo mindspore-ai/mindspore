@@ -7,6 +7,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 import mindspore.ops as ops
 from mindspore import context
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -47,11 +48,7 @@ list_arg = [[tensor_x, tensor_x], [[tensor_x, tensor_y], {"x": tensor_x, "y": te
 dict_arg = {"x": tensor_x, "y": tensor_y, "u": tensor_u}
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_non_tensor_inputs(mode):
     """
@@ -94,11 +91,7 @@ class GradCell(nn.Cell):
         return self.grad_all(self.net)(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_grad_parameter_input(mode):
     """
@@ -142,11 +135,7 @@ class GradCellWithParameterTuple(nn.Cell):
         return self.grad(self.net, self.params)(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_grad_parameter_as_input_and_fv2(mode):
     """

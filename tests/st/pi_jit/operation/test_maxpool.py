@@ -2,11 +2,10 @@ import numpy as np
 import pytest
 from mindspore import Tensor
 from ..share.ops.primitive.maxpool_ops import MaxPoolMock
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_maxpool_input_1x3x224x224_float16_strides_2_valid():
     """
     Feature: Ops.
@@ -23,9 +22,7 @@ def test_p_maxpool_input_1x3x224x224_float16_strides_2_valid():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_maxpool_input_2x2x2x2_float32_strides_2_valid():
     """
     Feature: Ops.
@@ -43,9 +40,7 @@ def test_p_maxpool_input_2x2x2x2_float32_strides_2_valid():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_maxpool_input_16x1x2x8_float16_strides_2_valid():
     """
     Feature: Ops.
@@ -62,9 +57,7 @@ def test_p_maxpool_input_16x1x2x8_float16_strides_2_valid():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_maxpool_input_2x32x16x16_float32_strides_2_valid():
     """
     Feature: Ops.
@@ -83,9 +76,7 @@ def test_p_maxpool_input_2x32x16x16_float32_strides_2_valid():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_maxpool_input_16x32x8x12_float16_strides_2_valid():
     """
     Feature: Ops.
@@ -102,9 +93,7 @@ def test_p_maxpool_input_16x32x8x12_float16_strides_2_valid():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_maxpool_input_2x12x12x12_float32_strides_2_same():
     """
     Feature: Ops.
@@ -123,9 +112,7 @@ def test_p_maxpool_input_2x12x12x12_float32_strides_2_same():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_maxpool_input_2x256x3x3_float16_strides_2_same():
     """
     Feature: Ops.
@@ -143,9 +130,7 @@ def test_p_maxpool_input_2x256x3x3_float16_strides_2_same():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_maxpool_input_32x32x32x32_float32_strides_2_same():
     """
     Feature: Ops.
@@ -163,9 +148,7 @@ def test_p_maxpool_input_32x32x32x32_float32_strides_2_same():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_maxpool_input_1x7x32x16_float16_strides_2d_same():
     """
     Feature: Ops.
@@ -182,9 +165,7 @@ def test_p_maxpool_input_1x7x32x16_float16_strides_2d_same():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_maxpool_input_1x8x256x256_float32_strides_2d_valid():
     """
     Feature: Ops.
@@ -202,9 +183,7 @@ def test_p_maxpool_input_1x8x256x256_float32_strides_2d_valid():
     fact.grad_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_maxpool_input_1x8x3x3_k_4_valid():
     """
     Feature: Ops.

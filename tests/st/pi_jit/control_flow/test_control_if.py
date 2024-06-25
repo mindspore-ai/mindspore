@@ -6,7 +6,7 @@ from mindspore import context, jit
 import mindspore.ops.operations as op
 from ..share.utils import match_array
 from ..share.grad import GradOfAllInputs
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class ControlOneIfOneAddnOneAddn(Cell):
@@ -22,9 +22,7 @@ class ControlOneIfOneAddnOneAddn(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ctrl_if_addn_addn_true():
     """
     Feature: PIJit
@@ -53,9 +51,7 @@ def test_ctrl_if_addn_addn_true():
     match_array(ps_grad[3], pi_grad[3])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ctrl_if_addn_addn_false():
     """
     Feature: PIJit
@@ -98,9 +94,7 @@ class ControlOneIfOneAddnOneAddnOneAddn(Cell):
         return out_me
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ctrl_if_addn_addn_addn_true():
     """
     Feature: PIJit
@@ -129,9 +123,7 @@ def test_ctrl_if_addn_addn_addn_true():
     match_array(ps_grad[3], pi_grad[3])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ctrl_if_addn_addn_addn_false():
     """
     Feature: PIJit

@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -53,10 +54,13 @@ class UniqueSquare(nn.Cell):
         return self.square(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_cpu():
+    """
+    Feature: Dynamic shape.
+    Description: Test dynamic shape ops.
+    Expectation: No exception.
+    """
     x = Tensor(np.array([1, 1, 2, 2, 3, 3]), mstype.int32)
     unique = Net()
     output = unique(x)
@@ -66,10 +70,13 @@ def test_unique_cpu():
     assert (output[1].asnumpy() == expect2).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_square():
+    """
+    Feature: Dynamic shape with heterogeneity.
+    Description: Test unique and square kernels in dynamic shape with heterogeneity scenarios.
+    Expectation: The value and shape of output are the expected values.
+    """
     x = Tensor(np.array([1, 1, 2, 2, 3, 3]), mstype.int32)
     net = UniqueSquare()
     output = net(x)
@@ -77,9 +84,7 @@ def test_unique_square():
     assert (output.asnumpy() == expect1).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unqiue_func_1d():
     """
     Feature: Test unique function
@@ -95,9 +100,7 @@ def test_unqiue_func_1d():
     assert (output[1].asnumpy() == expect2).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unqiue_func_2d():
     """
     Feature: Test unique function

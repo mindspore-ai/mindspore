@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """test while with grad in PIJit and pynative mode"""
-import pytest
 import numpy as np
 
 from mindspore.ops import composite as C
@@ -22,6 +21,7 @@ from mindspore import Parameter
 from mindspore import Tensor, jit, context
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -42,9 +42,7 @@ class GradNet(nn.Cell):
         return gradient_function(x, y)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_grad():
     """
     Feature: while with grad.
@@ -73,9 +71,7 @@ class WhileSpecTwiceNet(nn.Cell):
         return y
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_while_header_spec_twice():
     """
     Feature: FuncGraph Cloner.

@@ -15,6 +15,7 @@
 """run perf statistic test"""
 import pytest
 from mindspore import Tensor, jit, context
+from tests.mark_utils import arg_mark
 
 
 @jit(mode="PIJit", jit_config={"perf_statistics": True})
@@ -77,10 +78,8 @@ def perf_bytecode_complex(a, b):
     return a
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('func_param', [(perf_statistic_simple, True), (perf_statistic_complex, True),
                                         (perf_bytecode_simple, True), (perf_bytecode_complex, True)])
 def test_perf_statistic_case(func_param):

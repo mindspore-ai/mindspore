@@ -4,6 +4,7 @@ from mindspore import Tensor, context, jit
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore.ops import GradOperation
+from tests.mark_utils import arg_mark
 
 
 class GradOperationNet(nn.Cell):
@@ -38,9 +39,7 @@ class NoneNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('x', [np.array([1.2, 1.3, 1.1]).astype(np.float32)])
 @pytest.mark.parametrize('y', [np.array([0.01, 0.3, 1.1]).astype(np.float32)])
 @pytest.mark.parametrize('z', [np.array([0]).astype(np.float32)])

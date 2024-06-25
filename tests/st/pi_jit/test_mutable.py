@@ -17,6 +17,7 @@ import pytest
 from mindspore.common import mutable
 from mindspore.ops import functional as F
 from mindspore import Tensor, jit, context
+from tests.mark_utils import arg_mark
 
 @jit(mode="PIJit")
 def is_mutable():
@@ -30,9 +31,7 @@ def not_mutable():
 
 
 @pytest.mark.skip(reason="pynative mode and graph mode, results is not equal")
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('fun', [is_mutable])
 def test_mutable_case1(fun):
     """
@@ -47,9 +46,7 @@ def test_mutable_case1(fun):
 
 
 @pytest.mark.skip(reason="pynative mode and graph mode, results is not equal")
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('fun', [not_mutable])
 def test_mutable_case2(fun):
     """

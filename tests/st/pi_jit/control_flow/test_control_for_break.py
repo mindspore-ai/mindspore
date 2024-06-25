@@ -6,7 +6,7 @@ from mindspore import nn
 from mindspore import context, jit
 from ..share.utils import match_array
 import mindspore.ops.operations as P
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class CtrlForBreakRange1(Cell):
@@ -23,9 +23,7 @@ class CtrlForBreakRange1(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_range_1_10_3_break():
     """
     Feature: PIJit
@@ -58,9 +56,7 @@ class CtrlForBreakRange2(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_range_4_n8_n4_break():
     """
     Feature: PIJit
@@ -93,9 +89,7 @@ class CtrlForBreakRange3(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_range_n5_5_2_break():
     """
     Feature: PIJit
@@ -128,9 +122,7 @@ class CtrlForBreakRange4(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_range_n2_n8_n2_break():
     """
     Feature: PIJit
@@ -168,9 +160,7 @@ class CtrlForEnumerateIfBreak(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_enumerate_if_break():
     """
     Feature: PIJit
@@ -215,9 +205,7 @@ class CtrlForBreakElifElse(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_break_in_elif_else():
     """
     Feature: PIJit

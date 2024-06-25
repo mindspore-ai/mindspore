@@ -1,29 +1,12 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ============================================================================
-
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, context, jit
 import numpy as np
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cell_dict_getitem():
     """
     Feature: Support CellDict in graph mode.
@@ -55,10 +38,7 @@ def test_cell_dict_getitem():
         assert np.allclose(output.shape, expect_output.shape)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cell_dict_contain():
     """
     Feature: Support CellDict in graph mode.
@@ -89,10 +69,7 @@ def test_cell_dict_contain():
     assert out2 == expect_out2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cell_dict_get_keys():
     """
     Feature: Support CellDict in graph mode.
@@ -120,10 +97,7 @@ def test_cell_dict_get_keys():
         assert key == expect_key
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cell_dict_get_values():
     """
     Feature: Support CellDict in graph mode.
@@ -160,10 +134,7 @@ def test_cell_dict_get_values():
         assert np.allclose(expect.shape, output.shape)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cell_dict_get_items():
     """
     Feature: Support CellDict in graph mode.
@@ -204,10 +175,7 @@ def test_cell_dict_get_items():
         assert np.allclose(expect.shape, output.shape)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cell_dict_duplicated_parameter():
     """
     Feature: Support CellDict in graph mode.

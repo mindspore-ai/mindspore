@@ -20,6 +20,7 @@ import mindspore.nn as nn
 from math import cos
 from mindspore import Tensor, context
 from mindspore.common.api import jit
+from tests.mark_utils import arg_mark
 
 cfg = {
     "replace_nncell_by_construct": True,
@@ -31,9 +32,7 @@ cfg = {
 }
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_basic_graph_call():
     """
     Feature: One stage basic operation.
@@ -61,9 +60,7 @@ def test_basic_graph_call():
     assert np.all(ret.asnumpy() == np.array([3, 3, 3]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_basic_graph_call_2():
     """
     Feature: One stage basic operation.
@@ -91,9 +88,7 @@ def test_basic_graph_call_2():
     assert ret == (1, 2, 3, 4, 5, 6)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_graph_call_with_vargs():
     """
     Feature: One stage basic operation.
@@ -121,9 +116,7 @@ def test_graph_call_with_vargs():
     assert np.all(ret.asnumpy() == np.array([3, 5, 7]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_graph_call_with_vargs_2():
     """
     Feature: One stage basic operation.
@@ -154,9 +147,7 @@ def test_graph_call_with_vargs_2():
     assert np.all(ret.asnumpy() == np.array([3, 5, 7]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_graph_call_with_kwargs():
     """
     Feature: One stage basic operation.
@@ -187,9 +178,7 @@ def test_graph_call_with_kwargs():
     assert np.all(ret.asnumpy() == np.array([3, 5, 7]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_graph_call_with_kwargs_2():
     """
     Feature: One stage basic operation.

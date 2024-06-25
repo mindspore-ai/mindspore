@@ -2,6 +2,7 @@ import pytest
 from mindspore import jit, jit_class
 from mindspore import context
 from .share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
 class StaticTestCall():
@@ -107,9 +108,7 @@ def ms_class_method():
     return net.func()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [call_class])
 @pytest.mark.parametrize('ms_func', [ms_call_class])
 def test_parser_class1(func, ms_func):
@@ -125,9 +124,7 @@ def test_parser_class1(func, ms_func):
     match_array(result_static, result_ms)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [class_attribute])
 @pytest.mark.parametrize('ms_func', [ms_class_attribute])
 def test_parser_class2(func, ms_func):
@@ -143,9 +140,7 @@ def test_parser_class2(func, ms_func):
     match_array(result_static, result_ms)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [class_attribute2])
 @pytest.mark.parametrize('ms_func', [ms_class_attribute2])
 def test_parser_class3(func, ms_func):

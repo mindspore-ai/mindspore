@@ -2,6 +2,7 @@ import pytest
 from .test_cross_file_inline_func import inlinef
 from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable
 from mindspore import jit, context
+from tests.mark_utils import arg_mark
 
 conf = {
     "print_after_all": False,
@@ -22,9 +23,7 @@ def cross_inline_make_func_test(a=True):
     return g
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cross_file_inline_make_func():
     """
     Feature: Cross File Inline Function Testing

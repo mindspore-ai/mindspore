@@ -2,7 +2,7 @@ from mindspore.nn import Cell
 import mindspore.ops.operations as P
 from mindspore.common.parameter import Parameter
 from .ctrl_factory import CtrlFactory
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class CtrlWhileInForContinueX(Cell):
@@ -23,9 +23,7 @@ class CtrlWhileInForContinueX(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_for_continue_in_for_x():
     '''
     TEST_SUMMARY:
@@ -61,9 +59,7 @@ class CtrlWhileInForContinue(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_for_continue_in_for():
     '''
     TEST_SUMMARY:
@@ -97,9 +93,7 @@ class CtrlWhileInForContinueOne(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_for_in_while_param_continue_in_for():
     '''
     TEST_SUMMARY:
@@ -135,9 +129,7 @@ class CtrlWhileInForContinueAdd(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_for_continue_in_while_no_param():
     '''
     TEST_SUMMARY:
@@ -173,9 +165,7 @@ class CtrlWhileContinueInForX(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_for_continue_in_while_x():
     '''
     TEST_SUMMARY:
@@ -212,9 +202,7 @@ class CtrlWhileContinueInFor(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_for_continue_in_while():
     '''
     TEST_SUMMARY:

@@ -1,11 +1,9 @@
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_tensor_shape_not_none():
     '''
     Description:
@@ -17,9 +15,7 @@ def test_tensor_shape_not_none():
     Tensor(input_data=None, dtype=mstype.float32, shape=[2, 4], init=1)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_tensor_shape():
     '''
     Description:

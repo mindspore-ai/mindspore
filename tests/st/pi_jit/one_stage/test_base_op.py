@@ -20,6 +20,7 @@ from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common import dtype
 from mindspore.common.api import jit
+from tests.mark_utils import arg_mark
 
 cfg = {
     "replace_nncell_by_construct": True,
@@ -31,9 +32,7 @@ cfg = {
 }
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_make_tuple():
     """
     Feature: One stage basic operation.
@@ -56,9 +55,7 @@ def test_make_tuple():
     assert ret[2] == Tensor([3])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_make_list():
     """
     Feature: One stage basic operation.
@@ -81,9 +78,7 @@ def test_make_list():
     assert ret[2] == Tensor([3])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_return_add_result_tuple():
     """
     Feature: One stage basic operation.
@@ -103,9 +98,7 @@ def test_return_add_result_tuple():
     assert ret == (1, 2, 3, 4, 5, 6)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_return_add_result_list():
     """
     Feature: One stage basic operation.
@@ -125,9 +118,7 @@ def test_return_add_result_list():
     assert ret == [1, 2, 3, 4, 5, 6]
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_empty_tuple_input():
     """
     Feature: One stage basic operation.
@@ -150,9 +141,7 @@ def test_empty_tuple_input():
     assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_empty_list_input():
     """
     Feature: One stage basic operation.
@@ -175,9 +164,7 @@ def test_empty_list_input():
     assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_empty_dict_input():
     """
     Feature: One stage basic operation.
@@ -200,9 +187,7 @@ def test_empty_dict_input():
     assert np.all(ret.asnumpy() == np.array([2, 3, 4]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_tuple_slice():
     """
     Feature: One stage basic operation.
@@ -225,9 +210,7 @@ def test_tuple_slice():
     assert ret[1] == Tensor([2])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_list_slice():
     """
     Feature: One stage basic operation.
@@ -250,9 +233,7 @@ def test_list_slice():
     assert ret[1] == Tensor([2])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_list_slice_with_default_parameter():
     """
     Feature: One stage basic operation.
@@ -275,9 +256,7 @@ def test_list_slice_with_default_parameter():
     assert ret[1] == Tensor([2])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_list_slice_with_default_parameter_2():
     """
     Feature: One stage basic operation.
@@ -301,9 +280,7 @@ def test_list_slice_with_default_parameter_2():
     assert ret[2] == Tensor([3])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_list_slice_with_default_parameter_3():
     """
     Feature: One stage basic operation.
@@ -327,9 +304,7 @@ def test_list_slice_with_default_parameter_3():
     assert ret[2] == Tensor([3])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_make_dict():
     """
     Feature: One stage basic operation.
@@ -349,9 +324,7 @@ def test_make_dict():
     assert ret == Tensor([1])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_make_dict_2():
     """
     Feature: One stage basic operation.
@@ -372,9 +345,7 @@ def test_make_dict_2():
     assert ret == Tensor([1])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_make_dict_3():
     """
     Feature: One stage basic operation.
@@ -394,9 +365,7 @@ def test_make_dict_3():
     assert ret == Tensor([2])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_tuple_input():
     """
     Feature: One stage basic operation.
@@ -417,9 +386,7 @@ def test_tuple_input():
     assert np.allclose(ret.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_list_input():
     """
     Feature: One stage basic operation.
@@ -440,9 +407,7 @@ def test_list_input():
     assert np.allclose(ret.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_handle_constant():
     """
     Feature: One stage basic operation.
@@ -462,9 +427,7 @@ def test_handle_constant():
     assert ret == (1, 2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_handle_constant_2():
     """
     Feature: One stage basic operation.
@@ -484,9 +447,7 @@ def test_handle_constant_2():
     assert ret == (1, 2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_handle_mutable_kwargs_args():
     """
     Feature: One stage basic operation.
@@ -504,9 +465,7 @@ def test_handle_mutable_kwargs_args():
     assert ret == 1012
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_handle_mutable_kwargs_args_2():
     """
     Feature: One stage basic operation.
@@ -524,9 +483,7 @@ def test_handle_mutable_kwargs_args_2():
     assert ret == 12
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_use_free_variable():
     """
     Feature: One stage basic operation.
@@ -548,9 +505,7 @@ def test_use_free_variable():
 
 
 @pytest.mark.skip(reason="When disable loop_unrolling, check guard failed.")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_use_free_variable_2():
     """
     Feature: One stage basic operation.
@@ -571,9 +526,7 @@ def test_use_free_variable_2():
     assert not net(input2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_guard_for_getattr():
     """
     Feature: One stage basic operation.
@@ -598,9 +551,7 @@ def test_guard_for_getattr():
     assert ret2 == 4
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_guard_for_getattr_2():
     """
     Feature: One stage basic operation.
@@ -625,9 +576,7 @@ def test_guard_for_getattr_2():
     assert ret2 == 3
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cycle_container_structure():
     """
     Feature: One stage basic operation.
@@ -647,9 +596,7 @@ def test_cycle_container_structure():
     assert ret == a
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cycle_container_structure_2():
     """
     Feature: One stage basic operation.
@@ -669,9 +616,7 @@ def test_cycle_container_structure_2():
     assert ret == a
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cycle_container_structure_3():
     """
     Feature: One stage basic operation.
