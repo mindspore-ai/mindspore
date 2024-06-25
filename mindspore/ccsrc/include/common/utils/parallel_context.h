@@ -28,6 +28,7 @@
 #include "include/common/utils/convert_utils.h"
 #include "utils/info.h"
 #include "include/common/visible.h"
+#include "mindspore/core/symbolic_shape/symbol_info.h"
 
 namespace mindspore::parallel {
 constexpr char kStandalone[] = "stand_alone";
@@ -236,6 +237,9 @@ class COMMON_EXPORT ParallelContext {
   void set_stra_file_only_trainable_params(const bool);
   bool stra_file_only_trainable_params() const { return stra_file_only_trainable_params_; }
 
+  void set_symbol_infos(const std::vector<symshape::SymbolInfoList> &symbol_infos) { symbol_infos_ = symbol_infos; }
+  const std::vector<symshape::SymbolInfoList> &symbol_infos() const { return symbol_infos_; }
+
  private:
   ParallelContext();
   bool ParallelContextCareGraph(const FuncGraphPtr &func_graph) const;
@@ -299,6 +303,7 @@ class COMMON_EXPORT ParallelContext {
   std::string fusion_mode_;
   bool direct_split_ = false;
   bool pipeline_result_broadcast_ = false;
+  std::vector<symshape::SymbolInfoList> symbol_infos_;
 };
 }  // namespace mindspore::parallel
 #endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_PARALLEL_CONTEXT_H_

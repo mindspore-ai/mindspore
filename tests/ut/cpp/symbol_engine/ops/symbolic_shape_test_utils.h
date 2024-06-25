@@ -24,10 +24,10 @@
 #include "utils/ms_context.h"
 #include "common/py_func_graph_fetcher.h"
 #include "pipeline/jit/ps/parse/data_converter.h"
-#include "ops/symbol_ops_impl/getnext.h"
+#include "mindspore/core/symbolic_shape/symbol_info.h"
 
 namespace mindspore::symshape::test {
-using IntSymbolInfo = ops::SymbolInfo;
+using IntSymbolInfo = symshape::SymbolInfo;
 class SymbolEngineImplTestHelper {
  public:
   // Initialize a symbol engine, but not build symbolic shape of ops.
@@ -35,7 +35,7 @@ class SymbolEngineImplTestHelper {
   // Initialize a symbol engine, and then build symbolic shape of ops.
   void BuildSymbolEngine(const FuncGraphPtr &fg);
 
-  ListSymbolPtr SetSymbolicShapeInfo(const AnfNodePtr &node, const ops::SymbolInfoList &symbol_info);
+  ListSymbolPtr SetSymbolicShapeInfo(const AnfNodePtr &node, const SymbolInfoList &symbol_info);
   ListSymbolPtr BuildSymbolicShape(const CNodePtr &cnode);
   SymbolPtr BuildSymbolicValue(const CNodePtr &cnode);
   bool SupportInfer() { return symbol_engine_->SupportInfer(); }

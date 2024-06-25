@@ -13,29 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/ops/symbol_ops_impl/getnext.h"
 #include <map>
 #include <algorithm>
 #include <utility>
 #include "mindspore/core/symbolic_shape/operation_builder.h"
+#include "mindspore/core/symbolic_shape/symbol_info.h"
 
 namespace mindspore {
 namespace symshape {
-namespace ops {
 std::vector<ListSymbolPtr> BuildSymbolicShapeBySymbolInfo(const AbstractBasePtrList &args_abs,
                                                           const std::vector<SymbolInfoList> &symbol_infos) {
   auto n = std::min(symbol_infos.size(), args_abs.size());
   std::vector<ListSymbolPtr> result(n);
   std::map<int64_t, SymbolPtr> id_sym_map;
   for (size_t i = 0; i < n; i++) {
+    if (args_abs[i] == nullptr) {
+      continue;
+    }
     result[i] = args_abs[i]->GetShape()->BuildSymbolicShape();
     if (symbol_infos[i].empty()) {
       continue;
     }
     auto shape = result[i]->symbols();
     if (symbol_infos[i].size() != shape.size()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "The symbol_infos[i].size() should be equals to shape.size(), but got "
-                                 << symbol_infos[i].size() << " vs " << shape.size();
+      MS_LOG(WARNING) << "The symbol_infos[i].size() should be equals to shape.size(), but got "
+                      << symbol_infos[i].size() << " vs " << shape.size();
+      return {};
     }
     bool has_uniq_symbol = false;
     for (size_t j = 0; j < symbol_infos[i].size(); j++) {
@@ -73,6 +76,7 @@ std::vector<ListSymbolPtr> BuildSymbolicShapeBySymbolInfo(const AbstractBasePtrL
   return result;
 }
 
+namespace ops {
 std::vector<SymbolInfoList> ParseSymbolInfo(const ValuePtr &attr) {
   auto inputs = attr->cast<ValueSequencePtr>();
   MS_EXCEPTION_IF_NULL(inputs);
@@ -117,12 +121,21 @@ std::vector<SymbolInfoList> ParseSymbolInfo(const ValuePtr &attr) {
 }
 
 REG_SYMBOL_OP_BUILDER("GetNext").SetShapeFunc([](OperationBuilder *b) -> SymbolPtr {
-  if (!b->prim()->HasAttr("symbols")) {
-    return b->out_abstract()->GetShape()->BuildSymbolicShape();
+  ValuePtr symbols_attr = nullptr;
+  if (b->prim()->HasAttr("symbols_for_parallel")) {
+    symbols_attr = b->prim()->GetAttr("symbols_for_parallel");
+  } else if (b->prim()->HasAttr("symbols")) {
+    symbols_attr = b->prim()->GetAttr("symbols");
+  } else {
+    return nullptr;
   }
+  MS_EXCEPTION_IF_NULL(symbols_attr);
   auto abs_seq = b->out_abstract()->cast_ptr<abstract::AbstractSequence>();
   MS_EXCEPTION_IF_NULL(abs_seq);
-  auto out = BuildSymbolicShapeBySymbolInfo(abs_seq->elements(), ParseSymbolInfo(b->prim()->GetAttr("symbols")));
+  auto out = BuildSymbolicShapeBySymbolInfo(abs_seq->elements(), ParseSymbolInfo(symbols_attr));
+  if (out.empty()) {
+    return nullptr;
+  }
   return ListSymbol::Make(SymbolPtrList(out.begin(), out.end()));
 });
 }  // namespace ops

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_GET_NEXT_H_
-#define MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_GET_NEXT_H_
+#ifndef MINDSPORE_CORE_SYMBOLIC_SHAPE_SYMBOL_INFO_H_
+#define MINDSPORE_CORE_SYMBOLIC_SHAPE_SYMBOL_INFO_H_
 
 #include <vector>
 #include <string>
@@ -24,7 +24,6 @@
 
 namespace mindspore {
 namespace symshape {
-namespace ops {
 struct MS_CORE_API SymbolInfo {
   int64_t max = -1;
   int64_t min = 1;
@@ -37,7 +36,6 @@ using SymbolInfoList = std::vector<SymbolInfo>;
 
 MS_CORE_API std::vector<ListSymbolPtr> BuildSymbolicShapeBySymbolInfo(const AbstractBasePtrList &args_abs,
                                                                       const std::vector<SymbolInfoList> &symbol_infos);
-}  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_GET_NEXT_H_
+#endif  // MINDSPORE_CORE_SYMBOLIC_SHAPE_SYMBOL_INFO_H_

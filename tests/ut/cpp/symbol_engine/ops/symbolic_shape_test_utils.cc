@@ -37,8 +37,8 @@ void SymbolEngineImplTestHelper::BuildSymbolEngine(const FuncGraphPtr &fg) {
 }
 
 ListSymbolPtr SymbolEngineImplTestHelper::SetSymbolicShapeInfo(const AnfNodePtr &node,
-                                                               const ops::SymbolInfoList &symbol_info) {
-  auto ret = ops::BuildSymbolicShapeBySymbolInfo({node->abstract()}, {symbol_info})[0];
+                                                               const SymbolInfoList &symbol_info) {
+  auto ret = BuildSymbolicShapeBySymbolInfo({node->abstract()}, {symbol_info})[0];
   node->abstract()->SetSymbolicShape(ret);
   return ret;
 }

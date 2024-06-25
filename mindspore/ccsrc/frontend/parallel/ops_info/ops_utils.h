@@ -214,6 +214,7 @@ constexpr char NUM_SAMPLED[] = "num_sampled";
 constexpr char NUM_TRUE[] = "num_true";
 constexpr char SEED[] = "seed";
 constexpr char SEED2[] = "seed2";
+constexpr char SYMBOLS[] = "symbols";
 constexpr char RANGE_MAX[] = "range_max";
 constexpr char REMOVE_ACCIDENTAL_HITS[] = "remove_accidental_hits";
 constexpr char UNIQUE_STRING[] = "unique";

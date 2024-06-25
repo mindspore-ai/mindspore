@@ -91,7 +91,7 @@
 #include "kernel/graph_kernel/graph_kernel_builder_manager.h"
 #include "kernel/graph_kernel_info.h"
 #include "include/backend/data_queue/data_queue_mgr.h"
-#include "mindspore/core/ops/symbol_ops_impl/getnext.h"
+#include "mindspore/core/symbolic_shape/symbol_info.h"
 #include "include/common/symbol_engine/symbol_engine_impl.h"
 #include "pipeline/jit/ps/load_mindir.h"
 #include "load_mindir/infer_mindir.h"
@@ -1217,7 +1217,7 @@ void GraphExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs,
 }
 
 void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePtrList *args_abs) {
-  std::vector<symshape::ops::SymbolInfoList> symbol_infos;
+  std::vector<symshape::SymbolInfoList> symbol_infos;
   symbol_infos.reserve(args_abs->size());
   bool has_dyn_shape = false;
   bool is_parallel = parallel::IsSemiOrAutoParallelMode();
@@ -1227,7 +1227,7 @@ void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePt
     if (iter == cur_convert_input_.end()) {
       continue;
     }
-    auto &info_list = symbol_infos.emplace_back(symshape::ops::SymbolInfoList{});
+    auto &info_list = symbol_infos.emplace_back(symshape::SymbolInfoList{});
     if (!iter->second.first->isa<MetaTensor>()) {
       continue;
     }
@@ -1278,7 +1278,7 @@ void GraphExecutorPy::ConvertSymbolicShape(const py::tuple &args, AbstractBasePt
   MS_LOG(DEBUG) << "after parallel symbol";
   parallel::PrintSymbolInfo(symbol_infos);
 
-  auto symbolic_shape_list = symshape::ops::BuildSymbolicShapeBySymbolInfo(*args_abs, symbol_infos);
+  auto symbolic_shape_list = symshape::BuildSymbolicShapeBySymbolInfo(*args_abs, symbol_infos);
   for (size_t i = 0; i < symbolic_shape_list.size(); i++) {
     // when the same tensor object is used in set_inputs interface, the inputs may shared a same Abstract object.
     // but for dynamic shape, the same "-1" in abstract can be different symbolic shape.
