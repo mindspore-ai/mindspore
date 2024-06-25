@@ -438,7 +438,7 @@ def _process_dyn_args(fn, dyn_args):
     """
     if dyn_args is None:
         # nothing should be done for None.
-        return None
+        return dyn_args
 
     if isinstance(dyn_args, dict) and ARG_SPECIFIED in dyn_args:
         return dyn_args
