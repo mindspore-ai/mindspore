@@ -112,6 +112,50 @@ def test_ops_div_std(mode, rounding_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_div_forward_case01(mode):
+    """
+    Feature: pyboost function.
+    Description: test function div.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x = np.random.randn(64, 32, 3578).astype(np.float32)
+    y = np.random.randn(64, 32, 1).astype(np.float32)
+    rounding_mode = None
+    net = NetNone()
+    output = net(ms.Tensor(x, dtype=ms.float32), ms.Tensor(y, dtype=ms.float32))
+    expect = generate_expect_forward_output(x, y, rounding_mode)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_div_forward_case02(mode):
+    """
+    Feature: pyboost function.
+    Description: test function div.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    x = np.random.randn(64, 32, 1).astype(np.float32)
+    y = 7168
+    rounding_mode = None
+    net = NetNone()
+    output = net(ms.Tensor(x, dtype=ms.float32), y)
+    expect = generate_expect_forward_output(x, y, rounding_mode)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+
 @test_utils.run_with_cell
 def div_forward_dyn(x, y):
     return ms.ops.div(x, y)

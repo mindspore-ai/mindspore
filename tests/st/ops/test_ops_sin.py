@@ -16,9 +16,9 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops
-from mindspore.ops import sin
-
+from mindspore.mint import sin
 from tests.st.utils import test_utils
+from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 
 def generate_random_input(shape, dtype):
@@ -54,35 +54,40 @@ def sin_vmap_func(x):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_sin_forward(context_mode):
+def test_ops_sin_normal(context_mode):
     """
     Feature: pyboost function.
-    Description: test function sin forward.
+    Description: test function sin forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
+    x = generate_random_input((64, 224), np.float32)
     output = sin_forward_func(ms.Tensor(x))
     expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
+    x2 = generate_random_input((2, 3, 4, 5), np.float32)
+    output2 = sin_backward_func(ms.Tensor(x2))
+    expect2 = generate_expect_backward_output(x2)
+    np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-3)
 
-@pytest.mark.level0
+
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_sin_backward(context_mode):
+def test_ops_sin_forward_case01(context_mode):
     """
     Feature: pyboost function.
-    Description: test function sin backward.
+    Description: test function sin forward add cases.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
-    output = sin_backward_func(ms.Tensor(x))
-    expect = generate_expect_backward_output(x)
+    x = generate_random_input((384, 128), np.float32)
+    output = sin_forward_func(ms.Tensor(x))
+    expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
@@ -110,100 +115,14 @@ def test_ops_sin_vmap(context_mode):
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_sin_forward_dynamic_shape(context_mode):
+def test_ops_sin_dynamic_shape():
     """
     Feature: pyboost function.
-    Description: test function sin forward with dynamic shape.
-    Expectation: expect correct result.
+    Description: test function sin with dynamic shape and dynamic rank.
+    Expectation: return the correct value.
     """
-    ms.context.set_context(mode=context_mode)
-    x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(sin_forward_func)
-    test_cell.set_inputs(x_dyn)
-    x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_forward_output(x1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_forward_output(x2)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    x = generate_random_input((2, 3, 4, 5), np.float32)
+    y = generate_random_input((2, 3, 4, 5, 6), np.float32)
 
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_sin_forward_dynamic_rank(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function sin forward with dynamic rank.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(sin_forward_func)
-    test_cell.set_inputs(x_dyn)
-    x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_forward_output(x1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_forward_output(x2)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_sin_backward_dynamic_shape(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function sin backward with dynamic shape.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(sin_backward_func)
-    test_cell.set_inputs(x_dyn)
-    x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_backward_output(x1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_backward_output(x2)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_sin_backward_dynamic_rank(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function sin backward with dynamic rank.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(sin_backward_func)
-    test_cell.set_inputs(x_dyn)
-    x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_backward_output(x1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_backward_output(x2)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    TEST_OP(sin_forward_func
+            , [[ms.Tensor(x)], [ms.Tensor(y)]], 'sin')
