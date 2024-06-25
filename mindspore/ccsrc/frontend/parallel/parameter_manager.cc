@@ -629,6 +629,7 @@ void InitPynativeNoShardParams(const FuncGraphPtr &root) {
 
 void AutoParallelPostProcess(const FuncGraphPtr &root) {
   auto parameters = root->parameters();
+  MS_LOG(INFO) << "Start AutoParallelPostProcess";
   for (auto &param : parameters) {
     if (ParameterIsCloned(param)) {
       continue;
@@ -639,8 +640,11 @@ void AutoParallelPostProcess(const FuncGraphPtr &root) {
     if (!param_ptr->has_default()) {
       continue;
     }
+    MS_LOG(INFO) << "Start slice parameter " << param_ptr->DebugString();
     SliceParameterObj(param_ptr, layout);
+    MS_LOG(INFO) << "End slice parameter " << param_ptr->DebugString();
   }
+  MS_LOG(INFO) << "End AutoParallelPostProcess";
 }
 
 void SetClonedTensorShapeForOptimizer(const FuncGraphPtr &root) {

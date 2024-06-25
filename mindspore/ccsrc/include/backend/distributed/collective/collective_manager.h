@@ -116,6 +116,9 @@ class BACKEND_EXPORT CollectiveManager {
   bool GetLocalGroupRankAndSize(const std::vector<uint32_t> &group_ranks, uint32_t *local_group_rank,
                                 uint32_t *local_group_size);
 
+  // Get timeout window for communicator initialization.
+  int64_t GetCommunicatorInitTimeout();
+
   std::atomic_bool inited_;
   std::atomic_bool finalized_;
 
