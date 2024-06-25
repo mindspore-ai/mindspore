@@ -300,10 +300,11 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
   };
   MS_LOG(WARNING) << "Begin initialize communication group on the device side: " << group_name;
 
-  // Timeout limit 600 seconds to wait finish initializing device communication group.
-  const int64_t kTimeToWait = 600;
+  // Timeout limit in seconds to wait finish initializing device communication group.
+  int64_t comm_init_timout = GetCommunicatorInitTimeout();
+  MS_LOG(INFO) << "Communicator initializing timeout is " << comm_init_timout << " seconds.";
   // Initialize communication group on the device side in thread with timeout limit.
-  ret = ExecuteFuncInThread(init_device_comm_group_func, kTimeToWait);
+  ret = ExecuteFuncInThread(init_device_comm_group_func, comm_init_timout);
   if (!ret) {
     MS_LOG(ERROR) << "Failed to create comm group on device side for " << group_name;
   }
@@ -532,6 +533,18 @@ bool CollectiveManager::AssignLocalRank() {
 
   return true;
 }
+
+int64_t CollectiveManager::GetCommunicatorInitTimeout() {
+  std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_type == kAscendDevice) {
+    std::string str_comm_init_timeout = common::GetEnv("HCCL_CONNECT_TIMEOUT");
+    return str_comm_init_timeout.empty() ? 600 : std::stoi(str_comm_init_timeout);
+  }
+
+  // Return 600 seconds as default timeout.
+  return 600;
+}
+
 }  // namespace collective
 }  // namespace distributed
 }  // namespace mindspore

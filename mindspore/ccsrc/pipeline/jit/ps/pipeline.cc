@@ -919,6 +919,7 @@ void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const st
 }
 
 void GraphExecutorPy::ParallelPostProcess(const std::string &phase, bool use_compile_cache) {
+  MS_LOG(INFO) << "Start ParallelPostProcess";
   // Slice Python parameter obj
   auto layout_graph = phase + kStepParallelGraph;
   // only Parallel graph has tensor_layout
@@ -941,6 +942,7 @@ void GraphExecutorPy::ParallelPostProcess(const std::string &phase, bool use_com
   }
   MS_EXCEPTION_IF_NULL(root);
   parallel::AutoParallelPostProcess(root);
+  MS_LOG(INFO) << "End ParallelPostProcess";
 }
 
 // Clean all resource not used in the future and cache generated during compiling.
