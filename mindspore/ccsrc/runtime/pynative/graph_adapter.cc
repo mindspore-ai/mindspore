@@ -497,7 +497,7 @@ void UpdateValueNodeAbstractFromTensor(const ValueNodePtr &value_node, const ten
   auto new_abs = std::make_shared<abstract::AbstractTensor>(old_abs_tensor->element(),
                                                             std::make_shared<abstract::Shape>(real_shape));
   value_node->set_abstract(new_abs);
-  MS_LOG(INFO) << "Change bprop ValueNode abstract from " << old_abs->ToString() << " to " << new_abs->ToString();
+  MS_LOG(DEBUG) << "Change bprop ValueNode abstract from " << old_abs->ToString() << " to " << new_abs->ToString();
 }
 
 void GraphAdapter::UpdateDynamicValueNodeAbstract(const KernelGraphPtr &graph) {
