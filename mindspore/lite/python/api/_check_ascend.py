@@ -21,6 +21,7 @@ import re
 import logging
 from abc import ABCMeta
 from multiprocessing import Process, Queue
+from functools import wraps
 
 
 class AscendEnvChecker(metaclass=ABCMeta):
@@ -204,6 +205,7 @@ def ascend_env(func):
     ascend_checker = AscendEnvChecker()
     ascend_checker.check_env()
 
+    @wraps(func)
     def wrapper():
         func()
 
