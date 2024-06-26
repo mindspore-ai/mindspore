@@ -153,7 +153,7 @@ from mindspore.ops.function.math_func import greater_equal
 # 59
 from mindspore.ops.functional import square
 # 60
-from mindspore.ops.function.math_func import all
+from mindspore.ops.function.math_func import all as all_ext
 
 # 61
 from mindspore.ops.functional import rsqrt
@@ -371,6 +371,67 @@ def any(input, dim=None, keepdim=False):
         [ True True]
     """
     return any_ext(input, dim, keepdim)
+
+
+def all(input, dim=None, keepdim=False):
+    r"""
+    Reduces a dimension of `input` by the "logical AND" of all elements in the dimension, by default. And also can
+    reduce a dimension of `input` along the `dim`. Determine whether the dimensions of the output and input are the
+    same by controlling `keepdim`.
+
+    Note:
+        The `dim` with tensor type is only used for compatibility with older versions and is not recommended.
+
+    Args:
+        input (Tensor): Input Tensor, has the shape :math:`(N, *)` where :math:`*` means,
+            any number of additional dimensions.
+        dim (Union[int, tuple(int), list(int), Tensor], optional): The dimensions to reduce.
+            Suppose the rank of `input` is r, `dim` must be in the range [-rank(input), rank(input)).
+            Default: ``None`` , all dimensions are reduced.
+        keepdim (bool, optional): If ``True`` , keep these reduced dimensions and the length is 1.
+            If ``False`` , don't keep these dimensions. Default : ``False`` .
+
+    Returns:
+        Tensor, the dtype is bool.
+
+        - If `dim` is ``None`` , and `keepdim` is ``False`` ,
+            the output is a 0-D Tensor representing the "logical AND" of all elements in the input Tensor.
+        - If `dim` is int, such as 2, and `keepdim` is ``False`` ,
+            the shape of output is :math:`(input_1, input_3, ..., input_R)`.
+        - If `dim` is tuple(int), such as (2, 3), and `keepdim` is ``False`` ,
+            the shape of output is :math:`(input_1, input_4, ..., input_R)`.
+        - If `dim` is 1-D Tensor, such as [2, 3], and `keepdim` is ``False`` ,
+            the shape of output is :math:`(input_1, input_4, ..., input_R)`.
+
+    Raises:
+        TypeError: If `keepdim` is not a bool.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `dim` is not one of the following: int, tuple, list or Tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, mint
+        >>> x = Tensor(np.array([[True, False], [True, True]]))
+        >>> # case 1: Reduces a dimension by the "logicalAND" of all elements in the dimension.
+        >>> output = mint.all(x, keepdim=True)
+        >>> print(output)
+        [[False]]
+        >>> print(output.shape)
+        (1, 1)
+        >>> # case 2: Reduces a dimension along axis 0.
+        >>> output = mint.all(x, dim=0)
+        >>> print(output)
+        [ True False]
+        >>> # case 3: Reduces a dimension along axis 1.
+        >>> output = mint.all(x, dim=1)
+        >>> print(output)
+        [False True]
+    """
+    return all_ext(input, dim, keepdim)
+
 
 
 def cat(tensors, dim=0):

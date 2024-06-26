@@ -3,7 +3,7 @@ mindspore.ops.all
 
 .. py:function:: mindspore.ops.all(input, axis=None, keep_dims=False)
 
-    默认情况下，通过对维度中所有元素进行“逻辑与”来减少 `input` 的维度。也可以沿 `axis` 减少 `input` 的维度。通过控制 `keep_dim` 来确定输出和输入的维度是否相同。
+    默认情况下，通过对维度中所有元素进行“逻辑与”来减少 `input` 的维度。也可以沿 `axis` 减少 `input` 的维度。通过控制 `keep_dims` 来确定输出和输入的维度是否相同。
 
     .. note::
         Tensor类型的 `axis` 仅用作兼容旧版本，不推荐使用。
