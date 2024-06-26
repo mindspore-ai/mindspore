@@ -1414,9 +1414,9 @@ def _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode, crc_check):
             pb_content = _decrypt(ckpt_file_name, dec_key, len(dec_key), dec_mode)
             if pb_content is None:
                 raise ValueError("For 'load_checkpoint', failed to decrypt the checkpoint file.")
-        if crc_check and b"crc_num" not in pb_content:
+        if crc_check and pb_content[-17:-10] == b"crc_num":
             logger.warning("For 'load_checkpoint', the ckpt file do not contain the crc code, please check the file.")
-        if b"crc_num" in pb_content:
+        if pb_content[-17:-10] == b"crc_num":
             crc_num_bytes = pb_content[-10:]
             pb_content = pb_content[:-17]
             if crc_check:
@@ -2343,7 +2343,7 @@ def check_checkpoint(ckpt_file_name):
     checkpoint_list = Checkpoint()
     with _ckpt_fs.open(ckpt_file_name, *_ckpt_fs.open_args) as f:
         pb_content = f.read()
-        if b"crc_num" in pb_content:
+        if pb_content[-17:-10] == b"crc_num":
             crc_num_bytes = pb_content[-10:]
             pb_content = pb_content[:-17]
             crc_num = int.from_bytes(crc_num_bytes, byteorder='big')
