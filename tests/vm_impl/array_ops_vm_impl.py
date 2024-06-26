@@ -23,22 +23,27 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
 from .vm_interface import vm
 
+
 # pylint: disable=unused-argument
 @vm_impl_getters.register(P.Assign)
 def vm_impl_assign(self):
     """Generate vm_impl function for Assign"""
+
     def vm_impl(x, value, u=None):
         x.assign_value(value)
         return x
+
     return vm_impl
 
 
 @vm_impl_getters.register(P.AssignAdd)
 def vm_impl_assignadd(self):
     """Generate vm_impl function for Assign"""
+
     def vm_impl(x, value, u=None):
         x.assign_value(value)
         return x
+
     return vm_impl
 
 
@@ -135,10 +140,11 @@ def vm_impl_transpose(self):
 def vm_impl_split(self):
     """Generate vm_impl function for Split"""
 
-    def vm_impl(x):
+    def vm_impl(x, axis, output_num):
         x = x.asnumpy()
-        output = np.array_split(x, (self.pos,))
-        return Tensor(output[0]), Tensor(output[1])
+        output = np.split(x, output_num, axis)
+        output = [Tensor(value) for value in output]
+        return output
 
     return vm_impl
 
@@ -249,9 +255,34 @@ def vm_impl_concatV2(self):
     """Generate vm_impl function for Concat"""
 
     def vm_impl(x, axis):
-        x = x.asnumpy()
-        out = vm.Concat(x, axis)
+        val_seq = [value.asnumpy() for value in x]
+        out = np.concatenate(val_seq, axis)
         return Tensor(out)
+
+    return vm_impl
+
+
+@vm_impl_getters.register(P.Stack)
+def vm_impl_stack(self):
+    """Generate vm_impl function for Stack"""
+
+    def vm_impl(x):
+        val_seq = [value.asnumpy() for value in x]
+        out = np.stack(val_seq, self.axis if not isinstance(self, str) else 0)
+        return Tensor(out)
+
+    return vm_impl
+
+
+@vm_impl_getters.register(P.Unstack)
+def vm_impl_unstack(self):
+    """Generate vm_impl function for Unstack"""
+
+    def vm_impl(x):
+        x = x.asnumpy()
+        out = np.moveaxis(x, self.axis if not isinstance(self, str) else 0, 0)
+        output = [Tensor(value) for value in out]
+        return output
 
     return vm_impl
 
@@ -330,6 +361,7 @@ def vm_impl_square(self):
 @vm_impl_getters.register(P.ZerosLike)
 def vm_impl_zeros_like(self):
     """Generate vm_impl function for ZerosLike"""
+
     def vm_impl(x):
         return Tensor(np.zeros_like(x.asnumpy()))
 
@@ -337,6 +369,7 @@ def vm_impl_zeros_like(self):
 @vm_impl_getters.register(P.Partial)
 def vm_impl_partial(self):
     """Generate vm_impl function for Partial"""
+
     def vm_impl(*args):
         func = args[0].__call__
         partial_func = functools.partial(func, *args[1:])
@@ -348,6 +381,7 @@ def vm_impl_partial(self):
 @vm_impl_getters.register(P.Depend)
 def vm_impl_depend(self):
     """Generate vm_impl function for Depend"""
+
     def vm_impl(value, expr):
         return value
 
@@ -357,6 +391,7 @@ def vm_impl_depend(self):
 @vm_impl_getters.register(P.Load)
 def vm_impl_load(self):
     """Generate vm_impl function for Load"""
+
     def vm_impl(value, u=None):
         return value
 
