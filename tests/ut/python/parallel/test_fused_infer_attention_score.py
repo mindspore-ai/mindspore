@@ -32,8 +32,8 @@ def generate_inputs(dims, optinal_inputs, input_layout='BSH', sparse_mode=0, is_
     has_block_table, has_query_padding_size, has_kv_padding_size = optinal_inputs
     attn_mask = None
     pse_shift = None
-    actual_seq_lengths = [1 for i in range(B)] if has_actual_seq_lengths else None
-    actual_seq_lengths_kv = [1 for i in range(B)] if has_actual_seq_lengths_kv else None
+    actual_seq_lengths = Tensor(np.ones((B,), dtype=np.int64)) if has_actual_seq_lengths else None
+    actual_seq_lengths_kv = Tensor(np.ones((B,), dtype=np.int64)) if has_actual_seq_lengths_kv else None
     deq_scale1 = Tensor(1, dtype=mindspore.uint64) if has_deq_scale1 else None
     quant_scale1 = Tensor(1, dtype=mindspore.uint64) if has_quant_scale1 else None
     deq_scale2 = Tensor(1, dtype=mindspore.uint64) if has_deq_scale2 else None
@@ -291,7 +291,6 @@ def test_fused_infer_attention_score_strategy_error(input_layout):
 
 @pytest.mark.parametrize('input_layout', ['BSH', 'BNSD'])
 @pytest.mark.parametrize('strategys', [(2, 2, 1), (1, 2, 1)])
-@pytest.mark.skip("Fail to check input type")
 def test_fused_infer_attention_score_semi_auto_parallel_sparsemode0(input_layout, strategys):
     """
     Feature: test FusedInferAttentionScore semi parallel
@@ -304,7 +303,7 @@ def test_fused_infer_attention_score_semi_auto_parallel_sparsemode0(input_layout
     dp = strategys[0]
     mp = strategys[1]
     sp = strategys[2]
-    optinal_inputs = [True, True, False, False, False, False, False,
+    optinal_inputs = [True, True, True, True, False, False, False,
                       False, False, False, False, False, False, False]
     dims = [B, N, S, D]
     inputs = generate_inputs(dims, optinal_inputs, input_layout=input_layout, sparse_mode=0)

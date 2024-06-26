@@ -55,9 +55,9 @@ fused_infer_attention_score:
             - **pse_shift** (Tensor) - The padding mask tensor with data type of float16 or BFloat16. Default: ``None``.
             - **attn_mask** (Tensor) - The attention mask tensor with data type of int8, uint8 or bool. For each element, 0 indicates retention and 1 indicates discard.
               Default: ``None``.
-            - **actual_seq_lengths** (list[int]) - Describe actual sequence length of each input with data type of int64.
+            - **actual_seq_lengths** (Tensor) - Describe actual sequence length of each input with data type of int64.
               Default: ``None``.
-            - **actual_seq_lengths_kv** (list[int]) - Describe actual sequence length of each input with data type of int64.
+            - **actual_seq_lengths_kv** (Tensor) - Describe actual sequence length of each input with data type of int64.
               Default: ``None``.
             - **dequant_scale1** (Tensor) - Quantization factor for inverse quantization after BMM1 with data type of uint64.
               Default: ``None``.

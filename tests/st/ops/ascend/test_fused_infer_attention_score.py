@@ -88,7 +88,7 @@ class FusedInferAttentionScoreFunc(nn.Cell):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_pfa_bsh_fwd(context_mode):
     """
     Feature: test FusedInferAttentionScore.
@@ -134,7 +134,7 @@ def test_fused_infer_attention_score_pfa_bsh_fwd(context_mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_pfa_bnsd_fwd(context_mode):
     """
     Feature: test FusedInferAttentionScore.
@@ -178,7 +178,7 @@ def test_fused_infer_attention_score_pfa_bnsd_fwd(context_mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_bnsd_incre(context_mode):
     """
     Feature: test FusedInferAttentionScore.
@@ -221,7 +221,7 @@ def test_fused_infer_attention_score_bnsd_incre(context_mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_bnsd_incre_antiquant(context_mode):
     """
     Feature: test FusedInferAttentionScore.
@@ -268,7 +268,7 @@ def test_fused_infer_attention_score_bnsd_incre_antiquant(context_mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_bsh_incre(context_mode):
     """
     Feature: test FusedInferAttentionScore.
@@ -308,7 +308,7 @@ def test_fused_infer_attention_score_bsh_incre(context_mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_bsh_incre_antiquant(context_mode):
     """
     Feature: test FusedInferAttentionScore.
@@ -354,7 +354,7 @@ def test_fused_infer_attention_score_bsh_incre_antiquant(context_mode):
 @pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_fused_infer_attention_score_pfa_bnsd_fwd_dynamic(context_mode):
     """
     Feature: test FusedInferAttentionScore.

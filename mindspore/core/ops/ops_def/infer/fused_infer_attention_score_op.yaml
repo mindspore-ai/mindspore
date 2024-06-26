@@ -16,13 +16,13 @@ fused_infer_attention_score:
       dtype: tensor
       default: None
     actual_seq_lengths:
-      dtype: tuple[int]
+      dtype: tensor
       default: None
-      type_cast: list[int], tensor
+      type_cast: list[int], tuple[int]
     actual_seq_lengths_kv:
-      dtype: tuple[int]
+      dtype: tensor
       default: None
-      type_cast: list[int], tensor
+      type_cast: list[int], tuple[int]
     dequant_scale1:
       dtype: tensor
       default: None
@@ -105,5 +105,4 @@ fused_infer_attention_score:
   function:
     disable: True
   dispatch:
-    enable: True
-    Ascend: FusedInferAttentionScoreAscend
+    enable: False
