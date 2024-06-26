@@ -60,7 +60,7 @@ tensor::BaseTensorPtr NonZeroCPUCustomize(const std::shared_ptr<OpRunner> &op, c
   auto output_real_shape = output_tensor_kernel[0]->GetDeviceShapeVector();
   auto simple_infer_ptr = op->output_value_simple_info();
   simple_infer_ptr->shape_vector_ = ShapeArray{output_real_shape};
-  outputs[0]->set_shape(output_real_shape);
+  op->UpdateOutputShape(outputs[kIndex0], output_real_shape);
   MS_LOG(DEBUG) << "NonZero CPU end";
 
   return outputs[0];
