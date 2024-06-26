@@ -606,7 +606,7 @@ def sqrt(input):
 
     .. math::
 
-        out_{i} = \sqrt{x_{input}}
+        out_{i} = \sqrt{input_{i}}
 
     Args:
         input (Tensor): The input tensor with a dtype of number.Number.
