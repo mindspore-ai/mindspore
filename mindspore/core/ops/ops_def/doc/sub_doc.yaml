@@ -22,7 +22,7 @@ sub:
                 the second input should be a number.Number or bool value, or a Tensor whose data type is number or bool.
 
         Returns:
-            Tensor, the shape is the same as the one after broadcasting,
+            Tensor with a shape that is the same as the broadcasted shape of the input `input` and `other`,
             and the data type is the one with higher precision or higher digits among the two inputs.
 
         Raises:

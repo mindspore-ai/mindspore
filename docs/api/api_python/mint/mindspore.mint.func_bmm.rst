@@ -6,14 +6,14 @@ mindspore.mint.bmm
     基于batch维度的两个Tensor的矩阵乘法，仅支持三维。
 
     .. math::
-        \text{output}[b, i, j] = \text{input}[b, i, k] @ \text{mat2}[b, k, j]
+        \text{output} = \text{input} @ \text{mat2}
 
     参数：
-        - **input** (Tensor) - 输入相乘的第一个Tensor。必须是三维Tensor。
-        - **mat2** (Tensor) - 输入相乘的第二个Tensor。必须是三维Tensor。
+        - **input** (Tensor) - 输入相乘的第一个Tensor。必须是三维Tensor，shape为 :math:`(b, n, m)` 。
+        - **mat2** (Tensor) - 输入相乘的第二个Tensor。必须是三维Tensor，shape为 :math:`(b, m, p)` 。
 
     返回：
-        Tensor，输出Tensor的shape为 :math:`(B, N, M)` 。其中每个矩阵是输入批次中相应矩阵的乘积。
+        Tensor，输出Tensor的shape为 :math:`(b, n, p)` 。其中每个矩阵是输入批次中相应矩阵的乘积。
 
     异常：
         - **ValueError** - `input` 或 `mat2` 的维度不为3。

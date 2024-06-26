@@ -283,7 +283,7 @@ def add(input, other, *, alpha=1):
         alpha (number.Number): A scaling factor applied to `other`, default 1.
 
     Returns:
-        Tensor, the shape is the same as the one of the input `input`, `other` after broadcasting,
+        Tensor with a shape that is the same as the broadcasted shape of the input `input` and `other`,
         and the data type is the one with higher precision or higher digits among the two inputs and alpha.
 
     Raises:
@@ -661,7 +661,7 @@ def sub(input, other, *, alpha=1):
         alpha (number.Number): A scaling factor applied to `other`, default 1.
 
     Returns:
-        Tensor, the shape is the same as the one of the input `input`, `other` after broadcasting,
+        Tensor with a shape that is the same as the broadcasted shape of the input `input` and `other`,
         and the data type is the one with higher precision or higher digits among the two inputs and alpha.
 
     Raises:

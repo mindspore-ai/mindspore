@@ -8053,8 +8053,6 @@ def matmul(input, other):
     Note:
         Numpy arguments `out`, `casting`, `order`, `subok`, `signature`, and `extobj` are
         not supported.
-        On GPU, the supported dtypes are np.float16 and np.float32.
-        On CPU, the supported dtypes are np.float16 and np.float32.
         The dtype of `input` and `other` must be same.
         On Ascend, the rank of `input` or `other` must be between 1 and 6.
 

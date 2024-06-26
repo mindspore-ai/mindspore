@@ -3,14 +3,14 @@ bmm_ext:
     Performs batch matrix-matrix multiplication of two three-dimensional tensors.
 
     .. math::
-        \text{output}[b, i, j] = \text{input}[b, i, k] @ \text{mat2}[b, k, j]
+        \text{output}= \text{input} @ \text{mat2}
 
     Args:
-        input (Tensor): The first batch of matrices to be multiplied. Must be a three-dimensional tensor.
-        mat2 (Tensor): The second batch of matrices to be multiplied. Must be a three-dimensional tensor.
+        input (Tensor): The first batch of matrices to be multiplied. Must be a three-dimensional tensor of shape `(b, n, m)`.
+        mat2 (Tensor): The second batch of matrices to be multiplied. Must be a three-dimensional tensor of shape `(b, m, p)`.
 
     Returns:
-        Tensor, the output tensor of shape `(b, n, p)`, where each matrix is the product of the corresponding matrices in the input batches.
+        Tensor, the output tensor of shape `(B, n, p)`, where each matrix is the product of the corresponding matrices in the input batches.
 
     Raises:
         TypeError: If `input` or `mat2` is not three-dimensional tensors.
