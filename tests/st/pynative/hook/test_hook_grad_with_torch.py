@@ -165,7 +165,7 @@ class MENet2(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_gpu'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
@@ -198,7 +198,7 @@ def test_bprop_compara_with_pytorch():
         assert np.allclose(inputs.grad, input_grad.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_gpu'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
@@ -238,7 +238,7 @@ class MEMul1WithUsedMap(nn.Cell):
         return (grads,)
 
 
-@arg_mark(plat_marks=['platform_gpu'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')

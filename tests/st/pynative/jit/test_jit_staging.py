@@ -26,11 +26,11 @@ from tests.mark_utils import arg_mark
 
 
 def setup_module():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_staging_together():
@@ -90,7 +90,7 @@ class MomentumWithMsFunc(nn.Cell):
 grad_by_list = C.GradOperation(get_by_list=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')

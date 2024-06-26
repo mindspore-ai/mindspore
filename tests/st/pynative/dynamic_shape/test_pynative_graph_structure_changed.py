@@ -19,7 +19,7 @@ import torch
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')

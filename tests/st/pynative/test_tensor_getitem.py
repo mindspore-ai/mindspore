@@ -49,8 +49,8 @@ class NetWorkSlicePositive(Cell):
         return ret0, ret1, ret2, ret3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_slice_positive():
@@ -79,8 +79,8 @@ class NetWorkSliceEllipsis(Cell):
         return ret0, ret1, ret2, ret3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_slice_ellipsis():
@@ -110,8 +110,8 @@ class NetWorkReduceDimension(Cell):
         return ret1, ret2, ret3, ret4
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_reduce_dimension():
@@ -164,8 +164,8 @@ class TensorGetItemByThreeTensors(Cell):
         return ret0, ret1, ret2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_getitem_by_tensors():
@@ -205,8 +205,8 @@ class TensorGetItemByMixedTensorsBasicCase(Cell):
         return ret0, ret1, ret2, ret3, ret4, ret5
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_getitem_by_mixed_tensors():
@@ -238,8 +238,8 @@ class TensorItemByNone(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_item_by_none():
@@ -262,7 +262,7 @@ class TensorItemByItem(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
@@ -297,7 +297,7 @@ def test_item_by_int():
         net(input_3d_ms, index_np_4)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
@@ -347,8 +347,8 @@ class TensorSetItemByMixedTensors_0(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_by_mixed_tensors_0():
@@ -381,8 +381,8 @@ class TensorSetItemByMixedTensors_1(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_by_mixed_tensors_1():
@@ -415,8 +415,8 @@ class TensorSetItemByMixedTensors_2(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_by_mixed_tensors_2():
@@ -441,8 +441,8 @@ class TensorGetItemByMixedTensorsIndexError(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_getitem_by_mixed_tensor_exception():
@@ -467,8 +467,8 @@ class TensorSetItemByOneTensorWithNumber(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_one_tensor_with_number():
@@ -495,8 +495,8 @@ class TensorSetItemByOneTensorWithTensor(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_by_one_tensor_with_tensor():
@@ -525,8 +525,8 @@ class TensorSetItemByOneTensorWithTupleOfNumber(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_by_one_tensor_with_tuple_number():
@@ -553,8 +553,8 @@ class TensorSetItemByOneTensorWithTupleOfTensor(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_by_one_tensor_with_tuple_tensors():
@@ -587,8 +587,8 @@ class TensorSetItemByTensorsWithNumber(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_by_tensors_with_number():
@@ -619,8 +619,8 @@ class TensorSetItemByTensorsWithTensor(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_by_tensors_with_tensor():
@@ -652,8 +652,8 @@ class TensorSetItemByTensorsWithTensorNumberError(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_by_tensors_with_tensor_error():
@@ -680,8 +680,8 @@ class TensorSetItemByTensorsWithTupleOfNumber(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_by_tensors_with_tuple_of_number():
@@ -712,8 +712,8 @@ class TensorSetItemByTensorsWithTupleOfTensor(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_by_tensors_with_tuple_of_tensor():
@@ -749,8 +749,8 @@ class TensorSetItemByTensorsWithTupleOfTensorNumberError(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_by_tensor_with_tuple_of_tensor_error():
@@ -766,8 +766,8 @@ def test_setitem_by_tensor_with_tuple_of_tensor_error():
         net(index_0_ms, index_1_ms, index_2_ms, value_0_ms, value_1_ms)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_setitem_grad():
@@ -864,8 +864,8 @@ def test_tensor_assign_slice_value_1():
     assert np.all(z == out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tensor_assign_slice_value_2():
@@ -887,8 +887,8 @@ def test_tensor_assign_slice_value_2():
     assert np.all(z == out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tensor_assign_exception():
@@ -954,8 +954,8 @@ def test_tensor_assign_exception():
         net(Ta4d, b, Ta4d_ck)
 
 
-@arg_mark(plat_marks=['platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tensor_assign_exception_2():
@@ -1071,8 +1071,8 @@ class TensorAssignWithBoolTensorIndex2Error(Cell):
         return a
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tensor_assign_bool_index_0():
@@ -1092,8 +1092,8 @@ def test_tensor_assign_bool_index_0():
     assert np.all(out.asnumpy() == res)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tensor_assign_bool_index_1():
@@ -1112,8 +1112,8 @@ def test_tensor_assign_bool_index_1():
     assert np.all(out.asnumpy() == res)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tensor_assign_bool_index_exception():
@@ -1154,8 +1154,8 @@ def test_tensor_assign_bool_index_exception():
         net4(Ta, u_scalar)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tensor_slice_reduce_out_of_bounds_neg():
@@ -1175,8 +1175,8 @@ def test_tensor_slice_reduce_out_of_bounds_neg():
     assert "index -7 is out of bounds for dimension with size 6" in str(ex.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tensor_slice_reduce_out_of_bounds_positive():
@@ -1196,8 +1196,8 @@ def test_tensor_slice_reduce_out_of_bounds_positive():
     assert "index 6 is out of bounds for dimension with size 6" in str(ex.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tensor_range():

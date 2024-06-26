@@ -38,7 +38,7 @@ def run_in_pyhon(func):
     return func is None
 
 
-@arg_mark(plat_marks=['platform_gpu'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
           essential_mark='essential')

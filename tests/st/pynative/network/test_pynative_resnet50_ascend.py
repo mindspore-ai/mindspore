@@ -334,7 +334,7 @@ def resnet50(num_classes):
     return ResNet(ResidualBlock, [3, 4, 6, 3], num_classes)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')

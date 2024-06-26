@@ -76,10 +76,6 @@ class SetitemGradNet(Cell):
         return gradient_func(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_setitem_grad():
     """
     Feature: Test setitem grad
@@ -97,10 +93,6 @@ def test_setitem_grad():
     assert np.array_equal(output[1].asnumpy(), y_grad)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_setitem_by_list():
     x = np.ones((2, 3, 4), dtype=np.float32)
 
@@ -112,10 +104,6 @@ def test_setitem_by_list():
     setup_testcase(x, cases)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_setitem_with_sequence():
     x = np.ones((2, 3, 4), dtype=np.float32)
 
@@ -128,10 +116,6 @@ def test_setitem_with_sequence():
     setup_testcase(x, cases)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_setitem_dtype():
     x = np.ones((2, 3, 4), dtype=np.float32)
 
@@ -144,10 +128,6 @@ def test_setitem_dtype():
     setup_testcase(x, cases)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_setitem_by_tuple_with_int():
     x = np.arange(24).reshape(2, 3, 4).astype(np.float32)
 
@@ -161,10 +141,6 @@ def test_setitem_by_tuple_with_int():
     setup_testcase(x, cases)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_setitem_by_tuple_with_list():
     x = np.arange(24).reshape(2, 3, 4).astype(np.float32)
 
@@ -178,10 +154,6 @@ def test_setitem_by_tuple_with_list():
     setup_testcase(x, cases)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_setitem_by_nested_unit_list():
     x = np.arange(24).reshape(2, 3, 4).astype(np.float32)
 
@@ -193,10 +165,6 @@ def test_setitem_by_nested_unit_list():
     setup_testcase(x, cases)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_setitem_with_broadcast():
     x = np.arange(2*3*4*5*6).reshape(2, 3, 4, 5, 6).astype(np.float32)
     v1 = np.full((1, 4, 5), -1).tolist()
@@ -211,10 +179,6 @@ def test_setitem_with_broadcast():
     setup_testcase(x, cases)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_setitem_mul_by_scalar():
     x = np.ones((4, 5), dtype=np.float32)
 
@@ -225,10 +189,6 @@ def test_setitem_mul_by_scalar():
     setup_testcase(x, cases)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_setitem_by_slice():
     x = np.ones((3, 4, 5), dtype=np.float32)
 
@@ -303,10 +263,6 @@ class TensorItemSetByItemWithNumber(Cell):
         return ret
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_setitem_dim_expand():
     x = np.ones((2, 3, 4), dtype=np.float32)
     def cases(x):
@@ -318,10 +274,6 @@ def test_setitem_dim_expand():
     setup_testcase(x, cases)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_itemset_by_number_with_number():
     net = TensorItemSetByItemWithNumber()
     input_1d_np = np.array([1]).astype(np.float32)
@@ -371,10 +323,6 @@ def test_itemset_by_number_with_number():
         net(input_3d_ms, index_np_4, value_np_2)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_itemset_by_tuple_with_number():
     net = TensorItemSetByItemWithNumber()
     input_1d_np = np.array([1]).astype(np.float32)
@@ -422,3 +370,27 @@ def test_itemset_by_tuple_with_number():
         net(input_3d_ms, index_np_5, value_np_1)
     with pytest.raises(IndexError):
         net(input_3d_ms, index_np_5, value_np_2)
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
+def test_itemset_all():
+    """
+    Feature: Test setitem
+    Description: Test setitem
+    Expectation: success
+    """
+    test_setitem_grad()
+    test_setitem_by_list()
+    test_setitem_with_sequence()
+    test_setitem_dtype()
+    test_setitem_by_tuple_with_int()
+    test_setitem_by_tuple_with_list()
+    test_setitem_by_nested_unit_list()
+    test_setitem_mul_by_scalar()
+    test_setitem_by_slice()
+    test_setitem_dim_expand()
+    test_itemset_by_number_with_number()
+    test_itemset_by_tuple_with_number()

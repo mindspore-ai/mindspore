@@ -564,7 +564,7 @@ def test_net_normal_recompute_sequential_cell():
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level2',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_net_normal_recompute_not_tensor_input():

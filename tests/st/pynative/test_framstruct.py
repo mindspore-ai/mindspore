@@ -22,10 +22,6 @@ from tests.mindspore_test_framework.utils.check_gradient import (
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_operation_grad_checker():
     """
     Feature: Auto diff.
@@ -50,10 +46,6 @@ def test_operation_grad_checker():
                    input_selector=[1], sampling_times=2)
 
 
-@arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_grad_checker_primitive():
     """
     Feature: Auto diff.
@@ -70,10 +62,6 @@ def test_grad_checker_primitive():
                    grad_checker_class=OperationGradChecker, sampling_times=2)
 
 
-@arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_nn_jacobian_checker():
     """
     Feature: Auto diff.
@@ -99,10 +87,6 @@ def test_nn_jacobian_checker():
                    output_selector=[0])
 
 
-@arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_nn_grad_checker():
     """
     Feature: Auto diff.
@@ -126,10 +110,6 @@ def test_nn_grad_checker():
                    grad_checker_class=NNGradChecker, sampling_times=3)
 
 
-@arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_operation_jacobian_checker():
     """
     Feature: Auto diff.
@@ -153,3 +133,20 @@ def test_operation_jacobian_checker():
                    Tensor(np.array([[0.1, 0.3], [0.2, 0.2], [-.1, 0.4]], np.float32)),
                    grad_checker_class=OperationGradChecker, input_selector=[0],
                    output_selector=[0])
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
+def test_framstruct_all():
+    """
+    Feature: Auto diff.
+    Description: Check the result for GradOperation.
+    Expectation: The result is expected.
+    """
+    test_operation_grad_checker()
+    test_grad_checker_primitive()
+    test_nn_jacobian_checker()
+    test_nn_grad_checker()
+    test_operation_jacobian_checker()

@@ -109,7 +109,7 @@ def test_no_grad_with_parameter():
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_no_grad_with_nested_network():
@@ -128,7 +128,7 @@ def test_no_grad_with_nested_network():
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_no_grad_decorator():

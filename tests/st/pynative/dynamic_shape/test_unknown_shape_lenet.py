@@ -224,7 +224,7 @@ def test_set_inputs_cell_before_top_cell_unknown_shape():
     model.train(1, ds_train, callbacks=[CustomCallback()], dataset_sink_mode=True)
 
 
-@arg_mark(plat_marks=['platform_gpu'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')

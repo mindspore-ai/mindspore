@@ -28,7 +28,7 @@ def setup_module():
 
 # GPU: does not supported op "FloorMod"
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tesnsor_augassign_by_slice():
@@ -75,8 +75,8 @@ def test_tesnsor_augassign_by_slice():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tesnsor_augassign_by_ellipsis():
@@ -135,8 +135,8 @@ def test_tesnsor_augassign_by_ellipsis():
     assert np.allclose(input_tensor_3d.asnumpy(), input_np_3d, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tesnsor_augassign_by_bool():
@@ -204,8 +204,8 @@ def test_tesnsor_augassign_by_bool():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tesnsor_augassign_by_number():
@@ -328,8 +328,8 @@ def test_tesnsor_augassign_by_number():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tesnsor_augassign_by_tensor():
@@ -436,7 +436,7 @@ def test_tesnsor_augassign_by_tensor():
     assert np.allclose(input_tensor_3d.asnumpy(), input_np_3d, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
@@ -614,8 +614,8 @@ def test_tesnsor_augassign_by_list():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_tesnsor_augassign_by_tuple():
