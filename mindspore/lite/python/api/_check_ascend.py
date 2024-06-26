@@ -200,6 +200,7 @@ class AscendEnvChecker(metaclass=ABCMeta):
 
 
 def ascend_env(func):
+    """ascend_env"""
     ascend_checker = AscendEnvChecker()
     ascend_checker.check_env()
 

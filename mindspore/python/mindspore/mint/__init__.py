@@ -555,6 +555,7 @@ def ones(size, *, dtype=None):
 
 
 def permute(input, dims):
+    """permute"""
     return permute_ext(input, dims)
 
 
