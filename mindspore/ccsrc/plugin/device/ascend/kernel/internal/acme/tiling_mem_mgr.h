@@ -112,6 +112,7 @@ class TilingMemMgr {
 
  private:
   device::DeviceContext *device_context_{nullptr};
+  void *default_stream_{nullptr};
 };
 }  // namespace kernel
 }  // namespace mindspore

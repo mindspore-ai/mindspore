@@ -86,14 +86,10 @@ TilingMemPool::~TilingMemPool() {
 int TilingMemPoolDevice::Init() { return 0; }
 
 void *TilingMemPoolDevice::MallocInner(size_t size) {
-  void *device_addr;
-  (void)device::ascend::AscendMemoryPool::GetInstance().AllocDeviceMem(size, &device_addr);
-  return device_addr;
+  return device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(size);
 }
 
-void TilingMemPoolDevice::FreeInner(void *addr) {
-  (void)device::ascend::AscendMemoryPool::GetInstance().FreeDeviceMem(&addr);
-}
+void TilingMemPoolDevice::FreeInner(void *addr) { device::ascend::AscendMemoryPool::GetInstance().FreeTensorMem(addr); }
 
 int TilingMemPoolHost::Init() { return 0; }
 
@@ -110,8 +106,12 @@ TilingMemMgr::TilingMemMgr() {
 
 void TilingMemMgr::CopySync(void *host_ptr, void *device_ptr, size_t size) {
   device_context_->device_res_manager_->BindDeviceToCurrentThread(false);
-
-  auto ret = aclrtMemcpy(device_ptr, size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE);
+  if (default_stream_ == nullptr) {
+    auto default_stream_id = device_context_->device_res_manager_->DefaultStream();
+    default_stream_ = device_context_->device_res_manager_->GetStream(default_stream_id);
+  }
+  auto ret =
+    CALL_ASCEND_API(aclrtMemcpyAsync, device_ptr, size, host_ptr, size, ACL_MEMCPY_HOST_TO_DEVICE, default_stream_);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "Copy tiling data from host to device failed!";
   }
@@ -119,8 +119,12 @@ void TilingMemMgr::CopySync(void *host_ptr, void *device_ptr, size_t size) {
 
 void TilingMemMgr::CopySyncD2H(void *host_ptr, void *device_ptr, size_t size) {
   device_context_->device_res_manager_->BindDeviceToCurrentThread(false);
-
-  auto ret = aclrtMemcpy(host_ptr, size, device_ptr, size, ACL_MEMCPY_DEVICE_TO_HOST);
+  if (default_stream_ == nullptr) {
+    auto default_stream_id = device_context_->device_res_manager_->DefaultStream();
+    default_stream_ = device_context_->device_res_manager_->GetStream(default_stream_id);
+  }
+  auto ret =
+    CALL_ASCEND_API(aclrtMemcpyAsync, host_ptr, size, device_ptr, size, ACL_MEMCPY_DEVICE_TO_HOST, default_stream_);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "Copy tiling data from host to device failed!";
   }
