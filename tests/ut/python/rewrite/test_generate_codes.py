@@ -388,3 +388,60 @@ def test_net_with_unused_import():
     new_net = stree.get_network()
     y = new_net(Tensor(1.0))
     assert np.allclose(y0.asnumpy(), y.asnumpy())
+
+
+class NetWithStatic(nn.Cell):
+
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = self.static_func(x)
+        return x
+
+    @staticmethod
+    def static_func(x):
+        return x
+
+class SubNetWithStatic(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.relu = nn.ReLU()
+
+    def construct(self, x):
+        x = self.relu(x)
+        x = self.static_func(x)
+        return x
+
+    @staticmethod
+    def static_func(x):
+        raise NotImplementedError
+
+
+class NetWithSubNetStatic(SubNetWithStatic):
+    @staticmethod
+    def static_func(x):
+        return x
+
+
+def test_net_with_static_method():
+    """
+    Feature: Rewrite.
+    Description: Test rewrite parse network with static method function.
+    Expectation: Success.
+    """
+    net = NetWithStatic()
+    y0 = net(Tensor(1.0))
+    stree = SymbolTree.create(net)
+    new_net = stree.get_network()
+    y = new_net(Tensor(1.0))
+    assert np.allclose(y0.asnumpy(), y.asnumpy())
+
+    net = NetWithSubNetStatic()
+    y0 = net(Tensor(1.0))
+    stree = SymbolTree.create(net)
+    new_net = stree.get_network()
+    y = new_net(Tensor(1.0))
+    assert np.allclose(y0.asnumpy(), y.asnumpy())

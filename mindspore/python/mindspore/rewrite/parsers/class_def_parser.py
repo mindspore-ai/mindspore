@@ -117,7 +117,10 @@ class ClassDefParser(Parser):
             if callable(value) and key in function_defs:
                 # ignore functions defined by self
                 continue
-            assign_code = f"self.__class__.{key} = obj.__class__.{key}"
+            if isinstance(value, staticmethod):
+                assign_code = f"self.{key} = obj.__class__.{key}"
+            else:
+                assign_code = f"self.__class__.{key} = obj.__class__.{key}"
             assign_ast = ast.parse(assign_code).body[0]
             init_func_ast.body.append(assign_ast)
 
