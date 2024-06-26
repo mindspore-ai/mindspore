@@ -50,7 +50,7 @@ def test_two_tensors_add():
               np.float32, np.float64, np.uint16, np.uint32, np.uint64)
     for dtype in dtypes:
         output = Tensor(x.astype(dtype)) / Tensor(y.astype(dtype))
-        expect_result = (x / y).astype(dtype)
+        expect_result = x / y
         assert output.asnumpy().dtype == expect_result.dtype
         assert np.array_equal(output.asnumpy(), expect_result)
 
@@ -60,7 +60,7 @@ def test_two_tensors_add():
     div_dyn_net = NetDiv()
     div_dyn_net.set_inputs(input_x_dyn, input_y_dyn)
     dyn_output = div_dyn_net(Tensor(x.astype(np.float32)), Tensor(y.astype(np.float32)))
-    expect_dync_result = (x / y).astype(np.float32)
+    expect_dync_result = x / y
     assert np.array_equal(dyn_output.asnumpy(), expect_dync_result)
 
 
