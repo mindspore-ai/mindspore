@@ -685,7 +685,18 @@ void GetEvalStackInfo(std::ostringstream &oss) {
 
   oss << "\n";
   int index = 0;
+  int file_oss_index = 0;
   std::string last_location_info = "";
+  const size_t max_stack_depth = 50;
+  bool print_ellipsis = false;
+  const size_t half = 2;
+  if (stack.size() > max_stack_depth) {
+    oss << "The depth of the current stack is " << stack.size() << ".\n"
+        << "You can get more call stack information in analyze_fail.ir.\n\n";
+  }
+  std::ostringstream file_oss;
+  file_oss << "\n";
+
   for (size_t i = 0; i < stack.size(); ++i) {
     auto node_config = stack[i];
     MS_EXCEPTION_IF_NULL(node_config);
@@ -700,9 +711,17 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     if (this_location_info.empty() || this_location_info == last_location_info) {
       continue;
     }
-
     last_location_info = this_location_info;
-    oss << "# " << index++ << " " << this_location_info;
+    file_oss << "# " << file_oss_index++ << " " << this_location_info;
+    if ((i <= max_stack_depth / half) || (i >= (stack.size() - max_stack_depth / half))) {
+      oss << "# " << index++ << " " << this_location_info;
+    } else {
+      if (!print_ellipsis) {
+        print_ellipsis = true;
+        oss << "......\n\n";
+      }
+      index++;
+    }
   }
   bool empty_stack_info = oss.str() == "\n";
 
@@ -711,7 +730,7 @@ void GetEvalStackInfo(std::ostringstream &oss) {
     "\n----------------------------------------------------\n"
     "- The Traceback of Net Construct Code:\n"
     "----------------------------------------------------" +
-    oss.str() + "\n";
+    file_oss.str() + "\n";
   StaticAnalysisException::Instance().AppendMsg(msg);
   std::string file_name = GetEvalFailDatPath();
   auto ret = OutputAnalyzedGraphWithType(file_name);

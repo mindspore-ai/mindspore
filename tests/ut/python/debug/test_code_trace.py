@@ -18,6 +18,7 @@ import pytest
 import numpy as np
 import mindspore
 from mindspore import nn, Tensor, ops, context, jit, Model
+from mindspore.nn import Cell
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.common.api import _cell_graph_executor, _MindsporeFunctionExecutor
@@ -261,3 +262,32 @@ def test_code_trace5():
         raise ValueError("Code trace accuracy is not 1.0")
 
     shutil.rmtree(save_graph_path)
+
+
+@security_off_wrap
+def test_code_trace_loop_stack_depth():
+    """
+    Feature: Code Trace.
+    Description: Test stack depth.
+    Expectation: success.
+    """
+    class Net(Cell):
+        def __init__(self):
+            super().__init__()
+            self.default = 4000
+
+        def construct(self, x):
+            output = x
+            for i in range(self.default):
+                if self.default is None:
+                    output = output + i
+            if output > self.default:
+                return self.default
+            return output
+
+    with pytest.raises(RuntimeError):
+        context.set_context(mode=context.GRAPH_MODE)
+        net = Net()
+        x = Tensor([-1])
+        out = net(x)
+        assert out == -1
