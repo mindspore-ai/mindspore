@@ -10,7 +10,7 @@ bmm_ext:
         mat2 (Tensor): The second batch of matrices to be multiplied. Must be a three-dimensional tensor of shape `(b, m, p)`.
 
     Returns:
-        Tensor, the output tensor of shape `(B, n, p)`, where each matrix is the product of the corresponding matrices in the input batches.
+        Tensor, the output tensor of shape `(b, n, p)`, where each matrix is the product of the corresponding matrices in the input batches.
 
     Raises:
         TypeError: If `input` or `mat2` is not three-dimensional tensors.
