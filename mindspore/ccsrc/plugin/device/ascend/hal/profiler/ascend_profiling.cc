@@ -110,8 +110,10 @@ void AscendProfiler::Init(const std::string &profiling_path, uint32_t device_id,
   if (options["profile_memory"] == "on") {
     MS_LOG(INFO) << "profile_memory is on, profile_data_path:" << profile_data_path_;
     enable_prof_mem_ = true;
+    MS_LOG(INFO) << "Enable profiling memory.";
     auto ms_context = MsContext::GetInstance();
     ms_context->set_param<std::string>(MS_CTX_PROF_MEM_OUTPUT_PATH, profile_data_path_);
+    ms_context->set_param<bool>(MS_CTX_ENABLE_PROF_MEM, true);
   }
 
   if (options["pcie"] == "on") {
@@ -210,8 +212,10 @@ void AscendProfiler::Start() {
 
   MemoryProfiling::GetInstance().StartMemoryProfiling();
   if (enable_prof_mem_) {
-    auto ms_context = MsContext::GetInstance();
-    MS_LOG(INFO) << "Enable profiling memory.";
+    MS_LOG(INFO) << "Start profiling memory.";
+    auto &mem_tracker = device::tracker::MemTrackerManager::GetInstance();
+    mem_tracker.UpdateProfilingPos();
+    auto &&ms_context = MsContext::GetInstance();
     ms_context->set_param<bool>(MS_CTX_ENABLE_PROF_MEM, true);
   }
 
@@ -255,8 +259,8 @@ void AscendProfiler::Stop() {
     device::tracker::MemTrackerManager::GetInstance().DumpProfilingMemInfo(profile_data_path_, csvPrefix);
     device::tracker::MemTrackerManager::GetInstance().Dump();
 
-    MS_LOG(INFO) << "Disable profiling memory.";
-    auto ms_context = MsContext::GetInstance();
+    MS_LOG(INFO) << "End profiling memory.";
+    auto &&ms_context = MsContext::GetInstance();
     ms_context->set_param<bool>(MS_CTX_ENABLE_PROF_MEM, false);
   }
 
