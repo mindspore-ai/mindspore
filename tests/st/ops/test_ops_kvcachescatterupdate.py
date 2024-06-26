@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 
-import pytest
 import numpy as np
 from mindspore.ops.auto_generate import KVCacheScatterUpdate
 from mindspore import Tensor, jit, JitConfig
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 kv_cache_scatter_update_op = KVCacheScatterUpdate()
 

@@ -12,14 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import copy
 import numpy as np
-import pytest
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter, context
 from mindspore.ops import operations as P
 from mindspore.nn.optim.adam import _update_run_op
+from tests.mark_utils import arg_mark
 
 
 class OriNet(nn.Cell):
@@ -115,7 +114,7 @@ def test_adam_weight_decay_fission_2_decay_flag_is_false():
     assert (output1.asnumpy() == output2[0].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_adam_weight_decay_pass_without_same_type():
     """
     Feature: AdamWeightDecay op
@@ -148,7 +147,7 @@ def test_adam_weight_decay_pass_without_same_type():
     assert (output1.asnumpy() == output2[0].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_adam_weight_decay_pass_with_same_type_to_assign():
     """
     Feature: AdamWeightDecay op

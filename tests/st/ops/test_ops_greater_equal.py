@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, ops
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 class GreaterEqualNet(nn.Cell):
     def construct(self, x, y):
@@ -37,7 +37,8 @@ def GenInputData(np_data_type, shape=(3, 4, 5)):
     data = np.arange(size).reshape(*shape).astype(np_data_type)
     return Tensor(data)
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_greater_equal_op(mode):
     """
@@ -53,7 +54,8 @@ def test_greater_equal_op(mode):
     assert np.allclose(output.asnumpy(), [False, True])
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_greater_equal_op_backward(mode):
     """
@@ -70,7 +72,8 @@ def test_greater_equal_op_backward(mode):
     assert np.allclose(grads[0].asnumpy(), expect_out, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_greater_equal_op_vmap(mode):
     """
@@ -87,7 +90,8 @@ def test_greater_equal_op_vmap(mode):
     np.testing.assert_array_equal(out.asnumpy(), expect_out)
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_greater_equal_op_dynamic_shape(mode):
     """
@@ -107,7 +111,8 @@ def test_greater_equal_op_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect_out.asnumpy(), rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_greater_equal_op_dynamic_rank(mode):
     """
@@ -127,7 +132,8 @@ def test_greater_equal_op_dynamic_rank(mode):
     np.testing.assert_allclose(output.asnumpy(), expect_out.asnumpy(), rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'],
+          level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_greater_equal_dynamic_shape():
     """
     Feature: Test greater equal with dynamic shape in graph mode.

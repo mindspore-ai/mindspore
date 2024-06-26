@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore as ms
@@ -21,6 +20,7 @@ from mindspore.mint import split
 
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 @test_utils.run_with_cell
 def split_forward_func(x, axis, output_num):
@@ -79,7 +79,7 @@ def test_split_ext_int_SD5B(context_mode):
     first_output = out[0]
     assert np.allclose(first_output.shape, expect_shape)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_SDV2(context_mode):
     """
@@ -100,7 +100,7 @@ def test_split_ext_int_SDV2(context_mode):
     first_output = out[0]
     assert np.allclose(first_output.shape, expect_shape)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_forward(context_mode):
     """

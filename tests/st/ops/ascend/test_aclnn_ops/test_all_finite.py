@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 '''test all finite'''
 import pytest
 import numpy as np
@@ -20,6 +19,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, nn
 from mindspore.ops.operations.nn_ops import AllFinite
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -77,7 +77,7 @@ def test_all_finite(mode):
     assert output1.asnumpy() == True
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_all_finite_small(mode):
     """

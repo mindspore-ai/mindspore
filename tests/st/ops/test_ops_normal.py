@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import numpy as np
-import pytest
 import mindspore as ms
 from mindspore import mint, Generator
 from mindspore.ops.auto_generate import NormalTensorTensor, NormalTensorFloat,\
      NormalFloatTensor, NormalFloatFloat
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 generator = Generator()
 seed_ = ms.Tensor(1, ms.int64)
 offset_ = ms.Tensor(1, ms.int64)
@@ -93,7 +92,7 @@ def test_normal_tensor_tensor_forward():
     assert output.shape == (10, 10)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_normal_tensor_float_forward():
     """
     Feature: pyboost function.
@@ -106,7 +105,7 @@ def test_normal_tensor_float_forward():
     assert output.shape == (10, 10)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_normal_float_tensor_forward():
     """
     Feature: pyboost function.
@@ -119,7 +118,7 @@ def test_normal_float_tensor_forward():
     assert output.shape == (10, 10)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_normal_float_float_forward():
     """
     Feature: pyboost function.

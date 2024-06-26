@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -24,6 +23,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
 
 from tests.st.pynative.utils import GradOfAllInputs
+from tests.mark_utils import arg_mark
 
 
 class Fold(Cell):

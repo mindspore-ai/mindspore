@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
-import pytest
 import numpy as np
 import mindspore as ms
 import mindspore.context as context
@@ -22,6 +20,7 @@ from mindspore.nn import Cell
 from mindspore.ops import composite as C
 from mindspore.ops.operations import Minimum
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 grad = C.GradOperation(get_all=True, sens_param=True)
@@ -86,7 +85,7 @@ def test_min_tensor_grad_4d():
     gen_data(inputA_np, inputB_np, ms_type=ms.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @test_utils.run_test_with_On
 def test_min_tensor_grad_with_same_input():
     """

@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import ops
 import mindspore.nn as nn
 from tests.st.numpy_native.utils import check_all_results, to_tensor
+from tests.mark_utils import arg_mark
 
 
 class NetSwapAxes(nn.Cell):
@@ -26,7 +26,8 @@ class NetSwapAxes(nn.Cell):
         return ops.swapaxes(x, axis0=axis0, axis1=axis1)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_swapaxes(mode):
     """

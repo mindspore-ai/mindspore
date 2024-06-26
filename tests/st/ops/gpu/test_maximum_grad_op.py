@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from tests.st.pynative.utils import GradOfAllInputs
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
 
