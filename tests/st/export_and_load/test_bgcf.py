@@ -15,7 +15,6 @@
 """Architecture"""
 import os
 import numpy as np
-import pytest
 
 import mindspore.nn as nn
 from mindspore import Parameter, Tensor, context
@@ -23,6 +22,7 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore.common.initializer import initializer
 from mindspore.train.serialization import export
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -191,10 +191,8 @@ class ForwardBGCF(nn.Cell):
                                                        items, i_neighs, i_gnew_neighs, 1)
         return user_rep, item_rep
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_export_bgcf():
     context.set_context(mode=context.GRAPH_MODE)
     num_user, num_item = 7068, 3570

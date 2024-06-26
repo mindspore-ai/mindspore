@@ -24,6 +24,8 @@ from mindspore.common import mutable
 from mindspore.common.tensor import Tensor
 from mindspore.train.serialization import export, load
 from mindspore import context
+from tests.mark_utils import arg_mark
+
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -133,11 +135,10 @@ def test_mutable_dynamic_tuple():
     os.remove(verify_name)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'platform_ascend910b'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 def test_mindir_raise_export_and_load():
     """
     Feature: export raise primitive and test the raise when

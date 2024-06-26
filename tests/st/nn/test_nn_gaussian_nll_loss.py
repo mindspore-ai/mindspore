@@ -4,6 +4,7 @@ import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -16,13 +17,10 @@ class Net(nn.Cell):
         return loss
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('full', [True, False])
 def test_gaussian_nll_loss_full(mode, full):
@@ -46,13 +44,10 @@ def test_gaussian_nll_loss_full(mode, full):
     assert np.allclose(output.asnumpy(), expected)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('reduction', ['mean', 'sum', 'none'])
 def test_gaussian_nll_loss_reduction(mode, reduction):

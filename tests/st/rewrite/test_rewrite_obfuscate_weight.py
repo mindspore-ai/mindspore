@@ -24,6 +24,7 @@ from mindspore import save_checkpoint, load_checkpoint
 from mindspore import obfuscate_ckpt, load_obf_params_into_net
 from mindspore import Tensor
 import mindspore.ops as ops
+from tests.mark_utils import arg_mark
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
@@ -86,9 +87,7 @@ class LeNet5(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_normal_inputs():
     """
     Feature: Test weight obfuscation.

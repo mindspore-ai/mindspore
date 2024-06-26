@@ -17,6 +17,7 @@ import numpy as np
 from mindspore import nn
 import mindspore as ms
 from mindspore.experimental import optim
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -34,13 +35,10 @@ class Net(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_sequential_lr_scheduler(mode):
     """
@@ -69,13 +67,10 @@ def test_sequential_lr_scheduler(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_reduce_lr_on_plateau(mode):
     """
@@ -102,13 +97,10 @@ def test_reduce_lr_on_plateau(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_step_lr(mode):
     """
@@ -134,13 +126,10 @@ def test_step_lr(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_linear_lr(mode):
     """
@@ -166,13 +155,10 @@ def test_linear_lr(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_exponential_lr(mode):
     """
@@ -198,13 +184,10 @@ def test_exponential_lr(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_polynomial_lr(mode):
     """
@@ -230,13 +213,10 @@ def test_polynomial_lr(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_lambdalr_scheduler(mode):
     """
@@ -272,13 +252,10 @@ def test_lambdalr_scheduler(mode):
         assert np.allclose([float(lr) for lr in current_lr], expect_list[i])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_multiplicative_lr(mode):
     """
@@ -305,11 +282,10 @@ def test_multiplicative_lr(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_multistep_lr(mode):
     """
@@ -335,13 +311,10 @@ def test_multistep_lr(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_constant_lr(mode):
     """
@@ -367,13 +340,10 @@ def test_constant_lr(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_cyclic_lr(mode):
     """
@@ -399,11 +369,10 @@ def test_cyclic_lr(mode):
         assert np.allclose(current_lr[0].asnumpy(), expect_list[i])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_cosine_annealing_warm_restarts(mode):
     """
@@ -434,13 +403,10 @@ def test_cosine_annealing_warm_restarts(mode):
             assert np.allclose(current_lr[0].asnumpy(), expect_list[epoch*iters+i])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_cosine_annealing_lr(mode):
     """

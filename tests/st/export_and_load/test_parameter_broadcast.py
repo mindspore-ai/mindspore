@@ -16,11 +16,10 @@ import os
 import pytest
 from mindspore import context
 import shutil
+from tests.mark_utils import arg_mark
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_parameter_broadcast(mode):
     """

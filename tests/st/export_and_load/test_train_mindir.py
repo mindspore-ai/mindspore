@@ -14,7 +14,6 @@
 import os
 from io import BytesIO
 import numpy as np
-import pytest
 
 import mindspore.nn as nn
 from mindspore import context
@@ -24,6 +23,7 @@ from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.train.serialization import export, load
+from tests.mark_utils import arg_mark
 
 
 def weight_variable():
@@ -112,11 +112,10 @@ def decrypt_func(cipher_file, key):
     return plain_data
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 def test_export_lenet_grad_mindir():
     """
     Feature: export LeNet to MindIR file
@@ -134,13 +133,10 @@ def test_export_lenet_grad_mindir():
     assert os.path.exists(verify_name)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 def test_load_mindir_and_run():
     """
     Feature: Load LeNet to MindIR
@@ -165,10 +161,7 @@ def test_load_mindir_and_run():
     assert np.allclose(outputs0.asnumpy(), outputs_after_load.asnumpy())
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_load_mindir_and_run_with_encryption():
     """
     Feature: Load encrypted LeNet to MindIR with decryption
@@ -195,10 +188,7 @@ def test_load_mindir_and_run_with_encryption():
     os.remove(mindir_name)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_load_mindir_generated_from_old_version():
     """
     Feature: Load MindIR generated from old version

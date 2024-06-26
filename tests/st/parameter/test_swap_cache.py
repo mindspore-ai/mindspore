@@ -19,6 +19,7 @@ import mindspore as ms
 from mindspore._c_expression import swap_cache
 from mindspore.common.api import jit
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 
 class ReLUNet(ms.nn.Cell):
@@ -37,10 +38,7 @@ def swap_numpy(dst_np, src_np, block_mapping_np):
     return dst_np
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_swap_cache():
     """
     Feature: test swap cache api.

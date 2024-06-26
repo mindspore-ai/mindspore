@@ -32,6 +32,7 @@ from mindspore.common.initializer import TruncatedNormal
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.nn import Accuracy
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
@@ -127,9 +128,7 @@ class ErrorCallback(Callback):
             raise RuntimeError("Exec runtime error.")
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ckpt_append_info():
     """
     Feature: Save append info during save ckpt.
@@ -157,9 +156,7 @@ def test_ckpt_append_info():
             os.remove(file_name)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ckpt_error():
     """
     Feature: Save ckpt when error in train.
@@ -207,9 +204,7 @@ def create_dataset_lenet(num_data=32, batch_size=32, repeat_size=1):
     return input_data
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_checkpointconfig_append_info_and_load_checkpoint():
     """
     Feature: Save checkpoint for CheckpointConfig's append_info and load checkpoint.

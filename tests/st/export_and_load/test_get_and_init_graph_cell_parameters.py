@@ -19,12 +19,12 @@ import os
 import stat
 
 import numpy as np
-import pytest
 
 from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore import export, load, save_checkpoint, load_checkpoint
 from mindspore import nn
+from tests.mark_utils import arg_mark
 
 
 class TestNet(nn.Cell):
@@ -81,12 +81,10 @@ def get_and_init_graph_cell_parameters():
         os.remove(ckpt_name)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 def test_get_and_init_graph_cell_parameters_in_graph_mode():
     """
     Description: load mind ir and update parameters in graph mode.

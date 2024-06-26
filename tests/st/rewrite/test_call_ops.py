@@ -19,14 +19,15 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore.rewrite import SymbolTree
+from tests.mark_utils import arg_mark
 
 class ReverseNet(nn.Cell):
     def construct(self, x):
         x = ops.reverse(x, [1])
         return x
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_rewrite_ops_reverse(mode):
     """
@@ -49,8 +50,8 @@ class CovNet(nn.Cell):
         x = ops.cov(x)
         return x
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_rewrite_ops_cov(mode):
     """
@@ -73,8 +74,8 @@ class DsplitNet(nn.Cell):
         x = ops.dsplit(x, 3)
         return x
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_rewrite_ops_dsplit(mode):
     """

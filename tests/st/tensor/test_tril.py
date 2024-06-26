@@ -14,6 +14,7 @@
 # ============================================================================
 import numpy as np
 import pytest
+from tests.mark_utils import arg_mark
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, context
@@ -34,13 +35,10 @@ class TrilNet(nn.Cell):
         return self.tril(value, k)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tril(mode):
     """
@@ -56,10 +54,10 @@ def test_tril(mode):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE,])
 def test_tril_0(mode):
     """
@@ -73,10 +71,10 @@ def test_tril_0(mode):
     assert np.sum(out.asnumpy()) == 34
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE,])
 def test_tril_1(mode):
     """
@@ -90,10 +88,10 @@ def test_tril_1(mode):
     assert np.sum(out.asnumpy()) == 42
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE,])
 def test_tril_2(mode):
     """
@@ -107,10 +105,10 @@ def test_tril_2(mode):
     assert np.sum(out.asnumpy()) == 19
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE,])
 def test_tril_parameter(mode):
     """
@@ -122,10 +120,10 @@ def test_tril_parameter(mode):
     net(Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), 0)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE,])
 def test_tril_parameter_1(mode):
     """
@@ -137,10 +135,10 @@ def test_tril_parameter_1(mode):
     net(Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), 0)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE,])
 def test_tril_parameter_2(mode):
     """

@@ -19,6 +19,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -31,9 +32,7 @@ class Net(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_instancenorm1d_para_customed_dtype(mode):
     """

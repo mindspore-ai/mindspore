@@ -20,6 +20,7 @@ import mindspore.ops as ops
 import mindspore.multiprocessing as mp
 import mindspore.ops.functional as F
 import numpy as np
+from tests.mark_utils import arg_mark
 
 
 def subprocess(mode, i, q):
@@ -29,12 +30,10 @@ def subprocess(mode, i, q):
     assert np.allclose(y.asnumpy(), np.log(2), 1e-3), "subprocess id:{i}"
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fork(mode):
     """
@@ -66,12 +65,11 @@ def test_fork(mode):
 def child_process(x):
     return ops.log(x)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_multiprocess_pool(mode):
     """
@@ -124,12 +122,11 @@ def childprocess(mode, i, q):
     assert np.allclose(fgrad[0].asnumpy(), np.array([1.]), 1e-3)
     assert np.allclose(fgrad[1].asnumpy(), np.array([0.]), 1e-3)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fork_subgraphs(mode):
     """

@@ -22,6 +22,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.initializer import Normal
+from tests.mark_utils import arg_mark
 
 
 class LeNet5(nn.Cell):
@@ -65,12 +66,10 @@ def remove_ckpt(file_name):
         os.remove(file_name)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend910b'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_save_load_checkpoint_with_bf16_graph(mode):
     """
@@ -121,12 +120,11 @@ def test_save_load_checkpoint_with_bf16_graph(mode):
     assert output_empty_list["lr_parameter"].dtype == ms.bfloat16
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend910b'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_save_load_checkpoint_with_bf16_pynative(mode):
     """
@@ -177,12 +175,11 @@ def test_save_load_checkpoint_with_bf16_pynative(mode):
     assert output_empty_list["lr_parameter"].dtype == ms.bfloat16
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend910b'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_save_load_checkpoint_with_bf16_pynative_accuracy(mode):
     """
@@ -201,13 +198,10 @@ def test_save_load_checkpoint_with_bf16_pynative_accuracy(mode):
         assert np.allclose(param.float().asnumpy(), output_param_dict[param.name].float().asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_list_ckpt_error(mode):
     """
