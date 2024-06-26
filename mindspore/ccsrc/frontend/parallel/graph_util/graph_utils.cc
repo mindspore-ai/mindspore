@@ -1176,12 +1176,28 @@ Status UpdateReshapeShapeValue(const CNodePtr &reshape_cnode, const CNodePtr &sh
   return Status::SUCCESS;
 }
 
+bool SkipSupplyForReshape(const CNodePtr &cnode) {
+  if (!IsReshapeOp(cnode)) {
+    return false;
+  }
+  auto prim = GetCNodePrimitive(cnode);
+  if (prim->HasAttr(SKIP_REDISTRIBUTION)) {
+    bool skip_redistribution = GetValue<bool>(prim->GetAttr(SKIP_REDISTRIBUTION));
+    return skip_redistribution;
+  }
+  return false;
+}
+
 Status UpdateShapeNode(const CNodePtr &cnode, const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(cnode);
   // Step1. Get shape input tensor layout. cnode is Shape op.
   auto input_of_shape = cnode->input(1);
   auto input_cnode = input_of_shape->cast<CNodePtr>();
   if (input_cnode == nullptr) {
+    return Status::SUCCESS;
+  }
+  if (SkipSupplyForReshape(input_cnode)) {
+    MS_LOG(INFO) << "Skip " << cnode->fullname_with_scope() << ", because its input is reshape.";
     return Status::SUCCESS;
   }
   if (IsValueNode<FuncGraph>(input_cnode->input(0))) {
