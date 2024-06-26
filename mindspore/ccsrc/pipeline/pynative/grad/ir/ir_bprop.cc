@@ -346,6 +346,9 @@ void IrBprop::AddReverseUser(const AnfNodePtr &node, const CNodePtr &user, size_
 void IrBprop::BackPropagate() {
   UpdateLazyUser();
   const auto &last_node_reverse_iter = GetLastNodeReverseIter();
+#ifndef ENABLE_TEST
+  SeenNum seen = NewSeenGeneration();
+#endif
   MS_LOG(DEBUG) << "Is running recompute grad " << is_run_recompute_;
   for (auto iter = last_node_reverse_iter; iter != ad_param_->variable_adjoint_set_.rend(); ++iter) {
     const auto &variable = *iter;
@@ -378,7 +381,6 @@ void IrBprop::BackPropagate() {
       const auto &din = next_edge.second;
 #ifndef ENABLE_TEST
       // VM no need run pass
-      SeenNum seen = NewSeenGeneration();
       pass_forward_->ConvertMakeTupleInputToDynamicInput(din, seen, bprop_graph_run_by_single_op_);
 #endif
       last_variable->ir_function_node()->UpdateAccumulativeDout(din);
