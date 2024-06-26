@@ -1,4 +1,5 @@
-set(FFMPEG_FLAGS
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    set(FFMPEG_FLAGS
         --disable-programs
         --disable-doc
         --disable-postproc
@@ -8,7 +9,20 @@ set(FFMPEG_FLAGS
         --disable-static
         --enable-shared
         --disable-x86asm
-        )
+        --extra-cflags="-D_FORTIFY_SOURCE=2 -fstack-protector-all"
+        --extra-ldflags="-Wl,-z,relro,-z,now")
+else()
+    set(FFMPEG_FLAGS
+        --disable-programs
+        --disable-doc
+        --disable-postproc
+        --disable-decoder=av1
+        --disable-libxcb
+        --disable-hwaccels
+        --disable-static
+        --enable-shared
+        --disable-x86asm)
+endif()
 
 set(REQ_URL "https://ffmpeg.org/releases/ffmpeg-5.1.2.tar.gz")
 set(SHA256 "87fe8defa37ce5f7449e36047171fed5e4c3f4bb73eaccea8c954ee81393581c")
@@ -36,6 +50,9 @@ else()
             LIBS avcodec avdevice avfilter avformat avutil swresample swscale
             URL ${REQ_URL}
             SHA256 ${SHA256}
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2022-3964.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2022-3965.patch
+            PATCHES ${TOP_DIR}/third_party/patch/ffmpeg/CVE-2023-47342.patch
             CONFIGURE_COMMAND ./configure ${FFMPEG_FLAGS}
             )
 
