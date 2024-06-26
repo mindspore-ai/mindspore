@@ -174,10 +174,8 @@ class AdamW(Optimizer):
             maximize = group.get("maximize")
             start_id = self.group_start_id[group_id]
             end_id = self.group_start_id[group_id + 1]
-            lr = self.lrs[group_id]
-            if isinstance(group.get("lr"), float):
-                lr = self.op_cast(group.get("lr"), mstype.float32)
-            grads = tuple([grad if not maximize else F.neg(grad) for grad in gradients[start_id: end_id]])
+            lr = group.get("lr")
+            grads = tuple(gradients[start_id: end_id])
 
             self.hyper_map(F.partial(_optim_adamw_opt, self.adamw_opt, beta1, beta2, float(lr),
                                      group.get("eps"), group.get("weight_decay"), self.state_step,
