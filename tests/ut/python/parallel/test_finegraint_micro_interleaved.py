@@ -193,6 +193,19 @@ class NetWithAdd2(nn.Cell):
         return out
 
 
+class NetWithAdd3(nn.Cell):
+    def __init__(self, bias, add_in_layout):
+        super().__init__()
+        self.add = P.Add().shard(in_strategy=add_in_layout)
+        self.gelu = P.GeLU()
+        self.bias = Parameter(bias, "bias")
+
+    def construct(self, y):
+        out1 = self.add(y, self.bias)
+        out = self.gelu(out1)
+        return out
+
+
 class NetWithRmsNorm(nn.Cell):
     def __init__(self, weight, bias, gamma, matmul_in_layout, add_in_layout, relu_in_layout, rmsnorm_in_layout,
                  out_layout=None):
@@ -273,6 +286,40 @@ class NetWithUnsupportedOps(nn.Cell):
         out = self.relu(input_x)
         out = self.tensor_scatter_update(out, indices, update)
         out = self.mul(out, 2)
+        return out
+
+
+class NetWithSplit(nn.Cell):
+    def __init__(self, mul_size, in_strategy=None, out_strategy=None):
+        super().__init__()
+        mul_np = np.full(mul_size, 0.5, dtype=np.float32)
+        self.mul_weight = Parameter(Tensor(mul_np), name="mul_weight")
+        self.mul = P.Mul()
+        self.split = P.Split(-1, 2).add_prim_attr("skip_redistribution", True)
+        self.split.shard(in_strategy=in_strategy, out_strategy=out_strategy)
+        self.add = P.Add()
+
+    def construct(self, inputs):
+        x = self.mul(inputs, self.mul_weight)
+        x1, x2 = self.split(x)
+        out = self.add(x1, x2)
+        return out
+
+
+class NetWithSplitAxis0(nn.Cell):
+    def __init__(self, mul_size, in_strategy=None, out_strategy=None):
+        super().__init__()
+        mul_np = np.full(mul_size, 0.5, dtype=np.float32)
+        self.mul_weight = Parameter(Tensor(mul_np), name="mul_weight")
+        self.mul = P.Mul()
+        self.split = P.Split(0, 2)
+        self.split.shard(in_strategy=in_strategy, out_strategy=out_strategy)
+        self.add = P.Add()
+
+    def construct(self, inputs):
+        x = self.mul(inputs, self.mul_weight)
+        x1, x2 = self.split(x)
+        out = self.add(x1, x2)
         return out
 
 
@@ -465,24 +512,6 @@ def test_interleaved_with_transpose():
     _ = compile_net(net, x)
 
 
-def test_interleaved_with_transpose_failed():
-    """
-    Feature: test micro interleaved when interleaved_parallel is not 2
-    Description: dev_num is 4.
-    Expectation: compile failed
-    """
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
-    with pytest.raises(ValueError):
-        layout = Layout((2, 2, 1, 1, 3), ("dp", "sp", "mp", "cp", "interleaved_parallel"))
-        in_strategy = (layout("dp", ("sp", "cp"), "mp", "interleaved_parallel"),)
-        out_strategy = (layout(("sp", "cp"), "interleaved_parallel", "dp", "mp"),)
-        x = Tensor(np.ones([64, 96, 16, 16]), dtype=ms.float32)
-        net = GradWrap(
-            NetWithLoss(
-                NetWithTranspose((64, 96, 16, 16), (1, 3, 0, 2), in_strategy, out_strategy)))
-        _ = compile_net(net, x)
-
-
 def test_interleaved_with_unsupported_ops():
     """
     Feature: test layout extend
@@ -499,3 +528,52 @@ def test_interleaved_with_unsupported_ops():
     update = Tensor(np.ones((2, 2, 3)).astype(np.float32))
     with pytest.raises(RuntimeError):
         compile_net_unsupported(net, input_x, indices, update)
+
+
+def test_interleaved_size4():
+    """
+    Feature: test micro interleaved in parameter
+    Description: dev_num is 16.
+    Expectation: compile ok
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
+    layout = Layout((2, 1, 2, 4), ("dp", "sp", "mp", "interleaved_parallel"))
+    add_layout = (layout(("interleaved_parallel", "dp"), "mp"), layout("None", "mp"))
+    x = Tensor(np.ones([1024, 1024]), dtype=ms.float32)
+    bias = Tensor(np.ones([1, 1024]), dtype=ms.float32)
+    net = GradWrap(
+        NetWithLoss(NetWithAdd3(bias, add_layout)))
+    _ = compile_net(net, x)
+
+
+def test_interleaved_with_split():
+    """
+    Feature: test micro interleaved
+    Description: dev_num is 8.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 4, 2), ("dp", "mp", "interleaved_parallel"))
+    in_strategy = (layout(("dp", "interleaved_parallel"), "mp"),)
+    x = Tensor(np.ones([64, 128]), dtype=ms.float32)
+    net = GradWrap(
+        NetWithLoss(
+            NetWithSplit((64, 128), in_strategy)))
+    _ = compile_net(net, x)
+
+
+def test_interleaved_with_split_with_error():
+    """
+    Feature: test micro interleaved
+    Description: dev_num is 8.
+    Expectation: raise error
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 4, 2), ("dp", "mp", "interleaved_parallel"))
+    in_strategy = (layout(("interleaved_parallel"), ("dp", "mp")),)
+    x = Tensor(np.ones([64, 128]), dtype=ms.float32)
+    net = GradWrap(
+        NetWithLoss(
+            NetWithSplitAxis0((64, 128), in_strategy)))
+    with pytest.raises(RuntimeError):
+        _ = compile_net(net, x)

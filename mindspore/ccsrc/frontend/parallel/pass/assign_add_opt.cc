@@ -27,6 +27,7 @@
 #include "mindspore/core/ops/nn_optimizer_ops.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
 #include "frontend/parallel/device_manager.h"
+#include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/pass/pass_utils.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/utils/convert_utils_base.h"
@@ -37,6 +38,7 @@ namespace parallel {
 namespace {
 constexpr auto kAttrConcatN = "N";
 constexpr auto kAttrCastDw = "CastDw";
+constexpr auto kAttrTmpMakeTuple = "tmp_make_tuple";
 constexpr size_t kPartialPreIndex = 2;
 
 CNodePtr GetMatmulDwNodeFront(const std::vector<CNodePtr> &matmul_dw_nodes,
@@ -362,6 +364,92 @@ bool IsNeedOptimizeAssignAdd(bool is_kbyk_mode) {
   }
   return true;
 }
+
+void ReplaeAddNAssignAddToTwoAssignAdd(const FuncGraphManagerPtr &manager) {
+  for (const auto &each_graph : manager->func_graphs()) {
+    std::list<CNodePtr> graph_orders = each_graph->GetOrderedCnodes();
+    std::vector<CNodePtr> origin_nodes_topological(graph_orders.cbegin(), graph_orders.cend());
+    for (const auto &node : origin_nodes_topological) {
+      if (!IsPrimitiveCNode(node, prim::kPrimAssignAdd)) {
+        continue;
+      }
+      auto assign_add_input = GetInputNodeWithFilter(node->input(kIndex2), [&](const CNodePtr &cnode) {
+        bool filter = IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimLoad);
+        return std::make_pair(filter, 1);
+      });
+      if (!IsPrimitiveCNode(assign_add_input, prim::kPrimAddN)) {
+        continue;
+      }
+      auto addn_cnode = assign_add_input->cast<CNodePtr>();
+      if (!IsPrimitiveCNode(addn_cnode->input(kIndex1), prim::kPrimMakeTuple)) {
+        continue;
+      }
+      auto cast_node = GetInputNodeWithFilter(node->input(kIndex2), [&](const CNodePtr &cnode) {
+        bool filter = IsPrimitiveCNode(cnode, prim::kPrimLoad);
+        return std::make_pair(filter, 1);
+      });
+      bool contain_cast = IsPrimitiveCNode(cast_node, prim::kPrimCast);
+      auto make_tuple_cnode = addn_cnode->input(kIndex1)->cast<CNodePtr>();
+      std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple->Clone())};
+      std::vector<AbstractBasePtr> maketuple_abs_inputs;
+      auto matmuls = make_tuple_cnode->inputs();
+      bool all_mm = std::all_of(matmuls.begin() + 1, matmuls.end(),
+                                [&](auto cnode) { return IsPrimitiveCNode(cnode, prim::kPrimMatMul); });
+      if (!all_mm) {
+        continue;
+      }
+      for (size_t i = kIndex1; i < make_tuple_cnode->size(); ++i) {
+        auto input_node = make_tuple_cnode->input(i);
+        std::vector<AnfNodePtr> assign_add_inputs = node->inputs();
+        assign_add_inputs[kIndex0] = NewValueNode(prim::kPrimAssignAdd->Clone());
+        assign_add_inputs[kIndex2] = input_node;
+        if (contain_cast) {
+          std::vector<AnfNodePtr> cast_inputs{cast_node->cast<CNodePtr>()->input(kIndex0), input_node,
+                                              cast_node->cast<CNodePtr>()->input(kIndex2)};
+          auto new_cast = each_graph->NewCNode(cast_inputs);
+          new_cast->set_abstract(cast_node->abstract()->Clone());
+          new_cast->abstract()->set_shape(input_node->abstract()->GetShapeTrack());
+          assign_add_inputs[kIndex2] = new_cast;
+        }
+        auto new_assign_add_cnode = each_graph->NewCNode(assign_add_inputs);
+        new_assign_add_cnode->set_abstract(node->abstract()->Clone());
+        make_tuple_inputs.push_back(new_assign_add_cnode);
+        maketuple_abs_inputs.push_back(node->abstract()->Clone());
+      }
+      auto make_tuple = each_graph->NewCNode(make_tuple_inputs);
+      make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(maketuple_abs_inputs));
+      make_tuple->AddAttr(kAttrTmpMakeTuple, MakeValue(true));
+      manager->Replace(node, make_tuple);
+    }
+  }
+}
+
+void EraseTmpMakeTuple(const FuncGraphManagerPtr &manager) {
+  for (const auto &each_graph : manager->func_graphs()) {
+    std::list<CNodePtr> graph_orders = each_graph->GetOrderedCnodes();
+    std::vector<CNodePtr> origin_nodes_topological(graph_orders.cbegin(), graph_orders.cend());
+    for (const auto &node : origin_nodes_topological) {
+      if (!IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
+        continue;
+      }
+      if (!node->HasAttr(kAttrTmpMakeTuple)) {
+        continue;
+      }
+      auto node_inputs = node->inputs();
+      if (node_inputs.size() < SIZE_TWO) {
+        continue;
+      }
+      auto first_input = node_inputs[kIndex1];
+      bool is_all_equal =
+        std::all_of(node_inputs.begin() + 1, node_inputs.end(), [&](auto cnode) { return cnode == first_input; });
+      if (!is_all_equal) {
+        MS_LOG(INTERNAL_EXCEPTION) << "Merge assignAdd cannot erase make_tuple fail, make_tuple:"
+                                   << node->DebugString();
+      }
+      manager->Replace(node, first_input);
+    }
+  }
+}
 }  // namespace
 
 void AssignAddOpt(const FuncGraphPtr &graph) {
@@ -372,6 +460,7 @@ void AssignAddOpt(const FuncGraphPtr &graph) {
   }
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
+  ReplaeAddNAssignAddToTwoAssignAdd(manager);
   auto is_enable_concat_eliminate = ms_context->get_param<bool>(MS_CTX_ENABLE_CONCAT_ELIMINATE_OPT);
   MS_LOG(INFO) << "Merge multi matmul assign add begin and concat eliminate enable flag is:"
                << is_enable_concat_eliminate;
@@ -453,6 +542,7 @@ void AssignAddOpt(const FuncGraphPtr &graph) {
                                 para_index);
     }
   }
+  EraseTmpMakeTuple(manager);
 }
 }  // namespace parallel
 }  // namespace mindspore

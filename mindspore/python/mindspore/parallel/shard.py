@@ -34,9 +34,7 @@ class Layout():
         device_matrix (tuple): Describe the shape of devices arrangement, its element type is int.
         alias_name (tuple): The alias name for each axis of device_matrix, its length shoits element type is string.
                             When using "interleaved_parallel" as an alias name, the tensor would be split into multiple
-                            copies on the corresponding partition dimension on a single card. The corresponding value
-                            of "interleaved_parallel" in device_matrix must be 2.
-
+                            copies on the corresponding partition dimension on a single card.
     Raises:
         TypeError: `device_matrix` is not a tuple type.
         TypeError: `alias_name` is not a tuple type.
@@ -81,9 +79,6 @@ class Layout():
         if inter_key in alias_name and alias_name.index(inter_key) != len(alias_name) - 1:
             raise ValueError(f"When alias_name {alias_name} contains keyword 'interleaved_parallel',"
                              f" it should be at the last dim of alias_name, which means the virtual sharding.")
-        if inter_key in alias_name and device_matrix[alias_name.index(inter_key)] != 2:
-            raise ValueError(f"When alias_name {alias_name} contains keyword 'interleaved_parallel',"
-                             f" the corresponding dim of device_matrix should be 2.")
         self._device_shape = device_matrix
         self._alias_name = alias_name
         self._tensor_map = None

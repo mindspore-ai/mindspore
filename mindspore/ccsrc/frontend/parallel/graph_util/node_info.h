@@ -76,6 +76,9 @@ std::shared_ptr<typename std::enable_if<std::is_base_of<ValueSequeue, T>::value,
 }
 
 const AnfNodePtr RealInputNode(const CNodePtr cnode, size_t index);
+CNodePtr MakeMakeTupleByCNode(const CNodePtr &cnode);
+AnfNodePtr RefParameterToActualNode(const AnfNodePtr &node,
+                                    std::function<std::pair<bool, size_t>(const CNodePtr &)> filter);
 }  // namespace parallel
 }  // namespace mindspore
 

@@ -80,6 +80,14 @@ class LayerNormInfo : public OperatorInfo {
   TensorLayout mean_infer_tensor_layout_;
   TensorLayout var_infer_tensor_layout_;
 };
+
+class LayerNormV3Info : public LayerNormInfo {
+ public:
+  LayerNormV3Info(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                  const PrimitiveAttrs &attrs)
+      : LayerNormInfo(operator_name, inputs_shape, outputs_shape, attrs) {}
+  ~LayerNormV3Info() override = default;
+};
 }  // namespace parallel
 }  // namespace mindspore
 

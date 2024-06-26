@@ -473,6 +473,7 @@ constexpr char FUSE_BATCH_NORM_EX[] = "FusedBatchNormEx";
 constexpr char BATCH_NORM[] = "BatchNorm";
 constexpr char SYNC_BATCH_NORM[] = "SyncBatchNorm";
 constexpr char LAYER_NORM[] = "LayerNorm";
+constexpr char LAYER_NORM_V3[] = "LayerNormV3";
 constexpr char RMS_NORM[] = "RmsNorm";
 constexpr char POOLING[] = "Pooling";
 constexpr char CAST[] = "Cast";

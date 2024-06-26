@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/device_matrix.h"
@@ -28,7 +29,7 @@
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
-#include "pipeline/jit/ps/resource.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 
 namespace mindspore {
 namespace parallel {
@@ -195,6 +196,118 @@ Status SplitInfo::InferTensorMap() {
   return SUCCESS;
 }
 
+Status SplitInfo::CheckInputLayout() {
+  if (inputs_tensor_info_.size() != kSizeOne) {
+    MS_LOG(ERROR) << "The size of input_tensor_layout for " << name_ << " is " << inputs_tensor_info_.size()
+                  << " rather than 1.";
+    return FAILED;
+  }
+  auto stra = inputs_tensor_info_.front().InferStrategy();
+  if (axis_ >= stra.size()) {
+    MS_LOG(ERROR) << name_ << ": The axis is out of range, the axis is " << axis_;
+    return FAILED;
+  }
+  auto input_layout = inputs_tensor_info_.front().tensor_layout();
+  if (input_layout.IsInterleavedParallel()) {
+    auto tensor_map_axis = input_layout.tensor_map_before()[axis_];
+    if (std::find(tensor_map_axis.begin(), tensor_map_axis.end(), 0) != tensor_map_axis.end()) {
+      MS_LOG(ERROR) << name_ << ": The axis can not be split by interleaved_parallel.";
+      return FAILED;
+    }
+  }
+  if (stra[axis_] != 1 && !skip_redistribution_) {
+    MS_LOG(ERROR) << name_ << ": The axis can not be split";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
+Status SplitInfo::CheckOutputLayout() {
+  if (output_infer_tensor_layout_.tensor_shape_before().array().empty()) {
+    MS_LOG(ERROR) << "Parameter of output tensor layout for " << name_ << " is not allowed to be set by users.";
+    return FAILED;
+  }
+  MS_LOG(INFO) << name_ << ": Using output tensor layout infer by input tensor layout.";
+  UpdateOutputTensorInfoForInterleaved();
+  return SUCCESS;
+}
+
+Status SplitInfo::InferOutputTensorInfo() {
+  for (size_t i = 0; i < outputs_shape_.size(); ++i) {
+    auto output_infer_tensor_layout = inputs_tensor_info_[kIndex0].tensor_layout();
+    TensorLayout output_infer_tensor_layout_new;
+    output_infer_tensor_layout_new.InitFromExtendVector(output_infer_tensor_layout.device_arrangement_origin().array(),
+                                                        output_infer_tensor_layout.tensor_map_before(),
+                                                        outputs_shape_[i]);
+    TensorInfo output_tensor_info(output_infer_tensor_layout_new);
+    outputs_tensor_info_.push_back(output_tensor_info);
+    output_infer_tensor_layout_ = output_infer_tensor_layout_new;
+  }
+  return SUCCESS;
+}
+
+void SplitInfo::UpdateOutputTensorInfoForInterleaved() {
+  if (inputs_tensor_info_[kIndex0].tensor_layout().device_arrangement_interleaved().array().empty()) {
+    return;
+  }
+  for (size_t i = 0; i < outputs_shape_.size(); ++i) {
+    if (!outputs_tensor_info_[i].tensor_layout().device_arrangement_interleaved().array().empty()) {
+      continue;
+    }
+    auto interleaved_num = ParallelContext::GetInstance()->fine_grained_micro_interleaved_size();
+    auto output_dev_matrix = outputs_tensor_info_[i].tensor_layout().device_arrangement_origin().array();
+    output_dev_matrix[output_dev_matrix.size() - 1] = interleaved_num;
+    Arrangement out_device_arrangement_interleaved;
+    out_device_arrangement_interleaved.Init(output_dev_matrix);
+    auto new_tensor_layout = outputs_tensor_info_[kIndex0].tensor_layout();
+    new_tensor_layout.set_device_arrangement_interleaved(out_device_arrangement_interleaved);
+    TensorInfo new_output_tensor_info(new_tensor_layout);
+    outputs_tensor_info_[i] = new_output_tensor_info;
+  }
+}
+
+Status SplitInfo::ComputeReplaceGraphForInterleaved(const CNodePtr &cnode) {
+  GenerateGraph gen_g = GenerateGraph(attrs_);
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << name_ << "GenerateGraph Init failed";
+    return FAILED;
+  }
+  auto interleaved_num = ParallelContext::GetInstance()->fine_grained_micro_interleaved_size();
+  Attr output_nums_attr = {"output_nums", MakeValue(interleaved_num)};
+  OperatorAttrs virtual_converter_begin_attrs = {output_nums_attr};
+  auto virtual_converter_begin = gen_g.PushBack(
+    {gen_g.NewOpInst(VIRTUAL_CONVERTER_BEGIN, virtual_converter_begin_attrs), gen_g.virtual_input_node()});
+  std::vector<AnfNodePtr> virtual_converter_end_inputs_vector;
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(virtual_converter_begin, 1)};
+  for (int64_t i = 0; i < interleaved_num; ++i) {
+    auto tuple_get_item = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), virtual_converter_begin, CreatInt64Imm(i)});
+    auto axis = CreatInt64Imm(SizeToLong(axis_));
+    auto output_num = CreatInt64Imm(SizeToLong(outputs_shape_.size()));
+    auto split = gen_g.PushBack({gen_g.NewOpInst(prim_name_), tuple_get_item, axis, output_num});
+    virtual_converter_end_inputs_vector.push_back(split);
+  }
+  Attr input_nums_attr = {"input_nums", MakeValue(interleaved_num)};
+  OperatorAttrs virtual_converter_end_attrs = {input_nums_attr};
+  std::vector<AnfNodePtr> virtual_converter_end_inputs = {
+    gen_g.NewOpInst(VIRTUAL_CONVERTER_END, virtual_converter_end_attrs)};
+  std::copy(virtual_converter_end_inputs_vector.begin(), virtual_converter_end_inputs_vector.end(),
+            std::back_inserter(virtual_converter_end_inputs));
+  auto virtual_converter_end = gen_g.PushBack(virtual_converter_end_inputs);
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, virtual_converter_end));
+  return SUCCESS;
+}
+
+ReplaceGraphPtr SplitInfo::replace_graph(const CNodePtr &cnode) {
+  if (inputs_tensor_info_[kIndex0].tensor_layout().IsInterleavedParallel()) {
+    if (ComputeReplaceGraphForInterleaved(cnode) != SUCCESS) {
+      MS_LOG(EXCEPTION) << name_ << " splitting micro interleaved failed.";
+    }
+    return replace_graph_;
+  }
+  return replace_graph_;
+}
+
 Status SplitInfo::SetCostUnderStrategy(const StrategyPtr &strategy) { return SetCostUnderStrategyBase(strategy); }
 
 std::vector<StrategyPtr> SplitInfo::GenerateOpStrategies(int64_t stage_id) {
@@ -256,6 +369,40 @@ Status SplitInfo::InferAsLossDivisor() {
   as_loss_divisor_ = ComputeRepeatDeviceNumByTensorMap(dev_matrix_shape_, outputs_tensor_map_[0]);
   MS_LOG(INFO) << name_ << ": the dev matrix shape is " << ShapeToString(dev_matrix_shape_)
                << ", the output tensor map is " << ShapeToString(outputs_tensor_map_[0]) << ", loss divisor is "
+               << as_loss_divisor_;
+  return SUCCESS;
+}
+
+Status SplitInfo::InferAsLossDivisorByLayout() {
+  if (!ParallelContext::GetInstance()->loss_repeated_mean()) {
+    as_loss_divisor_ = 1;
+    return SUCCESS;
+  }
+
+  if (outputs_tensor_info_.empty()) {
+    MS_LOG(ERROR) << name_ << ": The outputs tensor info is empty.";
+    return FAILED;
+  }
+
+  TensorMaps outputs_tensor_map = outputs_tensor_info_[0].tensor_layout().tensor_map_before();
+  if (outputs_tensor_map.empty()) {
+    MS_LOG(INFO) << name_ << ": out_dev_matrix_shape is empty";
+    as_loss_divisor_ = stage_device_size_;
+    MS_LOG(INFO) << name_ << ": The output is a scalar, use the dev size " << as_loss_divisor_ << ", loss divisor.";
+    return SUCCESS;
+  }
+
+  auto out_dev_matrix_shape = outputs_tensor_info_[0].tensor_layout().device_arrangement_origin().array();
+  if (out_dev_matrix_shape.empty()) {
+    out_dev_matrix_shape = dev_matrix_shape_;
+  }
+  Shape squashed_tensor_map;
+  for (const auto &tensor_map : outputs_tensor_map) {
+    std::copy(tensor_map.begin(), tensor_map.end(), std::back_inserter(squashed_tensor_map));
+  }
+  as_loss_divisor_ = ComputeRepeatDeviceNumByTensorMap(out_dev_matrix_shape, squashed_tensor_map);
+  MS_LOG(INFO) << name_ << ": the dev matrix shape is " << ShapeToString(out_dev_matrix_shape)
+               << ", the output tensor map is " << ShapeToString(squashed_tensor_map) << ", loss divisor is "
                << as_loss_divisor_;
   return SUCCESS;
 }

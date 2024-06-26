@@ -23,6 +23,7 @@ from mindspore.common.initializer import initializer
 from mindspore.train import Model
 from mindspore.nn.wrap.cell_wrapper import PipelineCell, MicroBatchInterleaved
 import mindspore.common.lazy_inline as lazy_inline
+from mindspore.parallel.shard import Layout
 
 
 class DatasetLenet():
@@ -104,6 +105,25 @@ class LazyInlineNet(nn.Cell):
         out = self.cell4(out, param)
         return out
 
+class LazyInlineNetForFineGrain(nn.Cell):
+    @lazy_inline
+    def __init__(self, stra1, stra2, param=None):
+        super().__init__()
+        self.cell1 = MatMulCell(stra1, stra2)
+        self.cell1.pipeline_stage = 0
+        self.cell2 = MatMulCell(stra1, stra2)
+        self.cell2.pipeline_stage = 1
+        self.cell3 = MatMulCell(stra1, stra2)
+        self.cell3.pipeline_stage = 0
+        self.cell4 = MatMulCell2(stra1, ((8, 1), (1, 1)))
+        self.cell4.pipeline_stage = 1
+
+    def construct(self, x, label):
+        out, param = self.cell1(x)
+        out, param = self.cell2(out)
+        out, param = self.cell3(out)
+        out = self.cell4(out, param)
+        return out
 
 def test_pipeline_interleave_gpipe_stage0():
     """
@@ -182,6 +202,96 @@ def test_pipeline_interleave_gpipe_batch_interleave_stage1():
     stra1 = ((16, 1), (1, 1))
     stra2 = ((8, 1), (1, 1))
     net = PipelineCell(MicroBatchInterleaved(LazyInlineNet(stra1, stra2), 2), 4)
+    params = net.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_pipeline_interleave_gpipe_fine_grain_interleave_stage0():
+    """
+    Feature: Pipeline Interleave
+    Description: Pipeline Interleave with gpipe scheduler and Seq-dim Interleave
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(pipeline_config={"pipeline_interleave": True, "pipeline_scheduler": "gpipe"})
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    layout1 = Layout((16, 1, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout1 = (layout1(("dp", "interleaved_parallel"), "mp"), layout1("mp", "None"))
+    layout2 = Layout((8, 2, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout2 = (layout2(("dp", "interleaved_parallel"), "None"), layout2("None", "None"))
+    net = PipelineCell(LazyInlineNetForFineGrain(matmul_layout1, matmul_layout2), 4)
+    params = net.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+def test_pipeline_interleave_gpipe_fine_grain_interleave_stage1():
+    """
+    Feature: Pipeline Interleave
+    Description: Pipeline Interleave with gpipe scheduler and Seq-dim Interleave
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(pipeline_config={"pipeline_interleave": True, "pipeline_scheduler": "gpipe"})
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    layout1 = Layout((16, 1, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout1 = (layout1(("dp", "interleaved_parallel"), "mp"), layout1("mp", "None"))
+    layout2 = Layout((8, 2, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout2 = (layout2(("dp", "interleaved_parallel"), "None"), layout2("None", "None"))
+    net = PipelineCell(LazyInlineNetForFineGrain(matmul_layout1, matmul_layout2), 4)
+    params = net.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+
+def test_pipeline_interleave_1f1b_fine_grain_interleave_stage0():
+    """
+    Feature: Pipeline Interleave
+    Description: Pipeline Interleave with gpipe scheduler and Seq-dim Interleave
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=32, global_rank=0, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(pipeline_config={"pipeline_interleave": True, "pipeline_scheduler": "1f1b"})
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    layout1 = Layout((16, 1, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout1 = (layout1(("dp", "interleaved_parallel"), "mp"), layout1("mp", "None"))
+    layout2 = Layout((8, 2, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout2 = (layout2(("dp", "interleaved_parallel"), "None"), layout2("None", "None"))
+    net = PipelineCell(LazyInlineNetForFineGrain(matmul_layout1, matmul_layout2), 4)
+    params = net.trainable_params()
+    dataset = DatasetLenet(data, label, 3)
+    optim = nn.Lamb(params, learning_rate=0.01)
+    model = Model(net, optimizer=optim)
+    model.train(2, dataset, dataset_sink_mode=False)
+
+def test_pipeline_interleave_1f1b_fine_grain_interleave_stage1():
+    """
+    Feature: Pipeline Interleave
+    Description: Pipeline Interleave with gpipe scheduler and Seq-dim Interleave
+    Expectation: success
+    """
+    context.set_auto_parallel_context(device_num=32, global_rank=16, pipeline_stages=2)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_auto_parallel_context(pipeline_config={"pipeline_interleave": True, "pipeline_scheduler": "1f1b"})
+    data = Tensor(np.ones([32, 64]), dtype=ms.float32)
+    label = Tensor(np.ones([64, 64]), dtype=ms.float32)
+    layout1 = Layout((16, 1, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout1 = (layout1(("dp", "interleaved_parallel"), "mp"), layout1("mp", "None"))
+    layout2 = Layout((8, 2, 2), ("dp", "mp", "interleaved_parallel"))
+    matmul_layout2 = (layout2(("dp", "interleaved_parallel"), "None"), layout2("None", "None"))
+    net = PipelineCell(LazyInlineNetForFineGrain(matmul_layout1, matmul_layout2), 4)
     params = net.trainable_params()
     dataset = DatasetLenet(data, label, 3)
     optim = nn.Lamb(params, learning_rate=0.01)

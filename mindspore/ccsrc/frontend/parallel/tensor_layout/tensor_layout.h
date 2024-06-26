@@ -71,6 +71,10 @@ class TensorLayout {
 
   Arrangement tensor_shape() const { return tensor_shape_; }
 
+  Arrangement base_tensor_shape() const {
+    return !tensor_shape_before_.array().empty() ? tensor_shape_before_ : tensor_shape_;
+  }
+
   Arrangement tensor_shape_origin() const { return tensor_shape_origin_; }
 
   Arrangement device_arrangement_origin() const { return device_arrangement_origin_; }
@@ -160,6 +164,10 @@ class TensorLayout {
   void set_device_arrangement_interleaved(Arrangement device_arrangement_interleaved) {
     device_arrangement_interleaved_ = device_arrangement_interleaved;
   }
+
+  void set_fine_grain_block_index(int64_t fine_grain_block_index) { fine_grain_block_index_ = fine_grain_block_index; }
+
+  int64_t fine_grain_block_index() { return fine_grain_block_index_; }
   // Key for user data.
   constexpr static char key[] = "TLayout";
 
@@ -186,6 +194,7 @@ class TensorLayout {
   bool uniform_split_ = true;
   bool layout_transfer_ = false;
   int64_t field_size_ = 0;
+  int64_t fine_grain_block_index_ = -1;
   Shape opt_shard_slice_shape_;
   std::string opt_shard_group_ = "";         // for allgather
   std::string opt_shard_mirror_group_ = "";  // for mirror ops

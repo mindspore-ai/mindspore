@@ -18,6 +18,7 @@
 
 #include <string>
 #include <utility>
+#include <algorithm>
 
 #include "ops/sequence_ops.h"
 #include "ops/array_ops.h"
@@ -575,6 +576,49 @@ const AnfNodePtr RealInputNode(const CNodePtr cnode, size_t index) {
     MS_EXCEPTION_IF_NULL(prim);
   }
   return input0;
+}
+
+CNodePtr MakeMakeTupleByCNode(const CNodePtr &cnode) {
+  std::vector<AnfNodePtr> maketuple_inputs{NewValueNode(prim::kPrimMakeTuple)};
+  auto virtual_converted_end_inputs = cnode->inputs();
+  std::copy(virtual_converted_end_inputs.begin() + 1, virtual_converted_end_inputs.end(),
+            std::back_inserter(maketuple_inputs));
+  auto make_tuple_cnode = cnode->func_graph()->NewCNode(maketuple_inputs);
+  return make_tuple_cnode;
+}
+
+// reshape1 ---> depend ---> call @sub_graph(x, y, z)
+// sub_graph(x, y, z): reshape2(y)
+// find the reshape1 through y
+AnfNodePtr RefParameterToActualNode(const AnfNodePtr &node,
+                                    std::function<std::pair<bool, size_t>(const CNodePtr &)> filter) {
+  if (!node->isa<Parameter>()) {
+    return nullptr;
+  }
+  auto node_param_ptr = node->cast<ParameterPtr>();
+  if (node_param_ptr->has_default()) {
+    return node;
+  }
+  auto sub_func_graph = node_param_ptr->func_graph();
+  auto call_cnodes_map = sub_func_graph->func_graph_cnodes_index();
+  auto sub_graph_parameters = sub_func_graph->parameters();
+  auto curr_param_iter = std::find(sub_graph_parameters.begin(), sub_graph_parameters.end(), node);
+  if (curr_param_iter == sub_graph_parameters.end()) {
+    MS_LOG(EXCEPTION) << "Cannot find param " << node_param_ptr->DebugString() << " in current sub_graph";
+  }
+  size_t curr_param_index = static_cast<size_t>(curr_param_iter - sub_graph_parameters.begin());
+  for (const auto &node_pair : call_cnodes_map) {
+    if (!node_pair.first->first->isa<CNode>() || node_pair.first->second > 0) {
+      continue;
+    }
+    auto cnode = node_pair.first->first->cast<CNodePtr>();
+    auto cnode_input = cnode->input(curr_param_index + 1);
+    auto pre_cnode = GetInputNodeWithFilter(cnode_input, filter);
+    if (pre_cnode) {
+      return pre_cnode;
+    }
+  }
+  return nullptr;
 }
 }  // namespace parallel
 }  // namespace mindspore

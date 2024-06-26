@@ -25,6 +25,7 @@
 #include <set>
 #include <string>
 #include <queue>
+#include <list>
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/other_ops.h"
 #include "mindspore/core/ops/array_ops.h"
@@ -425,7 +426,7 @@ Status ObtainOutputTensorLayout(const OperatorInfoPtr &next_distribute_operator,
 void InsertRedistributionForMicroInterleaved(const TensorRedistributionPtr &tensor_redistribution,
                                              const std::pair<AnfNodePtr, int64_t> &node_pair,
                                              const FuncGraphPtr &func_graph, const CNodePtr &attr_cnode,
-                                             const CNodePtr &real_pre_node) {
+                                             const AnfNodePtr &real_pre_node) {
   auto redistribution_oplist_ptr_vector = tensor_redistribution->InferTensorRedistributionOperatorVirtualGraphs();
   auto next_cnode = node_pair.first->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(next_cnode);
@@ -435,6 +436,18 @@ void InsertRedistributionForMicroInterleaved(const TensorRedistributionPtr &tens
   auto virtual_converter_begin =
     CreateVirtualConverterBeginNode(real_pre_node, redistribution_oplist_ptr_vector.size());
   std::vector<CNodePtr> tuple_get_item_vector;
+  int64_t fine_grain_block_index = -1;
+  if (IsPrimitiveCNode(real_pre_node) &&
+      GetCNodePrimitive(real_pre_node)->HasAttr(kAttrFineGrainedInterleavedBlockIndex)) {
+    fine_grain_block_index =
+      GetValue<int64_t>(GetCNodePrimitive(real_pre_node)->GetAttr(kAttrFineGrainedInterleavedBlockIndex));
+  }
+  if (IsPrimitiveCNode(next_cnode) && GetCNodePrimitive(next_cnode)->HasAttr(kAttrFineGrainedInterleavedBlockIndex)) {
+    fine_grain_block_index =
+      GetValue<int64_t>(GetCNodePrimitive(next_cnode)->GetAttr(kAttrFineGrainedInterleavedBlockIndex));
+  }
+  auto interleaved_num = ParallelContext::GetInstance()->fine_grained_micro_interleaved_size();
+  auto stage_begin_rank = g_device_manager->stage_device_num() * g_device_manager->stage_id() * interleaved_num;
   for (size_t i = 0; i < redistribution_oplist_ptr_vector.size(); ++i) {
     if (redistribution_oplist_ptr_vector[i]->first.empty()) {
       return;
@@ -456,6 +469,11 @@ void InsertRedistributionForMicroInterleaved(const TensorRedistributionPtr &tens
     auto virtual_converter_end_prim = GetCNodePrimitive(virtual_converter_end);
     virtual_converter_end_prim->AddAttr(RECOMPUTE_COMM_OP, out_recompute_comm_op_attr);
   }
+  if (fine_grain_block_index >= 0) {
+    auto virtual_converter_end_prim = GetCNodePrimitive(virtual_converter_end);
+    virtual_converter_end_prim->AddAttr(kAttrFineGrainedInterleavedBlockIndex,
+                                        MakeValue<int64_t>(fine_grain_block_index));
+  }
   std::vector<std::vector<std::vector<int64_t>>> ag_group_ranks_vectors;
 
   for (size_t i = 0; i < redistribution_oplist_ptr_vector.size(); ++i) {
@@ -474,6 +492,16 @@ void InsertRedistributionForMicroInterleaved(const TensorRedistributionPtr &tens
       if (op_name == ALL_GATHER) {
         auto group_ranks_attr = (redistribution_oplist_ptr->first)[index].second.first[1].second;
         auto group_ranks = GetValue<std::vector<int64_t>>(group_ranks_attr);
+        std::set<int64_t> new_group_ranks_set;
+        std::transform(group_ranks.begin(), group_ranks.end(),
+                       std::inserter(new_group_ranks_set, new_group_ranks_set.begin()), [&](int64_t g_rank) {
+                         return int64_t((g_rank - stage_begin_rank) / interleaved_num) +
+                                stage_begin_rank / interleaved_num;
+                       });
+        if (new_group_ranks_set.size() <= group_ranks.size() &&
+            GetCNodePrimitive(virtual_converter_end)->HasAttr(RECOMPUTE_COMM_OP)) {
+          GetCNodePrimitive(virtual_converter_end)->EraseAttr(RECOMPUTE_COMM_OP);
+        }
         ag_group_ranks_vector.push_back(group_ranks);
       }
     }
@@ -544,7 +572,7 @@ static void Redistribution(const std::pair<AnfNodePtr, std::vector<int>> &node_p
     MS_LOG(EXCEPTION) << "Failure:tensor_redistribution init failed";
   }
   if (tensorlayout_in.GetVirtualRank().size() > 1 || tensorlayout_out.GetVirtualRank().size() > 1) {
-    auto real_pre_node = next_cnode->input(node_pair.second[node_pair.second.size() - 1])->cast<CNodePtr>();
+    auto real_pre_node = next_cnode->input(node_pair.second[node_pair.second.size() - 1]);
     InsertRedistributionForMicroInterleaved(tensor_redistribution,
                                             {node_pair.first, node_pair.second[node_pair.second.size() - 1]},
                                             func_graph, pre_cnode, real_pre_node);
@@ -2047,7 +2075,7 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
   MS_EXCEPTION_IF_NULL(cnode->func_graph());
   FuncGraphManagerPtr manager = cnode->func_graph()->manager();
   MS_EXCEPTION_IF_NULL(manager);
-  AnfNodeIndexSet node_set = manager->node_users()[cnode];
+  auto node_set = NextNodeUsers(cnode);
   for (auto &node_pair : node_set) {
     auto use_apply = node_pair.first->cast<CNodePtr>();
     if (visit->find(use_apply) != visit->end()) {
@@ -2119,6 +2147,11 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
       MS_LOG(INFO) << "FindNextLayout success node " << use_apply->DebugString() << ", in support new shapebase ops";
       *next_is_reshape = false;
       auto layout = GetInputLayoutFromCNode(node_pair, make_tuple_index);
+      if (IsPrimitiveCNode(node_pair.first) &&
+          GetCNodePrimitive(node_pair.first)->HasAttr(kAttrFineGrainedInterleavedBlockIndex)) {
+        layout.set_fine_grain_block_index(
+          GetValue<int64_t>(GetCNodePrimitive(node_pair.first)->GetAttr(kAttrFineGrainedInterleavedBlockIndex)));
+      }
       return std::make_shared<TensorLayout>(layout);
     }
     if (IsParallelCareNode(use_apply) && use_apply->has_user_data<OperatorInfo>()) {
@@ -2128,6 +2161,11 @@ static std::shared_ptr<TensorLayout> FindNextLayout(const AnfNodePtr &cnode, boo
       MS_LOG(INFO) << "FindNextLayout success node " << use_apply->DebugString();
       *next_is_reshape = false;
       auto layout = GetInputLayoutFromCNode(node_pair, -1);
+      if (IsPrimitiveCNode(node_pair.first) &&
+          GetCNodePrimitive(node_pair.first)->HasAttr(kAttrFineGrainedInterleavedBlockIndex)) {
+        layout.set_fine_grain_block_index(
+          GetValue<int64_t>(GetCNodePrimitive(node_pair.first)->GetAttr(kAttrFineGrainedInterleavedBlockIndex)));
+      }
       return std::make_shared<TensorLayout>(layout);
     }
     MS_LOG(DEBUG) << "FindNextLayout failed node " << use_apply->DebugString() << "  " << IsParallelCareNode(use_apply)
@@ -2181,6 +2219,10 @@ static std::shared_ptr<TensorLayout> FindPrevParallelCareNodeLayout(const AnfNod
     if (!layout_ptr) {
       MS_LOG(EXCEPTION) << "Failure:GetLayoutFromCNode failed";
     }
+    if (IsPrimitiveCNode(cnode) && GetCNodePrimitive(cnode)->HasAttr(kAttrFineGrainedInterleavedBlockIndex)) {
+      layout_ptr->set_fine_grain_block_index(
+        GetValue<int64_t>(GetCNodePrimitive(cnode)->GetAttr(kAttrFineGrainedInterleavedBlockIndex)));
+    }
     return layout_ptr;
   }
   return nullptr;
@@ -2221,43 +2263,6 @@ static RedistributionOpListPtr InferSensRedistribution(const AnfNodePtr &node, c
   return sens_redistribution_list;
 }
 
-// reshape1 ---> depend ---> call @sub_graph(x, y, z)
-// sub_graph(x, y, z): reshape2(y)
-// find the reshape1 through y
-static AnfNodePtr RefParameterToActualNode(const AnfNodePtr &node) {
-  if (!node->isa<Parameter>()) {
-    return nullptr;
-  }
-  auto node_param_ptr = node->cast<ParameterPtr>();
-  if (node_param_ptr->has_default()) {
-    return node;
-  }
-  auto sub_func_graph = node_param_ptr->func_graph();
-  auto call_cnodes_map = sub_func_graph->func_graph_cnodes_index();
-  auto sub_graph_parameters = sub_func_graph->parameters();
-  auto curr_param_iter = std::find(sub_graph_parameters.begin(), sub_graph_parameters.end(), node);
-  if (curr_param_iter == sub_graph_parameters.end()) {
-    MS_LOG(EXCEPTION) << "Cannot find param " << node_param_ptr->DebugString() << " in current sub_graph";
-  }
-  size_t curr_param_index = static_cast<size_t>(curr_param_iter - sub_graph_parameters.begin());
-  for (const auto &node_pair : call_cnodes_map) {
-    if (!node_pair.first->first->isa<CNode>() || node_pair.first->second > 0) {
-      continue;
-    }
-    auto cnode = node_pair.first->first->cast<CNodePtr>();
-    auto cnode_input = cnode->input(curr_param_index + 1);
-    auto pre_cnode = GetInputNodeWithFilter(cnode_input, [&](const CNodePtr &cnode) {
-      bool filter = IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
-                    IsPrimitiveCNode(cnode, prim::kPrimDepend);
-      return std::make_pair(filter, 1);
-    });
-    if (pre_cnode) {
-      return pre_cnode;
-    }
-  }
-  return nullptr;
-}
-
 static bool IsCommonOp(const AnfNodePtr &node) {
   CNodePtr cnode = node->cast<CNodePtr>();
   bool is_comm_op =
@@ -2265,22 +2270,30 @@ static bool IsCommonOp(const AnfNodePtr &node) {
   return is_comm_op;
 }
 
-static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node, bool *is_input_param) {
-  if (node->isa<Parameter>()) {
-    auto node_param_ptr = node->cast<ParameterPtr>();
-    if (node_param_ptr->has_default()) {
-      // Only when the real input of Reshape is a parameter that the strategy of Reshape will be assigned to this
-      // parameter.
-      *is_input_param = true;
-      return CreateParameterLayout(node);
-    }
+std::shared_ptr<TensorLayout> FindPrevLayoutByParameter(const AnfNodePtr &node, bool *is_input_param) {
+  auto node_param_ptr = node->cast<ParameterPtr>();
+  if (node_param_ptr->has_default()) {
+    // Only when the real input of Reshape is a parameter that the strategy of Reshape will be assigned to this
+    // parameter.
+    *is_input_param = true;
+    return CreateParameterLayout(node);
+  }
 
-    // the node is parameter of sub-graph
-    auto actual_node = RefParameterToActualNode(node);
-    if (actual_node) {
-      return FindPrevLayout(actual_node, is_input_param);
-    }
-    return nullptr;
+  // the node is parameter of sub-graph
+  auto actual_node = RefParameterToActualNode(node, [&](const CNodePtr &cnode) {
+    bool filter = IsPrimitiveCNode(cnode, prim::kPrimCast) || IsPrimitiveCNode(cnode, prim::kPrimLoad) ||
+                  IsPrimitiveCNode(cnode, prim::kPrimDepend);
+    return std::make_pair(filter, 1);
+  });
+  if (actual_node) {
+    return FindPrevLayout(actual_node, is_input_param);
+  }
+  return nullptr;
+}
+
+std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node, bool *is_input_param) {
+  if (node->isa<Parameter>()) {
+    return FindPrevLayoutByParameter(node, is_input_param);
   }
   if (!node->isa<CNode>()) {
     return nullptr;
@@ -2304,6 +2317,10 @@ static std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node, bool
     auto layout_ptr = GetOutputLayoutFromCNode(cnode, 0);
     if (!layout_ptr) {
       MS_LOG(EXCEPTION) << "Failure:GetLayoutFromCNode failed";
+    }
+    if (IsPrimitiveCNode(cnode) && GetCNodePrimitive(cnode)->HasAttr(kAttrFineGrainedInterleavedBlockIndex)) {
+      layout_ptr->set_fine_grain_block_index(
+        GetValue<int64_t>(GetCNodePrimitive(cnode)->GetAttr(kAttrFineGrainedInterleavedBlockIndex)));
     }
     return layout_ptr;
   }
@@ -2538,7 +2555,7 @@ static void SplitSens(const CNodePtr &grad_sens_node, const TensorLayout &loss_g
       MS_LOG(DEBUG) << "loss layout " << loss_grad_layout.ToString();
       AbstractBasePtr abstract = sens_tensor_node->abstract();
       MS_EXCEPTION_IF_NULL(abstract);
-      auto slice_shape = loss_grad_layout.slice_shape().array();
+      auto slice_shape = loss_grad_layout.base_slice_shape().array();
       std::shared_ptr<abstract::BaseShape> parallel_shape = std::make_shared<abstract::Shape>(slice_shape);
       MS_EXCEPTION_IF_NULL(parallel_shape);
       auto cloned_abstract = abstract->Clone();
@@ -3689,11 +3706,18 @@ static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const 
 
   if (pipeline_stages > 1 && is_pp_interleave) {
     MS_EXCEPTION_IF_NULL(pipeline_processor);
-    pipeline_processor->GraphPartition(all_nodes);
+    if (parallel::ParallelContext::GetInstance()->fine_grained_micro_interleaved_size() > 0) {
+      auto all_nodes_pp = TopoSort(root->get_return(), SuccDeeperSimple);
+      pipeline_processor->Init(all_nodes_pp);
+      pipeline_processor->GraphPartition(all_nodes_pp);
+    } else {
+      pipeline_processor->GraphPartition(all_nodes);
+    }
+
     pipeline_processor->ElimGraphStage();
     pipeline_processor->ModifyParameterList();
   }
-
+  parallel::ParallelContext::GetInstance()->set_fine_grained_micro_interleaved_size(-1);
   // save strategy as checkpoint for multi-train
   auto all_nodes_after_pp = TopoSort(root->get_return(), SuccDeeperSimple);
   if (StrategyCheckpoint::GetInstance().SaveCheckPointOn()) {

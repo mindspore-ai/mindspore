@@ -38,6 +38,7 @@ class SplitInfo : public OperatorInfo {
   std::vector<StrategyPtr> GenerateOpStrategies(int64_t stage_id) override;
   std::shared_ptr<Strategies> GenerateBatchStrategies() override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
+  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status GetAttrs() override;
@@ -47,9 +48,16 @@ class SplitInfo : public OperatorInfo {
   Status InferTensorMap() override;
   Status InferAsLossDivisor() override;
   Status InferMirrorOps() override;
+  Status CheckInputLayout() override;
+  Status CheckOutputLayout() override;
+  Status InferOutputTensorInfo() override;
+  void UpdateOutputTensorInfoForInterleaved() override;
+  virtual Status ComputeReplaceGraphForInterleaved(const CNodePtr &cnode);
+  Status InferAsLossDivisorByLayout() override;
 
   size_t axis_ = 0;
   size_t skip_redistribution_ = false;
+  TensorLayout output_infer_tensor_layout_;
 };
 
 class SplitVInfo : public SplitInfo {

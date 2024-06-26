@@ -49,10 +49,18 @@ class ReshapeInfo : public OperatorInfo {
               const std::vector<std::shared_ptr<TensorLayout>> &out_tensor_layouts = {}) override;
   void SetInputLayout(const TensorLayout &input_layout) {
     input_layout_ = input_layout;
+    if (input_layout_.fine_grain_block_index() >= 0) {
+      GetCNodePrimitive(cnode_)->AddAttr(kAttrFineGrainedInterleavedBlockIndex,
+                                         MakeValue<int64_t>(input_layout_.fine_grain_block_index()));
+    }
     input_layout_set_flag_ = true;
   }
   void SetOutputLayout(const TensorLayout &output_layout) {
     output_layout_ = output_layout;
+    if (output_layout_.fine_grain_block_index() >= 0) {
+      GetCNodePrimitive(cnode_)->AddAttr(kAttrFineGrainedInterleavedBlockIndex,
+                                         MakeValue<int64_t>(output_layout_.fine_grain_block_index()));
+    }
     output_layout_set_flag_ = true;
   }
   void SetCostForReshape(const mindspore::parallel::StrategyPtr &strategy);

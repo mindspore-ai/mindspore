@@ -937,6 +937,8 @@ AnfNodePtr PipelinePostProcess::GenerateMainGraphRecv(const AnfNodePtr &fg_node,
 }
 
 void PipelinePostProcess::Init(const std::vector<AnfNodePtr> &nodes) {
+  shared_cell_ = nullptr;
+  shared_cell_users_.clear();
   for (auto &node : nodes) {
     if ((IsPrimitiveCNode(node, prim::kPrimSend) || IsPrimitiveCNode(node, prim::kPrimReceive)) &&
         shared_cell_ == nullptr) {

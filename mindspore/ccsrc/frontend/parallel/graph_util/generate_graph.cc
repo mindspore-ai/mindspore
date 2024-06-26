@@ -355,7 +355,7 @@ void InsertVirtualPipelineEndNode(const CNodePtr &cnode, const FuncGraphManagerP
   }
 }
 
-CNodePtr CreateVirtualConverterBeginNode(const CNodePtr &input_cnode, size_t output_nums) {
+CNodePtr CreateVirtualConverterBeginNode(const AnfNodePtr &input_cnode, size_t output_nums) {
   auto graph = input_cnode->func_graph();
   MS_EXCEPTION_IF_NULL(graph);
   Attr output_nums_attr = {"output_nums", MakeValue(output_nums)};
