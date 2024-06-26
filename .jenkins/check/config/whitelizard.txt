@@ -140,6 +140,7 @@ mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp32/deconv_winograd_fp
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/intrinsics/avx/TiledC8MatMulFp32.c:TiledC8MatmulFp32
 mindspore/mindspore/ccsrc/plugin/device/cpu/kernel/nnacl/fp16/quant_dtype_cast_fp16.c:Fp16ToInt8_arm64
 mindspore/mindspore/ccsrc/backend/common/session/gpu_session.cc:mindspore::session::gpu::GPUSession::LoadInputData
+mindspore/mindspore/ccsrc/backend/common/mem_reuse/mem_dynamic_allocator.cc:mindspore::device::DynamicMemPoolBestFit::CombineMemBuf
 mindspore/mindspore/ccsrc/debug/dump_proto.cc:mindspore::ProtoExporter::SetNodeOutputType
 mindspore/mindspore/ccsrc/debug/dump_proto.cc:mindspore::ProtoExporter::SetValueToProto
 mindspore/mindspore/ccsrc/debug/dump_proto.cc:mindspore::ProtoExporter::SetScalarToProto

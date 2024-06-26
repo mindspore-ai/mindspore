@@ -172,7 +172,8 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   std::set<DeviceMemPtr> mem_bufs_;
   // The related interface of device memory eager free.
   virtual const bool IsEnableEagerFree() const { return false; }
-  virtual const bool IsEnableVmm() const { return false; }
+  const bool IsEnableVmm() const { return enable_vmm_; }
+  void SetEnableVmm(bool enable_vmm) { enable_vmm_ = enable_vmm; }
   virtual const bool SyncAllStreams() { return false; }
   virtual size_t AllocDeviceMemByEagerFree(size_t size, DeviceMemPtr *addr) { return 0; }
   virtual size_t FreeDeviceMemByEagerFree(const DeviceMemPtr addr, const size_t size) { return 0; }
@@ -247,6 +248,8 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
 
   // key : <user_stream_id, memory_stream_id>
   std::unordered_map<std::pair<uint32_t, uint32_t>, std::set<DynamicMemBufPtr>, pair_hash> stream_pair_addresses_;
+
+  bool enable_vmm_{false};
 };
 
 // Recording information for debugging the memory allocator.
@@ -354,13 +357,12 @@ class DynamicMemBlock {
 struct DeviceState {
   // Update peak size.
   void UpdatePeakSize() {
-    used_mem_peak_size_ = std::max(used_mem_peak_size_, total_used_mem_size_ + total_used_by_event_mem_size_);
-    size_t mem_increment = ((total_used_mem_size_ + total_used_by_event_mem_size_) >
-                            (temp_total_used_mem_size_ + temp_total_used_by_event_mem_size_))
-                             ? (total_used_mem_size_ + total_used_by_event_mem_size_ - temp_total_used_mem_size_ -
-                                temp_total_used_by_event_mem_size_)
-                             : 0;
-    temp_used_mem_peak_size_ = std::max(temp_used_mem_peak_size_, mem_increment);
+    size_t total_used_size_ = total_used_mem_size_ + total_used_by_event_mem_size_;
+    size_t temp_used_size_ = temp_total_used_mem_size_ + temp_total_used_by_event_mem_size_;
+    used_mem_peak_size_ = std::max(used_mem_peak_size_, total_used_size_);
+    if (total_used_size_ > temp_used_size_) {
+      temp_used_mem_peak_size_ = std::max(temp_used_mem_peak_size_, total_used_size_ - temp_used_size_);
+    }
   }
 
   // Memory allocated from device

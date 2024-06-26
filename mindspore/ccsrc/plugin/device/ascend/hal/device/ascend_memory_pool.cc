@@ -33,6 +33,8 @@ namespace ascend {
 static const size_t ASCEND_COMMON_POOL_ALLOC_UNIT_SIZE_FOR_GRAPH_RUN_MODE = 8 << 20;
 constexpr char kGlobalOverflowWorkspace[] = "GLOBAL_OVERFLOW_WORKSPACE";
 
+AscendMemoryPool::AscendMemoryPool() { SetEnableVmm(AscendVmmAdapter::GetInstance().IsEnabled()); }
+
 void AscendMemoryPool::SetMemPoolBlockSize(size_t available_device_mem_size) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -168,8 +170,6 @@ size_t AscendMemoryPool::GetMaxUsedMemSize() const {
 const bool AscendMemoryPool::IsEnableEagerFree() const {
   return AscendGmemAdapter::GetInstance().is_eager_free_enabled();
 }
-
-const bool AscendMemoryPool::IsEnableVmm() const { return AscendVmmAdapter::GetInstance().IsEnabled(); }
 
 const bool AscendMemoryPool::SyncAllStreams() { return AscendStreamMng::GetInstance().SyncAllStreams(); }
 

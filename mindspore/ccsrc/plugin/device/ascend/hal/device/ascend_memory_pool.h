@@ -57,13 +57,12 @@ class AscendMemoryPool : public DynamicMemPoolBestFit {
 
   // The related interface of device memory eager free.
   const bool IsEnableEagerFree() const override;
-  const bool IsEnableVmm() const override;
   const bool SyncAllStreams() override;
   size_t AllocDeviceMemByEagerFree(size_t size, DeviceMemPtr *addr) override;
   size_t FreeDeviceMemByEagerFree(const DeviceMemPtr addr, const size_t size) override;
 
  private:
-  AscendMemoryPool() = default;
+  AscendMemoryPool();
   std::mutex mutex_;
   // overflow memory info, key is kernel, val is memory ptr
   mindspore::HashMap<std::string, void *> overflow_memory_info_map_;

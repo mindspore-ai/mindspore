@@ -229,7 +229,9 @@ void SuperKernelActor::FetchInputDeviceTensor(OpContext<DeviceTensor> *const con
 void SuperKernelActor::Run(OpContext<DeviceTensor> *const context) {
   MS_EXCEPTION_IF_NULL(context);
   MS_EXCEPTION_IF_NULL(graph_);
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "SuperKernelActor", graph_->ToString());
+  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), "SuperKernelActor", graph_->ToString());
+  }
 
   if (enable_kbk_sub_graph_execute_) {
     return RunGraphKernelByKernel(context);

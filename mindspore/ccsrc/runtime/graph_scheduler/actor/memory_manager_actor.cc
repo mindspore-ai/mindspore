@@ -41,8 +41,10 @@ void MemoryManagerActor::AllocateMemory(const std::vector<DeviceTensor *> *alloc
       continue;
     }
 
-    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, from_aid.Name(), device::tracker::MemType::kKernel,
-                                                   device_tensor->GetSize(), device_tensor);
+    if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, from_aid.Name(), device::tracker::MemType::kKernel,
+                                                     device_tensor->GetSize(), device_tensor);
+    }
 
     try {
       // Allocate memory through the device context.
