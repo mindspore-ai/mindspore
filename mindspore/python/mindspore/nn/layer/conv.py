@@ -708,7 +708,7 @@ class Conv3d(_Conv):
 
     Inputs:
         - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
-          Currently input data type only support float16 and float32.
+          Currently, input data type support float16 and float32 in CPU and GPU, and only float16 in Ascend.
 
     Outputs:
         Tensor of shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
