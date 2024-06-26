@@ -28,6 +28,7 @@ from mindspore import nn, context
 from mindspore import dataset as ds
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.train import Callback, OnRequestExit, LossMonitor, Model, FlopsUtilizationCollector
+from tests.mark_utils import arg_mark
 
 
 def conv(in_channels, out_channels, kernel_size, stride=1, padding=0):
@@ -126,9 +127,10 @@ class EpochAndStepRecord(Callback):
         self.step = cb_params.cur_step_num
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 def test_on_request_exit_callback():
     """
     Feature: OnRequestExit Callback.
@@ -191,9 +193,10 @@ def test_on_request_exit_callback():
     shutil.rmtree(directory)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_flops_callback():
     """
     Feature: FlopsUtilizationCollector Callback.

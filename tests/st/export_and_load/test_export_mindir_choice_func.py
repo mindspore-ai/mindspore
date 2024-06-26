@@ -13,7 +13,6 @@
 # limitations under the License.
 import os
 import numpy as np
-import pytest
 
 import mindspore.nn as nn
 from mindspore import ops, context, load_mindir
@@ -21,6 +20,7 @@ from mindspore.common.tensor import Tensor
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.train.serialization import export, load
 from mindspore import save_mindir
+from tests.mark_utils import arg_mark
 
 def weight_variable():
     return TruncatedNormal(0.02)
@@ -103,13 +103,11 @@ def _custom_func(mindir_model):
     mindir_model.producer_version = "1.0"
     mindir_model.user_info["version"] = "1.0"
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 def test_load_mindir_with_custom_func():
     """
     Feature: Load LeNet to MindIR with custom_func
@@ -131,13 +129,10 @@ def test_load_mindir_with_custom_func():
     assert mindir_model.user_info["version"] == "1.0"
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 def test_load_obfuscate_mindir():
     """
     Feature: Load obfuscated mindir

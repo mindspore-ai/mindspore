@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+from tests.mark_utils import arg_mark
 from mindspore import nn, Tensor
 import mindspore as ms
 
@@ -28,13 +29,10 @@ class GeqrfNet(nn.Cell):
         return x.geqrf()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_geqrf_rank2_double_fp(mode):
     """
@@ -57,9 +55,7 @@ def test_geqrf_rank2_double_fp(mode):
 
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_geqrf_rank3_float_fp(mode):
     """

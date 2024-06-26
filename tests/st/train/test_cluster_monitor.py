@@ -16,6 +16,7 @@ import pytest
 
 import mindspore as ms
 from mindspore.train.callback._cluster_monitor import _get_dp_tp_from_layout
+from tests.mark_utils import arg_mark
 
 parameter_layout_dict = {
     'accu_grads.backbone.embedding.word_embedding.embedding_table':
@@ -41,13 +42,11 @@ parameter_layout_dict = {
 }
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
+@arg_mark(
+    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
+    level_mark='level0',
+    card_mark='onecard',
+    essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_amp_overflow(mode):
     """

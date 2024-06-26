@@ -19,6 +19,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 import mindspore.ops as ops
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -34,11 +35,10 @@ class Net(nn.Cell):
         return out
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_avgpool2d_normal(mode):
     """

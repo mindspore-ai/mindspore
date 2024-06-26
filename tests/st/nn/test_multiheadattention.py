@@ -19,12 +19,13 @@ import pytest
 import mindspore as ms
 from mindspore import context
 from mindspore.nn import MultiheadAttention
+from tests.mark_utils import arg_mark
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [ms.float16, ms.float32, ms.float64])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_multihead_attention_cpu_gpu(dtype, mode):
@@ -45,10 +46,7 @@ def test_multihead_attention_cpu_gpu(dtype, mode):
     assert attn_output_weights.shape == (8, 10, 10)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('dtype', [ms.float16, ms.float32])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_multihead_attention_ascend(dtype, mode):

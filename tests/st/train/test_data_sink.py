@@ -23,6 +23,7 @@ import mindspore.dataset as ds
 from mindspore import Tensor, context
 from mindspore.train.data_sink import data_sink
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
 def fixed_dataset_generator():
@@ -99,11 +100,10 @@ def _train_func_sink(model, dataset, loss_fn, opt, input_signature=None):
         print("loss: ", loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_data_sink_fixed_shape(mode):
     """
@@ -124,11 +124,10 @@ def test_data_sink_fixed_shape(mode):
     _train_func_sink(network, dataset, loss_fn, opt)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.skip(reason='Have ops issue, not support yet')
 def test_data_sink_dynamic_shape(mode):
@@ -152,11 +151,10 @@ def test_data_sink_dynamic_shape(mode):
     _train_func_sink(network, dataset, loss_fn, opt, input_signature)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_function_data_sink_dynamic_shape(mode):

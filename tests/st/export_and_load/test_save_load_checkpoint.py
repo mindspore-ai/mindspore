@@ -22,6 +22,7 @@ import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.initializer import Normal
 from mindspore.train.serialization import load_checkpoint_async
+from tests.mark_utils import arg_mark
 
 
 class LeNet5(nn.Cell):
@@ -65,10 +66,7 @@ def remove_ckpt(file_name):
         os.remove(file_name)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_ops_save_checkpoint(mode):
     """
@@ -111,10 +109,7 @@ def test_ops_save_checkpoint(mode):
     assert "lr" in output_empty_list
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_load_checkpoint_async(mode):
     """

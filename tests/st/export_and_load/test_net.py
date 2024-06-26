@@ -15,13 +15,13 @@
 """Export net test."""
 import os
 import numpy as np
-import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.train.serialization import export
+from tests.mark_utils import arg_mark
 
 
 class SliceNet(nn.Cell):
@@ -35,10 +35,7 @@ class SliceNet(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_export_slice_net():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     input_x = Tensor(np.random.rand(4, 4, 4), ms.float32)

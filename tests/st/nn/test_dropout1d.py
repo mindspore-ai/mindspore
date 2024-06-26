@@ -20,6 +20,7 @@ import mindspore
 from mindspore import nn
 import mindspore.ops as ops
 import mindspore.context as context
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -43,11 +44,10 @@ class FNet(nn.Cell):
         return out
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_dropout1d(mode):
     """
@@ -65,11 +65,10 @@ def test_dropout1d(mode):
     np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_f_dropout1d(mode):
     """

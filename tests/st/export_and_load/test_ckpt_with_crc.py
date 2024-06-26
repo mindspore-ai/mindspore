@@ -20,6 +20,7 @@ import mindspore as ms
 import mindspore.nn as nn
 
 from mindspore.common.file_system import FileSystem
+from tests.mark_utils import arg_mark
 
 
 class Network(nn.Cell):
@@ -34,13 +35,10 @@ class Network(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ckpt_save_with_crc(mode):
     """
@@ -67,13 +65,10 @@ def test_ckpt_save_with_crc(mode):
     os.remove('./save_with_crc.ckpt')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ckpt_save_with_crc_failed(mode):
     """
@@ -82,9 +77,7 @@ def test_ckpt_save_with_crc_failed(mode):
     Expectation: Success.
     """
     ms.set_context(mode=mode)
-    weight = ms.Tensor([[0.27201429, 2.22499485],
-                        [-0.5636731, -2.21354142],
-                        [1.3987198, 0.04099071]], dtype=ms.float32)
+    weight = ms.Tensor([[0.27201429, 2.22499485], [-0.5636731, -2.21354142], [1.3987198, 0.04099071]], dtype=ms.float32)
     bias = ms.Tensor([-0.41271235, 0.28378568, -0.81612898], dtype=ms.float32)
     net = Network(weight, bias)
     ms.save_checkpoint(net, './save_with_crc_failed.ckpt', crc_check=True)
