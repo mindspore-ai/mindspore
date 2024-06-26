@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import sys
 import numpy as np
 import mindspore as ms
 import mindspore.dataset as ds
@@ -60,7 +61,7 @@ class InitNet(nn.Cell):
             _table_id=table_id,
             bucket_size=100,
             seed=1024,
-            seed2=1024
+            seed2=1024,
         )
         return es_op2
 
@@ -133,7 +134,8 @@ def train():
     """
     train net.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE,
+                        device_target="Ascend", jit_config={"jit_level": 'O0'})
     init_es_net_func(embedding_dim, value_total_len)
 
     net = EsNet()
@@ -154,5 +156,9 @@ def train():
 
 
 if __name__ == "__main__":
-    train()
-    release()
+    try:
+        train()
+        release()
+        sys.exit(0)
+    except Exception as e:
+        raise e
