@@ -18,6 +18,7 @@ import mindspore as ms
 from mindspore import ops
 from mindspore.ops import floor
 from tests.st.utils import test_utils
+from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 
 def generate_random_input(shape, dtype):
@@ -102,6 +103,23 @@ def test_ops_floor_vmap(context_mode):
     output = floor_vmap_func(ms.Tensor(x))
     expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+def test_ops_floor_dynamic_shape():
+    """
+    Feature: pyboost function.
+    Description: test function floor with dynamic shape.
+    Expectation: expect correct result.
+    """
+    x1 = generate_random_input((2, 3, 4, 5), np.float32)
+    x2 = generate_random_input((3, 4, 5, 6), np.float32)
+    TEST_OP(floor_forward_func, [[ms.Tensor(x1)], [ms.Tensor(x2)]], '', disable_input_check=True,
+            disable_yaml_check=True, disable_tensor_dynamic_type='DYNAMIC_RANK')
 
 
 @pytest.mark.level1

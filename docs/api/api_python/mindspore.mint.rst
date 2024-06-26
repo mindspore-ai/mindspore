@@ -161,6 +161,7 @@ Reduction运算
     mindspore.mint.eq
     mindspore.mint.greater
     mindspore.mint.gt
+    mindspore.mint.isclose
     mindspore.mint.le
     mindspore.mint.less
     mindspore.mint.less_equal
@@ -335,14 +336,6 @@ Dropout函数
 
 距离函数
 ^^^^^^^^^^^^^^^^^^^
-
-.. mscnplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.isclose
-
 
 
 

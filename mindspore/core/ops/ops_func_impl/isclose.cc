@@ -35,7 +35,8 @@ BaseShapePtr IsCloseFuncImpl::InferShape(const PrimitivePtr &primitive,
     const int MAX = 0x7fffffff;
     auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
     auto other_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
-    int64_t input_size = 1, other_size = 1;
+    int64_t input_size = 1;
+    int64_t other_size = 1;
     for (size_t i = 0; i < input_shape.size(); i++) {
       input_size *= input_shape[i];
     }
