@@ -82,6 +82,9 @@ Status LinSpaceInfo::InferTensorMap() {
   inputs_tensor_map_.clear();
   outputs_tensor_map_.clear();
 
+  if (inputs_shape_.empty()) {
+    inputs_shape_.assign(input_value_.size(), Shape{});
+  }
   inputs_tensor_map_.assign(inputs_shape_.size(), TensorMap{});
   (void)outputs_tensor_map_.emplace_back(TensorMap{0});
   return SUCCESS;
@@ -160,7 +163,7 @@ Status LinSpaceInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto new_end = gen_g.PushBack({gen_g.NewOpInst(ADD), new_start, start_end_offset});
   auto lin_space = gen_g.PushBack({gen_g.NewOpInst(LIN_SPACE), new_start, new_end, CreatInt64Imm(slice_output_size)});
 
-  std::vector<std::pair<AnfNodePtr, int64_t>> inputs_nodes = {std::make_pair(sub, 1), std::make_pair(sub, 2),
+  std::vector<std::pair<AnfNodePtr, int64_t>> inputs_nodes = {std::make_pair(sub, 2), std::make_pair(sub, 1),
                                                               std::make_pair(new_start, 1)};
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
     std::make_pair(inputs_nodes, lin_space));
@@ -264,7 +267,7 @@ Status LinSpaceExtInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto lin_space =
     gen_g.PushBack({gen_g.NewOpInst(LIN_SPACE_EXT), new_start, new_end, CreatInt64Imm(slice_output_size), dtype_});
 
-  std::vector<std::pair<AnfNodePtr, int64_t>> inputs_nodes = {std::make_pair(sub, 1), std::make_pair(sub, 2),
+  std::vector<std::pair<AnfNodePtr, int64_t>> inputs_nodes = {std::make_pair(sub, 2), std::make_pair(sub, 1),
                                                               std::make_pair(new_start, 1)};
   replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
     std::make_pair(inputs_nodes, lin_space));
