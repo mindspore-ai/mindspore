@@ -19,6 +19,8 @@
 #include "mindspore/core/utils/ms_context.h"
 #include "mindspore/ccsrc/runtime/hardware/device_context_manager.h"
 #include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 #include "acl/acl.h"
 
 namespace mindspore {
