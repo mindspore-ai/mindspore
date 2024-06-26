@@ -130,6 +130,11 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
     }));
   }
 
+  void UpdateOutputShape(const BaseTensorPtr &tensor, const ShapeVector &shape) {
+    tensor->set_shape(shape);
+    std::static_pointer_cast<device::DeviceAddress>(tensor->device_address())->address_common()->shape_vector_ = shape;
+  }
+
  protected:
   // Op primitive, may delete latter.
   PrimitivePtr primitive_{nullptr};
