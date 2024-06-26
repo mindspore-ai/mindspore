@@ -31,7 +31,8 @@ namespace ops {
 
 void CheckMatrixInverseExtShape(const ShapeVector &input_shape, const std::string &prim_name) {
   auto input_rank = SizeToLong(input_shape.size());
-  MS_CHECK_VALUE(input_rank != 1, "For 'MatrixInverseExt', the input tensor must have at least 2 dimensions");
+  MS_CHECK_VALUE(input_rank >= 2 || (input_rank == 1 && input_shape[kInputIndex0] == 0),
+                 "For 'MatrixInverseExt', the input tensor must have at least 2 dimensions");
   if (input_rank >= kNumber2) {
     MS_CHECK_VALUE(input_shape[input_rank - kNumber1] == input_shape[input_rank - kNumber2],
                    "For 'MatrixInverseExt', the last two dimensions should be same");
