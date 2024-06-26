@@ -1005,9 +1005,6 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   if (parallel_context->hccl_test_available()) {
     parallel::g_device_manager = nullptr;
   }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  ms_context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphs();
   (void)profiler::CollectHostInfo(kCompiler, kPipelineClean, kPipelineClean, 0, 0, 1);
   ProcessStatus::GetInstance().RecordEnd();
@@ -1018,6 +1015,9 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
 
 bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &args, const py::dict &kwargs,
                                    const std::string &phase, bool use_vm, bool trace_flag) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  ms_context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   PhaseManager::GetInstance().set_phase(phase);
   phase_ = phase;
 
@@ -1076,6 +1076,9 @@ bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &a
 
 bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &args, const py::dict &kwargs,
                                    const py::object &phase, bool use_vm) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  ms_context->SetCellReuseLevel(CellReuseLevel::kNoCellReuse);
   // Check if the phase is valid.
   if ((!py::isinstance<py::str>(phase))) {
     MS_LOG(ERROR) << "The `phase` must be string.";
@@ -1148,8 +1151,6 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   if (is_parallel_mode) {
     ParallelPostProcess(phase_, use_compile_cache);
   }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
 #ifdef ENABLE_DUMP_IR
   mindspore::RDR::Snapshot();
 #endif
