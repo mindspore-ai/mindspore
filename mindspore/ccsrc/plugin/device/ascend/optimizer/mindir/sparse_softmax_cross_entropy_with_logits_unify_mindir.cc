@@ -555,6 +555,10 @@ const AnfNodePtr SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(const F
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
   CheckCNodeInputSize(sparse_softmax_node, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
 
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    !is_dynamic, "SparseSoftmaxCrossEntropyWithLogits with dynamic inputs is not supported yet in Graph mode!");
+
   if (IsSparseSoftmaxCrossEntropyWithLogitsGrad(sparse_softmax_node, name())) {
     return nullptr;
   }
@@ -600,6 +604,10 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
   auto sparse_softmax_node_grad = GetSparseNode(depend_node, 1);
   CheckCNodeInputSize(sparse_softmax_node_grad, kSparseSoftmaxCrossEntropyWithLogitsInputTensorNum);
 
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    !is_dynamic, "Grad SparseSoftmaxCrossEntropyWithLogits with dynamic inputs is not supported yet in Graph mode!");
+
   CNodePtr softmax_node;
   auto one_hot_node = CreateOneHot(graph, sparse_softmax_node_grad, *this);
   softmax_node = CreateSoftmaxCrossEntropyWithLogits(graph, sparse_softmax_node_grad, one_hot_node, *this);
@@ -636,8 +644,7 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(con
   int64_t batch_size;
   int64_t depth;
   GetDepthAndBatchSizeFromSparseSoftmaxNode(sparse_softmax_node, &batch_size, &depth);
-  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
-  ShapeVector shape = is_dynamic ? ShapeVector{-1, depth} : ShapeVector{batch_size, depth};
+  ShapeVector shape = ShapeVector{batch_size, depth};
   common::AnfAlgo::SetOutputInferTypeAndShape({kNumberTypeFloat32}, {shape}, new_mul_node.get());
 
   auto logits_shape = common::AnfAlgo::GetPrevNodeOutputInferShape(sparse_softmax_node, 0UL);
@@ -664,6 +671,10 @@ const AnfNodePtr GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::Process(c
   auto depend_node = node->cast<CNodePtr>();
   auto sparse_softmax_node_grad = GetSparseNode(depend_node, 1UL);
   auto sparse_softmax_node = GetSparseNode(depend_node, kIndex2);
+
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    !is_dynamic, "Grad SparseSoftmaxCrossEntropyWithLogits with dynamic inputs is not supported yet in Graph mode!");
 
   CNodePtr softmax_node;
   auto one_hot_node = CreateOneHot(graph, sparse_softmax_node_grad, *this);
@@ -700,7 +711,7 @@ const AnfNodePtr PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process
 
   auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
   MS_EXCEPTION_IF_CHECK_FAIL(
-    !is_dynamic, "SparseSoftmaxCrossEntropyWithLogits with Dynamical inpputs is not supported yet in PyNative mode.");
+    !is_dynamic, "SparseSoftmaxCrossEntropyWithLogits with dynamic inputs is not supported yet in PyNative mode!");
 
   CNodePtr softmax_node;
   auto one_hot_node = CreateOneHot(graph, sparse_softmax_node, *this);
@@ -745,7 +756,7 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Pro
   auto sparse_softmax_node = mul_node->input(kIndex1);
   auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
   MS_EXCEPTION_IF_CHECK_FAIL(
-    !is_dynamic, "SparseSoftmaxCrossEntropyWithLogits with Dynamical inpputs is not supported yet in PyNative mode.");
+    !is_dynamic, "SparseSoftmaxCrossEntropyWithLogits with dynamic inpputs is not supported yet in PyNative mode.");
 
   bool is_sp_grad_flag = true;
   std::vector<AnfNodePtr> softmax_node_outputs;
@@ -807,7 +818,7 @@ const AnfNodePtr PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2::P
   auto sparse_softmax_node = cast_cnode->input(kIndex1);
   auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
   MS_EXCEPTION_IF_CHECK_FAIL(
-    !is_dynamic, "SparseSoftmaxCrossEntropyWithLogits with Dynamical inpputs is not supported yet in PyNative mode.");
+    !is_dynamic, "SparseSoftmaxCrossEntropyWithLogits with dynamic inputs is not supported yet in PyNative mode.");
 
   bool is_sp_grad_flag = true;
   std::vector<AnfNodePtr> softmax_node_outputs;
@@ -849,6 +860,11 @@ const AnfNodePtr GeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR::Process(const
 
   auto sparse_softmax_node = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(sparse_softmax_node);
+
+  auto is_dynamic = common::AnfAlgo::IsDynamicShape(sparse_softmax_node);
+  MS_EXCEPTION_IF_CHECK_FAIL(
+    !is_dynamic, "GE SparseSoftmaxCrossEntropyWithLogits with dynamic inputs is not supported yet in Graph mode!");
+
   if (common::AnfAlgo::HasNodeAttr(kAttrVisited, sparse_softmax_node)) {
     return nullptr;
   }
