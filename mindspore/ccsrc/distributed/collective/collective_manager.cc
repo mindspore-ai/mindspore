@@ -617,13 +617,14 @@ bool CollectiveManager::CreateSimulationGroup(const std::string &group_name, con
 }
 
 int64_t CollectiveManager::GetCommunicatorInitTimeout() {
+  // The default timeout is 600 seconds.
+  int64_t default_comm_init_timeout = 600;
   std::string device_type = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (device_type == kAscendDevice) {
     std::string str_comm_init_timeout = common::GetEnv("HCCL_CONNECT_TIMEOUT");
-    return str_comm_init_timeout.empty() ? 600 : std::stoi(str_comm_init_timeout);
+    return str_comm_init_timeout.empty() ? default_comm_init_timeout : std::stoi(str_comm_init_timeout);
   }
-  // Return 600 seconds as default timeout.
-  return 600;
+  return default_comm_init_timeout;
 }
 }  // namespace collective
 }  // namespace distributed
