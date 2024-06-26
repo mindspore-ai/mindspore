@@ -46,8 +46,8 @@ class GraphNet(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_jit_support_parameter_as_input():

@@ -18,7 +18,7 @@ from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=['platform_gpu'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='allcards',
           essential_mark='unessential')
 def test_pynative_nccl_allreduce():

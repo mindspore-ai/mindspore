@@ -161,8 +161,8 @@ class GradWrap(nn.Cell):
         return grad_by_list(self.network, weights)(x, label)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_lenet_ms_func():

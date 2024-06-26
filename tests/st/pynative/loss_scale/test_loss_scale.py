@@ -29,7 +29,7 @@ from mindspore.train.loss_scale_manager import DynamicLossScaleManager
 from tests.mark_utils import arg_mark
 
 def setup_module():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
 
 class MindData:
     """ Stub for MindData """
@@ -147,7 +147,7 @@ class MSELoss(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_loss_scale_fp16_lr_overflow():
@@ -169,8 +169,8 @@ def test_loss_scale_fp16_lr_overflow():
     assert output_1[0].asnumpy() == output_2[0].asnumpy()
     assert output_1[1].asnumpy() == output_2[1].asnumpy() == True
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['platform_ascend910b'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_loss_scale_fp16_lr_overflow_set_sense_scale():
@@ -212,7 +212,7 @@ def test_loss_scale_fp16_model_train_overflow():
     model = Model(net, loss_fn=loss, optimizer=optimizer, metrics=None, loss_scale_manager=scale_manager)
     model.train(2, dataset, dataset_sink_mode=False)
 
-@arg_mark(plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
           essential_mark='essential')
@@ -233,7 +233,7 @@ def test_loss_scale_fp16_opt_rmsprop_overflow():
     assert output_1[0].asnumpy() == output_2[0].asnumpy()
     assert output_1[1].asnumpy() == output_2[1].asnumpy() == True
 
-@arg_mark(plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
           essential_mark='essential')

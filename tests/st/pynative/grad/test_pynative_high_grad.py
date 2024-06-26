@@ -66,7 +66,7 @@ class TwoInputBprop(nn.Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_highgrad_one_input_sec_grad():
@@ -84,7 +84,7 @@ def test_highgrad_one_input_sec_grad():
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_highgrad_one_input_third_grad():
@@ -101,7 +101,7 @@ def test_highgrad_one_input_third_grad():
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_highgrad_two_input_sec_grad():
@@ -128,7 +128,7 @@ def test_highgrad_two_input_sec_grad():
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_ms_function_highgrad_one_input_sec_grad():

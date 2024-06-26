@@ -164,8 +164,8 @@ class Ms_Cell_Change_Shape(nn.Cell):
         return dout
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_lenet_train_hook_function_print_and_save_grad():
@@ -188,8 +188,8 @@ def test_pynative_lenet_train_hook_function_print_and_save_grad():
     assert success
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_custom_bprop_and_Cell_MulAdd():
@@ -201,8 +201,8 @@ def test_pynative_custom_bprop_and_Cell_MulAdd():
            (Tensor(1.0, mstype.float32), Tensor(2.0, mstype.float32))
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_custom_bprop_and_cell_ms_cell_change_shape():
@@ -220,8 +220,8 @@ def test_pynative_custom_bprop_and_cell_ms_cell_change_shape():
     assert "should have the same shape as the 0th arg" in str(ex.value)
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_custom_bprop_and_Cell_Ms_Cell():
@@ -317,8 +317,8 @@ class LeNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_hook():

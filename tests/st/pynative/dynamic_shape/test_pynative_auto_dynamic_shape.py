@@ -95,8 +95,8 @@ class CmpNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_auto_dynamic_shape_with_three_static_shape():
@@ -136,8 +136,8 @@ def test_pynative_auto_dynamic_shape_with_three_static_shape():
     assert np.allclose(grad[1].asnumpy(), cmp_grad[1].asnumpy(), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_auto_dynamic_shape_mixing_static_shape_and_dynamic_shape_1():
@@ -179,8 +179,8 @@ def test_pynative_auto_dynamic_shape_mixing_static_shape_and_dynamic_shape_1():
     assert np.allclose(grad[1].asnumpy(), cmp_grad[1].asnumpy(), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_auto_dynamic_shape_mixing_static_shape_and_dynamic_shape_2():

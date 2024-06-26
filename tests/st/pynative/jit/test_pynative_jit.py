@@ -42,8 +42,8 @@ def conv_bn_relu(x):
     return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_call_single_func():
@@ -76,8 +76,8 @@ class CellConvBnReLU(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_call_single_cell():
@@ -137,8 +137,8 @@ class CellCallSingleCell(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_cell_call_cell():
@@ -196,8 +196,8 @@ class CallSameFunc(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_call_same_func():
@@ -230,8 +230,8 @@ def test_call_same_func():
     assert np.allclose(grad_second[1][3].asnumpy(), -84.6, 0.1, 0.1)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_jit():
@@ -288,7 +288,7 @@ def test_pynative_jit():
     assert np.allclose(out_a[1][0].asnumpy(), out_b[1][0].asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
@@ -315,8 +315,8 @@ def test_pynative_jit_mix_execute():
     assert output == 8
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_jit_empty_graph():
@@ -348,8 +348,8 @@ def test_pynative_jit_empty_graph():
     assert output.asnumpy() == 10
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_jit_control_flow_if_break():
@@ -387,8 +387,8 @@ def test_pynative_jit_control_flow_if_break():
     assert (output.asnumpy() == z.asnumpy() * 4).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_jit_with_dynamic_shape():
@@ -407,8 +407,8 @@ def test_pynative_jit_with_dynamic_shape():
     assert (output[0].asnumpy() == np.array([1, 2, 3, 5])).all()
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_jit_with_tuple_inputs():
@@ -437,8 +437,8 @@ def test_pynative_jit_with_tuple_inputs():
     assert (out[0].asnumpy() == np.ones([2, 2]) + 1).all()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_jit_with_optional_inputs():
@@ -459,8 +459,8 @@ def test_pynative_jit_with_optional_inputs():
     assert foo(x=a, y=4).asnumpy() == 7
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_jit_with_args_inputs():
@@ -478,8 +478,8 @@ def test_pynative_jit_with_args_inputs():
     assert foo(x, 1, 2).asnumpy() == 6
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_pynative_jit_with_kwargs_inputs():
@@ -499,7 +499,7 @@ def test_pynative_jit_with_kwargs_inputs():
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_ms_vmap_cell_list():
@@ -553,7 +553,7 @@ def test_ms_vmap_cell_list():
     assert np.all(output_grad.asnumpy() == expect_grad)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
@@ -594,7 +594,7 @@ def test_control_flow_for_in_while_return_in_for_param():
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_jit_pyexecute():

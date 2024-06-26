@@ -56,8 +56,8 @@ class MsFuncVarHook(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_var_hook_forward():
@@ -71,8 +71,8 @@ def test_var_hook_forward():
     assert np.allclose(out1.asnumpy(), out2.asnumpy(), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_var_hook_grad():
@@ -119,8 +119,8 @@ class MsFuncCellHook(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_cell_hook_forward():
@@ -134,8 +134,8 @@ def test_cell_hook_forward():
     assert np.allclose(out1.asnumpy(), out2.asnumpy(), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'],
-          level_mark='level2',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_cell_hook_grad():

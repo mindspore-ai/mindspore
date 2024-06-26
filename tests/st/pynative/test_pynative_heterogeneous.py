@@ -76,7 +76,7 @@ def test_heterogeneous_default_cpu_prim_ascend():
 
 
 @arg_mark(plat_marks=['platform_gpu'],
-          level_mark='level0',
+          level_mark='level1',
           card_mark='onecard',
           essential_mark='essential')
 def test_heterogeneous_default_gpu_prim_cpu():

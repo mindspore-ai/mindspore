@@ -52,7 +52,7 @@ class LeNet5(nn.Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_loss_cell_wrapper():
@@ -67,7 +67,7 @@ def test_loss_cell_wrapper():
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_grad_cell_wrapper():

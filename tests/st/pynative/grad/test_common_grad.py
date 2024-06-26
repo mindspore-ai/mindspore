@@ -96,7 +96,7 @@ def test_bprop_wrt_inputs_and_params():
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_network_with_dict_output():
@@ -130,11 +130,7 @@ def test_network_with_dict_output():
     assert np.allclose(x, grad_out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
-@arg_mark(plat_marks=['platform_gpu'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')

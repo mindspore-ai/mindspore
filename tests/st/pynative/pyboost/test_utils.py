@@ -121,7 +121,7 @@ def run_test_func(test_func):
     return wrapper
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+@arg_mark(plat_marks=['cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')

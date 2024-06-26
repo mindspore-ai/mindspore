@@ -88,7 +88,7 @@ def test_softmaxloss_grad():
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_lenet_grad():

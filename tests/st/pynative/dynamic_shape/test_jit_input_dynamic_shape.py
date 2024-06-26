@@ -117,7 +117,7 @@ class EmptyLess(Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_dynamic_rank_shape_lt():
@@ -152,7 +152,7 @@ class ListEQ(Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_dynamic_rank_shape_list_eq():
@@ -185,7 +185,7 @@ class ListLt(Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_set_inputs_shape_list_lt():
@@ -248,7 +248,7 @@ class NegStepSlice(Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_set_inputs_shape_neg_step_slice():
@@ -277,7 +277,7 @@ class SliceNegStep(Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_set_inputs_shape_slice_neg_step():
@@ -311,7 +311,7 @@ class InTuple(Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_set_inputs_shape_in_tuple():
@@ -370,7 +370,7 @@ class SliceNeg(Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_set_inputs_shape_slice_neg():
@@ -427,7 +427,7 @@ class TupleMulInt(Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_set_inputs_shape_tuple_mul_int():

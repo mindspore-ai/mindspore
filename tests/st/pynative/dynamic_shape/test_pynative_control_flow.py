@@ -37,8 +37,8 @@ class GradofAllInputsAndParams(nn.Cell):
         out = self.grad(self.net, self.params)(*x)
         return out
 
-@arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
 def test_sit_pynative_diff_shape_with_while_in_construct():

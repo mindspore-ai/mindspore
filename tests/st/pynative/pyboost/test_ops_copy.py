@@ -19,10 +19,6 @@ import numpy as np
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_copy_contiguous():
     """
     Feature: test cast operator
@@ -35,10 +31,6 @@ def test_copy_contiguous():
     assert np.allclose(output.asnumpy(), x.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_copy_dim2_with_transpose():
     """
     Feature: test cast operator
@@ -53,10 +45,6 @@ def test_copy_dim2_with_transpose():
     assert np.allclose(output.asnumpy(), transpose_result.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_copy_dim3_with_transpose():
     """
     Feature: test cast operator
@@ -71,10 +59,6 @@ def test_copy_dim3_with_transpose():
     assert np.allclose(output.asnumpy(), transpose_result.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_copy_dim4_with_transpose():
     """
     Feature: test cast operator
@@ -89,10 +73,6 @@ def test_copy_dim4_with_transpose():
     assert np.allclose(output.asnumpy(), transpose_result.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_copy_dim2_with_slice():
     """
     Feature: test cast operator
@@ -107,10 +87,6 @@ def test_copy_dim2_with_slice():
     assert np.allclose(output.asnumpy(), slice_res.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_copy_dim3_with_slice():
     """
     Feature: test cast operator
@@ -125,10 +101,6 @@ def test_copy_dim3_with_slice():
     assert np.allclose(output.asnumpy(), slice_res.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_copy_dim4_with_slice():
     """
     Feature: test cast operator
@@ -141,3 +113,22 @@ def test_copy_dim4_with_slice():
 
     slice_res = x[1:3:2, 1:4:2, 2:6:2, 1:4:2]
     assert np.allclose(output.asnumpy(), slice_res.asnumpy())
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
+def test_copy_all():
+    """
+    Feature: test cast operator
+    Description: test copy run by pyboost
+    Expectation: success
+    """
+    test_copy_contiguous()
+    test_copy_dim2_with_transpose()
+    test_copy_dim3_with_transpose()
+    test_copy_dim4_with_transpose()
+    test_copy_dim2_with_slice()
+    test_copy_dim3_with_slice()
+    test_copy_dim4_with_slice()

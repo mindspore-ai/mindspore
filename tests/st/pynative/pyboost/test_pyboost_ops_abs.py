@@ -37,7 +37,7 @@ def abs_dyn_shape_func(x):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level0',
+          level_mark='level1',
           card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('mode',
@@ -79,7 +79,7 @@ def test_abs_backward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level0',
+          level_mark='level1',
           card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('mode',
@@ -98,7 +98,7 @@ def test_abs_vmap(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level0',
+          level_mark='level1',
           card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('mode',
@@ -120,7 +120,7 @@ def test_abs_dynamic_shape(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level0',
+          level_mark='level1',
           card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('mode',

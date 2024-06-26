@@ -150,8 +150,8 @@ def test_tensor_backward_hook_handle_remove():
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1',
-          card_mark='onecard',
+          level_mark='level0',
+          card_mark='allcards',
           essential_mark='essential')
 def test_tensor_hook_with_reduce_scatter():
     """
