@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 # pylint: disable=unused-variable
 import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import mint, jit, JitConfig
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -70,7 +70,7 @@ def test_inverse_std(mode):
     assert np.allclose(output_grad.asnumpy(), expect_grad, 5e-1, 5e-1)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_inverse_dynamic_shape(mode):
     """

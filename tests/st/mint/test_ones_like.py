@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 # pylint: disable=unused-variable
 import pytest
 import numpy as np
@@ -20,6 +19,7 @@ import mindspore as ms
 from mindspore.common import dtype as mstype
 from mindspore import ops, mint, Tensor, jit, JitConfig
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def ones_like_forward_func(input_tensor, dtype=None):
@@ -74,7 +74,7 @@ def test_ones_like_backward(mode):
     np.testing.assert_allclose(input_grad.asnumpy(), expect_grad, rtol=1e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_ones_like_dynamic_shape():
     """
     Feature: Test ones_like with dynamic shape in graph mode.

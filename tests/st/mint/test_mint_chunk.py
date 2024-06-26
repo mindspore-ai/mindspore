@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 import mindspore as ms
 from mindspore import mint, Tensor, jit, context, JitConfig, ops
@@ -56,7 +56,7 @@ def do_test_chunk_forward(mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", ['GE', 'pynative', 'KBK'])
 def test_chunk_forward_with_minus_dim(mode):
     """
@@ -137,7 +137,7 @@ def test_chunk_backward(mode):
     assert grad.asnumpy().shape == x.shape
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_chunk_forward_dynamic_shape(context_mode):
     """
@@ -260,21 +260,3 @@ def test_chunk_forward_mutable(context_mode):
         out = chunk_forward_func(x, ms.mutable(chunks), ms.mutable(dims))
         for res, exp in zip(out, expect):
             assert np.allclose(res.asnumpy(), exp)
-
-'''
-# Dynamic length tuple output is not support for now
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_f_chunk_dynamic(mode):
-    """
-    Feature: test dynamic split.
-    Description: test auto grad of op Split.
-    Expectation: expect correct result.
-    """
-    np_x1 = np.arange(4 * 4).reshape(4, 4)
-    x1 = ms.Tensor(np_x1, ms.float32)
-    np_x2 = np.arange(4 * 4 * 5).reshape(4, 4, 5)
-    x2 = ms.Tensor(np_x2, ms.float32)
-    TEST_OP(chunk_forward_func, [[x1, 2, 1], [x2, 4, 0]], mode = mode, grad = False)
-    TEST_OP(chunk_forward_func, [[x1, 2, 1], [x2, 4, 0]], mode = mode, grad = True)
-'''
