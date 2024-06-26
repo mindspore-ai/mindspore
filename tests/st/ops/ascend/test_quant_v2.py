@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 
 
 """test quant_v2"""
@@ -23,6 +22,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops.operations._infer_ops import QuantV2
 from mindspore import Tensor, jit, JitConfig
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype, tensor_type):
@@ -82,7 +82,7 @@ def test_quant_static_shape(mode, rounding, support_type):
     np.testing.assert_allclose(ms_out.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('rounding', ['ROUND', 'FLOOR', 'CEIL', 'TRUNC'])
 def test_quant_dynamic_shape(rounding):
     """

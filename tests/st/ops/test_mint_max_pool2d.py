@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore as ms
@@ -21,6 +20,7 @@ from mindspore.mint.nn.functional import max_pool2d
 from mindspore import dtype as mstype
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 @test_utils.run_with_cell
@@ -127,7 +127,7 @@ def test_ops_max_pool2d_backward_without_return_indices(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_ops_max_pool2d_dynamic():
     """
     Feature: Pyboost function.

@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
-import pytest
 import numpy as np
 
 import mindspore as ms
@@ -22,6 +20,7 @@ from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 context.set_context(device_target="Ascend")
 grad = C.GradOperation(get_all=True, sens_param=True)
@@ -86,7 +85,7 @@ def test_net():
     gen_data(inputA_np, inputB_np, ms_type=ms.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_max_tensor_grad_with_same_input():
     """
     Feature: test maximum grad on ascend
@@ -132,7 +131,7 @@ def test_max_tensor_grad_with_bf16():
     assert np.allclose(output[1].float().asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_max_tensor_grad_with_input_nan():
     """
     Feature: test maximumgrad on Ascend(910B)

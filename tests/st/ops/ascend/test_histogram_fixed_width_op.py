@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import numpy as np
-import pytest
 from mindspore import ops
 from mindspore import nn
 from mindspore import Tensor
 from mindspore import dtype as mstype
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -30,7 +29,7 @@ class Net(nn.Cell):
         return self.op(x, range_op)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_histogram_fixed_width_float64():
     """
     Feature: HistogramFixedWidth op

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -21,6 +20,7 @@ import mindspore as ms
 import mindspore.context as context
 from mindspore import Tensor, ops
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 @test_utils.run_with_cell
 def fft_forward_func(x, signal_ndim, inverse, real, norm='backward', onesided=True, signal_sizes=()):

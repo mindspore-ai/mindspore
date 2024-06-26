@@ -12,17 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 
 import math
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -48,7 +47,7 @@ def net_run():
     assert math.isclose(output.asnumpy().tolist(), expected, rel_tol=1e-4, abs_tol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_bce_mean_dyn_ascend():
     """
     Feature: Test dynamic shape of BCEWithLogitsLoss op that the reduction is mean on ascend.

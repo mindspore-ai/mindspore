@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 from mindspore import ops
@@ -20,6 +19,7 @@ from mindspore.mint import topk
 import mindspore as ms
 import tests.st.utils.test_utils as test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -71,7 +71,7 @@ def test_ops_topk_ext_forward0(context_mode):
     assert output1.asnumpy().shape == (7, 8, 3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_forward1(context_mode):
     """
@@ -93,7 +93,7 @@ def test_ops_topk_ext_forward1(context_mode):
 
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_forward2(context_mode):
     """
@@ -132,7 +132,7 @@ def test_ops_topk_ext_backward0(context_mode):
     assert output.asnumpy().shape == (7, 8, 9)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_backward1(context_mode):
     """
@@ -150,7 +150,7 @@ def test_ops_topk_ext_backward1(context_mode):
     assert output.asnumpy().shape == (7, 8, 9)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_ops_topk_ext_backward2(context_mode):
     """

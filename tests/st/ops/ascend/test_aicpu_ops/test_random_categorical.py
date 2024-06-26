@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore
@@ -21,6 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 class Net(nn.Cell):
     def __init__(self, num_sample):

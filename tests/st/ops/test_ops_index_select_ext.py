@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -21,6 +20,7 @@ from mindspore import ops
 from mindspore.ops.auto_generate import index_select_ext
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -43,7 +43,8 @@ def generate_expect_forward_output(input_np, axis, index_np):
     return input_np[(slice(None),) * axis + (index_np,)]
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_func_index_select_ext_normal(context_mode):
     """
@@ -70,7 +71,8 @@ def test_func_index_select_ext_normal(context_mode):
     np.testing.assert_allclose(grad.asnumpy(), expect1, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level1', card_mark='onecard',
+          essential_mark='essential')
 def test_func_index_select_ext_dynamic():
     """
     Feature: pyboost function.

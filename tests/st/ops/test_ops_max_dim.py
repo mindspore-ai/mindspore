@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 from mindspore import context, Tensor
@@ -21,6 +20,7 @@ from mindspore.ops.extend import max as max_
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.ops.test_ops_min_dim import (argmin_with_value_argmax_case, argmin_with_value_argmax_case_dyn,
                                            argmin_with_value_argmax_case_vmap)
+from tests.mark_utils import arg_mark
 
 def np_argmax_with_value(input_x, axis, keepdims):
     value = np.max(input_x, axis)
@@ -31,7 +31,8 @@ def np_argmax_with_value(input_x, axis, keepdims):
     return value, index
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_argmax_with_value(mode):
     """
@@ -43,7 +44,8 @@ def test_argmax_with_value(mode):
     argmin_with_value_argmax_case(max_, np_argmax_with_value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_argmax_with_value_vmap(mode):
     """
@@ -55,7 +57,8 @@ def test_argmax_with_value_vmap(mode):
     argmin_with_value_argmax_case_vmap(max_)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_argmax_with_value_dyn(mode):
     """
@@ -67,7 +70,8 @@ def test_argmax_with_value_dyn(mode):
     argmin_with_value_argmax_case_dyn(max_, np_argmax_with_value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_argmax_with_value_dyn_rank(mode):
     """

@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 import mindspore as ms
 from mindspore import mint, int32, int64, float32
@@ -28,7 +28,7 @@ def arange_forward(start=0, end=None, step=1, *, dtype=None):
     return mint.arange(start, end, step, dtype=dtype)
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_arange_forward(mode):
     """
@@ -66,7 +66,8 @@ def test_arange_forward(mode):
         assert res.dtype == case['dtype']
 
 
-@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level1', card_mark='onecard',
+          essential_mark='essential')
 def test_forward_dynamic_shape():
     """
     Feature: mint.arange

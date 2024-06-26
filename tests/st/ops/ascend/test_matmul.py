@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -24,6 +23,7 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 context.set_context(device_target="Ascend")
 
@@ -50,7 +50,7 @@ def test_net():
     print(output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_net_bf16(mode):

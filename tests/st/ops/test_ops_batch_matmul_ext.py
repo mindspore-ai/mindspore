@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -22,6 +21,7 @@ from mindspore.nn import Cell
 from mindspore.ops.extend import bmm
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.pynative.utils import allclose_nparray
+from tests.mark_utils import arg_mark
 
 loss = 1e-3
 
@@ -35,7 +35,8 @@ class BmmCell(Cell):
         return self.bmm(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize("shape1, shape2", [
     [[10, 10, 10], [10, 10, 10]],
@@ -58,7 +59,8 @@ def test_ops(context_mode, shape1, shape2):
     np.testing.assert_allclose(output, expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize("shape1, shape2", [
     [[1280, 77, 64], [1280, 64, 77]],
@@ -85,7 +87,8 @@ def test_ops_network(context_mode, shape1, shape2, dtype):
     allclose_nparray(output, expect, loss, loss)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_ops_dynamic():
     """
     Feature: ops.extend.add

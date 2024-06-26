@@ -12,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 """
 Test DecoderKVCache plugin custom ops.
 """
 import numpy as np
-import pytest
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor, context
 from mindspore.ops.operations._inner_ops import DecoderKVCache
+from tests.mark_utils import arg_mark
 
 
 b = 26

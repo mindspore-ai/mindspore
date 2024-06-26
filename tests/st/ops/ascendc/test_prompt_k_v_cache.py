@@ -12,18 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 """
 Test PromptKVCache plugin custom ops.
 """
 import numpy as np
-import pytest
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor, context, Parameter
 import mindspore.common.dtype as mstype
 from mindspore.ops.operations._inner_ops import PromptKVCache
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 b = 4
 h = 4

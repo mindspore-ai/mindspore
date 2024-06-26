@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -23,6 +22,7 @@ from mindspore.ops.operations.random_ops import UniformExt
 from mindspore.nn import Cell
 
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 rtol = 1e-3
 

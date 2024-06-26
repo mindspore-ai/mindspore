@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore as ms
@@ -20,6 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -45,7 +45,7 @@ def generate_testcases(nptype, ms_type=None):
     assert id(input_tensor) != id(output)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_stack_bfloat16(mode):
     """
