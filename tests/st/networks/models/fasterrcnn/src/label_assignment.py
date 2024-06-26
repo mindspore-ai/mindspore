@@ -164,14 +164,14 @@ def rpn_anchor_target(
         bg_mask = match_labels == 0
         if use_random:
             fg_num = int(rnp_sample_batch * rpn_fg_fraction)
-            fg_sampler = ops.RandomChoiceWithMask(count=fg_num)
+            fg_sampler = ops.RandomChoiceWithMask(count=fg_num, seed=1, seed2=1)
             fg_idx, fg_s_mask = fg_sampler(fg_mask)
             fg_mask = ops.zeros_like(fg_mask)
             fg_mask[fg_idx.reshape(-1)] = fg_s_mask
 
             bg_num = rnp_sample_batch - fg_num
             bg_num_mask = ms.numpy.arange(int(rnp_sample_batch)) < bg_num
-            bg_sampler = ops.RandomChoiceWithMask(count=int(rnp_sample_batch))
+            bg_sampler = ops.RandomChoiceWithMask(count=int(rnp_sample_batch), seed=1, seed2=1)
             bg_idx, bg_s_mask = bg_sampler(bg_mask)
             bg_mask = ops.zeros_like(bg_mask)
             bg_mask[bg_idx.reshape(-1)] = ops.logical_and(bg_s_mask, bg_num_mask)
@@ -253,11 +253,11 @@ def generate_proposal_target(rois, rois_mask, gts, rois_per_batch, fg_fraction, 
         # structure gt_box
         fg_mask = ops.logical_and(gt_class > -1, gt_class != num_classes)  # nonzero
         fg_num = int(rois_per_batch * fg_fraction)
-        fg_sampler = ops.RandomChoiceWithMask(count=fg_num)
+        fg_sampler = ops.RandomChoiceWithMask(count=fg_num, seed=1, seed2=1)
         fg_idx, fg_s_mask = fg_sampler(fg_mask)
 
         bg_mask = gt_class == num_classes
-        bg_sampler = ops.RandomChoiceWithMask(count=int(rois_per_batch))
+        bg_sampler = ops.RandomChoiceWithMask(count=int(rois_per_batch), seed=1, seed2=1)
         bg_idx, bg_s_mask = bg_sampler(bg_mask)
         bg_num = int(rois_per_batch - fg_num)
         bg_num_mask = ms.numpy.arange(int(rois_per_batch)) < bg_num
@@ -321,11 +321,11 @@ def generate_proposal_target_with_mask(
         # structure gt_box
         fg_mask = ops.logical_and(gt_class > -1, gt_class != num_classes)  # nonzero
         fg_num = int(rois_per_batch * fg_fraction)
-        fg_sampler = ops.RandomChoiceWithMask(count=fg_num)
+        fg_sampler = ops.RandomChoiceWithMask(count=fg_num, seed=1, seed2=1)
         fg_idx, fg_s_mask = fg_sampler(fg_mask)
 
         bg_mask = gt_class == num_classes
-        bg_sampler = ops.RandomChoiceWithMask(count=int(rois_per_batch))
+        bg_sampler = ops.RandomChoiceWithMask(count=int(rois_per_batch), seed=1, seed2=1)
         bg_idx, bg_s_mask = bg_sampler(bg_mask)
         bg_num = int(rois_per_batch - fg_num)
         bg_num_mask = ops.arange(int(rois_per_batch)) < bg_num
