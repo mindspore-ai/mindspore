@@ -1167,7 +1167,7 @@ Status OperatorInfo::CreateGroupForOptShard(TensorLayout *tensor_layout, std::ve
   auto integrated_save = ParallelContext::GetInstance()->optimizer_weight_shard_aggregated_save();
   if (!integrated_save) {
     tensor_layout->set_opt_weight_shard_size(LongToInt(optimizer_weight_shard_size));
-    if (optimizer_weight_shard_size > 0 && group_devices.size() != LongToSize(optimizer_weight_shard_size)) {
+    if (optimizer_weight_shard_size > 0 && group_devices.size() < LongToSize(optimizer_weight_shard_size)) {
       tensor_layout->set_opt_weight_shard_size(SizeToInt(group_devices.size()));
     }
     MS_EXCEPTION_IF_ZERO("SizeToLong(group_devices.size()) - 1", SizeToLong(group_devices.size()) - 1);
