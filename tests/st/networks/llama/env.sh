@@ -14,6 +14,7 @@
 # limitations under the License.
 # ============================================================================
 LOCAL_HIAI=/usr/local/Ascend
+export ASCEND_HOME_PATH=${LOCAL_HIAI}/latest
 export TBE_IMPL_PATH=${LOCAL_HIAI}/latest/opp/built-in/op_impl/ai_core/tbe/impl/:${TBE_IMPL_PATH}
 export LD_LIBRARY_PATH=${LOCAL_HIAI}/latest/lib64/:${LOCAL_HIAI}/add-ons/:${LD_LIBRARY_PATH}
 

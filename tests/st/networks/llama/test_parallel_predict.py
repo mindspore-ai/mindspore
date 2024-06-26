@@ -21,43 +21,44 @@ import os
 import pytest
 
 
-class TestLlamaParallelPredict:
-    """A test class for testing pipeline."""
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_single
+def test_parallel_predict():
+    """
+    Feature: Trainer.predict()
+    Description: Test trainer for predict.
+    Expectation: AssertionError
+    """
+    os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+    os.environ["MS_ENABLE_LCCL"] = "1"
+    os.environ["MS_INTERNAL_ENABLE_CUSTOM_KERNEL_LIST"] = "MatMulAllReduce"
+    os.environ["CUSTOM_MATMUL_SHUFFLE"] = "on"
+    os.environ["RUN_MODE"] = "predict"
+    sh_path = os.path.split(os.path.realpath(__file__))[0]
+    os.system(f"source {sh_path}/env.sh")
+    ret = os.system(f"bash {sh_path}/mpirun_launch_llama.sh 4 test_predict")
+    os.system(f"grep -E 'ERROR|error' {sh_path}/test_predict.log -C 10")
+    assert ret == 0
 
-    @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend910b_training
-    @pytest.mark.env_single
-    def test_predict(self):
-        """
-        Feature: Trainer.predict()
-        Description: Test trainer for predict.
-        Expectation: AssertionError
-        """
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
-        os.environ['GRAPH_OP_RUN'] = "1"
-        os.environ['MS_ENABLE_INTERNAL_KERNELS'] = "on"
-        sh_path = os.path.split(os.path.realpath(__file__))[0]
-        os.system(f"source {sh_path}/env.sh")
-        ret = os.system(f"bash {sh_path}/msrun_launch_llama.sh 8 test_predict")
-        os.system(f"cat {sh_path}/msrun_log/worker_7.log")
-        os.system(f"grep -E 'ERROR|error' {sh_path}/msrun_log/worker_7.log -C 3")
-        assert ret == 0
 
-    @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend910b_training
-    @pytest.mark.env_single
-    def test_predict_bf16(self):
-        """
-        Feature: Trainer.predict()
-        Description: Test trainer for predict.
-        Expectation: AssertionError
-        """
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
-        os.environ['GRAPH_OP_RUN'] = "1"
-        os.environ['MS_ENABLE_INTERNAL_KERNELS'] = "on"
-        sh_path = os.path.split(os.path.realpath(__file__))[0]
-        os.system(f"source {sh_path}/env.sh")
-        ret = os.system(f"bash {sh_path}/msrun_launch_llama.sh 8 test_predict")
-        os.system(f"cat {sh_path}/msrun_log/worker_7.log")
-        os.system(f"grep -E 'ERROR|error' {sh_path}/msrun_log/worker_7.log -C 3")
-        assert ret == 0
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_single
+def test_parallel_predict_bf16():
+    """
+    Feature: Trainer.predict()
+    Description: Test trainer for bfloat16 predict.
+    Expectation: AssertionError
+    """
+    os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+    os.environ["MS_ENABLE_LCCL"] = "1"
+    os.environ["MS_INTERNAL_ENABLE_CUSTOM_KERNEL_LIST"] = "MatMulAllReduce"
+    os.environ["CUSTOM_MATMUL_SHUFFLE"] = "on"
+    os.environ["RUN_MODE"] = "predict"
+    sh_path = os.path.split(os.path.realpath(__file__))[0]
+    os.system(f"source {sh_path}/env.sh")
+    ret = os.system(
+        f"bash {sh_path}/mpirun_launch_llama.sh 4 test_predict_bf16")
+    os.system(f"grep -E 'ERROR|error' {sh_path}/test_predict_bf16.log -C 10")
+    assert ret == 0
