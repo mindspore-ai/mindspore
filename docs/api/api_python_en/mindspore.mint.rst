@@ -1,6 +1,14 @@
 mindspore.mint
 ===============
 
+mindpsore.mint provides a large number of functional, nn, optimizer interfaces. The API usages and functions are consistent with the mainstream usage in the industry for easy reference.
+
+The module import method is as follows:
+
+.. code-block::
+
+    from mindspore import mint
+
 Tensor
 ---------------
 
