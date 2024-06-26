@@ -83,11 +83,6 @@ int SocketOperation::SetSocketOptions(int sock_fd) {
     MS_LOG(ERROR) << "Failed to call setsockopt TCP_NODELAY, fd: " << sock_fd << ", errno:" << errno;
     return -1;
   }
-
-  ret = SetSocketKeepAlive(sock_fd, SOCKET_KEEPALIVE, SOCKET_KEEPIDLE, SOCKET_KEEPINTERVAL, SOCKET_KEEPCOUNT);
-  if (ret > 0) {
-    MS_LOG(WARNING) << "Failed to call setsockopt keep alive, fd: " << sock_fd;
-  }
   return 0;
 }
 
