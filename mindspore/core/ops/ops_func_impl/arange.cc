@@ -60,7 +60,7 @@ int64_t ComputeShapeSize(const ValuePtrList &input_values, bool result_type_is_i
   auto end = end_opt.value();
   auto step = step_opt.value();
 
-  bool step_not_zero = step;
+  bool step_not_zero = static_cast<bool>(step);
   bool step_positive;
   if constexpr (std::is_same<T, bool>::value) {
     step_positive = step_not_zero;
@@ -131,12 +131,10 @@ BaseShapePtr ArangeFuncImpl::InferShape(const PrimitivePtr &primitive,
   auto input_type = input_args[kInputIndex0]->GetType();
   auto result_type_is_int = CheckDtypeValidAndIsInteger(primitive, dtype_value);
   auto shape_size = GetShapeSize(input_type, input_values, result_type_is_int);
-
   if (shape_size < 0) {
     (void)out_shape.emplace_back(abstract::Shape::kShapeDimAny);
     return std::make_shared<abstract::Shape>(out_shape);
   }
-
   (void)out_shape.emplace_back(shape_size);
   return std::make_shared<abstract::TensorShape>(out_shape);
 }
