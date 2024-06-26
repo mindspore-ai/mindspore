@@ -163,7 +163,7 @@ class AclTensorBufferMaker {
     }
     auto real_size = type_size * size;
     if (type == kObjectTypeString) {
-      data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, addr, size + sizeof(ge::StringHead));
+      data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, addr, size);
     } else if (addr == nullptr || real_size == 0) {
       data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, nullptr, 0);
     } else {

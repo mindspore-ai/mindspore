@@ -931,7 +931,15 @@ void AscendDeviceAddress::CopyHostToDevice(const void *src, uint64_t size,
     if (type_id() == kObjectTypeString) {
       // NOTE: For string type, ge::StringHead.len does not include '\0', since kernel_tensor allocated size including
       // '\0', see method `CreateDeviceAddressForScalarAndString` defined in `device_address_utils.cc`, and method
-      // `PrepareDataForStringValue` defined in `device_address_utils.cc`, so here pass `size - 1` to `head.len`.
+      // `PrepareDataForStringValue` defined in `data_prepare_actor.cc`, so here pass `size - 1` to `head.len`.
+      // NOTE: method `CopyHostToDevice` can be triggered from the two scenarios as below:
+      // 1. method `CopyNoneTensorDataToDevice` in `device_address_utils.cc` passes a kernel tensor, the parameter
+      // `size` include `ge::StringHead`
+      // 2. method `PrepareDataForStringValue` in `data_prepare_actor.cc` passes a raw string, the parameter `size` does
+      // not include `ge::StringHead`
+      if (size == GetSize() && size >= sizeof(ge::StringHead)) {
+        size -= sizeof(ge::StringHead);
+      }
       ge::StringHead head{.addr = sizeof(ge::StringHead), .len = static_cast<int64_t>(size) - 1};
       // sync string head info from device to host
       SyncMemory(GetDevicePtr(), &head, sizeof(ge::StringHead), ACL_MEMCPY_HOST_TO_DEVICE, nullptr);
