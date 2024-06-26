@@ -194,17 +194,18 @@ TypePtrList BatchMatMulFuncImpl::InferType(const PrimitivePtr &primitive, const 
     }
     ret_type = out_type->cast<TypePtr>();
   }
-  const auto x_dtype_id = x_tensor->data_type();
-  const auto y_dtype_id = y_tensor->data_type();
-  if (x_dtype_id != y_dtype_id) {
-    MS_EXCEPTION(ValueError)
-      << "For BatchMatMul, the dtype of 'input' and 'other' should be the same, but got 'input' with "
-      << "dtype: " << x_dtype_id << " and 'other' with dtype: " << y_dtype_id << ".";
+  const auto x_type = x_tensor->Dtype();
+  const auto y_type = y_tensor->Dtype();
+  auto op_name = primitive->name();
+  if (x_type->type_id() != y_type->type_id()) {
+    MS_EXCEPTION(TypeError) << "For '" << op_name
+                            << "', the type of 'x2' should be same as 'x1', but got 'x1' with type Tensor["
+                            << x_type->ToString() << "] and 'x2' with type Tensor[" << y_type->ToString() << "].";
   }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   std::string device_target = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  if (x_dtype_id == TypeId::kNumberTypeInt8 && device_target == kAscendDevice) {
+  if (x_type->type_id() == TypeId::kNumberTypeInt8 && device_target == kAscendDevice) {
     ret_type = kInt32;
   }
   return {ret_type};
