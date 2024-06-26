@@ -114,10 +114,11 @@ class ClassDefParser(Parser):
             if key.startswith('__'):
                 # ignore inner functions
                 continue
-            if callable(value) and key in function_defs:
+            is_staticmethod = isinstance(value, staticmethod)
+            if not is_staticmethod and callable(value) and key in function_defs:
                 # ignore functions defined by self
                 continue
-            if isinstance(value, staticmethod):
+            if is_staticmethod:
                 assign_code = f"self.{key} = obj.__class__.{key}"
             else:
                 assign_code = f"self.__class__.{key} = obj.__class__.{key}"
