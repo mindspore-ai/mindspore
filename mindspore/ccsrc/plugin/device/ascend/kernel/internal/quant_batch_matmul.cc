@@ -38,16 +38,6 @@ internal::OpParamPtr InternalQuantBatchMatmul::CreateOpParam(const std::vector<K
   return param_ptr;
 }
 
-uint64_t InternalQuantBatchMatmul::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
-                                                     const std::vector<KernelTensor *> &outputs) {
-  // User defined CacheKey, the inputs should include all the factors which will affect tiling result.
-  return TilingCacheMgr::GetInstance().GenTilingCacheKey(
-    kernel_name_, inputs[kIndex0]->GetShapeVector(), inputs[kIndex0]->dtype_id(), inputs[kIndex1]->GetShapeVector(),
-    inputs[kIndex1]->dtype_id(), inputs[kIndex2]->GetShapeVector(), inputs[kIndex2]->dtype_id(),
-    inputs[kIndex3]->GetShapeVector(), inputs[kIndex3]->dtype_id(), inputs[kIndex4]->GetShapeVector(),
-    inputs[kIndex4]->dtype_id());
-}
-
 MS_INTERNAL_KERNEL_FACTORY_REG(QuantBatchMatmul, InternalQuantBatchMatmul);
 REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(QuantBatchMatmul, INPUT_NUM_4, INDEX_0, INDEX_1, INDEX_4, INDEX_2);
 REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(QuantBatchMatmul, OUTPUT_NUM_1, INDEX_0);

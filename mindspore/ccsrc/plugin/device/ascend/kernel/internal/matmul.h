@@ -30,8 +30,6 @@ class InternalMatMul : public InternalKernelMod {
  protected:
   internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs);
-  uint64_t GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
-                             const std::vector<KernelTensor *> &outputs) override;
 };
 }  // namespace kernel
 }  // namespace mindspore

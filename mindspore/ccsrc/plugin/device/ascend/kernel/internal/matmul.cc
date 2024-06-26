@@ -63,13 +63,6 @@ internal::OpParamPtr InternalMatMul::CreateOpParam(const std::vector<KernelTenso
   return std::static_pointer_cast<internal::OpParam>(param_ptr);
 }
 
-uint64_t InternalMatMul::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
-                                           const std::vector<KernelTensor *> &outputs) {
-  return TilingCacheMgr::GetInstance().GenTilingCacheKey(kernel_name_, inputs[kIndex0]->GetShapeVector(),
-                                                         inputs[kIndex0]->dtype_id(), inputs[kIndex1]->GetShapeVector(),
-                                                         inputs[kIndex1]->dtype_id());
-}
-
 MS_INTERNAL_KERNEL_FACTORY_REG(MatMul, InternalMatMul);
 REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(MatMul, INPUT_NUM_2, INDEX_0, INDEX_1);
 REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(MatMul, OUTPUT_NUM_1, INDEX_0);
