@@ -8,12 +8,13 @@
 
 - [[#I9EYXX](https://gitee.com/mindspore/mindspore/issues/I9EYXX)] Fixed that the compilation cache was disabled in msrun distributed parallel startup mode.
 - [[#I86Z01](https://gitee.com/mindspore/mindspore/issues/I86Z01)] Fixed an error returned by ops.interpolate interface in PyNative mode.
+- [[#IA8OA3](https://gitee.com/mindspore/mindspore/issues/IA8OA3)] Fixed occasional host networking connection errors in large-scale cluster with over 10 thousand cards.
 
 ### Contributors
 
 Thanks goes to these wonderful people:
 
-xiaoyao, tianxiaodong
+xiaoyao, tianxiaodong, ZPaC
 
 Contributions of any kind are welcome!
 
