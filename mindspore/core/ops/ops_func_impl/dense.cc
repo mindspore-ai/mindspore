@@ -118,19 +118,21 @@ TypePtrList DenseFuncImpl::InferType(const PrimitivePtr &primitive, const ValueP
   MS_EXCEPTION_IF_NULL(x_tensor);
   MS_EXCEPTION_IF_NULL(y_tensor);
   TypePtr ret_type = x_tensor->Dtype();
-  const auto x_dtype_id = x_tensor->data_type();
-  const auto y_dtype_id = y_tensor->data_type();
-  if (x_dtype_id != y_dtype_id) {
-    MS_EXCEPTION(TypeError) << "For Dense, all dtypes should be the same, but got 'input' with "
-                            << "dtype: " << x_dtype_id << " and 'other' with dtype: " << y_dtype_id << ".";
+  const auto x_type = x_tensor->Dtype();
+  const auto y_type = y_tensor->Dtype();
+  auto op_name = primitive->name();
+  if (x_type->type_id() != y_type->type_id()) {
+    MS_EXCEPTION(TypeError) << "For '" << op_name
+                            << "', the type of 'x2' should be same as 'x1', but got 'x1' with type Tensor["
+                            << x_type->ToString() << "] and 'x2' with type Tensor[" << y_type->ToString() << "].";
   }
   if (input_values[kInputIndex2] != mindspore::kNone) {
     const auto &bias_tensor = input_values[kInputIndex2]->cast<tensor::BaseTensorPtr>();
     MS_EXCEPTION_IF_NULL(bias_tensor);
-    const auto bias_dtype_id = bias_tensor->data_type();
-    if (x_dtype_id != bias_dtype_id) {
+    const auto bias_type = bias_tensor->Dtype();
+    if (x_type->type_id() != bias_type->type_id()) {
       MS_EXCEPTION(TypeError) << "For Dense, all dtypes should be the same, but got 'input' with "
-                              << "dtype: " << x_dtype_id << " and 'bias' with dtype: " << bias_dtype_id << ".";
+                              << "dtype: " << x_type << " and 'bias' with dtype: " << bias_type << ".";
     }
   }
 

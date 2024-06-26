@@ -106,11 +106,13 @@ TypePtrList BatchMatMulExtFuncImpl::InferType(const PrimitivePtr &primitive, con
   MS_EXCEPTION_IF_NULL(x_tensor);
   MS_EXCEPTION_IF_NULL(y_tensor);
   TypePtr ret_type = x_tensor->Dtype();
-  const auto x_dtype_id = x_tensor->data_type();
-  const auto y_dtype_id = y_tensor->data_type();
-  if (x_dtype_id != y_dtype_id) {
-    MS_EXCEPTION(ValueError) << "For MatMul, the dtype of 'input' and 'other' should be the same, but got 'input' with "
-                             << "dtype: " << x_dtype_id << " and 'other' with dtype: " << y_dtype_id << ".";
+  const auto x_type = x_tensor->Dtype();
+  const auto y_type = y_tensor->Dtype();
+  auto op_name = primitive->name();
+  if (x_type->type_id() != y_type->type_id()) {
+    MS_EXCEPTION(TypeError) << "For '" << op_name
+                            << "', the type of 'x2' should be same as 'x1', but got 'x1' with type Tensor["
+                            << x_type->ToString() << "] and 'x2' with type Tensor[" << y_type->ToString() << "].";
   }
   return {ret_type};
 }
