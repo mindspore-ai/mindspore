@@ -96,6 +96,17 @@ Tensor
     mindspore.mint.sub
     mindspore.mint.tanh
 
+线性函数
+^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.bmm
+    mindspore.mint.matmul
+
 Reduction 函数
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -231,6 +242,7 @@ mindspore.mint.nn.functional
     mindspore.mint.nn.functional.batch_norm
     mindspore.mint.nn.functional.dropout
     mindspore.mint.nn.functional.grid_sample
+    mindspore.mint.nn.functional.linear
 
 卷积函数
 ^^^^^^^^^^
@@ -284,6 +296,7 @@ mindspore.mint.nn.functional
 
     mindspore.mint.nn.functional.binary_cross_entropy
     mindspore.mint.nn.functional.elu
+    mindspore.mint.nn.functional.gelu
     mindspore.mint.nn.functional.leaky_relu
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu

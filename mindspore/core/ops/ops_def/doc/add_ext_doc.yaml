@@ -39,11 +39,11 @@ add_ext:
         >>> import numpy as np
         >>> import mindspore
         >>> from mindspore import Tensor
-        >>> from mindspore.ops.extend import add
+        >>> from mindspore import ops
         >>> x = Tensor(1, mindspore.int32)
         >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
         >>> alpha = 0.5
-        >>> output = add(x, y, alpha)
+        >>> output = ops.auto_generate.add_ext(x, y, alpha)
         >>> print(output)
         [3. 3.5 4.]
         >>> # the data type of x is int32, the data type of y is float32,

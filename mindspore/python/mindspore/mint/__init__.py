@@ -62,6 +62,7 @@ from mindspore.ops.functional import flip
 from mindspore.ops.auto_generate import flatten_ext as flatten
 # 16
 from mindspore.ops.functional import matmul
+from mindspore.ops.auto_generate import bmm_ext as bmm
 # 17
 from mindspore.ops.functional import mean_ext
 # 18
@@ -766,6 +767,7 @@ __all__ = [
     'flatten',
     # 16
     'matmul',
+    'bmm',
     # 17
     'mean',
     # 18

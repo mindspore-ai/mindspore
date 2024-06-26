@@ -100,6 +100,16 @@ Pointwise Operations
 
     mindspore.mint.tanh
 
+Linear Algebraic Functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.bmm
+    mindspore.mint.matmul
 
 Reduction Operations
 ^^^^^^^^^^^^^^^^^^^^^
@@ -215,6 +225,7 @@ Neural Network Layer Functions
     mindspore.mint.nn.functional.batch_norm
     mindspore.mint.nn.functional.dropout
     mindspore.mint.nn.functional.grid_sample
+    mindspore.mint.nn.functional.linear
 
 Convolution functions
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -266,6 +277,7 @@ Non-linear activation functions
 
     mindspore.mint.nn.functional.binary_cross_entropy
     mindspore.mint.nn.functional.elu
+    mindspore.mint.nn.functional.gelu
     mindspore.mint.nn.functional.leaky_relu
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
