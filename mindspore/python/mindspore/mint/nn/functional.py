@@ -95,7 +95,7 @@ from mindspore.ops.functional import gelu
 # 37
 
 # 38
-
+from mindspore.ops.functional import dense as linear
 # 39
 from mindspore.ops.functional import group_norm
 # 40
@@ -440,7 +440,7 @@ __all__ = [
     # 37
 
     # 38
-
+    'linear',
     # 39
     'group_norm',
     # 40

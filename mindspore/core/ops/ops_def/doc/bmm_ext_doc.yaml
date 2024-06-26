@@ -24,9 +24,14 @@ bmm_ext:
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> from mindspore.ops.extend import bmm
+        >>> from mindspore import ops
         >>> a = Tensor(np.ones(shape=[2, 3, 4]), mindspore.float32)
         >>> b = Tensor(np.ones(shape=[2, 4, 5]), mindspore.float32)
-        >>> output = bmm(a, b)
-        >>> print(output.shape)
-        (2, 3, 5)
+        >>> output = ops.auto_generate.bmm_ext(a, b)
+        >>> print(output)
+        [[[4. 4. 4. 4. 4.]
+          [4. 4. 4. 4. 4.]
+          [4. 4. 4. 4. 4.]]
+         [[4. 4. 4. 4. 4.]
+          [4. 4. 4. 4. 4.]
+          [4. 4. 4. 4. 4.]]]
