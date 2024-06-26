@@ -59,36 +59,6 @@ TypePtrList ClampTensorFuncImpl::InferType(const PrimitivePtr &primitive, const 
   return {x_tensor->Dtype()};
 }
 
-bool ClampTensorFuncImpl::IsBroadcastable(const std::vector<int64_t> &x_shape,
-                                          const std::vector<int64_t> &y_shape) const {
-  if (x_shape == y_shape) {
-    return true;
-  }
-
-  if (IsDynamicRank(x_shape) || IsDynamicRank(y_shape)) {
-    return true;
-  }
-
-  if (x_shape.size() < y_shape.size()) {
-    return false;
-  }
-
-  auto miss = x_shape.size() - y_shape.size();
-  for (size_t i = 0; i < y_shape.size(); i++) {
-    if (x_shape[miss + i] == y_shape[i]) {
-      continue;
-    }
-    if (x_shape[miss + i] == -1) {
-      continue;
-    }
-    if (y_shape[i] == -1 || y_shape[i] == 1) {
-      continue;
-    }
-    return false;
-  }
-  return true;
-}
-
 BaseShapePtr ClampTensorFuncImpl::InferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) const {
   auto input0_shape = input_args[kInputIndex0]->GetShape();

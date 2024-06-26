@@ -31,9 +31,6 @@ class MIND_API ClampTensorFuncImpl : public OpFuncImpl {
   // simply infer
   ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
   TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
-
- private:
-  bool IsBroadcastable(const std::vector<int64_t> &x_shape, const std::vector<int64_t> &y_shape) const;
 };
 }  // namespace ops
 }  // namespace mindspore

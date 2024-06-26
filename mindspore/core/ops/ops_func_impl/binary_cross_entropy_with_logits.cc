@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace ops {
-
 TypePtr BCEWithLogitsLossFuncImpl::InferType(const PrimitivePtr &primitive,
                                              const std::vector<abstract::AbstractBasePtr> &input_args) const {
   auto op_name = primitive->name();
@@ -54,7 +53,6 @@ BaseShapePtr BCEWithLogitsLossFuncImpl::InferShape(const PrimitivePtr &primitive
 
   auto target_shape_ptr = input_args[kInputIndex1]->GetShape();
   auto target_shape_vector = target_shape_ptr->GetShapeVector();
-
   if (!ObscureShapeEqual(input_shape_vector, target_shape_vector)) {
     MS_EXCEPTION(ValueError) << "For '" << primitive->name()
                              << "', two inputs 'input' and 'target' shape are not equal, 'input' shape: "

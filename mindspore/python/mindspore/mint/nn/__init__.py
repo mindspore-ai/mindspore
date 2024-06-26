@@ -223,6 +223,8 @@ from mindspore.nn.layer.basic import DropoutExt as Dropout
 
 # 100
 from mindspore.ops.auto_generate import BCEWithLogitsLoss as BCEWithLogitsLoss_prim
+
+
 class BCEWithLogitsLoss(Cell):
     r"""
     Adds sigmoid activation function to `input` as logits, and uses this logits to compute binary cross entropy
