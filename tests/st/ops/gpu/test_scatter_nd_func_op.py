@@ -29,7 +29,7 @@ from mindspore.ops.functional import vmap
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
-div = P.Div()
+div = P.RealDiv()
 
 func_map = {
     "update": ops.ScatterNdUpdate,
