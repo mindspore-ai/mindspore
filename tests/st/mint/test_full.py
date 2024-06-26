@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 # pylint: disable=unused-variable
 import pytest
 import numpy as np
@@ -20,6 +19,7 @@ import mindspore as ms
 from mindspore.common import dtype as mstype
 from mindspore import ops, mint, Tensor, jit, JitConfig, context, nn
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 class FullNet(nn.Cell):
@@ -101,7 +101,7 @@ def test_full_backward(mode):
     assert value_grad.shape == ()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_full_dynamic_shape():
     """
     Feature: Test full with dynamic shape in graph mode.
@@ -125,7 +125,7 @@ def test_full_dynamic_shape():
             disable_yaml_check=True, disable_grad=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_full_forward_dynamic_rank(context_mode):
     """
@@ -150,10 +150,8 @@ def test_full_forward_dynamic_rank(context_mode):
         _ = test_cell(size, value, ms.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_full_backward_dynamic_rank(context_mode):
     """

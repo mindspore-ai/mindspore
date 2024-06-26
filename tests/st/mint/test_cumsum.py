@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -21,6 +20,7 @@ from mindspore import ops, jit, JitConfig
 from mindspore.mint import cumsum
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 def generate_random_input(shape, dim):
     x = np.random.randn(*shape)
@@ -104,7 +104,7 @@ def test_cumsum_backward(mode):
 
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_cumsum_dynamic_shape():
     """
     Feature: Test dynamic shape.

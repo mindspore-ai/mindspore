@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore as ms
@@ -22,6 +21,7 @@ from mindspore import mint
 from mindspore import jit, JitConfig
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
@@ -166,7 +166,7 @@ def test_repeat_interleave_bfloat16(mode, dim):
             Tensor(x, dtype=ms.bfloat16), Tensor(repeats), dim)
     assert np.allclose(output.float().asnumpy(), expect, 0.004, 0.004)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_repeat_interleave_dynamic_shape_int():
     """
     Feature: Test dynamic shape.
