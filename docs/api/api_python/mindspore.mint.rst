@@ -160,6 +160,7 @@ Reduction运算
     :template: classtemplate.rst
 
     mindspore.mint.eq
+    mindspore.mint.ne
     mindspore.mint.greater
     mindspore.mint.gt
     mindspore.mint.isclose
