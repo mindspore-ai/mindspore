@@ -407,7 +407,7 @@ def ones(size, *, dtype=None):
     Examples:
         >>> import mindspore
         >>> from mindspore import mint
-        >>> output = mint.ones((2, 2), mindspore.float32)
+        >>> output = mint.ones((2, 2), dtype=mindspore.float32)
         >>> print(output)
         [[1. 1.]
          [1. 1.]]
@@ -534,7 +534,7 @@ def zeros(size, *, dtype=None):
     Examples:
         >>> import mindspore
         >>> from mindspore import mint
-        >>> output = mint.zeros((2, 2), mindspore.float32)
+        >>> output = mint.zeros((2, 2), dtype=mindspore.float32)
         >>> print(output)
         [[0. 0.]
          [0. 0.]]
