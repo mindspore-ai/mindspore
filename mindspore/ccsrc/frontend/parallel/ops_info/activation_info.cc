@@ -963,6 +963,7 @@ REGISTER(EluInfo);
 REGISTER(ReLUInfo);
 REGISTER(SiLUInfo);
 REGISTER(identityInfo);
+REGISTER(ShardIdentityInfo);
 REGISTER(RepeatElementsInfo);
 REGISTER(ReLU6Info);
 REGISTER(SoftsignInfo);

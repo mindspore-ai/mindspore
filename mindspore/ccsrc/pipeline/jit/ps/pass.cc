@@ -503,6 +503,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
                          {"merge_comm", opt::OptPassConfig(parallel::MergeComm)},
                          {"allreduce_fusion", opt::OptPassConfig(parallel::StepAllreduceFusion)},
                          {"matmul_add_comm_reduction", opt::OptPassConfig(parallel::MatmulAddCommReduction)},
+                         {"virtual_shard_identity", opt::OptPassConfig({irpass.virtual_shard_identity_})},
                          {"virtual_dataset", virtual_dataset},
                          {"get_grad_eliminate_", get_grad},
                          {"virtual_output", opt::OptPassConfig({irpass.virtual_output_eliminate_})},

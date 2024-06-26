@@ -136,6 +136,9 @@ class OptimizeIRPassLib {
   // virtual output
   SubstitutionPtr virtual_output_eliminate_;
 
+  // virtual shard identity
+  SubstitutionPtr virtual_shard_identity_;
+
   // PipelineSplit
   SubstitutionPtr parallel_virtual_node_;
 

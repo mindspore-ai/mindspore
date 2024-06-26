@@ -375,6 +375,25 @@ class AllGather(PrimitiveWithInfer):
         return x_dtype
 
 
+class ShardIdentity(PrimitiveWithInfer):
+    """
+    Auto parallel virtual operator. Identity operator only for shard function.
+    Do nothing in terms of infer_shape, infer_dtype, and the tensor.
+
+    It is only for internal use of parallel modules and cannot be called by users.
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        pass
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        return x_dtype
+
+
 class _MiniStepAllGather(PrimitiveWithInfer):
     """
     Auto parallel virtual operator. Do nothing in forward, do reducescatter in backward in mini-step. It is only for
