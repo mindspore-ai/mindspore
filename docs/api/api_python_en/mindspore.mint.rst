@@ -85,6 +85,8 @@ Pointwise Operations
     mindspore.mint.cumsum
     mindspore.mint.atan2
     mindspore.mint.arctan2
+    mindspore.mint.ceil
+    mindspore.mint.cos
     mindspore.mint.unique
     mindspore.mint.div
     mindspore.mint.divide
@@ -234,6 +236,8 @@ Neural Network Layer Functions
     mindspore.mint.nn.functional.batch_norm
     mindspore.mint.nn.functional.dropout
     mindspore.mint.nn.functional.grid_sample
+    mindspore.mint.nn.functional.group_norm
+    mindspore.mint.nn.functional.layer_norm
     mindspore.mint.nn.functional.linear
 
 Convolution functions
