@@ -1,6 +1,14 @@
 mindspore.mint
 ===============
 
+mindspore.mint提供了大量的functional、nn、优化器接口，API用法及功能等与业界主流用法一致，方便用户参考使用。
+
+模块导入方法如下：
+
+.. code-block::
+
+    from mindspore import mint
+
 Tensor
 ---------------
 
