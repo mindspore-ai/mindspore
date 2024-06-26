@@ -123,6 +123,12 @@ REG_FALLBACK_BUILDER("BinaryCrossEntropyWithLogitsBackward").SetBody(BODYFUNC(ib
   auto target = ib->GetInput(kIndex2);
   auto weight = ib->GetInput(kIndex3);
   auto pos_weight = ib->GetInput(kIndex4);
+  if (ib->GetDtype(weight)->isa<TypeNone>()) {
+    weight = ib->Emit("OnesLike", {target});
+  }
+  if (ib->GetDtype(pos_weight)->isa<TypeNone>()) {
+    pos_weight = ib->Emit("OnesLike", {target});
+  }
   auto reduction = ib->GetInput(kIndex5);
   auto sigmoid_input = ib->Emit("Sigmoid", {predict});
   auto t = ib->Mul(target, pos_weight);
