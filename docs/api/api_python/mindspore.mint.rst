@@ -23,7 +23,6 @@ Tensor
     mindspore.mint.eye
     mindspore.mint.ones
     mindspore.mint.ones_like
-    mindspore.mint.one_hot
     mindspore.mint.zeros
     mindspore.mint.zeros_like
 
@@ -269,9 +268,15 @@ mindspore.mint.nn.functional
     mindspore.mint.nn.functional.unfold
 
 
+Tensor创建
+^^^^^^^^^^^^^^^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
-
+    mindspore.mint.nn.functional.one_hot
 
 
 

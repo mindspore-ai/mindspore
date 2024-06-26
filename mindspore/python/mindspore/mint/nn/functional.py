@@ -334,7 +334,7 @@ def one_hot(tensor, num_classes=-1):
     Args:
         tensor (Tensor): A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
             Data type must be int32 or int64.
-        num_classes (int): A scalar defining the depth of the one-hot dimension.
+        num_classes (int): A scalar defining the depth of the one-hot dimension, default: ``-1``.
 
     Returns:
         Tensor, one-hot tensor.
@@ -342,7 +342,7 @@ def one_hot(tensor, num_classes=-1):
     Raises:
         TypeError: If `num_classes` is not an int.
         TypeError: If dtype of `tensor` is not int32 or int64.
-        ValueError: If `num_classes` is less than 0.
+        ValueError: If `num_classes` is less than -1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -353,7 +353,7 @@ def one_hot(tensor, num_classes=-1):
         >>> from mindspore import Tensor, mint
         >>> tensor = Tensor(np.array([0, 1, 2]), mindspore.int32)
         >>> num_classes = 3
-        >>> output = mint.one_hot(tensor, num_classes)
+        >>> output = mint.nn.functional.one_hot(tensor, num_classes)
         >>> print(output)
         [[1 0 0]
          [0 1 0]

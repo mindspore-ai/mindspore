@@ -1,7 +1,7 @@
-mindspore.mint.one_hot
-=======================
+mindspore.mint.nn.functional.one_hot
+======================================
 
-.. py:function:: mindspore.mint.one_hot(tensor, num_classes)
+.. py:function:: mindspore.mint.nn.functional.one_hot(tensor, num_classes=-1)
 
     返回一个one-hot类型的Tensor。
 
@@ -9,7 +9,7 @@ mindspore.mint.one_hot
 
     参数：
         - **tensor** (Tensor) - 输入索引，shape为 :math:`(X_0, \ldots, X_n)` 的Tensor。数据类型必须为int32或int64。
-        - **num_classes** (int) - 输入的Scalar，定义one-hot的深度。
+        - **num_classes** (int) - 输入的Scalar，定义one-hot的深度，默认值： ``-1`` 。
 
     返回：
         Tensor，one-hot类型的Tensor。
