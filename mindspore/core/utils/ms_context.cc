@@ -472,10 +472,15 @@ void MsContext::SetJitLevel(const std::string &jit_level) const {
 
 std::string MsContext::GetJitLevel() const {
   static bool first_call = true;
+  auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
   static const auto env_var = common::GetEnv("GRAPH_OP_RUN");
   if (env_var == "1") {
     return kAttrJitLevelO0;
   } else if (env_var == "0") {
+    if (mode == kPynativeMode) {
+      MS_LOG(INFO) << "Pynative mode use jit_level O0 when GRAPH_OP_RUN=0.";
+      return kAttrJitLevelO0;
+    }
     return kAttrJitLevelO2;
   }
 
@@ -487,7 +492,6 @@ std::string MsContext::GetJitLevel() const {
   }
 
   auto global_jit_level = get_param<std::string>(MS_CTX_JIT_LEVEL);
-  auto mode = get_param<int>(MS_CTX_EXECUTION_MODE);
   auto device_target = get_param<std::string>(MS_CTX_DEVICE_TARGET);
   if (jit_level.empty()) {
     if (!global_jit_level.empty()) {

@@ -137,7 +137,8 @@ RunMode GeDeviceContext::GetRunMode(const FuncGraphPtr &func_graph) const {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   if (IsDynamicShapeFuncGraph(func_graph)) {
-    if (context->get_param<std::string>(MS_CTX_JIT_LEVEL) == "O2") {
+    if (context->get_param<std::string>(MS_CTX_JIT_LEVEL) == "O2" &&
+        context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
       MS_LOG(INFO) << "set dynamic shape RunMode::kGraphMode";
       return RunMode::kGraphMode;
     }
@@ -466,8 +467,7 @@ void GeDeviceContext::SetHcclOptions(const std::shared_ptr<MsContext> &inst_cont
   } else {
     // device id is still needed for non-distribute case
     (*ge_options)["ge.exec.deviceId"] = env_device_id;
-    MS_LOG(INFO) << "No hccl mode. "
-                 << "If use hccl, make sure [RANK_TABLE_FILE,RANK_ID,DEVICE_ID] all be set in ENV.";
+    MS_LOG(INFO) << "No hccl mode. If use hccl, make sure [RANK_TABLE_FILE,RANK_ID,DEVICE_ID] all be set in ENV.";
   }
 }
 
