@@ -50,7 +50,8 @@ Status DvppAutoContrastOp::Compute(const std::shared_ptr<DeviceTensorAscend910B>
   int64_t input_h = input->GetShape()[kHeightIndexNHWC];
   int64_t input_w = input->GetShape()[kWidthIndexNHWC];
   RETURN_IF_NOT_OK(CheckDvppLimit(input_h, input_w, h_lb, w_lb, h_ub, w_ub, kDvppAutoContrastOp));
-  CHECK_FAIL_RETURN_UNEXPECTED(ignore_.size() <= 256,
+  constexpr int64_t kLengthMax = 256;
+  CHECK_FAIL_RETURN_UNEXPECTED(ignore_.size() <= kLengthMax,
                                "DvppAutoContrast: the length of ignore should be less or equal to 256, but got: " +
                                  std::to_string(ignore_.size()));
 
