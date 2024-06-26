@@ -52,8 +52,6 @@ std::vector<tensor::BaseTensorPtr> UnstackExtAscendCustomize(const std::shared_p
       PyBoostUtils::MallocOpInputs(device_context, x_tensor);
       MS_LOG(DEBUG) << "View device task UnstackExt end";
     }));
-
-    op->SetOutputTupleAbstract();
   } else {
     MS_LOG_EXCEPTION << "View unsupported:" << primitive->name() << " or input ERROR";
   }

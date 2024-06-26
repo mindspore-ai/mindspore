@@ -265,6 +265,7 @@ tensor::BaseTensorPtr GetContiguousTensor(const tensor::BaseTensorPtr &input_ten
   auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_target);
   auto contiguous_tensor = contiguous_op->Call(input_tensor);
   if (requires_grad) {
+    contiguous_op->CreateOutputSimpleInfoForView();
     const auto &contiguous_run_info = std::make_shared<FrontendOpRunInfo>();
     contiguous_run_info->requires_grad = true;
     PyBoost::UpdateOpRunInfo(contiguous_op, contiguous_run_info);

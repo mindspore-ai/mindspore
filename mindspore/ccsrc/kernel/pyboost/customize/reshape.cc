@@ -28,14 +28,12 @@ tensor::BaseTensorPtr ReshapeCustomize(const std::shared_ptr<OpRunner> &op, cons
                                        const ValueTuplePtr &shape, const std::string &device_target) {
   MS_LOG(DEBUG) << "Call start";
   MS_EXCEPTION_IF_NULL(input_tensor);
-  op->GenerateInputAbstract(input_tensor, shape);
 
   auto view_op = CREATE_PYBOOST_OP(View, device_target);
   auto old_storage_info = input_tensor->storage_info();
   if (old_storage_info == nullptr || old_storage_info->is_contiguous) {
     // Tensor is contiguous, reshape by view
     auto output_tensor = view_op->Call(input_tensor, shape);
-    op->set_output_abs(view_op->output_abs());
     op->set_outputs(view_op->outputs());
     return output_tensor;
   }
@@ -45,7 +43,6 @@ tensor::BaseTensorPtr ReshapeCustomize(const std::shared_ptr<OpRunner> &op, cons
   copy_op->set_stream_id(op->stream_id());
   const auto copy_tensor = copy_op->Call(input_tensor);
   auto output_tensor = view_op->Call(copy_tensor, shape);
-  op->set_output_abs(view_op->output_abs());
   op->set_outputs(view_op->outputs());
   return output_tensor;
 }

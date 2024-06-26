@@ -18,12 +18,9 @@
         }
       )
     );
-
-    GenerateInputAbstract(${call_args});
-    // Stub tensor need output abstract
-    ${set_output_abs}
   } else {
     MS_LOG_EXCEPTION << "View unsupported:" << primitive_->name() <<" or input ERROR";
   }
+  get_op()->CreateOutputSimpleInfoForView();
   MS_LOG(DEBUG) << "View ${op_name} Call end";
   return ${return_values};

@@ -34,17 +34,17 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
-void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, const AbstractBasePtr &abstract_tensor,
+void CreateTensor(const TypeId &type_id, const ShapeVector &shape_vector, const AbstractBasePtr &abstract_tensor,
                   std::vector<tensor::BaseTensorPtr> *outputs) {
-  auto output_tensor = std::make_shared<tensor::BaseTensor>(type->type_id(), shape_vector);
+  auto output_tensor = std::make_shared<tensor::BaseTensor>(type_id, shape_vector);
   output_tensor->set_abstract(abstract_tensor);
   output_tensor->set_need_pipeline_sync(true);
   (void)outputs->emplace_back(output_tensor);
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
 }
 
-void CreateTensor(const TypePtr &type, const ShapeVector &shape_vector, std::vector<tensor::BaseTensorPtr> *outputs) {
-  auto output_tensor = std::make_shared<tensor::BaseTensor>(type->type_id(), shape_vector);
+void CreateTensor(const TypeId &type_id, const ShapeVector &shape_vector, std::vector<tensor::BaseTensorPtr> *outputs) {
+  auto output_tensor = std::make_shared<tensor::BaseTensor>(type_id, shape_vector);
   output_tensor->set_need_pipeline_sync(true);
   (void)outputs->emplace_back(output_tensor);
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString();
@@ -55,6 +55,14 @@ AbstractBasePtr ToAbstractNoValue(const tensor::BaseTensorPtr &tensor) {
   auto abs = tensor->GetAbstractCache();
   abs->set_value(kValueAny);
   return abs;
+}
+
+void PyBoostUtils::CreateOutputTensor(const TypeId &type_id, const ShapeVector &shape_vector,
+                                      std::vector<tensor::BaseTensorPtr> *outputs) {
+  runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,
+                                     runtime::ProfilerEvent::kPyBoostCreateOutputTensor,
+                                     runtime::ProfilerRecorder::kNoName, false);
+  CreateTensor(type_id, shape_vector, outputs);
 }
 
 void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vector<tensor::BaseTensorPtr> *outputs) {
@@ -77,12 +85,12 @@ void PyBoostUtils::CreateOutputTensor(const AbstractBasePtr &abstract, std::vect
       MS_LOG(EXCEPTION) << "AbstractTensor shape is valid " << shape->ToString();
     }
     const auto &shape_vector = shape->cast<abstract::ShapePtr>()->shape();
-    CreateTensor(type, shape_vector, abstract_tensor, outputs);
+    CreateTensor(type->type_id(), shape_vector, abstract_tensor, outputs);
   } else if (abstract->isa<abstract::AbstractScalar>()) {
     const auto &scalar = abstract->cast<abstract::AbstractScalarPtr>();
     const auto &type = scalar->GetTypeTrack();
     MS_LOG(DEBUG) << "Create scalar tensor type " << type->ToString();
-    CreateTensor(type, {}, nullptr, outputs);
+    CreateTensor(type->type_id(), {}, nullptr, outputs);
   } else {
     MS_LOG(EXCEPTION) << "Not support abstract " << abstract->ToString();
   }
@@ -133,7 +141,8 @@ void PyBoostUtils::CreateOutputTensor(const ValueSimpleInfoPtr &output_value_sim
   for (size_t i = 0; i < elem_size; ++i) {
     MS_LOG(DEBUG) << "Get tensor shape " << output_value_simple_info->shape_vector_[i] << ", type "
                   << TypeIdToType(output_value_simple_info->dtype_vector_[i]->type_id())->ToString();
-    CreateTensor(output_value_simple_info->dtype_vector_[i], output_value_simple_info->shape_vector_[i], outputs);
+    CreateTensor(output_value_simple_info->dtype_vector_[i]->type_id(), output_value_simple_info->shape_vector_[i],
+                 outputs);
   }
 }
 

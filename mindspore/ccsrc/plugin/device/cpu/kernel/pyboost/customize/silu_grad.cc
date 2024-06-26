@@ -52,8 +52,6 @@ void SiLUGradCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorP
                           const BaseTensorPtr &x_tensor) {
   auto device_context = op->device_context();
   const auto &output = SiLUGradCPUCall(device_context, dout_tensor, x_tensor);
-  op->set_input_abs({dout_tensor->ToAbstract(), x_tensor->ToAbstract()});
-  op->set_output_abs(output->output_abs());
   op->set_outputs(output->outputs());
 }
 }  // namespace pyboost

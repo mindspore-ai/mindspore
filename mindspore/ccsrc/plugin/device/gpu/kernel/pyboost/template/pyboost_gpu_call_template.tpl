@@ -39,5 +39,6 @@ std::make_shared<runtime::PyBoostDeviceTask>([this, op, ${call_args_with_tensor}
 }
 )
 );
+op->CreateOutputSimpleInfoForView();
 MS_LOG(DEBUG) << op_name() << " call end";
 return ${return_values};

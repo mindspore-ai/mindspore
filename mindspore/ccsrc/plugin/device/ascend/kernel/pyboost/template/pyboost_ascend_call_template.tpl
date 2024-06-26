@@ -29,4 +29,5 @@ std::make_shared<runtime::PyBoostDeviceTask>(
   }
 )
 );
+op->CreateOutputSimpleInfoForView();
 return ${return_values};

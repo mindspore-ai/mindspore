@@ -56,16 +56,12 @@ std::vector<tensor::BaseTensorPtr> ChunkAscendCustomize(const std::shared_ptr<Op
     auto split_sizes =
       std::make_shared<ValueTuple>(std::vector<ValuePtr>(chunks_imm, std::make_shared<Int64Imm>(split_size)));
     output = split_with_size_op->Call(input_tensor, split_sizes, dim_ptr);
-    op->set_input_abs({ToAbstractNoValue(input_tensor), split_sizes->ToAbstract(), dim_ptr->ToAbstract()});
-    op->set_output_abs(split_with_size_op->output_abs());
     op->set_outputs(split_with_size_op->outputs());
     return output;
   }
   auto split_tensor_op = CREATE_PYBOOST_OP(SplitTensor, device_name);
   auto split_size_ptr = std::make_shared<Int64Imm>(split_size);
   output = split_tensor_op->Call(input_tensor, split_size_ptr, dim_ptr);
-  op->set_input_abs({ToAbstractNoValue(input_tensor), split_size_ptr->ToAbstract(), dim_ptr->ToAbstract()});
-  op->set_output_abs(split_tensor_op->output_abs());
   op->set_outputs(split_tensor_op->outputs());
   return output;
 }

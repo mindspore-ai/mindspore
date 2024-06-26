@@ -64,7 +64,6 @@ void DenseAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorP
     const auto beta = std::make_shared<Int64Imm>(1);
     const auto alpha = std::make_shared<Int64Imm>(1);
     auto addmm_out = addmm_op->Call(bias_tensor_, input_tensor, weight_transposed, beta, alpha);
-    op->set_output_abs(addmm_op->output_abs());
     op->set_outputs({addmm_out});
     MS_LOG(DEBUG) << "Dense Launch end";
     return;
@@ -75,12 +74,10 @@ void DenseAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorP
       auto bias_tensor_ = bias_tensor.value();
       auto add_op = CREATE_PYBOOST_OP(Add, device_name);
       auto add_out = add_op->Call(matmul_out, bias_tensor_);
-      op->set_output_abs(add_op->output_abs());
       op->set_outputs({add_out});
       MS_LOG(DEBUG) << "Dense Launch end";
       return;
     }
-    op->set_output_abs(matmul_op->output_abs());
     op->set_outputs({matmul_out});
     MS_LOG(DEBUG) << "Dense Launch end";
     return;

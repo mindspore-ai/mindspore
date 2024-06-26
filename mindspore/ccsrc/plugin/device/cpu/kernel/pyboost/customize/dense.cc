@@ -52,8 +52,6 @@ void DenseCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr 
   const auto &device_name = device_context->device_context_key_.device_name_;
   auto transpose_op = CREATE_PYBOOST_OP(Transpose, device_name);
   auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_name);
-  auto bias_abstract = bias_tensor.has_value() ? bias_tensor.value()->ToAbstract() : kNone->ToAbstract();
-  op->set_input_abs({input_tensor->ToAbstract(), weight_tensor->ToAbstract(), bias_abstract});
   auto perm = GetTransposePerm(weight_tensor);
   auto matmul_op = CREATE_PYBOOST_OP(MatMulExt, device_name);
 
@@ -63,9 +61,6 @@ void DenseCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr 
     auto alpha = std::make_shared<FP32Imm>(1.0);
     auto add_op = CREATE_PYBOOST_OP(AddExt, device_name);
     output = add_op->Call(output, bias_tensor.value(), alpha);
-    op->set_output_abs(add_op->output_abs());
-  } else {
-    op->set_output_abs(matmul_op->output_abs());
   }
   op->set_outputs({output});
   MS_LOG(DEBUG) << "Dense Launch end";

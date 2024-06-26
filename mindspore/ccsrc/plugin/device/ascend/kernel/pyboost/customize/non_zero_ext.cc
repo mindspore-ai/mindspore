@@ -33,12 +33,10 @@ std::vector<tensor::BaseTensorPtr> NonZeroExtAscendCustomize(const std::shared_p
                                                              const BaseTensorPtr &input_tensor) {
   MS_LOG(DEBUG) << "NonZeroExt call start";
   MS_EXCEPTION_IF_NULL(input_tensor);
-  op->GenerateInputAbstract(input_tensor);
   auto nonzero_op = CREATE_PYBOOST_OP(NonZero, kAscendDevice);
   auto unstack_op = CREATE_PYBOOST_OP(UnstackExt, kAscendDevice);
   const auto output_tensor = nonzero_op->Call(input_tensor);
   auto output_tuple = unstack_op->Call(output_tensor, std::make_shared<Int64Imm>(1));
-  op->set_output_abs(unstack_op->output_abs());
   op->set_outputs(unstack_op->outputs());
   MS_LOG(DEBUG) << "NonZeroExt call end";
   return output_tuple;

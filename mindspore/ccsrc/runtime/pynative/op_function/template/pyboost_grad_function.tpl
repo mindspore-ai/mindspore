@@ -7,6 +7,7 @@ void ${func_name}(OpRunnerInfo* op_runner_info, VectorRef *op_outputs) {
   // Run op
   ${convert_body}
   (void)op->Call(${call_args});
+  op->CreateOutputSimpleInfoForView();
   if (op->output_value_simple_info() != nullptr) {
     op_runner_info->output_value_simple_info = op->output_value_simple_info();
   } else {

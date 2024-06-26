@@ -56,9 +56,7 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   void set_primitive(const PrimitivePtr &primitive) { primitive_ = primitive; }
   const PrimitivePtr &primitive() const { return primitive_; }
   const std::vector<AbstractBasePtr> &input_abs() const { return input_abs_; }
-  void set_input_abs(const std::vector<AbstractBasePtr> &input_abs) { input_abs_ = input_abs; }
   const AbstractBasePtr &output_abs() const { return output_abs_; }
-  void set_output_abs(const AbstractBasePtr &output_abs) { output_abs_ = output_abs; }
   const DeviceContext *device_context() const { return device_context_; }
   const std::vector<pynative::DeviceAddressPromisePtr> &device_sync_promises() const { return device_sync_promises_; }
   const std::vector<tensor::BaseTensorPtr> &outputs() const { return outputs_; }
@@ -72,19 +70,6 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
       MS_LOG(EXCEPTION) << "idx is out of bounds, idx:" << idx << ", outputs_.size():" << outputs_.size();
     }
     return outputs_[idx];
-  }
-
-  // For view op used
-  void SetOutputAbstract() { output_abs_ = kAbstractConverter.ConvertAbstract(output(kIndex0)); }
-
-  // For view op used
-  void SetOutputTupleAbstract() {
-    AbstractBasePtrList abs_list;
-    for (const auto &output : outputs_) {
-      const auto &abs = kAbstractConverter.ConvertAbstract(output);
-      (void)abs_list.emplace_back(abs);
-    }
-    output_abs_ = std::make_shared<abstract::AbstractTuple>(abs_list);
   }
 
   template <typename... T>
@@ -133,6 +118,19 @@ class BACKEND_EXPORT OpRunner : public std::enable_shared_from_this<OpRunner> {
   void UpdateOutputShape(const BaseTensorPtr &tensor, const ShapeVector &shape) {
     tensor->set_shape(shape);
     std::static_pointer_cast<device::DeviceAddress>(tensor->device_address())->address_common()->shape_vector_ = shape;
+  }
+
+  void CreateOutputSimpleInfoForView() {
+    if (output_value_simple_info_ != nullptr || output_abs_ != nullptr) {
+      MS_LOG(DEBUG) << "op:" << primitive_->name() << ", already have simple-info or output_abs.";
+      return;
+    }
+    output_value_simple_info_ = std::make_shared<ValueSimpleInfo>();
+    output_value_simple_info_->size_ = outputs_.size();
+    for (size_t i = 0; i < outputs_.size(); ++i) {
+      output_value_simple_info_->shape_vector_.emplace_back(outputs_[i]->shape());
+      output_value_simple_info_->dtype_vector_.emplace_back(outputs_[i]->Dtype());
+    }
   }
 
  protected:

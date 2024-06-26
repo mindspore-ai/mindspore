@@ -92,8 +92,6 @@ tensor::BaseTensorPtr DivModCustomize(const std::shared_ptr<OpRunner> &op, const
                                                  op->device_context()->device_context_key_.device_name_);
       TruncCall(op, act_tensor);
     } else {
-      op->set_input_abs({x_tensor->ToAbstract()});
-      op->set_output_abs(div_op->output_abs());
       op->set_outputs(div_op->outputs());
     }
   }

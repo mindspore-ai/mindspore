@@ -39,8 +39,6 @@ OpPtr SiLUCPUCall(const device::DeviceContext *device_context, const BaseTensorP
 void SiLUCPUCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &x_tensor) {
   auto device_context = op->device_context();
   const auto &output = SiLUCPUCall(device_context, x_tensor);
-  op->set_input_abs({x_tensor->ToAbstract()});
-  op->set_output_abs(output->output_abs());
   op->set_outputs(output->outputs());
 }
 }  // namespace pyboost

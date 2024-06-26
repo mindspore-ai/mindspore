@@ -52,5 +52,6 @@ for (auto &tensor : outputs()) {
 }
 const auto &real_output = PyBoostUtils::CastTensor(op->outputs(), output_types, "CPU");
 set_outputs(real_output);
+get_op()->CreateOutputSimpleInfoForView();
 return ${return_values};
 

@@ -38,8 +38,6 @@ void FlattenExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTe
   auto new_shape = std::make_shared<ValueTuple>(out_shape);
   auto reshape_op = CREATE_PYBOOST_OP(Reshape, op->device_context()->device_context_key_.device_name_);
   reshape_op->Call(input_x_tensor, new_shape);
-  op->set_input_abs({input_x_tensor->ToAbstract(), start_dim->ToAbstract(), end_dim->ToAbstract()});
-  op->set_output_abs(reshape_op->output_abs());
   op->set_outputs(reshape_op->outputs());
   MS_LOG(DEBUG) << op->primitive()->name() << " Call end";
 }

@@ -59,6 +59,8 @@ class BACKEND_EXPORT PyBoostUtils {
                                  std::vector<tensor::BaseTensorPtr> *outputs);
   static void CreateOutputTensor(const ValueSimpleInfoPtr &output_value_simple_info,
                                  std::vector<tensor::BaseTensorPtr> *outputs);
+  static void CreateOutputTensor(const TypeId &type_id, const ShapeVector &shape_vector,
+                                 std::vector<tensor::BaseTensorPtr> *outputs);
 
   // Create input device address without kernel tensor
   template <typename... Args>
