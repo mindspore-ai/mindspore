@@ -7066,7 +7066,7 @@ def gelu(input, approximate='none'):
         >>> x = Tensor([1.0, 2.0, 3.0], mindspore.float32)
         >>> result = ops.gelu(x)
         >>> print(result)
-        [0.841192 1.9545976 2.9963627]
+        [0.8413447 1.9544997 2.9959505]
     """
     if approximate not in ['none', 'tanh']:
         raise ValueError("For ops.gelu, approximate value should be either 'none' or 'tanh'.")
