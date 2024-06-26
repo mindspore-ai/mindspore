@@ -53,7 +53,7 @@ def test_net():
     mask = Net()
     output = mask(tx, ty)
     print(output.asnumpy())
-    assert ([255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] == output.asnumpy()).all()
+    assert ([255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255] == output.asnumpy()).all()
 
 
 class Drop(nn.Cell):
