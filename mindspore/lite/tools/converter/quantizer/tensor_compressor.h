@@ -127,10 +127,10 @@ class TensorCompressor {
 
     auto tensor_info = weight->default_param()->cast<tensor::TensorPtr>();
     CHECK_NULL_RETURN(tensor_info);
-    auto max_size = tensor_info->Size();
+    auto max_size = tensor_info->ElementsNum();
     auto quant_data = static_cast<T *>(tensor_info->data().data());
     // write the index: each index has unique_value_bit unsigned
-    for (size_t i = 0; i < max_size; i++) {
+    for (int i = 0; i < max_size; i++) {
       auto quant_value = quant_data[i];
       for (size_t j = 0; j < unique_value_bit; j++) {
         bits[index++] = (unique_value_index_map.at(quant_value) >> (unique_value_bit - j - 1)) & (0x1);
