@@ -29,6 +29,8 @@ from mindspore.profiler.common.util import get_newest_file
 class AscendHCCLGenerator:
     """Generate ascend hccl data from files."""
 
+    DEFAULT_MODEL_ID = 4294967295
+
     def __init__(self, mindstudio_profiler_output, steptrace):
         self.mindstudio_profiler_output = mindstudio_profiler_output
         self.steptrace = steptrace
@@ -184,7 +186,8 @@ class AscendHCCLGenerator:
                 size = size if isinstance(size, int) else int(size, 16)
                 steptrace = groups_steptrace.get(model_id, None)
                 if steptrace is None:
-                    logging.warning('Could not find model: %s in hccl json, skip.', model_id)
+                    if self.DEFAULT_MODEL_ID != model_id:
+                        logging.warning('Could not find model: %s in hccl json, skip.', model_id)
                     continue
                 tag = np.searchsorted(steptrace['Iteration End'], te * 1e-3, side='left')
                 iteration_id = steptrace[tag]['Iteration ID']
