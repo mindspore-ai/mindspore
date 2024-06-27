@@ -927,7 +927,7 @@ Status TensorRedistribution::OperatorListIsEmpty(ConstructOperator *constructor,
                  << shape.ToString();
     auto reshape_mode = ReshapeMode::FROM_ORIGIN_BASE_SLICE_TO_TO_ORIGIN_BASE_SLICE;
     reshape_mode = this->is_dynamic_shape_ ? reshape_mode : ReshapeMode::NO_RESHAPE;
-    if (constructor.ReshapeOP(shape.array(), false, reshape_mode) == Status::FAILED) {
+    if (constructor->ReshapeOP(shape.array(), false, reshape_mode) == Status::FAILED) {
       return Status::FAILED;
     } else {
       (void)operator_vector->insert(operator_vector->cbegin(), constructor->GetOperator());
