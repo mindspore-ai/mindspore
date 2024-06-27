@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -37,7 +37,9 @@ def get_output(x, axis, enable_graph_kernel=False):
     return output
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_argmax():
+    context.set_context(mode=context.GRAPH_MODE)
     x0 = Tensor(np.random.normal(0, 1, [2, 3, 4, 4]).astype(np.float32))
     axis0 = 3
     expect = get_output(x0, axis0, False)
@@ -49,11 +51,3 @@ def test_argmax():
     expect = get_output(x1, axis1, False)
     output = get_output(x1, axis1, True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 0.0001, 0.0001)
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_argmax_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_argmax()

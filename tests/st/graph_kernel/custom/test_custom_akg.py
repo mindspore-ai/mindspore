@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
+from tests.mark_utils import arg_mark
 import numpy as np
 from mindspore import context, Tensor
 from mindspore.nn import Cell
@@ -217,41 +217,14 @@ def hybrid_custom_inplace_assign_two_outputs():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_hybrid_ascend_graph_mode():
-    """
-    Feature: test case for Custom op with func_type="akg"
-    Description: ascend test case, akg dsl using hybrid grammar in GRAPH_MODE.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    hybrid_outer_product()
-    hybrid_custom_inplace_assign_one_output()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_hybrid_ascend_pynative_mode():
-    """
-    Feature: test case for Custom op with func_type="akg"
-    Description: ascend test case, akg dsl using hybrid grammar in PYNATIVE_MODE.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    hybrid_outer_product()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_hybrid_gpu_graph_mode():
     """
     Feature: test case for Custom op with func_type="akg"
     Description: gpu test case, akg dsl using hybrid grammar in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     hybrid_outer_product()
     hybrid_outer_product_autodiff()
     hybrid_pow_autodiff()
@@ -260,16 +233,14 @@ def test_hybrid_gpu_graph_mode():
     hybrid_custom_inplace_assign_two_outputs()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_hybrid_gpu_pynative_mode():
     """
     Feature: test case for Custom op with func_type="akg"
     Description: gpu test case, akg dsl using hybrid grammar in PYNATIVE_MODE.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     hybrid_outer_product()
     hybrid_outer_product_autodiff()
     hybrid_pow_autodiff()
@@ -330,51 +301,23 @@ def irbuilder_case():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_irbuilder_ascend_graph_mode():
-    """
-    Feature: test case for Custom op with func_type="akg" and reg info
-    Description: ascend test case, akg dsl using irbuilder grammar in GRAPH_MODE.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    irbuilder_case()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_irbuilder_ascend_pynative_mode():
-    """
-    Feature: test case for Custom op with func_type="akg" and reg info
-    Description: ascend test case, akg dsl using irbuilder grammar in PYNATIVE_MODE.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    irbuilder_case()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_irbuilder_gpu_graph_mode():
     """
     Feature: test case for Custom op with func_type="akg" and reg info
     Description: gpu test case, akg dsl using irbuilder grammar in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     irbuilder_case()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_irbuilder_gpu_pynative_mode():
     """
     Feature: test case for Custom op with func_type="akg" and reg info
     Description: gpu test case, akg dsl using irbuilder grammar in PYNATIVE_MODE.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     irbuilder_case()

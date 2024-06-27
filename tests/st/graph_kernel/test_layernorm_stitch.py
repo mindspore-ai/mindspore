@@ -19,11 +19,7 @@ from mindspore import Tensor
 import mindspore.nn as nn
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
-import pytest
-
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-# enable graph kernel optimization.
-context.set_context(enable_graph_kernel=True)
+from tests.mark_utils import arg_mark
 
 
 class EmbeddingPostprocessor(Cell):
@@ -69,7 +65,7 @@ def get_layernorm_output(x, y, z, enable_stitch_fusion):
     return result
 
 
-def test_layernorm(shape1, shape2, dtype):
+def run_layernorm(shape1, shape2, dtype):
     np.random.seed(0)
     x = Tensor(np.random.normal(0, 1, shape1).astype(dtype))
     y = Tensor(np.random.normal(0, 1, shape1).astype(dtype))
@@ -79,9 +75,13 @@ def test_layernorm(shape1, shape2, dtype):
     compare_result(expect, output, dtype)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_layernorm_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_layernorm([8192, 768], [1, 768], np.float32)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(enable_graph_kernel=True)
+    context.set_context(mode=context.GRAPH_MODE)
+    run_layernorm([8192, 768], [1, 768], np.float32)

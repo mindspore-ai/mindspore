@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
+from tests.mark_utils import arg_mark
 import numpy as np
 import mindspore
 from mindspore import context, Tensor
@@ -42,16 +42,14 @@ def run(x):
     assert np.allclose(expect_np, out.asnumpy(), 1.e-4, 1.e-7)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_finite():
     """
     Feature: test nan/inf case in graph kernel
     Description: input tensor is nan/inf with shape (1,)
     Expectation: no compile error
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", enable_graph_kernel=True)
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     x0 = Tensor(np.array([float('nan')]).astype(np.float32))
     run(x0)
     x1 = Tensor(np.array([float('inf')]).astype(np.float32))

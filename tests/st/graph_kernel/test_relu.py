@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -36,7 +36,7 @@ def get_output(x, enable_graph_kernel=False):
     return output
 
 
-def test_relu(shape, dtype):
+def run_relu(shape, dtype):
     x = Tensor(np.random.normal(0, 10, shape).astype(dtype))
     expect = get_output(x, False)
     output = get_output(x, True)
@@ -47,20 +47,25 @@ def test_relu(shape, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_relu_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_relu((4, 3), np.int32)
-    test_relu((12, 1), np.float16)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_relu((4, 3), np.int32)
+    run_relu((12, 1), np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_relu_ascend():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_relu((4, 3), np.int32)
-    test_relu((12, 1), np.float16)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_relu((4, 3), np.int32)
+    run_relu((12, 1), np.float16)

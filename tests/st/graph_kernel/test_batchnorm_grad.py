@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
@@ -37,13 +37,21 @@ def get_output(input_dy, input_x, input_scale, input_save_mean, input_save_inv_v
     output = net(input_dy, input_x, input_scale, input_save_mean, input_save_inv_variance, input_reverse)
     return output
 
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_bn_grad_train():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, graph_kernel_flags='--enable_expand_ops=BatchNormGrad')
     input_dy = Tensor(np.random.normal(5, 1, [1, 2, 4, 4]).astype(np.float32))
     input_x = Tensor(np.random.normal(5, 1, [1, 2, 4, 4]).astype(np.float32))
-    input_scale = Tensor(np.random.normal(5, 1, [2,]).astype(np.float32))
-    input_save_mean = Tensor(np.random.normal(5, 1, [2,]).astype(np.float32))
-    input_save_inv_variance = Tensor(np.random.normal(5, 1, [2,]).astype(np.float32))
-    input_reverse = Tensor(np.random.normal(5, 1, [2,]).astype(np.float32))
+    input_scale = Tensor(np.random.normal(5, 1, [2]).astype(np.float32))
+    input_save_mean = Tensor(np.random.normal(5, 1, [2]).astype(np.float32))
+    input_save_inv_variance = Tensor(np.random.normal(5, 1, [2]).astype(np.float32))
+    input_reverse = Tensor(np.random.normal(5, 1, [2]).astype(np.float32))
 
     expect = get_output(
         input_dy, input_x, input_scale, input_save_mean, input_save_inv_variance, input_reverse, True, False)
@@ -54,13 +62,21 @@ def test_bn_grad_train():
     assert np.allclose(expect[1].asnumpy(), output[1].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(expect[2].asnumpy(), output[2].asnumpy(), 0.0001, 0.0001)
 
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bn_grad_infer():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, graph_kernel_flags='--enable_expand_ops=BatchNormGrad')
     input_dy = Tensor(np.random.normal(5, 1, [1, 2, 4, 4]).astype(np.float32))
     input_x = Tensor(np.random.normal(5, 1, [1, 2, 4, 4]).astype(np.float32))
-    input_scale = Tensor(np.random.normal(5, 1, [2,]).astype(np.float32))
-    input_save_mean = Tensor(np.random.normal(5, 1, [2,]).astype(np.float32))
-    input_save_inv_variance = Tensor(np.random.normal(5, 1, [2,]).astype(np.float32))
-    input_reverse = Tensor(np.random.normal(5, 1, [2,]).astype(np.float32))
+    input_scale = Tensor(np.random.normal(5, 1, [2]).astype(np.float32))
+    input_save_mean = Tensor(np.random.normal(5, 1, [2]).astype(np.float32))
+    input_save_inv_variance = Tensor(np.random.normal(5, 1, [2]).astype(np.float32))
+    input_reverse = Tensor(np.random.normal(5, 1, [2]).astype(np.float32))
 
     expect = get_output(
         input_dy, input_x, input_scale, input_save_mean, input_save_inv_variance, input_reverse, False, False)
@@ -70,19 +86,3 @@ def test_bn_grad_infer():
     assert np.allclose(expect[0].asnumpy(), output[0].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(expect[1].asnumpy(), output[1].asnumpy(), 0.0001, 0.0001)
     assert np.allclose(expect[2].asnumpy(), output[2].asnumpy(), 0.0001, 0.0001)
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_bn_grad_train_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU",
-                        graph_kernel_flags='--enable_expand_ops=BatchNormGrad')
-    test_bn_grad_train()
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_bn_grad_infer_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU",
-                        graph_kernel_flags='--enable_expand_ops=BatchNormGrad')
-    test_bn_grad_train()

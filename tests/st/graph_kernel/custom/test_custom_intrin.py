@@ -1,9 +1,9 @@
-import pytest
 import numpy as np
 from mindspore import context, Tensor
 from mindspore.nn import Cell
 import mindspore.ops as ops
 from mindspore.ops import kernel
+from tests.mark_utils import arg_mark
 
 #########################
 # test cases for serial #
@@ -185,8 +185,7 @@ def ms_kernel_bin_inputs_test(dtype, kernel_fn):
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 def test_ms_kernel_ascend_scheduling_intrin():
     """
     Feature: test case for Custom op with new scheduling intrin
@@ -194,7 +193,7 @@ def test_ms_kernel_ascend_scheduling_intrin():
     Expectation: the result match with numpy result
     """
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_serial_1)
     ms_kernel_bin_inputs_test(dtype="float32", kernel_fn=add_serial_2)
 

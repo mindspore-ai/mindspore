@@ -21,11 +21,7 @@ import mindspore.nn as nn
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 import mindspore.ops.functional as F
-import pytest
-
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-# enable graph kernel optimization.
-context.set_context(enable_graph_kernel=True)
+from tests.mark_utils import arg_mark
 
 
 class BertAttentionPiece(Cell):
@@ -77,7 +73,7 @@ def get_softmax_output(x, y, enable_stitch_fusion):
     return result
 
 
-def test_softmax(shape, dtype):
+def run_softmax(shape, dtype):
     np.random.seed(0)
     x = Tensor(np.random.normal(0, 1, shape).astype(dtype))
     y = Tensor(np.random.normal(0, 1, shape).astype(dtype))
@@ -86,9 +82,13 @@ def test_softmax(shape, dtype):
     compare_result(expect, output, dtype)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_softmax_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_softmax([64, 12, 128, 128], np.float16)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(enable_graph_kernel=True)
+    context.set_context(mode=context.GRAPH_MODE)
+    run_softmax([64, 12, 128, 128], np.float16)

@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -57,7 +57,14 @@ def get_output(i0, i1, i2, enable_graph_kernel=False):
     return output
 
 
-def run():
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_parallel_matmul_combine():
+    """
+    Feature: Parallel Matmul combination
+    Description: on GPU device
+    Expectation: network return same result with the feature on and off
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     i0 = Tensor(np.random.normal(1, 0.01, [96, 800]).astype(np.float16))
     i1 = Tensor(np.random.normal(1, 0.01, [800, 128]).astype(np.float16))
     i2 = Tensor(np.random.normal(1, 0.01, [1, 128]).astype(np.float16))
@@ -68,28 +75,3 @@ def run():
         expect_np = exp.asnumpy().copy()
         output_np = out.asnumpy().copy()
         assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_parallel_matmul_combine_ascend():
-    """
-    Feature: Parallel Matmul combination
-    Description: on Ascend device
-    Expectation: network return same result with the feature on and off
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    run()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_parallel_matmul_combine_gpu():
-    """
-    Feature: Parallel Matmul combination
-    Description: on GPU device
-    Expectation: network return same result with the feature on and off
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    run()

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
+from tests.mark_utils import arg_mark
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
@@ -48,16 +48,14 @@ def compare_transpose_result(shape, dtype, perm):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_transpose_to_reshape_gpu():
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+def test_transpose_to_reshape():
     """
     Feature: Test transpose replacement in arithmetic_simplify pass.
     Description: Verify the correctness of the replacement.
     Expectation: No exception
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     compare_transpose_result((10, 1, 20, 1, 4, 5), np.float32, (1, 3, 0, 2, 4, 5))
     compare_transpose_result((10, 1, 20, 1, 4, 5), np.float32, (0, 1, 3, 2, 4, 5))
     compare_transpose_result((10, 1, 20, 1, 4, 5), np.float32, (3, 0, 2, 4, 1, 5))

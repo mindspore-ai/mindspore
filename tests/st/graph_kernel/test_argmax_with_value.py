@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -40,7 +40,14 @@ def get_output(x, keep_dims, axis, index, enable_graph_kernel=False):
     return output
 
 
-def run_argmax_with_value():
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
+def test_argmax_with_value():
+    """
+    Feature: graph_kernel_expander
+    Description: test ArgMaxWithValue when enable_graph_kernel=True
+    Expectation: the results are consistent whether using graph kernel or not
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     x0 = Tensor(np.random.normal(0, 1, [2, 3, 4, 4]).astype(np.float32))
     axis0 = -1
     expect = get_output(x0, False, axis0, 0, False)
@@ -64,16 +71,3 @@ def run_argmax_with_value():
     expect = get_output(x3, False, axis3, 1, False)
     output = get_output(x3, False, axis3, 1, True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 0.0001, 0.0001)
-
-
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_argmax_with_value_gpu():
-    """
-    Feature: test ArgMaxWithValue when enable_graph_kernel=True
-    Description: graph mode on GPU
-    Expectation: the results are consistent whether using graph kernel or not
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    run_argmax_with_value()

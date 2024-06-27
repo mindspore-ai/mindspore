@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -30,7 +30,15 @@ class TanhGradNet(Cell):
         return self.tanh_grad(y, dy)
 
 
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_tanh_grad():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     np.random.seed(0)
     input_y = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
     input_dy = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
@@ -39,20 +47,3 @@ def test_tanh_grad():
     expect = input_dy * (1.0 - input_y * input_y)
     res = np.allclose(expect, result.asnumpy(), rtol=1.e-4, atol=1.e-7, equal_nan=True)
     assert res
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_tanh_grad_gpu():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
-    test_tanh_grad()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_tanh_grad_ascend():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
-    test_tanh_grad()

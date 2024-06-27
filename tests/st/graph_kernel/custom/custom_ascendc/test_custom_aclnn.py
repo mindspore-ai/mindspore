@@ -14,6 +14,7 @@
 # ============================================================================
 
 import pytest
+from tests.mark_utils import arg_mark
 import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor
@@ -60,6 +61,7 @@ class BaseNet(Cell):
         return res
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn(context_mode):
     """
@@ -67,7 +69,7 @@ def test_custom_add_aclnn(context_mode):
     Description: test case for aclnnAddCustom op with func_type="aclnn"
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs",
+    context.set_context(mode=context_mode, save_graphs=False, save_graphs_path="./graphs",
                         jit_config={"jit_level": "O0"})
     x = np.ones([8, 2048]).astype(np.float16)
     y = np.ones([8, 2048]).astype(np.float16)
@@ -78,6 +80,7 @@ def test_custom_add_aclnn(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn_dynamic(context_mode):
     """
@@ -85,7 +88,7 @@ def test_custom_add_aclnn_dynamic(context_mode):
     Description: test case for aclnnAddCustom op in Dynamic Shape
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs",
+    context.set_context(mode=context_mode, save_graphs=False, save_graphs_path="./graphs",
                         jit_config={"jit_level": "O0"})
     x = np.ones([8, 2048]).astype(np.float16)
     y = np.ones([8, 2048]).astype(np.float16)
@@ -98,6 +101,7 @@ def test_custom_add_aclnn_dynamic(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn_cpp_infer(context_mode):
     """
@@ -105,7 +109,7 @@ def test_custom_add_aclnn_cpp_infer(context_mode):
     Description: test case for aclnnAddCustom op with func_type="aclnn", infer shape by cpp.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs",
+    context.set_context(mode=context_mode, save_graphs=False, save_graphs_path="./graphs",
                         jit_config={"jit_level": "O0"})
     x = np.ones([8, 2048]).astype(np.float16)
     y = np.ones([8, 2048]).astype(np.float16)
@@ -116,6 +120,7 @@ def test_custom_add_aclnn_cpp_infer(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclnn_bprop(context_mode):
     """
@@ -127,7 +132,7 @@ def test_custom_add_aclnn_bprop(context_mode):
     def bprop(x, y, out, dout):
         return dout, dout
 
-    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs",
+    context.set_context(mode=context_mode, save_graphs=False, save_graphs_path="./graphs",
                         jit_config={"jit_level": "O0"})
     x = np.ones([8, 2048]).astype(np.float16)
     y = np.ones([8, 2048]).astype(np.float16)

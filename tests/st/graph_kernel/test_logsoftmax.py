@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -43,7 +43,15 @@ class Grad(nn.Cell):
         return gout
 
 
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_logsoftmax():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     x = np.array([[-0.08082921, -0.13706027, -0.4711177, -0.05606057],
                   [-0.46082982, 1.1761844, -1.016654, -1.743829],
                   [-1.5062045, 0.6910976, 0.4839723, 1.1502692]]).astype(np.float32)
@@ -55,7 +63,15 @@ def test_logsoftmax():
     assert np.allclose(output.asnumpy(), expect)
 
 
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_logsoftmaxgrad():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     x = np.array([[-0.47705367, 0.48267725, -1.0453935, 1.574488, 0.20362134, 0.4435456, -0.23984082, -0.43684655,
                    -0.7725506, 1.4481013],
                   [1.1012247, 1.7069651, 0.55062026, 0.3361901, -1.1082426, -0.5001939, -0.3255393, -0.7972024,
@@ -89,35 +105,3 @@ def test_logsoftmaxgrad():
     net = LogSoftmax()
     dx = Grad(net)(Tensor(x), Tensor(dy))
     assert np.allclose(dx[0].asnumpy(), expect)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_logsoftmax_gpu():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
-    test_logsoftmax()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_logsoftmaxgrad_gpu():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
-    test_logsoftmaxgrad()
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_logsoftmax_asend():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
-    test_logsoftmax()
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_logsoftmaxgrad_asend():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
-    test_logsoftmaxgrad()

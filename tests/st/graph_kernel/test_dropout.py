@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -29,11 +29,14 @@ class Net(nn.Cell):
         return self.drop(x_)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_dropout():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     x_shape = [4096, 768]
     x = np.ones(x_shape).astype(np.float32)
     keep_prob = 0.9
@@ -47,9 +50,9 @@ def test_dropout():
     assert (elem_count * (keep_prob - 0.1)) < nonzero_count < (elem_count * (keep_prob + 0.1))
     output_sum = np.sum(output_np)
     x_sum = np.sum(x)
-    assert abs(output_sum - x_sum)/x_sum < 0.1
+    assert abs(output_sum - x_sum) / x_sum < 0.1
     # check mask
     mask_np = mask.asnumpy()
     mask_sum = np.sum(mask_np)
     assert np.count_nonzero(mask_np) == nonzero_count
-    assert abs(mask_sum - nonzero_count)/nonzero_count < 0.1
+    assert abs(mask_sum - nonzero_count) / nonzero_count < 0.1

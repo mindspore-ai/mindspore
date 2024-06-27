@@ -14,13 +14,13 @@
 # ============================================================================
 
 import numpy as np
-import pytest
 import mindspore
 import mindspore.ops as ops
 import mindspore.context as context
 from mindspore import Tensor, Parameter
 from mindspore.nn import Cell
 from tests.st.graph_kernel.gk_utils import AssertGKEnable
+from tests.mark_utils import arg_mark
 
 
 class Net(Cell):
@@ -47,16 +47,14 @@ def get_output(x0, x1, shape, enable_graph_kernel):
     return y0.float().asnumpy(), net.param.float().asnumpy()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_convert_bfloat16():
     """
     Feature: test graph kernel bfloat16 data type
     Description: input is bfloat16
     Expectation: the result match with the expected result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     np.random.seed(1)
     shape = (4, 4)
     x0 = np.random.normal(0, 1, shape).astype(np.float32)

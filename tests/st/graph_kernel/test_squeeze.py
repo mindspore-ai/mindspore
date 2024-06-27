@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -36,17 +36,20 @@ def get_output(x, axis=(), enable_graph_kernel=False):
     return output
 
 
-def test_squeeze(shape, dtype, axis=()):
+def run_squeeze(shape, dtype, axis=()):
     x = Tensor(np.random.normal(0, 10, shape).astype(dtype))
     expect = get_output(x, axis, False)
     output = get_output(x, axis, True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_squeeze_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_squeeze((1, 16, 1, 1), np.int32)
-    test_squeeze((1, 16, 1, 1), np.float32, (0, 2))
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_squeeze((1, 16, 1, 1), np.int32)
+    run_squeeze((1, 16, 1, 1), np.float32, (0, 2))

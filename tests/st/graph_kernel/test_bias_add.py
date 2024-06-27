@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -36,7 +36,7 @@ def get_output(x, b, data_format, enable_graph_kernel):
     return output
 
 
-def test_bias_add(shape1, shape2, data_format, dtype):
+def run_bias_add(shape1, shape2, data_format, dtype):
     np.random.seed(0)
     x = Tensor(np.random.normal(0, 10, shape1).astype(dtype))
     b = Tensor(np.ones(shape2).astype(dtype))
@@ -49,11 +49,14 @@ def test_bias_add(shape1, shape2, data_format, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bias_add_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_bias_add((2, 3), (3,), "NCHW", np.float32)
-    test_bias_add((2, 3, 4, 5), (3,), "NCHW", np.float32)
-    test_bias_add((2, 3, 4, 5), (5,), "NHWC", np.float32)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_bias_add((2, 3), (3,), "NCHW", np.float32)
+    run_bias_add((2, 3, 4, 5), (3,), "NCHW", np.float32)
+    run_bias_add((2, 3, 4, 5), (5,), "NHWC", np.float32)

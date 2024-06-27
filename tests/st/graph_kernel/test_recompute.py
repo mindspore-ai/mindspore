@@ -14,14 +14,16 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
 
-#{cast} would be recompute and fused
+# {cast} would be recompute and fused
+
+
 class Net1(Cell):
     def __init__(self):
         super(Net1, self).__init__()
@@ -34,7 +36,9 @@ class Net1(Cell):
         sum2_res = self.sum(cast_res, (1,))
         return sum1_res, sum2_res
 
-#{sqrt} would be recompute on Ascend
+# {sqrt} would be recompute on Ascend
+
+
 class Net2(Cell):
     def __init__(self):
         super(Net2, self).__init__()
@@ -50,7 +54,9 @@ class Net2(Cell):
         sum_res = self.sum(add_res, (0,))
         return neg_res, sum_res
 
-#{sqrt} would be recompute
+# {sqrt} would be recompute
+
+
 class Net3(Cell):
     def __init__(self):
         super(Net3, self).__init__()
@@ -64,7 +70,9 @@ class Net3(Cell):
         add_res = self.add(x1, sqrt_res)
         return neg_res, add_res
 
-#{sqrt neg} would be recompute
+# {sqrt neg} would be recompute
+
+
 class Net4(Cell):
     def __init__(self):
         super(Net4, self).__init__()
@@ -79,7 +87,9 @@ class Net4(Cell):
         sum2_res = self.sum(neg_res, (1,))
         return sum1_res, sum2_res
 
-#{sqrt} would be recompute
+# {sqrt} would be recompute
+
+
 class Net5(Cell):
     def __init__(self):
         super(Net5, self).__init__()
@@ -92,7 +102,8 @@ class Net5(Cell):
         add2_res = self.add(sqrt_res, x2)
         return add1_res, add2_res
 
-def test_basic1(net):
+
+def run_basic1(net):
     def get_output(i0, net, enable_graph_kernel=False):
         context.set_context(enable_graph_kernel=enable_graph_kernel)
         net_obj = net()
@@ -110,7 +121,7 @@ def test_basic1(net):
     assert np.allclose(expect1_np, output1_np, 1.e-3, 1.e-3)
 
 
-def test_basic2(net):
+def run_basic2(net):
     def get_output(i0, i1, net, enable_graph_kernel=False):
         context.set_context(enable_graph_kernel=enable_graph_kernel)
         net_obj = net()
@@ -128,7 +139,8 @@ def test_basic2(net):
     assert np.allclose(expect0_np, output0_np, 1.e-3, 1.e-3)
     assert np.allclose(expect1_np, output1_np, 1.e-3, 1.e-3)
 
-def test_basic3(net):
+
+def run_basic3(net):
     def get_output(i0, i1, i2, net, enable_graph_kernel=False):
         context.set_context(enable_graph_kernel=enable_graph_kernel)
         net_obj = net()
@@ -147,67 +159,57 @@ def test_basic3(net):
     assert np.allclose(expect0_np, output0_np, 1.e-3, 1.e-3)
     assert np.allclose(expect1_np, output1_np, 1.e-3, 1.e-3)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_1():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_basic1(Net1)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic1(Net1)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_2():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_basic2(Net2)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic2(Net2)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_3():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_basic2(Net3)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic2(Net3)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_4():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_basic1(Net4)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic1(Net4)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_5():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_basic3(Net5)
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_ascend_1():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_basic1(Net1)
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_ascend_2():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_basic2(Net2)
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_ascend_3():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_basic2(Net3)
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_ascend_4():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_basic1(Net4)
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_ascend_5():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_basic3(Net5)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic3(Net5)

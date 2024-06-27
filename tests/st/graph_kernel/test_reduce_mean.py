@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -30,7 +30,15 @@ class Net(Cell):
         return self.reduce_mean(x)
 
 
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_reduce_mean():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     np.random.seed(0)
     input_x = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
     expect = np.mean(input_x, keepdims=False)
@@ -38,20 +46,3 @@ def test_reduce_mean():
     result = net(Tensor(input_x))
     res = np.allclose(expect, result.asnumpy(), rtol=1.e-4, atol=1.e-7, equal_nan=True)
     assert res
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_reduce_mean_gpu():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
-    test_reduce_mean()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_reduce_mean_ascend():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
-    test_reduce_mean()

@@ -14,7 +14,7 @@
 # ============================================================================
 
 import platform
-import pytest
+from tests.mark_utils import arg_mark
 import numpy as np
 from mindspore import context, Tensor
 from mindspore.nn import Cell
@@ -190,48 +190,14 @@ def ms_kernel_grid_cpu():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_ms_kernel_ascend_graph_mode():
-    """
-    Feature: test case for Custom op with func_type="kernel"
-    Description: ascend test case, Python DSL with kernel decorator in GRAPH_MODE.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    ms_kernel_cast_pyfunc()
-    ms_kernel_cast_with_infer()
-    ms_kernel_cast_without_infer()
-    ms_kernel_allocate()
-    ms_kernel_grid()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_ms_kernel_ascend_pynative_mode():
-    """
-    Feature: test case for Custom op with func_type="kernel"
-    Description: ascend test case, Python DSL with kernel decorator in PYNATIVE_MODE.
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    ms_kernel_cast_pyfunc()
-    ms_kernel_cast_with_infer()
-    ms_kernel_cast_without_infer()
-    ms_kernel_allocate()
-    ms_kernel_grid()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ms_kernel_gpu_graph_mode():
     """
     Feature: test case for Custom op with func_type="kernel"
     Description: gpu test case, Python DSL with kernel decorator in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     ms_kernel_cast_pyfunc()
     ms_kernel_cast_with_infer()
     ms_kernel_cast_without_infer()
@@ -239,16 +205,14 @@ def test_ms_kernel_gpu_graph_mode():
     ms_kernel_grid()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ms_kernel_gpu_pynative_mode():
     """
     Feature: test case for Custom op with func_type="kernel"
     Description: gpu test case, Python DSL with kernel decorator in PYNATIVE_MODE.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     ms_kernel_cast_pyfunc()
     ms_kernel_cast_with_infer()
     ms_kernel_cast_without_infer()
@@ -256,9 +220,7 @@ def test_ms_kernel_gpu_pynative_mode():
     ms_kernel_grid()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ms_kernel_cpu_graph_mode():
     """
     Feature: test case for Custom op with func_type="kernel"
@@ -269,14 +231,12 @@ def test_ms_kernel_cpu_graph_mode():
         # skip window and mac, same for pynative below
         pass
     else:
-        context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+        context.set_context(mode=context.GRAPH_MODE)
         ms_kernel_allocate_cpu()
         ms_kernel_grid_cpu()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ms_kernel_cpu_pynative_mode():
     """
     Feature: test case for Custom op with func_type="kernel"
@@ -286,6 +246,6 @@ def test_ms_kernel_cpu_pynative_mode():
     if platform.system().lower() in {"windows", "darwin"}:
         pass
     else:
-        context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+        context.set_context(mode=context.PYNATIVE_MODE)
         ms_kernel_allocate_cpu()
         ms_kernel_grid_cpu()

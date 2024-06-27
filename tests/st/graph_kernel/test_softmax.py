@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+
 
 class Net(nn.Cell):
     def __init__(self, axis=-1):
@@ -27,13 +28,15 @@ class Net(nn.Cell):
     def construct(self, x):
         return self.Softmax(x)
 
+
 def get_output(x, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
     opt = Net()
     output = opt(Tensor(x))
     return output
 
-def test_softmax(shape, dtype):
+
+def run_softmax(shape, dtype):
     np.random.seed(0)
     x = np.random.normal(0, 1, shape).astype(dtype)
 
@@ -48,17 +51,24 @@ def test_softmax(shape, dtype):
 
     assert np.allclose(expect.asnumpy(), output.asnumpy(), rtol, atol, equal_nan=True)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_softmax_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_softmax([4, 32, 48], np.float32)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_softmax_gpu():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_softmax([4, 32, 48], np.float32)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_softmax_ascend():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_softmax([2, 32, 48, 64], np.float32)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_softmax([2, 32, 48, 64], np.float32)

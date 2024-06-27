@@ -17,7 +17,7 @@ import os
 import shutil
 import platform
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -36,8 +36,16 @@ class Net(Cell):
         return res
 
 
-def gktest_for_llvm():
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
+def test_for_llvm():
+    """
+    Feature: easy test case for graph_kernel in cpu check whether ci has llvm.
+    Description: cpu test case, use graph_kernel execute ops.
+    Expectation: if ci has not llvm assrt False else assert True
+    """
     if platform.system() == "Linux":
+        # run on cpu with gpu package
         context.set_context(mode=context.GRAPH_MODE, device_target="CPU",
                             enable_graph_kernel=True, graph_kernel_flags="--dump_as_text")
         i0 = np.random.uniform(1, 2, [1, 1024]).astype(np.float32)
@@ -50,27 +58,3 @@ def gktest_for_llvm():
         assert np.allclose(output, expect, rtol=1.e-4, atol=1.e-4, equal_nan=True)
     else:
         pass
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_gkcpu_for_llvm():
-    """
-    Feature: easy test case for graph_kernel in cpu check whether ci has llvm.
-    Description: cpu test case, use graph_kernel execute ops.
-    Expectation: if ci has not llvm assrt False else assert True
-    """
-    gktest_for_llvm()
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
-def test_gkgpu_for_llvm():
-    """
-    Feature: easy test case for graph_kernel in cpu check whether ci has llvm.
-    Description: cpu test case, use graph_kernel execute ops.
-    Expectation: if ci has not llvm assrt False else assert True
-    """
-    gktest_for_llvm()

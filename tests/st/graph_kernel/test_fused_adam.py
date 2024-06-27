@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -127,7 +127,14 @@ def CalFusedAdam(beta1, beta2, one_sub_beta_1, one_sub_beta_2, gradient, eps, we
     return param_expect, m_expect, v_expect
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_adam():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     np.random.seed(0)
     beta1 = np.array([0.9]).astype(np.float32)
     beta2 = np.array([0.999]).astype(np.float32)
@@ -156,7 +163,14 @@ def test_adam():
                        rtol=1.e-4, atol=1.e-8, equal_nan=True)
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_adam_weight_decay():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     np.random.seed(0)
     beta1 = np.array([0.9]).astype(np.float32)
     beta2 = np.array([0.999]).astype(np.float32)
@@ -186,7 +200,14 @@ def test_adam_weight_decay():
                        rtol=1.e-4, atol=1.e-8, equal_nan=True)
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_adam_side_effect():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     np.random.seed(0)
     beta1 = np.array([0.9]).astype(np.float32)
     beta2 = np.array([0.999]).astype(np.float32)
@@ -215,52 +236,3 @@ def test_adam_side_effect():
                        rtol=1.e-4, atol=1.e-8, equal_nan=True)
     assert np.allclose(opt.x.data.asnumpy(), m_expect,
                        rtol=1.e-4, atol=1.e-8, equal_nan=True)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_adam_gpu():
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="GPU")
-    test_adam()
-
-
-def test_adam_ascend():
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="Ascend")
-    test_adam()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_adam_weight_decay_gpu():
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="GPU")
-    test_adam_weight_decay()
-
-
-def test_adam_weight_decay_ascend():
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="Ascend")
-    test_adam_weight_decay()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_adam_side_effect_gpu():
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="GPU")
-    test_adam_side_effect()
-
-
-@pytest.mark.level3
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_adam_side_effect_ascend():
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="Ascend")
-    test_adam_side_effect()

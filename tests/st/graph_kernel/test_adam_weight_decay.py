@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -24,8 +24,6 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn.optim.optimizer import Optimizer
-
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
 def _adam_opt(opt, beta1, beta2, eps, lr, weight_decay, param, m, v, gradient):
@@ -90,15 +88,14 @@ def run_adam_weight_decay(enable_graph_kernel=False):
     return losses
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_adam_weight_decay():
     """
     Feature: graph kernel testcase for AdamWeightDecay
     Description: fixed input when using graph_kernel in graph mode
     Expectation: get the same result when using and not using graph kernel
     """
+    context.set_context(mode=context.GRAPH_MODE)
     expect = run_adam_weight_decay(False)
     result = run_adam_weight_decay(True)
     res1 = np.allclose(expect[0], result[0], rtol=1.e-4, atol=1.e-4, equal_nan=True)

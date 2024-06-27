@@ -12,9 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import platform
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -52,57 +51,25 @@ def softsign_compare(shape, dtype):
     assert np.allclose(expect.asnumpy(), output.asnumpy(), rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_sofsign_cpu_pynative_mode():
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
+def test_sofsign_pynative_mode():
     """
-    /// Feature: softsign op expand fallback
-    /// Description: softsign op on cpu set pynative mode test expand fallback
-    /// Expectation: open graph kernel result equal to close graph kernel
+    Feature: softsign op expand fallback
+    Description: softsign op set pynative mode test expand fallback
+    Expectation: open graph kernel result equal to close graph kernel
     """
-    if platform.system().lower() != 'linux':
-        return
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     softsign_compare([2, 3, 2], np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_sofsign_cpu_graph_mode():
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
+def test_sofsign_graph_mode():
     """
-    /// Feature: softsign op expand fallback
-    /// Description: softsign op on cpu set graph mode test expand fallback
-    /// Expectation: open graph kernel result equal to close graph kernel
+    Feature: softsign op expand fallback
+    Description: softsign op set graph mode test expand fallback
+    Expectation: open graph kernel result equal to close graph kernel
     """
-    if platform.system().lower() != 'linux':
-        return
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    softsign_compare([2, 3, 2], np.float32)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_sofsign_gpu_pynative_mode():
-    """
-    /// Feature: softsign op expand fallback
-    /// Description: softsign op on gpu set pynative mode test expand fallback
-    /// Expectation: open graph kernel result equal to close graph kernel
-    """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    softsign_compare([2, 3, 2], np.float32)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_sofsign_gpu_graph_mode():
-    """
-    /// Feature: softsign op expand fallback
-    /// Description: softsign op on gpu set graph mode test expand fallback
-    /// Expectation: open graph kernel result equal to close graph kernel
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     softsign_compare([2, 3, 2], np.float32)

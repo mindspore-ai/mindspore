@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import torch
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -118,16 +118,13 @@ class MedianFactory():
         assert np.allclose(grad_ms, grad_torch)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_median_gpu():
     """
     Feature: Test median.
     Description: Test median and mediangrad in Gpu with different global_median parameter.
     Expectation: the result match given one.
     """
-
     fact = MedianFactory(input_shape=(5, 5), global_median=True, axis=0, keep_dims=False)
     fact.forward_cmp()
     fact.grad_cmp()

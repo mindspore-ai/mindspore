@@ -17,7 +17,7 @@ import os
 import platform
 import subprocess
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
@@ -192,16 +192,14 @@ add_gpu_info_attr_only = CustomRegOp("add_with_attr_kernel_gpu_2") \
     .get_op_info()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_aot_single_output_gpu():
     """
     Feature: custom aot operator, multiple inputs, single output, GPU
     Description: pre-compile xxx.cu to xxx.so, custom operator launches xxx.so
     Expectation: nn result matches numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    context.set_context(mode=context.GRAPH_MODE)
     aot_single_output(get_file_path_gpu, "add.cu", "add.so", None)
     aot_single_output_auto_compile("add.cu", None)
     aot_single_output_dyn_shape("add.cu", None)
@@ -236,12 +234,7 @@ add_cpu_info_attr_only = CustomRegOp("add_with_attr_kernel_cpu_2") \
     .get_op_info()
 
 
-
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_aot_single_output_cpu():
     """
     Feature: custom aot operator, multiple inputs, single output, CPU, GRAPH_MODE
@@ -252,23 +245,21 @@ def test_aot_single_output_cpu():
     if sys.lower() in {"windows", "darwin"}:
         pass
     else:
-        context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+        context.set_context(mode=context.GRAPH_MODE)
         aot_single_output(get_file_path_cpu, "add.cc", "add.so", add_cpu_info)
         aot_single_output_with_attr("add_with_attr.cc", add_with_attr_cpu_info)
         aot_single_output_with_attr_only("add_with_attr.cc", add_cpu_info_attr_only)
         aot_single_output_dyn_shape("add.cc", add_cpu_info)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reorganize():
     """
     Feature: custom aot operator, multiple inputs(dtypes:float32,int64_t), single output, GPU
     Description: pre-compile xxx.cu to xxx.so, custom operator launches xxx.so
     Expectation: nn result matches numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    context.set_context(mode=context.GRAPH_MODE)
     shape = [5]
     input_x = np.array([1.0, 4.0, 9.0, 16.0, 25.0]).astype(np.float32)
     input_y = np.array([3, 2, 0, 1, 4]).astype(np.int64)
@@ -287,16 +278,14 @@ def test_reorganize():
     assert np.allclose(expect, output.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_hetero_square_mul():
     """
     Feature: custom aot operator, multiple inputs(dtypes:float32,float16), single output(dtype:float16), GPU
     Description: pre-compile xxx.cu to xxx.so, custom operator launches xxx.so
     Expectation: nn result matches numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    context.set_context(mode=context.GRAPH_MODE)
     shape = [5]
     input_x = np.random.normal(0, 1, shape).astype(np.float32)
     input_y = np.random.normal(0, 1, shape).astype(np.float16)
@@ -325,16 +314,14 @@ class SquareGradNet(Cell):
         return res2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_square_py_bprop():
     """
     Feature: custom aot operator, bprop(pyfunc), GPU
     Description: pre-compile xxx.cu to xxx.so, custom operator launches xxx.so
     Expectation: nn result matches numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
     sens = np.array([1.0, 1.0, 1.0]).astype(np.float32)
     expect = np.array([4.0, 256.0, 2916.0]).astype(np.float32)
@@ -358,16 +345,14 @@ def test_square_py_bprop():
     assert np.allclose(expect, dx_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_square_aot_bprop():
     """
     Feature: custom aot operator, bprop(Cell), GPU
     Description: pre-compile xxx.cu to xxx.so, custom operator launches xxx.so
     Expectation: nn result matches numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
     sens = np.array([1.0, 1.0, 1.0]).astype(np.float32)
     expect = np.array([4.0, 256.0, 2916.0]).astype(np.float32)
@@ -484,28 +469,24 @@ def add_mul_div_bprop(source, execf, source_prop, execf_prop):
     assert np.allclose(expect_dy, dy_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_add_mul_div_bprop_graph():
     """
     Feature: custom aot operator, bprop(Cell), multiple outputs, GPU, GRAPH_MODE
     Description: pre-compile xxx.cu to xxx.so, custom operator launches xxx.so
     Expectation: nn result matches numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     add_mul_div_bprop("add_mul_div.cu", "add_mul_div.so", "add_mul_div_bprop.cu", "add_mul_div_bprop.so")
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_add_mul_div_bprop_pynative():
     """
     Feature: custom aot operator, bprop(Cell), multiple outputs, GPU, PYNATIVE_MODE
     Description: pre-compile xxx.cu to xxx.so, custom operator launches xxx.so
     Expectation: nn result matches numpy result
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    context.set_context(mode=context.PYNATIVE_MODE)
     add_mul_div_bprop("add_mul_div.cu", "add_mul_div_pynative.so",
                       "add_mul_div_bprop.cu", "add_mul_div_bprop_pynative.so")

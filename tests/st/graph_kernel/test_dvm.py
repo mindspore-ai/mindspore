@@ -21,6 +21,7 @@ import mindspore as ms
 import mindspore.ops as ops
 import mindspore.ops.operations as P
 from tests.st.graph_kernel.gk_utils import AssertGKEnable
+from tests.mark_utils import arg_mark
 
 ascend_grad_overflow = P.IsFinite()
 
@@ -87,9 +88,7 @@ def fuse(shape1, shape2, dtype):
     np.testing.assert_allclose(expects[2], outputs[2], 0, 0)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("shape1, shape2", [((32, 1024), (32, 1024)), ((44, 1, 47, 1), (1, 34, 1, 91))])
 @pytest.mark.parametrize("dtype", [np.float16, np.float32])
 def test_easy_fuse_dvm(shape1, shape2, dtype):
@@ -98,7 +97,7 @@ def test_easy_fuse_dvm(shape1, shape2, dtype):
     Description: ascend test case, use graph_kernel execute ops.
     Expectation: the result match with close graph_kernel result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     fuse(shape1, shape2, dtype)
 
 
@@ -114,9 +113,7 @@ class Net(nn.Cell):
         return y1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dvm_dynamic_shape():
     """
     Feature: dynamic shape test case
@@ -124,7 +121,7 @@ def test_dvm_dynamic_shape():
     Expectation: the result match with expect
     """
     np.random.seed(1)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     x0 = np.random.normal(0, 1, (8, 32)).astype(np.float16)
     x1 = np.random.normal(0, 1, (8, 1)).astype(x0.dtype)
     x2 = np.random.normal(0, 1, (1, 32)).astype(x0.dtype)
@@ -149,9 +146,7 @@ class NetD(nn.Cell):
         return y1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dvm_multiple_run():
     """
     Feature: dynamic shape test case
@@ -159,7 +154,7 @@ def test_dvm_multiple_run():
     Expectation: the result match with expect
     """
     np.random.seed(1)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     context.set_context(jit_config={"jit_level": "O1"},
                         graph_kernel_flags="--enable_cluster_ops=Reshape")
     x0_dyn = Tensor(shape=(None,), dtype=ms.float16)
@@ -192,9 +187,7 @@ class NetT(nn.Cell):
         return y1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dvm_transpose():
     """
     Feature: Transpose test case
@@ -203,7 +196,7 @@ def test_dvm_transpose():
     """
     np.random.seed(1)
     enable_graph_kernel = True
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     context.set_context(jit_config={"jit_level": "O1"},
                         graph_kernel_flags="--enable_cluster_ops=Transpose")
     x0 = np.random.normal(0, 1, (16, 32, 16)).astype(np.float16)
@@ -230,9 +223,7 @@ class NetBool(nn.Cell):
         return y3
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dvm_bool():
     """
     Feature: Boolean type test case
@@ -240,7 +231,7 @@ def test_dvm_bool():
     Expectation: the result match with expect
     """
     np.random.seed(1)
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     context.set_context(jit_config={"jit_level": "O1"})
     x0 = np.random.normal(0, 1, (3, 1, 1, 1)).astype(np.float16)
     x1 = np.random.normal(0, 1, (3, 1, 1, 1)).astype(np.float16)

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -119,7 +119,14 @@ def get_greater_equal_net_output(x0, y0, x1, y1, x2, y2, x3, y3, enable_graph_ke
     return greter_equal_output_0, greter_equal_output_1, greter_equal_output_2, greter_equal_output_3
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_less_net():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     x0, y0, x1, y1, x2, y2, x3, y3 = gen_data()
     out_gk_on_0, out_gk_on_1, out_gk_on_2, out_gk_on_3 = get_less_net_output(x0, y0, x1, y1, x2, y2, x3, y3, True)
     out_gk_off_0, out_gk_off_1, out_gk_off_2, out_gk_off_3 = get_less_net_output(
@@ -135,7 +142,14 @@ def test_less_net():
     assert out_gk_on_3.shape == out_gk_off_3.shape
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_greater_net():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     x0, y0, x1, y1, x2, y2, x3, y3 = gen_data()
     out_gk_on_0, out_gk_on_1, out_gk_on_2, out_gk_on_3 = get_greater_net_output(x0, y0, x1, y1, x2, y2, x3, y3, True)
     out_gk_off_0, out_gk_off_1, out_gk_off_2, out_gk_off_3 = get_greater_net_output(
@@ -151,7 +165,14 @@ def test_greater_net():
     assert out_gk_on_3.shape == out_gk_off_3.shape
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_less_equal_net():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     x0, y0, x1, y1, x2, y2, x3, y3 = gen_data()
     out_gk_on_0, out_gk_on_1, out_gk_on_2, out_gk_on_3 = get_less_equal_net_output(
         x0, y0, x1, y1, x2, y2, x3, y3, True)
@@ -168,7 +189,14 @@ def test_less_equal_net():
     assert out_gk_on_3.shape == out_gk_off_3.shape
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_greater_equal_net():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     x0, y0, x1, y1, x2, y2, x3, y3 = gen_data()
     out_gk_on_0, out_gk_on_1, out_gk_on_2, out_gk_on_3 = get_greater_equal_net_output(
         x0, y0, x1, y1, x2, y2, x3, y3, True)
@@ -183,35 +211,3 @@ def test_greater_equal_net():
     assert out_gk_on_2.shape == out_gk_off_2.shape
     assert np.all(out_gk_on_3 == out_gk_off_3)
     assert out_gk_on_3.shape == out_gk_off_3.shape
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_less_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    test_less_net()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_greater_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    test_greater_net()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_less_equal_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    test_less_equal_net()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_greater_equal_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
-    test_greater_equal_net()

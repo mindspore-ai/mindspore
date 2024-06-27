@@ -15,7 +15,7 @@
 
 import copy
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
 import mindspore.context as context
 from mindspore import Tensor
@@ -41,6 +41,7 @@ class LayerNormGradNet(nn.Cell):
     def construct(self, dy, x, var, mean, gamma):
         return self.layernorm_grad(dy, x, var, mean, gamma)
 
+
 def get_layernorm_output(x, gamma, beta, begin_norm_axis, begin_params_axis, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
 
@@ -57,6 +58,7 @@ def get_layernorm_grad_output(x, dy, var, mean, gamma, begin_norm_axis, begin_pa
     output = net(x, dy, var, mean, gamma)
 
     return output
+
 
 def get_rtol_atol(dtype):
     if dtype == np.float16:
@@ -76,7 +78,7 @@ def compare_result(expect, output, dtype):
         assert np.allclose(expect.asnumpy(), output.asnumpy(), rtol, atol, equal_nan=True)
 
 
-def test_layernorm(shape, dtype, begin_norm_axis=-1, begin_params_axis=-1):
+def run_layernorm(shape, dtype, begin_norm_axis=-1, begin_params_axis=-1):
     begin_norm_axis = begin_norm_axis if begin_norm_axis >= 0 else begin_norm_axis + len(shape)
     begin_params_axis = begin_params_axis if begin_params_axis >= 0 else begin_params_axis + len(shape)
     assert 0 <= begin_norm_axis < len(shape)
@@ -95,7 +97,7 @@ def test_layernorm(shape, dtype, begin_norm_axis=-1, begin_params_axis=-1):
     compare_result(expect, output, dtype)
 
 
-def test_layernorm_grad(shape, dtype, begin_norm_axis=-1, begin_params_axis=-1):
+def run_layernorm_grad(shape, dtype, begin_norm_axis=-1, begin_params_axis=-1):
     begin_norm_axis = begin_norm_axis if begin_norm_axis >= 0 else begin_norm_axis + len(shape)
     begin_params_axis = begin_params_axis if begin_params_axis >= 0 else begin_params_axis + len(shape)
     assert 0 <= begin_norm_axis < len(shape)
@@ -121,37 +123,48 @@ def test_layernorm_grad(shape, dtype, begin_norm_axis=-1, begin_params_axis=-1):
 
     compare_result(expect, output, dtype)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_layernorm_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_layernorm([4, 32, 32], np.float32, -1, -1)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_layernorm([4, 32, 32], np.float32, -1, -1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_layernorm_ascend():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_layernorm([4, 32, 32], np.float16, -1, -1)
-    test_layernorm([4, 32, 32], np.float32, -1, -1)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_layernorm([4, 32, 32], np.float16, -1, -1)
+    run_layernorm([4, 32, 32], np.float32, -1, -1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_layernorm_grad_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_layernorm_grad([4, 32, 32], np.float32, -1, -1)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_layernorm_grad([4, 32, 32], np.float32, -1, -1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_layernorm_grad_ascend():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_layernorm_grad([2, 16, 32], np.float16, -1, -1)
-    test_layernorm_grad([4, 32, 32], np.float32, -1, -1)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_layernorm_grad([2, 16, 32], np.float16, -1, -1)
+    run_layernorm_grad([4, 32, 32], np.float32, -1, -1)
