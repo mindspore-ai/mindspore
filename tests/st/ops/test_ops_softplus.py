@@ -122,7 +122,6 @@ def test_ops_softplus_vmap(context_mode):
     Description: test function softplus vmap feature.
     Expectation: expect correct result.
     """
-    os.environ['GRAPH_OP_RUN'] = '1'
     ms.context.set_context(mode=context_mode)
     x = generate_random_input((2, 3, 4, 5), np.float32)
     output = softplus_vmap_func(ms.Tensor(x))
@@ -132,7 +131,6 @@ def test_ops_softplus_vmap(context_mode):
     output2 = softplus_vmap_func(ms.Tensor(x), 2, 12)
     expect2 = generate_expect_forward_output(x, 2, 12)
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
-    del os.environ['GRAPH_OP_RUN']
 
 
 @pytest.mark.level0
