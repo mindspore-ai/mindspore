@@ -32,6 +32,7 @@ from mindspore.ops.auto_generate import abs
 # 1
 from mindspore.ops.function.math_func import divide, div
 from mindspore.ops.auto_generate import topk_ext as topk
+from mindspore.ops.function.math_func import roll
 # 2
 from mindspore.ops.function.math_func import sin
 # 3
@@ -921,6 +922,7 @@ __all__ = [
     'div',
     'divide',
     'topk',
+    'roll',
     # 2
     'sin',
     # 3

@@ -160,20 +160,20 @@ REG_BPROP_BUILDER("Roll").SetUnusedInputs({i0, i3}).SetBody(BODYFUNC(ib) {
   auto shift = ib->GetInput(kIndex1);
   auto axis = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
+  auto is_dynamic_shifts = false;
   auto shift_value = shift->BuildValue();
   MS_EXCEPTION_IF_NULL(shift_value);
-  auto shift_array_opt = ops::GetArrayValue<int64_t>(shift->abstract());
-  if (!shift_array_opt.has_value()) {
-    MS_LOG(EXCEPTION)
-      << "Roll bprop doesn't support dynamic shift. The exception can be deleted if the following conditions are met:"
-         "1. The SequenceNeg op is supported, 2. Roll supports dynamic shift.";
+  auto shift_array_opt = ops::GetArrayValue<int64_t>(shift_value);
+  if (!shift_array_opt.has_value() || shift_array_opt.value().HasUnknownValue()) {
+    is_dynamic_shifts = True;
+  }
+  if (is_dynamic_shifts) {
+    auto shifts_tensor = ib->Emit("TupleToTensor", {shift, ib->Value<int64_t>(kInt64->type_id())});
+    auto neg_shifts = ib->Emit("Neg", {shifts_tensor});
+    auto neg_shifts_tuple = ib->TensorToTuple(neg_shifts);
+    return {ib->Emit("Roll", {dout, neg_shifts_tuple, axis}), ib->OutZeros(shift), ib->OutZeros(axis)};
   }
   auto shift_array = shift_array_opt.value();
-  if (shift_array.HasUnknownValue()) {
-    MS_LOG(EXCEPTION)
-      << "Roll bprop doesn't support dynamic shift. The exception can be deleted if the following conditions are met:"
-         "1. The SequenceNeg op is supported, 2. Roll supports dynamic shift.";
-  }
   std::vector<int64_t> shift_vec = shift_array.ToVector();
   std::vector<int64_t> neg_shift(shift_vec.size());
   (void)std::transform(shift_vec.begin(), shift_vec.end(), neg_shift.begin(),

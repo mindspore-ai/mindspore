@@ -1143,6 +1143,10 @@ std::optional<ArrayValue<T>> GetArrayValue(const ValuePtr &value) {
     return std::nullopt;
   }
 
+  if (value->isa<None>()) {
+    return std::nullopt;
+  }
+
   std::vector<T> array_data;
   if (value->isa<KernelTensorValue>()) {
     auto kernel_tensor_value = value->cast<KernelTensorValuePtr>();

@@ -8,26 +8,26 @@ roll:
             shift (Union[list(int), tuple(int), int]): Specifies the number of places by which elements are shifted
                 positively (towards larger indices) along the specified dimension. Negative shifts will roll the elements
                 in the opposite direction.
-            axis (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled.
+            axis (Union[list(int), tuple(int), int]): Specifies the dimension indexes of shape to be rolled. Default: ``None`` .
 
         Inputs:
-            - **input_x** (Tensor) - Input tensor.
+            - **input** (Tensor) - Input tensor.
 
         Outputs:
-            Tensor, has the same shape and type as `input_x`.
+            Tensor, has the same shape and type as `input`.
 
         Supported Platforms:
-            ``GPU``
+            ``Ascend`` ``GPU``
 
         Examples:
-            >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
+            >>> input = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
             >>> op = ops.Roll(shift=2, axis=0)
-            >>> output = op(input_x)
+            >>> output = op(input)
             >>> print(output)
             [3. 4. 0. 1. 2.]
-            >>> input_x = Tensor(np.array([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]).astype(np.float32))
+            >>> input = Tensor(np.array([[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]).astype(np.float32))
             >>> op = ops.Roll(shift=-1, axis=0)
-            >>> output = op(input_x)
+            >>> output = op(input)
             >>> print(output)
             [[5. 6. 7. 8. 9.]
-            [0. 1. 2. 3. 4.]]
+             [0. 1. 2. 3. 4.]]

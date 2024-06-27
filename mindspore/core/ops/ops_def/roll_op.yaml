@@ -9,10 +9,13 @@ roll:
       type_cast:  int, list[int]
     axis:
       dtype: tuple[int]
+      default: None
       prim_init: True
-      type_cast: int, list[int]
+      arg_handler: to_axis
   returns:
     output:
       dtype: tensor
   function:
     disable: True
+  dispatch:
+    enable: True
