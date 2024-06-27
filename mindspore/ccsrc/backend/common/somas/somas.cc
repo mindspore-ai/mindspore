@@ -166,7 +166,8 @@ bool Somas::Assign(const session::KernelGraph &graph) {
 
   if (nodes_list_.size() > kNodesThreshold) {
     MS_LOG(WARNING) << "The number of nodes in the graph is too large, the SOMAS algorithm may be slow. Please use "
-                       "export MS_DEV_RUNTIME_CONF=\"inline:false\", the number of nodes: "
+                       "export MS_DEV_RUNTIME_CONF=\"inline:false\" or set memory_optimize_level=\"O0\" in context, "
+                       "the number of nodes: "
                     << nodes_list_.size();
   }
 
