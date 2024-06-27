@@ -475,27 +475,7 @@ Status MatMul::CheckNDTPInputLayout(const TensorLayout &a_in_layout, const Tenso
   if (a_tensor_map[axis0_0].size() != kSizeOne || a_tensor_map[axis0_1].size() != kSizeOne ||
       b_tensor_map[axis1_0].size() != kSizeOne || b_tensor_map[axis1_1].size() != kSizeOne) {
     // Judge whether  meet these conditions for the 3D.
-    if (a_tensor_map[axis0_1].size() != kSizeOne ||
-        b_tensor_map[axis1_1].size() !=
-          kSizeOne  // any one of the last dimension should not be divided more than once in the input layout
-        || a_tensor_map[axis0_0].size() != kSizeTwo ||
-        b_tensor_map[axis1_0].size() != kSizeTwo  // the second last dimension should be divide twice.
-        || a_tensor_map[axis0_0][kIndex0] != b_tensor_map[axis1_0][kIndex0]  // the z in two inputs should be equal
-        || a_tensor_map[axis0_0][kIndex1] != b_tensor_map[axis1_1][kIndex0] ||
-        a_tensor_map[axis0_1][kIndex0] != b_tensor_map[axis1_0][kIndex1]  // the pattern of x and y should be satisfied.
-    ) {
-      MS_LOG(ERROR) << "For 3D MatMul/Batch MatMul, the input layout for the last two dimensions should be like: \n"
-                    << " ((z,x),y), (x,(z,y))  when transpose_b is 'true'; or "
-                    << " (y,(z,x)), ((z,y),x)  when transpose_a is 'true'; or "
-                    << " ((z,x),y), ((z,y),x)  in the other situation. But now they are: ("
-                    << a_tensor_map[a_in_layout.tensor_shape_before().array().size() - kSizeTwo] << ", "
-                    << a_tensor_map[a_in_layout.tensor_shape_before().array().size() - kSizeOne] << "), ("
-                    << b_tensor_map[b_in_layout.tensor_shape_before().array().size() - kSizeTwo] << ", "
-                    << b_tensor_map[b_in_layout.tensor_shape_before().array().size() - kSizeOne] << ").";
-      return FAILED;
-    }
-    three_d_tp_ = true;
-    MS_LOG(INFO) << "3D TP inputLayout check pass, it is activated.";
+    return Check3DTPInputLayout(a_in_layout, b_in_layout, axis0_0, axis0_1, axis1_0, axis1_1);
   } else {
     // Judge whether  meet these conditions for 2D.
     if (a_tensor_map[axis0_0] != b_tensor_map[axis1_1] || a_tensor_map[axis0_1] != b_tensor_map[axis1_0]) {
@@ -509,8 +489,35 @@ Status MatMul::CheckNDTPInputLayout(const TensorLayout &a_in_layout, const Tenso
       return FAILED;
     }
     MS_LOG(INFO) << "2D TP inputLayout check pass, it is activated.";
+    return SUCCESS;
   }
+}
 
+Status MatMul::Check3DTPInputLayout(const TensorLayout &a_in_layout, const TensorLayout &b_in_layout, size_t axis0_0,
+                                    size_t axis0_1, size_t axis1_0, size_t axis1_1) {
+  auto a_tensor_map = a_in_layout.tensor_map_before();
+  auto b_tensor_map = b_in_layout.tensor_map_before();
+  if (a_tensor_map[axis0_1].size() != kSizeOne ||
+      b_tensor_map[axis1_1].size() !=
+        kSizeOne  // any one of the last dimension should not be divided more than once in the input layout
+      || a_tensor_map[axis0_0].size() != kSizeTwo ||
+      b_tensor_map[axis1_0].size() != kSizeTwo  // the second last dimension should be divide twice.
+      || a_tensor_map[axis0_0][kIndex0] != b_tensor_map[axis1_0][kIndex0]  // the z in two inputs should be equal
+      || a_tensor_map[axis0_0][kIndex1] != b_tensor_map[axis1_1][kIndex0] ||
+      a_tensor_map[axis0_1][kIndex0] != b_tensor_map[axis1_0][kIndex1]  // the pattern of x and y should be satisfied.
+  ) {
+    MS_LOG(ERROR) << "For 3D MatMul/Batch MatMul, the input layout for the last two dimensions should be like: \n"
+                  << " ((z,x),y), (x,(z,y))  when transpose_b is 'true'; or "
+                  << " (y,(z,x)), ((z,y),x)  when transpose_a is 'true'; or "
+                  << " ((z,x),y), ((z,y),x)  in the other situation. But now they are: ("
+                  << a_tensor_map[a_in_layout.tensor_shape_before().array().size() - kSizeTwo] << ", "
+                  << a_tensor_map[a_in_layout.tensor_shape_before().array().size() - kSizeOne] << "), ("
+                  << b_tensor_map[b_in_layout.tensor_shape_before().array().size() - kSizeTwo] << ", "
+                  << b_tensor_map[b_in_layout.tensor_shape_before().array().size() - kSizeOne] << ").";
+    return FAILED;
+  }
+  three_d_tp_ = true;
+  MS_LOG(INFO) << "3D TP inputLayout check pass, it is activated.";
   return SUCCESS;
 }
 
@@ -1150,7 +1157,8 @@ Status MatMul::ComputeNDTPReplaceGraph(const CNodePtr &cnode) {
   auto matmul = gen_g.PushBack(
     {gen_g.NewOpInst(IsPrimitiveCNode(cnode, prim::kPrimBatchMatMul) ? BATCH_MATMUL : MATMUL, matmul_attrs),
      matmul_left_input, matmul_right_input});
-  std::pair<AnfNodePtr, int64_t> left_input_node, right_input_node;
+  std::pair<AnfNodePtr, int64_t> left_input_node;
+  std::pair<AnfNodePtr, int64_t> right_input_node;
 
   left_input_node = x_flag ? std::make_pair(x_all_gather, kIndex1) : std::make_pair(matmul, kIndex1);
   right_input_node = z_flag ? std::make_pair(z_all_gather, kIndex2) : std::make_pair(matmul, kIndex2);

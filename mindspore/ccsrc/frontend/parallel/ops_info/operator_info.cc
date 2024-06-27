@@ -1263,7 +1263,7 @@ Status OperatorInfo::CreateGroupByDimWithDevMatrix(DeviceMatrix *dev_matrix, siz
     if (g_device_manager->CheckDeviceList(group_devices) != SUCCESS) {
       MS_LOG(INFO) << name_ << ": Try to create communication group : " << group_devices
                    << " failed in auto parallel mode, "
-                      "this error can be ignored in parallel strategies searching step";
+                   << "this error can be ignored in parallel strategies searching step";
       return FAILED;
     }
     return SUCCESS;

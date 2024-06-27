@@ -93,6 +93,8 @@ class MatMul : public MatMulBase {
                                     const TensorLayout &input_layout, int64_t scatter_tensor_axis);
   TensorLayout InferNDTPOutputLayout();
   Status CheckNDTPInputLayout(const TensorLayout &a_in_layout, const TensorLayout &b_in_layout);
+  Status Check3DTPInputLayout(const TensorLayout &a_in_layout, const TensorLayout &b_in_layout, size_t axis0_0,
+                              size_t axis0_1, size_t axis1_0, size_t axis1_1);
   void CheckPCLMatMul(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
   Status CheckInputStrategy(const Shape &mat_a_strategy, const Shape &mat_b_strategy);
   TensorLayout InferOutputLayout();
