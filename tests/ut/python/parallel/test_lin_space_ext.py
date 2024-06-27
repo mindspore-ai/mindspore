@@ -74,6 +74,23 @@ def test_lin_space_ext_data_parallel_steps_dynamic_shape():
                                        ['TensorToScalar-0', 'TensorToScalar-1', 'TensorToScalar-2', 43])
 
 
+def test_lin_space_ext_parallel_all_constant_input():
+    """
+    Feature: test LinSpaceExt parallel
+    Description: parallel with repeated_cal
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    start = 1
+    end = 10
+    x = 8
+    strategy = ((8,),)
+    net = Net(strategy)
+    phase = compile_net(net, start, end, x, mstype.float32)
+    validator = ParallelValidator(net, phase)
+    assert validator.check_node_inputs('LinSpaceExt-0', ['ScalarAdd-0', 'ScalarAdd-1', 1, 43])
+
+
 def test_lin_space_ext_parallel_with_repeated_cal():
     """
     Feature: test LinSpaceExt parallel
