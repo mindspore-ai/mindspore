@@ -143,10 +143,6 @@
         返回：
             Tensor类型，返回计算结果。
 
-    .. py:method:: exec_checkpoint_graph()
-
-        保存checkpoint图。
-
     .. py:method:: extend_repr()
 
         在原有描述基础上扩展Cell的描述。
