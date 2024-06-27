@@ -1464,7 +1464,7 @@ def onp_convolve(mode):
     return a, b, c, d, e
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_convolve():
     for mode in ['full', 'same', 'valid']:
         mnp_res = mnp_convolve(mode)
@@ -1931,7 +1931,7 @@ def onp_matrix_power(x):
     return a, b, c, d
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
           card_mark='onecard', essential_mark='unessential')
 def test_matrix_power():
     arrs = [

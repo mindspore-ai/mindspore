@@ -332,7 +332,7 @@ def test_line_search(maxiter, func, x, p):
     match_array(msp_res.f_k, osp_res[3], error=5)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='unessential')
 @pytest.mark.parametrize('maxiter, func, x, p',
                          [(10, _line_func_1, [1.13689136, 0.09772497, 0.58295368, -0.39944903, 0.37005589],
@@ -518,7 +518,7 @@ def test_lbfgs_fixes4594(dtype):
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [onp.float32, onp.float64])
 @pytest.mark.parametrize('func_x0', [(rosenbrock, onp.zeros(2)), (rosenbrock, onp.zeros(300))])
