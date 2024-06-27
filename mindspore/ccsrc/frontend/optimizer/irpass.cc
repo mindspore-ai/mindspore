@@ -253,6 +253,10 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
   virtual_output_eliminate_ =
     MakeSubstitution(std::make_shared<VirtualOutputEliminater>(), "virtual_output_eliminate", prim::kPrimVirtualOutput);
 
+  // Virtual Shard Identity
+  virtual_shard_identity_ =
+    MakeSubstitution(std::make_shared<ShardIdentityEliminater>(), "shard_identity_eliminate", prim::kPrimShardIdentity);
+
   // PipelineSplit
   parallel_virtual_node_ = MakeSubstitution(
     std::make_shared<ParallelVirtualNodeEliminater>(), "parallel_virtual_node",

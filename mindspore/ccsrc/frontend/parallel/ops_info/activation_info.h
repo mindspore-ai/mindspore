@@ -259,6 +259,14 @@ class SiLUInfo : public ActivationOther {
   ~SiLUInfo() override = default;
 };
 
+class ShardIdentityInfo : public ReLUInfo {
+ public:
+  ShardIdentityInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+                    const PrimitiveAttrs &attrs)
+      : ReLUInfo(name, inputs_shape, outputs_shape, attrs) {}
+  ~ShardIdentityInfo() override = default;
+};
+
 class identityInfo : public ActivationOther {
  public:
   identityInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
