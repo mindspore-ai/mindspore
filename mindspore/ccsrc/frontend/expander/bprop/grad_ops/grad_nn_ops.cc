@@ -2047,7 +2047,12 @@ REG_BPROP_BUILDER("SoftmaxBackward").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) 
   auto dim = ib->GetInput(kIndex2);
   auto grad = ib->GetInput(kIndex4);
 
-  auto grad_dout = ib->Emit("SoftmaxBackward", {grad, output, dim});
+  NodePtr grad_dout{nullptr};
+  if (grad_output->need_compute_grad_out()) {
+    grad_dout = ib->Emit("SoftmaxBackward", {grad, output, dim});
+  } else {
+    grad_dout = ib->OutZeros(grad_output);
+  }
 
   // grad_out = grad_output * grad - (output * grad_output).sum(dim, true) * grad -
   // grad_output * (output * grad).sum(dim, true)
@@ -2059,7 +2064,12 @@ REG_BPROP_BUILDER("SoftmaxBackward").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) 
     auto grad_out = part1 - part2 - part3;
     return grad_out;
   };
-  auto grad_out = softmax_double_backward_func();
+  NodePtr grad_out{nullptr};
+  if (output->need_compute_grad_out()) {
+    grad_out = softmax_double_backward_func();
+  } else {
+    grad_out = ib->OutZeros(output);
+  }
 
   return {grad_dout, grad_out, ib->OutZeros(dim)};
 });
