@@ -286,6 +286,7 @@ def test_single_ops():
     Description: Test PyNative forward RunOp.
     Expectation: No exception.
     """
+
     class ReluAddNet(nn.Cell):
         def construct(self, x):
             y = ops.relu(x)
@@ -350,3 +351,28 @@ def test_pyboost_cache():
     for _ in range(9999):
         output = ops.sin(x)
     assert np.allclose(output.asnumpy(), np.array([0.84147096]))
+
+
+class Dropout(nn.Cell):
+    def __init__(self):
+        super().__init__()
+        self.op = ops.Dropout(keep_prob=0.5)
+
+    def construct(self, x):
+        return self.op(x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_dropout():
+    """
+    Feature: PyNative forward RunOp Dropout need refresh output.
+    Description: Test Dropout need refresh output.
+    Expectation: No exception.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    net = Dropout()
+    _, mask = net(Tensor(np.ones([1, 2, 3, 4, 5]), ms.float32))
+    assert mask.shape == (16,)
+    assert mask.dtype == ms.uint8
