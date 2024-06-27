@@ -189,7 +189,8 @@ BackendOpRunInfoPtr CreateBackendOpRunInfo(const FrontendOpRunInfoPtr &op_run_in
 void UpdateStubTensor(const FrontendOpRunInfoPtr &op_run_info) {
   // Some operators do not have StubNodes, such as Cast inserted for automatic mixed precision.
   if (op_run_info->stub_output != nullptr) {
-    if (op_run_info->base_op_run_info.has_dynamic_output) {
+    if (op_run_info->base_op_run_info.has_dynamic_output ||
+        OpCompiler::GetInstance().IsInvalidInferResultOp(op_run_info->base_op_run_info.op_name)) {
       UpdateOutputStubNodeAbs(op_run_info);
     }
     op_run_info->stub_output->SetValue(op_run_info->real_out);
@@ -550,7 +551,8 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   // Infer output abstract
   InferOutputAbstract(op_run_info);
 
-  if (!op_run_info->base_op_run_info.has_dynamic_output) {
+  if (!(op_run_info->base_op_run_info.has_dynamic_output ||
+        OpCompiler::GetInstance().IsInvalidInferResultOp(op_run_info->base_op_run_info.op_name))) {
     // Output is dynamic shape, need to SetAbstract after RunOp.
     UpdateOutputStubNodeAbs(op_run_info);
   }
