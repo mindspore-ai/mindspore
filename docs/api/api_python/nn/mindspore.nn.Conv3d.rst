@@ -58,7 +58,7 @@ mindspore.nn.Conv3d
         - **dtype** (:class:`mindspore.dtype`) - Parameters的dtype。默认值： ``mstype.float32`` 。
 
     输入：
-        - **x** (Tensor) - shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。目前输入数据类型只支持float16和float32。
+        - **x** (Tensor) - shape为 :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` 的Tensor。目前，CPU和GPU平台上输入数据类型支持float16和float32，Ascend平台上输入数据类型只支持float16。
 
     输出：
         Tensor，shape为 :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})` 。
