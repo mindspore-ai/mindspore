@@ -10167,7 +10167,7 @@ def tanhshrink(input):
         raise TypeError(f"For tanhshrink, the input must be a Tensor, but got {type(input)}.")
 
     if input.dtype in mstype.int_type + mstype.uint_type:
-        input = input.astype(mstype.float64)
+        input = input.astype(mstype.float32)
     return input - tanh_(input)
 
 
