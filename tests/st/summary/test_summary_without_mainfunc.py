@@ -14,13 +14,11 @@
 # ============================================================================
 import os
 import sys
-import pytest
-from tests.security_utils import security_off_wrap
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.env_single
-@security_off_wrap
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards",
+          essential_mark="essential")
 def test_summarycollector():
     """
     Feature: Test SummaryCollector in distribute trainning.

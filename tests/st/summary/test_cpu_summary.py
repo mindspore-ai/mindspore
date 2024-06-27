@@ -26,7 +26,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.train.summary.summary_record import SummaryRecord
 from tests.summary_utils import SummaryReader
-from tests.security_utils import security_off_wrap
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
@@ -60,10 +60,7 @@ def train_summary_record(test_writer, steps):
     return out_me_dict
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=["platform_cpu"], level_mark="level1", card_mark="onecard", essential_mark="essential")
 def test_summary_step2_summary_record1():
     """Test record 10 step summary."""
     if platform.system() == "Windows":
@@ -83,10 +80,7 @@ def test_summary_step2_summary_record1():
                 assert tags == {'tensor', 'histogram', 'scalar', 'image'}
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=["platform_cpu"], level_mark="level1", card_mark="onecard", essential_mark="essential")
 def test_summary_record_for_multi_instances():
     """
     Feature: Test the multi instances of SummaryRecord in a script.
