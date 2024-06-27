@@ -44,6 +44,13 @@ const std::vector<std::pair<KernelAttr, ResizeBicubicGradPtrCreatorFunc>> kernel
      .AddOutputAttr(kNumberTypeFloat32),
    CreateResizeBicubicGradKernelPtr<float, float>},
   {KernelAttr()
+     .AddInputAttr(kNumberTypeFloat32)
+     .AddInputAttr(kNumberTypeFloat64)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)
+     .AddOutputAttr(kNumberTypeFloat64),
+   CreateResizeBicubicGradKernelPtr<float, double>},
+  {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kObjectTypeNumber, kNumberTypeBool)

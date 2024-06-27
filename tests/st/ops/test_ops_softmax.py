@@ -109,8 +109,8 @@ def test_softmax_double_backward(mode):
     """
     context.set_context(mode=mode)
     context.set_context(jit_config={"jit_level": "O2"})
-    dout = Tensor(np.random.rand(10, 10))
-    out = Tensor(np.random.rand(10, 10))
+    dout = Tensor(np.random.rand(10, 10).astype(np.float32))
+    out = Tensor(np.random.rand(10, 10).astype(np.float32))
     dim = -1
     grads = softmax_double_backward_func(dout, out, dim)
     print(grads)
