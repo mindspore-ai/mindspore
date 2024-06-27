@@ -25,11 +25,12 @@ import os
 import shutil
 import yaml
 import numpy as np
-import pytest
 from omegaconf import OmegaConf
 
 import mindspore as ms
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell, FixedLossScaleUpdateCell
+
+from tests.mark_utils import arg_mark
 
 workspace = os.path.dirname(os.path.abspath(__file__))
 if os.path.exists(os.path.join(workspace, "mindone/examples/stable_diffusion_v2/tests")):
@@ -447,9 +448,7 @@ def main(args):
     os.environ.pop("MS_ENABLE_ACLNN")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sd2_1p():
     """
     Feature: Stable diffusion 2.0 1p test

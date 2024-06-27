@@ -18,7 +18,6 @@
 import os
 import time
 import numpy as np
-import pytest
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as C
@@ -35,6 +34,7 @@ from tests.st.networks import utils
 head_path = os.path.dirname(os.path.abspath(__file__)) + "/../../../../../../"
 utils.replace_check_param(head_path)
 
+from tests.mark_utils import arg_mark
 from tests.models.official.nlp.bert.src.bert_for_pre_training import BertNetworkWithLoss
 from tests.models.official.nlp.bert.src.bert_for_pre_training import BertTrainOneStepWithLossScaleCell
 from tests.models.official.nlp.bert.src.bert_model import BertConfig
@@ -240,10 +240,7 @@ def test_bert_precision(enable_graph_kernel=False):
     assert np.allclose(loss_value, expect_loss_value, 0, 0.0005)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_bert_precision_graph_kernel_off():
     test_bert_precision(enable_graph_kernel=False)
 

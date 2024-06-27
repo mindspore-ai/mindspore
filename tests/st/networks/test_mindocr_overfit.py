@@ -24,12 +24,13 @@ import sys
 import time
 
 import numpy as np
-import pytest
 from addict import Dict
 from mindspore.train.callback._callback import _handle_loss
 
 import mindspore as ms
 from mindspore import load_checkpoint, set_context
+
+from tests.mark_utils import arg_mark
 
 workspace = os.path.dirname(os.path.abspath(__file__))
 if os.path.exists(os.path.join(workspace, "mindocr/tests")):
@@ -203,9 +204,7 @@ def main_test_process(args, cfg):
     return loss_start, loss_end, average_step_time, time_compile
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_db_r50_1p():
     """
     Feature: MindOCR dbnet-resnet50 1p test
@@ -228,9 +227,7 @@ def test_db_r50_1p():
     ), f"Loss end should in less than 10.45, but got {loss_end}"
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_crnn_vgg7_1p():
     """
     Feature: MindOCR crnn_vgg7 1p test
