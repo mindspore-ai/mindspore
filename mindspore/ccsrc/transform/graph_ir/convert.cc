@@ -92,6 +92,7 @@ constexpr auto kTypeMerge = "Merge";
 constexpr auto kTypeIf = "If";
 constexpr auto kTypeVariable = "Variable";
 constexpr auto kParallelGroup = "_parallel_group";
+constexpr auto kParallelGroupId = "_parallel_group_id";
 constexpr auto kTypeRefData = "RefData";
 constexpr auto kBroadcast = "broadcast";
 constexpr auto kInit = "init";
@@ -3821,6 +3822,28 @@ void DfGraphConvertor::ConvertParallelGroupToHcom(const CNodePtr &node) {
   op_cache_[node.get()] = op;
 }
 
+void DfGraphConvertor::ConvertParallelGroupIdToHcom(const CNodePtr &node) {
+  auto parallel_group_id_value = node->GetAttr(kParallelGroupId);
+  auto parallel_group_id = GetValue<uint32_t>(parallel_group_id_value);
+  OpAdapterPtr adpt = FindAdapter(node, training_);
+  if (adpt == nullptr) {
+    return;
+  }
+
+  // get operator
+  OperatorPtr op = nullptr;
+  auto it_op = op_cache_.find(node.get());
+  if (it_op != op_cache_.end()) {
+    op = it_op->second;
+  } else {
+    op = adpt->generate(node);
+    op_cache_[node.get()] = op;
+  }
+  MS_EXCEPTION_IF_NULL(op);
+  (void)op->SetAttr(kParallelGroupId, parallel_group_id);
+  MS_LOG(INFO) << "Successfully convert _parallel_group_id: " << parallel_group_id << " to ge op: " << op->GetName();
+}
+
 void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   MS_LOG(INFO) << "Add Hcom fusion_id";
@@ -4094,6 +4117,9 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
   }
   if (common::AnfAlgo::HasNodeAttr(kParallelGroup, node)) {
     ConvertParallelGroupToHcom(node);
+  }
+  if (node->HasAttr(kParallelGroupId)) {
+    ConvertParallelGroupIdToHcom(node);
   }
 
   return true;
