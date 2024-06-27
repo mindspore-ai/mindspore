@@ -157,11 +157,9 @@ class CheckpointConfig:
         >>> config.save_checkpoint_steps
         1
         >>> config.save_checkpoint_seconds
-        100
         >>> config.keep_checkpoint_max
         5
         >>> config.keep_checkpoint_per_n_minutes
-        5
         >>> config.integrated_save
         True
         >>> config.async_save
