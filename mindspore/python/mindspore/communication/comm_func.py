@@ -16,7 +16,6 @@
 """
 Defines communication operators with functional form.
 """
-import mindspore.ops.operations as P
 from mindspore.communication import GlobalComm, get_group_rank_from_world_rank, get_group_size
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import Tensor as Tensor_
@@ -40,6 +39,8 @@ __all__ = [
     'P2POp',
     'batch_isend_irecv',
 ]
+
+import mindspore.ops.operations as P
 
 
 def _check_split_sizes_sequence(tensor, sequence):

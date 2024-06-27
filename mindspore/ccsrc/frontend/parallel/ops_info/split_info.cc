@@ -21,13 +21,13 @@
 #include <utility>
 #include <vector>
 
+#include "include/common/utils/parallel_context.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
-#include "include/common/utils/parallel_context.h"
 #include "pipeline/jit/ps/resource.h"
 
 namespace mindspore {

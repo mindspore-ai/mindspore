@@ -17,16 +17,16 @@
 #include "frontend/parallel/ops_info/broadcast_to_info.h"
 
 #include <algorithm>
+#include <functional>
 #include <memory>
 #include <utility>
 #include <vector>
-#include <functional>
 
+#include "pipeline/jit/ps/resource.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
-#include "pipeline/jit/ps/resource.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 
 namespace mindspore {

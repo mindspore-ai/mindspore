@@ -915,6 +915,26 @@ Shape AlignToLayoutShape(const Shape &to_origin_shape, const Shape &to_layout_sh
   return target_shape;
 }
 
+Status TensorRedistribution::OperatorListIsEmpty(ConstructOperator *constructor, OperatorVector *const operator_vector,
+                                                 OutPutInfoVector *const output_info_vector) {
+  if (from_origin_.base_slice_shape().array() != to_origin_.base_slice_shape().array() || keep_reshape_) {
+    reshape_flag_ = true;
+    constructor->UpdateTensorShape(from_origin_.base_slice_shape().array());
+    Arrangement shape = to_origin_.base_slice_shape();
+    MS_LOG(INFO) << "from_origin_.base_slice_shape is not same with to_origin_.base_slice_shape: "
+                 << "from_origin_.base_slice_shape=" << from_origin_.base_slice_shape().array()
+                 << ", to_origin_.base_slice_shape=" << to_origin_.base_slice_shape().array() << ", reshape to "
+                 << shape.ToString();
+    if (constructor->ReshapeOP(shape.array()) == Status::FAILED) {
+      return Status::FAILED;
+    } else {
+      (void)operator_vector->insert(operator_vector->cbegin(), constructor->GetOperator());
+      (void)output_info_vector->insert(output_info_vector->cbegin(), std::make_pair(false, 0));
+    }
+  }
+  return Status::SUCCESS;
+}
+
 Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const TensorLayout &to_layout,
                                           OperatorVector *const operator_vector,
                                           OutPutInfoVector *const output_info_vector) {
@@ -922,24 +942,8 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
   MS_EXCEPTION_IF_NULL(output_info_vector);
   ConstructOperator constructor;
   if (operator_list_.empty()) {
-    if (from_origin_.base_slice_shape().array() != to_origin_.base_slice_shape().array() || keep_reshape_) {
-      reshape_flag_ = true;
-      constructor.UpdateTensorShape(from_origin_.base_slice_shape().array());
-      Arrangement shape = to_origin_.base_slice_shape();
-      MS_LOG(INFO) << "from_origin_.base_slice_shape is not same with to_origin_.base_slice_shape: "
-                   << "from_origin_.base_slice_shape=" << from_origin_.base_slice_shape().array()
-                   << ", to_origin_.base_slice_shape=" << to_origin_.base_slice_shape().array() << ", reshape to "
-                   << shape.ToString();
-      if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
-        return Status::FAILED;
-      } else {
-        (void)operator_vector->insert(operator_vector->cbegin(), constructor.GetOperator());
-        (void)output_info_vector->insert(output_info_vector->cbegin(), std::make_pair(false, 0));
-      }
-    }
-    return Status::SUCCESS;
+    return OperatorListIsEmpty(&constructor, operator_vector, output_info_vector);
   }
-
   // 1. 需要知道哪个轴是动态的，哪个轴是常量，只比较常量轴，但是是否能保证from_origin_和from_layout的rank是一样的？
   // from_origin_是静态，那from_layout也一定是静态，如果from_origin_是动态，那from_layout也一定是动态
   // 先支持from_origin_和from_layout的rank一样的场景

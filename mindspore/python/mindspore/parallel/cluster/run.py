@@ -24,47 +24,37 @@ def get_args():
     """
     parser = ArgumentParser()
     parser.add_argument(
-        "--worker_num",
-        type=int,
-        default=8,
+        "--worker_num", type=int, default=8,
         help="the total number of nodes participating in the training, an integer variable, "
         "with a default value of 8."
     )
     parser.add_argument(
         "--local_worker_num",
-        type=int,
-        default=8,
+        type=int, default=8,
         help="the number of nodes participating in local training, an integer variable, "
         "with a default value of 8."
     )
     parser.add_argument(
         "--master_addr",
-        default="127.0.0.1",
-        type=str,
+        default="127.0.0.1", type=str,
         help="specifies the IP address of the scheduler and its data type is string."
         " Allowed values: valid IP addresses."
     )
     parser.add_argument(
-        "--master_port",
-        default=8118,
-        type=int,
+        "--master_port", default=8118, type=int,
         help="specifies the port number of the scheduler, and its data type is integer."
         " Allowed values: port numbers within the range of 1024 to 65535 that are not "
         "already in use."
     )
     parser.add_argument(
-        "--node_rank",
-        default=-1,
-        type=int,
+        "--node_rank", default=-1, type=int,
         help="specifies the rank of current physical node, and its data type is integer."
         " This parameter is used for rank id assignment for each process on the node."
         " If not set, MindSpore will assign rank ids automatically and"
         " rank id of each process on the same node will be continuous."
     )
     parser.add_argument(
-        "--log_dir",
-        default="",
-        type=str,
+        "--log_dir", default="", type=str,
         help="specifies the log output file path."
     )
     parser.add_argument(

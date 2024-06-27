@@ -57,6 +57,8 @@ class VirtualDatasetInfo : public OperatorInfo {
 
  private:
   ShapeBasePtr ObtainTensorMap(const ShapeBasePtr &stra, const size_t &slice_dim, const Shape &dev_mat);
+  Status GetSquashedStrategyAndShape(const StrategyPtr &stra, std::vector<std::vector<int64_t>> *squashed_stra,
+                                     std::vector<std::vector<int64_t>> *squashed_shape);
   std::vector<int64_t> max_size_strategy_;
 };
 }  // namespace parallel
