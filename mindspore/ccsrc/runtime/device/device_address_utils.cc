@@ -895,9 +895,12 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
   MS_EXCEPTION_IF_NULL(device_address);
   device_address->set_is_view(is_view);
 
-  auto mem_type = tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kPyNativeInput;
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", mem_type, device_address->GetSize(),
-                                                 device_address.get());
+  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+    auto mem_type =
+      tensor->is_parameter() ? device::tracker::MemType::kWeight : device::tracker::MemType::kPyNativeInput;
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddMemInfo, "PyNative", mem_type, device_address->GetSize(),
+                                                   device_address.get());
+  }
   if (device_address->GetMutablePtr() != nullptr) {
     if (!is_view || device_address->GetDeviceType() != device::DeviceType::kCPU || device_address->from_mem_pool()) {
       return;
@@ -905,12 +908,13 @@ void DeviceAddressUtils::MallocForInput(const DeviceContext *device_context, con
     // If not from the pool, the lifetime of the device ptr is guaranteed elsewhere.
     // Before applying for a new address, clear the address. Otherwise a warnging is generated.
     device_address->set_ptr(nullptr);
-    if (device_context->GetDeviceType() != device_address->GetDeviceType()) {
-      const auto new_device_context = runtime::OpRunner::GetDeviceContext(kCPUDevice);
-      MS_EXCEPTION_IF_NULL(new_device_context);
-      if (!new_device_context->device_res_manager_->AllocateMemory(device_address.get())) {
-        MS_LOG(EXCEPTION) << "Allocate memory failed";
-      }
+    const auto new_device_context = device_context->GetDeviceType() == device_address->GetDeviceType()
+                                      ? device_context
+                                      : runtime::OpRunner::GetDeviceContext(kCPUDevice);
+
+    MS_EXCEPTION_IF_NULL(new_device_context);
+    if (!new_device_context->device_res_manager_->AllocateMemory(device_address.get())) {
+      MS_LOG(EXCEPTION) << "Allocate memory failed";
     }
   } else {
     if (!device_context->device_res_manager_->AllocateMemory(device_address.get())) {
