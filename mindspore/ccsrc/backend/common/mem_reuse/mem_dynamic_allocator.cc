@@ -111,24 +111,27 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
   }
   if (device_addr == nullptr) {
     device_addr = AddMemBlockAndMemBuf(align_size, from_persistent_mem, need_recycle, stream_id);
-  }
 
-  if (device_addr == nullptr) {
-    MS_LOG(INFO) << "Alloc tensor mem failed and try to sync all events to release memory.";
-    SyncAllEventsInner();
-    device_addr = FindAvailableMemBuf(align_size, from_persistent_mem, stream_id);
-  }
+    if (device_addr == nullptr) {
+      MS_LOG(INFO) << "Alloc tensor mem failed and try to sync all events to release memory.";
+      SyncAllEventsInner();
+      device_addr = FindAvailableMemBuf(align_size, from_persistent_mem, stream_id);
+    }
 
-  // Alloc memory failed and dump the info.
-  if (!device_addr) {
-    DumpDynamicMemPoolStateInfo();
+    // Alloc memory failed and dump the info.
+    if (!device_addr) {
+      DumpDynamicMemPoolStateInfo();
+    }
   }
 
 // report memory data to profiler
 #ifdef ENABLE_DEBUGGER
-  auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  static auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
-  profiler_inst->RecordMemoryPoolInfo(TotalUsedMemStatistics(), TotalMemStatistics(), TotalUsedByEventMemStatistics());
+  if (profiler_inst->GetEnableFlag() && profiler_inst->GetProfileMemoryFlag()) {
+    profiler_inst->RecordMemoryPoolInfo(TotalUsedMemStatistics(), TotalMemStatistics(),
+                                        TotalUsedByEventMemStatistics());
+  }
 #endif
 
   if (common::IsNeedProfileMemory()) {
@@ -139,9 +142,11 @@ DeviceMemPtr DynamicMemPoolBestFit::AllocTensorMem(size_t size, bool from_persis
                     << ", from persistent mem: " << from_persistent_mem << ", need recycle: " << need_recycle;
   }
   if (device_addr != nullptr) {
-    device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, align_size, GetMemoryPoolType(),
-                                         ActualPeakStatistics(), TotalUsedMemStatistics(), TotalMemStatistics(),
-                                         stream_id);
+    if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+      device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, align_size, GetMemoryPoolType(),
+                                           ActualPeakStatistics(), TotalUsedMemStatistics(), TotalMemStatistics(),
+                                           stream_id);
+    }
     if (IsMemoryPoolRecycle()) {
       (void)mem_bufs_.insert(device_addr);
     }
@@ -437,7 +442,6 @@ DeviceMemPtr DynamicMemPoolBestFit::CreateMemBlockAndMemBuf(size_t size, bool fr
   if (IsSplit(size, mem_buf->size_)) {
     SplitMemBuf(size, mem_buf, mem_mng, stream_id);
   }
-  MS_EXCEPTION_IF_NULL(mem_block);
   mem_block->update_border_addr(mem_buf->device_addr_, AddressOffset(mem_buf->device_addr_, mem_buf->size_));
   mem_buf->status_ = DynamicMemBufStatus::kMemBufUsed;
   // Memory statistics
@@ -627,9 +631,12 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block,
 
 // report memory data to profiler
 #ifdef ENABLE_DEBUGGER
-  auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
+  static auto profiler_inst = profiler::cpu::CPUProfiler::GetInstance();
   MS_EXCEPTION_IF_NULL(profiler_inst);
-  profiler_inst->RecordMemoryPoolInfo(TotalUsedMemStatistics(), TotalMemStatistics(), TotalUsedByEventMemStatistics());
+  if (profiler_inst->GetEnableFlag() && profiler_inst->GetProfileMemoryFlag()) {
+    profiler_inst->RecordMemoryPoolInfo(TotalUsedMemStatistics(), TotalMemStatistics(),
+                                        TotalUsedByEventMemStatistics());
+  }
 #endif
 
   if (common::IsNeedProfileMemory()) {
@@ -638,8 +645,10 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block,
                     << ", used by event mem: " << TotalUsedByEventMemStatistics()
                     << ", device address addr: " << mem_buf->device_addr_ << ", size: " << mem_buf->size_;
   }
-  device::tracker::CALL_MEMORY_TRACKER(FreeMemBlock, mem_buf->device_addr_, TotalUsedMemStatistics(),
-                                       TotalMemStatistics());
+  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+    device::tracker::CALL_MEMORY_TRACKER(FreeMemBlock, mem_buf->device_addr_, TotalUsedMemStatistics(),
+                                         TotalMemStatistics());
+  }
 
   if (mem_buf->status_ != origin_status) {
     DumpDynamicMemPoolDebugInfo();
@@ -765,8 +774,10 @@ void DynamicMemPoolBestFit::KeepTensorMemByAddr(const DeviceMemPtr &device_addr,
   MS_EXCEPTION_IF_NULL(device_addr);
   // Fetch the memblock and membuf by the device address.
   auto [mem_block, mem_buf, mem_mng] = FindByKeepAddr(device_addr);
-  device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), ActualPeakStatistics(),
-                                       TotalUsedMemStatistics(), TotalMemStatistics(), mem_block->stream_id_);
+  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+    device::tracker::CALL_MEMORY_TRACKER(AllocMemBlock, device_addr, size, GetMemoryPoolType(), ActualPeakStatistics(),
+                                         TotalUsedMemStatistics(), TotalMemStatistics(), mem_block->stream_id_);
+  }
   MS_EXCEPTION_IF_NULL(mem_block);
   MS_EXCEPTION_IF_NULL(mem_buf);
   MS_EXCEPTION_IF_NULL(mem_mng);
@@ -889,8 +900,8 @@ void DynamicMemPoolBestFit::ReleaseDeviceRes() {
 
 void DynamicMemPoolBestFit::DumpDynamicMemPoolStateInfo() {
   size_t total_used_size_list[kAllocatorTypeNum] = {0};
-  bool is_enable_memory_statistics = common::IsEnableRuntimeConfig(common::kRuntimeMemoryStat) ||
-                                     common::IsEnableRuntimeConfig(common::kRuntimeMemoryTrack);
+  static bool is_enable_memory_statistics = common::IsEnableRuntimeConfig(common::kRuntimeMemoryStat) ||
+                                            common::IsEnableRuntimeConfig(common::kRuntimeMemoryTrack);
   auto fn = [&](const MemStatusManagerPtr &mem_mng, const std::string &mem_type) {
     MS_EXCEPTION_IF_NULL(mem_mng);
     if (mem_mng->Empty()) {
@@ -1227,7 +1238,7 @@ size_t MemStatusManager::CalActualPeak() {
     return 0;
   }
   size_t actual_peak = total_block_size_;
-  auto end_block = mem_block_insertion_order_.back();
+  const auto &end_block = mem_block_insertion_order_.back();
   MS_EXCEPTION_IF_NULL(end_block);
   actual_peak -= end_block->size();
   actual_peak += end_block->get_actual_peak();

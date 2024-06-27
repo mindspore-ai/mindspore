@@ -318,8 +318,10 @@ void KernelActor::Run(OpContext<DeviceTensor> *const context) {
   try {
     MS_EXCEPTION_IF_NULL(kernel_);
     MS_EXCEPTION_IF_NULL(kernel_->func_graph());
-    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), kernel_->fullname_with_scope(),
-                                                   kernel_->func_graph()->ToString());
+    if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, GetAID().Name(), kernel_->fullname_with_scope(),
+                                                     kernel_->func_graph()->ToString());
+    }
     FetchInputDeviceTensor(context);
 
     if (ActorDispatcher::enable_runtime_multi_pipeline()) {
@@ -1018,24 +1020,24 @@ void KernelActor::ResizeKernelMod() {
 namespace {
 void TrackInputMemory(const std::vector<DeviceTensor *> &input_device_tensors, const std::string &actor_name,
                       const std::vector<bool> &depend_shape_input_list) {
-  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
-    for (size_t i = 0, end = input_device_tensors.size(); i < end; i++) {
-      // Skip shape depend inputs.
-      if (i < depend_shape_input_list.size() && depend_shape_input_list[i]) {
-        continue;
-      }
-      auto device_addr = input_device_tensors[i];
-      if (device_addr == nullptr || !device_addr->IsPtrValid()) {
-        continue;
-      }
-      device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(UseMemBlock, actor_name, device_addr->GetPtr());
+  for (size_t i = 0, end = input_device_tensors.size(); i < end; i++) {
+    // Skip shape depend inputs.
+    if (i < depend_shape_input_list.size() && depend_shape_input_list[i]) {
+      continue;
     }
+    auto device_addr = input_device_tensors[i];
+    if (device_addr == nullptr || !device_addr->IsPtrValid()) {
+      continue;
+    }
+    device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(UseMemBlock, actor_name, device_addr->GetPtr());
   }
 }
 }  // namespace
 
 bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
-  TrackInputMemory(input_device_tensors_, GetAID().Name(), depend_shape_input_list_);
+  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+    TrackInputMemory(input_device_tensors_, GetAID().Name(), depend_shape_input_list_);
+  }
   if (skip_launch_shape_related_op_) {
     MS_LOG(DEBUG) << "Skip launch real make tuple kernel: " << kernel_->fullname_with_scope()
                   << " input kernel tensor: " << input_kernel_tensors_;
