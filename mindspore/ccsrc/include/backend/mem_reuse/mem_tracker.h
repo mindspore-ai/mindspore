@@ -177,6 +177,7 @@ class BACKEND_EXPORT MemTracker {
                                    const std::string &file_name, size_t line_num) = 0;
 
   virtual void Dump() = 0;
+  virtual void UpdateProfilingPos() = 0;
   virtual void DumpProfilingMemInfo(const std::string &path, const std::string &file_name) = 0;
   virtual bool IsEnabled() = 0;
   virtual ~MemTracker() = default;
@@ -204,6 +205,7 @@ class BACKEND_EXPORT MemoryTrackerEnabled : public MemTracker {
   void UpdateDevicePtrInfo(DeviceMemPtr device_ptr, MemType mem_type, const std::string &task_name,
                            const std::string &file_name, size_t line_num) override;
   void Dump() override;
+  void UpdateProfilingPos() override;
   void DumpProfilingMemInfo(const std::string &path, const std::string &file_name) override;
 
   bool IsEnabled() override { return true; }
@@ -272,6 +274,7 @@ class BACKEND_EXPORT MemoryTrackerDisabled : public MemTracker {
   void UpdateDevicePtrInfo(DeviceMemPtr device_ptr, MemType mem_type, const std::string &task_name,
                            const std::string &file_name, size_t line_num) override {}
   void Dump() override {}
+  void UpdateProfilingPos() override {}
   void DumpProfilingMemInfo(const std::string &path, const std::string &file_name) {}
   bool IsEnabled() override { return false; }
   MemoryTrackerDisabled(const MemoryTrackerDisabled &) = delete;
