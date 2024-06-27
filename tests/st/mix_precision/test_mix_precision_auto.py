@@ -393,3 +393,50 @@ def test_auto_mix_precision_train_subnet_auto():
     loss_pynative2 = train_network_pynative2(Tensor(input_data), Tensor(label_data))
 
     assert np.allclose(loss_pynative.asnumpy(), loss_pynative2.asnumpy(), 0.0001, 0.0001)
+
+
+class NetWithRecompute(nn.Cell):
+
+    def __init__(self, in_c, out_c):
+        super().__init__()
+        self.relu = nn.ReLU()
+        self.bn = nn.BatchNorm2d(num_features=out_c,
+                                 gamma_init='ones',
+                                 beta_init='zeros',
+                                 moving_mean_init='zeros',
+                                 moving_var_init='ones')
+        self.conv = nn.Conv2d(in_channels=in_c,
+                              out_channels=out_c,
+                              kernel_size=3,
+                              stride=1,
+                              has_bias=False,
+                              pad_mode='same',
+                              weight_init='ones',
+                              bias_init='ones')
+        self.conv.recompute()
+
+    def construct(self, x):
+        x = self.conv(x)
+        x = self.bn(x)
+        x = self.relu(x)
+        return x
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_auto_mix_precision_recompute():
+    """
+    Feature: auto mixed precision auto mode.
+    Description: test amp auto mode using network with recompute.
+    Expectation: success.
+    """
+    context.set_context(mode=context.PYNATIVE_MODE)
+    input_data = np.random.randn(32, 3, 224, 224).astype(np.float16)
+
+    # net with amp should run success
+    net = NetWithRecompute(3, 10)
+    net = auto_mixed_precision(net, amp_level="auto", dtype=ms.float16)
+    grad_net = ops.GradOperation()(net)
+    grad_val = grad_net(Tensor(input_data))
+    _ = grad_val.asnumpy()

@@ -25,6 +25,8 @@ from mindspore.ops.composite import GradOperation
 from mindspore.common._register_for_recompute import recompute_registry
 from mindspore.common.api import _pynative_executor
 from mindspore.common.generator import get_rng_state, set_rng_state
+from mindspore.train.amp import amp_decorator
+from mindspore._c_expression.amp import get_curr_amp_strategy
 
 
 class _WrapCell(Cell):
@@ -64,6 +66,7 @@ class _RecomputeCell(Cell):
         self._add_attr("is_cell_recompute", "True")
         self.grad = GradOperation(get_all=True, get_by_list=True, sens_param=True)
         self.init_mixed_precision_type(block)
+        self.amp_strategy = None
 
     def construct(self, *args, **kwargs):
         _check_input_args_validate(self.net, args)
@@ -72,6 +75,7 @@ class _RecomputeCell(Cell):
         self.save_rng_state = kwargs.pop("save_rng_state", True)
         if self.save_rng_state:
             self.cpu_rng_state = get_rng_state()
+        self.amp_strategy = get_curr_amp_strategy()
         return self.net(*args, **kwargs)
 
     def bprop(self, *args):
@@ -93,7 +97,12 @@ class _RecomputeCell(Cell):
             pre_rng_state = get_rng_state()
             set_rng_state(self.cpu_rng_state)
             _pynative_executor.set_is_run_recompute(True)
-            grads = self.grad(self.net, self.internal_params)(*input_args, grad_input)
+            if self.amp_strategy:
+                with amp_decorator(self.amp_strategy.get_amp_level(), self.amp_strategy.get_amp_dtype(),
+                                   self.amp_strategy.get_white_list(), self.amp_strategy.get_black_list()):
+                    grads = self.grad(self.net, self.internal_params)(*input_args, grad_input)
+            else:
+                grads = self.grad(self.net, self.internal_params)(*input_args, grad_input)
             _pynative_executor.set_is_run_recompute(False)
             set_rng_state(pre_rng_state)
         except Exception as err:
