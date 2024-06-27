@@ -112,7 +112,7 @@ def test_shape_cast(data_type):
     helper(Net, (dyn, dyn), (x, y))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_stridedslice():
@@ -174,7 +174,7 @@ def test_concat_grad():
     helper(lambda: GradNet(Net()), (dyn, dyn), (x, y))
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
 def test_stridedslice_grad():

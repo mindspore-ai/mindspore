@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace symshape {
 /// \brief Build constant symbolic value.
-MS_CORE_API SymbolPtr ConstValueToSymbol(const ValuePtr &v);
+MS_CORE_API SymbolPtr ConstValueToSymbol(const ValuePtr &v, bool to_scalar = false);
 
 /// \brief Build symbolic value.
 /// If the abstract's value is ValueAny, the variable value list is generated according to the shape.

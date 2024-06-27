@@ -81,13 +81,46 @@ SymbolPtr GenValueByShape(const BaseShapePtr &baseshape, const TypePtr &type_ptr
 }
 }  // namespace
 
-SymbolPtr ConstValueToSymbol(const ValuePtr &v) {
+SymbolPtr KernelTensorValueToSymbol(const ValuePtr &v, bool to_scalar) {
+  auto type_ptr = v->type();
+  if (type_ptr == nullptr) {
+    MS_LOG(WARNING) << "type of KernelTensorPtr is null! trying getting Tuple Int";
+    auto value = CheckAndConvertUtils::CheckTupleInt(v->ToString(), v, "ConstSymbolicValue");
+    return IntValues2Symbol(value);
+  }
+  if (type_ptr->type_id() == kNumberTypeBool) {
+    return BoolSymbol::Make(ops::GetScalarValue<bool>(v).value());
+  }
+  if (type_ptr->type_id() == kObjectTypeString) {
+    return StrSymbol::Make(ops::GetScalarValue<std::string>(v).value());
+  }
+  if (type_ptr->type_id() == kNumberTypeInt64) {
+    return IntSymbol::Make(ops::GetScalarValue<int64_t>(v).value());
+  }
+  if (type_ptr->type_id() == kNumberTypeInt32) {
+    return IntSymbol::Make(static_cast<int64_t>(ops::GetScalarValue<int32_t>(v).value()));
+  }
+  auto value_opt = ops::GetArrayValue<int64_t>(v);
+  if (value_opt.has_value()) {
+    auto vec = value_opt.value().ToVector();
+    if (to_scalar && !vec.empty()) {
+      return IntSymbol::Make(vec[0]);
+    }
+    return IntValues2Symbol(vec);
+  }
+  MS_LOG(INTERNAL_EXCEPTION) << "Unsupported KernelTensorValue to Symbol: " << type_ptr->ToString();
+}
+
+SymbolPtr ConstValueToSymbol(const ValuePtr &v, bool to_scalar) {
+  if (v->isa<KernelTensorValue>()) {
+    return KernelTensorValueToSymbol(v, to_scalar);
+  }
   if (v->isa<ValueSequence>()) {
     auto seq = v->cast_ptr<ValueSequence>();
     MS_EXCEPTION_IF_NULL(seq);
     SymbolPtrList result(seq->size());
     (void)std::transform(seq->value().begin(), seq->value().end(), result.begin(),
-                         [](const ValuePtr &v) { return ConstValueToSymbol(v); });
+                         [to_scalar](const ValuePtr &v) { return ConstValueToSymbol(v, to_scalar); });
     return ListSymbol::Make(std::move(result));
   }
   if (v->isa<tensor::Tensor>()) {
@@ -107,30 +140,6 @@ SymbolPtr ConstValueToSymbol(const ValuePtr &v) {
   if (v->isa<StringImm>()) {
     return StrSymbol::Make(GetValue<std::string>(v));
   }
-  if (v->isa<KernelTensorValue>()) {
-    auto type_ptr = v->type();
-    if (type_ptr == nullptr) {
-      MS_LOG(WARNING) << "type of KernelTensorPtr is null! trying getting Tuple Int";
-      auto value = CheckAndConvertUtils::CheckTupleInt(v->ToString(), v, "ConstSymbolicValue");
-      return IntValues2Symbol(value);
-    }
-    if (type_ptr->type_id() == kNumberTypeBool) {
-      return BoolSymbol::Make(ops::GetScalarValue<bool>(v).value());
-    }
-    if (type_ptr->type_id() == kObjectTypeString) {
-      return StrSymbol::Make(ops::GetScalarValue<std::string>(v).value());
-    }
-    if (type_ptr->type_id() == kNumberTypeInt64) {
-      return IntSymbol::Make(ops::GetScalarValue<int64_t>(v).value());
-    }
-    if (type_ptr->type_id() == kNumberTypeInt32) {
-      return IntSymbol::Make(static_cast<int64_t>(ops::GetScalarValue<int32_t>(v).value()));
-    }
-    auto value_opt = ops::GetArrayValue<int64_t>(v);
-    if (value_opt.has_value()) {
-      return IntValues2Symbol(value_opt.value().ToVector());
-    }
-  }
   MS_LOG(EXCEPTION)
     << "Value should be one of {ValueSequence, Tensor, IntegerImm, BoolImm, FloatImm, StringImm}, but got "
     << v->ToString();
@@ -142,7 +151,11 @@ SymbolPtr BuildSymbolicValue(const AbstractBasePtr &abstract) {
   if (value_ptr->isa<ValueAny>()) {
     return GenValueByShape(abstract->GetShape(), abstract->GetType());
   }
-  return ConstValueToSymbol(value_ptr);
+  auto shape = abstract->GetShape();
+  if (shape->isa<abstract::TensorShape>() && shape->cast_ptr<abstract::TensorShape>()->shape().empty()) {
+    return ConstValueToSymbol(value_ptr, true);
+  }
+  return ConstValueToSymbol(value_ptr, false);
 }
 
 ShapeVector ToShape(const Symbol *symbol) {
