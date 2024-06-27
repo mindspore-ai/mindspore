@@ -642,14 +642,29 @@ class CSRTensor(CSRTensor_):
     values indicated by `values` and row and column positions indicated by `indptr`
     and `indices`.
 
-    For example, if indptr is [0, 1, 2, 2], indices is [1, 2], values is [1., 2.], shape is
-    (3, 4), then the dense representation of the sparse tensor will be:
+    For example, if indptr is [0, 2, 5, 6], indices is [0, 3, 1, 2, 4, 2], values is
+    [1., 2., 3., 4., 5., 6.], shape is (3, 5), then the dense representation of the sparse tensor will be:
 
     .. code-block::
+        [[1., 0., 0., 2., 0.],
+         [0., 3., 4., 0., 5.],
+         [0., 0., 6., 0., 0.]]
 
-        [[0., 1., 0., 0.],
-         [0., 0., 2., 0.],
-         [0., 0., 0., 0.]]
+    The length of `indptr` should equal to `shape[0]+1`, where the elements should be equal or monotonically
+    increasing and the maximum value should be equal to the number of non-zero values in the tensor. The length
+    of `indices` and `values` should be equal to the number of non-zero values in the tensor. To be concrete, get
+    the query indices of none-zero elements in every line according to `indptr`. Then get the column positions of
+    none-zero elements in every line by looking up query indices in `indices`. Finally, get the actual values of
+    none-zero elements in every line by looking up query indices in `values`. In the former example, 'indptr' of
+    [0, 2, 5, 6] represents that the indices of 0th row of the tensor origins from [0, 2), the indices of
+    the 1st row of the tensor origins from [2, 5) and the 2nd row of the tensor origins from [5, 6). For example,
+    the column positions of the non-zero elements of the 0th row in the tensor are provided by the [0, 2) elements in
+    `indices` (i.e. [0, 3]) and the corresponding values are provided by the [0, 2) elements in `values`
+    (i.e. [1., 2.]). The column positions of the non-zero elements of the 1st row in the tensor are provided by the
+    [2, 5) elements in `indices` (i.e. [1, 2, 4]) and the corresponding values are provided by the [2, 5) elements in
+    `values` (i.e. [3., 4., 5.]). The column positions of the non-zero elements of the 2nd row in the tensor are
+    provided by the [5, 6) elements in `indices` (i.e. [2]) and the corresponding values are provided by the [5, 6)
+    elements in `values` (i.e. [6.]).
 
     Common arithmetic operations include: addition (+), subtraction (-), multiplication (*),
     and division (/). For details about operations supported by `CSRTensor`, see
