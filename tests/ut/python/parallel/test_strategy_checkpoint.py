@@ -284,3 +284,54 @@ def six_matmul_load_auto():
     x7 = Tensor(np.ones([32, 32]), dtype=ms.float32)
     net.set_train()
     _cell_graph_executor.compile(net, x1, x6, x7)
+
+
+def test_parallel_optimizer_load_strategy():
+    """
+    Feature: test auto parallel
+    Description: auto parallel
+    Expectation: compile success
+    """
+
+    class NetWithLoss(nn.Cell):
+        def __init__(self, network):
+            super(NetWithLoss, self).__init__()
+            self.loss = VirtualLoss()
+            self.network = network
+
+        def construct(self, x1):
+            predict = self.network(x1)
+            return self.loss(predict)
+
+    class GradWrap(nn.Cell):
+        def __init__(self, network):
+            super(GradWrap, self).__init__()
+            self.network = network
+
+        def construct(self, x1):
+            return grad_all(self.network)(x1)
+
+    class Net(nn.Cell):
+        def __init__(self, strategy1):
+            super().__init__()
+            self.matmul1 = P.MatMul(transpose_b=True).shard(strategy1)
+            self.weight1 = Parameter(Tensor(np.ones([2560, 2560]), dtype=ms.float32), name="weight1")
+            self.relu = P.ReLU()
+
+        def construct(self, x1):
+            out = self.matmul1(x1, self.weight1)
+            out = self.relu(out)
+            return out
+
+    reset_auto_parallel_context()
+    set_auto_parallel_context(device_num=8, global_rank=0,
+                              strategy_ckpt_save_file='./strategy.ckpt',
+                              enable_parallel_optimizer=True, optimizer_weight_shard_size=2)
+    strategy1 = ((4, 1), (2, 1))
+    net = GradWrap(NetWithLoss(Net(strategy1)))
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    x1 = Tensor(np.ones([2560, 2560]), dtype=ms.float32)
+    net.set_train()
+    _cell_graph_executor.compile(net, x1)
+    strategy = ms.build_searched_strategy("./strategy.ckpt")
+    assert strategy["network.network.weight1"].opt_weight_shard_size == 2
