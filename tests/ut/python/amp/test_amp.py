@@ -173,18 +173,18 @@ def test_amp_auto_white_list():
     input_data = Tensor(np.ones([1, 1]), dtype=ms.float32)
     # test with net
     net = MatmulNet()
-    with pytest.raises(ValueError):
-        # ValueError: For MatMul, the dtype of 'input' and 'other' should be the same,
-        # but got 'input' with dtype: 43 and 'other' with dtype: 42.
+    with pytest.raises(TypeError):
+        # TypeError: For 'MatMul', the type of 'x2' should be same as 'x1', but got 'x1' with type Tensor[Float32] and
+        # 'x2' with type Tensor[Float16].
         net(input_data)
 
     net = auto_mixed_precision(net, "auto")
     out = net(input_data)
     assert out.dtype == ms.float16
     # test with func
-    with pytest.raises(ValueError):
-        # ValueError: For MatMul, the dtype of 'input' and 'other' should be the same,
-        # but got 'input' with dtype: 43 and 'other' with dtype: 42.
+    with pytest.raises(TypeError):
+        # TypeError: For 'MatMul', the type of 'x2' should be same as 'x1', but got 'x1' with type Tensor[Float32] and
+        # 'x2' with type Tensor[Float16].
         out = func_matmul(input_data)
         _ = out.asnumpy()
 
