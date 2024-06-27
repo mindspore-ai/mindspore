@@ -248,7 +248,7 @@ def clamp(input, min=None, max=None):
           max (Union(Tensor, float, int), optional): The maximum value. Default: ``None`` .
 
     Returns:
-          Union(Tensor), a clipped Tensor.
+          Tensor, a clipped Tensor.
           The data type and shape are the same as input.
 
     Raises:
