@@ -151,7 +151,7 @@ class BACKEND_EXPORT GraphScheduler {
                                std::vector<AbstractActor *> *const auto_monad_actors);
   void LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info,
                                   std::vector<AbstractActor *> *const auto_monad_actors,
-                                  std::vector<CNodePtr> *const communication_nodes);
+                                  std::vector<CNodePtr> *const communication_nodes, bool is_include_rpc);
   // The gather of linking data arrows of kernel, it will call following functions by the different from actor type.
   void LinkDataArrow(AbstractActor *const to_actor, const GraphCompilerInfo &graph_compiler_info,
                      const KernelGraphPtr &graph, const KernelWithIndex &from_kernel_with_output_idx,

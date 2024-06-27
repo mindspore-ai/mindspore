@@ -137,7 +137,7 @@ void SuperKernelActor::Init() {
       }
       // Free the ptr in device address of output node.
       if (device_address->GetPtr() != nullptr) {
-        MS_LOG(ERROR) << "Output node:" << output_node->DebugString() << " has a default ptr, maybe a mem leak.";
+        MS_LOG(INFO) << "Output node:" << output_node->DebugString() << " has a default ptr, maybe a mem leak.";
         device_address->set_ptr(nullptr);
       }
       if (common::IsNeedProfileMemory()) {
