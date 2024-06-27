@@ -130,10 +130,11 @@ def data_sink(fn, dataset, sink_size=1, jit_config=None, input_signature=None):
     A wrapper function to generate a function for the input function.
 
     Note:
-        When using data sinking, the dataset will be automatically sent in a loop, and only the step size of sinking
-        `sink_size` needs to be considered. The default value of `sink_size` is ``1``, which means that all data will
-        be sunk every epoch. If `sink_size` is greater than 1, the amount of data sunk per epoch will be the dataset
-        with a size of `sink_size`.
+        When using data sinking, the dataset will be automatically looped to the device. The device side can cache up
+        to 100 batches of data and occupy no more than 2GB of memory. At this time, only the number of steps for each
+        sinking `sink_size` needs to be considered. `sink_size` defaults to ``1``, indicating that each epoch only
+        takes one batch of data from the cache for training and outputs a loss. If `sink_size` is greater than 1, each
+        epoch takes out `sink_size` batches of data from the cache for training and outputs a loss.
 
     Args:
         fn (Function): The Python function that will be run with dataset.
