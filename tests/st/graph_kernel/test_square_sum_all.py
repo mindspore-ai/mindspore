@@ -14,11 +14,12 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
+
 
 class Net(Cell):
     def __init__(self):
@@ -28,13 +29,15 @@ class Net(Cell):
     def construct(self, x0, x1):
         return self.squaresumall(x0, x1)
 
+
 def get_output(inp0, inp1, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
     net = Net()
     output = net(inp0, inp1)
     return output
 
-def test_basic(datatype):
+
+def run_basic(datatype):
     inp0 = Tensor(np.random.normal(1, 0.1, [800, 96]).astype(datatype))
     inp1 = Tensor(np.random.normal(1, 0.1, [800, 96]).astype(datatype))
     expect = get_output(inp0, inp1, False)
@@ -46,16 +49,24 @@ def test_basic(datatype):
     assert np.allclose(expect_np0, output_np0, 1.e-4, 1.e-7)
     assert np.allclose(expect_np1, output_np1, 1.e-4, 1.e-7)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_1():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_basic(np.float16)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_gpu_1():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic(np.float16)
+
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_2():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_basic(np.float32)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic(np.float32)

@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -37,7 +37,14 @@ def get_output(x, axis, keep_dims, enable_graph_kernel=False):
     return output
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_reduce_min():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     x0 = Tensor(np.random.normal(0, 1, [2, 3, 4, 4]).astype(np.float32))
     axis0 = 3
     keep_dims0 = True
@@ -58,11 +65,3 @@ def test_reduce_min():
     expect = get_output(x2, axis2, keep_dims2, False)
     output = get_output(x2, axis2, keep_dims2, True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 0.0001, 0.0001)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_reduce_min_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_reduce_min()

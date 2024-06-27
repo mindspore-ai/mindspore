@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore as ms
@@ -56,16 +56,13 @@ def basic_test(net, inp):
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_fp16():
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_conv_fp16():
     """
     Feature: Graph Kernel expander
     Description: Verify Conv2D expander in GPU
     Expectation: No exception
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU",
-                        graph_kernel_flags='--enable_expand_ops=Conv2D')
+    context.set_context(mode=context.GRAPH_MODE, graph_kernel_flags='--enable_expand_ops=Conv2D')
     inp = Tensor(np.random.random((32, 32, 52, 52)).astype(np.float32))
     basic_test(Conv2dNet2().to_float(ms.float16), inp)

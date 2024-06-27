@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -36,7 +36,7 @@ def get_output(y_backprop, x, enable_graph_kernel=False):
     return output
 
 
-def test_relu_grad(shape1, shape2, dtype):
+def run_relu_grad(shape1, shape2, dtype):
     x = Tensor(np.random.normal(0, 10, shape1).astype(dtype))
     y_backprop = Tensor(np.random.normal(0, 10, shape2).astype(dtype))
     expect = get_output(y_backprop, x, False)
@@ -48,20 +48,25 @@ def test_relu_grad(shape1, shape2, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_relu_grad_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_relu_grad((4, 3), (4, 3), np.int32)
-    test_relu_grad((12, 1), (12, 1), np.float16)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_relu_grad((4, 3), (4, 3), np.int32)
+    run_relu_grad((12, 1), (12, 1), np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_relu_grad_ascend():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_relu_grad((4, 3), (4, 3), np.int32)
-    test_relu_grad((12, 1), (12, 1), np.float16)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_relu_grad((4, 3), (4, 3), np.int32)
+    run_relu_grad((12, 1), (12, 1), np.float16)

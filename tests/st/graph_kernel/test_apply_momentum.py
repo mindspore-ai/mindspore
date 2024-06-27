@@ -14,10 +14,12 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore
 from mindspore import Tensor, nn, ops, Parameter
 from mindspore import context
+
+
 class ApplyMomentum(nn.Cell):
     def __init__(self):
         super(ApplyMomentum, self).__init__()
@@ -26,9 +28,11 @@ class ApplyMomentum(nn.Cell):
                                          .astype(np.float32)), name="variable")
         self.accumulate = Parameter(Tensor(np.array([[0.6, 0.5], [0.2, 0.6]])
                                            .astype(np.float32)), name="accumulate")
+
     def construct(self, lr, grad, moment):
         out = self.apply_momentum(self.variable, self.accumulate, lr, grad, moment)
         return out
+
 
 def get_output(lr, grad, moment, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
@@ -37,6 +41,7 @@ def get_output(lr, grad, moment, enable_graph_kernel=False):
     net = ApplyMomentum()
     output = net(lr, grad, moment)
     return output, net.variable, net.accumulate
+
 
 def run_apply_momentum():
     lr = Tensor(0.1, mindspore.float32)
@@ -47,9 +52,8 @@ def run_apply_momentum():
     for i in range(2):
         assert np.allclose(expect[i].asnumpy(), output[i].asnumpy(), 0.0001, 0.0001)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_apply_momentum_ascend():
     """
     Feature: test graph kernel ApplyMomentum
@@ -57,5 +61,5 @@ def test_apply_momentum_ascend():
     Expectation: the result match with expect
     """
     context.set_context(jit_level='O0')
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     run_apply_momentum()

@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -48,14 +48,12 @@ def run_floatstatus_addn():
     assert res
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_floatstatus_addn():
     """
     Feature: graph kernel testcase for floatstatus addn fusion
     Description: random input when using graph_kernel in graph mode
     Expectation: the result is 0
     """
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     run_floatstatus_addn()

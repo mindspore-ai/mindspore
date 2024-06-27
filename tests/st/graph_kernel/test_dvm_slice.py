@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor, nn
 import mindspore.ops.operations as P
@@ -33,7 +34,7 @@ class Net(nn.Cell):
         c = self.slice(a, (10, 0, 133), (4, 2, 233))
         d = self.strided_slice(b, (10, 0, 133), (14, 2, 233), (1, 1, 1))
         e = self.abs(d)
-        f = c*c
+        f = c * c
         return e, f
 
 
@@ -60,9 +61,7 @@ def fuse(dtype):
     assert np.allclose(expect[1].asnumpy(), output[1] .asnumpy(), eps, eps)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("dtype", [np.float16, np.float32, np.int32])
 def test_slice_dvm(dtype):
     """
@@ -71,5 +70,5 @@ def test_slice_dvm(dtype):
     Expectation: the result match with close graph_kernel result
     """
     context.set_context(jit_level='O0')
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     fuse(dtype)

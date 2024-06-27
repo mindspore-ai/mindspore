@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -51,7 +51,7 @@ def get_output(i0, i1, i2, enable_graph_kernel=False, is_ge=False):
     return output
 
 
-def test_basic(is_ge=False):
+def run_basic(is_ge=False):
     """
     Feature: test graph kernel
     Description: run op fuse
@@ -70,28 +70,23 @@ def test_basic(is_ge=False):
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_basic_gpu():
     """
     Feature: test graph kernel precision on GPU
     Description: run op fuse
     Expectation: the result match with the expected result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_basic()
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_basic_ascend():
     """
     Feature: test graph kernel precision on Ascend
     Description: run op fuse
     Expectation: the result match with the expected result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_basic(True)
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic(True)

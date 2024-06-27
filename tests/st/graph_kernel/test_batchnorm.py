@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
@@ -29,6 +29,7 @@ class Net(nn.Cell):
         self.bias = Parameter(input_bias, name='b')
         self.mean = Parameter(input_mean, name='mean')
         self.variance = Parameter(input_variance, name='variance')
+
     def construct(self, input_x):
         return self.fused_bn_ex(input_x, self.scale, self.bias, self.mean, self.variance)
 
@@ -40,12 +41,19 @@ def get_output(x, weight, bias, moving_mean, moving_var, is_training, enable_gra
     return output, net.mean, net.variance
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bn_train():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     x = np.random.normal(0, 1, [1, 2, 4, 4]).astype(np.float32)
-    weight = np.random.normal(0, 1, [2,]).astype(np.float32)
-    bias = np.random.normal(0, 1, [2,]).astype(np.float32)
-    moving_mean = np.random.normal(0, 1, [2,]).astype(np.float32)
-    moving_var = np.random.normal(0, 1, [2,]).astype(np.float32)
+    weight = np.random.normal(0, 1, [2]).astype(np.float32)
+    bias = np.random.normal(0, 1, [2]).astype(np.float32)
+    moving_mean = np.random.normal(0, 1, [2]).astype(np.float32)
+    moving_var = np.random.normal(0, 1, [2]).astype(np.float32)
 
     train_expect = get_output(x, weight, bias, moving_mean, moving_var, True, False)
     train_output = get_output(x, weight, bias, moving_mean, moving_var, True, True)
@@ -56,30 +64,22 @@ def test_bn_train():
     assert np.allclose(train_expect[1].data.asnumpy(), train_output[1].data.asnumpy(), 0.0001, 0.0001)
     assert np.allclose(train_expect[2].data.asnumpy(), train_output[2].data.asnumpy(), 0.0001, 0.0001)
 
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bn_infer():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, graph_kernel_flags='--enable_expand_ops=BatchNorm')
     x = np.random.normal(5, 1, [1, 2, 4, 4]).astype(np.float32)
-    weight = np.random.normal(5, 1, [2,]).astype(np.float32)
-    bias = np.random.normal(5, 1, [2,]).astype(np.float32)
-    moving_mean = np.random.normal(5, 1, [2,]).astype(np.float32)
-    moving_var = np.random.normal(5, 1, [2,]).astype(np.float32)
+    weight = np.random.normal(5, 1, [2]).astype(np.float32)
+    bias = np.random.normal(5, 1, [2]).astype(np.float32)
+    moving_mean = np.random.normal(5, 1, [2]).astype(np.float32)
+    moving_var = np.random.normal(5, 1, [2]).astype(np.float32)
 
     infer_expect = get_output(x, weight, bias, moving_mean, moving_var, False, False)
     infer_output = get_output(x, weight, bias, moving_mean, moving_var, False, True)
 
     assert np.allclose(infer_expect[0][0].asnumpy(), infer_output[0][0].asnumpy(), 0.0001, 0.0001)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_bn_train_gpu():
-    # BatchNorm in train mode has monad in inputs
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_bn_train()
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_bn_infer_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU",
-                        graph_kernel_flags='--enable_expand_ops=BatchNorm')
-    test_bn_infer()

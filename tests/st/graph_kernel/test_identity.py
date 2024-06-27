@@ -14,11 +14,12 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
+
 
 class Net(Cell):
     def __init__(self):
@@ -28,29 +29,39 @@ class Net(Cell):
     def construct(self, x):
         return self.identity(x)
 
+
 def get_output(x, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
     net = Net()
     output = net(x)
     return output
 
-def test_basic(dtype):
+
+def run_basic(dtype):
     expect_np = np.random.normal(0, 10, (16, 32)).astype(dtype)
     x = Tensor(expect_np)
     output = get_output(x, True)
     output_np = output.asnumpy().copy()
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_1():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_basic(np.float16)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_gpu_1():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic(np.float16)
+
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_2():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_basic(np.float32)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic(np.float32)

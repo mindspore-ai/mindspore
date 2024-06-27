@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -59,7 +59,14 @@ class MultiOutNet(Cell):
         return self.add(add_res, sum_res)
 
 
-def atomic_add_sum_output():
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_atomic_add_sum_output():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     np.random.seed(0)
     input_x = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
 
@@ -72,7 +79,14 @@ def atomic_add_sum_output():
     assert res
 
 
-def atomic_add_single_output():
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_atomic_add_single_output():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     np.random.seed(0)
     input_x = np.random.normal(0, 1, [2, 2, 2, 256]).astype(np.float32)
     input_y = np.random.normal(0, 1, [2, 2, 2, 256]).astype(np.float32)
@@ -86,7 +100,14 @@ def atomic_add_single_output():
     assert res
 
 
-def atomic_add_multi_output():
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_atomic_add_multi_output():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     np.random.seed(0)
     input_x = np.random.normal(0, 1, [2, 2, 2, 256]).astype(np.float32)
     input_y = np.random.normal(0, 1, [2, 2, 2, 256]).astype(np.float32)
@@ -98,48 +119,3 @@ def atomic_add_multi_output():
 
     res = np.allclose(expect, result.asnumpy(), rtol=1.e-4, atol=1.e-7, equal_nan=True)
     assert res
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_atomic_add_sum_output_gpu():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
-    atomic_add_sum_output()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_atomic_add_single_output_gpu():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
-    atomic_add_single_output()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_atomic_add_multi_output_gpu():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
-    atomic_add_multi_output()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_atomic_add_sum_output_ascend():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
-    atomic_add_sum_output()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_atomic_add_single_output_ascend():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
-    atomic_add_single_output()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_atomic_add_multi_output_ascend():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
-    atomic_add_multi_output()

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
+from tests.mark_utils import arg_mark
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
@@ -57,9 +57,7 @@ def compare_stridedslice_result(shape, dtype, axis_mask, mask_type):
         raise ValueError('mask_type must be "new_axis_mask" or "shrink_axis_mask"')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_stridedslice_to_reshape_gpu():
     """
     Feature: Test stridedslice replacement in arithmetic_simplify pass.
@@ -67,7 +65,7 @@ def test_stridedslice_to_reshape_gpu():
     reshape in arithmetic_simplify pass.
     Expectation: No exception
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     compare_stridedslice_result((1, 255, 256), np.float32, 0, "new_axis_mask")
     compare_stridedslice_result((1, 255, 256), np.float32, 0, "shrink_axis_mask")
     compare_stridedslice_result((1, 255, 256), np.float32, 1, "new_axis_mask")

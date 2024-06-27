@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -41,33 +41,37 @@ class NetSigmoidGrad(nn.Cell):
         return self.sigmoid_grad(y, dy)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sigmoid():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
     x = Tensor(np.array([[[[-1, 1, 10],
                            [1, -1, 1],
                            [10, 1, -1]]]]).astype(np.float32))
 
     error = np.ones(shape=[1, 1, 3, 3]) * 1.0e-6
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     net = NetSigmoid()
     result_open_gk = net(x)
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=False, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=False)
     net_beta = NetSigmoid()
     result_close_gk = net_beta(x)
     diff = result_open_gk.asnumpy() - result_close_gk.asnumpy()
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sigmoid_grad():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
     y = Tensor(np.array([[[[-1, 1, 2],
                            [1, -1, 1],
                            [2, 1, -1]]]]).astype(np.float32))
@@ -77,13 +81,11 @@ def test_sigmoid_grad():
 
     error = np.ones(shape=[1, 1, 3, 3]) * 1.0e-6
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     net = NetSigmoidGrad()
     result_open_gk = net(y, dy)
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=False, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=False)
     net_beta = NetSigmoidGrad()
     result_close_gk = net_beta(y, dy)
     diff = result_open_gk.asnumpy() - result_close_gk.asnumpy()

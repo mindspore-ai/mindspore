@@ -14,12 +14,12 @@
 # ============================================================================
 
 import numpy as np
-import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from tests.st.pynative.utils import GradOfAllInputs
+from tests.mark_utils import arg_mark
 
 
 class Maximum(Cell):
@@ -58,25 +58,17 @@ def get_maximum_grad_output(input_x, input_y, input_dout, enable_graph_kernel=Fa
     return result[0].asnumpy(), result[1].asnumpy()
 
 
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_maximum_grad():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     input_x, input_y, input_dout = gen_data()
     result_off = get_maximum_grad_output(input_x, input_y, input_dout, False)
     result_on = get_maximum_grad_output(input_x, input_y, input_dout, True)
     assert np.allclose(result_on[0], result_off[0], rtol=1.e-4, atol=1.e-8, equal_nan=True)
-    assert np.allclose(result_on[1], result_off[1], rtol=1.e-4, atol=1.e-8, equal_nan=True)\
-
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_maximum_grad_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_maximum_grad()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_maximum_grad_ascend():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_maximum_grad()
+    assert np.allclose(result_on[1], result_off[1], rtol=1.e-4, atol=1.e-8, equal_nan=True)

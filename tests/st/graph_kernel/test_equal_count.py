@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -46,53 +46,34 @@ def basic_test(datatype):
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_fp16():
     """
-    /// Feature: equalcount op open graphkernel on gpu
-    /// Description: equalcount op on gpu set graph mode test open graph kernel flag
-    /// Expectation: open graph kernel result equal to close graph kernel
+    Feature: equalcount op open graphkernel on gpu
+    Description: equalcount op on gpu set graph mode test open graph kernel flag
+    Expectation: open graph kernel result equal to close graph kernel
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     basic_test(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_fp32():
     """
-    /// Feature: equalcount op open graphkernel on gpu
-    /// Description: equalcount op on gpu set graph mode test open graph kernel flag
-    /// Expectation: open graph kernel result equal to close graph kernel
+    Feature: equalcount op open graphkernel on gpu
+    Description: equalcount op on gpu set graph mode test open graph kernel flag
+    Expectation: open graph kernel result equal to close graph kernel
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     basic_test(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_ascend_graph_mode_fp32():
-    """
-    /// Feature: equalcount op expand fallback on ascend
-    /// Description: equalcount op on ascend set graph mode test expand fallback
-    /// Expectation: open graph kernel result equal to close graph kernel
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    basic_test(np.float32)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ascend_pynative_mode_fp32():
     """
-    /// Feature: equalcount op expand fallback on ascend
-    /// Description: equalcount op on ascend set pynative mode test expand fallback
-    /// Expectation: open graph kernel result equal to close graph kernel
+    Feature: equalcount op expand fallback on ascend
+    Description: equalcount op on ascend set pynative mode test expand fallback
+    Expectation: open graph kernel result equal to close graph kernel
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
     basic_test(np.float32)

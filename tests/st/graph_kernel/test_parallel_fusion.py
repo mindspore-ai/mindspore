@@ -14,10 +14,11 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter, ops
+
 
 class Net(nn.Cell):
     def __init__(self, var1, m1, v1, var2, m2, v2, var3, m3, v3, var4,
@@ -66,8 +67,7 @@ class Net(nn.Cell):
 
 def get_output(gradient, var1, v1, m1, var2, v2, m2, var3, v3, m3, var4,
                v4, m4, var5, v5, m5, var6, v6, m6, var7, v7, m7, enable_graph_kernel=False):
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
-                        enable_graph_kernel=enable_graph_kernel)
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=enable_graph_kernel)
     if enable_graph_kernel:
         context.set_context(enable_graph_kernel=True,
                             graph_kernel_flags="--enable_parallel_fusion=True "
@@ -77,9 +77,8 @@ def get_output(gradient, var1, v1, m1, var2, v2, m2, var3, v3, m3, var4,
     output = net(Tensor(0.001), Tensor(0.9), Tensor(0.999), Tensor(1e-8), Tensor(0.0), gradient)
     return output
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_parallel_fusion_ascend():
     """
     Feature: test graph kernel parallel

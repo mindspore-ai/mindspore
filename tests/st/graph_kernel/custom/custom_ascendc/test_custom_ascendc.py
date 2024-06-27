@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
+from tests.mark_utils import arg_mark
 import os
 import shutil
 import tempfile
@@ -46,9 +46,7 @@ class TestCase():
     def teardown(self):
         shutil.rmtree(self.temp_dir)
 
-    @pytest.mark.level1
-    @pytest.mark.env_onecard
-    @pytest.mark.platform_arm_ascend_training
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
     def test_custom_add_aclop(self):
         """
         Feature: Custom op testcase
@@ -59,9 +57,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @pytest.mark.level1
-    @pytest.mark.env_onecard
-    @pytest.mark.platform_arm_ascend_training
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
     def test_custom_add_aclop_dynamic(self):
         """
         Feature: Custom op testcase
@@ -72,9 +68,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @pytest.mark.level1
-    @pytest.mark.env_onecard
-    @pytest.mark.platform_arm_ascend_training
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
     def test_custom_add_aclop_graph(self):
         """
         Feature: Custom op testcase
@@ -85,9 +79,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @pytest.mark.level1
-    @pytest.mark.env_onecard
-    @pytest.mark.platform_arm_ascend_training
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
     def test_custom_add_aclnn(self):
         """
         Feature: Custom op testcase
@@ -98,9 +90,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @pytest.mark.level1
-    @pytest.mark.env_onecard
-    @pytest.mark.platform_arm_ascend_training
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
     def test_custom_add_aclnn_dynamic(self):
         """
         Feature: Custom op testcase
@@ -111,9 +101,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @pytest.mark.level1
-    @pytest.mark.env_onecard
-    @pytest.mark.platform_arm_ascend_training
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
     def test_custom_add_aclnn_cpp_infer(self):
         """
         Feature: Custom op testcase
@@ -124,9 +112,7 @@ class TestCase():
         result = subprocess.run(command, shell=True, stderr=subprocess.STDOUT)
         assert result.returncode == 0
 
-    @pytest.mark.level1
-    @pytest.mark.env_onecard
-    @pytest.mark.platform_arm_ascend_training
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
     def test_custom_add_aclnn_bprop(self):
         """
         Feature: Custom op testcase

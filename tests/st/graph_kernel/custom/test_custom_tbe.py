@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
+from tests.mark_utils import arg_mark
 import numpy as np
 from mindspore import context, Tensor
 from mindspore.nn import Cell
@@ -22,13 +22,13 @@ from mindspore.ops import TBERegOp, DataType, CustomRegOp, custom_info_register
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
 
 
-@custom_info_register(CustomRegOp() \
-                      .attr("bias", "required", "float") \
-                      .input(0, "x") \
-                      .output(0, "y") \
-                      .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-                      .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-                      .target("Ascend") \
+@custom_info_register(CustomRegOp()
+                      .attr("bias", "required", "float")
+                      .input(0, "x")
+                      .output(0, "y")
+                      .dtype_format(DataType.F32_Default, DataType.F32_Default)
+                      .dtype_format(DataType.F16_Default, DataType.F16_Default)
+                      .target("Ascend")
                       .get_op_info())
 def square_with_bias(input_x, output_y, bias=0.0, kernel_name="square_with_bias"):
     import te.lang.cce
@@ -53,14 +53,14 @@ def square_with_bias(input_x, output_y, bias=0.0, kernel_name="square_with_bias"
     te.lang.cce.cce_build_code(sch, config)
 
 
-@custom_info_register(CustomRegOp() \
-                      .attr("bias", "required", "float") \
-                      .input(0, "input_x") \
-                      .output(0, "output1") \
-                      .output(1, "output2") \
-                      .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
-                      .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-                      .target("Ascend") \
+@custom_info_register(CustomRegOp()
+                      .attr("bias", "required", "float")
+                      .input(0, "input_x")
+                      .output(0, "output1")
+                      .output(1, "output2")
+                      .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default)
+                      .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default)
+                      .target("Ascend")
                       .get_op_info())
 def square_with_bias_v2(input_x, output1, output2, bias=0.0, kernel_name="square_with_bias_v2"):
     import te.lang.cce
@@ -177,27 +177,25 @@ def multi_input_multi_output_with_attr():
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 def test_net1_graph_mode():
     """
     Feature: test case for Custom op with func_type="tbe"
     Description: test cases with multiple inputs, outputs and attr in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     multi_input_multi_output_with_attr()
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 def test_net1_pynative_mode():
     """
     Feature: test case for Custom op with func_type="tbe"
     Description: test cases with multiple inputs, outputs and attr in PYNATIVE_MODE.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
     multi_input_multi_output_with_attr()
 
 
@@ -234,41 +232,37 @@ def grad_case(bprop_func):
         raise ValueError("Precision error, compare result: {}".format(compare_res))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net2_graph_mode():
     """
     Feature: test case for Custom op with func_type="tbe"
     Description: grad test case in GRAPH_MODE.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     # bprop function using bprop
     grad_case(bprop)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 def test_net2_pynative_mode():
     """
     Feature: test case for Custom op with func_type="tbe"
     Description: grad test case in PYNATIVE_MODE.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
     # bprop function using bprop
     grad_case(bprop)
 
 
-@custom_info_register(CustomRegOp() \
-                      .input(0, "x") \
-                      .input(1, "dout") \
-                      .output(0, "y") \
-                      .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-                      .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
-                      .target("Ascend") \
+@custom_info_register(CustomRegOp()
+                      .input(0, "x")
+                      .input(1, "dout")
+                      .output(0, "y")
+                      .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default)
+                      .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default)
+                      .target("Ascend")
                       .get_op_info())
 def square_with_bias_grad(input_x, dout, output_y, kernel_name="square_with_bias_grad"):
     import te.lang.cce
@@ -304,27 +298,25 @@ def bprop1():
     return custom_bprop
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 def test_net2_bprop1_graph_mode():
     """
     Feature: test case for Custom op with func_type="tbe"
     Description: grad test case in GRAPH_MODE, grad function using Custom op.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     # bprop function using the return of bprop1
     grad_case(bprop1())
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 def test_net2_bprop1_pynative_mode():
     """
     Feature: test case for Custom op with func_type="tbe"
     Description: grad test case in PYNATIVE_MODE, grad function using Custom op.
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
     # bprop function using the return of bprop1
     grad_case(bprop1())

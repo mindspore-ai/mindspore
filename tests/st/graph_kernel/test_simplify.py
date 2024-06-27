@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -99,23 +99,19 @@ def run_empty_graph():
     assert res
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_basic_gpu():
     """
     Feature: test graph kernel arithmetic simplify
     Description: run test case on GPU
     Expectation: the result match with expect
     """
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     run_basic()
     run_empty_graph()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_basic_ascend():
     """
     Feature: test graph kernel arithmetic simplify
@@ -123,6 +119,6 @@ def test_basic_ascend():
     Expectation: the result match with expect
     """
     context.set_context(jit_level='O0')
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     run_basic()
     run_empty_graph()

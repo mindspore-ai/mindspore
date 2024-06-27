@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -31,10 +31,13 @@ class NetSoftmaxCrossEntropyWithLogits(nn.Cell):
         return self.loss(logits, labels)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_softmax_cross_entropy_with_logits():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
     logits = Tensor(np.array([[1, 1, 10],
                               [1, 10, 1],
                               [10, 1, 1]]).astype(np.float32))
@@ -42,13 +45,11 @@ def test_softmax_cross_entropy_with_logits():
                               [0, 1, 0],
                               [1, 0, 0]]).astype(np.float32))
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     softmax_cross_entropy_with_logits = NetSoftmaxCrossEntropyWithLogits()
     result_open_gk = softmax_cross_entropy_with_logits(logits, labels)
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=False, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=False)
     softmax_cross_entropy_with_logits_beta = NetSoftmaxCrossEntropyWithLogits()
     result_close_gk = softmax_cross_entropy_with_logits_beta(logits, labels)
 

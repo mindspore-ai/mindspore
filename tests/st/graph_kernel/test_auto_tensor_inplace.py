@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -46,23 +46,17 @@ def fusion_net_get_output(x, y, z, enable_auto_tensor_inplace=False):
     return output
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def fusion_net_compare_result():
+    """
+    Feature: graph kernel testcase for auto tensor inplace
+    Description: random input when using graph_kernel in graph mode
+    Expectation: get the same result when using and not using auto tensor inplace
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.random.normal(0, 1, [4, 16]).astype(np.float32))
     y = Tensor(np.random.normal(0, 1, [16, 4]).astype(np.float32))
     z = Tensor(np.random.normal(0, 1, [4, 4]).astype(np.float32))
     expect = fusion_net_get_output(x, y, z, False)
     output = fusion_net_get_output(x, y, z, True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 1.e-4, 1.e-7)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_graph_mode():
-    """
-    Feature: graph kernel testcase for auto tensor inplace
-    Description: random input when using graph_kernel in graph mode
-    Expectation: get the same result when using and not using auto tensor inplace
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    fusion_net_compare_result()

@@ -14,14 +14,24 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 import mindspore.ops as ops
 import mindspore.ops.operations as P
 
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_case_1():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(graph_kernel_flags="--enable_low_precision=true --disable_pass=highlevelopt2.atomic_clean")
+
     class Net1(Cell):
         def __init__(self):
             super(Net1, self).__init__()
@@ -30,6 +40,7 @@ def test_case_1():
             self.sum = ops.ReduceSum(keep_dims=False)
             self.add = ops.Add()
             self.pow = ops.Pow()
+
         def construct(self, x, y, z):
             t1 = self.sub(x, y)
             t2 = self.mul(t1, x)
@@ -39,6 +50,7 @@ def test_case_1():
             t6 = self.sum(t4)
             t7 = self.add(t5, t6)
             return t7
+
     def get_output(x, y, z, net, enable_graph_kernel=False):
         context.set_context(enable_graph_kernel=enable_graph_kernel)
         net_obj = net()
@@ -56,7 +68,16 @@ def test_case_1():
     assert np.allclose(expect_np, output_np, 1.e-2, 1.e-2)
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_case_2():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(graph_kernel_flags="--enable_low_precision=true")
+
     class Net2(Cell):
         def __init__(self):
             super(Net2, self).__init__()
@@ -64,6 +85,7 @@ def test_case_2():
             self.sum = P.ReduceSum(keep_dims=True)
             self.add = P.Add()
             self.neg = P.Neg()
+
         def construct(self, x, y):
             sqrt_res = self.sqrt(x)
             add_res = self.add(y, sqrt_res)
@@ -84,33 +106,3 @@ def test_case_2():
     expect_np = expect[0].asnumpy().copy()
     output_np = output[0].asnumpy().copy()
     assert np.allclose(expect_np, output_np, 1.e-2, 1.e-2)
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_case_1():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    context.set_context(graph_kernel_flags="--enable_low_precision=true --disable_pass=highlevelopt2.atomic_clean")
-    test_case_1()
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_case_2():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    context.set_context(graph_kernel_flags="--enable_low_precision=true")
-    test_case_2()
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_ascend_case_1():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(graph_kernel_flags="--enable_low_precision=true --disable_pass=highlevelopt2.atomic_clean")
-    test_case_1()
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_ascend_case_2():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    context.set_context(graph_kernel_flags="--enable_low_precision=true")
-    test_case_2()

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -57,15 +57,12 @@ def softmax_grad_ext_test(shape1, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ascend():
     """
     Feature: Graph Kernel expander
     Description: Verify SoftmaxGradExt expander in Ascend
     Expectation: No exception
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
-                        graph_kernel_flags="--enable_expand_ops=SoftmaxGradExt")
+    context.set_context(mode=context.GRAPH_MODE, graph_kernel_flags="--enable_expand_ops=SoftmaxGradExt")
     softmax_grad_ext_test((4, 4), np.float32)

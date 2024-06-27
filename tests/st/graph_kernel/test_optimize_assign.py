@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -52,51 +52,45 @@ class TestOptAssignNet_2(Cell):
         return add_res
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_opt_assign_output_1():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
     np.random.seed(0)
     input_x = np.random.normal(0, 1, [2, 2, 2]).astype(np.float32)
     input_y = np.random.normal(0, 1, [2, 2, 2]).astype(np.float32)
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     net = TestOptAssignNet_1()
     result_open_gk = net(Tensor(input_x), Tensor(input_y))
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=False, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=False)
     net_beta = TestOptAssignNet_1()
     result_close_gk = net_beta(Tensor(input_x), Tensor(input_y))
     res = np.allclose(result_open_gk.asnumpy(), result_close_gk.asnumpy(), rtol=1.e-4, atol=1.e-7, equal_nan=True)
     assert res
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_opt_assign_output_2():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
     np.random.seed(0)
     input_x = np.random.normal(0, 1, [2, 2, 2]).astype(np.float32)
     input_y = np.random.normal(0, 1, [2, 2, 2]).astype(np.float32)
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=True, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     net = TestOptAssignNet_2()
     result_open_gk = net(Tensor(input_x), Tensor(input_y))
 
-    context.set_context(mode=context.GRAPH_MODE,
-                        enable_graph_kernel=False, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=False)
     net_beta = TestOptAssignNet_2()
     result_close_gk = net_beta(Tensor(input_x), Tensor(input_y))
     res = np.allclose(result_open_gk.asnumpy(), result_close_gk.asnumpy(), rtol=1.e-4, atol=1.e-7, equal_nan=True)
     assert res
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_opt_assign_gpu_1():
-    test_opt_assign_output_1()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_opt_assign_gpu_2():
-    test_opt_assign_output_2()

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -28,6 +28,7 @@ class ErfNet(nn.Cell):
     def construct(self, x):
         return self.erf(x)
 
+
 class ErfcNet(nn.Cell):
     def __init__(self):
         super(ErfcNet, self).__init__()
@@ -36,10 +37,12 @@ class ErfcNet(nn.Cell):
     def construct(self, x):
         return self.erfc(x)
 
+
 def get_output(net, inp, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
     output = net()(inp)
     return output
+
 
 def basic_test(net, datatype):
     inp = Tensor(np.random.random((2, 3)).astype(datatype))
@@ -56,18 +59,26 @@ def basic_test(net, datatype):
     output_np = output.asnumpy().copy()
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_fp16():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     basic_test(ErfNet, np.float16)
     basic_test(ErfcNet, np.float16)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_fp32():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     basic_test(ErfNet, np.float32)
     basic_test(ErfcNet, np.float32)

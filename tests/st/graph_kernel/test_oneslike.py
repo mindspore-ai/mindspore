@@ -14,12 +14,13 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
 import mindspore.common.dtype as mstype
+
 
 class Net(Cell):
     def __init__(self):
@@ -29,6 +30,7 @@ class Net(Cell):
     def construct(self, shape, dtype, x):
         return self.oneslike(x)
 
+
 def get_output(shape, dtype, nptype, enable_graph_kernel=False):
     context.set_context(enable_graph_kernel=enable_graph_kernel)
     net = Net()
@@ -36,21 +38,30 @@ def get_output(shape, dtype, nptype, enable_graph_kernel=False):
     output = net(shape, dtype, x)
     return output
 
-def test_basic(shape, dtype, nptype):
+
+def run_basic(shape, dtype, nptype):
     expect = get_output(shape, dtype, nptype, False)
     output = get_output(shape, dtype, nptype, True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 1.e-4, 1.e-7)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_1():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_basic((2, 16), mstype.float16, np.float16)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_gpu_1():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic((2, 16), mstype.float16, np.float16)
+
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_2():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_basic((4, 32), mstype.float32, np.float32)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_basic((4, 32), mstype.float32, np.float32)

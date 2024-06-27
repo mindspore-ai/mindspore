@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -55,14 +55,12 @@ def easy_fuse():
     assert np.allclose(expect1_np, output1_np, rtol=1.e-4, atol=1.e-4, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_easy_fuse_cpu():
     """
     Feature: easy test case for graph_kernel in cpu.
     Description: cpu test case, use graph_kernel execute ops.
     Expectation: the result match with close graph_kernel result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
+    context.set_context(mode=context.GRAPH_MODE)
     easy_fuse()

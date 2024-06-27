@@ -37,7 +37,7 @@ def test_symbol_graphmode_setinputs():
         def construct(self, x, y):
             return self.add(x, y)
 
-    ms.set_context(mode=ms.GRAPH_MODE, device_target="CPU")
+    ms.set_context(mode=ms.GRAPH_MODE)
 
     s1 = Symbol(max=16, divisor=8)  # the value can be 8, 16
     s2 = Symbol(unique=True)
@@ -78,7 +78,7 @@ def test_symbol_pynativemode_setinputs():
         def construct(self, x, y):
             return self.add(x, y)
 
-    ms.set_context(mode=ms.PYNATIVE_MODE, device_target="CPU")
+    ms.set_context(mode=ms.PYNATIVE_MODE)
 
     s1 = Symbol(max=16, divisor=8)  # the value can be 8, 16
     s2 = Symbol(min=4, unique=True)
@@ -109,7 +109,7 @@ def test_symbol_pynativemode_signature():
     def add_func(x, y):
         return F.tensor_add(x, y)
 
-    ms.set_context(mode=ms.PYNATIVE_MODE, device_target="CPU")
+    ms.set_context(mode=ms.PYNATIVE_MODE)
 
     with pytest.raises(ValueError):
         x = Tensor(np.ones((1, 1), np.float32))

@@ -15,6 +15,7 @@
 
 import numpy as np
 import pytest
+from tests.mark_utils import arg_mark
 import mindspore.ops as ops
 from mindspore import context, Tensor
 from mindspore.nn import Cell
@@ -62,23 +63,7 @@ def run_reduce_with_axis(shape, axis):
     assert np.allclose(expect, output.asnumpy(), 1.e-4, 1.e-4, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_reduce():
-    """
-    Feature: test reduce sum with enable_graph_kernel=True
-    Description: reduce sum with InplaceAssign
-    Expectation: the result match with numpy result
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
-                        enable_graph_kernel=True,
-                        graph_kernel_flags="--enable_cluster_ops=ReduceSum")
-    run_case()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("shape, axis", [((1,), (0,)), ((1024, 1, 32), (1,))])
 def test_reduce_arithmetic_simplify(shape, axis):
     """
@@ -87,6 +72,5 @@ def test_reduce_arithmetic_simplify(shape, axis):
     Expectation: the result match with numpy result
     """
     context.set_context(jit_level='O0')
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
-                        enable_graph_kernel=True)
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
     run_reduce_with_axis(shape, axis)

@@ -16,7 +16,7 @@
 import os
 import platform
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
@@ -129,9 +129,7 @@ def julia_multiout_test(func_name, bench):
     assert np.allclose(expect2, output2.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level3
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
 def test_julia_single_output_cpu_add():
     """
     Feature: custom julia operator, multiple inputs, single output, CPU, GRAPH_MODE
@@ -142,13 +140,11 @@ def test_julia_single_output_cpu_add():
     if system != 'Linux':
         pass
     else:
-        context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+        context.set_context(mode=context.GRAPH_MODE)
         julia_elemwise_test("add.jl:Add:foo!", add)
 
 
-@pytest.mark.level3
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
 def test_julia_single_output_cpu_sub():
     """
     Feature: custom julia operator, multiple inputs, single output, CPU, GRAPH_MODE
@@ -159,13 +155,11 @@ def test_julia_single_output_cpu_sub():
     if system != 'Linux':
         pass
     else:
-        context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+        context.set_context(mode=context.GRAPH_MODE)
         julia_elemwise_test("sub.jl:Sub:foo!", sub)
 
 
-@pytest.mark.level3
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
 def test_julia_single_output_cpu_matmul():
     """
     Feature: custom julia operator, multiple inputs, single output, CPU, GRAPH_MODE
@@ -176,13 +170,11 @@ def test_julia_single_output_cpu_matmul():
     if system != 'Linux':
         pass
     else:
-        context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+        context.set_context(mode=context.GRAPH_MODE)
         julia_matmul_test("matmul.jl:Matmul:foo!", matmul)
 
 
-@pytest.mark.level3
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
 def test_julia_single_output_cpu_reducesum():
     """
     Feature: custom julia operator, multiple inputs, single output, CPU, GRAPH_MODE
@@ -193,13 +185,11 @@ def test_julia_single_output_cpu_reducesum():
     if system != 'Linux':
         pass
     else:
-        context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+        context.set_context(mode=context.GRAPH_MODE)
         julia_reducesum_test("reducesum.jl:ReduceSum:foo!", reducesum)
 
 
-@pytest.mark.level3
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level3', card_mark='onecard', essential_mark='unessential')
 def test_julia_multi_output_cpu():
     """
     Feature: custom julia operator, multiple inputs, multi output, CPU, GRAPH_MODE
@@ -210,5 +200,5 @@ def test_julia_multi_output_cpu():
     if system != 'Linux':
         pass
     else:
-        context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+        context.set_context(mode=context.GRAPH_MODE)
         julia_multiout_test("multi_output.jl:MultiOutput:foo!", multiout)

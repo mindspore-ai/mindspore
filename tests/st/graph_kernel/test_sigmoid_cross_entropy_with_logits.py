@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -41,10 +41,8 @@ class NetSigmoidCrossEntropyWithLogitsGrad(nn.Cell):
         return self.sigmoid_cross_entropy_with_logits_grad(logits, labels, dout)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'],
+          level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sigmoid_cross_entropy_with_logits():
     """
     Feature: test graph kernel SigmoidCrossEntropyWithLogits expander
@@ -72,10 +70,8 @@ def test_sigmoid_cross_entropy_with_logits():
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'],
+          level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sigmoid_cross_entropy_with_logits_grad():
     """
     Feature: test graph kernel SigmoidCrossEntropyWithLogitsGrad expander

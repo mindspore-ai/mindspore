@@ -15,7 +15,7 @@
 
 import platform
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -65,16 +65,14 @@ def func_with_dtype(ms_dtype, np_dtype):
     assert np.allclose(x.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_single_output():
     """
     Feature: test case for Custom op with func_type="pyfunc"
     Description: the net runs on GPU while custom pyfunc operator on CPU; GRAPH_MODE; single output
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    context.set_context(mode=context.GRAPH_MODE)
     func_with_dtype(ms.float16, np.float16)
     func_with_dtype(ms.float32, np.float32)
     func_with_dtype(ms.float64, np.float64)
@@ -82,16 +80,14 @@ def test_pyfunc_single_output():
     func_with_dtype(ms.int64, np.int64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_multi_output():
     """
     Feature: test case for Custom op with func_type="pyfunc"
     Description: the net runs on GPU while custom pyfunc operator on CPU; GRAPH_MODE; multiple output
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    context.set_context(mode=context.GRAPH_MODE)
     shape = (40, 40)
     dtype = ms.float32
 
@@ -116,16 +112,14 @@ class PyFuncGraph(nn.Cell):
         return self.func(x1, x2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_no_output():
     """
     Feature: test case for Custom op with func_type="pyfunc"
     Description:  the net runs on GPU while custom pyfunc operator on CPU; GRAPH_MODE; no output
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    context.set_context(mode=context.GRAPH_MODE)
     shape = (40, 40)
 
     np.random.seed(42)
@@ -142,16 +136,14 @@ def test_pyfunc_no_output():
     assert np.allclose(net_output, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_scalar():
     """
     Feature: test case for Custom op with func_type="pyfunc"
     Description:  the net runs on GPU while custom pyfunc operator on CPU; GRAPH_MODE; scalar output
     Expectation: the result match with numpy result
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
+    context.set_context(mode=context.GRAPH_MODE)
     shape = ()
     ms_dtype = ms.int32
 
@@ -164,9 +156,7 @@ def test_pyfunc_scalar():
     assert np.allclose(x.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_pynative():
     """
     Feature: test case for Custom op with func_type="pyfunc"
@@ -177,7 +167,7 @@ def test_pyfunc_pynative():
     if sys != 'Linux':
         pass
     else:
-        context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
+        context.set_context(mode=context.PYNATIVE_MODE)
         shape = (40, 40)
 
         np.random.seed(42)

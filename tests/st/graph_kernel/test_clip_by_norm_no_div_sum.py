@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
+from tests.mark_utils import arg_mark
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
@@ -59,15 +59,13 @@ def run_clip_by_norm_no_div_sum(shape0, shape1, shape2, shape3, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
-def test_clip_by_norm_no_div_sum_ascend():
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_clip_by_norm_no_div_sum():
     """
     Feature: test graph kernel ClipByNormNoDivSum
-    Description: run test case on Ascend
+    Description: run test case
     Expectation: the result match with expect
     """
     context.set_context(jit_level='O0')
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     run_clip_by_norm_no_div_sum((1, 1), (1,), (1, 1), (1,), np.float32)

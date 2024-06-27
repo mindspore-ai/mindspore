@@ -13,14 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """Testing custom operator's offline compilation"""
-import pytest
+from tests.mark_utils import arg_mark
 import tempfile
 from compile_utils import compile_custom_run
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_custom_compile():
     """
     Feature: Custom op testcase

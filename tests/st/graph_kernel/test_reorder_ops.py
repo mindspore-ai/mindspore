@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
+from tests.mark_utils import arg_mark
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
@@ -42,7 +42,14 @@ def get_castup_output(x0, enable_graph_kernel=False):
     return output
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_castup():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     x0 = Tensor(np.random.normal(0, 1, (16, 16)).astype(np.float16))
     expect = get_castup_output(x0, False)
     output = get_castup_output(x0, True)
@@ -72,40 +79,17 @@ def get_castdown_output(x0, enable_graph_kernel=False):
     return output
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_castdown():
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     x0 = Tensor(np.random.normal(0, 1, (16, 16)).astype(np.float32))
     expect = get_castdown_output(x0, False)
     output = get_castdown_output(x0, True)
     expect_np = expect.asnumpy().copy()
     output_np = output.asnumpy().copy()
     assert np.allclose(expect_np, output_np, 1e-3, 1e-3)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_castup_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_castup()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_castup_ascend():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_castup()
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_castdown_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_castdown()
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-def test_castdown_ascend():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_castdown()

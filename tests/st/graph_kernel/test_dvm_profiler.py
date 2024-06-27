@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor, nn
 from mindspore import Profiler
@@ -24,7 +24,7 @@ class Net(nn.Cell):
     def construct(self, x, y):
         a = x + y + 4
         b = x - y - 5
-        return a*b
+        return a * b
 
 
 def fuse(shape1, shape2, dtype):
@@ -39,9 +39,7 @@ def fuse(shape1, shape2, dtype):
     print(output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dvm_profiling():
     """
     Feature: easy test case for graph_kernel in Ascend.
@@ -49,5 +47,5 @@ def test_dvm_profiling():
     Expectation: Timeline generated successfully.
     """
     context.set_context(jit_level='O0')
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     fuse((32, 1024), (32, 1024), np.float16)

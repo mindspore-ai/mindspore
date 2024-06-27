@@ -14,7 +14,7 @@
 # ============================================================================
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
@@ -49,7 +49,14 @@ def fusion_net_get_output(x, y, indices, depth, enable_graph_kernel=False):
     return output
 
 
-def fusion_net_compare_result():
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_gpu_graph_mode():
+    """
+    Feature: graph kernel testcase for onehot
+    Description: random input when using graph_kernel in graph mode
+    Expectation: get the same result when using and not using graph kernel
+    """
+    context.set_context(mode=context.GRAPH_MODE)
     depth = 512
     indices = Tensor(np.random.randint(depth, size=[4, 1024]).astype(np.int32))
     x = Tensor(np.random.normal(0, 1, [4096, 512]).astype(np.float32))
@@ -57,16 +64,3 @@ def fusion_net_compare_result():
     expect = fusion_net_get_output(x, y, indices, depth, False)
     output = fusion_net_get_output(x, y, indices, depth, True)
     assert np.allclose(expect.asnumpy(), output.asnumpy(), 1.e-4, 1.e-7)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_gpu_graph_mode():
-    """
-    Feature: graph kernel testcase for onehot
-    Description: random input when using graph_kernel in graph mode
-    Expectation: get the same result when using and not using graph kernel
-    """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    fusion_net_compare_result()

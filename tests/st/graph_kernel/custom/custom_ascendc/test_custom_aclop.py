@@ -14,6 +14,7 @@
 # ============================================================================
 
 import pytest
+from tests.mark_utils import arg_mark
 import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor
@@ -47,6 +48,7 @@ class CustomNet(Cell):
         return res
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclop(context_mode):
     """
@@ -56,7 +58,7 @@ def test_custom_add_aclop(context_mode):
     """
     context.set_context(jit_level='O0')
 
-    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs")
+    context.set_context(mode=context_mode, save_graphs=False, save_graphs_path="./graphs")
     x = np.ones([8, 2048]).astype(np.float16)
     y = np.ones([8, 2048]).astype(np.float16)
     z = np.random.rand(8, 2048)
@@ -66,6 +68,7 @@ def test_custom_add_aclop(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_add_aclop_dynamic(context_mode):
     """
@@ -75,7 +78,7 @@ def test_custom_add_aclop_dynamic(context_mode):
     """
     context.set_context(jit_level='O0')
 
-    context.set_context(mode=context_mode, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs")
+    context.set_context(mode=context_mode, save_graphs=False, save_graphs_path="./graphs")
     x = np.ones([8, 2048]).astype(np.float16)
     y = np.ones([8, 2048]).astype(np.float16)
     z = np.random.rand(8, 2048)
@@ -87,6 +90,7 @@ def test_custom_add_aclop_dynamic(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level4', card_mark='onecard', essential_mark='unessential')
 def test_custom_add_aclop_graph():
     """
     Feature: Custom op testcase
@@ -94,7 +98,7 @@ def test_custom_add_aclop_graph():
     Expectation: the result match with numpy result
     """
 
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False, save_graphs_path="./graphs")
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=False, save_graphs_path="./graphs")
     x = np.ones([8, 2048]).astype(np.float16)
     y = np.ones([8, 2048]).astype(np.float16)
     z = np.random.rand(8, 2048).astype(np.float16)

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -35,18 +35,15 @@ class ComplexNet(nn.Cell):
         return self.div(mul_xy, sub_xy)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_complex_gpu():
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_complex():
     """
     Feature: easy complex test case for graph_kernel on gpu.
     Description: gpu test case, use graph_kernel expand complex ops.
     Expectation: the result is equal to numpy result.
     """
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU", enable_graph_kernel=True)
-    x = np.array([[3 + 4j, 5-2j, 6 + 8j], [3 + 4j, 5-2j, 6 + 8j]]).astype(np.complex64)
+    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True)
+    x = np.array([[3 + 4j, 5 - 2j, 6 + 8j], [3 + 4j, 5 - 2j, 6 + 8j]]).astype(np.complex64)
     y = np.array([3, 4, 5]).astype(np.float32)
     net = ComplexNet()
     output = net(Tensor(x), Tensor(y))

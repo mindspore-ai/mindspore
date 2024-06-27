@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -38,7 +38,7 @@ def get_output(dout, enable_graph_kernel=False):
     return output
 
 
-def test_bias_add_grad(shape, dtype):
+def run_bias_add_grad(shape, dtype):
     np.random.seed(0)
     dout = np.random.normal(0, 1, shape).astype(dtype)
 
@@ -53,11 +53,13 @@ def test_bias_add_grad(shape, dtype):
     assert np.allclose(expect.asnumpy(), output.asnumpy(), rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bias_add_grad_ascend():
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_bias_add_grad([2, 32, 48, 64], np.float32)
-    test_bias_add_grad([2, 32, 48, 64], np.float16)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(mode=context.GRAPH_MODE)
+    run_bias_add_grad([2, 32, 48, 64], np.float32)
+    run_bias_add_grad([2, 32, 48, 64], np.float16)

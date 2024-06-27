@@ -15,9 +15,9 @@
 
 import os
 import platform
-import pytest
+from tests.mark_utils import arg_mark
 import numpy as np
-from mindspore import context, Tensor
+from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
 import mindspore.ops as ops
@@ -44,8 +44,6 @@ class ReduceDynNet(Cell):
 
 
 def aot_fused_kernel():
-    context.set_context(device_target="CPU")
-
     dir_path = os.path.dirname(os.path.abspath(__file__))
     func_path = dir_path + "/aot_test_files/"
 
@@ -65,9 +63,7 @@ def aot_fused_kernel():
     assert np.allclose(expected, output.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_aot_fused_kernel():
     """
     Feature: custom aot operator, multiple inputs, single output, CPU, GRAPH_MODE

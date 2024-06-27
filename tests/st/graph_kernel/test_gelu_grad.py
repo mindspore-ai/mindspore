@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -49,22 +49,18 @@ def relu_grad_test(shape1, shape2, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu():
     """
     Feature: Graph Kernel expander
     Description: Verify GeLUGrad expander in GPU
     Expectation: No exception
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE)
     relu_grad_test((4, 3), (4, 3), np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ascend():
     """
     Feature: Graph Kernel expander
@@ -72,5 +68,5 @@ def test_ascend():
     Expectation: No exception
     """
     context.set_context(jit_level='O0')
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE)
     relu_grad_test((4, 3), (4, 3), np.float32)

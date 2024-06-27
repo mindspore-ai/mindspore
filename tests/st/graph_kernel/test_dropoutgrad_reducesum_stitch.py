@@ -20,11 +20,7 @@ from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as GP
 from mindspore.common import dtype as mstype
-import pytest
-
-context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-# enable graph kernel optimization.
-context.set_context(enable_graph_kernel=True)
+from tests.mark_utils import arg_mark
 
 
 class BertAttentionGradPiece(Cell):
@@ -72,7 +68,7 @@ def get_dropoutgrad_reducesum_output(x, y, z, enable_stitch_fusion):
     return result
 
 
-def test_dropoutgrad_reducesum(shape, dtype):
+def run_dropoutgrad_reducesum(shape, dtype):
     np.random.seed(0)
     x = Tensor(np.random.normal(0, 1, shape).astype(dtype))
     y = Tensor(np.random.normal(0, 1, shape).astype(dtype))
@@ -82,9 +78,13 @@ def test_dropoutgrad_reducesum(shape, dtype):
     compare_result(expect, output, dtype)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dropoutgrad_reducesum_gpu():
-    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_dropoutgrad_reducesum([64, 12, 128, 128], np.float16)
+    """
+    Feature: todo
+    Description: todo
+    Expectation: todo
+    """
+    context.set_context(enable_graph_kernel=True)
+    context.set_context(mode=context.GRAPH_MODE)
+    run_dropoutgrad_reducesum([64, 12, 128, 128], np.float16)
