@@ -146,6 +146,7 @@ Comparison Operations
     :template: classtemplate.rst
 
     mindspore.mint.eq
+    mindspore.mint.ne
     mindspore.mint.greater
     mindspore.mint.gt
     mindspore.mint.greater_equal
