@@ -556,7 +556,38 @@ def ones(size, *, dtype=None):
 
 
 def permute(input, dims):
-    """permute"""
+    """
+    Permutes the dimensions of the input tensor according to input `dims` .
+
+    Args:
+        input (Tensor): Input Tensor.
+        dims (tuple(int)): The order of the dimensions. Permute rearranges the `input` according
+            to the order of the `dims`.
+
+    Returns:
+        Tensor, has the same dimension as input tensor, with `axis` suitably permuted.
+
+    Raises:
+        ValueError: If `dims` is None.
+        ValueError: If the number of elements of `dims` is not equal to `input` ndim.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> import numpy as np
+        >>> from mindspore import Tensor, mint
+        >>> input_x = Tensor(np.array([[[1, 2, 3], [4, 5, 6]], [[7, 8, 9], [10, 11, 12]]]), mindspore.float32)
+        >>> input_perm = (0, 2, 1)
+        >>> print(mint.permute(input_x, input_perm))
+        [[[ 1.  4.]
+          [ 2.  5.]
+          [ 3.  6.]]
+         [[ 7. 10.]
+          [ 8. 11.]
+          [ 9. 12.]]]
+    """
     return permute_ext(input, dims)
 
 
