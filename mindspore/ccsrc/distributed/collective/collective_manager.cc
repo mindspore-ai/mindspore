@@ -159,6 +159,9 @@ bool CollectiveManager::Initialize() {
   if (device_type != kAscendDevice && !need_host_collective_) {
     MS_LOG(EXCEPTION) << kDetailedFailureReason;
   }
+  if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode && !need_host_collective_) {
+    MS_LOG(EXCEPTION) << "Ranktable startup method doesn't support pynative mode. Please switch to msrun method.";
+  }
 
   MS_LOG(INFO) << "Start initializing collective communication for backend: " << device_type << "...";
 
