@@ -206,9 +206,11 @@ class DropoutExtCell(Cell):
     def __init__(self):
         super().__init__()
         self.dropout_ext = dropout_ext_op
+        self.seed = ms.Tensor(1, mstype.int64)
+        self.offset = ms.Tensor(1, mstype.int64)
 
     def construct(self, x, p):
-        return self.dropout_ext(x, p)
+        return self.dropout_ext(x, p, self.seed, self.offset)
 
 
 @pytest.mark.level1

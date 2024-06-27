@@ -8,11 +8,9 @@ normal_float_float:
         size:
             dtype: tuple[int]
         seed:
-            dtype: int
-            type_cast: tensor
+            dtype: tensor
         offset:
-            dtype: int
-            type_cast: tensor
+            dtype: tensor
     returns:
         output: 
             dtype: tensor

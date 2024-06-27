@@ -105,6 +105,7 @@ check_int_const = validator.check_is_int
 check_non_negative_float_const = validator.check_non_negative_float
 check_string_const = constexpr(validator.check_string)
 
+generator_step_ = Tensor(1, mstype.int64)
 
 def adaptive_avg_pool2d(input, output_size):
     r"""
@@ -1397,7 +1398,7 @@ def dropout_ext(input, p=0.5, training=True):
     check_bool_const(training, "training", "dropout_ext")
     if training is False:
         return input
-    seed, offset = default_generator._step(1)  # pylint: disable=protected-access
+    seed, offset = default_generator._step(generator_step_)  # pylint: disable=protected-access
     out, _ = dropout_ext_op(input, p, seed, offset)
     return out
 

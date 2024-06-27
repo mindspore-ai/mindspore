@@ -6,11 +6,9 @@ normal_float_tensor:
         std:
             dtype: tensor
         seed:
-            dtype: int
-            type_cast: tensor
+            dtype: tensor
         offset:
-            dtype: int
-            type_cast: tensor
+            dtype: tensor
     returns:
         output: 
             dtype: tensor
@@ -20,3 +18,4 @@ normal_float_tensor:
         disable: True
     dispatch:
         enable: True
+        Ascend: NormalFloatTensorAscend

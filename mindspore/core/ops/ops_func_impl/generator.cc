@@ -21,13 +21,14 @@
 #include <unordered_map>
 #include <memory>
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 #include "utils/check_convert_utils.h"
 
 namespace mindspore::ops {
 using namespace generator;
 namespace {
-int64_t GetCmd(AbstractBasePtr cmd) {
-  auto cmd_opt = GetScalarValue<int64_t>(cmd->GetValue());
+int64_t GetCmd(ValuePtr cmd) {
+  auto cmd_opt = GetScalarValue<int64_t>(cmd);
   if (MS_UNLIKELY(!cmd_opt.has_value())) {
     MS_LOG(EXCEPTION) << "Cmd value unavailable.";
   }
@@ -37,18 +38,25 @@ int64_t GetCmd(AbstractBasePtr cmd) {
 }
 
 static std::unordered_map<int64_t, std::vector<TypePtr>> kGeneratorInputFormat{
-  {STEP, {ParamType, ParamType, ParamType}},                  // step, seed, offset
-  {SEED, {ParamType, ParamType}},                             // seed, offset
-  {GET_STATE, {ParamType, ParamType}},                        // seed, offset
-  {SET_STATE, {ParamType, ParamType, ParamType, ParamType}},  // seed, offset, new_seed, new_offset
-  {UNPACK_STATE, {StateType}},                                // state
-  {INITIAL_SEED, {ParamType}},                                // seed
+  {STEP, {ParamType, ParamType, ParamType}},         // seed, offset, step
+  {SEED, {ParamType, ParamType}},                    // seed, offset
+  {GET_STATE, {ParamType, ParamType}},               // seed, offset
+  {SET_STATE, {ParamType, ParamType, StateType}},    // seed, offset, state
+  {MANUAL_SEED, {ParamType, ParamType, ParamType}},  // seed, offset, new_seed
+  {INITIAL_SEED, {ParamType, ParamType}},            // seed, offset
 };
 }  // namespace
+ShapeArray GeneratorFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {{1}, {1}, {sizeof(param_type) * 2}};
+}
+
+TypePtrList GeneratorFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return {ParamType, ParamType, StateType};
+}
 
 int32_t GeneratorFuncImpl::CheckValidation(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) const {
-  int64_t cmd = GetCmd(input_args[kCmdIndex]);
+  int64_t cmd = GetCmd(input_args[kCmdIndex]->GetValue());
   const auto cmd_str = GeneratorEnumToString.at(cmd);
   const auto expected_types = kGeneratorInputFormat[cmd];
   auto input_types = input_args[kInputsIndex]->GetType()->cast<TuplePtr>();
@@ -70,61 +78,17 @@ int32_t GeneratorFuncImpl::CheckValidation(const PrimitivePtr &primitive,
 
 BaseShapePtr GeneratorFuncImpl::InferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args) const {
-  int64_t cmd = GetCmd(input_args[kCmdIndex]);
-  std::vector<ShapeVector> infer_shapes{};
-  switch (cmd) {
-    case STEP:
-      infer_shapes = {{1}, {1}};
-      break;
-    case SEED:
-      infer_shapes = {{1}};
-      break;
-    case GET_STATE:
-      infer_shapes = {{sizeof(param_type) * 2}};
-      break;
-    case SET_STATE:
-      infer_shapes = {{1}};
-      break;
-    case UNPACK_STATE:
-      infer_shapes = {{1}, {1}};
-      break;
-    case INITIAL_SEED:
-      infer_shapes = {{1}};
-      break;
-    default:
-      MS_LOG(EXCEPTION) << "Unknown cmd: " << cmd;
-  }
-  std::vector<abstract::BaseShapePtr> infer_shape_ptrs{infer_shapes.size()};
+  ShapeArray infer_shapes = {{1}, {1}, {sizeof(param_type) * 2}};
+  std::vector<abstract::BaseShapePtr> infer_shape_ptrs(infer_shapes.size());
   std::transform(infer_shapes.begin(), infer_shapes.end(), infer_shape_ptrs.begin(),
                  [](ShapeVector &v) { return std::make_shared<abstract::Shape>(v); });
   return std::make_shared<abstract::TupleShape>(infer_shape_ptrs);
 }
 
 TypePtr GeneratorFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const {
-  int64_t cmd = GetCmd(input_args[kCmdIndex]);
-  std::vector<TypePtr> infer_types{};
-  switch (cmd) {
-    case STEP:
-      infer_types = {ParamType, ParamType};
-      break;
-    case SEED:
-      infer_types = {ParamType};
-      break;
-    case GET_STATE:
-      infer_types = {StateType};
-      break;
-    case SET_STATE:
-      infer_types = {kInt64};
-      break;
-    case UNPACK_STATE:
-      infer_types = {ParamType, ParamType};
-      break;
-    case INITIAL_SEED:
-      infer_types = {ParamType};
-      break;
-    default:
-      MS_LOG(EXCEPTION) << "Unknown cmd: " << cmd;
-  }
+  const TypePtrList infer_types = {ParamType, ParamType, StateType};
   return std::make_shared<Tuple>(infer_types);
 }
+
+REGISTER_SIMPLE_INFER(kNameGenerator, GeneratorFuncImpl)
 }  // namespace mindspore::ops

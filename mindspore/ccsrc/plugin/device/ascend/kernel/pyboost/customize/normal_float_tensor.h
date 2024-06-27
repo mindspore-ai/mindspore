@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NORMAL_FLOAT_FLOAT_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NORMAL_FLOAT_FLOAT_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NORMAL_FLOAT_TENSOR_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NORMAL_FLOAT_TENSOR_H_
 #include <vector>
 #include <memory>
 #include "ir/tensor.h"
@@ -26,10 +26,10 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-tensor::BaseTensorPtr NormalFloatFloatAscendCustomize(const std::shared_ptr<OpRunner> &op, const FP32ImmPtr &mean_float,
-                                                      const FP32ImmPtr &std_float, const ValueTuplePtr &size,
-                                                      const BaseTensorPtr &seed, const BaseTensorPtr &offset);
+tensor::BaseTensorPtr NormalFloatTensorAscendCustomize(const std::shared_ptr<OpRunner> &op,
+                                                       const FP32ImmPtr &mean_float, const BaseTensorPtr &std_tensor,
+                                                       const BaseTensorPtr &seed, const BaseTensorPtr &offset);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NORMAL_FLOAT_FLOAT_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_NORMAL_FLOAT_TENSOR_H_

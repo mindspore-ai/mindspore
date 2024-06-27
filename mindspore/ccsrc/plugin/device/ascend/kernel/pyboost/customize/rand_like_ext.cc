@@ -24,17 +24,11 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::BaseTensorPtr RandLikeExtAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                 const BaseTensorPtr &tensor_tensor,
-                                                 const std::optional<Int64ImmPtr> &dtype, const Int64ImmPtr &seed,
-                                                 const Int64ImmPtr &offset) {
-  OpRunner::InferOpOutput(op, tensor_tensor, dtype, seed, offset);
-  // ValueTuple to std::vector
+                                                 const BaseTensorPtr &tensor_tensor, const BaseTensorPtr &seed,
+                                                 const BaseTensorPtr &offset, const std::optional<Int64ImmPtr> &dtype) {
+  OpRunner::InferOpOutput(op, tensor_tensor, seed, offset, dtype);
 
-  // Convert ValuePtr to c++ scalar
-  // Convert ValuePtr to c++ scalar
-  auto seed_imm = GetValue<int64_t>(seed);
-  auto offset_imm = GetValue<int64_t>(offset);
-
+  auto [seed_imm, offset_imm] = UpdateGeneratorState(seed, offset);
   auto device_context = op->device_context();
   auto outputs = op->outputs();
   PyBoostUtils::PrepareOpInputs(device_context, op->stream_id(), tensor_tensor);

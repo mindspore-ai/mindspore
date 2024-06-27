@@ -30,7 +30,20 @@ namespace ops {
 class MIND_API RandExtFuncImpl : public OnesFuncImpl {
  public:
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
-    auto infer_type = OnesFuncImpl::InferType(primitive, input_args);
+    auto prim_name = primitive->name();
+    // check
+    auto dtype_type = input_args[kIndex3]->GetType();
+    if (dtype_type->isa<TypeNone>()) {
+      return kFloat32;
+    }
+    auto dtype_ptr = input_args[kIndex3]->GetValue();
+    if (!dtype_ptr->isa<Int64Imm>()) {
+      MS_EXCEPTION(TypeError) << "For '" << prim_name
+                              << "', 'dtype' must be a TypeId, but got an invalid type: " << dtype_ptr->ToString()
+                              << ".";
+    }
+    auto val = GetValue<int64_t>(dtype_ptr);
+    auto infer_type = TypeIdToType(static_cast<TypeId>(val));
     CheckAndConvertUtils::CheckTypeValid("dtype", infer_type, {kFloat16, kFloat32, kFloat64, kBFloat16},
                                          primitive->name());
     return infer_type;

@@ -40,7 +40,7 @@ STEP = 0
 SEED = 1
 GET_STATE = 2
 SET_STATE = 3
-UNPACK_STATE = 4
+MANUAL_SEED = 4
 INITIAL_SEED = 5
 
 
@@ -95,10 +95,7 @@ class Generator:
         Args:
             state (tensor): target state of the generator.
         """
-        current_seed, offset = self._generator(
-            UNPACK_STATE, (state,))
-        self._generator(SET_STATE,
-                        (self._seed, self._offset, current_seed, offset))
+        self._generator(SET_STATE, (self._seed, self._offset, state))
 
     def get_state(self):
         """
@@ -107,7 +104,7 @@ class Generator:
         Returns:
             Tensor, generator state.
         """
-        return self._generator(GET_STATE, (self._seed, self._offset))[0]
+        return self._generator(GET_STATE, (self._seed, self._offset))[2]
 
     def seed(self):  # pylint: disable=redefined-outer-name
         """
@@ -130,8 +127,8 @@ class Generator:
         Returns:
             Generator, the generator instance.
         """
-        self._generator(SET_STATE,
-                        (self._seed, self._offset, seed, 0))
+        seed = Tensor(seed, mstype.int64)
+        self._generator(MANUAL_SEED, (self._seed, self._offset, seed))
         return self
 
     def initial_seed(self):
@@ -150,12 +147,12 @@ class Generator:
         Return current seed and offset, and update offset for the next call.
 
         Args:
-            step (int, Tensor): Update offset by step.
+            step (Tensor): Update offset by step.
 
         Returns:
             Current seed and offset.
         """
-        return self._generator(STEP, (self._seed, self._offset, step,))
+        return self._generator(STEP, (self._seed, self._offset, step,))[:2]
 
 
 default_generator = _random_seeded_generator()

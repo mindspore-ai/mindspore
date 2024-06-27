@@ -3,18 +3,14 @@ rand_like_ext:
     args:
         tensor:
             dtype: tensor
+        seed:
+            dtype: tensor
+        offset:
+            dtype: tensor
         dtype:
             dtype: TypeId
             arg_handler: dtype_to_type_id
             default: None
-        seed:
-            dtype: int
-            type_cast: Tensor
-            default: 0
-        offset:
-            dtype: int
-            type_cast: Tensor
-            default: 0
     returns:
         output:
             dtype: tensor

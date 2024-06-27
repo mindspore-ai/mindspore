@@ -277,7 +277,7 @@ def uniform_ext(tensor, a, b, generator=None):
     """
     if generator is None:
         generator = default_generator
-    seed, offset = generator._step(1)  # pylint: disable=protected-access
+    seed, offset = generator._step(generator_step_)  # pylint: disable=protected-access
     return uniform_(tensor, a, b, seed, offset)
 
 
@@ -723,7 +723,7 @@ def normal_ext(mean=0.0, std=1.0, size=None, generator=None):
     """
     if generator is None:
         generator = default_generator
-    seed, offset = generator._step(1)  # pylint: disable=protected-access
+    seed, offset = generator._step(generator_step_)  # pylint: disable=protected-access
 
     is_mean_tensor = isinstance(mean, Tensor)
     is_std_tensor = isinstance(std, Tensor)
@@ -1077,7 +1077,7 @@ def rand_ext(*size, generator=None, dtype=None):
     if not generator:
         generator = default_generator
     seed, offset = generator._step(generator_step_)  # pylint: disable=protected-access
-    return rand_ext_(size, dtype, seed, offset)
+    return rand_ext_(size, seed, offset, dtype)
 
 
 @_function_forbid_reuse
@@ -1111,7 +1111,7 @@ def rand_like_ext(input, *, dtype=None):
         (2, 3)
     """
     seed, offset = default_generator._step(generator_step_)  # pylint: disable=protected-access
-    return rand_like_ext_(input, dtype, seed, offset)
+    return rand_like_ext_(input, seed, offset, dtype)
 
 
 @_function_forbid_reuse

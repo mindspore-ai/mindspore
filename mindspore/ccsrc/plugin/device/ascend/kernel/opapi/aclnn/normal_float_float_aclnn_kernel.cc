@@ -21,16 +21,18 @@ void NormalFloatFloatAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> 
                                               const std::vector<KernelTensor *> &outputs) {
   mean_ = transform::ConvertKernelTensor<float>(inputs[kIndex0]);
   std_ = transform::ConvertKernelTensor<float>(inputs[kIndex1]);
-  seed_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex3]);
-  offset_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex4]);
-  GetWorkspaceForResize(mean_, std_, seed_, offset_, outputs[0]);
+  constexpr int64_t seed_stub = 0;
+  constexpr int64_t offset_stub = 0;
+  GetWorkspaceForResize(mean_, std_, seed_stub, offset_stub, outputs[0]);
 }
 
 bool NormalFloatFloatAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &workspace,
                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, mean_, std_, seed_, offset_, outputs[kIndex0]));
+  auto seed = transform::ConvertKernelTensor<int64_t>(inputs[kIndex3]);
+  auto offset = transform::ConvertKernelTensor<int64_t>(inputs[kIndex4]);
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, mean_, std_, seed, offset, outputs[kIndex0]));
   RunOp(stream_ptr, workspace);
   return true;
 }

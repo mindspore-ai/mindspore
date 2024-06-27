@@ -41,8 +41,8 @@ double GetScalarValue(const std::shared_ptr<Scalar> &scalar) {
 }
 
 tensor::BaseTensorPtr UniformExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &tensor_tensor,
-                                                const ScalarPtr &a, const ScalarPtr &b, const Int64ImmPtr &seed,
-                                                const Int64ImmPtr &offset) {
+                                                const ScalarPtr &a, const ScalarPtr &b, const BaseTensorPtr &seed,
+                                                const BaseTensorPtr &offset) {
   MS_LOG(DEBUG) << "UniformExt call start";
   OpRunner::InferOpOutput(op, tensor_tensor, a, b, seed, offset);
   // ValueTuple to std::vector
@@ -52,27 +52,25 @@ tensor::BaseTensorPtr UniformExtAscendCustomize(const std::shared_ptr<OpRunner> 
   double a_imm = GetScalarValue(a);
   double b_imm = GetScalarValue(b);
 
-  auto seed_imm = static_cast<uint64_t>(GetValue<int64_t>(seed));
-  auto offset_imm = static_cast<uint64_t>(GetValue<int64_t>(offset));
-
+  auto [seed_imm, offset_imm] = UpdateGeneratorState(seed, offset);
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), tensor_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
 
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, tensor_tensor, a_imm, b_imm, seed_imm,
-                                                                          offset_imm]() {
-    MS_LOG(DEBUG) << "Run device task UniformExt end";
-    auto device_context = op->device_context();
-    const auto &outputs = op->outputs();
-    // Malloc for input tensors
-    PyBoostUtils::MallocOpInputs(device_context, tensor_tensor);
-    // Malloc for output tensors
-    PyBoostUtils::MallocOpOutputs(device_context, outputs);
+  PyBoostUtils::DispatchRun(
+    std::make_shared<runtime::PyBoostDeviceTask>([op, tensor_tensor, a_imm, b_imm, seed_imm, offset_imm]() {
+      MS_LOG(DEBUG) << "Run device task UniformExt end";
+      auto device_context = op->device_context();
+      const auto &outputs = op->outputs();
+      // Malloc for input tensors
+      PyBoostUtils::MallocOpInputs(device_context, tensor_tensor);
+      // Malloc for output tensors
+      PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
-    LAUNCH_ACLNN(aclnnInplaceCopy, device_context, op->stream_id(), outputs[0], tensor_tensor);
-    LAUNCH_ACLNN(aclnnInplaceUniform, device_context, op->stream_id(), outputs[0], a_imm, b_imm, seed_imm, offset_imm);
-    MS_LOG(DEBUG) << "Run device task UniformExt end";
-  }));
+      LAUNCH_ACLNN(aclnnInplaceUniform, device_context, op->stream_id(), outputs[0], a_imm, b_imm,
+                   static_cast<uint64_t>(seed_imm), static_cast<uint64_t>(offset_imm));
+      MS_LOG(DEBUG) << "Run device task UniformExt end";
+    }));
   return op->output(0);
 }
 }  // namespace pyboost

@@ -24,8 +24,8 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 tensor::BaseTensorPtr DropoutExtAscendCustomize(const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &input,
-                                                const FP32ImmPtr &p, const Int64ImmPtr &seed,
-                                                const Int64ImmPtr &offset) {
+                                                const FP32ImmPtr &p, const BaseTensorPtr &seed,
+                                                const BaseTensorPtr &offset) {
   OpRunner::InferOpOutput(op, input, p, seed, offset);
   // Create device address for input/output tensors.
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input);
@@ -39,8 +39,7 @@ tensor::BaseTensorPtr DropoutExtAscendCustomize(const std::shared_ptr<OpRunner> 
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(op->device_context(), outputs);
     auto p_value = static_cast<double>(p->value());
-    auto seed_value = static_cast<int64_t>(seed->value());
-    auto offset_value = static_cast<int64_t>(offset->value());
+    auto [seed_value, offset_value] = UpdateGeneratorState(seed, offset);
     std::vector<int64_t> input_shape = input->shape();
     auto tensor_type = op->input_abs()[kIndex0]->GetType()->cast<TensorTypePtr>();
     MS_EXCEPTION_IF_NULL(tensor_type);

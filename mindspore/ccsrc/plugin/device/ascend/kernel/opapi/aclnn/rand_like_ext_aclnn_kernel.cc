@@ -40,8 +40,8 @@ bool RandLikeExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const 
   MS_EXCEPTION_IF_NULL(stream_ptr);
   constexpr double from_ = 0.0;
   constexpr double to_ = 1.0;
-  seed_ = static_cast<uint64_t>(transform::ConvertKernelTensor<int64_t>(inputs[kIndex2]));
-  offset_ = static_cast<uint64_t>(transform::ConvertKernelTensor<int64_t>(inputs[kIndex3]));
+  seed_ = static_cast<uint64_t>(transform::ConvertKernelTensor<int64_t>(inputs[kIndex1]));
+  offset_ = static_cast<uint64_t>(transform::ConvertKernelTensor<int64_t>(inputs[kIndex2]));
 
   ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, outputs[kIndex0], from_, to_, seed_, offset_));
   RunOp(stream_ptr, workspace);
