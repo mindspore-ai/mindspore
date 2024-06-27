@@ -583,6 +583,12 @@ void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const s
     if (mem_block->pool_name == "CPU") {
       continue;
     }
+
+    auto mem_info = mem_block->mem_info.lock();
+    if (mem_info != nullptr && mem_info->type == MemType::kInSideSomas) {
+      continue;
+    }
+
     for (const auto &csv : prof_csv) {
       csv.second(mem_block, block_file);
       block_file << ",";
