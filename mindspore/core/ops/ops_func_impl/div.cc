@@ -54,8 +54,9 @@ TypePtrList DivFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtr
   MS_EXCEPTION_IF_NULL(x_tensor);
   const auto &x_dtype = x_tensor->Dtype();
   const auto &x_type_id = x_tensor->Dtype()->type_id();
-  static const std::vector<TypeId> int_or_bool = {kNumberTypeUInt8, kNumberTypeInt8,  kNumberTypeInt16,
-                                                  kNumberTypeInt32, kNumberTypeInt64, kNumberTypeBool};
+  static const std::vector<TypeId> int_or_bool = {kNumberTypeUInt8,  kNumberTypeInt8,   kNumberTypeInt16,
+                                                  kNumberTypeUInt16, kNumberTypeInt32,  kNumberTypeUInt32,
+                                                  kNumberTypeInt64,  kNumberTypeUInt64, kNumberTypeBool};
   bool is_int_or_bool = std::any_of(int_or_bool.begin(), int_or_bool.end(),
                                     [&x_type_id](const TypeId &type_id) { return x_type_id == type_id; });
   if (is_int_or_bool) {

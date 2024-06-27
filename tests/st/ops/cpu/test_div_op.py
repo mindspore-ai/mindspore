@@ -50,7 +50,9 @@ def test_two_tensors_add():
               np.float32, np.float64, np.uint16, np.uint32, np.uint64)
     for dtype in dtypes:
         output = Tensor(x.astype(dtype)) / Tensor(y.astype(dtype))
-        expect_result = x / y
+        expect_result = np.divide(x.astype(dtype), y.astype(dtype))
+        if dtype in (np.int8, np.int16, np.int32, np.int64, np.uint16, np.uint32, np.uint64):
+            expect_result = expect_result.astype(np.float32)
         assert output.asnumpy().dtype == expect_result.dtype
         assert np.array_equal(output.asnumpy(), expect_result)
 
