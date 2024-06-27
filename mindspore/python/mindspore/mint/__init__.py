@@ -515,7 +515,7 @@ def mean(input, dim=None, keepdim=False, *, dtype=None):
         [[ 6.]
         [ 8.]
         [10.]]]
-        """
+    """
     return mean_ext(input, axis=dim, keep_dims=keepdim, dtype=dtype)
 
 

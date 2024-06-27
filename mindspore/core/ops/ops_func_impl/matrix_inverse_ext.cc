@@ -23,22 +23,25 @@
 #include "ops/op_utils.h"
 
 namespace {
+const constexpr int64_t kNumber0 = 0;
 const constexpr int64_t kNumber1 = 1;
 const constexpr int64_t kNumber2 = 2;
+const constexpr int64_t kNumber6 = 6;
 }  // namespace
 namespace mindspore {
 namespace ops {
 
 void CheckMatrixInverseExtShape(const ShapeVector &input_shape, const std::string &prim_name) {
   auto input_rank = SizeToLong(input_shape.size());
-  MS_CHECK_VALUE(input_rank >= 2 || (input_rank == 1 && input_shape[kInputIndex0] == 0),
+  MS_CHECK_VALUE(input_rank >= kNumber2 || (input_rank == kNumber1 && input_shape[kInputIndex0] == kNumber0),
                  "For 'MatrixInverseExt', the input tensor must have at least 2 dimensions");
   if (input_rank >= kNumber2) {
     MS_CHECK_VALUE(input_shape[input_rank - kNumber1] == input_shape[input_rank - kNumber2],
                    "For 'MatrixInverseExt', the last two dimensions should be same");
   }
 
-  MS_CHECK_VALUE(input_rank <= 6, "For 'MatrixInverseExt', the input tensor cannot be larger than 6 dimensions.");
+  MS_CHECK_VALUE(input_rank <= kNumber6,
+                 "For 'MatrixInverseExt', the input tensor cannot be larger than 6 dimensions.");
 }
 
 BaseShapePtr MatrixInverseExtFuncImpl::InferShape(const PrimitivePtr &primitive,
