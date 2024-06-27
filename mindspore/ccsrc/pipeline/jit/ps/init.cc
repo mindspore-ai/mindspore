@@ -260,6 +260,7 @@ PYBIND11_MODULE(_c_expression, m) {
          "Get the optimize graph proto string.")
     .def("set_jit_config", &GraphExecutorPy::SetJitConfig, py::arg("jit_config") = py::dict(), "Set the jit config.")
     .def("generate_arguments_key", &GraphExecutorPy::GenerateArgumentsKey, "Generate unique key of argument.")
+    .def("check_argument_consistency", &GraphExecutorPy::CheckArgumentsConsistency, "Check equal of arguments.")
     .def("clear_compile_arguments_resource", &GraphExecutorPy::ClearCompileArgumentsResource,
          "Clear resource when phase cached.")
     .def("inc_graph_cell_count", &GraphExecutorPy::IncGraphCellCount, "Increase the count of GraphCell instance.")

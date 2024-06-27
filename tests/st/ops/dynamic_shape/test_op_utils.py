@@ -399,7 +399,7 @@ def replace_nontensor_with_help_tensor(inputs):
         elif x is not None and not isinstance(x, (Tensor, tuple, list, str)):
             raise TypeError(f"Unsupported type: {type(x)}")
 
-    new_inputs += [nontensor_input_index, nontensor_input_type]
+    new_inputs += [tuple(nontensor_input_index), tuple(nontensor_input_type)]
     return new_inputs
 
 

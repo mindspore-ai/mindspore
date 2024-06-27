@@ -142,6 +142,8 @@ class GraphExecutorPy : public std::enable_shared_from_this<GraphExecutorPy> {
   // Generate a key for mapping function graph
   py::object GenerateArgumentsKey(const py::object &obj, const py::tuple &args, const py::dict &kwargs,
                                   bool enable_tuple_broaden = false);
+  // Check consistency of two arguments for mapping function graph
+  void CheckArgumentsConsistency(const py::tuple &compile_args, const py::tuple &args_list, const py::object &target);
   void ClearCompileArgumentsResource();
 
   void ClearCurConvertInput();

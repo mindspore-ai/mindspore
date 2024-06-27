@@ -170,14 +170,14 @@ def test_tile_forward_dyn(mode, dyn_mode):
     shape1 = (2, 3, 4, 5)
     np_x1 = np.random.rand(*shape1).astype(np.float32)
     x1 = Tensor(np_x1)
-    out1 = fwd_cell(x1, mul)
+    out1 = fwd_cell(x1, ms.mutable(mul))
     expect1 = np.tile(np_x1, mul)
     assert np.allclose(out1.asnumpy(), expect1)
 
     shape2 = (3, 4, 5, 6) if dyn_mode == "dyn_shape" else (2, 3, 4)
     np_x2 = np.random.rand(*shape2).astype(np.float32)
     x2 = Tensor(np_x2)
-    out2 = fwd_cell(x2, mul)
+    out2 = fwd_cell(x2, ms.mutable(mul))
     expect2 = np.tile(np_x2, mul)
     assert np.allclose(out2.asnumpy(), expect2)
 
@@ -240,13 +240,13 @@ def test_tile_dynamic_len(mode, is_fwd):
         # Forward.
         forward_cell = test_utils.to_cell_obj(tile_func)
         forward_cell.set_inputs(x, ms.mutable(mul, True))
-        out = forward_cell(x, mul)
+        out = forward_cell(x, ms.mutable(mul))
         fwd_expect = np.tile(np_x, mul)
         assert np.allclose(out.asnumpy(), fwd_expect)
     else:
         # Backward.
         backward_cell = test_utils.to_cell_obj(tile_backward_func)
         backward_cell.set_inputs(x, ms.mutable(mul, True))
-        grads = backward_cell(x, mul)
+        grads = backward_cell(x, ms.mutable(mul))
         bwd_expect = np.ones((2, 3, 4, 5)).astype(np.float32) * 4.0
         assert np.allclose(grads.asnumpy(), bwd_expect)
