@@ -73,6 +73,8 @@ from mindspore.train._utils import read_proto
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir, \
     split_mindir, split_dynamic_mindir
 from mindspore.common.generator import Generator
+from safetensors.numpy import save_file
+from safetensors import safe_open
 from ..ops.operations._opaque_predicate_registry import add_opaque_predicate, clean_funcs
 
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
@@ -252,55 +254,65 @@ def _save_weight(checkpoint_dir, model_name, iteration, params):
         logger.warning(f"Checkpoint dir: '{checkpoint_dir}' is not existed.")
 
 
-def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_param_inc=False, crc_check=False):
+def _exec_save(ckpt_file_name, data_list, enc_key=None, enc_mode="AES-GCM", map_param_inc=False, crc_check=False,
+               format="ckpt"):
     """Execute the process of saving checkpoint into file."""
     try:
         with _ckpt_mutex:
+            tmp_name = ckpt_file_name.replace(f".{format}", ".tmp")
             if os.path.exists(ckpt_file_name):
                 os.chmod(ckpt_file_name, stat.S_IWUSR)
                 os.remove(ckpt_file_name)
-            with _ckpt_fs.create(ckpt_file_name, *_ckpt_fs.create_args) as f:
-                plain_data = None
-                if enc_key is not None:
-                    plain_data = BytesIO()
+            if os.path.exists(tmp_name):
+                os.chmod(tmp_name, stat.S_IWUSR)
+                os.remove(tmp_name)
+            if format == "ckpt":
+                with _ckpt_fs.create(tmp_name, *_ckpt_fs.create_args) as f:
+                    plain_data = None
+                    if enc_key is not None:
+                        plain_data = BytesIO()
 
-                crc_num = 0
-                for name, value in data_list.items():
-                    if name == "random_op":
-                        _write_random_seed(name, value, f)
-                        continue
-                    if value[0] == "mapparameter":
-                        _write_mapparameter(name, value, f, map_param_inc)
-                        continue
-                    if value[0] == "offload_parameter":
-                        new_value = value[1:]
-                        new_value[2] = value[3]
-                        _write_parameter_bytes_data(name, new_value, f, enc_key, plain_data)
-                        _offload_if_config(value[3])
-                        continue
-                    if value[1] == "str":
-                        crc_num = _write_parameter_data(name, value, f, enc_key, plain_data, crc_num, crc_check)
-                        continue
-                    if isinstance(value[2], np.ndarray):
-                        crc_num = _write_parameter_data(name, value, f, enc_key, plain_data, crc_num, crc_check)
-                        continue
-                    if isinstance(value[2], Tensor) and hasattr(value[2], "slice_num") and value[2].slice_num > 1:
-                        _write_hugeparameter(name, value, f)
-                        continue
+                    crc_num = 0
+                    for name, value in data_list.items():
+                        if name == "random_op":
+                            _write_random_seed(name, value, f)
+                            continue
+                        if value[0] == "mapparameter":
+                            _write_mapparameter(name, value, f, map_param_inc)
+                            continue
+                        if value[0] == "offload_parameter":
+                            new_value = value[1:]
+                            new_value[2] = value[3]
+                            _write_parameter_bytes_data(name, new_value, f, enc_key, plain_data)
+                            _offload_if_config(value[3])
+                            continue
+                        if value[1] == "str":
+                            crc_num = _write_parameter_data(name, value, f, enc_key, plain_data, crc_num, crc_check)
+                            continue
+                        if isinstance(value[2], np.ndarray):
+                            crc_num = _write_parameter_data(name, value, f, enc_key, plain_data, crc_num, crc_check)
+                            continue
+                        if isinstance(value[2], Tensor) and hasattr(value[2], "slice_num") and value[2].slice_num > 1:
+                            _write_hugeparameter(name, value, f)
+                            continue
 
-                    crc_num = _write_parameter_bytes_data(name, value, f, enc_key, plain_data, crc_num, crc_check)
+                        crc_num = _write_parameter_bytes_data(name, value, f, enc_key, plain_data, crc_num, crc_check)
 
-                if enc_key is not None:
-                    plain_data.seek(0)
-                    max_block_size = ENCRYPT_BLOCK_SIZE * 1024
-                    block_data = plain_data.read(max_block_size)
-                    while block_data:
-                        f.write(_encrypt(block_data, len(block_data), enc_key, len(enc_key), enc_mode))
+                    if enc_key is not None:
+                        plain_data.seek(0)
+                        max_block_size = ENCRYPT_BLOCK_SIZE * 1024
                         block_data = plain_data.read(max_block_size)
-
-                if crc_check:
-                    f.write('crc_num'.encode() + crc_num.to_bytes(10, byteorder='big'))
-
+                        while block_data:
+                            f.write(_encrypt(block_data, len(block_data), enc_key, len(enc_key), enc_mode))
+                            block_data = plain_data.read(max_block_size)
+                    if crc_check:
+                        f.write('crc_num'.encode() + crc_num.to_bytes(10, byteorder='big'))
+            elif format == "safetensors":
+                save_dict = {}
+                for name, value in data_list.items():
+                    save_dict[name] = value[2].asnumpy()
+                save_file(save_dict, tmp_name)
+            os.rename(tmp_name, ckpt_file_name)
             os.chmod(ckpt_file_name, stat.S_IRUSR)
 
     except BaseException as e:
@@ -415,8 +427,11 @@ def _write_hugeparameter(name, value, f):
         offset += numpy_data.shape[0]
 
 
-def _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name):
+def _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name, format):
     """Check save_obj and ckpt_file_name for save_checkpoint."""
+    if format not in ["safetensors", "ckpt"]:
+        raise ValueError(f"For 'save_checkpoint', the format must be "
+                         f"'safetensors' or 'ckpt', but got {format}.")
     if not isinstance(save_obj, (nn.Cell, list, dict)):
         raise TypeError("For 'save_checkpoint', the parameter 'save_obj' must be nn.Cell, list or dict, "
                         "but got {}.".format(type(save_obj)))
@@ -428,14 +443,21 @@ def _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name):
     if os.path.isdir(ckpt_file_name):
         raise IsADirectoryError("For 'save_checkpoint', the parameter `ckpt_file_name`: {} is a directory, "
                                 "it must be a file name.".format(ckpt_file_name))
-    if not ckpt_file_name.endswith('.ckpt'):
-        ckpt_file_name += ".ckpt"
+    if not ckpt_file_name.endswith(format):
+        ckpt_file_name += f".{format}"
     return ckpt_file_name
+
+
+def _check_format_and_other_params(format, mode, crc_check=False, async_save=False, map_param_inc=False,
+                                   global_step_num=None):
+    param_not_default = (mode != "AES-GCM" or crc_check or async_save or map_param_inc or global_step_num is not None)
+    if format == "safetensors" and param_not_default:
+        raise ValueError("For 'save_checkpoint', when format is 'safetensors', other param must be default.")
 
 
 def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                     async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM", choice_func=None,
-                    crc_check=False, **kwargs):
+                    crc_check=False, format="ckpt", **kwargs):
     r"""
     Save checkpoint to a specified file.
 
@@ -465,6 +487,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                                  be saved. Default: ``None`` .
         crc_check (bool) : Whether to perform crc32 calculation when saving checkpoint and save the calculation
             result to the file. Default: ``False`` .
+        format (str): Format of the output file, can be "ckpt" or "safetensors". Default: "ckpt".
         kwargs (dict): Configuration options dictionary.
 
     Raises:
@@ -498,7 +521,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         - `Saving and Loading the Model - Saving and Loading the Model Weight
           <https://mindspore.cn/tutorials/en/master/beginner/save_load.html#saving-and-loading-the-model-weight>`_
     """
-    ckpt_file_name = _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name)
+    ckpt_file_name = _check_save_obj_and_ckpt_file_name(save_obj, ckpt_file_name, format)
     integrated_save = Validator.check_bool(integrated_save)
     async_save = Validator.check_bool(async_save)
     append_dict = _check_append_dict(append_dict)
@@ -508,6 +531,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     map_param_inc = kwargs.get('incremental', False)
     logger.info("Execute the process of saving checkpoint files.")
     global_step_num = kwargs.get('global_step_num', None)
+    _check_format_and_other_params(format, enc_mode, crc_check, async_save, map_param_inc, global_step_num)
 
     save_obj = _convert_save_obj_to_param_list(save_obj, integrated_save, append_dict, choice_func)
 
@@ -584,11 +608,12 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         aiturbo.save_ckpt(ckpt_name, global_step_num, data_list_np, crc_check)
     elif async_save:
         data_copy = copy.deepcopy(data_list)
-        thr = Thread(target=_exec_save, args=(ckpt_file_name, data_copy, enc_key, enc_mode, map_param_inc, crc_check),
+        thr = Thread(target=_exec_save,
+                     args=(ckpt_file_name, data_copy, enc_key, enc_mode, map_param_inc, crc_check, format),
                      name="asyn_save_ckpt")
         thr.start()
     else:
-        _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, map_param_inc, crc_check)
+        _exec_save(ckpt_file_name, data_list, enc_key, enc_mode, map_param_inc, crc_check, format)
 
     logger.info("Saving checkpoint process is finished.")
 
@@ -1085,9 +1110,14 @@ def obfuscate_model(obf_config, **kwargs):
 
 
 def _load_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, filter_prefix, choice_func, dec_key,
-                          dec_mode, crc_check):
+                          dec_mode, crc_check, format):
     """load parameter into parameter_dict"""
-    ckpt_file_name = _check_ckpt_file_name(ckpt_file_name)
+    ckpt_file_name = _check_ckpt_file_name(ckpt_file_name, format)
+    if format == "safetensors":
+        with safe_open(ckpt_file_name, framework='np') as f:
+            for k in f.keys():
+                parameter_dict[k] = Parameter(f.get_tensor(k))
+        return
     checkpoint_list = _parse_ckpt_proto(ckpt_file_name, dec_key, dec_mode, crc_check)
     try:
         param_data_list = []
@@ -1149,7 +1179,7 @@ def _load_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, filter
 
 def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None,
                     dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None,
-                    crc_check=False, remove_redundancy=False):
+                    crc_check=False, remove_redundancy=False, format="ckpt"):
     """
     Load checkpoint info from a specified file.
 
@@ -1184,6 +1214,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
         remove_redundancy (bool) : Whether to enable loading of checkpoint saved with redundancy removal.
             Redundancy removal refers to eliminating redundant data in data parallelism mode. Default: ``False`` , means
             redundant-free loading is not enabled.
+        format (str): Format of the input file, can be "ckpt" or "safetensors". Default: "ckpt".
 
     Returns:
         Dict, key is parameter name, value is a Parameter or string. When the `append_dict` parameter of
@@ -1234,6 +1265,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     dec_mode = Validator.check_isinstance('dec_mode', dec_mode, str)
     crc_check = Validator.check_isinstance('crc_check', crc_check, bool)
     remove_redundancy = Validator.check_isinstance('remove_redundancy', remove_redundancy, bool)
+    _check_format_and_other_params(format, dec_mode, crc_check)
     logger.info("Execute the process of loading checkpoint files.")
 
     parameter_dict = {}
@@ -1251,7 +1283,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
                 parameter_dict[key] = Parameter(Tensor(value), name=key)
     else:
         _load_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, filter_prefix, choice_func, dec_key,
-                              dec_mode, crc_check)
+                              dec_mode, crc_check, format)
 
     if not parameter_dict:
         raise ValueError(f"The loaded parameter dict is empty after filter or specify, please check whether "
@@ -1377,15 +1409,18 @@ def _load_map_parameter(checkpoint_list, element, element_id, map_data_list,
         parameter_dict[element.tag] = map_array
 
 
-def _check_ckpt_file_name(ckpt_file_name):
+def _check_ckpt_file_name(ckpt_file_name, format):
     """Check function load_checkpoint's ckpt_file_name."""
     if not isinstance(ckpt_file_name, str):
         raise TypeError("For 'load_checkpoint', the argument 'ckpt_file_name' must be string, "
                         "but got {}.".format(type(ckpt_file_name)))
 
-    if ckpt_file_name[-5:] != ".ckpt":
-        raise ValueError("For 'load_checkpoint', the checkpoint file should end with '.ckpt', please "
+    if format not in ['ckpt', 'safetensors']:
+        raise ValueError("For 'load_checkpoint', the checkpoint file should end with '.ckpt' or '.safetensors', please "
                          "input the correct 'ckpt_file_name'.")
+    if not ckpt_file_name.endswith(format):
+        raise ValueError(f"For 'load_checkpoint', the checkpoint file format must same with 'format', but got "
+                         f"file_name:'{ckpt_file_name}', format:'{format}'")
 
     ckpt_file_name = os.path.abspath(ckpt_file_name)
     if not os.path.exists(ckpt_file_name):

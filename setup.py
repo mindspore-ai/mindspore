@@ -102,7 +102,8 @@ required_package = [
     'scipy >= 1.5.4',
     'packaging >= 20.0',
     'psutil >= 5.6.1',
-    'astunparse >= 1.6.3'
+    'astunparse >= 1.6.3',
+    'safetensors >= 0.4.0'
 ]
 
 package_data = {

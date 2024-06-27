@@ -27,7 +27,7 @@ from mindspore.parallel._parallel_serialization import _rank_list_for_transform_
     _transform_parallel_checkpoint, _get_device_num_from_strategy, _make_dir, \
     _extract_layout_map, _extract_src_dst_layout_map, _parameter_not_in_local_stage, _extract_pipeline_stage_num, \
     _merge_protobuf_strategy, _merge_json_strategy, _extract_src_dst_layout_map_by_src
-
+from mindspore.parallel.transform_safetensors import _transform_safetensors, _collect_safetensor_files
 
 __all__ = ["merge_pipeline_strategys", "rank_list_for_transform", "transform_checkpoint_by_rank",
            "transform_checkpoints", "sync_pipeline_shared_parameters", "load_segmented_checkpoints"]
@@ -70,7 +70,6 @@ def merge_pipeline_strategys(src_strategy_dirs, dst_strategy_file):
         _merge_protobuf_strategy(src_strategy_files_protobuf, dst_strategy_file)
     else:
         _merge_json_strategy(src_strategy_files_json, dst_strategy_file)
-
 
 
 def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=None):
@@ -232,7 +231,7 @@ def _transform_checkpoint_by_stage(src_checkpoints_dir, dst_checkpoints_dir, ckp
     param_attr_dict = defaultdict(dict)
     param_type_dict = defaultdict(dict)
     src_strategy_list, dst_strategy_list, stage_id = _extract_src_dst_layout_map_by_src(src_strategy_file, \
-                                                                                             dst_strategy_file)
+                                                                                        dst_strategy_file)
     src_stage_device_num = np.prod(src_strategy_list.get(list(src_strategy_list.keys())[0])[0]) if src_strategy_list \
                                                                                                    is not None else 1
     dst_stage_device_num = np.prod(dst_strategy_list.get(list(dst_strategy_list.keys())[0])[0]) if dst_strategy_list \
@@ -357,7 +356,7 @@ def _transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix
 
 
 def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix, src_strategy_file=None,
-                          dst_strategy_file=None):
+                          dst_strategy_file=None, process_num=1, output_format="ckpt"):
     """
     Transform distributed checkpoint from source sharding strategy to destination sharding strategy for a rank.
     For more details about converting distributed Checkpoint, please refer to
@@ -368,18 +367,24 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
         rank number should be set to a subdirectory and the checkpoint file is stored in this subdirectory. If multiple
         files exist in a rank directory, the last file in the lexicgraphic order would be selected.
 
+        The number of multiprocess settings is related to the size of the host, and it is not recommended to set it
+        too large, otherwise it may cause freezing.
+
     Args:
         src_checkpoints_dir (str): The source checkpoints directory.
         dst_checkpoints_dir (str): The destination checkpoints directory to save the converted checkpoints.
         ckpt_prefix (str): The destination checkpoint name prefix.
-        src_strategy_file (str): Name of source sharding strategy file which saved by
+        src_strategy_file (str, optional): Name of source sharding strategy file which saved by
                                  'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
                                  when the 'src_strategy_file' is None, it means that the source sharding strategy is
                                  without any sharing for each parameter. Default:None.
-        dst_strategy_file (str): Name of destination sharding strategy file which saved by
+        dst_strategy_file (str， optional): Name of destination sharding strategy file which saved by
                                  'mindspore.set_auto_parallel_context(strategy_ckpt_save_file)'.
                                  when the 'dst_strategy_file' is None, it means that the destination sharding strategy
                                  is without any sharing for each parameter. Default:None.
+        process_num (int, optional): Number of processes to use for parallel processing. Defaults: 1.
+        output_format (str, optional): Control the format of the output checkpoint after conversion.
+            It can be set to either 'ckpt' or 'safetensors'. Default: 'ckpt'.
 
     Raises:
         ValueError: `src_strategy_file` or `dst_strategy_file` is incorrect.
@@ -393,6 +398,21 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
         ...                       "./src_strategy.ckpt", "./dst_strategy.ckpt")
 
     """
+    all_safetensor_files_map = _collect_safetensor_files(src_checkpoints_dir)
+    all_ckpt_files_map = _collect_safetensor_files(src_checkpoints_dir, format='ckpt')
+    if all_safetensor_files_map and all_ckpt_files_map:
+        raise ValueError("For 'transform_checkpoints', the 'src_checkpoints_dir' cannot contain "
+                         "both ckpt file and safetensors file simultaneously")
+    if all_safetensor_files_map and not all_ckpt_files_map:
+        _transform_safetensors(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix, src_strategy_file,
+                               dst_strategy_file, process_num, output_format)
+        return
+    if not all_safetensor_files_map and not all_ckpt_files_map:
+        raise ValueError("For 'transform_checkpoints', the 'src_checkpoints_dir' can not be empty.")
+    if all_ckpt_files_map and not all_safetensor_files_map and output_format == 'safetensors':
+        raise ValueError("For 'transform_checkpoints', 'output_format' can not be 'safetensors' "
+                         "when 'src_checkpoints_dir' only contains ckpt file.")
+
     if not os.path.isdir(src_checkpoints_dir):
         raise NotADirectoryError("src_checkpoints_dir {} is not a directory.".format(src_checkpoints_dir))
     _make_dir(dst_checkpoints_dir, "path")
@@ -419,7 +439,7 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
     layout_is_passed = src_layout_map and dst_layout_map
 
     if layout_is_passed and pipeline_stage_num == 1 and dst_stage_num == 1 and \
-        src_param_keys.issubset(dst_param_keys) and len(src_param_keys) < len(dst_param_keys):
+            src_param_keys.issubset(dst_param_keys) and len(src_param_keys) < len(dst_param_keys):
         ms.log.info("Transform checkpoint by every pipeline stage.")
         _transform_checkpoint_by_stage(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
                                        src_strategy_file, dst_strategy_file)
@@ -445,6 +465,7 @@ def _sync_params(name, param, layout):
 
     class SharedParameterSyncCell(ms.nn.Cell):
         """synchronize cell"""
+
         def __init__(self, param, is_send, peer_rank, sr_tag):
             super().__init__()
             self.param = param
