@@ -365,7 +365,7 @@ inline void HandleExceptionRethrow(const std::function<void(void)> &main_func,
       throw py::runtime_warning(ss.str());
     }
   } catch (const std::exception &ex) {
-    MS_LOG(INFO) << "Caught exception: " << ex.what();
+    MS_LOG(ERROR) << "Caught exception: " << ex.what();
     if (other_error_handler) {
       other_error_handler();
     }
