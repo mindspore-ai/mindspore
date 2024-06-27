@@ -23,11 +23,11 @@ from time import time
 from multiprocessing import Process, Queue
 
 import numpy as np
-import pytest
 
 import mindspore as ms
 from mindspore.communication import get_group_size, get_rank, init
 
+from tests.mark_utils import arg_mark
 from tests.st.utils import test_utils
 
 workspace = os.path.dirname(os.path.abspath(__file__))
@@ -248,9 +248,7 @@ def compute_process(q, device_id, device_num, args):
     q.put(loss_end)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_resnet_50_1p():
     """
     Feature: MindCV resnet50 1p test
@@ -267,9 +265,7 @@ def test_resnet_50_1p():
     # assert average_step_time < 122.97, f"Average step time should shorter than 122.97"
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
 def test_resnet_50_8p():
     """
     Feature: MindCV resnet50 8p test
@@ -295,9 +291,7 @@ def test_resnet_50_8p():
     res0 = q.get()
     assert 0.97 <= res0 <= 1.07, f"Loss start should in [7.25, 7.35], but got {res0}"
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_mobilenetv3_small_1p():
     """
     Feature: MindCV mobilenetv3 1p test
@@ -313,10 +307,7 @@ def test_mobilenetv3_small_1p():
     assert 1.02 <= loss_end <= 1.12, f"Loss start should in [1.02, 1.12], but got {loss_end}"
     # assert average_step_time < 117.26, f"Average step time should shorter than 117.26ms"
 
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @test_utils.run_test_with_On
 def test_inception_v3_1p():
     """
@@ -334,9 +325,7 @@ def test_inception_v3_1p():
     # assert average_step_time < 216.74, f"Average step time should shorter than 216.74ms"
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @test_utils.run_test_with_On
 def test_vit_b32_1p():
     """
