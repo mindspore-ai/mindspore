@@ -392,7 +392,7 @@ void E2eDump::DumpSingleAnfNode(const AnfNodePtr &anf_node, const size_t output_
   GetFileKernelName(NOT_NULL(&node_name));
 
   std::string dump_name = node_name;
-  const std::string cst_prefix = "Default--";
+  const std::string cst_prefix = "Default_";
   if (anf_node->isa<ValueNode>()) {
     if (dump_name.find(cst_prefix) == std::string::npos) {
       MS_LOG(INFO) << "Incorrect constant format: " << dump_name;
