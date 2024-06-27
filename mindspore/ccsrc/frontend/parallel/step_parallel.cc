@@ -864,6 +864,9 @@ static void StepReplaceOp(OperatorVector replace_op, const CNodePtr &node) {
       MS_LOG(INFO) << "The redistribution node in reshape would not be recomputed.";
       prim->set_attr(RECOMPUTE, MakeValue(do_recompute));
     }
+    if (prim->name() == GET_NEXT && origin_prim_attrs.find(SYMBOLS) != origin_prim_attrs.end()) {
+      prim->set_attr(SYMBOLS, origin_prim_attrs[SYMBOLS]);
+    }
     if (index == replace_op.size() - 1) {
       replace_node->set_user_data<OperatorInfo>(node->user_data<OperatorInfo>());
       replace_node->set_primal_attrs(node->primal_attrs());
@@ -3795,6 +3798,7 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   ParallelPartProcess(all_nodes, root, manager);
   BroadcastLastResult(root, manager);
   MicroBatchPostProcess(root, all_nodes);
+  UpdateParamSymbolicShape(root);
   DumpGraph(root, std::string(STEP_PARALLEL_END));
 
   // step parallel only run once

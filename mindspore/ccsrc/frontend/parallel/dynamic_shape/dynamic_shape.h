@@ -27,7 +27,7 @@
 #include "base/base.h"
 #include "utils/hash_map.h"
 #include "mindspore/core/symbolic_shape/symbol.h"
-#include "mindspore/core/ops/symbol_ops_impl/getnext.h"
+#include "mindspore/core/symbolic_shape/symbol_info.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "ops/array_ops.h"
@@ -47,9 +47,9 @@ constexpr size_t INPUT_SYMBOLS_INDEX = 0;
 constexpr size_t OUTPUT_SYMBOLS_INDEX = 1;
 constexpr size_t INPUT_OUTPUT_SYMBOLS_SIZE = 2;
 
-void PrintSymbolInfo(const std::vector<symshape::ops::SymbolInfoList> &symbol_infos);
-std::vector<symshape::ops::SymbolInfoList> ParallelSymbolInfo(
-  const std::vector<symshape::ops::SymbolInfoList> &symbol_infos, bool has_dyn_shape);
+void PrintSymbolInfo(const std::vector<symshape::SymbolInfoList> &symbol_infos);
+std::vector<symshape::SymbolInfoList> ParallelSymbolInfo(const std::vector<symshape::SymbolInfoList> &symbol_infos,
+                                                         bool has_dyn_shape);
 bool IsParallelDynamicShape(const FuncGraphPtr &func_graph);
 Symbols GetNodeSymbol(const AnfNodePtr &node);
 Symbols StaticShapesToSymbols(const Shapes &shapes);
@@ -65,6 +65,7 @@ bool IsDynamicShapesList(const std::vector<Shapes> &shapes_list);
 bool IsDynamicShapes(const Shapes &shapes);
 bool IsDynamicShape(const Shape &shape);
 bool IsSemiOrAutoParallelMode();
+void UpdateParamSymbolicShape(const FuncGraphPtr &root);
 }  // namespace parallel
 }  // namespace mindspore
 

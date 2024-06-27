@@ -16,6 +16,7 @@
 from __future__ import absolute_import
 
 import math
+import copy
 
 from mindspore import _checkparam as Validator
 from mindspore import log as logger
@@ -98,9 +99,10 @@ class _DataWrapper(nn.Cell):
             dataset_types, dataset_shapes, len(dataset_types), queue_name)
         if network.get_inputs() is not None:
             symbol_inputs = [getattr(inp, "symbolic_shape", None) for inp in network.get_inputs()]
-            symbol_inputs = _change_symbols_for_parallel(dataset_shapes, symbol_inputs)
-            if any((s is not None for s in symbol_inputs)):
+            symbols_for_parallel = _change_symbols_for_parallel(dataset_shapes, copy.deepcopy(symbol_inputs))
+            if any((s is not None for s in symbols_for_parallel)):
                 self.get_next.add_prim_attr("symbols", symbol_inputs)
+                self.get_next.add_prim_attr("symbols_for_parallel", symbols_for_parallel)
         self.network = network
         self._get_attr_from_cell(network)
 

@@ -25,7 +25,7 @@
 
 #include "mindspore/core/symbolic_shape/symbol.h"
 #include "mindspore/core/symbolic_shape/int_symbol.h"
-#include "mindspore/core/ops/symbol_ops_impl/getnext.h"
+#include "mindspore/core/symbolic_shape/symbol_info.h"
 #include "pipeline/jit/ps/action.h"
 #include "include/common/utils/parallel_context.h"
 
@@ -202,7 +202,7 @@ std::string RemainderOfSymbolsToString(const Symbols &symbols) {
   return str + "]";
 }
 
-void PrintSymbolInfo(const std::vector<symshape::ops::SymbolInfoList> &symbol_infos) {
+void PrintSymbolInfo(const std::vector<symshape::SymbolInfoList> &symbol_infos) {
   for (size_t i = 0; i < symbol_infos.size(); ++i) {
     auto info_list = symbol_infos[i];
     for (size_t j = 0; j < info_list.size(); ++j) {
@@ -259,11 +259,13 @@ static int64_t GetDeviceNum() {
 
 // modify symbol info by dataset strategy
 // only for data sink is false
-std::vector<symshape::ops::SymbolInfoList> ParallelSymbolInfo(
-  const std::vector<symshape::ops::SymbolInfoList> &symbol_infos, bool has_dyn_shape) {
+std::vector<symshape::SymbolInfoList> ParallelSymbolInfo(const std::vector<symshape::SymbolInfoList> &symbol_infos,
+                                                         bool has_dyn_shape) {
   if (!has_dyn_shape || !IsSemiOrAutoParallelMode()) {  // static shape or sink mode no need to handle symbol info here
     return symbol_infos;
   }
+
+  ParallelContext::GetInstance()->set_symbol_infos(symbol_infos);
 
   auto parallel_symbol_infos = symbol_infos;
   parallel::Strategies dataset_strategy;
@@ -387,6 +389,35 @@ bool InDynamicGraph(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(root_graph);
 
   return root_graph->dynamic_shape();
+}
+
+void UpdateParamSymbolicShape(const FuncGraphPtr &root) {
+  if (!root->dynamic_shape()) {
+    return;
+  }
+  auto symbol_infos = ParallelContext::GetInstance()->symbol_infos();
+  // when input is None, the parameter is removed from root graph.
+  symbol_infos.erase(std::remove_if(symbol_infos.begin(), symbol_infos.end(),
+                                    [](const symshape::SymbolInfoList &s) { return s.empty(); }),
+                     symbol_infos.end());
+  abstract::AbstractBasePtrList params_abs(root->parameters().size());
+  (void)std::transform(root->parameters().begin(), root->parameters().end(), params_abs.begin(),
+                       [](const AnfNodePtr &p) { return p->abstract(); });
+  std::vector<ListSymbolPtr> original_symbolic_shapes;
+  if (!symbol_infos.empty()) {
+    original_symbolic_shapes = symshape::BuildSymbolicShapeBySymbolInfo(params_abs, symbol_infos);
+  }
+  for (size_t i = 0; i < params_abs.size(); i++) {
+    if (params_abs[i] == nullptr) {
+      continue;
+    }
+    if (i < original_symbolic_shapes.size()) {
+      params_abs[i]->SetSymbolicShape(original_symbolic_shapes[i]);
+    } else if (params_abs[i]->GetSymbolicShape() != nullptr) {
+      params_abs[i]->SetSymbolicShape(nullptr);
+    }
+  }
+  ParallelContext::GetInstance()->set_symbol_infos({});
 }
 }  // namespace parallel
 }  // namespace mindspore
