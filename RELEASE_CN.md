@@ -8,12 +8,13 @@
 
 - [[#I9EYXX](https://gitee.com/mindspore/mindspore/issues/I9EYXX)] 修复编译缓存在msrun分布式并行启动方式下不使能的问题。
 - [[#I86Z01](https://gitee.com/mindspore/mindspore/issues/I86Z01)] 修复ops.interpolate接口在PyNative模式下反向报错问题。
+- [[#IA8OA3](https://gitee.com/mindspore/mindspore/issues/IA8OA3)] 修复万卡以上规模集群中偶现的host组网链接错误。
 
 ### 贡献者
 
 感谢以下人员做出的贡献:
 
-xiaoyao, tianxiaodong
+xiaoyao, tianxiaodong, ZPaC
 
 欢迎以任何形式对项目提供贡献！
 
