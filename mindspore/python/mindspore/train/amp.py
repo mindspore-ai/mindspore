@@ -491,7 +491,6 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
         setattr(network, "amp_strategy", amp_strategy)
         # set amp_strategy context decorator for the object
         network = _set_amp_decorator(network, AmpLevel.AmpAuto, dtype, white_list, black_list)
-        network = _OutputTo32(network)
     else:
         raise ValueError("The amp level {} is not supported".format(amp_level))
 
@@ -874,7 +873,6 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=m
         setattr(network, "amp_strategy", amp_strategy)
         # set amp_strategy context decorator for the object
         network = _set_amp_decorator(network, AmpLevel.AmpAuto, dtype, white_list, black_list)
-        network = _OutputTo32(network)
     return network
 
 

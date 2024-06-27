@@ -173,24 +173,24 @@ def test_amp_auto_white_list():
     input_data = Tensor(np.ones([1, 1]), dtype=ms.float32)
     # test with net
     net = MatmulNet()
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
+        # ValueError: For MatMul, the dtype of 'input' and 'other' should be the same,
+        # but got 'input' with dtype: 43 and 'other' with dtype: 42.
         net(input_data)
 
     net = auto_mixed_precision(net, "auto")
     out = net(input_data)
-    assert out.dtype == ms.float32
-    out_matmul = net._backbone(input_data)  # pylint: disable=protected-access
-    assert out_matmul.dtype == ms.float16
+    assert out.dtype == ms.float16
     # test with func
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
+        # ValueError: For MatMul, the dtype of 'input' and 'other' should be the same,
+        # but got 'input' with dtype: 43 and 'other' with dtype: 42.
         out = func_matmul(input_data)
         _ = out.asnumpy()
 
     net_func = auto_mixed_precision(func_matmul, "auto")
     out = net_func(input_data)
-    assert out.dtype == ms.float32
-    out_matmul = net_func._backbone(input_data)  # pylint: disable=protected-access
-    assert out_matmul.dtype == ms.float16
+    assert out.dtype == ms.float16
 
 
 class LogNet(nn.Cell):
@@ -220,14 +220,10 @@ def test_amp_auto_black_list():
     net = auto_mixed_precision(net, "auto")
     out = net(input_data)
     assert out.dtype == ms.float32
-    out_matmul = net._backbone(input_data)  # pylint: disable=protected-access
-    assert out_matmul.dtype == ms.float32
     # test with func
     net_func = auto_mixed_precision(func_log, "auto")
     out = net_func(input_data)
     assert out.dtype == ms.float32
-    out_matmul = net_func._backbone(input_data)  # pylint: disable=protected-access
-    assert out_matmul.dtype == ms.float32
 
 
 class BiasAddNet(nn.Cell):
@@ -259,36 +255,30 @@ def test_amp_auto_promote():
     net = BiasAddNet()
     net = auto_mixed_precision(net, "auto")
     out = net(input_fp16)
-    assert out.dtype == ms.float32
-    out_matmul = net._backbone(input_fp16)  # pylint: disable=protected-access
-    assert out_matmul.dtype == ms.float16
+    assert out.dtype == ms.float16
     # test with func
     net_func = auto_mixed_precision(func_biasadd, "auto")
     out = net_func(input_fp16)
-    assert out.dtype == ms.float32
-    out_matmul = net_func._backbone(input_fp16)  # pylint: disable=protected-access
-    assert out_matmul.dtype == ms.float16
+    assert out.dtype == ms.float16
 
     # promote with fp32
     input_fp32 = Tensor(np.ones([3, 3]), dtype=ms.float32)
     # test with net
     net2 = BiasAddNet()
     with pytest.raises(TypeError):
+        # TypeError: For primitive[BiasAdd], the input type must be same.
         net2(input_fp32)
     net2 = auto_mixed_precision(net2, "auto")
     out2 = net2(input_fp32)
     assert out2.dtype == ms.float32
-    out_matmul2 = net2._backbone(input_fp32)  # pylint: disable=protected-access
-    assert out_matmul2.dtype == ms.float32
     # test with func
     with pytest.raises(TypeError):
+        # TypeError: For primitive[BiasAdd], the input type must be same.
         out = func_biasadd(input_fp32)
         _ = out.asnumpy()
     net_func2 = auto_mixed_precision(func_biasadd, "auto")
     out2 = net_func2(input_fp32)
     assert out2.dtype == ms.float32
-    out_matmul2 = net_func2._backbone(input_fp32)  # pylint: disable=protected-access
-    assert out_matmul2.dtype == ms.float32
 
 
 def test_amp_custom_white_black_list():
@@ -305,9 +295,7 @@ def test_amp_custom_white_black_list():
     black_list = []
     net1 = custom_mixed_precision(net1, white_list=white_list, black_list=black_list, dtype=ms.float16)
     out = net1(input_data)
-    assert out.dtype == ms.float32
-    out_matmul = net1._backbone(input_data)  # pylint: disable=protected-access
-    assert out_matmul.dtype == ms.float16
+    assert out.dtype == ms.float16
     # test prim in black list
     net2 = MatmulNet()
     white_list = []
@@ -315,5 +303,3 @@ def test_amp_custom_white_black_list():
     net2 = custom_mixed_precision(net2, white_list=white_list, black_list=black_list, dtype=ms.float16)
     out = net2(input_data)
     assert out.dtype == ms.float32
-    out_matmul = net2._backbone(input_data)  # pylint: disable=protected-access
-    assert out_matmul.dtype == ms.float32
