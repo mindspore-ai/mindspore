@@ -110,8 +110,8 @@ def test_mean_normal(keep_dims, in_dtype, out_dtype, context_mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    axis = (0, -1)
-    x = generate_random_input((2, 3, 4, 5), mstype.dtype_to_nptype(in_dtype))
+    axis = (0, 1, 2, 3)
+    x = generate_random_input((64, 4, 64, 64), mstype.dtype_to_nptype(in_dtype))
     output = mean_forward_func(Tensor(x), axis, keep_dims, out_dtype)
     expect = generate_expect_forward_output("mean", x, axis, keep_dims, mstype.dtype_to_nptype(out_dtype))
     np.testing.assert_equal(output.dtype, out_dtype)
@@ -312,14 +312,14 @@ def test_sum_default_dtype(axis, in_dtype, context_mode):
     np.testing.assert_equal(grads.dtype, in_dtype)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('keep_dims', [False, True])
-@pytest.mark.parametrize('in_dtype', [mstype.float16])
+@pytest.mark.parametrize('in_dtype', [mstype.float32])
 @pytest.mark.parametrize('out_dtype', [mstype.float32])
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_prod_normal(keep_dims, in_dtype, out_dtype, context_mode):

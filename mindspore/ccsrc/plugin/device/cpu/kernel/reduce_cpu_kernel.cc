@@ -15,6 +15,7 @@
  */
 
 #include "plugin/device/cpu/kernel/reduce_cpu_kernel.h"
+#include <Eigen/Dense>
 #include <complex>
 #include <string>
 #include <vector>
@@ -62,6 +63,7 @@ class ReduceCpuKernelFunc : public CpuKernelFunc {
   void HandleInputAxis();
   void SpecialExcute();
   void CalAxesAndStride(std::vector<size_t> *axes, size_t *stride);
+  void ReduceMeanGetOutput(T *output, const size_t &size);
 
   enum class ReduceFuncType {
     kReduceAllType,
@@ -101,6 +103,22 @@ void ReduceSum(const T *in, T *out, size_t start, size_t end, TransposeIterator 
     }
   }
   *out = value;
+}
+
+template <>
+void ReduceSum(const Eigen::half *in, Eigen::half *out, size_t start, size_t end, TransposeIterator *iter) {
+  auto value = static_cast<double>(*out);
+  if (iter != nullptr) {
+    for (size_t i = start; i < end; i++) {
+      value += static_cast<double>(in[iter->GetPos()]);
+      iter->GenNextPos();
+    }
+  } else {
+    for (size_t i = start; i < end; i++) {
+      value += static_cast<double>(in[i]);
+    }
+  }
+  *out = static_cast<Eigen::half>(value);
 }
 
 template <>
@@ -151,6 +169,24 @@ void ReduceProd(const T *in, T *out, size_t start, size_t end, TransposeIterator
       *out *= in[i];
     }
   }
+}
+
+template <>
+void ReduceProd(const Eigen::half *in, Eigen::half *out, size_t start, size_t end, TransposeIterator *iter) {
+  auto value = static_cast<double>(*out);
+  if (iter != nullptr) {
+    for (size_t i = start; i < end; i++) {
+      value *= static_cast<double>(in[iter->GetPos()]);
+      iter->GenNextPos();
+    }
+    *out = static_cast<Eigen::half>(value);
+    return;
+  }
+
+  for (size_t i = start; i < end; i++) {
+    value *= static_cast<double>(in[i]);
+  }
+  *out = static_cast<Eigen::half>(value);
 }
 
 template <typename T>
@@ -396,7 +432,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::KernelTensor *> &
       *output_addr = input_addr[0];
       reduce_func_(input_addr, output_addr, 1, input_size, nullptr);
       if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
-        *output_addr /= SizeToFloat(input_size);
+        ReduceMeanGetOutput(output_addr, input_size);
       }
     } else {
       AccelerateLongVector(input_addr, output_addr, input_size);
@@ -450,7 +486,7 @@ bool ReduceCpuKernelFunc<T>::RunFunc(const std::vector<kernel::KernelTensor *> &
         iter.GenNextPos();
         reduce_func_(input_addr, &output_addr[i], 1, stride, &iter);
         if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
-          output_addr[i] /= SizeToFloat(stride);
+          ReduceMeanGetOutput(&output_addr[i], stride);
         }
       }
     };
@@ -480,7 +516,16 @@ void ReduceCpuKernelFunc<T>::AccelerateLongVector(T *input_addr, T *output_addr,
   };
   ParallelLaunchAutoSearch(task, input_size, this, &parallel_search_info_);
   if (reduce_type_ == ReduceFuncType::kReduceMeanType) {
-    *output_addr /= SizeToFloat(input_size);
+    ReduceMeanGetOutput(output_addr, input_size);
+  }
+}
+
+template <typename T>
+void ReduceCpuKernelFunc<T>::ReduceMeanGetOutput(T *output, const size_t &size) {
+  if constexpr (std::is_same<T, Eigen::half>::value) {
+    *output = static_cast<Eigen::half>(static_cast<double>(*output) / SizeToFloat(size));
+  } else {
+    *output /= SizeToFloat(size);
   }
 }
 
@@ -533,6 +578,7 @@ static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_ma
 
 static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_prod_mean_list = {
   {REDUCE_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)},
+  {REDUCE_CPU_REG(kNumberTypeFloat16, kNumberTypeInt64, Eigen::half)},
   {REDUCE_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
   {REDUCE_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
   {REDUCE_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
@@ -548,6 +594,7 @@ static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_pr
 
 static std::vector<std::pair<KernelAttr, SpecializeReduceFuncCreator>> kernel_sum_list = {
   {REDUCE_SUM_CPU_REG(kNumberTypeBool, kNumberTypeInt64, bool)},
+  {REDUCE_SUM_CPU_REG(kNumberTypeFloat16, kNumberTypeInt64, Eigen::half)},
   {REDUCE_SUM_CPU_REG(kNumberTypeFloat32, kNumberTypeInt64, float)},
   {REDUCE_SUM_CPU_REG(kNumberTypeFloat64, kNumberTypeInt64, double)},
   {REDUCE_SUM_CPU_REG(kNumberTypeInt8, kNumberTypeInt64, int8_t)},
