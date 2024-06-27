@@ -447,8 +447,8 @@ void ResetId(const ResourcePtr &resource) {
   }
 }
 
-void CheckShapeConsistency(const abstract::ShapePtr &compile_shape, const abstract::ShapePtr &args_shape, size_t index,
-                           const std::string &target_str) {
+void CheckShapeConsistency(const abstract::ShapePtr &compile_shape, const abstract::ShapePtr &args_shape,
+                           const std::string &target_str, size_t index) {
   MS_EXCEPTION_IF_NULL(compile_shape);
   MS_EXCEPTION_IF_NULL(args_shape);
   if (*compile_shape == *args_shape) {
@@ -508,7 +508,7 @@ void CheckAbstractConsistency(const AbstractBasePtrList &compile_abstracts, cons
         // Check shape's consistency.
         auto compile_shape = compile_tensor->shape();
         auto args_shape = args_tensor->shape();
-        CheckShapeConsistency(compile_shape, args_shape, i, target_str);
+        CheckShapeConsistency(compile_shape, args_shape, target_str, i);
 
         auto compile_element = compile_tensor->element();
         auto args_element = args_tensor->element();
@@ -517,20 +517,17 @@ void CheckAbstractConsistency(const AbstractBasePtrList &compile_abstracts, cons
                                   << "th type should be " << compile_tensor->BuildType()->ToString() << ", but got "
                                   << args_tensor->BuildType()->ToString() << "!";
         }
-        continue;
       } else if (compile_abs->isa<abstract::AbstractSequence>() && args_abs->isa<abstract::AbstractSequence>()) {
         auto compile_sequence = compile_abs->cast<abstract::AbstractSequencePtr>();
         auto args_sequence = args_abs->cast<abstract::AbstractSequencePtr>();
         CheckAbstractConsistency(compile_sequence->elements(), args_sequence->elements(), target_str,
                                  compile_sequence->dynamic_len());
-        continue;
       } else {
         if (!common::IsEqual(compile_abs, args_abs)) {
           MS_EXCEPTION(ValueError) << "For " << target_str << " or tuple(list) in " << target_str << ", the " << i + 1
                                    << "th should be" << compile_abs->ToString() << ", but got " << args_abs->ToString()
                                    << "!";
         }
-        continue;
       }
     } else {
       if (!common::IsEqual(compile_abs, args_abs)) {
