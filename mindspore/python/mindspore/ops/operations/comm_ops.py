@@ -375,7 +375,7 @@ class AllGather(PrimitiveWithInfer):
         return x_dtype
 
 
-class ShardIdentity(PrimitiveWithInfer):
+class AShardIdentity(PrimitiveWithInfer):
     """
     Auto parallel virtual operator. Identity operator only for shard function.
     Do nothing in terms of infer_shape, infer_dtype, and the tensor.
