@@ -548,6 +548,8 @@ void MemoryTrackerEnabled::Dump() {
 
   block_file.close();
   task_file.close();
+  ChangeFileMode(block_csv_path_opt.value(), S_IWUSR | S_IRUSR);
+  ChangeFileMode(task_csv_path_opt.value(), S_IWUSR | S_IRUSR);
   MS_LOG(INFO) << "Not bind size, " << not_bind_size;
   MS_LOG(INFO) << "MemoryTracker Dump end";
 }
@@ -605,6 +607,7 @@ void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const s
   block_file.flags(old_file_flags);
   block_file.precision(old_precision);
   block_file.close();
+  ChangeFileMode(csv_path_opt.value(), S_IWUSR | S_IRUSR);
 
   // record the last time stamp
   last_profiling_pos_ = mem_block_list_.size();
