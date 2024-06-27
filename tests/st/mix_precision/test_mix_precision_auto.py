@@ -17,7 +17,6 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore.amp import auto_mixed_precision, build_train_network
-from mindspore.train.amp import _add_loss_network
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore import nn
 from mindspore import ops
@@ -98,6 +97,7 @@ class Net_FP16(nn.Cell):
         x = self.cast(x, ms.float16)
         x = self.relu(x)
         x = self.mean(x, (2, 3))
+        x = self.cast(x, ms.float32)
         return x
 
 
@@ -147,9 +147,9 @@ def test_auto_mix_precision_train_auto():
                                weight_decay=0.001,
                                loss_scale=0.0001)
     loss_pynative = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
-    train_network_pynative = build_train_network(_add_loss_network(net_pynative, loss_pynative, ms.float16),
+    train_network_pynative = build_train_network(net_pynative,
                                                  opt_pynative,
-                                                 None,
+                                                 loss_pynative,
                                                  level="O0",
                                                  loss_scale_manager=FixedLossScaleManager(drop_overflow_update=False))
     loss_pynative = train_network_pynative(Tensor(input_data), Tensor(label_data))
@@ -162,9 +162,9 @@ def test_auto_mix_precision_train_auto():
                                 weight_decay=0.001,
                                 loss_scale=0.0001)
     loss_pynative2 = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
-    train_network_pynative2 = build_train_network(_add_loss_network(net_pynative2, loss_pynative2, ms.float16),
+    train_network_pynative2 = build_train_network(net_pynative2,
                                                   opt_pynative2,
-                                                  None,
+                                                  loss_pynative2,
                                                   level="O0",
                                                   loss_scale_manager=FixedLossScaleManager(drop_overflow_update=False))
     loss_pynative2 = train_network_pynative2(Tensor(input_data), Tensor(label_data))
@@ -315,6 +315,7 @@ class SubNet_FP16(nn.Cell):
         x = self.bn(x)
         x = ops.cast(x, ms.float16)
         x = self.relu(x)
+        x = ops.cast(x, ms.float32)
         return x
 
 
@@ -367,9 +368,9 @@ def test_auto_mix_precision_train_subnet_auto():
                                weight_decay=0.001,
                                loss_scale=0.0001)
     loss_pynative = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
-    train_network_pynative = build_train_network(_add_loss_network(net_pynative, loss_pynative, ms.float16),
+    train_network_pynative = build_train_network(net_pynative,
                                                  opt_pynative,
-                                                 None,
+                                                 loss_pynative,
                                                  level="O0",
                                                  loss_scale_manager=FixedLossScaleManager(drop_overflow_update=False))
     loss_pynative = train_network_pynative(Tensor(input_data), Tensor(label_data))
@@ -383,9 +384,9 @@ def test_auto_mix_precision_train_subnet_auto():
                                 weight_decay=0.001,
                                 loss_scale=0.0001)
     loss_pynative2 = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
-    train_network_pynative2 = build_train_network(_add_loss_network(net_pynative2, loss_pynative2, ms.float16),
+    train_network_pynative2 = build_train_network(net_pynative2,
                                                   opt_pynative2,
-                                                  None,
+                                                  loss_pynative2,
                                                   level="O0",
                                                   loss_scale_manager=FixedLossScaleManager(drop_overflow_update=False))
     loss_pynative2 = train_network_pynative2(Tensor(input_data), Tensor(label_data))

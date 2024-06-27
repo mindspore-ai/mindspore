@@ -462,7 +462,7 @@ def auto_mixed_precision(network, amp_level="O0", dtype=mstype.float16):
         return network
 
     # Return network if the same amp level has already been configurated
-    if hasattr(network, "_amp_level") and getattr(network, "_amp_level") in ("O1", "O2", "O3"):
+    if hasattr(network, "_amp_level") and getattr(network, "_amp_level") in ("O1", "O2", "O3", "auto"):
         logger.warning(f"The network's auto mixed-precision level is adjusted from {getattr(network, '_amp_level')} "
                        f"to {amp_level}, and repeated calls to mixed-precision interfaces can cause performance "
                        f"degradation.")
@@ -594,7 +594,8 @@ def _add_loss_network(network, loss_fn, cast_model_type):
             return self._loss_fn(F.mixed_precision_cast(mstype.float32, out), label)
 
     validator.check_value_type('loss_fn', loss_fn, nn.Cell)
-    if cast_model_type == mstype.float16:
+    if cast_model_type in (mstype.float16, mstype.bfloat16) or \
+       (hasattr(network, "_amp_level") and getattr(network, "_amp_level") in ("O2", "O3", "auto")):
         network = WithLossCell(network, loss_fn)
     else:
         network = nn.WithLossCell(network, loss_fn)
