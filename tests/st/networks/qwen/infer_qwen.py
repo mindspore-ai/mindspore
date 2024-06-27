@@ -12,20 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+import argparse
 import sys
 import os
-import argparse
 import glob
 import pandas as pd
 import numpy as np
-from mindspore import Profiler
-from mindspore import set_seed
 
 workspace = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(workspace, "mindformers"))
-sys.path.insert(0, os.path.join(workspace, "golden-stick"))
-from mindformers.tools.register import MindFormerConfig
 from mindformers import LlamaConfig, TransformerOpParallelConfig, LlamaForCausalLM, init_context
+from mindformers.tools.register import MindFormerConfig
+from mindspore import set_seed
+from mindspore import Profiler
+
 
 TOELERANCE = 5e-2
 
@@ -53,16 +53,16 @@ def get_total_time_from_profiler_file(file_path):
     return total_time
 
 
-def build_model(config_path, batch_size=1, model_parallel=1, use_bf16=False, quant=None):
-    set_seed(100)
-    np.random.seed(100)
+def build_model(config_path, batch_size=1, model_parallel=1, use_bf16=False):
+    set_seed(0)
+    np.random.seed(0)
     # set model config
     config = MindFormerConfig(config_path)
-    if quant:
-        config.quant = quant
 
     if model_parallel == 1:
         config.use_parallel = False
+        device_id = int(os.getenv('DEVICE_ID', '0'))
+        config.context.device_id = device_id
     else:
         # set parallel method
         config.use_parallel = True
@@ -96,103 +96,63 @@ def build_model(config_path, batch_size=1, model_parallel=1, use_bf16=False, qua
     return model
 
 
-def run_llama_1p_bs1(args):
+def run_qwen_1p_bs1(args):
     model = build_model(args.yaml_file, batch_size=1, model_parallel=1)
+
+    inputs = ["I love Beijing, because"]
+    inputs = inputs * 10
 
     inputs_ids = generate_input_ids(1, 10)
     outputs = model.generate(inputs_ids, max_length=20, do_sample=False)
-    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 19434, 14518,
-                           11470, 6527, 13385, 9334, 9551, 29535, 19805, 3270], dtype=np.int32)
-    for output in outputs:
-        assert (EXPECT_RES == outputs).all()
+    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 112013, 58939, 26026,
+                           120500, 90532, 65153, 50947, 91544, 121978, 54324], dtype=np.int32)
+    assert (EXPECT_RES == outputs).all()
 
     inputs_ids = generate_input_ids(4, 12)
     outputs = model.generate(inputs_ids, max_length=20, do_sample=False)
-    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17985,
-                           25267, 6935, 30170, 30901, 28619, 30901, 30901], dtype=np.int32)
+    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 44737,
+                           142316, 128759, 137564, 112013, 63376, 10391, 73120], dtype=np.int32)
     for output in outputs:
         assert (EXPECT_RES == output).all()
 
 
-def run_llama_1p_bs4(args):
+def run_qwen_1p_bs4(args):
     model = build_model(args.yaml_file, batch_size=4, model_parallel=1)
 
     inputs_ids = generate_input_ids(4, 10)
     outputs = model.generate(inputs_ids, max_length=20, do_sample=False)
-    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 19434, 14518,
-                           11470, 6527, 13385, 9334, 9551, 29535, 19805, 3270], dtype=np.int32)
+    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 112013, 58939, 26026,
+                           120500, 90532, 65153, 50947, 91544, 121978, 54324], dtype=np.int32)
     for output in outputs:
         assert (EXPECT_RES == output).all()
 
     inputs_ids = generate_input_ids(8, 12)
     outputs = model.generate(inputs_ids, max_length=20, do_sample=False)
-    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 17985,
-                           25267, 6935, 30170, 30901, 28619, 30901, 30901], dtype=np.int32)
+    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 44737,
+                           142316, 128759, 137564, 112013, 63376, 10391, 73120], dtype=np.int32)
     for output in outputs:
         assert (EXPECT_RES == output).all()
 
 
-def run_llama_4p_bs1(args):
+def run_qwen_4p_bs1(args):
     model = build_model(args.yaml_file, batch_size=1, model_parallel=4)
 
     inputs_ids = generate_input_ids(4, 10)
-    outputs = model.generate(inputs_ids,
-                             max_length=20,
-                             do_sample=False)
-    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8631, 21301,
-                           9393, 6950, 5321, 26787, 8752, 18897, 21524, 22538], dtype=np.int32)
+    outputs = model.generate(inputs_ids, max_length=20, do_sample=False)
+    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 143245, 10093, 110562,
+                           138575, 45809, 8325, 150506, 71002, 126201, 100730], dtype=np.int32)
     for output in outputs:
         assert (EXPECT_RES == output).all()
 
     inputs_ids = generate_input_ids(8, 12)
-    outputs = model.generate(inputs_ids,
-                             max_length=20,
-                             do_sample=False)
-    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16461,
-                           31007, 24750, 4468, 4775, 25799, 18814, 11507], dtype=np.int32)
+    outputs = model.generate(inputs_ids, max_length=20, do_sample=False)
+    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 20942,
+                           92522, 26067, 26887, 132151, 80685, 122336, 67935], dtype=np.int32)
     for output in outputs:
         assert (EXPECT_RES == output).all()
 
 
-def run_llama_4p_bs4(args):
-    model = build_model(args.yaml_file, batch_size=4, model_parallel=4)
-
-    inputs_ids = generate_input_ids(4, 10)
-    outputs = model.generate(inputs_ids,
-                             max_length=20,
-                             do_sample=False)
-    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8631, 21301,
-                           9393, 6950, 5321, 26787, 8752, 18897, 21524, 22538], dtype=np.int32)
-    for output in outputs:
-        assert (EXPECT_RES == output).all()
-
-    profiler_path = os.path.join(os.path.dirname(
-        os.path.abspath(__file__)), "predict_profiler")
-    os.system(f"rm -rf {profiler_path}")
-    profiler = Profiler(start_profile=False, output_path=profiler_path)
-    profiler.start()
-    inputs_ids = generate_input_ids(8, 12)
-    outputs = model.generate(inputs_ids,
-                             max_length=20,
-                             do_sample=False)
-    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16461,
-                           31007, 24750, 4468, 4775, 25799, 18814, 11507], dtype=np.int32)
-
-    for output in outputs:
-        assert (EXPECT_RES == output).all()
-
-    profiler.stop()
-    profiler.analyse()
-
-    profiler_file = glob.glob(os.path.join(os.path.join(
-        profiler_path, "**"), "op_statistic_*.csv"), recursive=True)[0]
-    expect_total_time = 17690
-    total_time = get_total_time_from_profiler_file(profiler_file)
-    print(f"total_time: {total_time}")
-    assert total_time <= expect_total_time * (1 + TOELERANCE)
-
-
-def run_llama_4p_bs4_bf16(args):
+def run_qwen_4p_bs4_bf16(args):
     model = build_model(args.yaml_file, batch_size=4,
                         model_parallel=4, use_bf16=True)
 
@@ -203,15 +163,36 @@ def run_llama_4p_bs4_bf16(args):
     model.generate(inputs_ids, max_length=20, do_sample=False)
 
 
-def run_llama_4p_bs4_w8a16(args):
-    model = build_model(args.yaml_file, batch_size=4,
-                        model_parallel=4, use_bf16=True, quant="w8a16")
+def run_qwen_4p_bs4(args):
+    model = build_model(args.yaml_file, batch_size=4, model_parallel=4)
 
     inputs_ids = generate_input_ids(4, 10)
-    model.generate(inputs_ids, max_length=20, do_sample=False)
+    outputs = model.generate(inputs_ids, max_length=20, do_sample=False)
+    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 143245, 10093, 110562,
+                           138575, 45809, 8325, 150506, 71002, 126201, 100730], dtype=np.int32)
+    for output in outputs:
+        assert (EXPECT_RES == output).all()
 
+    profiler_path = os.path.join(os.path.dirname(
+        os.path.abspath(__file__)), "predict_profiler")
+    os.system(f"rm -rf {profiler_path}")
+    profiler = Profiler(start_profile=False, output_path=profiler_path)
+    profiler.start()
     inputs_ids = generate_input_ids(8, 12)
-    model.generate(inputs_ids, max_length=20, do_sample=False)
+    outputs = model.generate(inputs_ids, max_length=20, do_sample=False)
+    EXPECT_RES = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 20942,
+                           92522, 26067, 26887, 132151, 80685, 122336, 67935], dtype=np.int32)
+    profiler.stop()
+    profiler.analyse()
+    for output in outputs:
+        assert (EXPECT_RES == output).all()
+
+    profiler_file = glob.glob(os.path.join(os.path.join(
+        profiler_path, "**"), "op_statistic_*.csv"), recursive=True)[0]
+    expect_total_time = 19549
+    total_time = get_total_time_from_profiler_file(profiler_file)
+    print(f"total_time: {total_time}")
+    assert total_time <= expect_total_time * (1 + TOELERANCE)
 
 
 if __name__ == "__main__":
@@ -222,15 +203,13 @@ if __name__ == "__main__":
                         help='test mode.')
     args_ = parser.parse_args()
     test_mode = args_.test_mode
-    if test_mode == "test_llama_1p_bs1":
-        run_llama_1p_bs1(args_)
-    if test_mode == "test_llama_1p_bs4":
-        run_llama_1p_bs4(args_)
-    if test_mode == "test_llama_4p_bs1":
-        run_llama_4p_bs1(args_)
-    if test_mode == "test_llama_4p_bs4":
-        run_llama_4p_bs4(args_)
-    if test_mode == "test_llama_4p_bs4_bf16":
-        run_llama_4p_bs4_bf16(args_)
-    if test_mode == "test_llama_4p_bs4_w8a16":
-        run_llama_4p_bs4_w8a16(args_)
+    if test_mode == "test_qwen_1p_bs1":
+        run_qwen_1p_bs1(args_)
+    if test_mode == "test_qwen_1p_bs4":
+        run_qwen_1p_bs4(args_)
+    if test_mode == "test_qwen_4p_bs1":
+        run_qwen_4p_bs1(args_)
+    if test_mode == "test_qwen_4p_bs4":
+        run_qwen_4p_bs4(args_)
+    if test_mode == "test_qwen_4p_bs4_bf16":
+        run_qwen_4p_bs4_bf16(args_)

@@ -14,33 +14,16 @@
 # limitations under the License.
 # ============================================================================
 set -e
-BASE_PATH=$(
-  cd "$(dirname $0)"
-  pwd
-)
+BASE_PATH=$(cd "$(dirname $0)"; pwd)
 CONFIG_FILE=$1
 USE_DEVICE_NUM=$2
 TEST_MODE=$3
-TEST_CASE=$4
 MF_PATH=${BASE_PATH}/../mindformers
 pip install -r ${MF_PATH}/requirements.txt
 
-export PATH=${ASCEND_HOME_PATH}/latest/tools/profiler/bin:$PATH
+export MS_MEMORY_POOL_RECYCLE=1
 
-if [ "$TEST_MODE" == "predict" ]; then
-  mpirun --allow-run-as-root -n ${USE_DEVICE_NUM} \
-    python ${BASE_PATH}/infer_llama.py \
-    --yaml_file ${CONFIG_FILE} \
-    --test_mode ${TEST_CASE} >${BASE_PATH}/${TEST_CASE}.log 2>&1
-elif [ "$TEST_MODE" == "train" ]; then
-  export MS_FORMAT_MODE=1
-  export MS_GE_TRAIN=1
-  export MS_ENABLE_REF_MODE=1
-  export MS_ENABLE_GE=1
-  export MS_DEV_CELL_REUSE=1
-  export MS_GE_ATOMIC_CLEAN_POLICY=1
-  export MS_MEMORY_POOL_RECYCLE=1
-  mpirun --allow-run-as-root -n ${USE_DEVICE_NUM} \
-    python ${BASE_PATH}/train_llama.py \
-    --test_mode ${TEST_CASE} >${BASE_PATH}/${TEST_CASE}.log 2>&1
-fi
+mpirun --allow-run-as-root -n ${USE_DEVICE_NUM} \
+  python ${BASE_PATH}/infer_baichuan.py \
+  --yaml_file ${CONFIG_FILE} \
+  --test_mode ${TEST_MODE} >${BASE_PATH}/${TEST_MODE}.log 2>&1

@@ -18,15 +18,11 @@ How to run this:
 pytest tests/st/test_model/test_llama_model/test_parallel_train.py
 pytest tests/st/test_model/test_llama_model/test_parallel_predict.py
 """
-from training_checker import TrainingChecker
-from mindformers.models.llama.llama_config import LlamaConfig
-from mindformers.models.llama.llama import LlamaForCausalLM
-from mindformers import Trainer, TrainingArguments
+
 import os
 import sys
 import argparse
 import numpy as np
-
 import mindspore as ms
 from mindspore import set_seed
 from mindspore.communication import init
@@ -34,7 +30,10 @@ from mindspore.dataset import GeneratorDataset
 
 workspace = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(workspace, "mindformers"))
-print(workspace)
+from training_checker import TrainingChecker
+from mindformers.models.llama.llama_config import LlamaConfig
+from mindformers.models.llama.llama import LlamaForCausalLM
+from mindformers import Trainer, TrainingArguments
 
 ms.set_context(mode=ms.GRAPH_MODE)
 ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL,
@@ -42,11 +41,6 @@ ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.SEMI_AUTO_PARALLEL,
                              full_batch=True,
                              enable_parallel_optimizer=True)
 init()
-
-EXPECT_RES_1 = "hello world Request){ rebels twe secretaryoper bet " \
-               "recol've Mist collabor tendsocatemp arrests hawChoyear"
-EXPECT_RES_2 = "I love Beijing shop southwestFX Crossing tower deterayers.) " \
-               "ReplyGS Schumer entert Albertrer modular catalogا"
 
 
 def generator_train():
@@ -74,6 +68,7 @@ def build_model(test_mode,
 
     args = TrainingArguments(
         batch_size=8, num_train_epochs=1, use_parallel=True)
+
     model_config = LlamaConfig(num_layers=2,
                                hidden_size=5120,
                                num_heads=40,
@@ -87,6 +82,8 @@ def build_model(test_mode,
                                softmax_compute_type=softmax_compute_type,
                                rotary_dtype=rotary_dtype,
                                param_init_type=param_init_type,
+                               block_size=32,
+                               num_blocks=20,
                                do_sample=False)
     model = LlamaForCausalLM(model_config)
 
@@ -156,54 +153,6 @@ def run_llama_8p_train_cp():
     sys.exit(0)
 
 
-def check_predict_result(outputs, expect_result):
-    for text_output in outputs:
-        results = text_output["text_generation_text"]
-        for result in results:
-            if result != expect_result:
-                return False
-    return True
-
-
-def run_llama_4p_predict():
-    """test msrun launch llama on 8p for Trainer.predict()."""
-    task_trainer = build_model(
-        'test_predict', True, "float16", "float16", "float16", "float16", "float16")
-    task_trainer.set_parallel_config(
-        data_parallel=1, model_parallel=4, pipeline_stage=1, micro_batch_num=1)
-    predict_data = ["hello world!"] * 8
-    outputs = task_trainer.predict(input_data=predict_data, max_length=20,
-                                   repetition_penalty=1, top_k=3, top_p=1, batch_size=8)
-    assert check_predict_result(outputs, EXPECT_RES_1)
-    predict_data = ["I love Beijing"] * 8
-    outputs = task_trainer.predict(input_data=predict_data, max_length=20,
-                                   repetition_penalty=1, top_k=3, top_p=1, batch_size=8)
-    assert check_predict_result(outputs, EXPECT_RES_2)
-
-    predict_data = ["hello world!"] * 16
-    outputs = task_trainer.predict(input_data=predict_data, max_length=20,
-                                   repetition_penalty=1, top_k=3, top_p=1, batch_size=8)
-    assert check_predict_result(outputs, EXPECT_RES_1)
-
-
-def run_llama_4p_predict_bf16():
-    """test msrun launch llama on 8p for Trainer.predict()."""
-    task_trainer = build_model(
-        'test_predict_bf16', True, "bfloat16", "bfloat16", "bfloat16", "bfloat16", "bfloat16")
-    predict_data = ["hello world!"] * 8
-    task_trainer.set_parallel_config(
-        data_parallel=1, model_parallel=4, pipeline_stage=1, micro_batch_num=1)
-    task_trainer.predict(input_data=predict_data, max_length=20,
-                         repetition_penalty=1, top_k=3, top_p=1, batch_size=8)
-    predict_data = ["I love Beijing"] * 8
-    task_trainer.predict(input_data=predict_data, max_length=20,
-                         repetition_penalty=1, top_k=3, top_p=1, batch_size=8)
-
-    predict_data = ["hello world!"] * 16
-    task_trainer.predict(input_data=predict_data, max_length=20,
-                         repetition_penalty=1, top_k=3, top_p=1, batch_size=8)
-
-
 def run_llama():
     """
     Feature: Trainer.train() Trainer.predict()
@@ -212,26 +161,11 @@ def run_llama():
     """
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--test_train', default=False, type=bool,
-        help='test msrun launch llama on train mode.')
-    parser.add_argument(
-        '--test_predict', default=False, type=bool,
-        help='test msrun launch llama on predict mode.')
-    parser.add_argument(
-        '--test_predict_bf16', default=False, type=bool,
-        help='test msrun launch llama on bfloat16 predict mode.')
-    parser.add_argument(
-        '--test_train_cp', default=False, type=bool,
-        help='test msrun launch llama on train mode.')
-
+        '--test_mode', default="", type=str, help='test_mode.')
     args = parser.parse_args()
-    if args.test_train:
+    if args.test_mode == "test_train":
         run_llama_8p_train()
-    elif args.test_predict:
-        run_llama_4p_predict()
-    elif args.test_predict_bf16:
-        run_llama_4p_predict_bf16()
-    elif args.test_train_cp:
+    elif args.test_mode == "test_train_cp":
         run_llama_8p_train_cp()
 
 
