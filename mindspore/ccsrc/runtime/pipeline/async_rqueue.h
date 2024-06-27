@@ -55,6 +55,8 @@ class BACKEND_EXPORT AsyncRQueue {
   // Add task to the end of the queue.
   void Push(const AsyncTaskPtr &task);
 
+  bool CanPush() const;
+
   // Wait for all async task finish executing.
   void Wait();
 

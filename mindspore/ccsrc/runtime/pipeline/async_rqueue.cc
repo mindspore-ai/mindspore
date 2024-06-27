@@ -116,6 +116,15 @@ void AsyncRQueue::Push(const AsyncTaskPtr &task) {
   tasks_queue_.Enqueue(task);
 }
 
+bool AsyncRQueue::CanPush() const {
+  if (current_level_ == kThreadWaitLevel::kLevelUnknown) {
+    // cppcheck-suppress unreadVariable
+    std::unique_lock<std::mutex> lock(level_mutex_);
+    current_level_ = thread_id_to_wait_level_[std::this_thread::get_id()];
+  }
+  return current_level_ < wait_level_;
+}
+
 void AsyncRQueue::Wait() {
   if (worker_ == nullptr) {
     return;
