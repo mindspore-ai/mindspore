@@ -32,12 +32,26 @@
 #include "backend/common/optimizer/dynamic_shape/dynamic_shape_helper.h"
 #include "kernel/framework_utils.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "utils/compile_config.h"
 
 namespace mindspore {
 namespace runtime {
 namespace {
 bool IsSomasEnable(const SomasInfo *somas_info) {
   return ((somas_info != nullptr) && (somas_info->whole_block_size_ != 0));
+}
+
+void CheckDryRun(const CNodePtr &kernel_) {
+  static const bool is_dry_run_mode = (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileKernel);
+  static auto enabled_profile = common::GetCompileConfig("COMPILE_PROFILE") == "1";
+  if (is_dry_run_mode && !enabled_profile) {
+    MS_LOG_WITH_NODE(EXCEPTION, kernel_)
+      << "The dry run mode can not support dynamic shape graph which contains value depend kernel:"
+      << kernel_->fullname_with_scope()
+      << ", launch kernel is skipped for dry run mode, which leads to fail to GetValue for infer "
+         "shape of these value depend kernel. You can only simulate compile graph and not do "
+         "InferShape and Resize by `export MS_SIMULATION_LEVEL=0` instead.";
+  }
 }
 }  // namespace
 
@@ -68,15 +82,7 @@ void KernelActor::Init() {
   has_dynamic_ = is_dynamic_shape_ || is_dynamic_type_ || is_dynamic_value_;
 
   if (is_dynamic_value_ && (is_dynamic_shape_ || is_dynamic_type_)) {
-    static const bool is_dry_run_mode = (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileKernel);
-    if (is_dry_run_mode) {
-      MS_LOG_WITH_NODE(EXCEPTION, kernel_)
-        << "The dry run mode can not support dynamic shape graph which contains value depend kernel:"
-        << kernel_->fullname_with_scope()
-        << ", launch kernel is skipped for dry run mode, which leads to fail to GetValue for infer "
-           "shape of these value depend kernel. You can only simulate compile graph and not do "
-           "InferShape and Resize by `export MS_SIMULATION_LEVEL=0` instead.";
-    }
+    CheckDryRun(kernel_);
   }
 
   // Check whether the kernel has input node which is a computed depend kernel.
