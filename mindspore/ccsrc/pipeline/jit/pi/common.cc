@@ -1080,7 +1080,8 @@ static py::object CallGraph(const JitCompileResults *c, const py::object &args, 
                                      "PIJitRunGraph");
 
   StaticAnalysisExceptionCleaner exception_cleaner;
-
+  RunEnvironment runEnvironment;
+  runEnvironment.fetchAndSetRunEnv(c);
   PyObject *py_args = args.ptr();
   PyObject *py_kwvargs = kwvargs.ptr();
   PyObject *res;
@@ -1098,7 +1099,7 @@ static py::object CallGraph(const JitCompileResults *c, const py::object &args, 
   } else {
     res = c->code->GetNativeFunc()(py_args, py_kwvargs);
   }
-
+  runEnvironment.resumePreviousRunEnv();
   if (res == NULL && !PyErr_Occurred()) {
     PyErr_SetString(PyExc_RuntimeError, "compiled graph execute failed");
   }
