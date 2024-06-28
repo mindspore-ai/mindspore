@@ -43,6 +43,7 @@ Tensor
     mindspore.mint.narrow
     mindspore.mint.nonzero
     mindspore.mint.normal
+    mindspore.mint.tile
     mindspore.mint.topk
     mindspore.mint.sort
     mindspore.mint.stack
