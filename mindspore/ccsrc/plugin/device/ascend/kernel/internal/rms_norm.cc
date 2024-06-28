@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/internal/rmsnorm.h"
+#include "plugin/device/ascend/kernel/internal/rms_norm.h"
 
 #include <memory>
 
