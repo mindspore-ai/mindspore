@@ -24,6 +24,7 @@
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
 #include "include/backend/optimizer/optimizer.h"
+#include "backend/common/pass/add_parallel_group_id_attr.h"
 #include "include/backend/debug/profiler/profiling.h"
 #include "plugin/device/ascend/optimizer/ge/all_to_all_v_for_ge.h"
 #include "plugin/device/ascend/optimizer/ge/maketuple_depend_remover.h"
@@ -147,6 +148,7 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   opt_acl_pm->AddPass(std::make_shared<opt::ConvertPadV3Paddings>());
   opt_acl_pm->AddPass(std::make_shared<opt::ConvertPadV3GradPaddings>());
   opt_acl_pm->AddPass(std::make_shared<opt::ResizeBilinearAddAttr>());
+  opt_acl_pm->AddPass(std::make_shared<opt::AddParallelGroupIdAttr>());
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();

@@ -250,6 +250,7 @@ class DfGraphConvertor {
   void ConvertConv2D(const CNodePtr &node);
   void ConvertDynamicStitch(const CNodePtr &node);
   void ConvertParallelGroupToHcom(const CNodePtr &node);
+  void ConvertParallelGroupIdToHcom(const CNodePtr &node);
   std::vector<int64_t> CastToInt(const ValuePtr &value) const;
   void TransDataType(const FuncGraphPtr &anf_graph) const;
   void TransInputDataType(const CNodePtr &node, const std::string &node_name) const;
