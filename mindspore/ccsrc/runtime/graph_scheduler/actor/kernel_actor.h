@@ -134,7 +134,7 @@ class KernelActor : public DebugAwareActor {
   void SendRecorderInfo(OpContext<DeviceTensor> *const context) const override;
 
   // Do kernel launching in this method after 'PreLaunchKernel' and 'PostLaunchKernel'.
-  virtual bool LaunchKernel(OpContext<DeviceTensor> *const context);
+  virtual bool LaunchKernel(OpContext<DeviceTensor> *const context, bool is_skip_launch = false);
   // Execute kernel actor multi stream produre to make sure safety of memory before kernel launch.
   virtual void ProcessMultiStreamBeforeKernelLaunch(OpContext<DeviceTensor> *const context);
   // Execute kernel actor multi stream produre to make sure safety of memory after kernel launch.

@@ -623,7 +623,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *const context) {
   }
 
   bool skip_launch = CollectiveManager::instance()->need_reinit() || IsSkippedLaunch(kernel_, nullptr);
-  if (!skip_launch && !LaunchKernel(context)) {
+  if (!LaunchKernel(context, skip_launch)) {
     MS_LOG_WITH_NODE(EXCEPTION, kernel_) << "#umsg#Kernel error:#umsg#Launch kernel failed: " +
                                               kernel_->fullname_with_scope()
                                          << trace::DumpSourceLines(kernel_);
@@ -913,7 +913,7 @@ void KernelActor::ExecuteLaunchKernelTask(OpContext<DeviceTensor> *const context
                               output_device_tensors_, device_contexts_[0], context, &GetAID());
   }
 
-  if (!IsSkippedLaunch(kernel_, nullptr) && !LaunchKernel(context)) {
+  if (!LaunchKernel(context, IsSkippedLaunch(kernel_, nullptr))) {
     MS_LOG_WITH_NODE(EXCEPTION, kernel_) << "#umsg#Kernel error:#umsg#Launch kernel failed: " +
                                               kernel_->fullname_with_scope()
                                          << trace::DumpSourceLines(kernel_);
@@ -1040,9 +1040,12 @@ void TrackInputMemory(const std::vector<DeviceTensor *> &input_device_tensors, c
 }
 }  // namespace
 
-bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
+bool KernelActor::LaunchKernel(OpContext<DeviceTensor> *const context, bool is_skip_launch) {
   if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
     TrackInputMemory(input_device_tensors_, GetAID().Name(), depend_shape_input_list_);
+  }
+  if (is_skip_launch) {
+    return true;
   }
   if (skip_launch_shape_related_op_) {
     MS_LOG(DEBUG) << "Skip launch real make tuple kernel: " << kernel_->fullname_with_scope()

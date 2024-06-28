@@ -34,8 +34,8 @@
 #include "include/common/utils/python_adapter.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/common/utils/utils.h"
-#include "abstract/abstract_value.h"
 #include "include/common/utils/parallel_context.h"
+#include "abstract/abstract_value.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/graph_util/graph_splitter.h"
@@ -78,6 +78,7 @@ namespace pipeline {
 namespace {
 const auto kFirstInput = 1;
 const auto kSecondInput = 2;
+const auto kLazyInlineThershold = 64;
 
 bool ExistControlFlow(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -1420,6 +1421,17 @@ bool SetModeForControlFlow(const FuncGraphPtr &func_graph, const std::vector<Anf
   return true;
 }
 
+bool IsCellReuse(const AnfNodePtr &input) {
+  if (IsValueNode<FuncGraph>(input)) {
+    auto fg = GetValueNode<FuncGraphPtr>(input);
+    MS_EXCEPTION_IF_NULL(fg);
+    if (fg->has_flag(FUNC_GRAPH_FLAG_CELL_REUSE)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void ProcessCanNotInline(const FuncGraphPtr &func_graph, const std::shared_ptr<MsContext> &context_ptr) {
   auto graphs = func_graph->func_graphs_used_total();
   (void)graphs.insert(func_graph);
@@ -1453,6 +1465,31 @@ void ProcessCanNotInline(const FuncGraphPtr &func_graph, const std::shared_ptr<M
   if (std::any_of(graphs.cbegin(), graphs.cend(), cant_inline_cell_reuse)) {
     MS_LOG(INFO) << "Set no inline because cell reuse graph has switch or nested cell reuse.";
     context_ptr->SetCellReuseLevel(CellReuseLevel::kNoInline);
+  }
+  if (!common::IsEnableRuntimeConfig(common::kRuntimeInline)) {
+    const auto &all_nodes = TopoSort(func_graph->return_node(), SuccDeeperSimple, AlwaysInclude);
+    size_t micro_num = 0;
+    for (auto &node : all_nodes) {
+      if (!node->isa<CNode>()) {
+        continue;
+      }
+      auto cnode = node->cast<CNodePtr>();
+      if (IsCellReuse(cnode->input(0))) {
+        micro_num++;
+      }
+    }
+    auto parallel_context = parallel::ParallelContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(parallel_context);
+    auto stages = parallel_context->pipeline_stage_split_num();
+    if (stages <= 1) {
+      return;
+    }
+    MS_LOG(INFO) << "Cell reuse micro num: " << micro_num;
+    if (micro_num > kLazyInlineThershold) {
+      MS_LOG(INFO) << "Set no inline because cell reuse micro num is greater than " << kLazyInlineThershold
+                   << ", micro num: " << micro_num;
+      context_ptr->SetCellReuseLevel(CellReuseLevel::kNoInline);
+    }
   }
 }
 
