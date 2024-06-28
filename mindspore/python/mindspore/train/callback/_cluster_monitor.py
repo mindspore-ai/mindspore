@@ -92,9 +92,12 @@ def _parse_perf_config():
 def _remove_pre_log():
     """Remove the previously saved log files."""
     directory = os.getenv("PERF_DUMP_PATH")
-    pattern = os.path.join(directory, "perf_ms_*.log")
+    device_id = get_local_rank()
+    pattern = os.path.join(directory, f"perf_ms_*_{device_id}.log")
     files_to_delete = glob.glob(pattern)
     for file_path in files_to_delete:
+        if os.path.islink(file_path):
+            continue
         try:
             os.remove(file_path)
         except OSError as e:
@@ -109,7 +112,6 @@ class ClusterMonitor(Callback):
 
     def __init__(self):
         super(ClusterMonitor, self).__init__()
-        _remove_pre_log()
         self.perf_config = _parse_perf_config()
         self.enabled = self.perf_config.get("enable")
         self.enable_step_time = self.perf_config.get("steptime")
@@ -133,6 +135,7 @@ class ClusterMonitor(Callback):
         self.initial_rank = 0
 
     def begin(self, run_context):
+        _remove_pre_log()
         pp_num = _get_auto_parallel_context("pipeline_stages")
         device_num = _get_device_num()
 
