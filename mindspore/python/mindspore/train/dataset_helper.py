@@ -22,7 +22,7 @@ from mindspore import _checkparam as Validator
 from mindspore import log as logger
 from mindspore.common._auto_dynamic import is_auto_dynamic, convert_new_shapes
 from mindspore.common.dtype import pytype_to_dtype
-from mindspore.common.api import _cell_graph_executor
+from mindspore.common.api import _cell_graph_executor, _is_args_fullmode, ARG_SPECIFIED
 from mindspore.common._utils import is_shape_unknown
 from mindspore.dataset.engine import offload
 from mindspore import context, nn
@@ -98,7 +98,15 @@ class _DataWrapper(nn.Cell):
         self.get_next = P.GetNext(
             dataset_types, dataset_shapes, len(dataset_types), queue_name)
         if network.get_inputs() is not None:
-            symbol_inputs = [getattr(inp, "symbolic_shape", None) for inp in network.get_inputs()]
+            network_inputs = network.get_inputs()
+            is_fullmode = _is_args_fullmode(network_inputs, False)
+            if is_fullmode:
+                symbol_inputs = [getattr(inp, "symbolic_shape", None) for inp in network.get_inputs()]
+            else:
+                symbol_inputs = [None for _ in dataset_shapes]
+                arg_specified = network_inputs.get(ARG_SPECIFIED, [])
+                for idx, inp in arg_specified:
+                    symbol_inputs[idx] = getattr(inp, "symbolic_shape", None)
             symbols_for_parallel = _change_symbols_for_parallel(dataset_shapes, copy.deepcopy(symbol_inputs))
             if any((s is not None for s in symbols_for_parallel)):
                 self.get_next.add_prim_attr("symbols", symbol_inputs)
@@ -157,6 +165,13 @@ def _check_inputs(network_shapes, dataset_shapes, dataset_types):
     """
     Check if set inputs are correct.
     """
+    if not _is_args_fullmode(network_shapes, False):
+        temp_network_shapes = [None for _ in dataset_shapes]
+        arg_specified = network_shapes.get(ARG_SPECIFIED, [])
+        for idx, inp in arg_specified:
+            temp_network_shapes[idx] = inp
+        network_shapes = temp_network_shapes
+
     for tensor_index, ele_dataset_shape in enumerate(dataset_shapes):
         if network_shapes[tensor_index] is None:
             continue
@@ -478,6 +493,7 @@ class DatasetHelper:
             '''
             Inner class for parsing send info.
             '''
+
             def __init__(self, send_info, run_context):
                 self.info_ = {}
                 self.sink_size = run_context.original_args()["batch_num"]
