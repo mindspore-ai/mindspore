@@ -128,11 +128,11 @@ class VirtualOutputEliminater : public AnfVisitor {
   }
 };
 
-// {prim::kPrimShardIdentity, X} -> X
-class ShardIdentityEliminater : public AnfVisitor {
+// {prim::kPrimAShardIdentity, X} -> X
+class AShardIdentityEliminater : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
-    if (!IsPrimitiveCNode(node, prim::kPrimShardIdentity) || node->func_graph() == nullptr ||
+    if (!IsPrimitiveCNode(node, prim::kPrimAShardIdentity) || node->func_graph() == nullptr ||
         parallel::HasNestedMetaFg(node->func_graph())) {
       return nullptr;
     }

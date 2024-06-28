@@ -176,7 +176,7 @@ static bool IsSettingStrategyByInsertIdentity(const FuncGraphPtr &func_graph, co
   auto node_users = manager->node_users()[cnode];
   for (const auto &user : node_users) {
     auto user_node = user.first;
-    if (IsPrimitiveCNode(user_node, prim::kPrimShardIdentity)) {
+    if (IsPrimitiveCNode(user_node, prim::kPrimAShardIdentity)) {
       auto attrs = GetCNodePrimitive(user_node)->attrs();
       if (StrategyFound(attrs)) {
         auto origin_strategies = ValueTuplePtrToShapes(attrs[parallel::IN_STRATEGY]->cast<ValueTuplePtr>());
@@ -284,7 +284,7 @@ static void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_
       if (execution_mode == kGraphMode) {
         // Setting strategy by insert identity CNode directly using inputs in GraphMode.
         // e.g TupleGetItem(parameter, index) -> func{identity{input_strategy[i], input_i}}.
-        identity_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimShardIdentity), parameter});
+        identity_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimAShardIdentity), parameter});
         AnfNodePtrList node_inputs_list(to_insert_cnode->inputs().begin(), to_insert_cnode->inputs().end());
         auto input_index =
           std::distance(node_inputs_list.begin(),
@@ -297,7 +297,7 @@ static void SetInputLayout(const FuncGraphPtr &func_graph, const AnfNodePtr &in_
       if (execution_mode == kPynativeMode) {
         // Setting strategy by insert identity after TupleGetItem in PynativeMode.
         // e.g TupleGetItem(parameter, index) -> identity{in_strategy=[input_strategy[index], TupleGetItem_i}
-        identity_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimShardIdentity), to_insert_cnode});
+        identity_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimAShardIdentity), to_insert_cnode});
         auto to_insert_cnode_abstract = to_insert_cnode->abstract();
         MS_EXCEPTION_IF_NULL(to_insert_cnode_abstract);
         identity_cnode->set_abstract(to_insert_cnode_abstract->Clone());
@@ -343,7 +343,7 @@ static void SetParameterLayout(const FuncGraphPtr &root) {
         continue;
       }
       // Setting param_layout by insert identity. e.g Load(param) -> identity{in_strategy=[param_layout]}
-      auto identity_cnode = cur_graph->NewCNode({NewValueNode(prim::kPrimShardIdentity), load_cnode});
+      auto identity_cnode = cur_graph->NewCNode({NewValueNode(prim::kPrimAShardIdentity), load_cnode});
       auto load_cnode_abstract = load_cnode->abstract();
       MS_EXCEPTION_IF_NULL(load_cnode_abstract);
       identity_cnode->set_abstract(load_cnode_abstract->Clone());
@@ -410,7 +410,7 @@ static bool SetStrategyForShard(const FuncGraphPtr &root, const std::vector<AnfN
       auto attrs = GetCNodePrimitive(reshard_cnode)->attrs();
 
       // New a identity prim and set the attributes the same as reshard prim.
-      auto new_identity_prim = std::make_shared<Primitive>(prim::kPrimShardIdentity->name());
+      auto new_identity_prim = std::make_shared<Primitive>(prim::kPrimAShardIdentity->name());
       new_identity_prim->SetAttrs(attrs);
 
       // Make identity prim into identity node and cast to AnfNode.
