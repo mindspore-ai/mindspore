@@ -689,7 +689,7 @@ void AddGraphDynamicShapeAttr(const KernelGraphPtr &kernel_graph) {
     return;
   }
 
-  const auto &nodes = TopoSort(kernel_graph->get_return());
+  const auto &nodes = TopoSort(kernel_graph->output());
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<CNode>() && common::AnfAlgo::IsDynamicShape(node)) {
