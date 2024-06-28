@@ -50,7 +50,7 @@ class MuxSendActor : public SendActor {
   // When serving as a service, the MuxSendActor and MuxRecvActor of the server are used in pairs, and the MuxSendActor
   // needs to obtain the information(ip and port) of peer that initiates this service from the corresponding
   // MuxRecvActor to response request.
-  bool LaunchKernel(OpContext<DeviceTensor> *const context) override;
+  bool LaunchKernel(OpContext<DeviceTensor> *const context, bool is_skip_launch = false) override;
 
   // MuxSendActor and MuxRecvActor of the server are used in pairs, and the MuxSendActor
   // needs to obtain the information(ip and port) of peer from the corresponding MuxRecvActor.

@@ -54,7 +54,7 @@ class SendActor : public RpcActor {
 
  protected:
   // Do real send operation in this method.
-  bool LaunchKernel(OpContext<DeviceTensor> *const context) override;
+  bool LaunchKernel(OpContext<DeviceTensor> *const context, bool is_skip_launch = false) override;
 
   // Erase inter-process inputs for this sequential number.
   void EraseInput(const OpContext<DeviceTensor> *context) override;
