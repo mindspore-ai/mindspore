@@ -122,7 +122,7 @@ def test_op():
     TEST_OP(UniformExtCell(), [
         [mindspore.Tensor(x1), from_, to, seed1, offset1],
         [mindspore.Tensor(x2), from_, to, seed2, offset2],
-    ], 'uniform_ext', disable_input_check=True, disable_mode=['GRAPH_MODE'], disable_grad=True)
+    ], 'uniform_ext', disable_input_check=True, disable_mode=['GRAPH_MODE'], disable_grad=True, inplace_update=True)
 
 
 def random_input(shape):
