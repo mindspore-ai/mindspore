@@ -162,7 +162,7 @@ def test_normal_tensor_tensor_dynamic_shape_testop():
     TEST_OP(normal_tensor_tensor_op,
             [[ms.Tensor(x1), ms.Tensor(x1), seed_, offset_],
              [ms.Tensor(x2), ms.Tensor(x2), seed2_, offset2_]], 'normal_tensor_tensor',
-            disable_input_check=True, disable_mode=['GRAPH_MODE'])
+            disable_input_check=True, disable_mode=['GRAPH_MODE'], inplace_update=True)
 
 
 @pytest.mark.level1
@@ -180,7 +180,7 @@ def test_normal_tensor_float_dynamic_shape_testop():
     TEST_OP(normal_tensor_float_op,
             [[ms.Tensor(x1), 1.0, seed_, offset_],
              [ms.Tensor(x2), 1.0, seed2_, offset2_]], 'normal_tensor_float',
-            disable_input_check=True, disable_mode=['GRAPH_MODE'])
+            disable_input_check=True, disable_mode=['GRAPH_MODE'], inplace_update=True)
 
 
 @pytest.mark.level1
@@ -198,7 +198,7 @@ def test_normal_float_tensor_dynamic_shape_testop():
     TEST_OP(normal_float_tensor_op,
             [[1.0, ms.Tensor(x1), seed_, offset_],
              [1.0, ms.Tensor(x2), seed2_, offset2_]], 'normal_float_tensor',
-            disable_input_check=True, disable_mode=['GRAPH_MODE'])
+            disable_input_check=True, disable_mode=['GRAPH_MODE'], inplace_update=True)
 
 @pytest.mark.level1
 @pytest.mark.env_onecard
@@ -213,7 +213,7 @@ def test_normal_float_float_dynamic_shape_testop():
     TEST_OP(normal_float_float_op,
             [[1.0, 1.0, (2, 2), seed_, offset_],
              [2.0, 2.0, (2, 2), seed2_, offset2_]], 'normal_float_float',
-            disable_input_check=True, disable_mode=['GRAPH_MODE'])
+            disable_input_check=True, disable_mode=['GRAPH_MODE'], inplace_update=True)
 
 
 

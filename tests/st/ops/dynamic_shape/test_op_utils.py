@@ -325,7 +325,7 @@ def check_inputs_seq(inputs_seq, disable_input_check):
                              f"but got {item} and {cmp_item}")
 
 
-def run_in_dynamic_env(prim, inputs, dump_ir, ir_path, dynamic_type, grad):
+def run_in_dynamic_env(prim, inputs, dump_ir, ir_path, dynamic_type, grad, inplace_update):
     """set dynamic env before execute"""
     out_actual = None
     global JIT_CONFIG
@@ -339,7 +339,7 @@ def run_in_dynamic_env(prim, inputs, dump_ir, ir_path, dynamic_type, grad):
     if JIT_CONFIG:
         dynamic_net.set_jit_config(JIT_CONFIG)
     debug_log_args(inputs, tag=f"run_in_dynamic_env run_inputs")
-    out_actual = dynamic_net(*inputs)
+    out_actual = dynamic_net(*clone_inputs(inputs, inplace_update))
     debug_log_args(out_actual, tag=f"run_in_dynamic_env out_actual")
 
     return out_actual
@@ -409,7 +409,7 @@ def convert_tensor_to_dynamic(inputs, dynamic_type):
     for i, x in enumerate(inputs):
         if isinstance(x, Tensor) and not isinstance(x, Parameter):
             ori_shape = x.shape
-            if dynamic_type == 'DYNAMIC_SHAPE':
+            if dynamic_type == 'DYNAMIC_SHAPE' and ori_shape:
                 new_shape = [None for _ in ori_shape]
             else:
                 new_shape = None
@@ -432,7 +432,7 @@ def convert_sequence_of_tensor_to_mutable(inputs):
     return inputs
 
 
-def run_with_dynamic_resize(prim, inputs_seq, mode_name, dump_ir, ir_path, expect_resize, ignore_output_index):
+def run_with_dynamic_resize(prim, inputs_seq, mode_name, dump_ir, ir_path, expect_resize, ignore_output_index, inplace_update):
     """test resize"""
     print(f"Start testing with [{mode_name}] [Resize]...")
     out_actual = None
@@ -453,12 +453,12 @@ def run_with_dynamic_resize(prim, inputs_seq, mode_name, dump_ir, ir_path, expec
     if JIT_CONFIG:
         dynamic_net.set_jit_config(JIT_CONFIG)
     dynamic_net.set_inputs(*compile_inputs)
-    dynamic_net(*run_inputs)
+    dynamic_net(*clone_inputs(run_inputs, inplace_update))
 
     run_inputs = replace_nontensor_with_help_tensor(inputs_seq[1])
     run_inputs = convert_sequence_of_tensor_to_mutable(run_inputs)
     debug_log_args(run_inputs, tag="run_with_dynamic_resize secend run_inputs")
-    out_actual = dynamic_net(*run_inputs)
+    out_actual = dynamic_net(*clone_inputs(run_inputs, inplace_update))
 
     compare_result(expect_resize, out_actual, 'Resize', None, ignore_output_index)
     print("End")
@@ -478,10 +478,11 @@ def convert_nontensor_to_mutable(inputs, dynamic_type):
 
 
 def run_and_compare(prim, inputs, mode_name, dump_ir, prefix_dir, post_str, tensor_dynamic_type, expect,
-                    grad, ignore_output_index):
+                    grad, ignore_output_index, inplace_update):
     ir_path = f"{prefix_dir}/{tensor_dynamic_type}_{post_str}"
     print(f"Start testing with [{mode_name}] [{tensor_dynamic_type}] [{post_str}]...")
-    out_actual = run_in_dynamic_env(prim, inputs, dump_ir, ir_path, tensor_dynamic_type, grad)
+    out_actual = run_in_dynamic_env(
+        prim, inputs, dump_ir, ir_path, tensor_dynamic_type, grad, inplace_update)
 
     compare(expect, out_actual, grad, ignore_output_index)
     print("End")
@@ -536,7 +537,7 @@ def get_dynamic_type(disable_tensor_dynamic_type, disable_nontensor_dynamic_type
 
 
 def run_with_dynamic(prim, inputs_seq, mode_name, disable_tensor_dynamic_type, disable_nontensor_dynamic_type, grad,
-                     dump_ir, prefix_name, expect, expect_second, ignore_output_index):
+                     dump_ir, prefix_name, expect, expect_second, ignore_output_index, inplace_update):
     """run_with_dynamic"""
     tensor_dynamic_type, nontensor_dynamic_type = get_dynamic_type(disable_tensor_dynamic_type,
                                                                    disable_nontensor_dynamic_type)
@@ -546,7 +547,8 @@ def run_with_dynamic(prim, inputs_seq, mode_name, disable_tensor_dynamic_type, d
         ir_path = f"{prefix_name}/Resize"
         expect_resize = expect_second[0] if grad else expect_second
         set_debug_status_info(mode_name, 'Resize')
-        run_with_dynamic_resize(prim, inputs_seq, mode_name, dump_ir, ir_path, expect_resize, ignore_output_index)
+        run_with_dynamic_resize(prim, inputs_seq, mode_name, dump_ir,
+                                ir_path, expect_resize, ignore_output_index, inplace_update)
 
     if has_tensor(inputs_seq[0]):
         # Test dynamic Tensor with no mutable inputs
@@ -554,7 +556,7 @@ def run_with_dynamic(prim, inputs_seq, mode_name, disable_tensor_dynamic_type, d
         for item in tensor_dynamic_type:
             set_debug_status_info(mode_name, item, 'None')
             run_and_compare(prim, inputs_seq[0], mode_name, dump_ir, prefix_name, 'None', item, expect,
-                            grad, ignore_output_index)
+                            grad, ignore_output_index, inplace_update)
 
     # Test dynamic nontensor
     has_scalar_only = is_has_scalar_only(inputs_seq[0])
@@ -568,14 +570,14 @@ def run_with_dynamic(prim, inputs_seq, mode_name, disable_tensor_dynamic_type, d
         for item in tensor_dynamic_type:
             set_debug_status_info(mode_name, item, 'STATIC_LEN')
             run_and_compare(prim, inputs_new, mode_name, dump_ir, prefix_name, 'VARIABLE_NONTENSOR_STATIC_LEN',
-                            item, expect, grad, ignore_output_index)
+                            item, expect, grad, ignore_output_index, inplace_update)
 
     if 'MUTABLE_LEN' in nontensor_dynamic_type and not has_scalar_only:
         inputs_new = convert_nontensor_to_mutable(inputs_seq[0], 'MUTABLE_LEN')
         for item in tensor_dynamic_type:
             set_debug_status_info(mode_name, item, 'MUTABLE_LEN')
             run_and_compare(prim, inputs_new, mode_name, dump_ir, prefix_name, 'VARIABLE_NONTENSOR_MUTABLE_LEN',
-                            item, expect, grad, ignore_output_index)
+                            item, expect, grad, ignore_output_index, inplace_update)
 
 
 def get_name_by_op(prim):
@@ -615,9 +617,20 @@ def create_net(prim, grad):
     return net_class(prim)
 
 
+def clone_inputs(args, inplace_update=False):
+    def clone_func(arg):
+        if isinstance(arg, (Tensor, Parameter)):
+            return arg.copy()
+        return copy.deepcopy(arg)
+
+    if not inplace_update:
+        return args
+    return [clone_func(arg) for arg in args]
+
+
 def TEST_OP(op, inputs_seq, yaml_name, *, disable_input_check=False, disable_yaml_check=False, disable_mode=[],
             disable_tensor_dynamic_type=None, disable_nontensor_dynamic_type=None, disable_grad=False,
-            disable_resize=False, ignore_output_index=None, dump_ir=False, custom_flag='', debug_info=False):
+            disable_resize=False, ignore_output_index=None, dump_ir=False, custom_flag='', debug_info=False, inplace_update=False):
     """
     This function creates several dynamic cases by converting Tensor/tuple/list/scalar inputs to dynamic shape to test
     the correctness of the op's dynamic inputs process. Both Primitive and Functional API are supported.
@@ -688,6 +701,7 @@ def TEST_OP(op, inputs_seq, yaml_name, *, disable_input_check=False, disable_yam
            Default: ``False`` .
         custom_flag (str): Some log and ir path is distinguished by Primitive's name. Default '' .
         debug_info (bool): Whether to print more debug information. Default ``False`` .
+        inplace_update (bool): Whether the op updates its inputs. Default ``False`` .
 
     Outputs:
         None
@@ -773,7 +787,8 @@ def TEST_OP(op, inputs_seq, yaml_name, *, disable_input_check=False, disable_yam
             static_net = create_net(op, grad)
             if JIT_CONFIG:
                 static_net.set_jit_config(JIT_CONFIG)
-            out_expect = static_net(*inputs_seq[0])
+            out_expect = static_net(
+                *clone_inputs(inputs_seq[0], inplace_update))
             debug_log_args(out_expect, tag="out_expect")
             print("End")
 
@@ -788,7 +803,8 @@ def TEST_OP(op, inputs_seq, yaml_name, *, disable_input_check=False, disable_yam
                 static_net_second = create_net(op, grad)
                 if JIT_CONFIG:
                     static_net_second.set_jit_config(JIT_CONFIG)
-                out_expect_second = static_net_second(*inputs_seq[1])
+                out_expect_second = static_net_second(
+                    *clone_inputs(inputs_seq[1], inplace_update))
                 debug_log_args(out_expect_second, tag="out_expect_second")
                 print("End")
             else:
@@ -796,7 +812,7 @@ def TEST_OP(op, inputs_seq, yaml_name, *, disable_input_check=False, disable_yam
 
             # step 2: run in dynamic mode and compare results
             run_with_dynamic(op, inputs_seq, mode_name, disable_tensor_dynamic_type, disable_nontensor_dynamic_type,
-                             grad, dump_ir, prefix_name, out_expect, out_expect_second, ignore_output_index)
+                             grad, dump_ir, prefix_name, out_expect, out_expect_second, ignore_output_index, inplace_update)
         except Exception as error:
             error_status_log()
             raise error
