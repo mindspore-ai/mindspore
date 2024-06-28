@@ -22,6 +22,7 @@
 #include "abstract/dshape.h"
 #include "mindspore/core/ops/sequence_ops.h"
 #include "mindspore/core/ops/framework_ops.h"
+#include "mindspore/core/ops/array_ops.h"
 #include "ir/func_graph.h"
 #include "utils/anf_utils.h"
 #include "utils/ms_context.h"
@@ -513,6 +514,11 @@ void GraphKernelJsonGenerator::GetAttrJson(const AnfNodePtr &anf_node, const std
   auto get_int_value = [](const ValuePtr &value) -> int {
     return value->isa<Int64Imm>() ? static_cast<int>(GetValue<int64_t>(value)) : GetValue<int>(value);
   };
+  if (IsPrimitiveCNode(anf_node, prim::kPrimCast) && op_attr->name() == "dtype") {
+    (*attr_json)[kJsonKeyName] = "dst_type";
+    (*attr_json)[kJsonKeyValue] = TypeIdToString(TypeId(get_int_value(attr_value)), true);
+    return;
+  }
   std::string type = op_attr->type();
   (*attr_json)[kJsonKeyDataType] = type;
   if (type == "int") {
@@ -603,8 +609,8 @@ bool GraphKernelJsonGenerator::CreateAttrDescJson(const AnfNodePtr &anf_node, co
         return false;
       }
     } else {
-      GetAttrJson(anf_node, dyn_input_sizes, op_attr, &attr_json, attr_value);
       attr_json[kJsonKeyName] = op_attr->name();
+      GetAttrJson(anf_node, dyn_input_sizes, op_attr, &attr_json, attr_value);
       attrs_json->push_back(attr_json);
     }
   }
