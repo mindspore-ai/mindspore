@@ -45,10 +45,9 @@
     if (ws_size == 0) {                                                                                              \
       DISPATCH_LAUNCH_KERNEL(device_context, aclnn_name, nullptr, 0, executor_handle, stream_ptr, release_function); \
     } else {                                                                                                         \
-      auto workspace_device_address =                                                                                \
-        runtime::DeviceAddressUtils::CreateWorkspaceAddressWithoutKernelTensor(device_context, stream_id, ws_size);  \
-      DISPATCH_LAUNCH_KERNEL(device_context, aclnn_name, workspace_device_address->GetMutablePtr(), ws_size,         \
-                             executor_handle, stream_ptr, release_function);                                         \
+      auto work_ptr = MemBlock(device_context, ws_size, stream_id);                                                \
+      DISPATCH_LAUNCH_KERNEL(device_context, aclnn_name, work_ptr.ptr_, ws_size, executor_handle, stream_ptr,        \
+                             release_function);                                                                      \
     }                                                                                                                \
     static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);                \
     if (sync) {                                                                                                      \
@@ -67,34 +66,45 @@
   RUN_OP_API_SYNC(aclnn_name, ws_ptr, ws_size, executor, stream);                                                     \
   MS_LOG(DEBUG) << "launch task end, " << aclnn_name;
 
-#define LAUNCH_ACLNN_SYNC(aclnn_api, device_context, stream_id, ...)                                              \
-  [](const std::string &aclnn_name, const device::DeviceContext *device_context, size_t real_stream_id,           \
-     auto &... args) -> auto {                                                                                    \
-    runtime::Pipeline::Get().WaitForward();                                                                       \
-    runtime::ProfilerRecorder aclnn_profiler(runtime::ProfilerModule::kPynative,                                  \
-                                             runtime::ProfilerEvent::kPyBoostLaunchAclnn, aclnn_name, false);     \
-    auto stream_ptr = device_context->device_res_manager_->GetStream(real_stream_id);                             \
-    auto use_huge_pages = true;                                                                                   \
-    auto return_values = GEN_EXECUTOR_CUST(aclnn_name, use_huge_pages, args...);                                  \
-    auto ws_size = std::get<0>(return_values);                                                                    \
-    auto executor_handle = std::get<1>(return_values);                                                            \
-    if (ws_size == 0) {                                                                                           \
-      LAUNCH_KERNEL(aclnn_name, nullptr, 0, executor_handle, stream_ptr);                                         \
-    } else {                                                                                                      \
-      auto workspace_device_address = runtime::DeviceAddressUtils::CreateWorkspaceAddressWithoutKernelTensor(     \
-        device_context, real_stream_id, ws_size);                                                                 \
-      LAUNCH_KERNEL(aclnn_name, workspace_device_address->GetMutablePtr(), ws_size, executor_handle, stream_ptr); \
-    }                                                                                                             \
-    if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                                       \
-      MS_LOG(EXCEPTION) << "SyncStream failed for op " << aclnn_name;                                             \
-    }                                                                                                             \
-    return return_values;                                                                                         \
-  }                                                                                                               \
+#define LAUNCH_ACLNN_SYNC(aclnn_api, device_context, stream_id, ...)                                          \
+  [](const std::string &aclnn_name, const device::DeviceContext *device_context, size_t real_stream_id,       \
+     auto &... args) -> auto {                                                                                \
+    runtime::Pipeline::Get().WaitForward();                                                                   \
+    runtime::ProfilerRecorder aclnn_profiler(runtime::ProfilerModule::kPynative,                              \
+                                             runtime::ProfilerEvent::kPyBoostLaunchAclnn, aclnn_name, false); \
+    auto stream_ptr = device_context->device_res_manager_->GetStream(real_stream_id);                         \
+    auto use_huge_pages = true;                                                                               \
+    auto return_values = GEN_EXECUTOR_CUST(aclnn_name, use_huge_pages, args...);                              \
+    auto ws_size = std::get<0>(return_values);                                                                \
+    auto executor_handle = std::get<1>(return_values);                                                        \
+    if (ws_size == 0) {                                                                                       \
+      LAUNCH_KERNEL(aclnn_name, nullptr, 0, executor_handle, stream_ptr);                                     \
+    } else {                                                                                                  \
+      auto work_ptr = MemBlock(device_context, ws_size, real_stream_id);                                    \
+      LAUNCH_KERNEL(aclnn_name, work_ptr.ptr_, ws_size, executor_handle, stream_ptr);                         \
+    }                                                                                                         \
+    if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                                   \
+      MS_LOG(EXCEPTION) << "SyncStream failed for op " << aclnn_name;                                         \
+    }                                                                                                         \
+    return return_values;                                                                                     \
+  }                                                                                                           \
   (#aclnn_api, device_context, stream_id, __VA_ARGS__)
 
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
+struct MemBlock {
+  MemBlock(const DeviceContext *device_context, size_t size, uint32_t stream_id) {
+    ptr_ = device_context->device_res_manager_->AllocateMemory(size, stream_id);
+    if (ptr_ == nullptr) {
+      MS_LOG(EXCEPTION) << "Alloc failed, size:" << size << ", stream_id:" << stream_id;
+    }
+    device_context_ = device_context;
+  }
+  ~MemBlock() { device_context_->device_res_manager_->FreeMemory(ptr_); }
+  void *ptr_;
+  const DeviceContext *device_context_;
+};
 int8_t GetCubeMathType();
 std::pair<int64_t, int64_t> UpdateGeneratorState(const tensor::BaseTensorPtr &seed, const tensor::BaseTensorPtr &offset,
                                                  int64_t step = 10);
