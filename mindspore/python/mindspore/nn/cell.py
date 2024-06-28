@@ -1008,9 +1008,7 @@ class Cell(Cell_):
                     raise TypeError(
                         f"For 'set_inputs' and tuple(list) in 'set_inputs',the type of {index + 1}th input must "
                         f"be Tensor, but got {type(net_input)}.")
-                is_param_set_input = isinstance(set_input, Parameter)
-                is_param_net_input = isinstance(net_input, Parameter)
-                if (is_param_set_input and not is_param_net_input) or (is_param_net_input and not is_param_set_input):
+                if isinstance(set_input, Parameter) != isinstance(net_input, Parameter):
                     raise TypeError(
                         f"For 'set_inputs' and tuple(list) in 'set_inputs', the {index + 1}th input must be the same "
                         f"as expected, but got expected: {type(set_input)} and input: {type(net_input)}.")
