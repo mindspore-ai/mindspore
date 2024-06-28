@@ -325,6 +325,19 @@ void FusedInferAttentionScoreInfo::InferOptionalTensorMap() {
   for (auto index = static_cast<size_t>(ops::kFusedInferAttentionScoreInputPseShiftIndex);
        index < optional_inputs_.size(); index++) {
     if (optional_inputs_[index]) {
+      if (index == ops::kFusedInferAttentionScoreInputAntiquantScaleIndex ||
+          index == ops::kFusedInferAttentionScoreInputAntiquantOffsetIndex) {
+        if (input_layout_ == FASInputLayoutMode::BSH) {
+          (void)inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(Shape{-1, 0}));
+          continue;
+        } else if (input_layout_ == FASInputLayoutMode::BNSD) {
+          (void)inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(Shape{-1, 0, -1, -1}));
+          continue;
+        } else if (input_layout_ == FASInputLayoutMode::BSND) {
+          (void)inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(Shape{-1, -1, 0, -1}));
+          continue;
+        }
+      }
       (void)inputs_tensor_map_new_.emplace_back(std::make_shared<ShapeValue>(optional_tensor_map_[index]));
     }
   }
