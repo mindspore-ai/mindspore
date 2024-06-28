@@ -16,5 +16,6 @@ scatter:
             dtype: tensor
     dispatch:
         enable: True
+        Ascend: ScatterAscend
     function:
         disable: True
