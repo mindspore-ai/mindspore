@@ -65,6 +65,7 @@ const AnfNodePtr SendOpAddControlDepend::Process(const FuncGraphPtr &func_graph,
   std::vector<AnfNodePtr> depend_input = {NewValueNode(std::make_shared<Primitive>(kDependOpName)), value_node, cnode};
   auto depend_node = NewCNode(depend_input, func_graph);
   MS_EXCEPTION_IF_NULL(depend_node);
+  depend_node->set_fullname_with_scope(node->fullname_with_scope() + "_Depend");
   depend_node->set_scope(node->scope());
   depend_node->set_abstract(value_node->abstract());
   MS_LOG(INFO) << "Create new depend: " << depend_node->fullname_with_scope()
