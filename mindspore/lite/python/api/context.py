@@ -239,9 +239,7 @@ class Context:
             >>> print(context.ascend)
             device_type: DeviceType.kAscend,
             precision_mode: enforce_fp32,
-            device_id: 2,
-            provider: ge,
-            rank_id: 0.
+            device_id: 2.provider: ge.rank_id: 0.
         """
         return self._target
 
