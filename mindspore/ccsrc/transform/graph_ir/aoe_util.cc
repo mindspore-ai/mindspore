@@ -93,7 +93,8 @@ void AoeUtil::Initialize() {
       {AoeOptions::JOB_TYPE, ::ge::AscendString(aoe_job_type.c_str())}};
     const AoeStatus status = aoe_initialize_(globalOptions);
     if (status != AOE_SUCCESS) {
-      MS_LOG(ERROR) << "AoeInitialize failed.";
+      MS_LOG(ERROR) << "AoeInitialize failed. Please refer to 'Ascend Optimization Engine' at "
+                    << "https://www.mindspore.cn to set environment variables.";
     }
     MS_LOG(INFO) << "AoeInitialize success.";
     initialize_ = true;
