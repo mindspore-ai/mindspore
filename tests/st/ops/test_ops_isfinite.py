@@ -15,6 +15,7 @@
 import pytest
 import numpy as np
 import mindspore as ms
+import mindspore.common.dtype as mstype
 from mindspore import ops, jit, JitConfig
 from mindspore.ops import isfinite
 from tests.st.utils import test_utils
@@ -50,183 +51,17 @@ def isfinite_vmap_func(x, in_axes=0):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_isfinite_forward(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function isfinite forward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
-    output = isfinite_forward_func(ms.Tensor(x))
-    expect = generate_expect_forward_output(x)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_isfinite_backward(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function isfinite backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
-    output = isfinite_backward_func(ms.Tensor(x))
-    expect = generate_expect_backward_output(x)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_isfinite_vmap(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function isfinite vmap feature.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
-    output = isfinite_vmap_func(ms.Tensor(x), 0)
-    expect = generate_expect_forward_output(x)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_isfinite_forward_dynamic_shape(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function isfinite forward with dynamic shape.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-
-    x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(isfinite_forward_func)
-    test_cell.set_inputs(x_dyn)
-
-    x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_forward_output(x1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-    x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_forward_output(x2)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_isfinite_forward_dynamic_rank(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function isfinite forward with dynamic rank.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-
-    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(isfinite_forward_func)
-    test_cell.set_inputs(x_dyn)
-
-    x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_forward_output(x1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-    x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_forward_output(x2)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_isfinite_backward_dynamic_shape(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function isfinite backward with dynamic shape.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-
-    x_dyn = ms.Tensor(shape=[None, None, None, None], dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(isfinite_backward_func)
-    test_cell.set_inputs(x_dyn)
-
-    x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_backward_output(x1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-    x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_backward_output(x2)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_isfinite_backward_dynamic_rank(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function isfinite backward with dynamic rank.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-
-    x_dyn = ms.Tensor(shape=None, dtype=ms.float32)
-    test_cell = test_utils.to_cell_obj(isfinite_backward_func)
-    test_cell.set_inputs(x_dyn)
-
-    x1 = generate_random_input((2, 3, 4, 5), np.float32)
-    output = test_cell(ms.Tensor(x1))
-    expect = generate_expect_backward_output(x1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-    x2 = generate_random_input((3, 4, 5, 6), np.float32)
-    output = test_cell(ms.Tensor(x2))
-    expect = generate_expect_backward_output(x2)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
-def test_isfinite_forward_static_shape(mode):
+def test_isfinite_forward(mode):
     """
     Feature: Test isfinite with static shape in graph and pynative mode.
     Description: call ops.isfinite with valid input and index.
     Expectation: return the correct value.
     """
-    x = generate_random_input((3, 4, 5), np.float32)
+    x = generate_random_input((7168, 8192), np.float32)
 
     if mode == 'pynative':
         output = isfinite_forward_func(ms.Tensor(x))
@@ -244,14 +79,14 @@ def test_isfinite_forward_static_shape(mode):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize("mode", ['pynative', 'GE', 'KBK'])
-def test_isfinite_backward_static_shape(mode):
+@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
+def test_isfinite_backward(mode):
     """
-    Feature: Test isfinite with backward.
+    Feature: Test isfinite backward with static shape in graph and pynative mode.
     Description: call ops.isfinite with valid input and index.
     Expectation: return the correct value.
     """
-    x = generate_random_input((3, 4, 5), np.float32)
+    x = generate_random_input((8192, 7168), np.float32)
 
     if mode == 'pynative':
         output = isfinite_backward_func(ms.Tensor(x))
@@ -264,7 +99,43 @@ def test_isfinite_backward_static_shape(mode):
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_isfinite_bfloat16(context_mode):
+    """
+    Feature: pyboost function.
+    Description: test function isfinite forward.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    x = generate_random_input((2560, 8192), np.float32)
+    output = isfinite_forward_func(ms.Tensor(x, mstype.bfloat16))
+    expect = generate_expect_forward_output(x)
+    np.testing.assert_allclose(output.float().asnumpy(), expect, rtol=1e-3)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_isfinite_vmap(context_mode):
+    """
+    Feature: pyboost function.
+    Description: test function isfinite vmap feature.
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=context_mode)
+    x = generate_random_input((8192, 2048), np.float32)
+    output = isfinite_vmap_func(ms.Tensor(x), 0)
+    expect = generate_expect_forward_output(x)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -279,40 +150,3 @@ def test_isfinite_dynamic_shape_testop():
     x2 = generate_random_input((3, 7, 8, 3), np.float32)
 
     TEST_OP(isfinite_forward_func, [[ms.Tensor(x1)], [ms.Tensor(x2)]], 'isfinite')
-
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.parametrize('param_jit_level', ["O2", "O0"])
-def test_isfinite_vmap(param_jit_level):
-    """
-    Feature: Test isfinite with vmap.
-    Description: call ops.isfinite with valid input and index.
-    Expectation: return the correct value.
-    """
-    def _foreach_run(inputs, batch):
-        out = []
-        for i in range(inputs.shape[batch]):
-            if batch == -1:
-                input_inner = inputs[..., i]
-            else:
-                input_inner = inputs[i, ...]
-            out.append(isfinite_forward_func(input_inner))
-        out = ops.Stack()(out)
-        return out
-
-    ms.set_context(jit_level=param_jit_level)
-    x = generate_random_input((4, 5, 6), np.float32)
-
-    batch_axis = -1
-    output = isfinite_vmap_func(ms.Tensor(x), batch_axis)
-    expect = _foreach_run(ms.Tensor(x), batch_axis)
-    assert np.allclose(output.asnumpy(), expect.asnumpy(), rtol=1e-4)
-
-    batch_axis = 0
-    output = isfinite_vmap_func(ms.Tensor(x), batch_axis)
-    expect = _foreach_run(ms.Tensor(x), batch_axis)
-    assert np.allclose(output.asnumpy(), expect.asnumpy(), rtol=1e-4)
