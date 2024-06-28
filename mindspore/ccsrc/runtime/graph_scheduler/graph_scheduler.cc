@@ -1156,6 +1156,16 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
   std::string default_group_name = "";
   const auto &parser = graph_compiler_info.control_node_parser_;
   MS_EXCEPTION_IF_NULL(parser);
+  auto is_include_rpc = [](const GraphCompilerInfo &graph_compiler_info) {
+    for (const auto &sub_graph : graph_compiler_info.graphs_) {
+      MS_EXCEPTION_IF_NULL(sub_graph);
+      if (std::any_of(sub_graph->execution_order().begin(), sub_graph->execution_order().end(),
+                      [](const CNodePtr &kernel) { return IsRpcActor(kernel); })) {
+        return true;
+      }
+    }
+    return false;
+  };
   for (const auto &graph : graph_compiler_info.graphs_) {
     MS_EXCEPTION_IF_NULL(graph);
     if (graph->execution_order().empty()) {
@@ -1177,7 +1187,8 @@ void GraphScheduler::Link(ActorSet *actor_set, const GraphCompilerInfo &graph_co
       // grouped by group name. And this is not required in non-control flow, the default unified group name is used.
       std::vector<CNodePtr> communication_nodes;
       const auto &group_name = (parser->IsInited() ? parser->FetchGroupNameByKernelGraph(graph) : default_group_name);
-      LinkDataArrowInNonSinkMode(graph, graph_compiler_info, &auto_monad_actors, &communication_nodes);
+      LinkDataArrowInNonSinkMode(graph, graph_compiler_info, &auto_monad_actors, &communication_nodes,
+                                 is_include_rpc(graph_compiler_info));
       (void)group_name_to_communication_nodes[group_name].first.insert(
         group_name_to_communication_nodes[group_name].first.end(), communication_nodes.begin(),
         communication_nodes.end());
@@ -1800,25 +1811,36 @@ void GraphScheduler::LinkDataArrowInSinkMode(const KernelGraphPtr &graph, const 
 }
 
 namespace {
-bool IsNeedLinkControlArrowByMonad(const KernelGraphPtr &graph) {
-  // Collect communication ops.
+bool IsNeedLinkControlArrowByMonad(const KernelGraphPtr &graph, const GraphCompilerInfo &graph_compiler_info,
+                                   bool is_include_rpc) {
+  MS_EXCEPTION_IF_NULL(graph);
   if (EnableKbkSubGraphExecute() || graph->is_graph_run_mode() || graph->is_any_type_input() ||
       graph->execution_order().empty()) {
+    MS_LOG(INFO) << "No need to link control arrow for graph:" << graph->ToString();
     return false;
+  }
+
+  if (is_include_rpc) {
+    MS_LOG(INFO) << "Need to link control arrow for graph:" << graph->ToString() << " by rpc kernel.";
+    return true;
   }
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<int>(MS_CTX_MEMORY_OPTIMIZE_LEVEL) != kOptimizeO0) {
+    MS_LOG(INFO) << "No need to link control arrow for graph:" << graph->ToString();
     return false;
   }
 
   for (const auto &kernel : graph->execution_order()) {
     MS_EXCEPTION_IF_NULL(kernel);
     if (common::AnfAlgo::IsCommunicationOp(kernel) && common::AnfAlgo::GetCNodeName(kernel) != kMatMulAllReduceOpName) {
+      MS_LOG(INFO) << "No need to link control arrow for graph:" << graph->ToString()
+                   << " by kernel:" << kernel->fullname_with_scope();
       return false;
     }
   }
+  MS_LOG(INFO) << "Need to link control arrow for graph:" << graph->ToString();
   return true;
 }
 }  // namespace
@@ -1826,7 +1848,7 @@ bool IsNeedLinkControlArrowByMonad(const KernelGraphPtr &graph) {
 void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
                                                 const GraphCompilerInfo &graph_compiler_info,
                                                 std::vector<AbstractActor *> *const auto_monad_actors,
-                                                std::vector<CNodePtr> *const communication_nodes) {
+                                                std::vector<CNodePtr> *const communication_nodes, bool is_include_rpc) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(auto_monad_actors);
   MS_EXCEPTION_IF_NULL(communication_nodes);
@@ -1838,7 +1860,7 @@ void GraphScheduler::LinkDataArrowInNonSinkMode(const KernelGraphPtr &graph,
   // Collect all the depend updatestate nodes of the kernels for linking control arrow.
   mindspore::HashMap<AnfNodePtr, std::set<AnfNodePtr>> cnode_to_monad_inputs;
   MS_LOG(INFO) << "Get all monad input of cnode in graph:" << graph->ToString() << " start.";
-  bool is_need_auto_monad_link = IsNeedLinkControlArrowByMonad(graph);
+  bool is_need_auto_monad_link = IsNeedLinkControlArrowByMonad(graph, graph_compiler_info, is_include_rpc);
   if (is_need_auto_monad_link) {
     GetAllCNodeUInputByGraph(graph, &cnode_to_monad_inputs);
   }
