@@ -859,7 +859,7 @@ void SuperKernelActor::BuildKernelActors() {
                       << " with index: " << output_index << " has no front node.";
       continue;
     }
-    if (!output_kernel->isa<CNode>()) {
+    if (!AnfUtils::IsRealCNodeKernel(output_kernel)) {
       continue;
     }
     auto iter = node_to_kernel_actor_.find(output_kernel);
