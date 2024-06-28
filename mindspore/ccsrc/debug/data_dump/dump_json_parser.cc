@@ -528,7 +528,8 @@ void DumpJsonParser::ParseE2eDumpSetting(const nlohmann::json &content) {
   if (CheckSelectableKeyExist(*e2e_dump_setting, kSampleMode)) {
     auto sample_mode = CheckJsonKeyExist(*e2e_dump_setting, kSampleMode);
     ParseSampleMode(*sample_mode);
-    if (CheckSelectableKeyExist(*e2e_dump_setting, kSampleNum)) {
+    if (CheckSelectableKeyExist(*e2e_dump_setting, kSampleNum) &&
+        sample_mode_ == static_cast<uint32_t>(DUMP_HEAD_AND_TAIL)) {
       auto sample_num = CheckJsonKeyExist(*e2e_dump_setting, kSampleNum);
       ParseSampleNum(*sample_num);
     }
@@ -864,8 +865,12 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 3, 4";
       }
       break;
-    case static_cast<uint32_t>(DUMP_BOTH_OVERFLOW):
+    case static_cast<uint32_t>(DUMP_BOTH_OVERFLOW): {
+      if (e2e_dump_enabled_) {
+        dump_mode_ = static_cast<uint32_t>(DUMP_ALL);
+      }
       break;
+    }
     case static_cast<uint32_t>(DUMP_LITE_EXCEPTION): {
       auto context = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(context);
