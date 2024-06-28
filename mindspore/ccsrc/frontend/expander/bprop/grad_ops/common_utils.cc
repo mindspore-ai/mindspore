@@ -669,19 +669,19 @@ NodePtr LGamma(BpropBuilder *ib, const NodePtr &x) {
   auto log_y = ib->Add(
     (ib->Add((ib->Log(reflex_x)), (ib->Mul((ib->Sub((ib->Add(z, one_half)), (ib->RealDiv(t, log_t)))), log_t)))),
     log_sqrt_two_pi);
-  auto abs_input = ib->Emit("Abs", {x});
-  auto abs_frac_input = ib->Sub(abs_input, (ib->Emit("Floor", {abs_input})));
+  auto abs_input = ib->Abs(x);
+  auto abs_frac_input = ib->Sub(abs_input, (ib->Floor(abs_input)));
   auto new_x = ib->Select(ib->LessEqual(x, zero), ib->Select(ib->Equal(abs_frac_input, zero), infinity, x), x);
   auto reduced_frac_input =
     ib->Select(ib->Greater(abs_frac_input, one_half), ib->Sub(one, abs_frac_input), abs_frac_input);
   auto reflection_denom =
-    ib->Log(ib->Emit("Sin", {ib->Mul(ib->Tensor(pi, ib->GetDtype(reduced_frac_input)), reduced_frac_input)}));
+    ib->Log(ib->Sin(ib->Mul(ib->Tensor(pi, ib->GetDtype(reduced_frac_input)), reduced_frac_input)));
   auto reflection =
-    ib->Select(ib->Emit("IsFinite", {reflection_denom}),
+    ib->Select(ib->IsFinite(reflection_denom),
                ib->Add((ib->Sub((ib->Neg(reflection_denom)), log_y)), ib->Tensor(log_pi, ib->GetDtype(log_y))),
                ib->Neg(reflection_denom));
   auto result = ib->Select(need_to_reflect, reflection, log_y);
-  return ib->Select(ib->Emit("IsFinite", {new_x}), result, infinity);
+  return ib->Select(ib->IsFinite(new_x), result, infinity);
 }
 
 bool CheckType(const TypePtr &check_type, const std::set<TypePtr> &template_types) {

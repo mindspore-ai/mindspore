@@ -126,8 +126,18 @@ PYBOOST_GRAD_FUNCTION_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/ccsrc/runtime/pynative/op_function/template/pyboost_grad_function.tpl'))
 
 PYBOOST_GRAD_HEADER_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH, './mindspore/ccsrc/runtime/pynative/op_function/template/pyboost_grad_function_header.tpl'))
+
+PYBOOST_NATIVE_GRAD_FUNCTION_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH, './mindspore/ccsrc/pipeline/pynative/grad/function/template/native_grad_function.tpl'))
+
+PYBOOST_NATIVE_GRAD_FUNCTIONS_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH,
-                 './mindspore/ccsrc/runtime/pynative/op_function/template/pyboost_grad_function_header.tpl'))
+                 './mindspore/ccsrc/pipeline/pynative/grad/function/template/pyboost_native_grad_functions.tpl'))
+
+PYBOOST_NATIVE_GRAD_FUNCTIONS_HEADER_TEMPLATE = CppTemplate.load_from_file(
+    os.path.join(WORK_PATH,
+                 './mindspore/ccsrc/pipeline/pynative/grad/function/template/pyboost_native_grad_functions_header.tpl'))
 
 GEN_OPS_DEF_HEADER_TEMPLATE = CppTemplate.load_from_file(
     os.path.join(WORK_PATH, './mindspore/python/mindspore/ops_generate/gen_ops_def_header.tpl'))
@@ -237,3 +247,10 @@ OpDef g${class_name} = {
   /*.is_view_ =*/${is_view},
 };
 """)
+
+MULTI_OUTPUT_TEMPLATE = """
+ValuePtrList values;
+(void)std::transform(op->outputs().begin(), op->outputs().end(), std::back_inserter(values),
+                   [](const auto &value){ return value;});
+auto output_value = std::make_shared<ValueTuple>(values);
+"""

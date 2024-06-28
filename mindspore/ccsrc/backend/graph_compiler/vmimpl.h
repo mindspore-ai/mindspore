@@ -179,7 +179,7 @@ class VM : public std::enable_shared_from_this<VM>, public VMImpl {
   FuncGraphPtrToBaseRefMap vars_;
 };
 
-extern BaseRef RunOperation(const PrimitivePtr &prim, const VectorRef &args);
+COMMON_EXPORT extern BaseRef RunOperation(const PrimitivePtr &prim, const VectorRef &args);
 
 }  // namespace compile
 }  // namespace mindspore

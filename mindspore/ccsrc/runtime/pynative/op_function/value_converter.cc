@@ -23,7 +23,7 @@
 
 namespace mindspore::runtime {
 namespace {
-tensor::BaseTensorPtr GetContiguousTensor(OpRunnerInfo *op_runner_info, const tensor::BaseTensorPtr &tensor) {
+tensor::BaseTensorPtr GetContiguousTensor(const std::string &device_target, const tensor::BaseTensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   const auto &storage_info = tensor->storage_info();
   if (storage_info == nullptr) {
@@ -39,77 +39,71 @@ tensor::BaseTensorPtr GetContiguousTensor(OpRunnerInfo *op_runner_info, const te
     }
   }
 
-  auto op = CREATE_PYBOOST_OP(Contiguous, op_runner_info->device_target);
+  auto op = CREATE_PYBOOST_OP(Contiguous, device_target);
   return op->Call(tensor);
 }
 }  // namespace
 
-Int64ImmPtr ValueConverter::ToInt(const ValuePtrList &inputs, size_t i) { return Convert<Int64ImmPtr>(inputs, i); }
+Int64ImmPtr ValueConverter::ToInt(const ValuePtr &input) { return Convert<Int64ImmPtr>(input); }
 
-FP32ImmPtr ValueConverter::ToFloat(const ValuePtrList &inputs, size_t i) { return Convert<FP32ImmPtr>(inputs, i); }
+FP32ImmPtr ValueConverter::ToFloat(const ValuePtr &input) { return Convert<FP32ImmPtr>(input); }
 
-BoolImmPtr ValueConverter::ToBool(const ValuePtrList &inputs, size_t i) { return Convert<BoolImmPtr>(inputs, i); }
+BoolImmPtr ValueConverter::ToBool(const ValuePtr &input) { return Convert<BoolImmPtr>(input); }
 
-ScalarPtr ValueConverter::ToScalar(const ValuePtrList &inputs, size_t i) { return Convert<ScalarPtr>(inputs, i); }
+ScalarPtr ValueConverter::ToScalar(const ValuePtr &input) { return Convert<ScalarPtr>(input); }
 
-tensor::BaseTensorPtr ValueConverter::ToTensor(const ValuePtrList &inputs, size_t i) {
-  return Convert<tensor::BaseTensorPtr>(inputs, i);
+tensor::BaseTensorPtr ValueConverter::ToTensor(const ValuePtr &input) { return Convert<tensor::BaseTensorPtr>(input); }
+
+StringImmPtr ValueConverter::ToString(const ValuePtr &input) { return Convert<StringImmPtr>(input); }
+
+TypePtr ValueConverter::ToDtype(const ValuePtr &input) { return Convert<TypePtr>(input); }
+
+ValueTuplePtr ValueConverter::ToValueTuple(const ValuePtr &input) { return Convert<ValueTuplePtr>(input); }
+
+std::optional<Int64ImmPtr> ValueConverter::ToIntOptional(const ValuePtr &input) {
+  return ConvertOptional<Int64ImmPtr>(input);
 }
 
-StringImmPtr ValueConverter::ToString(const ValuePtrList &inputs, size_t i) { return Convert<StringImmPtr>(inputs, i); }
-
-TypePtr ValueConverter::ToDtype(const ValuePtrList &inputs, size_t i) { return Convert<TypePtr>(inputs, i); }
-
-ValueTuplePtr ValueConverter::ToValueTuple(const ValuePtrList &inputs, size_t i) {
-  return Convert<ValueTuplePtr>(inputs, i);
+std::optional<FP32ImmPtr> ValueConverter::ToFloatOptional(const ValuePtr &input) {
+  return ConvertOptional<FP32ImmPtr>(input);
 }
 
-std::optional<Int64ImmPtr> ValueConverter::ToIntOptional(const ValuePtrList &inputs, size_t i) {
-  return ConvertOptional<Int64ImmPtr>(inputs, i);
+std::optional<BoolImmPtr> ValueConverter::ToBoolOptional(const ValuePtr &input) {
+  return ConvertOptional<BoolImmPtr>(input);
 }
 
-std::optional<FP32ImmPtr> ValueConverter::ToFloatOptional(const ValuePtrList &inputs, size_t i) {
-  return ConvertOptional<FP32ImmPtr>(inputs, i);
+std::optional<ScalarPtr> ValueConverter::ToScalarOptional(const ValuePtr &input) {
+  return ConvertOptional<ScalarPtr>(input);
 }
 
-std::optional<BoolImmPtr> ValueConverter::ToBoolOptional(const ValuePtrList &inputs, size_t i) {
-  return ConvertOptional<BoolImmPtr>(inputs, i);
+std::optional<tensor::BaseTensorPtr> ValueConverter::ToTensorOptional(const ValuePtr &input) {
+  return ConvertOptional<tensor::BaseTensorPtr>(input);
 }
 
-std::optional<ScalarPtr> ValueConverter::ToScalarOptional(const ValuePtrList &inputs, size_t i) {
-  return ConvertOptional<ScalarPtr>(inputs, i);
+std::optional<StringImmPtr> ValueConverter::ToStringOptional(const ValuePtr &input) {
+  return ConvertOptional<StringImmPtr>(input);
 }
 
-std::optional<tensor::BaseTensorPtr> ValueConverter::ToTensorOptional(const ValuePtrList &inputs, size_t i) {
-  return ConvertOptional<tensor::BaseTensorPtr>(inputs, i);
+std::optional<TypePtr> ValueConverter::ToDtypeOptional(const ValuePtr &input) {
+  return ConvertOptional<TypePtr>(input);
 }
 
-std::optional<StringImmPtr> ValueConverter::ToStringOptional(const ValuePtrList &inputs, size_t i) {
-  return ConvertOptional<StringImmPtr>(inputs, i);
+std::optional<ValueTuplePtr> ValueConverter::ToValueTupleOptional(const ValuePtr &input) {
+  return ConvertOptional<ValueTuplePtr>(input);
 }
 
-std::optional<TypePtr> ValueConverter::ToDtypeOptional(const ValuePtrList &inputs, size_t i) {
-  return ConvertOptional<TypePtr>(inputs, i);
-}
-
-std::optional<ValueTuplePtr> ValueConverter::ToValueTupleOptional(const ValuePtrList &inputs, size_t i) {
-  return ConvertOptional<ValueTuplePtr>(inputs, i);
-}
-
-tensor::BaseTensorPtr ValueConverter::ContiguousTensorValue(OpRunnerInfo *op_runner_info,
+tensor::BaseTensorPtr ValueConverter::ContiguousTensorValue(const std::string &device_target,
                                                             const tensor::BaseTensorPtr &tensor) {
-  MS_EXCEPTION_IF_NULL(op_runner_info);
-  if (op_runner_info->device_target == kAscendDevice) {
+  if (device_target == kAscendDevice) {
     return tensor;
   }
 
-  return GetContiguousTensor(op_runner_info, tensor);
+  return GetContiguousTensor(device_target, tensor);
 }
 
-ValueTuplePtr ValueConverter::ContiguousTensorValue(OpRunnerInfo *op_runner_info, const ValueTuplePtr &tuple) {
-  MS_EXCEPTION_IF_NULL(op_runner_info);
+ValueTuplePtr ValueConverter::ContiguousTensorValue(const std::string &device_target, const ValueTuplePtr &tuple) {
   MS_EXCEPTION_IF_NULL(tuple);
-  if (op_runner_info->device_target == kAscendDevice) {
+  if (device_target == kAscendDevice) {
     return tuple;
   }
 
@@ -129,7 +123,7 @@ ValueTuplePtr ValueConverter::ContiguousTensorValue(OpRunnerInfo *op_runner_info
     }
 
     const auto &tensor = val->cast<tensor::BaseTensorPtr>();
-    auto contiguous_tensor = GetContiguousTensor(op_runner_info, tensor);
+    auto contiguous_tensor = GetContiguousTensor(device_target, tensor);
     if (contiguous_tensor != tensor) {
       need_rebuild_tuple = true;
       new_value_list[i] = contiguous_tensor;

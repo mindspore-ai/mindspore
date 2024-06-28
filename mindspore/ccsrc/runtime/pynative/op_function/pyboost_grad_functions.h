@@ -45,13 +45,13 @@ class PyBoostOpExecute {
   // Api for outside call
   void COMMON_EXPORT RunPyBoostCall(OpRunnerInfo *op_runner_info, VectorRef *op_outputs);
 
+  // Run op by single op graph
+  void COMMON_EXPORT RunOpDeprecated(OpRunnerInfo *op_runner_info, VectorRef *op_outputs);
+
   // Clear backend for fork process.
   void ClearBackend() {}
 
  private:
-  // Run op by single op graph
-  void RunOpDeprecated(OpRunnerInfo *op_runner_info, VectorRef *op_outputs);
-
   // RunOp in VM
   void RunOpInVm(OpRunnerInfo *op_runner_info, VectorRef *op_outputs);
 

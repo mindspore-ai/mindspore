@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Op Proto."""
-from pyboost_utils import convert_python_func_name_to_c
+from pyboost_utils import convert_python_func_name_to_c, is_op_multi_output
 
 
 class Arg:
@@ -44,7 +44,8 @@ class OpProto:
                  gpu,
                  ascend,
                  prim_init,
-                 is_dispatch):
+                 is_dispatch,
+                 is_multi_output):
         self.operator_name = operator_name
         self.class_name = class_name
         self.op_args = op_args
@@ -58,6 +59,7 @@ class OpProto:
         self.ascend = ascend
         self.prim_init = prim_init
         self.is_dispatch = is_dispatch
+        self.is_multi_output = is_multi_output
 
     @staticmethod
     def get_device_special_name(dispatch, gpu, cpu, ascend):
@@ -130,9 +132,10 @@ class OpProto:
             dtype = return_dict[return_name]['dtype']
             arg = Arg(return_name, dtype, type_cast=[], inplace=inplace)
             return_args.append(arg)
+        is_multi_output = is_op_multi_output(return_args)
         is_view = False
         if 'view' in yaml.keys():
             is_view = True
         op_proto = OpProto(op_name, op_args, return_args, class_name,
-                           is_pyboost, is_view, cpu, gpu, ascend, prim_init, is_dispatch)
+                           is_pyboost, is_view, cpu, gpu, ascend, prim_init, is_dispatch, is_multi_output)
         return op_proto

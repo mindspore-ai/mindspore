@@ -434,7 +434,7 @@ NodePtr Emitter::SumExt(const NodePtr &input, const NodePtr &axis, const NodePtr
   auto dtype = Value(static_cast<int64_t>(input_dtype_id));
   MS_EXCEPTION_IF_NULL(dtype);
 
-  return Emit("SumExt", {input, axis, keep_dims, dtype});
+  return SumExt(input, axis, keep_dims, dtype);
 }
 
 NodePtr Emitter::Gather(const NodePtr &params, const NodePtr &indices, const NodePtr &axis, int64_t batch_dims) {

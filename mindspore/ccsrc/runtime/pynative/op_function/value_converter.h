@@ -18,17 +18,17 @@
 #define MINDSPORE_MINDSPORE_CCSRC_RUNTIME_PYNATIVE_OP_FUNCTION_VALUE_CONVERTER_H_
 
 #include <optional>
+#include <string>
 #include "ir/tensor.h"
 #include "ir/value.h"
 #include "include/backend/visible.h"
 #include "runtime/pynative/op_runner.h"
 
 namespace mindspore::runtime {
-class BACKEND_EXPORT ValueConverter {
+class COMMON_EXPORT ValueConverter {
  public:
   template <typename T>
-  static T Convert(const ValuePtrList &inputs, size_t i) {
-    const auto &input = inputs[i];
+  static T Convert(const ValuePtr &input) {
     MS_EXCEPTION_IF_NULL(input);
     auto t = input->template cast<T>();
     if (t == nullptr) {
@@ -36,18 +36,17 @@ class BACKEND_EXPORT ValueConverter {
     }
     return t;
   }
-  static Int64ImmPtr ToInt(const ValuePtrList &inputs, size_t i);
-  static FP32ImmPtr ToFloat(const ValuePtrList &inputs, size_t i);
-  static BoolImmPtr ToBool(const ValuePtrList &inputs, size_t i);
-  static ScalarPtr ToScalar(const ValuePtrList &inputs, size_t i);
-  static tensor::BaseTensorPtr ToTensor(const ValuePtrList &inputs, size_t i);
-  static StringImmPtr ToString(const ValuePtrList &inputs, size_t i);
-  static TypePtr ToDtype(const ValuePtrList &inputs, size_t i);
-  static ValueTuplePtr ToValueTuple(const ValuePtrList &inputs, size_t i);
+  static Int64ImmPtr ToInt(const ValuePtr &input);
+  static FP32ImmPtr ToFloat(const ValuePtr &input);
+  static BoolImmPtr ToBool(const ValuePtr &input);
+  static ScalarPtr ToScalar(const ValuePtr &input);
+  static tensor::BaseTensorPtr ToTensor(const ValuePtr &input);
+  static StringImmPtr ToString(const ValuePtr &input);
+  static TypePtr ToDtype(const ValuePtr &input);
+  static ValueTuplePtr ToValueTuple(const ValuePtr &input);
 
   template <typename T>
-  static std::optional<T> ConvertOptional(const ValuePtrList &inputs, size_t i) {
-    const auto &input = inputs[i];
+  static std::optional<T> ConvertOptional(const ValuePtr &input) {
     if (input->template isa<None>()) {
       return std::nullopt;
     }
@@ -55,23 +54,24 @@ class BACKEND_EXPORT ValueConverter {
     MS_EXCEPTION_IF_NULL(t);
     return std::make_optional<T>(t);
   }
-  static std::optional<Int64ImmPtr> ToIntOptional(const ValuePtrList &inputs, size_t i);
-  static std::optional<FP32ImmPtr> ToFloatOptional(const ValuePtrList &inputs, size_t i);
-  static std::optional<BoolImmPtr> ToBoolOptional(const ValuePtrList &inputs, size_t i);
-  static std::optional<ScalarPtr> ToScalarOptional(const ValuePtrList &inputs, size_t i);
-  static std::optional<tensor::BaseTensorPtr> ToTensorOptional(const ValuePtrList &inputs, size_t i);
-  static std::optional<StringImmPtr> ToStringOptional(const ValuePtrList &inputs, size_t i);
-  static std::optional<TypePtr> ToDtypeOptional(const ValuePtrList &inputs, size_t i);
-  static std::optional<ValueTuplePtr> ToValueTupleOptional(const ValuePtrList &inputs, size_t i);
+  static std::optional<Int64ImmPtr> ToIntOptional(const ValuePtr &input);
+  static std::optional<FP32ImmPtr> ToFloatOptional(const ValuePtr &input);
+  static std::optional<BoolImmPtr> ToBoolOptional(const ValuePtr &input);
+  static std::optional<ScalarPtr> ToScalarOptional(const ValuePtr &input);
+  static std::optional<tensor::BaseTensorPtr> ToTensorOptional(const ValuePtr &input);
+  static std::optional<StringImmPtr> ToStringOptional(const ValuePtr &input);
+  static std::optional<TypePtr> ToDtypeOptional(const ValuePtr &input);
+  static std::optional<ValueTuplePtr> ToValueTupleOptional(const ValuePtr &input);
 
-  static tensor::BaseTensorPtr ContiguousTensorValue(OpRunnerInfo *op_runner_info, const tensor::BaseTensorPtr &tensor);
-  static ValueTuplePtr ContiguousTensorValue(OpRunnerInfo *op_runner_info, const ValueTuplePtr &tuple);
+  static tensor::BaseTensorPtr ContiguousTensorValue(const std::string &device_target,
+                                                     const tensor::BaseTensorPtr &tensor);
+  static ValueTuplePtr ContiguousTensorValue(const std::string &device_target, const ValueTuplePtr &tuple);
   template <typename T>
-  static std::optional<T> ContiguousTensorValue(OpRunnerInfo *op_runner_info, const std::optional<T> &val) {
+  static std::optional<T> ContiguousTensorValue(const std::string &device_target, const std::optional<T> &val) {
     if (!val.has_value()) {
       return val;
     }
-    return std::make_optional<T>(ContiguousTensorValue(op_runner_info, val.value()));
+    return std::make_optional<T>(ContiguousTensorValue(device_target, val.value()));
   }
 };
 }  // namespace mindspore::runtime
