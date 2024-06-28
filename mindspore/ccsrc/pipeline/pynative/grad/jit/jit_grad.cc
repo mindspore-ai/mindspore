@@ -500,6 +500,12 @@ bool Jit::GetJitGradGraph(const pipeline::ResourcePtr &resource) {
 
 void Jit::Reset() { graph_phase_.clear(); }
 
+void Jit::Clear() {
+  for (auto &t : graph_phase_with_replace_info_) {
+    t.second.clear();
+  }
+}
+
 FuncGraphPtr Jit::GetJitForwardGraphCNodeInfo(const FuncGraphPtr &jit_forward_graph) {
   MS_EXCEPTION_IF_NULL(jit_forward_graph);
   PyNativeAlgo::Common::DumpGraphIR("jit_modify_before_forward_graph.ir", jit_forward_graph);
