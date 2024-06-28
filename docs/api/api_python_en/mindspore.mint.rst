@@ -109,6 +109,8 @@ Pointwise Operations
     mindspore.mint.pow
     mindspore.mint.reciprocal
     mindspore.mint.rsqrt
+    mindspore.mint.sigmoid
+    mindspore.mint.silu
     mindspore.mint.sin
     mindspore.mint.sqrt
     mindspore.mint.square
