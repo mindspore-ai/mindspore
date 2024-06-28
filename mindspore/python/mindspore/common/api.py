@@ -689,7 +689,6 @@ class _MindsporeFunctionExecutor:
         if enable_compile_cache is None:
             enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
         if enable_compile_cache is True or enable_compile_cache == "1":
-            self._graph_executor.set_enable_compile_cache(True)
             self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
 
     def _generate_compile_args(self, args_list):
@@ -1741,7 +1740,6 @@ class _CellGraphExecutor:
         if enable_compile_cache is None:
             enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
         if enable_compile_cache is True or enable_compile_cache == "1":
-            self._graph_executor.set_enable_compile_cache(True)
             self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
 
     def compile(self, obj, *args, phase='predict', do_convert=True, jit_config_dict=None, **kwargs):

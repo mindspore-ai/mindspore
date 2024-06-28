@@ -45,6 +45,8 @@ struct CachedIOSizeInfo {
   std::vector<size_t> output_size_list;
 };
 
+COMMON_EXPORT bool CompileCacheEnable();
+
 COMMON_EXPORT std::string NormalizeString(const std::string &name);
 
 class COMMON_EXPORT CompileCacheContext {
@@ -104,9 +106,6 @@ class COMMON_EXPORT CompileCacheContext {
   void set_init_compile_cache(const bool &init) { init_compile_cache_ = init; }
   bool init_compile_cache() const { return init_compile_cache_; }
 
-  void set_enable_compile_cache(const bool &enable_compile_cache) { enable_compile_cache_ = enable_compile_cache; }
-  bool enable_compile_cache() const { return enable_compile_cache_; }
-
  private:
   CompileCacheContext() = default;
   ~CompileCacheContext() = default;
@@ -129,7 +128,6 @@ class COMMON_EXPORT CompileCacheContext {
   std::string compile_cache_dep_files_hash_ = "";
   bool has_cached_queue_name_{false};
   bool init_compile_cache_{false};
-  bool enable_compile_cache_{false};
 };
 }  // namespace mindspore
 
