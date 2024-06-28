@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace device {
 namespace tracker {
+constexpr int64_t kIllegalStartTimeStamp = -1L;
 namespace {
 std::string GetRankID() {
   uint32_t rank_id = 0;
@@ -591,8 +592,8 @@ void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const s
       continue;
     }
 
-    auto mem_info = mem_block->mem_info.lock();
-    if (mem_info != nullptr && mem_info->type == MemType::kInSideSomas) {
+    if (mem_block->start_time_stamp == kIllegalStartTimeStamp) {
+      MS_LOG(DEBUG) << "Mem block start time stamp is " << kIllegalStartTimeStamp << ".";
       continue;
     }
 
