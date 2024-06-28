@@ -21,5 +21,3 @@ prod_ext:
         Ascend: ProdExtAscend
         CPU: ProdExtCPU
         GPU: ProdExtGPU
-    function:
-        disable: True
