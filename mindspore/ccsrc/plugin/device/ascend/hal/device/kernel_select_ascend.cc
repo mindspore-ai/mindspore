@@ -721,8 +721,9 @@ bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const AnfNodePtr &node) {
   }
   if (kernel::IsEnabledAclnnDispatch(op_name)) {
     if (!kernel::IsRegisteredAclnnOp(op_name)) {
-      MS_LOG_WITH_NODE(EXCEPTION, node) << "Kernel " << node->fullname_with_scope()
-                                        << " is enabled dispatch in yaml, but not registered an aclnn kernelmod.";
+      MS_LOG(WARNING) << "Kernel " << node->fullname_with_scope()
+                      << " is enabled dispatch in yaml, but not registered an aclnn kernelmod.";
+      return false;
     }
     kIsEnableAclnnMap.insert({op_name, true});
     return true;
