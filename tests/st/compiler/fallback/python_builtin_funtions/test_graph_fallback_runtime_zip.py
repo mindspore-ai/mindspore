@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
 from collections import Iterator
 from mindspore import Tensor, jit, context
@@ -42,8 +41,8 @@ def test_fallback_runtime_zip_numpy():
     assert out[1] == (2, 20)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_fallback_runtime_zip_asnumpy():
     """
     Feature: JIT Fallback
@@ -123,8 +122,8 @@ def test_fallback_runtime_zip_string():
     assert out == 3
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_fallback_runtime_zip_dict():
     """
     Feature: JIT Fallback

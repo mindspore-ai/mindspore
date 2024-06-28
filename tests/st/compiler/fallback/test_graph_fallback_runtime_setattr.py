@@ -195,7 +195,8 @@ def test_setattr_self_non_param_used_in_operator():
     assert np.all(test_net.data.asnumpy() == np.array([1, 2, 3, 4]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_setattr_self_non_param_used_in_operator_2():
     """
     Feature: Enable setattr for class non-param attribute.

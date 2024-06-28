@@ -19,7 +19,7 @@ from tests.st.compiler.fallback.cases_register import case_register
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@case_register.level0
+@case_register.level1
 @case_register.target_gpu
 @case_register.target_ascend
 def test_if_after_if_in_for_tensor_2():

@@ -58,8 +58,8 @@ def test_len_numpy_string():
     assert out == (2, 6)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_len_mutable():
     """
     Feature: JIT Fallback
@@ -75,8 +75,8 @@ def test_len_mutable():
     assert "object has no attribute '__len__'" in str(e.value)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_len_cust_class():
     """
     Feature: JIT Fallback
@@ -100,8 +100,8 @@ def test_len_cust_class():
     assert out == 4
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_len_seq_cell():
     """
     Feature: JIT Fallback

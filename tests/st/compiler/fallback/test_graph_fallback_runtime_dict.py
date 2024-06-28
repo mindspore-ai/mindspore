@@ -639,8 +639,8 @@ def test_nested_dict_with_parameter_constant1():
     assert out2 == 2
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_nested_dict_with_parameter_constant2():
     """
     Feature: Support dict.
@@ -738,8 +738,8 @@ def test_return_nested_dict_with_parameter_constant3():
     assert out == {'params': (net.x, net.y), 'a': 1, 'b': {'params': net.x, 'a': 2}}
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_return_nested_dict_with_parameter_constant4():
     """
     Feature: Return nested output of dict with parameter constant.
@@ -1001,8 +1001,8 @@ def test_dict_inner_method_overrrided_1():
     assert ms_out == 'aaa'
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_dict_inner_method_overrrided_2():
     """
     Feature: Support overriding dict getattr.
@@ -1021,8 +1021,8 @@ def test_dict_inner_method_overrrided_2():
     assert ms_out == 100
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_dict_inner_method_overrrided_3():
     """
     Feature: Support getattr from overridden dict.
@@ -1066,8 +1066,8 @@ def test_pynative_jit_dict_grad():
     ms.set_context(mode=ms.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_pynative_jit_dict_grad_2():
     """
     Feature: Return dict in forward graph.
