@@ -153,7 +153,9 @@ int64_t ComputeSlicingLength(int64_t start_pos, int64_t end_pos, int64_t strides
 
 SliceInfo GetSliceInfo(const AbstractBasePtr &input_arg, const std::string &arg_name) {
   SliceInfo slice_info;
+  MS_EXCEPTION_IF_NULL(input_arg);
   auto slice_shape = input_arg->GetShape();
+  MS_EXCEPTION_IF_NULL(slice_shape);
   if (slice_shape->isa<abstract::DynamicSequenceShape>()) {
     slice_info.is_rank_unknown = true;
     return slice_info;
