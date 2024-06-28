@@ -28,6 +28,8 @@ def test_ge_nested_tuple():
     Description: Support nested tuple in GE.
     Expectation: Run without errors.
     """
+    context.set_context(jit_config={"jit_level": "O2"})
+
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()

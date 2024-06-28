@@ -101,6 +101,7 @@ constexpr auto kTypeIndex = "index";
 constexpr auto kTypeY = "y";
 constexpr auto kTypeX = "x";
 constexpr auto kProcessNodeEngineID = "_process_node_engine_id";
+constexpr auto kIsFreeVariable = "_is_free_variable";
 
 namespace {
 const std::map<TypeId, TypeId> kReduceRaiseMap = {{kNumberTypeInt64, kNumberTypeInt32}};
@@ -222,35 +223,65 @@ ValuePtr CastDstValue(const ValuePtr &value, const TypeId &dst_type) {
   return value;
 }
 
-std::vector<AnfNodePtr> GetOrderedCNodes(const FuncGraphPtr fg, const AnfNodePtr node = nullptr) {
-  MS_EXCEPTION_IF_NULL(fg);
-  auto succ_include_fv = [&fg](const AnfNodePtr &node) -> AnfNodeWeakPtrList {
-    AnfNodeWeakPtrList vecs;
-    if (node == nullptr) {
-      return vecs;
-    }
-    if (node->isa<CNode>()) {
-      auto cnode = node->cast<CNodePtr>();
-      auto &weak_inputs = cnode->weak_inputs();
-      // Check if free variables used.
-      for (const auto &weak_input : weak_inputs) {
-        auto input = weak_input.lock();
-        MS_EXCEPTION_IF_NULL(input);
-        auto input_fg = GetValueNode<FuncGraphPtr>(input);
-        if (input_fg) {
-          for (auto &fv : input_fg->free_variables_nodes()) {
-            if (fv->func_graph() == fg && fg->nodes().contains(fv)) {
-              (void)vecs.emplace_back(fv);
+// If mark_fv is true, set the kIsFreeVariable flag for all free variables and their inputs.
+AnfNodeWeakPtrList SuccIncludeFv(const FuncGraphPtr &fg, const AnfNodePtr &node, bool mark_fv = false) {
+  AnfNodeWeakPtrList vecs;
+  if (node == nullptr) {
+    return vecs;
+  }
+
+  if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    bool is_fv = mark_fv && node->has_user_data(kIsFreeVariable);
+    auto &weak_inputs = cnode->weak_inputs();
+
+    // Check if free variables used.
+    for (const auto &weak_input : weak_inputs) {
+      auto input = weak_input.lock();
+      MS_EXCEPTION_IF_NULL(input);
+      if (is_fv) {
+        input->set_user_data(kIsFreeVariable, std::make_shared<bool>(true));
+      }
+      auto input_fg = GetValueNode<FuncGraphPtr>(input);
+      if (input_fg) {
+        for (auto &fv : input_fg->free_variables_nodes()) {
+          if (fv->func_graph() == fg && fg->nodes().contains(fv)) {
+            if (mark_fv) {
+              fv->set_user_data(kIsFreeVariable, std::make_shared<bool>(true));
             }
+            (void)vecs.emplace_back(fv);
           }
         }
       }
-      (void)vecs.insert(vecs.end(), weak_inputs.begin(), weak_inputs.end());
     }
-    return vecs;
-  };
+
+    (void)vecs.insert(vecs.end(), weak_inputs.begin(), weak_inputs.end());
+  }
+
+  return vecs;
+}
+
+std::vector<AnfNodePtr> GetOrderedCNodes(const FuncGraphPtr fg, const AnfNodePtr node = nullptr) {
+  MS_EXCEPTION_IF_NULL(fg);
+  auto succ_include_fv = [&fg](const AnfNodePtr &node) -> AnfNodeWeakPtrList { return SuccIncludeFv(fg, node); };
 
   return (node == nullptr) ? TopoSort(fg->get_return(), succ_include_fv) : TopoSort(node, succ_include_fv);
+}
+
+std::set<std::string> GetFvNames(const FuncGraphPtr fg) {
+  MS_EXCEPTION_IF_NULL(fg);
+  auto succ_include_fv = [&fg](const AnfNodePtr &node) -> AnfNodeWeakPtrList { return SuccIncludeFv(fg, node, true); };
+
+  std::set<std::string> fvs;
+  auto nodes = TopoSort(fg->get_return(), succ_include_fv);
+  for (const auto &node : nodes) {
+    if (node->has_user_data(kIsFreeVariable)) {
+      node->set_user_data(kIsFreeVariable, std::shared_ptr<bool>(nullptr));
+      fvs.emplace(node->fullname_with_scope());
+    }
+  }
+
+  return fvs;
 }
 
 int64_t GetDynInputNum(const OpAdapterPtr &adpt, bool is_call, std::vector<int64_t> dyn_input_sizes,
@@ -2275,13 +2306,11 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
   GetCallNodeInputs(cur_while_node_);
   // branch node set input.
   bool is_initdata_graph = false;
-  bool is_branch = false;
   std::vector<AnfNodePtr> nodes = GetOrderedCNodes(anf_graph_);
   for (auto &it : nodes) {
     if (IsBranchNode(it)) {
       auto node = it->cast<CNodePtr>();
       GetBranchNodeInput(node);
-      is_branch = true;
     }
     if (IsInitDataSetQueueNode(it)) {
       is_initdata_graph = true;
@@ -2321,11 +2350,13 @@ DfGraphConvertor &DfGraphConvertor::BuildGraph(const std::string &name) {
     SetGraphInputs(&inputs);
   }
 
-  if (!ref_mode_ || !is_branch) {
-    // Add const nodes as graph input for some operator work with constant
-    MS_LOG(INFO) << "Graph const input size: " << graph_const_inputs_.size();
-    (void)std::transform(graph_const_inputs_.begin(), graph_const_inputs_.end(), std::back_inserter(inputs),
-                         [](const OperatorPtr &x) { return *x; });
+  // Add const nodes as graph input for some operator work with constant
+  MS_LOG(INFO) << "Graph const input size: " << graph_const_inputs_.size();
+  auto fv_names = GetFvNames(anf_graph_);
+  for (auto &input : graph_const_inputs_) {
+    if (fv_names.find(input->GetName()) == fv_names.end()) {
+      inputs.emplace_back(*input);
+    }
   }
 
   FillEmptyInputsWithNoInputOp(&inputs);
