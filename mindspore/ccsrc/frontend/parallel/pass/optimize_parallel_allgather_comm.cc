@@ -46,9 +46,22 @@ void MoveCastBehindAllGather(const FuncGraphPtr &func_graph, const CNodePtr &all
     return;
   }
 
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  auto cast_input_node = cast_cnode->input(kIndex1);
+  auto cast_input_node_users = GetOutputNodesWithFilter(cast_input_node, [](const AnfNodePtr &node) {
+    return IsOneOfPrimitiveCNode(node, {prim::kPrimMakeTuple, prim::kPrimDepend});
+  });
+  for (auto &cast_input_node_user_pair : cast_input_node_users) {
+    if (cast_input_node_user_pair.first != cast_cnode &&
+        !IsPrimitiveCNode(cast_input_node_user_pair.first, prim::kPrimUpdateState)) {
+      return;
+    }
+  }
+
   // Get operator list from all_gather to cast
   AnfNodePtrList op_list;
-  auto cur_node = cast_cnode->input(kIndex1);
+  auto cur_node = cast_input_node;
   while (cur_node != all_gather_cnode) {
     op_list.push_back(cur_node);
     auto cur_cnode = cur_node->cast<CNodePtr>();
@@ -63,9 +76,6 @@ void MoveCastBehindAllGather(const FuncGraphPtr &func_graph, const CNodePtr &all
   }
   op_list.push_back(cur_node);
 
-  auto manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto cast_input_node = cast_cnode->input(kIndex1);
   auto cast_node_users = manager->node_users()[cast_cnode];
 
   for (const auto &cast_next_node_user_pair : cast_node_users) {
