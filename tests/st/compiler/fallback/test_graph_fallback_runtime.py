@@ -567,8 +567,8 @@ def test_pyexecute_raise_error_with_dynamic_length_sequence():
     assert np.allclose(ret.asnumpy(), np.array([0.0, 3.0, 4.0, 5.0]))
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_pyexecute_raise_error_with_dynamic_length_sequence_2():
     """
     Feature: Fallback runtime.
