@@ -255,7 +255,6 @@ def test_ascend_kbyk_profiler():
     Description: profiling ascend and host data.
     Expectation: No exception.
     """
-    os.environ['GRAPH_OP_RUN'] = "1"
     rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
     data_path = tempfile.mkdtemp(prefix='profiler_data', dir='/tmp')
     profiler_path = os.path.join(data_path, 'profiler/')
@@ -264,7 +263,6 @@ def test_ascend_kbyk_profiler():
         _check_d_profiling_file(profiler_path, rank_id)
         _check_host_profiling_file(profiler_path, rank_id)
         _check_kbyk_profiling_file(profiler_path, rank_id)
-        del os.environ['GRAPH_OP_RUN']
     finally:
         if os.path.exists(data_path):
             shutil.rmtree(data_path)

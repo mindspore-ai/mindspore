@@ -14,15 +14,12 @@
 # ============================================================================
 
 import pytest
-import os
 import numpy as np
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 import mindspore as ms
 from mindspore import Tensor
 from mindspore import ops, context, mint
-
-os.environ["GRAPH_OP_RUN"] = "1"
 
 
 @test_utils.run_with_cell

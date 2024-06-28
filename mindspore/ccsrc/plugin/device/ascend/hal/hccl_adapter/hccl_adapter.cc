@@ -167,10 +167,10 @@ HcclMode HcclAdapter::GetCurrentHcclMode() const {
   MS_EXCEPTION_IF_NULL(context);
   bool is_graph_mode = context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode;
   bool is_task_sink = context->get_param<bool>(MS_CTX_ENABLE_TASK_SINK);
-  bool graph_op_run = context->IsKByKExecutorMode();
+  bool graph_kbk = context->IsKByKExecutorMode();
   if (!is_graph_mode) {
     return HcclMode::kPynative;
-  } else if (is_task_sink && !graph_op_run) {
+  } else if (is_task_sink && !graph_kbk) {
     return HcclMode::kGraph;
   } else {
     return HcclMode::kKernelByKernel;
