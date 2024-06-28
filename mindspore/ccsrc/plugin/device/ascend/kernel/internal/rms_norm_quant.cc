@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/internal/rmsnormquant.h"
+#include "plugin/device/ascend/kernel/internal/rms_norm_quant.h"
 
 #include <memory>
 
