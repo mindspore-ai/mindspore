@@ -37,8 +37,8 @@ def run_testcase(testcase_name, expect_memory_usage):
         os.remove(log_filename)
     assert not os.path.exists(log_filename)
 
-    cmd = f"export GLOG_v=1; pytest -s test_recompute.py::" + testcase_name + " > " \
-          + log_filename + " 2>&1"
+    cmd = f"export GLOG_v=1; export MS_ALLOC_CONF=\"memory_recycle:False\"; pytest -s test_recompute.py::" + \
+          testcase_name + " > " + log_filename + " 2>&1"
     subprocess.check_output(cmd, shell=True)
     assert os.path.exists(log_filename)
     with open(log_filename, "r") as f:
@@ -51,7 +51,7 @@ def run_testcase(testcase_name, expect_memory_usage):
     os.remove(log_filename)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -64,7 +64,7 @@ def test_recompute_cell_recompute():
     run_testcase("test_recompute_block_recompute", 33)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -78,7 +78,7 @@ def test_recompute_op_recompute1():
     run_testcase("test_recompute_op_recompute1", 45)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -91,7 +91,7 @@ def test_recompute_op_recompute2():
     run_testcase("test_recompute_op_recompute2", 19)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -104,7 +104,7 @@ def test_recompute_op_recompute3():
     run_testcase("test_recompute_op_recompute3", 112)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -117,7 +117,7 @@ def test_recompute_cell_and_op_recompute1():
     run_testcase("test_recompute_cell_and_op_recompute1", 45)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -130,7 +130,7 @@ def test_recompute_cell_and_op_recompute2():
     run_testcase("test_recompute_cell_and_op_recompute2", 51)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
@@ -144,7 +144,7 @@ def test_recompute_cell_and_op_recompute_with_tuple_outputs1():
     run_testcase("test_recompute_cell_and_op_recompute_with_tuple_outputs1", 53)
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.env_onecard
