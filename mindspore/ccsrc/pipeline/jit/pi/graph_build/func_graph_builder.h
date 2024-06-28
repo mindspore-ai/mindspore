@@ -34,6 +34,8 @@ class FuncGraphBuilder {
   explicit FuncGraphBuilder(bool is_top = false) : graph_(std::make_shared<FuncGraph>()) {
     if (is_top) {
       parse::Parser::UpdateTopFuncGraph(graph_);
+      mng_ = Manage(graph_, true);
+      graph_->set_manager(mng_);
     }
   }
   virtual ~FuncGraphBuilder() { py_obj_to_node_.clear(); }
@@ -51,6 +53,10 @@ class FuncGraphBuilder {
   ///
   /// \return True if add top graph success, otherwise false.
   bool AddTopGraphInputs(std::vector<py::object> packed_inputs);
+
+  FuncGraphManagerPtr manager() const { return mng_; }
+
+  void set_manager(const FuncGraphManagerPtr &mng) { mng_ = mng; }
 
   /// \brief Add a cnode to the graph.
   ///
@@ -159,18 +165,25 @@ class FuncGraphBuilder {
 
   const std::vector<FuncGraphBuilder *> &prev_builders() const { return prev_builders_; }
 
-  AnfNodePtr GetNodeByObject(const py::object &obj);
-
   AnfNodePtr ReadLocalVariable(const py::object &obj);
 
   bool AddLocalVariable(const py::object &obj);
+
+  py::object BuildGradNetNode(const ValuePtr &callable_value, const py::object &callable_obj,
+                              const std::vector<py::object> &inputs_obj);
+
+  py::object BuildGradNode(const py::str &key, const std::vector<py::object> &inputs, bool need_unpack);
 
  private:
   static bool CheckCallable(const ValuePtr &value, const AbstractBasePtr &abs);
 
   static bool CheckGraphOutput(const AbstractBasePtr &abs);
 
+  AnfNodePtr GetNodeByObject(const py::object &obj, bool generate_value_node = true);
+
   AnfNodePtr ConvertObjToNode(const py::object &input_obj);
+
+  AnfNodePtr ConvertParameterTupleToNode(const py::object &input_obj);
 
   py::object AddFgCallNode(const FuncGraphPtr &fg, const std::vector<py::object> &inputs_obj);
 
@@ -200,6 +213,8 @@ class FuncGraphBuilder {
 
   bool AddTopGraphKwargsInputs(const py::object &vargs);
 
+  py::object HandleGrad(const py::str &key, const std::vector<py::object> &inputs, bool need_unpack);
+
   FuncGraphPtr graph_{nullptr};
   bool has_set_output_{false};
   HashMap<PyObject *, AnfNodePtr> py_obj_to_node_;
@@ -207,6 +222,8 @@ class FuncGraphBuilder {
 
   // Store all previous builders for subgraph call and control flow.
   std::vector<FuncGraphBuilder *> prev_builders_;
+
+  FuncGraphManagerPtr mng_;
 };
 }  // namespace mindspore
 #endif  // MINDSPORE_PI_JIT_GRAPH_BUILD_FUNC_GRAPH_BUILDER_H_

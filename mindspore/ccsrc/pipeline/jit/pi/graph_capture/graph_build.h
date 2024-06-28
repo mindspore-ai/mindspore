@@ -335,6 +335,8 @@ class MindGraphBuilder : public GraphBuilder {
  private:
   std::vector<py::object> GetNewArgs(CallNode *call_node, AObject *vobj = nullptr);
   bool AllConstantArgs(const std::vector<py::object> &args, const py::object &callable_info, CallNode *call_node);
+  bool IsGradCallable(const py::object &callable_info);
+  py::object ResolveGradCall(CallNode *call_node, StopTraceReason *stop_reason, const py::object &callable_info);
 
   py::object HandleGetShapeOfDynamicLengthTensor(const py::object &object);
 

@@ -4,6 +4,7 @@ import pytest
 from mindspore import jit, context, ops
 from mindspore.common import Parameter, Tensor, dtype
 from mindspore.nn import Cell
+from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable
 from ..share.utils import match_array
 
 
@@ -80,9 +81,10 @@ class Grad(Cell):
 
 def grad_return_ids_pos0(class_name):
     fact = GradFactory(shape=(3, 4), pos=0, weight=None)
-    jit(class_name.construct, mode="PSJit")
+    jit_mode_pi_disable()
     context.set_context(mode=context.PYNATIVE_MODE)
     jit_grad = fact.get_mindspore_grad()
+    jit_mode_pi_enable()
     jit(class_name.construct, mode="PIJit")
     context.set_context(mode=context.PYNATIVE_MODE)
     pijit_grad = fact.get_mindspore_grad()
@@ -91,9 +93,10 @@ def grad_return_ids_pos0(class_name):
 
 def grad_return_ids_pos01(class_name):
     fact = GradFactory(shape=(5, 4), pos=(0, 1), weight=None)
-    jit(class_name.construct, mode="PSJit")
+    jit_mode_pi_disable()
     context.set_context(mode=context.PYNATIVE_MODE)
     jit_grad = fact.get_mindspore_grad()
+    jit_mode_pi_enable()
     jit(class_name.construct, mode="PIJit")
     context.set_context(mode=context.PYNATIVE_MODE)
     pijit_grad = fact.get_mindspore_grad()
@@ -102,9 +105,10 @@ def grad_return_ids_pos01(class_name):
 
 def grad_return_ids_weight_w(class_name):
     fact = GradFactory(shape=(2, 4), pos=None, weight=['w'])
-    jit(class_name.construct, mode="PSJit")
+    jit_mode_pi_disable()
     context.set_context(mode=context.PYNATIVE_MODE)
     jit_grad = fact.get_mindspore_grad()
+    jit_mode_pi_enable()
     jit(class_name.construct, mode="PIJit")
     context.set_context(mode=context.PYNATIVE_MODE)
     pijit_grad = fact.get_mindspore_grad()
@@ -113,9 +117,10 @@ def grad_return_ids_weight_w(class_name):
 
 def grad_return_ids_weight_wb(class_name):
     fact = GradFactory(shape=(2, 5, 3), pos=None, weight=['w', 'b'])
-    jit(class_name.construct, mode="PSJit")
+    jit_mode_pi_disable()
     context.set_context(mode=context.PYNATIVE_MODE)
     jit_grad = fact.get_mindspore_grad()
+    jit_mode_pi_enable()
     jit(class_name.construct, mode="PIJit")
     context.set_context(mode=context.PYNATIVE_MODE)
     pijit_grad = fact.get_mindspore_grad()
@@ -125,9 +130,10 @@ def grad_return_ids_weight_wb(class_name):
 def grad_return_ids_pos_weight(class_name):
     fact = GradFactory(shape=(2, 3, 4), pos=None, weight=('w', 'b'))
     fact_pijit = GradFactory(shape=(2, 3, 4), pos=None, weight=('w', 'b'))
-    jit(class_name.construct, mode="PSJit")
+    jit_mode_pi_disable()
     context.set_context(mode=context.PYNATIVE_MODE)
     jit_grad = fact.get_mindspore_grad()
+    jit_mode_pi_enable()
     jit(class_name.construct, mode="PIJit")
     context.set_context(mode=context.PYNATIVE_MODE)
     pijit_grad = fact_pijit.get_mindspore_grad()

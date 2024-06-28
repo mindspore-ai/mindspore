@@ -596,7 +596,7 @@ AnalysisResult AnalysisEngine::Run(const FuncGraphPtr &func_graph, const Abstrac
     result.eval_result = eval_result;
     result.context = root_context;
   } catch (const std::exception &ex) {
-    MS_LOG(INFO) << "Eval " << func_graph->ToString() << " threw exception.";
+    MS_LOG(INFO) << "Eval " << func_graph->ToString() << " threw exception.\n" << ex.what();
     AnalysisSchedule::GetInstance().HandleException(ex);
   }
   AnalysisSchedule::GetInstance().Wait();

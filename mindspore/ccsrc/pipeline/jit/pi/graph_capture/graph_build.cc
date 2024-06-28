@@ -2127,12 +2127,27 @@ std::string GetFuncGraphName(const py::object &func, const MindGraphBuilderPtr &
   std::replace(func_name.begin(), func_name.end(), '.', '_');
   return func_name + "_" + std::to_string(subgraph->GetGraph()->GetCodeObj()->co_firstlineno);
 }
+
+bool CheckBuildSubGraph(const py::object &ret) {
+  if (ret.ptr() == nullptr) {
+    return false;
+  }
+  if (py::isinstance<py::str>(ret)) {
+    std::string ret_str = ret.cast<std::string>();
+    const std::string fake_grad_prefix = "FakeNodeKey MetaFuncGraph-grad";
+    if (ret_str.substr(0, fake_grad_prefix.size()) == fake_grad_prefix) {
+      return true;
+    }
+  }
+  return !CheckConstPyObject(ret.ptr());
+}
 }  // namespace
 
 StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
                                                 const GraphBuilderPtr &subgraph) {
   auto sg = std::dynamic_pointer_cast<MindGraphBuilder>(subgraph);
   sg->FGBuilder()->AddPrevBuilder(FGBuilder());
+  sg->FGBuilder()->set_manager(FGBuilder()->manager());
 
   auto code = sg->GetGraph()->GetGuard();
   MS_EXCEPTION_IF_NULL(code);
@@ -2155,8 +2170,7 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
   call_node->SetSubGraph(sg->GetGraph());
   auto sub_ret = sg->GetGraph()->GetRetVal();
   if (sub_ret != nullptr) {
-    if (sub_ret->GetVobj()->GetPyObject().ptr() == nullptr ||
-        CheckConstPyObject(sub_ret->GetVobj()->GetPyObject().ptr())) {
+    if (!CheckBuildSubGraph(sub_ret->GetVobj()->GetPyObject())) {
       call_node->SetVobj(sub_ret->GetVobj());
     } else {
       sg->FGBuilder()->SetGraphName(GetFuncGraphName(func, sg));
@@ -3476,6 +3490,44 @@ bool MindGraphBuilder::AllConstantArgs(const std::vector<py::object> &args, cons
   return std::all_of(new_args.begin(), new_args.end(), [](const auto &arg) { return CheckConstPyObject(arg.ptr()); });
 }
 
+py::object MindGraphBuilder::ResolveGradCall(CallNode *call_node, StopTraceReason *stop_reason,
+                                             const py::object &callable_info) {
+  auto args = call_node->GetArgs();
+  auto grad_net_node = static_cast<CallNode *>(call_node->input(0));
+  if (grad_net_node == nullptr) {
+    return py::object();
+  }
+  constexpr size_t grad_operation_index = 0;
+  constexpr size_t forward_net_index = 1;
+  bool guard_grad_operation = graph_->GuardValueNode(grad_net_node->input(grad_operation_index), GId);
+  if (!guard_grad_operation) {
+    MS_LOG(WARNING) << "Guard GradOperation value node failed, value node: "
+                    << grad_net_node->input(grad_operation_index)->ToString();
+  }
+  bool guard_forward_net = graph_->GuardValueNode(grad_net_node->input(forward_net_index), GId);
+  if (!guard_forward_net) {
+    MS_LOG(WARNING) << "Guard forward net value node for GradOperation failed, value node: "
+                    << grad_net_node->input(forward_net_index)->ToString();
+  }
+
+  bool need_unpack = (call_node->GetOpcode() == CALL_FUNCTION_KW || call_node->GetOpcode() == CALL_FUNCTION_EX);
+  auto ret = FGBuilder()->BuildGradNode(callable_info, args, need_unpack);
+  if (ret.ptr() != nullptr) {
+    call_node->SetVobj(AObject::Convert(ret));
+    *stop_reason = StopTraceReason::kNonStopTrace;
+  }
+  return py::object();
+}
+
+bool MindGraphBuilder::IsGradCallable(const py::object &callable_info) {
+  if (callable_info.ptr() == nullptr || !py::isinstance<py::str>(callable_info)) {
+    return false;
+  }
+  std::string callable_info_str = callable_info.cast<std::string>();
+  const std::string fake_grad_prefix = "FakeNodeKey MetaFuncGraph-grad";
+  return callable_info_str.substr(0, fake_grad_prefix.size()) == fake_grad_prefix;
+}
+
 py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) {
   AObject *callable = call_node->input(0)->GetVobj();
   py::object callable_info;
@@ -3487,6 +3539,9 @@ py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReaso
   py::object original_callable = callable_info;
   if (callable_info.ptr() == nullptr) {
     return py::object();
+  }
+  if (IsGradCallable(callable_info)) {
+    return ResolveGradCall(call_node, stop_reason, callable_info);
   }
   if (!FGBuilder()->ValidateCallableObject(callable_info)) {
     return py::object();
@@ -3717,6 +3772,20 @@ bool MindGraphBuilder::DoBinaryMul(const Instr &instr) {
 bool MindGraphBuilder::DoCompare(const Instr &instr) {
   auto r = pop();
   auto l = pop();
+
+  // python3.7 only
+  Opcode opcode(instr.op());
+  int oparg = instr.arg();
+  bool invert;
+  if (opcode.CheckIsOp(oparg, &invert)) {
+    int res = AObject::BinaryIs(l->GetVobj(), r->GetVobj());
+    auto o =
+      res == -1 ? AObject::MakeAObject(AObject::kTypeBool) : AObject::Convert((res ^ invert) ? Py_True : Py_False);
+    auto v = NewValueNode(o, instr, {l, r});
+    push(v);
+    return true;
+  }
+
   auto o = HandleMultiOp(instr, {l, r}, true);
   auto v = NewValueNode(o, instr, {l, r});
   push(v);
