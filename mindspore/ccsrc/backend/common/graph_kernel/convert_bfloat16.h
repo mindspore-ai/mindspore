@@ -18,6 +18,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore::graphkernel {
@@ -51,7 +52,7 @@ class ConvertBFloat16 : public opt::Pass {
   bool Process(const FuncGraphPtr &func_graph);
   HashMap<AnfNodePtr, AnfNodePtr> cast_nodes_;
   // (keep_bf16_node, {node_user, input_idx}), node_user's input[input_idx] is keep_bf16_node
-  HashMap<AnfNodePtr, std::pair<CNodePtr, size_t>> keep_bf16_nodes_;
+  HashMap<AnfNodePtr, std::vector<std::pair<CNodePtr, size_t>>> keep_bf16_nodes_;
   CNodePtr last_node_;
 };
 }  // namespace mindspore::graphkernel
