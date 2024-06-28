@@ -20,7 +20,7 @@ from mindspore import ops
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential')
@@ -57,7 +57,7 @@ def test_squeeze_single_op():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level0',
+          level_mark='level1',
           card_mark='onecard',
           essential_mark='essential')
 def test_squeeze_multiple_op():

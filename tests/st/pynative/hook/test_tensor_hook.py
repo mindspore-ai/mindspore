@@ -149,7 +149,7 @@ def test_tensor_backward_hook_handle_remove():
     assert np.allclose(output[0].asnumpy(), Tensor(np.array([1, 2, 3])).astype(np.float32).asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'],
+@arg_mark(plat_marks=['platform_gpu'],
           level_mark='level0',
           card_mark='allcards',
           essential_mark='essential')

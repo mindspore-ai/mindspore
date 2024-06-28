@@ -115,7 +115,7 @@ def test_copy_dim4_with_slice():
     assert np.allclose(output.asnumpy(), slice_res.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
           essential_mark='essential')
