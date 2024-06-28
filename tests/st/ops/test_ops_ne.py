@@ -49,7 +49,7 @@ def not_equal_vmap_func(x, other):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_not_equal_forward(context_mode):
+def test_ops_not_equal_normal(context_mode):
     """
     Feature: pyboost function.
     Description: test function not_equal forward.
@@ -61,22 +61,29 @@ def test_ops_not_equal_forward(context_mode):
     expect = generate_expect_forward_output(x, other)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
+    x, other = generate_random_input((2, 3, 4, 5), np.float32)
+    not_equal_backward_func(ms.Tensor(x), ms.Tensor(other))
+
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_not_equal_backward(context_mode):
+def test_ops_not_equal_bf16(context_mode):
     """
     Feature: pyboost function.
     Description: test function not_equal backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    x, other = generate_random_input((2, 3, 4, 5), np.float32)
-    not_equal_backward_func(ms.Tensor(x), ms.Tensor(other))
+
+    x_np = np.random.randn(1, 4096)
+    x = ms.Tensor(x_np, ms.bfloat16)
+    other = ms.Tensor(0, ms.bfloat16)
+
+    output = not_equal_forward_func(x, other)
+    expect = generate_expect_forward_output(x_np, 0)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
 @pytest.mark.level1
