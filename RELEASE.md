@@ -2,6 +2,181 @@
 
 [查看中文](./RELEASE_CN.md)
 
+## MindSpore 2.3.0 Release Notes
+
+### Major Features and Improvements
+
+#### AutoParallel
+
+- [STABLE] Extend functional parallelism. [mindspore.shard](https://www.mindspore.cn/docs/en/r2.3.0/api_python/mindspore/mindspore.shard.html) supports now the Graph mode. In Graph mode, the parallel sharding strategy of input and weight can be set for nn.Cell/function. For other operators, the parallel strategy can be automatically configured through "sharding_propagation". Add [mindspore.reshard](https://www.mindspore.cn/docs/en/r2.3.0/api_python/mindspore/mindspore.reshard.html) interface that supports manual rearranging and set up a precise sharding strategy ([mindspore.Layout](https://www.mindspore.cn/docs/en/r2.3.0/api_python/mindspore/mindspore.Layout.html)) for tensors.
+- [STABLE] Added Callback interface [mindspore.train.FlopsUtilizationCollector](https://www.mindspore.cn/docs/en/r2.3.0/api_python/train/mindspore.train.FlopsUtilizationCollector.html) statistical model flops utilization information MFU and hardware flops utilization information HFU.
+- [STABLE] Add functional communication API [mindspore.communication.comm_func](https://www.mindspore.cn/docs/en/r2.3.0/api_python/mindspore.communication.comm_func.html).
+- [BETA] Optimize the memory usage of interleaved pipeline in O0 and O1 mode.
+- [BETA] AutoParallel supports automatic pipeline strategy generation in multi-nodes scenarios (not supported in single-node scenario). Need to set `parallel_mode` to ``auto_parallel`` and `search_mode` to ``recursive_programming``.
+
+#### PyNative
+
+- [STABLE] Optimize the basic data structure of PyNative and improve operator API performance.
+- [STABLE] Tensor supports [register_hook](https://www.mindspore.cn/docs/en/r2.3.0/api_python/mindspore/Tensor/mindspore.Tensor.register_hook.html) so that users can print or modify the gradient with respect to the tensor.
+- [STABLE] The PyNative mode supports the recompute function. You can use the recompute interface to reduce the peak device memory of the network.
+
+#### FrontEnd
+
+- [STABLE] Optimize Checkpoint saving and loading basic processes to improve performance by 20%.
+- [STABLE] Support CRC verification of Checkpoint files during saving and loading processes to enhance security.
+
+#### Dataset
+
+- [STABLE] Support Ascend processing backend for the following transforms: Equalize, Rotate, AutoContrast, Posterize, AdjustSharpness, Invert, Solarize, ConvertColor, Erase.
+- [STABLE] Support video files reading and parsing function. For more detailed information, see APIs: [mindspore.dataset.vision.DecodeVideo](https://www.mindspore.cn/docs/en/r2.3.0/api_python/dataset_vision/mindspore.dataset.vision.DecodeVideo.html), [mindspore.dataset.vision.read_video](https://www.mindspore.cn/docs/en/r2.3.0/api_python/dataset_vision/mindspore.dataset.vision.read_video.html#mindspore.dataset.vision.read_video), and [mindspore.dataset.vision.read_video_timestamps](https://www.mindspore.cn/docs/en/r2.3.0/api_python/dataset_vision/mindspore.dataset.vision.read_video_timestamps.html#mindspore.dataset.vision.read_video_timestamps).
+- [STABLE] Support specifying the `max_rowsize` parameter as -1 in `mindspore.dataset.GeneratorDataset`, `mindspore.dataset.Dataset.map` and `mindspore.dataset.Dataset.batch` interfaces. The size of shared memory used by the dataset multiprocessing will be dynamically allocated according to the size of the data. The `max_rowsize` parameter does not need to be adjusted manually.
+
+#### Inference
+
+- [STABLE] 14 large models such as LLaMa2, LLaMa3, and Qwen1.5 are added to support the integrated training and inference architecture to unify scripts, distributed strategies, and runtime. The period from training to inference deployment of typical large models is reduced to days. Large operators are integrated to reduce the inference latency and effectively improve the network throughput.
+
+#### PIJIT
+
+- [BETA] Support bytecode parsing for Python 3.8 and Python 3.10 to expand the supporting version of Python.
+- [BETA] Support dynamic shape and symbolic shape as input to enable the dynamic input scenarios.
+- [BETA] Enable single-step composition capability to optimize compile time
+- [BETA] Support bytecode capture with side effects (STORE_ATTR, STORE_GLOBAL, LIST_APPEND, dict.pop) by bytecode tuning, enabling auto-mixed precision, reduction of cleavage diagrams, and improved performance.
+
+#### Profiler
+
+- [STABLE] Provides a hierarchical Profiler function, controls different levels of performance data collection through the profiler_level parameter.
+- [STABLE] Profiler analyse adds a new mode parameter to configure asynchronous parsing mode to parallelize performance data parsing and training.
+- [STABLE] The Profiler adds a new data_simplification parameter, which allows users to control whether to delete redundant data after parsing the performance data to save hard disk space.
+- [STABLE] The Profiler enhances the memory analysis function. Users can collect the memory application and release information of the framework, CANN and hardware through the profile_memory parameter, and visualize and analyze the information through the [MindStudio tool](https://www.hiascend.com/forum/thread-0230130822583032044-1-1.html).
+- [BETA] In Pynative mode, Timeline integrates host profiling information, including task time and user side stack information.
+
+#### Dump
+
+- [STABLE] Enhanced synchronous & asynchronous dump functionality and adds L2Norm information to statistics dumps, and the statistic_category field to allow users to customize which statistics to save, improving dump usability. For details about the support for synchronous/asynchronous dump, see [Dump Introduction](https://www.mindspore.cn/tutorials/experts/en/r2.3.0/debug/dump.html#dump-introduction).
+- [STABLE] Improved synchronous dump functionality: Enables overflow and exception dumps through the op_debug_mode field.
+- [STABLE] Enhanced synchronous dump functionality: The stat_calc_mode field enables device-side computation of statistics (default is host-side), and the sample_mode field is configured to perform sample-based dumps, improving dump performance.
+- [STABLE] Enhanced asynchronous dump functionality: Now supports saving in complex64 and complex128 formats.
+
+#### Runtime
+
+- [Stable] Supports multi-level compilation of the staic graph by setting [mindspore.set_context(jit_config={"jit_level": "O0/O1/O2"})](https://www.mindspore.cn/docs/en/r2.3.0/api_python/mindspore/mindspore.set_context.html). The default value is empty, the framework automatically selects the optimization level according to the product category, O2 for Altas training products and O0 for the rest of the products.
+- [Stable] Staic graph supports multi-stream concurrent execution of communication calculations in O0/O1.
+- [STABLE] Add memory management API [mindspore.hal.memory](https://www.mindspore.cn/docs/en/r2.3.0/api_python/mindspore.hal.html#memory).
+- [Beta] The memory pool supports virtual memory defragmentation, and virtual memory is enabled by default under graph O0/O1.
+
+#### Ascend
+
+- [STABLE] Provide an operator memory out of bounds access detection switch on the Ascend platform, where users can detect internal memory out of bounds issues of operators on the Ascend platform by setting `mindspore.set_context (Ascend_configuration={"op_debug_option": "oom"})`.
+- [BETA] The environment variable [MS_SIMULATION_LEVEL](https://www.mindspore.cn/docs/en/r2.3.0/note/env_var_list.html) supports graph compilation O0 execution mode on the Ascend platform, which can support compilation performance and runtime memory analysis
+- [BETA] Ascend platform supports [AscendC custom operators](https://www.mindspore.cn/tutorials/experts/en/r2.3.0/operation/op_custom_ascendc.html) through AOT.
+
+### API Change
+
+#### New APIs
+
+- [STABLE] Adds [mindspore.mint](https://www.mindspore.cn/docs/en/r2.3.0/api_python/mindspore.mint.html) API, provides a lot of functional, nn, optimizer interfaces. The API usage and functions are consistent with the mainstream usage in the industry, which is convenient for users to refer to and use. The mint interface is currently an experimental interface and performs better than ops in `jit_level="O0"` and pynative mode. Currently, the graph sinking mode and CPU/GPU backend are not supported, and it will be gradually improved in the future.
+
+  | mindspore.mint  |  |   | |
+  |:----|:----|:----|:----|
+  | mindspore.mint.eye |mindspore.mint.rand_like|mindspore.mint.isfinite|mindspore.mint.any|
+  | mindspore.mint.ones |mindspore.mint.rand|mindspore.mint.log|mindspore.mint.greater_equal|
+  | mindspore.mint.ones_like |mindspore.mint.gather|mindspore.mint.logical_and|mindspore.mint.all|
+  | mindspore.mint.zeros |mindspore.mint.permute|mindspore.mint.logical_not|mindspore.mint.mean|
+  | mindspore.mint.zeros_like |mindspore.mint.repeat_interleave|mindspore.mint.logical_or|mindspore.mint.prod|
+  | mindspore.mint.arange |mindspore.mint.abs|mindspore.mint.mul|mindspore.mint.sum|
+  | mindspore.mint.broadcast_to |mindspore.mint.add|mindspore.mint.neg|mindspore.mint.eq|
+  | mindspore.mint.cat |mindspore.mint.clamp|mindspore.mint.negative|mindspore.mint.ne|
+  | mindspore.mint.index_select |mindspore.mint.cumsum|mindspore.mint.pow|mindspore.mint.greater|
+  | mindspore.mint.max |mindspore.mint.atan2|mindspore.mint.reciprocal|mindspore.mint.gt|
+  | mindspore.mint.min |mindspore.mint.arctan2|mindspore.mint.rsqrt|mindspore.mint.isclose|
+  | mindspore.mint.scatter_add |mindspore.mint.ceil|mindspore.mint.sigmoid|mindspore.mint.le|
+  | mindspore.mint.narrow |mindspore.mint.unique|mindspore.mint.sin|mindspore.mint.less_equal|
+  | mindspore.mint.nonzero |mindspore.mint.div|mindspore.mint.sqrt|mindspore.mint.lt|
+  | mindspore.mint.normal |mindspore.mint.divide|mindspore.mint.square|mindspore.mint.maximum|
+  | mindspore.mint.tile |mindspore.mint.erf|mindspore.mint.sub|mindspore.mint.minimum|
+  | mindspore.mint.topk |mindspore.mint.erfinv|mindspore.mint.tanh|mindspore.mint.inverse|
+  | mindspore.mint.sort |mindspore.mint.exp|mindspore.mint.bmm|mindspore.mint.searchsorted|
+  | mindspore.mint.stack |mindspore.mint.floor|mindspore.mint.matmul|mindspore.mint.argmax|
+  | mindspore.mint.where |mindspore.mint.flip|mindspore.mint.split|mindspore.mint.cos|
+  | mindspore.mint.less |||
+
+  | mindspore.mint.nn|
+  |:----|
+  | mindspore.mint.nn.Dropout  |
+  | mindspore.mint.nn.Unfold |
+  | mindspore.mint.nn.Fold |
+  | mindspore.mint.nn.Linear|
+  | mindspore.mint.nn.BCEWithLogitsLoss |
+
+  | mindspore.mint.nn.functional||
+  |:----|:----|
+  |mindspore.mint.nn.functional.batch_norm |mindspore.mint.nn.functional.group_norm|
+  |mindspore.mint.nn.functional.fold |mindspore.mint.nn.functional.layer_norm|
+  |mindspore.mint.nn.functional.max_pool2d |mindspore.mint.nn.functional.linear|
+  |mindspore.mint.nn.functional.binary_cross_entropy |mindspore.mint.nn.functional.unfold|
+  |mindspore.mint.nn.functional.sigmoid |mindspore.mint.nn.functional.one_hot|
+  |mindspore.mint.nn.functional.tanh |mindspore.mint.nn.functional.elu|
+  |mindspore.mint.nn.functional.binary_cross_entropy_with_logits |mindspore.mint.nn.functional.gelu|
+  |mindspore.mint.nn.functional.dropout|mindspore.mint.nn.functional.leaky_relu|
+  |mindspore.mint.nn.functional.embedding  |mindspore.mint.nn.functional.silu|
+  |mindspore.mint.nn.functional.grid_sample|mindspore.mint.nn.functional.softplus|
+  |mindspore.mint.nn.functional.relu|mindspore.mint.nn.functional.softmax|
+  |mindspore.mint.nn.functional.pad||
+
+  | mindspore.mint.optim |
+  |:----|
+  | mindspore.mint.optim.AdamW |
+
+  | mindspore.mint.linalg |
+  |:----|
+  | mindspore.mint.linalg.inv |
+
+### Non-compatible Interface Changes
+
+- Interface name: `Profiler`
+
+  Changes: The performance data file generated by parsing is streamlined to save space. Delete the FRAMEWORK directory data and other redundant data after exporting the performance data. Retain only the deliverables of the profiler and the original performance data in the PROF_XXX directory to save space. Data simplification mode can be turned off by configuring the `data_simplification` parameter to `False`, which will be consistent with the performance data files generated by the historical version.
+- Interface name: The `saved_data` field in the configuration file of the dump function is `"tensor"`.
+
+  Changes: The name of the file to be dumped to disks is changed. `"/"` is replaced with `"_"`, and the operator name is changed to the global name of the operator.
+
+  <table>
+  <tr>
+  <td style="text-align:center"> Original interface </td> <td style="text-align:center"> v2.1 interface </td>
+  </tr>
+  <tr>
+  <td><pre>
+  File name format:
+  {op_type}.{op_name}.{task_id}.{stream_id}.
+  {timestamp}.{input_output_index}.{slot}.{format}.npy
+  </br>
+  Example:
+  Conv2D.Conv2D-op12.0.0.1623124369613540.
+  output.0.DefaultFormat.npy
+  </pre>
+  </td>
+  <td><pre>
+  File name format:
+  {op_type}.{op_name}.{task_id}.{stream_id}.
+  {timestamp}.{input_output_index}.{slot}.{format}.npy
+  </br>
+  Example:
+  Conv2D.Default_network-WithLossCell__backbone-AlexNet_conv3
+  -Conv2d_Conv2D-op12.0.0.1623124369613540.output.0.DefaultFormat.npy
+  </pre>
+  </td>
+  </tr>
+  </table>
+- Interface name: The `saved_data` field in the Dump function configuration file is `"statistic"`.
+
+  Changes: By default, `'max'`, `'min'`, `'avg'`, `'count'`, `'negative zero count'`, `'positive zero count'`, `'nan count'`,  `'negative inf count'` ,`'positive inf count'`,`'zero count'` and `'md5'`. In the 2.3 version, the `'max'`, `'min'`, and `'l2norm'` statistical items are saved by default. You can customize statistical items by configuring `'statistic_category'`.
+
+### Contributors
+
+caifubi;candanzg;ccsszz;chaiyouheng;changzherui;chenfei_mindspore;chengbin;chengfeng27;Chong;dairenjie;DavidFFFan;DeshiChen;dingjinshan;douzhixing;emmmmtang;Erpim;fary86;fengyixing;fuhouyu;gaoyong10;GuoZhibin;guozhijian;halo;haozhang;hejianheng;Henry Shi;horcham;huandong1;huangbingjian;Jackson_Wong;jiangchenglin3;jiangshanfeng;jiangzhenguang;jiaorui;bantao;jiaxueyu;jijiarong;JuiceZ;jxl;kairui_kou;lanzhineng;LiangZhibo;lichen;limingqi107;linqingke;liubuyu;liujunzhu;liuluobin;liyan2022;liyejun;LLLRT;looop5;lujiale;luochao60;luoyang;lvxudong;machenggui;maning202007;Margaret_wangrui;master_2;mengyuanli;moran;Mrtutu;NaCN;nomindcarry;panzhihui;pengqi;qiuyufeng;qiuzhongya;Renyuan Zhang;shaoshengqi;Shawny;shen_haochen;shenhaojing;shenwei41;shij1anhan;shilishan;shiziyang;shunyuanhan;shuqian0;TAJh;tanghuikang;tan-wei-cheng;Thibaut;tianxiaodong;TronZhang;TuDouNi;VectorSL;wang_ziqi;wanghenchang;wangjie;weiyang;wudawei;wujiangming;wujueying;XianglongZeng;xiaotianci;xiaoxin_zhang;xiaoxiongzhu;xiaoyao;XinDu;xuxinglei;yangchen;yanghaoran;yanglong;yangruoqi713;yangzhenzhang;yangzishuo;Yanzhi_YI;yao_yf;yefeng;yide12;YijieChen;YingLai Lin;yuchaojie;YuJianfeng;zangqx;zhaiyukun;zhangminli;zhangqinghua;ZhangZGC;zhengxinQian;zhengzuohe;zhouyaqiang0;zhuguodong;zhupuxu;zichun_ye;zjun;zlq2020;ZPaC;zuochuanyong;zyli2020;阿琛;狄新凯;范吉斌;冯一航;胡彬;宦晓玲;黄勇;康伟;雷仪婧;李良灿;李林杰;刘崇鸣;刘力力;刘勇琪;刘子涵;吕浩宇;王禹程;熊攀;徐安越;徐永飞;俞涵;张王泽;张栩浩;郑裔;周莉莉;周先琪;朱家兴;邹文祥
+
+Contributions of any kind are welcome!
+
 ## MindSpore 2.3.0-rc2 Release Notes
 
 ### Major Features and Improvements
