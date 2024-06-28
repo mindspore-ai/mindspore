@@ -262,9 +262,12 @@ class SamplerFn:
             if not w.queue_empty():
                 # in failover reset scenario the QUIT flag should be pop first
                 while w.idx_queue.qsize() > 0:
-                    result = w.idx_queue.get()
-                    if result != "QUIT":
-                        raise Exception("The queue of the subprocess is not empty.")
+                    try:
+                        result = w.idx_queue.get(timeout=1)
+                        if result != "QUIT":
+                            raise Exception("The queue of the subprocess is not empty.")
+                    except queue.Empty:
+                        continue
             # Start all workers
             if not w.is_alive():
                 w.start()
