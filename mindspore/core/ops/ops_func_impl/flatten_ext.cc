@@ -21,6 +21,7 @@
 #include "ops/op_utils.h"
 #include "mindapi/ir/value.h"
 #include "mindapi/ir/primitive.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -62,10 +63,8 @@ ShapeVector FlattenShapeCalc(const ShapeVector &input_shape, const int64_t &star
 
 BaseShapePtr FlattenExtFuncImpl::InferShape(const PrimitivePtr &primitive,
                                             const std::vector<AbstractBasePtr> &input_args) const {
-  const auto &input_x_shape = input_args[kIndex0]->GetShape();
-  if (input_x_shape->IsDimZero()) {
-    MS_LOG(EXCEPTION) << "Unsupported input shape dimension. The shape should not be empty.";
-  }
+  auto input_x_shape = input_args[kIndex0]->GetShape();
+  MS_EXCEPTION_IF_NULL(input_x_shape);
 
   auto x_shape = input_x_shape->GetShapeVector();
   MS_EXCEPTION_IF_NULL(primitive);
@@ -78,6 +77,9 @@ BaseShapePtr FlattenExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   auto x_rank = SizeToLong(x_shape.size());
+  if (x_rank == 0) {
+    x_rank = 1;
+  }
   auto start_opt = GetScalarValue<int64_t>(input_args[1]->GetValue());
   auto end_opt = GetScalarValue<int64_t>(input_args[2]->GetValue());
   if (!start_opt.has_value() || !end_opt.has_value()) {
@@ -95,5 +97,40 @@ TypePtr FlattenExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
   return input_args[kIndex0]->GetType();
 }
+
+TypePtrList FlattenExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &input_type = x_tensor->Dtype();
+  return {input_type};
+}
+
+ShapeArray FlattenExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+
+  const auto x_shape = x_tensor->shape();
+  MS_EXCEPTION_IF_NULL(primitive);
+  auto prim_name = primitive->name();
+  const int64_t input_num = 3;
+  (void)CheckAndConvertUtils::CheckInteger("input numbers", SizeToLong(input_values.size()), kGreaterEqual, input_num,
+                                           prim_name);
+
+  auto x_rank = SizeToLong(x_shape.size());
+  if (x_rank == 0) {
+    x_rank = 1;
+  }
+  auto start_opt = GetScalarValue<int64_t>(input_values[kInputIndex1]);
+  auto end_opt = GetScalarValue<int64_t>(input_values[kInputIndex2]);
+  auto start_dim = start_opt.value();
+  auto end_dim = end_opt.value();
+  CheckAndConvertUtils::CheckInRange<int64_t>("start_dim", start_dim, kIncludeBoth, {-x_rank, x_rank - 1}, prim_name);
+  CheckAndConvertUtils::CheckInRange<int64_t>("end_dim", end_dim, kIncludeBoth, {-x_rank, x_rank - 1}, prim_name);
+  auto out_shape = FlattenShapeCalc(x_shape, start_dim, end_dim);
+  return ShapeArray{
+    out_shape,
+  };
+}
+REGISTER_SIMPLE_INFER(kNameFlattenExt, FlattenExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
