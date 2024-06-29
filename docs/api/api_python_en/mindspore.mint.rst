@@ -211,8 +211,15 @@ Dropout Layers
 
     mindspore.mint.nn.Dropout
 
+Linear Layers
+^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
+    mindspore.mint.nn.Linear
 
 Convolution Layers
 ^^^^^^^^^^^^^^^^^^

@@ -227,7 +227,15 @@ Dropout层
     mindspore.mint.nn.Dropout
 
 
+线性层
+^^^^^^^^
 
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.Linear
 
 
 卷积层
