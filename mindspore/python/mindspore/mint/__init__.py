@@ -395,13 +395,13 @@ def all(input, dim=None, keepdim=False):
         Tensor, the dtype is bool.
 
         - If `dim` is ``None`` , and `keepdim` is ``False`` ,
-            the output is a 0-D Tensor representing the "logical AND" of all elements in the input Tensor.
+          the output is a 0-D Tensor representing the "logical AND" of all elements in the input Tensor.
         - If `dim` is int, such as 2, and `keepdim` is ``False`` ,
-            the shape of output is :math:`(input_1, input_3, ..., input_R)`.
+          the shape of output is :math:`(input_1, input_3, ..., input_R)`.
         - If `dim` is tuple(int), such as (2, 3), and `keepdim` is ``False`` ,
-            the shape of output is :math:`(input_1, input_4, ..., input_R)`.
+          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
         - If `dim` is 1-D Tensor, such as [2, 3], and `keepdim` is ``False`` ,
-            the shape of output is :math:`(input_1, input_4, ..., input_R)`.
+          the shape of output is :math:`(input_1, input_4, ..., input_R)`.
 
     Raises:
         TypeError: If `keepdim` is not a bool.

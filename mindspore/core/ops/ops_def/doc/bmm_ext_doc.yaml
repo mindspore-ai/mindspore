@@ -13,7 +13,7 @@ bmm_ext:
         Tensor, the output tensor of shape `(b, n, p)`, where each matrix is the product of the corresponding matrices in the input batches.
 
     Raises:
-        TypeError: If `input` or `mat2` is not three-dimensional tensors.
+        ValueError: If `input` or `mat2` is not three-dimensional tensors.
         ValueError: If the length of the third dimension of `input` is not equal to the length of the second dimension of `mat2`.
         ValueError: If the batch size of the inputs do not match.
 
