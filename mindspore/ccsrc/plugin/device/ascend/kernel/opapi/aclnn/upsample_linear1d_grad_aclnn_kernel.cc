@@ -31,6 +31,7 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+const pyfloat DEFAULT_SCALE_VALUE = -1;
 std::tuple<std::vector<int64_t>, std::vector<int64_t>, double, bool> UpsampleLinear1DGradGenerate(
   const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
   bool align_corners = inputs[kIndex4]->GetValueWithCheck<bool>();
@@ -39,7 +40,7 @@ std::tuple<std::vector<int64_t>, std::vector<int64_t>, double, bool> UpsampleLin
   auto grad_out_shape = inputs[kIndex0]->GetShapeVector();
   std::vector<int64_t> output_size{grad_out_shape.begin() + kIndex2, grad_out_shape.end()};
 
-  std::vector<pyfloat> scales{0.};
+  std::vector<pyfloat> scales{DEFAULT_SCALE_VALUE};
   if (inputs[kIndex3]->GetType()->type_id() != kMetaTypeNone) {
     if (!align_corners) {
       MS_LOG(EXCEPTION) << "For UpsampleLinear1DGrad with align_corners false, scales was not supported.";

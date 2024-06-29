@@ -68,6 +68,8 @@ parse_device()
         ENABLE_CPU="on"
         export ENABLE_MPI="on"
         export ENABLE_INTERNAL_KERNELS="on"
+        export ASCEND_GLOBAL_LOG_LEVEL=3
+        export ASCEND_SLOG_PRINT_TO_STDOUT=1
       else
         echo "Invalid value ${DEVICE_VERSION} for option -V"
         usage

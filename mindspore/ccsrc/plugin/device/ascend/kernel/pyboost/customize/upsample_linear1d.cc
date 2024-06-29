@@ -24,6 +24,7 @@ namespace mindspore {
 namespace kernel {
 namespace pyboost {
 namespace {
+const pyfloat DEFAULT_SCALE_VALUE = -1;
 tensor::BaseTensorPtr UpsampleLinear1DAscendCall(const std::shared_ptr<OpRunner> &op,
                                                  const device::DeviceContext *device_context,
                                                  const BaseTensorPtr &input_tensor,
@@ -52,7 +53,7 @@ tensor::BaseTensorPtr UpsampleLinear1DAscendCustomize(const std::shared_ptr<OpRu
   const ShapeVector &osize = op->output_abs()->GetShape()->GetShapeVector();
   std::vector<int64_t> output_size_vector = {osize.begin() + kDim2, osize.end()};
 
-  std::vector<pyfloat> scales{0.};
+  std::vector<pyfloat> scales{DEFAULT_SCALE_VALUE};
   if (scale_factors.has_value()) {
     scales = ConvertValueTupleToVector<pyfloat>(scale_factors.value());
   }
