@@ -12,6 +12,6 @@ mindspore.mint.linalg.inv
         Tensor，其类型和shape与 `input` 相同。
 
     异常：
-        - **TypeError** - `input` 不是Tensor。
         - **ValueError** - `input` 最后两个维度的大小不相同。
-        - **ValueError** - `input` 的维数为1。
+        - **ValueError** - `input` 不是空并且它的维度小于2维。
+        - **ValueError** - `input` 的维度大于6
