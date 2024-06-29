@@ -261,6 +261,13 @@ struct CompareBasedOnValueSimpleInfo {
     return old_input != new_input;
   }
 
+  template <typename T1, typename T2>
+  static bool IsNotEuqal(const std::shared_ptr<T1> &old_input, const std::shared_ptr<T2> &new_input) {
+    MS_EXCEPTION_IF_NULL(old_input);
+    MS_EXCEPTION_IF_NULL(new_input);
+    return old_input->type_id() != new_input->type_id();
+  }
+
   static bool IsValueSimpleInfoChange(const ValueSimpleInfo &old_input_simple_info,
                                       const ValueSimpleInfo &new_input_simple_info) {
     if (old_input_simple_info.size_ != new_input_simple_info.size_) {
