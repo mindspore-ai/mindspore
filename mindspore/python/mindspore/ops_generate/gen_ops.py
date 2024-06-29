@@ -762,6 +762,14 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
             dispatch = "true"
         enable_dispatch_str = f"""{dispatch}"""
 
+        is_view = operator_data.get('view')
+        if is_view:
+            is_view = "true"
+        else:
+            is_view = "false"
+        is_view_str = f"""{is_view}"""
+
+
         gen_include += f"""\n#include "ops/ops_func_impl/{operator_name}.h\""""
         cc_index_str = ''
         gen_opdef_map += f"""\n  {{"{class_name}", &g{class_name}}},"""
@@ -803,7 +811,8 @@ std::unordered_map<std::string, OpDefPtr> gOpDefTable = {{"""
 
         op_def_cc = template.OP_PROTO_TEMPLATE.replace(class_name=class_name, input_args=input_args_str,
                                                        return_args=return_args_str, signatures=signature_code,
-                                                       indexes=cc_index_str, enable_dispatch=enable_dispatch_str)
+                                                       indexes=cc_index_str, enable_dispatch=enable_dispatch_str,
+                                                       is_view=is_view_str)
         gen_cc_code += op_def_cc
     gen_opdef_map += f"""\n}};"""
     gen_cc_code += gen_opdef_map
