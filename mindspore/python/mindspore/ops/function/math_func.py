@@ -1336,7 +1336,7 @@ def sgn(input):
     non_zero_modulus = ops.masked_fill(modulus, zeros_mask, ops.cast(1, modulus.dtype))
     zeros_modulus = ops.zeros_like(non_zero_modulus)
     complex_modulus = ops.Complex()(non_zero_modulus, zeros_modulus)
-    res = input / complex_modulus
+    res = tensor_div(input, complex_modulus)
     return res
 
 

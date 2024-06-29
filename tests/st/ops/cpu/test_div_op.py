@@ -57,11 +57,13 @@ def test_two_tensors_add():
         assert np.array_equal(output.asnumpy(), expect_result)
 
     # Test for dynamic shape of div.
+    x = np.arange(2 * 3 * 2).reshape((2, 3, 2)).astype(np.float32)
+    y = np.arange(88, 2 * 3 * 2 + 88).reshape((2, 3, 2)).astype(np.float32)
     input_x_dyn = Tensor(shape=[2, None, 2], dtype=mstype.float32)
     input_y_dyn = Tensor(shape=[2, 3, None], dtype=mstype.float32)
     div_dyn_net = NetDiv()
     div_dyn_net.set_inputs(input_x_dyn, input_y_dyn)
-    dyn_output = div_dyn_net(Tensor(x.astype(np.float32)), Tensor(y.astype(np.float32)))
+    dyn_output = div_dyn_net(Tensor(x), Tensor(y))
     expect_dync_result = x / y
     assert np.array_equal(dyn_output.asnumpy(), expect_dync_result)
 
