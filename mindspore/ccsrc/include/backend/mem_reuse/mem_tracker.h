@@ -230,7 +230,8 @@ class BACKEND_EXPORT MemoryTrackerEnabled : public MemTracker {
   size_t last_profiling_pos_{0};  // Prevent the same data from being dumped.
   // for dump
   bool has_dump = false;
-  bool has_set_path = false;
+  bool is_init_enable_hccl_ = false;
+  bool enable_hccl_ = false;
   std::vector<TaskInfoPtr> task_list_;
   std::vector<MemInfoPtr> mem_info_list_;
   std::vector<MemBlockInfoPtr> mem_block_list_;
