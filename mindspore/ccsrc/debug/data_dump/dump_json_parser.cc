@@ -884,6 +884,11 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
           MS_LOG(WARNING) << "For e2e exception dump, it is not support to specify iteration, set iteration to all.";
           iteration_ = "all";
         }
+        if (e2e_dump_enabled_ && sample_mode_ != 0) {
+          MS_LOG(WARNING) << "For e2e exception dump, it is not support to sample dump, set sample_mode to 0, the "
+                             "whole tensor would be saved when exception occur.";
+          sample_mode_ = 0;
+        }
         break;
       } else {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
