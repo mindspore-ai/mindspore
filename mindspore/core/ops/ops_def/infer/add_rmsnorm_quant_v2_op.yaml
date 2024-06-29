@@ -1,0 +1,31 @@
+#operator AddRmsNormQuantV2
+add_rmsnorm_quant_v2:
+  args:
+    x1:
+      dtype: tensor
+    x2:
+      dtype: tensor
+    gamma:
+      dtype: tensor
+    scale:
+      dtype: tensor
+    offset:
+      dtype: tensor
+    epsilon:
+      dtype: float
+      default: 1e-5
+  returns:
+    y1:
+      dtype: tensor
+    y2:
+      dtype: tensor
+    x:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: AddRmsNormQuantV2
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: AddRmsNormQuantAscend
