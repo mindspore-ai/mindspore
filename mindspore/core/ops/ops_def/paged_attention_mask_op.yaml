@@ -13,6 +13,10 @@ paged_attention_mask:
       dtype: tensor
     alibi_mask:
       dtype: tensor
+      default: None
+    attn_mask:
+      dtype: tensor
+      default: None
     head_num:
       dtype: int
       prim_init: True
@@ -26,3 +30,5 @@ paged_attention_mask:
   returns:
     attention_out:
       dtype: tensor
+  function:
+    disable: True
