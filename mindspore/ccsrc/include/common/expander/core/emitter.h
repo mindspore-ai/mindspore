@@ -113,7 +113,7 @@ class COMMON_EXPORT Emitter {
   NodePtr Xlogy(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit("Xlogy", lhs, rhs); }
 
   NodePtr Select(const NodePtr &cond, const NodePtr &lhs, const NodePtr &rhs) {
-    auto [a, b] = UnifyDtype2(lhs, rhs);
+    auto [a, b] = UnifyDtype(lhs, rhs);
     return Emit(kSelectOpName, {cond, a, b});
   }
   NodePtr Less(const NodePtr &lhs, const NodePtr &rhs, const TypePtr &dst_type = nullptr) {
@@ -333,27 +333,15 @@ class COMMON_EXPORT Emitter {
     auto node = UnifyDtypeAndEmit(op, lhs, rhs);
     return dst_type == nullptr ? node : Cast(node, dst_type);
   }
-  std::tuple<NodePtr, NodePtr> UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs);
+  /// \brief Convert two tensors to the same dtype
+  std::tuple<NodePtr, NodePtr> UnifyDtype(const NodePtr &lhs, const NodePtr &rhs);
   NodePtr UnifyDtypeAndEmit(const std::string &op, const NodePtr &a, const NodePtr &b, const DAttr &attrs = {}) {
-    auto [lhs, rhs] = UnifyDtype2(a, b);
+    auto [lhs, rhs] = UnifyDtype(a, b);
     return Emit(op, {lhs, rhs}, attrs);
   }
 
   ExpanderInferPtr infer_{nullptr};
   ScopePtr scope_{nullptr};
-  inline static const std::vector<size_t> type_vector_ = [] {
-    std::vector<size_t> type_vector(kSparseTypeEnd + 1);
-    type_vector[kNumberTypeBool] = 1;
-    type_vector[kNumberTypeInt8] = 2;
-    type_vector[kNumberTypeUInt8] = 3;
-    type_vector[kNumberTypeInt16] = 4;
-    type_vector[kNumberTypeInt32] = 5;
-    type_vector[kNumberTypeInt64] = 6;
-    type_vector[kNumberTypeFloat16] = 7;
-    type_vector[kNumberTypeFloat32] = 8;
-    type_vector[kNumberTypeFloat64] = 9;
-    return type_vector;
-  }();
   static HashMap<std::string, ops::OpPrimCDefineFunc> &primc_func_cache() {
     static HashMap<std::string, ops::OpPrimCDefineFunc> cache{};
     return cache;

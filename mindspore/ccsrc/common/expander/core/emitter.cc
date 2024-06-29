@@ -565,16 +565,17 @@ NodePtr Emitter::TensorToTuple(const NodePtr &node) {
   return node;
 }
 
-std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype2(const NodePtr &lhs, const NodePtr &rhs) {
-  auto it1 = type_vector_[lhs->dtype()->type_id()];
-  auto it2 = type_vector_[rhs->dtype()->type_id()];
-  if (!it1 || !it2 || it1 == it2) {
+std::tuple<NodePtr, NodePtr> Emitter::UnifyDtype(const NodePtr &lhs, const NodePtr &rhs) {
+  auto type1 = lhs->dtype()->type_id();
+  auto type2 = rhs->dtype()->type_id();
+  if (type1 == type2) {
     return {lhs, rhs};
   }
-  if (it1 < it2) {
-    return {this->Cast(lhs, rhs->dtype()), rhs};
-  }
-  return {lhs, this->Cast(rhs, lhs->dtype())};
+  TypeId dst_type_id = ConvertTypeForTensorsOrScalars(type1, type2);
+  auto dst_type = Value(static_cast<int64_t>(dst_type_id));
+  NodePtr ret1 = (type1 == dst_type_id) ? lhs : Emit("Cast", {lhs, dst_type});
+  NodePtr ret2 = (type2 == dst_type_id) ? rhs : Emit("Cast", {rhs, dst_type});
+  return {ret1, ret2};
 }
 
 NodePtr Emitter::SparseSoftmaxCrossEntropyWithLogits(const NodePtrList &inputs, const DAttr &attrs, const NodePtr &out,

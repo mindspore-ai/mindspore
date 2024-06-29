@@ -102,6 +102,8 @@ COMMON_EXPORT std::map<SignatureEnumDType, std::pair<TypeId, bool>> GetSignature
   const std::vector<SignatureEnumDType> &dtypes, const std::vector<TypeId> &args_type_id,
   const std::vector<bool> &args_is_tensor, const std::set<size_t> &write_indices = {});
 
+COMMON_EXPORT TypeId ConvertTypeForTensorsOrScalars(const TypeId &type1, const TypeId &type2);
+
 COMMON_EXPORT std::string ValueSimpleInfoToString(const ValueSimpleInfo &value_simple_info);
 
 COMMON_EXPORT abstract::AbstractBasePtr TransformValueSimpleInfoToAbstract(const ValueSimpleInfo &value_simple_info);
