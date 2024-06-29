@@ -17,7 +17,8 @@ import sys
 import tempfile
 import shutil
 import pytest
-from dump_test_utils import generate_dump_json, check_ge_dump_structure
+from dump_test_utils import generate_dump_json
+from test_ge_dump import check_ge_dump_structure_acl
 
 
 @pytest.mark.level0
@@ -26,7 +27,7 @@ from dump_test_utils import generate_dump_json, check_ge_dump_structure
 @pytest.mark.env_single
 def test_dump_hccl():
     """
-    Feature: Test async dump for hccl operator.
+    Feature: Test acl dump for hccl operator.
     Description: Set dump envs for async dump, run AllReduce script on 8 cards ascend computor.
     Expectation: The AllReduce data is saved and the value is correct.
     """
@@ -42,5 +43,5 @@ def test_dump_hccl():
         exec_network_cmd = 'cd {0}; bash run_allreduce.sh'.format(os.path.split(os.path.realpath(__file__))[0])
         ret = os.system(exec_network_cmd)
         print("ret of exec_network_cmd: ", ret)
-        check_ge_dump_structure(dump_path, 1, 8, saved_data='tensor', check_data=False)
+        check_ge_dump_structure_acl(dump_path, 0, 8)
         del os.environ['MINDSPORE_DUMP_CONFIG']

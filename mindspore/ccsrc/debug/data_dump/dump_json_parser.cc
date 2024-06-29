@@ -516,14 +516,18 @@ void DumpJsonParser::ParseE2eDumpSetting(const nlohmann::json &content) {
   }
 
   auto e2e_dump_enable = CheckJsonKeyExist(*e2e_dump_setting, kEnable);
-  auto trans_flag = CheckJsonKeyExist(*e2e_dump_setting, kTransFlag);
-
+  bool set_trans_flag = CheckSelectableKeyExist(*e2e_dump_setting, kTransFlag);
+  if (set_trans_flag) {
+    auto trans_flag = CheckJsonKeyExist(*e2e_dump_setting, kTransFlag);
+    trans_flag_ = ParseEnable(*trans_flag);
+  } else {
+    trans_flag_ = true;
+  }
   if (CheckSelectableKeyExist(*e2e_dump_setting, kSaveArgs)) {
     auto save_args_flag = CheckJsonKeyExist(*e2e_dump_setting, kSaveArgs);
     save_args_flag_ = ParseEnable(*save_args_flag);
   }
   e2e_dump_enabled_ = ParseEnable(*e2e_dump_enable);
-  trans_flag_ = ParseEnable(*trans_flag);
   ParseStatCalcMode(*e2e_dump_setting);
   if (CheckSelectableKeyExist(*e2e_dump_setting, kSampleMode)) {
     auto sample_mode = CheckJsonKeyExist(*e2e_dump_setting, kSampleMode);
@@ -861,14 +865,13 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
       break;
     case static_cast<uint32_t>(DUMP_AICORE_OVERFLOW):
     case static_cast<uint32_t>(DUMP_ATOMIC_OVERFLOW):
-      if (e2e_dump_enabled_) {
-        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 3, 4";
+      if (!IsGeDump()) {
+        MS_LOG(INFO) << "Op_debug_mode should be 0, 3, 4. When set to 1 or 2, it would be reset to 3 and overflow dump "
+                        "is enabled.";
+        op_debug_mode_ = static_cast<uint32_t>(DUMP_BOTH_OVERFLOW);
       }
       break;
     case static_cast<uint32_t>(DUMP_BOTH_OVERFLOW): {
-      if (e2e_dump_enabled_) {
-        dump_mode_ = static_cast<uint32_t>(DUMP_ALL);
-      }
       break;
     }
     case static_cast<uint32_t>(DUMP_LITE_EXCEPTION): {
@@ -879,29 +882,30 @@ void DumpJsonParser::ParseOpDebugMode(const nlohmann::json &content) {
         MS_LOG(WARNING) << "Abnormal dump is not supported on " << device_target
                         << " backend, and none operator data would be saved when abnormal dump is enabled. ";
       }
-      if (IsAclDump() || e2e_dump_enabled_) {
-        if (e2e_dump_enabled_ && iteration_ != "all") {
-          MS_LOG(WARNING) << "For e2e exception dump, it is not support to specify iteration, set iteration to all.";
-          iteration_ = "all";
-        }
-        if (e2e_dump_enabled_ && sample_mode_ != 0) {
-          MS_LOG(WARNING) << "For e2e exception dump, it is not support to sample dump, set sample_mode to 0, the "
-                             "whole tensor would be saved when exception occur.";
-          sample_mode_ = 0;
-        }
-        break;
-      } else {
-        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
+      if (e2e_dump_enabled_ && iteration_ != "all") {
+        MS_LOG(WARNING) << "For e2e exception dump, it is not support to specify iteration, set iteration to all.";
+        iteration_ = "all";
       }
+      if (e2e_dump_enabled_ && sample_mode_ != 0) {
+        MS_LOG(WARNING) << "For e2e exception dump, it is not support to sample dump, set sample_mode to 0, the "
+                           "whole tensor would be saved when exception occur.";
+        sample_mode_ = 0;
+      }
+      if (async_dump_enabled_ && IsGeDump()) {
+        MS_LOG(EXCEPTION) << "For ge dump, op_debug_mode should be 0, 1, 2, 3.";
+      }
+      break;
     }
     default:
-      if (IsAclDump()) {
-        MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3, 4";
-      } else if (e2e_dump_enabled_) {
+      if (!IsGeDump()) {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 3, 4";
       } else {
         MS_LOG(EXCEPTION) << "Dump Json Parse Failed. op_debug_mode should be 0, 1, 2, 3";
       }
+  }
+  if (op_debug_mode_ != static_cast<uint32_t>(DUMP_WHOLE) && dump_mode_ != static_cast<uint32_t>(DUMP_ALL)) {
+    MS_LOG(WARNING) << "Overflow dump or exception dump do not support specify kernels, the dump_mode is set to 0";
+    dump_mode_ = static_cast<uint32_t>(DUMP_ALL);
   }
 }
 
@@ -967,7 +971,7 @@ void DumpJsonParser::JudgeDumpEnabled() {
     }
   }
   if (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
-    if (async_dump_enabled_ && !IsAclDump()) {
+    if (async_dump_enabled_ && IsGeDump()) {
       if (context->IsKByKExecutorMode()) {
         MS_LOG(WARNING)
           << "When jit_level is set to 'o0' or 'o1', async_dump only support acl dump method, ie. set environment "
@@ -1164,13 +1168,8 @@ bool DumpJsonParser::IsHCCLKernelInput(const std::string &kernel_name) const {
   return false;
 }
 
-bool DumpJsonParser::IsAclDump() {
-  bool is_acl_dump = false;
-  auto env_enable_kbk = common::GetEnv("MS_ACL_DUMP_CFG_PATH");
-  auto dump_enable_kbk = common::GetEnv("MINDSPORE_DUMP_CONFIG");
-  if (!env_enable_kbk.empty() && env_enable_kbk == dump_enable_kbk) {
-    is_acl_dump = true;
-  }
-  return is_acl_dump;
+bool DumpJsonParser::IsGeDump() {
+  auto enable_ge_dump = common::GetEnv("ENABLE_MS_GE_DUMP");
+  return enable_ge_dump == "1";
 }
 }  // namespace mindspore

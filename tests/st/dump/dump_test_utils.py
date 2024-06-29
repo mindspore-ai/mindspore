@@ -168,7 +168,7 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
     elif test_key == "test_Ascend_async_multi_root_graph_dump" or test_key == "test_ge_dump_net_multi_layer_mode1":
         data = async_dump_dict_3
         data["common_dump_settings"]["path"] = dump_path
-    elif test_key == "test_async_dump_npy" or test_key == "test_ge_dump_npy":
+    elif test_key in ["test_async_dump_npy", "test_ge_dump_npy", "test_acl_dump_complex"]:
         data = async_dump_dict
         data["common_dump_settings"]["path"] = dump_path
         data["common_dump_settings"]["file_format"] = "npy"
@@ -223,6 +223,10 @@ def generate_dump_json(dump_path, json_file_name, test_key, net_name='Net'):
     elif test_key == "test_acl_dump_assign_ops_by_regex":
         data = async_dump_dict_acl_assign_ops_by_regex
         data["common_dump_settings"]["path"] = dump_path
+    elif test_key == "test_acl_dump_exception":
+        data = async_dump_dict_acl
+        data["common_dump_settings"]["path"] = dump_path
+        data["common_dump_settings"]["op_debug_mode"] = 4
     else:
         raise ValueError(
             "Failed to generate dump json file. The test name value " + test_key + " is invalid.")
@@ -235,7 +239,7 @@ def generate_dump_json_with_overflow(dump_path, json_file_name, test_key, op):
     """
     Util function to generate dump configuration json file.
     """
-    if test_key == "test_async_dump" or test_key == "test_ge_dump":
+    if test_key in ["test_async_dump", "test_ge_dump", "test_overflow_acl_dump"]:
         data = async_dump_dict
         common_dump_settings = data.get("common_dump_settings", "")
         if not isinstance(common_dump_settings, dict):
@@ -265,7 +269,7 @@ def generate_statistic_dump_json(dump_path, json_file_name, test_key, saved_data
     data = {}
     if test_key in ["test_gpu_e2e_dump", "test_e2e_dump_dynamic_shape_custom_statistic"]:
         data = e2e_dump_dict
-    elif test_key == "test_async_dump" or test_key == "test_ge_dump":
+    elif test_key in ["test_async_dump", "test_ge_dump", "test_acl_dump"]:
         data = async_dump_dict
         data["common_dump_settings"]["input_output"] = 0
         data["common_dump_settings"]["file_format"] = "npy"
