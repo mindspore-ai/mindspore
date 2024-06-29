@@ -691,7 +691,7 @@ def test_branch_u_input_and_input():
     assert ret1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_branch_output_real_tuple():
     """
     Feature: Contrtol flow inline.
@@ -740,7 +740,7 @@ def test_branch_output_dynamic_tuple():
     assert ret1[0]
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_if_after_if():
     """
     Feature: Contrtol flow inline.
@@ -815,7 +815,7 @@ def test_output_ref_of_parameter():
     assert ret2
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_gather_switch_gather_output():
     """
     Feature: Contrtol flow inline.
