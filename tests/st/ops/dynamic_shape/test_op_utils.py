@@ -295,7 +295,7 @@ def check_inputs_with_yaml(inputs_seq, yaml_name, disable_yaml_check):
     debug_log("ops yaml file path: ", ops_yaml_path)
     if yaml_name not in ops_yaml_data.keys():
         raise RuntimeError(f"yaml check failed, yaml_name: '{yaml_name}' you provided is not found in " \
-                           f"{yaml_name}_op.yaml, Maybe you should commit a newer test_op_utils.yaml.")
+                           f"{yaml_name}_op.yaml, Maybe you rerun gen_ops.py.")
     args_num = len(ops_yaml_data.get(yaml_name).get('args'))
     if len(inputs_seq[0]) != args_num:
         raise RuntimeError(f"yaml check failed, inputs_seq[0] must has {args_num} items, but got {len(inputs_seq[0])}.")
@@ -320,6 +320,10 @@ def check_inputs_seq(inputs_seq, disable_input_check):
             if len(item.shape) == len(cmp_item.shape):
                 raise ValueError(f"The Tensor input of inputs_seq[0] and inputs_seq[1] must have different rank, " \
                                  f"but got shape {item.shape} and {cmp_item.shape}")
+        elif isinstance(item, (tuple, list)):
+            if len(item) == len(cmp_item):
+                raise ValueError(f"The tuple input of inputs_seq[0] and inputs_seq[1] must have different length, " \
+                                 f"but got {item} and {cmp_item}")
         elif item == cmp_item:
             raise ValueError(f"The nonensor input of inputs_seq[0] and inputs_seq[1] must have different value, " \
                              f"but got {item} and {cmp_item}")
@@ -432,6 +436,16 @@ def convert_sequence_of_tensor_to_mutable(inputs):
     return inputs
 
 
+def replace_diff_len_tuple_from_run_inputs(compile_inputs, run_inputs):
+    need_reset_inputs = False
+    re_compile_inputs = clone_inputs(compile_inputs, True)
+    for idx, item in enumerate(re_compile_inputs):
+        if isinstance(item, (tuple, list)) and len(item) != len(run_inputs[idx]):
+            re_compile_inputs[idx] = run_inputs[idx]
+            need_reset_inputs = True
+    return re_compile_inputs, need_reset_inputs
+
+
 def run_with_dynamic_resize(prim, inputs_seq, mode_name, dump_ir, ir_path, expect_resize, ignore_output_index, inplace_update):
     """test resize"""
     print(f"Start testing with [{mode_name}] [Resize]...")
@@ -454,6 +468,14 @@ def run_with_dynamic_resize(prim, inputs_seq, mode_name, dump_ir, ir_path, expec
         dynamic_net.set_jit_config(JIT_CONFIG)
     dynamic_net.set_inputs(*compile_inputs)
     dynamic_net(*clone_inputs(run_inputs, inplace_update))
+
+    re_compile_inputs, need_reset_inputs = replace_diff_len_tuple_from_run_inputs(inputs_seq[0], inputs_seq[1])
+    if need_reset_inputs:
+        re_compile_inputs = convert_tensor_to_dynamic(re_compile_inputs, 'DYNAMIC_RANK')
+        re_compile_inputs = replace_nontensor_with_help_tensor(re_compile_inputs)
+        re_compile_inputs = convert_sequence_of_tensor_to_mutable(re_compile_inputs)
+        debug_log_args(re_compile_inputs, tag="run_with_dynamic_resize re_compile_inputs")
+        dynamic_net.set_inputs(*re_compile_inputs)
 
     run_inputs = replace_nontensor_with_help_tensor(inputs_seq[1])
     run_inputs = convert_sequence_of_tensor_to_mutable(run_inputs)
@@ -669,7 +691,7 @@ def TEST_OP(op, inputs_seq, yaml_name, *, disable_input_check=False, disable_yam
             If ``True`` , yaml check will be disabled.
             Default: ``False`` .
         disable_mode (list[str]): Disable the given running mode.
-            If ``GRAPH_MODE`` , GRAPH_MODE will not set as running mode.
+            If ``GRAPH_MODE`` , GRAPH_MODE with jit_level=O0 will not set as running mode.
             If ``PYNATIVE_MODE`` , PYNATIVE_MODE will not set as running mode.
             If ``GRAPH_MODE_O0`` , GRAPH_MODE with jit_level=O0 will not set as running mode, kernel by kernel will be
             enabled on this running mode.
@@ -744,20 +766,23 @@ def TEST_OP(op, inputs_seq, yaml_name, *, disable_input_check=False, disable_yam
     debug_log_args(inputs_seq[1], tag="inputs_seq[1]")
 
     old_mode = context.get_context("mode")
-    running_mode_map = {'GRAPH_MODE': context.GRAPH_MODE, 'PYNATIVE_MODE': context.PYNATIVE_MODE, 'GRAPH_MODE_O0': None}
+    running_mode_map = {'GRAPH_MODE': context.GRAPH_MODE, 'PYNATIVE_MODE': context.PYNATIVE_MODE,
+                        'GRAPH_MODE_O0': context.GRAPH_MODE}
     for mode_name, mode in running_mode_map.items():
         if disable_mode is not None and mode_name in disable_mode:
             warning_log(f"{mode_name} is skipped.")
             continue
+        context.set_context(mode=mode)
         if mode_name == 'GRAPH_MODE_O0':
-            context.set_context(mode=context.GRAPH_MODE)
             device_target = context.get_context("device_target")
-            if device_target == "Ascend":
-                JIT_CONFIG = JitConfig('O0')
-            else:
+            if device_target != "Ascend":
                 warning_log(f"GRAPH_MODE_O0 is skipped, because device_target is not 'Ascend', but {device_target}")
+                continue
+            JIT_CONFIG = JitConfig(jit_level="O0")
+        elif mode_name == 'GRAPH_MODE':
+            JIT_CONFIG = JitConfig(jit_level="O2")
+            os.environ['MS_ALLOC_CONF'] = "enable_vmm:False"
         else:
-            context.set_context(mode=mode)
             JIT_CONFIG = None
 
         prefix_name = get_name_by_op(op)
@@ -812,7 +837,10 @@ def TEST_OP(op, inputs_seq, yaml_name, *, disable_input_check=False, disable_yam
 
             # step 2: run in dynamic mode and compare results
             run_with_dynamic(op, inputs_seq, mode_name, disable_tensor_dynamic_type, disable_nontensor_dynamic_type,
-                             grad, dump_ir, prefix_name, out_expect, out_expect_second, ignore_output_index, inplace_update)
+                             grad, dump_ir, prefix_name, out_expect, out_expect_second, ignore_output_index,
+                             inplace_update)
+            if mode_name == 'GRAPH_MODE':
+                del os.environ['MS_ALLOC_CONF']
         except Exception as error:
             error_status_log()
             raise error

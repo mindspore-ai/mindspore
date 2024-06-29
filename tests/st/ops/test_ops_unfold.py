@@ -66,8 +66,7 @@ def test_unfold(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_unfold_dynamic(mode):
+def test_unfold_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op Im2ColExt and Col2ImExt.
@@ -84,6 +83,5 @@ def test_unfold_dynamic(mode):
             [input_case1, 10, (4, 3), 2, (7, 8)],
             [input_case2, 4, (2, 3), 3, (4, 5)],
         ],
-        'im2col_ext',
-        disable_input_check=True
+        'im2col_ext', disable_input_check=True, disable_mode=['GRAPH_MODE'],
     )

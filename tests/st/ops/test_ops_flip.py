@@ -216,4 +216,4 @@ def test_flip_dynamic():
     """
     input_case1 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
     input_case2 = Tensor(np.random.rand(3, 4).astype(np.float32))
-    TEST_OP(flip_forward_func, [[input_case1, (0, -1)], [input_case2, (-1, 0)]], 'reverse_v2')
+    TEST_OP(flip_forward_func, [[input_case1, (0, -1)], [input_case2, (-1, 0)]], 'reverse_v2', disable_input_check=True)
