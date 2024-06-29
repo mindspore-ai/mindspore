@@ -61,6 +61,11 @@ def func_with_dtype(ms_dtype, np_dtype):
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_single_output():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     func_with_dtype(ms.float16, np.float16)
     func_with_dtype(ms.float32, np.float32)
@@ -71,6 +76,11 @@ def test_pyfunc_single_output():
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_multi_output():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     shape = (40, 40)
     dtype = ms.float32
@@ -97,6 +107,11 @@ class PyFuncGraph(nn.Cell):
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_no_output():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     shape = (40, 40)
     dtype = ms.float32
@@ -117,6 +132,11 @@ def test_pyfunc_no_output():
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_scalar():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     shape = ()
     ms_dtype = ms.int32

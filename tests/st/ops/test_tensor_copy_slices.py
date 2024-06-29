@@ -74,6 +74,11 @@ support_dtype = (np.int64, np.int32, np.float64, np.float32)
 
 
 def test_tensor_copy_slices():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     test_tensor_copy_slices_net_many_dtype((10,), (5,), (0,), (5,), (1,), support_dtype)
     test_tensor_copy_slices_net_many_dtype((10,), (5,), (5,), (10,), (1,), support_dtype)
     test_tensor_copy_slices_net_many_dtype((10, 10), (5, 10), (0,), (5,), (1,), support_dtype)

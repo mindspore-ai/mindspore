@@ -44,6 +44,11 @@ class NetReluGrad(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_relu_grad():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     relu_grad = NetReluGrad()
     output = relu_grad()
     expect = np.array([[[[1, 0, 3], [0, 5, 6], [0, 8, 0]]]]).astype(np.float32)

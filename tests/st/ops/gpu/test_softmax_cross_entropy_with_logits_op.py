@@ -33,6 +33,11 @@ class NetSoftmaxCrossEntropyWithLogits(nn.Cell):
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_softmax_cross_entropy_with_logits():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     logits = Tensor(np.array([[1, 1, 10],
                               [1, 10, 1],
                               [10, 1, 1]]).astype(np.float32))

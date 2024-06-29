@@ -1748,6 +1748,11 @@ def test_argmax():
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
           card_mark='onecard', essential_mark='unessential')
 def test_argmin():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     match_res(mnp.argmin, onp.argmin, rand_int())
     match_res(mnp.argmin, onp.argmin, rand_int(3))
     match_res(mnp.argmin, onp.argmin, rand_int(1, 1, 1))

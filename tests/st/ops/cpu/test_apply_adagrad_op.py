@@ -42,6 +42,11 @@ class Net(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_apply_adagrad():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     # numpy op
     grident_np = np.random.rand(3, 3).astype(np.float32)
     expect_accum_np = accum_np + grident_np * grident_np

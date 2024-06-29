@@ -40,6 +40,11 @@ value = np.array([[1, 2], [3, 4.0]]).astype(np.float32)
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     var = Tensor(x)
     assign = Net(var)
@@ -56,6 +61,11 @@ def test_assign():
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_float64():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     var = Tensor(x.astype(np.float64))
     assign = Net(var)

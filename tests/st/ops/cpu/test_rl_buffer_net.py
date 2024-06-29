@@ -67,9 +67,9 @@ exp = [s, a, r, s_]
 exp1 = [s_, a, r, s]
 
 
-@ pytest.mark.level0
-@ pytest.mark.platform_x86_cpu
-@ pytest.mark.env_onecard
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_Buffer():
     context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
     buffer = RLBuffer(batch_size=32, capcity=100, shapes=[(4,), (2,), (1,), (4,)], types=[

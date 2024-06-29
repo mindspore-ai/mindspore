@@ -726,6 +726,11 @@ def onp_roll(input_array):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
           card_mark='onecard', essential_mark='unessential')
 def test_roll():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     arr = rand_int(3, 4, 5)
     match_res(mnp_roll, onp_roll, arr)
     arr = rand_int(1, 4, 6).astype("int64")

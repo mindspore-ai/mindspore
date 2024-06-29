@@ -20,6 +20,7 @@ import tempfile
 import time
 import math
 import json
+import pytest
 
 from mindspore import JitConfig, Tensor, nn
 from pathlib import Path

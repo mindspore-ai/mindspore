@@ -210,6 +210,11 @@ def test_rint():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_round():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     net = RoundNet()
 
     x = np.array([0.9920, -0.4077, 0.9734, -1.0362, 1.5, -2.5, 4.5]).astype(np.float16)

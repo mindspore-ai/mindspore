@@ -86,6 +86,11 @@ class NetAdamWeightDecay(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_adam_weight_decay():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     epoch = 3
     net = NetAdamWeightDecay()
     optimizer = AdamWeightDecayOp(filter(lambda x: x.requires_grad, net.get_parameters()), learning_rate=0.01)
