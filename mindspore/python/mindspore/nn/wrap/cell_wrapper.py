@@ -23,11 +23,12 @@ from types import FunctionType, MethodType
 from mindspore import log as logger
 from mindspore.parallel._utils import _get_device_num, _get_gradients_mean,\
     _get_parallel_mode, _get_enable_parallel_optimizer, _is_pynative_parallel
-from mindspore.context import ParallelMode
+from mindspore.context import ParallelMode, GRAPH_MODE, get_context
 from mindspore import _checkparam as validator
 from mindspore import ops, nn
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter, ParameterTuple
+from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import _primexpr
 from mindspore.ops import composite as C
 from mindspore.ops import functional as F
@@ -741,8 +742,18 @@ class _TrainGradAccuStepCell(TrainOneStepCell):
         self.hyper_map = ops.HyperMap()
         self.opt_shard = _get_enable_parallel_optimizer()
         self._get_attr_from_cell(network)
-        self.enable_mindio = os.getenv("MS_ENABLE_MINDIO_GRACEFUL_EXIT")
-        self.barrier = ops.Barrier()
+        self.enable_mindio = False
+        mode = get_context("mode")
+        device_type = get_context("device_target")
+        if device_type != "Ascend" or mode != GRAPH_MODE:
+            return
+        graceful_exit = os.getenv("MS_ENABLE_MINDIO_GRACEFUL_EXIT")
+        ttp_lib_path = os.getenv("MS_MINDIO_TTP_LIB_PATH")
+        ttp_path_check = ttp_lib_path is not None and os.path.isfile(ttp_lib_path)
+        if graceful_exit == "true" and ttp_path_check:
+            self.g_one = Tensor([0.1])
+            self.allreduce_sum = ops.AllReduce()
+            self.enable_mindio = True
 
     def construct(self, *inputs):
         if not self.sense_flag:
@@ -752,7 +763,10 @@ class _TrainGradAccuStepCell(TrainOneStepCell):
         grads = self.grad(self.network, self.weights)(*inputs, sens)
         accu_grads = ops.depend(self.accu_grads, grads)
         if self.enable_mindio:
-            self.barrier()
+            g_one = ops.depend(self.g_one, accu_grads)
+            g_one_res = self.allreduce_sum(g_one)
+            accu_grads = ops.depend(accu_grads, g_one_res)
+            grads = ops.depend(grads, g_one_res)
         if self.opt_shard:
             succ = self.optimizer(grads)
         else:
@@ -768,7 +782,10 @@ class _TrainGradAccuStepCell(TrainOneStepCell):
         grads = self.grad_no_sens(self.network, self.weights)(*inputs)
         accu_grads = ops.depend(self.accu_grads, grads)
         if self.enable_mindio:
-            self.barrier()
+            g_one = ops.depend(self.g_one, accu_grads)
+            g_one_res = self.allreduce_sum(g_one)
+            accu_grads = ops.depend(accu_grads, g_one_res)
+            grads = ops.depend(grads, g_one_res)
         if self.opt_shard:
             succ = self.optimizer(grads)
         else:

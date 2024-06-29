@@ -37,20 +37,13 @@ std::shared_ptr<MindIOAdapter> MindIOAdapter::GetInstance() {
     if (inst_mindio_ == nullptr) {
       inst_mindio_ = std::make_shared<MindIOAdapter>();
       auto env = common::GetEnv("MS_ENABLE_MINDIO_GRACEFUL_EXIT");
+      auto libPath = common::GetEnv("MS_MINDIO_TTP_LIB_PATH");
       auto context = MsContext::GetInstance();
-      bool isEnable = true;
+      bool isEnable = false;
       int execute_mode = context->get_param<int>(MS_CTX_EXECUTION_MODE);
-      if (env.empty() || execute_mode != kGraphMode) {
-        isEnable = false;
-      }
-      if (isEnable) {
-        isEnable = false;
-        void *handle = dlopen("/usr/local/mindio/libttp.so", RTLD_LAZY);
-        auto libPath = common::GetEnv("MS_MINDIO_TTP_LIB_PATH");
-        if (handle == nullptr && (!libPath.empty())) {
-          MS_LOG(INFO) << "Default so path is incorrect and found custom mindio so path";
-          handle = dlopen(libPath.c_str(), RTLD_LAZY);
-        }
+      if (env == "true" && execute_mode == kGraphMode && !libPath.empty()) {
+        MS_LOG(INFO) << "TTP env is enable and found custom mindio so path.";
+        void *handle = dlopen(libPath.c_str(), RTLD_LAZY);
         if (handle) {
           MS_LOG(INFO) << "Found mindio so.";
           auto startFunc = DlsymWithCast<TTP_NotifyStartUpdatingOsFunPtr>(handle, "MindioTtpSetOptimStatusUpdating");
