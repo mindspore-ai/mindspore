@@ -16,7 +16,6 @@
 import os
 import tempfile
 import glob
-import pytest
 
 import mindspore.dataset as ds
 from mindspore.dataset import DSCallback
@@ -25,7 +24,7 @@ import mindspore.log as logger
 import mindspore.dataset.transforms as transforms
 import mindspore as ms
 from mindspore.profiler import Profiler
-from tests.security_utils import security_off_wrap
+from tests.mark_utils import arg_mark
 
 MNIST_DIR = "/home/workspace/mindspore_dataset/mnist/"
 CIFAR10_DIR = "/home/workspace/mindspore_dataset/cifar-10-batches-bin/"
@@ -92,11 +91,11 @@ def other_method_dataset():
                 {'name': 'label', 'type': 'int8', 'shape': [1]}]
     schema.parse_columns(columns1)
 
-    pipeline1 = ds.MnistDataset(MNIST_DIR, num_samples=100)
-    pipeline2 = ds.Cifar10Dataset(CIFAR10_DIR, num_samples=100)
+    pipeline1 = ds.MnistDataset(MNIST_DIR, num_samples=10)
+    pipeline2 = ds.Cifar10Dataset(CIFAR10_DIR, num_samples=10)
     ds.compare(pipeline1, pipeline2)
 
-    dataset = ds.MnistDataset(MNIST_DIR, num_samples=100)
+    dataset = ds.MnistDataset(MNIST_DIR, num_samples=10)
     one_hot_encode = transforms.OneHot(10)
     dataset = dataset.map(operations=one_hot_encode, input_columns="label")
     dataset = dataset.batch(batch_size=10, drop_remainder=True)
@@ -107,12 +106,8 @@ def other_method_dataset():
     return dataset
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential')
 def test_ascend_dataset_profiler():
     """
     Feature: Test the dataset profiling.

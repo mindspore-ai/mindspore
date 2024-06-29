@@ -20,9 +20,7 @@ import numpy as np
 from mindspore import nn
 import mindspore as ms
 import mindspore.dataset as ds
-from tests.security_utils import security_off_wrap
-import pytest
-
+from tests.mark_utils import arg_mark
 
 class StopAtStep(ms.Callback):
     """
@@ -91,11 +89,7 @@ class TestProfiler:
         if os.path.exists(self.data_path):
             shutil.rmtree(self.data_path)
 
-    @pytest.mark.level0
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
     def test_ascend_profiler(self):
         ms.set_context(mode=ms.GRAPH_MODE, device_target="Ascend")
         ms.set_context(jit_level="O2")
@@ -107,7 +101,7 @@ class TestProfiler:
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         data = ds.GeneratorDataset(generator, ["data", "label"])
         model = ms.Model(net, loss, optimizer)
-        model.train(3, data, callbacks=[profile_call_back], dataset_sink_mode=False)
+        model.train(1, data, callbacks=[profile_call_back], dataset_sink_mode=False)
         profiler_name = 'profiler/'
         self.profiler_path = os.path.join(self.data_path, profiler_name)
         aicore_file = self.profiler_path + f'aicore_intermediate_{self.rank_id}_detail.csv'

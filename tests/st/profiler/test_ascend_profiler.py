@@ -16,7 +16,6 @@
 import glob
 import tempfile
 import numpy as np
-import pytest
 import csv
 
 import mindspore
@@ -28,7 +27,7 @@ from mindspore import Model
 from mindspore import Profiler
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from tests.security_utils import security_off_wrap
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -93,22 +92,20 @@ class Net1(nn.Cell):
         return output
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ascend_profiling():
     """Test ascend profiling"""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     with tempfile.TemporaryDirectory() as tmpdir:
-        profiler = Profiler(output_path=tmpdir, l2_cache=True, data_simplification=False)
+        profiler = Profiler(output_path=tmpdir, l2_cache=True, data_simplification=False, profile_memory=True)
         add = Net()
         add(Tensor(x), Tensor(y))
         profiler.analyse()
         assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/mindstudio_profiler_output/op_summary*")) == 1
         assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/mindstudio_profiler_output/op_statistic*")) == 1
         assert len(glob.glob(f"{tmpdir}/profiler*/*PROF*/device_*/data/l2_cache.data*")) >= 2
+        assert len(glob.glob(f"{tmpdir}/profiler*/operator_memory*")) == 1
+        assert len(glob.glob(f"{tmpdir}/profiler*/memory_block.csv")) == 1
     with tempfile.TemporaryDirectory() as tmpdir:
         profiler = Profiler(output_path=tmpdir, l2_cache=True, data_simplification=True)
         add = Net()
@@ -119,11 +116,7 @@ def test_ascend_profiling():
         assert glob.glob(f"{tmpdir}/profiler*/*PROF*/mindstudio_profiler_log") == []
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ascend_pynative_profiling():
     """
     Feature: Test the ascend pynative model profiling
@@ -132,18 +125,16 @@ def test_ascend_pynative_profiling():
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     with tempfile.TemporaryDirectory() as tmpdir:
-        profiler = Profiler(output_path=tmpdir)
+        profiler = Profiler(output_path=tmpdir, profile_memory=True)
         add = Net()
         add(Tensor(x), Tensor(y))
         profiler.analyse()
         assert len(glob.glob(f"{tmpdir}/profiler*/ascend_timeline_display_*.json")) == 1
+        assert len(glob.glob(f"{tmpdir}/profiler*/operator_memory*")) == 1
+        assert len(glob.glob(f"{tmpdir}/profiler*/memory_block.csv")) == 1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_shape():
     """
     Feature: Test the ascend dynamic shape model profiling
@@ -164,11 +155,7 @@ def test_shape():
         assert len(glob.glob(f"{tmpdir}/profiler*/dynamic_shape_*.json")) == 1
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_collect_custom_aicpu():
     """
     Feature: Profiling can collect custom aicpu operators

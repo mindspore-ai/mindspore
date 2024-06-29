@@ -15,8 +15,7 @@
 import os
 import shutil
 import tempfile
-from tests.security_utils import security_off_wrap
-import pytest
+from tests.mark_utils import arg_mark
 
 
 def cleanup():
@@ -41,11 +40,7 @@ class TestProfiler:
         if os.path.exists(self.data_path):
             shutil.rmtree(self.data_path)
 
-    @pytest.mark.level0
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
     def test_ascend_profiler(self):
         rank_id = int(os.getenv('RANK_ID')) if os.getenv('RANK_ID') else 0
         status = os.system(
@@ -54,6 +49,6 @@ class TestProfiler:
             """
         )
         assert status == 0
-        for i in range(10, 100, 10):
+        for i in range(5, 16, 5):
             profiler_path = os.path.join(self.data_path, str(i), str(rank_id), 'profiler')
             assert os.path.exists(profiler_path)

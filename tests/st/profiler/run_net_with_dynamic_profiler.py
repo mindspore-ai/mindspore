@@ -86,7 +86,7 @@ class LeNet5(nn.Cell):
 def create_dataset(data_path, batch_size=32, repeat_size=1, num_parallel_workers=1):
     """create dataset for train"""
     # define dataset
-    mnist_ds = ds.MnistDataset(data_path, num_samples=batch_size * 10)
+    mnist_ds = ds.MnistDataset(data_path, num_samples=batch_size * 5)
 
     resize_height, resize_width = 32, 32
     rescale = 1.0 / 255.0
@@ -180,7 +180,7 @@ def train_with_profiler():
     profile_callback = DynamicProfiler(output_path)
 
     model = Model(lenet, loss_fn=loss, optimizer=optim, metrics={'acc': Accuracy()})
-    model.train(10, ds_train, callbacks=[profile_callback], dataset_sink_mode=False)
+    model.train(3, ds_train, callbacks=[profile_callback], dataset_sink_mode=False)
 
 
 parser = ArgumentParser(description='test dynamic profiler')

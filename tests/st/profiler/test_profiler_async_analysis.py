@@ -15,8 +15,7 @@
 import os
 import shutil
 import csv
-from tests.security_utils import security_off_wrap
-import pytest
+from tests.mark_utils import arg_mark
 
 
 def cleanup():
@@ -91,11 +90,7 @@ class TestProfilerAsyncAnalysis:
         """Run after each test case end."""
         cleanup()
 
-    @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
     def test_ascend_profiler(self):
         status = os.system(
             """python ./run_net_with_profiler.py --target=Ascend --mode=0 --output_path=%s""" % self.profiler_path
