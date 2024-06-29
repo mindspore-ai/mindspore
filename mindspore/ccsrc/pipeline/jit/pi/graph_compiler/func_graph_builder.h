@@ -113,7 +113,6 @@ class FuncGraphBuilder : public ir::IRMutator {
 
   // Store variable's name, variable's node.
   std::map<std::string, AnfNodePtr> assigned_vars_;
-  std::map<std::string, size_t> param_name_to_index_;
 };
 
 using FuncGraphBuilderPtr = std::shared_ptr<FuncGraphBuilder>;

@@ -29,7 +29,8 @@ namespace pijit {
 using InferFunc = bool (*)(CallNode *, GraphBuilder *);
 InferFunc FindInferFunc(const py::object &callable, bool trace_flag = false);
 
-void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param);
+void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param,
+                        const py::object &after_grad = py::object());
 bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guard_depth);
 bool JustCallAndSetRes(CallNode *call_node, GraphBuilder *g = nullptr);
 

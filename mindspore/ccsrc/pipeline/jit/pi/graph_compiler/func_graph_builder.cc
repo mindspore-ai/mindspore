@@ -100,7 +100,6 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::RefNodePtr &node) {
 ir::NodePtr FuncGraphBuilder::Mutate_(const ir::ParameterPtr &node) {
   auto name = node->GetName();
   auto index = node->GetIndex();
-  param_name_to_index_[name] = index;
   if (!func_->NeedGenParameters()) {
     MS_EXCEPTION_IF_CHECK_FAIL(static_cast<size_t>(index) < args_.size(), "Invalid paramete[" + name + "].");
     assigned_vars_[name] = args_[index];
@@ -120,10 +119,16 @@ ir::NodePtr FuncGraphBuilder::Mutate_(const ir::ParameterPtr &node) {
     MS_EXCEPTION_IF_CHECK_FAIL(node->GetIndex() < args_.size(), "Parameter " + name + " has no arguments");
     param->set_abstract(args_[node->GetIndex()]->abstract());
   }
+  if (param->abstract()->isa<abstract::AbstractRefTensor>()) {
+    auto abs_ref = param->abstract()->cast<abstract::AbstractRefPtr>();
+    auto new_name = name + "_" + abs_ref->ref_key_value()->ToString();
+    param->set_name(new_name);
+    param->debug_info()->set_name(new_name);
+  }
   auto defalut_value = node->GetDefaultValue();
   if (defalut_value != nullptr) {
     AnfNodePtr value_node = GetAnfNode(defalut_value);
-    func_graph_->set_param_default_value(name, value_node);
+    func_graph_->set_param_default_value(param->name(), value_node);
   }
   assigned_vars_[name] = param;
   func_graph_->add_parameter(param);
