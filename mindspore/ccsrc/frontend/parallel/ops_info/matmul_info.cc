@@ -502,14 +502,14 @@ Status MatMul::Check3DTPInputLayout(const TensorLayout &a_in_layout, const Tenso
         kSizeOne  // any one of the last dimension should not be divided more than once in the input layout
       || a_tensor_map[axis0_0].size() != kSizeTwo ||
       b_tensor_map[axis1_0].size() != kSizeTwo  // the second last dimension should be divide twice.
-      || a_tensor_map[axis0_0][kIndex0] != b_tensor_map[axis1_0][kIndex0]  // the z in two inputs should be equal
+      || a_tensor_map[axis0_0][kIndex0] != b_tensor_map[axis1_0][kIndex1]  // the z in two inputs should be equal
       || a_tensor_map[axis0_0][kIndex1] != b_tensor_map[axis1_1][kIndex0] ||
-      a_tensor_map[axis0_1][kIndex0] != b_tensor_map[axis1_0][kIndex1]  // the pattern of x and y should be satisfied.
+      a_tensor_map[axis0_1][kIndex0] != b_tensor_map[axis1_0][kIndex0]  // the pattern of x and y should be satisfied.
   ) {
     MS_LOG(ERROR) << "For 3D MatMul/Batch MatMul, the input layout for the last two dimensions should be like: \n"
-                  << " ((z,x),y), (x,(z,y))  when transpose_b is 'true'; or "
-                  << " (y,(z,x)), ((z,y),x)  when transpose_a is 'true'; or "
-                  << " ((z,x),y), ((z,y),x)  in the other situation. But now they are: ("
+                  << " ((z,x),y), (x,(y,z))  when transpose_b is 'true'; or "
+                  << " (y,(z,x)), ((y,z),x)  when transpose_a is 'true'; or "
+                  << " ((z,x),y), ((y,z),x)  in the other situation. But now they are: ("
                   << a_tensor_map[a_in_layout.tensor_shape_before().array().size() - kSizeTwo] << ", "
                   << a_tensor_map[a_in_layout.tensor_shape_before().array().size() - kSizeOne] << "), ("
                   << b_tensor_map[b_in_layout.tensor_shape_before().array().size() - kSizeTwo] << ", "
@@ -671,19 +671,37 @@ TensorLayout MatMul::InferNDTPOutputLayout() {
     }
   }
 
+  // get the unchange dims output_extended_tensor_map
+  for (size_t i = 0; i < input_layout0.tensor_shape_before().array().size() - kIndex2; ++i) {
+    output_extended_tensor_map.push_back(input_layout0.tensor_map_before()[i]);
+  }
+
   if (!transpose_b_) {
     output_tensor_shape.push_back(
       input_layout1.tensor_shape_before().GetDimByIdx(inputs_shape_[kIndex1].size() - kIndex1));
-    output_extended_tensor_map = input_layout1.tensor_map_before();
+    if (three_d_tp_) {
+      // change the position of y and z
+      Shape yz_shape(input_layout1.tensor_map_before()[input_layout1.tensor_shape_before().array().size() - kIndex2]);
+      std::swap(yz_shape[yz_shape.size() - kIndex2], yz_shape[yz_shape.size() - kIndex1]);
+      output_extended_tensor_map.push_back(yz_shape);
+    } else {
+      output_extended_tensor_map.push_back(
+        input_layout1.tensor_map_before()[input_layout1.tensor_shape_before().array().size() - kIndex2]);
+    }
+    output_extended_tensor_map.push_back(
+      input_layout1.tensor_map_before()[input_layout1.tensor_shape_before().array().size() - kIndex1]);
   } else {
     output_tensor_shape.push_back(
       input_layout1.tensor_shape_before().GetDimByIdx(inputs_shape_[kIndex1].size() - kIndex2));
     // the last two dims output_extended_tensor_map swap position and others unchange
-    for (size_t i = 0; i < input_layout1.tensor_shape_before().array().size() - kIndex2; ++i) {
-      output_extended_tensor_map.push_back(input_layout1.tensor_map_before()[i]);
+    if (three_d_tp_) {
+      Shape yz_shape(input_layout1.tensor_map_before()[input_layout1.tensor_shape_before().array().size() - kIndex1]);
+      std::swap(yz_shape[yz_shape.size() - kIndex2], yz_shape[yz_shape.size() - kIndex1]);
+      output_extended_tensor_map.push_back(yz_shape);
+    } else {
+      output_extended_tensor_map.push_back(
+        input_layout1.tensor_map_before()[input_layout1.tensor_shape_before().array().size() - kIndex1]);
     }
-    output_extended_tensor_map.push_back(
-      input_layout1.tensor_map_before()[input_layout1.tensor_shape_before().array().size() - kIndex1]);
     output_extended_tensor_map.push_back(
       input_layout1.tensor_map_before()[input_layout1.tensor_shape_before().array().size() - kIndex2]);
   }
@@ -1193,10 +1211,10 @@ int64_t MatMul::GetAllGatherDim(size_t all_gather_tensor_axis, const TensorLayou
     }
   } else {
     if (three_d_tp_) {
-      return all_gather_tensor_axis_map[kIndex0] == -1
+      return all_gather_tensor_axis_map[kIndex1] == -1
                ? -1
                : SizeToLong(input_layout.device_arrangement_origin().array().size() - kIndex1) -
-                   all_gather_tensor_axis_map[kIndex0];
+                   all_gather_tensor_axis_map[kIndex1];
     }
   }
   return -1;
