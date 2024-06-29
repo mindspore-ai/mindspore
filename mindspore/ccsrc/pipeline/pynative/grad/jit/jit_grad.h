@@ -48,6 +48,7 @@ class Jit {
   bool GetJitGradGraph(const pipeline::ResourcePtr &resource);
   inline bool eliminate_forward() const { return eliminate_forward_; }
   inline void set_eliminate_forward(bool eliminate_forward) { eliminate_forward_ = eliminate_forward; }
+  void Clear();
 
  private:
   void GradJitInner(const FrontendOpRunInfoPtr &op_run_info, const GradExecutor *grad_executor,
