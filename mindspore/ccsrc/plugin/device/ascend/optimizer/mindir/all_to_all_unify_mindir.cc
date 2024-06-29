@@ -32,6 +32,22 @@ namespace {
 constexpr size_t kCNodePrimitiveIdx = 0;
 constexpr size_t kAllToAllInputIdx = 1;
 constexpr auto kAttrIrUnified = "ir_unified";
+constexpr auto kAttrFlashIndex = "FLASH_INDEX";
+
+void ChangePrimitiveToAllToAllV(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto neighbor_exchange = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(neighbor_exchange);
+
+  if (neighbor_exchange->size() == kCNodePrimitiveIdx) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Inputs should not be empty for cnode " << node->DebugString()
+                               << trace::DumpSourceLines(neighbor_exchange);
+  }
+
+  auto prim = GetValueNode<PrimitivePtr>(neighbor_exchange->input(kCNodePrimitiveIdx));
+  MS_EXCEPTION_IF_NULL(prim);
+  prim->Named::operator=(Named(kAllToAllvOpName));
+}
 
 uint32_t GetRankSize(const std::string &group) {
   uint32_t rank_size;
@@ -289,6 +305,12 @@ const AnfNodePtr NeighborExchangeUnifyMindIR::Process(const FuncGraphPtr &graph,
   MS_EXCEPTION_IF_NULL(node);
   auto neighbor_exchange = node->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(neighbor_exchange);
+  auto neighbor_exchange_prim = GetCNodePrimitive(neighbor_exchange);
+  MS_EXCEPTION_IF_NULL(neighbor_exchange_prim);
+  if (!neighbor_exchange_prim->HasAttr(kAttrFlashIndex)) {
+    ChangePrimitiveToAllToAllV(node);
+    return node;
+  }
   auto all_to_all_v = CreateAllToAllvNode(graph, neighbor_exchange);
   return all_to_all_v;
 }
