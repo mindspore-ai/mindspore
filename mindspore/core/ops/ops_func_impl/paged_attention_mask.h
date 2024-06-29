@@ -35,6 +35,7 @@ enum PagedAttentionMaskInputIndex : size_t {
   kPagedAttentionMaskInputBlockTablesIndex,
   kPagedAttentionMaskInputContextLensIndex,
   kPagedAttentionMaskInputAlibiMaskIndex,
+  kPagedAttentionMaskInputAttnMaskIndex,
   kPagedAttentionMaskInputNumHeadIndex,
   kPagedAttentionMaskInputScaleValueIndex,
   kPagedAttentionMaskInputNumKVHeadIndex,

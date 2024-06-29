@@ -26,8 +26,8 @@ internal::OpParamPtr InternalPagedAttentionMask::CreateOpParam(const std::vector
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(PagedAttentionMask, InternalPagedAttentionMask);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(PagedAttentionMask, INPUT_NUM_6, INDEX_0, INDEX_1, INDEX_2, INDEX_4, INDEX_3,
-                                     INDEX_5);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(PagedAttentionMask, INPUT_NUM_7, INDEX_0, INDEX_1, INDEX_2, INDEX_4, INDEX_3,
+                                     INDEX_5, INDEX_6);
 REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(PagedAttentionMask, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore
