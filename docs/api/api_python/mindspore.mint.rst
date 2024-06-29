@@ -38,6 +38,8 @@ Tensor
     mindspore.mint.broadcast_to
     mindspore.mint.cat
     mindspore.mint.index_select
+    mindspore.mint.max
+    mindspore.mint.min
     mindspore.mint.scatter_add
     mindspore.mint.split
     mindspore.mint.narrow
@@ -177,6 +179,8 @@ Reduction运算
     mindspore.mint.less
     mindspore.mint.less_equal
     mindspore.mint.lt
+    mindspore.mint.maximum
+    mindspore.mint.minimum
 
 BLAS和LAPACK运算
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

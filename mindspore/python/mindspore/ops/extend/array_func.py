@@ -92,7 +92,7 @@ def max(input, dim=None, keepdim=False):
         and same dtype as `input`.
 
         tuple (Tensor) if `dim` is not the default value ``None`` , tuple of 2 tensors, containing the maximum
-        value of the input tensor along the given dimension `dim` and the corresponding index:
+        value of the input tensor along the given dimension `dim` and the corresponding index.
 
         - **values (Tensor)** - The maximum value of input tensor along the given dimension `dim`, with same dtype as
           `input`. If `keepdim` is ``True`` , the shape of output tensors is :math:`(input_1, input_2, ...,
@@ -141,7 +141,7 @@ def min(input, dim=None, keepdim=False):
         and same dtype as `input`.
 
         tuple (Tensor) if `dim` is not the default value ``None`` , tuple of 2 tensors, containing the minimum value
-        of the input tensor along the given dimension `dim` and the corresponding index:
+        of the input tensor along the given dimension `dim` and the corresponding index.
 
         - **values (Tensor)** - The minimum value of input tensor along the given dimension `dim`, with same dtype as
           `input`. If `keepdim` is ``True`` , the shape of output tensors is :math:`(input_1, input_2, ...,
