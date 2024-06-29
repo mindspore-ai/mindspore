@@ -14,6 +14,8 @@
 # ============================================================================
 """Linear algebra submodule"""
 from __future__ import absolute_import
+__all__ = ['block_diag', 'inv', 'cho_factor', 'cholesky',
+           'cho_solve', 'eigh', 'lu_factor', 'lu', 'solve_triangular']
 from .ops import LU, SolveTriangular
 from .utils import _nd_transpose, _value_check, _type_check, _dtype_check, _mstype_check, _square_check, _solve_check
 from .utils_const import _raise_value_error
@@ -24,9 +26,6 @@ from ..ops.operations.math_ops import Cholesky
 from ..ops.operations.linalg_ops import Eigh
 from ..ops import functional as F
 from ..ops import operations as P
-
-__all__ = ['block_diag', 'inv', 'cho_factor', 'cholesky',
-           'cho_solve', 'eigh', 'lu_factor', 'lu', 'solve_triangular']
 
 
 def solve_triangular(a, b, trans=0, lower=False, unit_diagonal=False, overwrite_b=False, debug=None, check_finite=True):

@@ -20,6 +20,11 @@ from ..common import dtype as mstype
 
 
 class SolveTriangular():
+    """
+    Solve linear system,(triangular matrix)
+    a * x = b
+    """
+
     def __init__(self, lower: bool = False, unit_diagonal: bool = False, trans: str = 'N'):
         self.lower = lower
         self.unit_diagonal = unit_diagonal
@@ -158,6 +163,3 @@ class LinearSumAssignment(Primitive):
     def __init__(self):
         super().__init__(name="LinearSumAssignment")
         self.init_prim_io_names(inputs=['cost_matrix', 'dimension_limit', 'maximize'], outputs=['row_ind', 'col_ind'])
-
-# pylint: disable=C0413,W0611
-from .ops_grad import get_bprpo_eigh
