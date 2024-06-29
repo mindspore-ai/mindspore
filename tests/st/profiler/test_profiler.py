@@ -19,8 +19,6 @@ from collections import defaultdict
 import json
 import sys
 import csv
-
-from tests.security_utils import security_off_wrap
 import pytest
 
 import mindspore as ms
@@ -34,6 +32,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.train import Model, Accuracy
 from mindspore import Profiler
+from tests.mark_utils import arg_mark
 
 
 mnist_path = '/home/workspace/mindspore_dataset/mnist'
@@ -124,10 +123,7 @@ def create_dataset(data_path, batch_size=32, repeat_size=1, num_parallel_workers
     return mnist_ds
 
 
-@pytest.mark.level3
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level3', card_mark='onecard', essential_mark='essential')
 def test_cpu_profiler():
     """
     Feature: profiler support cpu mode.
@@ -147,10 +143,7 @@ def test_cpu_profiler():
             shutil.rmtree(data_path)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_gpu_profiler():
     """
     Feature: profiler support GPU  mode.
@@ -171,10 +164,7 @@ def test_gpu_profiler():
             shutil.rmtree(data_path)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_gpu_profiler_pynative():
     """
     Feature: profiler support GPU pynative mode.
@@ -195,11 +185,7 @@ def test_gpu_profiler_pynative():
             shutil.rmtree(data_path)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ascend_profiler():
     """
     Feature: profiler support ascend mode.
@@ -220,11 +206,7 @@ def test_ascend_profiler():
             shutil.rmtree(data_path)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("profile_framework", ['all', 'time', 'memory', None])
 def test_host_profiler(profile_framework):
     """
@@ -244,11 +226,7 @@ def test_host_profiler(profile_framework):
             shutil.rmtree(data_path)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ascend_kbyk_profiler():
     """
     Feature: profiling ascend kbyk host data.
@@ -363,11 +341,7 @@ def _check_host_profiling_file(profiler_path, rank_id, profile_framework='all'):
             assert len(row) == 11
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_ascend_pynative_profiler():
     """
     Feature: profiling ascend pynative host data.

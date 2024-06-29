@@ -18,14 +18,13 @@ import shutil
 import sys
 
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore import Profiler
-from tests.security_utils import security_off_wrap
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -37,10 +36,7 @@ class Net(nn.Cell):
         return self.add(x_, y_)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_cpu_profiling():
     if sys.platform != 'linux':
         return
