@@ -28,9 +28,9 @@ from mindspore.ops import operations as P
 from mindspore.train import Loss, Model
 
 from mindspore import SummaryCollector, SummaryLandscape, SummaryRecord, Tensor, context, nn
-from tests.security_utils import security_off_wrap
 from tests.st.summary.dataset import create_mnist_dataset
 from tests.summary_utils import SummaryReader
+from tests.mark_utils import arg_mark
 
 
 def callback_fn():
@@ -227,12 +227,8 @@ class TestSummary:
         return tags
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level0", card_mark="onecard",
+          essential_mark="essential")
 def test_summary_with_sink_mode_false():
     """
     Feature: Test summary with sink mode false, and num samples is 64.
@@ -257,11 +253,7 @@ def test_summary_with_sink_mode_false():
             assert value == summary_tag_count
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
 def test_summarycollector_user_defind():
     """
     Feature: Test SummaryCollector with user-defined.
@@ -283,12 +275,7 @@ def test_summarycollector_user_defind():
     assert set(expected_files) == set(file_list)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=["platform_gpu"], level_mark="level0", card_mark="onecard", essential_mark="essential")
 def test_summary_collector_landscape():
     """
     Feature: Summary collector with landscape.
@@ -319,12 +306,8 @@ def test_summary_collector_landscape():
     assert np.allclose(tag_list_landscape[1], 2.28, atol=0.03)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="onecard",
+          essential_mark="essential")
 def test_summary_of_more_than_one_instance():
     """
     Feature: Test the multi instances of SummaryRecord in a script.
