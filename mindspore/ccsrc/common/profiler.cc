@@ -462,14 +462,14 @@ void ProfilerAnalyzer::DumpDetailData(const size_t step, const ProfilerDataSpan 
     return;
   }
 
-  ofs << "[Step:" << step << " step_time:" << step_time_ << "us, module_total_time:" << module_total_time_ << "us]\n";
+  ofs << "[Step:" << step << " step_time:" << step_time_ << "ns, module_total_time:" << module_total_time_ << "ns]\n";
   for (auto &data : span) {
     MS_EXCEPTION_IF_NULL(data);
     std::string title_name = data->is_stage_ ? ("stage:" + kProfilerStageString.at(data->stage_))
                                              : ("module:" + kProfilerModuleString.at(data->module_));
     ofs << title_name << ", event:" << kProfilerEventString.at(data->event_) << ", op:" << data->op_name_
         << ", start_time:" << data->start_time_ << ", end_time:" << data->end_time_ << ", dur_time:," << data->dur_time_
-        << ",us, tid:" << std::to_string(data->tid_) << ", pid:" << data->pid_ << "\n";
+        << ",ns, tid:" << std::to_string(data->tid_) << ", pid:" << data->pid_ << "\n";
   }
   ofs << "\n";
 
@@ -479,8 +479,8 @@ void ProfilerAnalyzer::DumpDetailData(const size_t step, const ProfilerDataSpan 
 void ProfilerAnalyzer::DumpSummaryData(const size_t step) const {
   // Fill the summary info.
   std::stringstream string_stream;
-  string_stream << "[Step:" << step << ", step_time:" << step_time_ << "us, module_total_time:" << module_total_time_
-                << "us]\n";
+  string_stream << "[Step:" << step << ", step_time:" << step_time_ << "ns, module_total_time:" << module_total_time_
+                << "ns]\n";
   DumpModuleSummaryData(string_stream);
   DumpStageSummaryData(string_stream);
   std::cout << string_stream.str() << std::endl;
@@ -511,8 +511,8 @@ void ProfilerAnalyzer::DumpStageSummaryData(std::stringstream &string_stream) co
     auto &stage_statistics_info = order_stage_info.second;
     string_stream << "Stage:" << stage_statistics_info->name_ << std::fixed << std::setprecision(kPrecisionDigits)
                   << ", total_time:" << stage_statistics_info->total_time_
-                  << "us, average_time:" << stage_statistics_info->average_time_
-                  << "us, total_count:" << stage_statistics_info->count_
+                  << "ns, average_time:" << stage_statistics_info->average_time_
+                  << "ns, total_count:" << stage_statistics_info->count_
                   << ", percent:" << stage_statistics_info->percent_ << "%\n";
     string_stream << "\n";
   }
@@ -537,8 +537,8 @@ void ProfilerAnalyzer::DumpModuleSummaryData(std::stringstream &string_stream) c
     auto &module_statistics_info = order_module_info.second->module_statistics_info_;
     string_stream << "Module:" << module_statistics_info->name_ << std::fixed << std::setprecision(kPrecisionDigits)
                   << ", total_time:" << module_statistics_info->total_time_
-                  << "us, average_time:" << module_statistics_info->average_time_
-                  << "us, total_count:" << module_statistics_info->count_
+                  << "ns, average_time:" << module_statistics_info->average_time_
+                  << "ns, total_count:" << module_statistics_info->count_
                   << ", percent:" << module_statistics_info->percent_ << "%\n";
     DumpEventSummaryData(order_module_info.second->event_infos_, string_stream);
   }
@@ -568,8 +568,8 @@ void ProfilerAnalyzer::DumpEventSummaryData(const std::map<ProfilerEvent, Profil
     auto &event_statistics_info = order_event_info.second->event_statistics_info_;
     string_stream << "  Event:" << event_statistics_info->name_ << std::fixed << std::setprecision(kPrecisionDigits)
                   << ", total_time:" << event_statistics_info->total_time_
-                  << "us, average_time:" << event_statistics_info->average_time_
-                  << "us, total_count:" << event_statistics_info->count_
+                  << "ns, average_time:" << event_statistics_info->average_time_
+                  << "ns, total_count:" << event_statistics_info->count_
                   << ", percent:" << event_statistics_info->percent_ << "%\n";
     DumpOpSummaryData(order_event_info.second->op_infos_, string_stream);
   }
@@ -579,8 +579,8 @@ void ProfilerAnalyzer::DumpEventSummaryData(const std::map<ProfilerEvent, Profil
     auto &event_statistics_info = order_inner_event_info.second->event_statistics_info_;
     string_stream << "  EventInner:" << event_statistics_info->name_ << std::fixed
                   << std::setprecision(kPrecisionDigits) << ", total_time:" << event_statistics_info->total_time_
-                  << "us, average_time:" << event_statistics_info->average_time_
-                  << "us, total_count:" << event_statistics_info->count_ << "\n";
+                  << "ns, average_time:" << event_statistics_info->average_time_
+                  << "ns, total_count:" << event_statistics_info->count_ << "\n";
     DumpOpSummaryData(order_inner_event_info.second->op_infos_, string_stream);
   }
 
@@ -615,8 +615,8 @@ void ProfilerAnalyzer::DumpOpSummaryData(const mindspore::HashMap<std::string, P
     auto &op_statistics_info = order_op_info.second;
     string_stream << "      Op:" << op_statistics_info->name_ << std::fixed << std::setprecision(kPrecisionDigits)
                   << ", total_time:" << op_statistics_info->total_time_
-                  << "us, average_time:" << op_statistics_info->average_time_
-                  << "us, total_count:" << op_statistics_info->count_;
+                  << "ns, average_time:" << op_statistics_info->average_time_
+                  << "ns, total_count:" << op_statistics_info->count_;
     if (op_statistics_info->is_inner_info_) {
       string_stream << "\n";
     } else {
@@ -634,8 +634,8 @@ void ProfilerAnalyzer::DumpOpSummaryData(const mindspore::HashMap<std::string, P
     auto &op_statistics_info = order_op_info.second;
     string_stream << "      Op:" << op_statistics_info->name_ << std::fixed << std::setprecision(kPrecisionDigits)
                   << ", average_time:" << op_statistics_info->average_time_
-                  << "us, total_time:" << op_statistics_info->total_time_
-                  << "us, total_count:" << op_statistics_info->count_;
+                  << "ns, total_time:" << op_statistics_info->total_time_
+                  << "ns, total_count:" << op_statistics_info->count_;
     if (op_statistics_info->is_inner_info_) {
       string_stream << "\n";
     } else {
