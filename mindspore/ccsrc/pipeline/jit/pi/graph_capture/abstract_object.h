@@ -20,6 +20,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <memory>
 #include "pybind11/pybind11.h"
 #include "pipeline/jit/pi/utils/mempool.h"
 #include "utils/convert_utils_base.h"
@@ -31,13 +32,25 @@ namespace pijit {
 class AbstractObjectBase;
 using AObject = AbstractObjectBase;
 
-class AObjectSourceScope {
- public:
-  AObjectSourceScope();
-  ~AObjectSourceScope();
-};
-
 class AbstractObjectBase {
+ private:
+  class Resource {
+   public:
+    static Resource *Current() { return weak_this_.empty() ? nullptr : weak_this_.back(); }
+
+   private:
+    static std::vector<Resource *> weak_this_;
+
+   public:
+    Resource();
+    ~Resource();
+    void Release() {}
+    MemPool<AbstractObjectBase> *pool() { return &pool_; }
+
+   private:
+    MemPool<AbstractObjectBase> pool_;
+  };
+
  public:
   enum Type {
 #define ABSTRACT_TYPE_DEF(unit) kType##unit,
@@ -60,8 +73,6 @@ class AbstractObjectBase {
 
   // record PyObject and check self reference for list,tuple,dict
   using RecMap = std::unordered_map<PyObject *, AObject *>;
-
-  static MemPool<AbstractObjectBase> aobject_mem_pool_;
 
   static bool trace_flag_;
 
@@ -101,6 +112,7 @@ class AbstractObjectBase {
   static AObject *Convert(const py::object &o) { return Convert(o.ptr()); }
   static AObject *Convert(PyObject *o) { return MakeAObject(GetPyType(o), o ? Py_TYPE(o) : nullptr, o); }
   static AObject *MakeAObject(Type real_type) { return MakeAObject(real_type, nullptr, nullptr); }
+  static auto MakeResource() { return Resource(); }
 
   static AObject *MakeFunction(const std::vector<AObject *> &args, const py::object &globals, int oparg);
 
@@ -305,6 +317,9 @@ class AbstractDict : public AbstractSequence {
 };
 
 class AbstractTensor : public AbstractObject {
+ public:
+  static py::object Binary(int op, const py::object &, const py::object &);
+
  public:
   AbstractTensor(const py::object &o, bool is_stub);
   virtual ~AbstractTensor() {}

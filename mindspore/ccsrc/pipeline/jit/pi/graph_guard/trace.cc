@@ -1141,7 +1141,10 @@ using PyObjectArray = std::vector<PyObject *>;
 
 static PyObject *CheckAndDoBinary(int op, const PyObjectArray &objs, binaryfunc pyfunc) {
   if (py::isinstance<mindspore::tensor::Tensor>(objs[0])) {
-    return AObject::Convert(objs[0])->Binary(AObject::Convert(objs[1]), op)->GetPyObject().ptr();
+    auto arg0 = py::reinterpret_borrow<py::object>(objs[0]);
+    auto arg1 = py::reinterpret_borrow<py::object>(objs[1]);
+    auto res = pijit::AbstractTensor::Binary(op, arg0, arg1);
+    return res.inc_ref().ptr();
   } else {
     return pyfunc(objs[0], objs[1]);
   }
