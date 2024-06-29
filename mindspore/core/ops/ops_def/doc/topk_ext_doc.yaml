@@ -30,7 +30,7 @@ topk_ext:
                 sorted. Default: ``True`` .
 
         Returns:
-            A tuple consisting of `values` and `indexes`.
+            A tuple consisting of `values` and `indices`.
 
             - values (Tensor) - The `k` largest or smallest elements in each slice of the given dimension.
             - indices (Tensor) - The indices of values within the last dimension of input.
