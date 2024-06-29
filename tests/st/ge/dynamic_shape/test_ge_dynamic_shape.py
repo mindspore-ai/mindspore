@@ -52,7 +52,7 @@ def dyn_basic():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_ge_dyn_shape():
     """
     Feature: convert ge graph

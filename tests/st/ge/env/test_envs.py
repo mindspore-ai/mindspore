@@ -16,7 +16,7 @@ import tests.st.ge.ge_test_utils as utils
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_ms_format_mode():
     """
     Feature: for MS_FORMAT_MODE
