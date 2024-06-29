@@ -339,7 +339,9 @@ STATUS BuildOpOutputs(const onnx::NodeProto &onnx_node, const FuncGraphPtr &anf_
     CHECK_NULL_RETURN(new_abstract_list);
     cnode->set_abstract(new_abstract_list);
   }
-  anf_nodes_map->emplace(onnx_node.name(), cnode);
+  if (onnx_node.op_type() == "Loop" || onnx_node.op_type() == "If") {
+    anf_nodes_map->emplace(onnx_node.name(), cnode);
+  }
   return RET_OK;
 }
 
