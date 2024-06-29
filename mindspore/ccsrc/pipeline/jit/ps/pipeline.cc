@@ -1074,7 +1074,7 @@ std::vector<ActionItem> GetActions(const ResourcePtr &resource, const std::strin
 void GraphExecutorPy::InitCompileCacheInfo(const ResourcePtr &resource, const std::string &phase) {
   // The compilation cache only support for training cell or functions decorated with 'jit' currently.
   // If enable compilation cache, it will get a non-empty dependent files list from python.
-  if (!CompileCacheContext::GetInstance().enable_compile_cache()) {
+  if (!CompileCacheEnable()) {
     return;
   }
   bool has_python_script = true;
@@ -1464,10 +1464,6 @@ bool GraphExecutorPy::Compile(const py::object &source, const py::tuple &args, c
     },
     [this, &phase]() { ReleaseResourceOnException(phase); }, [this, &phase]() { ReleaseResourceOnException(phase); });
   return res;
-}
-
-void GraphExecutorPy::set_enable_compile_cache(bool enable_compile_cache) {
-  CompileCacheContext::GetInstance().set_enable_compile_cache(enable_compile_cache);
 }
 
 void CacheFuncGraph(const ResourcePtr &resource) {

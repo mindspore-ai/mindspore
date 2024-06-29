@@ -252,8 +252,6 @@ PYBIND11_MODULE(_c_expression, m) {
          py::arg("enable_tuple_broaden") = py::bool_(false), "Set tuple broaden enable.")
     .def("set_compile_cache_dep_files", &GraphExecutorPy::set_compile_cache_dep_files,
          py::arg("compile_cache_dep_files") = py::list(), "Set the compilation cache dependent files.")
-    .def("set_enable_compile_cache", &GraphExecutorPy::set_enable_compile_cache,
-         py::arg("enable_compile_cache") = py::bool_(false), "Set enable compilation cache.")
     .def("set_weights_values", &GraphExecutorPy::set_weights_values, py::arg("weights") = py::dict(),
          "Set values of weights.")
     .def("get_optimize_graph_proto", &GraphExecutorPy::GetOptimizeGraphProto, py::arg("phase") = py::str(""),
