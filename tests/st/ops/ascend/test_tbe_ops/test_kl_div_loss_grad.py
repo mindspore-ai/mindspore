@@ -50,8 +50,6 @@ def generate_test_cases(dtype, mode, reduction):
         dy = Tensor(np.array([-1]).astype(dtype))
     backward_net = Net(reduction)
     output = backward_net(prediction, target, dy)
-    if reduction == "mean":
-        output = output / 2
     expect = np.array(expect_list[reduction_list.index(reduction)])
     assert np.allclose(output.asnumpy(), expect)
 
