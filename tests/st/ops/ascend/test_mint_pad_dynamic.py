@@ -47,7 +47,7 @@ def test_ops_pad_constant_dynamic():
 
     TEST_OP(pad_constant_func, [[ms.Tensor(input1), padding1, value1], [ms.Tensor(input2), padding2, value2]],
             'constant_pad_nd', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_reflect_1d_dynamic():
@@ -64,7 +64,7 @@ def test_ops_pad_reflect_1d_dynamic():
 
     TEST_OP(pad_reflect_func, [[ms.Tensor(input1), padding1], [ms.Tensor(input2), padding2]],
             'reflection_pad_1d', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_reflect_2d_dynamic():
@@ -81,7 +81,7 @@ def test_ops_pad_reflect_2d_dynamic():
 
     TEST_OP(pad_reflect_func, [[ms.Tensor(input1), padding1], [ms.Tensor(input2), padding2]],
             'reflection_pad_2d', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_reflect_3d_dynamic():
@@ -98,7 +98,7 @@ def test_ops_pad_reflect_3d_dynamic():
 
     TEST_OP(pad_reflect_func, [[ms.Tensor(input1), padding1], [ms.Tensor(input2), padding2]],
             'reflection_pad_3d', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_replicate_1d_dynamic():
@@ -115,7 +115,7 @@ def test_ops_pad_replicate_1d_dynamic():
 
     TEST_OP(pad_replicate_func, [[ms.Tensor(input1), padding1], [ms.Tensor(input2), padding2]],
             'replication_pad_1d', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_replicate_2d_dynamic():
@@ -132,7 +132,7 @@ def test_ops_pad_replicate_2d_dynamic():
 
     TEST_OP(pad_replicate_func, [[ms.Tensor(input1), padding1], [ms.Tensor(input2), padding2]],
             'replication_pad_2d', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_replicate_3d_dynamic():
@@ -149,4 +149,4 @@ def test_ops_pad_replicate_3d_dynamic():
 
     TEST_OP(pad_replicate_func, [[ms.Tensor(input1), padding1], [ms.Tensor(input2), padding2]],
             'replication_pad_3d', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)

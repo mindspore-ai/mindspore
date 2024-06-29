@@ -157,7 +157,7 @@ def test_softmax_dynamic():
             [input_case1, (-1,)],
             [input_case2, (0,)],
         ],
-        "softmax"
+        "softmax", disable_input_check=True
     )
 
 

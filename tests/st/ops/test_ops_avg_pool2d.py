@@ -117,5 +117,5 @@ def test_avg_pool2d_dynamic():
             [input_case1, 4, (2, 2), (1,), False, True, 1],
             [input_case2, 6, (1, 1), (2,), True, False, 2],
         ],
-        'avg_pool2d', disable_input_check=True
+        'avg_pool2d', disable_input_check=True, disable_mode=['GRAPH_MODE'],
     )

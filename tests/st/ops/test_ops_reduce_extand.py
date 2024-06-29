@@ -159,7 +159,7 @@ def test_mean_dynamic():
     axis1 = (0, -1)
     keep_dims1 = False
     input2 = Tensor(generate_random_input((3, 3, 4, 4), np.float32))
-    axis2 = (0, 1)
+    axis2 = (0, 1, -1)
     keep_dims2 = True
     TEST_OP(mean_func, [[input1, axis1, keep_dims1], [input2, axis2, keep_dims2]], '', disable_yaml_check=True)
 
@@ -233,7 +233,7 @@ def test_sum_dynamic():
     axis1 = (0, -1)
     keep_dims1 = False
     input2 = Tensor(generate_random_input((3, 3, 4, 4), np.float32))
-    axis2 = (0, 1)
+    axis2 = (0, 1, -1)
     keep_dims2 = True
     TEST_OP(sum_func, [[input1, axis1, keep_dims1], [input2, axis2, keep_dims2]], '', disable_yaml_check=True)
 
