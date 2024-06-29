@@ -20,7 +20,7 @@ from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
           card_mark='onecard', essential_mark='essential')
 @test_utils.run_test_with_On
 def test_hal_event_args():
@@ -36,7 +36,7 @@ def test_hal_event_args():
     assert ev2 is not None
 
 
-@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
           card_mark='onecard', essential_mark='essential')
 def test_hal_event_elapsed_time():
     """
