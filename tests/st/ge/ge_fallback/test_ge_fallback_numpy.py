@@ -36,7 +36,7 @@ def test_fallback_np_asnumpy():
     utils.run_testcase('ge_fallback_numpy', 'test_fallback_np_asnumpy')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_tensor_asnumpy():
     """
     Feature: Support JIT Fallback runtime feature.
