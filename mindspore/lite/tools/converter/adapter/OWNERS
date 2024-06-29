@@ -1,5 +1,7 @@
 approvers:
 - jpc_chenjianping #
+- YeFeng_24
+- zhuguodong
 
 options:
   no_parent_owners: false

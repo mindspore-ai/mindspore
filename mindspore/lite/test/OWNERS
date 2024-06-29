@@ -1,8 +1,10 @@
 approvers:
-- jpc_chenjianping #
-- hangangqiang
-- wang_shaocong
-- YeFeng_24
+- jpc_chenjianping
+- zhuguodong
+- YeFeng_24 #
+reviewers:
+- zhangyanhui
+- chengfeng27
 
 options:
     no_parent_owners: false
