@@ -234,5 +234,6 @@ OpDef g${class_name} = {
   },
   /*.func_impl_=*/g${class_name}FuncImpl,
   /*.enable_dispatch_ =*/${enable_dispatch},
+  /*.is_view_ =*/${is_view},
 };
 """)

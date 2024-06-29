@@ -74,6 +74,7 @@ struct OpDef {
   std::unordered_map<std::string, size_t> indexes_;
   OpFuncImpl &func_impl_;
   bool enable_dispatch_;
+  bool is_view_;
 };
 
 using OpDefPtr = OpDef *;
