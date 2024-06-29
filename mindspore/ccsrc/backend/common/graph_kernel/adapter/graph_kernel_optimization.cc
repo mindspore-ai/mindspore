@@ -73,6 +73,7 @@
 #include "backend/common/graph_kernel/deal_with_side_effect.h"
 #include "backend/common/graph_kernel/fold_updatestate.h"
 #include "backend/common/graph_kernel/proactive_fallback_expander.h"
+#include "backend/common/graph_kernel/transpose_matmul_fusion.h"
 #ifdef ENABLE_AKG
 #include "backend/common/graph_kernel/graph_kernel_build.h"
 #endif
@@ -104,6 +105,9 @@ PassManagerPtr GraphKernelOptimizer::PreProcess() const {
 
   // Fallback some operations for further expanding or fusing
   pm->Add(std::make_shared<ProactiveFallbackExpander>(), OptLevel_1, is_dvm);
+
+  // Transform Transpose + Mutmul to a single Matmul with attribute trans_a/trans_b
+  pm->Add(std::make_shared<TransposeMatmulFusion>(), OptLevel_2, is_ascend);
 
   // convert input to attr adapter for dyn-shape
   pm->Add(std::make_shared<ConvertFrontEndToGraphKernel>(), OptLevel_1);
