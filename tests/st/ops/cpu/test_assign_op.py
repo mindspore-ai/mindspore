@@ -40,6 +40,11 @@ class Assign(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_bool():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.bool_))
     y = Tensor(np.zeros([3, 3]).astype(np.bool_))
     assign = Assign(x, y)
@@ -52,6 +57,11 @@ def test_assign_bool():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_int8():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.int8))
     y = Tensor(np.zeros([3, 3]).astype(np.int8))
     assign = Assign(x, y)
@@ -64,6 +74,11 @@ def test_assign_int8():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_uint8():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.uint8))
     y = Tensor(np.zeros([3, 3]).astype(np.uint8))
     assign = Assign(x, y)
@@ -76,6 +91,11 @@ def test_assign_uint8():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_int16():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.int16))
     y = Tensor(np.zeros([3, 3]).astype(np.int16))
     assign = Assign(x, y)
@@ -88,6 +108,11 @@ def test_assign_int16():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_uint16():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.uint16))
     y = Tensor(np.zeros([3, 3]).astype(np.uint16))
     assign = Assign(x, y)
@@ -100,6 +125,11 @@ def test_assign_uint16():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_int32():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.int32))
     y = Tensor(np.zeros([3, 3]).astype(np.int32))
     assign = Assign(x, y)
@@ -112,6 +142,11 @@ def test_assign_int32():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_uint32():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.uint32))
     y = Tensor(np.zeros([3, 3]).astype(np.uint32))
     assign = Assign(x, y)
@@ -124,6 +159,11 @@ def test_assign_uint32():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_int64():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.int64))
     y = Tensor(np.zeros([3, 3]).astype(np.int64))
     assign = Assign(x, y)
@@ -136,6 +176,11 @@ def test_assign_int64():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_uint64():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.uint64))
     y = Tensor(np.zeros([3, 3]).astype(np.uint64))
     assign = Assign(x, y)
@@ -148,6 +193,11 @@ def test_assign_uint64():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_float16():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.array([[0.1, 0.2, 0.3],
                          [0.4, 0.5, 0.5],
                          [0.6, 0.7, 0.8]]).astype(np.float16))
@@ -166,6 +216,11 @@ def test_assign_float16():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_float32():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.array([[0.1, 0.2, 0.3],
                          [0.4, 0.5, 0.5],
                          [0.6, 0.7, 0.8]]).astype(np.float32))
@@ -184,6 +239,11 @@ def test_assign_float32():
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_float64():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.array([[0.1, 0.2, 0.3],
                          [0.4, 0.5, 0.5],
                          [0.6, 0.7, 0.8]]).astype(np.float64))

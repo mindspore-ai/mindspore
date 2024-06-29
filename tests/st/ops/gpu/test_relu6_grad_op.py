@@ -34,6 +34,11 @@ class NetReLU6Grad(nn.Cell):
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_relu6_grad():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.array([[[[-1, 1, 10],
                            [5.9, 6.1, 6],
                            [10, 1, -1]]]]).astype(np.float32))

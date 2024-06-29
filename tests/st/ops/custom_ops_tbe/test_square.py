@@ -47,6 +47,11 @@ def test_net():
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_grad_net():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = np.array([1.0, 4.0, 9.0]).astype(np.float32)
     sens = np.array([1.0, 1.0, 1.0]).astype(np.float32)
     square = Net()

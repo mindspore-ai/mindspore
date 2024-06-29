@@ -46,6 +46,11 @@ class NetRelu6Dynamic(nn.Cell):
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_relu6():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.array([[[[-1, 1, 10],
                            [5.9, 6.1, 6],
                            [10, 1, -1]]]]).astype(np.float32))
@@ -66,6 +71,11 @@ def test_relu6():
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_relu6_dynamic():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
 
     x1 = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]).astype(np.float32))
     expect1 = np.array([[0, 4, 0,],
