@@ -52,10 +52,15 @@ void GeneratorCheck(const std::vector<kernel::KernelTensor *> &inputs,
 }
 
 bool PrepareOutput(param_type seed, param_type offset, const std::vector<kernel::KernelTensor *> &outputs) {
-  *GetDeviceAddress<param_type>(outputs, kOutputSeedIdx) = seed;
-  *GetDeviceAddress<param_type>(outputs, kOutputOffsetIdx) = offset;
+  auto seed_addr = GetDeviceAddress<param_type>(outputs, kOutputSeedIdx);
+  auto offset_addr = GetDeviceAddress<param_type>(outputs, kOutputOffsetIdx);
+  MS_EXCEPTION_IF_NULL(seed_addr);
+  MS_EXCEPTION_IF_NULL(offset_addr);
+  *seed_addr = seed;
+  *offset_addr = offset;
   // Calculate State
   auto state_addr = GetDeviceAddress<state_type>(outputs, kOutputStateIdx);
+  MS_EXCEPTION_IF_NULL(state_addr);
   const auto param_size = sizeof(param_type);
   const auto output_size = param_size * 2 / sizeof(state_type);
   auto ret = memcpy_s(static_cast<void *>(state_addr), output_size, static_cast<void *>(&seed), param_size);
@@ -84,10 +89,13 @@ bool StepCompute(const std::vector<kernel::KernelTensor *> &inputs,
 
   auto seed_param = GetDeviceAddress<param_type>(inputs, kSeedParamIdx);
   auto offset_param = GetDeviceAddress<param_type>(inputs, kOffsetParamIdx);
-  auto step_size = *GetDeviceAddress<param_type>(inputs, kStepSizeIdx);
+  auto step_size = GetDeviceAddress<param_type>(inputs, kStepSizeIdx);
+  MS_EXCEPTION_IF_NULL(seed_param);
+  MS_EXCEPTION_IF_NULL(offset_param);
+  MS_EXCEPTION_IF_NULL(step_size);
 
   auto old_offset = *offset_param;
-  *offset_param = old_offset + step_size;
+  *offset_param = old_offset + *step_size;
   return PrepareOutput(*seed_param, old_offset, outputs);
 }
 
@@ -104,6 +112,8 @@ bool SeedCompute(const std::vector<kernel::KernelTensor *> &inputs,
 
   auto seed_param = GetDeviceAddress<param_type>(inputs, kSeedIdx);
   auto offset_param = GetDeviceAddress<param_type>(inputs, kOffsetIdx);
+  MS_EXCEPTION_IF_NULL(seed_param);
+  MS_EXCEPTION_IF_NULL(offset_param);
   auto rd = static_cast<param_type>(std::random_device()());
   *seed_param = rd;
   *offset_param = 0;
@@ -121,9 +131,11 @@ bool GetStateCompute(const std::vector<kernel::KernelTensor *> &inputs,
   constexpr size_t kOffsetIdx = 2;
   GeneratorCheck(inputs, outputs, kInputNum, kOutputNum, "get_state");
 
-  auto seed = *GetDeviceAddress<param_type>(inputs, kSeedIdx);
-  auto offset = *GetDeviceAddress<param_type>(inputs, kOffsetIdx);
-  return PrepareOutput(seed, offset, outputs);
+  auto seed = GetDeviceAddress<param_type>(inputs, kSeedIdx);
+  auto offset = GetDeviceAddress<param_type>(inputs, kOffsetIdx);
+  MS_EXCEPTION_IF_NULL(seed);
+  MS_EXCEPTION_IF_NULL(offset);
+  return PrepareOutput(*seed, *offset, outputs);
 }
 
 /*
@@ -141,6 +153,9 @@ bool SetStateCompute(const std::vector<kernel::KernelTensor *> &inputs,
   auto state = GetDeviceAddress<state_type>(inputs, kStateIdx);
   auto seed_param = GetDeviceAddress<param_type>(inputs, kSeedIdx);
   auto offset_param = GetDeviceAddress<param_type>(inputs, kOffsetIdx);
+  MS_EXCEPTION_IF_NULL(state);
+  MS_EXCEPTION_IF_NULL(seed_param);
+  MS_EXCEPTION_IF_NULL(offset_param);
   param_type seed;
   param_type offset;
   const auto param_size = sizeof(param_type);
@@ -169,12 +184,15 @@ bool ManualSeedCompute(const std::vector<kernel::KernelTensor *> &inputs,
   constexpr size_t kSeedIdx = 3;
   GeneratorCheck(inputs, outputs, kInputNum, kOutputNum, "manual_seed");
 
-  auto new_seed = *GetDeviceAddress<param_type>(inputs, kSeedIdx);
+  auto new_seed = GetDeviceAddress<param_type>(inputs, kSeedIdx);
   auto seed_param = GetDeviceAddress<param_type>(inputs, kSeedParamIdx);
   auto offset_param = GetDeviceAddress<param_type>(inputs, kOffsetParamIdx);
-  *seed_param = new_seed;
+  MS_EXCEPTION_IF_NULL(new_seed);
+  MS_EXCEPTION_IF_NULL(seed_param);
+  MS_EXCEPTION_IF_NULL(offset_param);
+  *seed_param = *new_seed;
   *offset_param = 0;
-  return PrepareOutput(new_seed, 0, outputs);
+  return PrepareOutput(*new_seed, 0, outputs);
 }
 
 /*
@@ -188,25 +206,28 @@ bool InitialSeedCompute(const std::vector<kernel::KernelTensor *> &inputs,
   constexpr size_t kOffsetParamIdx = 2;
   GeneratorCheck(inputs, outputs, kInputNum, kOutputNum, "initial_seed");
 
-  auto seed = *GetDeviceAddress<param_type>(inputs, kSeedParamIdx);
-  auto offset = *GetDeviceAddress<param_type>(inputs, kOffsetParamIdx);
-  return PrepareOutput(seed, offset, outputs);
+  auto seed = GetDeviceAddress<param_type>(inputs, kSeedParamIdx);
+  auto offset = GetDeviceAddress<param_type>(inputs, kOffsetParamIdx);
+  MS_EXCEPTION_IF_NULL(seed);
+  MS_EXCEPTION_IF_NULL(offset);
+  return PrepareOutput(*seed, *offset, outputs);
 }
 }  // namespace
 
 bool GeneratorCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &inputs,
                                    const std::vector<kernel::KernelTensor *> &,
                                    const std::vector<kernel::KernelTensor *> &outputs) {
-  auto cmd = *GetDeviceAddress<int64_t>(inputs, kCmdIndex);
+  auto cmd = GetDeviceAddress<int64_t>(inputs, kCmdIndex);
+  MS_EXCEPTION_IF_NULL(cmd);
   static const std::unordered_map<int64_t, ComputeFunc> compute_map{{STEP, StepCompute},
                                                                     {SEED, SeedCompute},
                                                                     {GET_STATE, GetStateCompute},
                                                                     {SET_STATE, SetStateCompute},
                                                                     {MANUAL_SEED, ManualSeedCompute},
                                                                     {INITIAL_SEED, InitialSeedCompute}};
-  auto iter = compute_map.find(cmd);
+  auto iter = compute_map.find(*cmd);
   if (iter == compute_map.end()) {
-    MS_LOG(ERROR) << "Unknown cmd: " << cmd;
+    MS_LOG(ERROR) << "Unknown cmd: " << *cmd;
     return false;
   }
   return (iter->second)(inputs, outputs);
