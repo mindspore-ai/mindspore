@@ -20,12 +20,18 @@
 
 namespace mindspore {
 bool CompileCacheEnable() {
-  auto enable = mindspore::MsContext::GetInstance()->get_param<bool>(mindspore::MS_CTX_ENABLE_COMPILE_CACHE);
-  if (!enable) {
+  auto enable = mindspore::MsContext::GetInstance()->get_param<int>(mindspore::MS_CTX_ENABLE_COMPILE_CACHE);
+  // no set enable_compile_cache in context, then read it from env variable.
+  if (enable < 0) {
     const auto &env_enable = mindspore::common::GetEnv(mindspore::kCompilerCacheEnable);
-    enable = !env_enable.empty() && env_enable == "1";
+    return !env_enable.empty() && env_enable == "1";
   }
-  return enable;
+  // set enable_compile_cache to false
+  if (enable == 0) {
+    return false;
+  }
+  // set enable_compile_cache to true
+  return true;
 }
 
 // normalize name for ge regex check

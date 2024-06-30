@@ -1201,6 +1201,13 @@ def _check_ascend_device_context_initialized(device_target, settings):
                                "take effect. ")
                 break
 
+
+def _check_key(key):
+    if key in ('precision_mode', 'jit_compile', 'atomic_clean_policy', 'matmul_allow_hf32', 'conv_allow_hf32',
+               'op_precision_mode', 'host_scheduling_max_threshold', 'ge_options', 'op_debug_option'):
+        raise ValueError(f"Please set '{key}' through parameter ascend_config")
+
+
 @args_type_check(mode=int, precompile_only=bool, device_target=str, device_id=int, save_graphs=(bool, int),
                  save_graphs_path=str, enable_dump=bool, aoe_tune_mode=str, aoe_config=dict,
                  save_dump_path=str, enable_reduce_precision=bool, variable_memory_max_size=str,
@@ -1210,7 +1217,7 @@ def _check_ascend_device_context_initialized(device_target, settings):
                  graph_kernel_flags=str, save_compile_cache=bool, runtime_num_threads=int, load_compile_cache=bool,
                  grad_for_scalar=bool, pynative_synchronize=bool, mempool_block_size=str, disable_format_transform=bool,
                  op_timeout=int, deterministic=str, ascend_config=dict, jit_syntax_level=int, debug_level=int,
-                 jit_enable_inplace_ops=bool, gpu_config=dict, jit_config=dict)
+                 jit_enable_inplace_ops=bool, gpu_config=dict, jit_config=dict, enable_compile_cache=bool)
 def set_context(**kwargs):
     """
     Set context for running environment.
@@ -1761,9 +1768,7 @@ def set_context(**kwargs):
             logger.warning(f"For 'context.set_context', '{key}' parameter is deprecated. "
                            "For details, please see the interface parameter API comments")
             continue
-        if key in ('precision_mode', 'jit_compile', 'atomic_clean_policy', 'matmul_allow_hf32', 'conv_allow_hf32',
-                   'op_precision_mode', 'host_scheduling_max_threshold', 'ge_options', 'op_debug_option'):
-            raise ValueError(f"Please set '{key}' through parameter ascend_config")
+        _check_key(key)
         if key == 'save_graphs':
             if value is True:
                 value = 2
@@ -1777,6 +1782,10 @@ def set_context(**kwargs):
         if key == 'debug_level' and value not in (RELEASE, DEBUG):
             raise ValueError(f"For 'debug_level', the value should be context.DEBUG"
                              f" or context.RELEASE, but got {value}.")
+        if key == 'enable_compile_cache':
+            setattr(ctx, key, value)
+            ctx.set_param(ms_ctx_param.__members__[key], int(value))
+            continue
         if not _check_target_specific_cfgs(device, key):
             continue
         if hasattr(ctx, key):

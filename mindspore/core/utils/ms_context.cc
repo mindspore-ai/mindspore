@@ -56,7 +56,6 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
 #ifndef ENABLE_SECURITY
   set_param<int>(MS_CTX_SAVE_GRAPHS_FLAG, 0);
   set_param<std::string>(MS_CTX_SAVE_GRAPHS_PATH, ".");
-  set_param<bool>(MS_CTX_ENABLE_COMPILE_CACHE, false);
   set_param<std::string>(MS_CTX_COMPILE_CACHE_PATH, "");
 #else
   // Need set a default value for arrays even if running in the security mode.
@@ -636,6 +635,7 @@ void MsContext::InitDigitalTypeDefaultValue() {
   set_param<int>(MS_CTX_SAVE_CKPT_STEPS, 0);
   set_param<int>(MS_CTX_LAST_TRIGGERED_STEP, 0);
   set_param<int>(MS_CTX_COMPUTE_COMMUNICATE_FUSION_LEVEL, 0);
+  set_param<int>(MS_CTX_ENABLE_COMPILE_CACHE, -1);
   set_param<int>(MS_CTX_DEBUG_LEVEL, kLevelRelease);
   set_param<float>(MS_CTX_MAX_DEVICE_MEMORY, kDefaultMaxDeviceMemory);
   set_param<float>(MS_CTX_MEMPOOL_BLOCK_SIZE, kDefaultMempoolBlockSize);
