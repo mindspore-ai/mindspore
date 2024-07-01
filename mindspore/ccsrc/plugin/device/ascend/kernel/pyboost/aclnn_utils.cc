@@ -27,7 +27,7 @@ int8_t GetCubeMathType() { return transform::OpApiUtil::GetCubeMathType(); }
 
 std::pair<int64_t, int64_t> UpdateGeneratorState(const tensor::BaseTensorPtr &seed, const tensor::BaseTensorPtr &offset,
                                                  int64_t step) {
-  runtime::OpExecutor::GetInstance().WaitAll();
+  runtime::Pipeline::Get().WaitAll();
   auto seed_value = *static_cast<int64_t *>(seed->data_c());
   offset->set_device_address(nullptr);
   auto offset_ptr = static_cast<int64_t *>(offset->data_c());
