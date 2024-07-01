@@ -668,6 +668,17 @@ bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
       return false;
     }
   }
+
+  const auto &mng = graph->manager();
+  if (mng != nullptr) {
+    for (const auto &node : mng->all_nodes()) {
+      if (node != nullptr && common::AnfAlgo::IsNodeOutputDynamicShape(node)) {
+        MS_LOG(INFO) << "Disable switch inline for dynamic shape node:" << node->DebugString();
+        return false;
+      }
+    }
+  }
+
   MS_LOG(INFO) << "Enable switch inline.";
   return true;
 }
@@ -678,7 +689,7 @@ void AddGraphDynamicShapeAttr(const KernelGraphPtr &kernel_graph) {
     return;
   }
 
-  const auto &nodes = TopoSort(kernel_graph->get_return());
+  const auto &nodes = TopoSort(kernel_graph->output());
   for (const auto &node : nodes) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->isa<CNode>() && common::AnfAlgo::IsDynamicShape(node)) {

@@ -3402,12 +3402,12 @@ def scatter_add_ext(input, dim, index, src):
 
     Args:
         input (Tensor): The target tensor. The rank must be at least 1.
-        dim (int): Which dim to scatter. Accepted range is [-r, r) where r = rank(input). Default: ``0``.
+        dim (int): Which dim to scatter. Accepted range is [-r, r) where r = rank(`input`). Default: ``0``.
         index (Tensor): The index of `input` to do scatter operation whose data type must be mindspore.int32 or
             mindspore.int64. Same rank as `input`. Except for the dimension specified by `dim`,
-            the size of each dimension of index must be less than or equal to the size of
-            the corresponding dimension of input.
-        src (Tensor): The tensor doing the scatter operation with `input`, has the same type as `input` as `index` and
+            the size of each dimension of `index` must be less than or equal to the size of
+            the corresponding dimension of `input`.
+        src (Tensor): The tensor doing the scatter operation with `input`, has the same type as `input` and
             the size of each dimension must be greater than or equal to that of `index`.
 
     Returns:
@@ -3416,8 +3416,10 @@ def scatter_add_ext(input, dim, index, src):
     Raises:
         TypeError: If `index` is neither int32 nor int64.
         ValueError: If anyone of the rank among `input`, `index` and `src` less than 1.
-        ValueError: If the shape of `src` is not equal to the shape of `index`.
-        ValueError: If the rank of `src` is not equal to the rank of `input`.
+        ValueError: If the rank of `input`, `index` and `src` is not the same.
+        ValueError: If, outside dimension `dim`, the size of any dimension of `index` is greater than the size of
+            the corresponding dimension of `input` .
+        ValueError: If the size of any dimension of `src` is less than that of `index`.
 
     Supported Platforms:
         ``Ascend``
@@ -3438,20 +3440,20 @@ def scatter_add_ext(input, dim, index, src):
         >>> out = ops.scatter_add_ext(input=input, dim=0, index=index, src=src)
         >>> print(out)
         [[1. 2. 3. 0. 0.]
-        [0. 0. 0. 0. 0.]
-        [4. 5. 6. 0. 0.]
-        [0. 0. 0. 0. 0.]
-        [7. 8. 9. 0. 0.]]
+         [0. 0. 0. 0. 0.]
+         [4. 5. 6. 0. 0.]
+         [0. 0. 0. 0. 0.]
+         [7. 8. 9. 0. 0.]]
         >>> input = Tensor(np.zeros((5, 5)), dtype=ms.float32)
         >>> src = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
         >>> index = Tensor(np.array([[0, 2, 4], [0, 2, 4], [0, 2, 4]]), dtype=ms.int64)
         >>> out = ops.scatter_add_ext(input=input, dim=1, index=index, src=src)
         >>> print(out)
         [[1. 0. 2. 0. 3.]
-        [4. 0. 5. 0. 6.]
-        [7. 0. 8. 0. 9.]
-        [0. 0. 0. 0. 0.]
-        [0. 0. 0. 0. 0.]]
+         [4. 0. 5. 0. 6.]
+         [7. 0. 8. 0. 9.]
+         [0. 0. 0. 0. 0.]
+         [0. 0. 0. 0. 0.]]
     """
     return scatter_add_ext_op(input, dim, index, src)
 

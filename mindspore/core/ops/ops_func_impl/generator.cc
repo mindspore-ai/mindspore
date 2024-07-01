@@ -67,8 +67,8 @@ int32_t GeneratorFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   } else {
     auto element_types = input_types->elements();
     MS_CHECK_VALUE(element_types.size() == expected_types.size(),
-                   CheckAndConvertUtils::CheckInteger("input number for cmd " + cmd_str, input_args.size(), kEqual,
-                                                      expected_types.size(), primitive->name()));
+                   "input number for cmd " + cmd_str + " should be " + std::to_string(expected_types.size()) +
+                     ", but got " + std::to_string(element_types.size()));
     for (size_t i = 0; i < element_types.size(); ++i) {
       CheckAndConvertUtils::CheckTensorTypeValid("inputs", element_types[i], {expected_types[i]}, primitive->name());
     }

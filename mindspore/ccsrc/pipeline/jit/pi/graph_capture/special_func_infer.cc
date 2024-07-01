@@ -389,7 +389,7 @@ static AObject *InferGradFuncResult(const py::object &func, const py::object &ar
  * If the function has no unsupported operation, merge the guard of inferred graph to caller graph.
  * else clear the mask of mindspore flag, avoid to capture this function call
  */
-void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param) {
+void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param, const py::object &after_grad) {
   const int except_flag = AObject::kMsFlagGradFunc | AObject::kMsFlagShardFunc | AObject::kMsFlagVmapFunc;
   ValueNode *grad_func_node = call_node->input(0);
   std::vector<py::object> stack_args;
@@ -434,8 +434,20 @@ void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param
     grad_func_node->GetVobj()->ClearMsFlag(except_flag);
     return;
   }
+  py::object infer_after_grad = Utils::GetModuleAttr(kModuleName, "infer_after_grad", true, true);
+  py::object result;
+  try {
+    result = infer_after_grad(after_grad, args, res->GetPyObject());
+  } catch (std::exception &e) {
+    MS_LOG(WARNING) << "Error while infer_after_grad, error:" << e.what();
+    PyErr_Clear();
+  }
+  if (result.ptr() != nullptr && result.ptr() != Py_None) {
+    call_node->SetVobj(AObject::Convert(result));
+  } else {
+    call_node->SetVobj(res);
+  }
   call_node->SetInlineReason(InlineReason::kInlineGraphSupportedByMS);
-  call_node->SetVobj(res);
 }
 
 static void HandleGradFunc(CallNode *call_node, const py::object &after_grad, TracePtr *trace) {
@@ -456,7 +468,7 @@ static void HandleGradFunc(CallNode *call_node, const py::object &after_grad, Tr
     (*trace)->Detach();
   }
   call_node->SetSubGraph(nullptr);
-  HandleGradFuncCall(call_node, AObject::Convert(decorated_func), sens_param);
+  HandleGradFuncCall(call_node, AObject::Convert(decorated_func), sens_param, after_grad);
 }
 
 static bool InferGradFunc(CallNode *call_node, GraphBuilder *unused = nullptr) {

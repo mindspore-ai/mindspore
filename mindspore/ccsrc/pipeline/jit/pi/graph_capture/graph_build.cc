@@ -3585,6 +3585,12 @@ ValueNode *MindGraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &
       graph_attr_node = NewValueNode(AObject::Convert(graph_attr_obj), instr, {target_node});
     }
   }
+  // Add Id guard for parameter, in case default value for parameter change in execution.
+  if (attr_obj.ptr() != nullptr && py::hasattr(attr_obj, "__parameter__") &&
+      py::isinstance<tensor::MetaTensor>(attr_obj)) {
+    graph_->GuardValueNode(graph_attr_node, GuardLevel::GId);
+    return graph_attr_node;
+  }
   // Add Guard for getattr node. For scalar/list/tuple/primitive, need to guard value. Otherwise, guard type and shape.
   AObject::Type attr_type = graph_attr_node->GetVobj() ? graph_attr_node->GetVobj()->GetType() : AObject::kTypeAnyValue;
   static const std::vector<AObject::Type> const_type = {AObject::kTypeInt,      AObject::kTypeFloat, AObject::kTypeBool,

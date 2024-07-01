@@ -17,7 +17,7 @@ mindspore.mint.mean
         - **dtype** (:class:`mindspore.dtype`, 可选) - 期望输出Tensor的类型。默认值： ``None`` 。
 
     返回：
-        Tensor，具有与 `input` 相同的数据类型。
+        Tensor。
 
         - 如果 `dim` 为 ``None`` ，且 `keepdim` 为 ``False`` ，则输出一个零维Tensor，表示输入Tensor中所有元素的平均值。
         - 如果 `dim` 为int，取值为1，并且 `keepdim` 为 ``False`` ，则输出的shape为 :math:`(input_0, input_2, ..., input_R)` 。

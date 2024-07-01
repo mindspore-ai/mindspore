@@ -325,9 +325,8 @@ std::string GetDataQueueName(const FuncGraphPtr &fg) {
 
 size_t CompileCacheManager::data_queue_num_ = 0;
 std::string CompileCacheManager::GetCachedDataQueueName(const std::string &dataset_phase) {
-  auto &context = CompileCacheContext::GetInstance();
   std::string queue_name;
-  if (!context.enable_compile_cache()) {
+  if (!CompileCacheEnable()) {
     return queue_name;
   }
   data_queue_num_++;
@@ -336,6 +335,7 @@ std::string CompileCacheManager::GetCachedDataQueueName(const std::string &datas
     config_mng.set_dataset_phase(dataset_phase);
   }
   // if queue name has cached, we should not get it again from cache file in the same process.
+  auto &context = CompileCacheContext::GetInstance();
   if (context.has_cached_queue_name()) {
     return queue_name;
   }

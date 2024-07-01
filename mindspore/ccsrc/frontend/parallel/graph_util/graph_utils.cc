@@ -469,7 +469,8 @@ AnfNodePtr ConvertConstParamToDynamic(const TensorRedistributionPtr &tensor_redi
   }
   std::vector<AnfNodePtr> shape_input;
   if (reshape_mode == ReshapeMode::FROM_ORIGIN_SLICE_TO_FROM_LAYOUT_SLICE ||
-      reshape_mode == ReshapeMode::TO_ORIGIN_SLICE_TO_TO_LAYOUT_SLICE) {
+      reshape_mode == ReshapeMode::TO_ORIGIN_SLICE_TO_TO_LAYOUT_SLICE ||
+      reshape_mode == ReshapeMode::FROM_ORIGIN_BASE_SLICE_TO_TO_ORIGIN_BASE_SLICE) {
     MatchingAccordingToPrime(shape_vec, dyn_dims_mapping, tensor_redistribution, func_graph, &shape_input,
                              reshape_mode);
   } else {

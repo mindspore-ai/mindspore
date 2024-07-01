@@ -723,6 +723,9 @@ class ModelGroup:
     Examples:
         >>> # Multi models share workspace memory
         >>> import mindspore_lite as mslite
+        >>> model_type=mslite.ModelType.MINDIR
+        >>> path1 = "path_to_model1"
+        >>> path2 = "path_to_model2"
         >>> model_group = mslite.ModelGroup()
         >>> model_group.add_model([path1, path2])
         >>> model_group.cal_max_size_of_workspace(model_type, context)

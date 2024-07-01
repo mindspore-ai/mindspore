@@ -227,6 +227,7 @@ void MemoryManagerActor::AllocateSomasMemory(SomasInfo *const somas_info, const 
                                                      somas_info->whole_block_size_, device_ptr,
                                                      device::tracker::MemType::kSomas);
       somas_info->base_address_ = device_ptr;
+      PROFILER_END(start_time, ProfilerModule::kRuntime, ProfilerEvent::kMemoryAlloc, from_aid.Name(), false);
       return;
     }
   } catch (const std::exception &e) {

@@ -81,6 +81,8 @@ int ClipCompute(struct KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(clip);
   ClipParameter *param = (ClipParameter *)clip->base_.param_;
   NNACL_CHECK_NULL_RETURN_ERR(param);
+  clip->min_val_ = param->min_val_;
+  clip->max_val_ = param->max_val_;
 
   int ret = NNACL_OK;
   if (clip->base_.in_size_ > ONE_TENSOR) {

@@ -31,12 +31,13 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+const pyfloat DEFAULT_SCALE_VALUE = -1;
 std::tuple<std::vector<int64_t>, double, bool> UpsampleLinear1DGenerate(const std::vector<KernelTensor *> &inputs,
                                                                         const std::vector<KernelTensor *> &outputs) {
   auto output_shape = outputs[kIndex0]->GetShapeVector();
   std::vector<int64_t> output_size{output_shape.begin() + kIndex2, output_shape.end()};
 
-  std::vector<pyfloat> scales{0.};
+  std::vector<pyfloat> scales{DEFAULT_SCALE_VALUE};
   if (inputs[kIndex2]->GetType()->type_id() != kMetaTypeNone) {
     scales = inputs[kIndex2]->GetValueWithCheck<std::vector<pyfloat>>();
   }

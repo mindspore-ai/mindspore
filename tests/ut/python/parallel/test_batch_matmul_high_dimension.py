@@ -179,8 +179,8 @@ def test_batch_matmul_3D_TP():
         _w1,
         _w2,
         False,
-        (layout("None", ("z", "x"), "y"), layout("None", ("z", "y"), "x")),
-        (layout("None", ("z", "y"), "x"), layout("None", ("z", "x"), "y"))
+        (layout("None", ("z", "x"), "y"), layout("None", ("y", "z"), "x")),
+        (layout("None", ("z", "y"), "x"), layout("None", ("x", "z"), "y"))
     )
     compile_batch_net(net)
 
@@ -199,8 +199,8 @@ def test_batch_matmul_3D_TP_transpose_b():
         _w1_trans,
         _w2_trans,
         True,
-        (layout("None", ("z", "x"), "y"), layout("None", "x", ("z", "y"))),
-        (layout("None", ("z", "y"), "x"), layout("None", "y", ("z", "x")))
+        (layout("None", ("z", "x"), "y"), layout("None", "x", ("y", "z"))),
+        (layout("None", ("z", "y"), "x"), layout("None", "y", ("x", "z")))
     )
     compile_batch_net(net)
 
@@ -219,8 +219,8 @@ def test_batch_matmul_3D_TP_reduce_2D():
         _w1,
         _w2,
         False,
-        (layout("None", ("z", "x"), "y"), layout("None", ("z", "y"), "x")),
-        (layout("None", ("z", "y"), "x"), layout("None", ("z", "x"), "y"))
+        (layout("None", ("z", "x"), "y"), layout("None", ("y", "z"), "x")),
+        (layout("None", ("z", "y"), "x"), layout("None", ("x", "z"), "y"))
     )
     compile_batch_net(net)
 
@@ -299,8 +299,8 @@ def test_matmul_3D_TP():
         _w1_s,
         _w2_s,
         False,
-        (layout(("z", "x"), "y"), layout(("z", "y"), "x")),
-        (layout(("z", "y"), "x"), layout(("z", "x"), "y"))
+        (layout(("z", "x"), "y"), layout(("y", "z"), "x")),
+        (layout(("z", "y"), "x"), layout(("x", "z"), "y"))
     )
     compile_net(net)
 
@@ -319,8 +319,8 @@ def test_matmul_3D_TP_transpose_b():
         _w1_trans_s,
         _w2_trans_s,
         True,
-        (layout(("z", "x"), "y"), layout("x", ("z", "y"))),
-        (layout(("z", "y"), "x"), layout("y", ("z", "x")))
+        (layout(("z", "x"), "y"), layout("x", ("y", "z"))),
+        (layout(("z", "y"), "x"), layout("y", ("x", "z")))
     )
     compile_net(net)
 
@@ -339,7 +339,7 @@ def test_matmul_3D_TP_reduce_2D():
         _w1_s,
         _w2_s,
         False,
-        (layout(("z", "x"), "y"), layout(("z", "y"), "x")),
-        (layout(("z", "y"), "x"), layout(("z", "x"), "y"))
+        (layout(("z", "x"), "y"), layout(("y", "z"), "x")),
+        (layout(("z", "y"), "x"), layout(("x", "z"), "y"))
     )
     compile_net(net)

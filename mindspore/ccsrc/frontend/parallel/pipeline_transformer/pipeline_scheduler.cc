@@ -200,6 +200,9 @@ static bool SortFuncBetweenMicro(const BorderPair &b_i, const BorderPair &b_j, i
 void PipelineScheduler::ControlOrder(const Border &b_prior, const Border &b_last) {
   auto node_prior = b_prior.border;
   auto node_last = b_last.border;
+  if (node_prior == node_last) {
+    return;
+  }
   std::vector<AnfNodePtr> depend_input = {NewValueNode(prim::kPrimDepend), node_last->input(1), node_prior};
   auto depend_node = root_->NewCNode(depend_input);
   depend_node->set_abstract(node_last->input(1)->abstract());

@@ -38,6 +38,7 @@ class ConstructGraph {
   CNodePtr NewCNode(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
                     const mindspore::HashMap<std::string, ValuePtr> &attrs);
   void SetOutput(const AnfNodePtr &node);
+  void SetGeneralBuildInfo(const AnfNodePtr &node);
 
  private:
   ParameterPtr NewInput(const std::string &name, const AbstractBasePtr &abs);

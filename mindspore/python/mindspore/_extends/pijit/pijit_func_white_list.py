@@ -32,6 +32,8 @@ from mindspore._c_expression import MetaFuncGraph_, function_id, Primitive_, Pri
 from mindspore._c_expression import Tensor as Tensor_
 from mindspore._extends.parse.resources import convert_object_map
 from mindspore import _checkparam as validator
+from mindspore import Parameter, ParameterTuple
+from mindspore.common.initializer import Zero
 
 
 def _get_after_grad_code():
@@ -281,3 +283,61 @@ for const_code in _get_pijit_constexpr_code():
 
 GUARD_KEY_RELAX_FUNC = 1
 _guard_func_map = dict()
+
+
+def infer_after_grad(after_grad_func, inputs, outputs):
+    """ Infer after_grad """
+    contents = {}
+    for index, name in enumerate(after_grad_func.__code__.co_freevars):
+        contents[name] = after_grad_func.__closure__[index].cell_contents
+    grad = contents.get('grad_') if 'grad_' in contents else contents.get('self')
+    grad_position = contents.get('grad_position')
+    weights = contents.get('weights')
+
+    def _validation_check():
+        if not grad:
+            raise ValueError("Failed to get grad")
+        if grad.has_aux and len(inputs) <= 1:
+            raise ValueError("Hax_aux must have more than one input")
+        if grad_position is None and weights is None:
+            raise ValueError("Ethither grad_position or weights must not be empty")
+        if grad.return_ids and grad_position is None:
+            raise ValueError("return_ids must have grad_position not empty")
+
+    def _to_result(grads):
+        if not grads:
+            return None
+        if len(grads) == 1:
+            return grads[0]
+        return tuple(grads)
+
+    _validation_check()
+
+    input_grads = []
+    if isinstance(grad_position, tuple):
+        for pos in grad_position:
+            input_grads.append((pos, inputs[pos]) if grad.return_ids else inputs[pos])
+    elif isinstance(grad_position, int):
+        input_grads.append((grad_position, inputs[grad_position]) if grad.return_ids else inputs[grad_position])
+
+    param_grads = []
+    if isinstance(weights, Parameter):
+        param_grads.append(Tensor(dtype=weights.dtype, shape=weights.shape, init=Zero()))
+    elif isinstance(weights, (ParameterTuple, list)):
+        param_grads = [Tensor(dtype=weight.dtype, shape=weight.shape, init=Zero()) for weight in weights]
+    grads_output = None
+    get_all = input_grads and param_grads
+    if get_all:
+        grads_output = (_to_result(input_grads), _to_result(param_grads))
+    elif input_grads:
+        grads_output = _to_result(input_grads)
+    elif param_grads:
+        grads_output = _to_result(param_grads)
+
+    if grad.get_value:
+        return outputs, grads_output
+
+    if grad.has_aux:
+        aux_output = tuple(list(inputs)[1:])
+        return grads_output, aux_output
+    return grads_output

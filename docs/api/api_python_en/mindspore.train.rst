@@ -28,6 +28,7 @@ Callback
     mindspore.train.LambdaCallback
     mindspore.train.LearningRateScheduler
     mindspore.train.LossMonitor
+    mindspore.train.MindIOTTPAdapter
     mindspore.train.ModelCheckpoint
     mindspore.train.OnRequestExit
     mindspore.train.ReduceLROnPlateau

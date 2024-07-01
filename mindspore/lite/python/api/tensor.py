@@ -324,6 +324,7 @@ class Tensor:
         format: Format.NCHW,
         element_num: 12,
         data_size: 48.
+        device: None:-1.
     """
 
     def __init__(self, tensor=None, shape=None, dtype=None, device=None):

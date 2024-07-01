@@ -106,7 +106,7 @@ int32_t SplitTensorFuncImpl::CheckValidation(const PrimitivePtr &primitive,
   auto rank = SizeToLong(input_shape.size());
   MS_CHECK_VALUE(rank > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("rank", rank, kGreaterEqual, 1, primitive));
   auto axis_value = GetScalarValue<int64_t>(input_args[kIndex2]->GetValue());
-  if (MS_UNLIKELY(!axis_value.has_value())) {
+  if (MS_UNLIKELY(!axis_value.has_value()) || IsDynamicRank(input_shape)) {
     return OP_CHECK_RETRY;
   }
   auto axis = axis_value.value();

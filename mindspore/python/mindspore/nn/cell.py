@@ -1084,6 +1084,7 @@ class Cell(Cell_):
 
     def exec_checkpoint_graph(self):
         """Executes GE saving checkpoint graph operation."""
+        logger.warning("'exec_checkpoint_graph' function is deprecated.")
         self.add_flags(ge_sync_data=True)
         _cell_graph_executor(self, phase='save')
 

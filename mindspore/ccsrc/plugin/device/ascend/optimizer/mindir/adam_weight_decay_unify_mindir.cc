@@ -54,6 +54,17 @@ AnfNodePtr CreateCastNode(const FuncGraphPtr &graph, const AnfNodePtr &input, co
   return input;
 }
 
+AnfNodePtr CreateDependNode(const FuncGraphPtr &graph, const AnfNodePtr &to_node, const AnfNodePtr &from_node) {
+  if (from_node == nullptr) {
+    return to_node;
+  }
+  MS_EXCEPTION_IF_NULL(to_node);
+  auto depend =
+    graph->NewCNode({NewValueNode(std::make_shared<Primitive>(prim::kPrimDepend->name())), to_node, from_node});
+  depend->set_abstract(to_node->abstract());
+  return depend;
+}
+
 AnfNodePtr CreateSubCNode(const FuncGraphPtr &graph, const AnfNodePtr &src_node, const AnfNodePtr &dst_node) {
   MS_EXCEPTION_IF_NULL(src_node);
   MS_EXCEPTION_IF_NULL(dst_node);
@@ -115,6 +126,10 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
   AnfNodePtr ori_param = nullptr;
   if (!all_fp32) {
     ori_param = input_list[kIndex1];
+    // depend monad to optimize memory
+    input_list[kIndex1] = CreateDependNode(func_graph, input_list[kIndex1], input_list[kIndex11]);
+    input_list[kIndex2] = CreateDependNode(func_graph, input_list[kIndex2], input_list[kIndex11]);
+    input_list[kIndex3] = CreateDependNode(func_graph, input_list[kIndex3], input_list[kIndex11]);
     input_list[kIndex1] = CreateCastNode(func_graph, input_list[kIndex1], kNumberTypeFloat32);
     input_list[kIndex2] = CreateCastNode(func_graph, input_list[kIndex2], kNumberTypeFloat32);
     input_list[kIndex3] = CreateCastNode(func_graph, input_list[kIndex3], kNumberTypeFloat32);
@@ -123,6 +138,8 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
     prim = std::make_shared<Primitive>(kAdamApplyOneWithDecayAssignOpName);
   }
   std::vector<AnfNodePtr> new_node_inputs = {NewValueNode(prim)};
+  // depend monad to optimize memory
+  input_list[kIndex9] = CreateDependNode(func_graph, input_list[kIndex9], input_list[kIndex11]);
   input_list[kIndex9] = CreateCastNode(func_graph, input_list[kIndex9], kNumberTypeFloat32);
 
   // Mapping ms index to ge index.

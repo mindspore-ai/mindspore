@@ -21,6 +21,7 @@ class JitConfig:
     Args:
         jit_level (str, optional): Used to control the compilation optimization level.
             Supports ["O0", "O1", "O2"]. Default: ``""`` , The framework automatically selects the execution method.
+            Not recommended, it is recommended to use the jit decorator.
 
             - ``"O0"``: Except for optimizations that may affect functionality, all other optimizations are turned off,
               adopt KernelByKernel execution mode.

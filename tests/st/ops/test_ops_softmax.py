@@ -15,11 +15,10 @@
 import pytest
 import numpy as np
 from tests.st.utils import test_utils
-
+from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 import mindspore as ms
 from mindspore import Tensor, context
-from mindspore import ops, JitConfig
-from mindspore import dtype as mstype
+from mindspore import ops
 
 
 def softmax_(x, axis):
@@ -42,7 +41,7 @@ def softmax_backward_forward_func(dout, out, dim=-1):
     return ops.auto_generate.SoftmaxBackward()(dout, out, dim)
 
 
-@test_utils.run_with_cell_ext(JitConfig(jit_level="O2"))
+@test_utils.run_with_cell
 def softmax_double_backward_func(dout, out, dim=-1):
     return ops.grad(softmax_backward_forward_func, (0, 1))(dout, out, dim)
 
@@ -59,7 +58,7 @@ def tensor_softmax_forward_func(x, axis=-1):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_softmax_forward(mode):
+def test_softmax_static_shape(mode):
     """
     Feature: Ops
     Description: test op softmax
@@ -73,21 +72,6 @@ def test_softmax_forward(mode):
     ).astype(np.float32)
     assert np.allclose(output.asnumpy(), expect_out, 1e-04, 1e-04)
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_softmax_backward(mode):
-    """
-    Feature: Auto grad.
-    Description: test auto grad of op softmax.
-    Expectation: expect correct result.
-    """
-    context.set_context(mode=mode)
     x = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
     grads = softmax_backward_func(x, 0)
     expect_shape = (10, 36, 12, 12)
@@ -170,119 +154,25 @@ def test_tensor_softmax(mode):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_softmax_dynamic_shape(mode):
+def test_softmax_dynamic():
     """
     Feature: Ops
     Description: test op softmax dynamic shape
     Expectation: expect correct result.
     """
-    context.set_context(mode=mode)
-    axis = ms.mutable((-1,))
-    x_dyn = Tensor(shape=[None, None, None, None], dtype=mstype.float32)
-    test_cell = test_utils.to_cell_obj(softmax_forward_func)
-    test_cell.set_inputs(x_dyn, axis)
-
-    x_1 = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
-    out_1 = test_cell(x_1, (-1,))
-    expect_shape_1 = (10, 36, 12, 12)
-    assert out_1.asnumpy().shape == expect_shape_1
-
-    x_2 = Tensor(np.random.rand(6, 20, 10, 10).astype(np.float32))
-    out_2 = test_cell(x_2, (-2,))
-    expect_shape_2 = (6, 20, 10, 10)
-    assert out_2.asnumpy().shape == expect_shape_2
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_softmax_dynamic_rank(mode):
-    """
-    Feature: Ops
-    Description: test op softmax dynamic rank
-    Expectation: expect correct result.
-    """
-    context.set_context(mode=mode)
-    axis = ms.mutable(-1)
-    x_dyn = Tensor(shape=None, dtype=mstype.float32)
-    test_cell = test_utils.to_cell_obj(softmax_forward_func)
-    test_cell.set_inputs(x_dyn, axis)
-
-    x_1 = Tensor(np.random.rand(10, 36, 12).astype(np.float32))
-    out_1 = test_cell(x_1, -1)
-    expect_shape_1 = (10, 36, 12)
-    assert out_1.asnumpy().shape == expect_shape_1
-
-    x_2 = Tensor(np.random.rand(6, 20, 10, 10).astype(np.float32))
-    out_2 = test_cell(x_2, -2)
-    expect_shape_2 = (6, 20, 10, 10)
-    assert out_2.asnumpy().shape == expect_shape_2
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_softmax_backward_dynamic_shape(mode):
-    """
-    Feature: Ops
-    Description: test op softmax backward dynamic shape
-    Expectation: expect correct result.
-    """
-    context.set_context(mode=mode)
-    axis = ms.mutable(-1)
-    x_dyn = Tensor(shape=[None, None, None, None], dtype=mstype.float32)
-    test_cell = test_utils.to_cell_obj(softmax_backward_func)
-    test_cell.set_inputs(x_dyn, axis)
-
-    x_1 = Tensor(np.random.rand(10, 36, 12, 12).astype(np.float32))
-    out_1 = test_cell(x_1, -1)
-    expect_shape_1 = (10, 36, 12, 12)
-    assert out_1.asnumpy().shape == expect_shape_1
-
-    x_2 = Tensor(np.random.rand(6, 20, 10, 10).astype(np.float32))
-    out_2 = test_cell(x_2, -2)
-    expect_shape_2 = (6, 20, 10, 10)
-    assert out_2.asnumpy().shape == expect_shape_2
-
-
-# 反向动态shape有公共问题，待解决后再放开用例
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_softmax_backward_dynamic_rank(mode):
-    """
-    Feature: Ops
-    Description: test op softmax backward dynamic rank
-    Expectation: expect correct result.
-    """
-    context.set_context(mode=mode)
-    axis = ms.mutable((-1,))
-    x_dyn = Tensor(shape=None, dtype=mstype.float32)
-    test_cell = test_utils.to_cell_obj(softmax_backward_func)
-    test_cell.set_inputs(x_dyn, axis)
-
-    x_1 = Tensor(np.random.rand(10, 36, 12).astype(np.float32))
-    out_1 = test_cell(x_1, (-1,))
-    expect_shape_1 = (10, 36, 12)
-    assert out_1.asnumpy().shape == expect_shape_1
-
-    x_2 = Tensor(np.random.rand(6, 20, 10, 10).astype(np.float32))
-    out_2 = test_cell(x_2, (-2,))
-    expect_shape_2 = (6, 20, 10, 10)
-    assert out_2.asnumpy().shape == expect_shape_2
+    context.set_context(
+        runtime_num_threads=1
+    )  # multi-threads have none-initialized bug now.
+    input_case1 = Tensor(np.random.randn(8, 30, 3), dtype=ms.float32)
+    input_case2 = Tensor(np.random.randn(9, 4), dtype=ms.float32)
+    TEST_OP(
+        softmax_forward_func,
+        [
+            [input_case1, (-1,)],
+            [input_case2, (0,)],
+        ],
+        "softmax"
+    )
 
 
 def run_softmax_api(ms_type, nptype):

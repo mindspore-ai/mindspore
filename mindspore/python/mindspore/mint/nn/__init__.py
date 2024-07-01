@@ -98,7 +98,7 @@ from mindspore.nn.layer.basic import DropoutExt as Dropout
 # 37
 
 # 38
-
+from mindspore.nn.extend.basic import Linear
 # 39
 
 # 40
@@ -381,7 +381,7 @@ __all__ = [
     # 37
 
     # 38
-
+    'Linear',
     # 39
 
     # 40

@@ -12,7 +12,6 @@ The module import method is as follows:
 Tensor
 ---------------
 
-
 Creation Operations
 ^^^^^^^^^^^^^^^^^^^^^^
 
@@ -21,6 +20,7 @@ Creation Operations
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.arange
     mindspore.mint.eye
     mindspore.mint.ones
     mindspore.mint.ones_like
@@ -35,21 +35,17 @@ Indexing, Slicing, Joining, Mutating Operations
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.mint.arange
-    mindspore.mint.broadcast_to
     mindspore.mint.cat
+    mindspore.mint.gather
     mindspore.mint.index_select
+    mindspore.mint.permute
     mindspore.mint.scatter_add
     mindspore.mint.split
     mindspore.mint.narrow
     mindspore.mint.nonzero
-    mindspore.mint.normal
     mindspore.mint.tile
-    mindspore.mint.topk
-    mindspore.mint.sort
     mindspore.mint.stack
     mindspore.mint.where
-
 
 Random Sampling
 -----------------
@@ -59,21 +55,12 @@ Random Sampling
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.normal
     mindspore.mint.rand_like
     mindspore.mint.rand
 
-
 Math Operations
------------------
-
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.gather
-    mindspore.mint.permute
-    mindspore.mint.repeat_interleave
+------------------
 
 Pointwise Operations
 ^^^^^^^^^^^^^^^^^^^^^
@@ -86,19 +73,16 @@ Pointwise Operations
     mindspore.mint.abs
     mindspore.mint.add
     mindspore.mint.clamp
-    mindspore.mint.cumsum
     mindspore.mint.atan2
     mindspore.mint.arctan2
     mindspore.mint.ceil
     mindspore.mint.cos
-    mindspore.mint.unique
     mindspore.mint.div
     mindspore.mint.divide
     mindspore.mint.erf
     mindspore.mint.erfinv
     mindspore.mint.exp
     mindspore.mint.floor
-    mindspore.mint.isfinite
     mindspore.mint.log
     mindspore.mint.logical_and
     mindspore.mint.logical_not
@@ -109,23 +93,12 @@ Pointwise Operations
     mindspore.mint.pow
     mindspore.mint.reciprocal
     mindspore.mint.rsqrt
+    mindspore.mint.sigmoid
     mindspore.mint.sin
     mindspore.mint.sqrt
     mindspore.mint.square
     mindspore.mint.sub
-
     mindspore.mint.tanh
-
-Linear Algebraic Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.bmm
-    mindspore.mint.matmul
 
 Reduction Operations
 ^^^^^^^^^^^^^^^^^^^^^
@@ -135,11 +108,15 @@ Reduction Operations
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.argmax
     mindspore.mint.all
     mindspore.mint.any
+    mindspore.mint.max
     mindspore.mint.mean
+    mindspore.mint.min
     mindspore.mint.prod
     mindspore.mint.sum
+    mindspore.mint.unique
 
 Comparison Operations
 ^^^^^^^^^^^^^^^^^^^^^^
@@ -150,15 +127,20 @@ Comparison Operations
     :template: classtemplate.rst
 
     mindspore.mint.eq
-    mindspore.mint.ne
     mindspore.mint.greater
-    mindspore.mint.gt
     mindspore.mint.greater_equal
+    mindspore.mint.gt
     mindspore.mint.isclose
+    mindspore.mint.isfinite
     mindspore.mint.le
     mindspore.mint.less
     mindspore.mint.less_equal
     mindspore.mint.lt
+    mindspore.mint.maximum
+    mindspore.mint.minimum
+    mindspore.mint.ne
+    mindspore.mint.topk
+    mindspore.mint.sort
 
 BLAS and LAPACK Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -168,7 +150,9 @@ BLAS and LAPACK Operations
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.bmm
     mindspore.mint.inverse
+    mindspore.mint.matmul
 
 Other Operations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -178,34 +162,14 @@ Other Operations
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.broadcast_to
+    mindspore.mint.cumsum
+    mindspore.mint.flip
+    mindspore.mint.repeat_interleave
     mindspore.mint.searchsorted
-
-Reduction Functions
-^^^^^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.argmax
-
 
 mindspore.mint.nn
 ------------------
-
-Dropout Layers
-^^^^^^^^^^^^^^^
-
-.. msplatformautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.nn.Dropout
-
-
-
 
 Convolution Layers
 ^^^^^^^^^^^^^^^^^^
@@ -217,7 +181,25 @@ Convolution Layers
     mindspore.mint.nn.Fold
     mindspore.mint.nn.Unfold
 
+Linear Layers
+^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.Linear
+
+Dropout Layers
+^^^^^^^^^^^^^^^
+
+.. msplatformautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.Dropout
 
 Loss Functions
 ^^^^^^^^^^^^^^^
@@ -232,22 +214,6 @@ Loss Functions
 mindspore.mint.nn.functional
 -----------------------------
 
-Neural Network Layer Functions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.nn.functional.batch_norm
-    mindspore.mint.nn.functional.dropout
-    mindspore.mint.nn.functional.embedding
-    mindspore.mint.nn.functional.grid_sample
-    mindspore.mint.nn.functional.group_norm
-    mindspore.mint.nn.functional.layer_norm
-    mindspore.mint.nn.functional.linear
-
 Convolution functions
 ^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -259,19 +225,6 @@ Convolution functions
     mindspore.mint.nn.functional.fold
     mindspore.mint.nn.functional.unfold
 
-
-Tensor Creation
-^^^^^^^^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: mint
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.mint.nn.functional.one_hot
-
-
-
 Pooling functions
 ^^^^^^^^^^^^^^^^^^^
 
@@ -282,19 +235,6 @@ Pooling functions
 
     mindspore.mint.nn.functional.max_pool2d
 
-
-
-
-
-Attention Mechanisms
-^^^^^^^^^^^^^^^^^^^^^^^
-
-
-
-
-
-
-
 Non-linear activation functions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -303,45 +243,49 @@ Non-linear activation functions
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.mint.nn.functional.binary_cross_entropy
+    mindspore.mint.nn.functional.batch_norm
     mindspore.mint.nn.functional.elu
     mindspore.mint.nn.functional.gelu
+    mindspore.mint.nn.functional.group_norm
+    mindspore.mint.nn.functional.layer_norm
     mindspore.mint.nn.functional.leaky_relu
+    mindspore.mint.nn.functional.relu
     mindspore.mint.nn.functional.sigmoid
     mindspore.mint.nn.functional.silu
     mindspore.mint.nn.functional.softmax
     mindspore.mint.nn.functional.softplus
     mindspore.mint.nn.functional.tanh
 
-
-
-
-
 Linear functions
 ^^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
-
-
-
-
+    mindspore.mint.nn.functional.linear
 
 Dropout functions
 ^^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.dropout
 
-
-
-
-
-Distance functions
+Sparse functions
 ^^^^^^^^^^^^^^^^^^^
 
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
 
-
-
-
+    mindspore.mint.nn.functional.embedding
+    mindspore.mint.nn.functional.one_hot
 
 Loss Functions
 ^^^^^^^^^^^^^^^^
@@ -351,11 +295,8 @@ Loss Functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.binary_cross_entropy
     mindspore.mint.nn.functional.binary_cross_entropy_with_logits
-
-
-
-
 
 Vision functions
 ^^^^^^^^^^^^^^^^^^
@@ -365,12 +306,8 @@ Vision functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.grid_sample
     mindspore.mint.nn.functional.pad
-
-
-
-
-
 
 mindspore.mint.optim
 ---------------------

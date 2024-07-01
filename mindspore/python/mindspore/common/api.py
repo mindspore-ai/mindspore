@@ -401,9 +401,25 @@ def _get_args_for_run_predict(obj, args, kwargs, compile_args):
     return new_args
 
 
-def _is_dyn_args_fullmode(dyn_args):
-    if not isinstance(dyn_args, dict):
+def _is_args_fullmode(args, is_init=True):
+    """Check whether the arguments is for incremental-mode.
+
+    Args:
+        args (Union[list, tuple, dict, Tensor]): Given arguments.
+        is_init (bool): Is check in argument initialization phase.
+
+    Raises:
+        RuntimeError: loss necessary keys and values for incremental-mode.
+
+    Returns:
+        bool: Fullmode or not.
+    """
+    if not isinstance(args, dict):
         return True
+    if not is_init and (args.get(ARG_SPECIFIED, None) is None or args.get(TOTAL_ARG_LEN, None) is None):
+        raise RuntimeError(
+            "The incremental inputs should be processed(with \"%s\" and \"%s\"), but got %s." %
+            (ARG_SPECIFIED, TOTAL_ARG_LEN, str(args)))
     return False
 
 
@@ -426,7 +442,7 @@ def _process_dyn_args(fn, dyn_args):
         return dyn_args
 
     args_sig = inspect.signature(fn)
-    if _is_dyn_args_fullmode(dyn_args):
+    if _is_args_fullmode(dyn_args):
         if not isinstance(dyn_args, (list, tuple)):
             temp_dyn_args = (dyn_args,)
         else:
@@ -456,6 +472,7 @@ def _process_dyn_args(fn, dyn_args):
         else:
             raise TypeError("Dynamic arguments is not accepted for VAR_POSITIONAL or VAR_KEYWORD parameters!")
 
+    offset = -1 if fn.__name__ == 'construct' and args_sig_parameters[0].name == "self" else 0
     meet_index = set()
 
     def _check_index_valid(index):
@@ -472,7 +489,7 @@ def _process_dyn_args(fn, dyn_args):
         if k in arg_names:
             cur_id = arg_names.index(k)
             _check_index_valid(cur_id)
-            arg_handler_infos.append([cur_id, v])
+            arg_handler_infos.append([cur_id + offset, v])
         else:
             raise ValueError("For dict mode, valid key is %s, but got %s!" % (arg_names, k))
     return {ARG_SPECIFIED: arg_handler_infos, TOTAL_ARG_LEN: len(args_sig_parameters)}
@@ -482,7 +499,7 @@ def _generate_dyn_compile_args(compile_args, dyn_args):
     """Generate the dynamic compile arguments."""
     if not dyn_args:
         return compile_args
-    if _is_dyn_args_fullmode(dyn_args):
+    if _is_args_fullmode(dyn_args, False):
         if not isinstance(dyn_args, (list, tuple)):
             return (dyn_args,)
         return dyn_args
@@ -689,7 +706,6 @@ class _MindsporeFunctionExecutor:
         if enable_compile_cache is None:
             enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
         if enable_compile_cache is True or enable_compile_cache == "1":
-            self._graph_executor.set_enable_compile_cache(True)
             self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
 
     def _generate_compile_args(self, args_list):
@@ -1741,7 +1757,6 @@ class _CellGraphExecutor:
         if enable_compile_cache is None:
             enable_compile_cache = os.getenv('MS_COMPILER_CACHE_ENABLE')
         if enable_compile_cache is True or enable_compile_cache == "1":
-            self._graph_executor.set_enable_compile_cache(True)
             self._graph_executor.set_compile_cache_dep_files(_get_compile_cache_dep_files())
 
     def compile(self, obj, *args, phase='predict', do_convert=True, jit_config_dict=None, **kwargs):

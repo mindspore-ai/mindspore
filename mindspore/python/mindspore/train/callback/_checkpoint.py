@@ -36,6 +36,7 @@ from mindspore.train.callback._callback import Callback, set_cur_net
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common.generator import Generator
+from mindspore.common.api import _cell_graph_executor
 from mindspore._c_expression import _collect_host_info
 
 
@@ -641,7 +642,8 @@ class ModelCheckpoint(Callback):
             if context.get_context("enable_ge") and os.getenv('MS_DISABLE_REF_MODE') \
                     and context.get_context("mode") == context.GRAPH_MODE:
                 set_cur_net(cb_params.train_network)
-                cb_params.train_network.exec_checkpoint_graph()
+                cb_params.train_network.add_flags(ge_sync_data=True)
+                _cell_graph_executor(cb_params.train_network, phase='save')
             if "epoch_num" in self._append_dict:
                 self._append_dict["epoch_num"] = self._append_epoch_num + cb_params.cur_epoch_num
             if "step_num" in self._append_dict:

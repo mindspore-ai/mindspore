@@ -1136,15 +1136,6 @@ void GeKernelExecutor::DoAsyncCkpt(const CNodePtr &kernel) const {
   }
 }
 
-bool GeKernelExecutor::IsNeedNotifyTTP(const CNodePtr &kernel) const {
-  MS_EXCEPTION_IF_NULL(kernel);
-  if (mindio::MindIOAdapter::GetInstance()->IsEnable() && common::AnfAlgo::HasNodeAttr(kFromRefGraph, kernel) &&
-      common::AnfAlgo::GetNodeAttr<bool>(kernel, kFromRefGraph)) {
-    return true;
-  }
-  return false;
-}
-
 bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelTensor *> &inputs,
                                     const vector<KernelTensor *> &workspace, const vector<KernelTensor *> &outputs,
                                     KernelMod *kernel_mod, void *stream) const {
@@ -1160,10 +1151,6 @@ bool GeKernelExecutor::LaunchKernel(const CNodePtr &kernel, const vector<KernelT
   } else {
     MS_EXCEPTION_IF_NULL(kernel_mod);
     MS_EXCEPTION_IF_NULL(stream);
-    if (IsNeedNotifyTTP(kernel) && AscendStreamMng::GetInstance().SyncStream(stream)) {
-      MS_LOG(INFO) << "Found optimizer sub kernel and send event to mindio";
-      mindio::MindIOAdapter::GetInstance()->NotifyStartUpdatingOs();
-    }
     bool ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();

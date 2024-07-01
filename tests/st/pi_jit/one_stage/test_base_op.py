@@ -18,6 +18,7 @@ import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
+from mindspore.common import dtype
 from mindspore.common.api import jit
 
 cfg = {
@@ -692,3 +693,31 @@ def test_cycle_container_structure_3():
     assert ret1 == a
     ret2 = net(b)
     assert ret2 == b
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_guard_parameter():
+    """
+    Feature: One stage basic operation.
+    Description: Test one stage basic operation.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.w = Parameter(Tensor(np.random.rand(2, 2), dtype.float32), name='w')
+
+        @jit(mode="PIJit")
+        def construct(self, x):
+            return self.w * x
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    m = Tensor([[1, 1], [2, 2]], dtype.float32)
+    net1 = Net()
+    ret1 = net1(m)
+    net2 = Net()
+    ret2 = net2(m)
+    assert np.allclose(ret1.asnumpy(), (net1.w * m).asnumpy())
+    assert np.allclose(ret2.asnumpy(), (net2.w * m).asnumpy())

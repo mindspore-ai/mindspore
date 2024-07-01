@@ -23,6 +23,8 @@
 #include <set>
 #include "common/common_test.h"
 #include "include/backend/optimizer/helper.h"
+#include "include/common/utils/anfalgo.h"
+#include "include/backend/anf_runtime_algorithm.h"
 
 namespace mindspore::test {
 void RunPass(const FuncGraphPtr &graph, const std::vector<opt::PassPtr> &passes) {
@@ -105,6 +107,31 @@ CNodePtr ConstructGraph::NewCNode(const std::string &prim_name, const std::vecto
   auto out_abs = opt::CppInferShapeAndType(GetCNodePrimitive(cnode), args);
   cnode->set_abstract(out_abs);
   return cnode;
+}
+
+void ConstructGraph::SetGeneralBuildInfo(const AnfNodePtr &node) {
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder info_builder;
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  size_t input_num = cnode->size() - 1;
+  info_builder.SetInputsFormat(std::vector<std::string>(input_num, "DefaultFormat"));
+  std::vector<TypeId> input_types(input_num);
+  for (size_t i = 0; i < input_types.size(); i++) {
+    input_types[i] = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, i);
+  }
+  info_builder.SetInputsDeviceType(input_types);
+  info_builder.SetInputsKernelObjectType(
+    std::vector<kernel::KernelObjectType>(input_num, kernel::KernelObjectType::TENSOR));
+  size_t output_num = common::AnfAlgo::GetOutputNumByAbstract(node->abstract());
+  info_builder.SetOutputsFormat(std::vector<std::string>(output_num, "DefaultFormat"));
+  std::vector<TypeId> output_types(output_num);
+  for (size_t i = 0; i < output_types.size(); i++) {
+    input_types[i] = common::AnfAlgo::GetOutputInferDataType(node, i);
+  }
+  info_builder.SetOutputsDeviceType(output_types);
+  info_builder.SetOutputsKernelObjectType(
+    std::vector<kernel::KernelObjectType>(output_num, kernel::KernelObjectType::TENSOR));
+  AnfAlgo::SetSelectKernelBuildInfo(info_builder.Build(), node.get());
 }
 
 void ConstructGraph::SetOutput(const AnfNodePtr &node) {

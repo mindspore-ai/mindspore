@@ -205,7 +205,7 @@ void ConvertBFloat16::GetKeepBF16Nodes(const FuncGraphPtr &func_graph) {
       // As NeedKeepBF16(cnode), value of GetCNodePrimitive(cnode) is not a nullptr
       auto prim_name = GetCNodePrimitive(cnode)->name();
       for (const auto &input_index : kNeedKeepBF16Ops.at(prim_name)) {
-        keep_bf16_nodes_[cnode->input(input_index)] = std::make_pair(cnode, input_index);
+        (void)keep_bf16_nodes_[cnode->input(input_index)].emplace_back(std::make_pair(cnode, input_index));
       }
     } else if (IsPrimitiveCNode(node, prim::kPrimReturn)) {
       auto ret_input = cnode->input(1);
@@ -215,12 +215,12 @@ void ConvertBFloat16::GetKeepBF16Nodes(const FuncGraphPtr &func_graph) {
         last_node_ = ret_input->cast<CNodePtr>();
         MS_EXCEPTION_IF_NULL(last_node_);
         for (size_t i = 1; i < last_node_->size(); ++i) {
-          keep_bf16_nodes_[last_node_->input(i)] = std::make_pair(last_node_, i);
+          (void)keep_bf16_nodes_[last_node_->input(i)].emplace_back(std::make_pair(last_node_, i));
         }
       } else {
         // single output
         last_node_ = cnode;
-        keep_bf16_nodes_[ret_input] = std::make_pair(last_node_, 1);
+        (void)keep_bf16_nodes_[ret_input].emplace_back(std::make_pair(last_node_, 1));
       }
     }
   }
@@ -281,8 +281,9 @@ bool ConvertBFloat16::Process(const FuncGraphPtr &func_graph) {
     auto iter = keep_bf16_nodes_.find(node);
     if (iter != keep_bf16_nodes_.end() && cur_output_type != orig_output_type) {
       auto new_cast_node = NewCastNode(func_graph, node, orig_output_type);
-      auto user_node = iter->second.first;
-      user_node->set_input(iter->second.second, new_cast_node);
+      for (auto &[user_node, idx] : iter->second) {
+        user_node->set_input(idx, new_cast_node);
+      }
     }
   }
   if (changed) {

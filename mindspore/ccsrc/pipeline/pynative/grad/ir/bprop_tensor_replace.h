@@ -37,6 +37,10 @@ struct TensorReplaceInfo {
   OpInfoWithTensorObject op_info_with_tensor_object{};
   OpInfoWithForwardOutput op_info_with_forward_output{};
   size_t need_replace_size{};
+  void clear() {
+    op_info_with_tensor_object.clear();
+    op_info_with_forward_output.clear();
+  }
 };
 
 void SetIdWithOpInfo(const ValuePtr &v, const std::string &op_info, size_t out_index,

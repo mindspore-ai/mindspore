@@ -637,7 +637,6 @@ static auto Analyze(const GraphBuilderPtr &g) {
 static void GraphCapture(JitCompileResults *jcr) {
   TimeRecorder recorder(__FUNCTION__, kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kLogPerf));
   MS_EXCEPTION_IF_NULL(jcr->code);
-  AObjectSourceScope resource;
 
   GraphJitConfig &conf = *jcr->conf;
   AObject::SetTraceFlag(conf.GetBoolConfig(GraphJitConfig::kTraceFlag));
@@ -973,6 +972,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kCapture, runtime::ProfilerEvent::kCaptureProcess,
                                        "PIJitCapture");
     c->stat = JitCompileResults::GRAPH_BUILDING;
+    auto aobject_resource = AObject::MakeResource();
     GraphCapture(c);
     sc.ApplySignature();
     if (c->stat == JitCompileResults::GRAPH_CAPTURED) {
@@ -984,6 +984,7 @@ static bool JitCompile(PyThreadState *tstate, JitCompileResults *c) {
       GuardForFrame(f, c->code, *c->conf);
       AddGuardForGlobals(f, c->code->GetGuard(), c->conf->GetBoolConfig(GraphJitConfig::kGuardDetachObject));
     }
+    aobject_resource.Release();
   }
   sc.ApplySignature();
 

@@ -1,17 +1,15 @@
 approvers:
 - zhaizhiqiang
 - zhang_xue_tong #
-- HilbertDavid
 - jpc_chenjianping
 - wang_shaocong
 - yeyunpeng2020
 - YeFeng_24
-- yangruoqi713
 reviewers:
 - xu_anyue
 - ling_qiao_min
-- greatpanc
 - gengdongjie
+- zhuguodong
 
 options:
   no_parent_owners: true

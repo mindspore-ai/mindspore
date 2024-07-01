@@ -137,7 +137,7 @@ void SuperKernelActor::Init() {
       }
       // Free the ptr in device address of output node.
       if (device_address->GetPtr() != nullptr) {
-        MS_LOG(ERROR) << "Output node:" << output_node->DebugString() << " has a default ptr, maybe a mem leak.";
+        MS_LOG(INFO) << "Output node:" << output_node->DebugString() << " has a default ptr, maybe a mem leak.";
         device_address->set_ptr(nullptr);
       }
       if (common::IsNeedProfileMemory()) {
@@ -859,7 +859,7 @@ void SuperKernelActor::BuildKernelActors() {
                       << " with index: " << output_index << " has no front node.";
       continue;
     }
-    if (!output_kernel->isa<CNode>()) {
+    if (!AnfUtils::IsRealCNodeKernel(output_kernel)) {
       continue;
     }
     auto iter = node_to_kernel_actor_.find(output_kernel);

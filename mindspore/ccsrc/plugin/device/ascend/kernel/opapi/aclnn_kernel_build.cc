@@ -77,5 +77,14 @@ bool IsEnabledAclnnDispatch(const std::string &op_name) {
   }
   return op_def->enable_dispatch_;
 }
+
+bool IsViewOp(const std::string &op_name) {
+  mindspore::ops::OpDefPtr op_def = mindspore::ops::GetOpDef(op_name);
+  if (op_def == nullptr) {
+    MS_LOG(INFO) << op_name << " is not defined in opdef.";
+    return false;
+  }
+  return op_def->is_view_;
+}
 }  // namespace kernel
 }  // namespace mindspore

@@ -15,12 +15,10 @@
 """fft operations, the function docs are adapted from Scipy API."""
 from __future__ import absolute_import
 from __future__ import division
-
+__all__ = ['dct', 'idct']
 from mindspore.ops.auto_generate import DCT
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.scipy.utils import _raise_value_error
-
-__all__ = ['dct', 'idct']
 
 
 def dct(x, type=2, n=None, axis=-1, norm=None):

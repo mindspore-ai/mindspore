@@ -49,11 +49,6 @@ class TensorLayout {
     return this->tensor_shape_.UpdateTensorShape(index, update_value);
   }
 
-  bool IsDynamicShape() {
-    return std::find(this->tensor_shape_.array().begin(), this->tensor_shape_.array().end(), -1) !=
-           this->tensor_shape_.array().end();
-  }
-
   bool skip_redistribution() const { return skip_redistribution_; }
 
   void set_skip_redistribution(bool flag) { skip_redistribution_ = flag; }

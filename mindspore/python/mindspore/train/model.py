@@ -1152,10 +1152,13 @@ class Model:
 
     def _wrapper_train(self, callbacks):
         """
-            This method used to wrap train function with ttp wrapper which will do event notify when
+        This method used to wrap train function with ttp wrapper which will do event notify when
+        exceptions throw.
+
         Args:
-            callbacks (function): callbacks pass by train method
+            callbacks (function): Callbacks passed by train method.
         """
+
         if not callbacks:
             return self._train
         cbs = callbacks if isinstance(callbacks, list) else [callbacks]

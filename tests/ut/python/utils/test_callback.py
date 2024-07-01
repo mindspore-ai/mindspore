@@ -620,7 +620,8 @@ def test_mindio_ttp_adapter():
             ckpt_save_path='./ckpt')
         assert mindio_cb.enable is False
 
-        os.environ["MS_ENABLE_MINDIO_GRACEFUL_EXIT"] = '1'
+        os.environ["MS_ENABLE_MINDIO_GRACEFUL_EXIT"] = 'true'
+        os.environ["MS_MINDIO_TTP_LIB_PATH"] = os.path.abspath(__file__)
         mindio_cb = MindIOTTPAdapter(
             controller_ip="192.168.0.1",
             controller_port=8080,

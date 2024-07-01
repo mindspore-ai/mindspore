@@ -1938,6 +1938,7 @@ void GradExecutor::ClearRes() {
   dynamic_inputs_cells_.clear();
   need_gc_top_cell_list_.clear();
   dynamic_shape()->Clear();
+  jit()->Clear();
 }
 
 void GradExecutor::AsyncClearTopCell() {

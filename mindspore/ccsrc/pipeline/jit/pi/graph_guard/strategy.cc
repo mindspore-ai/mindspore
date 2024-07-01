@@ -213,6 +213,12 @@ OptStrategy::CalcKind MakeCalcStrategyByObject(int bytecode, int opargs, const P
   return ObjectComputable(objs[0]);
 }
 
+OptStrategy::CalcKind MakeInplaceCalcStrategyByObject(int bytecode, int opargs, const PyObjectArray &objs) {
+  std::set<std::string> inplace = {"numpy.ndarray", "list", "<unnamed>"};
+  const char *tp_name = Py_TYPE(objs[0])->tp_name ? (Py_TYPE(objs[0]))->tp_name : "<unnamed>";
+  return inplace.find(tp_name) == inplace.end() ? ObjectComputable(objs[0]) : OptStrategy::CalcKind::kCalcUnsupported;
+}
+
 OptStrategy::CalcKind MakeCalcStrategyByMatMul(int bytecode, int opargs, const PyObjectArray &objs) {
   auto oc1 = ObjectComputable(objs[0]);
   auto oc2 = ObjectComputable(objs[1]);
@@ -256,25 +262,25 @@ static std::map<int, CheckPyObjectFunc> kBytecodeStrategy = {
   {BINARY_OR, MakeCalcStrategyByObject},
   {BINARY_FLOOR_DIVIDE, MakeCalcStrategyByObject},
   {BINARY_TRUE_DIVIDE, MakeCalcStrategyByObject},
-  {INPLACE_LSHIFT, MakeCalcStrategyByObject},
-  {INPLACE_RSHIFT, MakeCalcStrategyByObject},
-  {INPLACE_AND, MakeCalcStrategyByObject},
-  {INPLACE_XOR, MakeCalcStrategyByObject},
-  {INPLACE_OR, MakeCalcStrategyByObject},
-  {INPLACE_FLOOR_DIVIDE, MakeCalcStrategyByObject},
-  {INPLACE_TRUE_DIVIDE, MakeCalcStrategyByObject},
+  {INPLACE_LSHIFT, MakeInplaceCalcStrategyByObject},
+  {INPLACE_RSHIFT, MakeInplaceCalcStrategyByObject},
+  {INPLACE_AND, MakeInplaceCalcStrategyByObject},
+  {INPLACE_XOR, MakeInplaceCalcStrategyByObject},
+  {INPLACE_OR, MakeInplaceCalcStrategyByObject},
+  {INPLACE_FLOOR_DIVIDE, MakeInplaceCalcStrategyByObject},
+  {INPLACE_TRUE_DIVIDE, MakeInplaceCalcStrategyByObject},
   {BINARY_POWER, MakeCalcStrategyByObject},
   {BINARY_ADD, MakeCalcStrategyByObject},
   {BINARY_SUBTRACT, MakeCalcStrategyByObject},
   {BINARY_MULTIPLY, MakeCalcStrategyByObject},
   {BINARY_MODULO, MakeCalcStrategyByObject},
-  {INPLACE_POWER, MakeCalcStrategyByObject},
-  {INPLACE_ADD, MakeCalcStrategyByObject},
-  {INPLACE_SUBTRACT, MakeCalcStrategyByObject},
-  {INPLACE_MULTIPLY, MakeCalcStrategyByObject},
-  {INPLACE_MODULO, MakeCalcStrategyByObject},
+  {INPLACE_POWER, MakeInplaceCalcStrategyByObject},
+  {INPLACE_ADD, MakeInplaceCalcStrategyByObject},
+  {INPLACE_SUBTRACT, MakeInplaceCalcStrategyByObject},
+  {INPLACE_MULTIPLY, MakeInplaceCalcStrategyByObject},
+  {INPLACE_MODULO, MakeInplaceCalcStrategyByObject},
   {BINARY_MATRIX_MULTIPLY, MakeCalcStrategyByMatMul},
-  {INPLACE_MATRIX_MULTIPLY, MakeCalcStrategyByMatMul},
+  {INPLACE_MATRIX_MULTIPLY, MakeInplaceCalcStrategyByObject},
   {BINARY_SUBSCR,
    [](int bytecode, int opargs, const PyObjectArray &objs) { return OptStrategy::CalcKind::kCalcValue; }},
   {COMPARE_OP, MakeCalcStrategyByCompare},

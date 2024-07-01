@@ -18,7 +18,7 @@ from mindspore.common import Tensor, Parameter
 import mindspore.ops.operations as P
 from mindspore import context, ops, lazy_inline, nn
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", memory_optimize_level='O0')
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 context.set_context(jit_level='O2')
 
 

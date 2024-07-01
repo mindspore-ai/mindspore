@@ -91,12 +91,15 @@ void SendActor::Clear() {
   }
 }
 
-bool SendActor::LaunchKernel(OpContext<DeviceTensor> *const context) {
+bool SendActor::LaunchKernel(OpContext<DeviceTensor> *const context, bool is_skip_launch) {
+  if (is_skip_launch) {
+    return KernelActor::LaunchKernel(context, is_skip_launch);
+  }
   MS_ERROR_IF_NULL_W_RET_VAL(context, false);
   // Set context for later usage in FreeMessage.
   context_ = context;
 
-  if (!KernelActor::LaunchKernel(context)) {
+  if (!KernelActor::LaunchKernel(context, is_skip_launch)) {
     MS_LOG(ERROR) << "Launching kernel for send actor failed.";
     return false;
   }

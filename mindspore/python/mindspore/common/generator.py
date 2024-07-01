@@ -138,7 +138,8 @@ class Generator:
         Returns:
             The initial seed of generator.
         """
-        current_seed = self._generator(INITIAL_SEED, (self._seed,))[0]
+        current_seed = self._generator(
+            INITIAL_SEED, (self._seed, self._offset))[0]
         return self._to_scalar(current_seed)
 
 

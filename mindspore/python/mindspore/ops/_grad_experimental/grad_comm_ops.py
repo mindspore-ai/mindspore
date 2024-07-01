@@ -211,21 +211,17 @@ def get_bprop_mirror_micro_step_operator(self):
     def bprop(x, z, out, dout):
         real_grad = z
         assign_out = dout
-        if mean_flag:
-            if issubclass_(F.typeof(dout), mstype.tensor_type):
-                z = F.depend(z, dout)
+        if issubclass_(F.typeof(dout), mstype.tensor_type):
+            z = F.depend(z, dout)
+            if dev_num > 1:
                 real_grad = all_reduce(z)
-                real_grad = F.tensor_mul(real_grad, scale)
-                if opt_shard:
-                    return (real_grad, cast(out_tensor, dtype(z)))
-                return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z))), assign(z, real_grad))
-        else:
-            if issubclass_(F.typeof(dout), mstype.tensor_type):
-                z = F.depend(z, dout)
-                real_grad = all_reduce(z)
-                if opt_shard:
-                    return (real_grad, cast(out_tensor, dtype(z)))
-                return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z))), assign(z, real_grad))
+                if mean_flag:
+                    real_grad = F.tensor_mul(real_grad, scale)
+            else:
+                real_grad = z
+            if opt_shard:
+                return (real_grad, cast(out_tensor, dtype(z)))
+            return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z))), assign(z, real_grad))
         return F.depend((cast(out_tensor, dtype(x)), cast(out_tensor, dtype(z))), assign_out)
 
     return bprop

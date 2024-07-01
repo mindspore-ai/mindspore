@@ -29,6 +29,7 @@
 namespace mindspore {
 namespace device {
 namespace tracker {
+constexpr int64_t kIllegalStartTimeStamp = -1L;
 namespace {
 std::string GetRankID() {
   uint32_t rank_id = 0;
@@ -77,7 +78,7 @@ std::pair<std::string, std::string> MemoryTrackerEnabled::GetPath() {
     trace_path = "./";
   }
 
-  if (ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL)) {
+  if (enable_hccl_) {
     block_csv_path = trace_path + "/rank_" + GetRankID() + "/memory_block.csv";
     task_csv_path = trace_path + "/rank_" + GetRankID() + "/task.csv";
   } else {
@@ -95,6 +96,14 @@ void MemoryTrackerEnabled::AddTask(const std::string &task_name, const std::stri
   }
 
   std::lock_guard lock(mutex_);
+  if (!is_init_enable_hccl_) {
+    // MS_CTX_ENABLE_HCCL will be reset when the process is destroyed.
+    // Therefore, record the enable_hccl when AddTask for the first time.
+    auto ms_context = MsContext::GetInstance();
+    enable_hccl_ = ms_context->get_param<bool>(MS_CTX_ENABLE_HCCL);
+    is_init_enable_hccl_ = true;
+  }
+
   time_stamp_++;
   auto task_info = std::make_shared<TaskInfo>();
   MS_EXCEPTION_IF_NULL(task_info);
@@ -591,8 +600,8 @@ void MemoryTrackerEnabled::DumpProfilingMemInfo(const std::string &path, const s
       continue;
     }
 
-    auto mem_info = mem_block->mem_info.lock();
-    if (mem_info != nullptr && mem_info->type == MemType::kInSideSomas) {
+    if (mem_block->start_time_stamp == kIllegalStartTimeStamp) {
+      MS_LOG(DEBUG) << "Mem block start time stamp is " << kIllegalStartTimeStamp << ".";
       continue;
     }
 
