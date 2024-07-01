@@ -21,7 +21,7 @@ from mindspore import nn
 from mindspore import ops
 from mindspore import Tensor
 from mindspore.ops.function import prod
-from mindspore.ops.function import mean_ext as mean
+from mindspore.ops.function.math_func import mean_ext as mean
 from mindspore.ops.composite import GradOperation
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP

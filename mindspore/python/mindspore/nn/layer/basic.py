@@ -28,7 +28,7 @@ from mindspore.common.initializer import initializer, HeUniform, Uniform
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.function.nn_func import interpolate_ext
-from mindspore.ops.function.array_func import unfold_ext
+from mindspore.ops.auto_generate import unfold_ext
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.primitive import constexpr, Primitive, _primexpr
 from mindspore.common.parameter import Parameter

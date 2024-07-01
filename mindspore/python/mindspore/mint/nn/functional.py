@@ -28,11 +28,11 @@ from mindspore.ops.functional import (
 # 4
 
 # 5
-from mindspore.ops.functional import pad_ext as pad
+from mindspore.ops.function.nn_func import pad_ext as pad
 # 6
-from mindspore.ops.function.array_func import unfold_ext as unfold
+from mindspore.ops.auto_generate import unfold_ext as unfold
 # 7
-from mindspore.ops.function.array_func import fold_ext as fold
+from mindspore.ops.auto_generate import fold_ext as fold
 # 8
 from mindspore.ops.functional import layer_norm
 # 9
@@ -80,7 +80,7 @@ from mindspore.ops.function.nn_func import binary_cross_entropy
 # 30
 
 # 31
-from mindspore.ops.functional import softmax_ext as softmax
+from mindspore.ops.function.nn_func import softmax_ext as softmax
 
 # 32
 
@@ -206,7 +206,7 @@ from mindspore.ops.function.nn_func import avg_pool2d_ext as avg_pool2d
 # 92
 from mindspore.ops.extend import leaky_relu_ext as leaky_relu
 # 93
-from mindspore.ops.function.nn_func import softplus_ext as softplus # pylint: disable=W0611
+from mindspore.ops.auto_generate import softplus_ext as softplus  # pylint: disable=W0611
 # 94
 from mindspore.ops.function.math_func import tanh
 # 95
@@ -224,7 +224,7 @@ from mindspore.ops.function import binary_cross_entropy_with_logits as bce_with_
 # 323
 
 # 324
-from mindspore.ops.function.nn_func import elu_ext as elu
+from mindspore.ops.auto_generate import elu_ext as elu
 # 325
 
 

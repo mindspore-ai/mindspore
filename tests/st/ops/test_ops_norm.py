@@ -18,6 +18,7 @@ import pytest
 
 import mindspore as ms
 from mindspore import ops, Tensor
+from mindspore.ops.function.math_func import norm_ext
 
 import tests.st.utils.test_utils as test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
@@ -25,7 +26,7 @@ from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 @test_utils.run_with_cell
 def norm_ext_forward_func(x):
-    return ops.norm_ext(x)
+    return norm_ext(x)
 
 @test_utils.run_with_cell
 def norm_ext_backward_func(x):

@@ -2582,7 +2582,7 @@ def linspace_ext(start, end, steps, *, dtype=None):
         >>> start = Tensor(1, mindspore.float32)
         >>> end = Tensor(10, mindspore.float32)
         >>> steps = 5
-        >>> output = ops.linspace_ext(start, end, steps, dtype=mindspore.float32)
+        >>> output = ops.function.math_func.linspace_ext(start, end, steps, dtype=mindspore.float32)
         >>> print(output)
         [ 1.    3.25  5.5   7.75 10.  ]
     """
@@ -6785,7 +6785,7 @@ def mean_ext(input, axis=None, keep_dims=False, dtype=None):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.random.randn(3, 4, 5, 6).astype(np.float32))
-        >>> output = ops.mean_ext(x, 1, keep_dims=True)
+        >>> output = ops.function.math_func.mean_ext(x, 1, keep_dims=True)
         >>> result = output.shape
         >>> print(result)
         (3, 1, 5, 6)
@@ -6794,25 +6794,25 @@ def mean_ext(input, axis=None, keep_dims=False, dtype=None):
         ... [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
         ... [[6, 6, 6, 6, 6, 6], [8, 8, 8, 8, 8, 8], [10, 10, 10, 10, 10, 10]]]),
         ... mindspore.float32)
-        >>> output = ops.mean_ext(x)
+        >>> output = ops.function.math_func.mean_ext(x)
         >>> print(output)
         5.0
         >>> print(output.shape)
         ()
         >>> # case 2: Reduces a dimension along the axis 0
-        >>> output = ops.mean_ext(x, 0, True)
+        >>> output = ops.function.math_func.mean_ext(x, 0, True)
         >>> print(output)
         [[[4. 4. 4. 4. 4. 4.]
         [5. 5. 5. 5. 5. 5.]
         [6. 6. 6. 6. 6. 6.]]]
         >>> # case 3: Reduces a dimension along the axis 1
-        >>> output = ops.mean_ext(x, 1, True)
+        >>> output = ops.function.math_func.mean_ext(x, 1, True)
         >>> print(output)
         [[[2. 2. 2. 2. 2. 2.]]
         [[5. 5. 5. 5. 5. 5.]]
         [[8. 8. 8. 8. 8. 8.]]]
         >>> # case 4: Reduces a dimension along the axis 2
-        >>> output = ops.mean_ext(x, 2, True)
+        >>> output = ops.function.math_func.mean_ext(x, 2, True)
         >>> print(output)
         [[[ 2.]
         [ 2.]
@@ -7335,7 +7335,7 @@ def norm_ext(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         ``Ascend``
 
     Note:
-        Currently, it only support `ops.norm_ext(A)`.
+        Currently, it only support `ops.function.math_func.norm_ext(A)`.
 
     Examples:
         >>> import mindspore as ms
@@ -7344,7 +7344,7 @@ def norm_ext(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         >>> # Exclude 0 from original data for 0 is invalid input when `ord` is negative.
         >>> x = data_range[data_range != 0]
         >>> y = x.reshape(5, 5)
-        >>> print(ops.norm_ext(x))
+        >>> print(ops.function.math_func.norm_ext(x))
         38.327538
         >>> print(ops.norm(x, 0))
         25.0
@@ -11608,7 +11608,6 @@ __all__ = [
     'addcdiv',
     'addcmul',
     'angle',
-    'argmax_ext',
     'argmin',
     'arccosh',
     'arcsin',
@@ -11626,7 +11625,6 @@ __all__ = [
     'le',
     'lerp',
     'norm',
-    'norm_ext',
     'vector_norm',
     'matrix_norm',
     'tensor_gt',
@@ -11696,7 +11694,6 @@ __all__ = [
     'matrix_determinant',
     'det',
     'linspace',
-    'linspace_ext',
     'logspace',
     'lu_solve',
     'matrix_solve',
@@ -11784,7 +11781,6 @@ __all__ = [
     'amin',
     'amax',
     'mean',
-    'mean_ext',
     'prod',
     'all',
     'any',

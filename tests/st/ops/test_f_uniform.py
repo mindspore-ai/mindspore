@@ -19,6 +19,7 @@ import pytest
 import mindspore
 from mindspore.nn import Cell
 from mindspore.common.generator import Generator
+from mindspore.ops.function.random_func import uniform_ext
 
 rtol = 1e-3
 
@@ -26,7 +27,7 @@ rtol = 1e-3
 class UniformExtCell(Cell):
     def __init__(self):
         super().__init__()
-        self.uniform = mindspore.ops.uniform_ext
+        self.uniform = uniform_ext
 
     def construct(self, x, from_, to, generator):
         return self.uniform(x, from_, to, generator)

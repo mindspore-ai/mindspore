@@ -268,10 +268,11 @@ def uniform_ext(tensor, a, b, generator=None):
 
     Examples:
         >>> import mindspore
-        >>> x = mindspore.ops.ones((4, 2))
+        >>> from mindspore import ops
+        >>> x = ops.ones((4, 2))
         >>> generator = mindspore.Generator()
         >>> generator.manual_seed(100)
-        >>> result = mindspore.ops.uniform_ext(x, 1., 2., generator)
+        >>> result = ops.function.random_func.uniform_ext(x, 1., 2., generator)
         >>> print(result.shape)
         (4, 2)
     """
@@ -717,7 +718,7 @@ def normal_ext(mean=0.0, std=1.0, size=None, generator=None):
         >>> from mindspore import Tensor
         >>> mean = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
         >>> std = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-        >>> output = ops.normal_ext(mean, std)
+        >>> output = ops.function.random_func.normal_ext(mean, std)
         >>> print(output.shape)
         (3,)
     """
@@ -1071,7 +1072,7 @@ def rand_ext(*size, generator=None, dtype=None):
 
     Examples:
         >>> import mindspore.ops as ops
-        >>> print(ops.rand_ext((2, 3)).shape)
+        >>> print(ops.function.random_func.rand_ext(2, 3).shape)
         (2, 3)
     """
     if not generator:
@@ -1107,7 +1108,7 @@ def rand_like_ext(input, *, dtype=None):
         >>> import mindspore as ms
         >>> from mindspore import Tensor, ops
         >>> a = Tensor([[2, 3, 4], [1, 2, 3]])
-        >>> print(ops.rand_like_ext(a, dtype=ms.float32).shape)
+        >>> print(ops.function.random_func.rand_like_ext(a, dtype=ms.float32).shape)
         (2, 3)
     """
     seed, offset = default_generator._step(generator_step_)  # pylint: disable=protected-access
@@ -1528,10 +1529,10 @@ def _check_param(op_name, param_name, param_value):
 
 
 __all__ = [
-    'standard_laplace', 'random_categorical', 'uniform', 'uniform_ext', 'standard_normal', 'random_gamma',
+    'standard_laplace', 'random_categorical', 'uniform', 'standard_normal', 'random_gamma',
     'uniform_candidate_sampler', 'random_poisson', 'log_uniform_candidate_sampler', 'shuffle', 'choice_with_mask',
-    'normal_ext', 'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like',
-    'rand_ext', 'rand_like_ext', 'randn', 'randn_like',
+    'normal', 'laplace', 'gamma', 'poisson', 'multinomial', 'rand', 'rand_like',
+    'randn', 'randn_like',
     'randint', 'randint_like', 'multinomial_with_replacement', 'randperm'
 ]
 __all__.sort()
