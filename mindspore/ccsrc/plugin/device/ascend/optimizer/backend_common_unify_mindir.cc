@@ -149,6 +149,7 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::InferenceSwiGLUFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::InferenceMatmulSplitFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::ShapeReshapeFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::ShapeReshapeFusion2>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddRmsNormQuantFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::RmsNormQuantFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddRmsNormFusion>());

@@ -190,6 +190,7 @@ void GEBackendOptimizeACLAfterKernelSelect(const KernelGraphPtr &kernel_graph) {
   }
   if (!kernel_graph->is_graph_run_mode() && context_ptr->ascend_soc_version() != "ascend910") {
     opt_acl_after_kernel_select_pm->AddPass(std::make_shared<opt::ShapeReshapeFusion>());
+    opt_acl_after_kernel_select_pm->AddPass(std::make_shared<opt::ShapeReshapeFusion2>());
     opt_acl_after_kernel_select_pm->AddPass(std::make_shared<opt::ShapeReshapeDirectFusion>());
   }
 
