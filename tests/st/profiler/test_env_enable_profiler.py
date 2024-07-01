@@ -16,8 +16,7 @@ import os
 import sys
 import shutil
 import csv
-from tests.security_utils import security_off_wrap
-import pytest
+from tests.mark_utils import arg_mark
 
 
 def cleanup():
@@ -123,10 +122,7 @@ class TestEnvEnableProfiler:
         """Run after each test case end."""
         cleanup()
 
-    @pytest.mark.level3
-    @pytest.mark.platform_x86_cpu
-    @pytest.mark.env_onecard
-    @security_off_wrap
+    @arg_mark(plat_marks=['cpu_linux'], level_mark='level3', card_mark='onecard', essential_mark='essential')
     def test_cpu_profiler(self):
         if sys.platform != 'linux':
             return
@@ -138,10 +134,7 @@ class TestEnvEnableProfiler:
         CheckProfilerFiles(self.device_id, self.rank_id, self.profiler_path, "CPU")
         assert status == 0
 
-    @pytest.mark.level0
-    @pytest.mark.platform_x86_gpu_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
+    @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
     def test_gpu_profiler(self):
         root_status = os.system("whoami | grep root")
         cuda_status = os.system("nvcc -V | grep 'release 10'")
@@ -155,10 +148,7 @@ class TestEnvEnableProfiler:
         CheckProfilerFiles(self.device_id, self.rank_id, self.profiler_path, "GPU")
         assert status == 0
 
-    @pytest.mark.level0
-    @pytest.mark.platform_x86_gpu_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
+    @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
     def test_gpu_profiler_pynative(self):
         """
         Feature: profiler support GPU pynative mode.
@@ -177,11 +167,7 @@ class TestEnvEnableProfiler:
         CheckProfilerFiles(self.device_id, self.rank_id, self.profiler_path, "GPU")
         assert status == 0
 
-    @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
     def test_ascend_profiler(self):
         status = os.system(
             """export MS_PROFILER_OPTIONS='{"start":true, "profile_memory":true}';
@@ -191,11 +177,7 @@ class TestEnvEnableProfiler:
         CheckProfilerFiles(self.device_id, self.rank_id, self.profiler_path, "Ascend")
         assert status == 0
 
-    @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
     def test_host_profiler_none(self):
         status = os.system(
             """export MS_PROFILER_OPTIONS='{"start":true, "profile_memory":true, "profile_framework":null}';
@@ -205,11 +187,7 @@ class TestEnvEnableProfiler:
         CheckProfilerFiles(self.device_id, self.rank_id, self.profiler_path, "Ascend", None)
         assert status == 0
 
-    @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
     def test_host_profiler_time(self):
         status = os.system(
             """export MS_PROFILER_OPTIONS='{"start":true, "profile_memory":true, "profile_framework":"time"}';
@@ -219,11 +197,7 @@ class TestEnvEnableProfiler:
         CheckProfilerFiles(self.device_id, self.rank_id, self.profiler_path, "Ascend", "time")
         assert status == 0
 
-    @pytest.mark.level1
-    @pytest.mark.platform_arm_ascend_training
-    @pytest.mark.platform_x86_ascend_training
-    @pytest.mark.env_onecard
-    @security_off_wrap
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
     def test_host_profiler_memory(self):
         status = os.system(
             """export MS_PROFILER_OPTIONS='{"start":true, "profile_memory":true, "profile_framework":"memory"}';

@@ -17,7 +17,7 @@ test MindSpore vlog interface
 """
 
 import subprocess
-import pytest
+from tests.mark_utils import arg_mark
 
 
 def check_output(vlog_v, expect_output, is_expect=True):
@@ -39,10 +39,7 @@ def check_output(vlog_v, expect_output, is_expect=True):
         assert not matched, '`VLOG_v={vlog_v}` unexpected `{expect_output}` fail'
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_op_proto_warnings():
     """
     Feature: test mindspore vlog interface
