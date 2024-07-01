@@ -34,6 +34,7 @@ namespace mindspore {
 namespace kernel {
 static std::map<std::string, int> ms_op_key_to_internel_op_id = {
   {"SiLU", internal::OpId::Swish},
+  {"Swiglu", internal::OpId::SwiGLU},
   {"AddLayerNorm", internal::OpId::AddLayerNorm},
   {"Cast", internal::OpId::Cast},
   {"ReshapeAndCache", internal::OpId::ReshapeAndCache},
