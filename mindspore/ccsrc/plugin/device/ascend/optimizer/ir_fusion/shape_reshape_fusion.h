@@ -24,14 +24,22 @@ namespace mindspore {
 namespace opt {
 class BACKEND_EXPORT ShapeReshapeFusion : public PatternProcessPass {
  public:
-  explicit ShapeReshapeFusion(bool multigraph = true) : PatternProcessPass("shape_reshape", multigraph) {}
+  explicit ShapeReshapeFusion(const string &name = "shape_reshape", bool multigraph = true)
+      : PatternProcessPass(name, multigraph) {}
   ~ShapeReshapeFusion() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                            const EquivPtr &equiv) const override;
 
- private:
+ protected:
   VarPtr reshape_input_ = std::make_shared<Var>();
+};
+
+class BACKEND_EXPORT ShapeReshapeFusion2 : public ShapeReshapeFusion {
+ public:
+  explicit ShapeReshapeFusion2(bool multigraph = true) : ShapeReshapeFusion("shape_reshape_2", multigraph) {}
+  ~ShapeReshapeFusion2() override = default;
+  const BaseRef DefinePattern() const override;
 };
 
 class BACKEND_EXPORT ShapeReshapeDirectFusion : public PatternProcessPass {
