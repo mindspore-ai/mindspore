@@ -19,9 +19,72 @@
 #include <string>
 #include <memory>
 #include <algorithm>
+#include "include/backend/distributed/collective/collective_manager.h"
 
 namespace mindspore {
 namespace opt {
+namespace {
+template <typename SRC_T, typename DST_T>
+void ConvertDataType(void *dst_data, void *ori_data, int64_t len, bool need_rank_offset, uint32_t global_rank_id) {
+  auto rank_offset = need_rank_offset ? global_rank_id * len : 0;
+  SRC_T *ori_data_t = reinterpret_cast<SRC_T *>(ori_data) + rank_offset;
+  DST_T *dst_data_t = reinterpret_cast<DST_T *>(dst_data);
+  for (int i = 0; i < len; i++) {
+    dst_data_t[i] = static_cast<DST_T>(ori_data_t[i]);
+  }
+}
+
+std::shared_ptr<ValueNode> CreateValueNode(const tensor::TensorPtr &assist_tensor, const TensorTypePtr &tensor_type) {
+  tensor::DeviceInfo device_info{kOpFormat_DEFAULT, tensor_type};
+  assist_tensor->set_device_info(device_info);
+  MS_EXCEPTION_IF_NULL(assist_tensor);
+
+  auto assist_const = std::make_shared<ValueNode>(assist_tensor);
+  auto assist_abstract = assist_tensor->ToAbstract();
+  assist_const->set_abstract(assist_abstract);
+  auto assist_kernel_info = std::make_shared<device::KernelInfo>();
+  assist_const->set_kernel_info(assist_kernel_info);
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+  builder.SetOutputsFormat({kOpFormat_DEFAULT});
+  builder.SetOutputsDeviceType({common::AnfAlgo::GetOutputInferDataType(assist_const, 0)});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), assist_const.get());
+  return assist_const;
+}
+}  // namespace
+
+std::shared_ptr<ValueNode> ConvertWeightsToNewType(const AnfNodePtr &weight_node) {
+  auto w_param = GetParamFromLoad(weight_node->cast<CNodePtr>(), true);
+  MS_EXCEPTION_IF_NULL(w_param);
+  auto origin_shape = w_param->shape();
+  auto shape = common::AnfAlgo::GetOutputInferShape(weight_node, kIndex0);
+  if (shape.size() != 1 || origin_shape.size() != 1) {
+    MS_LOG(EXCEPTION) << "shape.size():" << shape.size() << " origin_shape.size():" << origin_shape.size()
+                      << " not all == 1.";
+  }
+  bool need_rank_offset = false;
+  if (origin_shape[0] != shape[0]) {
+    need_rank_offset = true;
+  }
+  auto ori_data = w_param->data_c();
+  auto w_type_id = static_cast<TypeId>(w_param->data_type_c());
+  auto global_rank_id = distributed::collective::CollectiveManager::instance()->global_rank_id();
+  tensor::TensorPtr assist_tensor;
+  TensorTypePtr tensor_type;
+  if (w_type_id == kNumberTypeInt8) {
+    assist_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt32, shape);
+    tensor_type = std::make_shared<TensorType>(kInt32);
+    ConvertDataType<int8_t, int32_t>(assist_tensor->data_c(), ori_data, shape[0], need_rank_offset, global_rank_id);
+  } else if (w_type_id == kNumberTypeFloat16) {
+    assist_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, shape);
+    tensor_type = std::make_shared<TensorType>(kFloat32);
+    ConvertDataType<float16, float>(assist_tensor->data_c(), ori_data, shape[0], need_rank_offset, global_rank_id);
+  } else {
+    MS_LOG(EXCEPTION) << "type_id " << TypeIdToString(w_type_id) << " is unexpected, only support int8 or fp16.";
+  }
+
+  return CreateValueNode(assist_tensor, tensor_type);
+}
 
 tensor::TensorPtr GetParamFromLoad(const CNodePtr &load, const bool unused) {
   if (IsPrimitiveCNode(load, prim::kPrimLoad)) {
@@ -125,21 +188,7 @@ std::shared_ptr<ValueNode> CreateWeightTensor(TypeId type_id, const std::vector<
   }
 
   TensorTypePtr tensor_type = std::make_shared<TensorType>(w_dtype);
-  tensor::DeviceInfo device_info{kOpFormat_DEFAULT, tensor_type};
-  assist_tensor->set_device_info(device_info);
-  MS_EXCEPTION_IF_NULL(assist_tensor);
-
-  auto assist_const = std::make_shared<ValueNode>(assist_tensor);
-  auto assist_abstract = assist_tensor->ToAbstract();
-  assist_const->set_abstract(assist_abstract);
-  auto assist_kernel_info = std::make_shared<device::KernelInfo>();
-  assist_const->set_kernel_info(assist_kernel_info);
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-  builder.SetOutputsFormat({kOpFormat_DEFAULT});
-  builder.SetOutputsDeviceType({common::AnfAlgo::GetOutputInferDataType(assist_const, 0)});
-  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
-  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), assist_const.get());
-  return assist_const;
+  return CreateValueNode(assist_tensor, tensor_type);
 }
 
 void SortWeightNodeList(AnfNodePtrList *node_list) {

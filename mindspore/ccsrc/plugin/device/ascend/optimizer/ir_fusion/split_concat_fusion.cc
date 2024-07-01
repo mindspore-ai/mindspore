@@ -27,40 +27,6 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CNodePtr &node) {
-  std::vector<std::string> inputs_format;
-  std::vector<std::string> outputs_format;
-  std::vector<TypeId> inputs_type;
-  std::vector<TypeId> outputs_type;
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder fusion_node_builder;
-
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
-  for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
-    inputs_format.push_back(kOpFormat_DEFAULT);
-  }
-  size_t output_num = AnfAlgo::GetOutputElementNum(node);
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, output_index));
-    outputs_format.push_back(kOpFormat_DEFAULT);
-  }
-  fusion_node_builder.SetInputsDeviceType(inputs_type);
-  fusion_node_builder.SetInputsFormat(inputs_format);
-  fusion_node_builder.SetOutputsDeviceType(outputs_type);
-  fusion_node_builder.SetOutputsFormat(outputs_format);
-  return fusion_node_builder.Build();
-}
-
-bool IsConstant(const BaseRef &n) {
-  if (utils::isa<AnfNodePtr>(n)) {
-    AnfNodePtr in = utils::cast<AnfNodePtr>(n);
-    MS_EXCEPTION_IF_NULL(in);
-    return in->isa<ValueNode>();
-  }
-  return false;
-}
-}  // namespace
 const BaseRef SplitConcatFusion::DefinePattern() const {
   split_axis_ = std::make_shared<CondVar>(IsConstant);
   concat_axis_ = std::make_shared<CondVar>(IsConstant);
