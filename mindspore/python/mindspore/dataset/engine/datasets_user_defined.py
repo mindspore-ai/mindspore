@@ -178,25 +178,41 @@ def _convert_row(row):
     return tuple(value)
 
 
-class SamplerFn:
+class SamplerFn(cde.PythonMultiprocessingRuntime):
     """
     Multiprocessing or multithread generator function wrapper master process.
     """
 
     def __init__(self, dataset, num_worker, multi_process, max_rowsize):
+        super(SamplerFn, self).__init__()
         self.workers = []
         self.dataset = dataset
         self.num_worker = num_worker
         self.multi_process = multi_process
         self.max_rowsize = max_rowsize
         self.need_join = False
+
+    def is_mp_enabled(self):
+        return self.workers is not None
+
+    def launch(self, op_id=-1):
+        """launch the multiprocessing pool"""
+        self.op_id = op_id
+        logger.info("Launching new Python Multiprocessing pool for GeneratorOp:" + str(self.op_id))
+        if self.is_mp_enabled():
+            message = "Launching a new Python multiprocessing pool for GeneratorOp while a pool already exists!" + \
+                " The existing pool will be terminated first."
+            logger.warning(message)
+            self._abort_watchdog()
+            self.reset()
+
         self.ppid = os.getpid()
         self.pids = []
         self.check_interval = get_multiprocessing_timeout_interval()  # the interval of check queue's size
         self._final_join = True
 
         # Event for end of epoch
-        if multi_process is True:
+        if self.multi_process is True:
             try:
                 self.eof = multiprocessing.Event()
             except Exception:
@@ -208,20 +224,20 @@ class SamplerFn:
 
         # get default queue size and adjust queuesize per worker if there are large # workers
         queue_size = get_prefetch_size()
-        queue_size = min(queue_size, queue_size * 4 // num_worker)
+        queue_size = min(queue_size, queue_size * 4 // self.num_worker)
         queue_size = max(2, queue_size)
 
-        if multi_process and get_enable_shared_mem():
+        if self.multi_process and get_enable_shared_mem():
             # generator dataset use idx_queue and res_queue to transfer data between main and subprocess
             # idx_queue is used multiprocess.Queue which is not shared memory, so it's size is 0.
             # res_queue is used shared memory, so it' size is max_rowsize which is defined by user.
-            _check_shm_usage(num_worker, queue_size, 0, max_rowsize)
+            _check_shm_usage(self.num_worker, queue_size, 0, self.max_rowsize)
         self.count = multiprocessing.Value('i', 0)
-        for worker_id in range(num_worker):
-            if multi_process is True:
+        for worker_id in range(self.num_worker):
+            if self.multi_process is True:
                 try:
-                    worker = _GeneratorWorkerMp(dataset, self.eof, max_rowsize, queue_size, self.ppid, self.count,
-                                                worker_id)
+                    worker = _GeneratorWorkerMp(self.dataset, self.eof, self.max_rowsize, queue_size, self.ppid,
+                                                self.count, worker_id)
                     worker.daemon = True
                     # When multi processes fork a subprocess, the lock of the main process is copied to the subprocess,
                     # which may cause deadlock. Therefore, the subprocess startup is performed in the initialization
@@ -240,10 +256,11 @@ class SamplerFn:
                 self.pids.append(worker.pid)
                 self.need_join = True
             else:
-                worker = _GeneratorWorkerMt(dataset, self.eof, worker_id)
+                worker = _GeneratorWorkerMt(self.dataset, self.eof, worker_id)
                 worker.daemon = True
             self.workers.append(worker)
-        self._launch_cleanup_worker(multi_process=multi_process)
+        if self.multi_process and platform.system().lower() != 'windows':
+            self._launch_cleanup_worker()
 
     def _interval_log(self, i, start_time, wait_count):
         cost_time = int(time.time()) - start_time
@@ -370,35 +387,31 @@ class SamplerFn:
                            "the `mindspore.dataset.config.set_multiprocessing_timeout_interval` interface."
         logger.warning(warning_message)
 
-    def _launch_cleanup_worker(self, multi_process):
+    def _launch_cleanup_worker(self):
         """
         We need a extra thread and process if main process or subprocess was killed.
-
-        Args:
-            multi_process: Whether use multiprocess.
         """
-        if multi_process is True and platform.system().lower() != 'windows':
-            _clean_worker_func = _PythonMultiprocessing._clean_process  # pylint: disable=W0212
-            self.cleaning_process = multiprocessing.Process(target=_clean_worker_func,
-                                                            name="GeneratorCleanProcess",
-                                                            args=(self.ppid, self.workers, self.eof))
-            self.cleaning_process.daemon = True
-            self.cleaning_process.start()
+        _clean_worker_func = _PythonMultiprocessing._clean_process  # pylint: disable=W0212
+        self.cleaning_process = multiprocessing.Process(target=_clean_worker_func,
+                                                        name="GeneratorCleanProcess",
+                                                        args=(self.ppid, self.workers, self.eof))
+        self.cleaning_process.daemon = True
+        self.cleaning_process.start()
 
-            if get_enable_watchdog():
-                self.eot = threading.Event()
-                self.watch_dog = threading.Thread(target=_PythonMultiprocessing._watch_dog,  # pylint: disable=W0212
-                                                  name="GeneratorWatchDog",
-                                                  args=(self.eot, self.workers + [self.cleaning_process]))
-                self.watch_dog.daemon = True
-                self.watch_dog.start()
+        if get_enable_watchdog():
+            self.eot = threading.Event()
+            self.watch_dog = threading.Thread(target=_PythonMultiprocessing._watch_dog,  # pylint: disable=W0212
+                                              name="GeneratorWatchDog",
+                                              args=(self.eot, self.workers + [self.cleaning_process]))
+            self.watch_dog.daemon = True
+            self.watch_dog.start()
 
-                if self._final_join is True:
-                    self._jointhread = Finalize(
-                        self.watch_dog, self._finalize_join,
-                        args=(weakref.ref(self.watch_dog), self.eot),
-                        exitpriority=-5
-                    )
+            if self._final_join is True:
+                self._jointhread = Finalize(
+                    self.watch_dog, self._finalize_join,
+                    args=(weakref.ref(self.watch_dog), self.eot),
+                    exitpriority=-5
+                )
 
     def _stop_subprocess(self):
         """Only the main process can call join."""
@@ -898,12 +911,12 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
         self.prepare_multiprocessing()
         if self.schema is None:
             return cde.GeneratorNode(self.prepared_source, self.column_names, self.column_types, self.source_len,
-                                     self.sampler, self.num_parallel_workers)
+                                     self.sampler, self.num_parallel_workers, self.sample_fn)
         schema = self.schema
         if isinstance(schema, Schema):
             schema = self.schema.cpp_schema
         return cde.GeneratorNode(self.prepared_source, schema, self.source_len, self.sampler,
-                                 self.num_parallel_workers)
+                                 self.num_parallel_workers, self.sample_fn)
 
     def __validate_memory_usage(self):
         """

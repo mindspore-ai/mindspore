@@ -27,31 +27,36 @@ namespace mindspore {
 namespace dataset {
 GeneratorNode::GeneratorNode(py::function generator_function, const std::vector<std::string> &column_names,
                              const std::vector<DataType> &column_types, int64_t source_len,
-                             std::shared_ptr<SamplerObj> sampler, uint32_t num_parallel_workers)
+                             std::shared_ptr<SamplerObj> sampler, uint32_t num_parallel_workers,
+                             std::shared_ptr<PythonMultiprocessingRuntime> python_mp)
     : MappableSourceNode(),
       generator_function_(generator_function),
       column_names_(column_names),
       column_types_(column_types),
       source_len_(source_len),
       sampler_(std::move(sampler)),
-      num_parallel_workers_(num_parallel_workers) {}
+      num_parallel_workers_(num_parallel_workers),
+      python_mp_(python_mp) {}
 
 GeneratorNode::GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema,
-                             int64_t source_len, std::shared_ptr<SamplerObj> sampler, uint32_t num_parallel_workers)
+                             int64_t source_len, std::shared_ptr<SamplerObj> sampler, uint32_t num_parallel_workers,
+                             std::shared_ptr<PythonMultiprocessingRuntime> python_mp)
     : MappableSourceNode(),
       generator_function_(generator_function),
       schema_(schema),
       source_len_(source_len),
       sampler_(std::move(sampler)),
-      num_parallel_workers_(num_parallel_workers) {}
+      num_parallel_workers_(num_parallel_workers),
+      python_mp_(python_mp) {}
 
 std::shared_ptr<DatasetNode> GeneratorNode::Copy() {
   std::shared_ptr<GeneratorNode> node;
   if (schema_ == nullptr) {
     node = std::make_shared<GeneratorNode>(generator_function_, column_names_, column_types_, source_len_, sampler_,
-                                           num_parallel_workers_);
+                                           num_parallel_workers_, python_mp_);
   } else {
-    node = std::make_shared<GeneratorNode>(generator_function_, schema_, source_len_, sampler_, num_parallel_workers_);
+    node = std::make_shared<GeneratorNode>(generator_function_, schema_, source_len_, sampler_, num_parallel_workers_,
+                                           python_mp_);
   }
   (void)node->SetNumWorkers(num_workers_);
   (void)node->SetConnectorQueueSize(connector_que_size_);
@@ -101,6 +106,9 @@ Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_
   }
   op->SetTotalRepeats(GetTotalRepeats());
   op->SetNumRepeatsPerEpoch(GetNumRepeatsPerEpoch());
+  if (python_mp_ != nullptr) {
+    op->SetPythonMp(python_mp_);
+  }
   node_ops->push_back(op);
   return Status::OK();
 }

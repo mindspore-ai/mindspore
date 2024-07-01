@@ -3462,7 +3462,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         Launch Python multiprocessing pool.
 
         Args:
-            pop_id: ID for operation to have Python multiprocessing pool launched
+            op_id: ID for operation to have Python multiprocessing pool launched
 
         Returns:
             Python multiprocssing pool is launched.

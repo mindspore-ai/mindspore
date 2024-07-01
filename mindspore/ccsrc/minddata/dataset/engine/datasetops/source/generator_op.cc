@@ -100,6 +100,13 @@ Status GeneratorOp::CreateGeneratorObject() {
 // Reentrant init method.
 Status GeneratorOp::Init() {
   RETURN_IF_NOT_OK(InitSampler());
+
+  // Launch the python multiprocessing
+  if (python_mp_) {
+    MS_LOG(DEBUG) << "Launch Python Multiprocessing for GeneratorOp: " << id();
+    python_mp_->launch(id());
+  }
+
   return CreateGeneratorObject();
 }
 
@@ -316,6 +323,10 @@ Status GeneratorOp::Reset() {
     wp_.Set();
   }
   return Status::OK();
+}
+
+void GeneratorOp::SetPythonMp(std::shared_ptr<PythonMultiprocessingRuntime> python_mp) {
+  python_mp_ = std::move(python_mp);
 }
 
 Status GeneratorOp::ComputeColMap() {
