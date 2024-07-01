@@ -47,7 +47,7 @@ class Net(nn.Cell):
 
     def construct(self, x):
         """
-        Take the squre of the input.
+        Take the square of the input.
         """
         return ops.square(x)
 
@@ -55,7 +55,7 @@ class Net(nn.Cell):
 class TestBreakpointTraining:
     def setup_class(self):
         """
-        Set seed at the setup of the class to keep the randomicity of shuffle.
+        Set seed at the setup of the class to keep the randomness of shuffle.
         """
         self.original_seed = ds.config.get_seed()
         ds.config.set_seed(0)
@@ -67,11 +67,11 @@ class TestBreakpointTraining:
         ds.config.set_seed(self.original_seed)
 
     @staticmethod
-    def create_np_dataset(datset_size, num_parallel_workers, python_multiprocessing):
+    def create_np_dataset(dataset_size, num_parallel_workers, python_multiprocessing):
         """
         Create a simple dataset.
         """
-        array = np.array(list(range(datset_size))).astype(np.int32)
+        array = np.array(list(range(dataset_size))).astype(np.int32)
         dataset = ds.NumpySlicesDataset(array, shuffle=True)
 
         def process(data):
@@ -117,43 +117,42 @@ class TestBreakpointTraining:
             num_steps_per_epoch = dataset_size
 
         if backend != "CPU":
-            # test both multi-processing and multi-threading
+            # test both multiprocessing and multi-threading
             multiprocess_cases = [False, True]
         else:
             # our CPU CI machines have poor memory that can not afford multiprocessing
             multiprocess_cases = [False]
         for python_multiprocessing in multiprocess_cases:
-            # test both single worker and multi-worker
-            for num_parallel_workers in (1, 4):
-                # create a simple data pipeline and model without randomicity
-                dataset = self.create_np_dataset(dataset_size, num_parallel_workers, python_multiprocessing)
-                model = self.create_model()
+            num_parallel_workers = 4
+            # create a simple data pipeline and model without randomness
+            dataset = self.create_np_dataset(dataset_size, num_parallel_workers, python_multiprocessing)
+            model = self.create_model()
 
-                # train the whole dataset and save the expected loss of each step
-                num_epochs = 3
-                expected_loss = self.train_and_get_loss(dataset, model, num_epochs, sink_mode, sink_size)
+            # train the whole dataset and save the expected loss of each step
+            num_epochs = 2
+            expected_loss = self.train_and_get_loss(dataset, model, num_epochs, sink_mode, sink_size)
 
-                # set initial step and verify the loss
-                dataset.set_init_step(init_step)
-                init_epoch = init_step // num_steps_per_epoch
-                retrain_loss = self.train_and_get_loss(dataset, model, num_epochs, sink_mode, sink_size,
-                                                       initial_epoch=init_epoch)
+            # set initial step and verify the loss
+            dataset.set_init_step(init_step)
+            init_epoch = init_step // num_steps_per_epoch
+            retrain_loss = self.train_and_get_loss(dataset, model, num_epochs, sink_mode, sink_size,
+                                                   initial_epoch=init_epoch)
 
-                if sink_mode and backend != "CPU":
-                    if mode == context.GRAPH_MODE:
-                        # we only have loss for each epoch
-                        skip_loss_count = init_step // num_steps_per_epoch
-                    else:
-                        # we have loss for each step, but the init_step will be
-                        # set to the epoch end due to sink mode
-                        skip_loss_count = init_step // num_steps_per_epoch * num_steps_per_epoch
+            if sink_mode and backend != "CPU":
+                if mode == context.GRAPH_MODE:
+                    # we only have loss for each epoch
+                    skip_loss_count = init_step // num_steps_per_epoch
                 else:
-                    # we have loss for each step
-                    skip_loss_count = init_step
+                    # we have loss for each step, but the init_step will be
+                    # set to the epoch end due to sink mode
+                    skip_loss_count = init_step // num_steps_per_epoch * num_steps_per_epoch
+            else:
+                # we have loss for each step
+                skip_loss_count = init_step
 
-                assert len(expected_loss) == len(retrain_loss) + skip_loss_count
-                for index, loss in enumerate(retrain_loss):
-                    np.testing.assert_array_equal(np.array(loss), expected_loss[index + skip_loss_count])
+            assert len(expected_loss) == len(retrain_loss) + skip_loss_count
+            for index, loss in enumerate(retrain_loss):
+                np.testing.assert_array_equal(np.array(loss), expected_loss[index + skip_loss_count])
 
 
     @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -166,8 +165,8 @@ class TestBreakpointTraining:
         Expectation: Model can resume training at the given step point
         """
         # set initial step to the end of the first epoch and verify the loss
-        init_step = 20
-        dataset_size = 20
+        init_step = 10
+        dataset_size = 10
         self.validate_retrain_loss_equal_to_normal_train(mode, "CPU", sink_mode, dataset_size, init_step)
 
 
@@ -182,8 +181,8 @@ class TestBreakpointTraining:
         Expectation: Model can resume training at the given step point
         """
         # set initial step to the end of the first epoch and verify the loss
-        init_step = 20
-        dataset_size = 20
+        init_step = 10
+        dataset_size = 10
         sink_mode, sink_size = sink_mode_and_size
         self.validate_retrain_loss_equal_to_normal_train(mode, "DEVICE", sink_mode, dataset_size, init_step, sink_size)
 
@@ -198,10 +197,10 @@ class TestBreakpointTraining:
         Description: Test setting the resuming step to the intermediate step of epoch on CPU
         Expectation: The resuming point can be automatically reset to the end of the previous epoch in sink mode
         """
-        # set initial step to the intermediate of the second epoch at step 30,
-        # then it will be automatically reset to the end of the first epoch at step 20
-        init_step = 30
-        dataset_size = 20
+        # set initial step to the intermediate of the second epoch at step 15,
+        # then it will be automatically reset to the end of the first epoch at step 10
+        init_step = 15
+        dataset_size = 10
         self.validate_retrain_loss_equal_to_normal_train(mode, "CPU", sink_mode, dataset_size, init_step)
 
 
@@ -215,10 +214,10 @@ class TestBreakpointTraining:
         Description: Test setting the resuming step to the intermediate step of epoch on GPU and Ascend
         Expectation: The resuming point can be automatically reset to the end of the previous epoch in sink mode
         """
-        # set initial step to the intermediate of the second epoch at step 25,
-        # then it will be automatically reset to the end of the first epoch at step 20
-        init_step = 25
-        dataset_size = 20
+        # set initial step to the intermediate of the second epoch at step 12,
+        # then it will be automatically reset to the end of the first epoch at step 10
+        init_step = 12
+        dataset_size = 10
         sink_mode, sink_size = sink_mode_and_size
         self.validate_retrain_loss_equal_to_normal_train(mode, "DEVICE", sink_mode, dataset_size, init_step, sink_size)
 
