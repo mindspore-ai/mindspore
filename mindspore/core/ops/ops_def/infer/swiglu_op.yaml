@@ -1,0 +1,15 @@
+#operator Swiglu
+swiglu:
+  args:
+    input:
+      dtype: tensor
+    dim:
+        dtype: int
+        default: -1
+  class:
+    disable: True
+  function:
+    disable: True
+  returns:
+    output0:
+      dtype: tensor
