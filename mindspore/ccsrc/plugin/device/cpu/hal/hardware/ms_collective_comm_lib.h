@@ -95,6 +95,9 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
 
   // Indicates whether the collective node has to synchronize the addresses of all the collective nodes.
   bool synchronized_{true};
+
+  // Retry getting message count;
+  uint64_t retry_count_;
 };
 }  // namespace cpu
 }  // namespace device

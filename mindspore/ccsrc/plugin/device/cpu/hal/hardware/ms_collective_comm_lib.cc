@@ -15,7 +15,7 @@
  */
 
 #include "plugin/device/cpu/hal/hardware/ms_collective_comm_lib.h"
-
+#include <random>
 #include "utils/ms_context.h"
 #include "include/backend/distributed/constants.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
@@ -56,6 +56,14 @@ bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_
   cgn_ = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(
     ClusterContext::instance()->node_base());
 
+  std::string timeout_env = common::GetEnv("MS_NODE_TIMEOUT");
+  if (!timeout_env.empty()) {
+    MS_LOG(INFO) << "MS_NODE_TIMEOUT env set by user: " << timeout_env;
+    retry_count_ = std::stoi(timeout_env) / 3;
+  } else {
+    retry_count_ = kMSCollectiveRetryTime / 3;
+  }
+
   global_rank_id_ = global_rank;
   global_rank_size_ = global_rank_size;
   local_rank_id_ = local_rank_id;
@@ -92,13 +100,25 @@ bool MsCollectiveCommLib::AllGatherHostHashName(size_t host_hash_name, std::vect
 
   auto role = common::GetEnv(distributed::kEnvRole);
   bool success = false;
-  // It this is not recovery scenario, retry for 3*200s, which is 10 minutes.
-  const size_t interval = 3;
-  size_t retry = RecoveryContext::GetInstance()->enable_recovery() ? SIZE_MAX : kMSCollectiveRetryTime;
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  int random_time_lower =
+    common::GetEnv("MS_RETRY_INTERVAL_LOWER").empty() ? 3 : std::stoi(common::GetEnv("MS_RETRY_INTERVAL_LOWER"));
+  int random_time_upper =
+    common::GetEnv("MS_RETRY_INTERVAL_UPPER").empty() ? 5 : std::stoi(common::GetEnv("MS_RETRY_INTERVAL_UPPER"));
+  MS_LOG(INFO) << "Interval of retry allgather hostname lower and upper are " << random_time_lower << " and "
+               << random_time_upper;
+  std::uniform_int_distribution<> distrib(random_time_lower, random_time_upper);
+  size_t retry = RecoveryContext::GetInstance()->enable_recovery() ? SIZE_MAX : retry_count_;
+
   while (!success && --retry > 0) {
     auto hostnames = cgn_->GetHostNames(role);
     if (hostnames.size() < host_hash_names->size()) {
-      (void)sleep(interval);
+      auto sleep_time = distrib(gen);
+      MS_LOG(WARNING) << "Retry to get hostname from the meta server node...Retry time: " << retry << "/"
+                      << retry_count_ << ", sleep " << sleep_time;
+      (void)sleep(sleep_time);
       continue;
     } else if (hostnames.size() > host_hash_names->size()) {
       MS_LOG(ERROR) << "Invalid number of hostnames, expected number of hostnames: " << host_hash_names->size()
@@ -158,21 +178,19 @@ bool MsCollectiveCommLib::SendUniqueID(const std::string &group_name, size_t roo
   std::string group_info_key = node_role_prefix + kGroupInfoPrefix + group_name;
 
   bool success = false;
-  // It this is not recovery scenario, retry for 3*200s, which is 10 minutes.
+  size_t retry = RecoveryContext::GetInstance()->enable_recovery() ? SIZE_MAX : retry_count_;
   const size_t interval = 3;
-  size_t retry = RecoveryContext::GetInstance()->enable_recovery() ? SIZE_MAX : kMSCollectiveRetryTime;
   while (!success && --retry > 0) {
     success = cgn_->PutMetadata(group_info_key, root_info, root_info_size);
     if (!success) {
       MS_LOG(WARNING) << "Failed to send unique id for group " << group_name << ". Retry time: " << retry << "/"
-                      << kMSCollectiveRetryTime;
+                      << retry_count_;
       (void)sleep(interval);
     }
   }
   if (!success) {
     MS_LOG(EXCEPTION) << "Failed to send unique id to the meta server node due to timeout.";
   }
-  MS_LOG(INFO) << "The unique id for group " << group_name << " has been registered to the meta server.";
   return true;
 }
 
@@ -184,9 +202,17 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
   std::string group_info_key = node_role_prefix + kGroupInfoPrefix + group_name;
 
   bool success = false;
-  // It this is not recovery scenario, retry for 3*200s, which is 10 minutes.
-  const size_t interval = 3;
-  size_t retry = RecoveryContext::GetInstance()->enable_recovery() ? SIZE_MAX : kMSCollectiveRetryTime;
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  int random_time_lower =
+    common::GetEnv("MS_RETRY_INTERVAL_LOWER").empty() ? 3 : std::stoi(common::GetEnv("MS_RETRY_INTERVAL_LOWER"));
+  int random_time_upper =
+    common::GetEnv("MS_RETRY_INTERVAL_UPPER").empty() ? 5 : std::stoi(common::GetEnv("MS_RETRY_INTERVAL_UPPER"));
+  MS_LOG(INFO) << "Interval of retry querying lower and upper are " << random_time_lower << " and "
+               << random_time_upper;
+  std::uniform_int_distribution<> distrib(random_time_lower, random_time_upper);
+  size_t retry = RecoveryContext::GetInstance()->enable_recovery() ? SIZE_MAX : retry_count_;
+
   while (!success && --retry > 0) {
     auto unique_id = cgn_->GetMetadata(group_info_key);
     if (unique_id.length() > 0) {
@@ -197,9 +223,11 @@ bool MsCollectiveCommLib::QueryUniqueID(const std::string &group_name, size_t ro
       }
       success = true;
     } else {
+      auto sleep_time = distrib(gen);
       MS_LOG(WARNING) << "Retry to lookup the unique id for group " << group_name
-                      << " from the meta server node...Retry time: " << retry << "/" << kMSCollectiveRetryTime;
-      (void)sleep(interval);
+                      << " from the meta server node...Retry time: " << retry << "/" << retry_count_ << ", sleep "
+                      << sleep_time;
+      (void)sleep(sleep_time);
     }
   }
   if (!success) {

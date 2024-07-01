@@ -290,6 +290,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
         std::this_thread::sleep_for(std::chrono::seconds(kWaitDuration));
       }
     }
+    MS_LOG(INFO) << "Successfully send/fetch unqiueid for communication group " << group_name;
   }
 
   // Step 5: Initialize communication group on the device side.
@@ -510,6 +511,7 @@ bool CollectiveManager::AssignLocalRank() {
   MS_EXCEPTION_IF_NULL(host_comm_lib_instance_);
   RETURN_IF_FALSE_WITH_LOG(host_comm_lib_instance_->AllGatherHostHashName(host_hash, &all_host_hashs_),
                            "AllGather for host names failed.");
+  MS_LOG(INFO) << "Successfully get all nodes' hostname.";
 
   // Accumulate rank id.
   // In disaster recovery scenario, this function will enter multiple times when the network is reconfigured, so old

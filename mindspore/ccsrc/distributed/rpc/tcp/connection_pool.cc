@@ -42,6 +42,8 @@ Connection *ConnectionPool::FindConnection(const std::string &dst_url) {
   auto iter = connections_.find(dst_url);
   if (iter != connections_.end()) {
     conn = iter->second;
+    MS_LOG(DEBUG) << "Find connection from: " << conn->source << " to: " << conn->destination << " " << conn
+                  << " for url " << dst_url;
   }
   return conn;
 }
@@ -59,6 +61,8 @@ void ConnectionPool::DeleteConnection(const std::string &dst_url) {
   Connection *conn = FindConnection(dst_url);
   if (conn != nullptr) {
     std::lock_guard<std::mutex> lock(mutex_);
+    MS_LOG(INFO) << "Delete connection from: " << conn->source << " to: " << conn->destination << " " << conn
+                 << " for url " << dst_url;
     (void)connections_.erase(dst_url);
     CloseConnection(conn);
   }
@@ -95,6 +99,7 @@ void ConnectionPool::AddConnection(Connection *conn) {
     CloseConnection(tmpConn);
   }
   std::lock_guard<std::mutex> lock(mutex_);
+  MS_LOG(INFO) << "Add connection from: " << conn->source << " to: " << conn->destination << " " << conn;
   (void)connections_.emplace(conn->destination, conn);
 }
 

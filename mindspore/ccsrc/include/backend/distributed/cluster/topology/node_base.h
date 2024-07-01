@@ -39,7 +39,14 @@ class NodeBase {
         role_(role),
         finalized_(false),
         start_time_(Now()),
-        topo_state_(TopoState::kInitializing) {}
+        topo_state_(TopoState::kInitializing) {
+    // If set MS_DISABLE_HEARTBEAT to 1, disable heartbeat after cluster is built.
+    disable_heartbeat_ = (common::GetEnv("MS_DISABLE_HEARTBEAT") == "1");
+    if (disable_heartbeat_) {
+      MS_LOG(WARNING)
+        << "The heartbeat feature between cluster nodes is disabled! The scheduler won't detect timeout nodes.";
+    }
+  }
   virtual ~NodeBase() = default;
 
   // Prepare the resources hold in this node.
@@ -83,6 +90,9 @@ class NodeBase {
 
   // The state of the topology consisting of compute graph nodes.
   TopoState topo_state_;
+
+  // Whether disabling heartbeat between nodes.
+  bool disable_heartbeat_;
 };
 }  // namespace topology
 }  // namespace cluster
