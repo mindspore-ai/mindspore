@@ -173,7 +173,7 @@ mindspore.mint.nn
 
 卷积层
 ^^^^^^^^^^^^^^^^^^
-.. msplatformautosummary::
+.. mscnplatwarnautosummary::
     :toctree: mint
     :nosignatures:
     :template: classtemplate.rst
@@ -194,7 +194,7 @@ mindspore.mint.nn
 Dropout层
 ^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. mscnplatwarnautosummary::
     :toctree: mint
     :nosignatures:
     :template: classtemplate.rst
@@ -322,7 +322,7 @@ mindspore.mint.optim
 mindspore.mint.linalg
 ----------------------
 
-倒数
+逆数
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::

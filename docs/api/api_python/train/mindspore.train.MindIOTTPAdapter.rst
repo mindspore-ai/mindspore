@@ -19,6 +19,7 @@ mindspore.train.MindIOTTPAdapter
         - **ModuleNotFoundError** - Mindio TTP whl 包未安装。
 
     .. py:method:: load_checkpoint_with_backup(ckpt_file_path, strategy_file_path, net)
+        :staticmethod:
 
         加载指定的checkpoint文件到网络中，如果配置的checkpoint文件没有，基于strategy文件获取备份的checkpoint进行加载。
 
@@ -30,15 +31,15 @@ mindspore.train.MindIOTTPAdapter
             - **strategy_file_path** (str) - 当前卡的strategy 文件。
             - **net** (Cell) - 需要加载权重的网络。
 
+        返回：
+            Dict，加载后的checkpoint权重。
+
         异常：
             - **ValueError** - 加载checkpoint文件失败。
 
-        返回：
-            Dict:  加载后的checkpoint权重。
-
     .. py:method:: on_train_step_end(run_context)
 
-         在第一次step完成进行MindIO TTP的初始化， 每个step完成时进行MindIO TTP的上报。
+        在第一次step完成进行MindIO TTP的初始化， 每个step完成时进行MindIO TTP的上报。
 
         参数：
             - **run_context** (RunContext) - 包含模型的相关信息。详情请参考 :class:`mindspore.train.RunContext`。
