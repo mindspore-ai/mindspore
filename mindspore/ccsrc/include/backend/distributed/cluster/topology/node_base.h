@@ -49,6 +49,13 @@ class NodeBase {
     int int_node_timeout = env_node_timeout.empty() ? kDefaultNodeTimeout : std::stoi(env_node_timeout);
     node_timeout_ = (int_node_timeout < 0) ? UINT64_MAX : int_node_timeout;
     MS_LOG(INFO) << "Node timeout after exception is " << node_timeout_ << " seconds.";
+
+    // If set MS_DISABLE_HEARTBEAT to 1, disable heartbeat after cluster is built.
+    disable_heartbeat_ = (common::GetEnv("MS_DISABLE_HEARTBEAT") == "1");
+    if (disable_heartbeat_) {
+      MS_LOG(WARNING)
+        << "The heartbeat feature between cluster nodes is disabled! The scheduler won't detect timeout nodes.";
+    }
   }
   virtual ~NodeBase() = default;
 
@@ -102,6 +109,10 @@ class NodeBase {
 
   // The timeout(second) window for heartbeat from compute graph node to meta server.
   size_t node_timeout_;
+
+  // Whether heartbeat is disabled. If it is, the scheduler won't detect timed out node. It's caller's job to handle the
+  // exception in this cluster.
+  bool disable_heartbeat_;
 };
 }  // namespace topology
 }  // namespace cluster

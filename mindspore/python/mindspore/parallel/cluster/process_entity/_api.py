@@ -328,31 +328,17 @@ class _ProcessManager:
         """
         scheduler_log_path = os.path.join(self.log_dir, "scheduler.log")
         time_out_node_ids = []
-        with open(scheduler_log_path, "r") as log:
-            scheduler_log = log.read()
-            # Filter out abnormal logs.
-            time_out_node_log = re.findall(r"node: .* is timed out", scheduler_log)
+        if os.path.exists(scheduler_log_path):
+            with open(scheduler_log_path, "r") as log:
+                scheduler_log = log.read()
+                # Filter out abnormal logs.
+                time_out_node_log = re.findall(r"node: .* is timed out", scheduler_log)
 
-            # Filter out node ids of the processes which exit abnormally.
-            def node_id_splitter(id):
-                return re.split(" is timed out", re.split("node: ", id)[1])[0]
-            for id in time_out_node_log:
-                time_out_node_ids.append(node_id_splitter(id))
-
-        # If 'time_out_node_ids' is not empty, only analyze logs of these time out nodes.
-        # Unless get the error logs of all workers.
-        if time_out_node_ids:
-            os.system(f"cat {scheduler_log_path}|grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
+                # Filter out node ids of the processes which exit abnormally.
+                def node_id_splitter(id):
+                    return re.split(" is timed out", re.split("node: ", id)[1])[0]
+                for id in time_out_node_log:
+                    time_out_node_ids.append(node_id_splitter(id))
             logger.error(f"Time out nodes are {time_out_node_ids}")
-            # Get the logs which have these timeout node ids.
-            def grepper(id):
-                return subprocess.getoutput(f"grep -rn 'This node {id}' {self.log_dir}"" | awk -F: '{print $1}'")
-            log_names = []
-            for id in time_out_node_ids:
-                log_names.append(grepper(id))
-            for log in log_names:
-                logger.error(f"cat log {log} error info and tail log:"
-                             "==========================")
-                os.system(f"cat {log}|grep -E 'ERROR|CRITICAL|Traceback|Error' -C 5")
-        else:
-            os.system(f"grep -rn -E 'ERROR|CRITICAL|Traceback|Error' -C 5 {self.log_dir}")
+
+        os.system(f"grep -rn -E 'ERROR|CRITICAL|Traceback|Error' -C 5 {self.log_dir}")

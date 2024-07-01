@@ -101,7 +101,7 @@ class CollectiveCommunicationLib {
   virtual CommunicationGroupPtr GetGroup(const std::string &group_name);
 
   // AllGather host names of all nodes, used to initialize collective communication.
-  virtual bool AllGatherHostHashName(size_t host_hash_name, std::vector<size_t> *host_hash_names) const { return true; }
+  virtual bool AllGatherHostHashName(size_t host_hash_name, std::vector<size_t> *host_hash_names) { return true; }
 
   // Broadcast the device root information to all nodes on host side, used to initialize collective communication.
   virtual bool BroadcastUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) { return true; }

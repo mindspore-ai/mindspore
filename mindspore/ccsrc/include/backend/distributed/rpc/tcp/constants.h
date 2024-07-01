@@ -66,11 +66,11 @@ static const int SOCKET_KEEPALIVE = 1;
 static const int SOCKET_KEEPIDLE = 600;
 
 // Send next probes after the specified interval.
-static const int SOCKET_KEEPINTERVAL = 5;
+static const int SOCKET_KEEPINTERVAL = 10;
 
 // Consider the socket in error state after we send three ACK
 // probes without getting a reply.
-static const int SOCKET_KEEPCOUNT = 3;
+static const int SOCKET_KEEPCOUNT = 30;
 
 static const char RPC_MAGICID[] = "RPC0";
 static const char TCP_RECV_EVLOOP_THREADNAME[] = "RECV_EVENT_LOOP";
