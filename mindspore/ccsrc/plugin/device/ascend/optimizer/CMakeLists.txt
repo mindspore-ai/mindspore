@@ -46,6 +46,8 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ir_fusion/shape_reshape_fusion.cc"
         "./ir_fusion/add_layer_norm_fusion.cc"
         "./ir_fusion/add_rms_norm_fusion.cc"
+        "./ir_fusion/rms_norm_quant_fusion.cc"
+        "./ir_fusion/add_rms_norm_quant_fusion.cc"
         "./ir_fusion/add_cast_rms_norm_cast_fusion.cc"
         "./ir_fusion/matmul_allreduce_fusion.cc"
         "./ir_fusion/matmul_elemwise_fusion.cc"

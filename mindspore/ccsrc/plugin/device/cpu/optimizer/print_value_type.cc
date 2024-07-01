@@ -27,31 +27,6 @@
 
 namespace mindspore {
 namespace opt {
-kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
-  std::vector<std::string> inputs_format;
-  std::vector<std::string> outputs_format;
-  std::vector<TypeId> inputs_type;
-  std::vector<TypeId> outputs_type;
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
-  for (size_t input_index = 0; input_index < input_num; input_index++) {
-    inputs_format.push_back(kOpFormat_DEFAULT);
-    inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
-  }
-  size_t output_num = AnfAlgo::GetOutputTensorNum(node);
-  for (size_t output_index = 0; output_index < output_num; output_index++) {
-    outputs_format.push_back(kOpFormat_DEFAULT);
-    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, output_index));
-  }
-
-  builder.SetInputsFormat(inputs_format);
-  builder.SetOutputsFormat(outputs_format);
-  builder.SetInputsDeviceType(inputs_type);
-  builder.SetOutputsDeviceType(outputs_type);
-  return builder.Build();
-}
-
 bool GetOptList(const std::vector<AnfNodePtr> &node_list, std::vector<AnfNodePtr> *opt_list,
                 std::vector<std::vector<std::pair<int64_t, int64_t>>> *not_tensor_pos_vec) {
   MS_EXCEPTION_IF_NULL(opt_list);

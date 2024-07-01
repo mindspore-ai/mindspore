@@ -57,6 +57,8 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/flash_attention_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/add_layer_norm_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/add_rms_norm_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/rms_norm_quant_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/add_rms_norm_quant_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/add_cast_rms_norm_cast_fusion.h"
 #include "plugin/device/ascend/optimizer/ge/avg_pool_grad_for_ge.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/mc2_fusion.h"
