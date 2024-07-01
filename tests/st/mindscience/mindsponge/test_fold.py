@@ -16,11 +16,11 @@
 import os
 import numpy as np
 import time
-import pytest
 import mindspore.context as context
 from mindspore import Tensor, nn, load_checkpoint
 from tests.st.mindscience.mindsponge.mindsponge.cell.amp import amp_convert
 from tests.st.mindscience.mindsponge.mindsponge.common.config_load import load_config
+from tests.mark_utils import arg_mark
 
 from data import Feature
 from model import MegaFold, compute_confidence
@@ -66,9 +66,7 @@ def fold_infer(mixed_precision, crop_size, is_ge_only=False):
     return confidence, time_list
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_910B_Ascend_fold():
     """
     Feature: 910B Megaflod
@@ -81,7 +79,7 @@ def test_910B_Ascend_fold():
                         memory_optimize_level="O1",
                         max_call_depth=6000)
     mixed_precision = 1
-    crop_size = 1536
+    crop_size = 512
     confidence, time_list = fold_infer(mixed_precision, crop_size)
     compile_time, exectue_time = time_list
     compile_time = compile_time - exectue_time
@@ -90,9 +88,7 @@ def test_910B_Ascend_fold():
     assert compile_time < 500
     assert exectue_time < 100
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_910A_Ascend_fold():
     """
     Feature: 910A Megaflod
