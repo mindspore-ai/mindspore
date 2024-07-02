@@ -27,7 +27,7 @@ SymbolPtr AdamWeigtDecayShapeBuilder(OperationBuilder *b) {
 REG_SYMBOL_OP_BUILDER("AdamWeightDecay")
   .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kShape})
   .SetShapeFunc(AdamWeigtDecayShapeBuilder);
-REG_SYMBOL_OP_BUILDER("AdamWeightDecayExt")
+REG_SYMBOL_OP_BUILDER("AdamW")
   .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kShape})
   .SetShapeFunc(AdamWeigtDecayShapeBuilder);
 }  // namespace ops

@@ -13,15 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADAM_WEIGHT_DECAY_EXT_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADAM_WEIGHT_DECAY_EXT_H_
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADAMW_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADAMW_H_
 
 #include <vector>
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-class MIND_API AdamWeightDecayExtFuncImpl : public OpFuncImpl {
+class MIND_API AdamWFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
@@ -29,4 +29,4 @@ class MIND_API AdamWeightDecayExtFuncImpl : public OpFuncImpl {
 }  // namespace ops
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADAM_WEIGHT_DECAY_EXT_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADAMW_H_

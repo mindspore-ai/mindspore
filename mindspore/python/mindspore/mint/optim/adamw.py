@@ -165,7 +165,7 @@ class AdamW(Optimizer):
         self.increase_tensor = Tensor(1, mstype.float32)
         self.assignadd = P.AssignAdd()
         self.op_cast = P.Cast()
-        self.adamw_opt = gen.AdamWeightDecayExt()
+        self.adamw_opt = gen.AdamW()
 
     def construct(self, gradients):
         self.assignadd(self.state_step, self.increase_tensor)

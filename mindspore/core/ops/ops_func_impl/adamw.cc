@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "ops/ops_func_impl/adam_weight_decay_ext.h"
+#include "ops/ops_func_impl/adamw.h"
 
 #include <map>
 #include <memory>
@@ -46,14 +46,13 @@
 
 namespace mindspore {
 namespace ops {
-BaseShapePtr AdamWeightDecayExtFuncImpl::InferShape(const PrimitivePtr &primitive,
-                                                    const std::vector<AbstractBasePtr> &input_args) const {
+BaseShapePtr AdamWFuncImpl::InferShape(const PrimitivePtr &primitive,
+                                       const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(primitive);
-  const int64_t adam_weight_decay_ext_size = 13;
+  const int64_t adamw_size = 13;
   auto input_real_num = SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args));
-  MS_CHECK_VALUE(input_real_num == adam_weight_decay_ext_size,
-                 CheckAndConvertUtils::FormatCheckIntegerMsg("input number", input_real_num, kEqual,
-                                                             adam_weight_decay_ext_size, primitive));
+  MS_CHECK_VALUE(input_real_num == adamw_size, CheckAndConvertUtils::FormatCheckIntegerMsg(
+                                                 "input number", input_real_num, kEqual, adamw_size, primitive));
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -85,15 +84,13 @@ BaseShapePtr AdamWeightDecayExtFuncImpl::InferShape(const PrimitivePtr &primitiv
     std::vector<abstract::BaseShapePtr>{var_shape_ptr, m_shape_ptr, v_shape_ptr});
 }
 
-TypePtr AdamWeightDecayExtFuncImpl::InferType(const PrimitivePtr &prim,
-                                              const std::vector<AbstractBasePtr> &input_args) const {
+TypePtr AdamWFuncImpl::InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(prim);
   auto prim_name = prim->name();
-  const int64_t adam_weight_decay_ext_size = 13;
+  const int64_t adamw_size = 13;
   auto input_real_num = SizeToLong(CheckAndConvertUtils::GetRemoveMonadAbsNum(input_args));
-  MS_CHECK_VALUE(input_real_num == adam_weight_decay_ext_size,
-                 CheckAndConvertUtils::FormatCheckIntegerMsg("input number", input_real_num, kEqual,
-                                                             adam_weight_decay_ext_size, prim));
+  MS_CHECK_VALUE(input_real_num == adamw_size,
+                 CheckAndConvertUtils::FormatCheckIntegerMsg("input number", input_real_num, kEqual, adamw_size, prim));
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
