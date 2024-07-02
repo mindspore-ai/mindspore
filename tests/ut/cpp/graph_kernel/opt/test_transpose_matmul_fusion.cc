@@ -19,7 +19,7 @@
 #include "common/common_test.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/utils.h"
-#include "backend/graph_optimizer_test_framework.h"
+#include "common/graph_optimizer_test_framework.h"
 #include "pre_activate/common/pattern_to_pattern_pass_utils.h"
 #include "backend/common/graph_kernel/transpose_matmul_fusion.h"
 

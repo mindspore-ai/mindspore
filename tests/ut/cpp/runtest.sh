@@ -51,13 +51,14 @@ if [ $# -gt 0 ]; then
   ./ut_MINDDATA1_tests --gtest_filter=$1
   ./ut_CCSRC_tests --gtest_filter=$1
   ./ut_SYMBOL_ENGINE_tests --gtest_filter=$1
+  ./ut_GRAPH_KERNEL_tests --gtest_filter=$1
   exit 0
 fi
 
 set +e
 
 #pids=()
-tasks=(./ut_CORE_tests ./ut_CCSRC_tests ./ut_API_tests ./ut_FRONTEND_tests ./ut_BACKEND_tests ./ut_PS_tests ./ut_OTHERS_tests ./ut_SYMBOL_ENGINE_tests)
+tasks=(./ut_CORE_tests ./ut_CCSRC_tests ./ut_API_tests ./ut_FRONTEND_tests ./ut_BACKEND_tests ./ut_PS_tests ./ut_OTHERS_tests ./ut_SYMBOL_ENGINE_tests ./ut_GRAPH_KERNEL_tests)
 #tasks=(./ut_CORE_tests ./ut_API_tests ./ut_FRONTEND_tests ./ut_BACKEND_tests ./ut_PS_tests ./ut_OTHERS_tests ./ut_MINDDATA0_tests ./ut_MINDDATA1_tests)
 set +e
 for task in "${tasks[@]}"; do
