@@ -17,7 +17,7 @@
 #include <string>
 
 #include "symbol_engine/ops/symbolic_shape_test_utils.h"
-#include "backend/graph_optimizer_test_framework.h"
+#include "common/graph_optimizer_test_framework.h"
 #include "abstract/dshape.h"
 #include "common/mockcpp.h"
 

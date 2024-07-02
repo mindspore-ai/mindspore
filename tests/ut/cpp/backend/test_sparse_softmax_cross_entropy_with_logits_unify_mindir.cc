@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <memory>
-#include "backend/graph_optimizer_test_framework.h"
+#include "common/graph_optimizer_test_framework.h"
 #include "ops/sequence_ops.h"
 #include "common/common_test.h"
 #include "plugin/device/ascend/optimizer/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
