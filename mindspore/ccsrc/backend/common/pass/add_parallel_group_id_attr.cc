@@ -61,7 +61,7 @@ bool AddParallelGroupIdAttr::Run(const FuncGraphPtr &func_graph) {
     } else if (cnode->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
       group_id = GroupId::BACKWARD;
     } else {
-      MS_LOG(INFO) << "While adding group id, detects cnode is neither forward nor backward!";
+      MS_LOG(DEBUG) << "While adding group id, detects cnode is neither forward nor backward!";
     }
 
     if (common::AnfAlgo::IsCommunicationOp(cnode)) {
@@ -75,7 +75,7 @@ bool AddParallelGroupIdAttr::Run(const FuncGraphPtr &func_graph) {
         // cnode is for data parallel
         index = Index::DATA_PARALLEL;
       } else {
-        MS_LOG(INFO)
+        MS_LOG(DEBUG)
           << "while adding index, detects cnode is communition operator but is not for data, model, pipeline parallel";
       }
     } else {
@@ -84,8 +84,8 @@ bool AddParallelGroupIdAttr::Run(const FuncGraphPtr &func_graph) {
 
     uint32_t parallel_group_id = static_cast<uint32_t>(group_id) << 16 | static_cast<uint32_t>(index);
     cnode->AddAttr(kParallelGroupId, MakeValue(parallel_group_id));
-    MS_LOG(INFO) << "Successfully add _parallel_group_id: " << parallel_group_id
-                 << " to node: " << cnode->fullname_with_scope();
+    MS_LOG(DEBUG) << "Successfully add _parallel_group_id: " << parallel_group_id
+                  << " to node: " << cnode->fullname_with_scope();
   }
   return false;
 }
