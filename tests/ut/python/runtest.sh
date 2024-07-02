@@ -28,14 +28,6 @@ if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == 
             exit ${RET}
         fi
 
-        echo "run python debugger gpu ut"
-        pytest -v $CURRPATH/debugger/gpu_tests
-
-        RET=$?
-        if [ ${RET} -ne 0 ]; then
-            exit ${RET}
-        fi
-
     elif [ $1 == "stage2" ]; then
         echo "run python parallel"
         pytest -s $CURRPATH/parallel/*.py
@@ -69,7 +61,7 @@ if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == 
             exit ${RET}
         fi
 
-        pytest -v --ignore=$CURRPATH/dataset --ignore=$CURRPATH/debugger/gpu_tests --ignore=$CURRPATH/parallel --ignore=$CURRPATH/ops --ignore=$CURRPATH/pynative_mode --ignore=$CURRPATH/pipeline --ignore=$CURRPATH/train --ignore=$CURRPATH/nn $IGNORE_EXEC $CURRPATH
+        pytest -v --ignore=$CURRPATH/dataset --ignore=$CURRPATH/parallel --ignore=$CURRPATH/ops --ignore=$CURRPATH/pynative_mode --ignore=$CURRPATH/pipeline --ignore=$CURRPATH/train --ignore=$CURRPATH/nn $IGNORE_EXEC $CURRPATH
 
         RET=$?
         if [ ${RET} -ne 0 ]; then
@@ -79,12 +71,6 @@ if [ $# -eq 1 ]  &&  ([ "$1" == "stage1" ] || [ "$1" == "stage2" ] || [ "$1" == 
 else
     echo "run all python ut"
     pytest $CURRPATH/dataset
-    RET=$?
-    if [ ${RET} -ne 0 ]; then
-        exit ${RET}
-    fi
-
-    pytest $CURRPATH/debugger/gpu_tests
     RET=$?
     if [ ${RET} -ne 0 ]; then
         exit ${RET}
@@ -114,7 +100,7 @@ else
         exit ${RET}
     fi
 
-    pytest -v --ignore=$CURRPATH/dataset --ignore=$CURRPATH/debugger/gpu_tests --ignore=$CURRPATH/parallel --ignore=$CURRPATH/ops --ignore=$CURRPATH/pynative_mode --ignore=$CURRPATH/pipeline --ignore=$CURRPATH/train --ignore=$CURRPATH/nn $IGNORE_EXEC $CURRPATH
+    pytest -v --ignore=$CURRPATH/dataset --ignore=$CURRPATH/parallel --ignore=$CURRPATH/ops --ignore=$CURRPATH/pynative_mode --ignore=$CURRPATH/pipeline --ignore=$CURRPATH/train --ignore=$CURRPATH/nn $IGNORE_EXEC $CURRPATH
     RET=$?
     if [ ${RET} -ne 0 ]; then
         exit ${RET}
