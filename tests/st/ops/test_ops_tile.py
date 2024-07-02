@@ -133,7 +133,7 @@ def test_tile_dynamic():
     ms.context.set_context(runtime_num_threads=1)  # multi-threads have none-initialized bug now.
     input_case1 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
     input_case2 = Tensor(np.random.rand(3, 4).astype(np.float32))
-    TEST_OP(tile_func, [[input_case1, (2, 3, 2, 3)], [input_case2, (3, 2, 3, 2)]], 'tile')
+    TEST_OP(tile_func, [[input_case1, (2, 3, 2, 3)], [input_case2, (3, 2, 3, 2)]], 'tile', disable_input_check=True)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',

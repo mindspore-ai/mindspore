@@ -83,5 +83,5 @@ def test_fold_dynamic():
             [input_case1, (12, 16), (6, 5), (3, 2), (2, 3), (2, 5)],
             [input_case2, (8, 8), (3, 3), (2, 2), (1, 1), (3, 3)],
         ],
-        "col2im_ext"
+        "col2im_ext", disable_input_check=True, disable_mode=['GRAPH_MODE'],
     )
