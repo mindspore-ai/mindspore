@@ -311,11 +311,8 @@ def test_print_to_file():
 
 
 @security_off_wrap
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential')
 def test_kbk_control_flow_print_string():
     """
     Feature: Test print string in control flow.

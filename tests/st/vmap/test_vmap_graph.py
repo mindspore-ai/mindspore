@@ -15,7 +15,6 @@
 """test vmap in graph mode"""
 
 import platform
-import pytest
 import numpy as np
 import mindspore.nn as nn
 import mindspore.numpy as mnp
@@ -28,14 +27,13 @@ from mindspore.ops.functional import vmap
 from mindspore.common.api import jit
 from mindspore.common.parameter import Parameter
 
+from tests.mark_utils import arg_mark
+
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
+          essential_mark='unessential')
 def test_vmap_cond():
     """
     Feature: vmap
@@ -73,12 +71,8 @@ def test_vmap_cond():
     assert np.allclose(result.asnumpy(), expect_result.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_vmap_gradient():
     """
     Feature: vmap
@@ -135,11 +129,8 @@ def test_vmap_gradient():
     assert np.allclose(vmap_jvp_y.asnumpy(), expect_y_jvp.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
+          essential_mark='unessential')
 def test_vmap_monad():
     """
     Feature: vmap
@@ -194,12 +185,8 @@ def test_vmap_monad():
     assert np.allclose(assign_add_var.asnumpy(), expect_assign_add_var.asnumpy())
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_vmap_reduce():
     """
     Feature: vmap
@@ -267,12 +254,8 @@ def test_vmap_reduce():
     assert np.allclose(result6.asnumpy(), expect_result6.asnumpy())
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_vmap_general_rule():
     """
     Feature: vmap
@@ -306,12 +289,8 @@ def test_vmap_general_rule():
     assert np.allclose(result2.asnumpy(), expect_result2.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_vmap_nested_axes():
     """
     Feature: vmap
@@ -356,12 +335,8 @@ def test_vmap_nested_axes():
     assert np.allclose(res5.asnumpy(), expect_res5.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_vmap_with_tuple_input():
     """
     Feature: vmap
@@ -393,10 +368,8 @@ def test_vmap_with_tuple_input():
     assert np.allclose(res[1].asnumpy(), np.array([[4, 4, 4], [4, 4, 4]]))
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_vmap_with_celllist_input():
     """
     Feature: vmap
@@ -441,12 +414,8 @@ def test_vmap_with_celllist_input():
         pass
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_vmap_as_vmap_input():
     """
     Feature: vmap
@@ -471,10 +440,8 @@ def test_vmap_as_vmap_input():
     assert np.allclose(output.asnumpy(), expect_res.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_vmap_with_celllist_nested_grad():
     """
     Feature: vmap

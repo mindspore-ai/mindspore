@@ -19,15 +19,11 @@ import pytest
 import mindspore.context as context
 from .optimizer_utils import FakeNet, build_network, default_fc1_weight_rprop, default_fc1_bias_rprop, \
     no_default_fc1_weight_rprop, no_default_fc1_bias_rprop, default_group_fc1_weight_rprop, default_group_fc1_bias_rprop
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_default_rprop(mode):
     """
@@ -42,13 +38,8 @@ def test_default_rprop(mode):
     assert np.allclose(cells.prev[1].asnumpy(), default_fc1_bias_rprop, atol=1.e-2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_no_default_rprop(mode):
     """
@@ -63,13 +54,8 @@ def test_no_default_rprop(mode):
     assert np.allclose(cells.prev[1].asnumpy(), no_default_fc1_bias_rprop, atol=1.e-2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_default_rprop_group(mode):
     """
