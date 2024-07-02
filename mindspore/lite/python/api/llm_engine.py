@@ -115,7 +115,7 @@ class LLMReq:
     @sequence_length.setter
     def sequence_length(self, sequence_length: int):
         """Set decoder sequence length of this inference task in LLMEngine"""
-        check_isinstance("sequence_length", sequence_length, int)
+        check_uint64_number_range("sequence_length", sequence_length)
         self.llm_request_.sequence_length = sequence_length
 
 
