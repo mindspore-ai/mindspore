@@ -14,7 +14,6 @@
 # ============================================================================
 """Export and load mindir in dynamic length of sequence and dynamic shape."""
 import os
-import pytest
 
 import numpy as np
 
@@ -30,9 +29,6 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
 def test_dynamic_shape_tuple():
     """
     Feature: export dynamic shape to MindIR file
@@ -78,9 +74,6 @@ class Net(nn.Cell):
         return self.relu(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
 def test_mutable_tuple():
     """
     Feature: export mutable tuple size to MindIR file
@@ -103,9 +96,6 @@ def test_mutable_tuple():
     os.remove(verify_name)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
 def test_mutable_dynamic_tuple():
     """
     Feature: export dynamic tuple size to MindIR file

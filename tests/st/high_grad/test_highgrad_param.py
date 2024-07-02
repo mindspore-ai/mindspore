@@ -14,12 +14,12 @@
 # ============================================================================
 """Test high order grad with respect to parameter first, then input."""
 
-import pytest
 import numpy as np
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor, context
 from mindspore import ParameterTuple, Parameter
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -59,12 +59,8 @@ class GradSec(nn.Cell):
         return output
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_sit_high_order_grad_params():
     context.set_context(mode=context.GRAPH_MODE)
     x = Tensor(np.array([1, 1]).astype(np.float32))

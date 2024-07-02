@@ -18,12 +18,11 @@ How to run this:
 pytest tests/st/test_model/test_llama_model/test_parallel_train.py
 """
 import os
-import pytest
+
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
 def test_train():
     """
     Feature: Trainer.train()
@@ -38,9 +37,7 @@ def test_train():
     assert ret == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
 def test_train_cp():
     """
     Feature: Trainer.train()

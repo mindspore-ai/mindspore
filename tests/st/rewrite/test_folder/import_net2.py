@@ -21,8 +21,6 @@ class NetImport(BaseNet, NoCellNet, NetWithClassVar):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def run_net_with_import(mode):
     """

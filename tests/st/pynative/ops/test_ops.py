@@ -364,9 +364,7 @@ class Dropout(nn.Cell):
         return self.op(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dropout():
     """
     Feature: PyNative forward RunOp Dropout need refresh output.

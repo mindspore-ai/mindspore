@@ -19,6 +19,7 @@ from mindspore.mint.nn.functional import binary_cross_entropy_with_logits
 from mindspore.mint.nn import BCEWithLogitsLoss
 import mindspore as ms
 import tests.st.utils.test_utils as test_utils
+from tests.mark_utils import arg_mark
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 
@@ -35,11 +36,8 @@ def binary_cross_entropy_with_logits_backward_func(inputx, target, weight=None, 
     return grad_op(inputx, target, weight, posWeight, reduction)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", ["pynative", "KBK", "graph"])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_binary_cross_entropy_with_logits_forward(mode, reduction):
@@ -83,9 +81,7 @@ def test_ops_binary_cross_entropy_with_logits_forward(mode, reduction):
     np.testing.assert_allclose(out_bw[0].asnumpy(), expect_bw, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_ops_binary_cross_entropy_with_logits_dynamic_shape():
     """
     Feature: pyboost function.
@@ -108,11 +104,8 @@ def test_ops_binary_cross_entropy_with_logits_dynamic_shape():
             "binary_cross_entropy_with_logits", disable_mode=['GRAPH_MODE'], disable_yaml_check=True)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", ["pynative", "KBK", "graph"])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_bce_with_logits_loss_forward(mode, reduction):
@@ -166,9 +159,7 @@ def test_ops_bce_with_logits_loss_forward(mode, reduction):
     np.testing.assert_allclose(out_bw[0].asnumpy(), expect_bw, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_ops_bce_with_logits_loss_dynamic_shape():
     """
     Feature: pyboost function.

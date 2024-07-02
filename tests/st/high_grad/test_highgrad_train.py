@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
 import mindspore.nn as nn
 import mindspore.ops as ops
@@ -23,6 +22,8 @@ from mindspore.nn.optim import Momentum
 from mindspore.ops.composite import GradOperation
 from mindspore.common import ParameterTuple, dtype
 import mindspore.ops.functional as F
+
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -90,12 +91,8 @@ class WithLossCellLocal(nn.Cell):
         return self.loss(out, label)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_high_grad_train():
     x_pure = np.random.randint(-10, 100, 32)
     x_train = x_pure.astype(np.float32)
@@ -116,11 +113,8 @@ def test_high_grad_train():
         train_network(Tensor([x_train[i]]), Tensor([y_train[i]]))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_high_grad_environ_eliminate():
     """
     Feature: eliminate the environ node.

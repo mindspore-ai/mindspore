@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import mint, jit, JitConfig
+from tests.mark_utils import arg_mark
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 
@@ -42,10 +43,7 @@ def atan2_backward_func(x, y):
     return input_grad
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_atan2_std(mode):
     """
@@ -74,10 +72,7 @@ def test_atan2_std(mode):
     np.testing.assert_allclose(output_grad[1].asnumpy(), expect_grad[1], 1e-5, 1e-5)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_atan2_dynamic_shape():
     """
     Feature: Test atan2 with dynamic shape in graph mode.
@@ -91,9 +86,7 @@ def test_atan2_dynamic_shape():
             'atan2_ext', disable_mode=['GRAPH_MODE'])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_atan2_bfloat16(mode):
     """

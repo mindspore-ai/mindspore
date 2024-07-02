@@ -17,6 +17,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor, jit, JitConfig
+from tests.mark_utils import arg_mark
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 
@@ -48,10 +49,7 @@ def rms_norm_grad_numpy_impl(x, gamma, epsilon, y_grad):
     return dx, dgamma.astype(np.float32)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 @pytest.mark.parametrize('input_dtype', [np.float32, np.float16])
 def test_rms_norm_forward(mode, input_dtype):
@@ -87,11 +85,8 @@ def test_rms_norm_forward(mode, input_dtype):
     np.testing.assert_allclose(rstd.asnumpy(), expect_rstd, rtol=loss)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 # the last dim of input must be integer multiple of 64 in 910a
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 @pytest.mark.parametrize('input_dtype', [np.float32, np.float16])
 def test_rms_norm_backward(mode, input_dtype):
@@ -129,11 +124,7 @@ def test_rms_norm_backward(mode, input_dtype):
     np.testing.assert_allclose(gamma_grad.asnumpy(), expect_gamma_grad, rtol=loss)
 
 
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 @pytest.mark.parametrize('input_dtype', [np.float32, np.float16])
 def test_rms_norm_backward_cmp_with_numpy(mode, input_dtype):
@@ -164,10 +155,7 @@ def test_rms_norm_backward_cmp_with_numpy(mode, input_dtype):
     np.testing.assert_allclose(gamma_grad.asnumpy(), expect_gamma_grad, rtol=r_loss, atol=a_loss)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend910b_training
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_rms_norm_dynamic_shape():
     """
     Feature: Test gather with dynamic shape in graph mode.

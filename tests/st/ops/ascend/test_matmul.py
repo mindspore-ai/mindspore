@@ -126,10 +126,7 @@ def do_test_matmul_dtypes(valid_dtypes, is_ge_only=False):
                 matmul(x_ms, y_ms)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_matmul_dtypes():
     """
     Feature: Test matmul dtypes.
@@ -139,10 +136,7 @@ def test_matmul_dtypes():
     do_test_matmul_dtypes([mstype.float16, mstype.float32])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matmul_dtypes_ge():
     """
     Feature: Test matmul dtypes.

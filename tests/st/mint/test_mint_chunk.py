@@ -83,10 +83,7 @@ def test_chunk_forward_with_minus_dim(mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", ['GE', 'pynative'])
 def test_chunk_forward(mode):
     """
@@ -97,10 +94,7 @@ def test_chunk_forward(mode):
     do_test_chunk_forward(mode)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_chunk_forward_kbk():
     """
     Feature: Chunk
@@ -110,10 +104,7 @@ def test_chunk_forward_kbk():
     do_test_chunk_forward('KBK')
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", ['GE', 'pynative', 'KBK'])
 def test_chunk_backward(mode):
     """
