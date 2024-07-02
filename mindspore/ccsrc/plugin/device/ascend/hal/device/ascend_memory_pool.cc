@@ -194,7 +194,7 @@ size_t AscendMemoryPool::FreeDeviceMemByEagerFree(const DeviceMemPtr addr, const
 }
 
 size_t AscendMemoryPool::MmapDeviceMem(const size_t size, const DeviceMemPtr addr) {
-  return AscendVmmAdapter::GetInstance().MmapDeviceMem(size, addr);
+  return AscendVmmAdapter::GetInstance().MmapDeviceMem(size, addr, total_mem_size());
 }
 
 bool AscendMemoryPool::FreeDeviceMem(const DeviceMemPtr &addr) {

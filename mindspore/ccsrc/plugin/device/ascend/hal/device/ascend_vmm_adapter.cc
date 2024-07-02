@@ -17,7 +17,9 @@
 #include <map>
 #include <vector>
 #include <tuple>
+
 #include "utils/convert_utils_base.h"
+#include "utils/ms_utils.h"
 #include "transform/symbol/symbol_utils.h"
 #include "transform/symbol/acl_rt_symbol.h"
 
@@ -81,9 +83,10 @@ void AscendVmmAdapter::ClearAllMemory() {
 
 AscendVmmAdapter::~AscendVmmAdapter() { ClearAllMemory(); }
 
-size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr addr) {
+size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr addr, const size_t max_size) {
   MS_EXCEPTION_IF_NULL(addr);
-  MS_LOG(DEBUG) << "VMM MmapDeviceMem size:" << size << ", addr:" << addr;
+  MS_LOG(DEBUG) << "VMM MmapDeviceMem size:" << size << ", addr:" << addr
+                << ", handle_queue_ size : " << handle_queue_.size() << ".";
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -105,6 +108,7 @@ size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr add
   auto handle_size = GetHandleSize(align_size);
   auto iter = vmm_map_.find(vmm_start_addr);
 
+  std::map<DeviceMemPtr, aclrtDrvMemHandle> mapped_vmm_handle;
   for (size_t i = 0; i < handle_size; ++i) {
     auto new_addr = AddressOffset(vmm_start_addr, i * kVmmAlignSize);
     if (iter == vmm_map_.end() || iter->first != new_addr) {
@@ -120,13 +124,38 @@ size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr add
       handle = handle_queue_.front();
       handle_queue_.pop();
     } else {
+      if (physical_handle_size_ * kVmmAlignSize >= max_size) {
+        MS_LOG(INFO) << "Mapped too much memory, physical_handle_size_ : " << physical_handle_size_
+                     << ", max_size : " << max_size << ", addr : " << addr << ", size : " << size << ".";
+        for (const auto [device_mem_ptr, handle] : mapped_vmm_handle) {
+          vmm_map_[device_mem_ptr] = nullptr;
+          handle_queue_.push(handle);
+        }
+        return 0;
+      }
+
       auto ret = CALL_ASCEND_API(aclrtMallocPhysical, &handle, kVmmAlignSize, &prop, 0);
       if (ret != ACL_ERROR_NONE) {
         if (common::IsNeedProfileMemory()) {
           return size;
         }
-        MS_LOG(ERROR) << "Malloc physical memory failed.";
+        size_t used_handle_size = 0;
+        for (const auto &[k, v] : vmm_map_) {
+          if (v != nullptr) {
+            MS_LOG(DEBUG) << "Inuse handle address : " << k << ", handle : " << v << ".";
+            used_handle_size += 1;
+          }
+        }
+        used_handle_size += handle_queue_.size();
+        MS_LOG(ERROR) << "Malloc physical memory failed, inuse physical memory handle size : " << used_handle_size
+                      << ", physical_handle_size_ size : " << physical_handle_size_ << ".";
         return 0;
+      } else {
+        physical_handle_size_++;
+        if (physical_handle_size_ * kVmmAlignSize >= max_size) {
+          MS_LOG(WARNING) << "Mapped too much memory, physical_handle_size_ : " << physical_handle_size_
+                          << ", max_size : " << max_size << ".";
+        }
       }
     }
 
@@ -139,8 +168,14 @@ size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr add
       handle_queue_.push(handle);
       return 0;
     }
+    mapped_vmm_handle[new_addr] = handle;
     iter->second = handle;
     iter++;
+  }
+
+  static bool enable_trace_mem = common::IsEnableAlllocConfig(common::kAllocMemoryTracker);
+  if (enable_trace_mem) {
+    MS_LOG(INFO) << "Total physical memory handle size : " << physical_handle_size_ << ".";
   }
   return size;
 }
@@ -164,7 +199,8 @@ size_t AscendVmmAdapter::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
 }
 
 size_t AscendVmmAdapter::EagerFreeDeviceMem(const DeviceMemPtr addr, const size_t size) {
-  MS_LOG(DEBUG) << "VMM EagerFreeDeviceMem size:" << size << ", addr:" << addr;
+  MS_LOG(DEBUG) << "Eager free device mem addr :" << addr << ", size :" << size
+                << ", handle_queue_ size : " << handle_queue_.size() << ".";
   if (common::IsNeedProfileMemory()) {
     return size;
   }
@@ -187,8 +223,10 @@ size_t AscendVmmAdapter::EagerFreeDeviceMem(const DeviceMemPtr addr, const size_
       return 0;
     }
     if (iter->second == nullptr) {
-      MS_LOG(ERROR) << "The handle is nullptr.";
-      return 0;
+      iter++;
+      vmm_start_addr = vmm_end_addr;
+      // Here nullptr may be huge, skip do logging.
+      continue;
     }
     auto ret = CALL_ASCEND_API(aclrtUnmapMem, vmm_start_addr);
     if (ret != ACL_ERROR_NONE) {
@@ -201,6 +239,8 @@ size_t AscendVmmAdapter::EagerFreeDeviceMem(const DeviceMemPtr addr, const size_
     vmm_start_addr = vmm_end_addr;
     ret_size += kVmmAlignSize;
   }
+  MS_LOG(DEBUG) << "After eager free, handle_queue_ size : " << handle_queue_.size()
+                << ", expected free size : " << size << ", real size : " << ret_size << ".";
   return ret_size;
 }
 }  // namespace ascend

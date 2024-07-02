@@ -151,10 +151,10 @@ TEST_F(TestAscendVmmAdapter, test_find_vmm_segment) {
   DeviceMemPtr addr = reinterpret_cast<DeviceMemPtr>(size);
   auto ret = ascend_vmm_adapter_.AllocDeviceMem(size * 7, &addr);
   EXPECT_EQ(ret, size * 7);
-  ret = ascend_vmm_adapter_.MmapDeviceMem(size, addr);
+  ret = ascend_vmm_adapter_.MmapDeviceMem(size, addr, SIZE_MAX);
   EXPECT_EQ(ret, size);
   DeviceMemPtr addr2 = reinterpret_cast<DeviceMemPtr>(size * 3);
-  ret = ascend_vmm_adapter_.MmapDeviceMem(size, addr2);
+  ret = ascend_vmm_adapter_.MmapDeviceMem(size, addr2, SIZE_MAX);
   EXPECT_EQ(ret, size);
   DeviceMemPtr addr3 = reinterpret_cast<DeviceMemPtr>(size + 233);
   DeviceMemPtr ret_addr = ascend_vmm_adapter_.FindVmmSegment(addr3);
@@ -169,10 +169,10 @@ TEST_F(TestAscendVmmAdapter, test_mmap_device_mem) {
   DeviceMemPtr addr = reinterpret_cast<DeviceMemPtr>(size);
   auto ret = ascend_vmm_adapter_.AllocDeviceMem(size * 20, &addr);
   EXPECT_EQ(ret, size * 20);
-  ret = ascend_vmm_adapter_.MmapDeviceMem(size, addr);
+  ret = ascend_vmm_adapter_.MmapDeviceMem(size, addr, SIZE_MAX);
   EXPECT_EQ(ret, size);
   DeviceMemPtr addr2 = reinterpret_cast<DeviceMemPtr>(size * 7);
-  ret = ascend_vmm_adapter_.MmapDeviceMem(size, addr2);
+  ret = ascend_vmm_adapter_.MmapDeviceMem(size, addr2, SIZE_MAX);
   EXPECT_EQ(ret, size);
   auto iter0 = ascend_vmm_adapter_.vmm_map_.find(addr);
   EXPECT_NE(iter0, ascend_vmm_adapter_.vmm_map_.end());
@@ -189,7 +189,7 @@ TEST_F(TestAscendVmmAdapter, test_mmap_device_mem_err) {
   auto ret = ascend_vmm_adapter_.AllocDeviceMem(size * 20, &addr);
   EXPECT_EQ(ret, size * 20);
   DeviceMemPtr addr2 = reinterpret_cast<DeviceMemPtr>(size * 24 + 233);
-  ret = ascend_vmm_adapter_.MmapDeviceMem(size, addr2);
+  ret = ascend_vmm_adapter_.MmapDeviceMem(size, addr2, SIZE_MAX);
   EXPECT_EQ(ret, 0);
 }
 
