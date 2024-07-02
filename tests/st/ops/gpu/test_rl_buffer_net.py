@@ -14,7 +14,6 @@
 # ============================================================================
 
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -23,6 +22,7 @@ from mindspore.common.api import jit
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 import mindspore as ms
+from tests.mark_utils import arg_mark
 
 
 def create_tensor(capcity, shapes, dtypes):
@@ -67,9 +67,7 @@ exp = [s, a, r, s_]
 exp1 = [s_, a, r, s]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_Buffer():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     buffer = RLBuffer(batch_size=32, capcity=100, shapes=[(4,), (2,), (1,), (4,)], types=[

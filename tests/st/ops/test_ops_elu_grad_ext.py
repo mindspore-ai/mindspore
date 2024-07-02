@@ -16,6 +16,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor
+from tests.mark_utils import arg_mark
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
@@ -40,11 +41,7 @@ def elu_grad_ext_vmap_func(dy, y, alpha):
     return ms.ops.vmap(elu_grad_ext_forward_func, in_axes=(0, 0, None), out_axes=0)(dy, y, alpha)
 
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_elu_grad_ext_forward(mode):
     """
@@ -64,12 +61,7 @@ def test_elu_grad_ext_forward(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_elu_grad_ext_dynamic_shape_testop():
     """
     Feature: Test elu_grad_ext with dynamic shape in graph mode using TEST_OP.
@@ -89,11 +81,7 @@ def test_elu_grad_ext_dynamic_shape_testop():
             'elu_grad_ext', disable_grad=True, disable_input_check=True)
 
 
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_elu_grad_ext_vmap(mode):
     """

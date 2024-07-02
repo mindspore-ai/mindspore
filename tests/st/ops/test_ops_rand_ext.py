@@ -4,6 +4,7 @@ import pytest
 import mindspore as ms
 from mindspore.ops import rand_ext, rand_like_ext
 
+from tests.mark_utils import arg_mark
 from tests.st.utils import test_utils
 
 
@@ -19,9 +20,7 @@ def run_randlike(tensor, dtype=None):
     return rand_like_ext(tensor, dtype=dtype)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_rand_normal(mode):
     """
@@ -38,9 +37,7 @@ def test_rand_normal(mode):
     assert y.dtype == np.float64
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_rand_randomness(mode):
     """
@@ -64,9 +61,7 @@ def test_rand_randomness(mode):
     assert np.all(x1 == x2)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_randlike_randomness(mode):
     """

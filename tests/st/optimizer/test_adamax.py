@@ -21,6 +21,7 @@ from mindspore import nn, Tensor
 from .optimizer_utils import build_network, default_fc1_weight_adamax, default_fc1_bias_adamax, \
     no_default_fc1_weight_adamax, no_default_fc1_bias_adamax, default_group_fc1_weight_adamax, \
     default_group_fc1_bias_adamax
+from tests.mark_utils import arg_mark
 
 w1 = np.array([[0.03909272, 0.08893055, -0.259909, -0.459185,
                 -0.0195536, 0.12977135, -0.62942827, -0.53132117],
@@ -54,13 +55,8 @@ class Net(nn.Cell):
         return self.fc2(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_default_adamax(mode):
     """
@@ -76,13 +72,8 @@ def test_default_adamax(mode):
     assert np.allclose(cells.moment1[1].asnumpy(), default_fc1_bias_adamax, atol=1.e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_no_default_adamax(mode):
     """
@@ -98,13 +89,8 @@ def test_no_default_adamax(mode):
     assert np.allclose(cells.moment1[1].asnumpy(), no_default_fc1_bias_adamax, atol=1.e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_default_adamax_group(mode):
     """

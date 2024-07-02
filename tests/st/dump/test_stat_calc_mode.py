@@ -20,7 +20,6 @@ import tempfile
 import time
 import math
 import json
-import pytest
 
 from mindspore import JitConfig, Tensor, nn
 from pathlib import Path
@@ -214,10 +213,8 @@ def test_kbk_stat_calc_mode_l2_dump_device():
     finally:
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_kbk_stat_calc_with_inf():
     """
     Feature: kbyk statistic dump support device l2 value dump.
@@ -265,11 +262,7 @@ def test_kbk_stat_calc_with_inf():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_kbk_stat_calc_with_nan():
     """
     Feature: kbyk statistic dump support device l2 value dump.

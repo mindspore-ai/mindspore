@@ -13,16 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor, ops, nn
 from mindspore import SparseTensor
+from tests.mark_utils import arg_mark
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_ge_switch_layer_with_const_input():
     """
     Feature: switch_layer with const input
@@ -60,10 +58,8 @@ def test_ge_switch_layer_with_const_input():
     expect = func1(indices, values)
     assert output[2] == expect[2]
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_ge_control_flow_and_nested_list_with_const_input():
     """
     Feature: control flow and nested list with const input
@@ -93,10 +89,8 @@ def test_ge_control_flow_and_nested_list_with_const_input():
     expect = ops.relu(x)
     assert np.allclose(output.asnumpy(), expect.asnumpy(), 0.001, 0.001)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_ge_control_flow_and_nested_tuple_with_const_input():
     """
     Feature: control flow and nested tuple with const input

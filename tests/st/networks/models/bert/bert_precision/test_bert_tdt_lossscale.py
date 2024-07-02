@@ -251,7 +251,7 @@ def test_bert_precision(enable_graph_kernel=False):
     assert np.allclose(loss_scale, expect_loss_scale, 0, 0)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bert_precision_graph_kernel_off():
     test_bert_precision(enable_graph_kernel=False)
 

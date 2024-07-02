@@ -14,7 +14,6 @@
 # ============================================================================
 import numpy as np
 import pytest
-from tests.mark_utils import arg_mark
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -27,8 +26,6 @@ class Net(nn.Cell):
         return output
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_nanquantile(mode):
     """

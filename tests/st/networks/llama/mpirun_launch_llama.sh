@@ -18,7 +18,6 @@ BASE_PATH=$(cd "$(dirname $0)"; pwd)
 USE_DEVICE_NUM=$1
 TEST_MODE=$2
 MF_PATH=${BASE_PATH}/../mindformers
-sed -i 's/numpy==1.26.4/numpy==1.20.0/' ${MF_PATH}/requirements.txt
 pip install -r ${MF_PATH}/requirements.txt
 
 

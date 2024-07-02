@@ -14,7 +14,6 @@
 # ============================================================================
 
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -23,6 +22,7 @@ from mindspore.common.api import jit
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
 import mindspore as ms
+from tests.mark_utils import arg_mark
 
 
 class RLBufferAppend(nn.Cell):
@@ -83,9 +83,8 @@ c = [Tensor(np.array([[6, 6, 6, 6], [6, 6, 6, 6]]), ms.float32),
      Tensor(np.array([[6], [6]]), ms.int32),
      Tensor(np.array([[6, 6, 6, 6], [6, 6, 6, 6]]), ms.float32)]
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_BufferSample():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     buffer_sample = RLBufferSample(capcity=5, batch_size=3, shapes=[(4,), (2,), (1,), (4,)], types=[
@@ -94,9 +93,7 @@ def test_BufferSample():
     print(ss, aa, rr, ss_)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_BufferGet():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     buffer_get = RLBufferGet(capcity=5, shapes=[(4,), (2,), (1,), (4,)], types=[
@@ -112,9 +109,7 @@ def test_BufferGet():
     np.testing.assert_almost_equal(ss_.asnumpy(), expect_s_)
 
 
-@ pytest.mark.level1
-@ pytest.mark.platform_x86_gpu_training
-@ pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_BufferAppend():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     buffer_append = RLBufferAppend(capcity=5, shapes=[(4,), (2,), (1,), (4,)], types=[
