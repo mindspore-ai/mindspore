@@ -24,21 +24,20 @@ BaseShapePtr MatmulFusionUtils::InferenceMultiMatmulInferShape(const PrimitivePt
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
   auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex1]->GetShape())[kShape];
-  auto shape_array_opt = GetArrayValue<int64_t>(input_args[kInputIndex2]);
-  auto shape_array = shape_array_opt.value();
-  std::vector<int64_t> shape_vec = shape_array.ToVector();
-
   if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {
     MS_LOG(EXCEPTION) << "For " << op_name << ", dynamic rank is not supported";
   }
   const size_t x_rank = x_shape.size();
   const size_t w_rank = w_shape.size();
-  MS_CHECK_VALUE(
-    x_rank != 0 && x_rank == w_rank,
-    CheckAndConvertUtils::FormatCommMsg("For '" + primitive->name() + "', all inputs must have the same rank."));
+  MS_CHECK_VALUE(x_rank == 3,
+                 CheckAndConvertUtils::FormatCommMsg("For '" + primitive->name() + "', x_rank should be 3."));
 
-  auto m = x_shape[0];
-  auto k = x_shape[1];
+  MS_CHECK_VALUE(w_rank == 2,
+                 CheckAndConvertUtils::FormatCommMsg("For '" + primitive->name() + "', w_rank should be 2."));
+
+  auto b = x_shape[0];  // in matmul, m = b * s
+  auto s = x_shape[1];
+  auto k = x_shape[2];
   auto k0 = w_shape[1];
   MS_CHECK_VALUE(k == k0, CheckAndConvertUtils::FormatCommMsg(
                             "For '" + primitive->name() + "', the K axis of all inputs must have the same length."));
@@ -53,21 +52,13 @@ BaseShapePtr MatmulFusionUtils::InferenceMultiMatmulInferShape(const PrimitivePt
     (n_len_list.size() == kSize2 || n_len_list.size() == kSize3),
     CheckAndConvertUtils::FormatCommMsg("For '" + primitive->name() + "', attr 'n_lens' must have 2 or 3 value."));
 
-  ShapeVector output_0_shape = {m, n_len_list[0]};
-  ShapeVector output_1_shape = {m, n_len_list[1]};
-  if (shape_vec.size() == kSize3) {
-    output_0_shape = {shape_vec[0], shape_vec[1], n_len_list[0]};
-    output_1_shape = {shape_vec[0], shape_vec[1], n_len_list[1]};
-  }
-
+  ShapeVector output_0_shape = {b, s, n_len_list[0]};
+  ShapeVector output_1_shape = {b, s, n_len_list[1]};
   std::vector<BaseShapePtr> shape_lists;
   (void)shape_lists.emplace_back(std::make_shared<abstract::TensorShape>(output_0_shape));
   (void)shape_lists.emplace_back(std::make_shared<abstract::TensorShape>(output_1_shape));
   if (n_len_list.size() == kSize3) {
-    ShapeVector output_2_shape = {m, n_len_list[2]};
-    if (shape_vec.size() == kSize3) {
-      output_2_shape = {shape_vec[0], shape_vec[1], n_len_list[2]};
-    }
+    ShapeVector output_2_shape = {b, s, n_len_list[2]};
     (void)shape_lists.emplace_back(std::make_shared<abstract::TensorShape>(output_2_shape));
   }
   return std::make_shared<abstract::TupleShape>(shape_lists);

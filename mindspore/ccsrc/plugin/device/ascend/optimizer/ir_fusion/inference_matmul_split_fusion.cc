@@ -74,6 +74,20 @@ bool InferenceMatmulSplitFusion::Run(const FuncGraphPtr &graph) {
   return changed;
 }
 
+bool InferenceMatmulSplitFusion::CheckReshapeNode(const AnfNodePtr &node) const {
+  auto matmul_cnode = node->cast<CNodePtr>();
+  auto reshape_node = common::AnfAlgo::GetInputNode(matmul_cnode, kIndex0);
+  if (reshape_node == nullptr || !reshape_node->isa<CNode>()) {
+    return false;
+  }
+  auto reshape_node_name = common::AnfAlgo::GetCNodeName(reshape_node);
+  if (reshape_node_name != prim::kPrimReshape->name()) {
+    MS_LOG(DEBUG) << "matmul input node is not a reshape node, it's a : " << reshape_node_name;
+    return false;
+  }
+  return true;
+}
+
 std::string InferenceMatmulSplitFusion::GetSplitFusionPatternName(const CNodePtr &cnode) const {
   std::string pattern_name = "";
   auto reshape_node = common::AnfAlgo::GetInputNode(cnode, kIndex0);
@@ -91,17 +105,17 @@ std::string InferenceMatmulSplitFusion::GetSplitFusionPatternName(const CNodePtr
     auto reshape_input_name = common::AnfAlgo::GetCNodeName(reshape_input_node);
     if (reshape_input_name == prim::kPrimMatMul->name()) {
       MS_LOG(DEBUG) << "process matmul reshape split fusion";
-      pattern_name = kPatternNameMatMulSplit;
+      pattern_name = CheckReshapeNode(reshape_input_node) ? kPatternNameMatMulSplit : "";
     } else if (reshape_input_name == prim::kPrimQuantBatchMatmul->name()) {
       MS_LOG(DEBUG) << "process quant_batch_matmul reshape split fusion";
-      pattern_name = kPatternNameQuantbatchmatmulSplit;
+      pattern_name = CheckReshapeNode(reshape_input_node) ? kPatternNameQuantbatchmatmulSplit : "";
     } else if (reshape_input_name == prim::kPrimAdd->name()) {
       auto bias_add_cnode = reshape_input_node->cast<CNodePtr>();
       auto bias_input_node = common::AnfAlgo::GetInputNode(bias_add_cnode, kIndex0);
       if (bias_input_node->isa<CNode>() &&
           common::AnfAlgo::GetCNodeName(bias_input_node) == prim::kPrimMatMul->name()) {
         MS_LOG(DEBUG) << "process matmul biasadd reshape split fusion";
-        pattern_name = kPatternNameMatMulBiasAddSplit;
+        pattern_name = CheckReshapeNode(bias_input_node) ? kPatternNameMatMulBiasAddSplit : "";
       }
     }
   }
@@ -154,6 +168,7 @@ bool InferenceMatmulSplitFusion::CheckMatMulDataFormat(const CNodePtr &matmul_cn
   MS_CHECK_TRUE_RET(trans_b != nullptr, false);
   bool is_trans_a = GetValue<bool>(trans_a->value());
   bool is_trans_b = GetValue<bool>(trans_b->value());
+  MS_LOG(DEBUG) << "the transpose format of matmul node is: trans_a=" << is_trans_a << " trans_b=" << is_trans_b;
   if (!is_trans_a && is_trans_b) {
     return true;
   }
@@ -206,7 +221,9 @@ CNodePtr InferenceMatmulSplitFusion::CreateMatmulSplitNode(const FuncGraphPtr &f
   MS_CHECK_TRUE_RET(matmul_cnode != nullptr, nullptr);
   MS_CHECK_TRUE_RET(matmul_cnode->func_graph() == split_cnode->func_graph(), nullptr);
 
-  auto input_x = matmul_cnode->input(kIndex1);
+  auto pre_reshape_cnode = matmul_cnode->input(kIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(pre_reshape_cnode != nullptr, nullptr);
+  auto input_x = pre_reshape_cnode->input(kIndex1);
   MS_CHECK_TRUE_RET(input_x != nullptr, nullptr);
   auto input_w = matmul_cnode->input(kIndex2);
   MS_CHECK_TRUE_RET(input_w != nullptr, nullptr);
@@ -215,9 +232,14 @@ CNodePtr InferenceMatmulSplitFusion::CreateMatmulSplitNode(const FuncGraphPtr &f
     return nullptr;
   }
 
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  auto reshape_tuple = kernel_graph->NewValueNode(MakeValue((int64_t)kTuplePlaceHolderNum));
+  kernel_graph->AddValueNodeToGraph(reshape_tuple);
+  MS_LOG(DEBUG) << "reshape_tuple node is: " << reshape_tuple->DebugString();
+
   size_t split_size_len = GetSplitSizeLen(split_cnode);
   auto matmul_split_prim = CreateMatmulSplitPrim(split_cnode, split_size_len, pattern_name);
-  std::vector<AnfNodePtr> matmul_split_inputs = {input_x, input_w, tuple_node};
+  std::vector<AnfNodePtr> matmul_split_inputs = {input_x, input_w, reshape_tuple};
   auto matmul_split_cnode = func_graph->NewCNode(matmul_split_prim, matmul_split_inputs);
   MS_EXCEPTION_IF_NULL(matmul_split_cnode);
 
@@ -249,7 +271,9 @@ CNodePtr InferenceMatmulSplitFusion::CreateMatmulBiasAddSplitNode(const FuncGrap
   MS_CHECK_TRUE_RET(matmul_cnode != nullptr, nullptr);
   MS_CHECK_TRUE_RET(matmul_cnode->func_graph() == split_cnode->func_graph(), {});
 
-  auto matmul_x = matmul_cnode->input(kIndex1);
+  auto pre_reshape = matmul_cnode->input(kIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(pre_reshape != nullptr, nullptr);
+  auto matmul_x = pre_reshape->input(kIndex1);
   MS_EXCEPTION_IF_NULL(matmul_x);
   auto matmul_w = matmul_cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(matmul_w);
@@ -259,10 +283,16 @@ CNodePtr InferenceMatmulSplitFusion::CreateMatmulBiasAddSplitNode(const FuncGrap
   if (!CheckSupportDataType(matmul_x, support_dtype) || !CheckMatMulDataFormat(matmul_cnode)) {
     return nullptr;
   }
+
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  auto reshape_tuple_node = kernel_graph->NewValueNode(MakeValue((int64_t)kTuplePlaceHolderNum));
+  kernel_graph->AddValueNodeToGraph(reshape_tuple_node);
+  MS_LOG(DEBUG) << "reshape_tuple is " << reshape_tuple_node->DebugString();
+
   size_t split_size_len = GetSplitSizeLen(split_cnode);
   auto matmul_split_prim = CreateMatmulSplitPrim(split_cnode, split_size_len, pattern_name);
   matmul_split_prim->AddAttr("with_bias", MakeValue<bool>(true));
-  std::vector<AnfNodePtr> matmul_split_inputs = {matmul_x, matmul_w, reshape_tuple, input_bias};
+  std::vector<AnfNodePtr> matmul_split_inputs = {matmul_x, matmul_w, reshape_tuple_node, input_bias};
   auto matmul_split_cnode = func_graph->NewCNode(matmul_split_prim, matmul_split_inputs);
   MS_EXCEPTION_IF_NULL(matmul_split_cnode);
 
@@ -291,7 +321,9 @@ CNodePtr InferenceMatmulSplitFusion::CreateQuantbatchmatmulSplitNode(const FuncG
   MS_CHECK_TRUE_RET(qbmm_cnode != nullptr, nullptr);
   MS_CHECK_TRUE_RET(qbmm_cnode->func_graph() == split_cnode->func_graph(), nullptr);
 
-  auto input_x = qbmm_cnode->input(kIndex1);
+  auto pre_reshape = qbmm_cnode->input(kIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(pre_reshape != nullptr, nullptr);
+  auto input_x = pre_reshape->input(kIndex1);
   MS_EXCEPTION_IF_NULL(input_x);
   auto input_w = qbmm_cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(input_w);
@@ -304,9 +336,14 @@ CNodePtr InferenceMatmulSplitFusion::CreateQuantbatchmatmulSplitNode(const FuncG
     return nullptr;
   }
 
+  auto kernel_graph = func_graph->cast<KernelGraphPtr>();
+  auto tuple_node = kernel_graph->NewValueNode(MakeValue((int64_t)kTuplePlaceHolderNum));
+  kernel_graph->AddValueNodeToGraph(tuple_node);
+  MS_LOG(DEBUG) << "tuple_node " << tuple_node->DebugString();
+
   size_t split_size_len = GetSplitSizeLen(split_cnode);
   auto qbmm_split_prim = CreateMatmulSplitPrim(split_cnode, split_size_len, pattern_name);
-  std::vector<AnfNodePtr> qbmm_split_inputs = {input_x, input_w, qbmm_tuple, input_bias, input_scale};
+  std::vector<AnfNodePtr> qbmm_split_inputs = {input_x, input_w, tuple_node, input_bias, input_scale};
   auto qbmm_split_cnode = func_graph->NewCNode(qbmm_split_prim, qbmm_split_inputs);
   MS_EXCEPTION_IF_NULL(qbmm_split_cnode);
 
@@ -377,7 +414,9 @@ CNodePtr InferenceMatmulSplitFusion::CreateMatmulSplitSiluNode(const FuncGraphPt
   MS_CHECK_TRUE_RET(matmul_cnode != nullptr, nullptr);
   MS_CHECK_TRUE_RET(matmul_cnode->func_graph() == split_cnode->func_graph(), nullptr);
 
-  auto x_node = matmul_cnode->input(kIndex1);
+  auto pre_reshape = matmul_cnode->input(kIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(pre_reshape != nullptr, nullptr);
+  auto x_node = pre_reshape->input(kIndex1);
   MS_EXCEPTION_IF_NULL(x_node);
   auto weight_node = matmul_cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(weight_node);
@@ -431,7 +470,9 @@ CNodePtr InferenceMatmulSplitFusion::CreateMatmulBiasAddSplitSiluNode(const Func
   MS_CHECK_TRUE_RET(matmul_cnode != nullptr, nullptr);
   MS_CHECK_TRUE_RET(matmul_cnode->func_graph() == split_cnode->func_graph(), {});
 
-  auto matmul_input = matmul_cnode->input(kIndex1);
+  auto pre_reshape = matmul_cnode->input(kIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(pre_reshape != nullptr, nullptr);
+  auto matmul_input = pre_reshape->input(kIndex1);
   MS_EXCEPTION_IF_NULL(matmul_input);
   auto input_w = matmul_cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(input_w);
@@ -485,7 +526,9 @@ CNodePtr InferenceMatmulSplitFusion::CreateQuantbatchmatmulSplitSiluNode(const F
   MS_CHECK_TRUE_RET(qbmm_cnode != nullptr, nullptr);
   MS_CHECK_TRUE_RET(qbmm_cnode->func_graph() == split_cnode->func_graph(), nullptr);
 
-  auto qbmm_x = qbmm_cnode->input(kIndex1);
+  auto pre_reshape = qbmm_cnode->input(kIndex1)->cast<CNodePtr>();
+  MS_CHECK_TRUE_RET(pre_reshape != nullptr, nullptr);
+  auto qbmm_x = pre_reshape->input(kIndex1);
   MS_EXCEPTION_IF_NULL(qbmm_x);
   auto qbmm_w = qbmm_cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(qbmm_w);
