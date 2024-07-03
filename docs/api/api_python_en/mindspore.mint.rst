@@ -172,7 +172,8 @@ mindspore.mint.nn
 
 Convolution Layers
 ^^^^^^^^^^^^^^^^^^
-.. msplatformautosummary::
+
+.. msplatwarnautosummary::
     :toctree: mint
     :nosignatures:
     :template: classtemplate.rst
@@ -193,7 +194,7 @@ Linear Layers
 Dropout Layers
 ^^^^^^^^^^^^^^^
 
-.. msplatformautosummary::
+.. msplatwarnautosummary::
     :toctree: mint
     :nosignatures:
     :template: classtemplate.rst
