@@ -19,7 +19,7 @@
 from mindspore.common._register_for_tensor import tensor_operator_registry
 from mindspore.ops import _constants
 from mindspore.ops.function import *
-from mindspore.ops.function.array_func import narrow, flatten
+from mindspore.ops.function.array_func import chunk_ext
 from mindspore.ops.function.math_func import all, argmax_ext
 from mindspore.ops.function.random_func import uniform_ext
 from mindspore.ops import operations as P
@@ -137,7 +137,7 @@ setattr(tensor_operator_registry, 'bincount', bincount)
 setattr(tensor_operator_registry, 'slogdet', slogdet)
 setattr(tensor_operator_registry, 'trace', trace)
 setattr(tensor_operator_registry, 'tril', tril)
-setattr(tensor_operator_registry, 'chunk', chunk)
+setattr(tensor_operator_registry, 'chunk', chunk_ext)
 setattr(tensor_operator_registry, 'count_nonzero', count_nonzero)
 setattr(tensor_operator_registry, 'sqrt', sqrt)
 setattr(tensor_operator_registry, 'square', square)

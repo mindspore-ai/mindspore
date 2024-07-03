@@ -19,9 +19,11 @@ NN Operators with better performance
 
 """
 from mindspore.ops._primitive_cache import _get_cache_prim
-from mindspore.ops.auto_generate.gen_ops_prim import Convolution, ConstantPadND, MaxPoolWithIndices, MaxPoolWithMask
+from mindspore.ops.auto_generate.gen_ops_prim import MaxPoolWithIndices, MaxPoolWithMask, \
+    constant_pad_nd_op
 from mindspore.ops.auto_generate import leaky_relu_ext
 from mindspore import _checkparam as validator
+from mindspore.ops.auto_generate.pyboost_inner_prim import *
 
 
 def _check_stride_when_same_mode(stride):
@@ -189,26 +191,21 @@ def conv2d(input, weight, bias=None, stride=1, padding=0, dilation=1, groups=1):
         # Calc padding info
         need_pad_nd, pad_l, pad_r = _get_pad_info(dilation, weight)
         if not need_pad_nd:
-            conv = _get_cache_prim(Convolution)(stride, pad_l, dilation, False, (0, 0), groups)
-            return conv(input, weight, bias)
+            return convolution_impl(input, weight, bias, stride, pad_l, dilation, False, (0, 0), groups)
 
         # Calc pad nd info
         pad_nd, pad_l = _get_pad_nd_info(pad_l, pad_r)
-        pad_nd_op = _get_cache_prim(ConstantPadND)()
-        padded_input = pad_nd_op(input, pad_nd, 0)
-        conv = _get_cache_prim(Convolution)(stride, pad_l, dilation, False, (0, 0), groups)
-        return conv(padded_input, weight, bias)
+        padded_input = constant_pad_nd_op(input, pad_nd, 0)
+        return convolution_impl(padded_input, weight, bias, stride, pad_l, dilation, False, (0, 0), groups)
 
     if isinstance(padding, int):
         padding = (padding,) * 2
 
     if isinstance(padding, (tuple, list)):
-        conv = _get_cache_prim(Convolution)(stride, padding, dilation, False, (0, 0), groups)
-        return conv(input, weight, bias)
+        return convolution_impl(input, weight, bias, stride, padding, dilation, False, (0, 0), groups)
     if isinstance(padding, str):
         if padding == 'valid':
-            conv = _get_cache_prim(Convolution)(stride, (0, 0), dilation, False, (0, 0), groups)
-            return conv(input, weight, bias)
+            return convolution_impl(input, weight, bias, stride, (0, 0), dilation, False, (0, 0), groups)
         if padding == 'same':
             _check_stride_when_same_mode(stride)
             return _convolution_same(input, weight, bias, dilation, groups)

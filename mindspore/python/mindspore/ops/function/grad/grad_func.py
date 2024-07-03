@@ -22,6 +22,7 @@ from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.nn.cell import Cell
 from mindspore.nn.grad.cell_grad import _LinearizeInner
+from mindspore.ops.operations.other_ops import stop_gradient_
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.function.array_func import ones, expand_dims, size, reshape, broadcast_to, transpose, zeros
 from mindspore.ops.composite import _Vmap, _Grad, _TaylorOperation, GradOperation
@@ -1405,7 +1406,7 @@ def stop_gradient(value):
         [[1.4100001 1.6       6.5999994]
          [1.4100001 1.6       6.5999994]]
     """
-    return P.StopGradient()(value)
+    return stop_gradient_(value)
 
 
 __all__ = [

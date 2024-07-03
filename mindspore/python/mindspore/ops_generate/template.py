@@ -86,7 +86,7 @@ PYTHON_PRIM_TEMPLATE = CppTemplate("""
 class _Pyboost${class_name}Prim(${class_name}Prim_):
     def __call__(self, ${input_args}):
         ${process_func}
-        return _convert_stub(super().__call__(${input_args}))
+        return _convert_stub(super().__call__(${processed_args}))
 
 
 ${func_impl_name}_impl = _Pyboost${class_name}Prim()

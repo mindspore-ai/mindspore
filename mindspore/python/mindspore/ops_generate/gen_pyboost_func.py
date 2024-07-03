@@ -835,7 +835,8 @@ def gen_pyboost_inner_prim(work_path, op_yaml_data):
             arg_handler = arg_info.get('arg_handler')
             processed_arg = arg_name
             if arg_handler is not None and arg_handler != 'dtype_to_type_id':
-                process_func += f"""converted_{arg_name} = {arg_handler}({arg_name})\n"""
+                process_func += f"""converted_{arg_name} = {arg_handler}("{op_proto.class_name}", 
+                                  "{arg_name}", {arg_name})\n"""
                 processed_arg = 'converted_' + arg_name
             input_args.append(arg_name)
             processed_args.append(processed_arg)

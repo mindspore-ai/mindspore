@@ -300,10 +300,10 @@ class SampleDistortedBoundingBoxV2(Primitive):
 
     @prim_attr_register
     def __init__(self, seed=0, seed2=0, \
-                  aspect_ratio_range=(0.75, 1.33), \
-                  area_range=(0.05, 1.0), \
-                  max_attempts=100, \
-                  use_image_if_no_bounding_boxes=False):
+                 aspect_ratio_range=(0.75, 1.33), \
+                 area_range=(0.05, 1.0), \
+                 max_attempts=100, \
+                 use_image_if_no_bounding_boxes=False):
         validator.check_is_int(seed, "seed", self.name)
         validator.check_is_int(seed2, "seed2", self.name)
         validator.check_value_type("aspect_ratio_range", aspect_ratio_range, [list, tuple], self.name)
@@ -582,6 +582,9 @@ class StopGradient(Primitive):
     @prim_attr_register
     def __init__(self):
         pass
+
+
+stop_gradient_ = StopGradient()
 
 
 class ConfusionMatrix(PrimitiveWithInfer):
