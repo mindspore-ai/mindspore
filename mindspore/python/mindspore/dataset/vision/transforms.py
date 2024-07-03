@@ -2076,7 +2076,7 @@ class Erase(ImageTensorOperation):
             >>> # Use the transform in dataset pipeline mode
             >>> data = np.random.randint(0, 255, size=(1, 100, 100, 3)).astype(np.uint8)
             >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
-            >>> transforms_list = [vision.Erase(10,10,10,10).device("Ascend")]
+            >>> transforms_list = [vision.Erase(10, 10, 10, 10, (100, 100, 100)).device("Ascend")]
             >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=transforms_list, input_columns=["image"])
             >>> for item in numpy_slices_dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
             ...     print(item["image"].shape, item["image"].dtype)
