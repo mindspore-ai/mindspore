@@ -37,6 +37,7 @@ namespace mindspore {
 namespace opt {
 constexpr auto kMatmulQkvSplitSizeLen = 3;
 constexpr auto kMatmulFfnSplitSizeLen = 2;
+constexpr auto kTuplePlaceHolderNum = 0;
 
 class InferenceMatmulSplitFusion : public Pass {
  public:
@@ -45,6 +46,7 @@ class InferenceMatmulSplitFusion : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
+  bool CheckReshapeNode(const AnfNodePtr &node) const;
   std::string GetFusionPatternName(const CNodePtr &cnode) const;
   std::string GetSplitFusionPatternName(const CNodePtr &cnode) const;
   bool CheckMatMulDataFormat(const CNodePtr &matmul_cnode) const;
