@@ -82,6 +82,32 @@ bool JustCallAndSetRes(CallNode *call_node, GraphBuilder *unused) {
   return false;
 }
 
+bool JustCallAndSetResWithArgs(CallNode *call_node, const std::vector<py::object> &args, GraphBuilder *unused) {
+  py::object func = call_node->input(0)->GetVobj()->GetPyObject();
+  if (func.ptr() == nullptr) {
+    return SetCallResType<AObject::kTypeAnyValue>(call_node);
+  }
+
+  auto pair = Utils::PackCallStackArgs(args, call_node->GetOpcode());
+  if (pair.first.ptr() == nullptr) {
+    return SetCallResType<AObject::kTypeAnyValue>(call_node);
+  }
+
+  pi_jit_disable();
+  PyObject *value = PyObject_Call(func.ptr(), pair.first.ptr(), pair.second.ptr());
+  if (PyErr_Occurred()) {
+    MS_LOG(INFO) << "got an error " << py::error_already_set().what() << " at call the "
+                 << std::string(py::str(func.ptr()));
+    PyErr_Clear();
+  }
+  pi_jit_enable();
+
+  call_node->SetVobj(AObject::Convert(value));
+  call_node->SetSubGraph(nullptr);
+  Py_XDECREF(value);
+  return false;
+}
+
 static bool CallNodeReturnConst(CallNode *call_node, Graph *sub_graph, AObject *value) {
   PyObject *cnst = value->GetPyObject().ptr();
   MS_EXCEPTION_IF_NULL(cnst);

@@ -524,8 +524,14 @@ static auto TraceRun(JitCompileResults *jcr) {
 
   if (conf.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
     auto mg = std::dynamic_pointer_cast<MindGraphBuilder>(g);
-    (void)mg->FGBuilder()->AddTopGraphInputs(PackArgs(jcr->origin_frame()));
+    MS_EXCEPTION_IF_NULL(mg);
+    auto code = jcr->origin_frame()->f_code;
+    int args_count = code->co_argcount + code->co_kwonlyargcount;
+    bool has_vargs = code->co_flags & CO_VARARGS;
+    bool has_kwargs = code->co_flags & CO_VARKEYWORDS;
+    (void)mg->FGAddTopInputs(args_count, has_vargs, has_kwargs);
   }
+
   (void)g->TraceRun();
   return g;
 }
@@ -1020,7 +1026,10 @@ static py::object CallGraph(const JitCompileResults *c, const py::object &args, 
     PyErr_SetString(PyExc_RuntimeError, "compiled graph execute failed");
   }
   auto res_obj = py::reinterpret_steal<py::object>(res);
-  return ResultMutable(res_obj);
+  if (!c->conf()->GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+    return ResultMutable(res_obj);
+  }
+  return res_obj;
 }
 
 static py::object CallCompiledCallable(PyThreadState *tstate, PyFrameObject *f, const JitCompileResults *c) {

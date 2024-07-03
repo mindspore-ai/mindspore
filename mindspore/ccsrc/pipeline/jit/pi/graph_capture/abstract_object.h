@@ -23,6 +23,7 @@
 #include <memory>
 #include "pybind11/pybind11.h"
 #include "pipeline/jit/pi/utils/mempool.h"
+#include "pipeline/jit/pi/graph_capture/abstract_wrapper.h"
 #include "utils/convert_utils_base.h"
 
 namespace py = pybind11;
@@ -109,6 +110,7 @@ class AbstractObjectBase {
   static Type GetPyType(PyObject *op);
   static Type GetPyType(PyTypeObject *tp);
   static Type GetMsType(PyTypeObject *tp);
+  static AObject *Convert(const AbstractWrapperPtr &wrapper);
   static AObject *Convert(const py::object &o) { return Convert(o.ptr()); }
   static AObject *Convert(PyObject *o) { return MakeAObject(GetPyType(o), o ? Py_TYPE(o) : nullptr, o); }
   static AObject *MakeAObject(Type real_type) { return MakeAObject(real_type, nullptr, nullptr); }

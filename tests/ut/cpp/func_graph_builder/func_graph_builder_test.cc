@@ -18,6 +18,7 @@
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
 #include "pipeline/jit/pi/graph_build/func_graph_builder.h"
+#include "pipeline/jit/pi/graph_capture/abstract_wrapper.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/utils/convert_utils.h"
 #include "ops/arithmetic_ops.h"
@@ -47,11 +48,11 @@ class TestFuncGraphBuilder : public UT::Common {
 TEST_F(TestFuncGraphBuilder, TestAddInputAddOutput) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
-  ASSERT_NE(input1.ptr(), nullptr);
+  auto input1 = func_graph_builder.AddTopGraphArgInput(int_v1);
+  ASSERT_NE(input1, nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder.AddSubGraphInput(int_v2);
-  ASSERT_NE(input2.ptr(), nullptr);
+  auto input2 = func_graph_builder.AddTopGraphArgInput(int_v2);
+  ASSERT_NE(input2, nullptr);
   ASSERT_TRUE(func_graph_builder.AddOutput(input2));
   auto graph = func_graph_builder.graph();
   ASSERT_NE(graph, nullptr);
@@ -65,18 +66,20 @@ TEST_F(TestFuncGraphBuilder, TestAddInputAddOutput) {
 TEST_F(TestFuncGraphBuilder, DISABLED_TestAddNodeAndSingleOutput) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
-  ASSERT_NE(input1.ptr(), nullptr);
+  auto v1_wrapper = func_graph_builder.AddLocalVariable(int_v1);
+  auto input1 = func_graph_builder.AddSubGraphInput(v1_wrapper);
+  ASSERT_NE(input1, nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder.AddSubGraphInput(int_v2);
-  ASSERT_NE(input2.ptr(), nullptr);
+  auto v2_wrapper = func_graph_builder.AddLocalVariable(int_v2);
+  auto input2 = func_graph_builder.AddSubGraphInput(v2_wrapper);
+  ASSERT_NE(input2, nullptr);
   auto mod = python_adapter::GetPyModule("mindspore.ops.operations._scalar_ops");
   ASSERT_FALSE(py::isinstance<py::none>(mod));
   auto scalar_add_prim_class = mod.attr("ScalarAdd");
   ASSERT_FALSE(py::isinstance<py::none>(scalar_add_prim_class));
   auto scalar_add_prim = scalar_add_prim_class();
   auto obj = func_graph_builder.AddNode(scalar_add_prim, {input1, input2});
-  ASSERT_NE(obj.ptr(), nullptr);
+  ASSERT_NE(obj, nullptr);
   ASSERT_TRUE(func_graph_builder.AddOutput(obj));
   auto graph = func_graph_builder.graph();
   ASSERT_NE(graph, nullptr);
@@ -90,18 +93,20 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestAddNodeAndSingleOutput) {
 TEST_F(TestFuncGraphBuilder, DISABLED_TestAddNodeAndMultiOutput) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
-  ASSERT_NE(input1.ptr(), nullptr);
+  auto v1_wrapper = func_graph_builder.AddLocalVariable(int_v1);
+  auto input1 = func_graph_builder.AddSubGraphInput(v1_wrapper);
+  ASSERT_NE(input1, nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder.AddSubGraphInput(int_v2);
-  ASSERT_NE(input2.ptr(), nullptr);
+  auto v2_wrapper = func_graph_builder.AddLocalVariable(int_v2);
+  auto input2 = func_graph_builder.AddSubGraphInput(v2_wrapper);
+  ASSERT_NE(input2, nullptr);
   auto mod = python_adapter::GetPyModule("mindspore.ops.operations._scalar_ops");
   ASSERT_FALSE(py::isinstance<py::none>(mod));
   auto scalar_add_prim_class = mod.attr("ScalarAdd");
   ASSERT_FALSE(py::isinstance<py::none>(scalar_add_prim_class));
   auto scalar_add_prim = scalar_add_prim_class();
   auto obj = func_graph_builder.AddNode(scalar_add_prim, {input1, input2});
-  ASSERT_NE(obj.ptr(), nullptr);
+  ASSERT_NE(obj, nullptr);
   ASSERT_TRUE(func_graph_builder.AddOutput(obj));
   ASSERT_TRUE(func_graph_builder.AddOutput(obj));
   auto graph = func_graph_builder.graph();
@@ -111,53 +116,18 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestAddNodeAndMultiOutput) {
 }
 
 // Feature: Build graph in pi_jit.
-// Description: Use the func_graph_builder api to remove an output.
-// Expectation: The expected graph is constructed.
-TEST_F(TestFuncGraphBuilder, DISABLED_TestRemoveOutput) {
-  FuncGraphBuilder func_graph_builder;
-  py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
-  ASSERT_NE(input1.ptr(), nullptr);
-  py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder.AddSubGraphInput(int_v2);
-  ASSERT_NE(input2.ptr(), nullptr);
-  py::int_ int_v3 = 3;
-  auto input3 = func_graph_builder.AddSubGraphInput(int_v3);
-  ASSERT_NE(input3.ptr(), nullptr);
-
-  auto mod = python_adapter::GetPyModule("mindspore.ops.operations._scalar_ops");
-  ASSERT_FALSE(py::isinstance<py::none>(mod));
-  auto scalar_add_prim_class = mod.attr("ScalarAdd");
-  ASSERT_FALSE(py::isinstance<py::none>(scalar_add_prim_class));
-  auto scalar_add_prim = scalar_add_prim_class();
-
-  auto obj1 = func_graph_builder.AddNode(scalar_add_prim, {input1, input2});
-  ASSERT_NE(obj1.ptr(), nullptr);
-  ASSERT_TRUE(func_graph_builder.AddOutput(obj1));
-
-  auto obj2 = func_graph_builder.AddNode(scalar_add_prim, {input2, input3});
-  ASSERT_NE(obj2.ptr(), nullptr);
-  ASSERT_TRUE(func_graph_builder.AddOutput(obj2));
-
-  func_graph_builder.RemoveOutput(obj1);
-
-  auto graph = func_graph_builder.graph();
-  ASSERT_NE(graph, nullptr);
-  FuncGraphPtr expected_graph = get_py_fun_.CallAndParseRet("test_remove_output", "graph");
-  ASSERT_TRUE(CheckEqual(graph, expected_graph));
-}
-
-// Feature: Build graph in pi_jit.
 // Description: Use the func_graph_builder api to add cnode with constant input.
 // Expectation: Failed to add the node.
 TEST_F(TestFuncGraphBuilder, DISABLED_TestAddNodeConstantInput) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
-  ASSERT_NE(input1.ptr(), nullptr);
+  auto v1_wrapper = func_graph_builder.AddLocalVariable(int_v1);
+  auto input1 = func_graph_builder.AddSubGraphInput(v1_wrapper);
+  ASSERT_NE(input1, nullptr);
   py::int_ int_v2 = 2;
-  auto obj = func_graph_builder.AddNode(prim::kPrimScalarAdd, {input1, int_v2});
-  ASSERT_NE(obj.ptr(), nullptr);
+  auto v2_wrapper = func_graph_builder.AddLocalVariable(int_v2);
+  auto obj = func_graph_builder.AddNode(prim::kPrimScalarAdd, {input1, v2_wrapper});
+  ASSERT_NE(obj, nullptr);
   ASSERT_TRUE(func_graph_builder.AddOutput(obj));
   auto graph = func_graph_builder.graph();
   ASSERT_NE(graph, nullptr);
@@ -171,17 +141,19 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestAddNodeConstantInput) {
 TEST_F(TestFuncGraphBuilder, TestAddNodeUnCallable) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
-  ASSERT_NE(input1.ptr(), nullptr);
+  auto v1_wrapper = func_graph_builder.AddLocalVariable(int_v1);
+  auto input1 = func_graph_builder.AddSubGraphInput(v1_wrapper);
+  ASSERT_NE(input1, nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder.AddSubGraphInput(int_v2);
-  ASSERT_NE(input2.ptr(), nullptr);
+  auto v2_wrapper = func_graph_builder.AddLocalVariable(int_v2);
+  auto input2 = func_graph_builder.AddSubGraphInput(v2_wrapper);
+  ASSERT_NE(input2, nullptr);
   auto mod = python_adapter::GetPyModule("mindspore.ops.operations._scalar_ops");
   ASSERT_FALSE(py::isinstance<py::none>(mod));
   auto scalar_add_prim_class = mod.attr("ScalarAdd");
   ASSERT_FALSE(py::isinstance<py::none>(scalar_add_prim_class));
   auto obj = func_graph_builder.AddNode(scalar_add_prim_class, {input1, input2});
-  ASSERT_EQ(obj.ptr(), nullptr);
+  ASSERT_EQ(obj, nullptr);
 }
 
 // Feature: Build graph in pi_jit.
@@ -190,11 +162,13 @@ TEST_F(TestFuncGraphBuilder, TestAddNodeUnCallable) {
 TEST_F(TestFuncGraphBuilder, DISABLED_TestAddMultiNode) {
   FuncGraphBuilder func_graph_builder;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder.AddSubGraphInput(int_v1);
-  ASSERT_NE(input1.ptr(), nullptr);
+  auto v1_wrapper = func_graph_builder.AddLocalVariable(int_v1);
+  auto input1 = func_graph_builder.AddSubGraphInput(v1_wrapper);
+  ASSERT_NE(input1, nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder.AddSubGraphInput(int_v2);
-  ASSERT_NE(input2.ptr(), nullptr);
+  auto v2_wrapper = func_graph_builder.AddLocalVariable(int_v2);
+  auto input2 = func_graph_builder.AddSubGraphInput(v2_wrapper);
+  ASSERT_NE(input2, nullptr);
   auto add_obj = func_graph_builder.AddMultiNode("add", {input1, input2});
   ASSERT_TRUE(func_graph_builder.AddOutput(add_obj));
   auto graph = func_graph_builder.graph();
@@ -209,30 +183,33 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestAddMultiNode) {
 TEST_F(TestFuncGraphBuilder, DISABLED_TestAddFgCallNodeSingleOutput) {
   FuncGraphBuilder func_graph_builder1;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder1.AddSubGraphInput(int_v1);
-  ASSERT_NE(input1.ptr(), nullptr);
+  auto v1_wrapper = func_graph_builder1.AddLocalVariable(int_v1);
+  auto input1 = func_graph_builder1.AddSubGraphInput(v1_wrapper);
+  ASSERT_NE(input1, nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder1.AddSubGraphInput(int_v2);
-  ASSERT_NE(input2.ptr(), nullptr);
+  auto v2_wrapper = func_graph_builder1.AddLocalVariable(int_v2);
+  auto input2 = func_graph_builder1.AddSubGraphInput(v2_wrapper);
+  ASSERT_NE(input2, nullptr);
   auto mod = python_adapter::GetPyModule("mindspore.ops.operations._scalar_ops");
   ASSERT_FALSE(py::isinstance<py::none>(mod));
   auto scalar_add_prim_class = mod.attr("ScalarAdd");
   ASSERT_FALSE(py::isinstance<py::none>(scalar_add_prim_class));
   auto scalar_add_prim = scalar_add_prim_class();
   auto obj = func_graph_builder1.AddNode(scalar_add_prim, {input1, input2});
-  ASSERT_NE(obj.ptr(), nullptr);
+  ASSERT_NE(obj, nullptr);
   ASSERT_TRUE(func_graph_builder1.AddOutput(obj));
   auto graph1 = func_graph_builder1.graph();
   ASSERT_NE(graph1, nullptr);
 
   FuncGraphBuilder func_graph_builder2;
-  input1 = func_graph_builder2.AddSubGraphInput(int_v1);
-  ASSERT_NE(input1.ptr(), nullptr);
-  input2 = func_graph_builder2.AddSubGraphInput(int_v2);
-  ASSERT_NE(input2.ptr(), nullptr);
+  v1_wrapper = func_graph_builder2.AddLocalVariable(int_v1);
+  input1 = func_graph_builder2.AddSubGraphInput(v1_wrapper);
+  ASSERT_NE(input1, nullptr);
+  v2_wrapper = func_graph_builder2.AddLocalVariable(int_v2);
+  input2 = func_graph_builder2.AddSubGraphInput(v2_wrapper);
+  ASSERT_NE(input2, nullptr);
   auto call_node_obj = func_graph_builder2.AddNode(graph1, {input1, input2});
-  ASSERT_NE(call_node_obj.ptr(), nullptr);
-  ASSERT_EQ(call_node_obj.ptr(), obj.ptr());
+  ASSERT_NE(call_node_obj, nullptr);
   ASSERT_TRUE(func_graph_builder2.AddOutput(call_node_obj));
   auto graph2 = func_graph_builder2.graph();
   DumpIR("graph2.ir", graph2);
@@ -246,35 +223,36 @@ TEST_F(TestFuncGraphBuilder, DISABLED_TestAddFgCallNodeSingleOutput) {
 TEST_F(TestFuncGraphBuilder, DISABLED_TestAddFgCallNodeMultiOutput) {
   FuncGraphBuilder func_graph_builder1;
   py::int_ int_v1 = 1;
-  auto input1 = func_graph_builder1.AddSubGraphInput(int_v1);
-  ASSERT_NE(input1.ptr(), nullptr);
+  auto v1_wrapper = func_graph_builder1.AddLocalVariable(int_v1);
+  auto input1 = func_graph_builder1.AddSubGraphInput(v1_wrapper);
+  ASSERT_NE(input1, nullptr);
   py::int_ int_v2 = 2;
-  auto input2 = func_graph_builder1.AddSubGraphInput(int_v2);
-  ASSERT_NE(input2.ptr(), nullptr);
+  auto v2_wrapper = func_graph_builder1.AddLocalVariable(int_v2);
+  auto input2 = func_graph_builder1.AddSubGraphInput(v2_wrapper);
+  ASSERT_NE(input2, nullptr);
   auto mod = python_adapter::GetPyModule("mindspore.ops.operations._scalar_ops");
   ASSERT_FALSE(py::isinstance<py::none>(mod));
   auto scalar_add_prim_class = mod.attr("ScalarAdd");
   ASSERT_FALSE(py::isinstance<py::none>(scalar_add_prim_class));
   auto scalar_add_prim = scalar_add_prim_class();
   auto obj1 = func_graph_builder1.AddNode(scalar_add_prim, {input1, input2});
-  ASSERT_NE(obj1.ptr(), nullptr);
+  ASSERT_NE(obj1, nullptr);
   ASSERT_TRUE(func_graph_builder1.AddOutput(obj1));
   auto obj2 = func_graph_builder1.AddNode(scalar_add_prim, {input1, input2});
-  ASSERT_NE(obj2.ptr(), nullptr);
+  ASSERT_NE(obj2, nullptr);
   ASSERT_TRUE(func_graph_builder1.AddOutput(obj2));
   auto graph1 = func_graph_builder1.graph();
   ASSERT_NE(graph1, nullptr);
 
   FuncGraphBuilder func_graph_builder2;
-  input1 = func_graph_builder2.AddSubGraphInput(int_v1);
-  ASSERT_NE(input1.ptr(), nullptr);
-  input2 = func_graph_builder2.AddSubGraphInput(int_v2);
-  ASSERT_NE(input2.ptr(), nullptr);
+  v1_wrapper = func_graph_builder2.AddLocalVariable(int_v1);
+  input1 = func_graph_builder2.AddSubGraphInput(v1_wrapper);
+  ASSERT_NE(input1, nullptr);
+  v2_wrapper = func_graph_builder2.AddLocalVariable(int_v2);
+  input2 = func_graph_builder2.AddSubGraphInput(v2_wrapper);
+  ASSERT_NE(input2, nullptr);
   auto call_node_obj = func_graph_builder2.AddNode(graph1, {input1, input2});
-  ASSERT_NE(call_node_obj.ptr(), nullptr);
-  ASSERT_TRUE(py::isinstance<py::tuple>(call_node_obj));
-  ASSERT_EQ(py::cast<py::tuple>(call_node_obj)[0].ptr(), obj1.ptr());
-  ASSERT_EQ(py::cast<py::tuple>(call_node_obj)[1].ptr(), obj2.ptr());
+  ASSERT_NE(call_node_obj, nullptr);
   ASSERT_TRUE(func_graph_builder2.AddOutput(call_node_obj));
   auto graph2 = func_graph_builder2.graph();
   DumpIR("graph2.ir", graph2);

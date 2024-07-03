@@ -24,10 +24,13 @@
 #include "ops/sequence_ops.h"
 #include "pipeline/jit/ps/parse/parse_base.h"
 #include "pipeline/jit/ps/parse/parse.h"
+#include "pipeline/jit/pi/graph_capture/abstract_wrapper.h"
 
 namespace mindspore {
 class FuncGraphBuilder;
 using FuncGraphBuilderPtr = std::shared_ptr<FuncGraphBuilder>;
+class AbstractWrapper;
+using AbstractWrapperPtr = std::shared_ptr<AbstractWrapper>;
 
 class FuncGraphBuilder {
  public:
@@ -38,21 +41,14 @@ class FuncGraphBuilder {
       graph_->set_manager(mng_);
     }
   }
-  virtual ~FuncGraphBuilder() { py_obj_to_node_.clear(); }
+  virtual ~FuncGraphBuilder() { key_to_node_.clear(); }
 
   /// \brief Add an input parameter to the graph.
   ///
-  /// \param[in] obj The input python object.
+  /// \param[in] abstract_wrapper The key to find node in function graph builder.
   ///
-  /// \return If the input is a tensor, return a fake tensor python object, else return the origin python object.
-  py::object AddSubGraphInput(const py::object &obj);
-
-  /// \brief Add an input parameter to the top graph.
-  ///
-  /// \param[in] packed_inputs The input python object for top graph.
-  ///
-  /// \return True if add top graph success, otherwise false.
-  bool AddTopGraphInputs(std::vector<py::object> packed_inputs);
+  /// \return The AbstractWrapperPtr for subgraph input.
+  AbstractWrapperPtr AddSubGraphInput(const AbstractWrapperPtr abstract_wrapper);
 
   FuncGraphManagerPtr manager() const { return mng_; }
 
@@ -63,31 +59,34 @@ class FuncGraphBuilder {
   /// \param[in] callable_obj The callable python object.
   /// \param[in] inputs_obj The input python objects.
   ///
-  /// \return The python object of the infer result.
-  py::object AddNode(const py::object &callable_obj, const std::vector<py::object> &inputs_obj);
+  /// \return The abstract wrapper  of the infer result.
+  AbstractWrapperPtr AddNode(const py::object &callable_obj,
+                             const std::vector<AbstractWrapperPtr> &inputs_abstract_wrapper);
 
   /// \brief Add a cnode to the graph.
   ///
   /// \param[in] callable_value The callable value.
   /// \param[in] inputs_obj The input python objects.
   ///
-  /// \return The python object of the infer result.
-  py::object AddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj);
+  /// \return The abstract wrapper of the infer result.
+  AbstractWrapperPtr AddNode(const ValuePtr &callable_value,
+                             const std::vector<AbstractWrapperPtr> &inputs_abstract_wrapper);
 
   /// \brief Add a python object to graph.
   ///
   /// \param[in] object The python object add to graph.
   ///
   /// \return Indicate whether the python object add to graph successfully.
-  bool AddAttrPythonObject(const py::object &object);
+  AbstractWrapperPtr AddAttrPythonObject(const py::object &object);
 
   /// \brief Add a binary operation cnode to the graph.
   ///
   /// \param[in] opcode The binary operation code.
-  /// \param[in] inputs_obj The input python objects.
+  /// \param[in] inputs_abstract_wrapper The abstract wrapper for inputs.
   ///
   /// \return The python object of the infer result.
-  py::object AddMultiNode(const std::string &opcode, const std::vector<py::object> &inputs_obj);
+  AbstractWrapperPtr AddMultiNode(const std::string &name,
+                                  const std::vector<AbstractWrapperPtr> &inputs_abstract_wrapper);
 
   /// \brief Add an output node to the graph.
   ///
@@ -95,12 +94,7 @@ class FuncGraphBuilder {
   /// \param[in] is_top_graph Indicate whether the graph to add output is top graph.
   ///
   /// \return Return true if the output object can be used as the output of the graph.
-  bool AddOutput(const py::object &output_obj, bool is_top_graph = true);
-
-  /// \brief Remove an output node of the graph.
-  ///
-  /// \param[in] output_obj The output python object.
-  void RemoveOutput(const py::object &output_obj);
+  bool AddOutput(const AbstractWrapperPtr &abstract_wrapper, bool is_top_graph = true);
 
   /// \brief Clear all output node of the graph.
   void ClearOutputNodes() { output_nodes_.clear(); }
@@ -157,37 +151,42 @@ class FuncGraphBuilder {
 
   static AbstractBasePtr EvalValue(const ValuePtr &value, const AbstractBasePtrList &inputs_abs_list);
 
-  using PyTensorConverter = std::function<py::object(const py::object &)>;
-  static py::object ConvertToPyObj(const AbstractBasePtr &abs);
-  static py::object ConvertToPyObj(const AbstractBasePtr &abs, const PyTensorConverter &tensor_convert_func);
-
   void AddPrevBuilder(const FuncGraphBuilderPtr &builder);
 
   const std::vector<FuncGraphBuilder *> &prev_builders() const { return prev_builders_; }
 
-  AnfNodePtr ReadLocalVariable(const py::object &obj);
+  AnfNodePtr ReadLocalVariable(const AbstractWrapperPtr &abstract_wrapper);
 
-  bool AddLocalVariable(const py::object &obj);
+  AbstractWrapperPtr AddLocalVariable(const py::object &obj);
 
-  py::object BuildGradNetNode(const ValuePtr &callable_value, const py::object &callable_obj,
-                              const std::vector<py::object> &inputs_obj);
+  AbstractWrapperPtr BuildGradNetNode(const ValuePtr &callable_value, const py::object &callable_obj,
+                                      const std::vector<AbstractWrapperPtr> &inputs_abstract_wrapper);
 
-  py::object BuildGradNode(const py::str &key, const std::vector<py::object> &inputs, bool need_unpack);
+  AbstractWrapperPtr BuildGradNode(const AbstractWrapperPtr &key, const std::vector<AbstractWrapperPtr> &inputs,
+                                   bool need_unpack);
+
+  AbstractWrapperPtr AddTopGraphArgInput(const py::object &object);
+
+  AbstractWrapperPtr AddTopGraphVargsInputs(const py::object &vargs);
+
+  AbstractWrapperPtr AddTopGraphKwargsInputs(const py::object &vargs);
+
+  AnfNodePtr GetNodeByWrapper(const AbstractWrapperPtr &abstract_wrapper);
 
  private:
   static bool CheckCallable(const ValuePtr &value, const AbstractBasePtr &abs);
 
   static bool CheckGraphOutput(const AbstractBasePtr &abs);
 
-  AnfNodePtr GetNodeByObject(const py::object &obj, bool generate_value_node = true);
-
   AnfNodePtr ConvertObjToNode(const py::object &input_obj);
 
   AnfNodePtr ConvertParameterTupleToNode(const py::object &input_obj);
 
-  py::object AddFgCallNode(const FuncGraphPtr &fg, const std::vector<py::object> &inputs_obj);
+  AbstractWrapperPtr AddFgCallNode(const FuncGraphPtr &fg,
+                                   const std::vector<AbstractWrapperPtr> &inputs_abstract_wrapper);
 
-  bool GetInputNodesAndAbstracts(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj,
+  bool GetInputNodesAndAbstracts(const ValuePtr &callable_value,
+                                 const std::vector<AbstractWrapperPtr> &inputs_abstract_wrapper,
                                  std::vector<AnfNodePtr> *input_node_list,
                                  std::vector<AbstractBasePtr> *input_abs_list);
 
@@ -201,23 +200,17 @@ class FuncGraphBuilder {
 
   static AbstractBasePtr GetAbstractOf(const AnfNodePtr &node);
 
-  py::object TryToAddNode(const ValuePtr &callable_value, const std::vector<py::object> &inputs_obj);
-
-  py::object ConvertToPyTensorOrParameter(const py::object &cpp_tensor);
+  AbstractWrapperPtr TryToAddNode(const ValuePtr &callable_value,
+                                  const std::vector<AbstractWrapperPtr> &inputs_abstract_wrapper);
 
   static bool CheckInvalidCellListDictMethod(const py::object &obj);
 
-  bool AddTopGraphArgsInputs(const py::object &object);
-
-  bool AddTopGraphVargsInputs(const py::object &vargs);
-
-  bool AddTopGraphKwargsInputs(const py::object &vargs);
-
-  py::object HandleGrad(const py::str &key, const std::vector<py::object> &inputs, bool need_unpack);
+  AbstractWrapperPtr HandleGrad(const AbstractWrapperPtr &key, const std::vector<AbstractWrapperPtr> &inputs,
+                                bool need_unpack);
 
   FuncGraphPtr graph_{nullptr};
   bool has_set_output_{false};
-  HashMap<PyObject *, AnfNodePtr> py_obj_to_node_;
+  HashMap<AbstractWrapperPtr, AnfNodePtr> key_to_node_;
   std::vector<AnfNodePtr> output_nodes_;
 
   // Store all previous builders for subgraph call and control flow.

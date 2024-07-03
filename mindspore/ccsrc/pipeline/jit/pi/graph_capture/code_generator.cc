@@ -1486,8 +1486,12 @@ void MindCodeBreakGenerator::Compile(const std::string &co_name, int co_argcount
     if (para->has_default()) {
       continue;
     }
-    phase += "_" + para->abstract()->ToString();
-    args[i] = *(para->user_data<py::object>("pi_jit_py_obj"));
+    auto para_abstract = para->abstract();
+    MS_EXCEPTION_IF_NULL(para_abstract);
+    phase += "_" + para_abstract->ToString();
+    auto input_obj = para->user_data<py::object>("pi_jit_py_obj");
+    MS_EXCEPTION_IF_NULL(input_obj);
+    args[i] = *input_obj;
   }
   phase += ".pi_jit";
   MindCompiler::CompileInfo compile_info{co_name, co_argcount, co_kwonlyargcount, co_flags};

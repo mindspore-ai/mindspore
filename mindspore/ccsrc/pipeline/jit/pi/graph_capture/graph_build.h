@@ -304,9 +304,10 @@ class MindGraphBuilder : public GraphBuilder {
   }
   bool trace_flag() { return true; }
   mindspore::FuncGraphBuilderPtr FGBuilder() const { return fg_builder_; }
-  bool FGAddInputs(const std::vector<py::object> &args);
-  py::object FGAddNode(CallNode *call_node, const py::object &callable_info, const std::vector<py::object> &args,
-                       StopTraceReason *stop_reason);
+  bool FGAddTopInputs(int args_count, bool has_vargs, bool has_kwargs);
+  bool FGAddInputs(const std::vector<ValueNode *> &args);
+  py::object FGAddNode(CallNode *call_node, const py::object &callable_info,
+                       const std::vector<AbstractWrapperPtr> &args, StopTraceReason *stop_reason);
   void FGAddOutput(bool is_top_graph);
   StopTraceReason BuildSubGraph(CallNode *call_node, int depth, const py::object &func,
                                 const GraphBuilderPtr &subgraph) override;
@@ -333,17 +334,19 @@ class MindGraphBuilder : public GraphBuilder {
   bool HandleCallClass(CallNode *call_node) override;
 
  private:
-  std::vector<py::object> GetNewArgs(CallNode *call_node, AObject *vobj = nullptr);
-  bool AllConstantArgs(const std::vector<py::object> &args, const py::object &callable_info, CallNode *call_node);
-  bool IsGradCallable(const py::object &callable_info);
-  py::object ResolveGradCall(CallNode *call_node, StopTraceReason *stop_reason, const py::object &callable_info);
+  std::vector<AbstractWrapperPtr> HandleInputArgs(const std::vector<ValueNode *> args);
+  std::vector<ValueNode *> GetNewArgs(CallNode *call_node, AObject *vobj = nullptr);
+  bool IsGradCallable(ValueNode *node);
+  py::object ResolveGradCall(CallNode *call_node, StopTraceReason *stop_reason);
 
-  py::object HandleGetShapeOfDynamicLengthTensor(const py::object &object);
+  AbstractWrapperPtr HandleGetShapeOfDynamicLengthTensor(const AbstractWrapperPtr &abstract_wrapper);
+  std::pair<bool, std::vector<py::object>> GetInputsObject(CallNode *call_node);
+  py::object GetPyObject(ValueNode *node);
 
   mindspore::FuncGraphBuilderPtr fg_builder_{nullptr};
   std::string co_name_;
-  AObject *HandleMultiOp(const Instr &instr, const std::vector<ValueNode *> &p, bool is_compare);
-  AObject *HandleBuildOp(const Instr &instr, const std::vector<ValueNode *> &p);
+  AbstractWrapperPtr HandleMultiOp(const Instr &instr, const std::vector<ValueNode *> &p, bool is_compare);
+  AbstractWrapperPtr HandleBuildOp(const Instr &instr, const std::vector<ValueNode *> &p);
 };
 }  // namespace pijit
 }  // namespace mindspore

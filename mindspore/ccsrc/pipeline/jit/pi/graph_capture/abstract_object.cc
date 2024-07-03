@@ -260,6 +260,12 @@ AbstractObjectBase::Type AbstractObjectBase::GetMsType(PyTypeObject *tp) {
   return kTypeAnyValue;
 }
 
+AObject *AbstractObjectBase::Convert(const AbstractWrapperPtr &wrapper) {
+  // TODO(LiangZhibo): Need to delete wrapper to python object precess later.
+  py::object res = AbstractWrapper::ConvertToPyObject(wrapper);
+  return Convert(res.ptr());
+}
+
 AObject *AbstractObjectBase::MakeAObject(AObject::Type type, PyTypeObject *tp, PyObject *o, RecMap *m) {
   MS_EXCEPTION_IF_CHECK_FAIL(Resource::Current() != nullptr, "can't take resource");
   MS_EXCEPTION_IF_CHECK_FAIL(tp == nullptr || o == nullptr || Py_TYPE(o) == tp, "check type match value");

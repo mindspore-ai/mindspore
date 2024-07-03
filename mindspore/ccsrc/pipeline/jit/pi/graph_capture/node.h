@@ -28,6 +28,7 @@
 #include "pipeline/jit/pi/graph_capture/constant_info.h"
 #include "pipeline/jit/pi/utils/utils.h"
 #include "pipeline/jit/pi/graph_guard/trace.h"
+#include "pipeline/jit/pi/graph_capture/abstract_wrapper.h"
 
 namespace mindspore {
 namespace pijit {
@@ -84,6 +85,10 @@ class InstrNode : public AbstractNode {
   int bci() const { return bci_; }
   void set_bci(int i) { bci_ = i; }
 
+  AbstractWrapperPtr abstract_wrapper() const { return abstract_wrapper_; }
+  void set_abstract_wrapper(const AbstractWrapperPtr &abstract_wrapper) { abstract_wrapper_ = abstract_wrapper; }
+  bool has_abstract_wrapper() const { return abstract_wrapper_ != nullptr; }
+
  protected:
   InstrNode(Type t, int op, int arg) : AbstractNode(t), op_(op), arg_(arg), line_(-1) {}
 
@@ -93,6 +98,7 @@ class InstrNode : public AbstractNode {
   int arg_;
   int line_ = -1;
   std::string name_;
+  AbstractWrapperPtr abstract_wrapper_ = nullptr;
 };
 
 class ValueNode : public InstrNode {

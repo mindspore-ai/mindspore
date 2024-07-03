@@ -33,6 +33,7 @@ void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param
                         const py::object &after_grad = py::object());
 bool GuardConstCallNodeParam(CallNode *call_node, Graph *sub_graph, int max_guard_depth);
 bool JustCallAndSetRes(CallNode *call_node, GraphBuilder *g = nullptr);
+bool JustCallAndSetResWithArgs(CallNode *call_node, const std::vector<py::object> &args, GraphBuilder *g = nullptr);
 
 bool CheckJitConstexpr(const py::object &func);
 bool CheckMSConstexpr(const py::object &func);

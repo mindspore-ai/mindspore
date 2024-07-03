@@ -551,7 +551,7 @@ PyObject *InferEngine::InferPrimitive(PyObject *primitive, const std::vector<PyO
     auto abs = opt_res.value();
     py::object pyObj;
     if (abs != nullptr) {
-      pyObj = FuncGraphBuilder::ConvertToPyObj(abs);
+      pyObj = AbstractWrapper::ConvertToPyObject(abs);
       if (pyObj.ptr() == nullptr) {
         pyObj = MakeObjectFromAbstract(abs->BuildShape(), abs->BuildType(), is_abstract);
       }
@@ -944,7 +944,7 @@ py::object EvalMSAPIValue(const py::object &ms_api, const py::object &args, cons
     MS_LOG(ERROR) << "eval callable object failed [" << std::string(py::str(callable_object)) << "]";
     return py::object();
   }
-  py::object res = FuncGraphBuilder::ConvertToPyObj(eval_result);
+  py::object res = AbstractWrapper::ConvertToPyObject(eval_result);
   if (res.ptr() == nullptr) {
     MS_LOG(ERROR) << "can't convert AbstractBasePtr to PyObject [" << eval_result->ToString() << "]";
     return py::object();
