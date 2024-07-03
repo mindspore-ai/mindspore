@@ -57,16 +57,20 @@ def rsqrt_vmap_func(x):
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
-def test_ops_rsqrt_forward(mode):
+def test_ops_rsqrt_normal(mode):
     """
     Feature: pyboost function.
-    Description: test function rsqrt forward.
+    Description: test function rsqrt forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)
     x = generate_std_input()
     output = rsqrt_forward_func(ms.Tensor(x))
     expect = generate_expect_forward_output(x)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+    output = rsqrt_backward_func(ms.Tensor(x))
+    expect = generate_expect_backward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
@@ -83,23 +87,6 @@ def test_ops_rsqrt_bf16(mode):
     output = rsqrt_forward_func(x)
     expect = np.array([1.0000, 0.7071, 0.5774, 0.5000])
     np.testing.assert_allclose(output.float().asnumpy(), expect, rtol=5e-3, atol=5e-3)
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_with_On
-def test_ops_rsqrt_backward(mode):
-    """
-    Feature: pyboost function.
-    Description: test function rsqrt backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=mode)
-    x = generate_std_input()
-    output = rsqrt_backward_func(ms.Tensor(x))
-    expect = generate_expect_backward_output(x)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',

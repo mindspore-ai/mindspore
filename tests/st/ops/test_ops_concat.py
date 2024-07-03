@@ -71,7 +71,7 @@ def forward_datas_prepare(shape, num=2, axis=0, diff_shapes=False, need_expect=T
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("params", [(((2, 2), (2, 3)), 1), (((3, 2, 3), (3, 3, 3)), -2)])
-def test_concat_forward(mode, params):
+def test_concat_normal(mode, params):
     """
     Feature: Ops.
     Description: test op concat.
@@ -83,19 +83,6 @@ def test_concat_forward(mode, params):
     out = concat_forward_func(tensor_inputs[0], tensor_inputs[1], axis)
     assert np.allclose(out.asnumpy(), expect)
 
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.parametrize("params", [(((2, 2), (2, 3)), 1), (((3, 2, 3), (3, 3, 3)), -2)])
-def test_concat_backward(mode, params):
-    """
-    Feature: Auto grad.
-    Description: test auto grad of op concat.
-    Expectation: expect correct result.
-    """
-    ms.set_context(mode=mode)
-    shape_param, axis = params
     x1 = ms.Tensor(np.random.rand(*shape_param[0]).astype(np.float32))
     x2 = ms.Tensor(np.random.rand(*shape_param[1]).astype(np.float32))
     grads = concat_backward_func(x1, x2, axis)

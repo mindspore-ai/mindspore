@@ -47,7 +47,7 @@ def flip_vmap_func(input_x, dims):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_flip_forward(mode):
+def test_flip_normal(mode):
     """
     Feature: test flip operator
     Description: test flip run by pyboost
@@ -61,20 +61,6 @@ def test_flip_forward(mode):
     expect = generate_expect_forward_output(np_array, dims)
     assert np.allclose(output.asnumpy(), expect)
 
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_flip_backward(mode):
-    """
-    Feature: test flip operator
-    Description: test flip run by pyboost
-    Expectation: success
-    """
-    context.set_context(mode=mode)
-    np_array = np.random.rand(2, 3, 4).astype(np.float32)
-    input_x = Tensor(np_array, ms.float32)
-    dims = (0, 1)
     output = flip_backward_func(input_x, dims)
     expect = generate_expect_backward_output(np_array, dims)
     assert np.allclose(output.asnumpy(), expect)

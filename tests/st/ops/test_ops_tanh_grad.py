@@ -52,7 +52,7 @@ def tanh_grad_vamp_func(y, dy):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_tanh_grad_forward(mode):
+def test_tanh_grad_normal(mode):
     """
     Feature: test tanh operator
     Description: test tanh run by pyboost
@@ -67,21 +67,6 @@ def test_tanh_grad_forward(mode):
     expect = generate_expect_forward_output(y_np, dy_np, np.float32)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_tanh_grad_backward(mode):
-    """
-    Feature: test tanh operator
-    Description: test tanh run by pyboost
-    Expectation: success
-    """
-    context.set_context(mode=mode)
-    y_np = generate_random_input((2, 3, 4), np.float32)
-    y_tensor = Tensor(y_np, ms.float32)
-    dy_np = generate_random_input((2, 3, 4), np.float32)
-    dy_tensor = Tensor(dy_np, ms.float32)
     output = tanh_grad_backward_func(y_tensor, dy_tensor)
     expect = generate_expect_backward_output(y_np, dy_np, np.float32)
     np.testing.assert_allclose(output[0].asnumpy(), expect[0], rtol=1e-4, atol=1e-4)

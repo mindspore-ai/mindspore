@@ -49,10 +49,10 @@ def clamp_backward_func(x, min_, max_):
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_clamp_forward0(context_mode):
+def test_ops_clamp_normal0(context_mode):
     """
     Feature: pyboost function.
-    Description: test function clamp forward.
+    Description: test function clamp forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -64,52 +64,6 @@ def test_ops_clamp_forward0(context_mode):
     assert output.asnumpy().dtype == 'float32'
     assert output.asnumpy().shape == (2, 3, 4, 5)
 
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_clamp_forward1(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function clamp forward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
-    # min
-    output = clamp_forward_func(ms.Tensor(x), 2, None)
-    expect = generate_expect_forward_output(x, 2, None)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    assert output.asnumpy().dtype == 'float32'
-    assert output.asnumpy().shape == (2, 3, 4, 5)
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_clamp_forward2(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function clamp forward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
-    # max
-    output = clamp_forward_func(ms.Tensor(x), None, 7)
-    expect = generate_expect_forward_output(x, None, 7)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    assert output.asnumpy().dtype == 'float32'
-    assert output.asnumpy().shape == (2, 3, 4, 5)
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_clamp_backward0(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function clamp backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
     x = generate_random_input((2, 3, 4), np.float32)
     # min & max
     output = clamp_backward_func(ms.Tensor(x), 2, 7)
@@ -121,13 +75,21 @@ def test_ops_clamp_backward0(context_mode):
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_clamp_backward1(context_mode):
+def test_ops_clamp_normal1(context_mode):
     """
     Feature: pyboost function.
-    Description: test function clamp backward.
+    Description: test function clamp forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
+    x = generate_random_input((2, 3, 4, 5), np.float32)
+    # min
+    output = clamp_forward_func(ms.Tensor(x), 2, None)
+    expect = generate_expect_forward_output(x, 2, None)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    assert output.asnumpy().dtype == 'float32'
+    assert output.asnumpy().shape == (2, 3, 4, 5)
+
     x = generate_random_input((2, 3, 4), np.float32)
     # min
     output = clamp_backward_func(ms.Tensor(x), 2, None)
@@ -139,13 +101,21 @@ def test_ops_clamp_backward1(context_mode):
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_clamp_backward2(context_mode):
+def test_ops_clamp_normal2(context_mode):
     """
     Feature: pyboost function.
-    Description: test function clamp backward.
+    Description: test function clamp forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
+    x = generate_random_input((2, 3, 4, 5), np.float32)
+    # max
+    output = clamp_forward_func(ms.Tensor(x), None, 7)
+    expect = generate_expect_forward_output(x, None, 7)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    assert output.asnumpy().dtype == 'float32'
+    assert output.asnumpy().shape == (2, 3, 4, 5)
+
     x = generate_random_input((2, 3, 4), np.float32)
     # max
     output = clamp_backward_func(ms.Tensor(x), None, 7)

@@ -53,7 +53,7 @@ def square_vmap_func(x, in_axes=0):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
           essential_mark='unessential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
-def test_square_forward(mode):
+def test_square_normal(mode):
     """
     Feature: Test square with static shape in graph and pynative mode.
     Description: call ops.square with valid input and index.
@@ -63,35 +63,18 @@ def test_square_forward(mode):
 
     if mode == 'pynative':
         output = square_forward_func(Tensor(x))
+        output1 = square_backward_func(Tensor(x))
     elif mode == 'KBK':
         output = (jit(square_forward_func, jit_config=JitConfig(jit_level="O0")))(Tensor(x))
+        output1 = (jit(square_backward_func, jit_config=JitConfig(jit_level="O0")))(Tensor(x))
     else:
         output = (jit(square_forward_func, jit_config=JitConfig(jit_level="O2")))(Tensor(x))
+        output1 = (jit(square_backward_func, jit_config=JitConfig(jit_level="O2")))(Tensor(x))
 
     expect = generate_expect_forward_output(x)
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4)
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential')
-@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
-def test_square_backward(mode):
-    """
-    Feature: Test square backward with static shape in graph and pynative mode.
-    Description: call ops.square with valid input and index.
-    Expectation: return the correct value.
-    """
-    x = generate_random_input((8192,), np.float32)
-
-    if mode == 'pynative':
-        output = square_backward_func(Tensor(x))
-    elif mode == 'KBK':
-        output = (jit(square_backward_func, jit_config=JitConfig(jit_level="O0")))(Tensor(x))
-    else:
-        output = (jit(square_backward_func, jit_config=JitConfig(jit_level="O2")))(Tensor(x))
-
-    expect = generate_expect_backward_output(x)
-    assert np.allclose(output.asnumpy(), expect, rtol=1e-4)
+    expect1 = generate_expect_backward_output(x)
+    assert np.allclose(output1.asnumpy(), expect1, rtol=1e-4)
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],

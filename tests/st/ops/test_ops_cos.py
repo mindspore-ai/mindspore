@@ -53,10 +53,10 @@ def cos_vmap_func(x):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_cos_forward(context_mode):
+def test_ops_cos_normal(context_mode):
     """
     Feature: pyboost function.
-    Description: test function cos forward.
+    Description: test function cos forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -70,26 +70,13 @@ def test_ops_cos_forward(context_mode):
     expect2 = generate_expect_forward_output(x2)
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-3, atol=1e-6)
 
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_cos_backward(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function cos backward.
-    Expectation: expect correct result.
-    """
-    x1 = generate_random_input((64, 224), np.float32)
     output1 = cos_backward_func(ms.Tensor(x1))
     expect1 = generate_expect_backward_output(x1)
     np.testing.assert_allclose(output1.asnumpy(), expect1, rtol=1e-3)
 
-    x2 = generate_random_input((384, 128), np.float32)
     output2 = cos_backward_func(ms.Tensor(x2))
     expect2 = generate_expect_backward_output(x2)
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-3)
-    ms.context.set_context(mode=context_mode)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',

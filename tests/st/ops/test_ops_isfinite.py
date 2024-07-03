@@ -53,45 +53,30 @@ def isfinite_vmap_func(x, in_axes=0):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
           essential_mark='unessential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
-def test_isfinite_forward(mode):
+def test_isfinite_normal(mode):
     """
     Feature: Test isfinite with static shape in graph and pynative mode.
     Description: call ops.isfinite with valid input and index.
     Expectation: return the correct value.
     """
     x = generate_random_input((7168, 8192), np.float32)
+    x1 = generate_random_input((8192, 7168), np.float32)
 
     if mode == 'pynative':
         output = isfinite_forward_func(ms.Tensor(x))
+        output1 = isfinite_backward_func(ms.Tensor(x1))
     elif mode == 'KBK':
         output = (jit(isfinite_forward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x))
+        output1 = (jit(isfinite_backward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x1))
     else:
         output = (jit(isfinite_forward_func, jit_config=JitConfig(jit_level="O2")))(ms.Tensor(x))
+        output1 = (jit(isfinite_backward_func, jit_config=JitConfig(jit_level="O2")))(ms.Tensor(x1))
 
     expect = generate_expect_forward_output(x)
     assert np.allclose(output.asnumpy(), expect, rtol=1e-4)
 
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential')
-@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
-def test_isfinite_backward(mode):
-    """
-    Feature: Test isfinite backward with static shape in graph and pynative mode.
-    Description: call ops.isfinite with valid input and index.
-    Expectation: return the correct value.
-    """
-    x = generate_random_input((8192, 7168), np.float32)
-
-    if mode == 'pynative':
-        output = isfinite_backward_func(ms.Tensor(x))
-    elif mode == 'KBK':
-        output = (jit(isfinite_backward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x))
-    else:
-        output = (jit(isfinite_backward_func, jit_config=JitConfig(jit_level="O2")))(ms.Tensor(x))
-
-    expect = generate_expect_backward_output(x)
-    assert np.allclose(output.asnumpy(), expect, rtol=1e-4)
+    expect1 = generate_expect_backward_output(x1)
+    assert np.allclose(output1.asnumpy(), expect1, rtol=1e-4)
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu'], level_mark='level1', card_mark='onecard',

@@ -73,10 +73,10 @@ def test_ops_onehot_forward1(mode):
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_onehot_forward(mode):
+def test_ops_onehot_normal(mode):
     """
     Feature: pyboost function.
-    Description: test function onehot forward.
+    Description: test function onehot forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)
@@ -87,20 +87,10 @@ def test_ops_onehot_forward(mode):
                               [0, 0, 1]]).astype(np.int64)
     np.testing.assert_allclose(output.asnumpy(), expect_output, rtol=1e-3)
 
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_onehot_backward(mode):
-    """
-    Feature: pyboost function.
-    Description: test function onehot backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=mode)
-    x = generate_random_input(2)
-    output = onehot_backward_func(ms.Tensor(x), 3)
-    expect = generate_expect_backward_output()
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    x1 = generate_random_input(2)
+    output1 = onehot_backward_func(ms.Tensor(x1), 3)
+    expect1 = generate_expect_backward_output()
+    np.testing.assert_allclose(output1.asnumpy(), expect1, rtol=1e-3)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
