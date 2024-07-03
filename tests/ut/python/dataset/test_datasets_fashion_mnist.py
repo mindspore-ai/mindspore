@@ -182,7 +182,6 @@ def test_fashion_mnist_sequential_sampler():
     assert num_iter == num_samples
 
 
-@pytest.mark.skip(reason="core-dump")
 def test_fashion_mnist_exception():
     """
     Feature: test_fashion_mnist_exception.

@@ -33,7 +33,7 @@ def count_unequal_element(data_expected, data_me, rtol, atol):
     loss_count = np.count_nonzero(greater)
     assert (loss_count / total_count) < rtol, \
         "\ndata_expected_std:{0}\ndata_me_error:{1}\nloss:{2}". \
-        format(data_expected[greater], data_me[greater], error[greater])
+            format(data_expected[greater], data_me[greater], error[greater])
 
 
 def allclose_nparray(data_expected, data_me, rtol, atol, equal_nan=True):
@@ -143,7 +143,6 @@ def test_griffin_lim_pipeline_invalid_param_range():
             _ = item["multi_dimensional_data"]
 
 
-@pytest.mark.skip(reason="Random segmentation fault on CI")
 def test_griffin_lim_pipeline_invalid_param_constraint():
     """
     Feature: GriffinLim
