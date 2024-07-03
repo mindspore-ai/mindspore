@@ -45,7 +45,7 @@ def flatten_backward_func(x, start_dim=0, end_dim=-1):
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_flatten_forward(mode):
+def test_flatten_normal(mode):
     """
     Feature: Ops.
     Description: test op flatten.
@@ -61,6 +61,14 @@ def test_flatten_forward(mode):
 
     output2 = flatten_forward_func(ms.Tensor(x), 0, 2)
     expect2 = x.reshape((24, 5))
+    np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
+
+    output = flatten_backward_func(ms.Tensor(x), 1, 3)
+    expect = np.ones(test_shape).astype(np.float32)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
+
+    output2 = flatten_backward_func(ms.Tensor(x), 0, 2)
+    expect2 = np.ones(test_shape).astype(np.float32)
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
 
 
@@ -83,27 +91,6 @@ def test_flatten_bfloat16(mode):
     output2 = flatten_forward_func(ms.Tensor(x), 0, 1)
     expect2 = x.reshape((6, 4))
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=5e-3, atol=5e-3)
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_flatten_backward(mode):
-    """
-    Feature: Ops.
-    Description: test op flatten.
-    Expectation: expect correct result.
-    """
-    ms.set_context(jit_level='O0')
-    ms.set_context(mode=mode)
-    test_shape = (2, 3, 4, 5)
-    x = generate_random_input(test_shape, np.float32)
-    output = flatten_backward_func(ms.Tensor(x), 1, 3)
-    expect = np.ones(test_shape).astype(np.float32)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
-
-    output2 = flatten_backward_func(ms.Tensor(x), 0, 2)
-    expect2 = np.ones(test_shape).astype(np.float32)
-    np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')

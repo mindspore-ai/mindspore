@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 
@@ -20,6 +19,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore import ops
 import tests.st.utils.test_utils as test_utils
+from tests.mark_utils import arg_mark
 
 
 @test_utils.run_with_cell
@@ -34,7 +34,7 @@ def backward_func(x, indices):
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_maxunpool2d_float32(context_mode):
+def test_maxunpool2d_float32_normal(context_mode):
     """
     Feature: maxunpool2d
     Description: test maxunpool2d
@@ -48,17 +48,5 @@ def test_maxunpool2d_float32(context_mode):
                            [8., 9.]]]], np.float32)
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-3)
 
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_maxunpool2d_grad_float32(context_mode):
-    """
-    Feature: maxunpool2d grad
-    Description: test maxunpool2d grad
-    Expectation: expect correct result.
-    """
-    context.set_context(mode=context_mode, device_target="Ascend")
-    x = Tensor(np.array([[[[0, 1], [8, 9]]]]).astype(np.float32))
-    indices = Tensor(np.array([[[[0, 1], [2, 3]]]]).astype(np.int64))
     x_grad = backward_func(x, indices)
     assert x_grad.asnumpy().shape == x.shape

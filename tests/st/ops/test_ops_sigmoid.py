@@ -46,10 +46,10 @@ def sigmoid_vmap_func(x):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_ops_sigmoid_forward(mode):
+def test_ops_sigmoid_normal(mode):
     """
     Feature: Pyboost function.
-    Description: Test function sigmoid forward.
+    Description: Test function sigmoid forward and backward.
     Expectation: Correct result.
     """
     ms.context.set_context(mode=mode)
@@ -58,21 +58,10 @@ def test_ops_sigmoid_forward(mode):
     expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_ops_sigmoid_backward(mode):
-    """
-    Feature: Pyboost function.
-    Description: Test function sigmoid backward.
-    Expectation: Correct result.
-    """
-    ms.context.set_context(mode=mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
     output = sigmoid_backward_func(ms.Tensor(x))
     expect = generate_expect_backward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
           card_mark='onecard', essential_mark='unessential')

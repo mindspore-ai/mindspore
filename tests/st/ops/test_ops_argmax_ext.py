@@ -53,10 +53,10 @@ def GenInputData(np_data_type, shape=(3, 4, 5)):
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_argmax_ext_forward(context_mode):
+def test_ops_argmax_ext_normal(context_mode):
     """
     Feature: pyboost function.
-    Description: test function argmax forward.
+    Description: test function argmax forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -67,22 +67,11 @@ def test_ops_argmax_ext_forward(context_mode):
     expect = generate_expect_forward_output(x, dim, keepdim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_argmax_ext_backward(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function argmax backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = GenInputData(np.float32, (2, 3, 4, 5))
-    dim = 0
-    keepdim = False
-    output = argmax_ext_backward_func(ms.Tensor(x), dim, keepdim)
-    expect = generate_expect_backward_output(x, dim, keepdim)
+    x1 = GenInputData(np.float32, (2, 3, 4, 5))
+    output = argmax_ext_backward_func(ms.Tensor(x1), dim, keepdim)
+    expect = generate_expect_backward_output(x1, dim, keepdim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_argmax_ext_dynamic_shape():

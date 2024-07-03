@@ -55,7 +55,7 @@ def full_backward_func(size, fill_value, dtype=None):
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['GE', 'pynative', 'KBK'])
-def test_full_forward(mode):
+def test_full_normal(mode):
     """
     Feature: Ops.
     Description: test full.
@@ -75,27 +75,18 @@ def test_full_forward(mode):
         y = (jit(full_forward_func, jit_config=JitConfig(jit_level="O2")))(size, value, dtype)
     np.testing.assert_allclose(y.asnumpy(), expect_y, rtol=1e-5)
 
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('mode', ['pynative', 'KBK']) # GE is unsupported for now.
-def test_full_backward(mode):
-    """
-    Feature: Ops.
-    Description: test full backward.
-    Expectation: expect correct result.
-    """
-    size = Tensor(np.array([1, 2, 3]).astype(np.int64))
-    value = Tensor(6)
-    dtype = mstype.int32
+    size1 = Tensor(np.array([1, 2, 3]).astype(np.int64))
+    value1 = Tensor(6)
+    dtype1 = mstype.int32
     expect_size_grad = 0
     expect_value_grad = 6
     if mode == 'pynative':
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        size_grad, value_grad = full_backward_func(size, value, dtype)
+        size_grad, value_grad = full_backward_func(size1, value1, dtype1)
     elif mode == 'KBK':
-        size_grad, value_grad = (jit(full_backward_func, jit_config=JitConfig(jit_level="O0")))(size, value, dtype)
+        size_grad, value_grad = (jit(full_backward_func, jit_config=JitConfig(jit_level="O0")))(size1, value1, dtype1)
     else:
-        size_grad, value_grad = (jit(full_backward_func, jit_config=JitConfig(jit_level="O2")))(size, value, dtype)
+        size_grad, value_grad = (jit(full_backward_func, jit_config=JitConfig(jit_level="O2")))(size1, value1, dtype1)
     np.testing.assert_allclose(size_grad.asnumpy(), expect_size_grad, rtol=1e-5)
     np.testing.assert_allclose(value_grad.asnumpy(), expect_value_grad, rtol=1e-5)
     assert value_grad.shape == ()

@@ -52,10 +52,10 @@ def ceil_vmap_func(x):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_ceil_forward(context_mode):
+def test_ops_ceil_normal(context_mode):
     """
     Feature: pyboost function.
-    Description: test function ceil forward.
+    Description: test function ceil forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -64,18 +64,6 @@ def test_ops_ceil_forward(context_mode):
     expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_ceil_backward(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function ceil backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
     output = ceil_backward_func(ms.Tensor(x))
     expect = generate_expect_backward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)

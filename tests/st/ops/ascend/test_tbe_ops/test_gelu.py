@@ -63,13 +63,13 @@ def test_gelu_input_dim_10240_768():
     gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_gelu_input_dim_1024_3072():
     input_shape = [1024, 3072]
     gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_gelu_input_dim_1024_4096():
     input_shape = [1024, 4096]
     gelu_forward_cmp(input_shape)
@@ -80,37 +80,37 @@ def test_gelu_input_dim_1280_1024():
     gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_gelu_input_dim_1280_768():
     input_shape = [1280, 768]
     gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_gelu_input_dim_128_3072():
     input_shape = [128, 3072]
     gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_gelu_input_dim_128_4096():
     input_shape = [128, 4096]
     gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_gelu_input_dim_160_1024():
     input_shape = [160, 1024]
     gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_gelu_input_dim_160_768():
     input_shape = [160, 768]
     gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_gelu_input_dim_16384_3072():
     input_shape = [16384, 3072]
     gelu_forward_cmp(input_shape)
@@ -121,7 +121,7 @@ def test_gelu_input_dim_16384_4096():
     gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_gelu_input_dim_20_1024():
     input_shape = [20, 1024]
     gelu_forward_cmp(input_shape)

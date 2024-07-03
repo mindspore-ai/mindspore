@@ -61,10 +61,10 @@ def nonzero_backward_func(x, as_tuple=False):
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('as_tuple', [True, False])
 @test_utils.run_test_with_On
-def test_ops_nonzero_forward(context_mode, as_tuple):
+def test_ops_nonzero_normal(context_mode, as_tuple):
     """
     Feature: pyboost function.
-    Description: test function nonzero forward.
+    Description: test function nonzero forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -84,6 +84,18 @@ def test_ops_nonzero_forward(context_mode, as_tuple):
         for expect, output, output_tensor in zip(expect_tuple, output_tuple, output_tensor_tuple):
             np.testing.assert_array_equal(output.asnumpy(), expect)
             np.testing.assert_array_equal(output_tensor.asnumpy(), expect)
+
+    x = np.array([1, 2, 2, 4, 3]).astype(np.float32)
+    if not as_tuple:
+        output = nonzero_backward_func(ms.Tensor(x), as_tuple)
+        expect = np.array([0., 0., 0., 0., 0.]).astype(np.float32)
+        np.testing.assert_array_equal(output.asnumpy(), expect)
+
+    if as_tuple and ms.get_context(attr_key='device_target') == 'Ascend':
+        output_tuple = nonzero_backward_func(ms.Tensor(x), as_tuple)
+        expect_tuple = np.array([[0, 0, 0, 0, 0]])
+        for expect, output in zip(expect_tuple, output_tuple):
+            np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
@@ -108,31 +120,6 @@ def test_ops_nonzero_bf16(context_mode, as_tuple):
     else:
         output_tuple = nonzero_forward_func(x_tensor, as_tuple)
         expect_tuple = np.array([[0, 1, 2]])
-        for expect, output in zip(expect_tuple, output_tuple):
-            np.testing.assert_array_equal(output.asnumpy(), expect)
-
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.parametrize('as_tuple', [True, False])
-@test_utils.run_test_with_On
-def test_ops_nonzero_backward(context_mode, as_tuple):
-    """
-    Feature: pyboost function.
-    Description: test function nonzero backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = np.array([1, 2, 2, 4, 3]).astype(np.float32)
-    if not as_tuple:
-        output = nonzero_backward_func(ms.Tensor(x), as_tuple)
-        expect = np.array([0., 0., 0., 0., 0.]).astype(np.float32)
-        np.testing.assert_array_equal(output.asnumpy(), expect)
-
-    if as_tuple and ms.get_context(attr_key='device_target') == 'Ascend':
-        output_tuple = nonzero_backward_func(ms.Tensor(x), as_tuple)
-        expect_tuple = np.array([[0, 0, 0, 0, 0]])
         for expect, output in zip(expect_tuple, output_tuple):
             np.testing.assert_array_equal(output.asnumpy(), expect)
 
