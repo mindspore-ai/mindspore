@@ -241,7 +241,7 @@ SortExt: 'aclnnSort'
 # 83
 
 # 84
-AdamWeightDecayExt: 'aclnnApplyAdamWV2'
+AdamW: 'aclnnApplyAdamWV2'
 # 85
 
 # 86

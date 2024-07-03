@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/pyboost/customize/adam_weight_decay_ext.h"
+#include "plugin/device/ascend/kernel/pyboost/customize/adamw.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 #include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr, tensor::BaseTensorPtr> AdamWeightDecayExtAscendCustomize(
+std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr, tensor::BaseTensorPtr> AdamWAscendCustomize(
   const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &var, const BaseTensorPtr &m, const BaseTensorPtr &v,
   const BaseTensorPtr &max_v, const BaseTensorPtr &grad, const BaseTensorPtr &step, const FP32ImmPtr &lr,
   const FP32ImmPtr &beta1, const FP32ImmPtr &beta2, const FP32ImmPtr &decay, const FP32ImmPtr &epsilon,

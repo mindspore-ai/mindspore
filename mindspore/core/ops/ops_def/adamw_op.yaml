@@ -1,5 +1,5 @@
-#operator adam_weight_decay_ext
-adam_weight_decay_ext:
+#operator adamw
+adamw:
   args:
     var:
       dtype: tensor
@@ -49,7 +49,7 @@ adam_weight_decay_ext:
     v:
       dtype: tensor
   class:
-    name: AdamWeightDecayExt
+    name: AdamW
   dispatch:
     enable: True
-    Ascend: AdamWeightDecayExtAscend
+    Ascend: AdamWAscend
