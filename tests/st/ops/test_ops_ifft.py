@@ -54,10 +54,10 @@ def generate_expect_backward_output(x, n, dim):
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_ifft_forward(mode):
+def test_ops_ifft_normal(mode):
     """
     Feature: ops.ifft
-    Description: test function ifft forward.
+    Description: test function ifft forward and backward.
     Expectation: success
     """
     ms.context.set_context(mode=mode)
@@ -69,22 +69,7 @@ def test_ops_ifft_forward(mode):
     expect = generate_expect_forward_output(x, n, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-5)
 
-
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_ifft_backward(mode):
-    """
-    Feature: ops.ifft
-    Description: test function ifft backward.
-    Expectation: success
-    """
-    ms.context.set_context(mode=mode)
-    n = 2
-    dim = 0
-    x = generate_random_input((2, 3, 4, 5), np.float32)
     dout = generate_random_input((2, 3, 4, 5), np.complex64)
-    net = IFFTNet()
     grad_net = IFFTGradNet(net, ms.Tensor(dout))
     grad_net.set_train()
     grad = grad_net(ms.Tensor(x), n, dim)

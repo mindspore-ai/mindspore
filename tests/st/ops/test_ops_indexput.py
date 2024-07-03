@@ -34,10 +34,10 @@ def indexput_backward_func(x1, x2, indices, accumulate=0):
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
-def test_indexput_op_forward(context_mode):
+def test_indexput_op_normal(context_mode):
     """
     Feature: Ops.
-    Description: test op indexput forward.
+    Description: test op indexput forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -49,21 +49,6 @@ def test_indexput_op_forward(context_mode):
     expected_out = np.array([[1, 2], [3, 4]], np.float32)
     np.testing.assert_allclose(out.asnumpy(), expected_out, rtol=1e-3)
 
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_with_On
-def test_indexput_op_backward(context_mode):
-    """
-    Feature: Ops.
-    Description: test op indexput backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-
-    x1 = ms.Tensor([[0, 0], [0, 0]], dtype=ms.float32)
-    x2 = ms.Tensor([1, 2, 3, 4], dtype=ms.float32)
-    indices = (ms.Tensor([0, 0, 1, 1]), ms.Tensor([0, 1, 0, 1]))
     out = indexput_backward_func(x1, x2, indices)
     x1_grad, x2_grad = out[0].asnumpy(), out[1].asnumpy()
     expected_x1_grad = np.zeros(x1.shape)

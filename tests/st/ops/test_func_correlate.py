@@ -69,10 +69,10 @@ def correlate_backward_func(a, v, dout):
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_correlate_forward(mode):
+def test_ops_correlate_normal(mode):
     """
     Feature: numpy.correlate
-    Description: test function correlate forward.
+    Description: test function correlate forward and backward.
     Expectation: success
     """
     ms.context.set_context(mode=mode)
@@ -82,17 +82,6 @@ def test_ops_correlate_forward(mode):
     expect = generate_expect_forward_output(a, v)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-5)
 
-
-@arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_correlate_backward(mode):
-    """
-    Feature: numpy.correlate
-    Description: test function correlate backward.
-    Expectation: success
-    """
-    ms.context.set_context(mode=mode)
     a = generate_random_input((10,), np.float32)
     v = generate_random_input((7,), np.float32)
     dout = generate_random_input((16,), np.float32)

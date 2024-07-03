@@ -46,7 +46,7 @@ def elu_vmap_func(x, alpha):
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
-def test_elu_forward(mode):
+def test_elu_normal(mode):
     """
     Feature: test elu operator
     Description: test elu run by pyboost
@@ -61,6 +61,10 @@ def test_elu_forward(mode):
     expect = generate_expect_forward_output(x_np, alpha, np.float32)
     np.testing.assert_allclose(output.asnumpy(), expect, 1e-4, 1e-4)
 
+    output = elu_backward_func(x_tensor, alpha)
+    expect = generate_expect_backward_output(x_np, alpha, np.float32)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
@@ -73,24 +77,6 @@ def test_elu_backward_alpha_neg(mode):
     context.set_context(mode=mode)
 
     alpha = np.random.uniform(-0.5, -2)
-    x_np = generate_random_input((2, 3, 4), np.float32)
-    x_tensor = Tensor(x_np, ms.float32)
-    output = elu_backward_func(x_tensor, alpha)
-    expect = generate_expect_backward_output(x_np, alpha, np.float32)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
-
-
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
-@pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
-def test_elu_backward(mode):
-    """
-    Feature: test elu operator
-    Description: test elu run by pyboost
-    Expectation: success
-    """
-    context.set_context(mode=mode)
-
-    alpha = np.random.uniform(0.5, 2)
     x_np = generate_random_input((2, 3, 4), np.float32)
     x_tensor = Tensor(x_np, ms.float32)
     output = elu_backward_func(x_tensor, alpha)

@@ -106,7 +106,7 @@ def test_isclose_attr(context_mode):
     assert compare_with_numpy(x, y, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
           essential_mark='unessential')
 def test_isclose_dynamic_shape_testop():
     """

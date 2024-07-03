@@ -53,10 +53,10 @@ def generate_expect_backward_output(dout, dim=None):
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_ifftshift_forward(mode):
+def test_ops_ifftshift_normal(mode):
     """
     Feature: ops.ifftshift
-    Description: test function ifftshift forward.
+    Description: test function ifftshift forward and backward.
     Expectation: success
     """
     ms.context.set_context(mode=mode)
@@ -66,20 +66,7 @@ def test_ops_ifftshift_forward(mode):
     expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
-
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_ifftshift_backward(mode):
-    """
-    Feature: ops.ifftshift
-    Description: test function ifftshift backward.
-    Expectation: success
-    """
-    ms.context.set_context(mode=mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
     dout = generate_random_input((2, 3, 4, 5), np.float32)
-    net = IFFTShiftNet()
     grad_net = IFFTShiftGradNet(net, ms.Tensor(dout))
     grad_net.set_train()
     output = grad_net(ms.Tensor(x))

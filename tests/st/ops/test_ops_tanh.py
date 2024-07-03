@@ -49,7 +49,7 @@ def tanh_vmap_func(x):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_tanh_forward(mode):
+def test_tanh_normal(mode):
     """
     Feature: test tanh operator
     Description: test tanh run by pyboost
@@ -62,19 +62,6 @@ def test_tanh_forward(mode):
     expect = generate_expect_forward_output(x_np, np.float32)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
-
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_tanh_backward(mode):
-    """
-    Feature: test tanh operator
-    Description: test tanh run by pyboost
-    Expectation: success
-    """
-    context.set_context(mode=mode)
-    x_np = generate_random_input((2, 3, 4), np.float32)
-    x_tensor = Tensor(x_np, ms.float32)
     output = tanh_backward_func(x_tensor)
     expect = generate_expect_backward_output(x_np, np.float32)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)

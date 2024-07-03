@@ -62,10 +62,10 @@ def generate_expect_backward_output_2_4(x, n, dim):
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_irfft_forward(mode):
+def test_ops_irfft_normal(mode):
     """
     Feature: ops.irfft
-    Description: test function irfft forward.
+    Description: test function irfft forward and backward.
     Expectation: success
     """
     ms.context.set_context(mode=mode)
@@ -77,22 +77,8 @@ def test_ops_irfft_forward(mode):
     expect = generate_expect_forward_output(x, n, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-5)
 
-
-@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_irfft_backward(mode):
-    """
-    Feature: ops.irfft
-    Description: test function irfft backward.
-    Expectation: success
-    """
-    ms.context.set_context(mode=mode)
-    n = 2
-    dim = 0
     x = generate_random_input((2, 3), np.float32)
     dout = np.ones((2, 3)).astype(np.float32)
-    net = IRFFTNet()
     grad_net = RFFTGradNet(net, ms.Tensor(dout))
     grad_net.set_train()
     grad = grad_net(ms.Tensor(x), n, dim)
