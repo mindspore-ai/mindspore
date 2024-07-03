@@ -2711,9 +2711,6 @@ void DfGraphConvertor::DrawOpInput(const AnfNodePtr &node, const AnfNodePtr &pre
                   << i << endl;
   } else if (pred->isa<Parameter>()) {
     compute_sout_ << op_draw_name_[pred.get()] << " -> " << op_draw_name_[node.get()] << ":" << i << endl;
-  } else {
-    // don't draw anything.
-    MS_LOG(INFO) << "DRAW_GE_GRAPH: Shouldn't have this case.";
   }
   return;
 }
@@ -3037,7 +3034,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     return;
   }
 
-  MS_LOG(INFO) << "Set op input for node: " << node->fullname_with_scope();
+  MS_LOG(DEBUG) << "Set op input for node: " << node->fullname_with_scope();
   if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
     SetMakeTupleInput(adpt, node);
     return;
@@ -3872,7 +3869,7 @@ void DfGraphConvertor::ConvertParallelGroupIdToHcom(const CNodePtr &node) {
   }
   MS_EXCEPTION_IF_NULL(op);
   (void)op->SetAttr(kParallelGroupId, parallel_group_id);
-  MS_LOG(INFO) << "Successfully convert _parallel_group_id: " << parallel_group_id << " to ge op: " << op->GetName();
+  MS_LOG(DEBUG) << "Successfully convert _parallel_group_id: " << parallel_group_id << " to ge op: " << op->GetName();
 }
 
 void DfGraphConvertor::ConvertHcomFusionId(const CNodePtr &node) {
