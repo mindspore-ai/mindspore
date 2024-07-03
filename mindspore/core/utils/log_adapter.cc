@@ -679,9 +679,9 @@ void InitSubModulesLogLevel() {
 bool ParsePositiveInt(const std::string &str, const size_t beg, const size_t end, int *ptr_val) {
   int64_t val = 0;
   size_t idx = beg;
-  constexpr const int64_t kNumber10 = 10;
+  constexpr int64_t number_10 = 10;
   while (idx < end && IsDigit(str[idx])) {
-    val = val * kNumber10 + (str[idx] - '0');
+    val = val * number_10 + (str[idx] - '0');
     if (val > std::numeric_limits<int>::max()) {
       return false;
     }
@@ -739,7 +739,7 @@ bool ParseVerboseLogLevel(const std::string &str, int *from, int *to) {
   size_t idx_lparen = std::string::npos;  // index of '('
   size_t idx_rparen = std::string::npos;  // index of ')'
   size_t idx_comma = std::string::npos;   // index of ','
-  constexpr const size_t kNumber3 = 3;
+  constexpr size_t number_3 = 3;
   if (!GetKeyworkIndices(str, &idx_lparen, &idx_rparen, &idx_comma)) {
     return false;
   }
@@ -752,7 +752,7 @@ bool ParseVerboseLogLevel(const std::string &str, int *from, int *to) {
     *from = *to = val;
     return true;
   } else if (idx_lparen == 0 && idx_rparen == str.size() - 1 && idx_comma > idx_lparen && idx_comma < idx_rparen &&
-             str.size() > kNumber3) {
+             str.size() > number_3) {
     // VLOG_v in format (,number)
     if (idx_comma == 1) {
       *from = 1;
