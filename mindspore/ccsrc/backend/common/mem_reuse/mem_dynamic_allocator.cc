@@ -519,6 +519,11 @@ const size_t DynamicMemPoolBestFit::FreeIdleMemsByEagerFree() {
   const auto [common_free_size, common_real_free_size] = eager_free_mem_func(common_mem_);
   auto free_size = persistent_free_size + common_free_size;
   auto real_free_size = persistent_real_free_size + common_real_free_size;
+  static bool is_enable_memory_statistics = common::IsEnableRuntimeConfig(common::kRuntimeMemoryStat);
+  if (is_enable_memory_statistics) {
+    std::cout << "Total eager free memory : " << free_size << ", real free : " << real_free_size
+              << ", not free size: " << (free_size - real_free_size) << "." << std::endl;
+  }
   MS_LOG(INFO) << "Total eager free memory : " << free_size << ", real free : " << real_free_size
                << ", not free size: " << (free_size - real_free_size) << ".";
   return real_free_size;
@@ -645,7 +650,8 @@ void DynamicMemPoolBestFit::CombineMemBuf(const DynamicMemBlockPtr &mem_block,
                     << ", used by event mem: " << TotalUsedByEventMemStatistics()
                     << ", device address addr: " << mem_buf->device_addr_ << ", size: " << mem_buf->size_;
   }
-  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled()) {
+  if (device::tracker::MemTrackerManager::GetInstance().IsEnabled() &&
+      target_status == DynamicMemBufStatus::kMemBufIdle) {
     device::tracker::CALL_MEMORY_TRACKER(FreeMemBlock, mem_buf->device_addr_, TotalUsedMemStatistics(),
                                          TotalMemStatistics());
   }
