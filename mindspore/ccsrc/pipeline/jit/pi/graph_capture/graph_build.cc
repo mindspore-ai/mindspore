@@ -225,9 +225,9 @@ Graph *GraphBuilder::NewGraph(PyCodeObject *co, PyObject *globals) {
   std::vector<Graph *> &graphs = (root_ != nullptr) ? root_->graph_pool_ : this->graph_pool_;
   if ((root_ == nullptr || root_ == this) && graph_ == nullptr) {
     JitCompileResults *jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co), false);
-    MS_EXCEPTION_IF_CHECK_FAIL(jcr && jcr->code != nullptr, "must be create guard code before trace start");
-    graphs.push_back(new Graph(co, globals, *jcr->conf));
-    graphs.back()->SetGuard(jcr->code);
+    MS_EXCEPTION_IF_CHECK_FAIL(jcr && jcr->code() != nullptr, "must be create guard code before trace start");
+    graphs.push_back(new Graph(co, globals, *jcr->conf()));
+    graphs.back()->SetGuard(jcr->code());
     // initialize side-effect handler, set unique data
     graphs.back()->SetSideEffect(std::make_shared<SideEffect>());
     graphs.back()->GetSideEffect()->set_data(std::make_shared<SideEffectData>());
@@ -1579,8 +1579,8 @@ void GraphBuilder::CollectInlineInfo(CallNode *node, int depth) {
   std::string func_name = graph_->GetCodeName();
   std::string root_name = root_->GetGraph()->GetCodeName();
   JitCompileResults *jcr = getJitCompileResults(reinterpret_cast<PyObject *>(root_->GetGraph()->GetCodeObj()), false);
-  if (jcr && jcr->tbs && !func_name.empty()) {
-    jcr->tbs->PushInlineInfo(
+  if (jcr && jcr->tbs() && !func_name.empty()) {
+    jcr->tbs()->PushInlineInfo(
       {func_name, inline_name, root_name, node->GetInlineReason(), code_size, depth, node->GetLineNo()});
   }
 }
@@ -2037,7 +2037,7 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
     return false;
   }
   auto jcr = getJitCompileResults(old_func.ptr(), false);
-  if (jcr != nullptr && jcr->stat != JitCompileResults::NEVER_COMPILE) {
+  if (jcr != nullptr && jcr->stat() != JitCompileResults::NEVER_COMPILE) {
     return true;
   }
 
@@ -3260,9 +3260,9 @@ static std::unique_ptr<GraphBuilder> GenerateRootGraph(const py::object &callabl
     PyErr_Clear();
     return nullptr;
   }
-  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(frame->f_code));
-  *jcr->conf = conf;
-  jcr->code = jcr->codehub->AddOptTarget(OptOption::CreateOptionByPoint(jcr));
+  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(frame->f_code), true);
+  *jcr->conf() = conf;
+  jcr->set_code(jcr->codehub()->AddOptTarget(OptOption::CreateOptionByPoint(jcr)));
 
   auto res = std::make_unique<GraphBuilder>(frame);
 
@@ -3290,8 +3290,8 @@ AObject *InferFuncResult(const py::object &callable, const py::object &args, con
   }
   if (clear_guard) {
     Graph *graph = g->GetGraph();
-    auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(graph->GetCodeObj()));
-    jcr->codehub->DelOptTarget(OptOption::CreateOptionByPoint(jcr), graph->GetGuard());
+    auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(graph->GetCodeObj()), false);
+    jcr->codehub()->DelOptTarget(OptOption::CreateOptionByPoint(jcr), graph->GetGuard());
   }
 
   ValueNode *res = g->GetGraph()->GetRetVal();

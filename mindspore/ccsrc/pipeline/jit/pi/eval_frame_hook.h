@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_PI_JIT_COMMON_H
-#define MINDSPORE_PI_JIT_COMMON_H
+#ifndef MINDSPORE_PI_JIT_EVAL_FRAME_HOOK_H
+#define MINDSPORE_PI_JIT_EVAL_FRAME_HOOK_H
 
 #include <vector>
-#include "pipeline/jit/pi/pydef.h"
-#include "pipeline/jit/pi/code_extra.h"
+#include "pybind11/pybind11.h"
 
 namespace mindspore {
 namespace pijit {
-namespace py = pybind11;
 
-std::vector<py::object> PackArgs(const PyFrameObject *frame);
+class PyFrameEvalHookManager {
+ public:
+  struct HookResult {
+    PyObject *result_;
+    bool has_result_;
+  };
+  using Hook = HookResult (*)(PyThreadState *, PyFrameObject *);
 
-void AutoGrad(PyFrameObject *f, PyObject *ret);
-PyObject *CallCodeHook(PyThreadState *tstate, PyFrameObject *f, JitCompileResults *c);
+  static PyFrameEvalHookManager *GetInstance();
+
+  void Register(Hook f) { func_.push_back(f); }
+  PyObject *RunHook(PyThreadState *, PyFrameObject *);
+
+ private:
+  PyFrameEvalHookManager();
+  std::vector<Hook> func_;
+};
 
 }  // namespace pijit
 }  // namespace mindspore
-
-#endif  // MINDSPORE_PI_JIT_COMMON_H
+#endif

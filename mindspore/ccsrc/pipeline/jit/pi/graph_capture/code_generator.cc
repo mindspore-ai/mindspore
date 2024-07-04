@@ -730,10 +730,10 @@ py::object CodeBreakGenerator::MakeCapturedCode(std::vector<std::unique_ptr<Inst
   code_gen.EraseUnusedInstr();
   py::object code = CodeGenerator::Transform(code_gen.GetCode());
   auto parent = getJitCompileResults(reinterpret_cast<PyObject *>(co_), false);
-  JitCompileResults *child = getJitCompileResults(code.ptr());
-  child->stat = CodeExtra::GRAPH_CAPTURED;
-  child->conf = parent->conf;
-  child->tbs = parent->tbs;
+  JitCompileResults *child = getJitCompileResults(code.ptr(), true);
+  child->set_stat(CodeExtra::GRAPH_CAPTURED);
+  child->set_conf(parent->conf());
+  child->set_tbs(parent->tbs());
   return code;
 }
 
@@ -844,10 +844,10 @@ py::object CodeBreakGenerator::MakeUntrackedCode(int untracked_bci, int untracke
   CodeGenerator::EraseUnusedInstr(&ccode.co_code);
   py::object code = CodeGenerator::Transform(ccode);
   auto parent = getJitCompileResults(reinterpret_cast<PyObject *>(co_), false);
-  CodeExtra *child = getJitCompileResults(code.ptr());
-  child->stat = CodeExtra::GRAPH_CANDIDATE;
-  child->conf = parent->conf;
-  child->tbs = parent->tbs;
+  CodeExtra *child = getJitCompileResults(code.ptr(), true);
+  child->set_stat(CodeExtra::GRAPH_CANDIDATE);
+  child->set_conf(parent->conf());
+  child->set_tbs(parent->tbs());
   return code;
 }
 
@@ -1066,10 +1066,10 @@ py::object CodeBreakGenerator::MakeCapturedCode() const {
   code_gen.EraseUnusedInstr();
   py::object result = CodeGenerator::Transform(code_gen.GetCode());
 
-  JitCompileResults *child = getJitCompileResults(result.ptr());
-  child->stat = CodeExtra::GRAPH_CAPTURED;
-  child->conf = jcr->conf;
-  child->tbs = jcr->tbs;
+  JitCompileResults *child = getJitCompileResults(result.ptr(), true);
+  child->set_stat(CodeExtra::GRAPH_CAPTURED);
+  child->set_conf(jcr->conf());
+  child->set_tbs(jcr->tbs());
   return result;
 }
 
@@ -1444,8 +1444,8 @@ py::object MindCodeBreakGenerator::MakeCapturedCode(std::vector<std::unique_ptr<
                                                     unsigned code_flag) const {
   // a stub to call graph
   py::object res = this->CodeBreakGenerator::MakeCapturedCode(std::move(load), argc, code_flag);
-  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co_));
-  if (jcr->conf->GetBoolConfig(GraphJitConfig::kInterpretCapturedCode)) {
+  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co_), true);
+  if (jcr->conf()->GetBoolConfig(GraphJitConfig::kInterpretCapturedCode)) {
     return res;
   }
   auto name = PyUnicode_AsUTF8(reinterpret_cast<PyCodeObject *>(res.ptr())->co_name);
@@ -1454,8 +1454,8 @@ py::object MindCodeBreakGenerator::MakeCapturedCode(std::vector<std::unique_ptr<
 }
 
 py::object MindCodeBreakGenerator::MakeCapturedCode() const {
-  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co_));
-  if (jcr->conf->GetBoolConfig(GraphJitConfig::kInterpretCapturedCode)) {
+  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co_), true);
+  if (jcr->conf()->GetBoolConfig(GraphJitConfig::kInterpretCapturedCode)) {
     return this->CodeBreakGenerator::MakeCapturedCode();
   }
   auto name = std::to_string(jcr->IncCodeCount()) + "R." + MakeCompiledName(PyUnicode_AsUTF8(co_->co_name));
@@ -1495,16 +1495,16 @@ void MindCodeBreakGenerator::Compile(const std::string &co_name, int co_argcount
   // Set NativeFunc.
   auto parent = getJitCompileResults(reinterpret_cast<PyObject *>(co_), false);
   if (stub.ptr() == nullptr) {
-    parent->code->SetNativeFunc(phase, callable, nullptr);
-    parent->stat = CodeExtra::GRAPH_CALLABLE;
+    parent->code()->SetNativeFunc(phase, callable, nullptr);
+    parent->set_stat(CodeExtra::GRAPH_CALLABLE);
   } else {
-    JitCompileResults *child = getJitCompileResults(stub.ptr());
-    MS_EXCEPTION_IF_CHECK_FAIL(child->code == nullptr, "must be a new stub code");
-    child->code = child->codehub->AddOptTarget(OptOption::CreateOptionByPoint(child));
-    child->code->SetNativeFunc(phase, callable, nullptr);
-    child->stat = CodeExtra::GRAPH_CALLABLE;
-    child->conf = parent->conf;
-    child->tbs = parent->tbs;
+    JitCompileResults *child = getJitCompileResults(stub.ptr(), true);
+    MS_EXCEPTION_IF_CHECK_FAIL(child->code() == nullptr, "must be a new stub code");
+    child->set_code(child->codehub()->AddOptTarget(OptOption::CreateOptionByPoint(child)));
+    child->code()->SetNativeFunc(phase, callable, nullptr);
+    child->set_stat(CodeExtra::GRAPH_CALLABLE);
+    child->set_conf(parent->conf());
+    child->set_tbs(parent->tbs());
   }
 }
 

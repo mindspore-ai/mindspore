@@ -287,8 +287,8 @@ static bool InferGradOperation(CallNode *call_node, AObject::MindsporeFlag f) {
     return false;
   }
   (void)pi_jit_should_compile(func, py::dict(), py::none());
-  auto jcr = getJitCompileResults(PyFunction_GET_CODE(func.ptr()));
-  *jcr->conf = call_node->GetGraph()->Config();
+  auto jcr = getJitCompileResults(PyFunction_GET_CODE(func.ptr()), false);
+  *jcr->conf() = call_node->GetGraph()->Config();
   return false;
 }
 
@@ -379,8 +379,6 @@ static py::object DeleteGradSensArgs(const py::object &args, const py::object &k
 
 static AObject *InferGradFuncResult(const py::object &func, const py::object &args, const py::object &kwargs,
                                     const GraphJitConfig &conf) {
-  auto jcr = getJitCompileResults(func.ptr());
-  *jcr->conf = conf;
   return InferFuncResult(func, args, kwargs, conf, true);
 }
 
@@ -927,22 +925,24 @@ static FuncKey KeyFinderPrimitive(const py::object &callable) {
   return iter != GetFuncKeyMap().end() ? iter->second : FUNC_KEY_PRIMITIVE;
 }
 
-static FuncKey KeyFinderMetaFunc(const py::object &callable) {
-  PyTypeObject *type_object = reinterpret_cast<PyTypeObject *>(callable.ptr());
-  type_object = PyType_CheckExact(type_object) ? type_object : Py_TYPE(type_object);
-  return IsMetaFuncGraphType<true>(type_object) ? FUNC_KEY_META_FUNCG_RAPH : FUNC_KEY_EMPTY;
-}
-
-static FuncKey KeyFinderGraphCell(const py::object &callable) {
-  static size_t id = 0;
-  if (id == 0) {
+static FuncKey KeyFinderCallableType(const py::object &callable) {
+  static size_t graph_cell_type_id = 0;
+  if (graph_cell_type_id == 0) {
     py::object type = Utils::GetModuleAttr("mindspore.nn.cell", "GraphCell", false, true);
-    id = reinterpret_cast<size_t>(type.ptr());
+    graph_cell_type_id = reinterpret_cast<size_t>(type.ptr());
   }
+
   PyTypeObject *type_object = reinterpret_cast<PyTypeObject *>(callable.ptr());
   type_object = PyType_CheckExact(type_object) ? type_object : Py_TYPE(type_object);
-  size_t cur_id = reinterpret_cast<size_t>(type_object);
-  return cur_id == id ? FUNC_KEY_GRAPH_CELL : FUNC_KEY_EMPTY;
+  size_t type_id = reinterpret_cast<size_t>(type_object);
+  if (IsPrimitiveType<true>(type_object) || IsPrimitiveFunctionType<true>(type_object)) {
+    return KeyFinderPrimitive(callable);
+  } else if (IsMetaFuncGraphType<true>(type_object)) {
+    return FUNC_KEY_META_FUNCG_RAPH;
+  } else if (type_id == graph_cell_type_id) {
+    return FUNC_KEY_GRAPH_CELL;
+  }
+  return FUNC_KEY_EMPTY;
 }
 
 static FuncKey KeyFinderSkipModule(const py::object &callable) {
@@ -964,13 +964,12 @@ static FuncKey KeyFinderSkipModule(const py::object &callable) {
 }
 
 static FuncKey FindFuncKey(const py::object &callable) {
+  static std::vector<FuncKey (*)(const py::object &callable)> finders = {
+    KeyFinderFuncId, KeyFinderFuncCodeId, KeyFinderCallableType, KeyFinderSkipModule,  // must be last for check modules
+  };
   if (callable.ptr() == nullptr || !PyCallable_Check(callable.ptr())) {
     return FUNC_KEY_EMPTY;
   }
-  std::vector<FuncKey (*)(const py::object &callable)> finders = {
-    KeyFinderFuncId,   KeyFinderFuncCodeId, KeyFinderPrimitive,
-    KeyFinderMetaFunc, KeyFinderGraphCell,  KeyFinderSkipModule,  // must be last for check modules
-  };
   FuncKey res = FUNC_KEY_EMPTY;
   for (auto iter = finders.begin(), end = finders.end(); iter != end && res == FUNC_KEY_EMPTY; ++iter) {
     res = (*iter)(callable);
