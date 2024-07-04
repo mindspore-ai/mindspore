@@ -32,7 +32,13 @@ internal::OpParamPtr InternalPagedAttention::CreateOpParam(const std::vector<Ker
   op_param.headSize = static_cast<int32_t>(inputs[kIndex5]->GetValueWithCheck<int64_t>());
   op_param.tor = inputs[kIndex6]->GetValueWithCheck<float>();
   op_param.kvHead = static_cast<int32_t>(inputs[kIndex7]->GetValueWithCheck<int64_t>());
-
+  int32_t max_seq_len = 32768;
+  std::string max_seq_len_env = common::GetEnv("MS_INTERNAL_MAX_SEQ_LEN");
+  if (!max_seq_len_env.empty()) {
+    max_seq_len = std::stoi(max_seq_len_env);
+  }
+  op_param.kvSeqLen = {max_seq_len};
+  MS_LOG(INFO) << "Set max_seq_len = " << max_seq_len << " for internal PagedAttention";
   param_ptr->specificParam = op_param;
   return param_ptr;
 }
