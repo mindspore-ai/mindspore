@@ -1305,7 +1305,14 @@ void ControlNodeScheduler::LinkArrowByKernel(const AnfNodePtr &kernel, ControlAc
     }
     auto type = FetchKernelTransformType(kernel_with_index.first, graph, {});
     auto from_actor = FetchActor(type, graph_compiler_info.name_, kernel_with_index.first, graph);
-    MS_EXCEPTION_IF_NULL(from_actor);
+    if (from_actor == nullptr) {
+      parser->PrintParseInfo();
+      MS_LOG_WITH_NODE(EXCEPTION, from_node)
+        << "Failed to get from actor by backend node:" << kernel_with_index.first->DebugString()
+        << " front node : " << from_node->fullname_with_scope() << " debug string:" << from_node->DebugString()
+        << " index:" << from_node_with_index.second << " by graph:" << graph->ToString()
+        << " to actor:" << to_actor->GetAID() << " type:" << type;
+    }
     SchedulerHelper::AddDataArrow(from_actor, to_actor, kernel_with_index.second, to_node_with_index.second,
                                   kernel_with_index.first);
   } else {
