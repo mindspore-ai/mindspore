@@ -67,8 +67,7 @@ from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
     flip, transpose, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, \
-    broadcast_to, strided_slice, ones, zeros, max_, min_, select, index_select_ext, \
-    fold_ext, unfold_ext
+    broadcast_to, strided_slice, ones, zeros, max_, min_, select
 from mindspore.ops.auto_generate.gen_ops_prim import scatter_add_ext_op, slice_ext_op
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 
@@ -1103,7 +1102,7 @@ def ones_like_ext(input, *, dtype=None):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
-        >>> output = ops.ones_like_ext(x)
+        >>> output = ops.function.array_func.ones_like_ext(x)
         >>> print(output)
         [[1 1]
          [1 1]]
@@ -1138,7 +1137,7 @@ def zeros_like_ext(input, *, dtype=None):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.arange(4).reshape(2, 2))
-        >>> output = ops.zeros_like_ext(x, dtype=mindspore.float32)
+        >>> output = ops.function.array_func.zeros_like_ext(x, dtype=mindspore.float32)
         >>> print(output)
         [[0. 0.]
          [0. 0.]]
@@ -2908,7 +2907,7 @@ def sort_ext(input, *, dim=-1, descending=False, stable=False):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> x = Tensor(np.array([[8, 2, 1], [5, 9, 3], [4, 6, 7]]), mindspore.float16)
-        >>> output = ops.sort_ext(x)
+        >>> output = ops.function.array_func.sort_ext(x)
         >>> # The output below is based on the Ascend platform.
         >>> print(output)
         (Tensor(shape=[3, 3], dtype=Float16, value=
@@ -3431,13 +3430,13 @@ def scatter_add_ext(input, dim, index, src):
         >>> input = Tensor(np.array([[1, 2, 3, 4, 5]]), dtype=ms.float32)
         >>> src = Tensor(np.array([[8, 8]]), dtype=ms.float32)
         >>> index = Tensor(np.array([[2, 4]]), dtype=ms.int64)
-        >>> out = ops.scatter_add_ext(input=input, dim=1, index=index, src=src)
+        >>> out = ops.function.array_func.scatter_add_ext(input=input, dim=1, index=index, src=src)
         >>> print(out)
         [[1. 2. 11. 4. 13.]]
         >>> input = Tensor(np.zeros((5, 5)), dtype=ms.float32)
         >>> src = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
         >>> index = Tensor(np.array([[0, 0, 0], [2, 2, 2], [4, 4, 4]]), dtype=ms.int64)
-        >>> out = ops.scatter_add_ext(input=input, dim=0, index=index, src=src)
+        >>> out = ops.function.array_func.scatter_add_ext(input=input, dim=0, index=index, src=src)
         >>> print(out)
         [[1. 2. 3. 0. 0.]
          [0. 0. 0. 0. 0.]
@@ -3447,7 +3446,7 @@ def scatter_add_ext(input, dim, index, src):
         >>> input = Tensor(np.zeros((5, 5)), dtype=ms.float32)
         >>> src = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
         >>> index = Tensor(np.array([[0, 2, 4], [0, 2, 4], [0, 2, 4]]), dtype=ms.int64)
-        >>> out = ops.scatter_add_ext(input=input, dim=1, index=index, src=src)
+        >>> out = ops.function.array_func.scatter_add_ext(input=input, dim=1, index=index, src=src)
         >>> print(out)
         [[1. 0. 2. 0. 3.]
          [4. 0. 5. 0. 6.]
@@ -6606,7 +6605,7 @@ def repeat_interleave_ext(input, repeats, dim=None, output_size=None):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
-        >>> output = ops.repeat_interleave_ext(input, repeats=2, dim=0)
+        >>> output = ops.function.array_func.repeat_interleave_ext(input, repeats=2, dim=0)
         >>> print(output)
         [[0 1 2]
          [0 1 2]
@@ -6762,10 +6761,8 @@ __all__ = [
     'ger',
     'ones',
     'ones_like',
-    'ones_like_ext',
     'zeros',
     'zeros_like',
-    'zeros_like_ext',
     'shape',
     'shape_',
     'reverse',
@@ -6773,7 +6770,6 @@ __all__ = [
     'hamming_window',
     'chunk',
     'full',
-    'full_ext',
     'full_like',
     'dyn_shape',
     'rank',
@@ -6832,7 +6828,6 @@ __all__ = [
     'narrow',
     'ravel',
     'scatter_add',
-    'scatter_add_ext',
     'scatter_mul',
     'scatter_max',
     'scatter_min',
@@ -6860,7 +6855,6 @@ __all__ = [
     'dsplit',
     'index_fill',
     'index_select',
-    'index_select_ext',
     'max',
     'argmax',
     'min',
@@ -6881,7 +6875,6 @@ __all__ = [
     'sequence_mask',
     'repeat_elements',
     'repeat_interleave',
-    'repeat_interleave_ext',
     'argwhere',
     'column_stack',
     'hstack',
@@ -6889,11 +6882,8 @@ __all__ = [
     'moveaxis',
     'aminmax',
     'sort',
-    'sort_ext',
     'top_k',
     'deepcopy',
     'flip',
-    'unfold_ext',
-    'fold_ext'
 ]
 __all__.sort()
