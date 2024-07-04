@@ -852,17 +852,17 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
     }
     if (as_ref_data) {
       StorageFormatConvertor::SetupStorageFormat(anf_graph_, node, desc);
-      auto variable = std::make_shared<RefData>(name);
-      MS_EXCEPTION_IF_NULL(variable);
-      (void)variable->update_output_desc_y(*desc);
-      (void)variable->update_input_desc_x(*desc);
-      (void)variable->set_attr_index(SizeToInt(ref_datas_.size()));
-      (void)ref_datas_.emplace_back(variable);
+      auto ref_data = std::make_shared<RefData>(name);
+      MS_EXCEPTION_IF_NULL(ref_data);
+      (void)ref_data->update_output_desc_y(*desc);
+      (void)ref_data->update_input_desc_x(*desc);
+      (void)ref_data->set_attr_index(SizeToInt(ref_datas_.size()));
+      (void)ref_datas_.emplace_back(ref_data);
       ref_data_names_.emplace_back(name);
-      // do not use read variable while variable sink
-      MS_LOG(DEBUG) << "InitParam, op_name = " << name << ", var = " << variable->GetName() << ".";
-      op_itor->second = variable;  // replace parameter with variable
-      vars_[name] = variable;      // prevent the variable operator from being freed
+      // do not use read ref_data while ref_data sink
+      MS_LOG(DEBUG) << "InitParam, op_name = " << name << ", var = " << ref_data->GetName() << ".";
+      op_itor->second = ref_data;  // replace parameter with ref_data
+      vars_[name] = ref_data;      // prevent the ref_data operator from being freed
     } else if (as_constant) {
       auto adpt_const = FindAdapter(kNameConst, training_);
       if (adpt_const == nullptr) {
@@ -899,11 +899,60 @@ void DfGraphConvertor::InitParamWithData(const TensorOrderMap &tensors) {
       DrawParamInitSubGraph(name, node);
     }
   }
+  ReplaceAllParameterToRefData();
   if (ref_mode_) {
     SetupParamInitSubGraph();
   } else {
     bool is_sink_size_repeat = InitLoopVar(&init_input);
     SetupParamInitSubGraph(tensors, &init_input, is_sink_size_repeat);
+  }
+}
+
+void DfGraphConvertor::ReplaceAllParameterToRefData() {
+  if (ref_mode_ && (ref_mode_type_ == RefModeFlag::kRefModeAll) && !export_air_) {
+    MS_LOG(INFO) << "Graph abs ref tenor to ref data, " << anf_graph_->ToString();
+    auto parameters = anf_graph_->parameters();
+    int64_t idx = 0;
+    for (const auto &param : parameters) {
+      auto op_itor = op_cache_.find(param.get());
+      if (op_itor != op_cache_.end() && op_itor->second->GetOpType() == kTypeRefData) {
+        MS_LOG(INFO) << "This process param has default, have been change to RefData: " << param->fullname_with_scope();
+        continue;
+      }
+      auto para = param->cast<ParameterPtr>();
+      MS_EXCEPTION_IF_NULL(para);
+      auto abs = para->abstract();
+      MS_EXCEPTION_IF_NULL(abs);
+      if (!abs->isa<abstract::AbstractRefTensor>()) {
+        continue;
+      }
+      MS_EXCEPTION_IF_NULL(abs->BuildShape());
+      auto shape = abs->BuildShape()->GetShapeVector();
+      auto type = abs->BuildType()->type_id();
+      if (type == kObjectTypeTensorType) {
+        type = dyn_cast<TensorType>(abs->BuildType())->element()->type_id();
+      }
+      auto name = para->name();
+      if (name.empty()) {
+        name = "RefData_NULL_" + std::to_string(idx++);
+      }
+      auto ref_data = std::make_shared<RefData>(name);
+      MS_EXCEPTION_IF_NULL(ref_data);
+      auto desc = TransformUtil::GetGeTensorDesc(shape, type, SelectParamOriFormat(graph_manager_, para));
+      if (!desc) {
+        MS_LOG(ERROR) << "Create ge node desc failed, node name:" << name << ", shape: " << shape << ", type: " << type;
+        continue;
+      }
+      (void)ref_data->update_output_desc_y(*desc);
+      (void)ref_data->update_input_desc_x(*desc);
+      (void)ref_data->set_attr_index(SizeToInt(ref_datas_.size()));
+      (void)ref_datas_.emplace_back(ref_data);
+      ref_data_names_.emplace_back(name);
+      // do not use read ref_data while ref_data sink
+      MS_LOG(INFO) << "Change no default param: " << name << " to ref data. ";
+      op_itor->second = ref_data;  // replace parameter with ref_data
+      vars_[name] = ref_data;      // prevent the ref_data operator from being freed
+    }
   }
 }
 
