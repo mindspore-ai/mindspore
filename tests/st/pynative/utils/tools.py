@@ -16,6 +16,7 @@
 import os
 import re
 import shutil
+from mindspore import context
 
 
 def clean_all_ir_files(folder_path):
@@ -32,7 +33,8 @@ def count_ir_files_num(folder_path, ir_name):
 
 
 def clear_folder(folder_path):
-    shutil.rmtree(folder_path)
+    if os.path.exists(folder_path):
+        shutil.rmtree(folder_path)
 
 
 def get_flag_from_ir_file_line(folder_path, ir_name, flag):
@@ -43,3 +45,33 @@ def get_flag_from_ir_file_line(folder_path, ir_name, flag):
                 value = line.split(':')[1].strip()
                 return int(value)
     return None
+
+
+class _CheckPyNativeRunMode:
+    """PyNative Run mode."""
+
+    def __enter__(self):
+        context.set_context(save_graphs=True, save_graphs_path="ir")
+        clean_all_ir_files("ir")
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        clear_folder("ir")
+        context.set_context(save_graphs=False)
+
+    def is_run_by_func_grad(self):
+        if count_ir_files_num("ir", "func_grad") != 0:
+            return True
+        return False
+
+    def is_run_by_single_op(self):
+        if count_ir_files_num("ir", "launch_bprop_graph") != 0 \
+                and get_flag_from_ir_file_line("ir", "launch_bprop_graph", "enable_run_graph_by_single_op") == 1:
+            return True
+        return False
+
+    def is_run_by_actor(self):
+        if count_ir_files_num("ir", "launch_bprop_graph") != 0 \
+                and get_flag_from_ir_file_line("ir", "launch_bprop_graph", "enable_run_graph_by_single_op") == 0:
+            return True
+        return False

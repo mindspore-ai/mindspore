@@ -26,9 +26,12 @@ void BackwardNode::UpdateNextEdges(const ValuePtrList &inputs) {
   for (size_t i = 0; i < inputs.size(); ++i) {
     const auto &value = inputs[i];
     if (value->isa<tensor::BaseTensor>()) {
-      auto tensor = value->cast<tensor::BaseTensorPtr>();
+      const auto &tensor = value->cast<tensor::BaseTensorPtr>();
       auto auto_grad_meta_data = tensor->auto_grad_meta_data();
-      MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
+      // Get scalar tensor
+      if (auto_grad_meta_data == nullptr) {
+        continue;
+      }
       auto variable = auto_grad_meta_data->variable();
       if (variable == nullptr || !variable->is_need_grad()) {
         continue;
@@ -88,6 +91,7 @@ std::string FuncVariable::ToString() const {
   for (size_t i = 0; i < func_node()->next_edges().size(); ++i) {
     auto last_variable = func_node()->next_edges()[i].variable;
     auto index = func_node()->next_edges()[i].input_index;
+    MS_EXCEPTION_IF_NULL(last_variable->func_node());
     buf << "Last edge: " << i << ", variable name: " << last_variable->func_node()->name()
         << ", output index: " << index << "\n";
   }

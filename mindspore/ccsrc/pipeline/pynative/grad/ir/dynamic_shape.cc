@@ -412,11 +412,13 @@ void DynamicShape::SaveUnknownShapeAbsFromJit(const ValuePtr &v, const AbstractB
 void NodeDynamicDetect::CheckNodeDynamic(const TopCellInfoPtr &top_cell, const ValuePtrList &inputs,
                                          const DynamicDetectNodeInfoPtr &node) {
   bool node_is_dynamic = false;
-  bool use_dynamic_shape_process = top_cell->has_bprop_cut_op();
-  if (!use_dynamic_shape_process) {
+  bool has_bprop_cut_op = top_cell->has_bprop_cut_op();
+  if (!has_bprop_cut_op) {
     node_is_dynamic = IsNodeDynamic(top_cell, inputs, node);
+  } else {
+    MS_LOG(INFO) << "Set use_dynamic_shape_process by bprop cut op";
   }
-  if (use_dynamic_shape_process || node_is_dynamic) {
+  if (has_bprop_cut_op || node_is_dynamic) {
     MS_LOG(INFO) << "Set use_dynamic_shape_process: " << true;
     top_cell->set_use_dynamic_shape_process(true);
     py::gil_scoped_acquire gil_acquire;

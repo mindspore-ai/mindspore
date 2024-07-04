@@ -30,6 +30,8 @@ void TopCellInfo::RecordCellBackwardHookOp(const std::string &cell_id, const Anf
 void TopCellInfo::GetOpInfo(const FrontendOpRunInfoPtr &op_run_info, bool is_jit_graph) const {
   // Dynamic shape no need do value node replace
   if (use_dynamic_shape_process_ && !is_jit_graph) {
+    MS_LOG(DEBUG) << "Current top cell is in dynamic process";
+    ++op_index_;
     return;
   }
   MS_EXCEPTION_IF_NULL(op_run_info);
@@ -91,17 +93,14 @@ void TopCellInfo::ClearDeviceMemory() const {
   }
 }
 
-void TopCellInfo::AddMetaGradInfo(const tensor::BaseTensorPtr &tensor, const AutoGradMetaDataPtr &auto_grad_meta_data) {
-  meta_grad_info_[tensor] = auto_grad_meta_data;
-}
-
 void TopCellInfo::BackUpValueMetaGradInfo(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
+  MS_EXCEPTION_IF_NULL(auto_grad_cell_ptr_);
   if (value->isa<tensor::BaseTensor>()) {
     auto tensor_value = value->cast<tensor::BaseTensorPtr>();
     auto auto_grad_meta_data = tensor_value->auto_grad_meta_data();
     if (auto_grad_meta_data != nullptr) {
-      meta_grad_info_[tensor_value] = auto_grad_meta_data;
+      auto_grad_cell_ptr_->param_meta_grad_info().emplace_back(tensor_value, auto_grad_meta_data);
     }
   } else if (value->isa<ValueSequence>()) {
     const auto &value_seq = value->cast<ValueSequencePtr>();
@@ -137,31 +136,49 @@ void TopCellInfo::ClearValueMetaGradInfo(const ValuePtr &value) {
 }
 
 void TopCellInfo::ResetMetaGradInfo() {
-  if (meta_grad_info_.empty()) {
+  // In recompute, outer top cell auto_grad_cell_ptr_ maybe nullptr
+  if (auto_grad_cell_ptr_ == nullptr) {
     return;
   }
-  for (auto &item : meta_grad_info_) {
+  if (auto_grad_cell_ptr_->param_meta_grad_info().empty() || need_resume_meta_grad_) {
+    return;
+  }
+  for (auto &item : auto_grad_cell_ptr()->param_meta_grad_info()) {
+    MS_LOG(DEBUG) << "Reset auto grad meta for tensor " << item.first->id();
     item.first->set_auto_grad_meta_data(nullptr);
   }
   need_resume_meta_grad_ = true;
 }
 
 void TopCellInfo::ResumeMetaGradInfo() {
-  if (!need_resume_meta_grad_ || meta_grad_info_.empty()) {
+  // In recompute, outer top cell auto_grad_cell_ptr_ maybe nullptr
+  if (auto_grad_cell_ptr_ == nullptr) {
+    return;
+  }
+  if (!need_resume_meta_grad_ || auto_grad_cell_ptr_->param_meta_grad_info().empty()) {
     return;
   }
 
-  for (auto &item : meta_grad_info_) {
+  for (auto &item : auto_grad_cell_ptr_->param_meta_grad_info()) {
+    MS_LOG(DEBUG) << "Resume auto grad meta for tensor " << item.first->id();
+    MS_EXCEPTION_IF_NULL(item.second);
     item.first->set_auto_grad_meta_data(item.second);
   }
   need_resume_meta_grad_ = false;
 }
 
 void TopCellInfo::ClearMetaGradInfo() {
-  for (auto &item : meta_grad_info_) {
-    item.first->set_auto_grad_meta_data(nullptr);
+  if (auto_grad_cell_ptr_ == nullptr) {
+    return;
   }
-  meta_grad_info_.clear();
+  for (auto &item : auto_grad_cell_ptr_->param_meta_grad_info()) {
+    if (item.first->is_parameter() && item.first->auto_grad_meta_data() != nullptr) {
+      item.first->auto_grad_meta_data()->Reset();
+    } else {
+      item.first->set_auto_grad_meta_data(nullptr);
+    }
+  }
+  auto_grad_cell_ptr_->param_meta_grad_info().clear();
 }
 
 void TopCellInfo::Clear() {
@@ -169,7 +186,7 @@ void TopCellInfo::Clear() {
                                      runtime::ProfilerEvent::kPyNativeGradClearTopCell,
                                      runtime::ProfilerRecorder::kNoName, true);
   MS_LOG(DEBUG) << "Clear top cell info. Cell id " << cell_id_;
-  auto_grad_cell_ptr_ = nullptr;
+  param_grad_info_.clear();
   is_init_kpynative_ = false;
   need_compile_graph_ = false;
   forward_already_run_ = false;
@@ -177,9 +194,11 @@ void TopCellInfo::Clear() {
   op_index_ = 0;
   resource_ = nullptr;
   fg_ = nullptr;
+  auto_grad_cell_ptr_ = nullptr;
   shadow_top_cell_ = nullptr;
   graph_info_map_.clear();
   replace_info_.clear();
+  input_args_info_ = nullptr;
 }
 
 void TopCellInfo::DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id) const {
@@ -278,9 +297,11 @@ void TopCellInfo::UpdateTopCellForwardTensorInfoInBpropGraph(const std::string &
       if (!pre_top_cell->is_ir_grad()) {
         MS_LOG(EXCEPTION) << "Forward repalce top cell must be ir grad";
       }
-      MS_LOG(DEBUG) << "Store pipeline top cell " << already_run_cell_id_ << " with input args id " << input_args_id_
-                    << ", op info " << op_info;
-      StoreForwardOutputWithOpInfo(pre_top_cell->replace_info().op_info_with_tensor_object, op_info, v, &replace_info_);
+      if (StoreForwardOutputWithOpInfo(pre_top_cell->replace_info().op_info_with_tensor_object, op_info, v,
+                                       &replace_info_)) {
+        MS_LOG(DEBUG) << "Store pipeline top cell " << already_run_cell_id_ << " with input args id " << input_args_id_
+                      << ", op info " << op_info;
+      }
     } else {
       // The first ir grad is not run before, indicate this is a first step, top cell will run func grad independently
       MS_LOG(DEBUG) << "Current top cell is pipeline top cell and run firstly, op info " << op_info;
@@ -296,6 +317,10 @@ void TopCellInfo::SaveForwardOutputTensorInfoInBpropGraph(const FuncGraphPtr &fu
   initial_graph_param_size_ = func_graph->parameters().size();
   if (has_bprop_cut_op()) {
     MS_LOG(DEBUG) << "Top cell has bprop cut, no need to save forward output tensor info";
+    const auto &value_node_list = func_graph->value_nodes();
+    for (const auto &elem : value_node_list) {
+      PyNativeAlgo::DataConvert::TransformValueNodeBaseTensorToTensor(elem.first->cast<ValueNodePtr>());
+    }
     return;
   }
   MS_LOG(DEBUG) << "Save top cell forward output tensor info";

@@ -54,8 +54,6 @@ struct PyNGraphInfo {
 };
 using GraphInfoPtr = std::shared_ptr<PyNGraphInfo>;
 
-using MetaGradInfoMap = mindspore::OrderedMap<tensor::BaseTensorPtr, AutoGradMetaDataPtr>;
-
 class TopCellInfo {
  public:
   TopCellInfo() = default;
@@ -68,9 +66,7 @@ class TopCellInfo {
         cell_id_(std::move(cellid)),
         already_run_cell_id_(std::move(already_run_cell_id)),
         resource_(std::move(r)),
-        fg_(std::move(fg)) {
-    meta_grad_info_.reserve(reserve_size);
-  }
+        fg_(std::move(fg)) {}
 
   inline bool is_init_kpynative() const { return is_init_kpynative_; }
   inline void set_init_kpynative(bool init) { is_init_kpynative_ = init; }
@@ -141,13 +137,11 @@ class TopCellInfo {
   void UpdateTopCellInfo(bool forward_already_run, bool need_compile_graph, bool vm_compile);
   void ClearDeviceMemory() const;
   void Clear();
-  void AddMetaGradInfo(const tensor::BaseTensorPtr &tensor, const AutoGradMetaDataPtr &auto_grad_meta_data);
   void BackUpValueMetaGradInfo(const ValuePtr &value);
   void ClearValueMetaGradInfo(const ValuePtr &value);
   void ClearMetaGradInfo();
   void ResetMetaGradInfo();
   void ResumeMetaGradInfo();
-  const MetaGradInfoMap &param_grad_info() const { return meta_grad_info_; }
   inline bool use_dynamic_shape_process() const { return use_dynamic_shape_process_; }
   inline void set_use_dynamic_shape_process(bool use_dynamic_shape_process) {
     use_dynamic_shape_process_ = use_dynamic_shape_process;
@@ -268,7 +262,6 @@ class TopCellInfo {
 
   // For forward output replace
   TensorReplaceInfo replace_info_;
-  MetaGradInfoMap meta_grad_info_;
   InputArgsInfoPtr input_args_info_{nullptr};
 };
 using TopCellInfoPtr = std::shared_ptr<TopCellInfo>;

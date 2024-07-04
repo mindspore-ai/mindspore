@@ -230,7 +230,9 @@ void IrBprop::BuildBPropCutCNode(const CNodePtr &cnode, const PrimitivePtr &prim
   bprop_graph_run_by_single_op_ = true;
 }
 
-AnfNodePtr IrBprop::MapParameter(const ValuePtr &value, const abstract::AbstractBasePtr &abs) {
+AnfNodePtr IrBprop::MapParameter(
+  const ValuePtr &value, const abstract::AbstractBasePtr &abs,
+  std::vector<std::pair<tensor::BaseTensorPtr, AutoGradMetaDataPtr>> *param_meta_grad_info) {
   if (value->isa<tensor::BaseTensor>()) {
     const auto &tensor = value->cast<tensor::BaseTensorPtr>();
     const auto &auto_grad_meta_data = tensor->auto_grad_meta_data();
@@ -241,6 +243,7 @@ AnfNodePtr IrBprop::MapParameter(const ValuePtr &value, const abstract::Abstract
       param->set_abstract(abs);
       return param;
     }
+    param_meta_grad_info->emplace_back(tensor, auto_grad_meta_data);
     set_bprop_graph_run_by_single_op(auto_grad_meta_data->is_register_hook());
     if (auto_grad_meta_data->input_type() == InputType::kParameter &&
         PyNativeAlgo::Common::IsParamRequiresGrad(tensor)) {
@@ -258,7 +261,7 @@ AnfNodePtr IrBprop::MapParameter(const ValuePtr &value, const abstract::Abstract
     AnfNodePtrList inputs;
     (void)inputs.emplace_back(NewValueNode(prim::kPrimMakeTuple));
     for (size_t i = 0; i < val_seq.size(); ++i) {
-      (void)inputs.emplace_back(MapParameter(val_seq[i], abs_seq->elements()[i]));
+      (void)inputs.emplace_back(MapParameter(val_seq[i], abs_seq->elements()[i], param_meta_grad_info));
     }
     auto cnode = ad_param_->tape_->FuncGraph::NewCNode(inputs);
     // For replacing fg parameter by user
@@ -269,10 +272,10 @@ AnfNodePtr IrBprop::MapParameter(const ValuePtr &value, const abstract::Abstract
     return cnode;
   } else if (value->isa<tensor::COOTensor>()) {
     const auto &coo_tensor = value->cast<tensor::COOTensorPtr>();
-    return MapParameter(coo_tensor->GetIndices(), abs);
+    return MapParameter(coo_tensor->GetIndices(), abs, param_meta_grad_info);
   } else if (value->isa<tensor::CSRTensor>()) {
     const auto &csr_tensor = value->cast<tensor::CSRTensorPtr>();
-    return MapParameter(csr_tensor->GetIndices(), abs);
+    return MapParameter(csr_tensor->GetIndices(), abs, param_meta_grad_info);
   } else {
     return PyNativeAlgo::Common::CreateValueNodeByValue(value, abs);
   }
@@ -410,9 +413,8 @@ AbstractBasePtr IrBprop::BuildForwardLastNode() {
   auto sens_variable = std::make_shared<IrVariable>(fn, ad_param_->sens_value_);
   if (ad_param_->sens_value_->isa<tensor::BaseTensor>()) {
     const auto &sens_tensor = ad_param_->sens_value_->cast<tensor::BaseTensorPtr>();
-    const auto &auto_grad_meta_data = sens_tensor->auto_grad_meta_data();
-    MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
-    if (PyNativeAlgo::Common::IsConstant(auto_grad_meta_data->input_type())) {
+    if (const auto &auto_grad_meta_data = sens_tensor->auto_grad_meta_data();
+        auto_grad_meta_data == nullptr || PyNativeAlgo::Common::IsConstant(auto_grad_meta_data->input_type())) {
       sens_variable->set_is_need_grad(false);
     }
   }
@@ -641,7 +643,8 @@ void IrBprop::CreateParameterAdjoint(const GradParamPtr &grad_param) const {
                                                graph_parameters[i]->abstract(), SpecialType::kZerosLikeType);
     auto func_node = std::make_shared<IrFunctionNode>(ad_param_->tape_, zeros_like_dout);
     // Copy to avoid corrupt real input grad info.
-    auto op_arg = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(grad_param->op_grad_info->input_value[i]);
+    auto op_arg =
+      PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(grad_param->op_grad_info->input_value[i], true);
     ClearGradMetaData(op_arg);
     auto adjoint = std::make_shared<IrVariable>(func_node, op_arg, true);
     adjoint->set_k_node(param);
@@ -944,8 +947,11 @@ void IrBprop::UpdateNextEdge(const IrFunctionNodePtr &fn, const AnfNodePtr &din,
   if (input_arg->isa<tensor::BaseTensor>()) {
     tensor::BaseTensorPtr input_tensor = nullptr;
     input_tensor = input_arg->cast<tensor::BaseTensorPtr>();
-    auto auto_grad_meta_data = input_tensor->auto_grad_meta_data();
-    MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
+    const auto &auto_grad_meta_data = input_tensor->auto_grad_meta_data();
+    // Get scalar tensor
+    if (auto_grad_meta_data == nullptr) {
+      return;
+    }
     auto variable = auto_grad_meta_data->variable();
     if (variable == nullptr || !variable->is_need_grad()) {
       return;

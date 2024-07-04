@@ -102,7 +102,9 @@ bool IsConstant(const ValuePtr &value) {
   if (value->isa<tensor::BaseTensor>()) {
     const auto &tensor = value->cast<tensor::BaseTensorPtr>();
     auto auto_grad_meta_data = tensor->auto_grad_meta_data();
-    MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
+    if (auto_grad_meta_data == nullptr) {
+      return true;
+    }
     if (auto_grad_meta_data->input_type() == InputType::kParameter ||
         auto_grad_meta_data->input_type() == InputType::kInput) {
       return false;
@@ -191,6 +193,7 @@ IrGrad::IrGrad(const std::vector<ValuePtr> &input_param_values, const AbstractBa
   ad_param()->anfnode_to_variable_adjoint_.reserve(op_num_in_bprop_graph);
   ad_param()->users_.dout_user_.reserve(op_num_in_bprop_graph);
   ad_param()->weights_used_in_graph_.reserve(op_num_in_bprop_graph);
+  param_meta_grad_info_.reserve(op_num_in_bprop_graph);
 
   for (size_t i = 0; i < input_param_values.size(); ++i) {
     auto input_parameter = ad_param()->fg_->add_parameter();
@@ -206,7 +209,8 @@ IrGrad::IrGrad(const std::vector<ValuePtr> &input_param_values, const AbstractBa
     auto input_adjoint = std::make_shared<IrVariable>(func_node, input_param_values[i], true);
 
     if (!input_param_values[i]->isa<ValueSequence>()) {
-      PyNativeAlgo::AutoGrad::SetGradInfoForInputs(input_param_values[i], input_adjoint, input_parameter);
+      PyNativeAlgo::AutoGrad::SetGradInfoForInputs(input_param_values[i], input_adjoint, &param_meta_grad_info_,
+                                                   input_parameter);
     } else {
       input_adjoint->set_is_need_grad(false);
     }
@@ -292,8 +296,8 @@ bool IrGrad::KPynativeWithFProp(const GradParamPtr &grad_param) {
   if (grad_by_value_) {
     for (size_t i = 0; i < grad_param->input_size; ++i) {
       if (PyNativeAlgo::Common::IsParam(grad_param->op_grad_info->input_value_grad_type[i])) {
-        auto parameter =
-          ir_bprop_->MapParameter(grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]);
+        auto parameter = ir_bprop_->MapParameter(grad_param->op_grad_info->input_value[i],
+                                                 grad_param->op_grad_info->input_abs[i], &param_meta_grad_info_);
         MS_EXCEPTION_IF_NULL(parameter);
         (void)args_node_list.emplace_back(parameter);
         continue;
@@ -409,10 +413,6 @@ FuncGraphPtr IrGrad::Finish(const tensor::BaseTensorPtrList &weights, const std:
   // Replace Parameter of primal func graph with parameter of ad_param()->tape_;
   ReplacePrimalParameter(grad_attr.has_sens);
   PyNativeAlgo::Common::DumpGraphIR("before_final_opt.ir", ad_param()->tape_);
-  // Clear weights grad info
-  for (const auto &weight : weights) {
-    weight->set_auto_grad_meta_data(nullptr);
-  }
   return ad_param()->tape_;
 }
 
@@ -427,8 +427,8 @@ CNodePtr IrGrad::ConstructBpropGraphInput(const GradParamPtr &grad_param, const 
     for (size_t i = 0; i < grad_param->input_size; ++i) {
       if (PyNativeAlgo::Common::IsParam(grad_param->op_grad_info->input_value_grad_type[i])) {
         // To solve the input is a tuple like (parameter, ...)
-        auto parameter =
-          ir_bprop_->MapParameter(grad_param->op_grad_info->input_value[i], grad_param->op_grad_info->input_abs[i]);
+        auto parameter = ir_bprop_->MapParameter(grad_param->op_grad_info->input_value[i],
+                                                 grad_param->op_grad_info->input_abs[i], &param_meta_grad_info_);
         MS_EXCEPTION_IF_NULL(parameter);
         (void)node_list.emplace_back(parameter);
         continue;
@@ -441,11 +441,10 @@ CNodePtr IrGrad::ConstructBpropGraphInput(const GradParamPtr &grad_param, const 
     if (!ir_bprop_->bprop_graph_run_by_single_op()) {
       ir_bprop()->set_bprop_graph_run_by_single_op([&grad_param]() {
         auto tensor = grad_param->op_grad_info->out_value->template cast<tensor::BaseTensorPtr>();
-        if (tensor == nullptr) {
+        if (tensor == nullptr || tensor->auto_grad_meta_data() == nullptr) {
           return false;
         }
         auto auto_grad_meta = tensor->auto_grad_meta_data();
-        MS_EXCEPTION_IF_NULL(auto_grad_meta);
         return auto_grad_meta->is_register_hook();
       }());
     }
@@ -480,13 +479,14 @@ AnfNodePtr IrGrad::BuildKNodeForCNodeInput(const ValuePtr &input, const abstract
   if (input->isa<tensor::BaseTensor>()) {
     const auto &tensor = input->cast<tensor::BaseTensorPtr>();
     const auto &auto_grad_meta_data = tensor->auto_grad_meta_data();
-    MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
-    auto k_node = auto_grad_meta_data->k_node();
-    if (k_node != nullptr) {
-      return k_node;
-    }
-    if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->input_type())) {
-      return ir_bprop_->MapParameter(input, abs);
+    if (auto_grad_meta_data != nullptr) {
+      auto k_node = auto_grad_meta_data->k_node();
+      if (k_node != nullptr) {
+        return k_node;
+      }
+      if (PyNativeAlgo::Common::IsParam(auto_grad_meta_data->input_type())) {
+        return ir_bprop_->MapParameter(input, abs, &param_meta_grad_info_);
+      }
     }
   } else if (input->isa<ValueSequence>() && !IsConstant(input)) {
     AnfNodePtrList inputs;
@@ -588,6 +588,7 @@ void IrGrad::UpdateSensParameter(const ValuePtr &value) {
     if (auto_grad_meta_data->input_type() == InputType::kParameter && variable == nullptr) {
       (void)ir_bprop_->AddParameterNode(sens_tensor,
                                         PyNativeAlgo::Common::SetAbstractValueToAnyValue(sens_tensor->ToAbstract()));
+      param_meta_grad_info_.emplace_back(sens_tensor, auto_grad_meta_data);
     }
   } else if (value->isa<ValueSequence>()) {
     const auto &value_seq = value->cast<ValueSequencePtr>()->value();
@@ -639,6 +640,7 @@ void IrGrad::SetSensAndWeights(const tensor::BaseTensorPtrList &weights, bool ha
   for (auto &weight : ad_param_->weights_used_in_graph_) {
     auto tensor = PyNativeAlgo::Common::GetTensorFromParam(weight);
     MS_EXCEPTION_IF_NULL(tensor);
+    // Need get grad, but not used in bprop graph
     if (need_grad_weights_.find(tensor->id()) == need_grad_weights_.end()) {
       UpdateTapeParameter(tensor);
     }
@@ -650,6 +652,7 @@ AnfNodePtr IrGrad::GetGradNodeByIndex(const tensor::BaseTensorPtr &tensor) {
   auto auto_grad_meta_data = tensor->auto_grad_meta_data();
   MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
   auto variable = auto_grad_meta_data->variable();
+  MS_LOG(DEBUG) << "Get variable " << (variable != nullptr ? variable->ToString() : "is nullptr");
   if (variable != nullptr && variable->is_need_grad()) {
     // If weight used in the forward network, but requires_grad is false, return zero like.
     if (tensor->param_info() != nullptr && !tensor->param_info()->requires_grad()) {
@@ -660,7 +663,8 @@ AnfNodePtr IrGrad::GetGradNodeByIndex(const tensor::BaseTensorPtr &tensor) {
     MS_EXCEPTION_IF_NULL(ir_variable);
     return ir_variable->RealDout();
   }
-  MS_LOG(INFO) << "parameter does not need grad, tensor: " << PyNativeAlgo::Common::GetIdByValue(tensor);
+  MS_LOG(INFO) << "weight not participate in forward calculation, but requires grad, id: "
+               << PyNativeAlgo::Common::GetIdByValue(tensor);
   return PyNativeAlgo::AutoGrad::BuildSpecialNode(ad_param()->tape_, tensor, nullptr, SpecialType::kZerosLikeType);
 }
 

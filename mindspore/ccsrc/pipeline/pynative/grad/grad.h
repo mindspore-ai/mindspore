@@ -246,7 +246,7 @@ class GradExecutor {
   // If grad_order=1, indicate first derivative; grad_order=2, indicate second derivative; ...
   size_t grad_order_{0};
   // if call grad not set_grad first, grad first is true.
-  bool grad_first_{false};
+  bool call_grad_api_first_{false};
 
   // Used for auto grad map reserve
   size_t op_num_in_bprop_graph_{kDefaultContainerSize};
