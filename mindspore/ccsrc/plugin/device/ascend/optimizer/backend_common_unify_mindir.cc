@@ -145,14 +145,14 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::CentralizationMindIR>());
 #ifdef ENABLE_INTERNAL_KERNELS
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddLayernormFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InferenceSwiGLUFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InferenceMatmulSplitFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::ShapeReshapeFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddRmsNormQuantFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::RmsNormQuantFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddRmsNormFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddCastRmsNormCastFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatMulAllReduceFusion>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InferenceSwiGLUFusion>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<opt::InferenceMatmulSplitFusion>());
 #endif  // ENABLE_INTERNAL_KERNELS
 }
 
