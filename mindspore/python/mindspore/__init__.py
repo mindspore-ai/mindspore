@@ -36,6 +36,7 @@ from mindspore.safeguard import obfuscate_ckpt, load_obf_params_into_net
 from mindspore._check_jit_forbidden_api import get_obj_module_and_name_info, is_jit_forbidden_module, \
     is_invalid_or_jit_forbidden_method
 from mindspore import _install_custom
+from mindspore import mint
 from mindspore.ops_generate import arg_dtype_cast, arg_handler
 
 __all__ = ["run_check"]
