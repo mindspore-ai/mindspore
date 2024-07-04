@@ -24,25 +24,7 @@
 #include "transform/symbol/acl_mdl_symbol.h"
 #include "transform/symbol/acl_symbol.h"
 #include "transform/symbol/symbol_utils.h"
-
-namespace {
-bool g_acl_initialized = false;
-std::mutex g_acl_init_mutex;
-
-void InitializeAcl() {
-  std::lock_guard<std::mutex> lock(g_acl_init_mutex);
-  if (g_acl_initialized) {
-    return;
-  }
-
-  if (CALL_ASCEND_API(aclInit, nullptr) != ACL_ERROR_NONE) {
-    MS_LOG(INFO) << "Call aclInit failed, acl data dump function may be unusable.";
-  } else {
-    MS_LOG(DEBUG) << "Call aclInit successfully";
-  }
-  g_acl_initialized = true;
-}
-}  // namespace
+#include "plugin/device/ascend/hal/common/ascend_utils.h"
 
 namespace mindspore {
 namespace datadump {
@@ -51,7 +33,7 @@ class AclDataDumper : public DataDumper {
   void Initialize() override {
     // NOTE: function `aclmdlInitDump` must be called after `aclInit` to take effect, MindSpore never call `aclInit`
     // before, so here call it once
-    InitializeAcl();
+    mindspore::device::ascend::InitializeAcl();
 
     if (CALL_ASCEND_API(aclmdlInitDump) != ACL_ERROR_NONE) {
       MS_LOG(INFO) << "Call aclmdlInitDump failed, acl data dump function will be unusable.";
