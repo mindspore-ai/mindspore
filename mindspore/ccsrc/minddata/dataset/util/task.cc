@@ -46,16 +46,16 @@ void Task::operator()() {
   thread_id_ = syscall(SYS_gettid);
 #endif
 
-#if defined(_WIN32) || defined(_WIN64)
-  process_id_ = GetCurrentProcessId();
-#else
-  process_id_ = getpid();
-#endif
   try {
     // Previously there is a timing hole where the thread is spawn but hit error immediately before we can set
     // the TaskGroup pointer and register. We move the registration logic to here (after we spawn) so we can
     // get the thread id.
     TaskGroup *vg = MyTaskGroup();
+    if (vg == nullptr) {
+      MS_LOG(ERROR) << "Task Group is nullptr.";
+      ShutdownGroup();
+      return;
+    }
     std::string uuid = ss.str();
     auto intrp_service = vg->GetIntrpService();
     rc_ = intrp_service->Register(&uuid, this);
@@ -137,6 +137,11 @@ Task::Task(const std::string &myName, const std::function<Status()> &f, int32_t 
       running_(false),
       caught_severe_exception_(false),
       native_handle_(0) {
+#if defined(_WIN32) || defined(_WIN64)
+  process_id_ = GetCurrentProcessId();
+#else
+  process_id_ = getpid();
+#endif
   IntrpResource::ResetIntrpState();
   wp_.ResetIntrpState();
   wp_.Clear();
@@ -233,6 +238,7 @@ TaskGroup *Task::MyTaskGroup() { return task_group_; }
 void Task::set_task_group(TaskGroup *vg) { task_group_ = vg; }
 
 Task::~Task() { task_group_ = nullptr; }
+
 Status Task::OverrideInterruptRc(const Status &rc) {
   if (rc == StatusCode::kMDInterrupted && this_thread::is_master_thread()) {
     // If we are interrupted, override the return value if this is the master thread.

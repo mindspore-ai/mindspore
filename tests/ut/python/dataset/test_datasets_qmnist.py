@@ -227,7 +227,6 @@ def test_qmnist_sequential_sampler():
     assert num_iter == num_samples
 
 
-@pytest.mark.skip(reason="random failures")
 def test_qmnist_exception():
     """
     Feature: QMnistDataset
@@ -342,7 +341,7 @@ def test_qmnist_usage():
     assert test_config("test") == 10
     assert test_config("nist") == 10
     assert test_config("all") == 30
-    assert "usage is not within the valid set of ['train', 'test', 'test10k', 'test50k', 'nist', 'all']" in\
+    assert "usage is not within the valid set of ['train', 'test', 'test10k', 'test50k', 'nist', 'all']" in \
            test_config("invalid")
     assert "Argument usage with value ['list'] is not of type [<class 'str'>]" in test_config(["list"])
 
