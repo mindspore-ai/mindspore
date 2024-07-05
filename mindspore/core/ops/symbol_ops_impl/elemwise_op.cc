@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/ops/symbol_ops_impl/elemwise_binop.h"
+#include "mindspore/core/ops/symbol_ops_impl/elemwise_op.h"
 #include <algorithm>
 #include <memory>
 #include <utility>
@@ -83,6 +83,7 @@ SymbolPtrList ElemwiseBinop::Process(const SymbolPtrList &lhs, const SymbolPtrLi
   return result;
 }
 
+// binary op
 REG_SYMBOL_OP_BUILDER("Add").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
 REG_SYMBOL_OP_BUILDER("AddExt").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
 REG_SYMBOL_OP_BUILDER("Div").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
@@ -101,6 +102,30 @@ REG_SYMBOL_OP_BUILDER("Pow").SetShapeDependN<DependOn::kShape, 2>().SetShapeFunc
 REG_SYMBOL_OP_BUILDER("RealDiv").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
 REG_SYMBOL_OP_BUILDER("Sub").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
 REG_SYMBOL_OP_BUILDER("SubExt").SetShapeDependN<DependOn::kShape, 2>().SetShapeFuncWith<ElemwiseBinop>();
+
+SymbolPtr AddnBuildShape(OperationBuilder *b, const SymbolPtrList &symbols) {
+  if (symbols.empty()) {
+    return nullptr;
+  }
+  auto result = symbols[0];
+  for (size_t i = 1; i < symbols.size(); i++) {
+    result = b->Emit(std::make_shared<ElemwiseBinop>(result, symbols[i]));
+  }
+  return result;
+}
+SymbolPtr GeneralBuildShape(OperationBuilder *b) { return AddnBuildShape(b, b->GetSymbolsOfDepend()); }
+
+// ops of more inputs
+REG_SYMBOL_OP_BUILDER("AddN").SetShapeDependN<DependOn::kShape>().SetShapeFunc([](OperationBuilder *b) {
+  if (b->input_num() > kDim1) {
+    return AddnBuildShape(b, b->GetSymbolsOfDepend());
+  }
+  auto inputs = b->GetInputShape(kIndex0)->as_sptr<ListSymbol>();
+  return AddnBuildShape(b, inputs->symbols());
+});
+REG_SYMBOL_OP_BUILDER("Addcdiv").SetShapeDependN<DependOn::kShape, 4>().SetShapeFunc(GeneralBuildShape);
+REG_SYMBOL_OP_BUILDER("Addcmul").SetShapeDependN<DependOn::kShape, 4>().SetShapeFunc(GeneralBuildShape);
+REG_SYMBOL_OP_BUILDER("Select").SetShapeDependN<DependOn::kShape, 3>().SetShapeFunc(GeneralBuildShape);
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

@@ -71,6 +71,7 @@ class MS_CORE_API OperationBuilder {
   SymbolPtr GetInputValue(size_t i) const { return GetValue(GetInput(i)); }
   SymbolPtr GetAttr(const std::string &attr_name) const;
   SymbolPtr GetInputOrAttr(size_t index, const std::string &attr_name) const;
+  SymbolPtrList GetSymbolsOfDepend() const;
 
   bool is_building_shape() const { return is_building_shape_; }
   const PrimitivePtr &prim() const { return prim_; }
@@ -101,25 +102,9 @@ std::vector<DependOn> DefaultDepender(const PrimitivePtr &, size_t input_num) {
 /// \tparam OP The class that inherit from `Operation`.
 template <typename OP, typename = std::enable_if_t<std::is_base_of_v<Operation, OP>>>
 SymbolPtr DefaultBuilder(OperationBuilder *b) {
-  bool build_value = !b->is_building_shape();
-  auto depends = b->symbol_builder_info().GetDepends(b->prim(), b->input_num(), build_value);
-  if (depends.empty()) {
-    MS_LOG(WARNING) << "For " << b->prim()->name() << ", the depends list is empty.";
+  auto inputs = b->GetSymbolsOfDepend();
+  if (inputs.empty()) {
     return nullptr;
-  }
-  if (b->input_num() < depends.size()) {
-    MS_LOG(WARNING) << "For " << b->prim()->name() << ", the input args num is less than the depends size. "
-                    << b->input_num() << " vs " << depends.size();
-    return nullptr;
-  }
-  SymbolPtrList inputs;
-  inputs.reserve(depends.size());
-  for (size_t i = 0; i < depends.size(); i++) {
-    if (depends[i] == DependOn::kShape) {
-      (void)inputs.emplace_back(b->GetInputShape(i));
-    } else if (depends[i] == DependOn::kValue) {
-      (void)inputs.emplace_back(b->GetInputValue(i));
-    }
   }
   return b->Emit(std::make_shared<OP>(std::move(inputs)));
 }
@@ -164,7 +149,6 @@ class MS_CORE_API OperationBuilderInfoRegistry {
     RegHelper &SetShapeFuncWith() {
       return SetShapeFunc(DefaultBuilder<OP>);
     }
-    RegHelper &SetShapeTransparentFunc() { return SetShapeFunc(TransparentInput); }
 
     RegHelper &SetValueDepend(const std::initializer_list<DependOn> &depends) {
       builder_->value_depend_list = depends;
@@ -192,7 +176,13 @@ class MS_CORE_API OperationBuilderInfoRegistry {
   const std::unordered_map<std::string, OperationBuilderInfo> &builders() const { return builders_; }
 
  private:
-  OperationBuilderInfo *NewBuilder(const std::string &name) { return &builders_[name]; }
+  OperationBuilderInfo *NewBuilder(const std::string &name) {
+    auto ret = builders_.insert({name, {}});
+    if (!ret.second) {
+      MS_LOG(WARNING) << "The symbolic operation builder of op [" << name << "] is registered repeatedly.";
+    }
+    return &(ret.first->second);
+  }
   std::unordered_map<std::string, OperationBuilderInfo> builders_;
 };
 

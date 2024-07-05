@@ -21,7 +21,9 @@ namespace ops {
 // infer symbolic shape. please add ops in lexicographical order.
 REG_SYMBOL_OP_BUILDER("Abs").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("AllReduce").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("AllToAll").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Assign").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("AssignAdd").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("BiasAdd").SetShapeDepend({DependOn::kShape, DependOn::kNone}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("BroadcastTo")
   .SetShapeDepend({DependOn::kNone, DependOn::kValue})
@@ -33,7 +35,9 @@ REG_SYMBOL_OP_BUILDER("ClampScalar")
 REG_SYMBOL_OP_BUILDER("Conv2DBackpropInput")
   .SetShapeDepend({DependOn::kNone, DependOn::kNone, DependOn::kValue})
   .SetShapeFunc(TransValueToShape);
+REG_SYMBOL_OP_BUILDER("Cos").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("CudnnUniformReal").SetShapeDepend({DependOn::kValue}).SetShapeFunc(TransValueToShape);
+REG_SYMBOL_OP_BUILDER("CumSum").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("DropoutGrad").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("DynamicBroadcastTo")
   .SetShapeDepend({DependOn::kNone, DependOn::kValue})
@@ -58,9 +62,13 @@ REG_SYMBOL_OP_BUILDER("PagedAttention").SetShapeDepend({DependOn::kShape}).SetSh
 REG_SYMBOL_OP_BUILDER("Reciprocal").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("ReluGrad").SetShapeDepend({DependOn::kShape, DependOn::kNone}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("ReLU").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("Round").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Rsqrt").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("RsqrtGrad").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("ReshapeAndCache").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("ScatterNd")
+  .SetShapeDepend({DependOn::kNone, DependOn::kNone, DependOn::kValue})
+  .SetShapeFunc(TransValueToShape);
 REG_SYMBOL_OP_BUILDER("Sigmoid").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("SigmoidGrad").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("SiLU").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
@@ -81,6 +89,8 @@ REG_SYMBOL_OP_BUILDER("StridedSliceGrad")
 REG_SYMBOL_OP_BUILDER("TensorScatterUpdate").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("Tril").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 REG_SYMBOL_OP_BUILDER("UniformExt").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
+REG_SYMBOL_OP_BUILDER("UniformInt").SetShapeDepend({DependOn::kValue}).SetShapeFunc(TransValueToShape);
+REG_SYMBOL_OP_BUILDER("UniformReal").SetShapeDepend({DependOn::kValue}).SetShapeFunc(TransValueToShape);
 REG_SYMBOL_OP_BUILDER("Zeros").SetShapeDepend({DependOn::kValue}).SetShapeFunc(TransValueToShape);
 REG_SYMBOL_OP_BUILDER("ZerosLike").SetShapeDepend({DependOn::kShape}).SetShapeFunc(TransparentInput);
 

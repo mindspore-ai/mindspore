@@ -13,16 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_ADDN_H_
-#define MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_ADDN_H_
-
-#include "mindspore/core/symbolic_shape/operation_builder.h"
+#include "mindspore/core/ops/symbol_ops_impl/scalar_mod.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
-SymbolPtr AddnBuildShape(OperationBuilder *b, const SymbolPtrList &symbols);
+SymbolPtr ScalarMod::Eval() {
+  auto lhs = input_as<IntSymbol>(0);
+  auto rhs = input_as<IntSymbol>(1);
+  if (lhs->HasData() && rhs->HasData()) {
+    return GenInt(lhs->value() % rhs->value());
+  }
+  if ((lhs->HasData() && lhs->value() == 0) || (rhs->HasData() && rhs->value() == 1)) {
+    return GenInt(0);
+  }
+  return GenVInt();
+}
+REG_SYMBOL_OP_BUILDER("ScalarMod").SetValueDependN<DependOn::kValue, 2>().SetValueFuncWith<ScalarMod>();
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_ADDN_H_

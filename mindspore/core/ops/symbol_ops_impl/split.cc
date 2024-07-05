@@ -35,13 +35,14 @@ SymbolPtr Split::Eval() {
   auto out_num = input_as_sptr<IntSymbol>(kIndex2);
   auto out_num_v = LongToSize(out_num->value());  // only support the output_num is a const value
   if (!x->HasData() || !axis->HasData()) {
-    return GenVIntList(out_num_v);
+    // all output shapes are equal
+    return GenList(SymbolPtrList(out_num_v, GenVList()));
   }
   DoNotEvalOnRun();
   auto axis_v = LongToSize(NormAxis(axis->value(), x->size()));
   SymbolPtrList out_shape = x->symbols();
   out_shape[axis_v] = Emit(std::make_shared<ScalarDiv>(x->item(axis_v), out_num));
-  return GenList(SymbolPtrList(out_num_v, GenList(out_shape)));
+  return GenList(SymbolPtrList(out_num_v, GenList(std::move(out_shape))));
 }
 
 REG_SYMBOL_OP_BUILDER("Split")

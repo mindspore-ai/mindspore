@@ -76,6 +76,10 @@ REG_SYMBOL_OP_BUILDER("FlashAttentionScore")
     return depends;
   })
   .SetShapeFunc(FlashAttentionScoreShapeBuilder);
+
+REG_SYMBOL_OP_BUILDER("FlashAttentionScoreGrad")
+  .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kShape, DependOn::kNone, DependOn::kShape})
+  .SetShapeFunc([](OperationBuilder *b) { return ListSymbol::Make(b->GetSymbolsOfDepend()); });
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore

@@ -13,16 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/ops/symbol_ops_impl/addn.h"
+#ifndef MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_ELEMWISE_OP_H_
+#define MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_ELEMWISE_OP_H_
+
+#include "mindspore/core/ops/symbol_ops_impl/common.h"
 
 namespace mindspore {
 namespace symshape {
 namespace ops {
-REG_SYMBOL_OP_BUILDER("Select")
-  .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kShape})
-  .SetShapeFunc([](OperationBuilder *b) {
-    return AddnBuildShape(b, {b->GetInputShape(kIndex0), b->GetInputShape(kIndex1), b->GetInputShape(kIndex2)});
-  });
+class MS_CORE_API ElemwiseBinop : public InferShapeOp {
+ public:
+  using InferShapeOp::InferShapeOp;
+  ElemwiseBinop(const SymbolPtr &lhs, const SymbolPtr &rhs) : InferShapeOp({lhs, rhs}) {}
+  ~ElemwiseBinop() override = default;
+  MS_DECLARE_PARENT(ElemwiseBinop, InferShapeOp)
+
+  static SymbolPtrList Process(const SymbolPtrList &lhs, const SymbolPtrList &rhs, const OperationEmitter &e,
+                               size_t shift = 0);
+
+ protected:
+  SymbolPtr Eval() override;
+};
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore
+#endif  // MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_ELEMWISE_OP_H_

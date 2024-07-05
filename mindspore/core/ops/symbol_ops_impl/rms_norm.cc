@@ -27,6 +27,10 @@ REG_SYMBOL_OP_BUILDER("RmsNorm").SetShapeDepend({DependOn::kShape}).SetShapeFunc
   rstd_shape.back() = IntSymbol::Make(1LL);
   return ListSymbol::Make(SymbolPtrList{inp, ListSymbol::Make(std::move(rstd_shape))});
 });
+
+REG_SYMBOL_OP_BUILDER("RmsNormGrad")
+  .SetShapeDepend({DependOn::kNone, DependOn::kShape, DependOn::kNone, DependOn::kShape})
+  .SetShapeFunc([](OperationBuilder *b) { return ListSymbol::Make(b->GetSymbolsOfDepend()); });
 }  // namespace ops
 }  // namespace symshape
 }  // namespace mindspore
