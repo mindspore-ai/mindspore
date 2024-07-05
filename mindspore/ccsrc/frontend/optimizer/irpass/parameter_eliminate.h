@@ -331,6 +331,103 @@ class ParameterEliminator {
  private:
   bool eliminate_only_returned_parameter_{false};
 };
+
+class PartialUnusedArgsEliminate {
+ public:
+  PartialUnusedArgsEliminate() = default;
+  virtual ~PartialUnusedArgsEliminate() = default;
+  bool operator()(const FuncGraphPtr &func_graph) {
+    MS_EXCEPTION_IF_NULL(func_graph);
+    auto manager = func_graph->manager();
+    MS_EXCEPTION_IF_NULL(manager);
+    bool changed = false;
+    for (const auto &fg : func_graph->func_graphs_used_total()) {
+      MS_EXCEPTION_IF_NULL(fg);
+      std::vector<CNodePtr> partial_nodes;
+      if (!GetUserPartialNodes(fg, &partial_nodes)) {
+        continue;
+      }
+      std::vector<size_t> unused_parameter_idx;
+      std::vector<AnfNodePtr> new_parameters;
+      const auto &node_users = manager->node_users();
+      const auto &origin_parameters = fg->parameters();
+      bool added_forward_u = fg->has_flag(kFuncGraphFlagAddedForwardU);
+      AnfNodePtr unused_arg_u = nullptr;
+      for (size_t i = 0; i < origin_parameters.size(); ++i) {
+        auto origin_para = origin_parameters[i];
+        auto iter = node_users.find(origin_para);
+        if (iter == node_users.end() || iter->second.empty()) {
+          (void)unused_parameter_idx.emplace_back(i);
+        } else if (added_forward_u && HasAbstractUMonad(origin_para) && i < origin_parameters.size() - 1) {
+          // The fv u monad from fprop should be replaced with the forward u added by pass 'add_forward_monad_depend.h'.
+          (void)unused_parameter_idx.emplace_back(i);
+          unused_arg_u = origin_para;
+        } else {
+          (void)new_parameters.emplace_back(origin_para);
+        }
+      }
+      if (unused_parameter_idx.empty()) {
+        continue;
+      }
+      mindspore::HashMap<AnfNodePtr, AnfNodePtr> repl;
+      if (!GetPartialRepl(partial_nodes, unused_parameter_idx, &repl)) {
+        continue;
+      }
+      if (unused_arg_u != nullptr) {
+        (void)manager->Replace(unused_arg_u, origin_parameters[origin_parameters.size() - 1]);
+      }
+      fg->set_parameters(new_parameters);
+      auto tr = manager->Transact();
+      for (auto &item : repl) {
+        (void)tr.Replace(item.first, item.second);
+      }
+      tr.Commit();
+      changed = true;
+    }
+    return changed;
+  }
+
+ private:
+  static bool GetUserPartialNodes(const FuncGraphPtr &fg, std::vector<CNodePtr> *partial_nodes) {
+    for (const auto &node_and_idx : fg->func_graph_cnodes_index()) {
+      auto user_node = node_and_idx.first->first;
+      if (!IsPrimitiveCNode(user_node, prim::kPrimPartial)) {
+        return false;
+      }
+      (void)partial_nodes->emplace_back(user_node->cast<CNodePtr>());
+    }
+    return true;
+  }
+
+  static bool GetPartialRepl(const std::vector<CNodePtr> &partial_nodes,
+                             const std::vector<size_t> &unused_parameter_idx,
+                             mindspore::HashMap<AnfNodePtr, AnfNodePtr> *repl) {
+    constexpr auto kPartialFirstArgIndex = 2;
+    for (const auto &partial : partial_nodes) {
+      const auto &origin_partial_inputs = partial->inputs();
+      std::vector<AnfNodePtr> new_partial_inputs;
+      size_t j = 0;
+      for (size_t i = 0; i < origin_partial_inputs.size(); ++i) {
+        if (j < unused_parameter_idx.size() && i >= kPartialFirstArgIndex &&
+            i - kPartialFirstArgIndex == unused_parameter_idx[j]) {
+          ++j;
+          continue;
+        } else {
+          (void)new_partial_inputs.emplace_back(origin_partial_inputs[i]);
+        }
+      }
+      // The unused parameter should be one of the partial inputs.
+      if (j < unused_parameter_idx.size()) {
+        return false;
+      }
+      auto partial_fg = partial->func_graph();
+      MS_EXCEPTION_IF_NULL(partial_fg);
+      auto new_partial = partial_fg->NewCNode(new_partial_inputs);
+      (void)repl->emplace(partial, new_partial);
+    }
+    return true;
+  }
+};
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

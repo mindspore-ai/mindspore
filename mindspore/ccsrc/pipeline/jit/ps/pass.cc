@@ -573,9 +573,7 @@ OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib 
     irpass.tuple_list_convert_item_index_to_positive_,
   });
 
-  opt::OptPassConfig d_2 = opt::OptPassConfig({irpass.partial_unused_args_eliminate_});
-
-  OptPassGroupMap map_a({{"d_1", d_1}, {"d_2", d_2}, {"renormalize", opt::OptPassConfig::Renormalize()}});
+  OptPassGroupMap map_a({{"d_1", d_1}, {"renormalize", opt::OptPassConfig::Renormalize()}});
 
   return map_a;
 }
@@ -815,6 +813,19 @@ bool AssignAddOpt(const ResourcePtr &resource) {
   OptPassGroupMap map({{"renormalize", opt::OptPassConfig({opt::OptPassConfig::Renormalize()})}});
   auto renormalize = opt::Optimizer::MakeOptimizer("renormalize", resource, map);
   (void)renormalize->step(func_graph, false);
+  return true;
+}
+
+bool PartialUnusedArgsEliminatePass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  FuncGraphPtr func_graph = resource->func_graph();
+  auto opt = opt::irpass::PartialUnusedArgsEliminate();
+  auto changed = opt(func_graph);
+  if (changed) {
+    OptPassGroupMap map({{"renormalize", opt::OptPassConfig({opt::OptPassConfig::Renormalize()})}});
+    auto renormalize = opt::Optimizer::MakeOptimizer("renormalize", resource, map);
+    (void)renormalize->step(func_graph, false);
+  }
   return true;
 }
 
@@ -1217,6 +1228,7 @@ std::vector<PassItem> kVmPasses = {
   {"opt_after_cconv", OptPassAfterCconvGroup},
   {"remove_dup_value", RemoveValueNodeDuplicationsPass},
   {"tuple_transform", OptPassTransformGraphGroup},
+  {"partial_unused_args_eliminate", PartialUnusedArgsEliminatePass},
   {"add_cache_embedding", AddCacheEmbeddingPass},
   {"add_recomputation", AddRecomputationPass},
   {"cse_after_recomputation", OptAfterRecomputeGroup},
