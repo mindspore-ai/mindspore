@@ -135,6 +135,7 @@ const std::vector<OpWithLevel> expand_ops_with_level_v2 = {
 
 const std::vector<OpWithLevel> expand_ops_with_level_dvm = {
   {kAscendDevice, OpLevel_0, prim::kPrimAdam},
+  {kAscendDevice, OpLevel_0, prim::kPrimAdamApplyOneWithDecayAssign},
   {kAscendDevice, OpLevel_0, prim::kPrimAddN},
   {kAscendDevice, OpLevel_0, prim::kPrimBiasAdd},
   {kAscendDevice, OpLevel_0, prim::kPrimBiasAddGrad},

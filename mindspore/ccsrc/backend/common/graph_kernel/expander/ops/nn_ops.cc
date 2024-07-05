@@ -154,15 +154,6 @@ REG_EXPANDER_FUNC("DropoutGrad").SetBody(BODYFUNC(ib) {
 });
 
 REG_EXPANDER_FUNC("BiasAdd").SetBody(BODYFUNC(ib) {
-  // Check Inputs
-  auto it = std::find_if(ib->inputs().cbegin(), ib->inputs().cend(), [](auto &input) {
-    return input->GetDtype() != TypeIdToType(kNumberTypeFloat32) &&
-           input->GetDtype() != TypeIdToType(kNumberTypeFloat16);
-  });
-  if (it != std::end(ib->inputs())) {
-    MS_LOG(INFO) << "In BiasAdd, input's dtype must be float16 or float32, But input's type is " << (*it)->GetDtype();
-    return {};
-  }
   // Expand
   auto input_x = ib->input(0);
   auto input_y = ib->input(1);
