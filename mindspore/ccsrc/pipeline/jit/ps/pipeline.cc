@@ -478,8 +478,9 @@ void CheckShapeConsistency(const abstract::ShapePtr &compile_shape, const abstra
   }
 }
 
-void CheckAbstractConsistency(const AbstractBasePtrList &compile_abstracts, const AbstractBasePtrList &args_abstracts,
-                              const std::string &target_str, bool dynamic_len = false) {
+inline void CheckSizeConsistency(const AbstractBasePtrList &compile_abstracts,
+                                 const AbstractBasePtrList &args_abstracts, const std::string &target_str,
+                                 bool dynamic_len = false) {
   if (!dynamic_len && compile_abstracts.size() != args_abstracts.size()) {
     MS_EXCEPTION(ValueError) << "For " << target_str << " and tuple(list) in " << target_str
                              << ", the length of input must be equal to expected one, but got expected: "
@@ -488,7 +489,11 @@ void CheckAbstractConsistency(const AbstractBasePtrList &compile_abstracts, cons
   if (dynamic_len && compile_abstracts.empty()) {
     MS_LOG(INTERNAL_EXCEPTION) << "For " << target_str << ", the dynamic_len compile arguments should not be empty!";
   }
+}
 
+void CheckAbstractConsistency(const AbstractBasePtrList &compile_abstracts, const AbstractBasePtrList &args_abstracts,
+                              const std::string &target_str, bool dynamic_len = false) {
+  CheckSizeConsistency(compile_abstracts, args_abstracts, target_str, dynamic_len);
   for (size_t i = 0; i < args_abstracts.size(); ++i) {
     auto compile_abs = dynamic_len ? compile_abstracts[0] : compile_abstracts[i];
     auto args_abs = args_abstracts[i];
@@ -529,6 +534,10 @@ void CheckAbstractConsistency(const AbstractBasePtrList &compile_abstracts, cons
                                    << "!";
         }
       }
+    } else if (compile_abs->isa<abstract::AbstractList>() && args_abs->isa<abstract::AbstractList>()) {
+      auto compile_sequence = compile_abs->cast<abstract::AbstractSequencePtr>();
+      auto args_sequence = args_abs->cast<abstract::AbstractSequencePtr>();
+      CheckAbstractConsistency(compile_sequence->elements(), args_sequence->elements(), target_str);
     } else {
       if (!common::IsEqual(compile_abs, args_abs)) {
         MS_EXCEPTION(ValueError) << "For " << target_str << " or tuple(list) in " << target_str << ", the " << i + 1
