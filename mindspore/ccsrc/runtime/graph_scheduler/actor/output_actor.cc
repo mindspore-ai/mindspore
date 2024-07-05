@@ -252,10 +252,7 @@ void OutputActor::RunOpData(OpData<DeviceTensor> *const input_data, OpContext<De
   if (tensor == nullptr) {
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR(*context, "Create output tensor failed.");
   }
-  // The persisted address can not released by the tensor print.
-  if (!IsOutputAddressPersisted(input_data->data_, node_with_index)) {
-    tensor->set_need_release_device_mem(true);
-  }
+  tensor->set_need_release_device_mem(true);
   outputs_[output_position] = tensor;
   current_outputs_num_++;
 }
