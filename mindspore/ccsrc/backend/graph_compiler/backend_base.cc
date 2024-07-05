@@ -611,6 +611,31 @@ bool HasSwitchNode(const FuncGraphPtr &func_graph) {
   });
 }
 
+bool IsNodeValid(const AnfNodePtr &node) {
+  if (node != nullptr && common::AnfAlgo::IsNodeOutputDynamicShape(node)) {
+    MS_LOG(INFO) << "Disable switch inline for dynamic shape node:" << node->DebugString();
+    return false;
+  } else if (common::AnfAlgo::CheckPrimitiveType(node, prim::kPrimPartial)) {
+    const auto &cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    if (cnode->size() <= 1 || cnode->input(1) == nullptr || !(IsValueNode<FuncGraph>(cnode->input(1)))) {
+      return true;
+    }
+    const auto &func_graph = GetValueNode<FuncGraphPtr>(cnode->input(1));
+    MS_EXCEPTION_IF_NULL(func_graph);
+    if (std::any_of(func_graph->parameters().begin(), func_graph->parameters().end(), [](const AnfNodePtr &para) {
+          return para != nullptr && para->abstract() != nullptr &&
+                 para->abstract()->isa<abstract::AbstractSequence>() &&
+                 para->abstract()->cast<abstract::AbstractSequencePtr>()->size() > 1;
+        })) {
+      MS_LOG(INFO) << "Disable switch inline for tuple input in graph:" << func_graph->ToString()
+                   << " for partial node:" << node->DebugString();
+      return false;
+    }
+  }
+  return true;
+}
+
 bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -668,17 +693,11 @@ bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
       return false;
     }
   }
-
   const auto &mng = graph->manager();
-  if (mng != nullptr) {
-    for (const auto &node : mng->all_nodes()) {
-      if (node != nullptr && common::AnfAlgo::IsNodeOutputDynamicShape(node)) {
-        MS_LOG(INFO) << "Disable switch inline for dynamic shape node:" << node->DebugString();
-        return false;
-      }
-    }
+  if (mng != nullptr && std::any_of(mng->all_nodes().begin(), mng->all_nodes().end(),
+                                    [](const AnfNodePtr &node) { return !IsNodeValid(node); })) {
+    return false;
   }
-
   MS_LOG(INFO) << "Enable switch inline.";
   return true;
 }
