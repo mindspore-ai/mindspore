@@ -92,6 +92,7 @@ Tensor
     mindspore.mint.clamp
     mindspore.mint.cos
     mindspore.mint.cosh
+    mindspore.mint.cross
     mindspore.mint.div
     mindspore.mint.divide
     mindspore.mint.erf

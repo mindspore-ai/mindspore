@@ -553,7 +553,8 @@ REG_ADPT_DESC(SilentCheck, prim::kPrimSilentCheck->name(), ADPT_DESC(SilentCheck
 
 // Cross
 INPUT_MAP(Cross) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
-ATTR_MAP(Cross) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())}};
+ATTR_MAP(Cross) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(Cross) = {{3, ATTR_DESC(dim, AnyTraits<int64_t>())}};
 OUTPUT_MAP(Cross) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Cross, prim::kPrimCross->name(), ADPT_DESC(Cross))
 

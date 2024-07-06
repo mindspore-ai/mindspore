@@ -54,6 +54,7 @@ from mindspore.ops.auto_generate import stack_ext as stack
 
 # 9
 from mindspore.ops.auto_generate import masked_select
+from mindspore.ops.function.math_func import cross
 # 10
 from mindspore.ops.function.math_func import ne
 # 11
@@ -1046,7 +1047,7 @@ __all__ = [
     # 54
     'normal',
     # 55
-
+    'cross',
     # 56
 
     # 57

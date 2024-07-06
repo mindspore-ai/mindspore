@@ -249,6 +249,10 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
    {
      "reduction",
    }},
+  {"Cross",
+   {
+     "dim",
+   }},
 };
 
 constexpr size_t kMatMulInputSizeWithBias = 6;  // primitive, x1, x2, bias, transpose_a, transpose_b
