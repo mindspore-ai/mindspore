@@ -1531,6 +1531,7 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   // If set_inputs, but has constrol flow, we need run by actor.
   bprop_graph->set_flag(kFlagEnableRunGraphBySingleOp,
                         auto_grad_cell->bprop_graph_run_by_single_op() && !bprop_graph->has_flag(kFlagIsControlFlow));
+  top_cell()->set_use_dynamic_shape_process(bprop_graph->has_flag(kFlagEnableRunGraphBySingleOp));
   if (top_cell()->has_call_graph()) {
     bprop_graph->set_flag(kFlagPyNativeWithJitCallGraph, true);
   }
