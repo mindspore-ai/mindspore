@@ -20,6 +20,7 @@
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
+#include "utils/llm_manager.h"
 
 namespace mindspore {
 namespace kernel {
@@ -29,18 +30,29 @@ internal::OpParamPtr InternalPagedAttention::CreateOpParam(const std::vector<Ker
   param_ptr->opId = internal::OpId::PagedAttention;
   internal::MixParam op_param;
   op_param.mixType = internal::MixParam::MixType::MIX_PAGED_ATTENTION_MASK_ND;
+  op_param.maskType = internal::MixParam::MaskType::MASK_TYPE_NONE;
   op_param.headSize = static_cast<int32_t>(inputs[kIndex5]->GetValueWithCheck<int64_t>());
   op_param.tor = inputs[kIndex6]->GetValueWithCheck<float>();
   op_param.kvHead = static_cast<int32_t>(inputs[kIndex7]->GetValueWithCheck<int64_t>());
-  int32_t max_seq_len = 32768;
+  op_param.maskType = internal::MixParam::MaskType::MASK_TYPE_NONE;
+  // set kvSeqLen with llm_manager's round_up_max_seq_length
+  auto &llm_manager = LLMManager::GetInstance();
+  max_seq_len_ = llm_manager.get_current_round_up_max_seq_length();
+  // reset kvSeqLen with env if exists
   std::string max_seq_len_env = common::GetEnv("MS_INTERNAL_MAX_SEQ_LEN");
   if (!max_seq_len_env.empty()) {
-    max_seq_len = std::stoi(max_seq_len_env);
+    max_seq_len_ = std::stoi(max_seq_len_env);
   }
-  op_param.kvSeqLen = {max_seq_len};
-  MS_LOG(INFO) << "Set max_seq_len = " << max_seq_len << " for internal PagedAttention";
+  op_param.kvSeqLen = {max_seq_len_};
+  MS_LOG(DEBUG) << "For op PagedAttention, set param.kvSeqlen = " << max_seq_len_;
   param_ptr->specificParam = op_param;
   return param_ptr;
+}
+
+uint64_t InternalPagedAttention::GenTilingCacheKey(const std::vector<KernelTensor *> &inputs,
+                                                   const std::vector<KernelTensor *> &outputs) {
+  // User defined CacheKey, the inputs should include all the factors which will affect tiling result.
+  return TilingCacheMgr::GetInstance().GenTilingCacheKey(kernel_name_, inputs, max_seq_len_);
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(PagedAttention, InternalPagedAttention);
