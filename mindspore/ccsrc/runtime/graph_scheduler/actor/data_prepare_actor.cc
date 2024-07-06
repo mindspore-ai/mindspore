@@ -28,6 +28,7 @@
 #include "mindrt/include/async/async.h"
 #include "utils/log_adapter.h"
 #include "utils/phase.h"
+#include "utils/llm_manager.h"
 #include "include/common/utils/convert_utils.h"
 #include "include/backend/distributed/recovery/recovery_context.h"
 #include "include/backend/mem_reuse/mem_tracker.h"
@@ -898,6 +899,25 @@ void DataPrepareActor::PrepareDataForHostTensorQueueNew(const VectorRef &args, O
   MS_EXCEPTION_IF_NULL(ms_context);
   static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
   if (enable_infer_boost && has_dynamic_shape_ && EnableKbkSubGraphExecute()) {
+    auto &llm_manager = LLMManager::GetInstance();
+    auto seq_length_idx = llm_manager.get_seq_length_graph_input_index();
+    if (seq_length_idx >= 0) {
+      // seq_length_idx >= 0 means enable multi-level seq length
+      auto seq_length_tensor = host_tensors[seq_length_idx];
+      auto seq_length_values = static_cast<int32_t *>(seq_length_tensor->data_ptr()->data());
+      auto seq_lenght_values_num = seq_length_tensor->data().nbytes() / sizeof(int32_t);
+      int32_t max_seq_length = 0;
+      for (size_t i = 0; i < seq_lenght_values_num; i++) {
+        auto v = seq_length_values[i];
+        if (v > max_seq_length) {
+          max_seq_length = v;
+        }
+      }
+      if (llm_manager.update_round_up_max_seq_length(max_seq_length)) {
+        isDyn = true;
+      }
+      MS_LOG(INFO) << "Current round_up_max_seq_length is " << llm_manager.get_current_round_up_max_seq_length();
+    }
     ActorDispatcher::set_enable_static_shape(!isDyn);
 
     const auto &phase = PhaseManager::GetInstance().phase();
