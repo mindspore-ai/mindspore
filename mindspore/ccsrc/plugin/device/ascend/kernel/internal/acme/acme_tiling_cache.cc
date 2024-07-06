@@ -32,17 +32,20 @@ TilingCacheItemPtr AcmeTilingCache::Bind(uint64_t key) {
 void AcmeTilingCache::Unbind(const TilingCacheItemPtr &item) {
   if (item != nullptr) {
     item->ref_count_--;
+    MS_LOG(DEBUG) << "unbind, addr: " << item->tiling_info_->tiling_addr_ << ", host_addr: " << item->host_addr_
+                  << ", ref: " << item->ref_count_;
   }
 }
 
-std::vector<void *> AcmeTilingCache::CombOutSuspectedUselessItems() {
-  std::vector<void *> tiling_addrs;
-  std::lock_guard<SimpleSpinLock> lock(spin_lock_);
+std::vector<TilingCacheItemPtr> AcmeTilingCache::CombOutSuspectedUselessItems() {
+  std::vector<TilingCacheItemPtr> erased_items;
   std::vector<uint64_t> keys;
   for (auto &iter : cache_) {
     if (iter.second->ref_count_ <= 0) {
       (void)keys.emplace_back(iter.first);
-      (void)tiling_addrs.emplace_back(iter.second->tiling_info_->tiling_addr_);
+      (void)erased_items.emplace_back(iter.second);
+      MS_LOG(DEBUG) << "Comb out key: " << iter.first << ", addr: " << iter.second->tiling_info_->tiling_addr_
+                    << ", host_addr: " << iter.second->host_addr_ << ", ref: " << iter.second->ref_count_;
     }
   }
 
@@ -50,19 +53,20 @@ std::vector<void *> AcmeTilingCache::CombOutSuspectedUselessItems() {
     cache_.erase(key);
   }
 
-  return tiling_addrs;
+  return erased_items;
 }
 
 bool AcmeTilingCache::Insert(uint64_t key, const TilingCacheItemPtr &ti_ptr) {
   if (cache_.size() == kMaxKernelCount) {
-    MS_LOG(DEBUG) << "The kernel is not cached because of the capacity limit. The key is " << key
-                  << ", and the tiling_info is " << ti_ptr->tiling_info_;
+    MS_LOG(INFO) << "The kernel is not cached because of the capacity limit. The key is " << key
+                 << ", and the tiling_info is " << ti_ptr->tiling_info_;
     return false;
   }
 
-  std::lock_guard<SimpleSpinLock> lock(spin_lock_);
   if (cache_.find(key) != cache_.end()) {
-    MS_LOG(EXCEPTION) << "T kernel is already in cache, where the key is " << key << ".";
+    MS_LOG(EXCEPTION) << "kernel is already in cache, where the key is " << key
+                      << ", device_addr: " << ti_ptr->tiling_info_->tiling_addr_
+                      << ", host_addr: " << ti_ptr->host_addr_ << ", size: " << ti_ptr->size_;
   }
 
   cache_[key] = ti_ptr;
@@ -105,7 +109,7 @@ uint64_t AcmeTilingCache::GenerateKey(const std::string &name, const std::vector
           break;
         }
         default:
-          MS_LOG(INTERNAL_EXCEPTION) << "Unsupported dtype " << data_type;
+          MS_LOG(INTERNAL_EXCEPTION) << "Unsupported dtype " << data_type << ", kernel: " << name;
       }
     } else if (type == kObjectTypeTuple || type == kObjectTypeList) {
       auto data_type = input->dtype_id();
@@ -121,10 +125,10 @@ uint64_t AcmeTilingCache::GenerateKey(const std::string &name, const std::vector
           break;
         }
         default:
-          MS_LOG(INTERNAL_EXCEPTION) << "Unsupported dtype " << data_type;
+          MS_LOG(INTERNAL_EXCEPTION) << "Unsupported dtype " << data_type << ", kernel: " << name;
       }
     } else {
-      MS_LOG(INTERNAL_EXCEPTION) << "Unsupported input type " << type;
+      MS_LOG(INTERNAL_EXCEPTION) << "Unsupported input type " << type << ", kernel: " << name;
     }
   }
 

@@ -26,6 +26,7 @@
 #include "plugin/factory/ms_factory.h"
 
 #include "plugin/device/ascend/kernel/internal/acme/acme_tiling_cache.h"
+#include "plugin/device/ascend/kernel/internal/acme/acme_spinlock.h"
 
 namespace mindspore {
 namespace kernel {
@@ -73,6 +74,7 @@ class AcmeKernelMod : public KernelMod {
   TilingCacheItemPtr last_item_{nullptr};
   std::vector<size_t> recreate_cared_indices_;
   std::string fullname_;
+  SimpleSpinLock lock_;
 };
 
 using AcmeKernelModPtr = std::shared_ptr<AcmeKernelMod>;

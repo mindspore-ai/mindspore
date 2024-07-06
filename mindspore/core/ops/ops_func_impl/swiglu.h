@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/internal/acme/add.h"
-
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SWIGLU_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SWIGLU_H_
 #include <memory>
-#include "kernel/kernel.h"
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
-namespace kernel {
-acme::AcmeOpPtr AcmeAdd::CreateKernel(acme::InputsImmutableInfoList inputs_ii,
-                                      acme::OutputsImmutableInfoList outputs_ii,
-                                      const std::vector<KernelTensor *> &ms_inputs,
-                                      const std::vector<KernelTensor *> &ms_outputs) {
-  return acme::CreateAddOp(inputs_ii, outputs_ii);
-}
-MS_ACME_KERNEL_FACTORY_REG(Add, AcmeAdd);
-}  // namespace kernel
+namespace ops {
+class MIND_API SwigluFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
+
+}  // namespace ops
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SWIGLU_H_

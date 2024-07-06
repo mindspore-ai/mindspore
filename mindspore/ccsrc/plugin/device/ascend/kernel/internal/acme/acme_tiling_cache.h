@@ -23,18 +23,20 @@
 #include "mindspore/core/ir/primitive.h"
 #include "kernel/kernel.h"
 #include "acme/include/acme.h"
-// #include "plugin/device/ascend/kernel/internal/acme/buffer_queue.h"
-#include "plugin/device/ascend/kernel/internal/acme/acme_spinlock.h"
+#include "plugin/device/ascend/kernel/internal/acme/tiling_mem_mgr.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr size_t kMaxKernelCount = 2 * 1024 * 1024;
+constexpr size_t kMaxKernelCount = kTilingMemPoolDeviceBlockNum;
 
 struct TilingCacheItem {
   std::atomic<int64_t> ref_count_{0};
   acme::TilingInfoPtr tiling_info_;
+  void *host_addr_;
+  size_t size_;
 
-  explicit TilingCacheItem(const acme::TilingInfoPtr &tiling_info) : ref_count_(1), tiling_info_(tiling_info) {}
+  TilingCacheItem(const acme::TilingInfoPtr &tiling_info, void *host_addr, size_t size)
+      : ref_count_(1), tiling_info_(tiling_info), host_addr_(host_addr), size_(size) {}
 };
 using TilingCacheItemPtr = std::shared_ptr<TilingCacheItem>;
 
@@ -51,14 +53,12 @@ class AcmeTilingCache {
   TilingCacheItemPtr Bind(uint64_t key);
   void Unbind(const TilingCacheItemPtr &item);
   bool Insert(uint64_t key, const TilingCacheItemPtr &ti_ptr);
-  std::vector<void *> CombOutSuspectedUselessItems();
+  std::vector<TilingCacheItemPtr> CombOutSuspectedUselessItems();
 
   static uint64_t GenerateKey(const std::string &name, const std::vector<KernelTensor *> &inputs);
 
  private:
-  SimpleSpinLock spin_lock_;
   std::unordered_map<uint64_t, TilingCacheItemPtr> cache_;
-  // BufferQueue key_content_bufs_;
 };
 }  // namespace kernel
 }  // namespace mindspore
