@@ -22,6 +22,9 @@
 #ifndef _MSC_VER
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/stat.h>
+#else
+#include <direct.h>
 #endif
 #include <map>
 #include <iomanip>
@@ -867,6 +870,58 @@ std::string GetTimeString() {
   return std::string(buf) + ss.str();
 #endif
 }
+
+bool MakeDirectory(const char *path) {
+#if defined(_WIN32) || defined(_WIN64)
+  if (mkdir(path) == -1) {
+#else
+  constexpr int DEFAULT_MKDIR_MODE = 0700;
+  if (mkdir(path, DEFAULT_MKDIR_MODE) == -1) {
+#endif
+    if (errno != EEXIST) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool MakePath(char *file_path) {
+  if (file_path == nullptr || file_path[0] == '\0') {
+    return true;
+  }
+
+  char *p = file_path + 1;
+  while (*p) {
+    if (*p == '\\' || *p == '/') {
+      char ch = *p;
+      *p = '\0';
+
+      if (!MakeDirectory(file_path)) {
+        *p = ch;
+        return false;
+      }
+      *p = ch;
+    }
+    p++;
+  }
+  return MakeDirectory(file_path);
+}
+
+// get log dir from GLOG_log_dir with RANK_ID or OMPI_COMM_WORLD_RANK.
+std::string GetRealLogPath(const std::string &log_dir) {
+  const std::string rank_id = mindspore::GetEnv("RANK_ID");
+  const std::string gpu_rank_id = mindspore::GetEnv("OMPI_COMM_WORLD_RANK");
+  const std::string ms_node_id = mindspore::GetEnv("MS_NODE_ID");
+  std::string rank = "0";
+  if (!rank_id.empty()) {
+    rank = rank_id;
+  } else if (!gpu_rank_id.empty()) {
+    rank = gpu_rank_id;
+  } else if (!ms_node_id.empty()) {
+    rank = ms_node_id;
+  }
+  return log_dir + "/rank_" + rank + "/logs";
+}
 }  // namespace mindspore
 
 extern "C" {
@@ -903,26 +958,15 @@ MS_CORE_API void common_log_init(void) {
   // Default print log to screen
   FLAGS_logtostderr = true;
   if (logtostderr == "0") {
-    if (mindspore::GetEnv("GLOG_log_dir").empty()) {
+    auto log_dir = mindspore::GetEnv("GLOG_log_dir");
+    if (log_dir.empty()) {
       MS_LOG(ERROR) << "`GLOG_log_dir` is empty, it must be set while 'logtostderr' equals to 0.";
       // Here can not throw exception and use python to catch, because the PYBIND11_MODULE is not yet been initialed.
       exit(EXIT_FAILURE);
     } else {
       FLAGS_logtostderr = false;
       // Set log dir from GLOG_log_dir with RANK_ID or OMPI_COMM_WORLD_RANK.
-
-      const std::string rank_id = mindspore::GetEnv("RANK_ID");
-      const std::string gpu_rank_id = mindspore::GetEnv("OMPI_COMM_WORLD_RANK");
-      const std::string ms_node_id = mindspore::GetEnv("MS_NODE_ID");
-      std::string rank = "0";
-      if (!rank_id.empty()) {
-        rank = rank_id;
-      } else if (!gpu_rank_id.empty()) {
-        rank = gpu_rank_id;
-      } else if (!ms_node_id.empty()) {
-        rank = ms_node_id;
-      }
-      FLAGS_log_dir = mindspore::GetEnv("GLOG_log_dir") + "/rank_" + rank + "/logs";
+      FLAGS_log_dir = mindspore::GetRealLogPath(log_dir);
     }
   }
 
@@ -950,6 +994,15 @@ MS_CORE_API void mindspore_log_init(void) {
 #define google mindspore_private
   static bool is_glog_initialzed = false;
   if (!is_glog_initialzed) {
+    std::string logtostderr = mindspore::GetEnv("GLOG_logtostderr");
+    std::string log_dir = mindspore::GetEnv("GLOG_log_dir");
+    if (logtostderr == "0" && !log_dir.empty()) {
+      auto path = mindspore::GetRealLogPath(log_dir);
+      if (!mindspore::MakePath(path.data())) {
+        fprintf(stderr, "Failed to create log path %s!\n", path.c_str());
+      }
+    }
+
     google::InitGoogleLogging("mindspore");
     is_glog_initialzed = true;
   }

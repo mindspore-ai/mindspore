@@ -18,6 +18,8 @@ test MindSpore vlog interface
 
 import subprocess
 import pytest
+import os
+import shutil
 
 
 def check_output(vlog_v, expect_output, is_expect=True):
@@ -43,7 +45,7 @@ def check_output(vlog_v, expect_output, is_expect=True):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_op_proto_warnings():
+def test_vlog():
     """
     Feature: test mindspore vlog interface
     Description: check whether mindspore vlog can work properly
@@ -56,14 +58,42 @@ def test_op_proto_warnings():
     check_output('(,)', 'Value of environment var VLOG_v is invalid:')
     check_output('0', 'Value of environment var VLOG_v is invalid:')
 
-    # test_valid VLOG_v value and expect some outputs
+    # test valid VLOG_v value and expect some outputs
     check_output('(1,2147483647)', ': log level for printing vlog tags already been used')
     check_output('(,2147483647)', ': log level for printing vlog tags already been used')
     check_output('(1,)', ': log level for printing vlog tags already been used')
     check_output('20000', ': log level for printing vlog tags already been used')
 
-    # test_valid VLOG_v value and unexpected some outputs
+    # test valid VLOG_v value and unexpected some outputs
     check_output('(5,3)', ': log level for printing vlog tags already been used', False)
     check_output('(,20)', ': log level for printing vlog tags already been used', False)
     check_output('(20001,)', ': log level for printing vlog tags already been used', False)
     check_output('50', ': log level for printing vlog tags already been used', False)
+
+
+@pytest.mark.level0
+@pytest.mark.env_onecard
+def test_vlog_to_file():
+    """
+    Feature: test mindspore vlog interface
+    Description: check whether mindspore vlog can work properly when log to file
+    Expectation: vlog can work properly
+    """
+    current_dir = os.getcwd()
+    log_path = f'{current_dir}/glogdir/111/222'
+    cmd = f"GLOG_logtostderr=0 GLOG_log_dir={log_path} VLOG_v='(1,)' python -c 'import mindspore as ms'"
+    retcode, _ = subprocess.getstatusoutput(cmd)
+    assert retcode == 0
+
+    log_file = f'{log_path}/rank_0/logs/mindspore.INFO'
+    matched = False
+    if os.path.exists(log_file):
+        with open(log_file, 'r') as f:
+            line = f.readline()
+            while line:
+                if line.find(': log level for printing vlog tags already been used') > 0:
+                    matched = True
+                    break
+                line = f.readline()
+    shutil.rmtree(f'{current_dir}/glogdir')
+    assert matched
