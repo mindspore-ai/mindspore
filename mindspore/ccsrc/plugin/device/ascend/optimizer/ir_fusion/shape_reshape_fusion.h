@@ -18,6 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_PASS_SHAPE_RESHAPE_FUSION_H_
 
 #include <memory>
+#include <string>
 #include "include/backend/optimizer/optimizer.h"
 
 namespace mindspore {
