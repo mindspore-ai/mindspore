@@ -32,8 +32,8 @@ void DoDisconnect(int fd, Connection *conn, uint32_t error, int soError) {
     return;
   }
   if (LOG_CHECK_EVERY_N()) {
-    MS_LOG(INFO) << "Failed to call connect, fd: " << fd << ", to: " << conn->destination.c_str()
-                 << ", events: " << error << ", errno: " << soError;
+    MS_LOG(INFO) << "Failed to call connect, fd: " << fd << "from : " << conn->source << " to: " << conn->destination
+                 << ", events: " << error << ", errno: " << soError << " " << strerror(soError);
   }
 
   conn->state = ConnectionState::kDisconnecting;
@@ -49,11 +49,8 @@ void ConnectedEventHandler(int fd, uint32_t events, void *context) {
   if (conn == nullptr || conn->socket_operation == nullptr) {
     return;
   }
-  conn->socket_operation->ConnEstablishedEventHandler(fd, events, context);
   if (conn->state == ConnectionState::kDisconnecting) {
     DoDisconnect(fd, conn, error, soError);
-    return;
-  } else if (conn->state != ConnectionState::kConnected) {
     return;
   }
 
@@ -64,6 +61,9 @@ void ConnectedEventHandler(int fd, uint32_t events, void *context) {
   if (conn->write_callback) {
     conn->write_callback(conn);
   }
+  MS_LOG(WARNING) << "Connection from " << conn->source << " to " << conn->destination << "is successfully created "
+                  << strerror(errno);
+  conn->socket_operation->ConnEstablishedEventHandler(fd, events, context);
   return;
 }
 
@@ -252,6 +252,16 @@ void TCPComm::EventCallBack(void *connection) {
     conn->conn_mutex->unlock();
   } else if (conn->state == ConnectionState::kDisconnecting) {
     std::lock_guard<std::mutex> lock(*conn_mutex_);
+    auto current_conn = conn_pool_->FindConnection(conn->destination);
+    if (current_conn != nullptr) {
+      if (current_conn->source != conn->source) {
+        MS_LOG(WARNING) << "Current connection created to " << conn->destination << " is from " << current_conn->source
+                        << ", not " << conn->source << ". No need to delete.";
+        return;
+      }
+    }
+    MS_LOG(INFO) << "The connection state is kDisconnecting. Start disconnecting from " << conn->source << " to "
+                 << conn->destination;
     conn_pool_->DeleteConnection(conn->destination);
   }
 }
@@ -466,6 +476,8 @@ bool TCPComm::Connect(const std::string &dst_url, const MemFreeCallback &free_cb
       (void)sleep(interval);
     }
     if (conn->state != ConnectionState::kConnected) {
+      MS_LOG(INFO) << "The connection from: " << conn->source << " to: " << conn->destination << " " << conn
+                   << " is not connected yet.";
       return false;
     }
     conn_pool_->AddConnection(conn);
