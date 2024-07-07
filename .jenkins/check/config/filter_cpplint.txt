@@ -55,6 +55,7 @@
 "mindspore/mindspore/ccsrc/plugin/device/ascend/hal/hardware/lowlatency_communication_group.h"       "build/include_subdir"
 "mindspore/mindspore/ccsrc/plugin/device/ascend/hal/hardware/lowlatency_communication_group.h"       "build/namespaces"
 "mindspore/mindspore/ccsrc/backend/common/mem_reuse/mem_tracker.cc"                                 "whitespace/indent"
+"mindspore/mindspore/ccsrc/runtime/graph_scheduler/actor/data_prepare_actor.cc"                    "runtime/references"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

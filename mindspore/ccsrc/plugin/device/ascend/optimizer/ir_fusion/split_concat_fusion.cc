@@ -16,6 +16,9 @@
 
 #include "plugin/device/ascend/optimizer/ir_fusion/split_concat_fusion.h"
 
+#include <string>
+#include <vector>
+
 #include "mindspore/core/ops/nn_ops.h"
 
 #include "abstract/dshape.h"
@@ -94,10 +97,6 @@ const AnfNodePtr SplitConcatFusion::Process(const FuncGraphPtr &graph, const Anf
                  << " shape:" << shape << " is unexpected.";
     return nullptr;
   }
-  auto cnode = node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto tuple_get_item_node = common::AnfAlgo::GetInputNode(cnode, 0);
-  auto split_node = common::AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_get_item_node), 0);
 
   auto concat_size = shape[1];
 
