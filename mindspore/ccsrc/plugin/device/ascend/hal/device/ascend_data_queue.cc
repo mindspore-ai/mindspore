@@ -255,7 +255,7 @@ AscendTdtQueue::AscendTdtQueue(const std::string &channel_name) : DataQueue(chan
 AscendTdtQueue::~AscendTdtQueue() {
   if (acl_handle_ != nullptr) {
     if (CALL_ASCEND_API(acltdtDestroyChannel, acl_handle_) != ACL_SUCCESS) {
-      MS_LOG(EXCEPTION) << "Failed to destroy channel for tdt queue. The details refer to 'Ascend Error Message'.";
+      MS_LOG(ERROR) << "Failed to destroy channel for tdt queue. The details refer to 'Ascend Error Message'.";
     } else {
       tdt_handle::DelHandle(&acl_handle_);
       acl_handle_ = nullptr;
