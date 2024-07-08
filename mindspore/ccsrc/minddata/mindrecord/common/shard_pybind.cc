@@ -187,6 +187,7 @@ void BindShardWriter(py::module *m) {
                  }
                  vector_blob_data[i] = blob_data_item;
                }
+               return SUCCESS;
              });
            }
 

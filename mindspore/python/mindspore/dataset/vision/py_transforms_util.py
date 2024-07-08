@@ -1569,7 +1569,7 @@ def adjust_gamma(img, gamma, gain):
     if not is_pil(img):
         raise TypeError("img should be PIL image. Got {}.".format(type(img)))
 
-    gamma_table = [(255 + 1 - 1e-3) * gain * pow(x / 255., gamma) for x in range(256)]
+    gamma_table = [int((255 + 1 - 1e-3) * gain * pow(x / 255., gamma)) for x in range(256)]
     if len(img.split()) == 3:
         gamma_table = gamma_table * 3
         img = img.point(gamma_table)
