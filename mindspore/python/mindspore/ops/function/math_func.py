@@ -31,7 +31,7 @@ from mindspore.ops import composite as C
 from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_utils
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.operations._inner_ops import TileSize
-from mindspore.ops.auto_generate import Cummin, BatchMatMul, LinSpaceExt, Norm, BitwiseAndScalar, BitwiseAndTensor,\
+from mindspore.ops.auto_generate import Cummin, BatchMatMul, lin_space_ext_op, Norm, BitwiseAndScalar, BitwiseAndTensor,\
     BitwiseOrScalar, BitwiseOrTensor, BitwiseXorScalar, BitwiseXorTensor
 from mindspore.ops import auto_generate
 from mindspore.ops.operations.math_ops import STFT
@@ -2702,39 +2702,38 @@ def linspace_ext(start, end, steps, *, dtype=None):
         \end{aligned}
 
     Args:
-        start (Union[Tensor, Number]): Start value of interval.
-          If `start` is Tensor, data type must be float32 or float64 and with shape of 0-D.
-        end (Union[Tensor, Number]): Last value of interval.
-          If `end` is Tensor, data type must be float32 or float64 and with shape of 0-D.
-        steps (Union[Tensor, int]): Number of ticks in the interval, inclusive of start and end.
-            Must be positive int number or 0D int32/int64 Tensor.
+        start (Union[float, int]): Start value of interval.
+          It can be a float or int number.
+        end (Union[float, int]): Last value of interval.
+          It can be a float or int number.
+        steps (int): Number of ticks in the interval, inclusive of start and end.
+            Must be positive int number.
 
     Keyword Args:
-        dtype (mindspore.dtype, optional): The output Tensor data type. Default: ``None`` , the data type of output
-            Tensor is float32.
+        dtype (mindspore.dtype, optional): The output Tensor data type. Default: ``None`` ,
+            in which case the data type of output Tensor is float32.
 
     Returns:
-        Tensor, has the shape of :math:`(steps,)`.
+        Tensor, has the shape of :math:`(steps,)`, with dtype specified by `dtype`.
 
     Raises:
-        TypeError: If dtype of `start` or dtype of `end` is not supported.
-        ValueError: If shape of `start` or shape of `end` is not 0-D.
-        TypeError: If `steps` is not int or 0D int32/int64 Tensor.
-        ValueError: If `steps` is not positive int number.
+        TypeError: If type of `start` or dtype of `end` is not supported.
+        ValueError: If `steps` is not positive integer.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend``
 
     Examples:
-        >>> start = Tensor(1, mindspore.float32)
-        >>> end = Tensor(10, mindspore.float32)
+        >>> import mindspore as ms
+        >>> from mindspore import ops
+        >>> start = 1
+        >>> end = 10
         >>> steps = 5
-        >>> output = ops.function.math_func.linspace_ext(start, end, steps, dtype=mindspore.float32)
+        >>> output = ops.function.math_func.linspace_ext(start, end, steps, dtype=ms.float32)
         >>> print(output)
         [ 1.    3.25  5.5   7.75 10.  ]
     """
-    return _get_cache_prim(LinSpaceExt)()(start, end, steps, dtype)
-
+    return lin_space_ext_op(start, end, steps, dtype)
 
 def det(input):
     r"""

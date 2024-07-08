@@ -19,100 +19,70 @@
 #include "ops/ops_func_impl/lin_space_ext.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
 BaseShapePtr LinSpaceExtFuncImpl::InferShape(const PrimitivePtr &primitive,
                                              const std::vector<AbstractBasePtr> &input_args) const {
   auto steps_opt = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue());
-  if (!(CheckAndConvertUtils::IsTensor(input_args[kInputIndex0]) &&
-        CheckAndConvertUtils::IsTensor(input_args[kInputIndex1]))) {
-    if (!MS_LIKELY(steps_opt.has_value())) {
-      ShapeVector infered_shape{abstract::Shape::kShapeDimAny};
-      return std::make_shared<abstract::TensorShape>(infered_shape);
-    } else {
-      int64_t steps = steps_opt.value();
-      MS_CHECK_VALUE(steps > 0,
-                     CheckAndConvertUtils::FormatCheckIntegerMsg("steps", steps, kGreaterThan, 0, primitive));
-      ShapeVector infered_shape{steps};
-      return std::make_shared<abstract::TensorShape>(infered_shape);
-    }
-  }
-
-  const auto &start_shape_ptr = input_args[kInputIndex0]->GetShape();
-  const auto &start_shape = start_shape_ptr->GetShapeVector();
-  const auto &end_shape_ptr = input_args[kInputIndex1]->GetShape();
-  const auto &end_shape = end_shape_ptr->GetShapeVector();
-  const auto &steps_value_ptr = input_args[kInputIndex2]->GetValue();
-  const auto &steps_value = GetScalarValue<int64_t>(steps_value_ptr);
-  if (MS_UNLIKELY(IsDynamic(start_shape) || IsDynamic(end_shape))) {
+  if (MS_UNLIKELY(!steps_opt.has_value())) {
     ShapeVector infered_shape{abstract::Shape::kShapeDimAny};
     return std::make_shared<abstract::TensorShape>(infered_shape);
-  }
-  // 0-D tensor input.
-  if (start_shape.empty() && end_shape.empty()) {
-    // Output is dynamic shape.
-    if (!steps_value.has_value()) {
-      ShapeVector infered_shape{abstract::Shape::kShapeDimAny};
-      return std::make_shared<abstract::TensorShape>(infered_shape);
-    } else {
-      int64_t steps = steps_value.value();
-      MS_CHECK_VALUE(steps > 0,
-                     CheckAndConvertUtils::FormatCheckIntegerMsg("steps", steps, kGreaterThan, 0, primitive));
-      ShapeVector infered_shape{steps};
-      return std::make_shared<abstract::TensorShape>(infered_shape);
-    }
-  }
-  // Support vmap.
-  size_t batch_rank = 0;
-  if (primitive->HasAttr(kBatchRank)) {
-    auto value_ptr = primitive->GetAttr(kBatchRank);
-    batch_rank = LongToSize(GetValue<int64_t>(value_ptr));
-  }
-
-  MS_CHECK_VALUE(
-    start_shape.size() == batch_rank,
-    CheckAndConvertUtils::FormatCheckIntegerMsg("rank of 'start'", start_shape.size(), kEqual, batch_rank, primitive));
-  MS_CHECK_VALUE(end_shape.size() == batch_rank, CheckAndConvertUtils::FormatCheckIntegerMsg(
-                                                   "rank of 'end'", end_shape.size(), kEqual, batch_rank, primitive));
-  MS_CHECK_VALUE(start_shape == end_shape,
-                 CheckAndConvertUtils::FormatCheckMsg("shape of 'start'", start_shape, kEqual, end_shape, primitive));
-
-  ShapeVector out_shape(start_shape.begin(), start_shape.end());
-  if (!steps_value.has_value()) {
-    out_shape.push_back(abstract::Shape::kShapeDimAny);
   } else {
-    int64_t steps = steps_value.value();
+    int64_t steps = steps_opt.value();
     MS_CHECK_VALUE(steps > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("steps", steps, kGreaterThan, 0, primitive));
-    out_shape.push_back(steps);
+    ShapeVector infered_shape{steps};
+    return std::make_shared<abstract::TensorShape>(infered_shape);
   }
-  return std::make_shared<abstract::TensorShape>(out_shape);
 }
 
 TypePtr LinSpaceExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
-  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
-
-  auto start_dtype = input_args[kInputIndex0]->GetType();
-  auto end_dtype = input_args[kInputIndex1]->GetType();
-  if (CheckAndConvertUtils::IsTensor(input_args[kInputIndex0]) ||
-      CheckAndConvertUtils::IsTensor(input_args[kInputIndex1])) {
-    std::map<std::string, TypePtr> type_dict = {
-      {"start type", start_dtype},
-      {"end type", end_dtype},
-    };
-    (void)CheckAndConvertUtils::CheckTensorTypeSame(type_dict, common_valid_types_with_bool, primitive->name());
+  auto prim_name = primitive->name();
+  // check
+  auto dtype_type = input_args[kInputIndex3]->GetType();
+  if (dtype_type->isa<TypeNone>()) {
+    return kFloat32;
   }
-  TypeId type_id;
-  if (input_args[kInputIndex3]->GetType()->isa<TypeNone>()) {
-    type_id = kFloat32->type_id();
-  } else {
-    auto dtype_opt = GetScalarValue<int64_t>(input_args[kInputIndex3]->GetValue());
-    MS_CHECK_VALUE(dtype_opt.has_value(), primitive->name() + " error: dtype input should have valid value.");
-    type_id = static_cast<TypeId>(dtype_opt.value());
+  auto dtype_ptr = input_args[kInputIndex3]->GetValue();
+  if (!dtype_ptr->isa<Int64Imm>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', 'dtype' must be a TypeId, but got an invalid type: " << dtype_ptr->ToString() << ".";
   }
-  return std::make_shared<TensorType>(TypeIdToType(type_id));
+  auto val = GetValue<int64_t>(dtype_ptr);
+  auto type_id = static_cast<TypeId>(val);
+  auto output_type = TypeIdToType(type_id);
+  return std::make_shared<TensorType>(output_type);
 }
+
+TypePtrList LinSpaceExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto prim_name = primitive->name();
+  auto dtype = input_values[kIndex3];
+  if (dtype->isa<None>()) {
+    return {kFloat32};
+  }
+  if (!dtype->isa<Int64Imm>()) {
+    MS_EXCEPTION(TypeError) << "For '" << prim_name
+                            << "', 'dtype' must be a TypeId, but got an invalid type: " << dtype->ToString() << ".";
+  }
+  const auto &dtype_scalar = dtype->cast<Int64ImmPtr>();
+  MS_EXCEPTION_IF_NULL(dtype_scalar);
+  auto type_id = static_cast<TypeId>(dtype_scalar->value());
+  return {TypeIdToType(type_id)};
+}
+ShapeArray LinSpaceExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  auto steps_opt = GetScalarValue<int64_t>(input_values[kInputIndex2]);
+  if (MS_UNLIKELY(!steps_opt.has_value())) {
+    ShapeVector infered_shape{abstract::Shape::kShapeDimAny};
+    return {infered_shape};
+  } else {
+    int64_t steps = steps_opt.value();
+    MS_CHECK_VALUE(steps > 0, CheckAndConvertUtils::FormatCheckIntegerMsg("steps", steps, kGreaterThan, 0, primitive));
+    ShapeVector infered_shape{steps};
+    return {infered_shape};
+  }
+}
+REGISTER_SIMPLE_INFER(kNameLinSpaceExt, LinSpaceExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

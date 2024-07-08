@@ -17,27 +17,24 @@
 #include "ops/test_ops.h"
 #include "ops/ops_func_impl/lin_space_ext.h"
 #include "ops/test_value_utils.h"
+#include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
 struct LinSpaceExtParams {
-  ShapeVector start_shape;
-  TypePtr start_type;
-  ShapeVector end_shape;
-  TypePtr end_type;
+  ValuePtr start;
+  ValuePtr end;
   ValuePtr steps;
+  ValuePtr dtype;
   ShapeVector output_shape;
   TypePtr output_type;
-  ValuePtr dtype;
 };
 
-
 class TestLinSpaceExt : public TestOps, public testing::WithParamInterface<LinSpaceExtParams> {};
-
 TEST_P(TestLinSpaceExt, dyn_shape) {
   const auto &param = GetParam();
-  auto start = std::make_shared<abstract::AbstractTensor>(param.start_type, param.start_shape);
-  auto end = std::make_shared<abstract::AbstractTensor>(param.end_type, param.end_shape);
+  auto start = param.start->ToAbstract();
+  auto end = param.end->ToAbstract();
   auto steps = param.steps->ToAbstract();
   auto dtype = param.dtype->ToAbstract();
   auto expect = std::make_shared<abstract::AbstractTensor>(param.output_type, param.output_shape);
@@ -51,9 +48,65 @@ TEST_P(TestLinSpaceExt, dyn_shape) {
   ASSERT_TRUE(*out_shape == *expect->GetShape());
 }
 
-INSTANTIATE_TEST_CASE_P(
-  TestLinSpaceExt, TestLinSpaceExt,
-  testing::Values(LinSpaceExtParams{{}, kFloat64, {}, kFloat64, CreateScalar<int64_t>(3), {3}, kFloat32, CreatePyInt(kNumberTypeFloat32)},
-                  LinSpaceExtParams{{}, kFloat64, {}, kFloat64, CreateScalar(kValueAny), {-1}, kFloat64, CreatePyInt(kNumberTypeFloat64)}));
+INSTANTIATE_TEST_CASE_P(TestLinSpaceExt, TestLinSpaceExt,
+                        testing::Values(LinSpaceExtParams{CreateScalar<int64_t>(3),
+                                                          CreateScalar<int64_t>(10),
+                                                          CreateScalar<int64_t>(3),
+                                                          CreatePyInt(kNumberTypeFloat32),
+                                                          {3},
+                                                          kFloat32},
+                                        LinSpaceExtParams{CreateScalar<double>(-31.414),
+                                                          CreateScalar<double>(3413.54598),
+                                                          CreateScalar<int64_t>(123),
+                                                          CreatePyInt(kNumberTypeFloat32),
+                                                          {123},
+                                                          kFloat32},
+                                        LinSpaceExtParams{CreateScalar<float>(3.0123),
+                                                          CreateScalar<float>(-10.011),
+                                                          CreateScalar(kValueAny),
+                                                          CreatePyInt(kNumberTypeFloat64),
+                                                          {-1},
+                                                          kFloat64}));
+
+class TestLinSpaceExtSimpleInfer : public TestOps, public testing::WithParamInterface<LinSpaceExtParams> {};
+TEST_P(TestLinSpaceExtSimpleInfer, simple_infer) {
+  const auto &param = GetParam();
+  LinSpaceExtFuncImpl lin_space_ext_func_impl;
+  auto prim = std::make_shared<Primitive>("LinSpaceExt");
+  ASSERT_NE(prim, nullptr);
+  ValuePtrList input_values;
+  input_values.push_back(std::move(param.start));
+  input_values.push_back(std::move(param.end));
+  input_values.push_back(std::move(param.steps));
+  input_values.push_back(std::move(param.dtype));
+
+  auto expect_shape = ShapeArray{param.output_shape};
+  auto expect_type = TypePtrList{param.output_type};
+
+  auto output_shape = lin_space_ext_func_impl.InferShape(prim, input_values);
+  auto output_type = lin_space_ext_func_impl.InferType(prim, input_values);
+
+  ShapeCompare(output_shape, expect_shape);
+  TypeCompare(output_type, expect_type);
+}
+INSTANTIATE_TEST_CASE_P(TestLinSpaceExtSimpleInfer, TestLinSpaceExtSimpleInfer,
+                        testing::Values(LinSpaceExtParams{CreateScalar<int64_t>(3),
+                                                          CreateScalar<int64_t>(10),
+                                                          CreateScalar<int64_t>(3),
+                                                          CreatePyInt(kNumberTypeFloat32),
+                                                          {3},
+                                                          kFloat32},
+                                        LinSpaceExtParams{CreateScalar<double>(-31.414),
+                                                          CreateScalar<double>(3413.54598),
+                                                          CreateScalar<int64_t>(123),
+                                                          CreatePyInt(kNumberTypeFloat32),
+                                                          {123},
+                                                          kFloat32},
+                                        LinSpaceExtParams{CreateScalar<float>(3.0123),
+                                                          CreateScalar<float>(-10.011),
+                                                          CreateScalar(kValueAny),
+                                                          CreatePyInt(kNumberTypeFloat64),
+                                                          {-1},
+                                                          kFloat64}));
 }  // namespace ops
 }  // namespace mindspore

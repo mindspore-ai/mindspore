@@ -15,7 +15,7 @@
 import pytest
 
 import mindspore.common.dtype as mstype
-from mindspore import Tensor, context, Symbol
+from mindspore import context
 from mindspore.nn import Cell
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate.gen_ops_prim import LinSpaceExt
@@ -47,31 +47,13 @@ def test_lin_space_ext_data_parallel():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    start = Tensor(1, mstype.float32)
-    end = Tensor(10, mstype.float32)
+    start = 1
+    end = 10
     x = 8
     net = Net()
     phase = compile_net(net, start, end, x, mstype.float32)
     validator = ParallelValidator(net, phase)
     assert validator.check_node_inputs('LinSpaceExt-0', ['ScalarAdd-0', 'ScalarAdd-1', 1, 43])
-
-
-def test_lin_space_ext_data_parallel_steps_dynamic_shape():
-    """
-    Feature: test LinSpaceExt parallel with dynamic shape
-    Description: strategy > 1
-    Expectation: compile success
-    """
-    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    s = Symbol(divisor=8)
-    start = Tensor(1, dtype=mstype.float32)
-    end = Tensor(10, mstype.float32)
-    x = Tensor(shape=[s], dtype=mstype.int64)
-    net = Net()
-    phase = compile_net(net, start, end, x, mstype.float32)
-    validator = ParallelValidator(net, phase)
-    assert validator.check_node_inputs('LinSpaceExt-0',
-                                       ['TensorToScalar-0', 'TensorToScalar-1', 'TensorToScalar-2', 43])
 
 
 def test_lin_space_ext_parallel_all_constant_input():
@@ -98,8 +80,8 @@ def test_lin_space_ext_parallel_with_repeated_cal():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    start = Tensor(1, mstype.float32)
-    end = Tensor(10, mstype.float32)
+    start = 1
+    end = 10
     x = 8
     strategy = ((4,),)
     net = Net(strategy)
@@ -115,8 +97,8 @@ def test_lin_space_ext_parallel_with_x_2():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    start = Tensor(1, mstype.float32)
-    end = Tensor(10, mstype.float32)
+    start = 1
+    end = 10
     x = 2
     strategy = ((2,),)
     net = Net(strategy)
@@ -132,8 +114,8 @@ def test_lin_space_ext_parallel_with_x_2_no_dtype_input():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    start = Tensor(1, mstype.float32)
-    end = Tensor(10, mstype.float32)
+    start = 1
+    end = 10
     x = 2
     strategy = ((2,),)
     net = Net(strategy)
@@ -149,8 +131,8 @@ def test_lin_space_ext_parallel_strategy_wrong():
     Expectation: compile failed
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    start = Tensor(1, mstype.float32)
-    end = Tensor(10, mstype.float32)
+    start = 1
+    end = 10
     x = 6
     strategy = ((4,),)
     net = Net(strategy)
@@ -165,9 +147,8 @@ def test_lin_space_ext_dynamic_shape():
     Expectation: compile success
     """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
-    s = Symbol(divisor=8)
-    start = Tensor(shape=[s], dtype=mstype.float32)
-    end = Tensor(10, mstype.float32)
+    start = 8
+    end = 10
     x = 8
     strategy = ((4,),)
     net = Net(strategy)
