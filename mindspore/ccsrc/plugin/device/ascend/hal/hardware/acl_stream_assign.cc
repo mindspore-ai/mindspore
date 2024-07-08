@@ -66,7 +66,8 @@ void SetForSwitchInline(const NotNull<KernelGraphPtr> &kernel_graph, const CNode
 
 void AddStreamIdForCommunicationOp(const AnfNodePtr &node, bool is_pp_interleave) {
   MS_EXCEPTION_IF_NULL(node);
-  if (!is_pp_interleave) {
+  static const auto enable_less_mem_vpp = common::GetEnv("ENABLE_LESS_MEM_VPP");
+  if (!is_pp_interleave || enable_less_mem_vpp != "1") {
     AnfAlgo::SetStreamId(kWorldGroupStreamIndex, node.get());
     common::AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(kWorldGroupStreamIndex), node);
   } else {
@@ -507,7 +508,8 @@ void AclStreamAssign::InsertEventsForSendOp(const NotNull<KernelGraphPtr> &kerne
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto is_pp_interleave = parallel_context->pipeline_interleave();
   auto pp_scheduler = parallel_context->pipeline_scheduler();
-  if (!is_pp_interleave || pp_scheduler != parallel::kPipeline1F1B) {
+  static const auto enable_less_mem_vpp = common::GetEnv("ENABLE_LESS_MEM_VPP");
+  if (!is_pp_interleave || pp_scheduler != parallel::kPipeline1F1B || enable_less_mem_vpp != "1") {
     return;
   }
   if (!IsPrimitiveCNode(kernel, std::make_shared<Primitive>(kSendOpName))) {
@@ -555,7 +557,8 @@ static std::tuple<std::vector<CNodePtr>, int64_t, int64_t> GetAllRecvs(const std
   MS_EXCEPTION_IF_NULL(parallel_context);
   auto is_pp_interleave = parallel_context->pipeline_interleave();
   auto pp_scheduler = parallel_context->pipeline_scheduler();
-  if (!is_pp_interleave || pp_scheduler != parallel::kPipeline1F1B) {
+  static const auto enable_less_mem_vpp = common::GetEnv("ENABLE_LESS_MEM_VPP");
+  if (!is_pp_interleave || pp_scheduler != parallel::kPipeline1F1B || enable_less_mem_vpp != "1") {
     return std::make_tuple(recv_ops, chunk_num, micro_size);
   }
   for (const auto &process_kernel : exec_kernels) {

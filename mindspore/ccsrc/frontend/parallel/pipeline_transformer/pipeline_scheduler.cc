@@ -506,8 +506,11 @@ void InterleavedScheduler::MemoryOptimizedWarmUpPhaseReorder() {
       auto last1 = sorted_fwd_begin[i + 1].first;
       ControlOrder(prior1, last1);
       auto prior2 = sorted_fwd_begin[i + 1].second;
+      if (last.border == prior2.border) {
+        continue;
+      }
       auto last2 = sorted_fwd_end[i - LongToSize(offset)].first;
-      ControlOrder(prior1, last1);
+      ControlOrder(prior2, last2);
     }
   }
 }
@@ -649,7 +652,8 @@ static bool EnableKbk() {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   auto jit_level = context->get_param<std::string>(MS_CTX_JIT_LEVEL);
-  return (jit_level == "O0" || jit_level == "O1");
+  MS_LOG(WARNING) << "Enable less mem vpp status:" << common::GetEnv("ENABLE_LESS_MEM_VPP");
+  return (jit_level == "O0" || jit_level == "O1") && common::GetEnv("ENABLE_LESS_MEM_VPP") == "1";
 }
 
 void InterleavedScheduler::StablePhaseReorder() {
