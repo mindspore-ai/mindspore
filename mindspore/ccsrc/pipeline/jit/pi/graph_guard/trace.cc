@@ -2095,8 +2095,8 @@ void OpTrace::JudgeDTypeChangePass() {
   }
   for (size_t i = 0; i < kParamCountTwo; ++i) {
     OpTracePtr trace = CastOpTrace(GetParam(i), CALL_FUNCTION);
-    ConstTracePtr const_op = CastConstTrace(trace->GetParam(kParamIndexOne));
-    PyObject *const_param = const_op->GetObject();
+    ConstTracePtr const_op = trace ? CastConstTrace(trace->GetParam(kParamIndexOne)) : nullptr;
+    PyObject *const_param = const_op ? const_op->GetObject() : nullptr;
     if (trace != nullptr && const_op != nullptr && const_param != nullptr &&
         py::isinstance<mindspore::PrimitivePyAdapter>(const_param) &&
         py::cast<mindspore::PrimitivePyAdapterPtr>(const_param)->name() == kDTypePrimName) {

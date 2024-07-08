@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -365,7 +365,7 @@ GeTensorPtr TransformUtil::ConvertTensor(const MeTensorPtr &tensor, const std::s
       return nullptr;
     }
   }
-  MS_LOG(INFO) << "Convert Me Tensor to Ge Tensor success!";
+  MS_LOG(DEBUG) << "Convert Me Tensor to Ge Tensor success!";
   return tensor_ptr;
 }
 

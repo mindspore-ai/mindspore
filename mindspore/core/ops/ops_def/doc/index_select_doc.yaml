@@ -36,7 +36,7 @@ index_select:
             [[ 8.  9. 10. 11.]
             [12. 13. 14. 15.]]]
             >>> index = Tensor([0,], mindspore.int32)
-            >>> y = ops.index_select_ext(input, 1, index)
+            >>> y = ops.auto_generate.index_select_ext(input, 1, index)
             >>> print(y)
             [[[ 0.  1.  2.  3.]]
             [[ 8.  9. 10. 11.]]]

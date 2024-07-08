@@ -21,7 +21,7 @@ import numpy as np
 
 import mindspore.dataset as ds
 from mindspore import log as logger
-from util_minddataset import add_and_remove_cv_file, add_and_remove_file # pylint: disable=unused-import
+from util_minddataset import add_and_remove_cv_file, add_and_remove_file  # pylint: disable=unused-import
 
 
 # pylint: disable=redefined-outer-name
@@ -40,6 +40,7 @@ def test_minddtaset_generatordataset_01(add_and_remove_cv_file):
 
     class MyIterable:
         """ custom iteration """
+
         def __init__(self, dataset, dataset_size):
             self._iter = None
             self._index = 0
@@ -91,6 +92,7 @@ def test_minddtaset_generatordataset_exception_01(add_and_remove_cv_file):
 
     class MyIterable:
         """ custom iteration """
+
         def __init__(self, dataset, dataset_size):
             self._iter = None
             self._index = 0
@@ -140,8 +142,10 @@ def test_minddtaset_generatordataset_exception_02(add_and_remove_file):
 
     file_paths = [file_name + "_cv" + str(i) for i in range(4)]
     file_paths += [file_name + "_nlp" + str(i) for i in range(4)]
+
     class MyIterable:
         """ custom iteration """
+
         def __init__(self, file_paths):
             self._iter = None
             self._index = 0
@@ -190,7 +194,6 @@ def test_minddtaset_generatordataset_exception_02(add_and_remove_file):
     assert 'Invalid data, column name:' in str(error_info.value)
 
 
-@pytest.mark.skip(reason="random failures")
 def test_two_level_pipeline_with_multiprocessing():
     """
     Feature: Test basic two level pipeline with multiprocessing testcases.
@@ -202,7 +205,10 @@ def test_two_level_pipeline_with_multiprocessing():
     class DatasetGenerator:
         def __init__(self):
             data1 = ds.ImageFolderDataset(file_name)
-            data1 = data1.map(DatasetGenerator.pyfunc, input_columns=["image"], python_multiprocessing=True)
+            data1 = data1.map(DatasetGenerator.pyfunc,
+                              input_columns=["image"],
+                              num_parallel_workers=2,
+                              python_multiprocessing=True)
             self.iter = data1.create_tuple_iterator(output_numpy=True)
 
         def __getitem__(self, item):

@@ -1319,7 +1319,7 @@ static int FindWithBlockEnd(int start_bci, const CFG *cfg) {
   size_t tar = (size_t)list[start_bci]->extra_jump()->bci();
   bool validate = tar + 1 < list.size() && list[tar]->op() == WITH_EXCEPT_START && list[tar + 1]->extra_jump();
   MS_EXCEPTION_IF_CHECK_FAIL(validate, "can't find with block");
-  return list[tar - 1]->extra_jump()->bci() - 1;
+  return list[tar - 1]->extra_jump() ? list[tar - 1]->extra_jump()->bci() - 1 : list.back()->bci();
 }
 
 // finally block has two copies in bytecodes, only test for Python3.9

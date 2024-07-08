@@ -17,7 +17,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor
 from mindspore import ops
-from mindspore import mint
+from mindspore.ops.function.array_func import repeat_interleave_ext as repeat_interleave
 from mindspore import jit, JitConfig
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
@@ -45,7 +45,7 @@ def generate_expect_backward_output(input_tensor, repeats, dim):
 
 @test_utils.run_with_cell
 def repeat_interleave_forward(input_tensor, repeats, dim, output_size=None):
-    return mint.repeat_interleave(input_tensor, repeats, dim, output_size)
+    return repeat_interleave(input_tensor, repeats, dim, output_size)
 
 @test_utils.run_with_cell
 def repeat_interleave_backward(input_tensor, repeats, dim, output_size=None):

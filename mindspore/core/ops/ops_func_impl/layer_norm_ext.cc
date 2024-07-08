@@ -111,13 +111,36 @@ TypePtrList LayerNormExtFuncImpl::InferType(const PrimitivePtr &primitive, const
 ShapeArray LayerNormExtFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
   const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   const auto &gamma_tensor = input_values[kInputIndex2]->cast<tensor::BaseTensorPtr>();
+  const auto &beta_tensor = input_values[kInputIndex3]->cast<tensor::BaseTensorPtr>();
+  const auto &normalized_shape_opt = GetArrayValue<int64_t>(input_values[kInputIndex1]);
+  if (!normalized_shape_opt.has_value() || normalized_shape_opt.value().HasUnknownValue()) {
+    ShapeVector dynamic_rank_shape{abstract::TensorShape::kShapeRankAny};
+    return {dynamic_rank_shape, dynamic_rank_shape, dynamic_rank_shape};
+  }
+
   MS_EXCEPTION_IF_NULL(x_tensor);
   const auto &x_shape = x_tensor->shape();
   const auto &gamma_shape = gamma_tensor->shape();
+  const auto &beta_shape = beta_tensor->shape();
+
+  if (normalized_shape_opt.value().ToVector() != gamma_shape && !IsDynamicShape(gamma_shape)) {
+    MS_LOG(EXCEPTION) << "For 'LayerNorm', the shape of gamma and beta must be equal to normalized_shape,"
+                      << " but got gamma shape: " << gamma_shape << ", beta shape: " << beta_shape
+                      << " ,normalized_shape: " << normalized_shape_opt.value().ToVector() << ".";
+  }
 
   const auto norm_dim = gamma_shape.size();
   const auto input_dim = x_shape.size();
   const auto begin_axis = input_dim - norm_dim;
+
+  for (size_t i = begin_axis; i < input_dim; ++i) {
+    size_t gamma_beta_shape_dim = i - begin_axis;
+    MS_CHECK_VALUE(x_shape[i] <= 0 || ((gamma_shape[gamma_beta_shape_dim] == x_shape[i]) &&
+                                       (beta_shape[gamma_beta_shape_dim] == x_shape[i])),
+                   CheckAndConvertUtils::FormatCommMsg(
+                     "For 'LayerNorm', gamma or beta shape must match input shape, but got input shape: ", x_shape,
+                     ", gamma shape: ", gamma_shape, ", beta shape: ", beta_shape, "."));
+  }
 
   ShapeVector mean_shape;
   for (size_t i = 0; i < begin_axis; ++i) {
@@ -128,7 +151,6 @@ ShapeArray LayerNormExtFuncImpl::InferShape(const PrimitivePtr &primitive, const
   }
   ShapeVector mean_out_shape = mean_shape;
   ShapeVector rstd_out_shape = mean_shape;
-
   return {x_shape, mean_out_shape, rstd_out_shape};
 }
 

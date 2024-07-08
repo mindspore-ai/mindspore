@@ -708,6 +708,15 @@ void RegMetaTensor(const py::module *m) {
   // dtype should define before Tensor, because Tensor init depend dtype
   (void)py::class_<BaseTensor, MetaTensor, std::shared_ptr<BaseTensor>>(*m, "BaseTensor");
   (void)py::class_<Tensor, BaseTensor, std::shared_ptr<Tensor>>(*m, "Tensor")
+    .def(py::init([](const Tensor &tensor) { return std::make_shared<Tensor>(tensor); }), py::arg("input"))
+    .def(py::init([](const Tensor &tensor, const TypePtr &type_ptr) {
+           TypeId data_type = type_ptr ? type_ptr->type_id() : kTypeUnknown;
+           if (data_type == kTypeUnknown || tensor.data_type() == data_type) {
+             return std::make_shared<Tensor>(tensor);
+           }
+           return std::make_shared<Tensor>(tensor, data_type);
+         }),
+         py::arg("input"), py::arg("dtype"))
     .def(py::init([](const BaseTensor &tensor) { return std::make_shared<Tensor>(tensor); }), py::arg("input"))
     .def(py::init([](const BaseTensor &tensor, const TypePtr &type_ptr) {
            TypeId data_type = type_ptr ? type_ptr->type_id() : kTypeUnknown;
@@ -1024,18 +1033,19 @@ void RegMetaTensor(const py::module *m) {
     .def("__repr__", &Tensor::ToStringRepr)
     .def("_offload", &TensorPy::Offload)
     .def("set_device_address", &TensorPy::SetDeviceAddress, py::arg("addr"), py::arg("shape"), py::arg("dtype"))
-    .def(py::pickle(
-      [](const Tensor &t) {  // __getstate__
-        /* Return a tuple that fully encodes the state of the object */
-        return py::make_tuple(TensorPy::SyncAsNumpy(t));
-      },
-      [](const py::tuple &t) {  // __setstate__
-        if (t.size() != 1) {
-          throw std::runtime_error("Invalid state!");
-        }
-        /* Create a new C++ instance */
-        return TensorPy::MakeTensor(t[0].cast<py::array>());
-      }));
+    .def(
+      py::pickle(
+        [](const Tensor &t) {  // __getstate__
+          /* Return a tuple that fully encodes the state of the object */
+          return py::make_tuple(TensorPy::SyncAsNumpy(t));
+        },
+        [](const py::tuple &t) {  // __setstate__
+          if (t.size() != 1) {
+            throw std::runtime_error("Invalid state!");
+          }
+          /* Create a new C++ instance */
+          return TensorPy::MakeTensor(t[0].cast<py::array>());
+        }));
 }
 
 template <typename T>

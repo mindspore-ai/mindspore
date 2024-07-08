@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADAM_WEIGHT_DECAY_EXT_H_
-#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADAM_WEIGHT_DECAY_EXT_H_
+#ifndef MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADAMW_H_
+#define MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADAMW_H_
 
 #include <memory>
 #include <vector>
@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr, tensor::BaseTensorPtr> AdamWeightDecayExtAscendCustomize(
+std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr, tensor::BaseTensorPtr> AdamWAscendCustomize(
   const std::shared_ptr<OpRunner> &op, const BaseTensorPtr &var, const BaseTensorPtr &m, const BaseTensorPtr &v,
   const BaseTensorPtr &max_v, const BaseTensorPtr &grad, const BaseTensorPtr &step, const FP32ImmPtr &lr,
   const FP32ImmPtr &beta1, const FP32ImmPtr &beta2, const FP32ImmPtr &decay, const FP32ImmPtr &epsilon,
@@ -35,4 +35,4 @@ std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr, tensor::BaseTensorPtr> 
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADAM_WEIGHT_DECAY_EXT_H_
+#endif  // MINDSPORE_MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_KERNEL_PYBOOST_CUSTOMIZE_ADAMW_H_

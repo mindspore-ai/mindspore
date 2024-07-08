@@ -104,15 +104,41 @@ TypePtr GroupNormFuncImpl::InferType(const PrimitivePtr &primitive,
 }
 
 TypePtrList GroupNormFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &prim_name = primitive->name();
   const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &weight_tensor = input_values[kInputIndex2]->cast<tensor::BaseTensorPtr>();
+  const auto &bias_tensor = input_values[kInputIndex3]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
-  return {x_tensor->Dtype(), x_tensor->Dtype(), x_tensor->Dtype()};
+  MS_EXCEPTION_IF_NULL(weight_tensor);
+  MS_EXCEPTION_IF_NULL(bias_tensor);
+
+  const auto &x_type = x_tensor->Dtype();
+  const auto &weight_type = weight_tensor->Dtype();
+  const auto &bias_type = bias_tensor->Dtype();
+  TypePtrList input_types{x_type, weight_type, bias_type};
+  const std::set<TypePtr> types_cnt(input_types.begin(), input_types.end());
+  auto is_valid = std::all_of(input_types.begin(), input_types.end(), [](const TypePtr &type) {
+    return (type == kFloat16 || type == kFloat32 || type == kBFloat16);
+  });
+  if (!is_valid || types_cnt.size() != 1) {
+    MS_EXCEPTION(TypeError) << "For " << prim_name
+                            << ". input arguments' types must be the same and be one of [BFloat16, Float16, Float32]. "
+                            << "But got input's type: " << x_type << ", weight's type: " << weight_type
+                            << ", bias's type: " << bias_type << ".";
+  }
+  return {x_type, x_type, x_type};
 }
 
 ShapeArray GroupNormFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
   const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  const auto &weight_tensor = input_values[kInputIndex2]->cast<tensor::BaseTensorPtr>();
+  const auto &bias_tensor = input_values[kInputIndex3]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
+  MS_EXCEPTION_IF_NULL(weight_tensor);
+  MS_EXCEPTION_IF_NULL(bias_tensor);
   const auto &x_shape = x_tensor->shape();
+  const auto &weight_shape = weight_tensor->shape();
+  const auto &bias_shape = bias_tensor->shape();
   const auto &num_groups_value = input_values[kInputIndex1];
   if (MS_UNLIKELY(IsDynamicRank(x_shape))) {
     return {x_shape, x_shape, x_shape};
@@ -122,9 +148,33 @@ ShapeArray GroupNormFuncImpl::InferShape(const PrimitivePtr &primitive, const Va
     ShapeVector dynamic_rank_shape{abstract::TensorShape::kShapeRankAny};
     return {dynamic_rank_shape, dynamic_rank_shape, dynamic_rank_shape};
   }
+  const auto x_rank = x_shape.size();
+  if (x_rank < kNumberTwo || x_rank > kNumberEight) {
+    MS_LOG(EXCEPTION) << "For '" << primitive->name()
+                      << "', The dim of input must be between 2 and 8. But got: " << x_rank << ".";
+  }
+  if (weight_shape.size() == 0 || bias_shape.size() == 0) {
+    MS_EXCEPTION(TypeError) << "For " << primitive->name()
+                            << ", the weight and bias must be a tensor, but got a number.";
+  }
+  if (weight_shape.size() != 1 || bias_shape.size() != 1 || weight_shape != bias_shape) {
+    MS_EXCEPTION(ValueError) << "For " << primitive->name() << ". "
+                             << "Weight and bias must have the same shape and the rank of weight and bias must be 1. "
+                             << "But got weight's shape: " << weight_shape << ", bias's shape: " << bias_shape;
+  }
+  int64_t num_groups = num_groups_opt.value();
   auto N = x_shape[0];
+  const int64_t channel = x_shape[1];
+  if (!IsDynamic(x_shape) && (channel % num_groups != 0)) {
+    MS_EXCEPTION(ValueError) << "For " << primitive->name() << ", the 'num_channels' must be divided by 'num_groups', "
+                             << "but got 'num_channels': " << channel << " ,'num_groups': " << num_groups;
+  }
+  if (!IsDynamic(x_shape) && !IsDynamic(weight_shape) && MS_UNLIKELY(weight_shape[kInputIndex0] != channel)) {
+    MS_EXCEPTION(ValueError) << "For " << primitive->name()
+                             << ", shape of weight and bias should be equal to input_x's channel dimension: " << channel
+                             << ", bug got shape: " << weight_shape << ".";
+  }
   ShapeVector out_shape{N, num_groups_opt.value()};
-
   return {x_shape, out_shape, out_shape};
 }
 

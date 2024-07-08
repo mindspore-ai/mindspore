@@ -63,6 +63,6 @@ im2col_ext:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> x = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float32)
-            >>> output = ops.unfold_ext(x, kernel_size=3, dilation=1, stride=1)
+            >>> output = ops.auto_generate.unfold_ext(x, kernel_size=3, dilation=1, stride=1)
             >>> print(output.shape)
             (4, 36, 900)

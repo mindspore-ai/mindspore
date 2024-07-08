@@ -14,6 +14,7 @@
 # ============================================================================
 """mint module."""
 from __future__ import absolute_import
+import mindspore.ops as ops
 from mindspore.ops.extend import gather, conv2d, max, min
 from mindspore.ops.extend import array_func, math_func, nn_func
 from mindspore.mint.nn.functional import *
@@ -42,8 +43,7 @@ from mindspore.ops.auto_generate import cumsum_ext as cumsum
 from mindspore.ops.auto_generate import stack_ext as stack
 
 # 7
-from mindspore.ops.auto_generate import ones as ones_ext
-from mindspore.ops.auto_generate import zeros as zeros_ext
+
 # 8
 
 # 9
@@ -53,7 +53,7 @@ from mindspore.ops.function.math_func import ne
 # 11
 
 # 12
-from mindspore.ops.function.array_func import repeat_interleave_ext as repeat_interleave
+
 # 13
 from mindspore.ops.functional import flip
 # 14
@@ -64,13 +64,13 @@ from mindspore.ops.auto_generate import flatten_ext as flatten
 from mindspore.ops.functional import matmul
 from mindspore.ops.auto_generate import bmm_ext as bmm
 # 17
-from mindspore.ops.functional import mean_ext
+
 # 18
 from mindspore.ops.functional import sum
 # 19
 from mindspore.ops.functional import log
 # 20
-from mindspore.ops.auto_generate import prod_ext
+
 # 21
 from mindspore.ops.functional import mul
 # 22
@@ -88,15 +88,15 @@ from mindspore.ops.functional import reciprocal
 # 28
 from mindspore.ops.functional import exp
 # 29
-from mindspore.ops.auto_generate import sqrt as sqrt_ext
+
 # 30
 from mindspore.ops.functional import searchsorted
 # 31
 
 # 32
-from mindspore.ops.auto_generate import sub_ext
+
 # 33
-from mindspore.ops.function.array_func import split_ext
+
 # 34
 
 # 35
@@ -110,15 +110,12 @@ from mindspore.ops.function.array_func import nonzero
 # 39
 
 # 40
-from mindspore.ops.functional import any as any_ext
 
 # 41
-from mindspore.ops.auto_generate import add_ext
 
 # 42
-from mindspore.ops.functional import argmax_ext as argmax
+from mindspore.ops.function.math_func import argmax_ext as argmax
 # 43
-from mindspore.ops.auto_generate import cat as cat_ext
 
 # 44
 from mindspore.ops.functional import cos
@@ -135,13 +132,13 @@ from mindspore.ops.functional import cos
 # 50
 from mindspore.ops.functional import tile
 # 51
-from mindspore.ops.functional import permute as permute_ext
+
 # 52
 
 # 53
 
 # 54
-from mindspore.ops import normal_ext as normal
+from mindspore.ops.function.random_func import normal_ext as normal
 # 55
 
 # 56
@@ -153,7 +150,6 @@ from mindspore.ops.function.math_func import greater_equal
 # 59
 from mindspore.ops.functional import square
 # 60
-from mindspore.ops.function.math_func import all as all_ext
 
 # 61
 from mindspore.ops.functional import rsqrt
@@ -196,7 +192,7 @@ from mindspore.ops.function import arange_ext as arange
 # 80
 
 # 81
-from mindspore.ops.function.array_func import index_select_ext as index_select
+from mindspore.ops.auto_generate import index_select_ext as index_select
 # 82
 
 # 83
@@ -244,8 +240,8 @@ from mindspore.ops.function.math_func import arctan2_ext as arctan2
 
 # 208
 from mindspore.ops.function.array_func import eye
-from mindspore.ops import rand_ext as rand
-from mindspore.ops import rand_like_ext as rand_like
+from mindspore.ops.function.random_func import rand_ext as rand
+from mindspore.ops.function.random_func import rand_like_ext as rand_like
 # 210
 from mindspore.ops.auto_generate import floor
 # 231
@@ -302,7 +298,7 @@ def add(input, other, *, alpha=1):
         >>> x = Tensor(1, mindspore.int32)
         >>> y = Tensor(np.array([4, 5, 6]).astype(np.float32))
         >>> alpha = 0.5
-        >>> output = mint.add(x, y, alpha)
+        >>> output = mint.add(x, y, alpha=alpha)
         >>> print(output)
         [3. 3.5 4.]
         >>> # the data type of x is int32, the data type of y is float32,
@@ -310,7 +306,7 @@ def add(input, other, *, alpha=1):
         >>> print(output.dtype)
         Float32
     """
-    return add_ext(input, other, alpha)
+    return ops.auto_generate.add_ext(input, other, alpha)
 
 
 def any(input, dim=None, keepdim=False):
@@ -370,7 +366,7 @@ def any(input, dim=None, keepdim=False):
         >>> print(output)
         [ True True]
     """
-    return any_ext(input, dim, keepdim)
+    return ops.functional.any(input, dim, keepdim)
 
 
 def all(input, dim=None, keepdim=False):
@@ -430,7 +426,7 @@ def all(input, dim=None, keepdim=False):
         >>> print(output)
         [False True]
     """
-    return all_ext(input, dim, keepdim)
+    return ops.function.math_func.all(input, dim, keepdim)
 
 
 
@@ -488,7 +484,7 @@ def cat(tensors, dim=0):
         [[0. 1. 0. 1.]
          [2. 1. 2. 1.]]
     """
-    return cat_ext(tensors, dim)
+    return ops.auto_generate.cat(tensors, dim)
 
 
 def mean(input, dim=None, keepdim=False, *, dtype=None):
@@ -577,7 +573,7 @@ def mean(input, dim=None, keepdim=False, *, dtype=None):
           [ 8.]
           [10.]]]
     """
-    return mean_ext(input, axis=dim, keep_dims=keepdim, dtype=dtype)
+    return ops.function.math_func.mean_ext(input, axis=dim, keep_dims=keepdim, dtype=dtype)
 
 
 def prod(input, dim=None, keepdim=False, *, dtype=None):
@@ -657,7 +653,7 @@ def prod(input, dim=None, keepdim=False, *, dtype=None):
           [2.62144e+05]
           [5.31441e+05]]]
     """
-    return prod_ext(input, axis=dim, keep_dims=keepdim, dtype=dtype)
+    return ops.auto_generate.prod_ext(input, axis=dim, keep_dims=keepdim, dtype=dtype)
 
 
 def ones(size, *, dtype=None):
@@ -693,7 +689,7 @@ def ones(size, *, dtype=None):
         [[1. 1.]
          [1. 1.]]
     """
-    return ones_ext(size, dtype)
+    return ops.auto_generate.ones(size, dtype)
 
 
 def permute(input, dims):
@@ -729,7 +725,7 @@ def permute(input, dims):
           [ 8. 11.]
           [ 9. 12.]]]
     """
-    return permute_ext(input, dims)
+    return ops.functional.permute(input, dims)
 
 
 def split(tensor, split_size_or_sections, dim=0):
@@ -770,7 +766,7 @@ def split(tensor, split_size_or_sections, dim=0):
          Tensor(shape=[3], dtype=Float32, value= [ 3.00000000e+00,  4.00000000e+00,  5.00000000e+00]),
          Tensor(shape=[3], dtype=Float32, value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
     """
-    return split_ext(tensor, split_size_or_sections, dim)
+    return ops.function.array_func.split_ext(tensor, split_size_or_sections, dim)
 
 
 def sqrt(input):
@@ -802,7 +798,7 @@ def sqrt(input):
         >>> print(output)
         [1. 2. 3.]
     """
-    return sqrt_ext(input)
+    return ops.auto_generate.sqrt(input)
 
 
 def sub(input, other, *, alpha=1):
@@ -852,7 +848,7 @@ def sub(input, other, *, alpha=1):
         >>> x = Tensor(np.array([4, 5, 6]).astype(np.float32))
         >>> y = Tensor(1, mindspore.int32)
         >>> alpha = 0.5
-        >>> output = mint.sub(x, y, alpha)
+        >>> output = mint.sub(x, y, alpha=alpha)
         >>> print(output)
         [3.5 4.5 5.5]
         >>> # the data type of x is float32, the data type of y is int32,
@@ -860,7 +856,7 @@ def sub(input, other, *, alpha=1):
         >>> print(output.dtype)
         Float32
     """
-    return sub_ext(input, other, alpha)
+    return ops.auto_generate.sub_ext(input, other, alpha)
 
 
 def zeros(size, *, dtype=None):
@@ -893,7 +889,7 @@ def zeros(size, *, dtype=None):
         [[0. 0.]
          [0. 0.]]
     """
-    return zeros_ext(size, dtype)
+    return ops.auto_generate.zeros(size, dtype)
 
 
 __all__ = [
@@ -930,7 +926,7 @@ __all__ = [
     # 11
 
     # 12
-    "repeat_interleave",
+
     # 13
     "flip",
     # 14

@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADAM_WEIGHT_DECAY_EXT_H_
-#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADAM_WEIGHT_DECAY_EXT_H_
 
-#include <vector>
-#include "ops/ops_func_impl/op_func_impl.h"
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_ONEHOT_MAPPER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_ONEHOT_MAPPER_H_
+
+#include "tools/converter/adapter/acl/mapper/primitive_mapper.h"
+#include "ops/auto_generate/gen_lite_ops.h"
+
+using mindspore::ops::kNameOneHot;
 
 namespace mindspore {
-namespace ops {
-class MIND_API AdamWeightDecayExtFuncImpl : public OpFuncImpl {
+namespace lite {
+class OneHotMapper : public PrimitiveMapper {
  public:
-  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-};
-}  // namespace ops
-}  // namespace mindspore
+  OneHotMapper() : PrimitiveMapper(kNameOneHot) {}
+  ~OneHotMapper() override = default;
 
-#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADAM_WEIGHT_DECAY_EXT_H_
+  STATUS Mapper(const CNodePtr &cnode) override;
+};
+}  // namespace lite
+}  // namespace mindspore
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_ADAPTER_ACL_MAPPER_ONEHOT_MAPPER_H_

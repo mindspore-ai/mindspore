@@ -167,7 +167,8 @@ bool IsValidFuncGraph(const FuncGraphPtr &func_graph, std::set<FuncGraphPtr> *ch
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(checked_graphs);
   if (checked_graphs->find(func_graph) != checked_graphs->end()) {
-    MS_LOG(EXCEPTION) << "Circle call exist in funcgraph:" << func_graph->ToString();
+    MS_LOG(INFO) << "Mulit call exist in funcgraph:" << func_graph->ToString();
+    return true;
   }
   MS_LOG(INFO) << "Check funcgraph:" << func_graph->ToString() << " in control flow inline.";
   checked_graphs->emplace(func_graph);

@@ -18,12 +18,14 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <fstream>
 #include "utils/dlopen_macro.h"
 #include "acl/error_codes/rt_error_codes.h"
 #include "transform/symbol/acl_base_symbol.h"
 #include "transform/symbol/acl_rt_symbol.h"
 #include "transform/symbol/acl_symbol.h"
 #include "transform/symbol/symbol_utils.h"
+#include "include/common/debug/common.h"
 
 namespace mindspore {
 namespace device {
@@ -172,13 +174,45 @@ void *callback_thread_func(void *data) {
   return data;
 }
 
+namespace {
+bool GenerateAclInitJson(const string &json_file_path) {
+  nlohmann::json acl_init_json;
+  // generate err_msg_mode
+  acl_init_json["err_msg_mode"] = "1";
+
+  // write to file
+  std::string json_file_str = acl_init_json.dump();
+  std::ofstream json_file(json_file_path);
+  if (!json_file.is_open()) {
+    MS_LOG(WARNING) << "Open file [" << json_file_path << "] failed!";
+    return False;
+  }
+  json_file << json_file_str;
+  json_file.close();
+  MS_LOG(INFO) << "Generate aclInit json to file : " << json_file_path;
+  return True;
+}
+}  // namespace
+
 void InitializeAcl() {
   std::lock_guard<std::mutex> lock(g_acl_init_mutex);
   if (g_acl_initialized) {
     return;
   }
 
-  if (CALL_ASCEND_API(aclInit, nullptr) != ACL_ERROR_NONE) {
+  const char *acl_json_path = nullptr;
+
+  std::string file_name = "./aclinit.json";
+  auto realpath = Common::CreatePrefixPath(file_name);
+  if (realpath.has_value()) {
+    if (GenerateAclInitJson(realpath.value())) {
+      acl_json_path = realpath.value().c_str();
+    }
+  } else {
+    MS_LOG(WARNING) << "Failed to get real path: [" << file_name << "] in generate aclInit json file path.";
+  }
+
+  if (CALL_ASCEND_API(aclInit, acl_json_path) != ACL_ERROR_NONE) {
     MS_LOG(WARNING) << "Call aclInit failed, acl data dump function will be unusable.";
   } else {
     MS_LOG(INFO) << "Call aclInit successfully";
