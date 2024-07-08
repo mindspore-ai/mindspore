@@ -19,7 +19,6 @@
 
 #include <memory>
 #include <vector>
-#include "mindapi/base/types.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
@@ -29,6 +28,10 @@ class MIND_API AvgPool2DGradFuncImpl final : public OpFuncImpl {
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+
+  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 };
 }  // namespace ops
 }  // namespace mindspore

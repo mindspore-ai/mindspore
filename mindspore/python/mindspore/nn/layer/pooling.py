@@ -18,6 +18,7 @@ from __future__ import absolute_import
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 import mindspore.ops as ops
+from mindspore.ops.function.nn_func import avg_pool2d_ext
 from mindspore._checkparam import _check_3d_int_or_tuple
 from mindspore import _checkparam as validator
 from mindspore.ops.primitive import constexpr, _primexpr
@@ -907,6 +908,46 @@ class AvgPool3d(_PoolNd):
         if expand_batch:
             out = out.squeeze(0)
         return out
+
+
+class AvgPool2dExt(Cell):
+    r"""
+    Applies a 2D average pooling over an input Tensor which can be regarded as
+    a composition of 2D input planes.
+
+    For details, please refer to :func:`mindspore.mint.nn.functional.avg_pool2d`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, nn
+        >>> from mindspore import dtype as mstype
+        >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mstype.float32)
+        >>> m =  nn.AvgPool2dExt(x, kernel_size=2, stride=1)
+        >>> output = m(x)
+        >>> print(output)
+        [[[[ 2.5   3.5   4.5]
+           [ 6.5   7.5   8.5]]
+          [[14.5  15.5  16.5]
+           [18.5  19.5  20.5]]
+          [[26.5  27.5  28.5]
+           [30.5  31.5  32.5]]]]
+    """
+    def __init__(self, kernel_size, stride=None, padding=0, ceil_mode=False,
+                 count_include_pad=True, divisor_override=None):
+        super(AvgPool2dExt, self).__init__()
+        self.kernel_size = kernel_size
+        self.stride = stride
+        self.padding = padding
+        self.ceil_mode = ceil_mode
+        self.count_include_pad = count_include_pad
+        self.divisor_override = divisor_override
+
+    def construct(self, input):
+        return avg_pool2d_ext(input, self.kernel_size, self.stride, self.padding,
+                              self.ceil_mode, self.count_include_pad, self.divisor_override)
 
 
 class AvgPool2d(_PoolNd):

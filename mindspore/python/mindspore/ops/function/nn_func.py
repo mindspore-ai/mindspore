@@ -45,7 +45,7 @@ from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, f
 from mindspore.ops.auto_generate import group_norm_op, rms_norm, layer_norm_ext_op, batch_norm_ext_op
 from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op, # pylint: disable=W0611
                                          replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
-                                         constant_pad_nd_op, dropout_ext_op, reverse_v2_impl)
+                                         constant_pad_nd_op, dropout_ext_op, reverse_v2_impl, avg_pool2d_op)
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
 from mindspore.common.generator import default_generator
 from mindspore.ops.auto_generate import hardshrink
@@ -519,28 +519,28 @@ def avg_pool2d(input_x, kernel_size=1, stride=1, padding=0, ceil_mode=False, cou
 def avg_pool2d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, count_include_pad=True,
                    divisor_override=None):
     r"""
-        Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
-        Typically the input is of shape :math:`(N, C, H_{in}, W_{in})`, outputs regional average in the
-        :math:`(H_{in}, W_{in})`-dimension. Given kernel size :math:`(k_{H}, k_{W})` and `stride` , the operation
-        is as follows.
+        Applies a 2D average pooling over an input Tensor which can be regarded as a composition of
+        2D input planes. Typically the input is of shape :math:`(N, C, H_{in}, W_{in})` ,
+        outputs regional average in the :math:`(H_{in}, W_{in})` -dimension.
+        Given kernel size :math:`(kH, kW)` and `stride` , the operation is as follows.
 
         .. math::
-            \text{output}(N_i, C_j, h, w) = \frac{1}{k_{H} * k_{W}} \sum_{m=0}^{k_{H}-1} \sum_{n=0}^{k_{W}-1}
+            \text{output}(N_i, C_j, h, w) = \frac{1}{kH * kW} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1}
             \text{input}(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
 
         Args:
-            input (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`.
+            input (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})` .
             kernel_size (Union[int, tuple[int], list[int]]): The size of kernel used to take the average value.
-                Can be a single number or a tuple (kH, kW).
-            stride (Union[int, tuple[int], list[int]]): The distance of kernel moving. Can be a single number or
-                a tuple (sH, sW). Default value is `kernel_size` .
-            padding (Union(int, tuple[int], list[int])): Implicit zero padding to be added on both sides.
-                Can be a single number or a tuple (padH, padW). Default: 0.
-            ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape.
+                Can be a single number or a tuple :math:`(kH, kW)` .
+            stride (Union[int, tuple[int], list[int]], optional): The distance of kernel moving.
+                Can be a single number or a tuple :math:`(sH, sW)` . Default value is `kernel_size` .
+            padding (Union(int, tuple[int], list[int]), optional): Implicit zero padding to be added on both sides.
+                Can be a single number or a tuple :math:`(padH, padW)` . Default: ``0``.
+            ceil_mode (bool, optional): If True, apply ceil instead of floor to compute the output shape.
                 Default: ``False``.
-            count_include_pad (bool): If True, include the zero-padding in the averaging calculation.
+            count_include_pad (bool, optional): If True, include the zero-padding in the averaging calculation.
                 Default: ``True`` .
-            divisor_override (int): If specified, it will be used as divisor in the averaging calculation,
+            divisor_override (int, optional): If specified, it will be used as divisor in the averaging calculation,
                 otherwise size of pooling region will be used. Default: ``None``.
 
         Returns:
@@ -557,11 +557,10 @@ def avg_pool2d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
             TypeError: If `kernel_size` or `stride` is neither int nor tuple.
             TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
             TypeError: If `divisor_override` is not an int or None.
-            ValueError: If the dimension of `input` is not equal to `4` or `3`.
+            ValueError: If the dimension of `input` is not equal to `3` or `4`.
             ValueError: If `kernel_size` or `stride` is less than 1.
-            ValueError: If `kernel_size` or `stride` is a tuple whose length is not equal to `2` or `1`.
-            ValueError: If `padding` is neither a int nor a tuple whose length is equal to `2` or `1`.
             ValueError: If value of `padding` is less than `0`.
+            ValueError: If `kernel_size`, `padding` or `stride` is a tuple whose length is not equal to `1` or `2`.
 
         Supported Platforms:
             ``Ascend``
@@ -574,16 +573,15 @@ def avg_pool2d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
             >>> output = ops.function.nn_func.avg_pool2d_ext(x, kernel_size=2, stride=1)
             >>> print(output)
             [[[[ 2.5   3.5   4.5]
-            [ 6.5   7.5   8.5]]
-            [[14.5  15.5  16.5]
-            [18.5  19.5  20.5]]
-            [[26.5  27.5  28.5]
-            [30.5  31.5  32.5]]]]
+               [ 6.5   7.5   8.5]]
+              [[14.5  15.5  16.5]
+               [18.5  19.5  20.5]]
+              [[26.5  27.5  28.5]
+               [30.5  31.5  32.5]]]]
     """
     if stride is None:
         stride = kernel_size
-    return _get_cache_prim(ops.auto_generate.AvgPool2D)()(input, kernel_size, stride, padding,
-                                                          ceil_mode, count_include_pad, divisor_override)
+    return avg_pool2d_op(input, kernel_size, stride, padding, ceil_mode, count_include_pad, divisor_override)
 
 
 def _check_avg_pool3d_padding(padding):
