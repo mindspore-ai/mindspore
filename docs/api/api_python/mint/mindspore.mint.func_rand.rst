@@ -9,7 +9,7 @@ mindspore.mint.rand
         - **size** (Union[int, tuple(int), list(int)]) - 输出的Tensor的shape，例如，:math:`(2, 3)` or :math:`2`。
 
     关键字参数：
-        - **generator** (:class:`mindspore.Generator`, 可选) - 随机数生成器。默认值： ``None`` ，使用默认随机数生成器。
+        - **generator** (:class:`mindspore.Generator`, 可选) - 伪随机数生成器。默认值： ``None`` ，使用默认伪随机数生成器。
         - **dtype** (:class:`mindspore.dtype`，可选) - 指定的输出Tensor的dtype，必须是float类型。如果是None，`mindspore.float32` 会被使用。默认值： ``None`` 。
 
     返回：

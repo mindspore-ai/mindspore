@@ -515,7 +515,7 @@ def mean(input, dim=None, keepdim=False, *, dtype=None):
           the output is a 0-D tensor representing the product of all elements in the input tensor.
         - If `dim` is int, set as 1, and `keepdim` is ``False`` ,
           the shape of output is :math:`(input_0, input_2, ..., input_R)`.
-        - If `dim` is tuple(int), set as (1, 2), and `keepdim` is ``False`` ,
+        - If `dim` is tuple(int) or list(int), set as (1, 2), and `keepdim` is ``False`` ,
           the shape of output is :math:`(input_0, input_3, ..., input_R)`.
         - If `dim` is 1-D Tensor, set as [1, 2], and `keepdim` is ``False`` ,
           the shape of output is :math:`(input_0, input_3, ..., input_R)`.

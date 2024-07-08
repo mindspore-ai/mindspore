@@ -6102,18 +6102,23 @@ def adaptive_avg_pool1d(input, output_size):
 
 
 def layer_norm(input, normalized_shape, weight=None, bias=None, eps=1e-5):
-    r"""Applies the Layer Normalization to the input tensor.
+    r"""Applies the Layer Normalization on the mini-batch input.
 
-    This operator will normalize the input tensor on given axis. LayerNorm is described in the paper
+    Layer normalization is widely used in recurrent neural networks. Apply normalization to the mini-batch
+    input of a single training case. LayerNorm is described in the paper
     `Layer Normalization <https://arxiv.org/abs/1607.06450>`_.
 
-    .. math::
-        y = \frac{x - mean}{\sqrt{variance + \epsilon}} * \gamma + \beta
+    Unlike batch normalization, layer normalization performs the exact same calculations at training and
+    test time. Applies to all channels and pixels, even batch_size=1. The formula is as follows:
 
-    where :math:`\gamma` is weight, :math:`\beta` is bias, :math:`\epsilon` is eps.
+    .. math::
+        y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
+
+    where :math:`\gamma` is the weight value learned through training, :math:`\beta` is the bias value
+    learned through training.
 
     Args:
-        input (Tensor): Tensor of shape :math:`(N, \ldots)`. The input of LayerNorm.
+        input (Tensor): The shape of input is `(N, *)`, where `*` represents any additional dimension.
         normalized_shape (Union(int, tuple[int], list[int])): The normalized shape of `input` for LayerNorm.
           `normalized_shape` equal to `input_shape[begin_norm_axis:]`, where `begin_norm_axis` represents the axis
           where normalization begins.
@@ -6125,7 +6130,7 @@ def layer_norm(input, normalized_shape, weight=None, bias=None, eps=1e-5):
           Default: ``1e-5`` .
 
     Returns:
-        - **output** (Tensor) - The normalized input, has the same type and shape as the `input`.
+        Tensor. The normalized tensor, has the same type and shape as the `input`.
 
     Raises:
         TypeError: If `input` is not a Tensor.
@@ -6416,6 +6421,7 @@ def binary_cross_entropy(logits, labels, weight=None, reduction='mean'):
     Args:
         logits (Tensor): The predictive value whose data type must be float16 or float32.
         labels (Tensor): The target value which has the same shape and data type as `logits`.
+            And the data type is float16 or float32.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
             Its shape must be able to broadcast to that of `logits` and `labels`.
             And it must have the same shape and data type as `logits`. Default: ``None`` . If set to ``None`` ,

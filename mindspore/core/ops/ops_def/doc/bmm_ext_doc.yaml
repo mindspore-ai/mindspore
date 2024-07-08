@@ -15,7 +15,7 @@ bmm_ext:
     Raises:
         ValueError: If `input` or `mat2` is not three-dimensional tensors.
         ValueError: If the length of the third dimension of `input` is not equal to the length of the second dimension of `mat2`.
-        ValueError: If the batch size of the inputs do not match.
+        ValueError: If the batch size of the inputs is not equal to the batch size of the mat2.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

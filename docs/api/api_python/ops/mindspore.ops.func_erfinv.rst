@@ -17,7 +17,7 @@ mindspore.ops.erfinv
           - GPU/CPU： float16、float32、float64。
 
     返回：
-        当输入为 int8、int16、int32、int64、uint8、bool 时，返回值类型为float32。
+        Tensor。当输入为 int8、int16、int32、int64、uint8、bool 时，返回值类型为float32。
         否则，返回值类型与输入类型相同。
 
     异常：

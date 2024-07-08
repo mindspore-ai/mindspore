@@ -34,7 +34,7 @@ binary_cross_entropy:
         Inputs:
             - **logits** (Tensor) - The predictive value whose data type must be float16 or float32,
               The shape is :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-            - **labels** (Tensor) - The target value which has the same shape and data type as `logits`.
+            - **labels** (Tensor) - The target value which has the same shape and data type as `logits`. And the data type is float16 or float32.
             - **weight** (Tensor, optional) - A rescaling weight applied to the loss of each batch element.
               And it must have the same shape and data type as `logits`. Default: ``None`` .
 

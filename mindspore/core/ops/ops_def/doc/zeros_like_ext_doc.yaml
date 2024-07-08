@@ -8,7 +8,7 @@ zeros_like_ext:
             - **input_x** (Tensor) - Tensor of any dimension.
 
         Returns:
-            Tensor, has the same shape and type as `input_x` but filled with ones.
+            Return a tensor filled with the value 0, with the same size as input.
 
         Supported Platforms:
             ``Ascend``

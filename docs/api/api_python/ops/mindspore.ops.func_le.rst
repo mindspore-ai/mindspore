@@ -14,6 +14,7 @@ mindspore.ops.le
 
     .. note::
         - 输入 `input` 和 `other` 遵循隐式类型转换规则，使数据类型保持一致。
+        - 输入必须是两个Tensor，或一个Tensor和一个Scalar。
         - 当输入是一个Tensor和一个Scalar时，Scalar只能是一个常数。
 
     参数：
