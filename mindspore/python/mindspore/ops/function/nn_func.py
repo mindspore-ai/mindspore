@@ -1222,12 +1222,12 @@ def max_unpool3d(x, indices, kernel_size, stride=None, padding=0, output_size=No
     return out
 
 
-def binary_cross_entropy_with_logits(logits, label, weight=None, pos_weight=None, reduction='mean'):
+def binary_cross_entropy_with_logits(input, target, weight=None, pos_weight=None, reduction='mean'):
     r"""
-    Adds sigmoid activation function to input `logits`, and uses the given logits to compute binary cross entropy
-    between the logits and the label.
+    Adds sigmoid activation function to input `input` as logits, and uses the given logits to compute binary cross
+    entropy between the `input` and the `target`.
 
-    Sets input logits as :math:`X`, input label as :math:`Y`, input weight as :math:`W`, output as :math:`L`. Then,
+    Sets input `input` as :math:`X`, input target as :math:`Y`, input weight as :math:`W`, output as :math:`L`. Then,
 
     .. math::
 
@@ -1268,14 +1268,14 @@ def binary_cross_entropy_with_logits(logits, label, weight=None, pos_weight=None
     :math:`P_c>1` increases the recall, :math:`P_c<1` increases the precision.
 
     Args:
-        logits (Tensor): Input logits. Data type must be float16 or float32.
-        label (Tensor): Ground truth label, has the same shape as `logits`.
+        input (Tensor): Input `input`. Data type must be float16 or float32.
+        target (Tensor): Ground truth label, has the same shape as `input`.
           Data type must be float16 or float32.
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element. It can be
-          broadcast to a tensor with shape of `logits`. Data type must be float16 or float32.
+          broadcast to a tensor with shape of `input`. Data type must be float16 or float32.
           Default: ``None``, `weight` is a Tensor whose value is ``1``.
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
-          number of classes. It can be broadcast to a tensor with shape of `logits`.
+          number of classes. It can be broadcast to a tensor with shape of `input`.
           Data type must be float16 or float32. Default: ``None``, `pos_weight` is a Tensor whose value is ``1``.
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
             ``'sum'`` . Default: ``'mean'`` .
@@ -1285,14 +1285,14 @@ def binary_cross_entropy_with_logits(logits, label, weight=None, pos_weight=None
             - ``'sum'``: the output elements will be summed.
 
     Returns:
-        Tensor or Scalar, if `reduction` is ``'none'``, it's a tensor with the same shape and type as input `logits`.
+        Tensor or Scalar, if `reduction` is ``'none'``, it's a tensor with the same shape and type as input `input`.
         Otherwise, the output is a scalar.
 
     Raises:
-        TypeError: If input `logits`, `label`, `weight`, `pos_weight` is not Tensor.
-        TypeError: If data type of input `logits`, `label`, `weight`, `pos_weight` is neither float16 nor float32.
+        TypeError: If input `input`, `target`, `weight`, `pos_weight` is not Tensor.
+        TypeError: If data type of input `input`, `target`, `weight`, `pos_weight` is neither float16 nor float32.
         TypeError: If data type of input `reduction` is not string.
-        ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
+        ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `input`.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
 
     Supported Platforms:
@@ -1302,17 +1302,17 @@ def binary_cross_entropy_with_logits(logits, label, weight=None, pos_weight=None
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
-        >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mindspore.float32)
-        >>> label = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mindspore.float32)
+        >>> input = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mindspore.float32)
+        >>> target = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mindspore.float32)
         >>> weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
         >>> pos_weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
-        >>> output = ops.binary_cross_entropy_with_logits(logits, label, weight, pos_weight)
+        >>> output = ops.binary_cross_entropy_with_logits(input, target, weight, pos_weight)
         >>> print(output)
         0.3463612
     """
 
     bce_with_logits_loss_op = _get_cache_prim(NN_OPS.BCEWithLogitsLoss)(reduction)
-    return bce_with_logits_loss_op(logits, label, weight, pos_weight)
+    return bce_with_logits_loss_op(input, target, weight, pos_weight)
 
 
 @_function_forbid_reuse

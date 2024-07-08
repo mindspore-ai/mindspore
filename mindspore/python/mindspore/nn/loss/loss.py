@@ -1820,10 +1820,10 @@ class MultilabelMarginLoss(LossBase):
 
 class BCEWithLogitsLoss(LossBase):
     r"""
-    Adds sigmoid activation function to input logits, and uses the given logits to compute binary cross entropy
-    between the logits and the labels.
+    Adds sigmoid activation function to input `input` as logits, and uses the given logits to compute binary cross
+    entropy between the `input` and the `target`.
 
-    Sets input `logits` as :math:`X`, input `labels` as :math:`Y`, output as :math:`L`. Then,
+    Sets input `input` as :math:`X`, input `target` as :math:`Y`, output as :math:`L`. Then,
 
     .. math::
         p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}}
@@ -1849,29 +1849,29 @@ class BCEWithLogitsLoss(LossBase):
             - ``'sum'``: the output elements will be summed.
 
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not None, it can be broadcast to a tensor with shape of `logits`,
+            If not None, it can be broadcast to a tensor with shape of `input`,
             data type must be float16 or float32. Default: ``None`` .
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
-            number of classes. If not None, it must be broadcast to a tensor with shape of `logits`, data type
+            number of classes. If not None, it must be broadcast to a tensor with shape of `input`, data type
             must be float16 or float32. Default: ``None`` .
 
     Inputs:
-        - **logits** (Tensor) - Input logits with shape :math:`(N, *)` where :math:`*` means, any number
+        - **input** (Tensor) - Input `input` with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The data type must be float16 or float32.
-        - **labels** (Tensor) - Ground truth label with shape :math:`(N, *)` where :math:`*` means, any number
-          of additional dimensions. The same shape and data type as `logits`.
+        - **target** (Tensor) - Ground truth label with shape :math:`(N, *)` where :math:`*` means, any number
+          of additional dimensions. The same shape and data type as `input`.
 
     Outputs:
-        Tensor or Scalar, if `reduction` is ``'none'``, its shape is the same as `logits`.
+        Tensor or Scalar, if `reduction` is ``'none'``, its shape is the same as `input`.
         Otherwise, a scalar value will be returned.
 
     Raises:
-        TypeError: If input `logits` or `labels` is not Tensor.
-        TypeError: If data type of `logits` or `labels` is neither float16 nor float32.
+        TypeError: If input `input` or `target` is not Tensor.
+        TypeError: If data type of `input` or `target` is neither float16 nor float32.
         TypeError: If `weight` or `pos_weight` is a parameter.
         TypeError: If data type of `weight` or `pos_weight` is neither float16 nor float32.
         TypeError: If data type of `reduction` is not string.
-        ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
+        ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `input`.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
     Supported Platforms:
@@ -1881,10 +1881,10 @@ class BCEWithLogitsLoss(LossBase):
         >>> import mindspore as ms
         >>> import mindspore.nn as nn
         >>> import numpy as np
-        >>> logits = ms.Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
-        >>> labels = ms.Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
+        >>> input = ms.Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
+        >>> target = ms.Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
         >>> loss = nn.BCEWithLogitsLoss()
-        >>> output = loss(logits, labels)
+        >>> output = loss(input, target)
         >>> print(output)
         0.3463612
     """
@@ -1900,10 +1900,10 @@ class BCEWithLogitsLoss(LossBase):
         self.weight = weight
         self.pos_weight = pos_weight
 
-    def construct(self, logits, labels):
-        _check_is_tensor('logits', logits, self.cls_name)
-        _check_is_tensor('labels', labels, self.cls_name)
-        loss = ops.binary_cross_entropy_with_logits(logits, labels, self.weight, self.pos_weight, self.reduction)
+    def construct(self, input, target):
+        _check_is_tensor('input', input, self.cls_name)
+        _check_is_tensor('target', target, self.cls_name)
+        loss = ops.binary_cross_entropy_with_logits(input, target, self.weight, self.pos_weight, self.reduction)
         return loss
 
 

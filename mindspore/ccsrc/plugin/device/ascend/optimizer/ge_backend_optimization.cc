@@ -51,6 +51,7 @@
 #include "plugin/device/ascend/optimizer/ge/inputs_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/maketuple_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/add_cast_for_ge.h"
+#include "plugin/device/ascend/optimizer/ge/bce_with_logits_loss_for_ge.h"
 #include "plugin/device/ascend/optimizer/ge/scalar_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/tuple_unify_mindir.h"
 #include "plugin/device/ascend/optimizer/ge/add_noop_to_es_grad.h"
@@ -105,6 +106,7 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::UnfoldMaketuple>("unfold_nested_maketuple"));
   opt_ge_pm->AddPass(std::make_shared<opt::BroadCastForSelect>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddNoOpToESGrad>());
+  opt_ge_pm->AddPass(std::make_shared<opt::BCEWithLogitsLossForGe>());
 
   optimizer->AddPassManager(opt_ge_pm);
   (void)optimizer->Optimize(kernel_graph);
