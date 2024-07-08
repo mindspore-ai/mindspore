@@ -62,7 +62,7 @@ class AscendVmmAdapter {
 
   void ClearAllMemory();
   size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr);
-  size_t MmapDeviceMem(const size_t size, const DeviceMemPtr addr);
+  size_t MmapDeviceMem(const size_t size, const DeviceMemPtr addr, const size_t max_size);
   size_t EagerFreeDeviceMem(const DeviceMemPtr addr, const size_t size);
 
   static const bool IsEnabled() {
@@ -105,6 +105,7 @@ class AscendVmmAdapter {
   uint64_t kVmmAlignSize;
   DeviceMemPtr FindVmmSegment(const DeviceMemPtr addr);
   size_t GetHandleSize(size_t input_size);
+  std::atomic<size_t> physical_handle_size_{0};
   std::map<DeviceMemPtr, aclrtDrvMemHandle> vmm_map_;
   std::vector<DeviceMemPtr> all_reserve_mems_;
   std::queue<aclrtDrvMemHandle> handle_queue_;
