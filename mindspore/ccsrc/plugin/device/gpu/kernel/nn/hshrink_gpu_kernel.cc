@@ -44,7 +44,6 @@ bool HShrinkGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
   kernel_func_ = func_list_[index].second;
 
   unit_size_ = abstract::TypeIdSize(kernel_attr.GetInputAttr(kIndex0).dtype);
-  lambd = inputs[kIndex1]->GetValueWithCheck<float>();
   return true;
 }
 
@@ -58,6 +57,7 @@ int HShrinkGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
     return KRET_RESIZE_FAILED;
   }
   input_elements_ = inputs[0]->size() / unit_size_;
+  lambd = inputs[kIndex1]->GetValueWithCheck<float>();
   return KRET_OK;
 }
 

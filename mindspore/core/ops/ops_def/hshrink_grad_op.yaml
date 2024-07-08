@@ -8,6 +8,7 @@ hshrink_grad:
         lambd:
             dtype: float
             default: 0.5
+            type_cast: int, bool
             prim_init: True
     returns:
         output: 
@@ -16,3 +17,6 @@ hshrink_grad:
         name: HShrinkGrad
     function:
         disable: True
+    dispatch:
+        enable: True
+        Ascend: HShrinkGradAscend

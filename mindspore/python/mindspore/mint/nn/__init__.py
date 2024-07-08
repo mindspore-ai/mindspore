@@ -224,6 +224,8 @@ from mindspore.nn.extend.basic import Linear
 # 100
 from mindspore.ops.auto_generate import BCEWithLogitsLoss as BCEWithLogitsLoss_prim
 
+# 220
+from mindspore.ops.auto_generate import HShrink
 
 class BCEWithLogitsLoss(Cell):
     r"""
@@ -303,6 +305,36 @@ class BCEWithLogitsLoss(Cell):
     def construct(self, input, target):
         out = self.bce_with_logits(input, target, self.weight, self.pos_weight)
         return out
+
+
+class Hardshrink(Cell):
+    r"""
+    Applies Hard Shrink activation function element-wise.
+
+    For details, please refer to :func:`mindspore.mint.nn.functional.hardshrink`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore
+        >>> from mindspore import Tensor, nn
+        >>> import numpy as np
+        >>> input = Tensor(np.array([[ 0.5,  1,  2.0], [0.0533,0.0776,-2.1233]]), mindspore.float32)
+        >>> Hardshrink = nn.Hardshrink()
+        >>> output = Hardshrink(input)
+        >>> print(output)
+        [[ 0.      1.      2.    ]
+        [ 0.      0.     -2.1233]]
+    """
+
+    def __init__(self, lambd=0.5):
+        super(Hardshrink, self).__init__()
+        self.hshrink = HShrink(lambd)
+
+    def construct(self, input):
+        return self.hshrink(input)
+
 
 __all__ = [
     'MaxPool2d',
@@ -505,6 +537,9 @@ __all__ = [
     # 99
 
     # 100
+
+    # 220
+    'Hardshrink',
 ]
 
 __all__.extend(basic.__all__)

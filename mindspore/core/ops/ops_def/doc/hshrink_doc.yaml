@@ -1,29 +1,47 @@
 hshrink:
     description: |
-        Hard Shrink activation function.
+        Hard Shrink activation function. Calculates the output according to the input elements.
 
-        Refer to :func:`mindspore.ops.hardshrink` for more details.
+        The formula is defined as follows:
+
+        .. math::
+            \text{HardShrink}(x) =
+            \begin{cases}
+            x, & \text{ if } x > \lambda \\
+            x, & \text{ if } x < -\lambda \\
+            0, & \text{ otherwise }
+            \end{cases}
+
+        HShrink Activation Function Graph:
+
+        .. image:: ../images/HShrink.png
+            :align: center
 
         Args:
-            lambd (float, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
+            input (Tensor): The input of Hard Shrink. Supported dtypes: 
 
-        Inputs:
-            - **input_x** (Tensor) - The input of Hard Shrink with data type of float16 or float32.
+                - Ascend: float16, float32, bfloat16.
+                - CPU/GPU: float16, float32.
+            lambd (number, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula.
+                Default: ``0.5`` .
 
-        Outputs:
-            Tensor, the same shape and data type as the input.
+        Returns:
+            Tensor, has the same data type and shape as the input `input`.
+
+        Raises:
+            TypeError: If `lambd` is not a float, int or bool.
+            TypeError: If `input` is not a tensor.
+            TypeError: If dtype of `input` is not float16, float32 or bfloat16.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
 
         Examples:
-            >>> import mindspore as ms
-            >>> import mindspore.ops as ops
-            >>> from mindspore import Tensor, nn
+            >>> import mindspore
             >>> import numpy as np
-            >>> input_x = Tensor(np.array([[0.5,  1,  2.0], [0.0533, 0.0776, -2.1233]]), ms.float32)
-            >>> hshrink = ops.HShrink()
-            >>> output = hshrink(input_x)
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([[ 0.5,  1,  2.0], [0.0533,0.0776,-2.1233]]), mindspore.float32)
+            >>> output = ops.hardshrink(input)
             >>> print(output)
             [[ 0.      1.      2.    ]
             [ 0.      0.     -2.1233]]

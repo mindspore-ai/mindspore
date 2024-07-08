@@ -1430,17 +1430,21 @@ class HShrink(Cell):
         :align: center
 
     Args:
-        lambd (float): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
+        lambd (number, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
 
     Inputs:
-        - **input_x** (Tensor) - The input of Hard Shrink with data type of float16 or float32.
+        - **input_x** (Tensor) - The input of Hard Shrink. Supported dtypes:
+
+          - Ascend: float16, float32, bfloat16.
+          - CPU/GPU: float16, float32.
 
     Outputs:
         Tensor, the same shape and data type as the input.
 
     Raises:
-        TypeError: If `lambd` is not a float.
-        TypeError: If dtype of `input_x` is neither float16 nor float32.
+        TypeError: If `lambd` is not a float, int or bool.
+        TypeError: If `input_x` is not a tensor.
+        TypeError: If dtype of `input_x` is not float16, float32 or bfloat16.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

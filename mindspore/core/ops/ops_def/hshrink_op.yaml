@@ -1,11 +1,12 @@
 #operator hshrink
 hshrink:
     args:
-        x:
+        input:
             dtype: tensor
         lambd:
             dtype: float
             default: 0.5
+            type_cast: int, bool
             prim_init: True
     returns:
         output: 
@@ -13,4 +14,9 @@ hshrink:
     class:
         name: HShrink
     function:
-        disable: True
+        name: hardshrink
+    dispatch:
+        enable: True
+        Ascend: HShrinkAscend
+
+    

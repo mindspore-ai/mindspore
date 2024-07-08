@@ -19,14 +19,17 @@ mindspore.nn.HShrink
         :align: center
 
     参数：
-        - **lambd** (float) - Hard Shrink公式定义的阈值 :math:`\lambda` 。默认值： ``0.5`` 。
+        - **lambd** (number，可选) - Hard Shrink公式定义的阈值 :math:`\lambda` 。默认值： ``0.5`` 。
 
     输入：
-        - **input_x** (Tensor) - Hard Shrink的输入，数据类型为float16或float32。
+        - **input_x** (Tensor) - Hard Shrink的输入。支持数据类型：
 
+          - Ascend：float16、float32、bfloat16。
+          - CPU/GPU：float16、float32。
     输出：
         Tensor，shape和数据类型与输入相同。
 
     异常：
-        - **TypeError** - `lambd` 不是float。
-        - **TypeError** - `input_x` 的dtype既不是float16也不是float32。
+        - **TypeError** - `lambd` 不是float、int和bool。
+        - **TypeError** - `input_x` 不是Tensor。
+        - **TypeError** - `input_x` 的dtype不是float16、float32和bfloat16。

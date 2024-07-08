@@ -46,7 +46,6 @@ bool HShrinkCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs, const 
     return false;
   }
   unit_size_ = sizeof(float);
-  lambd = inputs[kIndex1]->GetValueWithCheck<float>();
   return true;
 }
 
@@ -56,6 +55,7 @@ int HShrinkCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const
     return ret;
   }
   input_elements_ = inputs[0]->size() / unit_size_;
+  lambd = inputs[kIndex1]->GetValueWithCheck<float>();
   return static_cast<int>(KRET_OK);
 }
 

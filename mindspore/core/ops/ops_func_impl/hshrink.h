@@ -18,7 +18,7 @@
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_HSHRINK_H_
 
 #include <vector>
-
+#include <set>
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
@@ -27,6 +27,9 @@ class MIND_API HShrinkFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  // simply infer
+  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 };
 }  // namespace ops
 }  // namespace mindspore

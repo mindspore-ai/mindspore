@@ -63,18 +63,23 @@ TEST_P(TestHShrink, hshrink_input_xn_shape) {
 auto HShrinkOpShapeTestCases = testing::ValuesIn({
   /* static */
   HShrinkShape{{2, 3, 4}, CreateScalar(0.5), {2, 3, 4}},
+  HShrinkShape{{3, 4, 2}, CreateScalar(False), {3, 4, 2}},
+  HShrinkShape{{4, 3, 2}, CreateScalar(2), {4, 3, 2}},
   /* dynamic shape */
   HShrinkShape{{-1}, CreateScalar(0.3), {-1}},
-  HShrinkShape{{-1, 2, 4}, CreateScalar(0.5), {-1, 2, 4}},
-  HShrinkShape{{5, 3, -1, 2, 1}, CreateScalar(0.1), {5, 3, -1, 2, 1}},
+  HShrinkShape{{-1, 2, 4}, CreateScalar(False), {-1, 2, 4}},
+  HShrinkShape{{5, 3, -1, 2, 1}, CreateScalar(4), {5, 3, -1, 2, 1}},
   HShrinkShape{{5, 3, -1, 2, 1, 4, 7, 4}, CreateScalar(-0.4), {5, 3, -1, 2, 1, 4, 7, 4}},
   /* dynamic rank */
   HShrinkShape{{-2}, CreateScalar(0.5), {-2}},
+  HShrinkShape{{-2}, CreateScalar(True), {-2}},
+  HShrinkShape{{-2}, CreateScalar(4), {-2}},
 });
 
 auto HShrinkOpTypeTestCases = testing::ValuesIn({
   HShrinkDtype{kFloat16, kFloat16},
   HShrinkDtype{kFloat32, kFloat32},
+  HShrinkDtype{kBFloat16, kBFloat16},
 });
 
 INSTANTIATE_TEST_CASE_P(TestHShrink, TestHShrink, testing::Combine(HShrinkOpShapeTestCases, HShrinkOpTypeTestCases));
