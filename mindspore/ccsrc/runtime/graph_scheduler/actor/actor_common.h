@@ -451,6 +451,8 @@ bool EnableKbkSubGraphExecute();
 // If enable infer->resize->launch pipeline, also wait all infer, resize and launch task finish.
 bool WaitRuntimePipelineFinish(const OpContext<DeviceTensor> *context, bool wait_kernel_launch_finish = true);
 
+size_t GetDefragMemoryStepFreq();
+
 // Copy data from src_device_tensor to dst_device_tensor.
 bool Copy(const DeviceTensor *dst_device_tensor, const DeviceTensor *src_device_tensor);
 

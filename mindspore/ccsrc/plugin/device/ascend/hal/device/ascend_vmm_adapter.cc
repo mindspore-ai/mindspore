@@ -66,9 +66,9 @@ void AscendVmmAdapter::ClearAllMemory() {
       MS_LOG(ERROR) << "Free physical memory failed.";
     }
   }
-  while (!handle_queue_.empty()) {
-    auto handle = handle_queue_.front();
-    handle_queue_.pop();
+  while (!cached_handle_sets_.empty()) {
+    auto handle = *cached_handle_sets_.begin();
+    cached_handle_sets_.erase(cached_handle_sets_.begin());
     auto ret = CALL_ASCEND_API(aclrtFreePhysical, handle);
     if (ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Free physical memory failed.";
@@ -83,10 +83,31 @@ void AscendVmmAdapter::ClearAllMemory() {
 
 AscendVmmAdapter::~AscendVmmAdapter() { ClearAllMemory(); }
 
+namespace {
+void MoveBackMappedHandle(std::map<DeviceMemPtr, aclrtDrvMemHandle> *mapped_vmm_handle,
+                          std::map<DeviceMemPtr, aclrtDrvMemHandle> *vmm_map,
+                          std::set<aclrtDrvMemHandle> *cached_handle_sets_) {
+  for (const auto [address, handle] : *mapped_vmm_handle) {
+    auto ret = CALL_ASCEND_API(aclrtUnmapMem, address);
+    if (ret != ACL_ERROR_NONE) {
+      MS_LOG(ERROR) << "Unmap memory failed, address : " << address << ".";
+    } else {
+      auto iter = vmm_map->find(address);
+      if (iter == vmm_map->end()) {
+        MS_LOG(ERROR) << "Find vmm map address : " << address << " failed.";
+      } else {
+        iter->second = nullptr;
+        cached_handle_sets_->insert(handle);
+      }
+    }
+  }
+}
+};  // namespace
+
 size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr addr, const size_t max_size) {
   MS_EXCEPTION_IF_NULL(addr);
   MS_LOG(DEBUG) << "VMM MmapDeviceMem size:" << size << ", addr:" << addr
-                << ", handle_queue_ size : " << handle_queue_.size() << ".";
+                << ", cached_handle_sets_ size : " << cached_handle_sets_.size() << ".";
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
   auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -120,17 +141,14 @@ size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr add
       continue;
     }
     aclrtDrvMemHandle handle = nullptr;
-    if (!handle_queue_.empty()) {
-      handle = handle_queue_.front();
-      handle_queue_.pop();
+    if (!cached_handle_sets_.empty()) {
+      handle = *cached_handle_sets_.begin();
+      cached_handle_sets_.erase(cached_handle_sets_.begin());
     } else {
       if (physical_handle_size_ * kVmmAlignSize >= max_size) {
         MS_LOG(INFO) << "Mapped too much memory, physical_handle_size_ : " << physical_handle_size_
                      << ", max_size : " << max_size << ", addr : " << addr << ", size : " << size << ".";
-        for (const auto [device_mem_ptr, handle] : mapped_vmm_handle) {
-          vmm_map_[device_mem_ptr] = nullptr;
-          handle_queue_.push(handle);
-        }
+        MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_);
         return 0;
       }
 
@@ -146,9 +164,10 @@ size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr add
             used_handle_size += 1;
           }
         }
-        used_handle_size += handle_queue_.size();
+        used_handle_size += cached_handle_sets_.size();
         MS_LOG(ERROR) << "Malloc physical memory failed, inuse physical memory handle size : " << used_handle_size
                       << ", physical_handle_size_ size : " << physical_handle_size_ << ".";
+        MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_);
         return 0;
       } else {
         physical_handle_size_++;
@@ -165,10 +184,11 @@ size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr add
         return size;
       }
       MS_LOG(ERROR) << "Map memory failed.";
-      handle_queue_.push(handle);
+      cached_handle_sets_.insert(handle);
+      MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_);
       return 0;
     }
-    mapped_vmm_handle[new_addr] = handle;
+    mapped_vmm_handle[iter->first] = handle;
     iter->second = handle;
     iter++;
   }
@@ -200,7 +220,7 @@ size_t AscendVmmAdapter::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
 
 size_t AscendVmmAdapter::EagerFreeDeviceMem(const DeviceMemPtr addr, const size_t size) {
   MS_LOG(DEBUG) << "Eager free device mem addr :" << addr << ", size :" << size
-                << ", handle_queue_ size : " << handle_queue_.size() << ".";
+                << ", cached_handle_sets_ size : " << cached_handle_sets_.size() << ".";
   if (common::IsNeedProfileMemory()) {
     return size;
   }
@@ -233,13 +253,13 @@ size_t AscendVmmAdapter::EagerFreeDeviceMem(const DeviceMemPtr addr, const size_
       MS_LOG(ERROR) << "Unmap memory failed.";
       return 0;
     }
-    handle_queue_.push(iter->second);
+    cached_handle_sets_.insert(iter->second);
     iter->second = nullptr;
     iter++;
     vmm_start_addr = vmm_end_addr;
     ret_size += kVmmAlignSize;
   }
-  MS_LOG(DEBUG) << "After eager free, handle_queue_ size : " << handle_queue_.size()
+  MS_LOG(DEBUG) << "After eager free, cached_handle_sets_ size : " << cached_handle_sets_.size()
                 << ", expected free size : " << size << ", real size : " << ret_size << ".";
   return ret_size;
 }

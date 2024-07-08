@@ -489,6 +489,8 @@ size_t DynamicMemPoolBestFit::CalMemBlockAllocSize(size_t size, bool from_persis
 }
 
 const size_t DynamicMemPoolBestFit::FreeIdleMemsByEagerFree() {
+  eager_free_count_++;
+
   auto eager_free_mem_func = [&](MemStatusManagerPtr &mem_mng) {
     const auto &stream_ids = mem_mng->GetStreamIds();
     for (const auto &stream_id : stream_ids) {
@@ -538,9 +540,36 @@ const size_t DynamicMemPoolBestFit::FreeIdleMemsByEagerFree() {
     std::cout << "Total eager free memory : " << free_size << ", real free : " << real_free_size
               << ", not free size: " << (free_size - real_free_size) << "." << std::endl;
   }
-  MS_LOG(INFO) << "Total eager free memory : " << free_size << ", real free : " << real_free_size
-               << ", not free size: " << (free_size - real_free_size) << ".";
+  MS_LOG(INFO) << "Eager free count : " << eager_free_count_ << ", free memory : " << free_size
+               << ", real free : " << real_free_size << ", not free size: " << (free_size - real_free_size) << ".";
   return real_free_size;
+}
+
+void DynamicMemPoolBestFit::DefragMemory() {
+  MS_LOG(DEBUG) << "Start defrag memory.";
+#ifdef __APPLE__
+  std::lock_guard<SpinLock> spin_lock(spin_lock_);
+#else
+  std::lock_guard<std::mutex> locker(mutex_);
+#endif
+
+  // eager free count initialize with 0, and increase by initializing persistent pool and common pool.
+  if (eager_free_count_ <= 2L) {
+    MS_LOG(DEBUG) << "Exit defrag memory since eager free count is 0.";
+    return;
+  }
+  if (last_eager_free_count_ == eager_free_count_) {
+    MS_LOG(DEBUG) << "Exit defrag memory since last eager free count equals to eager free count : "
+                  << last_eager_free_count_ << ".";
+    return;
+  }
+
+  MS_LOG(INFO) << "Try to defrag memory.";
+  if (!SyncAllStreams()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Sync all streams failed.";
+  }
+  FreeIdleMemsByEagerFree();
+  last_eager_free_count_ = eager_free_count_;
 }
 
 bool DynamicMemPoolBestFit::IsSplit(size_t tensor_size, size_t mem_buf_size) const {

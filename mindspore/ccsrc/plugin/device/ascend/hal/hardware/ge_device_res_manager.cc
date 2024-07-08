@@ -174,6 +174,8 @@ void GeDeviceResManager::FreePartMemorys(const std::vector<void *> &free_addrs, 
   AscendMemoryPool::GetInstance().FreePartTensorMems(free_addrs, keep_addrs, keep_addr_sizes);
 }
 
+void GeDeviceResManager::DefragMemory() { AscendMemoryPool::GetInstance().DefragMemory(); }
+
 // Relevant function to manage memory statistics
 size_t GeDeviceResManager::GetTotalMemStatistics() const {
   MS_EXCEPTION_IF_NULL(mem_manager_);

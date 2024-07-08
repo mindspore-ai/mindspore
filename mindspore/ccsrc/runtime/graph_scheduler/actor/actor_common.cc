@@ -22,6 +22,7 @@
 #include "ops/structure_op_name.h"
 #include "runtime/graph_scheduler/device_tensor_store.h"
 #include "utils/ms_context.h"
+#include "utils/ms_utils.h"
 #include "include/common/utils/anfalgo.h"
 #include "include/backend/distributed/ps/ps_context.h"
 #include "utils/phase.h"
@@ -287,6 +288,28 @@ bool EnableKbkSubGraphExecute() {
   MS_EXCEPTION_IF_NULL(ms_context);
   static const bool enable_internal_kernels = ms_context->IsEnableInferBoost();
   return enable_internal_kernels;
+}
+
+size_t GetDefragMemoryStepFreq() {
+  static size_t defrag_memory_step_freq = 100L;
+
+  static std::once_flag init_flag;
+  std::call_once(init_flag, [&]() {
+    MS_LOG(INFO) << "Init defrag memory step freq.";
+    const auto &value = common::GetConfigValue(common::kAllocConf, common::kAllocDefragMemoryStepFreq);
+    MS_LOG(INFO) << "Config defrag memory step freq : " << value << ".";
+    if (value.size() != 0) {
+      std::stringstream sstream(value);
+      size_t config_value;
+      sstream >> config_value;
+      if (config_value != 0) {
+        defrag_memory_step_freq = config_value;
+      }
+    }
+    MS_LOG(INFO) << "Defrag memory step freq : " << defrag_memory_step_freq << ".";
+  });
+
+  return defrag_memory_step_freq;
 }
 
 bool WaitRuntimePipelineFinish(const OpContext<DeviceTensor> *context, bool wait_kernel_launch_finish) {
