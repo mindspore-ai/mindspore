@@ -626,7 +626,8 @@ bool IsNodeValid(const AnfNodePtr &node) {
     if (std::any_of(func_graph->parameters().begin(), func_graph->parameters().end(), [](const AnfNodePtr &para) {
           return para != nullptr && para->abstract() != nullptr &&
                  para->abstract()->isa<abstract::AbstractSequence>() &&
-                 para->abstract()->cast<abstract::AbstractSequencePtr>()->size() > 1;
+                 (para->abstract()->cast<abstract::AbstractSequencePtr>()->dynamic_len() ||
+                  para->abstract()->cast<abstract::AbstractSequencePtr>()->size() > 1);
         })) {
       MS_LOG(INFO) << "Disable switch inline for tuple input in graph:" << func_graph->ToString()
                    << " for partial node:" << node->DebugString();

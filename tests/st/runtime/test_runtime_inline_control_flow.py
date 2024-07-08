@@ -12,10 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mindspore import Tensor, jit, ops, mutable, nn, lazy_inline
+from mindspore import Tensor, jit, ops, mutable, nn, lazy_inline, export, load, context
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
-from mindspore.nn import Cell
+from mindspore.nn import Cell, GraphCell
 import mindspore.ops.operations as P
 import numpy as np
 import pytest
@@ -1038,3 +1038,62 @@ def test_lazy_inline():
     grad_net = GradNet(net)
     grad_net(x, y)
     grad_net(x, y)
+
+
+class TupleParaNet(Cell):
+    def __init__(self):
+        super(TupleParaNet, self).__init__()
+        self.add = ops.Add()
+    def construct(self, paralist):
+        length = len(list)
+        if length >= 2:
+            x1 = paralist[0]
+            x2 = paralist[length - 1]
+            return self.add(x1, x2)
+        return paralist[0]
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_tuple_parameter():
+    """
+    Feature: Contrtol flow inline.
+    Description: Tuple parameter.
+    Expectation: Not throw exception.
+    """
+    context.set_context(mode=context.GRAPH_MODE, jit_config={"jit_level": "O0"})
+    net = TupleParaNet()
+    input_2_ele = mutable((2, 3), dynamic_len=True)
+    export(net, input_2_ele, file_name="test.mindir", file_format="MINDIR")
+    input_3_ele = mutable((2, 2, 3), dynamic_len=False)
+    y = load("test.mindir")
+    mindir_load = GraphCell(y)
+    print(mindir_load(input_3_ele))
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_call_same_graph():
+    """
+    Feature: Contrtol flow inline.
+    Description: Two call node call same graph.
+    Expectation: Not throw exception.
+    """
+    param_a = Parameter(Tensor(5, mstype.float32), name='a')
+
+    @jit
+    def foo(x, y, param_a):
+        out = Tensor(1, mstype.float32)
+        for i in range(0, 2):
+            if x + i < y:
+                out += param_a
+                break
+        return out
+
+    x = Tensor(2, mstype.int32)
+    ret = foo(x, x, param_a)
+    assert ret
