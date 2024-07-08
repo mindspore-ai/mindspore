@@ -2073,7 +2073,7 @@ def inverse(input):
 
     Args:
         input (Tensor): A matrix to be calculated. Input `input` must be at least two dimensions, and the size of
-            the last two dimensions must be the same size.
+            the last two dimensions must be the same size. And the matrix must be invertible.
 
     Returns:
         Tensor, has the same type and shape as input `input`.
@@ -3174,6 +3174,7 @@ def eq(input, other):
 
     Note:
         - `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+        - The input must be two Tensors, or a Tensor and a Scalar.
         - The shapes of the inputs can be broadcasted to each other.
 
     Args:
@@ -8073,7 +8074,7 @@ def matmul(input, other):
         ValueError: If the last dimension of `input` is not the same size as the
             second-to-last dimension of `other`, or if a scalar value is passed in.
         ValueError: If the shape of `input` and `input` could not broadcast together.
-        RuntimeError: If the rank of `input` or `other` is less than 1 or greater than 6.
+        RuntimeError: If the rank of `input` or `other` is less than 1 or greater than 6 on the Ascend platform.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``

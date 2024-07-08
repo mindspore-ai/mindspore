@@ -24,4 +24,4 @@ mindspore.ops.sum
         - **TypeError** - `input` 不是Tensor类型。
         - **TypeError** - `dim` 类型不是int，tulpe(int)，list(int)，Tensor或None。
         - **ValueError** - `dim` 取值不在 :math:`[-input.ndim, input.ndim)` 范围。
-        - **TypeError** - `keepdim` 不是Tensor类型。
+        - **TypeError** - `keepdim` 不是bool类型。

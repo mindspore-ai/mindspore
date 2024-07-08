@@ -5788,8 +5788,8 @@ def fold(input, output_size, kernel_size, dilation=1, padding=0, stride=1):
         A Tensor, with same type as `input` . And its shape is as described above.
 
     Raises:
-        TypeError: If `kernel_size`, `dilation`, `padding`, `stride` data type is not int, tuple or list.
-        ValueError: If `kernel_size`, `dilation`, `stride` value is not
+        TypeError: If `output_size`, `kernel_size`, `stride`, `dilation`, `padding` data type is not int, tuple or list.
+        ValueError: If `output_size`, `kernel_size`, `dilation`, `stride` value is not
             greater than zero or elements number more than `2`.
         ValueError: If `padding` value is less than zero or elements number more than `2`.
         ValueError: If `input.shape[1] != kernel_size[0] * kernel_size[1]`

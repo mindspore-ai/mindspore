@@ -1056,7 +1056,8 @@ def rand_ext(*size, generator=None, dtype=None):
         size (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g. :math:`(2, 3)` or :math:`2`.
 
     Keyword Args:
-        generator (:class:`mindspore.Generator`, optional): a pseudorandom number generator. Default: ``None`` .
+        generator (:class:`mindspore.Generator`, optional): a pseudorandom number generator.
+            Default: ``None``, uses the default pseudorandom number generator.
         dtype (:class:`mindspore.dtype`, optional): Designated tensor dtype, it must be float type. If None,
             `mindspore.float32` will be applied. Default: ``None`` .
 

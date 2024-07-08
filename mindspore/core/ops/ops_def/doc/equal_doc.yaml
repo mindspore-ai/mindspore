@@ -13,6 +13,7 @@ equal:
 
     Note:
         - `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+        - The input must be two Tensors, or a Tensor and a Scalar.
         - The shapes of the inputs can be broadcasted to each other.
 
     Args:
