@@ -36,4 +36,4 @@ def test_sum():
     in2 = Tensor(np_data2)
 
     reducesum = ops.ReduceSum(keep_dims=True)
-    TEST_OP(reducesum, [[in1, (0,)], [in2, (1,)]], '', disable_yaml_check=True)
+    TEST_OP(reducesum, [[in1, [0]], [in2, [1]]], '', disable_yaml_check=True)
