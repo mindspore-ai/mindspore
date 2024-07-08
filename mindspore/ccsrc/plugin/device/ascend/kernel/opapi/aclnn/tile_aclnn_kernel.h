@@ -35,6 +35,9 @@ class TileAscend : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+  void GetAdaptedMultiples(KernelTensor *x_tensor, KernelTensor *multiples_tensor);
+
+  std::vector<int64_t> multiples_;
 };
 }  // namespace kernel
 }  // namespace mindspore
