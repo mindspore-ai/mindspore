@@ -27,6 +27,7 @@
 #include "ir/value.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
+#include "frontend/optimizer/irpass/parameter_eliminate.h"
 #include "pipeline/jit/ps/resource.h"
 #include "include/common/debug/draw.h"
 #include "include/common/debug/anf_ir_dump.h"
@@ -604,8 +605,15 @@ TEST_F(TestOptLib, test_sparse_tensor) {
 TEST_F(TestOptLib, test_partial_unused_args_eliminate) {
   FuncGraphPtr before_fg = getPyFun.CallAndParseRet("test_partial_unused_args_eliminate", "before");
   FuncGraphPtr after_fg = getPyFun.CallAndParseRet("test_partial_unused_args_eliminate", "after");
-  auto patterns = std::vector<SubstitutionPtr>({irpass.partial_unused_args_eliminate_});
-  ASSERT_TRUE(CheckOpt(before_fg, after_fg, patterns));
+  equiv_node.clear();
+  equiv_graph.clear();
+  ASSERT_NE(before_fg, nullptr);
+  ASSERT_NE(after_fg, nullptr);
+  auto manager = Manage(before_fg, true);
+  //OptimizerPtr optimizer = std::make_shared<Optimizer>("ut_test", std::make_shared<pipeline::Resource>());
+  auto opt = opt::irpass::PartialUnusedArgsEliminate();
+  opt(before_fg);
+  ASSERT_TRUE(Isomorphic(before_fg, after_fg, &equiv_graph, &equiv_node));
 }
 }  // namespace opt
 }  // namespace mindspore
