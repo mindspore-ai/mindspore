@@ -2267,6 +2267,11 @@ REG_BPROP_BUILDER("BCEWithLogitsLoss").SetUnusedInputs({i4}).SetBody(BODYFUNC(ib
 
   NodePtr grad_input = nullptr;
   if (input->need_compute_grad_out()) {
+    if (ib->GetDtype(input) != ib->GetDtype(target)) {
+      MS_LOG(DEBUG) << "For 'BinaryCrossEntropyWithLogitsBackward', cast 'input' dtype to 'target' dtype, input: "
+                    << input->ToString() << ", target: " << target->ToString();
+      target = ib->Cast(target, ib->GetDtype(input));
+    }
     grad_input = ib->Emit("BinaryCrossEntropyWithLogitsBackward", {dout, input, target, weight, posweight, reduction});
   } else {
     grad_input = ib->OutZeros(input);
