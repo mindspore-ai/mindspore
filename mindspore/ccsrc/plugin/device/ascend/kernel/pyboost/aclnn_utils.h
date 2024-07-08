@@ -45,8 +45,8 @@
     if (ws_size == 0) {                                                                                              \
       DISPATCH_LAUNCH_KERNEL(device_context, aclnn_name, nullptr, 0, executor_handle, stream_ptr, release_function); \
     } else {                                                                                                         \
-      auto work_ptr = MemBlock(device_context, ws_size, stream_id);                                                \
-      DISPATCH_LAUNCH_KERNEL(device_context, aclnn_name, work_ptr.ptr_, ws_size, executor_handle, stream_ptr,        \
+      auto work_ptr = std::make_shared<MemBlock>(device_context, ws_size, stream_id);                                \
+      DISPATCH_LAUNCH_KERNEL(device_context, aclnn_name, work_ptr->ptr_, ws_size, executor_handle, stream_ptr,       \
                              release_function);                                                                      \
     }                                                                                                                \
     static auto sync = MsContext::GetInstance()->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_SYNCHRONIZE);                \
@@ -80,8 +80,8 @@
     if (ws_size == 0) {                                                                                       \
       LAUNCH_KERNEL(aclnn_name, nullptr, 0, executor_handle, stream_ptr);                                     \
     } else {                                                                                                  \
-      auto work_ptr = MemBlock(device_context, ws_size, real_stream_id);                                    \
-      LAUNCH_KERNEL(aclnn_name, work_ptr.ptr_, ws_size, executor_handle, stream_ptr);                         \
+      auto work_ptr = std::make_shared<MemBlock>(device_context, ws_size, real_stream_id);                    \
+      LAUNCH_KERNEL(aclnn_name, work_ptr->ptr_, ws_size, executor_handle, stream_ptr);                        \
     }                                                                                                         \
     if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                                   \
       MS_LOG(EXCEPTION) << "SyncStream failed for op " << aclnn_name;                                         \
@@ -105,6 +105,7 @@ struct MemBlock {
   void *ptr_;
   const DeviceContext *device_context_;
 };
+using MemBlockPtr = std::shared_ptr<MemBlock>;
 int8_t GetCubeMathType();
 std::pair<int64_t, int64_t> UpdateGeneratorState(const tensor::BaseTensorPtr &seed, const tensor::BaseTensorPtr &offset,
                                                  int64_t step = 10);

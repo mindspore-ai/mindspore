@@ -189,8 +189,10 @@ class ApiCachePool {
     uint64_t *workspace_size_addr = &workspace_size;                                                              \
     transform::aclOpExecutor **executor_addr = &executor;                                                         \
     if (HitCache(api_name, executor_addr, workspace_size_addr, args...)) {                                        \
+      MS_LOG(DEBUG) << "gen executor aclnn cache hit.";                                                                                                            \
       return std::make_tuple(workspace_size, executor, release_func);                                             \
     }                                                                                                             \
+    MS_LOG(DEBUG) << "gen executor aclnn cache miss.";                                                                                                              \
     auto init_mem_func = transform::OpApiDefaultResource::GetInstance().init_mem_func();                          \
     if (init_mem_func) {                                                                                          \
       init_mem_func(nullptr, false);                                                                              \
