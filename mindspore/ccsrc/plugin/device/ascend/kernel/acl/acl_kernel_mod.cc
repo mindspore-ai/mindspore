@@ -124,7 +124,6 @@ void AclKernelMod::PackageOutput(const size_t idx, const ShapeVector &shape) {
   tensor_size = dev_shape.empty()
                   ? type_size
                   : std::accumulate(dev_shape.begin(), dev_shape.end(), type_size, std::multiplies<size_t>());
-  tensor_size = std::max(tensor_size, type_size);
   params.ori_shape = shape;
   params.dev_shape = dev_shape;
   output_size_list_[idx] = tensor_size;
