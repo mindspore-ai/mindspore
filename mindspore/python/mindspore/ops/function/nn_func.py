@@ -48,6 +48,7 @@ from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d
                                          constant_pad_nd_op, dropout_ext_op, reverse_v2_impl)
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
 from mindspore.common.generator import default_generator
+from mindspore.ops.auto_generate import hardshrink
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -1909,55 +1910,6 @@ def kl_div(logits, labels, reduction='mean'):
         return kl_div_sum / total_size
 
     return _get_cache_prim(P.KLDivLoss)(reduction=reduction)(logits, labels)
-
-
-def hardshrink(x, lambd=0.5):
-    r"""
-    Hard Shrink activation function. Calculates the output according to the input elements.
-
-    The formula is defined as follows:
-
-    .. math::
-        \text{HardShrink}(x) =
-        \begin{cases}
-        x, & \text{ if } x > \lambda \\
-        x, & \text{ if } x < -\lambda \\
-        0, & \text{ otherwise }
-        \end{cases}
-
-    HShrink Activation Function Graph:
-
-    .. image:: ../images/HShrink.png
-        :align: center
-
-    Args:
-        x (Tensor): The input of Hard Shrink with data type of float16 or float32.
-        lambd (float, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula.
-            Default: ``0.5`` .
-
-    Returns:
-        Tensor, has the same data type and shape as the input `x`.
-
-    Raises:
-        TypeError: If `lambd` is not a float.
-        TypeError: If `x` is not a tensor.
-        TypeError: If dtype of `x` is neither float16 nor float32.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([[ 0.5,  1,  2.0], [0.0533,0.0776,-2.1233]]), mindspore.float32)
-        >>> output = ops.hardshrink(x)
-        >>> print(output)
-        [[ 0.      1.      2.    ]
-        [ 0.      0.     -2.1233]]
-    """
-    hshrink_op = _get_cache_prim(P.HShrink)(lambd)
-    return hshrink_op(x)
 
 
 @constexpr

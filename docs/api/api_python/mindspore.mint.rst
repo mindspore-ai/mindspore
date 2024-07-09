@@ -181,6 +181,16 @@ mindspore.mint.nn
     mindspore.mint.nn.Fold
     mindspore.mint.nn.Unfold
 
+非线性激活层 (加权和，非线性)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.Hardshrink
+
 线性层
 ^^^^^^^^^^^^^^^^^^
 
@@ -247,6 +257,7 @@ mindspore.mint.nn.functional
     mindspore.mint.nn.functional.elu
     mindspore.mint.nn.functional.gelu
     mindspore.mint.nn.functional.group_norm
+    mindspore.mint.nn.functional.hardshrink
     mindspore.mint.nn.functional.layer_norm
     mindspore.mint.nn.functional.leaky_relu
     mindspore.mint.nn.functional.relu

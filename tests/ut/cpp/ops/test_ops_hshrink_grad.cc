@@ -70,18 +70,23 @@ TEST_P(TestHShrinkGrad, hshrink_grad_dyn_shape) {
 auto HShrinkGradOpShapeTestCases = testing::ValuesIn({
   /* static */
   HShrinkGradShape{{2, 3, 4}, {2, 3, 4}, CreateScalar(0.5), {2, 3, 4}},
+  HShrinkGradShape{{1, 2, 3}, {1, 2, 3}, CreateScalar(False), {1, 2, 3}},
+  HShrinkGradShape{{3, 4, 2}, {3, 4, 2}, CreateScalar(4), {3, 4, 2}},
   /* dynamic shape */
   HShrinkGradShape{{-1}, {-1}, CreateScalar(0.3), {-1}},
-  HShrinkGradShape{{-1, 2, 4}, {-1, 2, 4}, CreateScalar(0.5), {-1, 2, 4}},
-  HShrinkGradShape{{5, 3, -1, 2, 1}, {5, 3, -1, 2, 1}, CreateScalar(0.1), {5, 3, -1, 2, 1}},
+  HShrinkGradShape{{-1, 2, 4}, {-1, 2, 4}, CreateScalar(True), {-1, 2, 4}},
+  HShrinkGradShape{{5, 3, -1, 2, 1}, {5, 3, -1, 2, 1}, CreateScalar(3), {5, 3, -1, 2, 1}},
   HShrinkGradShape{{5, 3, -1, 2}, {5, 3, -1, 2, 1, 4, 7, 4}, CreateScalar(-0.4), {5, 3, -1, 2, 1, 4, 7, 4}},
   /* dynamic rank */
   HShrinkGradShape{{-2}, {-2}, CreateScalar(0.5), {-2}},
+  HShrinkGradShape{{-2}, {-2}, CreateScalar(False), {-2}},
+  HShrinkGradShape{{-2}, {-2}, CreateScalar(4), {-2}},
 });
 
 auto HShrinkGradOpTypeTestCases = testing::ValuesIn({
   HShrinkGradDtype{kFloat16, kFloat16, kFloat16},
   HShrinkGradDtype{kFloat32, kFloat32, kFloat32},
+  HShrinkGradDtype{kBFloat16, kBFloat16, kBFloat16},
 });
 
 INSTANTIATE_TEST_CASE_P(TestHShrinkGrad, TestHShrinkGrad,

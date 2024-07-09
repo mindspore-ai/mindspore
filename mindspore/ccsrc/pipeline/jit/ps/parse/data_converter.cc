@@ -1540,6 +1540,14 @@ ValuePtr ConvertTensorToNumber(const py::object &obj) {
   }
 }
 
+ValuePtr ConvertBoolOrIntToFloat(const py::object &obj) {
+  // bool is also an instance of py::int_
+  if (!py::isinstance<py::int_>(obj)) {
+    return nullptr;
+  }
+  return ConvertFloatWithType(obj);
+}
+
 static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
   // convert functions without type_cast
   {(int32_t)mindspore::ops::DT_BOOL, ConvertBool},
@@ -1656,6 +1664,9 @@ static const std::unordered_map<int32_t, OpDefConvertFunc> kConverters = {
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_FLOAT), ConvertTensorToFloat},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_BOOL), ConvertTensorToBool},
   {CombineTypesForTypeCast(mindspore::ops::DT_TENSOR, mindspore::ops::DT_NUMBER), ConvertTensorToNumber},
+
+  // TypeCas6: convert int/bool to float
+  {CombineTypesForTypeCast(mindspore::ops::DT_INT, mindspore::ops::DT_FLOAT), ConvertBoolOrIntToFloat},
 };
 
 OpDefConvertFunc GetConverterByType(int32_t dtype) {

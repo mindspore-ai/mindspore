@@ -182,6 +182,16 @@ Convolution Layers
     mindspore.mint.nn.Fold
     mindspore.mint.nn.Unfold
 
+Non-linear Activations (weighted sum, nonlinearity)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.Hardshrink
+
 Linear Layers
 ^^^^^^^^^^^^^^^^^^
 
@@ -248,6 +258,7 @@ Non-linear activation functions
     mindspore.mint.nn.functional.elu
     mindspore.mint.nn.functional.gelu
     mindspore.mint.nn.functional.group_norm
+    mindspore.mint.nn.functional.hardshrink
     mindspore.mint.nn.functional.layer_norm
     mindspore.mint.nn.functional.leaky_relu
     mindspore.mint.nn.functional.relu

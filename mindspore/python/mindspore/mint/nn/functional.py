@@ -221,11 +221,14 @@ from mindspore.ops.function.math_func import tanh
 
 # 100
 from mindspore.ops.function import binary_cross_entropy_with_logits as bce_with_logits
+# 220
+from mindspore.ops.function.nn_func import hardshrink # pylint: disable=W0611
 # 323
 
 # 324
 from mindspore.ops.auto_generate import elu_ext as elu
 # 325
+
 
 
 def binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean', pos_weight=None):
@@ -360,7 +363,6 @@ def one_hot(tensor, num_classes=-1):
          [0 0 1]]
     """
     return one_hot_ext(tensor, num_classes)
-
 
 __all__ = [
     'conv_transpose2d',

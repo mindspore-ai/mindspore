@@ -20,6 +20,9 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
+#include "ops/op_utils.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace ops {
@@ -39,10 +42,27 @@ TypePtr HShrinkFuncImpl::InferType(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   auto x_type = input_args[kInputIndex0]->GetType();
   MS_EXCEPTION_IF_NULL(x_type);
-  const std::set<TypePtr> valid_types = {kFloat16, kFloat32};
-  (void)CheckAndConvertUtils::CheckTensorTypeValid("input_x", x_type, valid_types, primitive->name());
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kBFloat16};
+  auto tensor_type = x_type->cast<TensorTypePtr>();
+  auto real_type = tensor_type->element();
+  (void)CheckAndConvertUtils::CheckSubClass("input_x", real_type, valid_types, primitive->name());
   return x_type->Clone();
 }
 
+TypePtrList HShrinkFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kBFloat16};
+  const auto &input_type = x_tensor->Dtype();
+  (void)CheckAndConvertUtils::CheckSubClass("input_x", input_type, valid_types, primitive->name());
+  return {input_type};
+}
+
+ShapeArray HShrinkFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameHShrink, HShrinkFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
