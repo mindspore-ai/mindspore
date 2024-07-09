@@ -210,7 +210,7 @@ mindspore.set_context
             请查询 `昇腾社区 <https://www.hiascend.com/>`_ 了解。
           - **conv_allow_hf32** (bool): 是否为Conv类算子使能FP32转换为HF32。默认值： ``True``。这是一个实验特性，可能会被更改或者删除。如果您想了解更多详细信息，
             请查询 `昇腾社区 <https://www.hiascend.com/>`_ 了解。
-          - **exception_dump** (str): 开启Ascend算子异常dump，提供计算异常时候的输入输出信息。可以为 ``"0"``，``"1"``，``"2"``。为 ``"0"`` 时关闭异常dump；为 ``"1"`` 时dump出AICore和AICPU异常算子输入输出数据；为 ``"2"`` 时dump出AICore异常算子输入数据。默认值： ``"2"``。
+          - **exception_dump** (str): 开启Ascend算子异常dump，提供计算异常时候的输入输出信息。可以为 ``"0"``，``"1"``，``"2"``。为 ``"0"`` 时关闭异常dump；为 ``"1"`` 时dump出AICore异常算子输入输出数据；为 ``"2"`` 时dump出AICore异常算子输入数据，保存信息减少，但可提升性能。默认值： ``"2"``。
           - **op_precision_mode** (str): 算子精度模式配置文件的所在路径。如果您想了解更多详细信息, 请查询 `昇腾社区 <https://www.hiascend.com/>`_ 了解。
           - **op_debug_option** (str): 表示Ascend算子调试配置，默认不开启，当前只支持内存访问越界检测，可配置为 ``oom`` 。
 
