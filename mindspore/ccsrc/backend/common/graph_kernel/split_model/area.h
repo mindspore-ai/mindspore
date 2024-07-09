@@ -71,6 +71,7 @@ class Area : public std::enable_shared_from_this<Area> {
   std::vector<AreaPtr> inputs() const;
   EdgeRelation input_relation(size_t i) const { return inputs_with_relation_[i].second; }
   const std::vector<AreaWithRelation> &inputs_with_relation() const { return inputs_with_relation_; }
+  std::vector<NodePtr> &area_outputs() { return area_outputs_; }
   size_t input_num() const { return inputs_with_relation_.size(); }
   // get the number of operators in the area
   size_t size() const { return ops_.size(); }
@@ -110,6 +111,8 @@ class Area : public std::enable_shared_from_this<Area> {
   // The `hd_->inputs` stores the NodeHandle of `this` area, to maintain the user edges.
   // They should always be in sync.
   std::vector<AreaWithRelation> inputs_with_relation_;
+
+  NodePtrList area_outputs_;
 };
 }  // namespace mindspore::graphkernel::inner
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_SPLIT_MODEL_AREA_H_

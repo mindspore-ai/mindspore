@@ -123,6 +123,7 @@ AreaPtr SplitModel::NewArea(const PrimOpPtr &op, bool is_output) {
   (void)areas_.emplace_back(new_area);
   node_area_map_[op] = new_area;
   SetDefaultAreaMode(new_area);
+  UpdateAreaOutput(new_area);
   return new_area;
 }
 
@@ -231,20 +232,29 @@ void SplitModel::FuseAreas(const AreaPtr &dom, const std::vector<AreaPtr> &areas
     return;
   }
   auto target = dom;
-  for (auto a : areas) {
-    if (direction == FuseDirection::BACKWARD) {
+  if (direction == FuseDirection::BACKWARD) {
+    for (auto a : areas) {
       // always use back node to fuse the front node.
       std::swap(target, a);
+      target->FuseInput(a);
+      reach_table_->FuseArea(target->id(), a->id());
     }
-    for (auto &op : a->ops()) {
+    for (auto &op : target->ops()) {
       node_area_map_[op] = target;
     }
-    target->FuseInput(a);
-    reach_table_->FuseArea(target->id(), a->id());
+  } else {
+    for (auto a : areas) {
+      for (auto &op : target->ops()) {
+        node_area_map_[op] = target;
+      }
+      target->FuseInput(a);
+      reach_table_->FuseArea(target->id(), a->id());
+    }
   }
   if (target->pattern() > NodePattern::RESHAPE) {
     target->SetMode(AreaMode::COMPOSITE);
   }
+  UpdateAreaOutput(target);
 }
 
 bool SplitModel::RunOnePattern(const FusePatternPtr &pattern) {
@@ -286,6 +296,20 @@ void SplitModel::RunFusePatterns() {
       iter = areas_.erase(iter);
     } else {
       ++iter;
+    }
+  }
+}
+
+void SplitModel::UpdateAreaOutput(const AreaPtr &area) const {
+  auto &area_outputs = area->area_outputs();
+  area_outputs.clear();
+  for (auto &ops : area->ops()) {
+    for (auto &[user, _] : ops->users()) {
+      auto iter = node_area_map_.find(user->shared_from_this());
+      if (iter == node_area_map_.end() || iter->second.get() != area.get()) {
+        (void)area_outputs.emplace_back(ops);
+        break;
+      }
     }
   }
 }
