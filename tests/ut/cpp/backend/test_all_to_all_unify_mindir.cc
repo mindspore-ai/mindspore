@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <memory>
-#include "backend/graph_optimizer_test_framework.h"
+#include "common/graph_optimizer_test_framework.h"
 #include "ops/sequence_ops.h"
 #include "common/common_test.h"
 #include "plugin/device/ascend/optimizer/mindir/all_to_all_unify_mindir.h"

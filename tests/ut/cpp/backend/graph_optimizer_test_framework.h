@@ -14,39 +14,9 @@
  * limitations under the License.
  */
 
+// this file is moved to common dir, to avoid compiling error when sync code, put a head file in backend dir now.
+// this file should be deleted after the code is merged into master.
 #ifndef UT_CPP_BACKEND_GRAPH_OPTIMIZER_TEST_FRAMEWORK_
 #define UT_CPP_BACKEND_GRAPH_OPTIMIZER_TEST_FRAMEWORK_
-
-#include "include/backend/optimizer/optimizer.h"
-#include "include/backend/kernel_graph.h"
-
-namespace mindspore::test {
-void RunPass(const FuncGraphPtr &graph, const std::vector<opt::PassPtr> &passes);
-
-class ConstructGraph {
- public:
-  ConstructGraph();
-  const std::shared_ptr<session::KernelGraph> &GetGraph() const;
-  ParameterPtr NewScalarInput(const std::string &name, const TypePtr &type);
-  ParameterPtr NewTensorInput(const std::string &name, const TypePtr &type, const ShapeVector &shape);
-  ParameterPtr NewTupleInput(const std::string &name, const std::vector<std::pair<TypePtr, ShapeVector>> &pairs);
-  ParameterPtr NewListInput(const std::string &name, const std::vector<std::pair<TypePtr, ShapeVector>> &pairs);
-
-  ValueNodePtr NewValueNode(const ValuePtr &value);
-  CNodePtr NewCNodeWithoutInfer(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
-                                const mindspore::HashMap<std::string, ValuePtr> &attrs);
-  CNodePtr NewCNode(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
-                    const mindspore::HashMap<std::string, ValuePtr> &attrs);
-  void SetOutput(const AnfNodePtr &node);
-  void SetGeneralBuildInfo(const AnfNodePtr &node);
-
- private:
-  ParameterPtr NewInput(const std::string &name, const AbstractBasePtr &abs);
-
-  std::shared_ptr<session::KernelGraph> graph_;
-};
-}  // namespace mindspore::test
-
-#define UT_CHECK_NULL(pointer) ASSERT_NE(pointer, nullptr)
-
+#include "common/graph_optimizer_test_framework.h"
 #endif  // UT_CPP_BACKEND_GRAPH_OPTIMIZER_TEST_FRAMEWORK_

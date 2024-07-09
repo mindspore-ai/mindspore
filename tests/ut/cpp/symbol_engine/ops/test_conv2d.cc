@@ -15,7 +15,7 @@
  */
 
 #include "symbol_engine/ops/symbolic_shape_test_utils.h"
-#include "backend/graph_optimizer_test_framework.h"
+#include "common/graph_optimizer_test_framework.h"
 
 namespace mindspore::symshape::test {
 /// Feature: Symbolic shape for Conv2D
