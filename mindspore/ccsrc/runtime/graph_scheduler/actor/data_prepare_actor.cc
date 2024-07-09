@@ -309,7 +309,7 @@ void UpdateDeviceAddressByRefInputNode(const std::vector<KernelGraphPtr> &graphs
   }
 }
 
-bool IsNeedSync(const TensorPtr &tensor) {
+bool IsNeedSync(const TensorPtr &tensor, bool *is_sub_data) {
   if (RecoveryContext::GetInstance()->enable_recovery() &&
       RecoveryContext::GetInstance()->need_sync_weight_to_device()) {
     return true;
@@ -320,7 +320,11 @@ bool IsNeedSync(const TensorPtr &tensor) {
   }
   // Sub data need sync each step
   auto data_ptr = tensor->data_ptr();
-  return data_ptr != nullptr && data_ptr->is_sub_data();
+  auto sync_flag = (data_ptr != nullptr && data_ptr->is_sub_data());
+  if (sync_flag) {
+    *is_sub_data = sync_flag;
+  }
+  return sync_flag;
 }
 
 void SyncTensorTrunk(const std::vector<std::vector<TensorPtr>> &input_tensors) {
@@ -543,7 +547,8 @@ void DataPrepareActor::PrepareData(const std::vector<std::vector<TensorPtr>> &in
     auto ms_context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(ms_context);
     static const bool enable_infer_boost = ms_context->IsEnableInferBoost();
-    if (first_step_ || !tensors_need_reprepare_.empty() || (has_parameter_input_ && !enable_infer_boost)) {
+    if (first_step_ || !tensors_need_reprepare_.empty() || (has_parameter_input_ && !enable_infer_boost) ||
+        is_sub_data_) {
       PrepareDataForDeviceTensorStore(input_tensors, args, context);
     }
     PrepareDataForHostTensorQueue(input_tensors, args, context);
@@ -1280,7 +1285,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   MS_EXCEPTION_IF_NULL(device_tensor);
   auto host_tensor_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
   // Use the device address of host tensor to set device tensor.
-  bool is_need_sync = IsNeedSync(tensor);
+  bool is_need_sync = IsNeedSync(tensor, &is_sub_data_);
   if (host_tensor_address != device_tensor) {
     if (host_tensor_address == nullptr) {
       if (device_tensor->GetDeviceType() != device_context->GetDeviceType()) {
