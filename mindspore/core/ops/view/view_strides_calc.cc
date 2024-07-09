@@ -82,6 +82,10 @@ TensorStorageInfoPtrList ViewCalc(const PrimitivePtr &prim, const std::vector<Va
   }
 
   auto shape = GetValue<std::vector<int64_t>>(inputs[1]);
+  if (std::any_of(shape.begin(), shape.end(), [](const int &shape_i) { return shape_i < -1; })) {
+    MS_EXCEPTION(ValueError) << "For primitive[" << prim->name()
+                             << "], the component of shape can't be less than -1, but got " << shape;
+  }
 
   return ViewCalcImpl(prim, input_tensor, shape);
 }
