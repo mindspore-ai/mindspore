@@ -57,6 +57,7 @@
 #include "frontend/parallel/pass/full_micro_interleaved_order_control.h"
 #include "frontend/parallel/pass/assign_add_opt.h"
 #include "frontend/parallel/pass/float32_redistribution.h"
+#include "frontend/parallel/pass/swap_dp_allreduce_reducescatter.h"
 #include "frontend/parallel/pass/merge_cast_opt.h"
 #include "frontend/parallel/pass/remove_cast_before_assign_add.h"
 #include "frontend/parallel/pass/bias_add_comm_swap.h"
@@ -801,6 +802,12 @@ bool ForceFp32Comm(const ResourcePtr &resource) {
   return true;
 }
 
+bool SwapDpAllReduceReduceScatterPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::SwapDpAllreduceReduceScatter(resource->func_graph());
+  return true;
+}
+
 bool RemoveCastBeforeAssignAdd(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::RemoveCastBeforeAssignAdd(resource->func_graph());
@@ -1200,6 +1207,7 @@ std::vector<PassItem> kVmPasses = {{"py_interpret_to_execute", PyInterpretToExec
                                    {"add_recomputation", AddRecomputationPass},
                                    {"cse_after_recomputation", OptAfterRecomputeGroup},
                                    {"environ_conv", EnvironConversionPass},
+                                   {"swap_dp_allreduce_reducescatter", SwapDpAllReduceReduceScatterPass},
                                    {"bias_add_comm_swap", BiasAddCommSwap},
                                    {"label_micro_interleaved_index", LabelMicroInterleavedIndexPass},
                                    {"label_fine_grained_interleaved_index", LabelFineGrainedInterleavedIndexPass},
