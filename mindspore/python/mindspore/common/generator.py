@@ -127,6 +127,8 @@ class Generator:
         Returns:
             Generator, the generator instance.
         """
+        if not isinstance(seed, int):
+            raise TypeError("Seed must be an integer.")
         seed = Tensor(seed, mstype.int64)
         self._generator(MANUAL_SEED, (self._seed, self._offset, seed))
         return self
