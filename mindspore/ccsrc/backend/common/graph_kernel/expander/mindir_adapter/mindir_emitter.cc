@@ -37,6 +37,23 @@ NodePtrList MindirEmitter::Inputs(const CNodePtr &cnode) {
     auto node = inputs[i];
     // Tensor has no device type in build_info, so skip
     if (node->isa<ValueNode>()) {
+      if (node->kernel_info() != nullptr) {
+        auto build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
+        if (build_info != nullptr) {
+          auto outputs_format = build_info->GetAllOutputFormats();
+          auto node_input_format = AnfAlgo::GetInputFormat(cnode, i - 1);
+          // the format fetched from Tensor itself may be ND, but the format fetched from cnode's input may be
+          // DefaultFormat, the ND format is a wrong format which will pad the Tensor's shape from 2D to 4D,
+          // and cause later operator got a wrong input shape
+          if (outputs_format.size() == 1 && outputs_format[0] != node_input_format) {
+            MS_LOG(INFO) << "For node[" << cnode->fullname_with_scope() << "], inputs[" << (i - 1)
+                         << "] node: " << node->DebugString() << ", update its format from '" << outputs_format[0]
+                         << "' to '" << node_input_format << "'";
+            outputs_format[0] = node_input_format;
+            build_info->SetOutputsFormat(outputs_format);
+          }
+        }
+      }
       result[i - 1] = NewNode(node);
       continue;
     }

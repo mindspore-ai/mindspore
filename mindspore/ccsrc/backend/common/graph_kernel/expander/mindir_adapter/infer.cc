@@ -70,8 +70,15 @@ void InferByDeviceInfo::HandleInputs(const NodePtrList &inputs) {
   auto cb = Callback::Instance();
   for (auto &inp : inputs) {
     auto anfnode = inp->as<AnfNodePtr>();
-    auto value = anfnode->abstract()->BuildValue();
-    if (value->isa<tensor::Tensor>()) {
+    MS_EXCEPTION_IF_NULL(anfnode);
+    ValuePtr value = nullptr;
+    if (anfnode->isa<ValueNode>()) {
+      value = anfnode->cast<ValueNodePtr>()->value();
+    } else {
+      MS_EXCEPTION_IF_NULL(anfnode->abstract());
+      value = anfnode->abstract()->BuildValue();
+    }
+    if (value != nullptr && value->isa<tensor::Tensor>()) {
       auto tensor = value->cast<tensor::TensorPtr>();
       auto &t = inner_node_cache_[inp] = std::make_shared<inner::ConstTensorNode>(tensor);
       t->shape = tensor->shape();
