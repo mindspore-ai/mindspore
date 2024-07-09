@@ -696,7 +696,8 @@ AnfNodeIndexSet GetActualOpUsers(const AnfNodePtr &node, NodeUsersMap *node_user
                           << "'s range.";
       }
       temp_node = temp_params[IntToSize(index - 1)];
-    } else if (IsPrimitiveCNode(cuser, prim::kPrimLoad) || IsPrimitiveCNode(cuser, prim::kPrimCast)) {
+    } else if (IsPrimitiveCNode(cuser, prim::kPrimLoad) || IsPrimitiveCNode(cuser, prim::kPrimCast) ||
+               IsPrimitiveCNode(cuser, prim::kPrimMirrorSilentCheck)) {
       temp_node = cuser;
     }
     if (temp_node) {
@@ -1009,6 +1010,7 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   AnfNodePtr care_node;
   bool is_param = true;
   auto op_info_pair = GetOpInfoPair(parameter, parameter, &care_node, &is_param);
+  MS_EXCEPTION_IF_NULL(op_info_pair.first);
   auto tensor_info = GetTensorInfo(op_info_pair, is_param);
   auto index = op_info_pair.second;
   auto op_info = op_info_pair.first;
