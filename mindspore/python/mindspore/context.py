@@ -1544,8 +1544,9 @@ def set_context(**kwargs):
               For detailed information, please refer to `Ascend community <https://www.hiascend.com/>`_ .
             - exception_dump (str): Enable exception dump for Ascend operators, providing the input and output data for
               failing Ascend operators. The value can be ``"0"`` , ``"1"`` and ``"2"``. For ``"0"`` , exception dump is
-              turned off; for ``"1"``, all inputs and outputs will be dumped for AICore and AICPU exception operators;
-              for ``"2"``, inputs will be dumped for AICore exception operators. Default: ``"2"`` .
+              turned off; for ``"1"``, all inputs and outputs will be dumped for AICore exception operators;
+              for ``"2"``, inputs will be dumped for AICore exception operators, reducing the saved information
+              but improving performance. Default: ``"2"`` .
             - op_precision_mode (str): Path to config file of op precision mode. For detailed information, please refer
               to `Ascend community <https://www.hiascend.com/>`_ .
             - op_debug_option (str): Enable debugging options for Ascend operators, default not enabled.
