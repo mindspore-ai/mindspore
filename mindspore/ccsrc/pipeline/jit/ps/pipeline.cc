@@ -436,9 +436,8 @@ void ResetId(const ResourcePtr &resource) {
   }
 #endif
   mindspore::id_generator::reset_id();
-  auto manager = resource->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  for (const auto &node : manager->all_nodes()) {
+  const auto &all_nodes = TopoSort(resource->func_graph()->get_return(), SuccDeeperSimple);
+  for (const auto &node : all_nodes) {
     if (node != nullptr && node->isa<CNode>()) {
       const auto &cnode = node->cast<CNodePtr>();
       MS_EXCEPTION_IF_NULL(cnode);
