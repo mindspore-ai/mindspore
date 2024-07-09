@@ -1,9 +1,10 @@
 binary_cross_entropy_with_logits:
     description: |
-        Adds sigmoid activation function to input `logits`, and uses the given logits to compute binary cross entropy
-        between the logits and the label.
+        Adds sigmoid activation function to `input` as logits, and uses the given logits to compute binary cross entropy
+        between the logits and the target.
 
-        Sets input logits as :math:`X`, input label as :math:`Y`, input weight as :math:`W`, output as :math:`L`. Then,
+        Sets input `input` as :math:`X`, input `target` as :math:`Y`, input weight as :math:`W`, output as :math:`L`.
+        Then,
 
         .. math::
 
@@ -52,25 +53,25 @@ binary_cross_entropy_with_logits:
                 - ``'sum'``: the output elements will be summed.
 
         Inputs:
-            - **logits** (Tensor) - Input logits. Data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
+            - **input** (Tensor) - Input `input`. Data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
               Tensor of shape :math:`(N, *)` where :math:`*` means, any number of additional dimensions.
-            - **label** (Tensor) - Ground truth label, has the same shape as `logits`.
+            - **target** (Tensor) - Ground truth label, has the same shape as `input`.
               Data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
             - **weight** (Tensor) - A rescaling weight applied to the loss of each batch element. It can be
-              broadcast to a tensor with shape of `logits`. Data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
+              broadcast to a tensor with shape of `input`. Data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
             - **pos_weight** (Tensor) - A weight of positive examples. Must be a vector with length equal to the
-              number of classes. It can be broadcast to a tensor with shape of `logits`.
+              number of classes. It can be broadcast to a tensor with shape of `input`.
               Data type must be float16, float32 or bfloat16(only Atlas A2 series products are supported).
 
         Outputs:
-            Tensor or Scalar, if `reduction` is ``'none'``, it's a tensor with the same shape and type as input `logits`.
+            Tensor or Scalar, if `reduction` is ``'none'``, it's a tensor with the same shape and type as input `input`.
             Otherwise, the output is a scalar.
 
         Raises:
             TypeError: If any input is not Tensor.
             TypeError: If data type of any input is not float16, float32 or bfloat16.
             TypeError: If data type of `reduction` is not string.
-            ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `logits`.
+            ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `input`.
             ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
 
         Supported Platforms:
@@ -80,11 +81,11 @@ binary_cross_entropy_with_logits:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> logits = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mindspore.float32)
-            >>> label = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mindspore.float32)
+            >>> input = Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]), mindspore.float32)
+            >>> target = Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]), mindspore.float32)
             >>> weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
             >>> pos_weight = Tensor(np.array([1.0, 1.0, 1.0]), mindspore.float32)
             >>> loss = ops.BCEWithLogitsLoss()
-            >>> output = loss(logits, label, weight, pos_weight)
+            >>> output = loss(input, target, weight, pos_weight)
             >>> print(output)
             0.3463612

@@ -1,9 +1,9 @@
 #operator binary_cross_entropy_with_logits
 binary_cross_entropy_with_logits:
   args:
-    logits:
+    input:
       dtype: tensor
-    label:
+    target:
       dtype: tensor
     weight:
       dtype: tensor
