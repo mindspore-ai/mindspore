@@ -275,8 +275,14 @@ void AcmeKernelMod::UpdateAddr(const std::vector<KernelTensor *> &inputs, const 
 bool AcmeKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   UpdateAddr(inputs, outputs, workspace);
-  auto status = acme_op_->Launch(acme_inputs_addr_, acme_outputs_addr_, acme_wss_addr_, stream_ptr);
-  return (status == acme::kAcmeOk);
+  acme::AcmeStatus status = acme::AcmeStatus::kAcmeOk;
+  if (ascend_profiler_->GetEnableFlag()) {
+    status =
+      acme_op_->LaunchWithProfiling(acme_inputs_addr_, acme_outputs_addr_, acme_wss_addr_, stream_ptr, fullname_);
+  } else {
+    status = acme_op_->Launch(acme_inputs_addr_, acme_outputs_addr_, acme_wss_addr_, stream_ptr);
+  }
+  return (status == acme::AcmeStatus::kAcmeOk);
 }
 }  // namespace kernel
 }  // namespace mindspore

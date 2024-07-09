@@ -27,7 +27,8 @@ acme::AcmeOpPtr AcmeMatmul::CreateKernel(acme::InputsImmutableInfoList inputs, a
   acme::MatmulParam param;
   param.transpose_a = ms_inputs[2]->GetValueWithCheck<bool>();
   param.transpose_b = ms_inputs[3]->GetValueWithCheck<bool>();
-  return acme::CreateMatmulOp(inputs, outputs, param);
+  const std::string op_name = "MatMul";
+  return acme::CreateMatmulOp(inputs, outputs, param, op_name);
 }
 MS_ACME_KERNEL_FACTORY_REG(MatMul, AcmeMatmul);
 }  // namespace kernel

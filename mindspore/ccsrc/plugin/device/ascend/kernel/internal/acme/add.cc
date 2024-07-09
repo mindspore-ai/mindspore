@@ -25,7 +25,8 @@ acme::AcmeOpPtr AcmeAdd::CreateKernel(acme::InputsImmutableInfoList inputs_ii,
                                       acme::OutputsImmutableInfoList outputs_ii,
                                       const std::vector<KernelTensor *> &ms_inputs,
                                       const std::vector<KernelTensor *> &ms_outputs) {
-  return acme::CreateAddOp(inputs_ii, outputs_ii);
+  const std::string op_name = "Add";
+  return acme::CreateAddOp(inputs_ii, outputs_ii, op_name);
 }
 MS_ACME_KERNEL_FACTORY_REG(Add, AcmeAdd);
 }  // namespace kernel

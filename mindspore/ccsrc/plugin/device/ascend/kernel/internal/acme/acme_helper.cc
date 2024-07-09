@@ -49,6 +49,15 @@ acme::TensorFormat TransAcmeFormat(Format format) {
     {NCHW, acme::TensorFormat::kFormatNCHW},
     {NHWC, acme::TensorFormat::kFormatNHWC},
     {ND, acme::TensorFormat::kFormatND},
+    {NC1HWC0, acme::TensorFormat::kFormatNC1HWC0},
+    {FRACTAL_Z, acme::TensorFormat::kFormatFRACTAL_Z},
+    {NC1HWC0_C04, acme::TensorFormat::kFormatNC1HWC0_C04},
+    {HWCN, acme::TensorFormat::kFormatHWCN},
+    {NDHWC, acme::TensorFormat::kFormatNDHWC},
+    {FRACTAL_NZ, acme::TensorFormat::kFormatFRACTAL_NZ},
+    {NCDHW, acme::TensorFormat::kFormatNCDHW},
+    {NDC1HWC0, acme::TensorFormat::kFormatNDC1HWC0},
+    {FRACTAL_Z_3D, acme::TensorFormat::kFormatFRACTAL_Z_3D},
   };
 
   auto iter = kMSFormatToAcmeFormat.find(format);
