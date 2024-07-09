@@ -15,6 +15,7 @@
  */
 #include "include/backend/distributed/cluster/topology/compute_graph_node.h"
 #include <utility>
+#include <random>
 #include <nlohmann/json.hpp>
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
@@ -158,6 +159,7 @@ bool ComputeGraphNode::Register() {
   MS_EXCEPTION_IF_NULL(hb_client_);
   MS_EXCEPTION_IF_NULL(tcp_client_);
   const auto &server_url = meta_server_addr_.GetUrl();
+  MS_LOG(INFO) << "Start connecting heartbeat client.";
   if (!hb_client_->IsConnected(server_url)) {
     if (!hb_client_->Connect(server_url, kNoRetry)) {
       MS_LOG(WARNING) << "Failed to connect to the meta server node url: " << server_url;
@@ -165,6 +167,7 @@ bool ComputeGraphNode::Register() {
     }
   }
 
+  MS_LOG(INFO) << "Start connecting business client.";
   if (!tcp_client_->IsConnected(server_url)) {
     if (!tcp_client_->Connect(server_url, kNoRetry)) {
       MS_LOG(WARNING) << "Failed to connect to the meta server node url: " << server_url;
@@ -242,12 +245,18 @@ bool ComputeGraphNode::Unregister() {
 }
 
 bool ComputeGraphNode::Heartbeat() {
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  int random_time_lower =
+    common::GetEnv("MS_RETRY_INTERVAL_LOWER").empty() ? 3 : std::stoi(common::GetEnv("MS_RETRY_INTERVAL_LOWER"));
+  int random_time_upper =
+    common::GetEnv("MS_RETRY_INTERVAL_UPPER").empty() ? 5 : std::stoi(common::GetEnv("MS_RETRY_INTERVAL_UPPER"));
+  std::uniform_int_distribution<> distrib(random_time_lower, random_time_upper);
+  MS_LOG(INFO) << "Interval of heartbeat lower and upper are " << random_time_lower << " and " << random_time_upper;
   try {
     MS_EXCEPTION_IF_NULL(hb_client_);
 
     MS_LOG(INFO) << "The heartbeat thread is started.";
-    uint32_t interval = 3;
-
     while (enable_hb_) {
       HeartbeatMessage hb_msg;
       hb_msg.set_node_id(node_id_);
@@ -278,6 +287,13 @@ bool ComputeGraphNode::Heartbeat() {
         HeartbeatRespMessage resp_msg;
         (void)resp_msg.ParseFromArray(body.c_str(), SizeToInt(body.length()));
         topo_state_ = static_cast<TopoState>(resp_msg.topo_state());
+        if (topo_state_ == TopoState::kInitialized && disable_heartbeat_) {
+          MS_LOG(WARNING)
+            << "After cluster is initialized, disconnect heartbeat client if MS_DISABLE_HEARTBEAT is set to 1.";
+          (void)hb_client_->Disconnect(meta_server_addr_.GetUrl());
+          break;
+        }
+
         auto nodes_num = resp_msg.nodes_num();
         auto abnormal_nodes_num = resp_msg.abnormal_nodes_num();
         if (abnormal_nodes_num > 0 && !recovery::IsEnableRecovery()) {
@@ -292,10 +308,10 @@ bool ComputeGraphNode::Heartbeat() {
         delete response;
       }
 
+      uint32_t interval = distrib(gen);
+      MS_LOG(DEBUG) << "Heart beat interval " << interval;
       (void)sleep(interval);
     }
-
-    MS_LOG(INFO) << "The heartbeat thread is finished.";
   } catch (const std::exception &e) {
     MsException::Instance().SetException();
   }
@@ -351,12 +367,14 @@ bool ComputeGraphNode::Reconnect() {
 
   // Reconnect to the meta server node.
   if (!tcp_client_->IsConnected(server_url)) {
+    MS_LOG(INFO) << "Start reconnecting business client.";
     (void)tcp_client_->Connect(server_url, kNoRetry);
   }
   if (!tcp_client_->IsConnected(server_url)) {
     return false;
   }
   if (!hb_client_->IsConnected(server_url)) {
+    MS_LOG(INFO) << "Start reconnecting heartbeat client.";
     (void)hb_client_->Connect(server_url, kNoRetry);
   }
   return hb_client_->IsConnected(server_url);
@@ -527,7 +545,25 @@ bool ComputeGraphNode::ExchangeMetadata(const std::string &biz, const size_t &ra
 std::vector<std::string> ComputeGraphNode::GetHostNames(const std::string &role) {
   auto retval = RetrieveMessageFromMSN(std::to_string(static_cast<int>(MessageName::kGetHostNames)), role);
   if (retval != nullptr) {
-    nlohmann::json hostnames = nlohmann::json::parse(*retval);
+    MS_LOG(INFO) << "Worker gets host names " << *retval;
+    nlohmann::json hostnames;
+    size_t retry_num = 60;
+    do {
+      try {
+        if (retval != nullptr) {
+          hostnames = nlohmann::json::parse(*retval);
+        } else {
+          MS_LOG(ERROR) << "Get hostnames from sched failed, receive empty message.";
+        }
+        break;
+      } catch (const std::exception &e) {
+        MS_LOG(ERROR) << "Worker failed to parse hostname json " << e.what() << ". Retry number: " << retry_num;
+        retval = RetrieveMessageFromMSN(std::to_string(static_cast<int>(MessageName::kGetHostNames)), role);
+        retry_num--;
+        (void)sleep(kExecuteInterval);
+      }
+    } while (retry_num != 0);
+    MS_LOG(DEBUG) << "Successfully get hostnames from scheduler: " << hostnames.dump();
     return hostnames.at(kHostNames).get<std::vector<std::string>>();
   } else {
     return std::vector<std::string>();

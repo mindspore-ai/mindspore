@@ -92,6 +92,12 @@ static const size_t kDefaultTopoTimeOut = 30 * 60;
 constexpr char kEnvNodeTimeOut[] = "MS_NODE_TIMEOUT";
 static const size_t kDefaultNodeTimeout = 300;
 
+constexpr char kEnvRetryIntervalLower[] = "MS_RETRY_INTERVAL_LOWER";
+static const size_t kDefaultRetryInterLower = 3;
+
+constexpr char kEnvRetryIntervalUpper[] = "MS_RETRY_INTERVAL_UPPER";
+static const size_t kDefaultRetryInterUpper = 5;
+
 #define EXECUTE_WITH_RETRY(func, retry, interval, err_msg)                     \
   do {                                                                         \
     bool success = false;                                                      \

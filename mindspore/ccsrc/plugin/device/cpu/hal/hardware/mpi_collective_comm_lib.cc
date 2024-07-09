@@ -56,7 +56,7 @@ bool MPICollectiveCommLib::Initialize(uint32_t, uint32_t, uint32_t) {
   return true;
 }
 
-bool MPICollectiveCommLib::AllGatherHostHashName(size_t, std::vector<size_t> *host_hash_names) const {
+bool MPICollectiveCommLib::AllGatherHostHashName(size_t, std::vector<size_t> *host_hash_names) {
   CHECK_IF_NULL(host_hash_names);
   CHECK_RET(MPI_Allgather(MPI_IN_PLACE, 0, MPI_DATATYPE_NULL, host_hash_names->data(), sizeof(size_t), MPI_BYTE,
                           MPI_COMM_WORLD),

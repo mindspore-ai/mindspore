@@ -37,7 +37,7 @@ def _generate_cmd_args_list(cmd, cmd_args):
     """
     Generates arguments list for 'Popen'. It consists of a binary file name and subsequential arguments.
     """
-    if cmd not in ['python', 'pytest']:
+    if cmd not in ['python', 'pytest', 'python3']:
         # If user don't set binary file name, defaulty use 'python' to launch the job.
         return ['python'] + [cmd] + cmd_args
     return [cmd] + cmd_args
@@ -50,7 +50,7 @@ def _generate_cmd_args_list_with_core(cmd, cmd_args, cpu_start, cpu_end):
     # Bind cpu cores to this process.
     taskset_args = ['taskset'] + ['-c'] + [str(cpu_start) + '-' + str(cpu_end)]
     final_cmd = []
-    if cmd not in ['python', 'pytest']:
+    if cmd not in ['python', 'pytest', 'python3']:
         # If user don't set binary file name, defaulty use 'python' to launch the job.
         final_cmd = taskset_args + ['python'] + [cmd] + cmd_args
     else:

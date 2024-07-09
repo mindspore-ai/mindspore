@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 #include <string>
+#include <random>
 #include "runtime/collective/collective_communication_lib.h"
 #include "plugin/device/cpu/hal/hardware/ms_communication_group.h"
 #include "include/backend/distributed/cluster/cluster_context.h"
@@ -58,7 +59,7 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
   bool CreateCommunicationGroup(const std::string &group_name, const std::vector<uint32_t> &group_ranks,
                                 uint32_t local_group_rank, uint32_t local_group_size) override;
 
-  bool AllGatherHostHashName(size_t host_hash_name, std::vector<size_t> *host_hash_names) const override;
+  bool AllGatherHostHashName(size_t host_hash_name, std::vector<size_t> *host_hash_names) override;
 
   bool BroadcastUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) override;
 
@@ -84,7 +85,7 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
   bool SendUniqueID(const std::string &group_name, size_t root_info_size, const void *root_info) const;
 
   // Query unique id from scheduler.
-  bool QueryUniqueID(const std::string &group_name, size_t root_info_size, void *root_info) const;
+  bool QueryUniqueID(const std::string &group_name, size_t root_info_size, void *root_info);
 
   std::shared_ptr<ps::core::CollectiveNode> node_;
 
@@ -95,6 +96,11 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
 
   // Indicates whether the collective node has to synchronize the addresses of all the collective nodes.
   bool synchronized_{true};
+
+  uint64_t retry_count_;
+
+  // Random retry interval.
+  std::uniform_int_distribution<> rand_distrib_;
 };
 }  // namespace cpu
 }  // namespace device

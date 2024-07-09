@@ -212,7 +212,6 @@ void EventLoop::Finalize() {
 void EventLoop::DeleteEvent(int fd) {
   auto iter = events_.find(fd);
   if (iter == events_.end()) {
-    MS_LOG(INFO) << "Not found event fd:" << fd;
     return;
   }
 

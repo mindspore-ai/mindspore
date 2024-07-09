@@ -225,7 +225,7 @@ MessageBase *const MetaServerNode::ProcessRegister(MessageBase *const message) {
     (void)time(&(node_info->last_update));
     nodes_[node_id] = node_info;
     MS_LOG(WARNING) << "The new node: " << node_id << "(role: " << role << ")"
-                    << ", rank id: " << rank_id
+                    << ", rank id: " << rank_id << ", hostname: " << node_info->host_name << ", ip: " << host_ip
                     << " is registered successfully. Currently registered node number: " << nodes_.size()
                     << ", expected node number: " << total_node_num_;
     (void)TransitionToInitialized();
@@ -441,6 +441,11 @@ MessageBase *const MetaServerNode::ProcessGetHostNames(MessageBase *const messag
   }
 
   retval[kHostNames] = hostnames;
+  try {
+    MS_LOG(DEBUG) << "Host names are " << retval.dump();
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Failed to dump host names json " << e.what();
+  }
   auto response = CreateMessage(meta_server_addr_.GetUrl(), result, retval.dump());
   MS_EXCEPTION_IF_NULL(response);
   return response.release();
@@ -464,32 +469,33 @@ void MetaServerNode::UpdateTopoState() {
         }
       }
 
-      // Update the state of compute graph nodes.
-      size_t abnormal_node_num = 0;
-      std::vector<std::string> time_out_node_ids = {};
-      for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
-        auto node_id = iter->first;
-        auto node_info = iter->second;
-        MS_EXCEPTION_IF_NULL(node_info);
-        time_t now = time(&now);
-        auto elapsed = difftime(now, node_info->last_update);
-        if (elapsed > node_timeout_) {
-          node_info->state = NodeState::kTimeout;
-          ++abnormal_node_num;
-          time_out_node_ids.push_back(node_id);
-          MS_LOG(ERROR) << "The node: " << node_id
-                        << " is timed out. It may exit with exception, please check this node's log.";
+      if (!disable_heartbeat_) {
+        // Update the state of compute graph nodes if heartbeat is enabled.
+        size_t abnormal_node_num = 0;
+        std::vector<std::string> time_out_node_ids = {};
+        for (auto iter = nodes_.begin(); iter != nodes_.end(); ++iter) {
+          auto node_id = iter->first;
+          auto node_info = iter->second;
+          MS_EXCEPTION_IF_NULL(node_info);
+          time_t now = time(&now);
+          auto elapsed = difftime(now, node_info->last_update);
+          if (elapsed > node_timeout_) {
+            node_info->state = NodeState::kTimeout;
+            ++abnormal_node_num;
+            time_out_node_ids.push_back(node_id);
+            MS_LOG(ERROR) << "The node: " << node_id
+                          << " is timed out. It may exit with exception, please check this node's log.";
+          }
         }
-      }
-      abnormal_node_num_ = abnormal_node_num;
-      if (abnormal_node_num_ > 0 && !recovery::IsEnableRecovery()) {
-        MS_LOG(EXCEPTION) << "The total number of timed out node is " << abnormal_node_num_
-                          << ". Timed out node list is: " << time_out_node_ids << ", worker " << time_out_node_ids[0]
-                          << " is the first one timed out, please check its log.";
+        abnormal_node_num_ = abnormal_node_num;
+        if (abnormal_node_num_ > 0 && !recovery::IsEnableRecovery()) {
+          MS_LOG(EXCEPTION) << "The total number of timed out node is " << abnormal_node_num_
+                            << ". Timed out node list is: " << time_out_node_ids << ", worker " << time_out_node_ids[0]
+                            << " is the first one timed out, please check its log.";
+        }
       }
 
       nodes_mutex_.unlock();
-
       static const size_t interval = 3;
       (void)sleep(interval);
     }

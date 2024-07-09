@@ -73,10 +73,10 @@ void SocketEventHandler(int fd, uint32_t events, void *context) {
     {
       std::lock_guard<std::mutex> count_lock(kPrintCountMutex);
       if (kPrintCount++ % kPrintCountInterval == 0) {
-        MS_LOG(INFO) << "Event value fd: " << fd << ", events: " << events << ", state: " << conn->state
-                     << ", errcode: " << conn->error_code << ", errno: " << errno
-                     << ", to: " << conn->destination.c_str() << ", type:" << conn->recv_message_type
-                     << ", remote: " << conn->is_remote;
+        MS_LOG(WARNING) << "Event value fd: " << fd << ", events: " << events << ", state: " << conn->state
+                        << ", errcode: " << conn->error_code << ", errno: " << errno << " " << strerror(errno)
+                        << ", to: " << conn->destination.c_str() << ", type:" << conn->recv_message_type
+                        << ", remote: " << conn->is_remote << ", count: " << kPrintCount << ", from: " << conn->source;
         (void)usleep(kPrintTimeInterval);
       }
     }
@@ -216,6 +216,8 @@ bool Connection::ReconnectSourceSocket(int fd, uint32_t events, int *soError, ui
     *soError = errno;
   }
   if (*soError > 0 || error > 0) {
+    MS_LOG(INFO) << "Connection from " << source << " to " << destination << " is not available yet, errno: " << errno
+                 << " " << strerror(errno) << ", events: " << events;
     return false;
   }
   retval = recv_event_loop->SetEventHandler(socket_fd, EPOLLIN | EPOLLHUP | EPOLLRDHUP | EPOLLERR, SocketEventHandler,
@@ -511,6 +513,8 @@ size_t Connection::Flush() {
     } else {
       // update metrics
       send_metrics->UpdateError(true, error_code);
+      MS_LOG(WARNING) << "Failed to send data, change connection state to disconnecting, errno: " << errno << " "
+                      << strerror(errno);
       state = ConnectionState::kDisconnecting;
       break;
     }
