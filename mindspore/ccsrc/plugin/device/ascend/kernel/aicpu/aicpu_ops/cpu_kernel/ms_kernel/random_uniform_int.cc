@@ -34,7 +34,7 @@ uint32_t RandomUniformIntCpuKernel::Compute(CpuKernelContext &ctx) {
   auto output_dtype = output->GetDataType();
   CUST_KERNEL_CHECK_FALSE(ctx, output_dtype == DT_INT32, KERNEL_STATUS_INNER_ERROR,
                           "Output only support data type int32_t, but got [%s].", DTypeStr(output_dtype).c_str());
-  size_t output_size = output->GetDataSize() / output_dtype;
+  size_t output_size = output->GetDataSize() / sizeof(int32_t);
 
   auto input_min = ctx.Input(kMinIdx);
   auto input_max = ctx.Input(kMaxIdx);
