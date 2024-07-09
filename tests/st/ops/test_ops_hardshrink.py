@@ -17,6 +17,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import ops
 from mindspore.mint.nn.functional import hardshrink
+from tests.mark_utils import arg_mark
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
@@ -50,11 +51,8 @@ def hardshrink_vmap_func(x, lambd=0.5):
     return ops.vmap(hardshrink_forward_func, in_axes=(0, None), out_axes=0)(x, lambd)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows',
+                      'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 @test_utils.run_test_with_On
@@ -81,9 +79,9 @@ def test_ops_hardshrink_normal(context_mode, dtype):
 
     # backward
     x2 = np.array([[0.5, 1, 2.0], [0.0533, 0.0776, -2.1233]]).astype(np.float32)
-    output_b2 = hardshrink_backward_func(ms.Tensor(x2))
-    expect_b2 = np.array([[0., 1., 1.], [0., 0., 1]]).astype(np.float32)
-    np.testing.assert_allclose(output_f2.asnumpy(), expect_f2, rtol=1e-3)
+    output_b1 = hardshrink_backward_func(ms.Tensor(x2))
+    expect_b1 = np.array([[0., 1., 1.], [0., 0., 1]]).astype(np.float32)
+    np.testing.assert_allclose(output_b1.asnumpy(), expect_b1, rtol=1e-3)
 
     output_b2 = hardshrink_backward_func(ms.Tensor(x2), 2)
     expect_b2 = np.array([[0., 0., 0.], [0., 0., 1]]).astype(np.float32)
@@ -94,11 +92,8 @@ def test_ops_hardshrink_normal(context_mode, dtype):
     np.testing.assert_allclose(output_b3.asnumpy(), expect_b3, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows',
+                      'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_hardshrink_vmap(context_mode):
@@ -122,11 +117,8 @@ def test_ops_hardshrink_vmap(context_mode):
     np.testing.assert_allclose(output3.asnumpy(), expect3, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows',
+                      'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @test_utils.run_test_with_On
 def test_hardshrink_dynamic_shape():
     """

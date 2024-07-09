@@ -30,6 +30,6 @@ mindspore.nn.HShrink
         Tensor，shape和数据类型与输入相同。
 
     异常：
-        - **TypeError** - `lambd` 不是float、int和bool。
+        - **TypeError** - `lambd` 不是float、int或bool。
         - **TypeError** - `input_x` 不是Tensor。
-        - **TypeError** - `input_x` 的dtype不是float16、float32和bfloat16。
+        - **TypeError** - `input_x` 的dtype不是float16、float32或bfloat16。
