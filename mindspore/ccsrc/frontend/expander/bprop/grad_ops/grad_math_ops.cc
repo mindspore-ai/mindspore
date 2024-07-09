@@ -1863,7 +1863,8 @@ DEF_PURE_SHAPE_CALC(g_reduce_prod)
     return {output_shape_kept_dims, tile_scaling, pack_shape, perm, InvertPermutation(perm)};
   })
   .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) -> std::vector<int64_t> {
-    if (!unknown_inputs.empty()) {
+    auto input_shape = inputs.at(0);
+    if (IsDynamicRank(input_shape) || !unknown_inputs.empty()) {
       return {-1, -1, 2, -1, -1};
     }
     auto size = SizeToLong(inputs.at(0).size());
