@@ -141,6 +141,8 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   // Display the detailed debug information of memory block and memory buf.
   void DumpDynamicMemPoolDebugInfo();
 
+  void DefragMemory();
+
   // The related interface of device memory real operation, needs override by device type.
   virtual size_t AllocDeviceMem(size_t size, DeviceMemPtr *addr) = 0;
   virtual bool FreeDeviceMem(const DeviceMemPtr &addr) = 0;
@@ -250,6 +252,8 @@ class BACKEND_EXPORT DynamicMemPoolBestFit {
   std::unordered_map<std::pair<uint32_t, uint32_t>, std::set<DynamicMemBufPtr>, pair_hash> stream_pair_addresses_;
 
   bool enable_vmm_{false};
+  size_t eager_free_count_{0};
+  size_t last_eager_free_count_{0};
 };
 
 // Recording information for debugging the memory allocator.

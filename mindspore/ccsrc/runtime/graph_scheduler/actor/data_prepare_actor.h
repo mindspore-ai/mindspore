@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_DATA_PREPARE_ACTOR_H_
 #define MINDSPORE_CCSRC_RUNTIME_FRAMEWORK_ACTOR_DATA_PREPARE_ACTOR_H_
 
+#include <atomic>
 #include <vector>
 #include <string>
 #include <memory>
@@ -163,6 +164,9 @@ class DataPrepareActor : public DebugAwareActor {
   static mindspore::HashSet<const tensor::Tensor *> tensors_need_reprepare_;
 
   bool has_dynamic_shape_{false};
+
+  // Global execution count for data prepare actor.
+  static std::atomic<size_t> execution_count_;
 };  // namespace runtime
 
 using DataPrepareActorPtr = std::shared_ptr<DataPrepareActor>;

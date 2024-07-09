@@ -357,6 +357,8 @@ void UpdateDataNodeDeviceAddressSize(const AnfNodePtr &input_node, const TensorP
 
 mindspore::HashSet<const tensor::Tensor *> DataPrepareActor::tensors_need_reprepare_ = {};
 
+std::atomic<size_t> DataPrepareActor::execution_count_ = 0;
+
 void DataPrepareActor::Init() {
   MS_EXCEPTION_IF_NULL(graph_compiler_info_);
   strategy_ = graph_compiler_info_->strategy_;
@@ -1443,6 +1445,19 @@ void DataPrepareActor::PreprocessBeforePrepareData() const {
 #if defined(__linux__) && defined(WITH_BACKEND)
   EmbeddingCacheScheduler::GetInstance().IncreaseGraphStep(GetAID());
 #endif
+
+  // Try to defrag memory.
+  auto defrag_memory_step_freq = GetDefragMemoryStepFreq();
+  if (++execution_count_ % defrag_memory_step_freq == 0) {
+    std::set<const DeviceContext *> defrag_memory_contexts;
+    for (auto &device_context : graph_compiler_info_->device_contexts_) {
+      MS_EXCEPTION_IF_NULL(device_context);
+      if ((defrag_memory_contexts.count(device_context) == 0)) {
+        device_context->device_res_manager_->DefragMemory();
+      }
+      (void)defrag_memory_contexts.insert(device_context);
+    }
+  }
 }
 }  // namespace runtime
 }  // namespace mindspore

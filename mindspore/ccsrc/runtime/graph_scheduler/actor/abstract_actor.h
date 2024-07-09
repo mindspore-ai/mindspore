@@ -149,6 +149,7 @@ class AbstractActor : public OpActor<DeviceTensor> {
   const std::unordered_set<std::string> &dependent_actors() const { return dependent_actors_; }
   AbstractActor *memory_alloc_insert_position() const { return memory_alloc_insert_position_; }
   AbstractActor *memory_free_insert_position() const { return memory_free_insert_position_; }
+  const std::vector<const DeviceContext *> &device_contexts() { return device_contexts_; }
 
  protected:
   friend class GraphScheduler;

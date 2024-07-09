@@ -21,8 +21,8 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <set>
 #include <string>
-#include <queue>
 
 #include "acl/acl.h"
 #include "utils/dlopen_macro.h"
@@ -108,7 +108,7 @@ class AscendVmmAdapter {
   std::atomic<size_t> physical_handle_size_{0};
   std::map<DeviceMemPtr, aclrtDrvMemHandle> vmm_map_;
   std::vector<DeviceMemPtr> all_reserve_mems_;
-  std::queue<aclrtDrvMemHandle> handle_queue_;
+  std::set<aclrtDrvMemHandle> cached_handle_sets_;
   static constexpr uint64_t kMB = 1024 * 1024;
   static constexpr uint64_t kDefaultAlignSize = 2 * kMB;
   static int StringToMB(const std::string &str) {
