@@ -304,6 +304,9 @@ class BACKEND_EXPORT DeviceResManager {
   // Destroy all device events.
   virtual bool DestroyAllEvents();
 
+  // Detect stress.
+  virtual int StressDetect() const { MS_LOG(EXCEPTION) << "Stress detection is not supported."; }
+
   // Dynamically load collective communication library.
   // Currently, four types are supported: OpenMPI and self developed framework for CPU. NCCL for GPU. HCCL for Ascend.
   virtual bool LoadCollectiveCommLib() { return true; }

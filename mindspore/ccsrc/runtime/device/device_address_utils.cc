@@ -1230,7 +1230,7 @@ void DeviceAddressUtils::MallocForOutputs(const DeviceContext *device_context,
 }
 
 device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddressWithoutKernelTensor(
-  const DeviceContext *device_context, size_t stream_id, const size_t &workspace_size) {
+  const DeviceContext *device_context, size_t stream_id, const size_t &workspace_size, bool no_exception) {
   MS_EXCEPTION_IF_NULL(device_context);
   auto device_address = device_context->device_res_manager_->CreateDeviceAddress(
     nullptr, workspace_size, ShapeVector(), Format::DEFAULT_FORMAT, kTypeUnknown,
@@ -1240,7 +1240,9 @@ device::DeviceAddressPtr DeviceAddressUtils::CreateWorkspaceAddressWithoutKernel
                                                  device_address->GetSize(), device_address.get());
   if (device_address->GetPtr() == nullptr &&
       !device_context->device_res_manager_->AllocateMemory(device_address.get())) {
-    MS_LOG(EXCEPTION) << "Allocate dynamic workspace memory failed";
+    if (!no_exception) {
+      MS_LOG(EXCEPTION) << "Allocate dynamic workspace memory failed";
+    }
   }
   MS_LOG(DEBUG) << "Create workspace device address:" << device_address;
   return device_address;
