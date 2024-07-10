@@ -19,9 +19,11 @@
 
 #include <functional>
 #include <set>
+#include <map>
 #include <string>
 #include <memory>
 #include <utility>
+#include "include/api/model_group.h"
 
 namespace mindspore {
 class ModelManager {
@@ -37,14 +39,14 @@ class ModelManager {
     return instance;
   }
 
-  void AddModel(const std::string model_path);
+  void AddModel(const std::string model_path, ModelGroupFlag share_flag);
   void AddModel(const std::pair<const void *, size_t> model_buff);
-  const std::set<std::string> &GetModelPath() const { return model_path_set_; }
+  const std::map<std::string, ModelGroupFlag> &GetModelPath() const { return model_path_set_; }
   const std::set<std::pair<const void *, size_t>> &GetModelBuff() const { return model_buff_set_; }
   void ClearModel();
 
  private:
-  std::set<std::string> model_path_set_;
+  std::map<std::string, ModelGroupFlag> model_path_set_;
   std::set<std::pair<const void *, size_t>> model_buff_set_;
 };
 }  // namespace mindspore

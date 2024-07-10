@@ -35,7 +35,7 @@ class ModelGroupImpl {
   explicit ModelGroupImpl(ModelGroupFlag flags);
   ~ModelGroupImpl() = default;
 
-  Status AddModel(const std::vector<std::string> &model_path_list);
+  Status AddModel(const std::vector<std::vector<char>> &model_path_list);
   Status AddModel(const std::vector<std::pair<const void *, size_t>> &model_buff_list);
   Status CalMaxSizeOfWorkspace(ModelType model_type, const std::shared_ptr<Context> &ms_context);
 

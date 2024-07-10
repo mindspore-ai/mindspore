@@ -102,6 +102,7 @@ class ModelProcess {
   void FreeResourceInput(std::vector<AclTensorInfo> acl_tensor_info);
   void FreeResourceOutput(std::vector<AclTensorInfo> *acl_tensor_info, const std::vector<KernelTensor *> &outputs);
   aclError AclrtMemcpy(void *dst, size_t destMax, const void *src, size_t count, aclrtMemcpyKind kind);
+  bool PrepareMutiModelShare(const void *om_data, size_t om_data_size);
 
   AclModelOptionsPtr options_;
   uint32_t model_id_ = UINT32_MAX;

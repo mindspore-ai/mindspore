@@ -36,7 +36,7 @@ ModelGroupImpl::ModelGroupImpl(ModelGroupFlag flags) : flags_(flags) {
   model_group_id_ = ++g_model_group_id;
 }
 
-Status ModelGroupImpl::AddModel(const std::vector<std::string> &model_path_list) {
+Status ModelGroupImpl::AddModel(const std::vector<std::vector<char>> &model_path_list) {
   if (flags_ != ModelGroupFlag::kShareWorkspace) {
     MS_LOG(ERROR) << "Only support share workspace for ModelGroup::AddModel(const std::vector<std::string> &)";
     return kLiteError;
@@ -49,7 +49,7 @@ Status ModelGroupImpl::AddModel(const std::vector<std::string> &model_path_list)
     if (model_path.empty()) {
       continue;
     }
-    (void)model_path_list_.emplace_back(model_path);
+    (void)model_path_list_.emplace_back(CharToString(model_path));
   }
 
   return kSuccess;

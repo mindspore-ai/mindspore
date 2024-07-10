@@ -32,20 +32,17 @@ ModelGroupImpl::ModelGroupImpl(ModelGroupFlag flags) : flags_(flags) {
   model_group_id_ = ++g_model_group_id;
 }
 
-Status ModelGroupImpl::AddModel(const std::vector<std::string> &model_path_list) {
-  if (flags_ != ModelGroupFlag::kShareWorkspace) {
-    MS_LOG(ERROR) << "Only support share workspace for ModelGroup::AddModel(const std::vector<std::string> &)";
-    return kLiteError;
-  }
+Status ModelGroupImpl::AddModel(const std::vector<std::vector<char>> &model_path_list) {
   if (model_path_list.empty()) {
     MS_LOG(ERROR) << "Param model_path_list is empty.";
     return kLiteParamInvalid;
   }
+  std::unique_lock<std::mutex> local_path(mtx_path_list_);
   for (auto &model_path : model_path_list) {
     if (model_path.empty()) {
       continue;
     }
-    (void)model_path_list_.emplace_back(model_path);
+    (void)model_path_list_.emplace_back(CharToString(model_path));
   }
   return kSuccess;
 }
@@ -92,25 +89,33 @@ Status ModelGroupImpl::AddModel(const std::vector<std::shared_ptr<ModelImpl>> &m
 }
 
 Status ModelGroupImpl::CalMaxSizeOfWorkspace(ModelType model_type, const std::shared_ptr<Context> &ms_context) {
-  if (flags_ != ModelGroupFlag::kShareWorkspace) {
-    MS_LOG(ERROR) << "Only support share workspace for ModelGroup::CalMaxSizeOfWorkspace";
+  if (ms_context->MutableDeviceInfo().size() > 0 && ms_context->MutableDeviceInfo()[0]->GetProvider() == "ge") {
+    MS_LOG(ERROR) << "Not Support GE model to ModelGroup::CalMaxSizeOfWorkspace!";
     return kLiteError;
   }
+  std::unique_lock<std::mutex> local_path(mtx_path_list_);
   for (auto &model_path : model_path_list_) {
     Model model;
-    std::string sharing_workspace_section = "inner_common";
-    std::string calc_workspace_key = "inner_calc_workspace_size";
-    std::string calc_workspace_value = "true";
-    model.UpdateConfig(sharing_workspace_section, std::make_pair(calc_workspace_key, calc_workspace_value));
+    model.UpdateConfig(lite::kInnerCommon, std::make_pair(lite::kInnerCalcWorkspaceSize, "true"));
+    model.UpdateConfig(lite::kInnerCommon, std::make_pair(lite::kInnerModelPath, model_path));
     auto ret = model.Build(model_path, model_type, ms_context);
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "model build failed.";
       ModelManager::GetInstance().ClearModel();
       return kLiteError;
     }
-    ModelManager::GetInstance().AddModel(model_path);
+    if (flags_ == ModelGroupFlag::kShareWorkspace) {
+      ModelManager::GetInstance().AddModel(model_path, ModelGroupFlag::kShareWorkspace);
+    } else if (flags_ == ModelGroupFlag::kShareWeight) {
+      ModelManager::GetInstance().AddModel(model_path, ModelGroupFlag::kShareWeight);
+    } else if (flags_ == ModelGroupFlag::kShareWeightAndWorkspace) {
+      ModelManager::GetInstance().AddModel(model_path, ModelGroupFlag::kShareWeightAndWorkspace);
+    } else {
+      MS_LOG(ERROR) << "Only Support share weightspace and share workspace!";
+      return kLiteError;
+    }
   }
-
+  model_path_list_.clear();
   for (auto &model_buff : model_buff_list_) {
     Model model;
     std::string sharing_workspace_section = "inner_common";

@@ -75,16 +75,36 @@ AclModelOptionsPtr CustomAscendKernelMod::GenAclOptions() {
     auto val = GetValue<std::string>(dump_path_val);
     acl_options_ptr->dump_path = val;
   }
-  auto inner_calc_workspace_size = primitive_->GetAttr("inner_calc_workspace_size");
+  auto inner_calc_workspace_size = primitive_->GetAttr(lite::kInnerCalcWorkspaceSize);
   if (inner_calc_workspace_size != nullptr) {
     auto val = GetValue<bool>(inner_calc_workspace_size);
     acl_options_ptr->multi_model_sharing_mem_prepare = val;
     is_multi_model_sharing_mem_prepare_ = true;
   }
-  auto inner_sharing_workspace = primitive_->GetAttr("inner_sharing_workspace");
+  auto inner_sharing_workspace = primitive_->GetAttr(lite::kInnerSharingWorkspace);
   if (inner_sharing_workspace != nullptr) {
     auto val = GetValue<bool>(inner_sharing_workspace);
     acl_options_ptr->multi_model_sharing_mem = val;
+  }
+  auto inner_model_path = primitive_->GetAttr(lite::kInnerModelPath);
+  if (inner_model_path != nullptr) {
+    auto val = GetValue<std::string>(inner_model_path);
+    acl_options_ptr->model_path = val;
+  }
+  auto workspace_key = primitive_->GetAttr(lite::kInnerWorkspace);
+  if (workspace_key != nullptr) {
+    auto val = GetValue<bool>(workspace_key);
+    acl_options_ptr->share_workspace = val;
+  }
+  auto weightspace_key = primitive_->GetAttr(lite::kInnerWeightspace);
+  if (weightspace_key != nullptr) {
+    auto val = GetValue<bool>(weightspace_key);
+    acl_options_ptr->share_weightspace = val;
+  }
+  auto weightspace_workspace_key = primitive_->GetAttr(lite::kInnerWeightspaceWorkspace);
+  if (weightspace_workspace_key != nullptr) {
+    auto val = GetValue<bool>(weightspace_workspace_key);
+    acl_options_ptr->share_weightspace_workspace = val;
   }
   // set device id
   uint32_t device_count;

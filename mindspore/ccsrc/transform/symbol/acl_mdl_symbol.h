@@ -48,6 +48,7 @@ ORIGIN_METHOD(aclmdlLoadFromMem, aclError, const void *, size_t, uint32_t *)
 ORIGIN_METHOD(aclmdlSetDump, aclError, const char *)
 ORIGIN_METHOD(aclmdlSetDynamicBatchSize, aclError, uint32_t, aclmdlDataset *, size_t, uint64_t)
 ORIGIN_METHOD(aclmdlUnload, aclError, uint32_t)
+ORIGIN_METHOD(aclmdlQuerySizeFromMem, aclError, const void *, size_t, size_t *, size_t *)
 
 extern aclmdlAddDatasetBufferFunObj aclmdlAddDatasetBuffer_;
 extern aclmdlCreateDatasetFunObj aclmdlCreateDataset_;
@@ -76,6 +77,7 @@ extern aclmdlLoadFromMemFunObj aclmdlLoadFromMem_;
 extern aclmdlSetDumpFunObj aclmdlSetDump_;
 extern aclmdlSetDynamicBatchSizeFunObj aclmdlSetDynamicBatchSize_;
 extern aclmdlUnloadFunObj aclmdlUnload_;
+extern aclmdlQuerySizeFromMemFunObj aclmdlQuerySizeFromMem_;
 
 void LoadAclMdlApiSymbol(const std::string &ascend_path);
 }  // namespace transform
