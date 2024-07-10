@@ -92,6 +92,7 @@ static const char *const kCommonContextSection = "common_context";
 // gpu context
 static const char *const kGPUContextSection = "gpu_context";
 static const char *const kInputShapeKey = "input_shape";
+static const char *const kDynamicDimsSearchKey = "ge.dynamicDims";
 static const char *const kDynamicDimsKey = "dynamic_dims";
 static const char *const kOptimizeDimsKey = "opt_dims";
 static const char *const kPrecisionModeKey = "precision_mode";
@@ -150,6 +151,7 @@ static const char *const kConverterOutputFile = "output_file";
 static const char *const kOMConverterOptionsSection = "om_converter";
 
 static const char *const KModelUserInfo = "user_info";
+static const char *const KModelInputShape = "input_shape";
 
 // for [ascend_context] [kvcache_input_layout]
 static const char *const kKVCacheLayoutBNSD = "BNSD";

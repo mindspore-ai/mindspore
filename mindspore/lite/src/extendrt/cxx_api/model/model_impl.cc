@@ -39,13 +39,13 @@
 #include "mindapi/base/base.h"
 #include "src/extendrt/delegate/graph_executor/litert/func_graph_reuse_manager.h"
 #include "mindspore/core/load_mindir/load_model.h"
-#include "src/common/common.h"
 #include "src/extendrt/delegate/plugin/tensorrt_executor_plugin.h"
 #include "src/extendrt/kernel/ascend/plugin/ascend_kernel_plugin.h"
 #include "utils/ms_utils_secure.h"
 #include "ops/custom.h"
 #include "ops/return.h"
 #include "src/extendrt/model_manager.h"
+#include "src/common/common.h"
 
 namespace mindspore {
 namespace {
@@ -287,6 +287,14 @@ FuncGraphPtr ModelImpl::LoadGraphByBufferImpl(const void *model_buff, size_t mod
     if (!user_info_string.empty()) {
       SetModelInfo(lite::KModelUserInfo, user_info_string);
     }
+  }
+  if (func_graph->get_attr(lite::kDynamicDimsKey) != nullptr) {
+    auto dynamic_dims = GetValue<std::string>(func_graph->get_attr(lite::kDynamicDimsKey));
+    SetModelInfo(lite::kDynamicDimsKey, dynamic_dims);
+  }
+  if (func_graph->get_attr(lite::KModelInputShape) != nullptr) {
+    auto input_shape = GetValue<std::string>(func_graph->get_attr(lite::KModelInputShape));
+    SetModelInfo(lite::KModelInputShape, input_shape);
   }
   return func_graph;
 }
