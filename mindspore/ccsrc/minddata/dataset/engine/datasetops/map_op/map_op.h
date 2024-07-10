@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,6 +217,18 @@ class MapOp : public ParallelOp<std::unique_ptr<MapWorkerJob>, TensorRow> {
   // Private function for initializing private variables such as in_columns_, out_columns_.
   // @return - Status
   Status InitPrivateVariable(std::unordered_map<std::string, int32_t> *col_name_id_map);
+
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  // Init Ascend910B resource.
+  // @return - Status
+  Status InitResource(const std::vector<std::vector<std::shared_ptr<TensorOp>>> &tfuncs,
+                      device::DeviceContext **device_context, size_t *stream_id);
+
+  // Apply transforms on tensor
+  // @return - Status
+  Status ComputeIsDvpp(const std::shared_ptr<TensorOp> tfunc, TensorRow *i_row, TensorRow *o_row,
+                       device::DeviceContext *device_context, size_t stream_id);
+#endif
 
  protected:
   Status Launch() override;

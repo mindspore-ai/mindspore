@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 
 #include "minddata/dataset/engine/datasetops/map_op/cpu_map_job.h"
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
+#include "minddata/dataset/core/device_tensor_ascend910b.h"
 #include "minddata/dataset/engine/datasetops/map_op/npu_map_job.h"
 #endif
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
@@ -222,6 +223,109 @@ Status MapOp::operator()() {
   return Status::OK();
 }
 
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+// init Ascend910B resource
+Status MapOp::InitResource(const std::vector<std::vector<std::shared_ptr<TensorOp>>> &tfuncs,
+                           device::DeviceContext **device_context, size_t *stream_id) {
+  RETURN_UNEXPECTED_IF_NULL(device_context);
+  RETURN_UNEXPECTED_IF_NULL(stream_id);
+  bool dvpp_flag = false;
+  for (auto &op : tfuncs[0]) {
+    if (op->IsDvppOp()) {
+      dvpp_flag = true;
+      break;
+    }
+  }
+
+  if (dvpp_flag) {
+    MS_LOG(INFO) << "Init resource for Ascend910B.";
+    auto ms_context = MsContext::GetInstance();
+    if (ms_context == nullptr) {
+      RETURN_STATUS_UNEXPECTED("Get ms context failed by MsContext::GetInstance()");
+    }
+    *device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
+      {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
+    if ((*device_context) == nullptr) {
+      RETURN_STATUS_UNEXPECTED("Get device context failed by ms context");
+    }
+    (*device_context)->Initialize();
+    if ((*device_context)->device_res_manager_ == nullptr) {
+      RETURN_STATUS_UNEXPECTED("The device resource manager is null.");
+    }
+
+    std::string soc_version;
+    auto ret = AclAdapter::GetInstance().GetSocName(&soc_version);
+    if (ret != APP_ERR_OK) {
+      RETURN_STATUS_UNEXPECTED("Get Soc Version failed.");
+    }
+    if (soc_version.find("Ascend910B") == std::string::npos && soc_version.find("Ascend910C") == std::string::npos) {
+      std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B / Ascend910C";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+
+    if ((*device_context)->device_res_manager_->CreateStream(stream_id) != true) {
+      RETURN_STATUS_UNEXPECTED("Create new stream failed on Ascend910B platform.");
+    }
+    MS_LOG(INFO) << "Create new stream id: " << std::to_string(*stream_id);
+  }
+  return Status::OK();
+}
+
+// Apply transforms on tensor
+Status MapOp::ComputeIsDvpp(const std::shared_ptr<TensorOp> tfunc, TensorRow *i_row, TensorRow *o_row,
+                            device::DeviceContext *device_context, size_t stream_id) {
+  RETURN_UNEXPECTED_IF_NULL(i_row);
+  RETURN_UNEXPECTED_IF_NULL(o_row);
+  RETURN_UNEXPECTED_IF_NULL(device_context);
+  std::vector<std::shared_ptr<DeviceTensorAscend910B>> device_in((*i_row).size());
+  auto i = 0;
+  for (auto &tensor : *i_row) {
+    if (tfunc->Name() == "DvppConvertColorOp") {
+      std::vector<int> channels = {1, 3, 4};
+      RETURN_IF_NOT_OK(DeviceTensorAscend910B::CreateDeviceTensor(tensor, device_context, stream_id, &device_in[i],
+                                                                  tfunc->IsHWC(), channels));
+    } else {
+      RETURN_IF_NOT_OK(
+        DeviceTensorAscend910B::CreateDeviceTensor(tensor, device_context, stream_id, &device_in[i], tfunc->IsHWC()));
+    }
+    i++;
+  }
+  std::vector<std::shared_ptr<DeviceTensorAscend910B>> device_out;
+  Status rc = tfunc->Compute(device_in, &device_out);
+  if (rc.IsError()) {
+    std::string op_name = tfunc->Name();
+    RETURN_IF_NOT_OK(util::RebuildMapErrorMsg(*i_row, op_name, &rc));
+  }
+  // Because we do ToHostTensor, we should sync first
+  if (!device_context->device_res_manager_->SyncStream(stream_id)) {
+    std::string err_msg = "SyncStream stream id: " + std::to_string(stream_id) + " failed.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  // copy the data from device to host
+  for (auto &tensor_row : device_out) {
+    std::shared_ptr<Tensor> host_out;
+    CHECK_FAIL_RETURN_UNEXPECTED(tensor_row->ToHostTensor(&host_out), "Copy tensor from device to host failed.");
+    (*o_row).push_back(std::move(host_out));
+  }
+
+  // release all the device memory
+  for (auto &item : device_in) {
+    if (!item->ReleaseDeviceMemory()) {
+      std::string err_msg = "Release the device memory failed after the dvpp ops executed.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
+  for (auto &item : device_out) {
+    if (!item->ReleaseDeviceMemory()) {
+      std::string err_msg = "Release the device memory failed after the dvpp ops executed.";
+      RETURN_STATUS_UNEXPECTED(err_msg);
+    }
+  }
+  return Status::OK();
+}
+#endif
+
 // Private function for worker/thread to loop continuously. It comprises the main
 // logic of MapOp: getting the data from previous Op, validating user specified column names,
 // applying a list of TensorOps to each of the data, process the results and then
@@ -236,47 +340,9 @@ Status MapOp::WorkerEntry(int32_t worker_id) {
 
 #if !defined(BUILD_LITE) && defined(ENABLE_D)
   // init Ascend910B resource
-  bool dvpp_flag = false;
-  for (auto &op : tfuncs_[0]) {
-    if (op->IsDvppOp()) {
-      dvpp_flag = true;
-      break;
-    }
-  }
-
   device::DeviceContext *device_context = nullptr;
   size_t stream_id = 0;
-  if (dvpp_flag) {
-    MS_LOG(INFO) << "Init resource for Ascend910B.";
-    auto ms_context = MsContext::GetInstance();
-    if (ms_context == nullptr) {
-      RETURN_STATUS_UNEXPECTED("Get ms context failed by MsContext::GetInstance()");
-    }
-    device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
-      {ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET), ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID)});
-    if (device_context == nullptr) {
-      RETURN_STATUS_UNEXPECTED("Get device context failed by ms context");
-    }
-    device_context->Initialize();
-    if (device_context->device_res_manager_ == nullptr) {
-      RETURN_STATUS_UNEXPECTED("The device resource manager is null.");
-    }
-
-    std::string soc_version;
-    auto ret = AclAdapter::GetInstance().GetSocName(&soc_version);
-    if (ret != APP_ERR_OK) {
-      RETURN_STATUS_UNEXPECTED("Get Soc Version failed.");
-    }
-    if (soc_version.find("Ascend910B") == std::string::npos && soc_version.find("Ascend910C") == std::string::npos) {
-      std::string err_msg = "The SoC: " + soc_version + " is not Ascend910B / Ascend910C";
-      RETURN_STATUS_UNEXPECTED(err_msg);
-    }
-
-    if (device_context->device_res_manager_->CreateStream(&stream_id) != true) {
-      RETURN_STATUS_UNEXPECTED("Create new stream failed on Ascend910B platform.");
-    }
-    MS_LOG(INFO) << "Create new stream id: " << std::to_string(stream_id);
-  }
+  RETURN_IF_NOT_OK(InitResource(tfuncs_, &device_context, &stream_id));
 #endif
 
   TensorRow in_row;
@@ -698,6 +764,13 @@ std::vector<int32_t> MapOp::GetMPWorkerPIDs() const {
 }
 
 Status MapOp::GetNextRowPullMode(TensorRow *const row) {
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+  // init Ascend910B resource
+  device::DeviceContext *device_context = nullptr;
+  size_t stream_id = 0;
+  RETURN_IF_NOT_OK(InitResource(tfuncs_, &device_context, &stream_id));
+#endif
+
   RETURN_UNEXPECTED_IF_NULL(row);
   TensorRow new_row;
   RETURN_IF_NOT_OK(child_[0]->GetNextRowPullMode(&new_row));
@@ -723,11 +796,19 @@ Status MapOp::GetNextRowPullMode(TensorRow *const row) {
   }
   // Apply transforms on tensor
   for (auto &t : tfuncs_[0]) {
-    Status rc = t->Compute(i_row, &o_row);
-    if (rc.IsError()) {
-      std::string op_name = t->Name();
-      RETURN_IF_NOT_OK(util::RebuildMapErrorMsg(i_row, op_name, &rc));
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
+    if (t->IsDvppOp()) {
+      RETURN_IF_NOT_OK(ComputeIsDvpp(t, &i_row, &o_row, device_context, stream_id));
+    } else {
+#endif
+      Status rc = t->Compute(i_row, &o_row);
+      if (rc.IsError()) {
+        std::string op_name = t->Name();
+        RETURN_IF_NOT_OK(util::RebuildMapErrorMsg(i_row, op_name, &rc));
+      }
+#if !defined(BUILD_LITE) && defined(ENABLE_D)
     }
+#endif
     i_row = std::move(o_row);
   }
 

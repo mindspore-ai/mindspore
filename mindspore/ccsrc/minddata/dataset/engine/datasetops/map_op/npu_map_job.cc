@@ -57,8 +57,14 @@ Status NpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out,
       }
       std::shared_ptr<DeviceTensorAscend910B> device_tensor = nullptr;
       // here we use the first op's IsHWC() to create device tensor
-      RETURN_IF_NOT_OK(DeviceTensorAscend910B::CreateDeviceTensor(tensor, device_context, stream_id, &device_tensor,
-                                                                  ops_[0]->IsHWC()));
+      if (ops_[0]->Name() == kDvppConvertColorOp) {
+        std::vector<int> channels = {1, 3, 4};
+        RETURN_IF_NOT_OK(DeviceTensorAscend910B::CreateDeviceTensor(tensor, device_context, stream_id, &device_tensor,
+                                                                    ops_[0]->IsHWC(), channels));
+      } else {
+        RETURN_IF_NOT_OK(DeviceTensorAscend910B::CreateDeviceTensor(tensor, device_context, stream_id, &device_tensor,
+                                                                    ops_[0]->IsHWC()));
+      }
       device_in[i].push_back(std::move(device_tensor));
     }
     i += 1;
