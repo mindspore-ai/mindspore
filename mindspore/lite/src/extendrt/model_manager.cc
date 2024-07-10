@@ -19,9 +19,22 @@
 #include <algorithm>
 #include <map>
 #include <string>
+#include "include/api/model_group.h"
 
 namespace mindspore {
-void ModelManager::AddModel(const std::string model_path) { (void)model_path_set_.insert(model_path); }
+bool JudgeMergeFlag(ModelGroupFlag input_flag, ModelGroupFlag cur_flag) {
+  return (input_flag == ModelGroupFlag::kShareWeight && cur_flag == ModelGroupFlag::kShareWorkspace) ||
+         (cur_flag == ModelGroupFlag::kShareWeight && input_flag == ModelGroupFlag::kShareWorkspace);
+}
+
+void ModelManager::AddModel(const std::string model_path, ModelGroupFlag share_flag) {
+  if (model_path_set_.find(model_path) != model_path_set_.end() &&
+      JudgeMergeFlag(share_flag, model_path_set_.at(model_path))) {
+    model_path_set_.at(model_path) = ModelGroupFlag::kShareWeightAndWorkspace;
+  } else {
+    (void)model_path_set_.insert(std::make_pair(model_path, share_flag));
+  }
+}
 
 void ModelManager::AddModel(const std::pair<const void *, size_t> model_buff) {
   (void)model_buff_set_.insert(model_buff);

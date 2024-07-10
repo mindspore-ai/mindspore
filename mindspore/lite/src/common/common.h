@@ -156,6 +156,15 @@ static const char *const KModelInputShape = "input_shape";
 // for [ascend_context] [kvcache_input_layout]
 static const char *const kKVCacheLayoutBNSD = "BNSD";
 static const char *const kKVCacheLayoutBSH = "BSH";
+
+// for sharing mem
+static const char *const kInnerCommon = "inner_common";
+static const char *const kInnerSharingWorkspace = "inner_sharing_workspace";
+static const char *const kInnerModelPath = "inner_model_path";
+static const char *const kInnerWeightspace = "inner_weightspace";
+static const char *const kInnerWorkspace = "inner_workspace";
+static const char *const kInnerCalcWorkspaceSize = "inner_calc_workspace_size";
+static const char *const kInnerWeightspaceWorkspace = "inner_weightspace_workspace";
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_COMMON_COMMON_H_

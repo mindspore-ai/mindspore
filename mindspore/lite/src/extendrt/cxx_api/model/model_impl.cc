@@ -45,6 +45,7 @@
 #include "ops/custom.h"
 #include "ops/return.h"
 #include "src/extendrt/model_manager.h"
+#include "include/api/model_group.h"
 #include "src/common/common.h"
 
 namespace mindspore {
@@ -299,9 +300,15 @@ FuncGraphPtr ModelImpl::LoadGraphByBufferImpl(const void *model_buff, size_t mod
   return func_graph;
 }
 
-bool ModelImpl::IsEnableModelSharing(const std::string &model_path) {
-  const std::set<std::string> &model_path_set = ModelManager::GetInstance().GetModelPath();
-  return model_path_set.find(model_path) != model_path_set.end();
+bool ModelImpl::IsEnableModelSharing(const std::string &model_path, ModelGroupFlag *model_group_flag) {
+  const std::map<std::string, ModelGroupFlag> &model_path_set = ModelManager::GetInstance().GetModelPath();
+  auto it = model_path_set.find(model_path);
+  if (it == model_path_set.end()) {
+    return false;
+  } else {
+    *model_group_flag = it->second;
+    return true;
+  }
 }
 
 bool ModelImpl::IsEnableModelSharing(const std::pair<const void *, size_t> &model_buff) {
@@ -312,17 +319,42 @@ bool ModelImpl::IsEnableModelSharing(const std::pair<const void *, size_t> &mode
 Status ModelImpl::UpdateSharingWorkspaceConfig(const void *model_buff, size_t model_size,
                                                const std::string &model_path) {
   bool model_sharing_flag = false;
+  ModelGroupFlag model_group_flag = ModelGroupFlag::kUnknown;
   if (!model_path.empty()) {
-    model_sharing_flag = IsEnableModelSharing(model_path);
+    model_sharing_flag = IsEnableModelSharing(model_path, &model_group_flag);
   } else {
     model_sharing_flag = IsEnableModelSharing(std::make_pair(model_buff, model_size));
   }
   if (model_sharing_flag) {
     MS_LOG(INFO) << "model_sharing_flag: " << model_sharing_flag;
-    auto ret = UpdateConfig("inner_common", std::make_pair("inner_sharing_workspace", "true"));
+    auto ret = UpdateConfig(lite::kInnerCommon, std::make_pair(lite::kInnerSharingWorkspace, "true"));
     if (ret != kSuccess) {
       MS_LOG(ERROR) << "UpdateConfig failed.";
       return ret;
+    }
+    ret = UpdateConfig(lite::kInnerCommon, std::make_pair(lite::kInnerModelPath, model_path));
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "UpdateConfig failed.";
+      return ret;
+    }
+    if (model_group_flag == ModelGroupFlag::kShareWeight) {
+      ret = UpdateConfig(lite::kInnerCommon, std::make_pair(lite::kInnerWeightspace, "true"));
+      if (ret != kSuccess) {
+        MS_LOG(ERROR) << "UpdateConfig failed!";
+        return ret;
+      }
+    } else if (model_group_flag == ModelGroupFlag::kShareWorkspace) {
+      ret = UpdateConfig(lite::kInnerCommon, std::make_pair(lite::kInnerWorkspace, "true"));
+      if (ret != kSuccess) {
+        MS_LOG(ERROR) << "UpdateConfig failed!";
+        return ret;
+      }
+    } else if (model_group_flag == ModelGroupFlag::kShareWeightAndWorkspace) {
+      ret = UpdateConfig(lite::kInnerCommon, std::make_pair(lite::kInnerWeightspaceWorkspace, "true"));
+      if (ret != kSuccess) {
+        MS_LOG(ERROR) << "UpdateConfig failed!";
+        return ret;
+      }
     }
   }
   return kSuccess;

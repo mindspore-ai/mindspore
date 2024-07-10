@@ -30,7 +30,7 @@ ModelGroup::ModelGroup(ModelGroupFlag flags) {
   }
 }
 
-Status ModelGroup::AddModel(const std::vector<std::string> &model_path_list) {
+Status ModelGroup::AddModel(const std::vector<std::vector<char>> &model_path_list) {
   if (impl_ == nullptr) {
     MS_LOG(ERROR) << "Model group implement is null.";
     return kLiteUninitializedObj;
