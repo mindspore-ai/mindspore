@@ -22,6 +22,7 @@ import hashlib
 
 from math import floor
 from mindspore import _checkparam as Validator
+from mindspore import log as logger
 from mindspore.train.callback._callback import Callback
 from mindspore.common.api import flops_collection
 
@@ -64,7 +65,6 @@ class FlopsUtilizationCollector(Callback):
     Raises:
         TypeError: If data_size is not positive int.
         TypeError: If full_flops is not bool.
-        AssertionError: If execute mode is not GRAPH_MODE  or is not static shape.
 
     Examples:
         >>> import numpy as np
@@ -82,14 +82,12 @@ class FlopsUtilizationCollector(Callback):
         >>> model = Model(network=net, optimizer=opt, loss_fn=crit, metrics={"recall"})
         >>> model.train(2, train_dataset, callbacks=[flops_callback])
         Full model flops is 6400, Full hardware flops is 6400, Shard model flops is 6400, Shard hardware flops is 6400
-        Train epoch time: 271.144 ms, per step time: 135.572 ms, mfu:0.47% hfu:0.47%
-        Train epoch time: 2.634 ms, per step time: 1.317 ms, mfu:48.59% hfu:48.59%
+        Train per step time: 135.572 ms, mfu:0.47% hfu:0.47%
+        Train per step time: 1.317 ms, mfu:48.59% hfu:48.59%
     """
     def __init__(self, data_size, computility=1, full_flops=True):
         super(FlopsUtilizationCollector, self).__init__()
-        if context.get_context("mode") != context.GRAPH_MODE:
-            raise AssertionError("FlopsUtilizationCollector now only support graph mode.")
-        self.epoch_time = time.time()
+        self.step_time = time.time()
         self.computility = computility
         self.full_mfu = 0.0
         self.full_hfu = 0.0
@@ -107,16 +105,16 @@ class FlopsUtilizationCollector(Callback):
         Validator.check_bool(full_flops, "verbose")
         Validator.check_positive_int(data_size, "data_size")
 
-    def epoch_begin(self, run_context):
+    def step_begin(self, run_context):
         """
-        Record time at the beginning of epoch.
+        Record time at the beginning of step.
 
 
         Args:
             run_context (RunContext): Context of the process running. For more details,
                     please refer to :class:`mindspore.train.RunContext`.
         """
-        self.epoch_time = time.time()
+        self.step_time = time.time()
 
     def _get_pipeline_group(self):
         """
@@ -135,15 +133,19 @@ class FlopsUtilizationCollector(Callback):
         rank_list_str = "-".join(rank_str_list)
         return rank_list, rank_list_str
 
-    def epoch_end(self, run_context):
+    def step_end(self, run_context):
         """
-        Print mfu and hfu time at the end of epoch.
+        Print mfu and hfu time at the end of step.
 
         Args:
            run_context (RunContext): Context of the process running. For more details,
                    please refer to :class:`mindspore.train.RunContext`.
         """
-        epoch_seconds = (time.time() - self.epoch_time) * 1000
+        if context.get_context("mode") != context.GRAPH_MODE:
+            logger.warning("FlopsUtilizationCollector now only support graph mode.")
+            return
+
+        step_seconds = (time.time() - self.step_time) * 1000
         if not self.mfu_calculated:
             cb_params = run_context.original_args()
             if cb_params.mode == 'train':
@@ -151,12 +153,13 @@ class FlopsUtilizationCollector(Callback):
             elif cb_params.mode == 'eval':
                 network = cb_params.eval_network
             else:
-                raise ValueError(
-                    'Model running mode is nerther train nor eval!')
+                logger.warning('FlopsUtilizationCollector only support train and eval mode!')
+                return
             full_model_flops, full_hardware_flops, shard_model_flops, \
                 shard_hardware_flops, is_dynamic_shape = flops_collection(network.current_phase)
             if is_dynamic_shape:
-                raise AssertionError("FlopsUtilizationCollector now do not support dynamic shape.")
+                logger.warning("FlopsUtilizationCollector now do not support dynamic shape.")
+                return
             self.full_mfu = full_model_flops / self.computility
             self.full_hfu = full_hardware_flops / self.computility
 
@@ -212,7 +215,8 @@ class FlopsUtilizationCollector(Callback):
             if isinstance(batch_num, int) and batch_num > 0:
                 step_size = cb_params.batch_num
         Validator.check_positive_int(step_size)
-        step_seconds = epoch_seconds / step_size
+        if cb_params.dataset_sink_mode:
+            step_seconds = step_seconds / step_size
         time_stamp = time.time()
         train_log = "time_monitor{{type=\"per_step_time\"}} {} {}".format(step_seconds, int(round(time_stamp * 1000)))
         if self.ma:
@@ -220,8 +224,8 @@ class FlopsUtilizationCollector(Callback):
             modes = stat.S_IWUSR | stat.S_IRUSR
             with os.fdopen(os.open(self.time_step_path, flags, modes), 'w') as f:
                 f.write(train_log + '\n')
-        train_log = "{} epoch time: {:5.3f} ms, per step time: {:5.3f} ms".format(
-            cb_params.mode.title(), epoch_seconds, step_seconds)
+        train_log = "{} per step time: {:5.3f} ms".format(
+            cb_params.mode.title(), step_seconds)
         if self.verbose:
             mfu = 1000 * self.full_mfu / step_seconds
             hfu = 1000 * self.full_hfu / step_seconds
