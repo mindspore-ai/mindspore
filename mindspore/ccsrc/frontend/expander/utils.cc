@@ -32,7 +32,6 @@
 #include "frontend/operator/ops_front_infer_function.h"
 #include "frontend/expander/bprop/bprop.h"
 #include "pybind_api/ir/primitive_py.h"
-#include "backend/common/graph_kernel/adapter/expander.h"
 #include "utils/ms_context.h"
 #include "include/common/utils/utils.h"
 #include "include/common/debug/anf_ir_dump.h"
@@ -141,55 +140,6 @@ class PrimpyConverter {
 bool ConvertPrimToPrimPy(const FuncGraphPtr &graph) {
   PrimpyConverter c;
   return c.Run(graph);
-}
-
-using graphkernel::ExpanderDecorator;
-using graphkernel::ExpanderPtr;
-class PrimToPrimPyDecorator : public ExpanderDecorator {
- public:
-  explicit PrimToPrimPyDecorator(const ExpanderPtr &decorated) : ExpanderDecorator(decorated) {}
-  ~PrimToPrimPyDecorator() override = default;
-  static ExpanderPtr Creator(const ExpanderPtr &decorated) {
-    return std::static_pointer_cast<Expander>(std::make_shared<PrimToPrimPyDecorator>(decorated));
-  }
-  AnfNodePtr Run(const AnfNodePtr &node) override {
-    auto new_node = decorated_->Run(node);
-    if (new_node == nullptr) {
-      return nullptr;
-    }
-    auto new_cnode = dyn_cast<CNode>(new_node);
-    auto expand_fg = GetCNodeFuncGraph(new_cnode);
-    if (!ConvertPrimToPrimPy(expand_fg)) {
-      return nullptr;
-    }
-    new_cnode->set_input(0, NewValueNode(expand_fg));
-    return new_cnode;
-  }
-};
-
-AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node) {
-  if (!graphkernel::CanExpandFallback(node)) {
-    return nullptr;
-  }
-  auto primitive = GetCNodePrimitive(node);
-  if (primitive == nullptr) {
-    return nullptr;
-  }
-  auto expander = graphkernel::GetExpander(node);
-  expander = PrimToPrimPyDecorator::Creator(expander);
-  auto new_node = expander->Run(node);
-  auto expand_fg = GetCNodeFuncGraph(new_node);
-  if (expand_fg == nullptr) {
-    return nullptr;
-  }
-#ifdef ENABLE_DUMP_IR
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(kIntroductory)) {
-    DumpIR("expand_fe_" + GetCNodeFuncName(node->cast<CNodePtr>()) + ".ir", expand_fg);
-  }
-#endif
-  return new_node;
 }
 
 void ClearAllCache() { bprop::ClearBpropOpGraphMap(); }

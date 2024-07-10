@@ -16,7 +16,7 @@
 #include <vector>
 #include <string>
 
-#include "common/common_test.h"
+#include "graph_kernel/common/graph_kernel_common_test_suite.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/utils.h"
 #include "common/graph_optimizer_test_framework.h"
@@ -34,7 +34,7 @@ struct TestParams {
   bool input_a_transpose;
   bool input_b_transpose;
 };
-class TestTransposeMatMulFusion : public UT::Common, public testing::WithParamInterface<TestParams> {
+class TestTransposeMatMulFusion : public GraphKernelCommonTestSuite, public testing::WithParamInterface<TestParams> {
  public:
   TestTransposeMatMulFusion() {}
 };

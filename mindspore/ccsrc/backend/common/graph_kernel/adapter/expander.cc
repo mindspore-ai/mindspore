@@ -105,86 +105,6 @@ ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract) {
   return GetExpander(node, expander);
 }
 
-bool CanExpandFallback(const AnfNodePtr &node) {
-  if (!node->isa<CNode>()) {
-    return false;
-  }
-  if (common::GetEnv("MS_DEV_EXPANDER_FALLBACK") == "off") {
-    return false;
-  }
-  // Operators with 'batch_rank' attribute, which only appears in the vmap scenario, are not supported currently.
-  if (common::AnfAlgo::HasNodeAttr(ops::kBatchRank, node->cast<CNodePtr>())) {
-    return false;
-  }
-  static const std::vector<OpWithLevel> expander_fallback_ops_with_level = {
-    {kAllTarget, OpLevel_0, prim::kPrimEqualCount},
-    {kAllTarget, OpLevel_0, prim::kPrimSoftsign},
-    {kAllTarget, OpLevel_0, prim::kPrimSquare},
-    {kAllTarget, OpLevel_0, prim::kPrimBiasAdd},
-    {kAllTarget, OpLevel_0, prim::kPrimReLU},
-    {kAllTarget, OpLevel_0, prim::kPrimRelu},
-    {kAllTarget, OpLevel_0, prim::kPrimSigmoid},
-    {kAllTarget, OpLevel_0, prim::kPrimBiasAdd},
-    {kAllTarget, OpLevel_0, prim::kPrimReLU},
-    {kAllTarget, OpLevel_0, prim::kPrimSoftplus},
-    {kAllTarget, OpLevel_0, prim::kPrimSoftplusGrad},
-    {kAllTarget, OpLevel_0, prim::kPrimAssignAdd},
-    {kAllTarget, OpLevel_0, prim::kLambApplyOptimizerAssign},
-    {kAllTarget, OpLevel_0, prim::kLambApplyWeightAssign},
-    {kAllTarget, OpLevel_0, prim::kPrimAdamWeightDecay},
-    {kAllTarget, OpLevel_0, prim::kPrimStandardNormal},
-    {kAllTarget, OpLevel_0, prim::kPrimAdam},
-    // some ops including custom op are only used expand fallbak on Ascend.
-    {kAscendDevice, OpLevel_0, prim::kPrimSolveTriangular},
-    {kAscendDevice, OpLevel_0, prim::kPrimLU},
-    // disabled
-    {kAllTarget, OpLevel_1, prim::kPrimAddN},
-    {kAllTarget, OpLevel_1, prim::kPrimErfc},
-    {kAllTarget, OpLevel_1, prim::kPrimExpandDims},
-    {kAllTarget, OpLevel_1, prim::kPrimGeLU},
-    {kAllTarget, OpLevel_1, prim::kPrimGeLUGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimSqrtGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimTile},
-    {kAllTarget, OpLevel_1, prim::kPrimClipByNormNoDivSum},
-    {kAllTarget, OpLevel_1, prim::kSoftmaxGradExt},
-    {kAllTarget, OpLevel_1, prim::kFusedMulAdd},
-    {kAllTarget, OpLevel_1, prim::kPrimBatchMatMul},
-    {kAllTarget, OpLevel_1, prim::kPrimBiasAddGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimDropout},
-    {kAllTarget, OpLevel_1, prim::kPrimDropoutGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimMaximumGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimMinimumGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimLayerNorm},
-    {kAllTarget, OpLevel_1, prim::kPrimLayerNormGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimLogSoftmax},
-    {kAllTarget, OpLevel_1, prim::kPrimLogSoftmaxV2},
-    {kAllTarget, OpLevel_1, prim::kPrimLogSoftmaxGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimMatMul},
-    {kAllTarget, OpLevel_1, prim::kPrimReduceMean},
-    {kAllTarget, OpLevel_1, prim::kPrimReluGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimSigmoidGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimSigmoidCrossEntropyWithLogits},
-    {kAllTarget, OpLevel_1, prim::kPrimSigmoidCrossEntropyWithLogitsGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimSlice},
-    {kAllTarget, OpLevel_1, prim::kPrimSoftmax},
-    {kAllTarget, OpLevel_1, prim::kPrimSoftmaxV2},
-    {kAllTarget, OpLevel_1, prim::kPrimSoftmaxCrossEntropyWithLogits},
-    {kAllTarget, OpLevel_1, prim::kPrimSquaredDifference},
-    {kAllTarget, OpLevel_1, prim::kPrimSqueeze},
-    {kAllTarget, OpLevel_1, prim::kPrimSquareSumAll},
-    {kAllTarget, OpLevel_1, prim::kPrimIdentityMath},
-    {kAllTarget, OpLevel_1, prim::kPrimOnesLike},
-    {kAllTarget, OpLevel_1, prim::kPrimBiasAddGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimMaximumGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimMinimumGrad},
-    {kAllTarget, OpLevel_1, prim::kPrimTanhGrad},
-  };
-  unsigned int op_level = (common::GetEnv("MS_DEV_EXPANDER_FALLBACK") == "1") ? 1 : 0;
-  auto ops = GkUtils::GetValidOps(expander_fallback_ops_with_level, op_level, {}, {}, {});
-  return std::any_of(ops.begin(), ops.end(),
-                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); });
-}
-
 AnfNodePtr ProcessCustomOpDeco::Run(const AnfNodePtr &node) {
   if (node == nullptr) {
     return nullptr;
@@ -200,84 +120,6 @@ AnfNodePtr ProcessCustomOpDeco::Run(const AnfNodePtr &node) {
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(graph);
   return new_node;
-}
-
-AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &)> &func) {
-  if (!CanExpandFallback(node)) {
-    return nullptr;
-  }
-  auto cnode = node->cast<CNodePtr>();
-  auto expander = GetExpander(node);
-  auto res = expander->Run(node);
-  auto expand_fg = GetCNodeFuncGraph(res);
-  if (expand_fg == nullptr) {
-    return nullptr;
-  }
-  // For Ascend, the selectkernel function may check and change the input Parameter of kernel,
-  // so we replace the inner Parameter to outer Parameter
-  bool need_replace_parameter = Callback::Instance()->GetTargetFromContext() == kAscendDevice;
-  std::map<AnfNodePtr, AnfNodePtr> param_map;
-  if (need_replace_parameter) {
-    auto &params = expand_fg->parameters();
-    for (size_t i = 0; i < params.size(); i++) {
-      if (cnode->input(i + 1)->isa<Parameter>()) {
-        param_map[params[i]] = cnode->input(i + 1);
-      }
-    }
-    need_replace_parameter = !param_map.empty();
-  }
-
-  auto todos = TopoSort(expand_fg->output());
-  for (const auto &inner_node : todos) {
-    if (!AnfUtils::IsRealCNodeKernel(inner_node)) {
-      continue;
-    }
-    try {
-      MS_LOG_TRY_CATCH_SCOPE;
-      bool suc = false;
-      if (OpDefAdapter::NeedConvertGK2FE(inner_node)) {
-        (void)ConvertGraphKernelToFrontEnd::Process(inner_node);
-      }
-      auto inner_cnode = inner_node->cast<CNodePtr>();
-      if (need_replace_parameter) {
-        std::vector<std::pair<size_t, AnfNodePtr>> ori_input;
-        for (size_t i = 1; i < inner_cnode->size(); i++) {
-          auto iter = param_map.find(inner_cnode->input(i));
-          if (iter != param_map.end()) {
-            MS_LOG(DEBUG) << "Replace " << inner_cnode->input(i)->DebugString() << " by "
-                          << iter->second->DebugString();
-            (void)ori_input.emplace_back(i, inner_cnode->input(i));
-            inner_cnode->set_input(i, iter->second);
-          }
-        }
-        suc = func(inner_cnode);
-        // recover the origin inputs
-        for (auto &ori : ori_input) {
-          inner_cnode->set_input(ori.first, ori.second);
-        }
-      } else {
-        suc = func(inner_cnode);
-      }
-      if (!suc) {
-        MS_LOG(INFO) << "ExpanderFallback: select kernel [" << inner_node->fullname_with_scope() << "] failed.";
-        res = nullptr;
-        break;
-      }
-    } catch (std::exception &e) {
-      MS_LOG(WARNING) << "ExpanderFallback: error in select kernel for [" << inner_node->fullname_with_scope()
-                      << "], msg: " << e.what();
-      res = nullptr;
-      break;
-    }
-  }
-#ifdef ENABLE_DUMP_IR
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  if (context->CanDump(kAdvanced)) {
-    DumpIR("verbose_ir_files/expand_" + GetCNodeFuncName(node->cast<CNodePtr>()) + ".ir", expand_fg);
-  }
-#endif
-  return res;
 }
 
 void SetDynamicShapeAttrToCNode(const CNodePtr &cnode) {
@@ -359,20 +201,6 @@ AnfNodePtr UnfoldMakeTupleDeco::Run(const AnfNodePtr &node) {
     cnode->set_inputs(new_inputs);
   }
   return decorated_->Run(cnode);
-}
-
-void InlineExpandFuncGraph(const AnfNodePtr &expanding_node, const FuncGraphPtr &expanded_graph) {
-  auto main_graph = expanding_node->func_graph();
-  auto mng = main_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(main_graph, true);
-    main_graph->set_manager(mng);
-  }
-  auto cnode = expanding_node->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(cnode);
-  AnfNodePtrList inp(cnode->inputs().begin() + 1, cnode->inputs().end());
-  auto out = InlineClone(expanded_graph, main_graph, inp, cnode);
-  (void)mng->Replace(expanding_node, out);
 }
 
 bool IsComplexOp(const AnfNodePtr &node) {

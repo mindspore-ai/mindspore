@@ -21,10 +21,6 @@
 
 namespace mindspore {
 namespace expander {
-/**
- * Try Expand cnode for front end graph.
- */
-AnfNodePtr TryExpandCNodeFE(const AnfNodePtr &node);
 bool ConvertPrimToPrimPy(const FuncGraphPtr &graph);
 ValuePtr ConvertPrimToPrimPy(const PrimitivePtr &primc);
 void ClearAllCache();
