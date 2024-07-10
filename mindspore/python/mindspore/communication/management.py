@@ -165,6 +165,7 @@ def init(backend_name=None):
     if os.getenv("MS_ROLE") == "MS_SCHED":
         backend_name = "mccl"
 
+    _set_elegant_exit_handle()
     if backend_name == "hccl":
         if _is_ps_mode():
             # Use MindSpore cluster to build network for Parameter Server training.
@@ -173,7 +174,6 @@ def init(backend_name=None):
                 raise RuntimeError("Parameter server and scheduler should use 'CPU' as backend instead of 'Ascend'")
             if _get_ps_context("worker_num") == 1:
                 GlobalComm.INITED = True
-                _set_elegant_exit_handle()
                 return
         if device_target != "Ascend":
             raise RuntimeError("For 'init', the argument 'backend_name' should be '{}' to init '{}', "
@@ -203,7 +203,6 @@ def init(backend_name=None):
                            "but got 'backend_name' : {}".format(backend_name))
 
     GlobalComm.INITED = True
-    _set_elegant_exit_handle()
     _set_envs()
 
 
