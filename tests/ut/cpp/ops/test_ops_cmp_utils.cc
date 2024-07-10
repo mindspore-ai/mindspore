@@ -45,6 +45,42 @@ void TypeCompare(const TypePtr &output, const TypePtr &expect) {
   }
 }
 
+void ShapeCompare(const ShapeArray &output, const ShapeArray &expect) {
+  if (output.size() != expect.size()) {
+    MS_LOG(ERROR) << "SimpleInfer Shape Compare Failed, start to print error info.";
+    MS_LOG(ERROR) << "output 'ShapeArray' size is " << output.size();
+    MS_LOG(ERROR) << "expect 'ShapeArray' size is " << expect.size();
+    ASSERT_TRUE(false);
+  }
+  for (size_t i = 0; i < output.size(); ++i) {
+    if (output[i] != expect[i]) {
+      MS_LOG(ERROR) << "SimpleInfer Shape Compare Failed, start to print error info.";
+      for (auto output_i : output) MS_LOG(ERROR) << "output shape: " << ShapeVectorToString(output_i);
+      for (auto expect_i : expect) MS_LOG(ERROR) << "expect shape: " << ShapeVectorToString(expect_i);
+      ASSERT_TRUE(false);
+    }
+  }
+}
+
+void TypeCompare(const TypePtrList &output, const TypePtrList &expect) {
+  if (output.size() != expect.size()) {
+    MS_LOG(ERROR) << "SimpleInfer Type Compare Failed, start to print error info.";
+    MS_LOG(ERROR) << "output 'TypePtrList' size is " << output.size();
+    MS_LOG(ERROR) << "expect 'TypePtrList' size is " << expect.size();
+    ASSERT_TRUE(false);
+  }
+  for (size_t i = 0; i < output.size(); ++i) {
+    ASSERT_NE(output[i], nullptr);
+    ASSERT_NE(expect[i], nullptr);
+    if (!(*output[i] == *expect[i])) {
+      MS_LOG(ERROR) << "SimpleInfer Type Compare Failed, start to print error info.";
+      for (auto output_i : output) MS_LOG(ERROR) << "output type: " << output_i->ToString();
+      for (auto expect_i : expect) MS_LOG(ERROR) << "expect type: " << expect_i->ToString();
+      ASSERT_TRUE(false);
+    }
+  }
+}
+
 void TestOpFuncImplWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
                                        const EltwiseOpParams &param) {
   auto primitive = std::make_shared<Primitive>(prim_name);
@@ -115,6 +151,58 @@ void TestOpFuncImplWithMultiInputOpParams(const OpFuncImplPtr &infer_impl, const
     expect_shape = std::make_shared<abstract::TensorShape>(param.out_shape_array[0]);
     expect_type = std::make_shared<TensorType>(param.out_type_list[0]);
   }
+
+  ShapeCompare(infer_shape, expect_shape);
+  TypeCompare(infer_type, expect_type);
+}
+
+void TestOpFuncImplSimpleInferWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
+                                                  const EltwiseOpParams &param) {
+  auto primitive = std::make_shared<Primitive>(prim_name);
+  ASSERT_NE(primitive, nullptr);
+  auto x = std::make_shared<tensor::BaseTensor>(param.x_type->type_id(), param.x_shape);
+  ASSERT_NE(x, nullptr);
+  ValuePtrList input_values{std::move(x)};
+  for (auto attr : param.attr_list) {
+    input_values.push_back(std::move(attr));
+  }
+
+  ASSERT_NE(infer_impl, nullptr);
+  auto infer_shape = infer_impl->InferShape(primitive, input_values);
+  auto infer_type = infer_impl->InferType(primitive, input_values);
+
+  auto expect_shape = ShapeArray{param.out_shape};
+  auto expect_type = TypePtrList{param.out_type};
+
+  ShapeCompare(infer_shape, expect_shape);
+  TypeCompare(infer_type, expect_type);
+}
+
+void TestOpFuncImplSimpleInferWithMultiInputOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
+                                                     const MultiInputOpParams &param) {
+  auto primitive = std::make_shared<Primitive>(prim_name);
+  ASSERT_NE(primitive, nullptr);
+  ASSERT_TRUE(param.in_shape_array.size() == param.in_type_list.size());
+  ASSERT_TRUE(!(param.in_shape_array.empty() && param.in_type_list.empty() && param.attr_list.empty()));
+  ValuePtrList input_values;
+  for (size_t idx = 0; idx < param.in_shape_array.size(); ++idx) {
+    auto input = std::make_shared<tensor::BaseTensor>(param.in_type_list[idx]->type_id(), param.in_shape_array[idx]);
+    input_values.push_back(std::move(input));
+  }
+  for (auto attr : param.attr_list) {
+    input_values.push_back(std::move(attr));
+  }
+
+  ASSERT_NE(infer_impl, nullptr);
+  auto infer_shape = infer_impl->InferShape(primitive, input_values);
+  auto infer_type = infer_impl->InferType(primitive, input_values);
+
+  ASSERT_TRUE(!param.out_shape_array.empty());
+  ASSERT_TRUE(!param.out_type_list.empty());
+  ASSERT_TRUE(param.out_shape_array.size() == param.out_type_list.size());
+
+  auto expect_shape = param.out_shape_array;
+  auto expect_type = param.out_type_list;
 
   ShapeCompare(infer_shape, expect_shape);
   TypeCompare(infer_type, expect_type);
