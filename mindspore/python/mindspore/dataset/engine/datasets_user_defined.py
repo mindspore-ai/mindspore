@@ -671,11 +671,11 @@ class GeneratorDataset(MappableDataset, UnionBaseDataset):
             Random accessible input is required.
         python_multiprocessing (bool, optional): Parallelize Python operations with multiple worker process. This
             option could be beneficial if the Python operation is computational heavy. Default: ``True``.
-        max_rowsize(int, optional): Maximum size of row in MB that is used for shared memory
+        max_rowsize(int, optional): Maximum size of data (in MB) that is used for shared memory
             allocation to copy data between processes, the total occupied shared memory will increase as
             ``num_parallel_workers`` and :func:`mindspore.dataset.config.set_prefetch_size` increase. If set to -1,
             shared memory will be dynamically allocated with the actual size of data. This is only used if
-            ``python_multiprocessing`` is set to True. Default: 16.
+            ``python_multiprocessing`` is set to True. Default: ``6``.
 
     Raises:
         RuntimeError: If source raises an exception during execution.
