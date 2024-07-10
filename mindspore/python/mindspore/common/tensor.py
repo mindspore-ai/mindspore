@@ -2201,6 +2201,7 @@ class Tensor(Tensor_, metaclass=_TensorMeta):
             >>> print(x.dtype)
             Int32
         """
+        dtype = _check_astype_and_convert(dtype)
         if not copy and dtype == self.dtype:
             return self
         return tensor_operator_registry.get('cast')(self, dtype)
