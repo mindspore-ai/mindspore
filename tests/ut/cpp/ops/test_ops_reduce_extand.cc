@@ -38,8 +38,8 @@ struct ReduceExtandParams {
   AbstractBasePtr dtype;
 };
 
-static auto value_any = std::make_shared<abstract::AbstractScalar>(kValueAny, kTypeAny);
-static auto value_none = std::make_shared<abstract::AbstractScalar>(kValueAny, kTypeNone);
+static auto value_any = mindspore::kValueAny->ToAbstract();
+static auto value_none = mindspore::kNone->ToAbstract();
 static auto keep_dims_true = std::make_shared<BoolImm>(true)->ToAbstract();
 static auto keep_dims_false = std::make_shared<BoolImm>(false)->ToAbstract();
 static auto dtype_float64 = std::make_shared<Int64Imm>(kNumberTypeFloat64)->ToAbstract();
@@ -96,6 +96,35 @@ TEST_P(TestReduceExtand, dyn_shape) {
 
   ShapeCompare(out_shape, expect_shape);
   TypeCompare(out_type, expect_type);
+}
+
+class TestReduceExtandSimpleInfer : public TestOps, public testing::WithParamInterface<std::tuple<const char *, ReduceExtandParams>> {};
+
+TEST_P(TestReduceExtandSimpleInfer, simple_infer) {
+  const auto &op_name = std::get<0>(GetParam());
+  const auto &param = std::get<1>(GetParam());
+  ASSERT_TRUE(reduce_extand_func_impl.find(op_name) != reduce_extand_func_impl.end());
+  auto op_impl = reduce_extand_func_impl[op_name];
+  ASSERT_NE(op_impl, nullptr);
+
+  auto prim = std::make_shared<Primitive>(op_name);
+  ASSERT_NE(prim, nullptr);
+  auto input = std::make_shared<tensor::BaseTensor>(param.input_type->type_id(), param.input_shape);
+  ASSERT_NE(input, nullptr);
+  ValuePtrList input_values;
+  input_values.push_back(std::move(input));
+  input_values.push_back(std::move(param.axis->GetValue()));
+  input_values.push_back(std::move(param.keep_dims->GetValue()));
+  input_values.push_back(std::move(param.dtype->GetValue()));
+
+  auto expect_shape = ShapeArray{param.output_shape};
+  auto expect_type = TypePtrList{param.output_type};
+
+  auto output_shape = op_impl->InferShape(prim, input_values);
+  auto output_type = op_impl->InferType(prim, input_values);
+
+  ShapeCompare(output_shape, expect_shape);
+  TypeCompare(output_type, expect_type);
 }
 
 auto ReduceExtandTestCase = testing::ValuesIn(
@@ -174,18 +203,18 @@ auto ReduceExtandTestCase_ProdExt = testing::ValuesIn(
    ReduceExtandParams{{}, kFloat32, {}, kFloat32, value_any, keep_dims_false, value_none}});
 
 auto ReduceExtandTestCase_ExtraDtype = testing::ValuesIn(
-  {ReduceExtandParams{{}, kFloat32, {-2}, kFloat32, value_any, value_any, value_none},
-   ReduceExtandParams{{}, kComplex64, {-2}, kComplex64, value_any, value_any, value_none},
-   ReduceExtandParams{{}, kInt32, {-2}, kInt64, value_any, value_any, value_none},
-   ReduceExtandParams{{}, kInt16, {-2}, kInt64, value_any, value_any, value_none},
-   ReduceExtandParams{{}, kInt8, {-2}, kInt64, value_any, value_any, value_none},
-   ReduceExtandParams{{}, kUInt8, {-2}, kInt64, value_any, value_any, value_none},
-   ReduceExtandParams{{}, kBool, {-2}, kInt64, value_any, value_any, value_none},
-   ReduceExtandParams{{}, kInt32, {-2}, kBool, value_any, value_any, dtype_bool},
-   ReduceExtandParams{{}, kInt16, {-2}, kUInt8, value_any, value_any, dtype_uint8},
-   ReduceExtandParams{{}, kInt8, {-2}, kBool, value_any, value_any, dtype_bool},
-   ReduceExtandParams{{}, kUInt8, {-2}, kInt16, value_any, value_any, dtype_int16},
-   ReduceExtandParams{{}, kBool, {-2}, kInt32, value_any, value_any, dtype_int32}});
+  {ReduceExtandParams{{}, kFloat32, {}, kFloat32, value_none, keep_dims_false, value_none},
+   ReduceExtandParams{{}, kComplex64, {}, kComplex64, value_none, keep_dims_false, value_none},
+   ReduceExtandParams{{}, kInt32, {}, kInt64, value_none, keep_dims_false, value_none},
+   ReduceExtandParams{{}, kInt16, {}, kInt64, value_none, keep_dims_false, value_none},
+   ReduceExtandParams{{}, kInt8, {}, kInt64, value_none, keep_dims_false, value_none},
+   ReduceExtandParams{{}, kUInt8, {}, kInt64, value_none, keep_dims_false, value_none},
+   ReduceExtandParams{{}, kBool, {}, kInt64, value_none, keep_dims_false, value_none},
+   ReduceExtandParams{{}, kInt32, {}, kBool, value_none, keep_dims_false, dtype_bool},
+   ReduceExtandParams{{}, kInt16, {}, kUInt8, value_none, keep_dims_false, dtype_uint8},
+   ReduceExtandParams{{}, kInt8, {}, kBool, value_none, keep_dims_false, dtype_bool},
+   ReduceExtandParams{{}, kUInt8, {}, kInt16, value_none, keep_dims_false, dtype_int16},
+   ReduceExtandParams{{}, kBool, {}, kInt32, value_none, keep_dims_false, dtype_int32}});
 
 INSTANTIATE_TEST_CASE_P(TestMeanExtGroup, TestReduceExtand,
                         testing::Combine(testing::ValuesIn({kNameMeanExt}), ReduceExtandTestCase));
@@ -196,6 +225,38 @@ INSTANTIATE_TEST_CASE_P(TestSumExtGroup_ExtraDtype, TestReduceExtand,
 INSTANTIATE_TEST_CASE_P(TestProdExtGroup, TestReduceExtand,
                         testing::Combine(testing::ValuesIn({kNameProdExt}), ReduceExtandTestCase_ProdExt));
 INSTANTIATE_TEST_CASE_P(TestProdExtGroup_ExtraDtype, TestReduceExtand,
+                        testing::Combine(testing::ValuesIn({kNameProdExt}), ReduceExtandTestCase_ExtraDtype));
+
+auto ReduceExtandSimpleInferTestCase = testing::ValuesIn(
+  {ReduceExtandParams{{2, 3, 4}, kFloat32, {2, 1, 4}, kFloat32, CreateIntTuple({1}), keep_dims_true, value_none},
+   ReduceExtandParams{{2, 3, 4}, kFloat32, {2, 4}, kFloat32, CreateIntTuple({1}), keep_dims_false, value_none},
+   ReduceExtandParams{{2, 3, 4}, kFloat32, {1, 1, 4}, kFloat32, CreateIntTuple({0, 1}), keep_dims_true, value_none},
+   ReduceExtandParams{{2, 3, 4}, kFloat32, {4}, kFloat32, CreateIntTuple({0, 1}), keep_dims_false, value_none},
+   ReduceExtandParams{{2, 3, 4}, kFloat32, {2, 3, 1}, kFloat32, CreateIntTuple({-1}), keep_dims_true, value_none},
+   ReduceExtandParams{{2, 3, 4}, kFloat32, {2, 4}, kFloat32, CreateIntTuple({-2}), keep_dims_false, value_none},
+   ReduceExtandParams{{2, 3, 4}, kFloat32, {2, 1, 1}, kFloat32, CreateIntTuple({-1, -2}), keep_dims_true, value_none},
+   ReduceExtandParams{{2, 3, 4}, kFloat32, {4}, kFloat32, CreateIntTuple({-2, -3}), keep_dims_false, value_none},
+   ReduceExtandParams{{2, 3, 4}, kFloat32, {}, kFloat32, CreateIntTuple({}), keep_dims_false, value_none},
+   ReduceExtandParams{{}, kFloat32, {}, kFloat32, CreateIntTuple({0}), keep_dims_true, value_none},
+   ReduceExtandParams{{}, kFloat32, {}, kFloat32, CreateIntTuple({0}), keep_dims_false, value_none}});
+
+auto ReduceExtandSimpleInferTestCase_ProdExt = testing::ValuesIn(
+  {ReduceExtandParams{{2, 3, 4}, kFloat32, {2, 1, 4}, kFloat32, CreateInt(1), keep_dims_true, value_none},
+   ReduceExtandParams{{2, 3, 4}, kFloat32, {2, 4}, kFloat32, CreateInt(1), keep_dims_false, value_none},
+   ReduceExtandParams{{2, 3, 4}, kFloat32, {2, 3, 1}, kFloat32, CreateInt(-1), keep_dims_true, value_none},
+   ReduceExtandParams{{2, 3, 4}, kFloat32, {2, 4}, kFloat32, CreateInt(-2), keep_dims_false, value_none},
+   ReduceExtandParams{{}, kFloat32, {}, kFloat32, CreateInt(0), keep_dims_true, value_none},
+   ReduceExtandParams{{}, kFloat32, {}, kFloat32, CreateInt(0), keep_dims_false, value_none}});
+
+INSTANTIATE_TEST_CASE_P(TestMeanExtGroup, TestReduceExtandSimpleInfer,
+                        testing::Combine(testing::ValuesIn({kNameMeanExt}), ReduceExtandSimpleInferTestCase));
+INSTANTIATE_TEST_CASE_P(TestSumExtGroup, TestReduceExtandSimpleInfer,
+                        testing::Combine(testing::ValuesIn({kNameSumExt}), ReduceExtandSimpleInferTestCase));
+INSTANTIATE_TEST_CASE_P(TestSumExtGroup_ExtraDtype, TestReduceExtandSimpleInfer,
+                        testing::Combine(testing::ValuesIn({kNameSumExt}), ReduceExtandTestCase_ExtraDtype));
+INSTANTIATE_TEST_CASE_P(TestProdExtGroup, TestReduceExtandSimpleInfer,
+                        testing::Combine(testing::ValuesIn({kNameProdExt}), ReduceExtandSimpleInferTestCase_ProdExt));
+INSTANTIATE_TEST_CASE_P(TestProdExtGroup_ExtraDtype, TestReduceExtandSimpleInfer,
                         testing::Combine(testing::ValuesIn({kNameProdExt}), ReduceExtandTestCase_ExtraDtype));
 
 struct ReduceExtandInferValueParams {
