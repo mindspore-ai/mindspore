@@ -659,16 +659,6 @@ void ForwardExecutor::SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) 
 
 void ForwardExecutor::ClearNodeAbsMap() const { infer_operation()->ClearNodeAbsCache(); }
 
-void ForwardExecutor::ClearForwardRes() const {
-#if defined(__APPLE__)
-  ClearNodeAbsMap();
-#else
-  static const auto op_run_info = std::make_shared<FrontendOpRunInfo>();
-  auto forward_task = std::make_shared<FrontendTask>([this](...) { ClearNodeAbsMap(); }, op_run_info);
-  runtime::Pipeline::Get().frontend_stage()->Push(forward_task);
-#endif
-}
-
 void ForwardExecutor::SetNodeAbsMapByValue(const FrontendOpRunInfoPtr &op_run_info) const {
   infer_operation()->SetNodeAbsCacheByValue(op_run_info);
 }

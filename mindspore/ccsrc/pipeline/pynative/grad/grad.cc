@@ -954,7 +954,7 @@ void GradExecutor::EndGraphImpl(const InputArgsInfoPtr &input_args_info) {
     DecreaseGradOrder();
   }
   top_input_args_info_ = input_args_info;
-  forward()->ClearForwardRes();
+  forward()->ClearNodeAbsMap();
 }
 
 void GradExecutor::DoGradForCustomBprop(const InputArgsInfoPtr &input_args_info, const std::string &out_id) const {

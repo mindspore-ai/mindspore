@@ -650,7 +650,7 @@ void MindRTBackend::RunGraphByCondition(const ActorInfo &actor_info, const Graph
 void MindRTBackend::WaitTaskFinish() const {
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kWaitTaskFinish,
                                      runtime::kDefaultOpName);
-  runtime::Pipeline::Get().WaitForward();
+  runtime::Pipeline::Get().WaitAll();
 }
 
 void MindRTBackend::ClearOpExecutorResource() const { runtime::OpExecutor::GetInstance().Reset(); }
