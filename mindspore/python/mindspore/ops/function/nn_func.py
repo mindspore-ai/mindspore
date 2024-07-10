@@ -6240,6 +6240,7 @@ def batch_norm_ext(input, running_mean, running_var, weight=None, bias=None, tra
 
     Args:
         input (Tensor): Tensor of shape :math:`(N, C, *)`, with bfloat16, float16 or float32 data type.
+            For Atlas training products, the shape must be 2-4 dimensions currently.
         running_mean (Tensor): The shape :math:`(C,)`, with bfloat, float16 or float32 data type.
         running_var (Tensor): The shape :math:`(C,)`, with bfloat, float16 or float32 data type.
         weight (Tensor, optional): The shape :math:`(C,)`, with bfloat, float16 or float32 data type, Default: ``None``.
