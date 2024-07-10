@@ -27,12 +27,17 @@
 
 #include "plugin/device/ascend/kernel/internal/acme/acme_tiling_cache.h"
 #include "plugin/device/ascend/kernel/internal/acme/acme_spinlock.h"
+#include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
 namespace kernel {
 class AcmeKernelMod : public KernelMod {
  public:
-  AcmeKernelMod() = default;
+  explicit AcmeKernelMod() {
+    ascend_profiler_ = profiler::Profiler::GetInstance(kAscendDevice);
+    MS_EXCEPTION_IF_NULL(ascend_profiler_);
+  }
+
   virtual ~AcmeKernelMod() = default;
 
   bool Init(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
@@ -63,6 +68,7 @@ class AcmeKernelMod : public KernelMod {
   acme::WsAddrList acme_wss_addr_;
 
  private:
+  std::shared_ptr<profiler::Profiler> ascend_profiler_{nullptr};
   void GetOrGenerateTiling(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
   inline void UpdateAddr(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs,
                          const std::vector<KernelTensor *> &workspace);
