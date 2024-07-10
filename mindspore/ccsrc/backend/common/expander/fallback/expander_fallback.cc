@@ -27,7 +27,6 @@
 #include "include/common/utils/anfalgo.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "backend/common/expander/fallback/fallback_irbuilder.h"
-#include "backend/common/graph_kernel/adapter/expander.h"
 
 namespace mindspore {
 namespace expander {
@@ -115,18 +114,6 @@ bool IbTryExpandCNode(const IRBuilderHandle &handle, const CNodePtr &cnode, cons
   return true;
 }
 
-bool GkTryExpandCNode(const AnfNodePtr &node, const SelectKernelFunc &func) {
-  auto mng = node->func_graph()->manager();
-  MS_EXCEPTION_IF_NULL(mng);
-  auto cnode = graphkernel::TryExpandCNode(node, func);
-  if (cnode == nullptr) {
-    return false;
-  }
-  (void)mng->Replace(node, cnode);
-  graphkernel::InlineExpandFuncGraph(cnode, GetCNodeFuncGraph(cnode));
-  return true;
-}
-
 bool TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &)> &func) {
   if (!Check(node)) {
     return false;
@@ -141,7 +128,7 @@ bool TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNode
   }
   const auto *handle = IRBuilderFactory::Instance().GetBuilder(AnfUtils::GetCNodeName(node));
   if (handle == nullptr) {
-    return GkTryExpandCNode(node, func);
+    return false;
   }
   return IbTryExpandCNode(*handle, node->cast<CNodePtr>(), func);
 }

@@ -82,21 +82,6 @@ BACKEND_EXPORT ExpanderPtr GetExpander(const AnfNodePtr &node, const ExpanderPtr
  */
 BACKEND_EXPORT ExpanderPtr GetExpander(const AnfNodePtr &node, bool abstract = true);
 
-/**
- * Inline the expanded func graph to main graph.
- */
-BACKEND_EXPORT void InlineExpandFuncGraph(const AnfNodePtr &expanding_node, const FuncGraphPtr &expanded_graph);
-
-/**
- * Try Expand cnode with check func.
- */
-BACKEND_EXPORT AnfNodePtr TryExpandCNode(const AnfNodePtr &node, const std::function<bool(const CNodePtr &)> &func);
-
-/**
- * Check if node can be expanded fallback.
- */
-BACKEND_EXPORT bool CanExpandFallback(const AnfNodePtr &node);
-
 bool IsComplexOp(const AnfNodePtr &node);
 }  // namespace mindspore::graphkernel
 #endif  // MINDSPORE_CCSRC_COMMON_GRAPH_KERNEL_ADAPTER_EXPANDER_H_
