@@ -931,6 +931,19 @@ REG_BPROP_BUILDER("ACos").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+REG_BPROP_BUILDER("AcosExt").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  NodePtr dx;
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'Acos', gradient not support for complex type currently.";
+  } else {
+    dx = ib->Neg(dout) * ib->Emit("Rsqrt", {ib->Sub(ib->Tensor(1, ib->GetDtype(x)), ib->Square(x))});
+  }
+  return {dx};
+});
+
 REG_BPROP_BUILDER("ACosGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto grad = ib->GetInput(kIndex1);
@@ -952,6 +965,19 @@ REG_BPROP_BUILDER("Acosh").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("AcoshGrad", {out, dout});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("AcoshExt").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  NodePtr dx;
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'Acosh', gradient not support for complex type currently.";
+  } else {
+    dx = dout * ib->Emit("Rsqrt", {ib->Sub(ib->Square(x), ib->Tensor(1, ib->GetDtype(x)))});
+  }
   return {dx};
 });
 
