@@ -27,6 +27,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool2D
 from mindspore.ops.operations.nn_ops import AdaptiveMaxPool3D, AdaptiveAvgPool3D
 from mindspore.nn.cell import Cell
+from mindspore._c_expression import MSContext
 
 __all__ = ['AvgPool3d', 'MaxPool3d', 'AvgPool2d', 'MaxPool2d', 'AvgPool1d', 'MaxPool1d', 'FractionalMaxPool2d',
            'FractionalMaxPool3d', 'AdaptiveAvgPool1d', 'AdaptiveMaxPool1d', 'AdaptiveMaxPool2d', 'AdaptiveMaxPool3d',
@@ -1014,8 +1015,12 @@ class AvgPool2d(_PoolNd):
                  data_format="NCHW"):
         """Initialize AvgPool2d."""
         super(AvgPool2d, self).__init__(kernel_size, stride, pad_mode, data_format)
+        self.ascend_910bc_target = (MSContext.get_instance().get_ascend_soc_version() in ['ascend910b', 'ascend910c'])
         if pad_mode.upper() == 'PAD' or padding != 0 or ceil_mode or not count_include_pad \
                 or divisor_override is not None:
+            if self.ascend_910bc_target:
+                raise ValueError(f"For '{self.cls_name}, the pad_mod 'PAD' is not support in 910B now, "
+                                 f"it will be supported in the future.")
             if self.format == "NHWC":
                 raise ValueError(f"For '{self.cls_name}, the 'NHWC' format are not support when 'pad_mode' is 'pad' or "
                                  f"'padding' is not 0 or 'ceil_mode' is not False or 'count_include_pad' is not True"
