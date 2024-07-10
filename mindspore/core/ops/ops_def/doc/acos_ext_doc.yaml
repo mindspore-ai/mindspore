@@ -1,0 +1,30 @@
+acos_ext:
+    description: |
+        Computes arccosine of input tensors element-wise.
+
+        .. math::
+
+            out_i = \cos^{-1}(input_i)
+
+        Args:
+            input (Tensor): The shape of tensor is
+                :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+
+        Returns:
+            Tensor, has the same shape and dtype as `input`.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If dtype of `input` is not bool, int8, uint8, int16, int32, int64, float16, float32, float64.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
+            >>> output = ops.acos_ext(input)
+            >>> print(output)
+            [0.737726  1.5307857 1.2661036 0.9764105]

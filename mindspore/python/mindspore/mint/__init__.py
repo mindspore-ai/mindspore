@@ -233,6 +233,20 @@ from mindspore.ops.function.math_func import tanh
 
 # 122
 
+# 151
+from mindspore.ops.function.math_func import acos_ext as acos
+from mindspore.ops.function.math_func import arccos_ext as arccos
+# 152
+from mindspore.ops.function.math_func import acosh_ext as acosh
+from mindspore.ops.function.math_func import arccosh_ext as arccosh
+# 172
+
+# 173
+
+# 174
+
+# 175
+
 # 176
 from mindspore.ops.function.math_func import atan2_ext as atan2
 from mindspore.ops.function.math_func import arctan2_ext as arctan2
@@ -249,6 +263,7 @@ from mindspore.ops.function.math_func import inverse_ext as inverse
 
 # 285
 from mindspore.ops.function.array_func import scatter_add_ext as scatter_add
+# 301
 
 
 def add(input, other, *, alpha=1):
@@ -1109,6 +1124,20 @@ __all__ = [
 
     # 100
 
+    # 151
+    'acos',
+    'arccos',
+    # 152
+    'acosh',
+    'arccosh',
+    # 172
+
+    # 173
+
+    # 174
+
+    # 175
+
     # 176
     'atan2',
     'arctan2',
@@ -1123,6 +1152,8 @@ __all__ = [
     'inverse',
     # 285
     'scatter_add',
+    # 301
+
     # 304
 
     # 305

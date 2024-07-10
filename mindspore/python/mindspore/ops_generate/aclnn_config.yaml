@@ -275,6 +275,18 @@ LeakyReLUGradExt: 'aclnnLeakyReluBackward'
 
 # 100
 
+# 151
+AcosExt: 'aclnnAcos'
+# 152
+AcoshExt: 'aclnnAcosh'
+# 172
+
+# 173
+
+# 174
+
+# 175
+
 # 176
 Atan2Ext: 'aclnnAtan2'
 # 220
@@ -282,3 +294,5 @@ HShrink: 'aclnnHardshrink'
 HShrinkGrad: 'aclnnHardshrinkBackward'
 # 231
 MatrixInverseExt: 'aclnnInverse'
+
+# 301

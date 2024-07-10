@@ -1,0 +1,12 @@
+#operator acos_ext
+acos_ext:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: AcosExt
+    dispatch:
+        enable: True

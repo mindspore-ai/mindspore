@@ -76,6 +76,10 @@ Pointwise Operations
     mindspore.mint.clamp
     mindspore.mint.atan2
     mindspore.mint.arctan2
+    mindspore.mint.acos
+    mindspore.mint.arccos
+    mindspore.mint.acosh
+    mindspore.mint.arccosh
     mindspore.mint.ceil
     mindspore.mint.cos
     mindspore.mint.div

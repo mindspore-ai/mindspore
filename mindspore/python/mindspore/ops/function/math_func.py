@@ -44,7 +44,8 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
                                          log, log1p, neg, not_equal, pow, round, isfinite, argmax_ext, mean_ext_op,
-                                         sum_ext_op, prod_ext_op, all, matrix_inverse_ext, atan2_ext, sign)
+                                         sum_ext_op, prod_ext_op, all, matrix_inverse_ext, atan2_ext, sign, acos_ext,
+                                         acosh_ext)
 from mindspore.ops.auto_generate import tanh
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
@@ -1665,6 +1666,16 @@ def arccosh(input):
     return acosh_(input)
 
 
+def arccosh_ext(input):
+    r"""
+    Alias for :func:`mindspore.ops.acosh_ext`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return acosh_ext(input)
+
+
 def arcsin(x):
     r"""
     Alias for :func:`mindspore.ops.asin`.
@@ -1788,6 +1799,16 @@ def arccos(input):
         ``Ascend`` ``GPU`` ``CPU``
     """
     return acos(input)
+
+
+def arccos_ext(input):
+    """
+    Alias for :func:`mindspore.ops.acos_ext` .
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return acos_ext(input)
 
 
 def arcsinh(input):

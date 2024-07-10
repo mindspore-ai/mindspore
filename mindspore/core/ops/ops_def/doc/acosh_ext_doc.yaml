@@ -1,0 +1,32 @@
+acosh_ext:
+    description: |
+        Computes inverse hyperbolic cosine of the inputs element-wise.
+
+        .. math::
+
+            out_i = \cosh^{-1}(input_i)
+
+        .. warning::
+            Given an input tensor input, the function computes inverse hyperbolic cosine of every element.
+            Input range is [1, inf].
+
+        Args:
+            input (Tensor): The input tensor of inverse hyperbolic cosine function.
+
+        Returns:
+            Tensor, has the same shape and type as `input`.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input = Tensor(np.array([1.0, 1.5, 3.0, 100.0]), mindspore.float32)
+            >>> output = ops.acosh_ext(input)
+            >>> print(output)
+            [0.        0.9624237 1.7627472 5.298292 ]
