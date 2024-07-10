@@ -23,11 +23,11 @@
 #include "ops/nn_ops.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "mindspore/core/ops/lite_ops.h"
-#include "ops/incre_flash_attention.h"
 #include "ops/prompt_flash_attention.h"
 #include "ops/fusion/pad_fusion.h"
 #include "ops/slice.h"
 #include "ops/auto_generate/gen_lite_ops.h"
+#include "ops/op_enum.h"
 
 namespace mindspore::opt {
 namespace {
@@ -1606,21 +1606,29 @@ CNodePtr FlashAttentionFusion::CreateIncreFlashAttentionCnodeForBNSD(
   }
   // add attr
   incre_flash_attention_prim->AddAttr("num_heads", api::MakeValue(num_heads));
-  incre_flash_attention_prim->AddAttr("input_layout", api::MakeValue("BNSD"));
+  incre_flash_attention_prim->AddAttr(
+    "input_layout",
+    api::MakeValue(static_cast<mindspore::ops::FASInputLayoutMode>(mindspore::ops::FASInputLayoutMode::BNSD)));
   incre_flash_attention_prim->AddAttr("scale_value", api::MakeValue(scale_value));
   incre_flash_attention_prim->AddAttr("num_key_value_heads", api::MakeValue(num_key_value_heads));
+  incre_flash_attention_prim->AddAttr("block_size", api::MakeValue(0));
+  incre_flash_attention_prim->AddAttr("inner_precise", api::MakeValue(1));
 
-  std::vector<int64_t> dyn_input_sizes = {-1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+  std::vector<int64_t> dyn_input_sizes = {-1, 1, 1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
   incre_flash_attention_prim->AddAttr("dyn_input_sizes", api::MakeValue(dyn_input_sizes));
 
   MS_LOG(INFO) << "num heads: " << num_heads << ", input layout: BNSD, scale value: " << scale_value
                << ", num_key_value_heads: " << num_key_value_heads << ", dyn_input_sizes:" << dyn_input_sizes;
   auto fa_prim_c = incre_flash_attention_prim->GetPrim();
   CNodePtr incre_flash_attention_cnode = nullptr;
+  auto none = NewValueNode(std::make_shared<None>());
+  none->set_abstract(std::make_shared<abstract::AbstractNone>());
   if (atten_mask != nullptr) {
-    incre_flash_attention_cnode = func_graph->NewCNode(fa_prim_c, {q, k, v, atten_mask});
+    incre_flash_attention_cnode = func_graph->NewCNode(
+      fa_prim_c, {q, k, v, atten_mask, none, none, none, none, none, none, none, none, none, none, none});
   } else {
-    incre_flash_attention_cnode = func_graph->NewCNode(fa_prim_c, {q, k, v});
+    incre_flash_attention_cnode = func_graph->NewCNode(
+      fa_prim_c, {q, k, v, none, none, none, none, none, none, none, none, none, none, none, none});
   }
   if (incre_flash_attention_cnode == nullptr) {
     MS_LOG(ERROR) << "new cnode failed.";

@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_INCRE_FLASH_ATTENTION_H_
-#define MINDSPORE_CORE_OPS_INCRE_FLASH_ATTENTION_H_
-#include <map>
+
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_INCRE_FLASH_ATTENTION_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_INCRE_FLASH_ATTENTION_H_
+
 #include <memory>
 #include <vector>
-#include "ops/base_operator.h"
+#include <set>
 #include "mindapi/base/types.h"
-#include "ops/primitive_c.h"
-#include "abstract/abstract_value.h"
-#include "mindspore/core/ops/op_name.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameIncreFlashAttention = "IncreFlashAttention";
 enum IncreFlashAttentionInputIndex : size_t {
   kIncreFlashAttentionInputQueryIndex = 0,
   kIncreFlashAttentionInputKeyIndex,
@@ -42,6 +40,13 @@ enum IncreFlashAttentionInputIndex : size_t {
   kIncreFlashAttentionInputAntiquantScale,
   kIncreFlashAttentionInputAntiquantOffset,
   kIncreFlashAttentionInputBlockTable,
+  kIncreFlashAttentionInputKvPaddingSize,
+  kIncreFlashAttentionInputNumHeads,
+  kIncreFlashAttentionInputInputLayout,
+  kIncreFlashAttentionInputScaleValue,
+  kIncreFlashAttentionInputNumKeyValueHeads,
+  kIncreFlashAttentionInputBlockSize,
+  kIncreFlashAttentionInputInnerPrecise,
   kIncreFlashAttentionInputsNum,
 };
 enum IncreFlashAttentionOutputIndex : size_t {
@@ -49,23 +54,13 @@ enum IncreFlashAttentionOutputIndex : size_t {
   kIncreFlashAttentionOutputsNum,
 };
 
-/// \brief IncreFlashAttention.
-/// Refer to Python API @ref mindspore.ops.IncreFlashAttention for more details.
-class MIND_API IncreFlashAttention : public BaseOperator {
+class MIND_API IncreFlashAttentionFuncImpl : public OpFuncImpl {
  public:
-  MIND_API_BASE_MEMBER(IncreFlashAttention);
-  /// \brief Constructor.
-  IncreFlashAttention() : BaseOperator(kNameIncreFlashAttention) {
-    InitIOName(
-      {"query", "key", "value", "attn_mask", "actual_seq_lengths", "padding_mask", "dequant_scale1", "quant_scale1",
-       "dequant_scale2", "quant_scale2", "quant_offset2", "antiquant_scale", "antiquant_offset", "block_table"},
-      {"attention_out"});
-  }
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  std::set<int64_t> GetValueDependArgIndices() const override;
 };
-AbstractBasePtr IncreFlashAttentionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args);
-using IncreFlashAttentionPtr = std::shared_ptr<IncreFlashAttention>;
+
 }  // namespace ops
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CORE_OPS_INCRE_FLASH_ATTENTION_H_
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_INCRE_FLASH_ATTENTION_H_

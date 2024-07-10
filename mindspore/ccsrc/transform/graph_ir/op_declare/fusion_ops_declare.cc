@@ -57,14 +57,14 @@ INPUT_MAP(IncreFlashAttention) = {{1, INPUT_DESC(query)},
                                   {11, INPUT_DESC(quant_offset2)},
                                   {12, INPUT_DESC(antiquant_scale)},
                                   {13, INPUT_DESC(antiquant_offset)},
-                                  {14, INPUT_DESC(block_table)}};
+                                  {14, INPUT_DESC(block_table)},
+                                  {15, INPUT_DESC(kv_padding_size)}};
 DYN_INPUT_MAP(IncreFlashAttention) = {{2, DYN_INPUT_DESC(key)}, {3, DYN_INPUT_DESC(value)}};
-ATTR_MAP(IncreFlashAttention) = {{"num_heads", ATTR_DESC(num_heads, AnyTraits<int64_t>())},
-                                 {"input_layout", ATTR_DESC(input_layout, AnyTraits<std::string>())},
-                                 {"scale_value", ATTR_DESC(scale_value, AnyTraits<float>())},
-                                 {"num_key_value_heads", ATTR_DESC(num_key_value_heads, AnyTraits<int64_t>())},
-                                 {"block_size", ATTR_DESC(block_size, AnyTraits<int64_t>())},
-                                 {"inner_precise", ATTR_DESC(inner_precise, AnyTraits<int64_t>())}};
+ATTR_MAP(IncreFlashAttention) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(IncreFlashAttention) = {
+  {16, ATTR_DESC(num_heads, AnyTraits<int64_t>())},  {17, ATTR_DESC(input_layout, AnyTraits<FASInputLayoutMode>())},
+  {18, ATTR_DESC(scale_value, AnyTraits<float>())},  {19, ATTR_DESC(num_key_value_heads, AnyTraits<int64_t>())},
+  {20, ATTR_DESC(block_size, AnyTraits<int64_t>())}, {21, ATTR_DESC(inner_precise, AnyTraits<int64_t>())}};
 OUTPUT_MAP(IncreFlashAttention) = {{0, OUTPUT_DESC(attention_out)}};
 REG_ADPT_DESC(IncreFlashAttention, "IncreFlashAttention", ADPT_DESC(IncreFlashAttention))
 

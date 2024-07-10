@@ -42,6 +42,7 @@
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
 #include "include/common/utils/comm_manager.h"
 #include "include/common/utils/parallel_context.h"
+#include "include/common/utils/anfalgo.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
 #include "ops/array_ops.h"
@@ -430,8 +431,13 @@ void RedistributionNextNodeInMakeTuple(
   std::vector<std::pair<std::pair<AnfNodePtr, std::vector<int>>, std::vector<int>>> *next_nodes) {
   auto modified_get_item_idx = RemovePlaceholderIdx(get_item_index);
   std::vector<int> input_index = {node_pair.second};
+  const std::string kIncreFlashAttentionName = "IncreFlashAttention";
   if (*make_tuple_index != -1) {
-    int node_pos = IsSomePrimitiveList(use_cnode, SUPPORT_NEW_SHAPEBASE_OPS) ? node_pair.second : 1;
+    int node_pos = node_pair.second;
+    if (common::AnfAlgo::GetCNodeName(use_cnode) != kIncreFlashAttentionName) {
+      node_pos = IsSomePrimitiveList(use_cnode, SUPPORT_NEW_SHAPEBASE_OPS) ? node_pair.second : 1;
+    }
+    MS_LOG(DEBUG) << "use_cnode name: " << common::AnfAlgo::GetCNodeName(use_cnode) << " ,node_pos: " << node_pos;
     auto real_node = GetRealKernelNode(use_cnode->input(node_pos), -1, nullptr);
     if (IsPrimitiveCNode(real_node.first, prim::kPrimMakeTuple)) {
       input_index.push_back(LongToInt((*make_tuple_index) + 1));

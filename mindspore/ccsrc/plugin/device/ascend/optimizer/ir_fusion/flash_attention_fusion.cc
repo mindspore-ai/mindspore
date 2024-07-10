@@ -20,7 +20,6 @@
 #include "ops/array_ops.h"
 #include "ops/nn_ops.h"
 #include "mindspore/core/ops/lite_ops.h"
-#include "ops/incre_flash_attention.h"
 #include "ops/prompt_flash_attention.h"
 #include "ops/fusion/pad_fusion.h"
 #include "ops/slice.h"

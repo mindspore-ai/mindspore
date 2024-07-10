@@ -7910,10 +7910,11 @@ def prompt_flash_attention(query, key, value, attn_mask, actual_seq_lengths, act
                quant_scale1, deq_scale2, quant_scale2, quant_offset2)
 
 
-def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, pse_shift, dequant_scale1, quant_scale1,
-                          dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table,
-                          num_heads, input_layout="BSH", scale_value=1.0, num_key_value_heads=0, block_size=0,
-                          inner_precise=1):
+def incre_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths=None, pse_shift=None,
+                          dequant_scale1=None, quant_scale1=None, dequant_scale2=None, quant_scale2=None,
+                          quant_offset2=None, antiquant_scale=None, antiquant_offset=None, block_table=None,
+                          num_heads=1, input_layout='BSH', scale_value=1.0, num_key_value_heads=0,
+                          block_size=0, inner_precise=1, kv_padding_size=None):
     r"""
     The interface for fully inference.
 
@@ -7930,22 +7931,25 @@ def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, pse_
     Inputs:
         - **query** (Tensor) - The query tensor with data type of float16 or bfloat16.
           Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
-        - **key** (TensorList) - The key tensor with data type of float16 or bfloat16.
+        - **key** (TensorList) - The key tensor with data type of float16 or bfloat16 or int8.
           Input tensor of shape :math:`(B, S, H)` / :math:`(B, N, S, D)`.
-        - **value** (TensorList) - The value tensor with data type of float16 or bfloat16.
+        - **value** (TensorList) - The value tensor with data type of float16 or bfloat16 or int8.
           Input tensor of shape :math:`(B, S, H)` / :math:`(B, N, S, D)`.
-        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or bool.
+        - **attn_mask** (Tensor) - The attention mask tensor with data type of bool or int8 or uint8.
           Input tensor of shape :math:`(B, S)` / :math:`(B, 1, S)` / :math:`(B, 1, 1, S)`.
-        - **actual_seq_lengths** (Tensor) - Describe actual sequence length of each input with data type of int.
-        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or float32.
-        - **dequant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
-        - **quant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of float.
-        - **dequant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
-        - **quant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of float.
-        - **quant_offset2** (Tensor) - Quantitative parametor, the tensor with data type of float.
-        - **antiquant_scale** (Tensor) - Quantitative parametor, the tensor with data type of float.
-        - **antiquant_offset** (Tensor) - Quantitative parametor, the tensor with data type of float.
-        - **block_table** (Tensor) - The tensor with data type of float.
+        - **actual_seq_lengths** (Tensor) - Describe actual sequence length of each input with data type of int32 or
+          int64.
+        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or bfloat16.
+        - **dequant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of uint64 or float32. It is
+          disable now.
+        - **quant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of float32. It is disable now.
+        - **dequant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of uint64 or float32. It is
+          disable now.
+        - **quant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of float32.
+        - **quant_offset2** (Tensor) - Quantitative parametor, the tensor with data type of float32.
+        - **antiquant_scale** (Tensor) - Quantitative parametor, the tensor with data type of float16 or bfloat16.
+        - **antiquant_offset** (Tensor) - Quantitative parametor, the tensor with data type of float16 or bfloat16.
+        - **block_table** (Tensor) - The tensor with data type of int32.
         - **num_heads**  (int) - The number of heads.
         - **input_layout** (str) - the data layout of the input qkv, support `(BSH)` and `(BNSD)`. Default `BSH`.
         - **scale_value** (double) - The scale value indicating the scale coefficient, which is used as the scalar of
@@ -7954,6 +7958,7 @@ def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, pse_
           The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
         - **block_size** (int) - Default: 0.
         - **inner_precise** (int) - Default: 1.
+        - **kv_padding_size** (Tensor) - The tensor with data type of int64.
 
     Outputs:
         - **attention_out** (Tensor) - Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
@@ -7961,11 +7966,11 @@ def incre_flash_attention(query, key, value, attn_mask, actual_seq_lengths, pse_
     Supported Platforms:
         ``Ascend``
     """
-
     _ifa = _get_cache_prim(NN_OPS.IncreFlashAttention)(num_heads, input_layout, scale_value, num_key_value_heads,
                                                        block_size, inner_precise)
     return _ifa(query, key, value, attn_mask, actual_seq_lengths, pse_shift, dequant_scale1, quant_scale1,
-                dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table)
+                dequant_scale2, quant_scale2, quant_offset2, antiquant_scale, antiquant_offset, block_table,
+                kv_padding_size)
 
 
 def embedding(input, weight, padding_idx=None, max_norm=None, norm_type=2.0, scale_grad_by_freq=False):
@@ -8055,6 +8060,7 @@ __all__ = [
     'pixel_unshuffle',
     'hardshrink',
     'is_floating_point',
+    'incre_flash_attention',
     'flip',
     'fliplr',
     'flipud',

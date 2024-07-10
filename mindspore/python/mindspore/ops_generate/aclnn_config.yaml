@@ -73,6 +73,7 @@ SoftplusGradExt: 'aclnnSoftplusBackward'
 StackExt: 'aclnnStack'
 TopkExt: 'aclnnTopk'
 WeightQuantBatchMatmul: 'aclnnWeightQuantBatchMatmulV2'
+IncreFlashAttention: 'aclnnIncreFlashAttentionV4'
 # 1
 
 # 2

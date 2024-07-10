@@ -24,10 +24,11 @@
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/step_parallel_utils.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
-#include "mindspore/core/ops/incre_flash_attention.h"
+#include "ops/ops_func_impl/incre_flash_attention.h"
+#include "ops/op_enum.h"
 #include "mindspore/core/ops/array_ops.h"
 #include "frontend/parallel/ops_info/incre_flash_attention_info.h"
+#include "frontend/parallel/ops_info/operator_info.h"
 
 namespace mindspore {
 namespace parallel {
@@ -48,6 +49,19 @@ constexpr size_t kRank3 = 3;
 constexpr size_t kRank2 = 2;
 constexpr int64_t kAntiquantStratDimBSHLayout = 1;
 constexpr int64_t kAntiquantStratDimBNSDLayout = 1;
+
+class FASInputLayoutMode {
+ public:
+  static std::string ConvertEnumToString(int64_t id) {
+    static const std::vector<std::string> input_layout_modes = {"BSH", "BNSD", "SBH", "BSND", "TND"};
+    if (id < 0 || id >= static_cast<int64_t>(input_layout_modes.size())) {
+      MS_LOG(EXCEPTION) << "Invalid input layout mode " << id;
+      return "";
+    }
+    return input_layout_modes[id];
+  }
+};
+
 }  // namespace
 
 bool IncreFlashAttentionInfo::CheckStrategyOnIndex(int64_t strategy, int64_t true_value, const std::string &dim_name,
@@ -69,42 +83,56 @@ void IncreFlashAttentionInfo::SetOptinalInputs() {
         atten_mask_rank_ = inputs_shape_[valid_input_index].size();
       }
       if (index == ops::kIncreFlashAttentionInputPseShiftIndex && valid_input_index < inputs_shape_.size()) {
-        padding_mask_rank_ = inputs_shape_[valid_input_index].size();
+        pse_shift_rank_ = inputs_shape_[valid_input_index].size();
       }
       valid_input_index++;
     } else {
-      if (optinal_input_ptr->isa<None>()) {
+      if (optinal_input_ptr->isa<None>() || optinal_input_ptr->isa<StringImm>() || optinal_input_ptr->isa<Int64Imm>() ||
+          optinal_input_ptr->isa<FP32Imm>()) {
         optinal_inputs_[index] = False;
       }
     }
   }
-  if (atten_mask_rank_ > kRank4 || padding_mask_rank_ > kRank4) {
-    MS_LOG(EXCEPTION) << "atten_mask or padding_mask got unexpected ranks: " << atten_mask_rank_ << " and "
-                      << padding_mask_rank_ << ". Expecting ranks not greater than 4.";
+  if (atten_mask_rank_ > kRank4 || pse_shift_rank_ > kRank4) {
+    MS_LOG(EXCEPTION) << "atten_mask or pse_shift got unexpected ranks: " << atten_mask_rank_ << " and "
+                      << pse_shift_rank_ << ". Expecting ranks not greater than 4.";
   }
 
   Shape atten_mask_tensor_map(atten_mask_rank_, -1);
   Shape atten_mask_strategy_map(atten_mask_rank_, 0);
-  Shape padding_mask_tensor_map(padding_mask_rank_, -1);
-  Shape padding_mask_strategy_map(padding_mask_rank_, 0);
+  Shape pse_shift_tensor_map(pse_shift_rank_, -1);
+  Shape pse_shift_strategy_map(pse_shift_rank_, 0);
   if (optinal_inputs_[ops::kIncreFlashAttentionInputAttnMaskIndex]) {
     atten_mask_tensor_map[kInputBatchDim] = 1;
     atten_mask_strategy_map[kInputBatchDim] = 1;
   }
-  if (padding_mask_rank_ >= kRank3) {
-    padding_mask_tensor_map[kInputBatchDim] = 1;
-    padding_mask_strategy_map[kInputBatchDim] = 1;
+  if (pse_shift_rank_ >= kRank3) {
+    pse_shift_tensor_map[kInputBatchDim] = 1;
+    pse_shift_strategy_map[kInputBatchDim] = 1;
   }
   optinal_tensor_map_[ops::kIncreFlashAttentionInputAttnMaskIndex] = atten_mask_tensor_map;
-  optinal_tensor_map_[ops::kIncreFlashAttentionInputPseShiftIndex] = padding_mask_tensor_map;
+  optinal_tensor_map_[ops::kIncreFlashAttentionInputPseShiftIndex] = pse_shift_tensor_map;
   optinal_op_strategies_[ops::kIncreFlashAttentionInputAttnMaskIndex] = atten_mask_strategy_map;
-  optinal_op_strategies_[ops::kIncreFlashAttentionInputPseShiftIndex] = padding_mask_strategy_map;
+  optinal_op_strategies_[ops::kIncreFlashAttentionInputPseShiftIndex] = pse_shift_strategy_map;
 }
 
 Status IncreFlashAttentionInfo::GetAttrs() {
-  head_num_ = GetIntAttr(kAttrHeadNum);
-  kv_head_num = GetIntAttr(kAttrKVHeadNum);
-  input_layout_ = GetStringAttr(kAttrInputLayout);
+  auto head_num_opt = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, kAttrHeadNum);
+  if (!head_num_opt.has_value()) {
+    return FAILED;
+  }
+  head_num_ = head_num_opt.value();
+  auto kv_head_num_opt = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, kAttrKVHeadNum);
+  if (!kv_head_num_opt.has_value()) {
+    return FAILED;
+  }
+  kv_head_num = kv_head_num_opt.value();
+  auto input_layout_opt = GetScalarValueFromInputsWithCheck<int64_t>(input_value_, name_, kAttrInputLayout);
+  if (!input_layout_opt.has_value()) {
+    return FAILED;
+  }
+  auto input_layout_enum = input_layout_opt.value();
+  input_layout_ = FASInputLayoutMode::ConvertEnumToString(input_layout_enum);
   SetOptinalInputs();
   return SUCCESS;
 }
@@ -336,6 +364,13 @@ void IncreFlashAttentionInfo::ReComputeBatchSplitFlagList() {
   split_flag_list_[ops::kIncreFlashAttentionInputAntiquantScale] = false;
   split_flag_list_[ops::kIncreFlashAttentionInputAntiquantOffset] = false;
   split_flag_list_[ops::kIncreFlashAttentionInputBlockTable] = false;
+  split_flag_list_[ops::kIncreFlashAttentionInputKvPaddingSize] = false;
+  split_flag_list_[ops::kIncreFlashAttentionInputNumHeads] = false;
+  split_flag_list_[ops::kIncreFlashAttentionInputInputLayout] = false;
+  split_flag_list_[ops::kIncreFlashAttentionInputScaleValue] = false;
+  split_flag_list_[ops::kIncreFlashAttentionInputNumKeyValueHeads] = false;
+  split_flag_list_[ops::kIncreFlashAttentionInputBlockSize] = false;
+  split_flag_list_[ops::kIncreFlashAttentionInputInnerPrecise] = false;
   split_flag_list_[ops::kIncreFlashAttentionInputsNum] = false;
 }
 
@@ -359,8 +394,8 @@ void IncreFlashAttentionInfo::ReplaceNodeInputOrAttrs() {
     auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
     MS_EXCEPTION_IF_NULL(prim);
     auto clone_prim = prim->Clone();
-    clone_prim->set_attr(kAttrHeadNum, MakeValue(head_num_ / mp_));
-    clone_prim->set_attr(kAttrKVHeadNum, MakeValue(kv_head_num / mp_));
+    SetValueInputToCNode<int64_t>(cnode, ops::kIncreFlashAttentionInputNumHeads + 1, head_num_ / mp_);
+    SetValueInputToCNode<int64_t>(cnode, ops::kIncreFlashAttentionInputNumKeyValueHeads + 1, kv_head_num / mp_);
     cnode->set_input(0, NewValueNode(clone_prim)->cast<AnfNodePtr>());
   }
 }
