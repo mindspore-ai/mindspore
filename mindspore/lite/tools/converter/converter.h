@@ -72,6 +72,7 @@ class ConverterImpl {
                         bool not_save, bool is_multi_model);
   int ExecuteMicro(const schema::MetaGraphT *meta_graph, const std::shared_ptr<ConverterPara> &param,
                    bool is_multi_model);
+  int UnifyInputShape(const std::shared_ptr<ConverterPara> &param);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -76,6 +76,7 @@ constexpr size_t kMaxNum1024 = 1024;
 constexpr size_t kPluginPathMaxNum = 10;
 constexpr int kPathLengthUpperLimit = 1024;
 constexpr size_t kEncMaxLen = 16;
+constexpr size_t kMaxInputShapeLen = 1e6;
 constexpr auto kFmk = "fmk";
 constexpr auto kModelFile = "modelFile";
 constexpr auto kOutputFile = "outputFile";
@@ -929,6 +930,97 @@ int CheckValueParam(const std::shared_ptr<ConverterPara> &param, bool is_multi_m
   return RET_OK;
 }
 
+int ParseStringInputShape(const std::string &input_shape_str,
+                          std::map<std::string, std::vector<int64_t>> *input_shape) {
+  if (input_shape_str.size() > kMaxInputShapeLen) {
+    MS_LOG(ERROR) << "input shape too long! input shape size:" << input_shape_str.size();
+    return RET_ERROR;
+  }
+  std::istringstream input_shape_stream(input_shape_str);
+  std::string token;
+  while (std::getline(input_shape_stream, token, ';')) {
+    size_t pos = token.find_last_of(':');
+    if (pos != std::string::npos) {
+      std::string name = token.substr(0, pos);
+      std::string numbers = token.substr(pos + 1);
+      // Remove '[' and ']' characters from numbers
+      numbers.erase(std::remove(numbers.begin(), numbers.end(), '['), numbers.end());
+      numbers.erase(std::remove(numbers.begin(), numbers.end(), ']'), numbers.end());
+
+      std::istringstream numStream(numbers);
+      std::string numStr;
+      while (std::getline(numStream, numStr, ',')) {
+        (*input_shape)[name].push_back(std::stoi(numStr));
+      }
+    }
+  }
+  return RET_OK;
+}
+
+bool CompareInputShape(const std::map<std::string, std::vector<int64_t>> &input_shape_param,
+                       const std::map<std::string, std::vector<int64_t>> &input_shape_config) {
+  if (input_shape_param.size() != input_shape_config.size()) {
+    return false;
+  }
+  // Iterate through map1 and compare with map2
+  for (auto it1 = input_shape_param.begin(), it2 = input_shape_config.begin(); it1 != input_shape_param.end();
+       ++it1, ++it2) {
+    // Compare keys
+    if (it1->first != it2->first) {
+      return false;
+    }
+    if (it1->second.size() != it2->second.size()) {
+      return false;
+    }
+    // Compare value vectors using std::equal
+    if (!std::equal(it1->second.begin(), it1->second.end(), it2->second.begin())) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool ShapeMapIsDynamicShape(std::map<std::string, std::vector<int64_t>> input_shape) {
+  for (auto it : input_shape) {
+    if (any_of(it.second.begin(), it.second.end(), [](int i) { return i == -1; })) {
+      return true;
+    }
+  }
+  return false;
+}
+
+int ConverterImpl::UnifyInputShape(const std::shared_ptr<ConverterPara> &param) {
+  auto input_shape_param = param->input_shape;
+  std::string input_shape_config_str = "";
+  auto config_infos = param->config_infos;
+  if (config_infos.find(kAclBuildOptionParam) != config_infos.end()) {
+    auto acl_build_options_section = config_infos.at(kAclBuildOptionParam);
+    if (acl_build_options_section.find(kInputShapeKey) != acl_build_options_section.end()) {
+      input_shape_config_str = acl_build_options_section.at(kInputShapeKey);
+    }
+  }
+  std::map<std::string, std::vector<int64_t>> input_shape_config;
+  auto ret = ParseStringInputShape(input_shape_config_str, &input_shape_config);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ParseStringInputShape failed! ret:" << ret << "!";
+    return ret;
+  }
+  if (!input_shape_param.empty() && !input_shape_config.empty()) {
+    bool compare_res = CompareInputShape(input_shape_param, input_shape_config);
+    if (compare_res == false) {
+      MS_LOG(ERROR) << "Input shape of input param not equal to input shape of config!";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  } else if (input_shape_param.size() == 0 && input_shape_config.size() > 0 &&
+             !ShapeMapIsDynamicShape(input_shape_config)) {
+    param->input_shape = input_shape_config;
+    for (auto &it : input_shape_config) {
+      lite::ConverterInnerContext::GetInstance()->UpdateGraphInputTensorShape(it.first, it.second);
+    }
+  }
+  return RET_OK;
+}
+
 int ConverterImpl::LoadPluginLib(const std::shared_ptr<ConverterPara> &param) {
   if (!param->plugins_path.empty()) {
     for (auto &path : param->plugins_path) {
@@ -955,6 +1047,11 @@ int ConverterImpl::Convert(const std::shared_ptr<ConverterPara> &param, void **m
   auto ret = InitConfigParam(param, &model_param_infos);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init config file failed: " << ret << " " << GetErrorInfo(ret);
+    return ret;
+  }
+  ret = UnifyInputShape(param);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "UnifyinputShape failed! ret:" << ret << "!";
     return ret;
   }
   ret = StoreConverterParameters(param);
