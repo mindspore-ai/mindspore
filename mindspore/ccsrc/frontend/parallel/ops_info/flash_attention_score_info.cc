@@ -364,10 +364,10 @@ Status FlashAttentionScoreInfo::InitInputsTensorMap() {
     inputs_tensor_map_[ops::kFlashAttentionScoreInputPrefixIndex] = {dev_matrix_batch_dim_};
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputActualSeqQlenIndex]) {
-    inputs_tensor_map_[ops::kFlashAttentionScoreInputActualSeqQlenIndex] = {-1};
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputActualSeqQlenIndex] = {dev_matrix_batch_dim_};
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputActualSeqKVlenIndex]) {
-    inputs_tensor_map_[ops::kFlashAttentionScoreInputActualSeqKVlenIndex] = {-1};
+    inputs_tensor_map_[ops::kFlashAttentionScoreInputActualSeqKVlenIndex] = {dev_matrix_batch_dim_};
   }
   inputs_tensor_map_.erase(std::remove(inputs_tensor_map_.begin(), inputs_tensor_map_.end(), Shape{}),
                            inputs_tensor_map_.end());
@@ -448,10 +448,10 @@ Status FlashAttentionScoreInfo::InitSplittableInputs() {
     splittable_inputs_[ops::kFlashAttentionScoreInputPrefixIndex] = {batch_group};
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputActualSeqQlenIndex]) {
-    splittable_inputs_[ops::kFlashAttentionScoreInputPrefixIndex] = {0};
+    splittable_inputs_[ops::kFlashAttentionScoreInputActualSeqQlenIndex] = {batch_group};
   }
   if (is_input_passed_[ops::kFlashAttentionScoreInputActualSeqKVlenIndex]) {
-    splittable_inputs_[ops::kFlashAttentionScoreInputActualSeqKVlenIndex] = {0};
+    splittable_inputs_[ops::kFlashAttentionScoreInputActualSeqKVlenIndex] = {batch_group};
   }
   splittable_inputs_.erase(std::remove(splittable_inputs_.begin(), splittable_inputs_.end(), Shape{}),
                            splittable_inputs_.end());
