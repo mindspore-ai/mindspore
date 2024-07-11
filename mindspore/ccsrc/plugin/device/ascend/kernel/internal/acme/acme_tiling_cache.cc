@@ -127,6 +127,8 @@ uint64_t AcmeTilingCache::GenerateKey(const std::string &name, const std::vector
         default:
           MS_LOG(INTERNAL_EXCEPTION) << "Unsupported dtype " << data_type << ", kernel: " << name;
       }
+    } else if (type == kMetaTypeNone) {
+      // skip
     } else {
       MS_LOG(INTERNAL_EXCEPTION) << "Unsupported input type " << type << ", kernel: " << name;
     }
