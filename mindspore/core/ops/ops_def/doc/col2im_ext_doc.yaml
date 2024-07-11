@@ -43,8 +43,8 @@ col2im_ext:
               :math:`(C, output\_size[0], output\_size[1], ...)`
 
         Raises:
-            TypeError: If `kernel_size`, `dilation`, `padding`, `stride` data type is not int, tuple or list.
-            ValueError: If `kernel_size`, `dilation`, `stride` value is not
+            TypeError: If `output_size`, `kernel_size`, `stride`, `dilation`, `padding` data type is not int, tuple or list.
+            ValueError: If `output_size`, `kernel_size`, `dilation`, `stride` value is not
                 greater than zero or elements number invalid.
             ValueError: If `padding` value is less than zero or elements number invalid.
             ValueError: If input.shape[-2] can't be divisible by the product of kernel_size.

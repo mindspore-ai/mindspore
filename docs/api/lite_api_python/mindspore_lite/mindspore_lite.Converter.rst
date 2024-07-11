@@ -27,7 +27,7 @@ mindspore_lite.Converter
             - **model_file** (str) - 转换时的输入模型文件路径。例如： ``"/home/user/model.prototxt"`` 。选项有TF： ``"model.pb"`` 、 CAFFE： ``"model.prototxt"`` 、 ONNX： ``"model.onnx"`` 、 MINDIR： ``"model.mindir"`` 、 TFLITE： ``"model.tflite"`` 、 PYTORCH： ``"model.pt or model.pth"``。
             - **output_file** (str) - 转换时的输出模型文件路径。可自动生成.ms或.mindir后缀。如果将 `save_type` 设置为 ``ModelType.MINDIR`` ，那么将生成MindSpore模型，该模型使用.mindir作为后缀。如果将 `save_type` 设置为 ``ModelType.MINDIR_LITE`` ，那么将生成MindSpore Lite模型，该模型使用.ms作为后缀。例如：输入模型为"/home/user/model.prototxt"，将 `save_type` 设置为 ``ModelType.MINDIR`` ，它将生成名为model.prototxt.mindir的模型在/home/user/路径下。
             - **weight_file** (str，可选) - 输入模型权重文件。仅当输入模型框架类型为 ``FmkType.CAFFE`` 时必选，Caffe模型一般分为两个文件： `model.prototxt` 是模型结构，对应 `model_file` 参数； `model.caffemodel` 是模型权值文件，对应 `weight_file` 参数。例如："/home/user/model.caffemodel"。默认值： ``""`` ，表示无模型权重文件。
-            - **config_file** (str，可选) - Converter的配置文件，可配置训练后量化或离线拆分算子并行或禁用算子融合功能并将插件设置为so路径等功能。 `config_file` 配置文件采用 `key = value` 的方式定义相关参数，有关训练后量化的配置参数，请参见 `训练后量化 <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_ 。有关扩展的配置参数，请参见 `扩展配置 <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#扩展配置>`_ 。例如："/home/user/model.cfg"。默认值： ``""`` ，表示不设置Converter的配置文件。
+            - **config_file** (str，可选) - Converter的配置文件，可配置训练后量化或离线拆分算子并行或禁用算子融合功能并将插件设置为so路径等功能。 `config_file` 配置文件采用 `key = value` 的方式定义相关参数，有关训练后量化的配置参数，请参见 `训练后量化 <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_ 。有关扩展的配置参数，请参见 `扩展配置 <https://www.mindspore.cn/lite/docs/zh-CN/master/use/converter_register.html#扩展配置>`_ 。例如："/home/user/model.cfg"。默认值： ``""`` ，表示不设置Converter的配置文件。
 
         异常：
             - **TypeError** - `fmk_type` 不是FmkType类型。
@@ -193,7 +193,7 @@ mindspore_lite.Converter
 
               有关训练后量化的配置参数，请参见 `训练后量化 <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_ 。
 
-              有关扩展的配置参数，请参见 `扩展配置 <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#扩展配置>`_ 。
+              有关扩展的配置参数，请参见 `扩展配置 <https://www.mindspore.cn/lite/docs/zh-CN/master/use/converter_register.html#扩展配置>`_ 。
 
               - ``"common_quant_param"``：公共量化参数部分。
               - ``"mixed_bit_weight_quant_param"``：混合位权重量化参数部分。
@@ -205,7 +205,7 @@ mindspore_lite.Converter
 
               有关训练后量化的配置参数，请参见 `训练后量化 <https://www.mindspore.cn/lite/docs/zh-CN/master/use/post_training_quantization.html>`_ 。
 
-              有关扩展的配置参数，请参见 `扩展配置 <https://www.mindspore.cn/lite/docs/zh-CN/master/use/nnie.html#扩展配置>`_ 。
+              有关扩展的配置参数，请参见 `扩展配置 <https://www.mindspore.cn/lite/docs/zh-CN/master/use/converter_register.html#扩展配置>`_ 。
 
         异常：
             - **TypeError** - `section` 不是str类型。

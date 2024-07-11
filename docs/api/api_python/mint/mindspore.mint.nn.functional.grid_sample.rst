@@ -18,7 +18,7 @@ mindspore.mint.nn.functional.grid_sample
     参数：
         - **input** (Tensor) - 4-D场景下，shape为 :math:`(N, C, H_{in}, W_{in})`，5-D场景下，shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})`。数据类型为float32或float64。
         - **grid** (Tensor) - 4-D场景下，shape为 :math:`(N, H_{out}, W_{out}, 2)`，5-D场景下，shape为 :math:`(N, D_{out}, H_{out}, W_{out}, 3)`。数据类型与 `input` 保持一致。
-        - **mode** (str) - 插值方法。可选方法为 ``'bilinear'``， ``'nearest'``。默认值： ``'bilinear'`` 。当 `mode` 为 ``'bilinear'``，且输入为5-D，则 `mode` 为 ``'trilinear'``。但是，当输入为4-D，则 `mode` 为 ``'bilinear'``。默认值： ``'bilinear'`` 。
+        - **mode** (str) - 插值方法。可选方法为 ``'bilinear'``， ``'nearest'``。默认值： ``'bilinear'`` 。注： ``'bilinear'`` 还不支持。当 `mode` 为 ``'bilinear'``，且输入为5-D，则 `mode` 为 ``'trilinear'``。但是，当输入为4-D，则 `mode` 为 ``'bilinear'``。默认值： ``'bilinear'`` 。
 
           - ``'nearest'``：最近邻插值。每个输出像素的值为最近的输入像素的值。这种方法简单快速，但可能导致块状或像素化的输出。
           - ``'bilinear'``：双线性插值。每个输出像素是最接近的四个输入像素的加权平均值，使用双线性插值计算。与最近邻插值相比，此方法产生更平滑的结果。

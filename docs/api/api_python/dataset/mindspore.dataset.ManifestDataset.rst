@@ -43,7 +43,7 @@
     **关于Manifest数据集：**
 
     Manifest文件包含数据集中包含的文件列表，包括文件名和文件ID等基本文件信息，以及扩展文件元数据。
-    Manifest是华为ModelArts支持的数据格式文件，详细说明请参见 `Manifest文档 <https://support.huaweicloud.com/engineers-modelarts/modelarts_23_0009.html>`_ 。
+    Manifest是华为ModelArts支持的数据格式文件，详细说明请参见 `Manifest文档 <https://support.huaweicloud.com/dataprepare-modelarts/dataprepare-modelarts-0015.html>`_ 。
 
     以下是原始Manifest数据集结构。可以将数据集文件解压缩到此目录结构中，并由MindSpore的API读取。
 
