@@ -113,6 +113,7 @@ Reduction运算
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.median
     mindspore.mint.argmax
     mindspore.mint.all
     mindspore.mint.any

@@ -45,7 +45,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
                                          log, log1p, neg, not_equal, pow, round, isfinite, argmax_ext, mean_ext_op,
                                          sum_ext_op, prod_ext_op, all, matrix_inverse_ext, atan2_ext, sign, acos_ext,
-                                         acosh_ext)
+                                         acosh_ext, median_ext_op, median_dim_op)
 from mindspore.ops.auto_generate import tanh
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
@@ -3625,6 +3625,51 @@ def fmin(input, other):
     """
     fmin_ = Fmin()
     return fmin_(input, other)
+
+
+def median_ext(input, dim=None, keepdim=False):
+    r"""
+    Output the median on the specified dimension 'dim' and its corresponding index.
+    If 'dim' is None, calculate the median of all elements in the Tensor.
+
+    Args:
+        input (Tensor): A Tensor of any dimension whose data type is uint8, int16, int32, int64, float16 or float32.
+        dim (int, optional): The dimension need to reduce. Default: ``None`` .
+        keepdim (bool, optional): Whether the output tensor need to retain `dim` dimension or not.
+            Default: ``False`` .
+
+    Returns:
+        - y (Tensor) - Output median, with the same data type as `input`.
+
+          - If `dim` is ``None`` , `y` only has one element.
+          - If `keepdim` is true, the `y` has the same shape as the `input` except the shape
+            of `y` in dimension `dim` is size 1.
+          - Otherwise, the `y` lacks `dim` dimension than input.
+
+        - indices (Tensor) - The index of the median. Shape is consistent with `y`, with a data type of int64.
+
+    Raises:
+        TypeError: If dtype of `input` is not one of the following: uint8, int16, int32, int64, float16 or float32.
+        TypeError: If input `input` is not a Tensor.
+        TypeError: If `dim` is not a int.
+        TypeError: If `keepdim` is not a bool.
+        ValueError: If `dim` is not in range of [-x.dim, x.dim-1].
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([[0.57, 0.11, 0.21],[0.38, 0.50, 0.57], [0.36, 0.16, 0.44]]).astype(np.float32))
+        >>> y = ops.function.math_func.median(x, dim=0, keepdim=False)
+        >>> print(y)
+        (Tensor(shape=[3], dtype=Float32, value= [ 3.79999995e-01,  1.59999996e-01,  4.39999998e-01]),
+        Tensor(shape=[3], dtype=Int64, value= [1, 2, 2]))
+    """
+    if dim is None:
+        return median_ext_op(input)
+    return median_dim_op(input, dim, keepdim)
 
 
 def median(input, axis=-1, keepdims=False):

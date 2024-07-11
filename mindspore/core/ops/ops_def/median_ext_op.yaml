@@ -1,0 +1,13 @@
+#operator median_ext
+median_ext:
+  args:
+    input:
+      dtype: tensor
+  returns:
+    out:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    

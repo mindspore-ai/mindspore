@@ -295,4 +295,7 @@ HShrinkGrad: 'aclnnHardshrinkBackward'
 # 231
 MatrixInverseExt: 'aclnnInverse'
 
+# 256
+MedianExt: 'aclnnMedian'
+
 # 301

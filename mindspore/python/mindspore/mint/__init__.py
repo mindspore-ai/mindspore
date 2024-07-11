@@ -22,6 +22,7 @@ from mindspore.mint.nn import functional
 from mindspore.mint import linalg
 from mindspore.ops import erf, where, triu
 from mindspore.ops.function.math_func import linspace_ext as linspace
+from mindspore.ops.function.math_func import median_ext as median
 from mindspore.ops.function.array_func import full_ext as full
 from mindspore.ops.function.array_func import ones_like_ext as ones_like
 from mindspore.ops.function.array_func import zeros_like_ext as zeros_like
@@ -1144,6 +1145,9 @@ __all__ = [
 
     # 208
     'eye',
+
+    # 256
+    'median',
     'rand',
     'rand_like',
     # 210

@@ -408,6 +408,22 @@ inline NodePtr GradDiagonal(Emitter *ib, const NodePtr &dout, const NodePtr &dx_
   return dx;
 }
 
+inline NodePtr MedianExtOpGetMask(BpropBuilder *ib, const NodePtr &x, const NodePtr &out) {
+  auto out_is_nan = ib->IsNanFunc(out);
+  auto input_is_nan = [&x](Emitter *e) -> NodePtrList { return {e->IsNanFunc(x)}; };
+  auto input_equal_out = [&x, &out](Emitter *e) -> NodePtrList { return {e->Equal(x, out)}; };
+  return ib->Conditional(out_is_nan, input_is_nan, input_equal_out);
+}
+
+inline NodePtr MedianExtOpGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &out, const NodePtr &dout) {
+  auto mask = MedianExtOpGetMask(ib, x, out);
+  auto x_zeros = ib->Zeros(x);
+  auto mask_sum = ib->Emit("SumExt", {mask, ib->EmitValue(kNone), ib->Value(false), ib->EmitValue(kNone)});
+  auto grad_div_mask_sum = ib->Div(dout, ib->Cast(mask_sum, ib->GetDtype(dout)));
+  auto dx = ib->Emit("MaskedFill", {x_zeros, mask, grad_div_mask_sum});
+  return {dx};
+}
+
 class DiagonalShapeCalc : public ShapeCalcFunctor {
  public:
   // cppcheck-suppress unknownMacro
@@ -1845,6 +1861,21 @@ REG_BPROP_BUILDER("Median").SetBody(BODYFUNC(ib) {
                        {"keep_dims", ib->GetAttr("keep_dims")}}),
              ib->GetDtype(x));
   return {dx};
+});
+
+REG_BPROP_BUILDER("MedianExt").SetBody(BODYFUNC(ib) {
+  auto dx = MedianExtOpGrad(ib, ib->GetInput(kIndex0), ib->GetInput(kIndex1), ib->GetInput(kIndex2));
+  return {dx};
+});
+
+REG_BPROP_BUILDER("MedianDim").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto axis = ib->GetInput(kIndex1);
+  auto keep_dims = ib->GetInput(kIndex2);
+  auto out = ib->GetInput(kIndex3);
+  auto dout = ib->GetInput(kIndex4);
+  auto dx = MeidanDimGrad(ib, x, axis, keep_dims, out, dout);
+  return {dx, ib->OutZeros(axis), ib->OutZeros(keep_dims)};
 });
 
 REG_BPROP_BUILDER("Trace").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(ib) {

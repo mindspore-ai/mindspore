@@ -94,6 +94,10 @@ NodePtr MinOrMaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, co
 std::pair<ShapeVector, ShapeVector> SplitShapeIndex(const ShapeVector &input_shape, const ShapeVector &axis);
 NodePtr ArgminOrArgmaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
                            const NodePtr &out, const NodePtr &dout, const bool is_max);
+NodePtr MeidanDimGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
+                      const NodePtr &out, const NodePtr &dout);
+inline NodePtr ReduceCommonOpGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
+                                  const NodePtr &out, const NodePtr &dout, int64_t dout_index, int64_t indices_index);
 TypeId PromoteBinaryDtype(TypeId t1, TypeId t2);
 NodePtr LGamma(BpropBuilder *ib, const NodePtr &x);
 bool CheckType(const TypePtr &check_type, const std::set<TypePtr> &template_types);
