@@ -113,12 +113,12 @@ Reduction Operations
     :nosignatures:
     :template: classtemplate.rst
 
-    mindspore.mint.median
     mindspore.mint.argmax
     mindspore.mint.all
     mindspore.mint.any
     mindspore.mint.max
     mindspore.mint.mean
+    mindspore.mint.median
     mindspore.mint.min
     mindspore.mint.prod
     mindspore.mint.sum
