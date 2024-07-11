@@ -6583,6 +6583,9 @@ def repeat_interleave_ext(input, repeats, dim=None, output_size=None):
     r"""
     Repeat elements of a tensor along an axis, like `numpy.repeat`.
 
+    .. warning::
+        Only support on Atlas A2 training series.
+
     Args:
         input (Tensor): The tensor to repeat values for. Must be of type: float16,
             float32, int8, uint8, int16, int32, or int64.

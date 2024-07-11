@@ -30,12 +30,18 @@ void RepeatInterleaveTensorAscend::GetWorkSpaceInfo(const std::vector<KernelTens
     auto rank = SizeToLong(output_shape.size());
     dim_ = (dim_ < 0) ? (dim_ + rank) : dim_;
     op_type_ = "aclnnRepeatInterleaveWithDim";
-    output_size_ = output_size_opt.has_value() ? output_size_opt.value() : output_shape[dim_];
+    output_size_ = output_shape[dim_];
     GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], dim_, output_size_, outputs[kIndex0]);
   } else {
     op_type_ = "aclnnRepeatInterleave";
-    output_size_ = output_size_opt.has_value() ? output_size_opt.value() : output_shape[0];
+    output_size_ = output_shape[0];
     GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], output_size_, outputs[kIndex0]);
+  }
+  if (output_size_opt.has_value()) {
+    int64_t output_size_imm = output_size_opt.value();
+    if (output_size_imm != output_size_) {
+      MS_EXCEPTION(RuntimeError) << "Allocated size does not match required size.";
+    }
   }
 }
 
