@@ -13,7 +13,7 @@ mindspore.mint.nn.functional.batch_norm
     其中， :math:`\gamma` 为 `weight`， :math:`\beta` 为 `bias`， :math:`\epsilon` 为 `eps`， :math:`mean` 为 :math:`x` 的均值， :math:`variance` 为 :math:`x` 的方差。
 
     参数：
-        - **input** (Tensor) - 数据输入，shape为 :math:`(N, C, *)` 的Tensor，其中 :math:`*` 表示任意的附加维度。支持数据类型为bfloat16，float16或float32。
+        - **input** (Tensor) - 数据输入，shape为 :math:`(N, C, *)` 的Tensor，其中 :math:`*` 表示任意的附加维度。对于Atlas 训练系列产品，当前仅支持2-4维。支持数据类型为bfloat16，float16或float32。
         - **running_mean** (Tensor) - shape为 :math:`(C,)` ，数据类型为bfloat16，float16或float32。
         - **running_var** (Tensor) - shape为 :math:`(C,)` ，数据类型为bfloat16，float16或float32。
         - **weight** (Tensor, 可选) - shape为 :math:`(C,)` ，数据类型为bfloat16，float16或float32，默认值: ``None`` 。为 ``None`` 时，初始化为 ``1`` 。

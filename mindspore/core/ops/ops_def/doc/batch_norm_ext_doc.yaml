@@ -1,4 +1,4 @@
-batch_norm:
+batch_norm_ext:
   description: |
     Batch Normalization for input data and updated parameters.
 
@@ -17,28 +17,23 @@ batch_norm:
     :math:`mean` is the mean of :math:`x`,
     :math:`variance` is the variance of :math:`x`.
 
-    Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C, *)`, where :math:`*` means, any number of additional
-            dimensions. with float16 or float32 data type. with bfloat16, float16 or float32 data type.
-        - **weight** (Tensor) - Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
-        - **bias** (Tensor) - Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
-        - **running_mean** (Tensor) - Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
-        - **running_var** (Tensor) - Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
-        - **training** (bool, optional) - If `training` is ``True`` , `mean` and `variance` are computed during
+    Args:
+        input (Tensor): Tensor of shape :math:`(N, C, *)`, where :math:`*` means, any number of additional
+            dimensions. with bfloat16, float16 or float32 data type. For Atlas training products, the shape must be
+            2-4 dimensions currently.
+        weight (Tensor): Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
+        bias (Tensor): Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
+        running_mean (Tensor): Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
+        running_var (Tensor): Tensor of shape :math:`(C,)`, with bfloat16, float16 or float32 data type.
+        training (bool, optional): If `training` is ``True`` , `mean` and `variance` are computed during
             training. If `training` is ``False`` , they're loaded from checkpoint during inference. Default: ``False`` .
-        - **momentum** (float, optional) - The hyper parameter to compute moving average for running_mean and
+        momentum (float, optional): The hyper parameter to compute moving average for running_mean and
             running_var (e.g. :math:`new\_running\_mean = (1 - momentum) * running\_mean + momentum * current\_mean`).
             Default: ``0.1`` 
-        - **epsilon** (float, optional) - A small value added for numerical stability. Default: ``1e-5``.
+        epsilon (float, optional): A small value added for numerical stability. Default: ``1e-5``.
 
-    Outputs:
-        Tuple of 3 Tensors, the normalized inputs and the updated parameters.
-
-        - **output_x** (Tensor) - The same type and shape as the input. The shape is :math:`(N, C, *)`.
-        - **saved_mean** (Tensor) - The mean calculated per-dimension over the mini-batches,
-          shape is :math:`(C,)`.
-        - **saved_variance** (Tensor) - The variance calculated per-dimension over the mini-batches,
-          shape is :math:`(C,)`.
+    returns:
+        Tensor, the normalized inputs, has the same shape and dtype as `input`.
 
     Raises:
         TypeError: If `training` is not a bool.
@@ -54,12 +49,11 @@ batch_norm:
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> input_x = Tensor(np.ones([2, 2]), mindspore.float32)
-        >>> scale = Tensor(np.ones([2]), mindspore.float32)
+        >>> weight = Tensor(np.ones([2]), mindspore.float32)
         >>> bias = Tensor(np.ones([2]), mindspore.float32)
-        >>> mean = Tensor(np.ones([2]), mindspore.float32)
-        >>> variance = Tensor(np.ones([2]), mindspore.float32)
-        >>> batch_norm = ops.BatchNormExt()
-        >>> output = batch_norm(input_x, scale, bias, mean, variance)
-        >>> print(output[0])
+        >>> running_mean = Tensor(np.ones([2]), mindspore.float32)
+        >>> running_var = Tensor(np.ones([2]), mindspore.float32)
+        >>> output = ops.batch_norm_ext(input_x, weight, bias, running_mean, running_var)
+        >>> print(output)
         [[1. 1.]
          [1. 1.]]
