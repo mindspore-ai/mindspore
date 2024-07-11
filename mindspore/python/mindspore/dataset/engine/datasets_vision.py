@@ -2799,8 +2799,8 @@ class ManifestDataset(MappableDataset, VisionBaseDataset):
 
     Manifest file contains a list of files included in a dataset, including basic file info such as File name and File
     ID, along with extended file metadata. Manifest is a data format file supported by Huawei Modelarts. For details,
-    see `Specifications for Importing the Manifest File <https://support.huaweicloud.com/engineers-modelarts/
-    modelarts_23_0009.html>`_ .
+    see `Specifications for Importing the Manifest File <https://support.huaweicloud.com/intl/en-us/dataprepare-modelarts/
+    dataprepare-modelarts-0015.html>`_ .
 
     .. code-block::
 

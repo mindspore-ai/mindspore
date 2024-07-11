@@ -2104,7 +2104,7 @@ def inverse_ext(input):
 
     Args:
         input (Tensor): A matrix to be calculated. Input `input` must be at least two dimensions, and the size of
-            the last two dimensions must be the same size.
+            the last two dimensions must be the same size. And the matrix must be invertible.
 
     Returns:
         Tensor, has the same type and shape as input `input`.

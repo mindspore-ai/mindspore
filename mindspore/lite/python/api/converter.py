@@ -730,7 +730,8 @@ class Converter:
                 For the configuration parameters related to post training quantization, please refer to
                 `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
                 For the configuration parameters related to extension, please refer to
-                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
+                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/converter_register.
+                html#extension-configuration>`_ .
                 For example, "/home/user/model.cfg". Default: ``""``, indicating that no configuration file.
 
         Raises:
@@ -814,7 +815,8 @@ class Converter:
                 `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
 
                 For the configuration parameters related to extension, please refer to
-                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
+                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/converter_register.
+                html#extension-configuration>`_ .
 
                 - ``"common_quant_param"``: Common quantization parameter.
                 - ``"mixed_bit_weight_quant_param"``: Mixed bit weight quantization parameter.
@@ -831,7 +833,8 @@ class Converter:
                 `quantization <https://www.mindspore.cn/lite/docs/en/master/use/post_training_quantization.html>`_ .
 
                 For the configuration parameters related to extension, please refer to
-                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/nnie.html#extension-configuration>`_ .
+                `extension  <https://www.mindspore.cn/lite/docs/en/master/use/converter_register.
+                html#extension-configuration>`_ .
 
         Raises:
             TypeError: `section` is not a str.

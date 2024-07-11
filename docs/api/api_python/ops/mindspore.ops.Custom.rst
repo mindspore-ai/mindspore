@@ -77,7 +77,7 @@ mindspore.ops.Custom
 
                b) ASCEND平台
 
-               在ASCEND平台使用Custom算子之前，用户首先需要基于Ascend C开发自定义算子并编译。算子开发可参考 `快速上手端到端算子开发 <https://www.hiascend.com/document/detail/zh/canncommercial/70RC1/operatordev/Ascendcopdevg/atlas_ascendc_10_0022.html>`_ ，自定义算子编译可使用工具 `Ascend C自定义算子离线编译 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/operation/ascendc_compile.html>`_。
+               在ASCEND平台使用Custom算子之前，用户首先需要基于Ascend C开发自定义算子并编译。算子开发可参考 `快速上手端到端算子开发 <https://www.hiascend.com/document/detail/zh/canncommercial/70RC1/operatordev/Ascendcopdevg/atlas_ascendc_10_0022.html>`_ ，自定义算子编译可使用工具 `Ascend C自定义算子离线编译 <https://www.mindspore.cn/tutorials/experts/zh-CN/master/operation/op_custom_ascendc.html>`_。
                在入参 `func` 中传入算子的名字, 以自定义算子实现中命名为 `AddCustom` 为例,存在以下几种使用方式:
 
                - 算子底层调用TBE： `func="AddCustom"`
