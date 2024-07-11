@@ -165,6 +165,10 @@ def test_ascend_config():
     with pytest.raises(ValueError):
         context.set_context(ascend_config={"op_precision_mode": "./invalid_path"})
     with pytest.raises(TypeError):
+        context.set_context(ascend_config={"op_debug_option": 2})
+    with pytest.raises(ValueError):
+        context.set_context(ascend_config={"op_debug_option": "xxx"})
+    with pytest.raises(TypeError):
         context.set_context(ascend_config={"ge_options": 'x'})
     with pytest.raises(TypeError):
         context.set_context(ascend_config={"ge_options": 2})
@@ -178,7 +182,7 @@ def test_ascend_config():
         context.set_context(ascend_config={"ge_options": {'global': {'x': 0}}})
     context.set_context.__wrapped__(ascend_config={
         "precision_mode": "force_fp16", "jit_compile": True, "atomic_clean_policy": 1,
-        "matmul_allow_hf32": False, "conv_allow_hf32": True, "op_precision_mode": "./",
+        "matmul_allow_hf32": False, "conv_allow_hf32": True, "op_precision_mode": "./", "op_debug_option": "oom",
         "ge_options": {"global": {"ge.opSelectImplmode": "high_precision"},
                        "session": {"ge.exec.atomicCleanPolicy": "0"}}})
 

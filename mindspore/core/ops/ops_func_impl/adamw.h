@@ -13,23 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "mindspore/core/symbolic_shape/operation_builder.h"
-#include "mindspore/core/ops/symbol_ops_impl/common.h"
+#ifndef MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADAMW_H_
+#define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADAMW_H_
+
+#include <vector>
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
-namespace symshape {
 namespace ops {
-SymbolPtr AdamWeigtDecayShapeBuilder(OperationBuilder *b) {
-  // var, m, v
-  return ListSymbol::Make({b->GetInputShape(kIndex0), b->GetInputShape(kIndex1), b->GetInputShape(kIndex2)});
-}
-
-REG_SYMBOL_OP_BUILDER("AdamWeightDecay")
-  .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kShape})
-  .SetShapeFunc(AdamWeigtDecayShapeBuilder);
-REG_SYMBOL_OP_BUILDER("AdamW")
-  .SetShapeDepend({DependOn::kShape, DependOn::kShape, DependOn::kShape})
-  .SetShapeFunc(AdamWeigtDecayShapeBuilder);
+class MIND_API AdamWFuncImpl : public OpFuncImpl {
+ public:
+  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+};
 }  // namespace ops
-}  // namespace symshape
 }  // namespace mindspore
+
+#endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ADAMW_H_

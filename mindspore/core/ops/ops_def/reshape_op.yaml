@@ -11,7 +11,7 @@ reshape:
       dtype: tensor
   view: True
   dispatch:
-    enable: True
+    enable: False
     Ascend: ReshapeAscend
     CPU: ReshapeCPU
     GPU: ReshapeGPU

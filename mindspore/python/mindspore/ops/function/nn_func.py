@@ -43,10 +43,9 @@ from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple,
 from mindspore.common.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, relu, fast_gelu, silu, elu, sigmoid, relu6
 from mindspore.ops.auto_generate import group_norm_op, rms_norm, layer_norm_ext_op, batch_norm_ext_op
-from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op,
+from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d_op, reflection_pad_3d_op, # pylint: disable=W0611
                                          replication_pad_1d_op, replication_pad_2d_op, replication_pad_3d_op,
-                                         constant_pad_nd_op, dropout_ext_op, reverse_v2_impl, softplus_ext,
-                                         elu_ext)
+                                         constant_pad_nd_op, dropout_ext_op, reverse_v2_impl)
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
 from mindspore.common.generator import default_generator
 
@@ -571,7 +570,7 @@ def avg_pool2d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> x = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
-            >>> output = ops.avg_pool2d_ext(x, kernel_size=2, stride=1)
+            >>> output = ops.function.nn_func.avg_pool2d_ext(x, kernel_size=2, stride=1)
             >>> print(output)
             [[[[ 2.5   3.5   4.5]
             [ 6.5   7.5   8.5]]
@@ -1391,7 +1390,7 @@ def dropout_ext(input, p=0.5, training=True):
         >>> import mindspore
         >>> from mindspore import Tensor, ops
         >>> input = Tensor(((20, 16), (50, 50)), mindspore.float32)
-        >>> output = ops.dropout_ext(input, p=0.5)
+        >>> output = ops.function.nn_func.dropout_ext(input, p=0.5)
         >>> print(output.shape)
         (2, 2)
     """
@@ -3073,7 +3072,7 @@ def softmax_ext(input, dim=None, dtype=None):
         >>> import numpy as np
         >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.array([1, 2, 3, 4, 5]), mindspore.float32)
-        >>> output = ops.softmax_ext(input)
+        >>> output = ops.function.nn_func.softmax_ext(input)
         >>> print(output)
         [0.01165623 0.03168492 0.08612854 0.23412167 0.6364086 ]
     """
@@ -3682,7 +3681,7 @@ def pad_ext(input, pad, mode='constant', value=0.0):
         >>> from mindspore import ops
         >>> import numpy as np
         >>> x = ms.Tensor(np.arange(1 * 2 * 2 * 2).reshape((1, 2, 2, 2)), dtype=ms.float64)
-        >>> output = ops.pad_ext(x, [1, 0, 0, 1], mode='constant', value=6.0)
+        >>> output = ops.function.nn_func.pad_ext(x, [1, 0, 0, 1], mode='constant', value=6.0)
         >>> print(output)
         [[[[6. 0. 1.]
            [6. 2. 3.]
@@ -6268,7 +6267,7 @@ def batch_norm_ext(input, running_mean, running_var, weight=None, bias=None, tra
         >>> running_var = Tensor([0.1, 0.2], mindspore.float32)
         >>> weight = Tensor([2.0, 2.0], mindspore.float32)
         >>> bias = Tensor([-1.0, -1.0], mindspore.float32)
-        >>> output = ops.batch_norm_ext(input_x, running_mean, running_var, weight, bias)
+        >>> output = ops.function.nn_func.batch_norm_ext(input_x, running_mean, running_var, weight, bias)
         >>> print(output)
         [[ 2.1621194  1.2360122]
          [14.810596  10.180061 ]]
@@ -8076,7 +8075,6 @@ __all__ = [
     'avg_pool2d',
     'avg_pool3d',
     'batch_norm',
-    'batch_norm_ext',
     'bias_add',
     'bidense',
     'binary_cross_entropy',
@@ -8123,7 +8121,6 @@ __all__ = [
     'softmin',
     'pdist',
     'pad',
-    'pad_ext',
     'prelu',
     'mirror_pad',
     'cross_entropy',
@@ -8152,7 +8149,6 @@ __all__ = [
     'multilabel_margin_loss',
     'multilabel_soft_margin_loss',
     'elu',
-    'elu_ext',
     'gelu',
     'hinge_embedding_loss',
     'gaussian_nll_loss',
@@ -8168,9 +8164,5 @@ __all__ = [
     'hardsigmoid',
     'group_norm',
     'rms_norm',
-    'dropout_ext',
-    'softmax_ext',
-    'softplus_ext',
-    'avg_pool2d_ext',
 ]
 __all__.sort()

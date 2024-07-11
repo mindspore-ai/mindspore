@@ -1,4 +1,4 @@
-adam_weight_decay_ext:
+adamw:
     description: |
         Implements Adam Weight Decay algorithm.
 

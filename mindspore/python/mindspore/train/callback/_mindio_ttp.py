@@ -360,11 +360,11 @@ class MindIOTTPAdapter(Callback):
             strategy_file_path (str): strategy file path for current rank.
             net (Cell): network that needs to load checkpoint.
 
-        Raises:
-            ValueError: Failed to load the checkpoint file.
-
         Returns:
             Dict, checkpoint weights after loaded.
+
+        Raises:
+            ValueError: Failed to load the checkpoint file.
 
         Examples:
             >>> import numpy as np

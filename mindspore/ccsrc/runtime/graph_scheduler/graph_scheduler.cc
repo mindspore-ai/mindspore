@@ -2699,13 +2699,17 @@ void GraphScheduler::LinkControlArrowByCommunicationNode(const std::vector<CNode
     return;
   }
 
-  // Ensure communication node to execute orderly.
-  for (size_t i = 1; i < communication_nodes.size(); ++i) {
-    auto from_actor = FetchActor(GetActorIdByKernel(communication_nodes[i - 1]));
-    auto to_actor = FetchActor(GetActorIdByKernel(communication_nodes[i]));
-    MS_EXCEPTION_IF_NULL(from_actor);
-    MS_EXCEPTION_IF_NULL(to_actor);
-    SchedulerHelper::AddControlArrow(from_actor, to_actor);
+  if (std::none_of(graphs.begin(), graphs.end(), [](const KernelGraphPtr &graph) {
+        return graph != nullptr && (!graph->inline_sub_graph_kernels().empty());
+      })) {
+    // Ensure communication node to execute orderly.
+    for (size_t i = 1; i < communication_nodes.size(); ++i) {
+      auto from_actor = FetchActor(GetActorIdByKernel(communication_nodes[i - 1]));
+      auto to_actor = FetchActor(GetActorIdByKernel(communication_nodes[i]));
+      MS_EXCEPTION_IF_NULL(from_actor);
+      MS_EXCEPTION_IF_NULL(to_actor);
+      SchedulerHelper::AddControlArrow(from_actor, to_actor);
+    }
   }
 
   // Ensure all actors execute orderly to optimize the execution performance in the multi device scenario currently.

@@ -19,12 +19,13 @@ import numpy as np
 
 from mindspore import Tensor, context
 from mindspore import ops
+from mindspore.ops.function.nn_func import batch_norm_ext
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 @test_utils.run_with_cell
 def batch_norm_forward_func(x, scale, bias, mean, var, training=False, momentum=0.1, eps=1e-5):
-    out = ops.batch_norm_ext(x, scale, bias, mean, var, training, momentum, eps)
+    out = batch_norm_ext(x, scale, bias, mean, var, training, momentum, eps)
     return out
 
 

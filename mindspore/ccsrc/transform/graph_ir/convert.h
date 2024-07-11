@@ -330,6 +330,7 @@ class DfGraphConvertor {
   void AddInputAttrsForESNode(const CNodePtr &node, const AnfNodePtr &input);
   void RemoveIdentityForES(::ge::GNode node);
   void ESOptimization();
+  void ReplaceAllParameterToRefData();
 
   std::shared_ptr<AnfGraph> anf_graph_{nullptr};
   FuncGraphManagerPtr graph_manager_{nullptr};

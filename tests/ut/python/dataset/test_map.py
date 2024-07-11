@@ -765,7 +765,6 @@ def test_randomness_across_workers(fix_randomness, transform_type, multiprocessi
     assert not np.array_equal(res[0], res[1])
 
 
-@pytest.mark.skip(reason="timeout")
 @pytest.mark.parametrize("fix_randomness", (False, True))
 @pytest.mark.parametrize("transform_type", ("cpp", "python"))
 @pytest.mark.parametrize("multiprocessing", (False, True))
@@ -777,10 +776,12 @@ def test_reproducibility_of_random_transforms(fix_randomness, transform_type, mu
     Expectation: Random results are different for each worker
     """
     original_seed = ds.config.get_seed()
+    original_prefetch_size = ds.config.get_prefetch_size()
+    ds.config.set_prefetch_size(2)
     dataset = create_dataset_with_two_workers_randomly_process_identical_images(fix_randomness, transform_type,
                                                                                 multiprocessing)
     # run the pipeline twice, when the random seed is set, the results should be consistent
-    # between the two times, ohtherwise they should be different
+    # between the two times, otherwise they should be different
     res_first_time = []
     for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         res_first_time.append(data["image"])
@@ -788,6 +789,7 @@ def test_reproducibility_of_random_transforms(fix_randomness, transform_type, mu
     for data in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
         res_second_time.append(data["image"])
     ds.config.set_seed(original_seed)
+    ds.config.set_prefetch_size(original_prefetch_size)
 
     # currently, the results of random pyfunc with multi-threads cannot be fixed
     if not multiprocessing and transform_type == "python":

@@ -126,9 +126,6 @@ def test_svhn_content_check():
     assert num_iter == 12
 
 
-# Run this test in separate process since this test updates shared memory config
-@pytest.mark.skip(reason="timeout")
-@pytest.mark.forked
 def test_svhn_basic():
     """
     Feature: test_svhn_basic.

@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-from mindspore.ops import rand_ext, rand_like_ext
+from mindspore.ops.function.random_func import rand_ext, rand_like_ext
 
 from tests.st.utils import test_utils
 

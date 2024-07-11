@@ -532,7 +532,9 @@ Status DataQueueOp::SendDataToAscend() {
       RETURN_IF_NOT_OK(CollectOpInfoStart(this->NameWithID(), "PushToAscend"));
       if (!enable_prefetch_cache_pipeline_) {
 #ifdef ENABLE_DUMP_IR
-        RETURN_IF_NOT_OK(md_channel_info_->RecordDeviceQueue(ascend_data_queue_->QueryQueueSize()));
+        if (ascend_data_queue_->QueueType() == "Ascend_MBUF") {
+          RETURN_IF_NOT_OK(md_channel_info_->RecordDeviceQueue(ascend_data_queue_->QueryQueueSize()));
+        }
         MS_LOG(INFO) << md_channel_info_->ToFormatString();
 #endif
         RETURN_IF_NOT_OK(SendRowToTdt(curr_row, is_profiling_enable, &tdt_cost));
@@ -768,7 +770,7 @@ Status DataQueueOp::GetMbufQueueSize(size_t *queue_size) {
     RETURN_STATUS_ERROR(StatusCode::kMDTDTPushFailure,
                         "DataQueueOp thread had been interrupted, please check for other error messages.");
   }
-  if (device_type_ == DeviceType::Ascend) {
+  if (device_type_ == DeviceType::Ascend && ascend_data_queue_->QueueType() == "Ascend_MBUF") {
     *queue_size = ascend_data_queue_->QueryQueueSize();
   } else {
     *queue_size = 1;

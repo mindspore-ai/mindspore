@@ -25,17 +25,14 @@ def set_dump(target, enabled=True):
     Enable or disable dump for the `target` and its contents.
 
     `target` should be an instance of :class:`mindspore.nn.Cell` or :class:`mindspore.ops.Primitive` .
-    Please note that this API takes effect only when Asynchronous Dump is enabled and the `dump_mode`
+    Please note that this API takes effect only when Synchronous Dump is enabled and the `dump_mode`
     field in dump config file is ``"2"`` . See the `dump document
     <https://www.mindspore.cn/tutorials/experts/en/master/debug/dump.html>`_ for details.
     The default enabled status for
     a :class:`mindspore.nn.Cell` or :class:`mindspore.ops.Primitive` is False.
 
-    .. warning::
-        This is an experimental API that is subject to change or deletion. It is not supported for 2.3 version.
-
     Note:
-        1. This API is only effective for GRAPH_MODE with Ascend backend.
+        1. This API is only effective for GRAPH_MODE whose graph compilation level is O0/O1 with Ascend backend.
         2. This API only supports being called before training starts.
            If you call this API during training, it may not be effective.
         3. After using `set_dump(Cell, True)` , operators in forward and backward

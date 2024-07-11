@@ -244,6 +244,12 @@ const AnfNodePtr ShapeReshapeFusion::Process(const FuncGraphPtr &func_graph, con
   return new_node;
 }
 
+const BaseRef ShapeReshapeFusion2::DefinePattern() const {
+  VarPtr shape_tuple = std::make_shared<SeqVar>();
+  VectorRef make_tuple = VectorRef({prim::kPrimMakeTuple, shape_tuple});
+  return VectorRef({std::make_shared<Primitive>("Reshape"), reshape_input_, make_tuple});
+}
+
 const BaseRef ShapeReshapeDirectFusion::DefinePattern() const {
   auto shape_node = VectorRef({prim::kPrimShape, std::make_shared<Var>()});
   auto reshape_input = std::make_shared<Var>();

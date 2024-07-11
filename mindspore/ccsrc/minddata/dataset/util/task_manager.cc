@@ -146,7 +146,10 @@ TaskManager::TaskManager() try : global_interrupt_(0),
 TaskManager::~TaskManager() {
   if (watchdog_) {
     WakeUpWatchDog();
-    (void)watchdog_->Join();
+    auto s = watchdog_->Join();
+    if (s.IsError()) {
+      MS_LOG(ERROR) << s.ToString();
+    }
     // watchdog_grp_ and watchdog_ pointers come from Services::GetInstance().GetServiceMemPool() which we will free it
     // on shutdown. So no need to free these pointers one by one.
     watchdog_grp_ = nullptr;

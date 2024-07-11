@@ -140,7 +140,7 @@ def test_kmnist_basic():
     data6 = ds.KMnistDataset(DATA_DIR, "train", num_samples=10)
     assert data6.get_col_names() == ["image", "label"]
 
-    #case 7: test batch
+    # case 7: test batch
     data7 = ds.KMnistDataset(DATA_DIR, num_samples=200)
     data7 = data7.batch(100, drop_remainder=True)
     num_iter7 = 0
@@ -190,7 +190,6 @@ def test_kmnist_sequential_sampler():
     assert num_iter == num_samples
 
 
-@pytest.mark.skip(reason="core-dump")
 def test_kmnist_exception():
     """
     Feature: test_kmnist_exception.

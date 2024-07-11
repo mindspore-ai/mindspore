@@ -21,7 +21,7 @@ import mindspore.common.dtype as mstype
 from mindspore import ops
 from mindspore.ops.auto_generate import dropout_ext_op
 from mindspore.nn import DropoutExt
-from mindspore.ops.function import dropout_ext
+from mindspore.ops.function.nn_func import dropout_ext
 from mindspore.nn import Cell
 from tests.st.utils import test_utils
 

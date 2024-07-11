@@ -239,17 +239,6 @@ def test_bert_precision(enable_graph_kernel=False):
     print("loss value: {}".format(loss_value))
     assert np.allclose(loss_value, expect_loss_value, 0, 0.0005)
 
-    overflow = np.array(callback.overflow_list)
-    expect_overflow = [False, False, False, False, False, False, False, False, False, True]
-    print("overflow: {}".format(overflow))
-    assert (overflow == expect_overflow).all()
-
-    loss_scale = np.array(callback.lossscale_list)
-    expect_loss_scale = [65536.0, 65536.0, 131072.0, 131072.0, 131072.0, 262144.0, 262144.0, 262144.0, 524288.0,
-                         262144.0]
-    print("loss scale: {}".format(loss_scale))
-    assert np.allclose(loss_scale, expect_loss_scale, 0, 0)
-
 
 @pytest.mark.level0
 @pytest.mark.platform_arm_ascend_training

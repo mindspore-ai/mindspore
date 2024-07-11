@@ -57,6 +57,6 @@ col2im_ext:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> x = Tensor(np.random.rand(16, 64, 25).astype(np.float32))
-            >>> output = ops.fold_ext(x, (8, 8), [2, 2], [2, 2], [2, 2], [2, 2])
+            >>> output = ops.auto_generate.fold_ext(x, (8, 8), [2, 2], [2, 2], [2, 2], [2, 2])
             >>> print(output.shape)
             (16, 16, 8, 8)
