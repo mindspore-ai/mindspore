@@ -1453,12 +1453,12 @@ class HShrink(Cell):
         >>> import mindspore
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> input_x = Tensor(np.array([[ 0.5,  1,  2.0], [0.0533,0.0776,-2.1233]]), mindspore.float32)
+        >>> input_x = Tensor(np.array([[0.5, 1, 2.0], [0.0533, 0.0776, -2.1233]]), mindspore.float32)
         >>> hshrink = nn.HShrink()
         >>> output = hshrink(input_x)
         >>> print(output)
         [[ 0.      1.      2.    ]
-        [ 0.      0.     -2.1233]]
+         [ 0.      0.     -2.1233]]
     """
 
     def __init__(self, lambd=0.5):
