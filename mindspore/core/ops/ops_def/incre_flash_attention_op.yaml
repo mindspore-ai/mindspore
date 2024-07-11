@@ -1,0 +1,81 @@
+#operator incre_flash_attention
+incre_flash_attention:
+  args:
+    query:
+      dtype: tensor
+    key:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+    value:
+      dtype: tuple[tensor]
+      type_cast: list[tensor]
+    attn_mask:
+      dtype: tensor
+      default: None
+    actual_seq_lengths:
+      dtype: tensor
+      default: None
+      type_cast: list[int], tuple[int]
+    pse_shift:
+      dtype: tensor
+      default: None
+    dequant_scale1:
+      dtype: tensor
+      default: None
+    quant_scale1:
+      dtype: tensor
+      default: None
+    dequant_scale2:
+      dtype: tensor
+      default: None
+    quant_scale2:
+      dtype: tensor
+      default: None
+    quant_offset2:
+      dtype: tensor
+      default: None
+    antiquant_scale:
+      dtype: tensor
+      default: None
+    antiquant_offset:
+      dtype: tensor
+      default: None
+    block_table:
+      dtype: tensor
+      default: None
+    kv_padding_size:
+      dtype: tensor
+      default: None
+    num_heads:
+      dtype: int
+      default: 1
+      prim_init: True
+    input_layout:
+      dtype: int
+      default: "'BSH'"
+      arg_handler: str_to_enum
+      prim_init: True
+    scale_value:
+      dtype: float
+      default: 1.0
+      prim_init: True
+    num_key_value_heads:
+      dtype: int
+      default: 0
+      prim_init: True
+    block_size:
+      dtype: int
+      default: 0
+      prim_init: True
+    inner_precise:
+      dtype: int
+      default: 1
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: IncreFlashAttentionAscend

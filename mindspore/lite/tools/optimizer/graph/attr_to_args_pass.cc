@@ -207,6 +207,15 @@ static const std::map<std::string, std::vector<string>> kAttrMapNeedAdjust = {
      "antiquant_mode",
      "softmax_lse_flag",
    }},
+  {"IncreFlashAttention",
+   {
+     "num_heads",
+     "input_layout",
+     "scale_value",
+     "num_key_value_heads",
+     "block_size",
+     "inner_precise",
+   }},
   {"GridSampler3D",
    {
      "interpolation_mode",

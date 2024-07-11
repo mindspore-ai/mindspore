@@ -23,7 +23,9 @@ from mindspore.nn import Cell
 from mindspore import Tensor
 from mindspore import mutable
 import mindspore.ops as ops
-from mindspore.ops.function.nn_func import incre_flash_attention
+from mindspore.ops.function import incre_flash_attention
+from mindspore.common import JitConfig
+from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 RANDOM_MAX = 1
 
@@ -310,6 +312,9 @@ def gen_ifa_golden(shape,
     q = q.reshape(new_q_shape).transpose(0, 2, 1, 3)  # 最终CPU计算，使用的是B N S D格式
     v = v.reshape(new_kv_shape).transpose(0, 2, 1, 3)
     k = k.reshape(new_kv_shape).transpose(0, 2, 1, 3)
+    q = np.ascontiguousarray(q)
+    v = np.ascontiguousarray(v)
+    k = np.ascontiguousarray(k)
 
     if input_layout == "BNSD":
         q_right = q
@@ -380,6 +385,7 @@ def gen_ifa_golden(shape,
         quant_scale2, quant_offset2 = gen_quant_param(max_num, min_num)
         y = quant(y, quant_scale2, quant_offset2)
     y = y.transpose(0, 2, 1, 3).reshape(q_right.shape)
+    y = np.ascontiguousarray(y)
     return q_right, k_right, v_right, masks_right, y, block_table, k_cache, v_cache, pse_shift, actual_seq_length_real
 
 
@@ -424,7 +430,36 @@ class IncreFlashAttentionFunc(Cell):
         return out
 
 
-def net_forward_test(inputs: list):
+def incre_flash_attention_func(query,
+                               key_i,
+                               value_i,
+                               attn_mask,
+                               actual_seq_lengths,
+                               pse_shift,
+                               dequant_scale1,
+                               quant_scale1,
+                               dequant_scale2,
+                               quant_scale2,
+                               quant_offset2,
+                               antiquant_scale,
+                               antiquant_offset,
+                               block_table,
+                               block_size,
+                               num_heads,
+                               input_layout,
+                               scale_value,
+                               num_key_value_heads,
+                               inner_precise,
+                               kv_padding_size):
+    return incre_flash_attention(query, key_i, value_i, attn_mask, actual_seq_lengths,
+                                 pse_shift, dequant_scale1, quant_scale1, dequant_scale2,
+                                 quant_scale2, quant_offset2, antiquant_scale,
+                                 antiquant_offset, block_table, num_heads,
+                                 input_layout, scale_value,
+                                 num_key_value_heads, block_size, inner_precise, kv_padding_size)
+
+
+def generate_net_inputs(inputs: list):
     B, N, S, D, data_format, num_key_value_heads = inputs[0], inputs[1], inputs[2], inputs[3], \
         inputs[4], inputs[5]
     H = N * D
@@ -448,6 +483,7 @@ def net_forward_test(inputs: list):
     pse_shift_1n1s = inputs[13]
     atten_mask_bool = inputs[14]
     kv_list = inputs[15]
+    kernel_by_kernel = inputs[16]
     atten_mask_shape = [B, S]
 
     if data_type == np.float16:
@@ -496,7 +532,6 @@ def net_forward_test(inputs: list):
     block_table = None if block_table_all is None else Tensor(
         block_table_all, dtype=mindspore.int32)
     actual_seq_lengths = Tensor(actual_seq_length_real, dtype=mindspore.int64)
-
     if not p_a_s_control[0]:
         pse_shift = None
     if not p_a_s_control[1]:
@@ -504,9 +539,17 @@ def net_forward_test(inputs: list):
     if not p_a_s_control[2]:
         actual_seq_lengths = None
 
+    return B, N, S, D, H, data_format, scale_value, num_key_value_heads, kv_multy, kernel_by_kernel, query, key, \
+        value, attn_mask, actual_seq_lengths, pse_shift, block_table, block_size
+
+
+def net_forward_test(params):
+    B, N, _, D, H, data_format, scale_value, num_key_value_heads, kv_multy, kernel_by_kernel, query, key, value, \
+        attn_mask, actual_seq_lengths, pse_shift, block_table, block_size = params
     net = IncreFlashAttentionFunc(N, data_format, scale_value,
                                   num_key_value_heads, kv_multy)
-
+    if kernel_by_kernel:
+        net.set_jit_config(JitConfig(jit_level="O0"))
     ifa_result = net(query, key, value, attn_mask, actual_seq_lengths,
                      pse_shift, None, None, None, None, None, None, None,
                      block_table, block_size)
@@ -519,74 +562,206 @@ def net_forward_test(inputs: list):
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_incre_flash_attention_bsh_fwd():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_incre_flash_attention_bsh_fwd(mode):
     """
     Feature: Test functional ifa operator.
+    Description: bsh mode for ifa test, ge and pynative.
+    Expectation: Assert result compare with expect value.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    # B, N, S, D, input_layerout, kvN, p_a_s_control[0], p_a_s_control[1], p_a_s_control[2], kv_multy(no used),
+    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list, kernel_by_kernel
+    inputs = [
+        1, 5, 4096, 128, "BSH", 1, True, True, True, False, np.float16, False,
+        0, True, True, True, False
+    ]
+    # inputs = [
+    #     1, 5, 1024, 128, "BSH", 1, False, False, False, False, np.float16, False,
+    #     0, True, True, True, False
+    # ]
+    params = generate_net_inputs(inputs)
+    net_forward_test(params)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_incre_flash_attention_bsh_fwd_kernel_by_kernel(mode):
+    """
+    Feature: Test functional ifa operator in kernel by kernel mode.
     Description: bsh mode for ifa test.
     Expectation: Assert result compare with expect value.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=mode, device_target="Ascend")
     # B, N, S, D, input_layerout, kvN, p_a_s_control[0], p_a_s_control[1], p_a_s_control[2], kv_multy(no used),
-    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list
+    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list, kernel_by_kernel
     inputs = [
         1, 5, 4096, 128, "BSH", 1, True, True, True, False, np.float16, False,
-        0, True, True, False
+        0, True, True, True, True
     ]
-    net_forward_test(inputs)
+    params = generate_net_inputs(inputs)
+    net_forward_test(params)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_incre_flash_attention_bnsd_fwd():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_incre_flash_attention_bnsd_fwd(mode):
     """
     Feature: Test functional ifa operator.
+    Description: bnsd mode for ifa test, ge and pynative.
+    Expectation: Assert result compare with expect value.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    # B, N, S, D, input_layerout, kvN, p_a_s_control[0], p_a_s_control[1], p_a_s_control[2], kv_multy(no used),
+    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list, kernel_by_kernel
+    inputs = [
+        1, 5, 4096, 128, "BNSD", 1, True, True, True, False, np.float16, False,
+        0, True, True, False, False
+    ]
+    params = generate_net_inputs(inputs)
+    net_forward_test(params)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_incre_flash_attention_bnsd_fwd_kernel_by_kernel(mode):
+    """
+    Feature: Test functional ifa operator in kernel by kernel mode.
     Description: bnsd mode for ifa test.
     Expectation: Assert result compare with expect value.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=mode, device_target="Ascend")
     # B, N, S, D, input_layerout, kvN, p_a_s_control[0], p_a_s_control[1], p_a_s_control[2], kv_multy(no used),
-    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list
+    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list, kernel_by_kernel
     inputs = [
         1, 5, 4096, 128, "BNSD", 1, True, True, True, False, np.float16, False,
-        0, True, True, False
+        0, True, True, False, True
     ]
-    net_forward_test(inputs)
+    params = generate_net_inputs(inputs)
+    net_forward_test(params)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_incre_flash_attention_bsh_fwd_paged_attention():
+@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
+def test_incre_flash_attention_bsh_fwd_paged_attention(mode):
     """
     Feature: Test functional ifa operator of paged attention.
     Description: bsh mode for ifa test of paged attention.
     Expectation: Assert result compare with expect value.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=mode, device_target="Ascend")
     # B, N, S, D, input_layerout, kvN, p_a_s_control[0], p_a_s_control[1], p_a_s_control[2], kv_multy(no used),
-    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list
+    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list, kernel_by_kernel
     inputs = [
         1, 5, 4096, 128, "BSH", 1, True, True, True, False, np.float16, True,
-        128, True, True, False
+        128, True, True, False, False
     ]
-    net_forward_test(inputs)
+    params = generate_net_inputs(inputs)
+    net_forward_test(params)
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
-def test_incre_flash_attention_bnsd_fwd_paged_attention():
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_incre_flash_attention_bsh_fwd_paged_attention_kernel_by_kernel(mode):
+    """
+    Feature: Test functional ifa operator of paged attention in kernel by kernel mode.
+    Description: bsh mode for ifa test of paged attention.
+    Expectation: Assert result compare with expect value.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    # B, N, S, D, input_layerout, kvN, p_a_s_control[0], p_a_s_control[1], p_a_s_control[2], kv_multy(no used),
+    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list, kernel_by_kernel
+    inputs = [
+        1, 5, 4096, 128, "BSH", 1, True, True, True, False, np.float16, True,
+        128, True, True, False, True
+    ]
+    params = generate_net_inputs(inputs)
+    net_forward_test(params)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
+def test_incre_flash_attention_bnsd_fwd_paged_attention(mode):
     """
     Feature: Test functional ifa operator of paged attention.
     Description: bnsd mode for ifa test of paged attention.
     Expectation: Assert result compare with expect value.
     """
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(mode=mode, device_target="Ascend")
     # B, N, S, D, input_layerout, kvN, p_a_s_control[0], p_a_s_control[1], p_a_s_control[2], kv_multy(no used),
-    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list
+    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list, kernel_by_kernel
     inputs = [
         1, 5, 4096, 128, "BNSD", 1, True, True, True, False, np.float16, True,
-        128, True, True, False
+        128, True, True, False, False
     ]
-    net_forward_test(inputs)
+    params = generate_net_inputs(inputs)
+    net_forward_test(params)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE])
+def test_incre_flash_attention_bnsd_fwd_paged_attention_kernel_by_kernel(mode):
+    """
+    Feature: Test functional ifa operator of paged attention in kernel by kernel mode.
+    Description: bnsd mode for ifa test of paged attention.
+    Expectation: Assert result compare with expect value.
+    """
+    context.set_context(mode=mode, device_target="Ascend")
+    # B, N, S, D, input_layerout, kvN, p_a_s_control[0], p_a_s_control[1], p_a_s_control[2], kv_multy(no used),
+    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list, kernel_by_kernel
+    inputs = [
+        1, 5, 4096, 128, "BNSD", 1, True, True, True, False, np.float16, True,
+        128, True, True, False, True
+    ]
+    params = generate_net_inputs(inputs)
+    net_forward_test(params)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend910b_training
+@pytest.mark.env_onecard
+def test_incre_flash_attention_bsh_fwd_dynamic():
+    """
+    Feature: Test functional ifa operator.
+    Description: bsh mode for ifa dynamic test.
+    Expectation: Assert result compare with expect value.
+    """
+    context.set_context(device_target="Ascend")
+    # B, N, S, D, input_layerout, kvN, p_a_s_control[0], p_a_s_control[1], p_a_s_control[2], kv_multy(no used),
+    # data_type, page_attention_flag, block_size, pse_shift_1n1s, atten_mask_bool, kv_list, kernel_by_kernel
+    inputs0 = [
+        1, 5, 4096, 128, "BSH", 1, True, True, True, False, np.float16, False,
+        0, True, True, True, False
+    ]
+    inputs1 = [
+        32, 32, 2048, 128, "BSH", 32, True, True, True, False, np.float16, False,
+        0, True, True, True, False
+    ]
+    params0 = generate_net_inputs(inputs0)
+    _, N0, _, _, _, data_format0, scale_value0, num_key_value_heads0, _, _, query0, key0, \
+        value0, attn_mask0, actual_seq_lengths0, pse_shift0, block_table0, block_size0 = params0
+
+    params1 = generate_net_inputs(inputs1)
+    _, N1, _, _, _, data_format1, scale_value1, num_key_value_heads1, _, _, query1, key1, \
+        value1, attn_mask1, actual_seq_lengths1, pse_shift1, block_table1, block_size1 = params1
+
+    net_inputs0 = [query0, key0, value0, attn_mask0, actual_seq_lengths0, pse_shift0, None, None, None, None, None,
+                   None, None, block_table0, block_size0, N0, data_format0, scale_value0, num_key_value_heads0, 1, None]
+    net_inputs1 = [query1, key1, value1, attn_mask1, actual_seq_lengths1, pse_shift1, None, None, None, None, None,
+                   None, None, block_table1, block_size1, N1, data_format1, scale_value1, num_key_value_heads1, 1, None]
+    TEST_OP(incre_flash_attention_func, [net_inputs0, net_inputs1], "incre_flash_attention", disable_input_check=True,
+            disable_grad=True)

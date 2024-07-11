@@ -32,7 +32,7 @@ from mindspore.ops.primitive import PrimitiveWithCheck
 from mindspore.ops.primitive import prim_attr_register
 from ..auto_generate import (CeLU, Flatten, LogSoftmax, ReLU, ReLU6, Dense, Tanh,
                              Elu, Sigmoid, Softmax, SoftplusExt, HSwish, HSigmoid, AvgPool, BiasAdd,
-                             NLLLoss, OneHot, GeLU, FastGeLU, PReLU, RmsNorm,
+                             NLLLoss, OneHot, GeLU, FastGeLU, PReLU, RmsNorm, IncreFlashAttention,
                              GridSampler3D, GridSampler2D, LayerNorm, LayerNormExt, HShrink, AdamWeightDecay, Dropout,
                              ApplyRotaryPosEmb, PagedAttention, PagedAttentionMask, ReshapeAndCache,
                              FlashAttentionScore, Embedding, UpsampleNearest1D, UpsampleNearest2D,
@@ -9588,73 +9588,6 @@ class PromptFlashAttention(Primitive):
         self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "actual_seq_lengths",
                                         "actual_seq_lengths_kv", "pse_shift", "deq_scale1", "quant_scale1",
                                         "deq_scale2", "quant_scale2", "quant_offset2"],
-                                outputs=["attention_out"])
-
-
-class IncreFlashAttention(Primitive):
-    r"""
-    The interface for fully inference.
-
-    B -- Batch size
-
-    S -- Sequence length
-
-    H -- Hidden size
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-        If there is no input parameter and no default value, None needs to be passed.
-
-    Args:
-    - **num_heads**  (int) - The number of heads.
-    - **input_layout** (str) - the data layout of the input qkv, support `(BSH)` and `(BNSD)`. Default `BSH`.
-    - **scale_value** (double) - The scale value indicating the scale coefficient, which is used as the scalar of
-        Muls in the calculation. Default: 1.0.
-    - **num_key_value_heads** (int) - head numbers of key/value which are used in GQA algorithm.
-        The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
-    - **block_size** (int) - Default: 0.
-    - **inner_precise** (int) - Default: 1.
-
-    Inputs:
-        - **query** (Tensor) - The query tensor with data type of float16 or bfloat16.
-          Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
-        - **key** (TensorList) - The key tensor with data type of float16 or bfloat16.
-          Input tensor of shape :math:`(B, S, H)` / :math:`(B, N, S, D)`.
-        - **value** (TensorList) - The value tensor with data type of float16 or bfloat16.
-          Input tensor of shape :math:`(B, S, H)` / :math:`(B, N, S, D)`.
-        - **attn_mask** (Tensor) - The attention mask tensor with data type of float16 or bool.
-          Input tensor of shape :math:`(B, S)` / :math:`(B, 1, S)` / :math:`(B, 1, 1, S)`.
-        - **actual_seq_lengths** (Tensor) - Describe actual sequence length of each input with data type of int.
-        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or float32.
-        - **dequant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
-        - **quant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of float.
-        - **dequant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of uint64.
-        - **quant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of float.
-        - **quant_offset2** (Tensor) - Quantitative parametor, the tensor with data type of float.
-        - **antiquant_scale** (Tensor) - Quantitative parametor, the tensor with data type of float.
-        - **antiquant_offset** (Tensor) - Quantitative parametor, the tensor with data type of float.
-        - **block_table** (Tensor) - The tensor with data type of float.
-
-    Outputs:
-        - **attention_out** (Tensor) - Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
-
-    Supported Platforms:
-        ``Ascend``
-    """
-
-    @prim_attr_register
-    def __init__(self, num_heads, input_layout="BSH", scale_value=1.0, num_key_value_heads=0, block_size=0,
-                 inner_precise=1):
-        """Initialize IncreFlashAttention."""
-        validator.check_value_type('num_heads', num_heads, [int], self.name)
-        validator.check_value_type('input_layout', input_layout, [str], self.name)
-        validator.check_value_type('scale_value', scale_value, [float], self.name)
-        validator.check_value_type('num_key_value_heads', num_key_value_heads, [int], self.name)
-        validator.check_value_type('block_size', block_size, [int], self.name)
-        validator.check_value_type('inner_precise', inner_precise, [int], self.name)
-        self.init_prim_io_names(inputs=["query", "key", "value", "attn_mask", "actual_seq_lengths", "pse_shift",
-                                        "dequant_scale1", "quant_scale1", "dequant_scale2", "quant_scale2",
-                                        "quant_offset2", "antiquant_scale", "antiquant_offset", "block_table"],
                                 outputs=["attention_out"])
 
 
