@@ -591,6 +591,31 @@ NodePtr Scatter_(BpropBuilder *ib, const NodePtr &input, const NodePtr &dim, con
   return TensorScatterElements(ib, input, dim_val, index, src, reduce_string);
 }
 
+NodePtr ScatterOrTensorScatterElements(BpropBuilder *ib, const NodePtr &input, const NodePtr &dim, const NodePtr &index,
+                                       const NodePtr &src, const std::string &reduce_string) {
+  auto dim_val = dim->BuildValue();
+  if (!ops::IsValueKnown(dim_val)) {
+    NodePtr dx_zeros = ib->Zeros(input);
+    auto dx = ib->Emit("Scatter", {dx_zeros, dim, index, src, ib->EmitValue(MakeValue<int64_t>(0))});
+    return dx;
+  }
+  auto input_shape = ib->GetShape(input);
+  if (input_shape.size() == 0) {
+    return TensorScatterElementsZeroDim(ib, input, dim_val, index, src, reduce_string);
+  } else if (IsDynamicRank(input_shape)) {
+    auto rank = ib->Emit("Rank", {input});
+    auto is_zero_dim_cond = ib->Emit("scalar_eq", {rank, ib->Value<int64_t>(0)});
+    auto scatter_zero_dim_impl = [&input, &dim_val, &index, &src, &reduce_string](Emitter *e) -> NodePtrList {
+      return {TensorScatterElementsZeroDim(e, input, dim_val, index, src, reduce_string)};
+    };
+    auto scatter_impl = [&input, &dim_val, &index, &src, &reduce_string](Emitter *e) -> NodePtrList {
+      return {TensorScatterElements(e, input, dim_val, index, src, reduce_string)};
+    };
+    return ib->Conditional(is_zero_dim_cond, scatter_zero_dim_impl, scatter_impl);
+  }
+  return TensorScatterElements(ib, input, dim_val, index, src, reduce_string);
+}
+
 NodePtr ArgminOrArgmaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
                            const NodePtr &out, const NodePtr &dout, const bool is_max) {
   auto keep_dims_value = keep_dims->BuildValue();
@@ -619,6 +644,42 @@ NodePtr ArgminOrArgmaxGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &ax
   }
   NodePtr dx_zeros = ib->Zeros(x);
   auto dx = Scatter_(ib, dx_zeros, axis, indices, dout_value, "none");
+  return dx;
+}
+
+NodePtr MeidanDimGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
+                      const NodePtr &out, const NodePtr &dout) {
+  return ReduceCommonOpGrad(ib, x, axis, keep_dims, out, dout, kIndex0, kIndex1);
+}
+
+inline NodePtr ReduceCommonOpGrad(BpropBuilder *ib, const NodePtr &x, const NodePtr &axis, const NodePtr &keep_dims,
+                                  const NodePtr &out, const NodePtr &dout, int64_t dout_index, int64_t indices_index) {
+  auto input_shape = ib->GetShape(x);
+  NodePtr dout_value = ib->TupleGetItem(dout, dout_index);
+  NodePtr indices = ib->TupleGetItem(out, indices_index);
+  auto keep_dims_value = keep_dims->BuildValue();
+  if (ops::IsValueKnown(keep_dims_value) && !IsDynamicRank(input_shape)) {
+    auto is_zero_dim = input_shape.size() == 0;
+    auto keep_dims_bool = GetValue<bool>(keep_dims_value);
+    indices = (keep_dims_bool || is_zero_dim) ? indices : ib->Emit("ExpandDims", {indices, axis});
+    dout_value = (keep_dims_bool || is_zero_dim) ? dout_value : ib->Emit("ExpandDims", {dout_value, axis});
+  } else {
+    auto rank = ib->Emit("Rank", {x});
+    auto rank_is_zero = ib->Emit("scalar_eq", {rank, ib->Value<int64_t>(0)});
+    auto cond = ib->LogicalOr(ib->ScalarToTensor(keep_dims, kBool), ib->ScalarToTensor(rank_is_zero, kBool));
+    auto indices_expand = [&indices, &axis](Emitter *e) -> NodePtrList {
+      return {e->Emit("ExpandDims", {indices, axis})};
+    };
+    auto indices_ori = [&indices](Emitter *e) -> NodePtrList { return {indices}; };
+    indices = ib->Conditional(cond, indices_ori, indices_expand);
+    auto dout_expand = [&dout_value, &axis](Emitter *e) -> NodePtrList {
+      return {e->Emit("ExpandDims", {dout_value, axis})};
+    };
+    auto dout_ori = [&dout_value](Emitter *e) -> NodePtrList { return {dout_value}; };
+    dout_value = ib->Conditional(cond, dout_ori, dout_expand);
+  }
+  NodePtr dx_zeros = ib->Zeros(x);
+  auto dx = ScatterOrTensorScatterElements(ib, dx_zeros, axis, indices, dout_value, "none");
   return dx;
 }
 

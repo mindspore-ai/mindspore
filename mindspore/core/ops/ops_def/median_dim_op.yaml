@@ -1,0 +1,21 @@
+#operator median_dim
+median_dim:
+  args:
+    input:
+      dtype: tensor
+    dim:
+      dtype: int
+      default: -1
+    keepdim:
+      dtype: bool
+      default: False
+  returns:
+    y:
+      dtype: tensor
+    indices:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    
