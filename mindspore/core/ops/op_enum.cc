@@ -180,6 +180,14 @@ REG_STRING_TO_ENUM_COMMON(fas_input_layout_mode, StrToEnumMap{{"BSH", FASInputLa
                                                               {"SBH", FASInputLayoutMode::SBH},
                                                               {"BSND", FASInputLayoutMode::BSND},
                                                               {"TND", FASInputLayoutMode::TND}})
+// ErrorMode
+REG_STRING_TO_ENUM_SPECIAL(error_mode, StrToEnumMap{{"CYCLE", ErrorMode::CYCLE}, {"SPECIFIC", ErrorMode::SPECIFIC}});
+
+// FlipMode
+REG_STRING_TO_ENUM_SPECIAL(flip_mode, StrToEnumMap{{"BITFLIP", FlipMode::BITFLIP},
+                                                   {"BITFLIP_DESIGNED", FlipMode::BITFLIP_DESIGNED},
+                                                   {"MULTIPLY", FlipMode::MULTIPLY},
+                                                   {"MULTIPLY_MAX", FlipMode::MULTIPLY_MAX}});
 }  // namespace
 
 int64_t StringToEnumImpl(const std::string &op_name, const std::string &arg_name, const std::string &enum_string) {
