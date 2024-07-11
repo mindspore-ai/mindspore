@@ -330,6 +330,7 @@ void ProcessSendRecvForGE(const FuncGraphPtr &graph) {
     return;
   }
   if (context->IsKByKExecutorMode()) {
+    AddAllGatherRecvDepend(graph);
     return;
   }
   auto parallel_context = parallel::ParallelContext::GetInstance();

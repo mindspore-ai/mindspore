@@ -141,5 +141,80 @@ void OverlapOptShardInPipeline(const FuncGraphPtr &graph) {
   depend_node->AddAttr("RecAllGatherDepend", MakeValue(True));
   (void)manager->Replace(first_receive_cnode, depend_node);
 }
+
+static std::vector<CNodePtr> GetOptShardReduceScatter(const std::vector<AnfNodePtr> &all_nodes) {
+  std::vector<CNodePtr> reduce_scatters;
+  for (const auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimReduceScatter)) {
+      continue;
+    }
+    auto prim = GetCNodePrimitive(node);
+    MS_EXCEPTION_IF_NULL(prim);
+    auto instance_name = prim->instance_name();
+    if (instance_name.find(kAttrNeedAllGather) != std::string::npos) {
+      (void)reduce_scatters.emplace_back(node->cast<CNodePtr>());
+    }
+  }
+  return reduce_scatters;
+}
+
+void OverlapOptShardGradInPipeline(const FuncGraphPtr &graph) {
+  if (parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kSemiAutoParallel &&
+      parallel::ParallelContext::GetInstance()->parallel_mode() != parallel::kAutoParallel) {
+    return;
+  }
+  if (parallel::g_device_manager == nullptr) {
+    MS_LOG(INFO) << "parallel::g_device_manager is not initialized.";
+    return;
+  }
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  auto is_kbk_mode = context->IsKByKExecutorMode();
+  if (!is_kbk_mode) {
+    return;
+  }
+  MS_EXCEPTION_IF_NULL(g_device_manager);
+  auto stage_num = g_device_manager->stage_num();
+  if (stage_num <= 1) {
+    return;
+  }
+  auto ret_after = graph->get_return();
+  MS_EXCEPTION_IF_NULL(ret_after);
+  auto all_nodes = TopoSort(ret_after, SuccDeeperSimple);
+  std::vector<CNodePtr> sends;
+  int64_t micro_size = 1;
+  CNodePtr last_send = nullptr;
+  for (const auto &node : all_nodes) {
+    if (!IsPrimitiveCNode(node, prim::kPrimSend)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    if (!cnode->HasPrimalAttr(kPrimalAttrForwardNodeName)) {
+      continue;
+    }
+    sends.emplace_back(cnode);
+    auto micro_attr = cnode->GetPrimalAttr(MICRO);
+    MS_EXCEPTION_IF_NULL(micro_attr);
+    auto micro = GetValue<int64_t>(micro_attr) + 1;
+    if (micro > micro_size) {
+      micro_size = micro;
+      last_send = cnode;
+    }
+  }
+  if (last_send != nullptr) {
+    auto opt_shard_rs = GetOptShardReduceScatter(all_nodes);
+    if (opt_shard_rs.empty()) {
+      return;
+    }
+    auto manager = graph->manager();
+    for (auto rs : opt_shard_rs) {
+      std::vector<AnfNodePtr> depend_input = {NewValueNode(prim::kPrimDepend), rs->input(1), last_send};
+      auto depend = graph->NewCNode(depend_input);
+      depend->AddPrimalAttr(PP_OPT_SHARD_CONTROL, MakeValue(1));
+      depend->set_abstract(rs->input(1)->abstract());
+      manager->SetEdge(rs, 1, depend);
+    }
+  }
+}
 }  // namespace parallel
 }  // namespace mindspore

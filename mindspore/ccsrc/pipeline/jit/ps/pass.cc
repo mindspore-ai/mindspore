@@ -950,6 +950,12 @@ bool OverlapGradMatmulAndGradAllreduce(const ResourcePtr &resource) {
   return true;
 }
 
+bool OverlapOptShardGradInPipelinePass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::OverlapOptShardGradInPipeline(resource->func_graph());
+  return true;
+}
+
 bool HandleGroupInfoPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::HandleGroupInfo();
@@ -1256,6 +1262,7 @@ std::vector<PassItem> kVmPasses = {
   {"comm_op_add_attrs", CommOpAddAttrs},
   {"add_comm_op_reuse_tag", AddCommOpReusePass},
   {"overlap_opt_shard_in_pipeline", OverlapOptShardInPipelinePass},
+  {"overlap_opt_shard_grad_in_pipeline", OverlapOptShardGradInPipelinePass},
   {"grouped_pairwise_exchange_alltoall", GroupedPairwiseExchangeAllToAllPass},
   {"overlap_recompute_and_grad_model_parallel", OverlapRecomputeAndGradModelParallel},
   {"overlap_grad_matmul_and_grad_allreduce", OverlapGradMatmulAndGradAllreduce},
