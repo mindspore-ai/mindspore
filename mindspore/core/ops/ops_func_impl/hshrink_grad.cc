@@ -20,6 +20,8 @@
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -46,5 +48,33 @@ TypePtr HShrinkGradFuncImpl::InferType(const PrimitivePtr &primitive,
   (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
   return x_type->Clone();
 }
+
+TypePtrList HShrinkGradFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const auto &gradients_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(gradients_tensor);
+  const auto &features_tensor = input_values[kIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(features_tensor);
+
+  const auto &gradients_type = gradients_tensor->Dtype();
+  const auto &features_type = features_tensor->Dtype();
+
+  if (gradients_type->type_id() != features_type->type_id()) {
+    MS_LOG_EXCEPTION << "For " << primitive->name()
+                     << ", the grad type must be same as input type, but got gradients_type: "
+                     << gradients_type->ToString() << " and features_type: " << features_type->ToString();
+  }
+  const std::set<TypePtr> valid_types = {kFloat16, kFloat32, kBFloat16};
+  (void)CheckAndConvertUtils::CheckSubClass("features", features_type, valid_types, primitive->name());
+  return {features_type};
+}
+
+ShapeArray HShrinkGradFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameHShrinkGrad, HShrinkGradFuncImpl)
+
 }  // namespace ops
 }  // namespace mindspore

@@ -321,8 +321,8 @@ class Hardshrink(Cell):
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
         >>> input = Tensor(np.array([[ 0.5,  1,  2.0], [0.0533,0.0776,-2.1233]]), mindspore.float32)
-        >>> Hardshrink = nn.Hardshrink()
-        >>> output = Hardshrink(input)
+        >>> hardshrink = nn.Hardshrink()
+        >>> output = hardshrink(input)
         >>> print(output)
         [[ 0.      1.      2.    ]
         [ 0.      0.     -2.1233]]
