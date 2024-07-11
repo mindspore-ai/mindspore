@@ -333,7 +333,7 @@ void GetCalOps(const FuncGraphPtr &graph, size_t *op_id, nlohmann::ordered_json 
 }  // namespace
 
 py::tuple FlopsCollection(const FuncGraphPtr &graph) {
-  MS_LOG(WARNING) << "cal model flops.";
+  MS_LOG(INFO) << "cal model flops.";
   size_t op_id = 0;
   nlohmann::ordered_json args;
   int64_t full_mfu = 0;
