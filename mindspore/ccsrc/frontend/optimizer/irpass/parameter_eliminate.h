@@ -341,7 +341,8 @@ class PartialUnusedArgsEliminate {
     auto manager = func_graph->manager();
     MS_EXCEPTION_IF_NULL(manager);
     bool changed = false;
-    for (const auto &fg : func_graph->func_graphs_used_total()) {
+    auto fgs = func_graph->func_graphs_used_total();
+    for (const auto &fg : fgs) {
       MS_EXCEPTION_IF_NULL(fg);
       std::vector<CNodePtr> partial_nodes;
       if (!GetUserPartialNodes(fg, &partial_nodes)) {
@@ -356,7 +357,8 @@ class PartialUnusedArgsEliminate {
       for (size_t i = 0; i < origin_parameters.size(); ++i) {
         auto origin_para = origin_parameters[i];
         auto iter = node_users.find(origin_para);
-        if (iter == node_users.end() || iter->second.empty()) {
+        // Currently, we don't eliminate the function parameter node because it will produce DeadNode after renormalize.
+        if (!HasAbstractFunction(origin_para) && (iter == node_users.end() || iter->second.empty())) {
           (void)unused_parameter_idx.emplace_back(i);
         } else if (added_forward_u && HasAbstractUMonad(origin_para) && i < origin_parameters.size() - 1) {
           // The fv u monad from fprop should be replaced with the forward u added by pass 'add_forward_monad_depend.h'.
@@ -388,6 +390,10 @@ class PartialUnusedArgsEliminate {
   }
 
  private:
+  static bool HasAbstractFunction(const AnfNodePtr &node) {
+    return node->abstract() != nullptr && node->abstract()->isa<abstract::AbstractFunction>();
+  }
+
   static bool GetUserPartialNodes(const FuncGraphPtr &fg, std::vector<CNodePtr> *partial_nodes) {
     for (const auto &node_and_idx : fg->func_graph_cnodes_index()) {
       auto user_node = node_and_idx.first->first;

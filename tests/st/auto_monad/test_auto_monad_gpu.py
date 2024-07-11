@@ -292,7 +292,7 @@ def test_updatestate_between_assign_maketuple():
         assert len(updatestate_num) == 1
 
 
-@pytest.mark.level1
+@pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_cycle_parameter_binding():
