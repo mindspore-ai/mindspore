@@ -40,8 +40,8 @@ hshrink:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> input = Tensor(np.array([[ 0.5,  1,  2.0], [0.0533,0.0776,-2.1233]]), mindspore.float32)
+            >>> input = Tensor(np.array([[0.5, 1, 2.0], [0.0533, 0.0776, -2.1233]]), mindspore.float32)
             >>> output = ops.hardshrink(input)
             >>> print(output)
             [[ 0.      1.      2.    ]
-            [ 0.      0.     -2.1233]]
+             [ 0.      0.     -2.1233]]

@@ -22,6 +22,7 @@
 #include "abstract/dshape.h"
 #include "abstract/abstract_value.h"
 #include "ops/test_ops.h"
+#include "ops/test_ops_cmp_utils.h"
 #include "ops/ops_func_impl/hshrink_grad.h"
 #include "ops/test_value_utils.h"
 
@@ -89,6 +90,12 @@ auto HShrinkGradOpTypeTestCases = testing::ValuesIn({
   HShrinkGradDtype{kBFloat16, kBFloat16, kBFloat16},
 });
 
+OP_FUNC_IMPL_SIMPLEINFER_TEST_DECLARE(HShrinkGrad, MultiInputOpParams);
+OP_FUNC_IMPL_SIMPLEINFER_TEST_CASES(
+  HShrinkGrad,
+  testing::Values(MultiInputOpParams{{{2, 3}, {2, 3}}, {kFloat16, kFloat16}, {{2, 3}}, {kFloat16}, {}},
+                  MultiInputOpParams{{{2, 3}, {2, 3}}, {kFloat32, kFloat32}, {{2, 3}}, {kFloat32}, {}},
+                  MultiInputOpParams{{{2, 3}, {2, 3}}, {kBFloat16, kBFloat16}, {{2, 3}}, {kBFloat16}, {}}));
 INSTANTIATE_TEST_CASE_P(TestHShrinkGrad, TestHShrinkGrad,
                         testing::Combine(HShrinkGradOpShapeTestCases, HShrinkGradOpTypeTestCases));
 }  // namespace ops

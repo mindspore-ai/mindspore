@@ -22,6 +22,7 @@
 #include "abstract/dshape.h"
 #include "abstract/abstract_value.h"
 #include "ops/test_ops.h"
+#include "ops/test_ops_cmp_utils.h"
 #include "ops/ops_func_impl/hshrink.h"
 #include "ops/test_value_utils.h"
 
@@ -81,6 +82,12 @@ auto HShrinkOpTypeTestCases = testing::ValuesIn({
   HShrinkDtype{kFloat32, kFloat32},
   HShrinkDtype{kBFloat16, kBFloat16},
 });
+
+OP_FUNC_IMPL_SIMPLEINFER_TEST_DECLARE(HShrink, EltwiseOpParams);
+OP_FUNC_IMPL_SIMPLEINFER_TEST_CASES(HShrink,
+                                    testing::Values(EltwiseOpParams{{2, 3}, kFloat16, {2, 3}, kFloat16, {}},
+                                                    EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32, {}},
+                                                    EltwiseOpParams{{2, 3}, kBFloat16, {2, 3}, kBFloat16, {}}));
 
 INSTANTIATE_TEST_CASE_P(TestHShrink, TestHShrink, testing::Combine(HShrinkOpShapeTestCases, HShrinkOpTypeTestCases));
 }  // namespace ops
