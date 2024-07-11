@@ -30,6 +30,10 @@ tensor::BaseTensorPtr RepeatInterleaveGradAscendCustomize(const std::shared_ptr<
                                                           const BaseTensorPtr &repeats, const Int64ImmPtr &dim) {
   OpRunner::InferOpOutput(op, input_tensor, repeats, dim);
   const ShapeVector &output_shape = op->output_value_simple_info()->shape_vector_[0];
+  auto repeats_shape = repeats->shape();
+  if (repeats_shape.empty()) {
+    repeats->set_shape(ShapeVector{1});
+  }
 
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, repeats);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
