@@ -22,39 +22,40 @@
 namespace mindspore {
 namespace pijit {
 
-PyFrameEvalHookManager::HookResult ApplyAutoJit(PyThreadState *tstate, PyFrameObject *f) {
+bool ApplyAutoJit(PyThreadState *ts, PyFrameObject *f, PyObject **result) {
   if (!kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kAutoJit)) {
-    return {nullptr, false};
+    return false;
   }
 
   PyObject *code = reinterpret_cast<PyObject *>(f->f_code);
-  auto c = getJitCompileResults(code, false);
+  auto c = GetJitCompileResults(code);
   if (c == nullptr) {
     if (!kPIJitConfigDefault.ShouldAutoJit(f)) {
-      return {nullptr, false};
+      return false;
     }
     (void)pi_jit_should_compile(py::cast<py::object>(code), py::dict(), py::none());
-    c = getJitCompileResults(code, false);
+    c = GetJitCompileResults(code);
   }
-  return {CallCodeHook(tstate, f, c), true};
+  *result = CallCodeHook(ts, f, c);
+  return true;
 }
 
-PyFrameEvalHookManager::HookResult ApplyAutoGrad(PyThreadState *tstate, PyFrameObject *f) {
+bool ApplyAutoGrad(PyThreadState *ts, PyFrameObject *f, PyObject **result) {
   if (kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kInferOnly)) {
-    return {nullptr, false};
+    return false;
   }
-  auto ret = _PyEval_EvalFrameDefault(tstate, f, 0);
-  AutoGrad(f, ret);
-  return {ret, true};
+  *result = _PyEval_EvalFrameDefault(ts, f, 0);
+  AutoGrad(f, *result);
+  return true;
 }
 
 PyFrameEvalHookManager::PyFrameEvalHookManager() : func_() {
   this->Register(ApplyAutoGrad);
   this->Register(ApplyAutoJit);
-  this->Register([](PyThreadState *tstate, PyFrameObject *f) {
-    auto c = CodeExtra::GetCodeExtra(f->f_code);
-    return (c == nullptr) ? HookResult{_PyEval_EvalFrameDefault(tstate, f, 0), true}
-                          : HookResult{CallCodeHook(tstate, f, c), true};
+  this->Register([](PyThreadState *ts, PyFrameObject *f, PyObject **result) {
+    auto c = GetJitCompileResults(f->f_code);
+    *result = c != nullptr ? CallCodeHook(ts, f, c) : _PyEval_EvalFrameDefault(ts, f, 0);
+    return true;
   });
 }
 
@@ -63,14 +64,12 @@ PyFrameEvalHookManager *PyFrameEvalHookManager::GetInstance() {
   return &instance;
 }
 
-PyObject *PyFrameEvalHookManager::RunHook(PyThreadState *tstate, PyFrameObject *f) {
-  for (auto iter = func_.rbegin(); iter != func_.rend(); ++iter) {
-    HookResult r = (*iter)(tstate, f);
-    if (r.has_result_) {
-      return r.result_;
-    }
+PyObject *PyFrameEvalHookManager::RunHook(PyThreadState *ts, PyFrameObject *f) {
+  PyObject *res = nullptr;
+  if (std::any_of(func_.rbegin(), func_.rend(), [&](Hook func) { return func(ts, f, &res); })) {
+    return res;
   }
-  return _PyEval_EvalFrameDefault(tstate, f, 0);
+  return _PyEval_EvalFrameDefault(ts, f, 0);
 }
 
 }  // namespace pijit

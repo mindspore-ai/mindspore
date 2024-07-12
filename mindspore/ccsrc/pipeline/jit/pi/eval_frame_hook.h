@@ -24,11 +24,7 @@ namespace pijit {
 
 class PyFrameEvalHookManager {
  public:
-  struct HookResult {
-    PyObject *result_;
-    bool has_result_;
-  };
-  using Hook = HookResult (*)(PyThreadState *, PyFrameObject *);
+  using Hook = bool (*)(PyThreadState *, PyFrameObject *, PyObject **result);
 
   static PyFrameEvalHookManager *GetInstance();
 

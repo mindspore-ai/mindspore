@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_PI_JIT_CODE_EXTRA_H
-#define MINDSPORE_PI_JIT_CODE_EXTRA_H
+#ifndef MINDSPORE_PI_JIT_JIT_COMPILE_RESULTS_H
+#define MINDSPORE_PI_JIT_JIT_COMPILE_RESULTS_H
 
 #include <unordered_map>
 #include <map>
@@ -32,9 +32,9 @@ namespace pijit {
 namespace py = pybind11;
 
 // record the inline and stop trace reason and other information for each graph
-class Tracebackes {
+class Traceback {
  public:
-  struct Tracebacke {
+  struct Element {
     std::string func_name_;
     std::string changed_func_;
     int code_size_;
@@ -50,10 +50,10 @@ class Tracebackes {
     int depth;
     int line;
   };
-  Tracebackes() = default;
-  Tracebackes(const std::string &raw_func_name, const std::string &raw_func_info_name, int raw_code_size)
+  Traceback() = default;
+  Traceback(const std::string &raw_func_name, const std::string &raw_func_info_name, int raw_code_size)
       : raw_func_name_(raw_func_name), raw_func_info_name_(raw_func_info_name), raw_code_size_(raw_code_size) {}
-  ~Tracebackes() { Clear(); }
+  ~Traceback() { Clear(); }
   void Clear() {
     tbs_.clear();
     stop_trace_res_.clear();
@@ -61,11 +61,11 @@ class Tracebackes {
   }
 
   std::string raw_func_name() const { return raw_func_name_; }
-  void PushTbs(const Tracebacke &tb) { tbs_.push_back(tb); }
+  void PushTbs(const Element &tb) { tbs_.push_back(tb); }
   void PushStopTraceRes(const std::string &func_name, StopTraceReason res) { stop_trace_res_.emplace(func_name, res); }
   void PushInlineInfo(InlineInfo info);
   void DumpInlineInfo(std::stringstream &os, const std::string &func_name) const;
-  int FindMaxNameLength(const std::list<Tracebacke> &tbs) const;
+  int FindMaxNameLength(const std::list<Element> &tbs) const;
   std::string Dump(bool is_all = false) const;
   std::string DumpSummary() const;
   std::string GetStopTrace() {
@@ -86,25 +86,20 @@ class Tracebackes {
   std::string raw_func_name_;
   std::string raw_func_info_name_;
   int raw_code_size_;
-  std::list<Tracebacke> tbs_;
+  std::list<Element> tbs_;
   // <func_name, stop_trace_reason>
   std::unordered_map<std::string, StopTraceReason> stop_trace_res_;
   // <root_func_name, InlineInfo>
   std::map<std::string, std::list<InlineInfo>> inline_infos_;
 };
 
-class CodeExtra {
+class JitCompileResults {
  public:
-  static CodeExtra *GetCodeExtra(PyCodeObject *co);
-  static CodeExtra *GetCodeExtraWithAlloc(PyObject *code, bool alloc);
-  static void SetCodeExtra(PyCodeObject *co, CodeExtra *ce);
-
-  static CodeExtra skip_;
+  static JitCompileResults *Create(PyCodeObject *code);
+  static Py_ssize_t InitIndex();
 
  private:
-  static Py_ssize_t GetCodeExtraIndex();
   static void FreeCallback(void *);
-  static Py_tss_t *tss_;
 
  public:
   enum State {
@@ -130,14 +125,14 @@ class CodeExtra {
   void set_origin_frame(PyFrameObject *f) { compile_frame_ = py::cast<py::object>(reinterpret_cast<PyObject *>(f)); }
   void set_code(const OptCodePtr &p) { code_ = p; }
   void set_codehub(const OptCodeHubPtr &p) { codehub_ = p; }
-  void set_tbs(const std::shared_ptr<Tracebackes> &t) { tbs_ = t; }
+  void set_tbs(const std::shared_ptr<Traceback> &t) { tbs_ = t; }
   void set_conf(const std::shared_ptr<GraphJitConfig> &c) { conf_ = c; }
 
   int IncCodeCount() { return compile_count_++; }
 
  private:
-  CodeExtra();
-  ~CodeExtra() = default;
+  JitCompileResults();
+  ~JitCompileResults();
 
   py::object compile_frame_;
   py::object input_signature_;
@@ -146,15 +141,39 @@ class CodeExtra {
   // compiler output
   OptCodePtr code_;
   OptCodeHubPtr codehub_;
-  std::shared_ptr<Tracebackes> tbs_;
+  std::shared_ptr<Traceback> tbs_;
   std::shared_ptr<GraphJitConfig> conf_;
   int compile_count_;
   int break_count_;
 };
-using JitCompileResults = CodeExtra;
 
-inline CodeExtra *getJitCompileResults(PyObject *func, bool alloc) {
-  return CodeExtra::GetCodeExtraWithAlloc(func, alloc);
+inline JitCompileResults *GetJitCompileResults(PyCodeObject *code) {
+  Py_ssize_t index = JitCompileResults::InitIndex();
+  if (index != -1) {
+    void *ptr = nullptr;
+    _PyCode_GetExtra(reinterpret_cast<PyObject *>(code), index, &ptr);
+    return reinterpret_cast<JitCompileResults *>(ptr);
+  }
+  return nullptr;
+}
+
+inline JitCompileResults *GetJitCompileResults(PyObject *code) {
+  code = PyMethod_Check(code) ? PyMethod_GET_FUNCTION(code) : code;
+  code = PyFunction_Check(code) ? PyFunction_GET_CODE(code) : code;
+  return PyCode_Check(code) ? GetJitCompileResults(reinterpret_cast<PyCodeObject *>(code)) : nullptr;
+}
+
+inline void SetJitCompileResults(PyCodeObject *code, JitCompileResults *ptr) {
+  Py_ssize_t index = JitCompileResults::InitIndex();
+  if (index != -1) {
+    _PyCode_SetExtra(reinterpret_cast<PyObject *>(code), index, ptr);
+  }
+}
+
+inline JitCompileResults *CreateJitCompileResults(PyObject *code) {
+  code = PyMethod_Check(code) ? PyMethod_GET_FUNCTION(code) : code;
+  code = PyFunction_Check(code) ? PyFunction_GET_CODE(code) : code;
+  return PyCode_Check(code) ? JitCompileResults::Create(reinterpret_cast<PyCodeObject *>(code)) : nullptr;
 }
 
 }  // namespace pijit

@@ -181,7 +181,7 @@ static void ensureInitialize() {
   });
 }
 
-void Tracebackes::PushInlineInfo(InlineInfo info) {
+void Traceback::PushInlineInfo(InlineInfo info) {
   const auto &it = inline_infos_.find(info.root_name_);
   if (it != inline_infos_.cend()) {
     it->second.push_back(info);
@@ -196,7 +196,7 @@ static void PrintLabel(std::stringstream &os, const std::string &str, int distan
   os << std::left << std::setw(distance) << str << ": ";
 }
 
-std::string Tracebackes::Dump(bool is_all) const {
+std::string Traceback::Dump(bool is_all) const {
   constexpr auto width = 10;
 
   std::stringstream os;
@@ -209,7 +209,7 @@ std::string Tracebackes::Dump(bool is_all) const {
   if (tbs_.empty()) {
     return os.str();
   }
-  std::list<Tracebacke> candidates;
+  std::list<Element> candidates;
   if (is_all) {
     candidates = tbs_;
   } else {
@@ -249,7 +249,7 @@ std::string Tracebackes::Dump(bool is_all) const {
   return os.str();
 }
 
-void Tracebackes::DumpInlineInfo(std::stringstream &os, const std::string &func_name) const {
+void Traceback::DumpInlineInfo(std::stringstream &os, const std::string &func_name) const {
   const auto &it = inline_infos_.find(func_name);
   if (it == inline_infos_.cend()) {
     return;
@@ -267,7 +267,7 @@ void Tracebackes::DumpInlineInfo(std::stringstream &os, const std::string &func_
   }
 }
 
-std::string Tracebackes::DumpSummary() const {
+std::string Traceback::DumpSummary() const {
   std::stringstream os;
   if (tbs_.empty()) {
     return os.str();
@@ -328,7 +328,7 @@ std::string Tracebackes::DumpSummary() const {
   return os.str();
 }
 
-int Tracebackes::FindMaxNameLength(const std::list<Tracebacke> &tbs) const {
+int Traceback::FindMaxNameLength(const std::list<Element> &tbs) const {
   constexpr auto name_length = kFive * (kTwo + kFive);
   int max_length = 15;
   for (const auto &tb : tbs) {
@@ -454,7 +454,7 @@ static void MarkBreak(Graph *g) {
     }
   }
   MS_EXCEPTION_IF_NULL(code);
-  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(code), false);
+  auto jcr = GetJitCompileResults(code);
   if (jcr != nullptr) {
     jcr->break_count()++;
   }
@@ -1553,7 +1553,7 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
   } else {
     return false;
   }
-  mindspore::pijit::JitCompileResults *c = mindspore::pijit::getJitCompileResults(code, true);
+  mindspore::pijit::JitCompileResults *c = mindspore::pijit::CreateJitCompileResults(code);
   if (c == nullptr) {
     return false;
   }
@@ -1584,7 +1584,7 @@ py::bool_ pi_jit_should_compile(const py::object &funcHandle, const py::object &
 
   c->set_stat(mindspore::pijit::JitCompileResults::GRAPH_CANDIDATE);
   *c->conf() = new_config;
-  *c->tbs() = mindspore::pijit::Tracebackes(raw_func_name, raw_func_info_name, raw_code_size);
+  *c->tbs() = mindspore::pijit::Traceback(raw_func_name, raw_func_info_name, raw_code_size);
   return true;
 }
 #else
@@ -1601,7 +1601,7 @@ py::bool_ pi_jit_should_compile(const py::object &func, const py::object &tag, c
 
 #endif
 
-static py::object ConvertCodeExtra(mindspore::pijit::CodeExtra *c) {
+static py::object ConvertCodeExtra(mindspore::pijit::JitCompileResults *c) {
   if (c->code() == nullptr) {
     return py::object();
   }
@@ -1630,7 +1630,7 @@ py::object get_code_extra(const py::object &func) {
   if (code.ptr() == nullptr) {
     return py::none();
   }
-  auto c = mindspore::pijit::getJitCompileResults(code.ptr(), false);
+  auto c = mindspore::pijit::GetJitCompileResults(code.ptr());
   if (c == nullptr) {
     return py::none();
   }

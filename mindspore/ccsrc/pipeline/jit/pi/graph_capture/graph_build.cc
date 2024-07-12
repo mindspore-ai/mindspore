@@ -224,7 +224,7 @@ ValueNode *GraphBuilder::NewValueNode(AObject *o, const Instr &i, const std::vec
 Graph *GraphBuilder::NewGraph(PyCodeObject *co, PyObject *globals) {
   std::vector<Graph *> &graphs = (root_ != nullptr) ? root_->graph_pool_ : this->graph_pool_;
   if ((root_ == nullptr || root_ == this) && graph_ == nullptr) {
-    JitCompileResults *jcr = getJitCompileResults(reinterpret_cast<PyObject *>(co), false);
+    JitCompileResults *jcr = GetJitCompileResults(co);
     MS_EXCEPTION_IF_CHECK_FAIL(jcr && jcr->code() != nullptr, "must be create guard code before trace start");
     graphs.push_back(new Graph(co, globals, *jcr->conf()));
     graphs.back()->SetGuard(jcr->code());
@@ -1578,7 +1578,7 @@ void GraphBuilder::CollectInlineInfo(CallNode *node, int depth) {
   }
   std::string func_name = graph_->GetCodeName();
   std::string root_name = root_->GetGraph()->GetCodeName();
-  JitCompileResults *jcr = getJitCompileResults(reinterpret_cast<PyObject *>(root_->GetGraph()->GetCodeObj()), false);
+  JitCompileResults *jcr = GetJitCompileResults(root_->GetGraph()->GetCodeObj());
   if (jcr && jcr->tbs() && !func_name.empty()) {
     jcr->tbs()->PushInlineInfo(
       {func_name, inline_name, root_name, node->GetInlineReason(), code_size, depth, node->GetLineNo()});
@@ -2036,7 +2036,7 @@ bool GraphBuilder::ReplaceCall(CallNode *call_node, const py::object &old_func) 
   if (!graph_->GuardInlinedFunc(call_node)) {
     return false;
   }
-  auto jcr = getJitCompileResults(old_func.ptr(), false);
+  auto jcr = GetJitCompileResults(old_func.ptr());
   if (jcr != nullptr && jcr->stat() != JitCompileResults::NEVER_COMPILE) {
     return true;
   }
@@ -3260,7 +3260,7 @@ static std::unique_ptr<GraphBuilder> GenerateRootGraph(const py::object &callabl
     PyErr_Clear();
     return nullptr;
   }
-  auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(frame->f_code), true);
+  auto jcr = JitCompileResults::Create(frame->f_code);
   *jcr->conf() = conf;
   jcr->set_code(jcr->codehub()->AddOptTarget(OptOption::CreateOptionByPoint(jcr)));
 
@@ -3290,7 +3290,7 @@ AObject *InferFuncResult(const py::object &callable, const py::object &args, con
   }
   if (clear_guard) {
     Graph *graph = g->GetGraph();
-    auto jcr = getJitCompileResults(reinterpret_cast<PyObject *>(graph->GetCodeObj()), false);
+    auto jcr = GetJitCompileResults(graph->GetCodeObj());
     jcr->codehub()->DelOptTarget(OptOption::CreateOptionByPoint(jcr), graph->GetGuard());
   }
 

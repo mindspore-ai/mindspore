@@ -287,7 +287,7 @@ static bool InferGradOperation(CallNode *call_node, AObject::MindsporeFlag f) {
     return false;
   }
   (void)pi_jit_should_compile(func, py::dict(), py::none());
-  auto jcr = getJitCompileResults(PyFunction_GET_CODE(func.ptr()), false);
+  auto jcr = GetJitCompileResults(PyFunction_GET_CODE(func.ptr()));
   *jcr->conf() = call_node->GetGraph()->Config();
   return false;
 }
@@ -377,11 +377,6 @@ static py::object DeleteGradSensArgs(const py::object &args, const py::object &k
   return py::reinterpret_steal<py::object>(new_arg);
 }
 
-static AObject *InferGradFuncResult(const py::object &func, const py::object &args, const py::object &kwargs,
-                                    const GraphJitConfig &conf) {
-  return InferFuncResult(func, args, kwargs, conf, true);
-}
-
 /**
  * Use the function decorated by 'after_grad' and arguments of 'after_grad' when called to infer result.
  * If the function has no unsupported operation, merge the guard of inferred graph to caller graph.
@@ -426,7 +421,7 @@ void HandleGradFuncCall(CallNode *call_node, AObject *decorated, bool sens_param
     func = decorated->GetAttr(GraphBuilder::ID_construct)->GetPyObject();
   }
 
-  AObject *res = InferGradFuncResult(func, args, kwargs, call_node->GetGraph()->Config());
+  AObject *res = InferFuncResult(func, args, kwargs, call_node->GetGraph()->Config(), true);
   if (res == nullptr || !res->IsMindSporeSupportedType()) {
     call_node->SetInlineReason(InlineReason::kInlineInfer_Fail);
     grad_func_node->GetVobj()->ClearMsFlag(except_flag);
@@ -925,13 +920,16 @@ static FuncKey KeyFinderPrimitive(const py::object &callable) {
   return iter != GetFuncKeyMap().end() ? iter->second : FUNC_KEY_PRIMITIVE;
 }
 
-static FuncKey KeyFinderCallableType(const py::object &callable) {
+static size_t GetGraphCellTypeId() {
   static size_t graph_cell_type_id = 0;
   if (graph_cell_type_id == 0) {
     py::object type = Utils::GetModuleAttr("mindspore.nn.cell", "GraphCell", false, true);
     graph_cell_type_id = reinterpret_cast<size_t>(type.ptr());
   }
+  return graph_cell_type_id;
+}
 
+static FuncKey KeyFinderCallableType(const py::object &callable) {
   PyTypeObject *type_object = reinterpret_cast<PyTypeObject *>(callable.ptr());
   type_object = PyType_CheckExact(type_object) ? type_object : Py_TYPE(type_object);
   size_t type_id = reinterpret_cast<size_t>(type_object);
@@ -939,7 +937,7 @@ static FuncKey KeyFinderCallableType(const py::object &callable) {
     return KeyFinderPrimitive(callable);
   } else if (IsMetaFuncGraphType<true>(type_object)) {
     return FUNC_KEY_META_FUNCG_RAPH;
-  } else if (type_id == graph_cell_type_id) {
+  } else if (type_id == GetGraphCellTypeId()) {
     return FUNC_KEY_GRAPH_CELL;
   }
   return FUNC_KEY_EMPTY;

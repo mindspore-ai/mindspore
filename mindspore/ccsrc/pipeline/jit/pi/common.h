@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "pipeline/jit/pi/pydef.h"
-#include "pipeline/jit/pi/code_extra.h"
+#include "pipeline/jit/pi/jit_compile_results.h"
 
 namespace mindspore {
 namespace pijit {
