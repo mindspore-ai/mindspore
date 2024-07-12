@@ -151,7 +151,7 @@ from mindspore.ops.function.math_func import greater_equal
 # 59
 from mindspore.ops.functional import square
 # 60
-
+from mindspore.ops.function.math_func import cummax, cummin
 # 61
 from mindspore.ops.functional import rsqrt
 # 62

@@ -169,6 +169,8 @@ Other Operations
     :template: classtemplate.rst
 
     mindspore.mint.broadcast_to
+    mindspore.mint.cummax
+    mindspore.mint.cummin
     mindspore.mint.cumsum
     mindspore.mint.flip
     mindspore.mint.searchsorted

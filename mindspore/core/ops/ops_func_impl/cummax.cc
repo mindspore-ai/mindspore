@@ -17,6 +17,7 @@
 #include "ops/ops_func_impl/cummax.h"
 #include "utils/check_convert_utils.h"
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -44,9 +45,33 @@ BaseShapePtr CummaxFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr CummaxFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   auto x_type = input_args[kInputIndex0]->GetType();
-  auto indices_type = kInt64;
-  return std::make_shared<Tuple>(std::vector{x_type, indices_type});
+  return std::make_shared<Tuple>(std::vector{x_type, kInt64});
 }
 
+TypePtrList CummaxFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &input_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(input_tensor);
+  return {input_tensor->Dtype(), kInt64};
+}
+
+ShapeArray CummaxFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  auto &x_shape = x_tensor->shape();
+  bool is_dynamic = IsDynamic(x_shape);
+  if (!is_dynamic) {
+    if (input_values[kInputIndex1] != mindspore::kNone) {
+      const auto &axis_scalar = GetScalarValue<int64_t>(input_values[kInputIndex1]);
+      int64_t axis_value = axis_scalar.value();
+      auto rank = SizeToLong(x_shape.size());
+      MS_CHECK_VALUE(
+        axis_value >= -rank && axis_value < rank,
+        CheckAndConvertUtils::FormatCheckInRangeMsg("axis", axis_value, kIncludeLeft, {-rank, rank}, primitive));
+    }
+  }
+  return {x_shape, x_shape};
+}
+
+REGISTER_SIMPLE_INFER(kNameCummax, CummaxFuncImpl)
 }  // namespace ops
 }  // namespace mindspore
