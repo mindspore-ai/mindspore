@@ -9,11 +9,17 @@ mindspore.ops.cosh
         out_i = \cosh(input_i)
 
     参数：
-        - **input** (Tensor) - cosh的输入，任意维度的Tensor，其数据类型为float16、float32、float64、complex64、complex128。
+        - **input** (Tensor) - cosh的输入，任意维度的Tensor，支持数据类型：
+
+          - GPU/CPU： float16、float32、float64、complex64或complex128。
+          - Ascend： float16、float32、float64、complex64、complex128或bfloat16。
 
     返回：
         Tensor，数据类型和shape与 `input` 相同。
 
     异常：
-        - **TypeError** - `input` 的数据类型不是float16、float32、float64、complex64、complex128。
-        - **TypeError** - `input` 不是Tensor。
+        - **TypeError** - 如果 `input` 不是Tensor。
+        - **TypeError** - 
+
+          - CPU/GPU: 如果 `input` 的数据类型不是float16、float32、float64、complex64或complex128。
+          - Ascend: 如果 `input` 的数据类型不是float16、float32、float64、complex64、complex128或bfloat16。
