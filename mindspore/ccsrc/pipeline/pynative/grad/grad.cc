@@ -1218,7 +1218,6 @@ py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::o
     (void)need_gc_top_cell_list_.emplace_back(top_cell_);
     ClearBpropTask();
     top_cell_->ClearMetaGradInfo();
-    AsyncClearTopCell();
 
     // If top cell is pipeline top cell, finded_top_cell_ will be itself;
     // Otherwise, it ir top cell in already_run_top_cell_;
@@ -1227,6 +1226,8 @@ py::object GradExecutor::RunGrad(const prim::GradOperationPtr &grad, const py::o
       top_cell_ = finded_top_cell_;
       finded_top_cell_ = nullptr;
     }
+    // Top cell clean must after pipeline forward output replace, because replace_info can not be clear
+    AsyncClearTopCell();
     top_cell_->UpdateTopCellInfo(false, false, false);
     return RunGradGraph();
   }

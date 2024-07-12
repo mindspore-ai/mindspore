@@ -178,6 +178,7 @@ void TopCellInfo::Clear() {
   shadow_top_cell_ = nullptr;
   graph_info_map_.clear();
   replace_info_.clear();
+  input_args_info_ = nullptr;
 }
 
 void TopCellInfo::DeleteParamNodeInfo(const FuncGraphPtr &g, const std::string &id) const {
