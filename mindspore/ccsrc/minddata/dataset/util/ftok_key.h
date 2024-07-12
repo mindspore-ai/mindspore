@@ -37,6 +37,13 @@
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "minddata/dataset/util/queue.h"
 #include "minddata/dataset/util/wait_post.h"
+#ifndef BUILD_LITE
+#include "mindspore/core/utils/file_utils.h"
+namespace platform = mindspore;
+#else
+#include "mindspore/lite/src/common/file_utils.h"
+namespace platform = mindspore::lite;
+#endif
 
 namespace mindspore {
 namespace dataset {

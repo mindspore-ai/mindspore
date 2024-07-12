@@ -816,7 +816,7 @@ def test_write_with_invalid_float_type():
         os.remove(mindrecord_file_name + ".db")
 
     # All data in the data list is incorrect and write with parallel
-    with pytest.raises(Exception, match=" has stopped abnormally. Please check the above log"):
+    with pytest.raises(Exception) as err:
         writer = FileWriter(file_name="test.mindrecord", shard_num=1, overwrite=True)
         schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"},
                        "data": {"type": "float64", "shape": [100]}}
@@ -837,6 +837,8 @@ def test_write_with_invalid_float_type():
                          "data": input_data}]
                 writer.write_raw_data(data, True)
         writer.commit()
+    assert "has stopped abnormally. Please check the above log" in str(err) or \
+           "Parallel write worker error, please check the above log" in str(err)
 
     if os.path.exists(mindrecord_file_name):
         os.remove(mindrecord_file_name)
@@ -844,7 +846,7 @@ def test_write_with_invalid_float_type():
         os.remove(mindrecord_file_name + ".db")
 
     # All data in the data list is incorrect and write with parallel and use shard_num=4
-    with pytest.raises(Exception, match=" has stopped abnormally. Please check the above log"):
+    with pytest.raises(Exception) as err:
         writer = FileWriter(file_name="test.mindrecord", shard_num=4, overwrite=True)
         schema_json = {"file_name": {"type": "string"}, "label": {"type": "int32"},
                        "data": {"type": "float64", "shape": [100]}}
@@ -865,6 +867,8 @@ def test_write_with_invalid_float_type():
                          "data": input_data}]
                 writer.write_raw_data(data, True)
         writer.commit()
+    assert "has stopped abnormally. Please check the above log" in str(err) or \
+           "Parallel write worker error, please check the above log" in str(err)
 
     if os.path.exists(mindrecord_file_name):
         os.remove(mindrecord_file_name)

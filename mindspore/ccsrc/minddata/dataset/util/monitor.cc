@@ -24,19 +24,20 @@ Status MonitorSubprocess(int pid) {
   // get the state changes in a child of the calling process
   int status = 0;
   auto ret = waitpid(pid, &status, WNOHANG | WUNTRACED | WCONTINUED);
-  if (WIFEXITED(status)) {  // the child is running
+  uint32_t uint_status = static_cast<uint32_t>(status);
+  if (WIFEXITED(uint_status)) {  // the child is running
     MS_LOG(INFO) << "[Monitor] The sub-process: " + std::to_string(pid) + " is still running.";
-  } else if (WIFSIGNALED(status)) {  // if the child process was terminated by a signal
+  } else if (WIFSIGNALED(uint_status)) {  // if the child process was terminated by a signal
     std::string err_msg = "[Monitor] The sub-process: " + std::to_string(pid) +
                           " is terminated by a signal abnormally. Status: " + std::to_string(status) +
                           ". Errno: " + std::to_string(errno);
     RETURN_STATUS_UNEXPECTED(err_msg);
-  } else if (WIFSTOPPED(status)) {  // if the child process was stopped by delivery of a signal
+  } else if (WIFSTOPPED(uint_status)) {  // if the child process was stopped by delivery of a signal
     std::string err_msg = "[Monitor] The sub-process: " + std::to_string(pid) +
                           " is stopped by delivery of a signal abnormally. Status: " + std::to_string(status) +
                           ". Errno: " + std::to_string(errno);
     RETURN_STATUS_UNEXPECTED(err_msg);
-  } else if (WIFCONTINUED(status)) {  // returns true if the child process was resumed by delivery of SIGCONT
+  } else if (WIFCONTINUED(uint_status)) {  // returns true if the child process was resumed by delivery of SIGCONT
     MS_LOG(INFO) << "[Monitor] The sub-process: " + std::to_string(pid) + " is resumed.";
   }
 
