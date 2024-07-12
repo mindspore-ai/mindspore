@@ -20,7 +20,6 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore import ops, context, mint
 
-ms.set_context(jit_level='O0')
 
 @test_utils.run_with_cell
 def avg_pool2d_forward_func(image, kernel_size, stride=None, padding=0,
@@ -50,6 +49,19 @@ def avg_pool2d_double_backward_func(grad, image, kernel_size, stride, padding=0,
                                                            ceil_mode, count_include_pad, divisor_override,)
 
 
+def set_context(mode):
+    if mode == context.GRAPH_MODE:
+        context.set_context(mode=mode, jit_config={"jit_level": "O0"})
+    else:
+        context.set_context(mode=mode)
+
+
+def compare_result(actual, expected):
+    diff = abs(actual.asnumpy() - expected)
+    error = np.ones(shape=expected.shape) * 1.0e-4
+    assert np.all(diff < error)
+
+
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend910b_training
@@ -60,7 +72,7 @@ def test_avg_pool2d(mode):
     Description: test op avg_pool2d and avg_pool2d_grad
     Expectation: expect correct result.
     """
-    context.set_context(mode=mode)
+    set_context(mode)
     image = Tensor(np.array([[[4.1702e-1, 7.2032e-1, 1.1437e-4, 3.0223e-1],
                               [1.4676e-1, 9.2339e-2, 1.8626e-1, 3.4556e-1],
                               [3.9677e-1, 5.3882e-1, 4.1919e-1, 6.8522e-1],
@@ -70,19 +82,15 @@ def test_avg_pool2d(mode):
     expected = np.array([[[0.1043, 0.1801, 0.0756],
                           [0.1359, 0.3092, 0.2577],
                           [0.0511, 0.2264, 0.1676]]]).astype(np.float32)
-    diff = abs(out.asnumpy() - expected)
-    error = np.ones(shape=expected.shape) * 1.0e-4
-    assert np.all(diff < error)
+    compare_result(out, expected)
 
-    grad = avg_pool2d_backward_func(image, 2, 2, 0, True, False)
+    grad = avg_pool2d_backward_func(image, 2, 2, 0, False, False)
 
     expected = np.array([[[0.2500, 0.2500, 0.2500, 0.2500],
                           [0.2500, 0.2500, 0.2500, 0.2500],
                           [0.2500, 0.2500, 0.2500, 0.2500],
                           [0.2500, 0.2500, 0.2500, 0.2500]]]).astype(np.float32)
-    diff = abs(grad.asnumpy() - expected)
-    error = np.ones(shape=expected.shape) * 1.0e-4
-    assert np.all(diff < error)
+    compare_result(grad, expected)
 
 
 @pytest.mark.level0
@@ -95,11 +103,12 @@ def test_avg_pool2d_double_backward(mode):
     Description: test auto grad of op SoftmaxBackward.
     Expectation: expect correct result.
     """
-    context.set_context(mode=mode)
+    set_context(mode)
     image = Tensor(np.random.rand(4, 3, 10, 10).astype(np.float32))
     grad = avg_pool2d_forward_func(image, 4)
-    grads = avg_pool2d_double_backward_func(grad, image, 4, 2)
-    print(grads)
+    double_grad = avg_pool2d_double_backward_func(grad, image, 4, 2)
+    expected = np.ones((4, 3, 4, 4)).astype(np.float32)
+    compare_result(double_grad, expected)
 
 
 @pytest.mark.level1
@@ -111,7 +120,7 @@ def test_avg_pool2d_dynamic():
     Description: test op AvgPool2D and AvgPool2DGrad.
     Expectation: expect AvgPool2D and AvgPool2DGrad. result.
     """
-    ms.context.set_context(
+    context.set_context(
         runtime_num_threads=1
     )  # multi-threads have none-initialized bug now.
     input_case1 = Tensor(np.random.randn(10, 2, 5, 60), dtype=ms.float32)
@@ -122,5 +131,6 @@ def test_avg_pool2d_dynamic():
             [input_case1, 4, (2, 2), (1,), False, True, 1],
             [input_case2, 6, (1, 1), (2,), True, False, 2],
         ],
-        'avg_pool2d', disable_input_check=True
+        'avg_pool2d',
+        disable_mode=["GRAPH_MODE"]
     )

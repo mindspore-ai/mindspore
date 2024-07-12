@@ -1,22 +1,22 @@
 avg_pool2d:
     description: |
         Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
-        Typically the input is of shape :math:`(N, C, H_{in}, W_{in})`, outputs regional average in the
-        :math:`(H_{in}, W_{in})`-dimension. Given kernel size :math:`(k_{H}, k_{W})` and `stride` , the operation
+        Typically the input is of shape :math:`(N, C, H_{in}, W_{in})` , outputs regional average in the
+        :math:`(H_{in}, W_{in})` -dimension. Given kernel size :math:`(kH, kW)` and `stride` , the operation
         is as follows.
 
         .. math::
-            \text{output}(N_i, C_j, h, w) = \frac{1}{k_{H} * k_{W}} \sum_{m=0}^{k_{H}-1} \sum_{n=0}^{k_{W}-1}
+            \text{output}(N_i, C_j, h, w) = \frac{1}{kH * kW} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1}
             \text{input}(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
 
         Inputs:
-            input (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})`.
+            input (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})` .
             kernel_size (Union[int, tuple[int], list[int]]): The size of kernel used to take the average value. Can be
-                a single number or a tuple (kH, kW).
+                a single number or a tuple :math:`(kH, kW)` .
             stride (Union[int, tuple[int], list[int]]): The distance of kernel moving. Can be a single number or
-                a tuple (sH, sW).
+                a tuple :math:`(sH, sW)` .
             padding (Union(int, tuple[int], list[int])): Implicit zero padding to be added on both sides. Can be a single
-                number or a tuple (padH, padW). Default: 0.
+                number or a tuple :math:`(padH, padW)` . Default: 0.
             ceil_mode (bool): If True, apply ceil instead of floor to compute the output shape. Default: ``False``.
             count_include_pad (bool): If True, include the zero-padding in the averaging calculation. Default: ``True`` .
             divisor_override (int): If specified, it will be used as divisor in the averaging calculation, otherwise
@@ -34,12 +34,11 @@ avg_pool2d:
             TypeError: If `input` is not a Tensor.
             TypeError: If `kernel_size` or `stride` is neither int nor tuple.
             TypeError: If `ceil_mode` or `count_include_pad` is not a bool.
-            TypeError: If `divisor_override` is not an int.
-            ValueError: If length of shape of `input` is not equal to `4` or `3`.
+            TypeError: If `divisor_override` is not an int or None.
+            ValueError: If the dimension of `input` is not equal to `3` or `4`.
             ValueError: If `kernel_size` or `stride` is less than 1.
-            ValueError: If `kernel_size` or `stride` is a tuple whose length is not equal to `2` or `1`.
-            ValueError: If `padding` is neither a int nor a tuple whose length is equal to `2` or `1`.
             ValueError: If value of `padding` is less than `0`.
+            ValueError: If `kernel_size`, `padding` or `stride` is a tuple whose length is not equal to `1` or `2`.
 
         Supported Platforms:
             ``Ascend``
@@ -52,8 +51,8 @@ avg_pool2d:
             >>> output = ops.auto_generate.AvgPool2D()(x, 2, 1)
             >>> print(output)
             [[[[ 2.5   3.5   4.5]
-            [ 6.5   7.5   8.5]]
-            [[14.5  15.5  16.5]
-            [18.5  19.5  20.5]]
-            [[26.5  27.5  28.5]
-            [30.5  31.5  32.5]]]]
+               [ 6.5   7.5   8.5]]
+              [[14.5  15.5  16.5]
+               [18.5  19.5  20.5]]
+              [[26.5  27.5  28.5]
+               [30.5  31.5  32.5]]]]

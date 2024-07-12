@@ -32,9 +32,15 @@ class MIND_API AvgPool2DFuncImpl final : public OpFuncImpl {
 
   int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
+  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+
  private:
-  const int64_t no_batch_rank_ = 3;
-  const int64_t batch_rank_ = 4;
+  const size_t no_batch_rank_ = 3;
+  const size_t batch_rank_ = 4;
+  const int64_t tuple_min_ele_num_ = 1;
+  const int64_t tuple_max_ele_num_ = 2;
 };
 }  // namespace ops
 }  // namespace mindspore

@@ -217,6 +217,16 @@ Dropout Layers
 
     mindspore.mint.nn.Dropout
 
+Pooling Layers
+^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.AvgPool2d
+
 Loss Functions
 ^^^^^^^^^^^^^^^
 
@@ -249,6 +259,7 @@ Pooling functions
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.avg_pool2d
     mindspore.mint.nn.functional.max_pool2d
 
 Non-linear activation functions

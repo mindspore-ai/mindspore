@@ -220,7 +220,7 @@ from mindspore.nn.extend.basic import Linear
 # 98
 
 # 99
-
+from mindspore.nn.layer.pooling import AvgPool2dExt as AvgPool2d
 # 100
 from mindspore.ops.auto_generate import BCEWithLogitsLoss as BCEWithLogitsLoss_prim
 
@@ -535,7 +535,7 @@ __all__ = [
     # 98
 
     # 99
-
+    'AvgPool2d',
     # 100
 
     # 220

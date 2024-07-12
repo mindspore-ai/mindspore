@@ -148,7 +148,7 @@ Reduction运算
     mindspore.mint.topk
     mindspore.mint.sort
 
-BLAS和LAPACK运算 
+BLAS和LAPACK运算
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
@@ -160,7 +160,7 @@ BLAS和LAPACK运算
     mindspore.mint.inverse
     mindspore.mint.matmul
 
-其他运算 
+其他运算
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. mscnplatwarnautosummary::
@@ -216,6 +216,16 @@ Dropout层
 
     mindspore.mint.nn.Dropout
 
+池化层
+^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.AvgPool2d
+
 损失函数
 ^^^^^^^^^^^^^^^
 
@@ -248,6 +258,7 @@ mindspore.mint.nn.functional
     :nosignatures:
     :template: classtemplate.rst
 
+    mindspore.mint.nn.functional.avg_pool2d
     mindspore.mint.nn.functional.max_pool2d
 
 非线性激活函数
