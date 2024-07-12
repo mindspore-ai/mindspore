@@ -59,6 +59,7 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   size_t GetStrategyRealIndex(size_t index);
   Status InitAttrs();
   RankList GetSPRankList();
+  int64_t GetActualSeqLengthSize();
 
  protected:
   Status InferForwardCommunication() override { return SUCCESS; }
@@ -79,6 +80,7 @@ class FlashAttentionScoreInfo : public OperatorInfo {
 
  private:
   void UpdateDropoutGenMaskSliceShapeAndSeed(const CNodePtr &reshape_cnode);
+  Status CheckInputInRingAttention();
   void InitIsInputPassed();
   Status InitQKVTensorMap();
   Status InitInputsTensorMap();
@@ -129,6 +131,8 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   bool attn_mask_have_n1_dim_ = false;      // true if attn_mask have n1 dim.
   bool enable_load_balance_ = false;
   bool enable_ring_attention_ = false;
+  bool enable_flash_sp_ = false;
+  bool enable_ra_send_recv_ = false;
   int64_t input_layout_;  // "BSH": 0; "BNSD": 1;
   int64_t sparse_mode_;
   bool kv_split_ = false;

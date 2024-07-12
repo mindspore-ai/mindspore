@@ -194,7 +194,9 @@ void OverlapOptShardGradInPipeline(const FuncGraphPtr &graph) {
     }
     sends.emplace_back(cnode);
     auto micro_attr = cnode->GetPrimalAttr(MICRO);
-    MS_EXCEPTION_IF_NULL(micro_attr);
+    if (micro_attr == nullptr) {
+      continue;
+    }
     auto micro = GetValue<int64_t>(micro_attr) + 1;
     if (micro > micro_size) {
       micro_size = micro;

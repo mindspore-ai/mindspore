@@ -70,6 +70,8 @@
 #include "frontend/parallel/pass/handle_group_info.h"
 #include "frontend/parallel/pass/overlap_recompute_and_grad_model_parallel.h"
 #include "frontend/parallel/pass/overlap_gradmatmul_and_gradallreduce.h"
+#include "frontend/parallel/pass/overlap_grad_ring_attention.h"
+#include "frontend/parallel/pass/overlap_grad_flash_sp.h"
 #include "frontend/parallel/pass/begin_end_overlap_inline.h"
 #include "frontend/parallel/pass/split_matmul_comm_elementwise_fp.h"
 #include "frontend/parallel/pass/split_layernorm_comm_fp.h"
@@ -411,6 +413,11 @@ opt::OptPassConfig GetOptPassA1(const opt::irpass::OptimizeIRPassLib &irpass) {
 }
 
 bool FlashSPFrontPass(const FuncGraphPtr &func_graph, const opt::OptimizerPtr &optimizer) {
+  auto parall_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
+  if (parall_mode != parallel::kSemiAutoParallel) {
+    MS_LOG(WARNING) << "ring attention & flash sp only supports semi parallel mode";
+    return false;
+  }
   if (func_graph->has_flag(parallel::FLASH_SP_RUN_ONCE_ONLY)) {
     return false;
   }
@@ -786,6 +793,18 @@ bool LabelMicroInterleavedIndexPass(const ResourcePtr &resource) {
 bool OverlapRecomputeAllGatherAndFlashAttentionGradPass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   parallel::OverlapRecomputeAllGatherAndFlashAttentionGrad(resource->func_graph());
+  return true;
+}
+
+bool OverlapGradRingAttentionPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::OverlapGradRingAttention(resource->func_graph());
+  return true;
+}
+
+bool OverlapGradFlashSP(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  parallel::OverlapGradFlashSP(resource->func_graph());
   return true;
 }
 
@@ -1267,6 +1286,8 @@ std::vector<PassItem> kVmPasses = {
   {"overlap_recompute_and_grad_model_parallel", OverlapRecomputeAndGradModelParallel},
   {"overlap_grad_matmul_and_grad_allreduce", OverlapGradMatmulAndGradAllreduce},
   {"overlap_recompute_allgather_and_fa_grad", OverlapRecomputeAllGatherAndFlashAttentionGradPass},
+  {"overlap_grad_ring_attention", OverlapGradRingAttentionPass},
+  {"overlap_grad_flash_sp", OverlapGradFlashSP},
   {"begin_end_overlap_inline", BeginEndOverlapInlinePass},
   {"overlap_grad_comm", OverlapGradCommPass},
   {"split_matmul_comm_elemetwise", SplitMatmulCommElementwiseOpFpPass},

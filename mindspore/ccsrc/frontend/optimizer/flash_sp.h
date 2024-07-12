@@ -39,7 +39,7 @@ class FlashSPInfo {
   int64_t GetRankId() const { return dev_rank_id_; }
   int64_t GetSendRankId() const { return send_rank_id_; }
   int64_t GetRecvRankId() const { return recv_rank_id_; }
-  std::vector<bool> GetIsInputPassed() const { return is_input_passed_; }
+  int64_t actual_seq_length_size() const { return actual_seq_length_size_; }
 
   void DisplayInfo() {
     MS_LOG(DEBUG) << "sp_num_ " << flashsp_num_;
@@ -53,7 +53,7 @@ class FlashSPInfo {
   int64_t send_rank_id_;
   int64_t recv_rank_id_;
   int64_t dev_rank_id_;
-  std::vector<bool> is_input_passed_;
+  int64_t actual_seq_length_size_;
 };
 }  // namespace parallel
 }  // namespace mindspore

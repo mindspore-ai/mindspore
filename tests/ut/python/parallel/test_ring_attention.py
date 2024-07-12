@@ -14,6 +14,9 @@
 
 import numpy as np
 import pytest
+import os
+import shutil
+import subprocess
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -58,7 +61,10 @@ def generate_inputs(B, N, S, D, input_layout, use_mqa=False, with_real_shift=Fal
     real_shift = Tensor(np.ones((B, N, S, S), dtype=np.float16)) if with_real_shift else None
     # attn_mask = Tensor(np.ones((S, S), dtype=np.uint8))
     attn_mask = None
-    return query, key, value, real_shift, attn_mask
+    sample_num = 4
+    actual_seq_qlen = Tensor(tuple(range(S // sample_num, S + 1, S // sample_num)), ms.int64)
+    actual_seq_kvlen = actual_seq_qlen
+    return query, key, value, real_shift, attn_mask, actual_seq_qlen, actual_seq_kvlen
 
 
 class NetWithLoss(nn.Cell):
@@ -79,7 +85,9 @@ def compile_net(net, *inputs):
 
 class Net(nn.Cell):
     def __init__(self, head_num, keep_prob=1.0, input_layout="BSH", sparse_mode=0, use_mqa=False,
-                 with_real_shift=False, dp=None, mp=None, sp=1, enable_ring_attention=True, enable_ud_mask=False):
+                 with_real_shift=False, dp=None, mp=None, sp=1, enable_ring_attention=False,
+                 use_send_recv=False, enable_flash_sp=False,
+                 enable_ud_mask=False, reset_attn_mask=False):
         super(Net, self).__init__()
         self.reshape = P.Reshape()
         self.drop_gen_mask = P.DropoutGenMask()
@@ -114,10 +122,15 @@ class Net(nn.Cell):
                 stra += ((dp, mp, sp, 1),)
             if keep_prob < 1.0:
                 stra += ((dp, mp, sp, 1),)
-            self.fa_op.shard(stra)
+            if reset_attn_mask:
+                stra += ((dp,),)
+                stra += ((dp,),)
+        self.fa_op.shard(stra)
         self.fa_op.add_prim_attr("enable_ring_attention", enable_ring_attention)
+        self.fa_op.add_prim_attr("enable_ra_send_recv", use_send_recv)
+        self.fa_op.add_prim_attr("enable_flash_sp", enable_flash_sp)
 
-    def construct(self, query, key, value, real_shift, attn_mask):
+    def construct(self, query, key, value, real_shift, attn_mask, actual_seq_qlen=None, actual_seq_kvlen=None):
         if self.input_layout == "BSH":
             bsz, seq_len, _ = query.shape
         elif self.input_layout == "SBH":
@@ -134,11 +147,12 @@ class Net(nn.Cell):
                                           (bsz, self.head_num, seq_len, 128))
         else:
             drop_mask_bits = None
-        return self.fa_op(query, key, value, real_shift, drop_mask_bits, None, attn_mask, None)
+        return self.fa_op(query, key, value, real_shift, drop_mask_bits, None, attn_mask, None,
+                          actual_seq_qlen, actual_seq_kvlen)
 
 
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
-def test_ring_attention_semi_auto_parallel(input_layout):
+def test_ring_attention_semi_auto_parallel_alltoallv(input_layout):
     """
     Features: test Ring Attention
     Description: semi_auto_parallel with strategy
@@ -146,14 +160,117 @@ def test_ring_attention_semi_auto_parallel(input_layout):
     """
     set_auto_parallel_context(device_num=8, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_context(save_graphs=True, save_graphs_path="./")
     dp = 1
     mp = 1
     sp = 4
     B, N, S, D = 8, 16, 1024, 128
-    query, key, value, real_shift, attn_mask = generate_inputs(B, N, S, D,
-                                                               input_layout)
-    net = Net(N, input_layout=input_layout, dp=dp, mp=mp, sp=sp, enable_ring_attention=True)
+    query, key, value, real_shift, attn_mask, _, _ = generate_inputs(B, N, S, D, input_layout)
+    net = Net(N, input_layout=input_layout, dp=dp, mp=mp, sp=sp, enable_ring_attention=True, use_send_recv=False)
+    if os.path.exists("./rank_0"):
+        shutil.rmtree("./rank_0")
     compile_net(net, query, key, value, real_shift, attn_mask)
+    file = "./rank_0/*validate*.ir"
+    para = "PrimFunc_FlashAttentionScore"
+    output = subprocess.check_output(
+        ["grep -r '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "4"
+
+    para = "NeighborExchange("
+    output = subprocess.check_output(
+        ["grep -r '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "3"
+    context.reset_auto_parallel_context()
+
+@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+def test_ring_attention_semi_auto_parallel_send_recv(input_layout):
+    """
+    Features: test Ring Attention
+    Description: semi_auto_parallel with strategy
+    Expectation: compile success
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_context(save_graphs=True, save_graphs_path="./")
+    dp = 1
+    mp = 1
+    sp = 4
+    B, N, S, D = 8, 16, 1024, 128
+    query, key, value, real_shift, attn_mask, _, _ = generate_inputs(B, N, S, D,
+                                                                     input_layout)
+    net = Net(N, input_layout=input_layout, dp=dp, mp=mp, sp=sp, enable_ring_attention=True, use_send_recv=True)
+    if os.path.exists("./rank_0"):
+        shutil.rmtree("./rank_0")
+    compile_net(net, query, key, value, real_shift, attn_mask)
+    file = "./rank_0/*validate*.ir"
+    para = "PrimFunc_FlashAttentionScore"
+    output = subprocess.check_output(
+        ["grep -r '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "4"
+
+    para = "Send("
+    output = subprocess.check_output(
+        ["grep -r '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "3"
+
+    para = "Receive("
+    output = subprocess.check_output(
+        ["grep -r '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "3"
+    context.reset_auto_parallel_context()
+
+@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+def test_flash_sp_semi_auto_parallel(input_layout):
+    """
+    Features: test Ring Attention
+    Description: semi_auto_parallel with strategy
+    Expectation: compile success
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    context.set_context(save_graphs=True, save_graphs_path="./")
+    dp = 1
+    mp = 1
+    sp = 8
+    B, N, S, D = 8, 16, 1024, 128
+    query, key, value, real_shift, attn_mask, _, _ = generate_inputs(B, N, S, D,
+                                                                     input_layout)
+    net = Net(N, input_layout=input_layout, dp=dp, mp=mp, sp=sp, enable_flash_sp=True)
+    if os.path.exists("./rank_0"):
+        shutil.rmtree("./rank_0")
+    compile_net(net, query, key, value, real_shift, attn_mask)
+    file = "./rank_0/*validate*.ir"
+    para = "PrimFunc_FlashAttentionScore"
+    output = subprocess.check_output(
+        ["grep -r '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "9"
+
+    para = "Send("
+    output = subprocess.check_output(
+        ["grep -r '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "11"
+
+    para = "Receive("
+    output = subprocess.check_output(
+        ["grep -r '%s' %s | wc -l" % (para, file)],
+        shell=True)
+    out = str(output, 'utf-8').strip()
+    assert out == "4"
+    context.reset_auto_parallel_context()
 
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
 def test_ring_attention_user_define_mask_semi_auto_parallel(input_layout):
@@ -169,9 +286,26 @@ def test_ring_attention_user_define_mask_semi_auto_parallel(input_layout):
     mp = 1
     sp = 4
     B, N, S, D = 8, 16, 1024, 128
-    query, key, value, real_shift, attn_mask = generate_inputs(B, N, S, D,
-                                                               input_layout)
+    query, key, value, real_shift, attn_mask, _, _ = generate_inputs(B, N, S, D,
+                                                                     input_layout)
     np.random.seed(42)
     attn_mask = Tensor(np.random.uniform(0, 2, size=(S, S)).astype(np.uint8), dtype=ms.uint8)
     net = Net(N, input_layout=input_layout, dp=dp, mp=mp, sp=sp, enable_ring_attention=True, enable_ud_mask=True)
     compile_net(net, query, key, value, real_shift, attn_mask)
+
+@pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
+def test_ring_attention_semi_auto_parallel_eod_reset_attn_mask(input_layout):
+    """
+    Features: test Ring Attention
+    Description: semi_auto_parallel with strategy
+    Expectation: compile success
+    """
+    set_auto_parallel_context(device_num=8, global_rank=0)
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
+    dp = 1
+    mp = 1
+    sp = 4
+    B, N, S, D = 8, 16, 1024, 128
+    query, key, value, real_shift, _, actual_seq_qlen, actual_seq_kvlen = generate_inputs(B, N, S, D, input_layout)
+    net = Net(N, input_layout=input_layout, dp=dp, mp=mp, sp=sp, enable_ring_attention=True, reset_attn_mask=True)
+    compile_net(net, query, key, value, real_shift, None, actual_seq_qlen, actual_seq_kvlen)
