@@ -802,7 +802,8 @@ def full_ext(size, fill_value, *, dtype=None):  # pylint: disable=redefined-oute
 
     Args:
         size (Union(tuple[int], list[int])): The specified shape of output tensor.
-        fill_value (number.Number): Value to fill the returned tensor. Complex numbers are not supported for now.
+        fill_value (Union(number.Number, Tensor)): Value to fill the returned tensor. It can be a Scalar number, a 0-D
+            Tensor, or a 1-D Tensor with only one element.
 
     Keyword Args:
         dtype (mindspore.dtype): The specified type of output tensor. `bool_` and `number` are supported, for details,
@@ -820,18 +821,16 @@ def full_ext(size, fill_value, *, dtype=None):  # pylint: disable=redefined-oute
 
     Examples:
         >>> from mindspore import ops
-        >>> output = ops.full((2, 2), 1)
+        >>> output = ops.full_ext((2, 2), 1)
         >>> print(output)
         [[1. 1.]
          [1. 1.]]
-        >>> output = ops.full((3, 3), 0)
+        >>> output = ops.full_ext((3, 3), 0)
         >>> print(output)
         [[0. 0. 0.]
          [0. 0. 0.]
          [0. 0. 0.]]
     """
-    if isinstance(fill_value, Tensor):
-        return fill_tensor_(size, fill_value, dtype)
     return fill_scalar_(size, fill_value, dtype)
 
 

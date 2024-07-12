@@ -23,6 +23,7 @@ Tensor
 
     mindspore.mint.arange
     mindspore.mint.eye
+    mindspore.mint.full
     mindspore.mint.ones
     mindspore.mint.ones_like
     mindspore.mint.zeros

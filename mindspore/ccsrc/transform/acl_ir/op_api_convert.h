@@ -575,7 +575,7 @@ inline ScalarPtr ConvertKernelTensor<ScalarPtr>(mindspore::kernel::KernelTensor 
     return nullptr;
   }
   auto value_ptr = tensor->GetValueTrack();
-  if (value_ptr == nullptr) {
+  if (value_ptr == nullptr || !value_ptr->isa<Scalar>()) {
     if (tensor->dtype_id() == kNumberTypeBool) {
       auto value = tensor->GetValueWithCheck<bool>();
       value_ptr = std::make_shared<BoolImm>(value);
@@ -609,10 +609,6 @@ inline ScalarPtr ConvertKernelTensor<ScalarPtr>(mindspore::kernel::KernelTensor 
   }
 
   MS_EXCEPTION_IF_NULL(value_ptr);
-
-  if (!value_ptr->isa<Scalar>()) {
-    MS_LOG(EXCEPTION) << "Current tensor's must be a scalar, please check!";
-  }
   auto scalar_ptr = value_ptr->cast<ScalarPtr>();
   MS_EXCEPTION_IF_NULL(scalar_ptr);
   return scalar_ptr;

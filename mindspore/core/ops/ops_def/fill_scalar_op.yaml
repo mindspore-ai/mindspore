@@ -3,9 +3,10 @@ fill_scalar:
     args:
         size:
             dtype: tuple[int]
-            type_cast: list[int], tensor
+            type_cast: list[int]
         fill_value:
             dtype: number
+            type_cast: Tensor
         dtype:
             dtype: TypeId
             arg_handler: dtype_to_type_id

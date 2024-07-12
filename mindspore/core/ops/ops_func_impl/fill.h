@@ -28,7 +28,8 @@ namespace ops {
 class MIND_API FillFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  // simply infer
+  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 };
 }  // namespace ops
 }  // namespace mindspore

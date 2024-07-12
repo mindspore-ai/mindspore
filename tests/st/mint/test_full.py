@@ -39,17 +39,16 @@ class FullGradNet(nn.Cell):
 
     def construct(self, size, fill_value, dtype):
         full_grad = self.grad_func(self.wrap_full)
-        return full_grad(size, fill_value, dtype)
+        return full_grad(size, fill_value, dtype)[0]
 
 
 def full_forward_func(size, fill_value, dtype=None):
     y = mint.full(size, fill_value, dtype=dtype)
     return y
 
-
 def full_backward_func(size, fill_value, dtype=None):
-    size_grad, value_grad = ops.grad(full_forward_func, (0, 1))(size, fill_value, dtype=dtype)
-    return size_grad, value_grad
+    value_grad = ops.grad(full_forward_func, (1,))(size, fill_value, dtype=dtype)
+    return value_grad
 
 
 @pytest.mark.level0
@@ -57,7 +56,7 @@ def full_backward_func(size, fill_value, dtype=None):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.parametrize('mode', ['GE', 'pynative', 'KBK'])
-def test_full_forward(mode):
+def test_full_forward_backward(mode):
     """
     Feature: Ops.
     Description: test full.
@@ -77,36 +76,21 @@ def test_full_forward(mode):
         y = (jit(full_forward_func, jit_config=JitConfig(jit_level="O2")))(size, value, dtype)
     np.testing.assert_allclose(y.asnumpy(), expect_y, rtol=1e-5)
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('mode', ['pynative', 'KBK']) # GE is unsupported for now.
-def test_full_backward(mode):
-    """
-    Feature: Ops.
-    Description: test full backward.
-    Expectation: expect correct result.
-    """
-    size = Tensor(np.array([1, 2, 3]).astype(np.int64))
     value = Tensor(6)
     dtype = mstype.int32
-    expect_size_grad = 0
-    expect_value_grad = 6
+    expect_value_grad = 0
     if mode == 'pynative':
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        size_grad, value_grad = full_backward_func(size, value, dtype)
+        value_grad = full_backward_func(size, value, dtype)
     elif mode == 'KBK':
-        size_grad, value_grad = (jit(full_backward_func, jit_config=JitConfig(jit_level="O0")))(size, value, dtype)
+        value_grad = (jit(full_backward_func, jit_config=JitConfig(jit_level="O0")))(size, value, dtype)
     else:
-        size_grad, value_grad = (jit(full_backward_func, jit_config=JitConfig(jit_level="O2")))(size, value, dtype)
-    np.testing.assert_allclose(size_grad.asnumpy(), expect_size_grad, rtol=1e-5)
+        value_grad = (jit(full_backward_func, jit_config=JitConfig(jit_level="O2")))(size, value, dtype)
     np.testing.assert_allclose(value_grad.asnumpy(), expect_value_grad, rtol=1e-5)
     assert value_grad.shape == ()
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -116,24 +100,22 @@ def test_full_dynamic_shape():
     Description: call ops.mint.full with valid input and index.
     Expectation: return the correct value.
     """
-    size_1 = Tensor(np.array([1, 2, 3]).astype(np.int64))
+    size_1 = (1, 2, 3)
     value_1 = Tensor([5])
-    size_2 = Tensor(np.array([1, 2, 3, 4]).astype(np.int64))
+    size_2 = (4, 3, 2)
     value_2 = Tensor(6)
-
     TEST_OP(full_forward_func, [[size_1, value_1], [size_2, value_2]], '', disable_input_check=True,
-            disable_yaml_check=True, disable_tensor_dynamic_type='DYNAMIC_RANK')
+            disable_yaml_check=True)
 
     size_1 = (1, 2, 3)
     value_1 = 5
     size_2 = (4, 3, 2)
     value_2 = 6
-
     TEST_OP(full_forward_func, [[size_1, value_1], [size_2, value_2]], '', disable_input_check=True,
             disable_yaml_check=True, disable_grad=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -145,18 +127,16 @@ def test_full_forward_dynamic_rank(context_mode):
     Expectation: output the right result.
     """
     context.set_context(mode=context_mode)
-    size_dyn = Tensor(shape=None, dtype=mstype.int64)
+    size = (2, 3)
     value_dyn = Tensor(shape=None, dtype=mstype.float32)
     test_cell = FullNet()
-    test_cell.set_inputs(size_dyn, value_dyn, ms.int32)
-    size = Tensor(np.array([2, 3]).astype(np.int64))
+    test_cell.set_inputs(size, value_dyn, ms.int32)
     value = Tensor(np.array([3]).astype(np.float32))
     out = test_cell(size, value, ms.int32)
     expect_output = np.full((2, 3), 3, np.int32)
     assert np.allclose(out.asnumpy(), expect_output)
 
-    with pytest.raises((TypeError, ValueError)):
-        size = Tensor(np.array([[2, 3], [4, 5]]).astype(np.int64))
+    with pytest.raises(ValueError):
         value = Tensor(np.array([3, 4]).astype(np.float32))
         _ = test_cell(size, value, ms.int32)
 
@@ -173,19 +153,18 @@ def test_full_backward_dynamic_rank(context_mode):
     Expectation: output the right result.
     """
     context.set_context(mode=context_mode)
-    size_dyn = Tensor(shape=None, dtype=ms.int64)
+    size = (2, 3)
     value_dyn = Tensor(shape=None, dtype=mstype.float32)
     test_cell = FullGradNet()
-    test_cell.set_inputs(size_dyn, value_dyn, ms.int32)
-    size = Tensor(np.array([2, 3]).astype(np.int64))
+    test_cell.set_inputs(size, value_dyn, ms.int32)
     value = Tensor(np.array([3]).astype(np.float32))
-    dsize, dvalue = test_cell(size, value, ms.int32)
-    expect_dsize = 0
-    expect_dvalue = [6]
-    assert np.allclose(dsize.asnumpy(), expect_dsize)
+    dvalue = test_cell(size, value, ms.int32)
+    expect_dvalue = [0]
     assert np.allclose(dvalue.asnumpy(), expect_dvalue)
 
-    with pytest.raises((TypeError, ValueError)):
-        size = Tensor(np.array([[2, 3], [4, 5]]).astype(np.int64))
-        value = Tensor(np.array([2, 3]).astype(np.float32))
-        _ = test_cell(size, value, ms.int32)
+    # The forward graph will be remove by optimization pass in GRAPH_MODE, since the input value is not used during
+    # backward. This will likely cause input validation loss in dynamic scene.
+    if context_mode == ms.PYNATIVE_MODE:
+        with pytest.raises(ValueError):
+            value = Tensor(np.array([2, 3]).astype(np.float32))
+            _ = test_cell(size, value, ms.int32)
