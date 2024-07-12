@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "mindspore/core/ops/symbol_ops_impl/common.h"
-#include "mindspore/core/ops/symbol_ops_impl/elemwise_binop.h"
+#include "mindspore/core/ops/symbol_ops_impl/elemwise_op.h"
 
 namespace mindspore {
 namespace symshape {

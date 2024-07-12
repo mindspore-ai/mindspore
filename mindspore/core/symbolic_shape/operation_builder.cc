@@ -81,6 +81,30 @@ SymbolPtr OperationBuilder::GetInputOrAttr(size_t index, const std::string &attr
   return GetAttr(attr_name);
 }
 
+SymbolPtrList OperationBuilder::GetSymbolsOfDepend() const {
+  bool build_value = !this->is_building_shape();
+  auto depends = symbol_builder_info_.GetDepends(this->prim(), this->input_num(), build_value);
+  if (depends.empty()) {
+    MS_LOG(WARNING) << "For " << this->prim()->name() << ", the depends list is empty.";
+    return {};
+  }
+  if (this->input_num() < depends.size()) {
+    MS_LOG(WARNING) << "For " << this->prim()->name() << ", the input args num is less than the depends size. "
+                    << this->input_num() << " vs " << depends.size();
+    return {};
+  }
+  SymbolPtrList symbols;
+  symbols.reserve(depends.size());
+  for (size_t i = 0; i < depends.size(); i++) {
+    if (depends[i] == DependOn::kShape) {
+      (void)symbols.emplace_back(this->GetInputShape(i));
+    } else if (depends[i] == DependOn::kValue) {
+      (void)symbols.emplace_back(this->GetInputValue(i));
+    }
+  }
+  return symbols;
+}
+
 SymbolPtr OperationBuilder::Emit(const OpPtr &op) const {
   op->SetOutAbstract(this->out_abstract());
   auto ret = emitter_->Emit(op);
@@ -89,19 +113,8 @@ SymbolPtr OperationBuilder::Emit(const OpPtr &op) const {
 }
 
 SymbolPtr TransparentInput(OperationBuilder *b) {
-  bool build_value = !b->is_building_shape();
-  auto depends = b->symbol_builder_info().GetDepends(b->prim(), b->input_num(), build_value);
-  // check only one depend status in the list.
-  auto iter1 = std::find_if(depends.begin(), depends.end(), [](DependOn d) { return d != DependOn::kNone; });
-  if (iter1 == depends.end()) {
-    return nullptr;
-  }
-  auto iter2 = std::find_if(iter1 + 1, depends.end(), [](DependOn d) { return d != DependOn::kNone; });
-  if (iter2 != depends.end()) {
-    return nullptr;
-  }
-  size_t idx = iter1 - depends.begin();
-  return (*iter1 == DependOn::kShape) ? b->GetInputShape(idx) : b->GetInputValue(idx);
+  auto symbols = b->GetSymbolsOfDepend();
+  return symbols.size() == 1 ? symbols[0] : nullptr;
 }
 
 const OperationBuilderInfo *OperationBuilderInfoRegistry::GetBuildInfo(const std::string &name) {
