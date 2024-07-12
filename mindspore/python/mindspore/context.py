@@ -1330,8 +1330,8 @@ def set_context(**kwargs):
             If the execution time exceeds this value, system will terminate the task.
             0 means endless wait. The defaults for AI Core and AICPU operators vary on different hardware.
             For more information,
-            please refer to `Ascend Community
-            <https://www.hiascend.com/>`_.
+            please refer to `Ascend Community document about aclrtSetOpExecuteTimeOut
+            <https://www.hiascend.com/document/detail/en/CANNCommunityEdition/600alphaX/infacldevg/aclcppdevg/aclcppdevg_03_0069.html>`_.
             Default: ``900`` .
         save_graphs (bool or int): Whether to save intermediate compilation graphs. Default: ``0`` .
             Available values are:
