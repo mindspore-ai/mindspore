@@ -22,6 +22,7 @@
 #include "utils/log_adapter.h"
 #include "utils/shape_utils.h"
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -37,7 +38,19 @@ BaseShapePtr CoshFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr CoshFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
   auto x_type = input_args[kInputIndex0]->GetType();
-  return x_type->Clone();
+  return x_type;
 }
+TypePtrList CoshFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const auto &input_type = x_tensor->Dtype();
+  return {input_type};
+}
+ShapeArray CoshFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameCosh, CoshFuncImpl);
 }  // namespace ops
 }  // namespace mindspore

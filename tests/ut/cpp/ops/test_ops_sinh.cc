@@ -67,11 +67,11 @@ auto SinhOpShapeTestCases = testing::ValuesIn({
   SinhShape{{-2}, {-2}},
 });
 
-auto SinhOpTypeTestCases = testing::ValuesIn({
-  SinhType{kFloat16, kFloat16},
-  SinhType{kFloat32, kFloat32},
-  SinhType{kComplex128, kComplex128}
-});
+auto SinhOpTypeTestCases = testing::ValuesIn(
+  {SinhType{kBool, kFloat32}, SinhType{kUInt8, kFloat32}, SinhType{kInt8, kFloat32}, SinhType{kInt16, kFloat32},
+   SinhType{kInt32, kFloat32}, SinhType{kInt64, kFloat32}, SinhType{kFloat16, kFloat16}, SinhType{kFloat32, kFloat32},
+   SinhType{kFloat64, kFloat64}, SinhType{kComplex64, kComplex64}, SinhType{kComplex128, kComplex128},
+   SinhType{kBFloat16, kBFloat16}});
 
 INSTANTIATE_TEST_CASE_P(TestSinh, TestSinh, testing::Combine(SinhOpShapeTestCases, SinhOpTypeTestCases));
 }  // namespace ops
