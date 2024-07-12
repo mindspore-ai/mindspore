@@ -157,5 +157,8 @@ class Kernel {
  private:
   VKernel *kernel_;
 };
+
+void SetDeterministic(bool enable);
+
 }  // namespace dvm
 #endif  // _DVM_H_

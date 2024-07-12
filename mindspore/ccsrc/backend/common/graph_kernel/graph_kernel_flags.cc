@@ -259,9 +259,9 @@ void GraphKernelFlags::CheckSupport() const {
       return;
     }
 #endif
-#ifndef ENABLE_DVM
     auto is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
     if (is_ascend) {
+#ifndef ENABLE_DVM
       MS_LOG(WARNING) << "Graph Kernel Fusion is not supported without the prebuild binary file tracked by git lfs, "
                          "and it will be turned off now. Please perform the following steps:\n\n"
                          "1. Install git lfs, refer https://github.com/git-lfs/git-lfs/wiki/installation\n"
@@ -271,8 +271,17 @@ void GraphKernelFlags::CheckSupport() const {
                          "4. Re-compile the source codes\n";
       const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
       return;
-    }
+#else
+      if (const_cast<GraphKernelFlags *>(this)->kernel_generator == "DVM") {
+        auto const &soc_version = context->ascend_soc_version();
+        if (!soc_version.empty() && soc_version != "ascend910b" && soc_version != "ascend910c") {
+          MS_LOG(WARNING) << "DVM does not support " << soc_version << ".";
+          const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
+          return;
+        }
+      }
 #endif
+    }
   }
 #endif
 }

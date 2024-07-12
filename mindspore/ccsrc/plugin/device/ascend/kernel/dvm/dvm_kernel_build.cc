@@ -776,6 +776,15 @@ class ParallelDvmKernelBuilder : public DvmKernelBuilder {
 }  // namespace
 
 KernelModPtr DvmOpBuild(const AnfNodePtr &anf_node) {
+  static bool init = false;
+  if (!init) {
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    bool enable_deterministic = ms_context->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON" ? true : false;
+    dvm::SetDeterministic(enable_deterministic);
+    init = true;
+    MS_LOG(INFO) << "Set dvm deterministic " << (enable_deterministic ? "true" : "false");
+  }
   MS_EXCEPTION_IF_NULL(anf_node);
   auto scope = anf_node->fullname_with_scope();
   MS_LOG(INFO) << "Start creating dvm kernel module for node: " << scope;
