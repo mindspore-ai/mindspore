@@ -3,7 +3,7 @@
 
 .. py:class:: mindspore.ops.Sign
 
-    符号函数，计算输入Tensor元素的执行符号。
+    符号函数，计算输入Tensor元素的执行符号。注意：在输入类型为float64时，该算子反向计算结果为NaN。
 
     .. math::
         sign(x) = \begin{cases} -1, &if\ x < 0 \cr

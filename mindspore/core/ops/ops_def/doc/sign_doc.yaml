@@ -1,6 +1,6 @@
 sign:
     description: |
-      Returns an element-wise indication of the sign of a number.
+      Returns an element-wise indication of the sign of a number. Notice: When the input dtype is float64, the gradient of this operator is NaN.
 
       .. math::
           \text{out}_{i} = \begin{cases}
