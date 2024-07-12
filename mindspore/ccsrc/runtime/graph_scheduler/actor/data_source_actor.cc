@@ -342,7 +342,6 @@ void HostQueueDataSourceActor::OnMemoryAllocFinish(OpContext<DeviceTensor> *cons
       if (enable_async_copy) {
         MS_LOG(INFO) << "Index :" << i << ", data_node_with_indexs_[i].first : "
                      << data_node_with_indexs_[i].first->DebugString();
-        device_tensor->kernel_tensor()->SetValue(host_tensor);
         if (!device_tensor->AsyncHostToDevice(LongToSize(host_tensor->data().nbytes()), host_tensor->data_type(),
                                               host_tensor->data_ptr()->data())) {
           SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), "SyncHostToDevice failed.");
