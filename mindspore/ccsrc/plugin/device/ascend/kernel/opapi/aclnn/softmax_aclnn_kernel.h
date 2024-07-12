@@ -38,6 +38,7 @@ class SoftmaxAscend : public AclnnKernelMod {
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
 
   int64_t GetDimValue(KernelTensor *axis_ptr) const noexcept;
+  int64_t dim_;
 };
 }  // namespace kernel
 }  // namespace mindspore

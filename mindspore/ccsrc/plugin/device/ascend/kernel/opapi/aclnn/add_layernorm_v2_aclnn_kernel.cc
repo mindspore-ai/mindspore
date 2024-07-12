@@ -42,10 +42,8 @@ bool AddLayerNormAscend::Launch(const std::vector<KernelTensor *> &inputs, const
   MS_EXCEPTION_IF_NULL(stream_ptr);
   auto additional_out = transform::ConvertKernelTensor<bool>(inputs[kIndex5]);
 
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2],
-                                      inputs[kIndex3], nullptr, eps_, additional_out, outputs[kIndex0],
-                                      outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], nullptr, eps_,
+        additional_out, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
   return true;
 }
 

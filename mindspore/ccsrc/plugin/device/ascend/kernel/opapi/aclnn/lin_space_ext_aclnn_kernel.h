@@ -38,6 +38,8 @@ class LinSpaceExtAscend : public AclnnKernelMod {
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
   int64_t steps_;
   TypeId dtype_;
+  ScalarPtr start_;
+  ScalarPtr end_;
 };
 }  // namespace kernel
 }  // namespace mindspore

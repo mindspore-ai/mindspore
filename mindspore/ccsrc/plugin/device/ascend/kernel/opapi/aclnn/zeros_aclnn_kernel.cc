@@ -32,15 +32,13 @@ namespace kernel {
 
 void ZerosAscendCall::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                        const std::vector<KernelTensor *> &outputs) {
-  auto return_value = GEN_EXECUTOR(op_type_, outputs[kIndex0]);
-  UpdateWorkspace(return_value);
+  GetWorkspaceForResize(outputs[kIndex0]);
 }
 
 bool ZerosAscendCall::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, outputs[kIndex0]);
   return true;
 }
 

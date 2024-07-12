@@ -35,6 +35,11 @@ class UpsampleBilinear2DAscend final : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
+  std::vector<int64_t> output_size_;
+  double scales_h_;
+  double scales_w_;
+  bool align_corners_;
 };
 }  // namespace kernel
 }  // namespace mindspore

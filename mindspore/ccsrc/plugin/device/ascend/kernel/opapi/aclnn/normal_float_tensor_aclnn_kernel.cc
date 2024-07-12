@@ -42,8 +42,7 @@ bool NormalFloatTensorAscend::Launch(const std::vector<KernelTensor *> &inputs,
 
   auto seed = transform::ConvertKernelTensor<int64_t>(inputs[kIndex2]);
   auto offset = transform::ConvertKernelTensor<int64_t>(inputs[kIndex3]);
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, mean_, inputs[kIndex1], seed, offset, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, mean_, inputs[kIndex1], seed, offset, outputs[kIndex0]);
   return true;
 }
 

@@ -68,8 +68,7 @@ bool UniformExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const s
   }
   seed_ = static_cast<uint64_t>(transform::ConvertKernelTensor<int64_t>(inputs[kIndex3]));
   offset_ = static_cast<uint64_t>(transform::ConvertKernelTensor<int64_t>(inputs[kIndex4]));
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, outputs[kIndex0], a_, b_, seed_, offset_));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, outputs[kIndex0], a_, b_, seed_, offset_);
   return true;
 }
 

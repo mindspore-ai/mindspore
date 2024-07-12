@@ -29,40 +29,29 @@ namespace kernel {
 
 void SliceExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                       const std::vector<KernelTensor *> &outputs) {
-  auto dim = transform::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
-  auto start = transform::ConvertKernelTensor<int64_t>(inputs[kIndex2]);
-  auto end = transform::ConvertKernelTensor<int64_t>(inputs[kIndex3]);
-  auto step = transform::ConvertKernelTensor<int64_t>(inputs[kIndex4]);
+  dim_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
+  start_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex2]);
+  end_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex3]);
+  step_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex4]);
 
   shape_ = inputs[0]->GetShapeVector();
-  dim = dim < 0 ? dim + shape_.size() : dim;
-  auto length_value = end - start;
-  start = start < 0 ? start + shape_[dim] : start;
-  end = start + length_value;
+  dim_ = dim_ < 0 ? dim_ + shape_.size() : dim_;
+  auto length_value = end_ - start_;
+  start_ = start_ < 0 ? start_ + shape_[dim_] : start_;
+  end_ = start_ + length_value;
 
-  GetWorkspaceForResize(inputs[kIndex0], dim, start, end, step, outputs[kIndex0]);
+  GetWorkspaceForResize(inputs[kIndex0], dim_, start_, end_, step_, outputs[kIndex0]);
 }
 
 bool SliceExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto dim = transform::ConvertKernelTensor<int64_t>(inputs[kIndex1]);
-  auto start = transform::ConvertKernelTensor<int64_t>(inputs[kIndex2]);
-  auto end = transform::ConvertKernelTensor<int64_t>(inputs[kIndex3]);
-  auto step = transform::ConvertKernelTensor<int64_t>(inputs[kIndex4]);
-
-  auto length_value = end - start;
-  dim = dim < 0 ? dim + shape_.size() : dim;
-  start = start < 0 ? start + shape_[dim] : start;
-  end = start + length_value;
-
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], dim, start, end, step, outputs[kIndex0]));
-  if (start == end) {
+  if (start_ == end_) {
     auto output_shape = shape_;
-    output_shape[dim] = 0;
+    output_shape[dim_] = 0;
     outputs[kIndex0]->SetShapeVector(output_shape);
   } else {
-    RunOp(stream_ptr, workspace);
+    RunOp(stream_ptr, workspace, inputs[kIndex0], dim_, start_, end_, step_, outputs[kIndex0]);
   }
   return true;
 }

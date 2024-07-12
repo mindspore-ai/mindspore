@@ -34,6 +34,12 @@ class MaxPoolWithMaskAscend : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
+  std::vector<int64_t> kernel_size_;
+  std::vector<int64_t> strides_;
+  std::vector<int64_t> pads_;
+  std::vector<int64_t> dilation_;
+  bool ceil_mode_;
 };
 }  // namespace kernel
 }  // namespace mindspore

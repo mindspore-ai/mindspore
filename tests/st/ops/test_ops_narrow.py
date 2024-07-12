@@ -43,7 +43,7 @@ def narrow_backward_func(x, dim, start, length):
     return ops.grad(narrow_forward_func, (0))(x, dim, start, length)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])

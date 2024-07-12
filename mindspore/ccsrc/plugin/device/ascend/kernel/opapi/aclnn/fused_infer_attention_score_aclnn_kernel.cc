@@ -121,16 +121,14 @@ bool FusedInferAttentionScoreAscend::Launch(const std::vector<KernelTensor *> &i
   auto block_size = transform::ConvertKernelTensor<int64_t>(inputs[real_input_idx_[kIndex25]]);
   auto antiquant_mode = transform::ConvertKernelTensor<int64_t>(inputs[real_input_idx_[kIndex26]]);
   auto softmax_lse_flag = transform::ConvertKernelTensor<bool>(inputs[real_input_idx_[kIndex27]]);
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(
-    op_type_, hash_id_, inputs[kIndex0], key_tensors, value_tensors, inputs[real_input_idx_[kIndex3]],
-    inputs[real_input_idx_[kIndex4]], actual_seq_lengths_array, actual_seq_lengths_kv_array,
-    inputs[real_input_idx_[kIndex7]], inputs[real_input_idx_[kIndex8]], inputs[real_input_idx_[kIndex9]],
-    inputs[real_input_idx_[kIndex10]], inputs[real_input_idx_[kIndex11]], inputs[real_input_idx_[kIndex12]],
-    inputs[real_input_idx_[kIndex13]], inputs[real_input_idx_[kIndex14]], inputs[real_input_idx_[kIndex15]],
-    inputs[real_input_idx_[kIndex16]], num_heads, scale, pre_tokens, next_tokens, input_layout_string,
-    num_key_value_heads, sparse_mode, inner_precise, block_size, antiquant_mode, softmax_lse_flag, outputs[kIndex0],
-    outputs[kIndex1]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], key_tensors, value_tensors, inputs[real_input_idx_[kIndex3]],
+        inputs[real_input_idx_[kIndex4]], actual_seq_lengths_array, actual_seq_lengths_kv_array,
+        inputs[real_input_idx_[kIndex7]], inputs[real_input_idx_[kIndex8]], inputs[real_input_idx_[kIndex9]],
+        inputs[real_input_idx_[kIndex10]], inputs[real_input_idx_[kIndex11]], inputs[real_input_idx_[kIndex12]],
+        inputs[real_input_idx_[kIndex13]], inputs[real_input_idx_[kIndex14]], inputs[real_input_idx_[kIndex15]],
+        inputs[real_input_idx_[kIndex16]], num_heads, scale, pre_tokens, next_tokens, input_layout_string,
+        num_key_value_heads, sparse_mode, inner_precise, block_size, antiquant_mode, softmax_lse_flag, outputs[kIndex0],
+        outputs[kIndex1]);
   return true;
 }
 

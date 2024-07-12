@@ -15,7 +15,9 @@
  */
 
 #include "transform/acl_ir/acl_convert.h"
+#include <fstream>
 #include <map>
+#include <unordered_set>
 #include <limits>
 #include <algorithm>
 #include "transform/acl_ir/acl_adapter_info.h"
@@ -180,6 +182,38 @@ size_t GetTupleSize(const KernelTensor *tensor) {
     return static_cast<size_t>(shape[kIndex0]);
   }
   return 1;
+}
+
+static std::once_flag kAclopStaticListInit;
+static std::unordered_set<std::string> kAclopStaticList;
+
+bool ReadStatciAclOp(const std::string &op_name, bool is_dynamic) {
+  static auto enable_static_env = common::GetEnv("MS_DEV_STATIC_ACL_OP");
+  if (enable_static_env == "1") {
+    return false;
+  }
+
+  static auto read_config = !enable_static_env.empty() && enable_static_env != "0";
+  if (read_config) {
+    std::call_once(kAclopStaticListInit, []() {
+      std::ifstream in_file(enable_static_env);
+      if (!in_file.is_open()) {
+        MS_LOG(WARNING) << "MS_DEV_STATIC_ACL_OP set path:" << enable_static_env << " is invalid.";
+        return;
+      }
+      std::string line;
+      while (getline(in_file, line)) {
+        kAclopStaticList.insert(line);
+      }
+      in_file.close();
+    });
+
+    if (kAclopStaticList.count(op_name) != 0) {
+      return false;
+    }
+  }
+
+  return is_dynamic;
 }
 }  // namespace
 
@@ -1180,7 +1214,7 @@ void AclConverter::ProcessRunnerSpecialInfo(const std::string &prim_name,
   MS_EXCEPTION_IF_NULL(opinfo);
   auto op_type = opinfo->op_type();
   if (!AclAdapterManager::GetInstance().CheckAclAdapter(op_type)) {
-    is_dynamic_ = is_dynamic;
+    is_dynamic_ = ReadStatciAclOp(prim_name, is_dynamic);
     precision_mode_ = DEFAULT_MODE;
     return;
   }

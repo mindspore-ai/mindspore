@@ -46,8 +46,7 @@ bool MaskedFillAscend::Launch(const std::vector<KernelTensor *> &inputs, const s
     GEN_EXECUTOR_BOOST(inplace_copy_str_, copy_hash_id_, outputs[kIndex0], inputs[kIndex0]);
   RUN_OP_API_ASYNC(inplace_copy_str_, ws_addr, copy_ws_size_, executor, stream_ptr, release_func);
 
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, outputs[kIndex0], inputs[kIndex1], inputs[kIndex2]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, outputs[kIndex0], inputs[kIndex1], inputs[kIndex2]);
   return true;
 }
 

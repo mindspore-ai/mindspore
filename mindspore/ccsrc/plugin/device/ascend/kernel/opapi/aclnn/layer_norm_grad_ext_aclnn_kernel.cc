@@ -28,11 +28,10 @@ namespace kernel {
 
 void LayerNormGradExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                               const std::vector<KernelTensor *> &outputs) {
-  auto normalized_shape = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex2]);
-  std::vector<uint8_t> output_mask{1, 1, 1};
+  normalized_shape_ = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex2]);
 
-  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], normalized_shape, inputs[kIndex3], inputs[kIndex4],
-                        inputs[kIndex5], inputs[kIndex6], output_mask, outputs[kIndex0], outputs[kIndex1],
+  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], normalized_shape_, inputs[kIndex3], inputs[kIndex4],
+                        inputs[kIndex5], inputs[kIndex6], output_mask_, outputs[kIndex0], outputs[kIndex1],
                         outputs[kIndex2]);
 }
 
@@ -40,13 +39,8 @@ bool LayerNormGradExtAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &workspace,
                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto normalized_shape = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex2]);
-  std::vector<uint8_t> output_mask{1, 1, 1};
-
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], normalized_shape,
-                                      inputs[kIndex3], inputs[kIndex4], inputs[kIndex5], inputs[kIndex6], output_mask,
-                                      outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], normalized_shape_, inputs[kIndex3], inputs[kIndex4],
+        inputs[kIndex5], inputs[kIndex6], output_mask_, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2]);
   return true;
 }
 

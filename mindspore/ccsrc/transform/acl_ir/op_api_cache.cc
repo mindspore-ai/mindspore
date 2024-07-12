@@ -17,25 +17,12 @@
 #include "transform/acl_ir/op_api_cache.h"
 
 namespace mindspore::transform {
-thread_local char g_hash_buf[g_hash_buf_size];
-thread_local int g_hash_offset = 0;
-
-typedef void (*AddTensorAddrToCachedList)(void *addr);
-
-void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
+namespace {
+void Gather(mindspore::kernel::KernelTensor *tensor) {
   if (tensor == nullptr || tensor->type_id() == kMetaTypeNone) {
     MemcpyToBuf("None", kSizeFive);
     return;
   }
-
-  // Normal tensor
-  static const auto add_tensor_addr_to_cached_list = transform::GetOpApiFunc("AddTensorAddrToCachedList");
-  if (add_tensor_addr_to_cached_list == nullptr) {
-    MS_LOG(EXCEPTION) << "AddTensorAddrToCachedList not in " << transform::GetOpApiLibName() << ", please check!";
-  }
-  AddTensorAddrToCachedList add_tensor_addr_to_cached_list_func =
-    reinterpret_cast<AddTensorAddrToCachedList>(add_tensor_addr_to_cached_list);
-  MS_EXCEPTION_IF_NULL(add_tensor_addr_to_cached_list_func);
 
   const auto &shape = tensor->GetShapeVector();
   const auto shape_size = shape.size();
@@ -59,24 +46,13 @@ void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
     // origin shape
     MemcpyToBuf(storage_info->ori_shape.data(), static_cast<int64_t>(storage_info->ori_shape.size()) * sizeof(int64_t));
   }
-
-  add_tensor_addr_to_cached_list_func(tensor->device_ptr());
 }
 
-void GatherInfo(const device::DeviceAddressPtr &device_address) {
+void Gather(const device::DeviceAddressPtr &device_address) {
   if (device_address == nullptr) {
     MemcpyToBuf("None", 5);
     return;
   }
-
-  // Normal tensor
-  static const auto add_tensor_addr_to_cached_list = transform::GetOpApiFunc("AddTensorAddrToCachedList");
-  if (add_tensor_addr_to_cached_list == nullptr) {
-    MS_LOG(EXCEPTION) << "AddTensorAddrToCachedList not in " << transform::GetOpApiLibName() << ", please check!";
-  }
-  AddTensorAddrToCachedList add_tensor_addr_to_cached_list_func =
-    reinterpret_cast<AddTensorAddrToCachedList>(add_tensor_addr_to_cached_list);
-  MS_EXCEPTION_IF_NULL(add_tensor_addr_to_cached_list_func);
 
   const auto &shape = device_address->GetShapeVector();
   const auto shape_size = shape.size();
@@ -100,40 +76,15 @@ void GatherInfo(const device::DeviceAddressPtr &device_address) {
     // origin shape
     MemcpyToBuf(storage_info->ori_shape.data(), static_cast<int64_t>(storage_info->ori_shape.size()) * sizeof(int64_t));
   }
-
-  add_tensor_addr_to_cached_list_func(device_address->GetMutablePtr());
 }
 
-void GatherInfo(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor_and_trans) {
-  auto tensor = tensor_and_trans.first;
-  auto trans = tensor_and_trans.second;
-  GatherInfo(tensor);
-  // trans
-  MemcpyToBuf(&trans, 1);
-}
-
-void GatherInfo(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
-  for (auto tensor : tensor_list) {
-    GatherInfo(tensor);
-  }
-}
-
-void GatherInfo(const mindspore::tensor::BaseTensorPtr &tensor) {
+void Gather(const mindspore::tensor::BaseTensorPtr &tensor) {
   if (tensor == nullptr) {
     return;
   }
 
   // "t" for tensor
   MemcpyToBuf("t", 1);
-
-  // Normal tensor
-  static const auto add_tensor_addr_to_cached_list = transform::GetOpApiFunc("AddTensorAddrToCachedList");
-  if (add_tensor_addr_to_cached_list == nullptr) {
-    MS_LOG(EXCEPTION) << "AddTensorAddrToCachedList not in " << transform::GetOpApiLibName() << ", please check!";
-  }
-  AddTensorAddrToCachedList add_tensor_addr_to_cached_list_func =
-    reinterpret_cast<AddTensorAddrToCachedList>(add_tensor_addr_to_cached_list);
-  MS_EXCEPTION_IF_NULL(add_tensor_addr_to_cached_list_func);
 
   const auto &shape = tensor->shape();
   const auto shape_size = shape.size();
@@ -158,8 +109,40 @@ void GatherInfo(const mindspore::tensor::BaseTensorPtr &tensor) {
   }
 
   // storage shape(current hasn't special format)
+}
+}  // namespace
+thread_local char g_hash_buf[g_hash_buf_size];
+thread_local int g_hash_offset = 0;
 
-  add_tensor_addr_to_cached_list_func(tensor->device_address()->GetMutablePtr());
+typedef void (*AddTensorAddrToCachedList)(void *addr);
+
+void GatherInfo(mindspore::kernel::KernelTensor *tensor) {
+  Gather(tensor);
+  RefreshAddr(tensor);
+}
+
+void GatherInfo(const device::DeviceAddressPtr &device_address) {
+  Gather(device_address);
+  RefreshAddr(device_address);
+}
+
+void GatherInfo(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor_and_trans) {
+  auto tensor = tensor_and_trans.first;
+  auto trans = tensor_and_trans.second;
+  GatherInfo(tensor);
+  // trans
+  MemcpyToBuf(&trans, 1);
+}
+
+void GatherInfo(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
+  for (auto tensor : tensor_list) {
+    GatherInfo(tensor);
+  }
+}
+
+void GatherInfo(const mindspore::tensor::BaseTensorPtr &tensor) {
+  Gather(tensor);
+  RefreshAddr(tensor);
 }
 
 void GatherInfo(const std::optional<tensor::BaseTensorPtr> &tensor) {
@@ -274,6 +257,38 @@ void RefreshAddr(mindspore::kernel::KernelTensor *tensor) {
   MS_EXCEPTION_IF_NULL(add_tensor_addr_to_cached_list_func);
 
   add_tensor_addr_to_cached_list_func(tensor->device_ptr());
+}
+
+void RefreshAddr(const device::DeviceAddressPtr &device_address) {
+  if (device_address == nullptr) {
+    return;
+  }
+
+  static const auto add_tensor_addr_to_cached_list = transform::GetOpApiFunc("AddTensorAddrToCachedList");
+  if (add_tensor_addr_to_cached_list == nullptr) {
+    MS_LOG(EXCEPTION) << "AddTensorAddrToCachedList not in " << transform::GetOpApiLibName() << ", please check!";
+  }
+  AddTensorAddrToCachedList add_tensor_addr_to_cached_list_func =
+    reinterpret_cast<AddTensorAddrToCachedList>(add_tensor_addr_to_cached_list);
+  MS_EXCEPTION_IF_NULL(add_tensor_addr_to_cached_list_func);
+
+  add_tensor_addr_to_cached_list_func(device_address->GetMutablePtr());
+}
+
+void RefreshAddr(const mindspore::tensor::TensorPtr &tensor) {
+  if (tensor == nullptr) {
+    return;
+  }
+
+  static const auto add_tensor_addr_to_cached_list = transform::GetOpApiFunc("AddTensorAddrToCachedList");
+  if (add_tensor_addr_to_cached_list == nullptr) {
+    MS_LOG(EXCEPTION) << "AddTensorAddrToCachedList not in " << transform::GetOpApiLibName() << ", please check!";
+  }
+  AddTensorAddrToCachedList add_tensor_addr_to_cached_list_func =
+    reinterpret_cast<AddTensorAddrToCachedList>(add_tensor_addr_to_cached_list);
+  MS_EXCEPTION_IF_NULL(add_tensor_addr_to_cached_list_func);
+
+  add_tensor_addr_to_cached_list_func(tensor->device_address()->GetMutablePtr());
 }
 
 void RefreshAddr(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor_and_trans) {
@@ -457,4 +472,106 @@ uint64_t calc_hash_id() {
   uint64_t hash_id = gen_hash(g_hash_buf, g_hash_offset);
   return hash_id;
 }
+
+void GatherHash(mindspore::kernel::KernelTensor *tensor) { Gather(tensor); }
+
+void GatherHash(const device::DeviceAddressPtr &device_address) { Gather(device_address); }
+
+void GatherHash(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor_and_trans) {
+  auto tensor = tensor_and_trans.first;
+  auto trans = tensor_and_trans.second;
+  GatherHash(tensor);
+  // trans
+  MemcpyToBuf(&trans, 1);
+}
+
+void GatherHash(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
+  for (auto tensor : tensor_list) {
+    GatherHash(tensor);
+  }
+}
+
+void GatherHash(const mindspore::tensor::TensorPtr &tensor) { Gather(tensor); }
+
+void GatherHash(const std::optional<tensor::TensorPtr> &tensor) {
+  // "ot" for optional tensor
+  MemcpyToBuf("ot", 2);
+  if (tensor.has_value()) {
+    GatherHash(tensor.value());
+  }
+}
+
+void GatherHash(const std::vector<tensor::TensorPtr> &tensors) {
+  for (const auto &tensor : tensors) {
+    GatherHash(tensor);
+  }
+}
+
+void GatherHash(const ScalarPtr &scalar) {
+  if (scalar == nullptr) {
+    MemcpyToBuf("None", 5);
+    return;
+  }
+  // "s" for scalar
+  MemcpyToBuf("s", 1);
+  if (scalar->isa<BoolImm>()) {
+    auto value = GetValue<bool>(scalar);
+    MemcpyToBuf(&value, sizeof(bool));
+  } else if (scalar->isa<Int64Imm>()) {
+    auto value = GetValue<int64_t>(scalar);
+    MemcpyToBuf(&value, sizeof(int64_t));
+  } else if (scalar->isa<FP32Imm>()) {
+    auto value = GetValue<float>(scalar);
+    MemcpyToBuf(&value, sizeof(float));
+  } else if (scalar->isa<Int32Imm>()) {
+    auto value = GetValue<int32_t>(scalar);
+    MemcpyToBuf(&value, sizeof(int32_t));
+  } else if (scalar->isa<Int8Imm>()) {
+    auto value = GetValue<int8_t>(scalar);
+    MemcpyToBuf(&value, sizeof(int8_t));
+  } else if (scalar->isa<Int16Imm>()) {
+    auto value = GetValue<int16_t>(scalar);
+    MemcpyToBuf(&value, sizeof(int16_t));
+  } else if (scalar->isa<UInt8Imm>()) {
+    auto value = GetValue<uint8_t>(scalar);
+    MemcpyToBuf(&value, sizeof(uint8_t));
+  } else if (scalar->isa<FP64Imm>()) {
+    auto value = GetValue<double>(scalar);
+    MemcpyToBuf(&value, sizeof(double));
+  } else if (scalar->isa<BF16Imm>()) {
+    auto value = GetValue<bfloat16>(scalar);
+    MemcpyToBuf(&value, sizeof(int16_t));
+  } else {
+    MS_LOG(EXCEPTION) << "Currently not support value: " << scalar->ToString();
+  }
+}
+
+void GatherHash(const std::optional<ScalarPtr> &scalar) {
+  if (scalar.has_value()) {
+    GatherHash(scalar.value());
+  } else {
+    MemcpyToBuf("None", 5);
+  }
+}
+
+void GatherHash(const TypePtr &type) {
+  const auto type_id = type->type_id();
+  MemcpyToBuf(&type_id, sizeof(int));
+}
+
+void GatherHash(const std::optional<TypePtr> &type) {
+  if (type.has_value()) {
+    GatherHash(type.value());
+  }
+}
+
+void GatherHash(const string &s) { MemcpyToBuf(s.c_str(), static_cast<int64_t>(s.size())); }
+
+void GatherHash(const std::optional<string> &s) {
+  if (s.has_value()) {
+    GatherHash(s.value());
+  }
+}
+
+void GatherHash() {}
 }  // namespace mindspore::transform

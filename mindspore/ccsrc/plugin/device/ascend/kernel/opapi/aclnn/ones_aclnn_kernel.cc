@@ -39,8 +39,7 @@ void OnesAscendCall::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
 bool OnesAscendCall::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                             const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, outputs[kIndex0]);
   return true;
 }
 

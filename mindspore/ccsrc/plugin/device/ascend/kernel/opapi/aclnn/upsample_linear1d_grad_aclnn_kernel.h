@@ -35,6 +35,11 @@ class UpsampleLinear1DGradAscend final : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
+  std::vector<int64_t> input_size_;
+  std::vector<int64_t> output_size_;
+  double scales_l_;
+  bool align_corners_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -13,37 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/kernel/opapi/aclnn/grid_sampler_2d_grad_aclnn_kernel.h"
-#include <algorithm>
+#include "plugin/device/ascend/kernel/opapi/aclnn/reduce_sum_aclnn_kernel.h"
 #include <vector>
-#include <memory>
-#include <functional>
 #include "ir/tensor.h"
-#include "runtime/device/kernel_runtime.h"
-#include "transform/acl_ir/op_api_convert.h"
+#include "transform/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
+#include "transform/symbol/acl_rt_symbol.h"
+#include "transform/symbol/symbol_utils.h"
 
 namespace mindspore {
 namespace kernel {
-
-void GridSampler2DGradAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
+void ReduceSumAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
-  interpolation_mode_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex3]);
-  padding_mode_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex4]);
-  align_corners_ = transform::ConvertKernelTensor<bool>(inputs[kIndex5]);
-  GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], interpolation_mode_, padding_mode_,
-                        align_corners_, output_mask_, outputs[kIndex0], outputs[kIndex1]);
+  dims_ = transform::ConvertKernelTensor<std::vector<int64_t>>(inputs[kIndex1]);
+  keep_dim_ = transform::ConvertKernelTensor<bool>(inputs[kIndex2]);
+  dtype_ = transform::ConvertKernelTensor<TypeId>(inputs[kIndex0]);
+  auto skip_mode = transform::ConvertKernelTensor<bool>(inputs[kIndex3]);
+  need_skip_execute_ = false;
+  if (AnfAlgo::IsDynamicShapeSkipExecute(skip_mode, inputs[kIndex1]->GetShapeVector())) {
+    need_skip_execute_ = true;
+    return;
+  }
+  GetWorkspaceForResize(inputs[kIndex0], dims_, keep_dim_, dtype_, outputs[kIndex0]);
 }
 
-bool GridSampler2DGradAscend::Launch(const std::vector<KernelTensor *> &inputs,
+bool ReduceSumAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &workspace,
                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], interpolation_mode_, padding_mode_,
-        align_corners_, output_mask_, outputs[kIndex0], outputs[kIndex1]);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], dims_, keep_dim_, dtype_, outputs[kIndex0]);
   return true;
 }
 
-MS_ACLNN_KERNEL_FACTORY_REG(GridSampler2DGrad, GridSampler2DGradAscend);
+MS_ACLNN_KERNEL_FACTORY_REG(ReduceSum, ReduceSumAclnnKernelMod);
 }  // namespace kernel
 }  // namespace mindspore

@@ -68,10 +68,8 @@ bool AvgPool2DGradAscend::Launch(const std::vector<KernelTensor *> &inputs,
   const auto &stride = std::get<1>(params);
   const auto &padding = std::get<2>(params);
   auto [ceil_mode, count_include_pad, divisor_override, cube_math_type] = std::get<3>(params);
-
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[0], inputs[1], kernel_size, stride, padding, ceil_mode,
-                                      count_include_pad, divisor_override, cube_math_type, outputs[0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[0], inputs[1], kernel_size, stride, padding, ceil_mode, count_include_pad,
+        divisor_override, cube_math_type, outputs[0]);
   return true;
 }
 

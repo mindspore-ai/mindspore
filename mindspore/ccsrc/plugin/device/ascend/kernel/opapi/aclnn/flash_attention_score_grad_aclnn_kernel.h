@@ -50,7 +50,8 @@ class FlashAttentionScoreGradAscend : public AclnnKernelMod {
  protected:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
 
-  auto FAGradGenerate(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  void FAGradGenerate(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
     auto prefix = inputs[kIndex12];
     MS_EXCEPTION_IF_NULL(prefix);
     std::vector<int64_t> prefix_array;
@@ -101,22 +102,20 @@ class FlashAttentionScoreGradAscend : public AclnnKernelMod {
                              "be not none when input layout is TND.";
       }
       op_type_ = "aclnnFlashAttentionUnpaddingScoreGrad";
-      auto return_value = GEN_EXECUTOR_BOOST(
-        op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
-        inputs[kIndex5], inputs[kIndex6], inputs[kIndex7], inputs[kIndex8], inputs[kIndex9], inputs[kIndex10],
-        inputs[kIndex11], prefix_array, actual_seq_qlen_array, actual_seq_kvlen_array, scale_value_value,
-        keep_prob_value, pre_tokens_value, next_tokens_value, head_num_value, input_layout_string, inner_precise_value,
-        sparse_mode_value, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
-      return return_value;
+      RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+            inputs[kIndex5], inputs[kIndex6], inputs[kIndex7], inputs[kIndex8], inputs[kIndex9], inputs[kIndex10],
+            inputs[kIndex11], prefix_array, actual_seq_qlen_array, actual_seq_kvlen_array, scale_value_value,
+            keep_prob_value, pre_tokens_value, next_tokens_value, head_num_value, input_layout_string,
+            inner_precise_value, sparse_mode_value, outputs[kIndex0], outputs[kIndex1], outputs[kIndex2],
+            outputs[kIndex3]);
+      return;
     }
     op_type_ = "aclnnFlashAttentionScoreGrad";
-    auto return_value = GEN_EXECUTOR_BOOST(
-      op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
-      inputs[kIndex5], inputs[kIndex6], inputs[kIndex7], inputs[kIndex8], inputs[kIndex9], inputs[kIndex10],
-      inputs[kIndex11], prefix_array, scale_value_value, keep_prob_value, pre_tokens_value, next_tokens_value,
-      head_num_value, input_layout_string, inner_precise_value, sparse_mode_value, outputs[kIndex0], outputs[kIndex1],
-      outputs[kIndex2], outputs[kIndex3]);
-    return return_value;
+    RunOp(stream_ptr, workspace, inputs[kIndex0], inputs[kIndex1], inputs[kIndex2], inputs[kIndex3], inputs[kIndex4],
+          inputs[kIndex5], inputs[kIndex6], inputs[kIndex7], inputs[kIndex8], inputs[kIndex9], inputs[kIndex10],
+          inputs[kIndex11], prefix_array, scale_value_value, keep_prob_value, pre_tokens_value, next_tokens_value,
+          head_num_value, input_layout_string, inner_precise_value, sparse_mode_value, outputs[kIndex0],
+          outputs[kIndex1], outputs[kIndex2], outputs[kIndex3]);
   }
 };
 }  // namespace kernel

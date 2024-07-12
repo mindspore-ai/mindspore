@@ -34,7 +34,11 @@ class GridSampler3DGradAscend : public AclnnKernelMod {
 
  private:
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
+
   std::vector<uint8_t> output_mask_{1, 1};
+  int64_t interpolation_mode_;
+  int64_t padding_mode_;
+  int64_t align_corners_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -56,9 +56,7 @@ bool IndexAddExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const 
                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
 
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], axis_, inputs[kIndex1], inputs[kIndex2],
-                                      alpha_, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], axis_, inputs[kIndex1], inputs[kIndex2], alpha_, outputs[kIndex0]);
   return true;
 }
 

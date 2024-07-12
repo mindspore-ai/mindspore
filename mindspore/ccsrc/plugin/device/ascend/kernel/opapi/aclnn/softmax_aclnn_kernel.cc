@@ -34,16 +34,14 @@ int64_t SoftmaxAscend::GetDimValue(KernelTensor *axis_ptr) const noexcept {
 
 void SoftmaxAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &outputs) {
-  auto dim = GetDimValue(inputs[kIndex1]);
-  GetWorkspaceForResize(inputs[kIndex0], dim, outputs[kIndex0]);
+  dim_ = GetDimValue(inputs[kIndex1]);
+  GetWorkspaceForResize(inputs[kIndex0], dim_, outputs[kIndex0]);
 }
 
 bool SoftmaxAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto dim = GetDimValue(inputs[kIndex1]);
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], dim, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], dim_, outputs[kIndex0]);
   return true;
 }
 

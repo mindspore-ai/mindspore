@@ -92,8 +92,7 @@ bool FlashAttentionScoreGradAscend::Launch(const std::vector<KernelTensor *> &in
                                            const std::vector<KernelTensor *> &workspace,
                                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  ParseGenExecutor(FAGradGenerate(inputs, outputs));
-  RunOp(stream_ptr, workspace);
+  FAGradGenerate(inputs, workspace, outputs, stream_ptr);
   return true;
 }
 

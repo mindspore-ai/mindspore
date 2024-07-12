@@ -53,8 +53,7 @@ bool EmbeddingAscend::Launch(const std::vector<KernelTensor *> &inputs, const st
     RUN_OP_API_ASYNC(embedding_renorm_name_, ws_addr, renorm_ws_size_, executor, stream_ptr, release_func);
   }
 
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex1], inputs[kIndex0], outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex1], inputs[kIndex0], outputs[kIndex0]);
   return true;
 }
 

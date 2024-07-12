@@ -32,20 +32,16 @@ namespace kernel {
 void UpsampleNearest2DAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                                const std::vector<KernelTensor *> &outputs) {
   auto output_shape = outputs[kIndex0]->GetShapeVector();
-  std::vector<int64_t> output_size{output_shape.begin() + kIndex2, output_shape.end()};
-  GetWorkspaceForResize(inputs[0], output_size, outputs[0]);
+  output_size_.clear();
+  output_size_.assign(output_shape.begin() + kIndex2, output_shape.end());
+  GetWorkspaceForResize(inputs[0], output_size_, outputs[0]);
 }
 
 bool UpsampleNearest2DAscend::Launch(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &workspace,
                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-
-  auto output_shape = outputs[kIndex0]->GetShapeVector();
-  std::vector<int64_t> output_size{output_shape.begin() + kIndex2, output_shape.end()};
-
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[0], output_size, outputs[0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[0], output_size_, outputs[0]);
 
   return true;
 }

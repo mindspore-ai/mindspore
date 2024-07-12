@@ -29,8 +29,7 @@
 
 namespace mindspore {
 namespace kernel {
-namespace {
-transform::aclIntArray *GetAdaptedMultiples(KernelTensor *x_tensor, KernelTensor *multiples_tensor) {
+void TileAscend::GetAdaptedMultiples(KernelTensor *x_tensor, KernelTensor *multiples_tensor) {
   auto x_shape = x_tensor->GetShape()->GetShapeVector();
   if (MS_UNLIKELY(IsDynamicRank(x_shape))) {
     MS_LOG(EXCEPTION) << "For 'Tile', the tensor's shape should not be dynamic rank in launch stage!";
@@ -43,21 +42,20 @@ transform::aclIntArray *GetAdaptedMultiples(KernelTensor *x_tensor, KernelTensor
     auto expand_len = x_dim - multiples_vector.size();
     (void)multiples_vector.insert(multiples_vector.begin(), expand_len, 1);
   }
-  return transform::ConvertType(multiples_vector);
+
+  multiples_ = std::move(multiples_vector);
 }
-}  // namespace
+
 void TileAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                   const std::vector<KernelTensor *> &outputs) {
-  auto dims = GetAdaptedMultiples(inputs[kIndex0], inputs[kIndex1]);
-  GetWorkspaceForResize(inputs[kIndex0], dims, outputs[kIndex0]);
+  GetAdaptedMultiples(inputs[kIndex0], inputs[kIndex1]);
+  GetWorkspaceForResize(inputs[kIndex0], multiples_, outputs[kIndex0]);
 }
 
 bool TileAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  auto dims = GetAdaptedMultiples(inputs[kIndex0], inputs[kIndex1]);
-  ParseGenExecutor(GEN_EXECUTOR(op_type_, inputs[kIndex0], dims, outputs[kIndex0]));
-  RunOp(stream_ptr, workspace);
+  RunOp(stream_ptr, workspace, inputs[kIndex0], multiples_, outputs[kIndex0]);
   return true;
 }
 
