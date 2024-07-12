@@ -119,9 +119,9 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<BnSplit>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::BatchNormGradUnifyMindIR>());
   (*unify_mindir_pm)->AddPass(std::make_shared<BnGradSplit>());
-  (*unify_mindir_pm)->AddPass(std::make_shared<BatchNorm2BNInfer>());
   (*unify_mindir_pm)->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
   (*unify_mindir_pm)->AddPass(std::make_shared<BatchNormGradInferFission>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<BatchNorm2BNInfer>());
   // just rename primitive name
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AscendMindIROpAdapter>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::DropoutGenMaskFusion>());
