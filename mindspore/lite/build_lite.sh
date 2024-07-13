@@ -215,7 +215,7 @@ build_lite_jni_and_jar() {
     if [[ "${ENABLE_ASAN}" == "ON" || "${ENABLE_ASAN}" == "on" ]] ; then
       ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test --info
     else
-      if [[ "${MSLITE_ENABLE_TESTCASES}" == "ON" || "${MSLITE_ENABLE_TESTCASES}" == "on" ]] ; then
+      if [[ "${MSLITE_ENABLE_TESTCASES}" == "ON" || "${MSLITE_ENABLE_TESTCASES}" == "on" ]] && [[ "${MSLITE_ENABLE_CLOUD_INFERENCE}" != "on" ]] ; then
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${LITE_JAVA_PATH}/native/libs/${NATIVE_PATH_ARCH}/
           ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ --info
       else
@@ -680,11 +680,12 @@ build_lite() {
           mv ${INSTALL_PREFIX}/*.tar.gz* ${BASEPATH}/output/
         fi
 
-        if [[ "${local_lite_platform}" == "x86_64" ]]; then
+        if [[ "${local_lite_platform}" == "x86_64" || "${local_lite_platform}" == "arm64" ]]; then
           if [[ "${MSLITE_ENABLE_TESTCASES}" == "ON" || "${MSLITE_ENABLE_TESTCASES}" == "on" ]]; then
             mkdir -pv ${BASEPATH}/mindspore/lite/test/do_test || true
-            if [[ ! "${MSLITE_ENABLE_CONVERTER}" || "${MSLITE_ENABLE_CONVERTER}" == "ON" || "${MSLITE_ENABLE_CONVERTER}" == "on" ]]; then
+            if [[ ! "${MSLITE_ENABLE_CONVERTER}" || "${MSLITE_ENABLE_CONVERTER}" == "ON" || "${MSLITE_ENABLE_CONVERTER}" == "on" || "${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on" ]]; then
               cp ${INSTALL_PREFIX}/mindspore-lite*/tools/converter/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
+              cp ${INSTALL_PREFIX}/mindspore-lite*/runtime/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
             fi
             cp ${INSTALL_PREFIX}/mindspore-lite*/runtime/lib/*.so* ${BASEPATH}/mindspore/lite/test/do_test || true
             if [ -d "${INSTALL_PREFIX}/mindspore-lite*/runtime/third_party/glog" ]; then
@@ -954,7 +955,7 @@ build_lite_x86_64_aarch64_jar()
   if [[ "${ENABLE_ASAN}" == "ON" || "${ENABLE_ASAN}" == "on" ]] ; then
     ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ -x test --info
   else
-    if [[ "${MSLITE_ENABLE_TESTCASES}" == "ON" || "${MSLITE_ENABLE_TESTCASES}" == "on" ]] ; then
+    if [[ "${MSLITE_ENABLE_TESTCASES}" == "ON" || "${MSLITE_ENABLE_TESTCASES}" == "on" ]] && [[ "${MSLITE_ENABLE_CLOUD_INFERENCE}" != "on" ]]; then
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${LITE_JAVA_PATH}/native/libs/linux_x86/
         ${gradle_command} releaseJar -p ${LITE_JAVA_PATH}/ --info
     else
