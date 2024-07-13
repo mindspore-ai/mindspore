@@ -60,6 +60,8 @@ https://mindspore.cn*/r2.3.q1/*
 https://www.mindspore.cn*/r2.3.q1/*
 https://mindspore.cn*/r2.3.0rc2/*
 https://www.mindspore.cn*/r2.3.0rc2/*
+https://mindspore.cn*/r2.3.0/*
+https://www.mindspore.cn*/r2.3.0/*
 http://sox.sourceforge.net/sox.html
 https://ffmpeg.org/releases/ffmpeg-%SOFTWARE_VERSION%.tar.gz
 https://tools.mindspore.cn/libs/ffmpeg/ffmpeg-%SOFTWARE_VERSION%.tar.gz

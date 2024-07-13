@@ -2,6 +2,181 @@
 
 [View English](./RELEASE.md)
 
+## MindSpore 2.3.0 Release Notes
+
+### 主要特性及增强
+
+#### AutoParallel
+
+- [STABLE] 扩展函数式并行能力，[mindspore.shard](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/mindspore/mindspore.shard.html)新增支持图模式，图模式下以nn.Cell/function为单位设置输入与权重的并行切分策略，未设置的算子将通过"sharding_propagation"自动配置并行策略；增加支持手动重排布的[mindspore.reshard](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/mindspore/mindspore.reshard.html)接口，通过[mindspore.Layout](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/mindspore/mindspore.Layout.html)对张量设置精准切分策略。
+- [STABLE] 新增Callback接口[mindspore.train.FlopsUtilizationCollector](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/train/mindspore.train.FlopsUtilizationCollector.html)统计模型算力利用率信息MFU和硬件算力利用率信息HFU 。
+- [STABLE] 新增函数式通信接口[mindspore.communication.comm_func](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/mindspore.communication.comm_func.html)。
+- [BETA] O0和O1模式下，优化interleaved pipeline的内存占用。
+- [BETA] 自动并行模式下支持多机场景自动流水线策略生成（暂不支持单机场景自动流水线策略生成），需要将 `parallel_mode` 设置成自动并行 ``auto_parallel`` 并将 `search_mode` 设置成双递归算法 ``recursive_programming``。
+
+#### PyNative
+
+- [STABLE] 优化动态图的基础数据结构，提升算子API性能。
+- [STABLE] Tensor支持[register_hook](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/mindspore/Tensor/mindspore.Tensor.register_hook.html)功能，以便用户打印或者修改Tensor对应的梯度。
+- [STABLE] PyNativ模式支持重计算功能，用户可以通过重计算接口降低网络的显存峰值。
+
+#### FrontEnd
+
+- [STABLE] 优化Checkpoint保存、加载基础流程，提升性能20%。
+- [STABLE] 支持在保存、加载过程中对Checkpoint文件进行CRC校验，提升安全性。
+
+#### Dataset
+
+- [STABLE] 为以下数据增强增加昇腾处理后端支持：Equalize、Rotate、AutoContrast、Posterize、AdjustSharpness、Invert、Solarize、ConvertColor、Erase。
+- [STABLE] 增加视频文件读取、解析功能支持，详见API：[mindspore.dataset.vision.DecodeVideo](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/dataset_vision/mindspore.dataset.vision.DecodeVideo.html)、[mindspore.dataset.vision.read_video](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/dataset_vision/mindspore.dataset.vision.read_video.html#mindspore.dataset.vision.read_video)、[mindspore.dataset.vision.read_video_timestamps](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/dataset_vision/mindspore.dataset.vision.read_video_timestamps.html#mindspore.dataset.vision.read_video_timestamps)。
+- [STABLE] 支持在 `mindspore.dataset.GeneratorDataset`、`mindspore.dataset.Dataset.map` 及 `mindspore.dataset.Dataset.batch` 接口中指定 `max_rowsize` 参数为-1，此时数据多进程所使用的共享内存将随数据大小动态分配并高效运行，无需手动调参。
+
+#### Inference
+
+- [STABLE] 新增LLaMa2、LLaMa3、Qwen1.5等14个大模型支持训推一体架构，实现脚本、分布式策略和运行时的统一，典型大模型训练到推理部署周期下降到天级，通过融合大算子降低推理时延，有效提升网络吞吐量。
+
+#### PIJIT
+
+- [BETA] 支持Python 3.8和Python 3.10的字节码解析，扩大Python版本的支持范围。
+- [BETA] 支持Dynamic Shape、Symbolic Shape作为输入，使能动态输入场景。
+- [BETA] 使能单步构图能力，优化编译时间。
+- [BETA] 通过调整字节码支持了带有副作用的字节码被捕获（STORE_ATTR、STORE_GLOBAL、LIST_APPEND、dict.pop），使能自动混合精度，减少裂图，提升性能。
+
+#### Profiler
+
+- [STABLE] 提供分级Profiler功能，通过profiler_level参数可控制按照不同级别进行性能数据采集。
+- [STABLE] Profiler analyse方法新增mode参数，可配置异步解析模式，性能数据解析与训练并行。
+- [STABLE] Profiler接口新增data_simplification参数，用户可控制性能数据解析完成后是否删除多余数据，节省硬盘空间。
+- [STABLE] Profiler接口增强内存分析功能，用户通过profile_memory参数可采集框架、CANN、硬件的内存申请、释放信息，并可通过[MindStudio工具](https://www.hiascend.com/forum/thread-0230130822583032044-1-1.html)进行可视化分析。
+- [BETA] PyNative模式下Timeline整合host profiling信息，包括任务耗时、用户侧堆栈信息。
+
+#### Dump
+
+- [STABLE] 增强同步和异步Dump功能，统计信息Dump新增L2Norm信息、新增statistic_category字段支持用户自定义需要保存的统计信息，提高Dump易用性。同步和异步Dump支持情况可参考[Dump功能说明](https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.0/debug/dump.html#dump功能说明)。
+- [STABLE] 完善同步Dump功能，通过配置op_debug_mode字段使能溢出和异常Dump。
+- [STABLE] 增强同步Dump功能，通过配置stat_calc_mode字段可以使能device计算统计信息（默认在host计算），通过配置sample_mode字段可以进行采样Dump，提升Dump性能。
+- [STABLE] 增强异步Dump功能，支持保存complex64和complex128格式。
+
+#### Runtime
+
+- [STABLE] 支持静态图多级编译，配置为[mindspore.set_context(jit_config={"jit_level": "O0/O1/O2"})](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/mindspore/mindspore.set_context.html)，默认值为空，框架根据产品类别自动选择优化级别，Altas训练产品为O2，其余产品均为O0。
+- [STABLE] 静态图O0/O1下支持通信计算多流并发执行。
+- [STABLE] 新增[内存管理接口](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/mindspore.hal.html#内存管理)。
+- [BETA] 内存池支持虚拟内存碎片整理，在静态图O0/O1下默认使能虚拟内存。
+
+#### Ascend
+
+- [STABLE] 提供昇腾平台上算子内存越界访问检测开关，用户可以通过设置 `mindspore.set_context(ascend_config={"op_debug_option": "oom"})`来检测昇腾平台上算子内部内存越界问题。
+- [BETA] 环境变量[MS_SIMULATION_LEVEL](https://www.mindspore.cn/docs/zh-CN/r2.3.0/note/env_var_list.html)在昇腾平台上新增支持图编译O0执行模式，并可支持编译性能和运行时内存分析。
+- [BETA] 昇腾平台支持通过AOT接入使用[AscendC自定义算子](https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3.0/operation/op_custom_ascendc.html)。
+
+### API变更
+
+#### 新增API
+
+- [STABLE] 新增[mindspore.mint](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/mindspore.mint.html)API，提供了大量的functional、nn、优化器接口，API用法及功能等与业界主流用法一致，方便用户参考使用。mint接口当前是实验性接口，在图编译模式为O0和PyNative模式下性能比ops更优。当前暂不支持图下沉模式及CPU、GPU后端，后续会逐步完善。
+
+  | mindspore.mint  |  |   | |
+  |:----|:----|:----|:----|
+  | mindspore.mint.eye |mindspore.mint.rand_like|mindspore.mint.isfinite|mindspore.mint.any|
+  | mindspore.mint.ones |mindspore.mint.rand|mindspore.mint.log|mindspore.mint.greater_equal|
+  | mindspore.mint.ones_like |mindspore.mint.gather|mindspore.mint.logical_and|mindspore.mint.all|
+  | mindspore.mint.zeros |mindspore.mint.permute|mindspore.mint.logical_not|mindspore.mint.mean|
+  | mindspore.mint.zeros_like |mindspore.mint.repeat_interleave|mindspore.mint.logical_or|mindspore.mint.prod|
+  | mindspore.mint.arange |mindspore.mint.abs|mindspore.mint.mul|mindspore.mint.sum|
+  | mindspore.mint.broadcast_to |mindspore.mint.add|mindspore.mint.neg|mindspore.mint.eq|
+  | mindspore.mint.cat |mindspore.mint.clamp|mindspore.mint.negative|mindspore.mint.ne|
+  | mindspore.mint.index_select |mindspore.mint.cumsum|mindspore.mint.pow|mindspore.mint.greater|
+  | mindspore.mint.max |mindspore.mint.atan2|mindspore.mint.reciprocal|mindspore.mint.gt|
+  | mindspore.mint.min |mindspore.mint.arctan2|mindspore.mint.rsqrt|mindspore.mint.isclose|
+  | mindspore.mint.scatter_add |mindspore.mint.ceil|mindspore.mint.sigmoid|mindspore.mint.le|
+  | mindspore.mint.narrow |mindspore.mint.unique|mindspore.mint.sin|mindspore.mint.less_equal|
+  | mindspore.mint.nonzero |mindspore.mint.div|mindspore.mint.sqrt|mindspore.mint.lt|
+  | mindspore.mint.normal |mindspore.mint.divide|mindspore.mint.square|mindspore.mint.maximum|
+  | mindspore.mint.tile |mindspore.mint.erf|mindspore.mint.sub|mindspore.mint.minimum|
+  | mindspore.mint.topk |mindspore.mint.erfinv|mindspore.mint.tanh|mindspore.mint.inverse|
+  | mindspore.mint.sort |mindspore.mint.exp|mindspore.mint.bmm|mindspore.mint.searchsorted|
+  | mindspore.mint.stack |mindspore.mint.floor|mindspore.mint.matmul|mindspore.mint.argmax|
+  | mindspore.mint.where |mindspore.mint.flip|mindspore.mint.split|mindspore.mint.cos|
+  | mindspore.mint.less |||
+
+  | mindspore.mint.nn|
+  |:----|
+  | mindspore.mint.nn.Dropout  |
+  | mindspore.mint.nn.Unfold |
+  | mindspore.mint.nn.Fold |
+  | mindspore.mint.nn.Linear|
+  | mindspore.mint.nn.BCEWithLogitsLoss |
+
+  | mindspore.mint.nn.functional||
+  |:----|:----|
+  |mindspore.mint.nn.functional.batch_norm |mindspore.mint.nn.functional.group_norm|
+  |mindspore.mint.nn.functional.fold |mindspore.mint.nn.functional.layer_norm|
+  |mindspore.mint.nn.functional.max_pool2d |mindspore.mint.nn.functional.linear|
+  |mindspore.mint.nn.functional.binary_cross_entropy |mindspore.mint.nn.functional.unfold|
+  |mindspore.mint.nn.functional.sigmoid |mindspore.mint.nn.functional.one_hot|
+  |mindspore.mint.nn.functional.tanh |mindspore.mint.nn.functional.elu|
+  |mindspore.mint.nn.functional.binary_cross_entropy_with_logits |mindspore.mint.nn.functional.gelu|
+  |mindspore.mint.nn.functional.dropout|mindspore.mint.nn.functional.leaky_relu|
+  |mindspore.mint.nn.functional.embedding  |mindspore.mint.nn.functional.silu|
+  |mindspore.mint.nn.functional.grid_sample|mindspore.mint.nn.functional.softplus|
+  |mindspore.mint.nn.functional.relu|mindspore.mint.nn.functional.softmax|
+  |mindspore.mint.nn.functional.pad||
+
+  | mindspore.mint.optim |
+  |:----|
+  | mindspore.mint.optim.AdamW |
+
+  | mindspore.mint.linalg |
+  |:----|
+  | mindspore.mint.linalg.inv |
+
+### 非兼容性接口变更
+
+- 接口名称：性能数据采集接口 `Profiler`
+
+  变更内容：解析生成的性能数据文件进行了精简，将在导出性能数据后删除FRAMEWORK目录数据以及其他多余数据，仅保留profiler的交付件以及PROF_XXX目录下的原始性能数据，以节省空间。通过将 `data_simplification`参数配置为 `False`可关闭精简模式，与历史版本生成的性能数据文件保持一致。
+- 接口名称：Dump功能配置文件中的 `saved_data` 字段为 `"tensor"`。
+
+  变更内容：Dump落盘的文件名发生变更，`"/"`用 `"_"`代替，算子名称变为算子全局名称。
+
+  <table>
+  <tr>
+  <td style="text-align:center"> 原文件名 </td> <td style="text-align:center"> 2.3文件名 </td>
+  </tr>
+  <tr>
+  <td><pre>
+  文件名格式：
+  {op_type}.{op_name}.{task_id}.{stream_id}.
+  {timestamp}.{input_output_index}.{slot}.{format}.npy
+  </br>
+  示例：
+  Conv2D.Conv2D-op12.0.0.1623124369613540.
+  output.0.DefaultFormat.npy
+  </pre>
+  </td>
+  <td><pre>
+  文件名格式：
+  {op_type}.{op_name}.{task_id}.{stream_id}.
+  {timestamp}.{input_output_index}.{slot}.{format}.npy
+  </br>
+  示例：
+  Conv2D.Default_network-WithLossCell__backbone-AlexNet_conv3
+  -Conv2d_Conv2D-op12.0.0.1623124369613540.output.0.DefaultFormat.npy
+  </pre>
+  </td>
+  </tr>
+  </table>
+- 接口名称：Dump功能配置文件中的 `saved_data`字段为 `"statistic"`。
+
+  变更内容：原默认保存 `"max"`、`"min"`、`"avg"`、`"count"`、`"negative zero count"`、`"positive zero count"`、`"nan count"`、`"negative inf count"`、`"positive inf count"`、`"zero count"`、`md5`统计项，2.3变更为默认保存 `"max"`、`"min"`、`"l2norm"`统计项，可以通过配置 `statistic_category`自定义统计项。
+
+### 贡献者
+
+caifubi;candanzg;ccsszz;chaiyouheng;changzherui;chenfei_mindspore;chengbin;chengfeng27;Chong;dairenjie;DavidFFFan;DeshiChen;dingjinshan;douzhixing;emmmmtang;Erpim;fary86;fengyixing;fuhouyu;gaoyong10;GuoZhibin;guozhijian;halo;haozhang;hejianheng;Henry Shi;horcham;huandong1;huangbingjian;Jackson_Wong;jiangchenglin3;jiangshanfeng;jiangzhenguang;jiaorui;bantao;jiaxueyu;jijiarong;JuiceZ;jxl;kairui_kou;lanzhineng;LiangZhibo;lichen;limingqi107;linqingke;liubuyu;liujunzhu;liuluobin;liyan2022;liyejun;LLLRT;looop5;lujiale;luochao60;luoyang;lvxudong;machenggui;maning202007;Margaret_wangrui;master_2;mengyuanli;moran;Mrtutu;NaCN;nomindcarry;panzhihui;pengqi;qiuyufeng;qiuzhongya;Renyuan Zhang;shaoshengqi;Shawny;shen_haochen;shenhaojing;shenwei41;shij1anhan;shilishan;shiziyang;shunyuanhan;shuqian0;TAJh;tanghuikang;tan-wei-cheng;Thibaut;tianxiaodong;TronZhang;TuDouNi;VectorSL;wang_ziqi;wanghenchang;wangjie;weiyang;wudawei;wujiangming;wujueying;XianglongZeng;xiaotianci;xiaoxin_zhang;xiaoxiongzhu;xiaoyao;XinDu;xuxinglei;yangchen;yanghaoran;yanglong;yangruoqi713;yangzhenzhang;yangzishuo;Yanzhi_YI;yao_yf;yefeng;yide12;YijieChen;YingLai Lin;yuchaojie;YuJianfeng;zangqx;zhaiyukun;zhangminli;zhangqinghua;ZhangZGC;zhengxinQian;zhengzuohe;zhouyaqiang0;zhuguodong;zhupuxu;zichun_ye;zjun;zlq2020;ZPaC;zuochuanyong;zyli2020;阿琛;狄新凯;范吉斌;冯一航;胡彬;宦晓玲;黄勇;康伟;雷仪婧;李良灿;李林杰;刘崇鸣;刘力力;刘勇琪;刘子涵;吕浩宇;王禹程;熊攀;徐安越;徐永飞;俞涵;张王泽;张栩浩;郑裔;周莉莉;周先琪;朱家兴;邹文祥
+
+欢迎以任何形式对项目提供贡献！
+
 ## MindSpore 2.3.0-rc2 Release Notes
 
 ### 主要特性和增强
