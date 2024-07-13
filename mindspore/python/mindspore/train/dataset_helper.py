@@ -263,6 +263,9 @@ def connect_network_with_dataset(network, dataset_helper):
     queue_name = dataset.__transfer_dataset__.queue_name
     if _dynamic_sink_scenario(dataset, dataset_iter, is_dynamic):
         dataset_types, dataset_shapes = dataset_helper.get_data_info()
+        # Need to do full_batch for shapes which also do in the _DatasetIterMSLoopSink
+        if _need_to_full():
+            dataset_shapes = _to_full_shapes(dataset_shapes, _get_device_num() // _get_pipeline_stages())
         dataset_types = [pytype_to_dtype(x) for x in dataset_types]
         if not is_dynamic:
             dataset_shapes = _auto_dynamic_shape.auto_dynamic_generate_compile_args(dataset_shapes, True)
