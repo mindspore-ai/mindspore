@@ -18,6 +18,7 @@
 #include <memory>
 #include "ops/op_utils.h"
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -46,20 +47,29 @@ BaseShapePtr FillFuncImpl::InferShape(const PrimitivePtr &primitive,
   return std::make_shared<abstract::TensorShape>(output_shape);
 }
 
-TypePtr FillFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  auto prim_name = primitive->name();
-  auto dtype_type = input_args[kInputIndex2]->GetType();
-  if (dtype_type->isa<TypeNone>()) {
-    return input_args[kInputIndex1]->GetType()->Clone();
+ShapeArray FillFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  if (input_values.size() != kSize3) {
+    MS_EXCEPTION(ValueError) << primitive->name() << " should have" << kSize3 << "inputs. Please try other inputs";
   }
-  auto dtype_ptr = input_args[kInputIndex2]->GetValue();
-  if (!dtype_ptr->isa<Int64Imm>()) {
-    MS_EXCEPTION(TypeError) << "For '" << prim_name
-                            << "', 'dtype' must be a TypeId, but got an invalid type: " << dtype_ptr->ToString() << ".";
+  const auto &size = input_values[kIndex0]->cast<ValueTuplePtr>();
+  MS_EXCEPTION_IF_NULL(size);
+
+  std::vector<int64_t> size_vector;
+  for (const auto &value : size->value()) {
+    const auto &size_element = value->cast<Int64ImmPtr>();
+    MS_EXCEPTION_IF_NULL(size_element);
+    size_vector.emplace_back(size_element->value());
   }
-  auto val = GetValue<int64_t>(dtype_ptr);
-  auto output_type = TypeIdToType(static_cast<TypeId>(val));
-  return std::make_shared<TensorType>(output_type);
+  ShapeVector output_shape;
+  for (size_t i = 0; i < size_vector.size(); i++) {
+    int64_t shape_i = size_vector[i];
+    MS_CHECK_VALUE(shape_i >= 0,
+                   CheckAndConvertUtils::FormatCheckIntegerMsg(
+                     "the " + std::to_string(i) + "th dimension of input shape", shape_i, kGreaterEqual, 0, primitive));
+    output_shape.push_back(shape_i);
+  }
+
+  return {output_shape};
 }
 }  // namespace ops
 }  // namespace mindspore

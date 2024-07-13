@@ -3,7 +3,7 @@ fill_tensor:
     args:
         size:
             dtype: tuple[int]
-            type_cast: list[int], tensor
+            type_cast: list[int]
         fill_value:
             dtype: tensor
         dtype:

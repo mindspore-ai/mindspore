@@ -26,7 +26,12 @@
 
 namespace mindspore {
 namespace ops {
-class MIND_API FillScalarFuncImpl : public FillFuncImpl {};
+class MIND_API FillScalarFuncImpl : public FillFuncImpl {
+ public:
+  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
+  // simply infer
+  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+};
 }  // namespace ops
 }  // namespace mindspore
 

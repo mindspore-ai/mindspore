@@ -58,9 +58,13 @@ class MIND_API AGFillV2Infer : public abstract::OpInferBase {
 
     const int64_t kDimZero = 0;
     auto input2_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[1]->GetShape())[kShape];
-    if (!IsDynamic(input2_shape)) {
-      (void)CheckAndConvertUtils::CheckInteger("value's rank", SizeToLong(input2_shape.size()), kEqual, kDimZero,
-                                               prim_name);
+    if (!IsDynamicRank(input2_shape)) {
+      (void)CheckAndConvertUtils::CheckInRange<int64_t>("dimension of the input [fill_value]", input2_shape.size(),
+                                                        kIncludeBoth, {0, 1}, primitive->name());
+      if (!IsDynamicShape(input2_shape) && input2_shape.size() == 1) {
+        (void)CheckAndConvertUtils::CheckInteger("size of the input [fill_value]", input2_shape[0], kEqual, 1,
+                                                 primitive->name());
+      }
     }
 
     auto value_ptr = input_args[kInputIndex0]->GetValue();

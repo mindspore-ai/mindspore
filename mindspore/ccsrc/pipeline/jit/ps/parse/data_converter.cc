@@ -1531,6 +1531,18 @@ ValuePtr ConvertTensorToNumber(const py::object &obj) {
       return std::make_shared<Int64Imm>(static_cast<int64_t *>(GetTensorDataPtr(tensor))[0]);
     case kNumberTypeInt32:
       return std::make_shared<Int32Imm>(static_cast<int32_t *>(GetTensorDataPtr(tensor))[0]);
+    case kNumberTypeInt16:
+      return std::make_shared<Int64Imm>(static_cast<int16_t *>(GetTensorDataPtr(tensor))[0]);
+    case kNumberTypeInt8:
+      return std::make_shared<Int64Imm>(static_cast<int8_t *>(GetTensorDataPtr(tensor))[0]);
+    case kNumberTypeUInt64:
+      return std::make_shared<Int64Imm>(static_cast<uint64_t *>(GetTensorDataPtr(tensor))[0]);
+    case kNumberTypeUInt32:
+      return std::make_shared<Int64Imm>(static_cast<uint32_t *>(GetTensorDataPtr(tensor))[0]);
+    case kNumberTypeUInt16:
+      return std::make_shared<Int64Imm>(static_cast<uint16_t *>(GetTensorDataPtr(tensor))[0]);
+    case kNumberTypeUInt8:
+      return std::make_shared<Int64Imm>(static_cast<uint8_t *>(GetTensorDataPtr(tensor))[0]);
     case kNumberTypeFloat64:
       return ConvertPythonFloatToScalarValue(static_cast<double *>(GetTensorDataPtr(tensor))[0]);
     case kNumberTypeFloat32:

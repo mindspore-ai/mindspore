@@ -29,12 +29,26 @@ tensor::BaseTensorPtr FillTensorAscendCustomize(const std::shared_ptr<OpRunner> 
                                                 const std::optional<Int64ImmPtr> &dtype) {
   OpRunner::InferOpOutput(op, size, fill_value, dtype);
   // No need to convert input
-  PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), fill_value);
+  bool is_host_tensor = fill_value->device_address() == nullptr && fill_value->isa<Tensor>();
+  if (!is_host_tensor) {
+    PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), fill_value);
+  }
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, fill_value]() {
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, fill_value, is_host_tensor]() {
     auto device_context = op->device_context();
     const auto &outputs = op->outputs();
+    if (is_host_tensor) {
+      MS_LOG(INFO) << "For " << op->primitive()->name()
+                   << ", Input [fill_value] is a host tensor, FillScalar will be used.";
+      auto value = CreateValueFromTensor(fill_value->cast<TensorPtr>())->cast<ScalarPtr>();
+      // Malloc for output tensors
+      PyBoostUtils::MallocOpOutputs(device_context, outputs);
+      MS_LOG(DEBUG) << "Call FillScalar start";
+      LAUNCH_ACLNN(aclnnInplaceFillScalar, device_context, op->stream_id(), outputs[0], value);
+      MS_LOG(DEBUG) << "Launch FillScalar end";
+      return;
+    }
     // Malloc for output tensors
     PyBoostUtils::MallocOpInputs(device_context, fill_value);
     // Malloc for output tensors
