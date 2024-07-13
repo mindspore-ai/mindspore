@@ -159,7 +159,7 @@ const std::unordered_map<std::string, std::string> kTypesMap = {
 const uint32_t LAZY_LOAD_THRESHOLD = 5000000;
 
 /// \brief the max number of samples
-const uint32_t SLOW_LOAD_THRESHOLD = 500000000;
+const uint32_t SLOW_LOAD_THRESHOLD = 100000000;
 
 enum LoadMode {
   kFast = 0,  // use std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json>; to cache meta data
