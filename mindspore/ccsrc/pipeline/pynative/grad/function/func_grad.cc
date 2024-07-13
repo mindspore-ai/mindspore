@@ -166,11 +166,13 @@ ValuePtrList CallBackwardHooks(const ValuePtr &value, ValuePtrList *grad_in) {
   if (grad_in->size() != kSizeOne) {
     MS_LOG(EXCEPTION) << "Tensor hook just work on one tensor value, not support value sequence";
   }
+  runtime::OpExecutor::GetInstance().WaitAll();
   for (const auto &hook : auto_grad_meta->backward_hooks()) {
     MS_LOG(DEBUG) << "Run hook id " << hook.first;
     MS_EXCEPTION_IF_NULL(hook.second);
     (*grad_in)[kIndex0] = (*(hook.second))(grad_in->front());
   }
+  runtime::OpExecutor::GetInstance().WaitAll();
   MS_LOG(DEBUG) << PyNativeAlgo::Common::PrintDebugInfo(*grad_in, "After hook print gradient in: ");
   auto_grad_meta->ClearBackwardHooks();
   return *grad_in;
