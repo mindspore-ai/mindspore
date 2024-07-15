@@ -98,6 +98,7 @@ Pointwise Operations
     mindspore.mint.negative
     mindspore.mint.pow
     mindspore.mint.reciprocal
+    mindspore.mint.roll
     mindspore.mint.rsqrt
     mindspore.mint.sigmoid
     mindspore.mint.sin

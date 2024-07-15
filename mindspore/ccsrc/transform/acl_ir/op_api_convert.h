@@ -617,7 +617,11 @@ inline ScalarPtr ConvertKernelTensor<ScalarPtr>(mindspore::kernel::KernelTensor 
 template <>
 inline std::vector<int64_t> ConvertKernelTensor<std::vector<int64_t>>(mindspore::kernel::KernelTensor *tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
-  return tensor->GetValueWithCheck<std::vector<int64_t>>();
+  auto res = tensor->GetOptionalValueWithCheck<std::vector<int64_t>>();
+  if (res.has_value()) {
+    return res.value();
+  }
+  return {};
 }
 
 template <>

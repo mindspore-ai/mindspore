@@ -16,6 +16,7 @@
 
 #include "ops/ops_func_impl/roll.h"
 #include "ops/op_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -41,15 +42,29 @@ int32_t RollFuncImpl::CheckValidation(const PrimitivePtr &primitive,
 
 BaseShapePtr RollFuncImpl::InferShape(const PrimitivePtr &primitive,
                                       const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  MS_EXCEPTION_IF_NULL(input_args[0]->GetType());
-  return input_args[0]->GetShape()->Clone();
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]->GetType());
+  return input_args[kInputIndex0]->GetShape()->Clone();
 }
 
 TypePtr RollFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(input_args[0]);
-  MS_EXCEPTION_IF_NULL(input_args[0]->GetType());
-  return input_args[0]->GetType()->Clone();
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]->GetType());
+  return input_args[kInputIndex0]->GetType()->Clone();
 }
+
+ShapeArray RollFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  auto x_shape_vector = x_tensor->shape();
+  return {x_shape_vector};
+}
+
+TypePtrList RollFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->Dtype()};
+}
+REGISTER_SIMPLE_INFER(kNameRoll, RollFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

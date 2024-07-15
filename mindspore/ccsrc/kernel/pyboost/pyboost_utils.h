@@ -252,6 +252,14 @@ std::vector<T> ConvertValueTupleToVector(const ValueTuplePtr &tuple) {
   return result;
 }
 
+template <typename T>
+std::vector<T> ConvertValueTupleToVector(const std::optional<ValueTuplePtr> &tuple) {
+  if (!tuple.has_value()) {
+    return {};
+  }
+  return ConvertValueTupleToVector<T>(tuple.value());
+}
+
 // Shield kernel hardware differences. Call some func of derived classes based on base classes.
 // Just like SetThreadPool
 class BACKEND_EXPORT PyboostKernelExtraFuncFactory {

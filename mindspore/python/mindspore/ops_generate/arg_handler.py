@@ -177,6 +177,21 @@ def to_3d_paddings(op_name, arg_name, pad):
     raise ValueError(arg_invalid_info(op_name, arg_name, pad))
 
 
+def to_axis(op_name, arg_name, axis):
+    """
+    axis int and list -> tuple
+    """
+    if axis is None:
+        return None
+    if isinstance(axis, int):
+        return (axis,)
+    if isinstance(axis, (tuple)):
+        return axis
+    if isinstance(axis, (list)):
+        return tuple(axis)
+    raise ValueError(arg_invalid_info(op_name, arg_name, axis))
+
+
 def generator_handler(op_name, arg_name, inputs):
     """
     convert constant value in tuple to tensor

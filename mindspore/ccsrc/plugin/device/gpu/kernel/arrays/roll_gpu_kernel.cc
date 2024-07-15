@@ -31,43 +31,43 @@ const std::vector<std::pair<KernelAttr, RollPtrCreatorFunc>> kernel_attr = {
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat16)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat16),
    CreateRollKernelPtr<half>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat32)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat32),
    CreateRollKernelPtr<float>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeFloat64)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeFloat64),
    CreateRollKernelPtr<double>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt64)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt64),
    CreateRollKernelPtr<int64_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt32)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt32),
    CreateRollKernelPtr<int32_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt16)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt16),
    CreateRollKernelPtr<int16_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeInt8)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeInt8),
    CreateRollKernelPtr<int8_t>},
   {KernelAttr()
@@ -79,13 +79,13 @@ const std::vector<std::pair<KernelAttr, RollPtrCreatorFunc>> kernel_attr = {
   {KernelAttr()
      .AddInputAttr(kNumberTypeUInt8)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeUInt8),
    CreateRollKernelPtr<uint8_t>},
   {KernelAttr()
      .AddInputAttr(kNumberTypeBool)
      .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
-     .AddInputAttr(kObjectTypeTuple, kNumberTypeInt64)
+     .AddOptionalInputAttr(kObjectTypeTuple, kNumberTypeInt64)
      .AddOutputAttr(kNumberTypeBool),
    CreateRollKernelPtr<bool>}};
 }  // namespace
@@ -125,12 +125,22 @@ int RollGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const st
   std::vector<int64_t> inp_shape = inputs[0]->GetShapeVector();
   MS_EXCEPTION_IF_NULL(outputs[0]);
   std::vector<int64_t> out_shape = outputs[0]->GetShapeVector();
-  input_shapes.emplace_back(inp_shape);
-  output_shapes.emplace_back(out_shape);
 
   MS_EXCEPTION_IF_NULL(attr_ptr_);
   attr_ptr_->shift = inputs[kIndex1]->GetValueWithCheck<std::vector<int64_t>>();
-  attr_ptr_->axis = inputs[kIndex2]->GetValueWithCheck<std::vector<int64_t>>();
+  auto axis_tmp = inputs[kIndex2]->GetOptionalValueWithCheck<std::vector<int64_t>>();
+  if (axis_tmp.has_value()) {
+    attr_ptr_->axis = axis_tmp.value();
+  } else {
+    // when dims=None, flatten the shape
+    auto none_shape = std::accumulate(inp_shape.cbegin(), inp_shape.cend(), 1, std::multiplies<int64_t>());
+    inp_shape = {none_shape};
+    attr_ptr_->axis = {0};
+  }
+
+  input_shapes.emplace_back(inp_shape);
+  output_shapes.emplace_back(out_shape);
+
   helper_ptr_->SetKernelParam(attr_ptr_);
   if (helper_ptr_->CalMemSize(input_shapes, output_shapes) == -1) {
     return KRET_RESIZE_FAILED;

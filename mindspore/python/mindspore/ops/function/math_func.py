@@ -35,7 +35,7 @@ from mindspore.ops.auto_generate import Cummin, BatchMatMul, LinSpaceExt, Norm
 from mindspore.ops import auto_generate
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import LuUnpack
-from mindspore.ops.operations.math_ops import Roll
+from mindspore.ops.auto_generate.pyboost_inner_prim import roll_impl
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.math_ops import DivMod
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
@@ -8600,16 +8600,12 @@ def roll(input, shifts, dims=None):
         >>> import mindspore as ms
         >>> from mindspore import ops
         >>> from mindspore import Tensor
-        >>> input_x = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
-        >>> output = ops.roll(input_x, shifts=2, dims=0)
+        >>> input = Tensor(np.array([0, 1, 2, 3, 4]).astype(np.float32))
+        >>> output = ops.roll(input, shifts=2, dims=0)
         >>> print(output)
         [3. 4. 0. 1. 2.]
     """
-    _shape = input.shape
-    if dims is None:
-        flatten_x = input.reshape(-1)
-        return Roll(shifts, 0)(flatten_x).reshape(_shape)
-    return Roll(shifts, dims)(input)
+    return roll_impl(input, shifts, dims)
 
 
 def xdivy(x, y):
