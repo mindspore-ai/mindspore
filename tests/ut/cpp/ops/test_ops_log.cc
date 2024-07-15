@@ -40,8 +40,8 @@ tensor::TensorPtr CreateLogBoolTensor() {
   return tensor;
 }
 }  // namespace
-OP_FUNC_IMPL_TEST_DECLARE(Log, EltwiseOpParams);
-OP_FUNC_IMPL_TEST_CASES(
+OP_FUNC_IMPL_INFER_TEST_DECLARE(Log, EltwiseOpParams);
+OP_FUNC_IMPL_INFER_TEST_CASES(
   Log,
   testing::Values(
     EltwiseOpParams{{2, 3}, kBool, {2, 3}, kFloat32, {}},
@@ -54,19 +54,6 @@ OP_FUNC_IMPL_TEST_CASES(
     EltwiseOpParams{{2, -1}, kFloat32, {2, -1}, kFloat32, {}},
     EltwiseOpParams{{-1, -1}, kFloat32, {-1, -1}, kFloat32, {}},
     EltwiseOpParams{{-2}, kFloat32, {-2}, kFloat32, {}}
-  ));
-
-OP_FUNC_IMPL_SIMPLEINFER_TEST_DECLARE(Log, EltwiseOpParams);
-OP_FUNC_IMPL_SIMPLEINFER_TEST_CASES(
-  Log,
-  testing::Values(
-    EltwiseOpParams{{2, 3}, kBool, {2, 3}, kFloat32, {}},
-    EltwiseOpParams{{2, 3}, kUInt8, {2, 3}, kFloat32, {}},
-    EltwiseOpParams{{2, 3}, kInt8, {2, 3}, kFloat32, {}},
-    EltwiseOpParams{{2, 3}, kInt16, {2, 3}, kFloat32, {}},
-    EltwiseOpParams{{2, 3}, kInt32, {2, 3}, kFloat32, {}},
-    EltwiseOpParams{{2, 3}, kInt64, {2, 3}, kFloat32, {}},
-    EltwiseOpParams{{2, 3}, kFloat32, {2, 3}, kFloat32, {}}
   ));
 
 struct LogInferValueParams {

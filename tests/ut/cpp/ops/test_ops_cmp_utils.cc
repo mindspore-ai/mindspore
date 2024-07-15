@@ -20,6 +20,7 @@
 #include "ir/primitive.h"
 #include "abstract/dshape.h"
 #include "abstract/abstract_value.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -158,12 +159,26 @@ void TestOpFuncImplWithMultiInputOpParams(const OpFuncImplPtr &infer_impl, const
 
 void TestOpFuncImplSimpleInferWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
                                                   const EltwiseOpParams &param) {
+  MS_LOG(INFO) << "Executing ut for simple infer.";
+  if (IsDynamic(param.x_shape)) {
+    MS_LOG(INFO) << "Skip dynamic case when doing simple infer.";
+    return;
+  }
   auto primitive = std::make_shared<Primitive>(prim_name);
   ASSERT_NE(primitive, nullptr);
+  const auto &simple_infer_func = SimpleInfer::Instance().GetFunc(prim_name);
+  if (simple_infer_func == nullptr) {
+    MS_LOG(ERROR) << prim_name << " has not simple infer implementation!";
+    ASSERT_TRUE(False);
+  }
   auto x = std::make_shared<tensor::BaseTensor>(param.x_type->type_id(), param.x_shape);
   ASSERT_NE(x, nullptr);
   ValuePtrList input_values{std::move(x)};
-  for (auto attr : param.attr_list) {
+  for (const auto &attr : param.attr_list) {
+    if (attr->isa<ValueAny>() || (attr->isa<ValueSequence>() && attr->ContainsValueAny())) {
+      MS_LOG(INFO) << "Skip dynamic case when doing simple infer.";
+      return;
+    }
     input_values.push_back(std::move(attr));
   }
 
@@ -180,16 +195,30 @@ void TestOpFuncImplSimpleInferWithEltwiseOpParams(const OpFuncImplPtr &infer_imp
 
 void TestOpFuncImplSimpleInferWithMultiInputOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
                                                      const MultiInputOpParams &param) {
+  MS_LOG(INFO) << "Executing ut for simple infer.";
   auto primitive = std::make_shared<Primitive>(prim_name);
   ASSERT_NE(primitive, nullptr);
   ASSERT_TRUE(param.in_shape_array.size() == param.in_type_list.size());
   ASSERT_TRUE(!(param.in_shape_array.empty() && param.in_type_list.empty() && param.attr_list.empty()));
+  const auto &simple_infer_func = SimpleInfer::Instance().GetFunc(prim_name);
+  if (simple_infer_func == nullptr) {
+    MS_LOG(ERROR) << prim_name << " has not simple infer implementation!";
+    ASSERT_TRUE(False);
+  }
   ValuePtrList input_values;
   for (size_t idx = 0; idx < param.in_shape_array.size(); ++idx) {
+    if (IsDynamic(param.in_shape_array[idx])) {
+      MS_LOG(INFO) << "Skip dynamic case when doing simple infer.";
+      return;
+    }
     auto input = std::make_shared<tensor::BaseTensor>(param.in_type_list[idx]->type_id(), param.in_shape_array[idx]);
     input_values.push_back(std::move(input));
   }
   for (auto attr : param.attr_list) {
+    if (attr->isa<ValueAny>() || (attr->isa<ValueSequence>() && attr->ContainsValueAny())) {
+      MS_LOG(INFO) << "Skip dynamic case when doing simple infer.";
+      return;
+    }
     input_values.push_back(std::move(attr));
   }
 
@@ -206,6 +235,18 @@ void TestOpFuncImplSimpleInferWithMultiInputOpParams(const OpFuncImplPtr &infer_
 
   ShapeCompare(infer_shape, expect_shape);
   TypeCompare(infer_type, expect_type);
+}
+
+void TestOpFuncImplInferWithEltwiseOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
+                                            const EltwiseOpParams &param) {
+  TestOpFuncImplWithEltwiseOpParams(infer_impl, prim_name, param);
+  TestOpFuncImplSimpleInferWithEltwiseOpParams(infer_impl, prim_name, param);
+}
+
+void TestOpFuncImplInferWithMultiInputOpParams(const OpFuncImplPtr &infer_impl, const std::string &prim_name,
+                                               const MultiInputOpParams &param) {
+  TestOpFuncImplWithMultiInputOpParams(infer_impl, prim_name, param);
+  TestOpFuncImplSimpleInferWithMultiInputOpParams(infer_impl, prim_name, param);
 }
 }  // namespace ops
 }  // namespace mindspore
