@@ -11,13 +11,13 @@ lin_space_ext:
 
         Inputs:
             - **start** (Union[float, int]) - Start value of interval.
-              It can be a float or int number.
+              It can be a float or integer.
             - **end** (Union[float, int]) - Last value of interval.
-              It can be a float or int number.
+              It can be a float or integer.
             - **steps** (int) - Number of ticks in the interval, inclusive of start and end.
-                Must be positive int number.
+              Must be positive integer.
             - **dtype** (mindspore.dtype, optional) - The output Tensor data type. Default: ``None`` , where the data type of output
-                Tensor is float32.
+              Tensor is float32.
     
         Outputs:
             Tensor, has the shape of :math:`(steps,)`, with dtype specified by `dtype`.

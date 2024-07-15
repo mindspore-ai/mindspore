@@ -14,7 +14,7 @@ mindspore.mint.linspace
     参数：
         - **start** (Union[float, int]) - 区间的起始值。可以为int或float。
         - **end** (Union[float, int]) - 区间的末尾值。可以为int或float。
-        - **steps** (int) - 间隔中的包含的数值数量，包括区间端点。
+        - **steps** (int) - 间隔中的包含的数值数量，包括区间端点。必须为正整数。
 
     关键字参数：
         - **dtype** (:class:`mindspore.dtype`, 可选) - 期望输出Tensor的类型。默认值： ``None`` ，则输出类型为float32。
