@@ -7,16 +7,19 @@ cosh:
             out_i = \cosh(input_i)
     
         Args:
-            input (Tensor): The input tensor of hyperbolic cosine function, its data type
-                must be float16, float32, float64, complex64 or complex128.
+            input (Tensor): The input tensor of hyperbolic cosine function.
+                Supported dtypes: 
+
+                - GPU/CPU: float16, float32, float64, complex64 or complex128.
+                - Ascend: float16, float32, float64, complex64, complex128 or bfloat16.
     
         Returns:
             Tensor, has the same shape as `input`.
     
-        Raises:
-            TypeError: If the dtype of `input` is not one of the following types:
-                           float16, float32, float64, complex64, complex128.
-            TypeError: If `input` is not a Tensor.
+        :raise TypeError: If `input` is not a Tensor.
+        :raise TypeError:
+            * CPU/GPU: If dtype of `input` is not float16, float32 or float64, complex64, complex128.
+            * Ascend: If dtype of `input` is not float16, float32, float64, complex64, complex128 or bfloat16.
     
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``

@@ -87,6 +87,7 @@ Pointwise Operations
     mindspore.mint.bitwise_xor
     mindspore.mint.ceil
     mindspore.mint.cos
+    mindspore.mint.cosh
     mindspore.mint.div
     mindspore.mint.divide
     mindspore.mint.erf
@@ -106,6 +107,7 @@ Pointwise Operations
     mindspore.mint.rsqrt
     mindspore.mint.sigmoid
     mindspore.mint.sin
+    mindspore.mint.sinh
     mindspore.mint.sqrt
     mindspore.mint.square
     mindspore.mint.sub
