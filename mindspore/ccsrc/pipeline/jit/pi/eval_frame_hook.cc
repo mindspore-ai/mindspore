@@ -16,7 +16,7 @@
 #include "pipeline/jit/pi/eval_frame_hook.h"
 #include "pipeline/jit/pi/pydef.h"
 #include "pipeline/jit/pi/pi_jit_config.h"
-#include "pipeline/jit/pi/common.h"
+#include "pipeline/jit/pi/runtime.h"
 #include "pipeline/jit/pi/external.h"
 
 namespace mindspore {

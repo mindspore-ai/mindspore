@@ -22,7 +22,7 @@
 #include <functional>
 #include <string>
 #include "include/common/utils/python_adapter.h"
-#include "pipeline/jit/pi/common.h"
+#include "pipeline/jit/pi/runtime.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {

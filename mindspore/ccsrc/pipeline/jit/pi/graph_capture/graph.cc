@@ -20,7 +20,7 @@
 #include <string>
 #include <regex>
 #include <utility>
-#include "pipeline/jit/pi/common.h"
+#include "pipeline/jit/pi/runtime.h"
 
 namespace mindspore {
 namespace pijit {

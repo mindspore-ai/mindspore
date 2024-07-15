@@ -22,7 +22,7 @@
 #include <utility>
 #include <unordered_map>
 #include <map>
-#include "pipeline/jit/pi/common.h"
+#include "pipeline/jit/pi/runtime.h"
 #include "pipeline/jit/pi/graph_capture/loop_unrolling.h"
 #include "pipeline/jit/pi/graph_capture/special_func_infer.h"
 #include "pipeline/jit/pi/graph_guard/infer.h"

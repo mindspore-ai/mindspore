@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_PI_JIT_COMMON_H
-#define MINDSPORE_PI_JIT_COMMON_H
+#ifndef MINDSPORE_PI_JIT_RUNTIME_H
+#define MINDSPORE_PI_JIT_RUNTIME_H
 
 #include <vector>
 #include "pipeline/jit/pi/pydef.h"

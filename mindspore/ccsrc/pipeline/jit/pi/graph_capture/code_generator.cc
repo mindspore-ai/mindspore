@@ -21,7 +21,7 @@
 #include "pipeline/jit/pi/graph_capture/cfg.h"
 #include "pipeline/jit/pi/graph_capture/side_effect.h"
 #include "pipeline/jit/pi/utils/utils.h"
-#include "pipeline/jit/pi/common.h"
+#include "pipeline/jit/pi/runtime.h"
 #include "pipeline/jit/pi/external.h"
 #include "pipeline/jit/pi/graph_compiler/compiler.h"
 
