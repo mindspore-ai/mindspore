@@ -14,6 +14,7 @@ mkdir -pv ${CUR_DIR}/do_test
 
 # prepare data for ut
 cd ${CUR_DIR}/do_test
+ls ${BUILD_DIR}/test/
 cp ${BUILD_DIR}/test/lite-test ./
 ENABLE_CONVERTER_TEST=false
 if [ -f "${BUILD_DIR}/test/lite-test-converter" ]; then
@@ -40,6 +41,18 @@ TEST_DATA_DIR=${CUR_DIR}/../../../tests/ut/data/dataset/
 cp -fr $TEST_DATA_DIR/testPK ./data
 
 echo 'run common ut tests'
+
+if [[ "${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "on" || "${MSLITE_ENABLE_CLOUD_FUSION_INFERENCE}" == "ON" || "${MSLITE_ENABLE_CLOUD_INFERENCE}" == "ON" || "${MSLITE_ENABLE_CLOUD_INFERENCE}" == "on" ]]; then
+  echo 'run MSLITE_ENABLE_CLOUD_FUSION_INFERENCE ut test'
+  set +e
+  source /usr/local/Ascend/latest/bin/setenv.bash
+  export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/Ascend/latest/lib64
+  set -e
+  ./lite-test-converter --gtest_filter="ClipMapperTest.*"
+  exit 0
+fi
+
+
 # test cases of MindData
 ./lite-test --gtest_filter="*MindDataTestTensorDE*"
 ./lite-test --gtest_filter="*MindDataTestEager*"
