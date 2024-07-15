@@ -28,6 +28,7 @@ namespace mindspore {
 namespace transform {
 class GeAdapterInfo;
 typedef enum ErrorAclType { kNormalOp, kUnknownOp, kInValidType, kSpecialOp, kInvalidBuildInfo } ErrorAclType;
+void SetParameterFormat(const AnfNodePtr &node, const std::string &format, std::string *old_foramt);
 
 class AclHelper {
  public:

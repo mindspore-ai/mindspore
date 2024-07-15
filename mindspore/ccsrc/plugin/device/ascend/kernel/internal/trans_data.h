@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_TRANSDATA_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_TRANSDATA_H_
 
-#include "plugin/device/ascend/kernel/internal/acme/matmul.h"
+#include <vector>
 
-#include <memory>
-#include "kernel/kernel.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
-acme::AcmeOpPtr AcmeMatmul::CreateKernel(acme::InputsImmutableInfoList inputs, acme::OutputsImmutableInfoList outputs,
-                                         const std::vector<KernelTensor *> &ms_inputs,
-                                         const std::vector<KernelTensor *> &ms_outputs) {
-  acme::MatmulParam param;
-  param.transpose_a = ms_inputs[2]->GetValueWithCheck<bool>();
-  param.transpose_b = ms_inputs[3]->GetValueWithCheck<bool>();
-  return acme::CreateMatmulOp(inputs, outputs, param);
-}
-// MS_ACME_KERNEL_FACTORY_REG(MatMul, AcmeMatmul);
+class InternalTransData : public InternalKernelMod {
+ public:
+  InternalTransData() : InternalKernelMod("TransData") {}
+  ~InternalTransData() = default;
+
+ protected:
+  internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs);
+};
 }  // namespace kernel
 }  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_TRANSDATA_H_

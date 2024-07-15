@@ -30,8 +30,15 @@ internal::OpParamPtr InternalPagedAttention::CreateOpParam(const std::vector<Ker
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
   param_ptr->opId = internal::OpId::PagedAttention;
   internal::MixParam op_param;
-  op_param.mixType = internal::MixParam::MixType::MIX_PAGED_ATTENTION_MASK_ND;
   op_param.maskType = internal::MixParam::MaskType::MASK_TYPE_NONE;
+
+  auto context_ptr = mindspore::MsContext::GetInstance();
+  if (context_ptr->ascend_soc_version() == "ascend310p") {
+    op_param.mixType = internal::MixParam::MixType::MIX_PAGED_ATTENTION_NZ_MASK;
+  } else {
+    op_param.mixType = internal::MixParam::MixType::MIX_PAGED_ATTENTION_MASK_ND;
+  }
+
   op_param.headSize = static_cast<int32_t>(inputs[kIndex5]->GetValueWithCheck<int64_t>());
   op_param.tor = inputs[kIndex6]->GetValueWithCheck<float>();
   op_param.kvHead = static_cast<int32_t>(inputs[kIndex7]->GetValueWithCheck<int64_t>());

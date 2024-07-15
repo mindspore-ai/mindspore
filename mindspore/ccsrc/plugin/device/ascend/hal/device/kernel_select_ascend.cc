@@ -73,13 +73,6 @@ std::string KernelSelectDebugString(const kernel::KernelBuildInfo *build_info,
   return output_buffer.str();
 }
 
-using AclKernelFormatList = std::vector<std::pair<std::vector<string>, std::vector<string>>>;
-AclKernelFormatList GetValidFormat(size_t input_num, size_t output_num) {
-  std::vector<std::string> inputs_format(input_num, kOpFormat_DEFAULT);
-  std::vector<std::string> outputs_format(output_num, kOpFormat_DEFAULT);
-  return {std::make_pair(inputs_format, outputs_format)};
-}
-
 void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> output_format, const CNodePtr &kernel_node,
                      size_t input_index, bool force_fresh = false) {
   MS_EXCEPTION_IF_NULL(real_input_node);
@@ -474,20 +467,10 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
     const auto &info = transform::GeAdapterManager::GetInstance().GetInfo(name, true);
     auto adapter_output_num = info->GetNumStaticOutputsOfMsOpProto();
     process_tuple_output(kernel, true, adapter_output_num);
-  } else if (kernel_type == OPAPI_KERNEL || kernel_type == INTERNAL_KERNEL) {
-    transform::OpApiUtil::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
-                                                  &output_reshape_types);
-    process_tuple_output(kernel, false, 1);
   } else {
-    auto cand_format = GetValidFormat(input_num, output_num);
-    if (cand_format.empty()) {
-      MS_LOG_WITH_NODE(EXCEPTION, kernel) << "The kernel: " << kernel->fullname_with_scope()
-                                          << " does not have a supported dynamic shape format on the Ascend platform.";
-    }
-    input_formats = cand_format.at(kFirstItem).first;
-    output_formats = cand_format.at(kFirstItem).second;
-    input_reshape_types.assign(input_num, "");
-    output_reshape_types.assign(output_num, "");
+    transform::OpApiUtil::GetValidKernelBuildInfo(kernel, &input_formats, &output_formats, &input_reshape_types,
+                                                  &output_reshape_types, kernel_type);
+    process_tuple_output(kernel, false, 1);
   }
 
   std::vector<TypeId> input_types;

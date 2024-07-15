@@ -402,6 +402,13 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
     bool is_weight = common::AnfAlgo::IsParameterWeight(parameter);
     kernel_info->set_feature_map_flag(!is_weight);
     types.push_back(is_weight ? kTypeUnknown : common::AnfAlgo::GetOutputInferDataType(parameter, 0));
+    if (is_weight && parameter->param_info() != nullptr && !parameter->param_info()->storage_format().empty()) {
+      std::string store_fmt = parameter->param_info()->storage_format();
+      MS_LOG(DEBUG) << "Update desc format from set format"
+                    << ", storage format: " << store_fmt << ", pre param: " << node->DebugString()
+                    << ", full name: " << node->ToString();
+      formats[0] = store_fmt;
+    }
   }
   // set parameter initaial device data type
   auto abs = node->abstract();
