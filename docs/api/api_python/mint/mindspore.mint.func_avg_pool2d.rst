@@ -24,10 +24,10 @@ mindspore.mint.nn.functional.avg_pool2d
         Tensor，其shape为 :math:`(N, C, H_{out}, W_{out})` 。
 
         .. math::
-                \begin{array}{ll} \\
-                    H_{out} = \frac{H_{in} + 2 \times padding[0] - kernel_size[0]}{stride[0]} + 1 \\
-                    W_{out} = \frac{W_{in} + 2 \times padding[1] - kernel_size[1]}{stride[1]} + 1
-                \end{array}
+            \begin{array}{ll} \\
+                H_{out} = \frac{H_{in} + 2 \times padding[0] - kernel_size[0]}{stride[0]} + 1 \\
+                W_{out} = \frac{W_{in} + 2 \times padding[1] - kernel_size[1]}{stride[1]} + 1
+            \end{array}
 
     异常：
         - **TypeError** - `input` 不是一个Tensor。
@@ -37,4 +37,4 @@ mindspore.mint.nn.functional.avg_pool2d
         - **ValueError** - `input` 的维度不等于3或4。
         - **ValueError** - `kernel_size` 或 `stride` 小于1。
         - **ValueError** - `padding` 的值小于0。
-        - **ValueError** - `kernel_size`, `padding` 或 `stride` 是tuple且其长度不等于1或2。
+        - **ValueError** - `kernel_size`、 `padding` 或 `stride` 是tuple且其长度不等于1或2。
