@@ -1,0 +1,45 @@
+#operator SilentCheckV2
+silent_check_v2:
+    args:
+        val:
+            dtype: tensor
+        input_grad:
+            dtype: tensor
+        sfda:
+            dtype: tensor
+        step:
+            dtype: tensor
+        c_min_steps:
+            dtype: int
+            default: 7
+        c_thresh_l1:
+            dtype: float
+            default: 1000000.
+        c_coeff_l1:
+            dtype: float
+            default: 100000.
+        c_thresh_l2:
+            dtype: float
+            default: 10000.
+        c_coeff_l2:
+            dtype: float
+            default: 5000.
+        npu_asd_detect:
+            dtype: int
+            default: 1
+    returns:
+        input_grad:
+            dtype: tensor
+        sfda:
+            dtype: tensor
+        step:
+            dtype: tensor
+        result:
+            dtype: tensor
+    labels:
+        side_effect_mem: True
+    function:
+        disable: True
+    dispatch:
+        enable: true
+        Ascend: SilentCheckV2Ascend

@@ -21,6 +21,7 @@
 #include "ops/nn_ops.h"
 #include "ops/other_ops.h"
 #include "ops/structure_ops.h"
+#include "transform/graph_ir/op_declare/op_declare_macro.h"
 
 namespace mindspore::transform {
 // ActsULQ
@@ -562,4 +563,16 @@ CUST_INPUT_MAP(Logit) = {{1, INPUT_DESC(x)}};
 CUST_ATTR_MAP(Logit) = {{"eps", ATTR_DESC(eps, AnyTraits<float>())}};
 CUST_OUTPUT_MAP(Logit) = {{0, OUTPUT_DESC(output)}};
 REG_ADPT_DESC(Logit, prim::kPrimLogit->name(), CUST_ADPT_DESC(Logit))
+
+// SilentCheckV2
+INPUT_MAP(SilentCheckV2) = {
+  {1, INPUT_DESC(val)}, {2, INPUT_DESC(input_grad)}, {3, INPUT_DESC(sfda)}, {4, INPUT_DESC(step)}};
+ATTR_MAP(SilentCheckV2) = EMPTY_ATTR_MAP;
+INPUT_ATTR_MAP(SilentCheckV2) = {
+  {5, ATTR_DESC(c_min_steps, AnyTraits<int64_t>())}, {6, ATTR_DESC(c_thresh_l1, AnyTraits<float>())},
+  {7, ATTR_DESC(c_coeff_l1, AnyTraits<float>())},    {8, ATTR_DESC(c_thresh_l2, AnyTraits<float>())},
+  {9, ATTR_DESC(c_coeff_l2, AnyTraits<float>())},    {10, ATTR_DESC(npu_asd_detect, AnyTraits<int64_t>())}};
+OUTPUT_MAP(SilentCheckV2) = {
+  {0, OUTPUT_DESC(input_grad)}, {1, OUTPUT_DESC(sfda)}, {2, OUTPUT_DESC(step)}, {3, OUTPUT_DESC(result)}};
+REG_ADPT_DESC(SilentCheckV2, prim::kPrimSilentCheckV2->name(), ADPT_DESC(SilentCheckV2))
 }  // namespace mindspore::transform
