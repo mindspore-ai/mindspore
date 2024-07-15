@@ -28,12 +28,12 @@ scatter_add_ext:
             Tensor, has the same shape and type as `input`.
 
         Raises:
-        TypeError: If `index` is neither int32 nor int64.
-        ValueError: If anyone of the rank among `input`, `index` and `src` less than 1.
-        ValueError: If the rank of `input`, `index` and `src` is not the same.
-        ValueError: If, outside dimension `dim`, the size of any dimension of `index` is greater than the size of
-            the corresponding dimension of `input` .
-        ValueError: If the size of any dimension of `src` is less than that of `index`.
+            TypeError: If `index` is neither int32 nor int64.
+            ValueError: If anyone of the rank among `input`, `index` and `src` less than 1.
+            ValueError: If the rank of `input`, `index` and `src` is not the same.
+            ValueError: If, outside dimension `dim`, the size of any dimension of `index` is greater than the size of
+                the corresponding dimension of `input` .
+            ValueError: If the size of any dimension of `src` is less than that of `index`.
 
         Supported Platforms:
             ``Ascend``
@@ -45,13 +45,13 @@ scatter_add_ext:
             >>> input = Tensor(np.array([[1, 2, 3, 4, 5]]), dtype=ms.float32)
             >>> src = Tensor(np.array([[8, 8]]), dtype=ms.float32)
             >>> index = Tensor(np.array([[2, 4]]), dtype=ms.int64)
-            >>> out = ops.ScatterAddExt()(input=input, dim=1, index=index, src=src)
+            >>> out = ops.auto_generate.ScatterAddExt()(input=input, dim=1, index=index, src=src)
             >>> print(out)
             [[1. 2. 11. 4. 13.]]
             >>> input = Tensor(np.zeros((5, 5)), dtype=ms.float32)
             >>> src = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
             >>> index = Tensor(np.array([[0, 0, 0], [2, 2, 2], [4, 4, 4]]), dtype=ms.int64)
-            >>> out = ops.ScatterAddExt()(input=input, dim=0, index=index, src=src)
+            >>> out = ops.auto_generate.ScatterAddExt()(input=input, dim=0, index=index, src=src)
             >>> print(out)
             [[1. 2. 3. 0. 0.]
             [0. 0. 0. 0. 0.]
@@ -61,7 +61,7 @@ scatter_add_ext:
             >>> input = Tensor(np.zeros((5, 5)), dtype=ms.float32)
             >>> src = Tensor(np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]), dtype=ms.float32)
             >>> index = Tensor(np.array([[0, 2, 4], [0, 2, 4], [0, 2, 4]]), dtype=ms.int64)
-            >>> out = ops.ScatterAddExt()(input=input, dim=1, index=index, src=src)
+            >>> out = ops.auto_generate.ScatterAddExt()(input=input, dim=1, index=index, src=src)
             >>> print(out)
             [[1. 0. 2. 0. 3.]
             [4. 0. 5. 0. 6.]

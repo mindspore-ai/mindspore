@@ -3,13 +3,10 @@ lin_space_ext:
   args:
     start:
       dtype: number
-      type_cast: tensor
     end:
       dtype: number
-      type_cast: tensor
     steps:
       dtype: int
-      type_cast: tensor
     dtype:
       dtype: TypeId
       arg_handler: dtype_to_type_id
