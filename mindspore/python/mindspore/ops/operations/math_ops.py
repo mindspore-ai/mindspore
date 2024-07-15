@@ -2566,7 +2566,8 @@ class NMSWithMask(PrimitiveWithInfer):
 
 class Sign(Primitive):
     r"""
-    Performs sign on the tensor element-wise.
+    Performs sign on the tensor element-wise. Notice: when the input is NaN and dtype is float64, the output of this
+    operator is NaN.
 
     .. math::
         sign(x) = \begin{cases} -1, &if\ x < 0 \cr

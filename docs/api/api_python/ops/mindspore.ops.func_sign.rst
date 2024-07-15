@@ -3,7 +3,7 @@ mindspore.ops.sign
 
 .. py:function:: mindspore.ops.sign(input)
 
-    按sign公式逐元素计算输入Tensor。注意：在输入类型为float64时，该算子反向计算结果为NaN。
+    按sign公式逐元素计算输入Tensor。注意：在输入为NaN且数据类型为float64时，该算子计算结果为NaN。
 
     .. math::
         \text{out}_{i} = \begin{cases}
