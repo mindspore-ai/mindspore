@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/kernel/pyboost/customize/cummin.h"
+#include "plugin/device/ascend/kernel/pyboost/customize/cummin_ext.h"
 #include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
@@ -21,21 +21,21 @@
 namespace mindspore {
 namespace kernel {
 namespace pyboost {
-std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr> CumMinAscendCustomize(const std::shared_ptr<OpRunner> &op,
-                                                                               const BaseTensorPtr &input_tensor,
-                                                                               const Int64ImmPtr &axis) {
+std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr> CumminExtAscendCustomize(const std::shared_ptr<OpRunner> &op,
+                                                                                  const BaseTensorPtr &input_tensor,
+                                                                                  const Int64ImmPtr &dim) {
   MS_LOG(DEBUG) << op->primitive()->name() << " call start";
-  OpRunner::InferOpOutput(op, input_tensor, axis);
+  OpRunner::InferOpOutput(op, input_tensor, dim);
   const auto &shape = input_tensor->shape();
   int64_t size = SizeToLong(shape.size());
-  auto axis_imm = GetValue<int64_t>(axis);
-  axis_imm = axis_imm < 0 ? axis_imm + size : axis_imm;
+  auto dim_imm = GetValue<int64_t>(dim);
+  dim_imm = dim_imm < 0 ? dim_imm + size : dim_imm;
   // No need to convert input
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor);
   PyBoostUtils::PrepareOpOutputs(op->device_context(), op->stream_id(), op->outputs());
   // Async
-  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, axis_imm]() {
-    MS_LOG(DEBUG) << "Run device task cummin end";
+  PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([op, input_tensor, dim_imm]() {
+    MS_LOG(DEBUG) << "Run device task cumminext end";
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyBoostDeviceTask,
                                        op->primitive()->name(), false);
     auto device_context = op->device_context();
@@ -44,7 +44,7 @@ std::tuple<tensor::BaseTensorPtr, tensor::BaseTensorPtr> CumMinAscendCustomize(c
     PyBoostUtils::MallocOpInputs(device_context, input_tensor);
     // Malloc for output tensors
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
-    LAUNCH_ACLNN(aclnnCummin, device_context, op->stream_id(), input_tensor, axis_imm, outputs[0], outputs[1]);
+    LAUNCH_ACLNN(aclnnCummin, device_context, op->stream_id(), input_tensor, dim_imm, outputs[0], outputs[1]);
     MS_LOG(DEBUG) << "Run device task " << op->primitive()->name() << " end";
   }));
   return std::make_tuple(op->outputs()[0], op->outputs()[1]);

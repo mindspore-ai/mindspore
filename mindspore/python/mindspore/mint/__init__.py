@@ -152,7 +152,7 @@ from mindspore.ops.function.math_func import greater_equal
 # 59
 from mindspore.ops.functional import square
 # 60
-from mindspore.ops.function.math_func import cummax, cummin
+from mindspore.ops.function.math_func import cummax
 # 61
 from mindspore.ops.functional import rsqrt
 # 62
@@ -196,7 +196,7 @@ from mindspore.ops.function import arange_ext as arange
 # 81
 from mindspore.ops.auto_generate import index_select_ext as index_select
 # 82
-
+from mindspore.ops.auto_generate import cummin_ext as cummin
 # 83
 from mindspore.ops.function.array_func import narrow_ext as narrow
 # 84

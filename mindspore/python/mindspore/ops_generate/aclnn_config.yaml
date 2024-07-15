@@ -81,7 +81,7 @@ IncreFlashAttention: 'aclnnIncreFlashAttentionV4'
 # 3
 
 # 4
-
+CumminExt: 'aclnnCummin'
 # 5
 
 # 6

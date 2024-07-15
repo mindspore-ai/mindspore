@@ -135,7 +135,7 @@ NodePtrList CumMaxMinGrad(BpropBuilder *ib) {
 
   auto dout = ib->GetInput(kIndex3);
   auto dout0 = ib->TupleGetItem(dout, kIndex0);
-  auto zero_cum = ib->ZerosLike(x);
+  auto zero_cum = ib->Emit("ZerosLikeExt", {x, ib->Value(static_cast<int64_t>(ib->GetDtypeId(x)))});
   return {ib->Emit("ScatterAddExt", {zero_cum, axis, indices, dout0}), ib->OutZeros(axis)};
 }
 
@@ -1253,6 +1253,8 @@ REG_BPROP_BUILDER("CumsumExt").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Cummax").SetBody(BODYFUNC(ib) { return CumMaxMinGrad(ib); });
 
 REG_BPROP_BUILDER("Cummin").SetBody(BODYFUNC(ib) { return CumMaxMinGrad(ib); });
+
+REG_BPROP_BUILDER("CumminExt").SetBody(BODYFUNC(ib) { return CumMaxMinGrad(ib); });
 
 REG_BPROP_BUILDER("MulNoNan").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);

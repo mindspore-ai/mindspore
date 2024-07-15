@@ -5490,6 +5490,26 @@ def frac(x):
 #####################################
 
 
+@_primexpr
+def _create_cummin_perm(axis, x_shape):
+    """Insure axis is in [-len(x_shape),len(s_shape)-1]"""
+
+    def _check(axis, len_axis):
+        if not isinstance(axis, int):
+            raise TypeError(f"The date type of 'axis' must be Int, but got {axis}.")
+        if axis < -len_axis or axis > len_axis:
+            raise ValueError(f"The value of axis must be in [{-len_axis}, {len_axis}], but got {axis}.")
+
+    len_axis = len(x_shape)
+    _check(axis, len_axis)
+    prem = [i for i in range(len_axis)]
+    if axis < 0:
+        axis = axis + len_axis
+    prem[0], prem[axis] = axis, 0
+    prem = tuple(prem)
+    return prem
+
+
 def cummin(input, axis):
     r"""
     Returns a tuple (values,indices) where 'values' is the cumulative minimum value of input Tensor `input`
@@ -5530,8 +5550,17 @@ def cummin(input, axis):
     """
     if isinstance(axis, bool):
         raise TypeError(f"For 'cummin', the date type of 'axis' must be Int, but got {axis}.")
-    cummin_op = _get_cache_prim(Cummin)(axis=axis)
-    return cummin_op(input)
+    cummin_op = _get_cache_prim(Cummin)(axis=0)
+    if axis == 0:
+        out1, out2 = cummin_op(input)
+    else:
+        x_shape = shape_(input)
+        prem = _create_cummin_perm(axis, x_shape)
+        input = transpose_(input, prem)
+        out1, out2 = cummin_op(input)
+        out1 = transpose_(out1, prem)
+        out2 = transpose_(out2, prem)
+    return [out1, out2]
 
 
 def cumsum(x, axis, dtype=None):
