@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SKIP_FIRST_EPOCH_SAMPLER_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SKIP_FIRST_EPOCH_SAMPLER_H_
 
+#include <limits>
+
 #include <nlohmann/json.hpp>
 
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
@@ -25,10 +27,11 @@ namespace dataset {
 class SkipFirstEpochSamplerRT : public SequentialSamplerRT {
  public:
   // Constructor
-  using SequentialSamplerRT::SequentialSamplerRT;
+  SkipFirstEpochSamplerRT(int64_t start_index, int64_t num_samples,
+                          int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   // Destructor.
-  ~SkipFirstEpochSamplerRT() = default;
+  ~SkipFirstEpochSamplerRT() override = default;
 
   Status GetNextSample(TensorRow *out) override;
 
@@ -55,6 +58,7 @@ class SkipFirstEpochSamplerRT : public SequentialSamplerRT {
   Status to_json(nlohmann::json *out_json) override;
 
  private:
+  int64_t sample_need_to_skip_;
   bool first_epoch_done_ = false;
 };
 }  // namespace dataset

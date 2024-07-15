@@ -57,7 +57,8 @@ TEST_F(MindDataTestStandAloneSampler, TestDistributedSampler) {
                         {0, 17, 4, 10, 14, 8, 15}, {13, 9, 16, 3, 2, 19, 12}, {1, 11, 6, 18, 7, 5, 0}};
   for (int i = 0; i < 6; i++) {
     std::shared_ptr<Tensor> t;
-    Tensor::CreateFromMemory(TensorShape({7}), DataType(DataType::DE_INT64), (unsigned char *)(res[i]), &t);
+    EXPECT_EQ(Tensor::CreateFromMemory(TensorShape({7}), DataType(DataType::DE_INT64), (unsigned char *)(res[i]), &t),
+              Status::OK());
     row.push_back(t);
   }
   MockStorageOp mock(20);
@@ -67,8 +68,8 @@ TEST_F(MindDataTestStandAloneSampler, TestDistributedSampler) {
   for (int i = 0; i < 6; i++) {
     std::shared_ptr<SamplerRT> sampler =
       std::make_shared<DistributedSamplerRT>(3, i % 3, (i < 3 ? false : true), num_samples);
-    sampler->HandshakeRandomAccessOp(&mock);
-    sampler->GetNextSample(&sample_row);
+    EXPECT_EQ(sampler->HandshakeRandomAccessOp(&mock), Status::OK());
+    EXPECT_EQ(sampler->GetNextSample(&sample_row), Status::OK());
     tensor = sample_row[0];
     MS_LOG(DEBUG) << (*tensor);
     if (i < 3) {  // This is added due to std::shuffle()
@@ -85,26 +86,26 @@ TEST_F(MindDataTestStandAloneSampler, TestStandAoneSequentialSampler) {
   MockStorageOp mock(5);
   uint64_t res[5] = {0, 1, 2, 3, 4};
   std::shared_ptr<Tensor> label1, label2;
-  CreateINT64Tensor(&label1, 3, reinterpret_cast<unsigned char *>(res));
-  CreateINT64Tensor(&label2, 2, reinterpret_cast<unsigned char *>(res + 3));
+  EXPECT_EQ(CreateINT64Tensor(&label1, 3, reinterpret_cast<unsigned char *>(res)), Status::OK());
+  EXPECT_EQ(CreateINT64Tensor(&label2, 2, reinterpret_cast<unsigned char *>(res + 3)), Status::OK());
   int64_t num_samples = 0;
   int64_t start_index = 0;
   std::shared_ptr<SamplerRT> sampler = std::make_shared<SequentialSamplerRT>(start_index, num_samples, 3);
 
   std::shared_ptr<Tensor> tensor;
   TensorRow sample_row;
-  sampler->HandshakeRandomAccessOp(&mock);
-  sampler->GetNextSample(&sample_row);
+  EXPECT_EQ(sampler->HandshakeRandomAccessOp(&mock), Status::OK());
+  EXPECT_EQ(sampler->GetNextSample(&sample_row), Status::OK());
   tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label1));
-  sampler->GetNextSample(&sample_row);
+  EXPECT_EQ(sampler->GetNextSample(&sample_row), Status::OK());
   tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label2));
-  sampler->ResetSampler();
-  sampler->GetNextSample(&sample_row);
+  EXPECT_EQ(sampler->ResetSampler(), Status::OK());
+  EXPECT_EQ(sampler->GetNextSample(&sample_row), Status::OK());
   tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label1));
-  sampler->GetNextSample(&sample_row);
+  EXPECT_EQ(sampler->GetNextSample(&sample_row), Status::OK());
   tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label2));
 }
@@ -118,36 +119,36 @@ TEST_F(MindDataTestStandAloneSampler, TestStandAloneSkipFirstEpochSampler) {
   MockStorageOp mock(5);
   uint64_t res[5] = {0, 1, 2, 3, 4};
   std::shared_ptr<Tensor> label, label1, label2;
-  CreateINT64Tensor(&label, 5, reinterpret_cast<unsigned char *>(res));
-  CreateINT64Tensor(&label1, 3, reinterpret_cast<unsigned char *>(res));
-  CreateINT64Tensor(&label2, 2, reinterpret_cast<unsigned char *>(res + 3));
+  EXPECT_EQ(CreateINT64Tensor(&label, 5, reinterpret_cast<unsigned char *>(res)), Status::OK());
+  EXPECT_EQ(CreateINT64Tensor(&label1, 3, reinterpret_cast<unsigned char *>(res)), Status::OK());
+  EXPECT_EQ(CreateINT64Tensor(&label2, 2, reinterpret_cast<unsigned char *>(res + 3)), Status::OK());
   int64_t num_samples = 0;
   int64_t start_index = 0;
   std::shared_ptr<SamplerRT> sampler = std::make_shared<SkipFirstEpochSamplerRT>(start_index, num_samples, 3);
 
   std::shared_ptr<Tensor> tensor;
   TensorRow sample_row;
-  sampler->HandshakeRandomAccessOp(&mock);
-  sampler->GetNextSample(&sample_row);
+  EXPECT_EQ(sampler->HandshakeRandomAccessOp(&mock), Status::OK());
+  EXPECT_EQ(sampler->GetNextSample(&sample_row), Status::OK());
   tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label1));
 
-  sampler->GetNextSample(&sample_row);
+  EXPECT_EQ(sampler->GetNextSample(&sample_row), Status::OK());
   tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label2));
 
   // Test output after Reset
-  sampler->ResetSampler();
-  sampler->GetNextSample(&sample_row);
+  EXPECT_EQ(sampler->ResetSampler(), Status::OK());
+  EXPECT_EQ(sampler->GetNextSample(&sample_row), Status::OK());
   tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label));
 
   // Test different start index
   start_index = 2;
-  CreateINT64Tensor(&label, 3, reinterpret_cast<unsigned char *>(res + 2));
+  EXPECT_EQ(CreateINT64Tensor(&label, 3, reinterpret_cast<unsigned char *>(res + 2)), Status::OK());
   sampler = std::make_shared<SkipFirstEpochSamplerRT>(start_index, num_samples, 3);
-  sampler->HandshakeRandomAccessOp(&mock);
-  sampler->GetNextSample(&sample_row);
+  EXPECT_EQ(sampler->HandshakeRandomAccessOp(&mock), Status::OK());
+  EXPECT_EQ(sampler->GetNextSample(&sample_row), Status::OK());
   tensor = sample_row[0];
   EXPECT_TRUE((*tensor) == (*label));
 }

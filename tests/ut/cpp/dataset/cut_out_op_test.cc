@@ -35,9 +35,11 @@ TEST_F(MindDataTestCutOutOp, TestOp) {
   auto op = std::make_unique<CutOutOp>(50, 50, 5, false);
 
   EXPECT_TRUE(op->OneToOne());
-  Status s = op->Compute(input_tensor_, &output_tensor_);
-  EXPECT_EQ(input_tensor_->shape()[0], output_tensor_->shape()[0]);
-  EXPECT_EQ(input_tensor_->shape()[1], output_tensor_->shape()[1]);
-  EXPECT_EQ(input_tensor_->shape()[2], output_tensor_->shape()[2]);
-  EXPECT_EQ(s, Status::OK());
+  auto input_shape = input_tensor_->shape();
+  EXPECT_EQ(op->Compute(input_tensor_, &output_tensor_), Status::OK());
+  EXPECT_EQ(input_shape.Size(), 3);
+  EXPECT_EQ(output_tensor_->shape().Size(), 3);
+  EXPECT_EQ(input_shape[0], output_tensor_->shape()[0]);
+  EXPECT_EQ(input_shape[1], output_tensor_->shape()[1]);
+  EXPECT_EQ(input_shape[2], output_tensor_->shape()[2]);
 }

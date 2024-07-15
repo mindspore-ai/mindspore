@@ -39,8 +39,10 @@ TEST_F(MindDataTestRandomRotationOp, TestOp) {
   bool expand = false;
   auto op = std::make_unique<RandomRotationOp>(sDegree, eDegree, InterpolationMode::kLinear, expand, center, 0, 0, 0);
   EXPECT_TRUE(op->OneToOne());
-  Status s = op->Compute(input_tensor_, &output_tensor);
-  EXPECT_TRUE(s.IsOk());
-  EXPECT_EQ(input_tensor_->shape()[0], output_tensor->shape()[0]);
-  EXPECT_EQ(input_tensor_->shape()[1], output_tensor->shape()[1]);
+  auto input_shape = input_tensor_->shape();
+  EXPECT_EQ(op->Compute(input_tensor_, &output_tensor), Status::OK());
+  EXPECT_EQ(input_shape.Size(), 3);
+  EXPECT_EQ(output_tensor->shape().Size(), 3);
+  EXPECT_EQ(input_shape[0], output_tensor->shape()[0]);
+  EXPECT_EQ(input_shape[1], output_tensor->shape()[1]);
 }

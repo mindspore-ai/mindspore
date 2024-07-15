@@ -34,7 +34,7 @@ class SequentialSamplerRT : public SamplerRT {
                       int64_t samples_per_tensor = std::numeric_limits<int64_t>::max());
 
   // Destructor.
-  ~SequentialSamplerRT() = default;
+  ~SequentialSamplerRT() override = default;
 
   // init sampler, called by python
   Status InitSampler() override;
