@@ -3261,7 +3261,7 @@ static std::unique_ptr<GraphBuilder> GenerateRootGraph(const py::object &callabl
     return nullptr;
   }
   auto jcr = JitCompileResults::Create(frame->f_code);
-  *jcr->conf() = conf;
+  jcr->set_conf(std::make_shared<GraphJitConfig>(conf));
   jcr->set_code(jcr->codehub()->AddOptTarget(OptOption::CreateOptionByPoint(jcr)));
 
   auto res = std::make_unique<GraphBuilder>(frame);

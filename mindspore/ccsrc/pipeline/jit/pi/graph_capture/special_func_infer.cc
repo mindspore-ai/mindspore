@@ -288,7 +288,7 @@ static bool InferGradOperation(CallNode *call_node, AObject::MindsporeFlag f) {
   }
   (void)pi_jit_should_compile(func, py::dict(), py::none());
   auto jcr = GetJitCompileResults(PyFunction_GET_CODE(func.ptr()));
-  *jcr->conf() = call_node->GetGraph()->Config();
+  jcr->set_conf(std::make_shared<GraphJitConfig>(call_node->GetGraph()->Config()));
   return false;
 }
 
