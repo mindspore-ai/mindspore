@@ -242,9 +242,11 @@ from mindspore.ops.function.math_func import arccos_ext as arccos
 from mindspore.ops.function.math_func import acosh_ext as acosh
 from mindspore.ops.function.math_func import arccosh_ext as arccosh
 # 172
-
+from mindspore.ops.function.math_func import asin_ext as asin
+from mindspore.ops.function.math_func import arcsin_ext as arcsin
 # 173
-
+from mindspore.ops.function.math_func import asinh_ext as asinh
+from mindspore.ops.function.math_func import arcsinh_ext as arcsinh
 # 174
 
 # 175
@@ -1136,9 +1138,11 @@ __all__ = [
     'acosh',
     'arccosh',
     # 172
-
+    'asin',
+    'arcsin',
     # 173
-
+    'asinh',
+    'arcsinh',
     # 174
 
     # 175

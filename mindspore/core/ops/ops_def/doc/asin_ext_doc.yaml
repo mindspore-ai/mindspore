@@ -1,10 +1,10 @@
-acos_ext:
+asin_ext:
     description: |
-        Computes arccosine of input tensors element-wise.
+        Computes arcsine of input tensors element-wise.
 
         .. math::
 
-            out_i = \cos^{-1}(input_i)
+            out_i = \sin^{-1}(input_i)
 
         Args:
             input (Tensor): The shape of tensor is
@@ -25,6 +25,6 @@ acos_ext:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> input = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
-            >>> output = ops.acos_ext(input)
+            >>> output = ops.asin_ext(input)
             >>> print(output)
-            [0.7377037  1.5307857 1.2661037 0.9764114]
+            [0.8330927  0.04001068  0.30469266  0.59438497 ]

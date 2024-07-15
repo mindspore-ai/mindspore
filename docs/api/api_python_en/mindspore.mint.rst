@@ -81,6 +81,10 @@ Pointwise Operations
     mindspore.mint.arccos
     mindspore.mint.acosh
     mindspore.mint.arccosh
+    mindspore.mint.asin
+    mindspore.mint.arcsin
+    mindspore.mint.asinh
+    mindspore.mint.arcsinh
     mindspore.mint.bitwise_and
     mindspore.mint.bitwise_or
     mindspore.mint.bitwise_xor
