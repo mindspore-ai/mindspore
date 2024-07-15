@@ -316,7 +316,6 @@ class ApiCachePool {
     }                                                                                                              \
     uint64_t workspace_size = 0;                                                                                   \
     transform::aclOpExecutor *executor = nullptr;                                                                  \
-    std::function<void()> release_func = nullptr;                                                                  \
     uint64_t *workspace_size_addr = &workspace_size;                                                               \
     transform::aclOpExecutor **executor_addr = &executor;                                                          \
     auto converted_params = transform::ConvertTypes(args..., workspace_size_addr, executor_addr);                  \

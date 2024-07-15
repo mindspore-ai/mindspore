@@ -41,7 +41,9 @@ bool ReduceSumAclnnKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                      const std::vector<KernelTensor *> &workspace,
                                      const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  RunOp(stream_ptr, workspace, inputs[kIndex0], dims_, keep_dim_, dtype_, outputs[kIndex0]);
+  if (!need_skip_execute_) {
+    RunOp(stream_ptr, workspace, inputs[kIndex0], dims_, keep_dim_, dtype_, outputs[kIndex0]);
+  }
   return true;
 }
 

@@ -34,7 +34,6 @@ class DropoutExtAscend : public AclnnKernelMod {
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
  private:
-  DEFINE_GET_WORKSPACE_FOR_RESIZE()
   DEFINE_GET_WORKSPACE_FOR_OPS(aclnnDropoutGenMaskV2, GenMask)
   DEFINE_GET_WORKSPACE_FOR_OPS(aclnnDropoutDoMask, DoMask)
   const std::string dropout_gen_mask_{"aclnnDropoutGenMaskV2"};
