@@ -2696,27 +2696,6 @@ REG_BPROP_BUILDER("Min").SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
-DEF_PURE_SHAPE_CALC(g_repeat_interleave_shape)
-  .SetCalc([](const ShapeArray &inputs) -> ShapeArray {
-    auto shape_out = inputs.at(kIndex0);
-    auto repeats = inputs.at(kIndex1)[0];
-    auto axis = inputs.at(kIndex2)[0];
-    axis = axis < 0 ? axis + SizeToLong(shape_out.size()) : axis;
-    if (repeats == 0) {
-      MS_EXCEPTION(RuntimeError) << "repeats must be not zero";
-    }
-    shape_out[axis] = shape_out[axis] / repeats;
-    shape_out.insert(shape_out.begin() + axis, repeats);
-    return {shape_out, {axis}};
-  })
-  .SetInfer([](const ShapeArray &inputs, const HashSet<size_t> &unknown_inputs) -> std::vector<int64_t> {
-    auto shape_out = inputs.at(kIndex0);
-    if (IsDynamicRank(shape_out)) {
-      return {-1, 1};
-    }
-    return {SizeToLong(shape_out.size()) + 1, 1};
-  });
-
 REG_BPROP_BUILDER("RepeatInterleaveInt").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto repeats = ib->GetInput(kIndex1);
@@ -2728,11 +2707,9 @@ REG_BPROP_BUILDER("RepeatInterleaveInt").SetUnusedInputs({i0}).SetBody(BODYFUNC(
   if (axis_node->isa<None>()) {
     axis = ib->Value(static_cast<int64_t>(-1));
   }
-  auto shape_array = ib->ShapeCalc(g_repeat_interleave_shape, {dout, repeats, axis}, {1, 2});
-  auto new_shape = shape_array[0];
-  auto new_axis = shape_array[1];
-  auto reshape = ib->Reshape(dout, new_shape);
-  auto result = ib->Reshape(ib->ReduceSum(reshape, new_axis), x_shape);
+  auto new_repeats = ib->Reshape(ib->ScalarToTensor(repeats, kInt64), ib->Value(std::vector<int64_t>{1}));
+  auto grad = ib->Emit("RepeatInterleaveGrad", {dout, new_repeats, axis});
+  auto result = ib->Reshape(grad, x_shape);
   return {result, ib->OutZeros(repeats), ib->OutZeros(axis), ib->OutZeros(output_size)};
 });
 
