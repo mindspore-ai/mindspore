@@ -4,23 +4,74 @@ incre_flash_attention:
 
     B -- Batch size
 
+    N -- Num heads
+
     S -- Sequence length
+
+    D -- Head dim
 
     H -- Hidden size
 
+    Self attention constructs an attention model based on the relationship between input samples themselves. The
+    principle is to assume that there is a length of the input sample sequence :math:`x` of :math:`n`, and each
+    element of :math:`x` is a :math:`d` dimensional vector, which can be viewed as a token embedding. This sequence
+    can be transformed through 3 weight matrices to obtain 3 matrices with dimensions of :math:`n\times d`. The self
+    attention calculation formula is defined as:
+
+    .. math::
+        Attention(Q,K,V)=Softmax(\frac{QK^{T} }{\sqrt{d} } )V
+
+    where the product of :math:`Q` and :math:`K^{T}` represents the attention of input :math:`x`. To avoid the value
+    becoming too large, it is usually scaled by dividing it by the square root of :math:`d` and perform softmax
+    normalization on each row, yields a matrix of :math:`n\times d` after multiplying :math:`V`.
+
     .. warning::
         This is an experimental API that is subject to change or deletion.
-        If there is no input parameter and no default value, None needs to be passed.
+
+    Note:
+      - If there is no input parameter and no default value, None needs to be passed.
+      - The shape of the tensor corresponding to the key and value parameters needs to be completely consistent.
+      - :math:`N` of parameter query is equal with numHeads. :math:`N` of parameter key and parameter value is equal
+        with numKeyValueHeads. numHeads is a multiple of numKeyValueHeads.
+      - When the data type of query, key, and value is FLOAT16 and the data type of output is INT8, the input
+        parameter quantScale2 is required and quantOffset2 is optional.
+      - The pseShift data type needs to be consistent with the query data type, and only supports D-axis alignment,
+        which means that the D-axis can be divided by 16.
+      - Page attention:
+
+        - The necessary condition for enabling page attention is that the blocktable exists, and the key
+          and value are arranged in a contiguous memory according to the index in the blocktable. The support for key
+          and value dtypes is FLOAT16/BFLOAT16/INT8.
+        - In the enabling scenario of page attention, 16 alignment is required when input types of key and value are
+          FLOAT16/BFLOAT16, and 32 alignment is required when input types of key and value are INT8. It is
+          recommended to use 128.
+        - The maximum maxBlockNumPerSeq currently supported by blocktable is 16k, and exceeding 16k will result in
+          interception and error messages; If you encounter :math:`S` being too large and causing maxBlockNumPerSeq
+          to exceed 16k, you can increase the blockSize to solve the problem.
+        - The multiplication of all dimensions of the shape of the parameters key and value in the page attention
+          scenario cannot exceed the representation range of int32.
+        - When performing per-channel post quantization, page attention cannot be enabled simultaneously.
+      - kvPaddingSize:
+
+        - The calculation formula for the starting point of kvCache transfer is
+          :math:`Smax-kvPaddingSize-actualSeqLengths`. The calculation formula for the transfer endpoint of kvCache
+          is :math:`Smax-kvPaddingSize`. When the starting or ending point of the kvCache transfer is less than 0,
+          the returned data result is all 0.
+        - When kvPaddingSize is less than 0, it will be set to 0.
+        - kvPaddingSize needs to be enabled together with the actualSeqLengths parameter, otherwise it is considered
+          as the kv right padding scene.
+        - It needs to be enabled together with the attenMask parameter and ensure that the meaning of attenMask is
+          correct, that is, it can correctly hide invalid data. Otherwise, it will introduce accuracy issues.
 
     Args:
-        - **num_heads** (int) - The number of heads.
-        - **input_layout** (str) - the data layout of the input qkv, support `(BSH)` and `(BNSD)`. Default `BSH`.
-        - **scale_value** (double) - The scale value indicating the scale coefficient, which is used as the scalar of
+        num_heads (int): The number of heads.
+        input_layout (str): the data layout of the input qkv, support `(BSH)` and `(BNSD)`. Default: `BSH`.
+        scale_value (double): The scale value indicating the scale coefficient, which is used as the scalar of
             Muls in the calculation. Default: 1.0.
-        - **num_key_value_heads** (int) - head numbers of key/value which are used in GQA algorithm.
-            The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
-        - **block_size** (int) - Default: 0.
-        - **inner_precise** (int) - Default: 1.
+        num_key_value_heads (int): Head numbers of key/value which are used in GQA algorithm.
+            The value 0 indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+        block_size (int): The maximum number of tokens stored in each block of KV in page attention. Default: 0.
+        inner_precise (int): Default: 1.
 
     Inputs:
         - **query** (Tensor) - The query tensor with data type of float16 or bfloat16.
@@ -33,21 +84,42 @@ incre_flash_attention:
           Input tensor of shape :math:`(B, S)` / :math:`(B, 1, S)` / :math:`(B, 1, 1, S)`.
         - **actual_seq_lengths** (Tensor) - Describe actual sequence length of each input with data type of int32 or
           int64.
-        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or bfloat16.
+        - **pse_shift** (Tensor) - The position encoding tensor with data type of float16 or bfloat16. Input tensor of
+          shape :math:`(1, N, 1, S)` / :math:`(B, N, 1, S)`.
         - **dequant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of uint64 or float32. It is
           disable now.
         - **quant_scale1** (Tensor) - Quantitative parametor, the tensor with data type of float32. It is disable now.
         - **dequant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of uint64 or float32. It is
           disable now.
-        - **quant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of float32.
-        - **quant_offset2** (Tensor) - Quantitative parametor, the tensor with data type of float32.
+        - **quant_scale2** (Tensor) - Quantitative parametor, the tensor with data type of float32, supporting
+          per-tensor and per-channel.
+        - **quant_offset2** (Tensor) - Quantitative parametor, the tensor with data type of float32, supporting
+          per-tensor and per-channel.
         - **antiquant_scale** (Tensor) - Quantitative parametor, the tensor with data type of float16 or bfloat16.
+          Shape is :math:`(2, N, 1, D)` when input layout is BNSD or :math:`(2, H)` when input layout is BSH.
         - **antiquant_offset** (Tensor) - Quantitative parametor, the tensor with data type of float16 or bfloat16.
+          Shape is :math:`(2, N, 1, D)` when input layout is BNSD or :math:`(2, H)` when input layout is BSH.
         - **block_table** (Tensor) - The tensor with data type of int32.
         - **kv_padding_size** (Tensor) - The tensor with data type of int64.
 
     Outputs:
-        - **attention_out** (Tensor) - Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
+        attention_out (Tensor), Input tensor of shape :math:`(B, 1, H)` / :math:`(B, N, 1, D)`.
 
     Supported Platforms:
         ``Ascend``
+
+    Examples:
+        >>> from mindspore import ops
+        >>> from mindspore.common import Tensor
+        >>> from mindspore.common import dtype as mstype
+        >>> import numpy as np
+        >>> from mindspore.ops.auto_generate import IncreFlashAttention
+        >>> B, N, S, D, kvN = 1, 4, 10, 128, 1
+        >>> query = Tensor(np.random.randn(B, 1, N * D), mstype.float16)
+        >>> key = [Tensor(np.random.randn(B, S, kvN * D), mstype.float16)]
+        >>> value = [Tensor(np.random.randn(B, S, kvN * D), mstype.float16)]
+        >>> ifa_ms = IncreFlashAttention(num_heads=N, num_key_value_heads=kvN)
+        >>> attn_out = ifa_ms(query, key, value)
+        >>> attn_out
+        Tensor(shape=[1, 1, 512], dtype=Float16, value=
+        [[[-1.5161e-01, -2.1814e-01, -1.6284e-01 ...  1.0283e+00, -1.1143e+00, -1.7607e+00]]])
