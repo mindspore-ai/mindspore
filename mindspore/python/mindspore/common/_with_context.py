@@ -39,7 +39,7 @@ class _PyNativeCellCall:
             _pynative_executor.set_eval_use_dynamic_shape_process(True)
 
         # bprop cell in middle
-        if hasattr(self.obj, "bprop") and not self._is_call_new_graph and _pynative_executor.grad_flag():
+        if self.obj.has_bprop and not self._is_call_new_graph and _pynative_executor.grad_flag():
             _pynative_executor.new_graph(self.obj, *self.args, **self.kwargs)
 
         # Set mixed precision
@@ -64,7 +64,7 @@ class _PyNativeCellCall:
             _pynative_executor.set_eval_use_dynamic_shape_process(False)
 
         # bprop cell in middle
-        if hasattr(self.obj, "bprop") and not self._is_call_new_graph and _pynative_executor.grad_flag():
+        if self.obj.has_bprop and not self._is_call_new_graph and _pynative_executor.grad_flag():
             _pynative_executor.end_graph(self.obj, self.output, *self.args, **self.kwargs)
 
         # mixed precision reset

@@ -168,6 +168,10 @@ class Cell(Cell_):
         self._is_check_and_refresh = False
         self._amp_level = ""
         self._init_flag = False
+        self._shard_fn = None
+        self.has_bprop = False
+        if hasattr(self, "bprop"):
+            self.has_bprop = True
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -487,7 +491,7 @@ class Cell(Cell_):
             cast_inputs = self._run_forward_pre_hook(cast_inputs)
         if self._enable_backward_hook:
             output = self._backward_hook_construct(*cast_inputs, **kwargs)
-        elif hasattr(self, "_shard_fn"):
+        elif self._shard_fn is not None:
             output = self._shard_fn(*cast_inputs, **kwargs)
         else:
             if self.recompute_cell is not None:
@@ -644,7 +648,7 @@ class Cell(Cell_):
 
         shard_fn = Shard()
         fn = shard_fn(self, in_strategy, out_strategy, parameter_plan, device, level)
-        object.__setattr__(self, "_shard_fn", fn)
+        self._shard_fn = fn
         return fn
 
     def auto_cast_inputs(self, inputs):
@@ -716,7 +720,19 @@ class Cell(Cell_):
             self._init_flag = True
 
         with _PyNativeCellCall(self, args, kwargs) as call:
-            output = self._run_construct(args, kwargs)
+            if self._enable_forward_pre_hook:
+                args = self._run_forward_pre_hook(args)
+            if self._enable_backward_hook:
+                output = self._backward_hook_construct(*args, **kwargs)
+            elif self._shard_fn is not None:
+                output = self._shard_fn(*args, **kwargs)
+            else:
+                if self.recompute_cell is not None:
+                    output = self.recompute_cell(*args, **kwargs)
+                else:
+                    output = self.construct(*args, **kwargs)
+            if self._enable_forward_hook:
+                output = self._run_forward_hook(args, output)
             call.output = output
 
         return output
