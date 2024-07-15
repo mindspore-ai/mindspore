@@ -81,6 +81,9 @@ Tensor
     mindspore.mint.arccos
     mindspore.mint.acosh
     mindspore.mint.arccosh
+    mindspore.mint.bitwise_and
+    mindspore.mint.bitwise_or
+    mindspore.mint.bitwise_xor
     mindspore.mint.ceil
     mindspore.mint.cos
     mindspore.mint.div
