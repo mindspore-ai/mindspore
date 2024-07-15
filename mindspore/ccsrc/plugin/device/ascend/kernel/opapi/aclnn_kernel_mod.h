@@ -103,7 +103,7 @@ using CacheTuple = std::tuple<uint64_t, aclOpExecutor *, ProcessCache, size_t>;
                                                                                                                       \
   template <typename... Args>                                                                                         \
   void RunOp##FUNC_NAME(void *stream_ptr, const std::vector<KernelTensor *> &workspace, const Args &... args) {       \
-    auto [executor, release_func] = GetExecutor(args...);                                                             \
+    auto [executor, release_func] = GetExecutor##FUNC_NAME(args...);                                                  \
     runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kKernel, runtime::ProfilerEvent::kAclnnRunOp,         \
                                        op_type_##FUNC_NAME##_);                                                       \
     if (workspace_size_list_.empty()) {                                                                               \

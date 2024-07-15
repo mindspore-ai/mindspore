@@ -26,8 +26,9 @@ void DropoutExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &input
   seed_value_ = 0;
   offset_value_ = 0;
   dtype_value_ = inputs[kIndex0]->dtype_id();
-  GetWorkspaceForResize(inputs[kIndex0], p_value_, seed_value_, offset_value_, dtype_value_, outputs[kIndex0],
-                        outputs[kIndex1]);
+  GetWorkspaceForResizeGenMask(inputs[kIndex0]->GetShapeVector(), p_value_, seed_value_, offset_value_, dtype_value_,
+                               outputs[kIndex1]);
+  GetWorkspaceForResizeDoMask(inputs[kIndex0], outputs[kIndex1], p_value_, outputs[kIndex0]);
 }
 
 bool DropoutExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
