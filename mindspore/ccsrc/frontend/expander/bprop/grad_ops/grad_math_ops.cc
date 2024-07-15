@@ -903,6 +903,19 @@ REG_BPROP_BUILDER("Asin").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   return {dx};
 });
 
+REG_BPROP_BUILDER("AsinExt").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  NodePtr dx;
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'Asin', gradient not support for complex type currently.";
+  } else {
+    dx = dout * ib->Emit("Rsqrt", {ib->Sub(ib->Tensor(1, ib->GetDtype(x)), ib->Square(x))});
+  }
+  return {dx};
+});
+
 REG_BPROP_BUILDER("AsinGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto grad = ib->GetInput(kIndex1);
@@ -923,6 +936,19 @@ REG_BPROP_BUILDER("Asinh").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto dx = ib->Emit("AsinhGrad", {out, dout});
+  return {dx};
+});
+
+REG_BPROP_BUILDER("AsinhExt").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto dout = ib->GetInput(kIndex2);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  NodePtr dx;
+  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+    MS_EXCEPTION(TypeError) << "For 'Asinh', gradient not support for complex type currently.";
+  } else {
+    dx = dout * ib->Emit("Rsqrt", {ib->Add(ib->Square(x), ib->Tensor(1, ib->GetDtype(x)))});
+  }
   return {dx};
 });
 

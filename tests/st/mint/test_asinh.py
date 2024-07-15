@@ -21,33 +21,33 @@ from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 
 def generate_random_input(shape, dtype):
-    return np.random.uniform(-1, 1, shape).astype(dtype)
+    return np.random.randn(*shape).astype(dtype)
 
 
 def generate_expect_forward_output(x):
-    return np.arccos(x)
+    return np.arcsinh(x)
 
 
 def generate_expect_backward_output(x):
-    return -1 / np.sqrt(1 - np.square(x))
+    return 1 / np.sqrt(np.square(x) + 1)
 
 
-def acos_forward_func(x):
-    return mint.acos(x)
+def asinh_forward_func(x):
+    return mint.asinh(x)
 
 
-def acos_backward_func(x):
-    return ops.grad(acos_forward_func, (0,))(x)
+def asinh_backward_func(x):
+    return ops.grad(asinh_forward_func, (0,))(x)
 
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
-def test_acos_std(mode):
+def test_asinh_std(mode):
     """
     Feature: standard forward, backward features.
-    Description: test function acos.
+    Description: test function asinh.
     Expectation: expect correct result.
     """
     x = generate_random_input((2, 3, 4), np.float32)
@@ -55,11 +55,11 @@ def test_acos_std(mode):
     expect_grad = generate_expect_backward_output(x)
     if mode == 'pynative':
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        output = acos_forward_func(ms.Tensor(x))
-        output_grad = acos_backward_func(ms.Tensor(x))
+        output = asinh_forward_func(ms.Tensor(x))
+        output_grad = asinh_backward_func(ms.Tensor(x))
     else:
-        output = (jit(acos_forward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x))
-        output_grad = (jit(acos_backward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x))
+        output = (jit(asinh_forward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x))
+        output_grad = (jit(asinh_backward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x))
 
     np.allclose(output.asnumpy(), expect, rtol=1e-5, equal_nan=True)
     np.allclose(output_grad.asnumpy(), expect_grad, rtol=1e-5, equal_nan=True)
@@ -69,26 +69,26 @@ def test_acos_std(mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
-def test_acos_dynamic_shape():
+def test_asinh_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.
-    Description: test acos forward with dynamic shape.
+    Description: test asinh forward with dynamic shape.
     Expectation: expect correct result.
     """
     tensor_1 = ms.Tensor(generate_random_input((2, 3), np.float32))
     tensor_2 = ms.Tensor(generate_random_input((3, 4, 5), np.float32))
 
-    TEST_OP(acos_forward_func, [[tensor_1], [tensor_2]], 'acos_ext', disable_mode=['GRAPH_MODE'])
+    TEST_OP(asinh_forward_func, [[tensor_1], [tensor_2]], 'asinh_ext', disable_mode=['GRAPH_MODE'])
 
 
 @pytest.mark.level1
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
-def test_acos_bfloat16(mode):
+def test_asinh_bfloat16(mode):
     """
-    Feature: test acos functional API.
-    Description: testcase for acos functional API.
+    Feature: test asinh functional API.
+    Description: testcase for asinh functional API.
     Expectation: the result match with expected result.
     """
     x = generate_random_input((2, 3), np.float32)
@@ -97,11 +97,11 @@ def test_acos_bfloat16(mode):
 
     if mode == 'pynative':
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        output = acos_forward_func(ms.Tensor(x, dtype=ms.bfloat16))
-        output_grad = acos_backward_func(ms.Tensor(x, dtype=ms.bfloat16))
+        output = asinh_forward_func(ms.Tensor(x, dtype=ms.bfloat16))
+        output_grad = asinh_backward_func(ms.Tensor(x, dtype=ms.bfloat16))
     else:
-        output = (jit(acos_forward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x, dtype=ms.bfloat16))
-        output_grad = (jit(acos_backward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x, dtype=ms.bfloat16))
+        output = (jit(asinh_forward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x, dtype=ms.bfloat16))
+        output_grad = (jit(asinh_backward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x, dtype=ms.bfloat16))
 
     np.allclose(output.float().asnumpy(), expect, 0.004, 0.004, equal_nan=True)
     np.allclose(output_grad.float().asnumpy(), expect_grad, 0.004, 0.004, equal_nan=True)

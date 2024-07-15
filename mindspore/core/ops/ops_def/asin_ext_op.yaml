@@ -1,0 +1,12 @@
+#operator asin_ext
+asin_ext:
+    args:
+        input:
+            dtype: tensor
+    returns:
+        output: 
+            dtype: tensor
+    class:
+        name: AsinExt
+    dispatch:
+        enable: True

@@ -281,9 +281,9 @@ AcosExt: 'aclnnAcos'
 # 152
 AcoshExt: 'aclnnAcosh'
 # 172
-
+AsinExt: 'aclnnAsin'
 # 173
-
+AsinhExt: 'aclnnAsinh'
 # 174
 
 # 175

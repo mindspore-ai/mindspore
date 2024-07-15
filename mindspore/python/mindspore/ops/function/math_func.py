@@ -46,7 +46,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
                                          log, log1p, neg, not_equal, pow, round, isfinite, argmax_ext, mean_ext_op,
                                          sum_ext_op, prod_ext_op, all, matrix_inverse_ext, atan2_ext, sign, acos_ext,
-                                         acosh_ext, median_ext_op, median_dim_op)
+                                         acosh_ext, asin_ext, asinh_ext, median_ext_op, median_dim_op)
 from mindspore.ops.auto_generate import tanh
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
@@ -1692,6 +1692,16 @@ def arcsin(x):
     return asin_(x)
 
 
+def arcsin_ext(x):
+    r"""
+    Alias for :func:`mindspore.ops.asin_ext`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return asin_ext(x)
+
+
 def arctan(input):
     r"""
     Alias for :func:`mindspore.ops.atan`.
@@ -1825,6 +1835,16 @@ def arcsinh(input):
         ``Ascend`` ``GPU`` ``CPU``
     """
     return asinh(input)
+
+
+def arcsinh_ext(input):
+    r"""
+    Alias for :func:`mindspore.ops.asinh_ext`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+    """
+    return asinh_ext(input)
 
 
 def arctanh(input):
