@@ -2703,11 +2703,11 @@ def linspace_ext(start, end, steps, *, dtype=None):
 
     Args:
         start (Union[float, int]): Start value of interval.
-          It can be a float or int number.
+            It can be a float or integer.
         end (Union[float, int]): Last value of interval.
-          It can be a float or int number.
+            It can be a float or integer.
         steps (int): Number of ticks in the interval, inclusive of start and end.
-            Must be positive int number.
+            Must be positive integer.
 
     Keyword Args:
         dtype (mindspore.dtype, optional): The output Tensor data type. Default: ``None`` ,
