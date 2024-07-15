@@ -75,21 +75,21 @@ Tensor
 
     mindspore.mint.abs
     mindspore.mint.add
-    mindspore.mint.clamp
-    mindspore.mint.atan2
-    mindspore.mint.arctan2
     mindspore.mint.acos
-    mindspore.mint.arccos
     mindspore.mint.acosh
+    mindspore.mint.arccos
     mindspore.mint.arccosh
-    mindspore.mint.asin
     mindspore.mint.arcsin
-    mindspore.mint.asinh
     mindspore.mint.arcsinh
+    mindspore.mint.arctan2
+    mindspore.mint.asin
+    mindspore.mint.asinh
+    mindspore.mint.atan2
     mindspore.mint.bitwise_and
     mindspore.mint.bitwise_or
     mindspore.mint.bitwise_xor
     mindspore.mint.ceil
+    mindspore.mint.clamp
     mindspore.mint.cos
     mindspore.mint.cosh
     mindspore.mint.div
