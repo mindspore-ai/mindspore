@@ -55,18 +55,18 @@ def reshard(tensor, layout):
         >>> from mindspore import ops, nn, Tensor, context, Layout
         >>> context.set_context(mode=ms.GRAPH_MODE)
         >>> context.set_auto_parallel_context(parallel_mode=ms.ParallelMode.AUTO_PARALLEL,
-        >>>                                   search_mode="sharding_propagation")
+        ...                                   search_mode="sharding_propagation")
         >>> class Network(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super().__init__()
-        >>>         self.matmul = ops.MatMul()
-        >>>         self.relu = ops.ReLU()
-        >>>     def construct(self, x, layout):
-        >>>         x = self.relu(x)
-        >>>         x_reshard = ops.reshard(x, self.layout)
-        >>>         y = Tensor(np.ones(shape=(128, 128)), dtype=ms.float32)
-        >>>         x = self.matmul(x_reshard, y)
-        >>>         return x
+        ...     def __init__(self):
+        ...         super().__init__()
+        ...         self.matmul = ops.MatMul()
+        ...         self.relu = ops.ReLU()
+        ...     def construct(self, x, layout):
+        ...         x = self.relu(x)
+        ...         x_reshard = ops.reshard(x, self.layout)
+        ...         y = Tensor(np.ones(shape=(128, 128)), dtype=ms.float32)
+        ...         x = self.matmul(x_reshard, y)
+        ...         return x
         >>>
         >>> layout = Layout((4, 2), ("dp", "mp"))
         >>> input_layout = layout("dp", "mp")
