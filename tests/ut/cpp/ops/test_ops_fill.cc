@@ -47,12 +47,18 @@ TEST_P(TestFillScalar, fill_scalar_dyn_shape) {
   if (shape_dim == 0) {
     in_shape_seq->CheckAndConvertToDynamicLenSequence();
   }
-  auto fill_value = param.fill_value->ToAbstract();
-  auto dtype_value = param.dtype_value->ToAbstract();
+  auto fill_abs = param.fill_value->ToAbstract();
+  auto dtype_abs = param.dtype_value->ToAbstract();
   auto expect_shape = std::make_shared<abstract::Shape>(param.output_shape);
   auto expect_type = std::make_shared<TensorType>(param.output_dtype);
 
-  DoFuncImplInferAndCompare<FillScalarFuncImpl>(kNameFillScalar, {in_shape, fill_value, dtype_value}, expect_shape, expect_type);
+  DoFuncImplInferAndCompare<FillScalarFuncImpl>(
+      kNameFillScalar, {in_shape, fill_abs, dtype_abs}, expect_shape, expect_type);
+  // skip the dynamic length input case
+  if (shape_dim != 0) {
+    DoFuncImplSimpleInferAndCompare<FillScalarFuncImpl>(
+        kNameFillScalar, {param.shape_value, param.fill_value, param.dtype_value}, {param.output_shape}, {param.output_dtype});
+  }
 }
 
 auto fill_scalar_test_cases = testing::Values(
