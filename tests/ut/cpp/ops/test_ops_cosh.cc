@@ -71,6 +71,9 @@ auto CoshOpTypeTestCases = testing::ValuesIn({
   CoshType{kFloat16, kFloat16},
   CoshType{kFloat32, kFloat32},
   CoshType{kFloat64, kFloat64},
+  CoshType{kComplex64, kComplex64},
+  CoshType{kComplex128, kComplex128},
+  CoshType{kBFloat16, kBFloat16},
 });
 
 INSTANTIATE_TEST_CASE_P(TestCosh, TestCosh, testing::Combine(CoshOpShapeTestCases, CoshOpTypeTestCases));

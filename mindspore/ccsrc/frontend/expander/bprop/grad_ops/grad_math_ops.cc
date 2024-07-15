@@ -1031,13 +1031,8 @@ REG_BPROP_BUILDER("AcoshGrad").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Cosh").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto x_dtype_id = ib->GetDtypeId(x);
-  NodePtr dx;
-  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
-    MS_EXCEPTION(TypeError) << "For 'Cosh', gradient not support for complex type currently.";
-  } else {
-    dx = ib->Mul((ib->Emit("Sinh", {x})), dout);
-  }
+  auto conj_x = ib->Conj(x);
+  auto dx = ib->Mul((ib->Emit("Sinh", {conj_x})), dout);
   return {dx};
 });
 

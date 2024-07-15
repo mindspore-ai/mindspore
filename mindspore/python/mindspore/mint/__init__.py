@@ -38,7 +38,8 @@ from mindspore.ops.function.math_func import sin
 # 3
 from mindspore.ops.function.clip_func import clamp
 # 4
-
+from mindspore.ops.auto_generate import sinh
+from mindspore.ops.auto_generate import cosh
 # 5
 from mindspore.ops.auto_generate import cumsum_ext as cumsum
 # 6
@@ -928,7 +929,8 @@ __all__ = [
     # 3
     'clamp',
     # 4
-
+    'sinh',
+    'cosh',
     # 5
     'cumsum',
     # 6
