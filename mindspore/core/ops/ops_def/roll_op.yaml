@@ -11,7 +11,7 @@ roll:
       dtype: tuple[int]
       default: None
       prim_init: True
-      arg_handler: to_axis
+      type_cast:  int, list[int]
   returns:
     output:
       dtype: tensor
