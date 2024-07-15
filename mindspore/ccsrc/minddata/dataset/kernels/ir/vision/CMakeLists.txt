@@ -18,7 +18,6 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         cutmix_batch_ir.cc
         cutout_ir.cc
         decode_ir.cc
-        decode_video_ir.cc
         equalize_ir.cc
         erase_ir.cc
         gaussian_blur_ir.cc
@@ -77,4 +76,8 @@ set(DATASET_KERNELS_IR_VISION_SRC_FILES
         ascend_vision_ir.cc
         )
 
-add_library(kernels-ir-vision OBJECT ${DATASET_KERNELS_IR_VISION_SRC_FILES})
+if(ENABLE_FFMPEG)
+    add_library(kernels-ir-vision OBJECT ${DATASET_KERNELS_IR_VISION_SRC_FILES} decode_video_ir.cc)
+else()
+    add_library(kernels-ir-vision OBJECT ${DATASET_KERNELS_IR_VISION_SRC_FILES})
+endif()

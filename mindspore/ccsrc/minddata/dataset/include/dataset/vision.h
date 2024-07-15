@@ -441,6 +441,7 @@ class DATASET_API CutOut final : public TensorTransform {
   std::shared_ptr<Data> data_;
 };
 
+#ifdef ENABLE_FFMPEG
 /// \brief Decode the input video.
 class DATASET_API DecodeVideo final : public TensorTransform {
  public:
@@ -470,6 +471,7 @@ class DATASET_API DecodeVideo final : public TensorTransform {
   /// \return Shared pointer to TensorOperation object.
   std::shared_ptr<TensorOperation> Parse() override;
 };
+#endif
 
 /// \brief Encode the image as JPEG data.
 /// \param[in] image The image to be encoded.
@@ -1717,6 +1719,7 @@ Status DATASET_API ReadFile(const std::string &filename, mindspore::MSTensor *ou
 Status DATASET_API ReadImage(const std::string &filename, mindspore::MSTensor *output,
                              ImageReadMode mode = ImageReadMode::kUNCHANGED);
 
+#ifdef ENABLE_FFMPEG
 /// \brief Read the video, audio, metadata from a video file. It supports AVI, H264, H265, MOV, MP4, WMV file formats.
 /// \param[in] filename The path to the videoe file to be read.
 /// \param[out] video_output The video frames of the video file.
@@ -1737,6 +1740,7 @@ Status DATASET_API ReadVideo(const std::string &filename, mindspore::MSTensor *v
 /// \return The status code.
 Status DATASET_API ReadVideoTimestamps(const std::string &filename, std::tuple<std::vector<float>, float> *output,
                                        const std::string &pts_unit = "pts");
+#endif
 
 /// \brief Crop the given image and zoom to the specified size.
 class DATASET_API ResizedCrop final : public TensorTransform {

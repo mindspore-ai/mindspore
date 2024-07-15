@@ -2,6 +2,13 @@ file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc"
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
 add_subdirectory(lite_cv)
 add_subdirectory(dvpp)
+
+if(ENABLE_FFMPEG)
+    set(FFMPEG_DEPEND_FILES
+        decode_video_op.cc
+        video_utils.cc)
+endif()
+
 add_library(kernels-image OBJECT
     adjust_brightness_op.cc
     adjust_contrast_op.cc
@@ -18,7 +25,6 @@ add_library(kernels-image OBJECT
     cut_out_op.cc
     cutmix_batch_op.cc
     decode_op.cc
-    decode_video_op.cc
     equalize_op.cc
     erase_op.cc
     gaussian_blur_op.cc
@@ -78,8 +84,7 @@ add_library(kernels-image OBJECT
     resize_cubic_op.cc
     trivial_augment_wide_op.cc
     vertical_flip_op.cc
-    video_utils.cc
     to_tensor_op.cc
-    )
+    ${FFMPEG_DEPEND_FILES})
 
 add_dependencies(kernels-image kernels-dvpp-image)

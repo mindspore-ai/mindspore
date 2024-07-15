@@ -273,6 +273,7 @@ PYBIND_REGISTER(DecodeOperation, 1, ([](const py::module *m) {
                     }));
                 }));
 
+#ifdef ENABLE_FFMPEG
 PYBIND_REGISTER(
   DecodeVideoOperation, 1, ([](const py::module *m) {
     (void)py::class_<vision::DecodeVideoOperation, TensorOperation, std::shared_ptr<vision::DecodeVideoOperation>>(
@@ -283,6 +284,7 @@ PYBIND_REGISTER(
         return decode_video;
       }));
   }));
+#endif
 
 PYBIND_REGISTER(EncodeJpegOperation, 1, ([](py::module *m) {
                   (void)m->def("encode_jpeg", ([](const std::shared_ptr<Tensor> &image, int quality) {
@@ -808,6 +810,7 @@ PYBIND_REGISTER(ReadImageOperation, 1, ([](py::module *m) {
                                }));
                 }));
 
+#ifdef ENABLE_FFMPEG
 PYBIND_REGISTER(ReadVideo, 1, ([](py::module *m) {
                   (void)m->def(
                     "read_video",
@@ -831,6 +834,7 @@ PYBIND_REGISTER(ReadVideoTimestampsOperation, 1, ([](py::module *m) {
                                  return std::make_tuple(pts_int64_vector, video_fps, time_base);
                                }));
                 }));
+#endif
 
 PYBIND_REGISTER(RescaleOperation, 1, ([](const py::module *m) {
                   (void)
