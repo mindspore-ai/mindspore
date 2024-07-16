@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_ACME_ACME_HELPER_H_
 
 #include <memory>
+#include <string>
 #include "acme/include/acme.h"
 #include "include/api/format.h"
 #include "ir/dtype/type_id.h"
@@ -25,6 +26,8 @@
 namespace mindspore {
 namespace kernel {
 inline acme::ShapeInfo TransAcmeShape(const ShapeVector &shape) { return shape; }
+
+std::string TransAcmeOpName(const std::string &ms_op_name);
 
 acme::DataType TransAcmeDataType(TypeId ms_type);
 

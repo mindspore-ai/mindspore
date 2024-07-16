@@ -44,6 +44,7 @@ void GetValidKernelBuildInfoWithInternalFormat(const AnfNodePtr &node, std::vect
 #include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 #include "plugin/device/ascend/hal/device/kernel_select_ascend.h"
 #include "plugin/device/ascend/kernel/internal/acme_kernel_mod.h"
+#include "plugin/device/ascend/kernel/internal/acme/acme_helper.h"
 #include "include/backend/anf_runtime_algorithm.h"
 #include "include/common/utils/anfalgo.h"
 #include "plugin/factory/ms_factory.h"
@@ -266,6 +267,16 @@ void GetMsTypesList(const CNodePtr &kernel, std::vector<TypeId> *ms_in_dtypes, s
 bool IsRegisteredInternalKernel(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   std::string opname = common::AnfAlgo::GetCNodeName(anf_node);
+  auto cnode = anf_node->cast<CNodePtr>();
+  std::vector<TypeId> ms_in_dtypes;
+  std::vector<TypeId> ms_out_dtypes;
+  GetMsTypesList(cnode, &ms_in_dtypes, &ms_out_dtypes);
+  if (Factory<AcmeKernelMod>::Instance().IsRegistered(opname)) {
+    auto acme_op_name = TransAcmeOpName(opname);
+    auto acme_in_dtypes = InternalKernelModInOutMap::GetInstance()->MapAcmeInputDtypes(opname, ms_in_dtypes);
+    auto acme_out_dtypes = InternalKernelModInOutMap::GetInstance()->MapAcmeOutputDtypes(opname, ms_out_dtypes);
+    return acme::IsAcmeKernelDtypesSupported(acme_op_name, acme_in_dtypes, acme_out_dtypes);
+  }
   if (Factory<InternalKernelMod>::Instance().IsRegistered(opname)) {
     if (opname == kReshapeOpName) {
       return true;
@@ -276,10 +287,6 @@ bool IsRegisteredInternalKernel(const AnfNodePtr &anf_node) {
       MS_LOG(INFO) << "internal can't find Kernel[" << opname << "]";
       return false;
     }
-    std::vector<TypeId> ms_in_dtypes;
-    std::vector<TypeId> ms_out_dtypes;
-    auto cnode = anf_node->cast<CNodePtr>();
-    GetMsTypesList(cnode, &ms_in_dtypes, &ms_out_dtypes);
     check_param->in_dtypes_ = InternalKernelModInOutMap::GetInstance()->MapInternelInputDtypes(opname, ms_in_dtypes);
     check_param->out_dtypes_ = InternalKernelModInOutMap::GetInstance()->MapInternelOutputDtypes(opname, ms_out_dtypes);
     return internal::IsInternalKernelDtypesSupported(check_param);

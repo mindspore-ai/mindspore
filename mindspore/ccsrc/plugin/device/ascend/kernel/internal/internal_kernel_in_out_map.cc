@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <algorithm>
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
+#include "plugin/device/ascend/kernel/internal/acme/acme_helper.h"
 
 namespace mindspore {
 namespace kernel {
@@ -100,6 +101,34 @@ std::vector<int64_t> InternalKernelModInOutMap::MapInternelOutputDtypes(const st
     internel_dtypes.push_back(InternalKernelUtils::ToInternalDType(ms_dtypes[idx_list.at(i)]));
   }
   return internel_dtypes;
+}
+
+std::vector<acme::DataType> InternalKernelModInOutMap::MapAcmeInputDtypes(const std::string &op_name,
+                                                                          const std::vector<TypeId> &ms_dtypes) {
+  std::vector<acme::DataType> acme_dtypes;
+  auto map_iter = input_idx_.find(op_name);
+  if (map_iter == input_idx_.end()) {
+    return acme_dtypes;
+  }
+  auto idx_list = map_iter->second;
+  for (size_t i = 0; i < idx_list.size(); i++) {
+    acme_dtypes.push_back(TransAcmeDataType(ms_dtypes[idx_list.at(i)]));
+  }
+  return acme_dtypes;
+}
+
+std::vector<acme::DataType> InternalKernelModInOutMap::MapAcmeOutputDtypes(const std::string &op_name,
+                                                                           const std::vector<TypeId> &ms_dtypes) {
+  std::vector<acme::DataType> acme_dtypes;
+  auto map_iter = output_idx_.find(op_name);
+  if (map_iter == output_idx_.end()) {
+    return acme_dtypes;
+  }
+  auto idx_list = map_iter->second;
+  for (size_t i = 0; i < idx_list.size(); i++) {
+    acme_dtypes.push_back(TransAcmeDataType(ms_dtypes[idx_list.at(i)]));
+  }
+  return acme_dtypes;
 }
 
 InternalKernelModInOutRegistrar::InternalKernelModInOutRegistrar(const std::string op_name, const int map_type,
