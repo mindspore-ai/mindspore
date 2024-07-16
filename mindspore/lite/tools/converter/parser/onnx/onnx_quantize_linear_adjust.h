@@ -37,10 +37,15 @@ class OnnxQuantizeLinearAdjust {
                             size_t index);
   static int DoParameterQuantDeQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index,
                                      const QuantParamHolderPtr &quant_param_holder);
+  static int DoParameterQuant(const CNodePtr &cnode, const ParameterPtr &input_node, size_t input_index,
+                              const QuantParamHolderPtr &quant_param_holder);
   static int QuantDeQuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
                                 const std::vector<schema::QuantParamT> &quant_params, int preferred_dim);
+  static int QuantFilter(const AnfNodePtr &parameter_node, const tensor::TensorPtr &weight,
+                         const std::vector<schema::QuantParamT> &quant_params, int preferred_dim);
   static bool FoldQuantParms(const FuncGraphPtr &func_graph);
   static bool DoWeightQuantDeQuant(const FuncGraphPtr &func_graph);
+  static bool DoWeightQuant(const FuncGraphPtr &func_graph);
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_QUANTIZE_LINEAR_ADJUST_H
