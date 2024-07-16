@@ -435,56 +435,27 @@ bool SymbolEngineImpl::GeneralizeParamShape(const AnfNodePtr &param, const Abstr
   }
   bool build_again = false;
   bool gen_all = false;
-  auto NewInt = [&build_again]() -> IntSymbolPtr {
-    build_again = true;
-    return IntSymbol::Make();
-  };
   std::function<SymbolPtrList(const SymbolPtrList &, const SymbolPtrList &)> process;
-  process = [&NewInt, &gen_all, &process](const SymbolPtrList &s1, const SymbolPtrList &s2) {
+  process = [&build_again, &gen_all, &process](const SymbolPtrList &ori_sym, const SymbolPtrList &new_sym) {
     SymbolPtrList ret;
-    if (s1.size() != s2.size()) {
+    if (ori_sym.size() != new_sym.size()) {
       gen_all = true;
       return ret;
     }
-    ret = s1;
-    for (size_t i = 0; i < s1.size(); i++) {
-      if (s1[i]->EqualsTo(s2[i])) {
+    ret = ori_sym;
+    for (size_t i = 0; i < ori_sym.size(); i++) {
+      if (ori_sym[i]->EqualsTo(new_sym[i])) {
         continue;
       }
-      if (s1[i]->is<ListSymbol>()) {
-        ret[i] = ListSymbol::Make(process(s1[i]->as<ListSymbol>()->symbols(), s2[i]->as<ListSymbol>()->symbols()));
+      if (ori_sym[i]->is<ListSymbol>()) {
+        ret[i] =
+          ListSymbol::Make(process(ori_sym[i]->as<ListSymbol>()->symbols(), new_sym[i]->as<ListSymbol>()->symbols()));
         continue;
       }
-      auto v1 = s1[i]->as<IntSymbol>();
-      auto v2 = s2[i]->as<IntSymbol>();
-      if (v2->is_const()) {
-        if (v1->is_const()) {
-          ret[i] = NewInt();
-        } else {
-          auto d1 = v1->divisor();
-          auto r1 = v1->remainder();
-          // if "d1 * v1 + r1 == v2", that's v2 match the condition of v1.
-          if ((v2->value() - r1 + d1) % d1 != 0) {
-            ret[i] = NewInt();
-          }
-        }
-      } else if (v1->is_const()) {
-        ret[i] = NewInt();
-      } else {
-        // two symbols are variable
-        auto d1 = v1->divisor();
-        auto r1 = v1->remainder();
-        auto d2 = v2->divisor();
-        auto r2 = v2->remainder();
-        if (r1 == r2) {
-          if (d2 % d1 != 0) {
-            auto t = NewInt();
-            t->SetDivisorRemainder(std::gcd(d1, d2), r1);
-            ret[i] = t;
-          }
-        } else {
-          ret[i] = NewInt();
-        }
+      auto gen_symbol = ops::JoinIntSymbol(ori_sym[i], new_sym[i]);
+      if (gen_symbol != ori_sym[i]) {
+        build_again = true;
+        ret[i] = gen_symbol;
       }
     }
     return ret;

@@ -74,5 +74,7 @@ class Common : public testing::Test {
     ifs.close();
   }
 };
+
+#define UT_CHECK_NULL(pointer) ASSERT_NE(pointer, nullptr)
 }  // namespace UT
 #endif  // TESTS_UT_COMMON_UT_COMMON_H_

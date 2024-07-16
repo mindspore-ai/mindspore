@@ -21,6 +21,43 @@
 namespace mindspore {
 namespace symshape {
 namespace ops {
+SymbolPtr JoinIntSymbol(const SymbolPtr &s1, const SymbolPtr &s2, const OpPtr &op) {
+  auto v1 = s1->as<IntSymbol>();
+  auto v2 = s2->as<IntSymbol>();
+  if (v2->is_subset_of(v1, false)) {
+    return s1;
+  }
+  if (v1->is_subset_of(v2, false)) {
+    return s2;
+  }
+  if (v1->is_const() && !v2->is_const()) {
+    // if a variable and a const symbol, make "v1" to variable and "v2" to const.
+    std::swap(v1, v2);
+  }
+  IntSymbolPtr ret = IntSymbol::Make(op);
+  if (v2->is_const()) {
+    if (v1->is_const()) {
+      ret->SetDivisorRemainder(std::gcd(v1->value(), v2->value()), 0);
+    } else {
+      auto d1 = v1->divisor();
+      auto r1 = v1->remainder();
+      if (r1 == 0) {
+        ret->SetDivisorRemainder(std::gcd(d1, v2->value()), 0);
+      }
+    }
+  } else {
+    // two symbols are variable
+    auto d1 = v1->divisor();
+    auto r1 = v1->remainder();
+    auto d2 = v2->divisor();
+    auto r2 = v2->remainder();
+    if (r1 == r2) {
+      ret->SetDivisorRemainder(std::gcd(d1, d2), r1);
+    }
+  }
+  return ret;
+}
+
 class MS_CORE_API ControlFlowJoin : public InferShapeOp {
  public:
   ControlFlowJoin(const SymbolPtr &cond, const SymbolPtr &true_branch, const SymbolPtr &false_branch)
@@ -35,7 +72,7 @@ class MS_CORE_API ControlFlowJoin : public InferShapeOp {
 };
 
 SymbolPtr ControlFlowJoin::ItemJoin(const SymbolPtr &tb, const SymbolPtr &fb) {
-  return tb->EqualsTo(fb) ? tb : GenVInt();
+  return tb->EqualsTo(fb) ? tb : JoinIntSymbol(tb, fb, shared_from_this());
 }
 
 SymbolPtr ControlFlowJoin::ShapeJoin(const SymbolPtr &tb, const SymbolPtr &fb) {

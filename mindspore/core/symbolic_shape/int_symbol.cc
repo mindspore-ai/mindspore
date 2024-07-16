@@ -127,5 +127,50 @@ bool IntSymbol::is_divisible_by(int64_t d) const {
 bool IntSymbol::is_divisible_by(const IntSymbolPtr &d) const {
   return (d->HasData() && is_divisible_by(d->value())) || (this->HasData() && value() == 0) || this->EqualsTo(d);
 }
+
+bool IntSymbol::is_subset_of(const IntSymbol *other, bool strict) const {
+  if (*this == *other) {
+    return true;
+  }
+  if (this->is_const()) {
+    auto v = this->value();
+    if (other->is_const()) {
+      return v == other->value();
+    }
+    if ((other->range_min() <= v) && (v <= other->range_max())) {
+      if (strict && other->math_info_.relation_expr_.s != nullptr) {
+        // other = a * s + b, check v in {other}
+        auto s = other->math_info_.relation_expr_.s;
+        auto a = other->math_info_.relation_expr_.a;
+        auto b = other->math_info_.relation_expr_.b;
+        auto tmp = (Frac(v) - b) / a;
+        return tmp.is_int() && IntSymbol::Make(tmp.x())->is_subset_of(s.get(), strict);
+      }
+      // v in {other.d * N + other.r}
+      return (v - other->remainder()) % other->divisor() == 0;
+    }
+    return false;
+  }
+  if (other->is_const()) {
+    return false;
+  }
+  if (strict) {
+    if (this->math_info_.relation_expr_.s != other->math_info_.relation_expr_.s &&
+        other->math_info_.relation_expr_.s != nullptr) {
+      return false;
+    }
+  }
+  if (this->range_min() < other->range_min() || this->range_max() > other->range_max()) {
+    return false;
+  }
+  auto d1 = this->divisor();
+  auto r1 = this->remainder();
+  auto d2 = other->divisor();
+  auto r2 = other->remainder();
+  if (r1 == r2) {
+    return d1 % d2 == 0;
+  }
+  return false;
+}
 }  // namespace symshape
 }  // namespace mindspore
