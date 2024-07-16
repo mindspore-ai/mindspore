@@ -361,9 +361,6 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
     MS_LOG(INFO) << "Use MS_COMPILER_OP_LEVEL, op debug level:" << op_debug_level;
   }
 
-  // Disable the global variable acc, only enable it while adding training graph in pipeline
-  (*ge_options)["ge.exec.variable_acc"] = "0";
-
   // ge heterogeneous mode
   if (ms_context_ptr->get_param<bool>(MS_CTX_ENABLE_GE_HETEROGENOUS)) {
     (*ge_options)["ge.socVersion"] = "Ascend310P3";
