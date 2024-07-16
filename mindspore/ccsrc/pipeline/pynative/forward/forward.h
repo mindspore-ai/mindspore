@@ -31,14 +31,13 @@
 #include "runtime/pipeline/async_hqueue.h"
 #include "ops/view/view_strides_calculator.h"
 #include "runtime/pipeline/async_rqueue.h"
+#include "backend/graph_compiler/op_backend.h"
 
 namespace mindspore {
 namespace pynative {
 class GradExecutor;
 using GradExecutorPtr = std::shared_ptr<GradExecutor>;
 using GradExecutorWeakPtr = std::weak_ptr<GradExecutor>;
-
-using MindrtBackendMap = std::map<std::string, std::shared_ptr<compile::MindRTBackend>>;
 
 class ForwardExecutor {
  public:
@@ -67,7 +66,6 @@ class ForwardExecutor {
   void set_grad_executor(const GradExecutorPtr &grad_executor) { grad_executor_ = GradExecutorWeakPtr(grad_executor); }
   void RefreshForwardCallback();
   void ClearNodeAbsMap() const;
-  void ClearForwardRes() const;
   void SetNodeAbsMapByValue(const FrontendOpRunInfoPtr &op_run_info) const;
   void SetNodeAbsMapById(const std::string &id, const abstract::AbstractBasePtr &abs) const;
   AbstractBasePtr GetNodeAbsById(const std::string &id) const;
@@ -75,7 +73,6 @@ class ForwardExecutor {
   bool EnablePipeline(const std::string &op_name) const;
   bool enable_async() const;
   const std::string &device_target() const { return device_target_; }
-  const MindrtBackendMap &mindrt_backend() const { return mindrt_backends_; }
   void set_mix_precision_type(const MixedPrecisionType mix_precision_type, bool is_push) {
     is_push ? mix_precision_type_stack_.push(mix_precision_type) : mix_precision_type_stack_.pop();
     MS_LOG(DEBUG) << "Set mix precision type " << mix_precision_type << ", is push " << is_push;
@@ -106,7 +103,6 @@ class ForwardExecutor {
   void ChildAfterFork();
 
  private:
-  compile::MindRTBackendPtr GetMindRtBackend(const string &cur_device_target);
   inline CastOperationPtr cast_operation() const {
     MS_EXCEPTION_IF_NULL(cast_operation_);
     return cast_operation_;
@@ -157,7 +153,7 @@ class ForwardExecutor {
   CastOperationPtr cast_operation_;
   PyBoostCastOperationPtr pyboost_cast_operation_;
   InferOperationPtr infer_operation_;
-  MindrtBackendMap mindrt_backends_;
+  compile::OpBackendPtr op_backend_{nullptr};
   mindspore::HashMap<std::string, PrimitivePtr> slice_prim_cache_;
 };
 }  // namespace pynative

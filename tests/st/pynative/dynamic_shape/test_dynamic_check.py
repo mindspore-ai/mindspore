@@ -64,7 +64,7 @@ class Net(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_input_shape_changed():
@@ -164,7 +164,7 @@ class NetHasBprop(nn.Cell):
         return x
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net_bprop_dynamic_shape():

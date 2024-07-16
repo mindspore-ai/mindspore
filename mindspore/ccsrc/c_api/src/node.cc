@@ -1639,18 +1639,10 @@ STATUS DynamicOpInfer(size_t output_num, FrontendOpRunInfoPtr op_run_info, const
   return RET_OK;
 }
 
-MindRTBackendPtr DynamicOpGetMindRTBackend(ResMgrHandle res_mgr, const string &cur_device_target, uint32_t device_id) {
+const OpBackendPtr &DynamicOpGetBackend(ResMgrHandle res_mgr) {
   auto res_mgr_ptr = reinterpret_cast<ResourceManager *>(res_mgr);
-  auto cached_backend = res_mgr_ptr->GetBackendFromCache(cur_device_target);
-  if (cached_backend != nullptr) {
-    return cached_backend;
-  } else {
-    std::lock_guard<std::mutex> guard(mindspore::pipeline::Resource::GetBackendInitMutex());
-    auto backend = std::make_shared<mindspore::compile::MindRTBackend>("ms", cur_device_target, device_id);
-    MS_EXCEPTION_IF_NULL(backend);
-    res_mgr_ptr->CacheBackend(cur_device_target, backend);
-    return backend;
-  }
+  MS_EXCEPTION_IF_NULL(res_mgr_ptr);
+  return res_mgr_ptr->GetOpBackend();
 }
 
 ValuePtr DynamicOpRun(ResMgrHandle res_mgr, const FrontendOpRunInfoPtr &op_run_info) {
@@ -1666,16 +1658,13 @@ ValuePtr DynamicOpRun(ResMgrHandle res_mgr, const FrontendOpRunInfoPtr &op_run_i
     false);
 
   mindspore::VectorRef outputs;
-  const auto &cur_mindrt_backend =
-    DynamicOpGetMindRTBackend(res_mgr, op_run_info->base_op_run_info.device_target, device_id);
-  MS_EXCEPTION_IF_NULL(cur_mindrt_backend);
+  const auto &op_backend = DynamicOpGetBackend(res_mgr);
+  MS_EXCEPTION_IF_NULL(op_backend);
   py::scoped_interpreter py_scope;
   if (op_run_info->base_op_run_info.use_dynamic_shape_process) {
     mindspore::AnfAlgo::SetDynamicAttrToPrim(backend_op_run_info->op_prim);
-    cur_mindrt_backend->RunOpDynamic(backend_op_run_info, &outputs);
-  } else {
-    cur_mindrt_backend->RunOp(backend_op_run_info, &outputs);
   }
+  op_backend->Run(backend_op_run_info, op_run_info->base_op_run_info.device_target, device_id, &outputs);
 
   if (op_run_info->base_op_run_info.has_dynamic_output) {
     op_run_info->base_op_run_info.abstract = backend_op_run_info->base_op_run_info.abstract;

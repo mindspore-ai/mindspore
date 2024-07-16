@@ -293,6 +293,7 @@ void ForwardExecutor::Init() {
   compile::SetMindRTEnable();
   python_adapter::set_python_env_flag(true);
   tensor::Tensor::RegisterLazyCallback([]() { runtime::Pipeline::Get().WaitAll(); });
+  op_backend_ = std::make_unique<compile::OpBackend>();
 }
 
 void ForwardExecutor::RefreshForwardCallback() {
@@ -336,10 +337,8 @@ void ForwardExecutor::ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_ru
     return;
   }
   MS_LOG(DEBUG) << "Start, task_type:" << task_type;
-
-  const auto &cur_mind_rt_backend = GetMindRtBackend(op_run_info->base_op_run_info.device_target);
-  MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
-  cur_mind_rt_backend->RunViewKernelTask(op_run_info->base_op_run_info, task_type, enable_async);
+  MS_EXCEPTION_IF_NULL(op_backend_);
+  op_backend_->RunViewKernelTask(op_run_info->base_op_run_info, task_type, enable_async);
 
   MS_LOG(DEBUG) << "End";
 }
@@ -660,16 +659,6 @@ void ForwardExecutor::SetCastForInputs(const FrontendOpRunInfoPtr &op_run_info) 
 
 void ForwardExecutor::ClearNodeAbsMap() const { infer_operation()->ClearNodeAbsCache(); }
 
-void ForwardExecutor::ClearForwardRes() const {
-#if defined(__APPLE__)
-  ClearNodeAbsMap();
-#else
-  static const auto op_run_info = std::make_shared<FrontendOpRunInfo>();
-  auto forward_task = std::make_shared<FrontendTask>([this](...) { ClearNodeAbsMap(); }, op_run_info);
-  runtime::Pipeline::Get().frontend_stage()->Push(forward_task);
-#endif
-}
-
 void ForwardExecutor::SetNodeAbsMapByValue(const FrontendOpRunInfoPtr &op_run_info) const {
   infer_operation()->SetNodeAbsCacheByValue(op_run_info);
 }
@@ -693,16 +682,11 @@ VectorRef ForwardExecutor::RunOpBackendInner(const FrontendOpRunInfoPtr &op_run_
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   ms_context->set_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER, true);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 
   VectorRef outputs;
-  const auto &cur_mind_rt_backend = GetMindRtBackend(backend_op_run_info->base_op_run_info.device_target);
-  MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
-  bool use_dynamic_shape_process = backend_op_run_info->base_op_run_info.use_dynamic_shape_process;
-  if (use_dynamic_shape_process) {
-    cur_mind_rt_backend->RunOpDynamic(backend_op_run_info, &outputs);
-  } else {
-    cur_mind_rt_backend->RunOp(backend_op_run_info, &outputs);
-  }
+  MS_EXCEPTION_IF_NULL(op_backend_);
+  op_backend_->Run(backend_op_run_info, backend_op_run_info->base_op_run_info.device_target, device_id, &outputs);
 
   if (op_run_info->base_op_run_info.has_dynamic_output ||
       OpCompiler::GetInstance().IsInvalidInferResultOp(op_run_info->base_op_run_info.op_name)) {
@@ -723,20 +707,6 @@ void ForwardExecutor::RunOpBackend(const FrontendOpRunInfoPtr &op_run_info,
     op_run_info->out_value_id = PyNativeAlgo::Common::GetIdByValue(op_run_info->real_out);
     SetNodeAbsMapByValue(op_run_info);
   }
-}
-
-compile::MindRTBackendPtr ForwardExecutor::GetMindRtBackend(const string &cur_device_target) {
-  const auto iter = mindrt_backends_.find(cur_device_target);
-  if (iter != mindrt_backends_.end()) {
-    return iter->second;
-  }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  auto backend = std::make_shared<compile::MindRTBackend>("ms", cur_device_target, device_id);
-  MS_EXCEPTION_IF_NULL(backend);
-  mindrt_backends_[cur_device_target] = backend;
-  return backend;
 }
 
 ValuePtr ForwardExecutor::RunOpWithBackendPolicy(const FrontendOpRunInfoPtr &op_run_info,
@@ -888,9 +858,8 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::BaseTensorPtr &i
     input_tensor->set_device_address(device_address);
   }
 
-  const auto &cur_mind_rt_backend = GetMindRtBackend(op_run_info->base_op_run_info.device_target);
-  MS_EXCEPTION_IF_NULL(cur_mind_rt_backend);
-  cur_mind_rt_backend->RunAllocMemTask(device_context, input_tensor, EnablePipeline(""), is_cpu_address_exist);
+  MS_EXCEPTION_IF_NULL(op_backend_);
+  op_backend_->RunAllocMemTask(device_context, input_tensor, EnablePipeline(""), is_cpu_address_exist);
 }
 
 device::DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const DeviceSyncPtr &device_address,
@@ -980,10 +949,8 @@ void ForwardExecutor::ClearRes() {
     GilReleaseWithCheck gil_release;
     runtime::Pipeline::Get().frontend_stage()->Clear();
   }
-  for (const auto &item : mindrt_backends_) {
-    MS_EXCEPTION_IF_NULL(item.second);
-    item.second->ClearOpExecutorResource();
-  }
+  runtime::OpExecutor::GetInstance().Reset();
+
   init_ = false;
   enable_async_ = false;
   is_jit_compiling_ = false;
@@ -993,7 +960,7 @@ void ForwardExecutor::ClearRes() {
   ClearNodeAbsMap();
   infer_operation()->ClearPrimAbsList();
   infer_operation()->ClearConstFlagPrimCache();
-  mindrt_backends_.clear();
+  op_backend_ = std::make_unique<compile::OpBackend>();
   slice_prim_cache_.clear();
 }
 
@@ -1001,6 +968,7 @@ void ForwardExecutor::ChildAfterFork() {
   MS_LOG(DEBUG) << "ForwardExecutor reinitialize after fork.";
   MS_LOG(DEBUG) << "Reinitialize frontend_queue_.";
   runtime::Pipeline::Get().frontend_stage()->ChildAfterFork();
+  op_backend_ = std::make_unique<compile::OpBackend>();
   MS_LOG(DEBUG) << "ForwardExecutor reinitialize after fork done.";
 }
 }  // namespace pynative

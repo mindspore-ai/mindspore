@@ -28,6 +28,7 @@
 #include "pipeline/jit/ps/resource.h"
 #include "utils/ms_context.h"
 #include "backend/graph_compiler/backend_base.h"
+#include "backend/graph_compiler/op_backend.h"
 #include "c_api/src/dynamic_op_info.h"
 
 static const size_t maxOpPoolSize = 500;
@@ -73,6 +74,13 @@ class ResourceManager {
       return nullptr;
     }
     return iter->second;
+  }
+
+  const OpBackendPtr &GetOpBackend() {
+    if (op_backend_ == nullptr) {
+      op_backend_ = std::make_unique<mindspore::compile::OpBackend>();
+    }
+    return op_backend_;
   }
 
   void CacheOpRunInfo(std::shared_ptr<InnerOpInfo> inner_info, FrontendOpRunInfoPtr run_info) {
@@ -121,6 +129,7 @@ class ResourceManager {
   std::unordered_map<ConstHandle, BasePtr> ptr_res_pool_{};
   std::unordered_map<InnerOpInfo, FrontendOpRunInfoPtr> dynamic_op_pool_{};
   std::unordered_map<std::string, MindRTBackendPtr> backends_{};
+  OpBackendPtr op_backend_;
   mindspore::HashMap<std::string, mindspore::Any> results_{};
   std::shared_ptr<mindspore::MsContext> context_ = nullptr;
   bool auto_infer_ = true;

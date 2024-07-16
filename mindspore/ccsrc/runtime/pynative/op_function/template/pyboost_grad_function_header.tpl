@@ -87,11 +87,15 @@ void PyBoostOpExecute::RunOpDeprecated(OpRunnerInfo *op_runner_info, VectorRef *
   op_runner_info->output_abs = kernel::pyboost::PyBoostUtils::InferByOpDef(op_runner_info->prim, op_runner_info->inputs_abs);
   backend_op_run_info->base_op_run_info.abstract = op_runner_info->output_abs ;
   // Call single op graph run
-  GetMindRtBackend(op_runner_info->device_target);
   backend_op_run_info->base_op_run_info.use_dynamic_shape_process = true;
   backend_op_run_info->op_prim = std::make_shared<Primitive>(*op_runner_info->prim);
   AnfAlgo::SetDynamicAttrToPrim(backend_op_run_info->op_prim);
-  backend_->RunOpDynamic(backend_op_run_info, op_outputs);
+
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+
+  op_backend_.Run(backend_op_run_info, backend_op_run_info->base_op_run_info.device_target, device_id, op_outputs);
 }
 
 void PyBoostOpExecute::RunOpInVm(OpRunnerInfo *op_runner_info, VectorRef *op_outputs) {
@@ -116,17 +120,6 @@ void PyBoostOpExecute::RunOpInVm(OpRunnerInfo *op_runner_info, VectorRef *op_out
   }
 
   MS_LOG(EXCEPTION) << "prim: " << op_runner_info->prim->name() << "did not has vm op!";
-}
-
-void PyBoostOpExecute::GetMindRtBackend(const string &cur_device_target) {
-  if (backend_ != nullptr) {
-    return;
-  }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  auto backend = std::make_shared<compile::MindRTBackend>("ms", cur_device_target, device_id);
-  backend_ = backend;
 }
 
 ${function_body}

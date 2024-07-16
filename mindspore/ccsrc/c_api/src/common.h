@@ -91,4 +91,5 @@ using AttrMap = mindspore::HashMap<std::string, ValuePtr>;
 using FrontendOpRunInfoPtr = mindspore::pynative::FrontendOpRunInfoPtr;
 using ForwardExecutorPtr = std::shared_ptr<mindspore::pynative::ForwardExecutor>;
 using MindRTBackendPtr = mindspore::compile::MindRTBackendPtr;
+using OpBackendPtr = mindspore::compile::OpBackendPtr;
 #endif  // MINDSPORE_CCSRC_C_API_SRC_COMMON_H_
