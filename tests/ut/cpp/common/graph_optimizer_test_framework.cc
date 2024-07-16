@@ -126,7 +126,7 @@ void ConstructGraph::SetGeneralBuildInfo(const AnfNodePtr &node) {
   info_builder.SetOutputsFormat(std::vector<std::string>(output_num, "DefaultFormat"));
   std::vector<TypeId> output_types(output_num);
   for (size_t i = 0; i < output_types.size(); i++) {
-    input_types[i] = common::AnfAlgo::GetOutputInferDataType(node, i);
+    output_types[i] = common::AnfAlgo::GetOutputInferDataType(node, i);
   }
   info_builder.SetOutputsDeviceType(output_types);
   info_builder.SetOutputsKernelObjectType(
