@@ -21,18 +21,18 @@
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(AsinhExt, EltwiseOpParams);
+OP_FUNC_IMPL_INFER_TEST_DECLARE(AsinhExt, EltwiseOpParams);
 
-OP_FUNC_IMPL_TEST_CASES(AsinhExt, testing::Values(EltwiseOpParams{{2, 3}, kBool, {2, 3}, kFloat32},
-                                                  EltwiseOpParams{{2, 3}, kUInt8, {2, 3}, kFloat32},
-                                                  EltwiseOpParams{{2, 3}, kInt8, {2, 3}, kFloat32},
-                                                  EltwiseOpParams{{2, 3}, kInt16, {2, 3}, kFloat32},
-                                                  EltwiseOpParams{{2, 3}, kInt32, {2, 3}, kFloat32},
-                                                  EltwiseOpParams{{2, 3}, kInt64, {2, 3}, kFloat32},
-                                                  EltwiseOpParams{{2, 3}, kFloat16, {2, 3}, kFloat16},
-                                                  EltwiseOpParams{{-1, 3}, kFloat32, {-1, 3}, kFloat32},
-                                                  EltwiseOpParams{{-1, -1}, kFloat64, {-1, -1}, kFloat64},
-                                                  EltwiseOpParams{{-2}, kComplex64, {-2}, kComplex64},
-                                                  EltwiseOpParams{{-2}, kComplex128, {-2}, kComplex128}));
+OP_FUNC_IMPL_INFER_TEST_CASES(AsinhExt, testing::Values(EltwiseOpParams{{2, 3}, kBool, {2, 3}, kFloat32},
+                                                        EltwiseOpParams{{2, 3}, kUInt8, {2, 3}, kFloat32},
+                                                        EltwiseOpParams{{2, 3}, kInt8, {2, 3}, kFloat32},
+                                                        EltwiseOpParams{{2, 3}, kInt16, {2, 3}, kFloat32},
+                                                        EltwiseOpParams{{2, 3}, kInt32, {2, 3}, kFloat32},
+                                                        EltwiseOpParams{{2, 3}, kInt64, {2, 3}, kFloat32},
+                                                        EltwiseOpParams{{2, 3}, kFloat16, {2, 3}, kFloat16},
+                                                        EltwiseOpParams{{-1, 3}, kFloat32, {-1, 3}, kFloat32},
+                                                        EltwiseOpParams{{-1, -1}, kFloat64, {-1, -1}, kFloat64},
+                                                        EltwiseOpParams{{-2}, kComplex64, {-2}, kComplex64},
+                                                        EltwiseOpParams{{-2}, kComplex128, {-2}, kComplex128}));
 }  // namespace ops
 }  // namespace mindspore
