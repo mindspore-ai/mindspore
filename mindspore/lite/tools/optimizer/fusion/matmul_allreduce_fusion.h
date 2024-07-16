@@ -50,7 +50,6 @@ class MatMulAllReduceFusion : public MultiplePatternProcessPass {
   const std::string kPatternNameMatMulDequantAllReduce = "MatMulDequantAllReduce";
   const std::string kPatternNameQuantBatchMatmulAllReduce = "QuantBatchMatmulAllReduce";
   const std::string kAttrNameGroup = "group";
-  const std::string kAttrNameCommRenuse = "comm_renuse";
   const std::string kAttrNameFusion = "fusion";
   const std::string kAttrNameOp = "op";
   const std::string kAttrNameTransposeA = "transpose_a";

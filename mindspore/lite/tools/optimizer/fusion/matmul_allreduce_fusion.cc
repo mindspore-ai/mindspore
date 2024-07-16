@@ -133,7 +133,6 @@ PrimitivePtr MatMulAllReduceFusion::CreateMatMulAllReducePrim(const PrimitivePtr
   auto matmul_allreduce_prim = prim::kPrimMatMulAllReduce->Clone();
   MS_CHECK_TRUE_RET(matmul_allreduce_prim, {});
   // add attr
-  matmul_allreduce_prim->AddAttr(kAttrNameCommRenuse, allreduce_prim->GetAttr(kAttrNameCommRenuse));
   matmul_allreduce_prim->AddAttr(kAttrNameGroup, allreduce_prim->GetAttr(kAttrNameGroup));
   matmul_allreduce_prim->AddAttr(kAttrNameFusion, allreduce_prim->GetAttr(kAttrNameFusion));
   matmul_allreduce_prim->AddAttr(kAttrNameOp, allreduce_prim->GetAttr(kAttrNameOp));
@@ -331,7 +330,6 @@ CNodePtr MatMulAllReduceFusion::CreateQuantBatchMatmulAllReduceNode(const FuncGr
   // add attr
   auto allreduce_prim = GetCNodePrimitive(allreduce_cnode);
   auto qbmm_prim = GetCNodePrimitive(qbmm_cnode);
-  matmul_allreduce_prim->AddAttr(kAttrNameCommRenuse, allreduce_prim->GetAttr(kAttrNameCommRenuse));
   matmul_allreduce_prim->AddAttr(kAttrNameGroup, allreduce_prim->GetAttr(kAttrNameGroup));
   matmul_allreduce_prim->AddAttr(kAttrNameFusion, allreduce_prim->GetAttr(kAttrNameFusion));
   matmul_allreduce_prim->AddAttr(kAttrNameOp, allreduce_prim->GetAttr(kAttrNameOp));

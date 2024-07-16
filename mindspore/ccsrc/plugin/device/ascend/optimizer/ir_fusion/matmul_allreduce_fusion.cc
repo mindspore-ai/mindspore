@@ -33,7 +33,6 @@
 #include "ops/other_op_name.h"
 #include "mindspore/ccsrc/frontend/parallel/ops_info/ops_utils.h"
 #include "mindspore/core/ir/anf.h"
-#include "utils/phase.h"
 
 namespace mindspore::opt {
 const BaseRef MatMulAllReduceFusion::DefinePattern() const {
@@ -104,20 +103,22 @@ const AnfNodePtr MatMulAllReduceFusion::Process(const mindspore::FuncGraphPtr &f
                                                 const mindspore::EquivPtr &equiv) const {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  if (!ms_context->IsEnableInferBoost()) {
-    return nullptr;
-  }
 
-  auto phase = PhaseManager::GetInstance().phase();
-  if (common::GetEnv("MS_ENABLE_LCCL").empty() || phase.rfind(kPhaseNamePrefill) == std::string::npos) {
-    return nullptr;
-  }
-
-  auto enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
-  bool enable_matmul_allreduce =
-    (std::find(enable_op_list.begin(), enable_op_list.end(), kMatMulAllReduceOpName) != enable_op_list.end());
-  if (!enable_matmul_allreduce) {
-    return nullptr;
+  if (ms_context->IsEnableInferBoost()) {
+    if (common::GetEnv("MS_ENABLE_LCCL").empty()) {
+      return nullptr;
+    }
+    auto enable_op_list = ms_context->ms_internal_enable_custom_kernel_list();
+    bool enable_matmul_allreduce =
+      (std::find(enable_op_list.begin(), enable_op_list.end(), kMatMulAllReduceOpName) != enable_op_list.end());
+    if (!enable_matmul_allreduce) {
+      return nullptr;
+    }
+  } else {
+    // if not IsEnableInferBoost and not O2, no fuison
+    if (ms_context->GetJitLevel() != "O2") {
+      return nullptr;
+    }
   }
 
   if (func_graph == nullptr || node == nullptr) {
