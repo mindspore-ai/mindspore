@@ -145,6 +145,7 @@
 #include "tools/optimizer/fusion/flash_attention_fusion.h"
 #include "tools/optimizer/fusion/groupnormsilu_fusion.h"
 #include "tools/optimizer/fusion/adjust_resize_dims_pass.h"
+#include "tools/optimizer/graph/adjust_quant_matmul_pass.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -831,7 +832,8 @@ bool AnfTransform::StoreBuiltinPass(const std::shared_ptr<ConverterPara> &param)
     {"LayerNormV3Fusion", std::make_shared<opt::LayerNormV3Fusion>(), false},
     {"FFNFusion", std::make_shared<opt::FFNFusion>(), false},
     {"FuseAddAndLayernorm", std::make_shared<opt::FuseAddAndLayernorm>(), false},
-    {"AdjustMatmulPass", std::make_shared<opt::AdjustMatmulPass>(), false}};
+    {"AdjustMatmulPass", std::make_shared<opt::AdjustMatmulPass>(), false},
+    {"AdjustQuantMatmulPass", std::make_shared<opt::AdjustQuantMatmulPass>(), false}};
   for (const auto &pass_info : pass_infos) {
     MS_CHECK_TRUE_RET(std::get<1>(pass_info) != nullptr, false);
     PassStorage::StorePass(std::get<0>(pass_info), std::get<1>(pass_info), std::get<opt::kInputIndexTwo>(pass_info));
