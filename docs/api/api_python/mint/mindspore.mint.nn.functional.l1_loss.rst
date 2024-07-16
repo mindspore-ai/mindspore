@@ -10,7 +10,7 @@ mindspore.mint.nn.functional.l1_loss
     公式如下：
 
     .. math::
-        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|,
+        \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|
 
     其中， :math:`N` 为batch size。
 
@@ -26,7 +26,7 @@ mindspore.mint.nn.functional.l1_loss
     参数：
         - **input** (Tensor) - 预测值，任意维度的Tensor。
         - **target** (Tensor) - 目标值，通常情况与 `input` 的shape相同。如果 `input` 和 `target` 的shape不同，需要保证他们之间可以互相广播。
-        - **reduction** (str,可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str, 可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
           - ``'none'``：不应用规约方法。
           - ``'mean'``：计算输出元素的平均值。

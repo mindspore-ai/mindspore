@@ -22,6 +22,7 @@
 #include "kernel/pyboost/pyboost_utils.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 #include "mindapi/base/types.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -36,13 +37,7 @@ tensor::BaseTensorPtr L1LossBackwardExtAscendCustomize(const std::shared_ptr<OpR
 
   auto reduction_imm = static_cast<Reduction>(GetValue<int64_t>(reduction));
   // transform reduction enum value to corresponding value
-  std::unordered_map<Reduction, int64_t> reduction_map = {
-    {Reduction::REDUCTION_SUM, 2}, {Reduction::MEAN, 1}, {Reduction::NONE, 0}};
-  auto iter = reduction_map.find(reduction_imm);
-  if (iter == reduction_map.end()) {
-    MS_LOG(EXCEPTION) << "For L1LossBackwardExt, the value of reduction is invalid.";
-  }
-  auto reduction_value = iter->second;
+  auto reduction_value = ConvertReductionForAclnn(reduction_imm);
 
   // No need to convert input
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), grad_output_tensor, input_tensor, target_tensor);

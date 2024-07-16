@@ -2,9 +2,9 @@ l1_loss_ext:
     description: |
             Calculate the mean absolute error between the `input` value and the `target` value.
 
-            Assuming that the :math:`x` and :math:`y` (predicted and target value) are 1-D Tensor,
-            length :math:`N`, `reduction` is set to ``'none'``, then calculate the loss of
-            :math:`x` and :math:`y` without dimensionality reduction.
+            Assuming that the :math:`x` and :math:`y` are the predicted value and target value,
+            both are one-dimensional tensors of length :math:`N`, length :math:`N`, `reduction` is set to ``'none'``,
+            then calculate the loss of :math:`x` and :math:`y` without dimensionality reduction.
 
             The formula is as follows:
 
@@ -25,7 +25,7 @@ l1_loss_ext:
             Args:
                 input (Tensor): Predicted value, Tensor of any dimension.
                 target (Tensor): Target value, usually has the same shape as the `input`.
-                    If `input` and `target` have different shape, make sure they can broadcast to each other.
+                    If `input` and `target` have different shapes, make sure they can broadcast to each other.
                 reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
                     ``'sum'`` . Default: ``'mean'`` .
 

@@ -224,7 +224,7 @@ from mindspore.ops.function import binary_cross_entropy_with_logits as bce_with_
 # 220
 from mindspore.ops.function.nn_func import hardshrink # pylint: disable=W0611
 # 238
-from mindspore.ops.extend import l1_loss_ext as l1_loss
+from mindspore.ops.extend import l1_loss_ext as l1_loss # pylint: disable=W0611
 # 323
 
 # 324
@@ -568,9 +568,6 @@ __all__ = [
     # 99
 
     # 100
-
-    # 283
-    'l1_loss',
 
     # 323
 
