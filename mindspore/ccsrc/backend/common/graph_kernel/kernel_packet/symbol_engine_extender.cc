@@ -89,7 +89,7 @@ void SymbolEngineExtender::FindShapeDependHostNode(const CNodePtr &node, HashSet
   if (prim == nullptr) {
     return;
   }
-  if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
+  if (!AnfUtils::IsRealKernel(node)) {
     return;
   }
   auto depends = symshape::GetShapeDepends(prim, node->size() - 1);
@@ -116,7 +116,7 @@ void SymbolEngineExtender::FindValueDependNode(const CNodePtr &node, HashSet<Anf
   if (!visited->insert(node).second) {
     return;
   }
-  if (IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
+  if (!AnfUtils::IsRealKernel(node)) {
     return;
   }
   auto prim = GetCNodePrimitive(node);
