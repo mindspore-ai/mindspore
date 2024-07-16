@@ -26,6 +26,11 @@ internal::OpParamPtr ApplyRotaryPosEmb::CreateOpParam(const std::vector<KernelTe
   internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
   param_ptr->opId = internal::OpId::ApplyRotaryPosEmb;
 
+  auto context_ptr = mindspore::MsContext::GetInstance();
+  if (context_ptr->ascend_soc_version() == "ascend310p") {
+    param_ptr->opId = internal::OpId::ApplyRotaryPosEmbNz;
+  }
+
   internal::ApplyRotaryPosEmbParam ropeParam;
   auto last_input = inputs.at(kIndex5);
   if (last_input->dtype_id() == TypeId::kNumberTypeInt64) {

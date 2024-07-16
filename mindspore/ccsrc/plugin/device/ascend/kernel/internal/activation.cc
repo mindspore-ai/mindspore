@@ -65,5 +65,22 @@ class InternalSwiGLU : public InternalActivation {
 MS_INTERNAL_KERNEL_FACTORY_REG(Swiglu, InternalSwiGLU);
 REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Swiglu, INPUT_NUM_1, INDEX_0);
 REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Swiglu, OUTPUT_NUM_1, INDEX_0);
+class InternalFastGeLU : public InternalActivation {
+ public:
+  InternalFastGeLU() : InternalActivation("FastGeLU") {}
+  ~InternalFastGeLU() = default;
+
+ protected:
+  void SetComputeType(internal::OpParamPtr param_ptr) override {
+    param_ptr->opId = internal::OpId::FastGeLU;
+    internal::ActivationParam op_param;
+    op_param.activationType = internal::ActivationParam::ACTIVATION_FAST_GELU;
+    param_ptr->specificParam = op_param;
+  }
+};
+
+MS_INTERNAL_KERNEL_FACTORY_REG(FastGeLU, InternalFastGeLU);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(FastGeLU, INPUT_NUM_1, INDEX_0);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(FastGeLU, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

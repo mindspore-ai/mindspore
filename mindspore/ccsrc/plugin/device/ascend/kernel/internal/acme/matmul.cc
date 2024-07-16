@@ -30,6 +30,6 @@ acme::AcmeOpPtr AcmeMatmul::CreateKernel(acme::InputsImmutableInfoList inputs, a
   const std::string op_name = "MatMul";
   return acme::CreateMatmulOp(inputs, outputs, param, op_name);
 }
-MS_ACME_KERNEL_FACTORY_REG(MatMul, AcmeMatmul);
+// MS_ACME_KERNEL_FACTORY_REG(MatMul, AcmeMatmul);
 }  // namespace kernel
 }  // namespace mindspore

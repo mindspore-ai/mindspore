@@ -33,6 +33,13 @@ internal::OpParamPtr InternalRmsNorm::CreateOpParam(const std::vector<KernelTens
   rmsnorm_param.epsilon = inputs[kIndex2]->GetValueWithCheck<float>();
   rmsnorm_param.inGamma = true;
 
+  auto context_ptr = mindspore::MsContext::GetInstance();
+  if (context_ptr->ascend_soc_version() == "ascend310p") {
+    rmsnorm_param.normType = internal::NormParam::RMS_NORM;
+  } else {
+    rmsnorm_param.normType = internal::NormParam::RMS_NORM_FORWARD;
+  }
+
   param_ptr->specificParam = rmsnorm_param;
   return param_ptr;
 }

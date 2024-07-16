@@ -15,50 +15,39 @@
 """
 Test module for testing the paralleled llama interface used for mindformers.
 How to run this:
-pytest tests/st/test_model/test_llama_model/test_parallel_predict.py
+pytest tests/st/test_model/test_llama_model/test_parallel_train.py
 """
 import os
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_single
-def test_parallel_predict():
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='unessential')
+def test_train():
     """
-    Feature: Trainer.predict()
-    Description: Test trainer for predict.
+    Feature: Trainer.train()
+    Description: Test parallel trainer for train.
     Expectation: AssertionError
     """
     os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
-    os.environ["MS_ENABLE_LCCL"] = "1"
-    os.environ["MS_INTERNAL_ENABLE_CUSTOM_KERNEL_LIST"] = "MatMulAllReduce"
-    os.environ["CUSTOM_MATMUL_SHUFFLE"] = "on"
-    os.environ["RUN_MODE"] = "predict"
-    sh_path = os.path.split(os.path.realpath(__file__))[0]
-    os.system(f"source {sh_path}/env.sh")
-    ret = os.system(f"bash {sh_path}/mpirun_launch_llama.sh 4 test_predict")
-    os.system(f"grep -E 'ERROR|error' {sh_path}/test_predict.log -C 10")
-    assert ret == 0
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_single
-def test_parallel_predict_bf16():
-    """
-    Feature: Trainer.predict()
-    Description: Test trainer for bfloat16 predict.
-    Expectation: AssertionError
-    """
-    os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
-    os.environ["MS_ENABLE_LCCL"] = "1"
-    os.environ["MS_INTERNAL_ENABLE_CUSTOM_KERNEL_LIST"] = "MatMulAllReduce"
-    os.environ["CUSTOM_MATMUL_SHUFFLE"] = "on"
-    os.environ["RUN_MODE"] = "predict"
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     os.system(f"source {sh_path}/env.sh")
     ret = os.system(
-        f"bash {sh_path}/mpirun_launch_llama.sh 4 test_predict_bf16")
-    os.system(f"grep -E 'ERROR|error' {sh_path}/test_predict_bf16.log -C 10")
+        f"bash {sh_path}/mpirun_launch_llama.sh "" 8 train test_train")
+    os.system(f"grep -E 'ERROR|error' {sh_path}/test_train.log -C 10")
+    assert ret == 0
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='unessential')
+def test_train_cp():
+    """
+    Feature: Trainer.train()
+    Description: Test context parallel trainer for train.
+    Expectation: AssertionError
+    """
+    os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+    sh_path = os.path.split(os.path.realpath(__file__))[0]
+    os.system(f"source {sh_path}/env.sh")
+    ret = os.system(
+        f"bash {sh_path}/mpirun_launch_llama.sh "" 8 train test_train_cp")
+    os.system(f"grep -E 'ERROR|error' {sh_path}/test_train_cp.log -C 10")
     assert ret == 0

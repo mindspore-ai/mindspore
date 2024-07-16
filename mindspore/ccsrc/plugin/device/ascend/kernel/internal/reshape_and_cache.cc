@@ -28,6 +28,11 @@ internal::OpParamPtr ReshapeAndCache::CreateOpParam(const std::vector<KernelTens
   auto param_ptr = std::make_shared<internal::OpParam>();
   param_ptr->opId = internal::OpId::ReshapeAndCache;
 
+  auto context_ptr = mindspore::MsContext::GetInstance();
+  if (context_ptr->ascend_soc_version() == "ascend310p") {
+    param_ptr->opId = internal::OpId::ReshapeAndCacheNz;
+  }
+
   internal::MixParam mix_param;
   mix_param.mixType = internal::MixParam::MixType::MIX_RESHAPE_AND_CACHE_ND;
   param_ptr->specificParam = mix_param;

@@ -24,3 +24,6 @@
 [submodule "tests/st/networks/mindformers"]
 	path = tests/st/networks/mindformers
 	url = https://gitee.com/mindspore/mindformers.git
+[submodule "tests/st/networks/golden-stick"]
+	path = tests/st/networks/golden-stick
+	url = https://gitee.com/mindspore/golden-stick.git

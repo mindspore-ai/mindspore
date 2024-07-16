@@ -32,8 +32,14 @@ internal::OpParamPtr InternalQuantBatchMatmul::CreateOpParam(const std::vector<K
   transpose_x1 = static_cast<bool>(inputs[kIndex5]->GetValueWithCheck<bool>());
   transpose_x2 = static_cast<bool>(inputs[kIndex6]->GetValueWithCheck<bool>());
 
+  auto shape_a = inputs[kIndex0]->GetShapeVector();
+  auto shape_b = inputs[kIndex1]->GetShapeVector();
+  int m = (!transpose_x1) ? shape_a[kIndex0] : shape_a[kIndex1];
+  int k = (!transpose_x1) ? shape_a[kIndex1] : shape_a[kIndex0];
+  int n = (!transpose_x2) ? shape_b[kIndex1] : shape_b[kIndex0];
+
   bool has_bias = !(inputs[kIndex4]->GetType()->isa<TypeNone>());
-  internal::MatMulParam op_param = {transpose_x1, transpose_x2, {0, 0, 0}, has_bias, true};
+  internal::MatMulParam op_param = {transpose_x1, transpose_x2, {m, k, n}, has_bias, true};
   param_ptr->specificParam = op_param;
   return param_ptr;
 }

@@ -41,7 +41,6 @@ class AntiquantAddMulMatMulAllReduceFusion : public MultiplePatternProcessPass {
  protected:
   const std::string kPatternNameAntiquantAddMulMatMulAllReduce = "AntiquantAddMulMatMulAllReduce";
   const std::string kAttrNameGroup = "group";
-  const std::string kAttrNameCommRenuse = "comm_renuse";
   const std::string kAttrNameFusion = "fusion";
   const std::string kAttrNameOp = "op";
   const std::string kAttrNameTransposeA = "transpose_a";
