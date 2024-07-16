@@ -14,9 +14,9 @@
 # ============================================================================
 """mint nn functional."""
 from __future__ import absolute_import
-from mindspore.ops.extend import max_pool2d
+import mindspore.ops as ops
+from mindspore.ops.function.nn_func import max_pool2d_ext as max_pool2d
 from mindspore.ops.functional import (
-    conv_transpose2d,
     grid_sample
 )
 # 1
@@ -36,7 +36,7 @@ from mindspore.ops.auto_generate import fold_ext as fold
 # 8
 from mindspore.ops.functional import layer_norm
 # 9
-from mindspore.ops.function.nn_func import interpolate_ext as interpolate
+
 # 10
 
 # 11
@@ -147,7 +147,6 @@ from mindspore.ops.functional import embedding
 # 63
 
 # 64
-from mindspore.ops.extend import one_hot as one_hot_ext
 
 # 65
 
@@ -200,11 +199,11 @@ from mindspore.ops.extend import one_hot as one_hot_ext
 # 89
 
 # 90
-from mindspore.ops.function.nn_func import avg_pool2d_ext as avg_pool2d
+
 # 91
 
 # 92
-from mindspore.ops.extend import leaky_relu_ext as leaky_relu
+from mindspore.ops.auto_generate import leaky_relu_ext as leaky_relu
 # 93
 from mindspore.ops.auto_generate import softplus_ext as softplus  # pylint: disable=W0611
 # 94
@@ -220,21 +219,22 @@ from mindspore.ops.function.math_func import tanh
 # 99
 
 # 100
-from mindspore.ops.function import binary_cross_entropy_with_logits as bce_with_logits
+
 # 220
-from mindspore.ops.function.nn_func import hardshrink # pylint: disable=W0611
+from mindspore.ops.function.nn_func import hardshrink  # pylint: disable=W0611
 # 221
 from mindspore.ops.function.nn_func import hardsigmoid  # pylint: disable=W0611
 # 222
 from mindspore.ops.function.nn_func import hardswish  # pylint: disable=W0611
 # 238
-from mindspore.ops.extend import l1_loss_ext as l1_loss # pylint: disable=W0611
+from mindspore.ops.auto_generate import l1_loss_ext as l1_loss  # pylint: disable=W0611
 # 323
 
 # 324
 from mindspore.ops.auto_generate import elu_ext as elu
-# 325
 
+
+# 325
 
 
 def binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean', pos_weight=None):
@@ -330,7 +330,7 @@ def binary_cross_entropy_with_logits(input, target, weight=None, reduction='mean
         >>> print(output)
         0.3463612
     """
-    return bce_with_logits(input, target, weight, pos_weight, reduction)
+    return ops.function.binary_cross_entropy_with_logits(input, target, weight, pos_weight, reduction)
 
 
 def one_hot(tensor, num_classes=-1):
@@ -368,10 +368,10 @@ def one_hot(tensor, num_classes=-1):
          [0 1 0]
          [0 0 1]]
     """
-    return one_hot_ext(tensor, num_classes)
+    return ops.function.array_func.one_hot_ext(tensor, num_classes)
+
 
 __all__ = [
-    'conv_transpose2d',
     'max_pool2d',
     # 1
     'binary_cross_entropy_with_logits',
@@ -390,7 +390,7 @@ __all__ = [
     # 8
     'layer_norm',
     # 9
-    'interpolate',
+
     # 10
 
     # 11
@@ -552,7 +552,7 @@ __all__ = [
     # 89
 
     # 90
-    'avg_pool2d',
+
     # 91
     'grid_sample',
     # 92

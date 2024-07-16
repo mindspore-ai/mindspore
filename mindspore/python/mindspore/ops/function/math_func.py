@@ -41,7 +41,8 @@ from mindspore.ops.auto_generate.pyboost_inner_prim import roll_impl
 from mindspore.ops.operations.math_ops import Ormqr
 from mindspore.ops.operations.math_ops import DivMod
 from mindspore.ops.operations.array_ops import MatrixSetDiagV3, Transpose
-from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, sub, cos, cosh,
+from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh, cummax, real, conj, add, sub, cos,
+                                         cosh,
                                          matrix_exp, sqrt, rsqrt, square, trace, nextafter, abs, acos, acosh, angle,
                                          asin, asinh, atan, atan2, atanh, ceil, equal, erf, erfc, erfinv, exp, expm1,
                                          floor, floor_divide, floor_mod, gcd, greater, greater_equal, less, less_equal,
@@ -49,6 +50,7 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, sin, sinc, sinh,
                                          sum_ext_op, prod_ext_op, all, matrix_inverse_ext, atan2_ext, sign, acos_ext,
                                          acosh_ext, asin_ext, asinh_ext, median_ext_op, median_dim_op, xlogy_op,
                                          xlogy_scalar_other_op, xlogy_scalar_self_op)
+from mindspore.ops.auto_generate.gen_ops_def import add_ext, sub_ext, bmm_ext
 from mindspore.ops.auto_generate import tanh
 from mindspore.nn import layer
 from mindspore._checkparam import check_is_number
@@ -240,6 +242,7 @@ bitwise_or_scalar_ = BitwiseOrScalar()
 bitwise_or_tensor_ = BitwiseOrTensor()
 bitwise_xor_scalar_ = BitwiseXorScalar()
 bitwise_xor_tensor_ = BitwiseXorTensor()
+
 
 #####################################
 # Element-wise Operation Functions.
@@ -2810,6 +2813,7 @@ def linspace_ext(start, end, steps, *, dtype=None):
     """
     return lin_space_ext_op(start, end, steps, dtype)
 
+
 def det(input):
     r"""
     Computes the determinant of one or more square matrices.
@@ -3216,6 +3220,7 @@ def logit(input, eps=None):
         eps = -1.0
     logit_ = _get_cache_prim(P.Logit)(eps)
     return logit_(input)
+
 
 #####################################
 # Comparison Operation Functions.
@@ -8671,6 +8676,54 @@ def baddbmm(input, batch1, batch2, beta=1, alpha=1):
     return y
 
 
+def baddbmm_ext(input, batch1, batch2, beta=1, alpha=1):
+    r"""
+    The result is the sum of the input and a batch matrix-matrix product of matrices in batch1 and batch2.
+    The formula is defined as follows:
+
+    .. math::
+        \text{out}_{i} = \beta \text{input}_{i} + \alpha (\text{batch1}_{i} \mathbin{@} \text{batch2}_{i})
+
+    Args:
+        input (Tensor): The input Tensor. When batch1 is a :math:`(C, W, T)` Tensor and batch2 is a
+            :math:`(C, T, H)` Tensor, input must be broadcastable with :math:`(C, W, H)` Tensor.
+        batch1 (Tensor): :math:`batch1` in the above formula. Must be 3-D Tensor, dtype is same as input.
+        batch2 (Tensor): :math:`batch2` in the above formula. Must be 3-D Tensor, dtype is same as input.
+        beta (Union[float, int], optional): multiplier for input. Default: ``1`` .
+        alpha (Union[float, int], optional): multiplier for :math:`batch1 @ batch2`. Default: ``1`` .
+            Arguments beta and alpha must be integers when inputs of type not FloatTensor, otherwise they should
+            be a real number.
+
+    Returns:
+        Tensor, has the same dtype as input, shape will be :math:`(C, W, H)`.
+
+    Raises:
+        TypeError: The type of `input`, `batch1`, `batch2` is not Tensor.
+        TypeError: The types of `input`, `batch1`, `batch2` are different.
+        TypeError: For inputs of type FloatTensor or DoubleTensor, \
+                    arguments beta and alpha not be real numbers, otherwise not be integers.
+        TypeError: For Baddbmm, attributes alpha and beta are not real numbers
+        ValueError: If `batch1` and `batch2` are not 3-D tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> from mindspore.ops.function.math_func import baddbmm_ext
+        >>> input = Tensor(np.ones([1, 3, 3]).astype(np.float32))
+        >>> batch1 = Tensor(np.ones([1, 3, 4]).astype(np.float32))
+        >>> batch2 = Tensor(np.ones([1, 4, 3]).astype(np.float32))
+        >>> output = baddbmm_ext(input, batch1, batch2)
+        >>> print(output)
+        [[[5. 5. 5.]
+          [5. 5. 5.]
+          [5. 5. 5.]]]
+    """
+    return ops.auto_generate.baddbmm(input, batch1, batch2, beta, alpha)
+
+
 def log2(input):
     r"""
     Returns a new Tensor by taking the base 2 logarithm of the elements in the input Tensor.
@@ -9012,7 +9065,6 @@ def _check_is_tensor(param_name, input, cls_name):
     """Returns True if input is Tensor."""
     if not isinstance(input, Tensor):
         raise TypeError(f"For {cls_name}, {param_name} must be a Tensor, but got {type(input)}.")
-
 
 
 def any(input, axis=None, keep_dims=False):

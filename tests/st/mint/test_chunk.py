@@ -55,7 +55,7 @@ def do_test_chunk_forward(mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -85,7 +85,7 @@ def test_chunk_forward_with_minus_dim(mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -99,7 +99,7 @@ def test_chunk_forward(mode):
     do_test_chunk_forward(mode)
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -112,7 +112,7 @@ def test_chunk_forward_kbk():
     do_test_chunk_forward('KBK')
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -139,7 +139,7 @@ def test_chunk_backward(mode):
     assert grad.asnumpy().shape == x.shape
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

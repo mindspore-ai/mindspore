@@ -82,7 +82,7 @@ def GenGradOut(np_data_type):
 
 def call_gather(x, dim, indices):
     """call_gather"""
-    out = ops.extend.gather(x, dim, indices)
+    out = ops.function.array_func.gather_ext(x, dim, indices)
     return out
 
 
