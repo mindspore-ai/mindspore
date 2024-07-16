@@ -27,7 +27,7 @@
 #include "backend/common/graph_kernel/adapter/split_model_ascend.h"
 #include "backend/common/graph_kernel/split_model/split_model_factory.h"
 
-namespace mindspore {
+namespace mindspore::graphkernel::test {
 namespace {
 void Init() {
   auto context = MsContext::GetInstance();
@@ -57,16 +57,15 @@ class TestSiLUGrad : public GraphKernelCommonTestSuite, public testing::WithPara
 TEST_P(TestSiLUGrad, silu_grad) {
   Init();
   const auto &param = GetParam();
-  test::ConstructGraph c;
+  ConstructGraph c;
   auto x0 = c.NewTensorInput("x0", param.x0_type, param.x0_shape);
   auto x1 = c.NewTensorInput("x1", param.x1_type, param.x1_shape);
-  auto op = c.NewCNode("SiLUGrad", {x0, x1}, {});
-  c.SetGeneralBuildInfo(op);
+  auto op = c.NewCNodeWithBuildInfo("SiLUGrad", {x0, x1}, {});
   c.SetOutput(op);
 
-  test::RunPass(c.GetGraph(), {std::make_shared<graphkernel::GraphKernelExpanderCloud>(),
-                               std::make_shared<graphkernel::SymbolEngineBuilder>(false),
-                               std::make_shared<graphkernel::GraphKernelSplitterWithPy>(false)});
+  RunPass(c.GetGraph(), {std::make_shared<graphkernel::GraphKernelExpanderCloud>(),
+                         std::make_shared<graphkernel::SymbolEngineBuilder>(false),
+                         std::make_shared<graphkernel::GraphKernelSplitterWithPy>(false)});
   size_t gk_node_num = 0;
   auto nodes = TopoSort(c.GetGraph()->get_return());
   for (const auto &node : nodes) {
@@ -79,4 +78,4 @@ TEST_P(TestSiLUGrad, silu_grad) {
 
 INSTANTIATE_TEST_CASE_P(TestOpSiLUGrad, TestSiLUGrad,
                         testing::Values(SiLUGradParams{{-1, 32}, {-1, 32}, kFloat32, kFloat32}));
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::test

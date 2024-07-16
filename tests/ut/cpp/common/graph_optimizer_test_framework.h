@@ -34,9 +34,11 @@ class ConstructGraph {
 
   ValueNodePtr NewValueNode(const ValuePtr &value);
   CNodePtr NewCNodeWithoutInfer(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
-                                const mindspore::HashMap<std::string, ValuePtr> &attrs);
+                                const mindspore::HashMap<std::string, ValuePtr> &attrs = {});
   CNodePtr NewCNode(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
-                    const mindspore::HashMap<std::string, ValuePtr> &attrs);
+                    const mindspore::HashMap<std::string, ValuePtr> &attrs = {});
+  CNodePtr NewCNodeWithBuildInfo(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
+                                 const mindspore::HashMap<std::string, ValuePtr> &attrs = {});
   void SetOutput(const AnfNodePtr &node);
   void SetGeneralBuildInfo(const AnfNodePtr &node);
 
