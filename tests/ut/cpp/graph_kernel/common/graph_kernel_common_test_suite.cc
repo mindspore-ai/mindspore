@@ -19,9 +19,5 @@
 
 namespace mindspore {
 
-void GraphKernelCommonTestSuite::SetUp() {
-  if (graphkernel::Callback::Instance() == nullptr) {
-    graphkernel::Callback::RegImpl(std::make_shared<graphkernel::CallbackImpl>());
-  }
-}
+void GraphKernelCommonTestSuite::SetUp() {}
 }  // namespace mindspore
