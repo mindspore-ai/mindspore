@@ -35,12 +35,11 @@ TEST_F(MindDataTestSwapRedBlueOp, TestOp1) {
   // SwapRedBlue params
   auto op = std::make_unique<SwapRedBlueOp>();
   EXPECT_TRUE(op->OneToOne());
-  Status s = op->Compute(input_tensor_, &output_tensor_);
-  size_t actual = 0;
-  if (s == Status::OK()) {
-    actual = output_tensor_->shape()[0] * output_tensor_->shape()[1] * output_tensor_->shape()[2];
-  }
-  EXPECT_EQ(actual, input_tensor_->shape()[0] * input_tensor_->shape()[1] * 3);
-  EXPECT_EQ(s, Status::OK());
+  auto input_shape = input_tensor_->shape();
+  EXPECT_EQ(op->Compute(input_tensor_, &output_tensor_), Status::OK());
+  EXPECT_EQ(input_shape.Size(), 3);
+  EXPECT_EQ(output_tensor_->shape().Size(), 3);
+  size_t input_item_size = input_shape[0] * input_shape[1] * input_shape[2];
+  size_t output_item_size = output_tensor_->shape()[0] * output_tensor_->shape()[1] * output_tensor_->shape()[2];
+  EXPECT_EQ(input_item_size, output_item_size);
 }
-

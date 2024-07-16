@@ -40,14 +40,16 @@ TEST_F(MindDataTestToFloat16Op, TestOp) {
   bool expand = false;
   auto op = std::make_unique<RandomRotationOp>(s_degree, e_degree, InterpolationMode::kLinear, expand, center, 0, 0, 0);
   EXPECT_TRUE(op->OneToOne());
-  Status s = op->Compute(input_tensor_, &output_tensor);
-  EXPECT_TRUE(s.IsOk());
-  EXPECT_EQ(input_tensor_->shape()[0], output_tensor->shape()[0]);
-  EXPECT_EQ(input_tensor_->shape()[1], output_tensor->shape()[1]);
+  auto input_shape = input_tensor_->shape();
+  EXPECT_EQ(op->Compute(input_tensor_, &output_tensor), Status::OK());
+  EXPECT_EQ(input_shape.Size(), 3);
+  EXPECT_EQ(output_tensor->shape().Size(), 3);
+  EXPECT_EQ(input_shape[0], output_tensor->shape()[0]);
+  EXPECT_EQ(input_shape[1], output_tensor->shape()[1]);
 
   auto to_float_op = std::make_unique<ToFloat16Op>();
   std::shared_ptr<Tensor> output_tensor1;
-  s = op->Compute(output_tensor, &output_tensor1);
+  EXPECT_EQ(op->Compute(output_tensor, &output_tensor1), Status::OK());
   EXPECT_EQ(output_tensor->shape()[0], output_tensor1->shape()[0]);
   EXPECT_EQ(output_tensor->shape()[1], output_tensor1->shape()[1]);
 }

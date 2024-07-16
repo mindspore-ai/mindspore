@@ -22,6 +22,9 @@
 
 namespace mindspore {
 namespace dataset {
+SkipFirstEpochSamplerRT::SkipFirstEpochSamplerRT(int64_t start_index, int64_t num_samples, int64_t samples_per_tensor)
+    : SequentialSamplerRT(start_index, num_samples, samples_per_tensor), sample_need_to_skip_(start_index) {}
+
 Status SkipFirstEpochSamplerRT::GetNextSample(TensorRow *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
   if (index_produced_ > num_samples_) {
@@ -31,31 +34,32 @@ Status SkipFirstEpochSamplerRT::GetNextSample(TensorRow *out) {
   } else if (index_produced_ == num_samples_) {
     (*out) = TensorRow(TensorRow::kFlagEOE);
   } else {
-    // only at the first epoch, the current index is equal to the starting index
-    int64_t sample_need_to_skip = current_index_ == start_index_ ? start_index_ : 0;
-    int64_t num_index_fetched = num_rows_;
+    int64_t num_index_valid;
     if (HasChildSampler()) {
       RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
       CHECK_FAIL_RETURN_UNEXPECTED(!child_ids_.empty(),
                                    "SkipFirstEpochSampler: got empty output index from child sampler.");
-      num_index_fetched = child_ids_[0]->Size();
-      while (sample_need_to_skip >= num_index_fetched) {
-        sample_need_to_skip -= num_index_fetched;
-        current_index_ += num_index_fetched;
+      num_index_valid = child_ids_[0]->Size();
+      while (sample_need_to_skip_ >= num_index_valid) {
+        sample_need_to_skip_ -= num_index_valid;
+        current_index_ += num_index_valid;
         RETURN_IF_NOT_OK(child_[0]->GetNextSample(&child_ids_));
         CHECK_FAIL_RETURN_UNEXPECTED(!child_ids_.empty(),
                                      "SkipFirstEpochSampler: got empty output index from child sampler.");
-        num_index_fetched = child_ids_[0]->Size();
+        num_index_valid = child_ids_[0]->Size();
       }
+      CHECK_FAIL_RETURN_UNEXPECTED(
+        child_ids_[0]->type().value() == DataType::Type::DE_INT64,
+        "SkipFirstEpochSampler: output index from child sampler must be of int64 type, but got: " +
+          child_ids_[0]->type().ToString());
+    } else {
+      // calculate how many ids left to produce
+      num_index_valid = num_rows_ - index_produced_;
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      child_ids_[0]->type().value() == DataType::Type::DE_INT64,
-      "SkipFirstEpochSampler: output index from child sampler must be of int64 type, but got: " +
-        child_ids_[0]->type().ToString());
 
     // Compute how many ids are left to pack, and pack this amount into a new Tensor.
     // Respect the setting for samples per Tensor though.
-    int64_t remaining_ids = num_index_fetched - sample_need_to_skip;
+    int64_t remaining_ids = num_index_valid - sample_need_to_skip_;
     int64_t num_elements = std::min(remaining_ids, samples_per_tensor_);
 
     std::shared_ptr<Tensor> sampleIds;
@@ -67,12 +71,12 @@ Status SkipFirstEpochSamplerRT::GetNextSample(TensorRow *out) {
       if (copy_data_length < SECUREC_MEM_MAX_LEN) {
         int ret_code =
           memcpy_s(sampleIds->GetMutableBuffer(), copy_data_length,
-                   child_ids_[0]->GetMutableBuffer() + sample_need_to_skip * sizeof(int64_t), copy_data_length);
+                   child_ids_[0]->GetMutableBuffer() + sample_need_to_skip_ * sizeof(int64_t), copy_data_length);
         CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, err_msg + " errno: " + std::to_string(ret_code));
       } else {
         auto dest =
           std::memcpy(sampleIds->GetMutableBuffer(),
-                      child_ids_[0]->GetMutableBuffer() + sample_need_to_skip * sizeof(int64_t), copy_data_length);
+                      child_ids_[0]->GetMutableBuffer() + sample_need_to_skip_ * sizeof(int64_t), copy_data_length);
         CHECK_FAIL_RETURN_UNEXPECTED(dest == sampleIds->GetMutableBuffer(), err_msg);
       }
       current_index_ += num_elements;
@@ -85,6 +89,7 @@ Status SkipFirstEpochSamplerRT::GetNextSample(TensorRow *out) {
       }
     }
     index_produced_ += num_elements;  // Count the packed ids towards our overall sample count
+    sample_need_to_skip_ = 0;
     (*out) = {sampleIds};
   }
   return Status::OK();
