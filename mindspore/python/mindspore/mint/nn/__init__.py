@@ -227,6 +227,9 @@ from mindspore.ops.auto_generate import BCEWithLogitsLoss as BCEWithLogitsLoss_p
 # 220
 from mindspore.ops.auto_generate import HShrink
 
+# 238
+from mindspore.ops.operations.nn_ops import L1LossExt as L1Loss
+
 class BCEWithLogitsLoss(Cell):
     r"""
     Adds sigmoid activation function to `input` as logits, and uses this logits to compute binary cross entropy
@@ -540,6 +543,8 @@ __all__ = [
 
     # 220
     'Hardshrink',
+    # 238
+    'L1Loss',
 ]
 
 __all__.extend(basic.__all__)

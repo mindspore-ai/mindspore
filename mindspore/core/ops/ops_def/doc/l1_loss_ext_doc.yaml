@@ -1,0 +1,55 @@
+l1_loss_ext:
+    description: |
+            Calculate the mean absolute error between the `input` value and the `target` value.
+
+            Assuming that the :math:`x` and :math:`y` (predicted and target value) are 1-D Tensor,
+            length :math:`N`, `reduction` is set to ``'none'``, then calculate the loss of
+            :math:`x` and :math:`y` without dimensionality reduction.
+
+            The formula is as follows:
+
+            .. math::
+                \ell(x, y) = L = \{l_1,\dots,l_N\}^\top, \quad \text{with } l_n = \left| x_n - y_n \right|,
+
+            where :math:`N` is the batch size.
+
+            If `reduction` is ``'mean'`` or ``'sum'`` , then:
+
+            .. math::
+                \ell(x, y) =
+                \begin{cases}
+                    \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+                    \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+                \end{cases}
+
+            Args:
+                input (Tensor): Predicted value, Tensor of any dimension.
+                target (Tensor): Target value, usually has the same shape as the `input`.
+                    If `input` and `target` have different shape, make sure they can broadcast to each other.
+                reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+                    ``'sum'`` . Default: ``'mean'`` .
+
+                    - ``'none'``: no reduction will be applied.
+                    - ``'mean'``: compute and return the mean of elements in the output.
+                    - ``'sum'``: the output elements will be summed.
+
+            Returns:
+                Tensor or Scalar, if `reduction` is ``'none'``, return a Tensor with same shape and dtype as `input`.
+                Otherwise, a scalar value will be returned.
+
+            Raises:
+                TypeError: If `input` is not a Tensor.
+                TypeError: If `target` is not a Tensor.
+                ValueError: If `reduction` is not one of ``'none'``, ``'mean'`` or ``'sum'``.
+
+            Supported Platforms:
+                ``Ascend`` ``GPU`` ``CPU``
+
+            Examples:
+                >>> from mindspore import Tensor, ops
+                >>> from mindspore import dtype as mstype
+                >>> x = Tensor([[1, 2, 3], [4, 5, 6]], mstype.float32)
+                >>> target = Tensor([[6, 5, 4], [3, 2, 1]], mstype.float32)
+                >>> output = ops.l1_loss_ext(x, target, reduction="mean")
+                >>> print(output)
+                3.0

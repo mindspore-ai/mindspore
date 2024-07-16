@@ -1246,6 +1246,20 @@ REG_BPROP_BUILDER("SmoothL1Loss").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {dx, dy};
 });
 
+REG_BPROP_BUILDER("L1LossExt").SetUnusedInputs({i3}).SetBody((BODYFUNC(ib) {
+  // input, target, reduction, out, dout
+  auto grad_output = ib->GetInput(kIndex4);
+  auto input = ib->GetInput(kIndex0);
+  auto target = ib->GetInput(kIndex1);
+  auto reduction = ib->GetInput(kIndex2);
+
+  auto dx = ib->Emit("L1LossBackwardExt", {grad_output, input, target, reduction});
+  auto dy = ib->Emit("L1LossBackwardExt", {grad_output, target, input, reduction});
+  std::vector<NodePtr> ret = BinopGradCommon(ib, input, target, dx, dy);
+  ret.emplace_back(ib->OutZeros(reduction));
+  return ret;
+}));
+
 REG_BPROP_BUILDER("L2Loss").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);

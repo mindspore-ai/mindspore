@@ -191,6 +191,16 @@ Other Operations
 mindspore.mint.nn
 ------------------
 
+Loss Functions
+^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.nn.L1Loss
+
 Convolution Layers
 ^^^^^^^^^^^^^^^^^^
 
@@ -340,6 +350,7 @@ Loss Functions
 
     mindspore.mint.nn.functional.binary_cross_entropy
     mindspore.mint.nn.functional.binary_cross_entropy_with_logits
+    mindspore.mint.nn.functional.l1_loss
 
 Vision functions
 ^^^^^^^^^^^^^^^^^^

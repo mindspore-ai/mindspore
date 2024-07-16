@@ -1,0 +1,19 @@
+#operator l1_loss_ext
+l1_loss_ext:
+  args:
+    input:
+      dtype: tensor
+    target:
+      dtype: tensor
+    reduction:
+      dtype: int
+      default: "'mean'"
+      arg_handler: str_to_enum
+  returns:
+    outputs:
+      dtype: tensor
+  class:
+    name: L1LossExt
+  dispatch:
+    enable: True
+    Ascend: L1LossExtAscend

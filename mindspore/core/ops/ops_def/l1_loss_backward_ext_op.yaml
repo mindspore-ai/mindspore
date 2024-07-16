@@ -1,0 +1,23 @@
+#operator l1_loss_backward_ext
+l1_loss_backward_ext:
+  args:
+    grad_output:
+      dtype: tensor
+    input:
+      dtype: tensor
+    target:
+      dtype: tensor
+    reduction:
+      dtype: int
+      default: "'mean'"
+      arg_handler: str_to_enum
+  returns:
+    out:
+      dtype: tensor
+  function:
+    disable: True
+  class:
+    name: L1LossBackwardExt
+  dispatch:
+    enable: True
+    Ascend: L1LossBackwardExtAscend
