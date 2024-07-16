@@ -75,7 +75,7 @@ TopkExt: 'aclnnTopk'
 WeightQuantBatchMatmul: 'aclnnWeightQuantBatchMatmulV2'
 IncreFlashAttention: 'aclnnIncreFlashAttentionV4'
 # 1
-
+Xlogy: 'aclnnXLogYTensor'
 # 2
 
 # 3

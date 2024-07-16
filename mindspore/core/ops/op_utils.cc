@@ -1275,5 +1275,48 @@ void CheckTensorScalarRank(const PrimitivePtr &primitive, const AbstractBasePtr 
                                                                kEqual, kDimZero, primitive));
   }
 }
+
+bool IsFloatType(TypePtr type) {
+  mindspore::HashSet<TypeId> float_type_ids = {kNumberTypeFloat,   kNumberTypeFloat16,  kNumberTypeFloat32,
+                                               kNumberTypeFloat64, kNumberTypeBFloat16, kNumberTypeDouble};
+  TypeId type_id;
+  if (type->isa<TensorType>()) {
+    auto tensor_type = type->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_type);
+    auto element = tensor_type->element();
+    MS_EXCEPTION_IF_NULL(element);
+    type_id = element->type_id();
+  } else {
+    type_id = type->type_id();
+  }
+  if (float_type_ids.find(type_id) != float_type_ids.end()) {
+    return true;
+  }
+  return false;
+}
+
+bool IsIntegralType(TypePtr type, bool include_bool) {
+  mindspore::HashSet<TypeId> int_type_ids = {kNumberTypeInt,    kNumberTypeInt8,   kNumberTypeInt16, kNumberTypeInt32,
+                                             kNumberTypeInt64,  kNumberTypeUInt,   kNumberTypeUInt8, kNumberTypeUInt16,
+                                             kNumberTypeUInt32, kNumberTypeUInt64, kNumberTypeInt4,  kNumberTypeGLUInt};
+
+  TypeId type_id;
+  if (type->isa<TensorType>()) {
+    auto tensor_type = type->cast<TensorTypePtr>();
+    MS_EXCEPTION_IF_NULL(tensor_type);
+    auto element = tensor_type->element();
+    MS_EXCEPTION_IF_NULL(element);
+    type_id = element->type_id();
+  } else {
+    type_id = type->type_id();
+  }
+  if (int_type_ids.find(type_id) != int_type_ids.end()) {
+    return true;
+  }
+  if (include_bool && type_id == kNumberTypeBool) {
+    return true;
+  }
+  return false;
+}
 }  // namespace ops
 }  // namespace mindspore

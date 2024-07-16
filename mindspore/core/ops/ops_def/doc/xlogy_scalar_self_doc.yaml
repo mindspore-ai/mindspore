@@ -1,0 +1,37 @@
+xlogy_scalar_self:
+    description: |
+        Computes the first input tensor multiplied by the logarithm of second input tensor element-wise.
+        Returns zero when `input` is zero.
+
+        .. math::
+
+            out_i = input_{i}\ln{other_{i}}
+
+        Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
+
+        Args:
+            input (number): The first input is a number.
+            other (Tensor): The second input is a tensor.
+
+        Returns:
+            Tensor, the shape is the same as the second input,
+            and the data type is the one with higher precision or higher digits among the two inputs.
+
+        Raises:
+            TypeError: If `input` is not a number.
+            TypeError: If `other` is not a Tensor.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> from mindspore.ops.auto_generate import XLogYScalarSelf
+            >>> input = 3
+            >>> other = Tensor(np.array([2, 2, 2]), mindspore.float32)
+            >>> op = XLogYScalarSelf()
+            >>> output = op(input, other)
+            >>> print(output)
+            [2.07944155   2.07944155   2.07944155]

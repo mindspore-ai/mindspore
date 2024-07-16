@@ -43,7 +43,7 @@ TypePtr PowFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<
   auto x2_type = input_args[kInputIndex1]->GetType();
   MS_EXCEPTION_IF_NULL(x1_type);
   MS_EXCEPTION_IF_NULL(x2_type);
-  return PromoteType(x1_type, x2_type, primitive->name());
+  return std::make_shared<TensorType>(PromoteType(x1_type, x2_type, primitive->name()));
 }
 }  // namespace ops
 }  // namespace mindspore

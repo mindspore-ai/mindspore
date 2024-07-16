@@ -40,6 +40,7 @@ from mindspore.ops.function.clip_func import clamp
 # 4
 from mindspore.ops.auto_generate import sinh
 from mindspore.ops.auto_generate import cosh
+from mindspore.ops.function.math_func import xlogy_ext as xlogy
 # 5
 from mindspore.ops.auto_generate import cumsum_ext as cumsum
 # 6
@@ -930,6 +931,7 @@ __all__ = [
     'sin',
     # 3
     'clamp',
+    'xlogy',
     # 4
     'sinh',
     'cosh',

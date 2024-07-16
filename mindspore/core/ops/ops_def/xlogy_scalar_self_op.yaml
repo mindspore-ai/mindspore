@@ -1,0 +1,16 @@
+#operator XLogYScalarSelf
+xlogy_scalar_self:
+    args:
+        input:
+            dtype: number
+        other:
+            dtype: tensor
+    returns:
+        out:
+            dtype: tensor
+    class:
+        name: XLogYScalarSelf
+    function:
+        disable: True
+    dispatch:
+        enable: True
