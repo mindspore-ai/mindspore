@@ -1,15 +1,15 @@
-#operator cummin
-cummin:
+#operator cummin_ext
+cummin_ext:
   args:
     input:
       dtype: tensor
-    axis:
+    dim:
       dtype: int
-      prim_init: True
   returns:
     values:
       dtype: tensor
     indices:
       dtype: tensor
-  function:
-      disable: True
+  dispatch:
+    enable: True
+    Ascend: CumminExtAscend

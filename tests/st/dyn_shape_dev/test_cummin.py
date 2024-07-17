@@ -86,7 +86,7 @@ def test_cummin_vmap(context_mode, dtype):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+# @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_cummin_dynamic(context_mode):
     """
@@ -120,7 +120,7 @@ def test_cummin_dynamic(context_mode):
 @pytest.mark.env_onecard
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+# @pytest.mark.platform_arm_ascend_training
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_cummin_dynamic_rank(context_mode):
     """
