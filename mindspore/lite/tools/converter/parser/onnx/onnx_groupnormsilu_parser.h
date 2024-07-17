@@ -14,21 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_GROUPNORM_PARSER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_GROUPNORM_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_GROUPNORMSILU_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_GROUPNORMSILU_PARSER_H_
 
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {
-class OnnxGroupNormParser : public OnnxNodeParser {
+class OnnxGroupNormSiluParser : public OnnxNodeParser {
  public:
-  OnnxGroupNormParser() : OnnxNodeParser("GroupNorm") {}
-  ~OnnxGroupNormParser() override = default;
+  OnnxGroupNormSiluParser() : OnnxNodeParser("GroupNormSilu") {}
+  ~OnnxGroupNormSiluParser() override = default;
 
   PrimitiveCPtr Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_GROUPNORM_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ONNX_GROUPNORMSILU_PARSER_H_
