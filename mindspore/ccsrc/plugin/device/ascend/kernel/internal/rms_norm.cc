@@ -29,12 +29,10 @@ internal::OpParamPtr InternalRmsNorm::CreateOpParam(const std::vector<KernelTens
   internal::NormParam rmsnorm_param;
   param_ptr->opId = internal::OpId::RmsNorm;
 
-  rmsnorm_param.normType = internal::NormParam::RMS_NORM_FORWARD;
   rmsnorm_param.epsilon = inputs[kIndex2]->GetValueWithCheck<float>();
   rmsnorm_param.inGamma = true;
 
-  auto context_ptr = mindspore::MsContext::GetInstance();
-  if (context_ptr->ascend_soc_version() == "ascend310p") {
+  if (soc_ == "ascend310p") {
     rmsnorm_param.normType = internal::NormParam::RMS_NORM;
   } else {
     rmsnorm_param.normType = internal::NormParam::RMS_NORM_FORWARD;

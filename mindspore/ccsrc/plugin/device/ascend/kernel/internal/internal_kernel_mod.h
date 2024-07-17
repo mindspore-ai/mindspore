@@ -82,6 +82,8 @@ class InternalKernelMod : public KernelMod {
   explicit InternalKernelMod(std::string &&op_type) : op_type_(std::move(op_type)) {
     ascend_profiler_ = profiler::Profiler::GetInstance(kAscendDevice);
     MS_EXCEPTION_IF_NULL(ascend_profiler_);
+    auto context_ptr = mindspore::MsContext::GetInstance();
+    soc_ = context_ptr->ascend_soc_version();
   }
   virtual ~InternalKernelMod();
 
@@ -112,6 +114,7 @@ class InternalKernelMod : public KernelMod {
   std::string op_type_;
   std::shared_ptr<profiler::Profiler> ascend_profiler_{nullptr};
   std::string fullname_;
+  std::string soc_;
 };
 
 using InternalKernelModPtr = std::shared_ptr<InternalKernelMod>;
