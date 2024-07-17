@@ -1822,7 +1822,11 @@ void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_in
   }
   for (const auto &v : value_seq->value()) {
     if (!v->isa<tensor::BaseTensor>()) {
-      MS_LOG(EXCEPTION) << "The input object is not a tensor!";
+      MS_LOG(DEBUG) << "Get value " << v->ToString() << " in tensor tuple, op name "
+                    << op_run_info->base_op_run_info.op_name;
+      (void)op_run_info->base_op_run_info.expanded_input_values.emplace_back(value_seq);
+      (void)op_run_info->base_op_run_info.input_types.emplace_back(InputType::kConstant);
+      continue;
     }
     InputType input_type = InputType::kInput;
     auto tensor = v->cast<tensor::BaseTensorPtr>();

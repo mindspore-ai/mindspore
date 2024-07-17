@@ -1487,7 +1487,8 @@ FuncGraphPtr GradExecutor::GetBpropGraph(const autograd::GradAttr &grad_attr,
   MS_EXCEPTION_IF_NULL(auto_grad_cell);
   // Update bprop_graph_run_by_single_op for bprop graph, if it is true, pass like ConvertMakeTupleInputToDynamicInput
   // will not take effect
-  auto_grad_cell->set_bprop_graph_run_by_single_op(top_cell()->use_dynamic_shape_process());
+  auto_grad_cell->set_bprop_graph_run_by_single_op(top_cell()->use_dynamic_shape_process() ||
+                                                   top_cell()->has_bprop_cut_op());
   FuncGraphPtr bprop_graph = auto_grad_cell->Finish(w_args, p_args, grad_attr);
   MS_LOG(DEBUG) << "Top graph input params size " << top_input_args_info_->input_arg_value_vec.size();
   UpdateParamAbsByArgs(top_input_args_info_->input_arg_value_vec, bprop_graph);

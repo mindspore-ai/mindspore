@@ -579,6 +579,6 @@ def test_pynative_forward_hook_cell_input():
     y = ms.Tensor(np.ones([1]).astype(np.float32))
 
     net(x, y)
-
+    relu_id = id(net.relu)
     global test_cell_id
-    assert test_cell_id == id(net.relu)
+    assert test_cell_id == relu_id
