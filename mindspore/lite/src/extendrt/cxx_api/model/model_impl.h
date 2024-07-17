@@ -31,6 +31,7 @@
 #include "extendrt/infer_session.h"
 #include "src/common/config_infos.h"
 #include "mindapi/ir/common.h"
+#include "include/api/model_group.h"
 
 #ifndef _WIN32
 #include <dlfcn.h>
@@ -233,7 +234,7 @@ class ModelImpl {
   ///
   void SetMsContext();
 
-  bool IsEnableModelSharing(const std::string &model_path);
+  bool IsEnableModelSharing(const std::string &model_path, ModelGroupFlag *model_group_flag);
 
   bool IsEnableModelSharing(const std::pair<const void *, size_t> &model_buff);
 

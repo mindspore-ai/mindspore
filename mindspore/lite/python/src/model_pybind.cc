@@ -303,7 +303,8 @@ Status PyModelGroupAddModelByObject(ModelGroup *model_group, const std::vector<M
 void ModelGroupPyBind(const py::module &m) {
   (void)py::enum_<ModelGroupFlag>(m, "ModelGroupFlag")
     .value("kShareWeight", ModelGroupFlag::kShareWeight)
-    .value("kShareWorkspace", ModelGroupFlag::kShareWorkspace);
+    .value("kShareWorkspace", ModelGroupFlag::kShareWorkspace)
+    .value("kShareWeightAndWorkspace", ModelGroupFlag::kShareWeightAndWorkspace);
 
   (void)py::class_<ModelGroup, std::shared_ptr<ModelGroup>>(m, "ModelGroupBind")
     .def(py::init<ModelGroupFlag>())

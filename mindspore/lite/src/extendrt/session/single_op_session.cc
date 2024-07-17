@@ -118,6 +118,20 @@ void SingleOpInferSession::SetCustomAscendOpAttrs(const kernel::BaseOperatorPtr 
     dst_prim->AddAttr("inner_sharing_workspace", MakeValue(is_inner_sharing_workspace));
     MS_LOG(INFO) << "is_inner_sharing_workspace: " << is_inner_sharing_workspace;
   }
+  if (share_mem.find("inner_model_path") != share_mem.end()) {
+    auto model_path = share_mem["inner_model_path"];
+    dst_prim->AddAttr("inner_model_path", MakeValue(model_path));
+    MS_LOG(INFO) << "inner_model_path: " << model_path;
+  }
+  if (share_mem.find("inner_workspace") != share_mem.end()) {
+    dst_prim->AddAttr("inner_workspace", MakeValue(true));
+  }
+  if (share_mem.find("inner_weightspace") != share_mem.end()) {
+    dst_prim->AddAttr("inner_weightspace", MakeValue(true));
+  }
+  if (share_mem.find("inner_weightspace_workspace") != share_mem.end()) {
+    dst_prim->AddAttr("inner_weightspace_workspace", MakeValue(true));
+  }
   auto ascend_context = config_infos_[lite::kAscendContextSection];
   std::string profiling_path;
   if (ascend_context.find(lite::kProfilingPathKey) != ascend_context.end()) {

@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <mutex>
 #include <utility>
 #include <unordered_map>
 #include "include/api/model_group.h"
@@ -33,7 +34,7 @@ class ModelGroupImpl {
   explicit ModelGroupImpl(ModelGroupFlag flags);
   ~ModelGroupImpl() = default;
 
-  Status AddModel(const std::vector<std::string> &model_path_list);
+  Status AddModel(const std::vector<std::vector<char>> &model_path_list);
   Status AddModel(const std::vector<std::pair<const void *, size_t>> &model_buff_list);
   Status AddModel(const std::vector<std::shared_ptr<ModelImpl>> &model_list);
   Status CalMaxSizeOfWorkspace(ModelType model_type, const std::shared_ptr<Context> &ms_context);
@@ -41,6 +42,7 @@ class ModelGroupImpl {
  private:
   friend class ModelGroup;
   std::vector<std::string> model_path_list_;
+  std::mutex mtx_path_list_;
   std::vector<std::pair<const void *, size_t>> model_buff_list_;
   std::map<std::string, std::map<std::string, std::string>> config_info_;
   ModelGroupFlag flags_;
