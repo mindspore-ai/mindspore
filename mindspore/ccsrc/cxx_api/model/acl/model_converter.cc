@@ -17,7 +17,6 @@
 #include "cxx_api/model/acl/model_converter.h"
 #include <memory>
 #include "include/transform/graph_ir/utils.h"
-#include "cxx_api/model/model_converter_utils/multi_process.h"
 #include "graph/graph_buffer.h"
 #include "graph/graph.h"
 #include "cxx_api/model/aoe/auto_tune_process.h"
@@ -136,7 +135,6 @@ Status ModelConverter::SaveModel(const ge::ModelBufferData &model) const {
 }
 
 Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
-  MultiProcess multi_process;
   Buffer buffer_ret;
   ClearCurrentRtCtx();
   auto ascend_path = GetAscendPath();
@@ -155,66 +153,19 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
     return buffer_ret;
   }
-  auto parent_process = [&df_graph, &buffer_ret](MultiProcess *multi_process) -> Status {
-    MS_EXCEPTION_IF_NULL(multi_process);
-    ge::GraphBuffer model_data;
-    auto ge_ret = df_graph->SaveToMem(model_data);
-    if (ge_ret != ge::SUCCESS) {
-      MS_LOG(ERROR) << "Save ge model to buffer failed.";
-      return kMCFailed;
-    }
-
-    // send original model to child
-    auto status = multi_process->SendMsg(model_data.GetData(), model_data.GetSize());
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "Send original model to child process failed";
-      return status;
-    }
-    // receive convert model result from child
-    CreateBufferCall call = [&buffer_ret](size_t msg_len) -> uint8_t * {
-      (void)buffer_ret.ResizeData(msg_len);
-      return static_cast<uint8_t *>(buffer_ret.MutableData());
-    };
-    status = multi_process->ReceiveMsg(call);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "Receive result model from child process failed";
-      return status;
-    }
-    return kSuccess;
-  };
-  auto child_process = [this](MultiProcess *multi_process) -> Status {
-    MS_EXCEPTION_IF_NULL(multi_process);
-    // receive original model from parent
-    Buffer model;
-    CreateBufferCall call = [&model](size_t msg_len) -> uint8_t * {
-      (void)model.ResizeData(msg_len);
-      return static_cast<uint8_t *>(model.MutableData());
-    };
-    auto status = multi_process->ReceiveMsg(call);
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "Receive original model from parent process failed";
-      return status;
-    }
-    Buffer model_result = LoadAscendIRInner(model);
-    if (model_result.DataSize() == 0) {
-      MS_LOG(ERROR) << "Convert model from MindIR to OM failed";
-      return kMCFailed;
-    }
-    // send result model to parent
-    status = multi_process->SendMsg(model_result.Data(), model_result.DataSize());
-    if (status != kSuccess) {
-      MS_LOG(ERROR) << "Send result model to parent process failed";
-      return status;
-    }
-    return kSuccess;
-  };
-  auto status = multi_process.MainProcess(parent_process, child_process);
-  if (status != kSuccess) {
-    MS_LOG(ERROR) << "Convert MindIR model to OM model failed";
-  } else {
-    MS_LOG(INFO) << "Convert MindIR model to OM model success";
+  ge::GraphBuffer model_data;
+  auto ge_ret = df_graph->SaveToMem(model_data);
+  if (ge_ret != ge::SUCCESS) {
+    MS_LOG(ERROR) << "Save ge model to buffer failed.";
+    return buffer_ret;
   }
-  return buffer_ret;
+  buffer_ret.SetData(model_data.GetData(), model_data.GetSize());
+  Buffer model_result = LoadAscendIRInner(buffer_ret);
+  if (model_result.DataSize() == 0) {
+    MS_LOG(ERROR) << "Convert model from MindIR to OM failed";
+    return {};
+  }
+  return model_result;
 }
 
 Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
