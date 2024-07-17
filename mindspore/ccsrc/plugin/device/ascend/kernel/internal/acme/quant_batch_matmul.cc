@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/internal/acme/matmul.h"
+#include "plugin/device/ascend/kernel/internal/acme/quant_batch_matmul.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 
 #include <memory>
@@ -22,19 +22,20 @@
 
 namespace mindspore {
 namespace kernel {
-acme::AcmeOpPtr AcmeMatmul::CreateKernel(acme::InputsImmutableInfoList inputs, acme::OutputsImmutableInfoList outputs,
+acme::AcmeOpPtr AcmeQuantBatchMatmul::CreateKernel(acme::InputsImmutableInfoList inputs, acme::OutputsImmutableInfoList outputs,
                                          const std::vector<KernelTensor *> &ms_inputs,
                                          const std::vector<KernelTensor *> &ms_outputs) {
   acme::MatmulParam param;
-  auto input_len = ms_inputs.size();
-  param.transpose_a = ms_inputs[input_len - kIndex2]->GetValueWithCheck<bool>();
-  param.transpose_b = ms_inputs[input_len - kIndex1]->GetValueWithCheck<bool>();
+  param.transpose_a = ms_inputs[kIndex5]->GetValueWithCheck<bool>();
+  param.transpose_b = ms_inputs[kIndex6]->GetValueWithCheck<bool>();
+  param.with_bias = !(ms_inputs[kIndex4]->GetType()->isa<TypeNone>());
   param.enable_shuffle = false; // the real definition is in acme
-  const std::string op_name = "MatMul";
+  param.enable_dequant = true;
+  const std::string op_name = "QuantBatchMatmul";
   return acme::CreateMatmulOp(inputs, outputs, param, op_name);
 }
-MS_ACME_KERNEL_FACTORY_REG(MatMul, AcmeMatmul);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(MatMul, INPUT_NUM_2, INDEX_0, INDEX_1);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(MatMul, OUTPUT_NUM_1, INDEX_0);
+MS_ACME_KERNEL_FACTORY_REG(QuantBatchMatmul, AcmeQuantBatchMatmul);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(QuantBatchMatmul, INPUT_NUM_4, INDEX_0, INDEX_1, INDEX_4, INDEX_2);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(QuantBatchMatmul, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore
