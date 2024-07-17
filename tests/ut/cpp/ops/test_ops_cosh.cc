@@ -68,6 +68,12 @@ auto CoshOpShapeTestCases = testing::ValuesIn({
 });
 
 auto CoshOpTypeTestCases = testing::ValuesIn({
+  CoshType{kBool, kFloat32},
+  CoshType{kUInt8, kFloat32},
+  CoshType{kInt8, kFloat32},
+  CoshType{kInt16, kFloat32},
+  CoshType{kInt32, kFloat32},
+  CoshType{kInt64, kFloat32},
   CoshType{kFloat16, kFloat16},
   CoshType{kFloat32, kFloat32},
   CoshType{kFloat64, kFloat64},
@@ -77,5 +83,32 @@ auto CoshOpTypeTestCases = testing::ValuesIn({
 });
 
 INSTANTIATE_TEST_CASE_P(TestCosh, TestCosh, testing::Combine(CoshOpShapeTestCases, CoshOpTypeTestCases));
+
+class TestCoshSimpleInfer : public TestOps, public testing::WithParamInterface<std::tuple<CoshShape, CoshType>> {};
+
+TEST_P(TestCoshSimpleInfer, simple_infer) {
+  const auto &shape_param = std::get<0>(GetParam());
+  const auto &dtype_param = std::get<1>(GetParam());
+
+  CoshFuncImpl cosh_func_impl;
+  auto prim = std::make_shared<Primitive>("Cosh");
+  auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
+  auto expect_shape = std::make_shared<abstract::TensorShape>(shape_param.out_shape);
+  auto expect_dtype = std::make_shared<TensorType>(dtype_param.out_type);
+
+  auto out_shape = cosh_func_impl.InferShape(prim, {x});
+  ASSERT_TRUE(*out_shape == *expect_shape);
+  auto out_dtype = cosh_func_impl.InferType(prim, {x});
+  ASSERT_TRUE(*out_dtype == *expect_dtype);
+}
+
+auto CoshOpShapeTestCasesSimpleInfer = testing::ValuesIn({
+  /* static */
+  CoshShape{{2}, {2}},
+  CoshShape{{2, 3, 4}, {2, 3, 4}},
+});
+
+INSTANTIATE_TEST_CASE_P(TestCoshSimpleInfer, TestCoshSimpleInfer,
+                        testing::Combine(CoshOpShapeTestCasesSimpleInfer, CoshOpTypeTestCases));
 }  // namespace ops
 }  // namespace mindspore
