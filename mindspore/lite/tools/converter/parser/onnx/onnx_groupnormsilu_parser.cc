@@ -13,26 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/converter/parser/onnx/onnx_groupnorm_parser.h"
+#include "tools/converter/parser/onnx/onnx_groupnormsilu_parser.h"
 #include <memory>
 #include "ops/group_norm_silu.h"
 
 namespace mindspore {
 namespace lite {
-namespace {
-constexpr bool activate_silu = false;
-}
-
-PrimitiveCPtr OnnxGroupNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+PrimitiveCPtr OnnxGroupNormSiluParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   auto groupnorm_silu_prim = std::make_shared<ops::GroupNormSilu>();
   if (groupnorm_silu_prim == nullptr) {
     MS_LOG(ERROR) << "new GroupNormSilu prim failed!";
     return nullptr;
   }
-
-  groupnorm_silu_prim->AddAttr(kAttrActivateSilu, api::MakeValue(activate_silu));
   int num_groups = 32;
   float eps = 0.00001;
+  bool activate_silu = false;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == kAttrNumGroups) {
       num_groups = onnx_node_attr.i();
@@ -40,12 +35,21 @@ PrimitiveCPtr OnnxGroupNormParser::Parse(const onnx::GraphProto &onnx_graph, con
     } else if (onnx_node_attr.name() == kAttrEps) {
       eps = onnx_node_attr.f();
       MS_LOG(INFO) << "Attr eps from ONNX is: " << eps;
+    } else if (onnx_node_attr.name() == kAttrActivateSilu) {
+      if (onnx_node_attr.has_i()) {
+        activate_silu = onnx_node_attr.i();
+        MS_LOG(INFO) << "Attr activate_silu from ONNX is: " << activate_silu;
+      } else {
+        MS_LOG(INFO) << "Attr activate_silu is not found in ONNX, or its type is not int, set to false";
+      }
     }
   }
   groupnorm_silu_prim->AddAttr(kAttrNumGroups, api::MakeValue(num_groups));
   groupnorm_silu_prim->AddAttr(kAttrEps, api::MakeValue(eps));
+  groupnorm_silu_prim->AddAttr(kAttrActivateSilu, api::MakeValue(activate_silu));
   return groupnorm_silu_prim->GetPrim();
 }
-OnnxNodeRegistrar g_onnxGroupNormParser("GroupNorm", new OnnxGroupNormParser());
+OnnxNodeRegistrar g_onnxGroupNormParser("GroupNorm", new OnnxGroupNormSiluParser());
+OnnxNodeRegistrar g_onnxGroupNormSiluParser("GroupNormSilu", new OnnxGroupNormSiluParser());
 }  // namespace lite
 }  // namespace mindspore
