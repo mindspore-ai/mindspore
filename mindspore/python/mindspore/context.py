@@ -1588,7 +1588,7 @@ def set_context(**kwargs):
                 `LazyInline <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.lazy_inline.html>`
                 Default: False.
               - compute_communicate_fusion_level (int): Enable the fusion between compute and communicate.
-                Default: ``0``.
+                Default: ``0``. Note: This function must be used with Ascend Training Solution 24.0.RC2 or later.
 
                 - 0: Disable fusion.
 
