@@ -17,13 +17,16 @@
 #define TESTS_UT_CPP_GRAPH_KERNEL_COMMON_GRAPH_KERNEL_TEST_SUITE_H_
 
 #include "common/common_test.h"
+#include "common/graph_optimizer_test_framework.h"
 
-namespace mindspore {
+namespace mindspore::graphkernel::test {
+using mindspore::test::ConstructGraph;
+using mindspore::test::RunPass;
+
 class GraphKernelCommonTestSuite : public UT::Common {
  public:
   GraphKernelCommonTestSuite(){};
   virtual ~GraphKernelCommonTestSuite() = default;
-  void SetUp() override;
 };
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::test
 #endif  // TESTS_UT_CPP_GRAPH_KERNEL_COMMON_GRAPH_KERNEL_TEST_SUITE_H_

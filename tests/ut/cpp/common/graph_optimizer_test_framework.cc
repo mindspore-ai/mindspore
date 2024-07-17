@@ -109,6 +109,13 @@ CNodePtr ConstructGraph::NewCNode(const std::string &prim_name, const std::vecto
   return cnode;
 }
 
+CNodePtr ConstructGraph::NewCNodeWithBuildInfo(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
+                                               const mindspore::HashMap<std::string, ValuePtr> &attrs) {
+  auto cnode = NewCNode(prim_name, inputs, attrs);
+  SetGeneralBuildInfo(cnode);
+  return cnode;
+}
+
 void ConstructGraph::SetGeneralBuildInfo(const AnfNodePtr &node) {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder info_builder;
   auto cnode = node->cast<CNodePtr>();
