@@ -14,26 +14,25 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/internal/acme/matmul.h"
-#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
+#include "plugin/device/ascend/kernel/internal/acme/gather.h"
 
 #include <memory>
 #include "kernel/kernel.h"
 
 namespace mindspore {
 namespace kernel {
-acme::AcmeOpPtr AcmeMatmul::CreateKernel(const acme::InputsImmutableInfoList &inputs,
-                                         const acme::OutputsImmutableInfoList &outputs,
+acme::AcmeOpPtr AcmeGather::CreateKernel(const acme::InputsImmutableInfoList &inputs_ii,
+                                         const acme::OutputsImmutableInfoList &outputs_ii,
                                          const std::vector<KernelTensor *> &ms_inputs,
                                          const std::vector<KernelTensor *> &ms_outputs) {
-  acme::MatmulParam param;
-  auto input_len = ms_inputs.size();
-  param.transpose_a = ms_inputs[input_len - kIndex2]->GetValueWithCheck<bool>();
-  param.transpose_b = ms_inputs[input_len - kIndex1]->GetValueWithCheck<bool>();
-  return acme::CreateMatmulOp(inputs, outputs, param, acme::kAcmeMatMulOpName);
+  acme::GatherParam param;
+  param.axes.emplace_back(ms_inputs[kIndex2]->GetValueWithCheck<int64_t>());
+  param.batch_dims = ms_inputs[kIndex3]->GetValueWithCheck<int64_t>();
+  return acme::CreateGatherOp(inputs_ii, outputs_ii, param, acme::kAcmeGatherOpName);
 }
-MS_ACME_KERNEL_FACTORY_REG(MatMul, acme::kAcmeMatMulOpName, AcmeMatmul);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(MatMul, INPUT_NUM_2, INDEX_0, INDEX_1);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(MatMul, OUTPUT_NUM_1, INDEX_0);
+
+MS_ACME_KERNEL_FACTORY_REG(Gather, acme::kAcmeGatherOpName, AcmeGather);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Gather, INPUT_NUM_2, INDEX_0, INDEX_1);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Gather, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

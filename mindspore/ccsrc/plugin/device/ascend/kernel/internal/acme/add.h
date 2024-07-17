@@ -31,7 +31,8 @@ class AcmeAdd : public AcmeKernelMod {
   ~AcmeAdd() = default;
 
  protected:
-  acme::AcmeOpPtr CreateKernel(acme::InputsImmutableInfoList inputs, acme::OutputsImmutableInfoList outputs,
+  acme::AcmeOpPtr CreateKernel(const acme::InputsImmutableInfoList &inputs,
+                               const acme::OutputsImmutableInfoList &outputs,
                                const std::vector<KernelTensor *> &ms_inputs,
                                const std::vector<KernelTensor *> &ms_outputs) override;
 };

@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/internal/acme/add.h"
+#include "plugin/device/ascend/kernel/internal/acme/swish.h"
 
 #include <memory>
 #include "kernel/kernel.h"
 
 namespace mindspore {
 namespace kernel {
-acme::AcmeOpPtr AcmeAdd::CreateKernel(const acme::InputsImmutableInfoList &inputs_ii,
-                                      const acme::OutputsImmutableInfoList &outputs_ii,
-                                      const std::vector<KernelTensor *> &ms_inputs,
-                                      const std::vector<KernelTensor *> &ms_outputs) {
-  return acme::CreateAddOp(inputs_ii, outputs_ii, acme::kAcmeAddOpName);
+acme::AcmeOpPtr AcmeSwish::CreateKernel(const acme::InputsImmutableInfoList &inputs_ii,
+                                        const acme::OutputsImmutableInfoList &outputs_ii,
+                                        const std::vector<KernelTensor *> &ms_inputs,
+                                        const std::vector<KernelTensor *> &ms_outputs) {
+  return acme::CreateSwishOp(inputs_ii, outputs_ii, acme::kAcmeSwishOpName);
 }
-MS_ACME_KERNEL_FACTORY_REG(Add, acme::kAcmeAddOpName, AcmeAdd);
+
+MS_ACME_KERNEL_FACTORY_REG(SiLU, acme::kAcmeSwishOpName, AcmeSwish);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(SiLU, INPUT_NUM_1, INDEX_0);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(SiLU, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

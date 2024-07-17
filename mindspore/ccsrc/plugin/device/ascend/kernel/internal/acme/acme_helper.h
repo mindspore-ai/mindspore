@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include "acme/include/acme.h"
 #include "include/api/format.h"
 #include "ir/dtype/type_id.h"
@@ -37,6 +38,41 @@ inline acme::ArgDescPtr MakeDefaultArgDesc(acme::TensorFormat format, acme::Data
   acme::ShapeInfo shape{1};
   return std::make_shared<acme::ArgDesc>(shape, dtype, format);
 }
+
+class NameMapper {
+ public:
+  NameMapper() = default;
+  ~NameMapper() = default;
+
+  static NameMapper &GetInstance() {
+    static NameMapper name_mammer;
+    return name_mammer;
+  }
+
+  inline std::string GetAcmeName(const std::string &ms_name) const {
+    auto iter = ms_to_acme_mapper_.find(ms_name);
+    if (iter == ms_to_acme_mapper_.end()) {
+      return "";
+    }
+
+    return iter->second;
+  }
+
+  inline void Insert(const std::string &ms_name, const std::string &acme_name) {
+    ms_to_acme_mapper_[ms_name] = acme_name;
+  }
+
+ private:
+  std::unordered_map<std::string, std::string> ms_to_acme_mapper_;
+};
+
+class NameMappingRegistrar {
+ public:
+  NameMappingRegistrar(const std::string &ms_name, const std::string &acme_name) {
+    NameMapper::GetInstance().Insert(ms_name, acme_name);
+  }
+  ~NameMappingRegistrar() = default;
+};
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_ACME_ACME_HELPER_H_

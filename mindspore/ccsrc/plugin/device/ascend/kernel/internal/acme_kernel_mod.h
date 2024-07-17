@@ -27,6 +27,8 @@
 
 #include "plugin/device/ascend/kernel/internal/acme/acme_tiling_cache.h"
 #include "plugin/device/ascend/kernel/internal/acme/acme_spinlock.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
+#include "plugin/device/ascend/kernel/internal/acme/acme_helper.h"
 #include "include/backend/debug/profiler/profiling.h"
 
 namespace mindspore {
@@ -53,7 +55,8 @@ class AcmeKernelMod : public KernelMod {
 
  protected:
   virtual bool IsNeedRecreate(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
-  virtual acme::AcmeOpPtr CreateKernel(acme::InputsImmutableInfoList inputs, acme::OutputsImmutableInfoList outputs,
+  virtual acme::AcmeOpPtr CreateKernel(const acme::InputsImmutableInfoList &inputs,
+                                       const acme::OutputsImmutableInfoList &outputs,
                                        const std::vector<KernelTensor *> &ms_inputs,
                                        const std::vector<KernelTensor *> &ms_outputs) {
     return nullptr;
@@ -86,7 +89,23 @@ class AcmeKernelMod : public KernelMod {
 using AcmeKernelModPtr = std::shared_ptr<AcmeKernelMod>;
 using AcmeKernelModPtrList = std::vector<AcmeKernelModPtr>;
 
-#define MS_ACME_KERNEL_FACTORY_REG(NAME, DERIVE) MS_KERNEL_FACTORY_REG(AcmeKernelMod, NAME, DERIVE)
+#define MS_ACME_KERNEL_FACTORY_REG(PRIM_NAME_STR, ACME_NAME_VAR, DERIVE) \
+  MS_KERNEL_FACTORY_REG(AcmeKernelMod, PRIM_NAME_STR, DERIVE);           \
+  const static NameMappingRegistrar g_##PRIM_NAME_STR##_ms_to_acme_mapper(#PRIM_NAME_STR, ACME_NAME_VAR);
+
+#define DECLARE_ACME_KERNEL_MOD(NAME)                                                     \
+  class Acme##NAME : public AcmeKernelMod {                                               \
+   public:                                                                                \
+    Acme##NAME() : AcmeKernelMod() {}                                                     \
+    ~Acme##NAME() = default;                                                              \
+                                                                                          \
+   protected:                                                                             \
+    acme::AcmeOpPtr CreateKernel(const acme::InputsImmutableInfoList &inputs,             \
+                                 const acme::OutputsImmutableInfoList &outputs,           \
+                                 const std::vector<KernelTensor *> &ms_inputs,            \
+                                 const std::vector<KernelTensor *> &ms_outputs) override; \
+  };
+
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_ACME_KERNEL_MOD_H_

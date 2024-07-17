@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_ACME_SWISH_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_ACME_SWISH_H_
 
-#include "plugin/device/ascend/kernel/internal/acme/add.h"
+#include <string>
+#include <vector>
+#include <utility>
 
-#include <memory>
-#include "kernel/kernel.h"
+#include "plugin/device/ascend/kernel/internal/acme_kernel_mod.h"
+#include "acme/include/acme.h"
 
 namespace mindspore {
 namespace kernel {
-acme::AcmeOpPtr AcmeAdd::CreateKernel(const acme::InputsImmutableInfoList &inputs_ii,
-                                      const acme::OutputsImmutableInfoList &outputs_ii,
-                                      const std::vector<KernelTensor *> &ms_inputs,
-                                      const std::vector<KernelTensor *> &ms_outputs) {
-  return acme::CreateAddOp(inputs_ii, outputs_ii, acme::kAcmeAddOpName);
-}
-MS_ACME_KERNEL_FACTORY_REG(Add, acme::kAcmeAddOpName, AcmeAdd);
+DECLARE_ACME_KERNEL_MOD(Swish)
 }  // namespace kernel
 }  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_ACME_SWISH_H_
