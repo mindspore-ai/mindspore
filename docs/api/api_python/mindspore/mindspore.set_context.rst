@@ -233,7 +233,7 @@ mindspore.set_context
             - **enable_opt_shard_comm_opt** (bool): 为 ``True`` 时表示开启正向计算与优化器并行的AllGather通信的掩盖，暂时不支持 `LazyInline <https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.lazy_inline.html>`_ 功能下开启。默认值： ``False`` 。
             - **enable_concat_eliminate_opt** (bool): 为 ``True`` 时表示开启Concat消除优化，当前在开启细粒度双副本优化时有收益。默认值： ``False`` 。
             - **enable_begin_end_inline_opt** (bool): 为 ``True`` 时表示开启首尾micro_batch子图的内联，用于半自动并行子图模式，流水线并行场景，一般需要和其它通信计算掩盖优化一起使用。默认值： ``False`` 。
-            - **compute_communicate_fusion_level** (int): 控制通算融合的级别。默认值：``0``。
+            - **compute_communicate_fusion_level** (int): 控制通算融合的级别。默认值：``0``。注：此功能需要配套Ascend Training Solution 24.0.RC2以上版本使用。
 
               - 0: 不启用通算融合。
 
