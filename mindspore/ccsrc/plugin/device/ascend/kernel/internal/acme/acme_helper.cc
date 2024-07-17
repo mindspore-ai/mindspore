@@ -30,6 +30,7 @@ std::string TransAcmeOpName(const std::string &ms_op_name) {
     {kAddOpName, acme::kAcmeAddOpName},
     {kGeLUOpName, acme::kAcmeGeLUOpName},
     {"AddRmsNorm", acme::kAcmeAddRmsNormOpName},
+    {"QuantBatchMatmul", acme::kAcmeMatMulOpName},
   };
   auto iter = kMsOpNameToAcmeOpName.find(ms_op_name);
   if (iter == kMsOpNameToAcmeOpName.end()) {
