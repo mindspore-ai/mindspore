@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ class ProgramSpecializer {
   void SetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func, const AbstractFunctionPtr &new_abs_func,
                               const CNodePtr &cnode, const AnfNodePtr &func);
   AbstractFunctionPtr GetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func);
-  void SpecializeCNodeInput0FuncGraph();
+  void SpecializeFuncGraph();
 
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> &sequence_abstract_list() { return sequence_abstract_list_; }
   std::vector<std::pair<AnfNodePtr, size_t>> &dead_node_list() { return dead_node_list_; }

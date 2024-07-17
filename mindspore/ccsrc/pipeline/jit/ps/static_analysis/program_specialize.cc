@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -297,6 +297,7 @@ AbstractFunctionPtr ProgramSpecializer::GetSpecializedAbstract(const AbstractFun
                     << ", new_abs_func: " << iter->second.second->ToString();
       return iter->second.second;
     }
+    MS_LOG(DEBUG) << "Cannot find abstract for old_abstract: " << old_abs_func->ToString();
     return nullptr;
   }
   if (old_abs_func->isa<FuncGraphAbstractClosure>()) {
@@ -375,25 +376,14 @@ AbstractFunctionPtr ProgramSpecializer::SpecializeAbstractFuncRecursively(const 
   return new_abs;
 }
 
-void ProgramSpecializer::SpecializeCNodeInput0FuncGraph() {
+void ProgramSpecializer::SpecializeFuncGraph() {
   MS_EXCEPTION_IF_NULL(manager_);
   const auto &all_nodes = manager_->all_nodes();
   for (auto node : all_nodes) {
     MS_EXCEPTION_IF_NULL(node);
-    if (!node->isa<CNode>()) {
-      continue;
-    }
-    auto &input0 = node->cast_ptr<CNode>()->input(0);
-    MS_EXCEPTION_IF_NULL(input0);
-    if (IsValueNode<FuncGraph>(input0) || IsValueNode<Primitive>(input0)) {
-      continue;
-    }
-    MS_EXCEPTION_IF_NULL(node);
-    const auto &old_abs = input0->abstract();
+    const auto &old_abs = node->abstract();
     if (old_abs == nullptr) {
-      constexpr auto recursive_level = 2;
-      MS_LOG(INTERNAL_EXCEPTION) << "Node's first input abstract should not be null, "
-                                 << node->DebugString(recursive_level);
+      continue;
     }
     if (!(old_abs->isa<FuncGraphAbstractClosure>() || old_abs->isa<MetaFuncGraphAbstractClosure>() ||
           old_abs->isa<AbstractFuncUnion>() || old_abs->isa<PartialAbstractClosure>())) {
@@ -402,12 +392,12 @@ void ProgramSpecializer::SpecializeCNodeInput0FuncGraph() {
     auto old_abs_func = old_abs->cast<AbstractFunctionPtr>();
     auto new_abs_func = SpecializeAbstractFuncRecursively(old_abs_func);
     if (new_abs_func != nullptr) {
-      input0->set_abstract(new_abs_func);
-      MS_LOG(DEBUG) << "Find specialized abstract for node: " << input0->DebugString()
+      node->set_abstract(new_abs_func);
+      MS_LOG(DEBUG) << "Find specialized abstract for node: " << node->DebugString()
                     << ", old_abstract: " << old_abs->ToString()
                     << ", specialized_abstract: " << new_abs_func->ToString();
     } else {
-      MS_LOG(DEBUG) << "cannot find specialized abstract for node: " << input0->DebugString()
+      MS_LOG(DEBUG) << "cannot find specialized abstract for node: " << node->DebugString()
                     << ", old_abstract: " << old_abs_func->ToString();
     }
   }

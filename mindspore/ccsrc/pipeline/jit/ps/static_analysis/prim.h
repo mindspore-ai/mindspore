@@ -207,19 +207,6 @@ class SwitchEvaluator final : public Evaluator {
   }
 };
 
-class SwitchLayerEvaluator final : public Evaluator {
- public:
-  SwitchLayerEvaluator() : Evaluator("SwitchLayerEvaluator") {}
-  ~SwitchLayerEvaluator() override = default;
-  MS_DECLARE_PARENT(SwitchLayerEvaluator, Evaluator);
-  EvalResultPtr Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                    const AnfNodeConfigPtr &out_conf) override;
-
-  EvalResultPtr Eval(AnalysisEnginePtr, const AbstractBasePtrList &, const AnfNodeConfigPtr &) override {
-    MS_LOG(INTERNAL_EXCEPTION) << "Eval() should not be called, Run() method should be called";
-  }
-};
-
 class PrimitiveArgsToInputsEvaluator : public TransitionPrimEvaluator {
  public:
   explicit PrimitiveArgsToInputsEvaluator(const PrimitivePtr primitive)

@@ -323,7 +323,7 @@ FuncGraphPtr ProgramSpecialize(const abstract::AnalysisEnginePtr &engine, const 
   auto manager = engine->func_graph_manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->KeepRoots({result});
-  specializer.SpecializeCNodeInput0FuncGraph();
+  specializer.SpecializeFuncGraph();
   MS_LOG(DEBUG) << "ProgramSpecialize end";
   return result;
 }

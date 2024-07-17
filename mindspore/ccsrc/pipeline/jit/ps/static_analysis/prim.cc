@@ -527,43 +527,6 @@ EvalResultPtr SwitchEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList
   MS_LOG(EXCEPTION) << "Not support this condition value: " << cond_abstract->GetValueTrack()->ToString();
 }
 
-EvalResultPtr SwitchLayerEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,
-                                        const AnfNodeConfigPtr &out_conf) {
-  MS_EXCEPTION_IF_NULL(engine);
-  AbstractBasePtrList args_abs_list;
-  MS_EXCEPTION_IF_NULL(out_conf);
-  MS_EXCEPTION_IF_NULL(out_conf->node());
-  if (!out_conf->node()->isa<CNode>()) {
-    MS_LOG(INTERNAL_EXCEPTION) << "Node of out_conf should be CNode";
-  }
-  auto out_cnode = out_conf->node()->cast<CNodePtr>();
-  MS_EXCEPTION_IF_NULL(out_cnode);
-  if (out_cnode->empty() || (out_cnode->size() - 1) != args_conf_list.size()) {
-    MS_LOG(EXCEPTION) << "For 'SwitchLayer',"
-                      << " the args size should equal to inputs size minus 1, but args size " << args_conf_list.size()
-                      << ", inputs size " << out_cnode->size();
-  }
-
-  // Inputs: condition, true branch, false branch
-  constexpr auto switch_input_size = 3;
-  if (args_conf_list.size() != switch_input_size) {
-    MS_LOG(EXCEPTION) << "SwitchLayer evaluator requires 3 parameters, while the input size is " << args_abs_list.size()
-                      << ".";
-  }
-  auto eval_func = [](const ConfigPtr &conf) -> AbstractBasePtr {
-    MS_EXCEPTION_IF_NULL(conf);
-    const auto &eval_result = conf->ObtainEvalResult();
-    MS_EXCEPTION_IF_NULL(eval_result);
-    auto abs = eval_result->abstract();
-    MS_EXCEPTION_IF_NULL(abs);
-    return abs;
-  };
-  auto cond_abstract = eval_func(args_conf_list[0]);
-  ValuePtr cond_value = cond_abstract->GetValueTrack();
-  MS_EXCEPTION_IF_NULL(cond_value);
-  MS_LOG(EXCEPTION) << "Not support this condition value: " << cond_value->ToString();
-}
-
 namespace {
 py::object BuildPyObject(const ValuePtr &value_ptr) {
   if (value_ptr == nullptr) {
