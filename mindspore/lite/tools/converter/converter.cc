@@ -1020,6 +1020,59 @@ int ConverterImpl::UnifyInputShape(const std::shared_ptr<ConverterPara> &param) 
   }
   return RET_OK;
 }
+std::string ConvertMapToString(const std::map<std::string, std::vector<int64_t>> &mapData) {
+  std::stringstream ss;
+  bool first = true;
+  for (const auto &entry : mapData) {
+    if (!first) {
+      ss << ";";  // Add ';' separator except before the first entry
+    }
+    first = false;
+    const std::string &key = entry.first;
+    const std::vector<int64_t> &vec = entry.second;
+    ss << key << ":";
+    bool firstNum = true;
+    for (const auto &num : vec) {
+      if (!firstNum) {
+        ss << ",";
+      }
+      firstNum = false;
+      ss << num;
+    }
+  }
+  return ss.str();
+}
+
+int ConverterImpl::RecordSupportedDynamicDims(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
+  std::string input_shape_config_str = "";
+  auto config_infos = param->config_infos;
+  if (config_infos.find(kAclBuildOptionParam) != config_infos.end()) {
+    auto acl_build_section = config_infos.at(kAclBuildOptionParam);
+    if (acl_build_section.find(kInputShapeKey) != acl_build_section.end()) {
+      input_shape_config_str = acl_build_section.at(kInputShapeKey);
+    }
+  }
+  std::string dynamic_dim_str = "";
+  if (config_infos.find(kAclBuildOptionParam) != config_infos.end()) {
+    auto acl_build_section = config_infos.at(kAclBuildOptionParam);
+    if (acl_build_section.find(kDynamicDimsSearchKey) != acl_build_section.end()) {
+      dynamic_dim_str = acl_build_section.at(kDynamicDimsSearchKey);
+    }
+  }
+  if (input_shape_config_str != "") {
+    func_graph->set_attr(kInputShapeKey, MakeValue(input_shape_config_str));
+  } else {
+    auto input_shape_param = param->input_shape;
+    if (input_shape_param.size() > 0) {
+      auto input_shape_param_str = ConvertMapToString(input_shape_param);
+      func_graph->set_attr(kInputShapeKey, MakeValue(input_shape_param_str));
+    }
+  }
+  if (dynamic_dim_str != "") {
+    func_graph->set_attr(kDynamicDimsKey, MakeValue(dynamic_dim_str));
+  }
+  return RET_OK;
+}
 
 int ConverterImpl::LoadPluginLib(const std::shared_ptr<ConverterPara> &param) {
   if (!param->plugins_path.empty()) {
@@ -1126,6 +1179,10 @@ int ConverterImpl::HandleGraphCommon(const std::shared_ptr<ConverterPara> &param
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Optimize func graph failed: " << ret << " " << GetErrorInfo(ret);
     return ret;
+  }
+  ret = RecordSupportedDynamicDims(param, graph);
+  if (ret != RET_OK) {
+    MS_LOG(WARNING) << "RecordSupportedDynamicDims failed! ret:" << ret << ".";
   }
 
   ret = SaveGraph(graph, param, model_data, data_size, not_save, is_multi_model);
