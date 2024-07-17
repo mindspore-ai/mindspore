@@ -889,8 +889,6 @@ inline bool CheckShapeNull(const std::vector<T> &shape, std::string kernel_name,
 
 #define CHECK_SHAPE_NULL(shape, kernel_name, param_name) \
   mindspore::kernel::CheckShapeNull(shape, kernel_name, param_name)
-
-int ConvertReductionForAclnn(Reduction reduction);
 }  // namespace kernel
 }  // namespace mindspore
 

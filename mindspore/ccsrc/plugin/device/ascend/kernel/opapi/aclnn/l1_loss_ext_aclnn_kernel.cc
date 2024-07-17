@@ -20,6 +20,7 @@
 #include "transform/acl_ir/acl_helper.h"
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/base/types.h"
+#include "kernel/common_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -27,13 +28,7 @@ void L1LossExtAclnnKernelMod::GetWorkSpaceInfo(const std::vector<KernelTensor *>
                                                const std::vector<KernelTensor *> &outputs) {
   auto reduction_imm = static_cast<Reduction>(transform::ConvertKernelTensor<int64_t>(inputs[kIndex2]));
   // transform reduction enum value to corresponding value
-  std::unordered_map<Reduction, int64_t> reduction_map = {
-    {Reduction::REDUCTION_SUM, 2}, {Reduction::MEAN, 1}, {Reduction::NONE, 0}};
-  auto iter = reduction_map.find(reduction_imm);
-  if (iter == reduction_map.end()) {
-    MS_LOG(EXCEPTION) << "For L1LossExt, the value of reduction is invalid.";
-  }
-  reduction_ = iter->second;
+  reduction_ = ConvertReductionForAclnn(reduction_imm);
 
   GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], reduction_, outputs[kIndex0]);
 }

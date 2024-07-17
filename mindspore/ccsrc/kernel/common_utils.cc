@@ -143,6 +143,16 @@ bool CheckShapesSame(const ShapeArray &shape_array) {
                      [&first_shape](const ShapeVector &shape) { return IsSameShape(shape, first_shape); });
 }
 
+int ConvertReductionForAclnn(Reduction reduction) {
+  std::unordered_map<Reduction, int64_t> reduction_map = {
+    {Reduction::REDUCTION_SUM, 2}, {Reduction::MEAN, 1}, {Reduction::NONE, 0}};
+  auto iter = reduction_map.find(reduction);
+  if (iter == reduction_map.end()) {
+    MS_LOG(EXCEPTION) << "For ConvertReductionForAclnn, the value of reduction is invalid.";
+  }
+  return iter->second;
+}
+
 std::string GetProcessorStr(const AnfNodePtr &anf_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   std::string processor = kProcessorUnknown;

@@ -40,26 +40,20 @@ TypePtr L1LossExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
   auto input_type = input_args[kInputIndex0]->GetType();
   auto target_type = input_args[kInputIndex1]->GetType();
-  if (input_type == kInt64) {
-    if (target_type == kInt64) {
-      return kInt64;
-    } else {
-      return target_type;
-    }
-  } else {
-    return input_type;
-  }
+  MS_EXCEPTION_IF_NULL(input_type);
+  MS_EXCEPTION_IF_NULL(target_type);
+  auto input_real_type = input_type->cast<TensorTypePtr>()->element()->type_id();
+  return input_real_type == kNumberTypeInt64 ? target_type : input_type;
 }
 
 TypePtrList L1LossExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
   auto input_type = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>()->Dtype();
   auto target_type = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>()->Dtype();
-  if (input_type == kInt64) {
-    if (target_type == kInt64) {
-      return {kInt64};
-    } else {
-      return {target_type};
-    }
+  MS_EXCEPTION_IF_NULL(input_type);
+  MS_EXCEPTION_IF_NULL(target_type);
+  auto input_real_type = input_type->type_id();
+  if (input_real_type == kNumberTypeInt64) {
+    return {target_type};
   } else {
     return {input_type};
   }

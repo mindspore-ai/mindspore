@@ -652,15 +652,5 @@ void ConvertLaunchInfoToAddr(const KernelLaunchInfo &launch_info, KernelLaunchAd
   std::transform((launch_info.outputs_).begin(), (launch_info.outputs_).end(), std::back_inserter(mem_info->outputs_),
                  [](const auto &output) { return std::make_shared<Address>(output->device_ptr(), output->size()); });
 }
-
-int ConvertReductionForAclnn(Reduction reduction) {
-  std::unordered_map<Reduction, int64_t> reduction_map = {
-    {Reduction::REDUCTION_SUM, 2}, {Reduction::MEAN, 1}, {Reduction::NONE, 0}};
-  auto iter = reduction_map.find(reduction);
-  if (iter == reduction_map.end()) {
-    MS_LOG(EXCEPTION) << "For ConvertReductionForAclnn, the value of reduction is invalid.";
-  }
-  return iter->second;
-}
 }  // namespace kernel
 }  // namespace mindspore
