@@ -184,6 +184,9 @@ bool RemoveRedundantDepends(const FuncGraphPtr &func_graph, const FuncGraphManag
   for (auto &node : todos) {
     if (IsPrimitiveCNode(node, prim::kPrimDepend)) {
       const auto &depend_cnode = node->cast<CNodePtr>();
+      if (depend_cnode->size() != kSizeThree) {
+        continue;
+      }
       if (users[depend_cnode].size() != 1 || !common::AnfAlgo::IsGraphKernel(users[depend_cnode].front().first)) {
         continue;
       }
