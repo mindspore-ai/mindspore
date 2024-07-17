@@ -86,6 +86,7 @@ class AbstractObjectBase {
   Type GetType() const { return type_; }
 
   virtual py::object GetPyObject() { return py::object(); }
+  virtual void SetPyObject(const py::object &value) { return; };
 
   virtual AObject *Binary(AObject *other, int op) { return MakeAObject(kTypeAnyValue); }
   virtual AObject *Unary(int op) const { return MakeAObject(kTypeAnyValue); }
@@ -137,11 +138,17 @@ class AbstractObjectBase {
   static const char *GetTypeDesc(AObject::Type type);
   static std::string ToString(PyObject *);
 
+  AbstractWrapperPtr abstract_wrapper() const { return abstract_wrapper_; }
+  void set_abstract_wrapper(const AbstractWrapperPtr &abstract_wrapper) { abstract_wrapper_ = abstract_wrapper; }
+  bool has_abstract_wrapper() const { return abstract_wrapper_ != nullptr; }
+
  protected:
   static AObject *MakeAObject(Type type, PyTypeObject *tp, PyObject *op, RecMap *rec = nullptr);
+  static AObject *MakeVariableAObject(const AbstractWrapperPtr& wrapper);
   PyTypeObject *type_object_;
   const Type type_;
   unsigned ms_flag_;
+  AbstractWrapperPtr abstract_wrapper_ = nullptr;
 };
 
 class AbstractObject : public AbstractObjectBase {
@@ -150,6 +157,7 @@ class AbstractObject : public AbstractObjectBase {
   virtual ~AbstractObject() {}
 
   py::object GetPyObject() override { return value_; }
+  void SetPyObject(const py::object &value) override { value_ = value; }
 
   AObject *Binary(AObject *other, int op) override;
   AObject *Unary(int op) const override;

@@ -261,9 +261,35 @@ AbstractObjectBase::Type AbstractObjectBase::GetMsType(PyTypeObject *tp) {
 }
 
 AObject *AbstractObjectBase::Convert(const AbstractWrapperPtr &wrapper) {
-  // TODO(LiangZhibo): Need to delete wrapper to python object precess later.
-  py::object res = AbstractWrapper::ConvertToPyObject(wrapper);
-  return Convert(res.ptr());
+  if (wrapper == nullptr || wrapper->abstract() == nullptr) {
+    return Resource::Current()->pool()->New<AbstractObjectBase>(kTypeAnyValue);
+  }
+  auto abstract = wrapper->abstract();
+  // TODO(LiangZhibo): Python object need to be created when used.
+  if (abstract->isa<abstract::AbstractTensor>() || abstract->BuildValue() != kValueAny) {
+    py::object res = AbstractWrapper::ConvertToPyObject(wrapper);
+    return Convert(res.ptr());
+  }
+  // For variable wrapper which can not be convert to python object, only save type and type object information.
+  return MakeVariableAObject(wrapper);
+}
+
+AObject *AbstractObjectBase::MakeAObject(const AbstractWrapperPtr& wrapper) {
+  AObject *res;
+  if (wrapper == nullptr || wrapper->abstract() == nullptr) {
+    res = Resource::Current()->pool()->New<AbstractObjectBase>(kTypeAnyValue);
+  } else {
+    auto abstract = wrapper->abstract();
+    if (abstract->isa<abstract::AbstractTensor>()) {
+      MS_LOG(ERROR) << "#############################";
+      res = Resource::Current()->pool()->New<AbstractTensor>(py::object(), false);
+    } else {
+      res = Resource::Current()->pool()->New<AbstractObjectBase>(kTypeAnyValue);
+    }
+  }
+
+  //res->SetTypeObject(o == nullptr ? tp : Py_TYPE(o));
+  return res;
 }
 
 AObject *AbstractObjectBase::MakeAObject(AObject::Type type, PyTypeObject *tp, PyObject *o, RecMap *m) {

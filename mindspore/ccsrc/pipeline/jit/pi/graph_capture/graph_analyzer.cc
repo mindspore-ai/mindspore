@@ -755,7 +755,7 @@ bool MindGraphAnalyzer::AnalyzeAliveLocals(std::vector<ValueNode *> aliveNodes) 
     if (std::find(capturedLocals.begin(), capturedLocals.end(), node) == capturedLocals.end()) {
       continue;
     }
-    if (func_graph_builder->AddOutput(node->abstract_wrapper(), true)) {
+    if (func_graph_builder->AddOutput(node->GetVobj()->abstract_wrapper(), true)) {
       MS_LOG(INFO) << "Add output success for node: " << node->ToString();
       GetCaptureInfo().captured_.outputs.push_back(node);
       continue;

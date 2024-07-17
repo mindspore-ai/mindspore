@@ -2128,18 +2128,29 @@ std::string GetFuncGraphName(const py::object &func, const MindGraphBuilderPtr &
   return func_name + "_" + std::to_string(subgraph->GetGraph()->GetCodeObj()->co_firstlineno);
 }
 
-bool CheckBuildSubGraph(const py::object &ret) {
-  if (ret.ptr() == nullptr) {
+bool CheckBuildSubGraph(ValueNode *node) {
+  auto a_object = node->GetVobj();
+  const auto &py_object = a_object->GetPyObject();
+  if (py_object.ptr() != nullptr) {
+    if (py::isinstance<py::str>(py_object)) {
+      std::string ret_str = py_object.cast<std::string>();
+      const std::string fake_grad_prefix = "FakeNodeKey MetaFuncGraph-grad";
+      if (ret_str.substr(0, fake_grad_prefix.size()) == fake_grad_prefix) {
+        return true;
+      }
+    }
+    return !CheckConstPyObject(py_object.ptr());
+  }
+  if (!a_object->has_abstract_wrapper() || a_object->abstract_wrapper() == nullptr) {
     return false;
   }
-  if (py::isinstance<py::str>(ret)) {
-    std::string ret_str = ret.cast<std::string>();
-    const std::string fake_grad_prefix = "FakeNodeKey MetaFuncGraph-grad";
-    if (ret_str.substr(0, fake_grad_prefix.size()) == fake_grad_prefix) {
-      return true;
-    }
+  auto abstract = a_object->abstract_wrapper()->abstract();
+  auto value = abstract->BuildValue();
+  if (value != kValueAny) {
+    a_object->SetPyObject(AbstractWrapper::ConvertToPyObject(abstract));
+    return false;
   }
-  return !CheckConstPyObject(ret.ptr());
+  return true;
 }
 }  // namespace
 
@@ -2148,12 +2159,13 @@ std::vector<AbstractWrapperPtr> MindGraphBuilder::HandleInputArgs(const std::vec
   for (auto arg : args) {
     MS_EXCEPTION_IF_NULL(arg);
     // TODO(LiangZhibo): need to handle node repeatedly found problem later.
-    if (arg->has_abstract_wrapper() && FGBuilder()->GetNodeByWrapper(arg->abstract_wrapper()) != nullptr) {
-      ret.push_back(arg->abstract_wrapper());
+    if (arg->GetVobj()->has_abstract_wrapper() &&
+        FGBuilder()->GetNodeByWrapper(arg->GetVobj()->abstract_wrapper()) != nullptr) {
+      ret.push_back(arg->GetVobj()->abstract_wrapper());
       continue;
     }
     auto new_wrapper = FGBuilder()->AddLocalVariable(arg->GetVobj()->GetPyObject());
-    arg->set_abstract_wrapper(new_wrapper);
+    arg->GetVobj()->set_abstract_wrapper(new_wrapper);
     ret.push_back(new_wrapper);
   }
   return ret;
@@ -2189,7 +2201,8 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
   call_node->SetSubGraph(sg->GetGraph());
   auto sub_ret = sg->GetGraph()->GetRetVal();
   if (sub_ret != nullptr) {
-    if (!CheckBuildSubGraph(sub_ret->GetVobj()->GetPyObject())) {
+    // if (!CheckBuildSubGraph(sub_ret->GetVobj()->GetPyObject())) {
+    if (!CheckBuildSubGraph(sub_ret)) {
       call_node->SetVobj(sub_ret->GetVobj());
     } else {
       sg->FGBuilder()->SetGraphName(GetFuncGraphName(func, sg));
@@ -2203,7 +2216,7 @@ StopTraceReason MindGraphBuilder::BuildSubGraph(CallNode *call_node, int depth, 
         if (res != nullptr) {
           MS_LOG(INFO) << "add fg node suc: ";
           call_node->SetVobj(AObject::Convert(res));
-          call_node->set_abstract_wrapper(res);
+          call_node->GetVobj()->set_abstract_wrapper(res);
         }
       }
     }
@@ -3435,7 +3448,7 @@ bool MindGraphBuilder::FGAddTopInputs(int args_count, bool has_vargs, bool has_k
     if (ret == nullptr) {
       return false;
     }
-    cur->set_abstract_wrapper(ret);
+    cur->GetVobj()->set_abstract_wrapper(ret);
   }
   if (has_vargs) {
     auto cur = locals[cur_index];
@@ -3444,7 +3457,7 @@ bool MindGraphBuilder::FGAddTopInputs(int args_count, bool has_vargs, bool has_k
     if (ret == nullptr) {
       return false;
     }
-    cur->set_abstract_wrapper(ret);
+    cur->GetVobj()->set_abstract_wrapper(ret);
     cur_index++;
   }
   if (has_kwargs) {
@@ -3454,7 +3467,7 @@ bool MindGraphBuilder::FGAddTopInputs(int args_count, bool has_vargs, bool has_k
     if (ret == nullptr) {
       return false;
     }
-    cur->set_abstract_wrapper(ret);
+    cur->GetVobj()->set_abstract_wrapper(ret);
   }
   return true;
 }
@@ -3469,7 +3482,7 @@ bool MindGraphBuilder::FGAddInputs(const std::vector<ValueNode *> &args) {
       MS_LOG(INFO) << "Add input fail for input: " << args[i]->ToString();
       return false;
     }
-    args[i]->set_abstract_wrapper(ret_abstract_wrapper);
+    args[i]->GetVobj()->set_abstract_wrapper(ret_abstract_wrapper);
     MS_LOG(INFO) << "Add input success for input: " << args[i]->ToString();
   }
   return true;
@@ -3478,7 +3491,7 @@ bool MindGraphBuilder::FGAddInputs(const std::vector<ValueNode *> &args) {
 void MindGraphBuilder::FGAddOutput(bool is_top_graph) {
   if (auto ret = GetGraph()->GetRetVal()) {
     MS_LOG(INFO) << "try add output for value node: " << ret->ToString();
-    if (FGBuilder()->AddOutput(ret->abstract_wrapper(), is_top_graph)) {
+    if (FGBuilder()->AddOutput(ret->GetVobj()->abstract_wrapper(), is_top_graph)) {
       MS_LOG(INFO) << "add output succuss for value node: " << ret->ToString();
     } else {
       MS_LOG(INFO) << "add output fail for value node: " << ret->ToString();
@@ -3500,7 +3513,7 @@ py::object MindGraphBuilder::FGAddNode(CallNode *call_node, const py::object &ca
     MS_LOG(INFO) << py::str(node->GetPyObject());
     MS_LOG(INFO) << node->ToString();
     call_node->SetVobj(node);
-    call_node->set_abstract_wrapper(res);
+    call_node->GetVobj()->set_abstract_wrapper(res);
     *stop_reason = StopTraceReason::kNonStopTrace;
   }
   return py::object();
@@ -3559,8 +3572,8 @@ std::pair<bool, std::vector<py::object>> MindGraphBuilder::GetInputsObject(CallN
   std::vector<py::object> input_objects;
   for (auto arg_value_node : args_value_node) {
     auto arg_py_object = arg_value_node->GetVobj()->GetPyObject();
-    if (arg_py_object.ptr() == nullptr && arg_value_node->has_abstract_wrapper()) {
-      auto arg_abstract_wrapper = arg_value_node->abstract_wrapper();
+    if (arg_py_object.ptr() == nullptr && arg_value_node->GetVobj()->has_abstract_wrapper()) {
+      auto arg_abstract_wrapper = arg_value_node->GetVobj()->abstract_wrapper();
       arg_py_object = AbstractWrapper::ConvertToPyObject(arg_abstract_wrapper);
     }
     if (arg_py_object.ptr() == nullptr) {
@@ -3576,7 +3589,7 @@ py::object MindGraphBuilder::ResolveGradCall(CallNode *call_node, StopTraceReaso
   if (grad_net_node == nullptr) {
     return py::object();
   }
-  auto grad_net_wrapper = grad_net_node->abstract_wrapper();
+  auto grad_net_wrapper = grad_net_node->GetVobj()->abstract_wrapper();
   if (grad_net_wrapper == nullptr) {
     MS_LOG(ERROR) << "Fail to get abstract wrapper for grad net node: " << grad_net_node->ToString();
     return py::object();
@@ -3601,17 +3614,17 @@ py::object MindGraphBuilder::ResolveGradCall(CallNode *call_node, StopTraceReaso
   auto ret = FGBuilder()->BuildGradNode(grad_net_wrapper, HandleInputArgs(args_value_nodes), need_unpack);
   if (ret != nullptr) {
     call_node->SetVobj(AObject::Convert(ret));
-    call_node->set_abstract_wrapper(ret);
+    call_node->GetVobj()->set_abstract_wrapper(ret);
     *stop_reason = StopTraceReason::kNonStopTrace;
   }
   return py::object();
 }
 
 bool MindGraphBuilder::IsGradCallable(ValueNode *node) {
-  if (node == nullptr || !node->has_abstract_wrapper()) {
+  if (node == nullptr || !node->GetVobj()->has_abstract_wrapper()) {
     return false;
   }
-  auto abstract = node->abstract_wrapper()->abstract();
+  auto abstract = node->GetVobj()->abstract_wrapper()->abstract();
   if (abstract == nullptr) {
     return false;
   }
@@ -3636,7 +3649,7 @@ py::object MindGraphBuilder::GetPyObject(ValueNode *node) {
   if (object.ptr() != nullptr) {
     return object;
   }
-  return AbstractWrapper::ConvertToPyObject(node->abstract_wrapper());
+  return AbstractWrapper::ConvertToPyObject(node->GetVobj()->abstract_wrapper());
 }
 
 py::object MindGraphBuilder::ResolveCallable(CallNode *call_node, StopTraceReason *stop_reason) {
@@ -3706,13 +3719,13 @@ bool MindGraphBuilder::HandleCallClass(CallNode *call_node) {
     MS_LOG(INFO) << "Failed to handle call class";
     return false;
   }
-  if (call_node->has_abstract_wrapper()) {
+  if (call_node->GetVobj()->has_abstract_wrapper()) {
     return true;
   }
   if (call_node->GetVobj() != nullptr && call_node->GetVobj()->GetPyObject().ptr() != nullptr) {
     auto abs_wrapper = FGBuilder()->AddLocalVariable(call_node->GetVobj()->GetPyObject());
     if (abs_wrapper != nullptr) {
-      call_node->set_abstract_wrapper(abs_wrapper);
+      call_node->GetVobj()->set_abstract_wrapper(abs_wrapper);
       return true;
     }
   }
@@ -3747,10 +3760,10 @@ ValueNode *MindGraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &
   // TODO(LiangZhibo): Need to refactor getattr process later.
   auto attr_obj = attr_node->GetVobj()->GetPyObject();
   if (instr.name() == "shape") {
-    auto ret_wrapper = HandleGetShapeOfDynamicLengthTensor(target_node->abstract_wrapper());
+    auto ret_wrapper = HandleGetShapeOfDynamicLengthTensor(target_node->GetVobj()->abstract_wrapper());
     if (ret_wrapper != nullptr) {
       auto ret = NewValueNode(AObject::Convert(ret_wrapper), instr, {target_node});
-      ret->set_abstract_wrapper(ret_wrapper);
+      ret->GetVobj()->set_abstract_wrapper(ret_wrapper);
       return ret;
     }
   }
@@ -3758,7 +3771,7 @@ ValueNode *MindGraphBuilder::HandleGetattr(ValueNode *target_node, const Instr &
   auto abstract_wrapper = fg_builder_->AddAttrPythonObject(attr_obj);
   graph_attr_node = attr_node;
   if (abstract_wrapper != nullptr) {
-    graph_attr_node->set_abstract_wrapper(abstract_wrapper);
+    graph_attr_node->GetVobj()->set_abstract_wrapper(abstract_wrapper);
   }
   if (attr_obj.ptr() != nullptr && py::hasattr(attr_obj, "__parameter__") &&
       py::isinstance<tensor::MetaTensor>(attr_obj)) {
@@ -3842,7 +3855,7 @@ bool MindGraphBuilder::DoGetItem(const Instr &instr) {
   auto l = pop();
   auto o = HandleMultiOp(instr, {l, r}, false);
   auto v = NewValueNode(AObject::Convert(o), instr, {l, r});
-  v->set_abstract_wrapper(o);
+  v->GetVobj()->set_abstract_wrapper(o);
   push(v);
   return true;
 }
@@ -3851,7 +3864,7 @@ bool MindGraphBuilder::DoUnary(const Instr &instr) {
   auto o = pop();
   auto r = HandleMultiOp(instr, {o}, false);
   auto v = NewValueNode(AObject::Convert(r), instr, {o});
-  v->set_abstract_wrapper(r);
+  v->GetVobj()->set_abstract_wrapper(r);
   push(v);
   return true;
 }
@@ -3861,7 +3874,7 @@ bool MindGraphBuilder::DoBinary(const Instr &instr) {
   auto l = pop();
   auto o = HandleMultiOp(instr, {l, r}, false);
   auto v = NewValueNode(AObject::Convert(o), instr, {l, r});
-  v->set_abstract_wrapper(o);
+  v->GetVobj()->set_abstract_wrapper(o);
   push(v);
   return true;
 }
@@ -3871,7 +3884,7 @@ bool MindGraphBuilder::DoBinaryMul(const Instr &instr) {
   auto l = pop();
   auto o = HandleMultiOp(instr, {l, r}, false);
   auto v = NewValueNode(AObject::Convert(o), instr, {l, r});
-  v->set_abstract_wrapper(o);
+  v->GetVobj()->set_abstract_wrapper(o);
   push(v);
   return true;
 }
@@ -3895,7 +3908,7 @@ bool MindGraphBuilder::DoCompare(const Instr &instr) {
 
   auto o = HandleMultiOp(instr, {l, r}, true);
   auto v = NewValueNode(AObject::Convert(o), instr, {l, r});
-  v->set_abstract_wrapper(o);
+  v->GetVobj()->set_abstract_wrapper(o);
   push(v);
   return true;
 }
@@ -3910,7 +3923,7 @@ bool MindGraphBuilder::DoBuildOp(const Instr &instr) {
   auto o = HandleBuildOp(instr, p);
   popn(tmp_arg);
   auto v = NewValueNode(AObject::Convert(o), instr, p);
-  v->set_abstract_wrapper(o);
+  v->GetVobj()->set_abstract_wrapper(o);
   push(v);
   return true;
 }
@@ -4006,7 +4019,7 @@ bool MindGraphBuilder::UnpackCallExParams(std::vector<ValueNode *> *params, int 
     auto r = NewValueNode(AObject::Convert(py::int_(i)), LOAD_CONST, -1, {});
     auto o = HandleMultiOp(instr, {l, r}, false);
     auto node = NewValueNode(AObject::Convert(o), instr, {l, r});
-    node->set_abstract_wrapper(o);
+    node->GetVobj()->set_abstract_wrapper(o);
     new_args_inputs.push_back(node);
   }
 
@@ -4070,7 +4083,7 @@ bool MindGraphBuilder::UnpackCallExDict(std::vector<ValueNode *> *params, CallNo
     auto r = NewValueNode(AObject::Convert(py::cast<py::str>(cur_key)), LOAD_CONST, -1, {});
     auto o = HandleMultiOp(instr, {l, r}, false);
     auto node = NewValueNode(AObject::Convert(o), instr, {l, r});
-    node->set_abstract_wrapper(o);
+    node->GetVobj()->set_abstract_wrapper(o);
     params->push_back(node);
     i++;
   }
