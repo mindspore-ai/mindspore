@@ -168,6 +168,16 @@ def test_model_group_for_ascend(model_path, in_data_path, input_shapes):
     # use model two for inference
     test_model_inference_ascend(model_file, in_data_file_list, shapes)
 
+def test_input_shape_for_ascend(model_path, input_shape_str):
+    context = mslite.Context()
+    context.target = ["ascend"]
+    context.ascend.device_id = 0
+    context.cpu.thread_num = 2
+    context.cpu.thread_affinity_mode = 0
+    context.parallel.workers_num = 2
+    model = mslite.Model()
+    model.build_from_file(model_path, mslite.ModelType.MINDIR, context)
+    input_shape_config = model.get_model_info("input_shape")
 
 if __name__ == '__main__':
     model_file = sys.argv[1]
@@ -198,6 +208,8 @@ if __name__ == '__main__':
         print("run model inference ascend success.")
         test_parallel_inference_ascend(model_file, in_data_file_list, shapes)
         print("run parallel inference ascend success.")
+        test_input_shape_for_ascend(model_file, input_shapes_str)
+        print("run input shape test success.")
     elif backend == "CPU_PARALLEL":
         test_parallel_inference_cpu(model_file, in_data_file_list, shapes)
         print("run parallel inference cpu success.")
