@@ -163,22 +163,33 @@ int DeQuantData(const int8_t *tensor_data, int64_t elements_num, std::vector<min
 // quant_data = std::round(origin_data / scale + zero_point)
 // new_data = scale * (quant_data - zero_point)
 template <typename T>
-T QuantDeQuantData(float origin_data, const schema::QuantParamT *quant_param, int quant_max, int quant_min) {
-  MS_ASSERT(quant_param != nullptr);
-  MS_ASSERT(quant_param->inited);
+T QuantDeQuantData(float origin_data, const schema::QuantParamT *quant_param, int quant_max, int quant_min,
+                   bool need_dequant = true) {
+  if (quant_param == nullptr) {
+    MS_LOG(ERROR) << "quant_param is nullptr!";
+    return 0;
+  }
+  if (!quant_param->inited) {
+    MS_LOG(ERROR) << "quant_param->inited is false!";
+    return 0;
+  }
   const auto scale = quant_param->scale;
   const int zero_point = quant_param->zeroPoint;
   if (scale <= SCALE_THREASHOLD) {
     return 0;
   }
-  return [quant_max, quant_min, zero_point, scale, origin_data] {
+  return [quant_max, quant_min, zero_point, scale, origin_data, need_dequant] {
     auto quant_data = std::round(origin_data / scale + zero_point);
     if (quant_data > quant_max) {
       quant_data = quant_max;
     } else if (quant_data < quant_min) {
       quant_data = quant_min;
     }
-    return static_cast<T>(scale * (quant_data - zero_point));
+    if (!need_dequant) {
+      return static_cast<T>(quant_data);
+    } else {
+      return static_cast<T>(scale * (quant_data - zero_point));
+    }
   }();
 }
 }  // namespace mindspore::lite::quant

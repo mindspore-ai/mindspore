@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_ADJUST_MATMUL_PASS_H
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_ADJUST_MATMUL_PASS_H
+#ifndef MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_QUANTIZE_DECLARE_H_
+#define MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_QUANTIZE_DECLARE_H_
 
-#include "include/backend/optimizer/pass.h"
+#include "transform/graph_ir/op_declare/op_declare_macro.h"
+#include "utils/hash_map.h"
 
-namespace mindspore {
-namespace opt {
-class AdjustMatmulPass : public Pass {
- public:
-  AdjustMatmulPass() : Pass("AdjustMatmulPass") {}
-  ~AdjustMatmulPass() override = default;
-  bool Run(const FuncGraphPtr &func_graph) override;
-};
-}  // namespace opt
-}  // namespace mindspore
+DECLARE_OP_ADAPTER(TransQuantParamV2)
+DECLARE_OP_USE_OUTPUT(TransQuantParamV2)
 
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_ADJUST_MATMUL_PASS_H
+#endif  // MINDSPORE_CCSRC_TRANSFORM_GRAPH_IR_OP_DECLARE_NN_QUANTIZE_DECLARE_H_
