@@ -29,6 +29,17 @@ AnfNodePtr GraphKernelExpander::CreateExpandedNode(const CNodePtr &node, const s
   std::vector<AnfNodePtr> inputs(node->inputs().begin() + 1, node->inputs().end());
   (void)ConvertTensorToParameter(new_fg, &inputs);
   auto graph_kernel_node = CreateNewFuseCNode(main_graph, new_fg, inputs);
+  // update sub graph nodes attr
+  auto expand_from = MakeValue(name);
+  auto nodes = TopoSort(new_fg->get_return());
+  for (const auto &n : nodes) {
+    if (n == nullptr || !n->isa<CNode>()) {
+      continue;
+    }
+    auto cnode = n->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    cnode->AddAttr(kAttrExpandFrom, expand_from);
+  }
   MS_LOG(DEBUG) << "Expand node: " << node->fullname_with_scope()
                 << " with: " << graph_kernel_node->fullname_with_scope();
   return graph_kernel_node;

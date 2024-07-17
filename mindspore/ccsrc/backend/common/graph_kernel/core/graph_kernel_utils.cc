@@ -34,8 +34,7 @@
 #include "utils/ms_context.h"
 
 namespace mindspore::graphkernel {
-namespace {
-ListSymbolPtr GetOutputSymbolicShape(const AnfNodePtr &node, size_t i) {
+ListSymbolPtr GkUtils::GetOutputSymbolicShape(const AnfNodePtr &node, size_t i) {
   if (node == nullptr) {
     return nullptr;
   }
@@ -63,7 +62,6 @@ ListSymbolPtr GetOutputSymbolicShape(const AnfNodePtr &node, size_t i) {
   // single output
   return symbol_shape;
 }
-}  // namespace
 
 std::string GkUtils::ExtractGraphKernelName(const AnfNodePtrList &nodes, const std::string &prefix,
                                             const std::string &postfix) {
@@ -353,7 +351,7 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
       auto shape = cb->GetOutputShape(node, i);
       auto type = cb->GetOutputType(node, i);
       auto format = cb->GetOutputFormat(node, i);
-      auto symbol_shape = GetOutputSymbolicShape(node, i);
+      auto symbol_shape = GkUtils::GetOutputSymbolicShape(node, i);
       listinfo.push_back(inner::NodeBase({shape, type, format, symbol_shape}));
     }
     return listinfo;
