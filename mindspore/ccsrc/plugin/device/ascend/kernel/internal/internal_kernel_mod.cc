@@ -20,6 +20,7 @@
 #include "plugin/device/ascend/hal/device/ascend_memory_pool.h"
 #include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 #include "acl/acl_rt.h"
+#include "utils/llm_manager.h"
 
 namespace mindspore {
 namespace kernel {
@@ -134,6 +135,7 @@ bool InternalKernelMod::Init(const std::vector<KernelTensor *> &inputs, const st
 }
 
 int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto &llm_manager = LLMManager::GetInstance();
   auto ret = KernelMod::Resize(inputs, outputs);
   if (ret != 0) {
     MS_LOG(ERROR) << "op " << op_type_ << " invoke resize failed";
@@ -146,6 +148,13 @@ int InternalKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const s
       return KRET_RESIZE_FAILED;
     }
   }
+
+  if (op_type_ == "PagedAttention" && llm_manager.enable_multi_level_seq_length_) {
+    MS_LOG(INFO) << "Update multi_level_seq_length for Internal Op: " << op_type_;
+    auto param = CreateOpParam(inputs, outputs);
+    impl_->UpdateParam(param);
+  }
+
   std::vector<internal::DIMS> input_shapes(inputs_.size());
   for (auto iter = inputsIdxMap_.begin(); iter != inputsIdxMap_.end(); iter++) {
     InternalKernelUtils::ToInternalTensor(inputs_[iter->second], inputs[iter->first]);

@@ -42,12 +42,14 @@ file(GLOB_RECURSE MS_OPTIMIZER_910B RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "./ir_fusion/mc2_fusion.cc"
         "./ir_fusion/inference_weight_preprocess_utils.cc"
         "./ir_fusion/inference_matmul_split_fusion.cc"
+        "./ir_fusion/inference_swiglu_fusion.cc"
         "./ir_fusion/shape_reshape_fusion.cc"
         "./ir_fusion/add_layer_norm_fusion.cc"
         "./ir_fusion/add_rms_norm_fusion.cc"
         "./ir_fusion/add_cast_rms_norm_cast_fusion.cc"
         "./ir_fusion/matmul_allreduce_fusion.cc"
         "./ir_fusion/matmul_elemwise_fusion.cc"
+        "./ir_fusion/split_concat_fusion.cc"
         "./enhancer/eliminate_maketuple_getitem.cc"
         )
 list(REMOVE_ITEM MS_OPTIMIZER_910B
