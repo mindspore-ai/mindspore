@@ -19,6 +19,7 @@ import math
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
+from mindspore import mutable
 from mindspore.common import dtype as mstype
 from mindspore.ops import auto_generate as P
 from mindspore.ops.function.nn_func import prompt_flash_attention, incre_flash_attention
@@ -360,8 +361,8 @@ def test_fused_infer_attention_score_pfa_bnsd_fwd_dynamic(context_mode):
     key = Tensor(shape=[None, N, None, None], dtype=mstype.float16)
     value = Tensor(shape=[None, N, None, None], dtype=mstype.float16)
 
-    key_mut = [key]
-    value_mut = [value]
+    key_mut = mutable(input_data=(key,), dynamic_len=False)
+    value_mut = mutable(input_data=(value,), dynamic_len=False)
     net_fias = FusedInferAttentionScoreFunc(num_heads=Q_N, input_layout='BNSD', num_key_value_heads=N)
     net_fias.set_inputs(query, key_mut, value_mut, None, None,
                         None, None, None, None, None, None,
@@ -373,8 +374,8 @@ def test_fused_infer_attention_score_pfa_bnsd_fwd_dynamic(context_mode):
     query_v = Tensor(q, dtype=mstype.float16)
     key_v = Tensor(k, dtype=mstype.float16)
     value_v = Tensor(v, dtype=mstype.float16)
-    key_mut_v = [key_v]
-    value_mut_v = [value_v]
+    key_mut_v = mutable(input_data=(key_v,), dynamic_len=False)
+    value_mut_v = mutable(input_data=(value_v,), dynamic_len=False)
     fias_result = net_fias(query_v, key_mut_v, value_mut_v, None, None,
                            None, None, None, None, None, None,
                            None, None, None, None, None, None)
