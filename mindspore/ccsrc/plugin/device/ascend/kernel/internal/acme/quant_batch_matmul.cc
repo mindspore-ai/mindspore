@@ -15,14 +15,12 @@
  */
 
 #include "plugin/device/ascend/kernel/internal/acme/quant_batch_matmul.h"
-#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
 
 #include <memory>
 #include "kernel/kernel.h"
 
 namespace mindspore {
 namespace kernel {
-constexpr auto kAcmeQuantBatchMatmulOpName = "QuantBatchMatmul";  // this should be defined in acme
 acme::AcmeOpPtr AcmeQuantBatchMatmul::CreateKernel(const acme::InputsImmutableInfoList &inputs,
                                                    const acme::OutputsImmutableInfoList &outputs,
                                                    const std::vector<KernelTensor *> &ms_inputs,
@@ -33,9 +31,9 @@ acme::AcmeOpPtr AcmeQuantBatchMatmul::CreateKernel(const acme::InputsImmutableIn
   param.with_bias = !(ms_inputs[kIndex4]->GetType()->isa<TypeNone>());
   param.enable_shuffle = false;  // the real definition is in acme
   param.enable_dequant = true;
-  return acme::CreateMatmulOp(inputs, outputs, param, kAcmeQuantBatchMatmulOpName);
+  return acme::CreateMatmulOp(inputs, outputs, param, acme::kAcmeMatMulOpName);
 }
-MS_ACME_KERNEL_FACTORY_REG(QuantBatchMatmul, kAcmeQuantBatchMatmulOpName, AcmeQuantBatchMatmul);
+MS_ACME_KERNEL_FACTORY_REG(QuantBatchMatmul, acme::kAcmeMatMulOpName, AcmeQuantBatchMatmul);
 REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(QuantBatchMatmul, INPUT_NUM_4, INDEX_0, INDEX_1, INDEX_4, INDEX_2);
 REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(QuantBatchMatmul, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
