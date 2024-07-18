@@ -16,4 +16,3 @@ mindspore.mint.asin
 
     异常：
         - **TypeError** - 如果 `input` 不是Tensor。
-        - **TypeError** - 如果 `input` 的数据类型不是bool、int8、uint8、int16, int32、int64、float16、float32或float64。

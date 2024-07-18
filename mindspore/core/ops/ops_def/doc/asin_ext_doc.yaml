@@ -15,7 +15,6 @@ asin_ext:
 
         Raises:
             TypeError: If `input` is not a Tensor.
-            TypeError: If dtype of `input` is not bool, int8, uint8, int16, int32, int64, float16, float32, float64.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
