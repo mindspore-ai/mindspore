@@ -1063,6 +1063,10 @@ bool AutoParallelSymbolPassWithReNormalize(const ResourcePtr &resource) {
   // must be bind with renormalize
   OptPassGroupMap opt_map({{"renormalize", opt::OptPassConfig::Renormalize()},
                            {"build", opt::OptPassConfig(opt::irpass::SymbolEngineBuilder())}});
+  if (common::GetEnv("MS_DEV_FOLD_SAME_VALUE") == "1") {
+    opt::irpass::OptimizeIRPassLib irpass;
+    (void)opt_map.push_back({"fold_same_value", opt::OptPassConfig({irpass.fold_same_value_})});
+  }
   auto opt = opt::Optimizer::MakeOptimizer("parallel-infer-symbol", resource, opt_map, true);
   (void)opt->step(func_graph, false);
   MS_LOG(INFO) << "symbol pass for parallel end";

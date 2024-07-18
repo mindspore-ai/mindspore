@@ -308,6 +308,26 @@ bool ShapeOpCse::operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &
   }
   return changed;
 }
+
+AnfNodePtr FoldSameValue::operator()(const OptimizerPtr &, const AnfNodePtr &node) {
+  if (GetSymbolEngine(node) == nullptr) {
+    return nullptr;
+  }
+  PatternNode<AnfNodePtr> any;
+  PatternNode<AnfNodePtr> target;
+  MATCH_REPLACE_IF(node, PPrimitive(prim::kPrimShape, PPrimitive(prim::kPrimReshape, any, target)), target,
+                   Check(node, target.GetNode(node)));
+  return nullptr;
+}
+
+bool FoldSameValue::Check(const AnfNodePtr &a, const AnfNodePtr &b) const {
+  if (a->abstract() == nullptr || b->abstract() == nullptr) {
+    return false;
+  }
+  auto a_value = a->abstract()->GetSymbolicValue();
+  auto b_value = b->abstract()->GetSymbolicValue();
+  return a_value != nullptr && b_value != nullptr && a_value->EqualsTo(b_value);
+}
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore

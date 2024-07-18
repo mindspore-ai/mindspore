@@ -190,6 +190,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr elim_shapecalc_of_broadcastargs_;
   SubstitutionPtr opt_reshape_;
   SubstitutionPtr fold_const_symbol_;
+  SubstitutionPtr fold_same_value_;
 };
 
 // the collection of irpass for resolve action
