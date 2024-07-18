@@ -58,10 +58,12 @@ from mindspore.common.file_system import FileSystem, _register_basic_file_system
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore.experimental import MapParameter
 from mindspore.ops import Cast
-from mindspore.parallel._cell_wrapper import get_allgather_cell
+from mindspore.parallel._cell_wrapper import get_allgather_cell, _single_parameter_broadcast
 from mindspore.parallel._tensor import _load_tensor, _get_tensor_strategy, _get_tensor_slice_index
 from mindspore.parallel._tensor import _reshape_param_data, _reshape_param_data_with_weight
-from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices, _is_in_auto_parallel_mode
+from mindspore.parallel._utils import _infer_rank_list, _remove_repeated_slices, _is_in_auto_parallel_mode,\
+    _get_device_num
+from mindspore.parallel._auto_parallel_context import _get_auto_parallel_context
 from mindspore.parallel._parallel_serialization import _convert_to_list, _convert_to_layout, _build_searched_strategy, \
     _restore_group_info_list
 from mindspore.parallel._ps_context import _set_checkpoint_load_status, _store_warm_up_ptr_by_tensor, \
@@ -71,8 +73,6 @@ from mindspore.train._utils import read_proto
 from mindspore._c_expression import load_mindir, _encrypt, _decrypt, _is_cipher_file, dynamic_obfuscate_mindir, \
     split_mindir, split_dynamic_mindir
 from mindspore.common.generator import Generator
-from mindspore.train._utils import get_parameter_redundancy, remove_param_redundancy
-from mindspore.parallel.parameter_broadcast import parameter_broadcast
 from ..ops.operations._opaque_predicate_registry import add_opaque_predicate, clean_funcs
 
 tensor_to_ms_type = {"Int8": mstype.int8, "UInt8": mstype.uint8, "Int16": mstype.int16, "UInt16": mstype.uint16,
@@ -527,12 +527,17 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         for param in save_obj:
             if param["name"] == "random_op":
                 if os.getenv("AITURBO") == "1":
-                    data_list_np["random_op"] = param["data"]
+                    data_list_np["random_op"] = []
+                    data_list_np["random_op"].append(param["data"])
+                    if crc_check:
+                        bytes_value = bytes(data_list_np[key][0])
+                        data_list_np[key].append(binascii.crc32(bytes_value))
                 else:
                     data_list["random_op"] = param["data"]
                 continue
             key = param["name"]
             data_list[key] = []
+            data_list_np[key] = []
             if isinstance(param["data"], MapParameter):
                 data_list[param["name"]].append("mapparameter")
                 data_list[param["name"]].append(param["data"])
@@ -546,7 +551,10 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
 
             if isinstance(param["data"], str):
                 if os.getenv("AITURBO") == "1":
-                    data_list_np[key] = np.array(param["data"])
+                    data_list_np[key].append(np.array(param["data"]))
+                    if crc_check:
+                        bytes_value = data_list_np[key][0].tobytes()
+                        data_list_np[key].append(binascii.crc32(bytes_value))
                 else:
                     data_list[key].append([0])
                     data_list[key].append('str')
@@ -556,7 +564,10 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
                 if isinstance(param["data"], Parameter):
                     param["data"].init_data()
                 if os.getenv("AITURBO") == "1":
-                    data_list_np[key] = param["data"].asnumpy()
+                    data_list_np[key].append(param["data"].asnumpy())
+                    if crc_check:
+                        bytes_value = data_list_np[key][0].tobytes()
+                        data_list_np[key].append(binascii.crc32(bytes_value))
                 else:
                     dims = []
                     for dim in param['data'].shape:
@@ -570,7 +581,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
     if os.getenv("AITURBO") == "1":
         import aiturbo
         ckpt_name = os.path.basename(ckpt_file_name)
-        aiturbo.save_ckpt(ckpt_name, global_step_num, data_list_np)
+        aiturbo.save_ckpt(ckpt_name, global_step_num, data_list_np, crc_check)
     elif async_save:
         data_copy = copy.deepcopy(data_list)
         thr = Thread(target=_exec_save, args=(ckpt_file_name, data_copy, enc_key, enc_mode, map_param_inc, crc_check),
@@ -1138,7 +1149,7 @@ def _load_into_param_dict(ckpt_file_name, parameter_dict, specify_prefix, filter
 
 def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None,
                     dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None,
-                    crc_check=False):
+                    crc_check=False, remove_redundancy=False):
     """
     Load checkpoint info from a specified file.
 
@@ -1170,6 +1181,9 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
             that matches the custom condition will be loaded. If returns ``False`` , the Parameter that
             matches the custom condition will be removed. Default: ``None`` .
         crc_check (bool) : Whether to perform crc32 validation when loading checkpoint. Default: ``False`` .
+        remove_redundancy (bool) : Whether to enable loading of checkpoint saved with redundancy removal.
+            Redundancy removal refers to eliminating redundant data in data parallelism mode. Default: ``False`` , means
+            redundant-free loading is not enabled.
 
     Returns:
         Dict, key is parameter name, value is a Parameter or string. When the `append_dict` parameter of
@@ -1219,6 +1233,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     dec_key = Validator.check_isinstance('dec_key', dec_key, (type(None), bytes))
     dec_mode = Validator.check_isinstance('dec_mode', dec_mode, str)
     crc_check = Validator.check_isinstance('crc_check', crc_check, bool)
+    remove_redundancy = Validator.check_isinstance('remove_redundancy', remove_redundancy, bool)
     logger.info("Execute the process of loading checkpoint files.")
 
     parameter_dict = {}
@@ -1245,7 +1260,7 @@ def load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=N
     if _warm_up_host_cache_enabled(parameter_dict):
         (is_worker, net_dict, warm_up_dict) = _warm_up_host_cache(parameter_dict, net)
     if net is not None:
-        load_param_into_net(net, parameter_dict, strict_load)
+        load_param_into_net(net, parameter_dict, strict_load, remove_redundancy)
     if _warm_up_host_cache_enabled(parameter_dict):
         _warm_up_host_cache_post_process(is_worker, net_dict, warm_up_dict)
 
@@ -1484,7 +1499,7 @@ def _check_load_param_into_net(net, parameter_dict):
         parameter_dict.pop("random_op")
 
 
-def load_param_into_net(net, parameter_dict, strict_load=False):
+def load_param_into_net(net, parameter_dict, strict_load=False, remove_redundancy=False):
     """
     Load parameters into network, return parameter list that are not loaded in the network.
 
@@ -1496,6 +1511,9 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
                             into net when parameter name's suffix in checkpoint file is the same as the
                             parameter in the network. When the types are inconsistent perform type conversion
                             on the parameters of the same type, such as float32 to float16. Default: ``False`` .
+        remove_redundancy (bool) : Whether to enable loading of checkpoint saved with redundancy removal.
+            Redundancy removal refers to eliminating redundant data in data parallelism mode. Default: ``False`` , means
+            redundant-free loading is not enabled.
 
     Returns:
         - param_not_load (List), the parameter name in model which are not loaded into the network.
@@ -1529,6 +1547,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
             raise TypeError(msg)
 
     strict_load = Validator.check_bool(strict_load)
+    remove_redundancy = Validator.check_isinstance('remove_redundancy', remove_redundancy, bool)
     logger.info("Execute the process of loading parameters into net.")
     for _, param in net.parameters_and_names():
         param.from_ckpt = True
@@ -1560,16 +1579,28 @@ def load_param_into_net(net, parameter_dict, strict_load=False):
         logger.warning("For 'load_param_into_net', "
                        "{} parameters in the 'net' are not loaded, because they are not in the "
                        "'parameter_dict', please check whether the network structure is consistent "
-                       "when training and loading checkpoint.".format(len(param_not_load)))
+                       "when training and loading checkpoint. Another possibility is that "
+                       "the redundant loading is not enabled, but the loaded checkpoint is saved with "
+                       "redundancy removed. ".format(len(param_not_load)))
         logger.warning("{} are not loaded.".format(param_not_load))
-    if os.getenv("AITURBO") == "1" and net.parameter_layout_dict is not None:
+    if remove_redundancy:
         param_layout = net.parameter_layout_dict
-        param_redundancy = get_parameter_redundancy(param_layout)
-        remove_param_redundancy_dict = remove_param_redundancy(param_redundancy)
-        target_parameter_name_set = set(parameter_dict.keys())
-        for rank_id, param_name_set in remove_param_redundancy_dict:
-            if param_name_set == target_parameter_name_set:
-                parameter_broadcast(net, param_layout, rank_id)
+        if not param_layout:
+            raise ValueError(f"For load remove_redundancy ckpt, the layout of the network should not be None, "
+                             f"but got {param_layout}")
+        param_dict_set = set(parameter_dict.keys())
+        param_layout_set = set(param_layout.keys())
+        if not ckpt_not_load or param_layout_set.issubset(param_dict_set):
+            logger.warning(f"For remove_redundancy ckpt loading, the currently loaded ckpt contains the full set of "
+                           f"parameters.")
+        else:
+            rank_id = get_rank()
+            device_num = _get_device_num()
+            stage_num = _get_auto_parallel_context("pipeline_stages")
+            chunk_size = device_num // stage_num
+            initial_rank = (rank_id // chunk_size) * chunk_size
+            _single_parameter_broadcast(net, param_layout, rank_id, initial_rank)
+
     return param_not_load, ckpt_not_load
 
 

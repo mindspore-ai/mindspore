@@ -715,6 +715,7 @@ class Model:
                 train_network.add_flags_recursive(is_first_iteration=True)
             for inputs in train_dataset_helper:
                 train_network.compile(*inputs)
+                self._train_network.parameter_layout_dict = train_network.parameter_layout_dict
                 break
 
         if valid_dataset:
