@@ -921,6 +921,10 @@ std::map<SignatureEnumDType, std::pair<TypeId, bool>> GetSignatureTypeMap(const 
   return sig_type_map;
 }
 
+TypeId ConvertTypeForTensorsOrScalars(const TypeId &type1, const TypeId &type2) {
+  return ConvertTypeForTensorsOrScalars(type1, type2, GetHashId(type1, type2));
+}
+
 std::string ValueSimpleInfoToString(const ValueSimpleInfo &value_simple_info) {
   std::ostringstream buf;
   buf << "Value simple info element size : " << value_simple_info.size_;
