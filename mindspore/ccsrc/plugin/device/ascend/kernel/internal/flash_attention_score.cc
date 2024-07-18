@@ -56,8 +56,7 @@ internal::OpParamPtr InternalFlashAttentionScore::CreateOpParam(const std::vecto
 
   internal::MixParam op_param;
 
-  auto context_ptr = mindspore::MsContext::GetInstance();
-  if (context_ptr->ascend_soc_version() == "ascend310p") {
+  if (soc_ == "ascend310p") {
     op_param.mixType = internal::MixParam::MixType::MIX_UNPAD_FLASH_ATTENTION_NZ_ENCODER_NOCACHE;
     op_param.maskType = internal::MixParam::MaskType::MASK_TYPE_NORM;
   } else {

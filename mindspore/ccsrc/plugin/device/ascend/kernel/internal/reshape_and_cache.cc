@@ -28,8 +28,7 @@ internal::OpParamPtr ReshapeAndCache::CreateOpParam(const std::vector<KernelTens
   auto param_ptr = std::make_shared<internal::OpParam>();
   param_ptr->opId = internal::OpId::ReshapeAndCache;
 
-  auto context_ptr = mindspore::MsContext::GetInstance();
-  if (context_ptr->ascend_soc_version() == "ascend310p") {
+  if (soc_ == "ascend310p") {
     param_ptr->opId = internal::OpId::ReshapeAndCacheNz;
   }
 
