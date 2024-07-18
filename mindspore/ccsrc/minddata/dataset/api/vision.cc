@@ -36,7 +36,9 @@
 #include "minddata/dataset/kernels/ir/vision/cutmix_batch_ir.h"
 #include "minddata/dataset/kernels/ir/vision/cutout_ir.h"
 #include "minddata/dataset/kernels/ir/vision/decode_ir.h"
+#ifdef ENABLE_FFMPEG
 #include "minddata/dataset/kernels/ir/vision/decode_video_ir.h"
+#endif
 #include "minddata/dataset/kernels/ir/vision/equalize_ir.h"
 #include "minddata/dataset/kernels/ir/vision/erase_ir.h"
 #include "minddata/dataset/kernels/ir/vision/gaussian_blur_ir.h"
@@ -99,6 +101,8 @@
 
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/image_utils.h"
+#endif
+#if !defined(ENABLE_ANDROID) && defined(ENABLE_FFMPEG)
 #include "minddata/dataset/kernels/image/video_utils.h"
 #endif
 #include "minddata/dataset/kernels/ir/validators.h"
@@ -383,7 +387,7 @@ std::shared_ptr<TensorOperation> Decode::Parse(const MapTargetDevice &env) {
   return nullptr;
 }
 
-#ifndef ENABLE_ANDROID
+#if !defined(ENABLE_ANDROID) && defined(ENABLE_FFMPEG)
 // DecodeVideo Transform Operation.
 DecodeVideo::DecodeVideo() {}
 
@@ -1200,6 +1204,7 @@ Status ReadImage(const std::string &filename, mindspore::MSTensor *output, Image
   return Status::OK();
 }
 
+#ifdef ENABLE_FFMPEG
 // ReadVideo Function.
 Status ReadVideo(const std::string &filename, mindspore::MSTensor *video_output, mindspore::MSTensor *audio_output,
                  std::map<std::string, std::string> *metadata_output, float start_pts, float end_pts,
@@ -1243,6 +1248,7 @@ Status ReadVideoTimestamps(const std::string &filename, std::tuple<std::vector<f
   *output = std::make_tuple(pts_float_vector, video_fps);
   return Status::OK();
 }
+#endif
 #endif  // not ENABLE_ANDROID
 
 // Rescale Transform Operation.

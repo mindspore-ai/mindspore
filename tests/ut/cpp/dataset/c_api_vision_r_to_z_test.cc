@@ -1574,6 +1574,7 @@ TEST_F(MindDataTestPipeline, TestWritePngException) {
   ASSERT_ERROR(mindspore::dataset::vision::WritePng(filename_2, image_ms_tensor));
 }
 
+#ifdef ENABLE_FFMPEG
 /// Description: a function used by the test cases for ReadVideoTimestamps
 /// Expectation: create the timestamps according to the vector_length, video_fps, start_index
 void create_expected_video_timestamps(std::tuple<std::vector<float>, float> *output, int vector_length, float video_fps,
@@ -2009,3 +2010,4 @@ TEST_F(MindDataTestPipeline, TestReadVideoTimestampsException) {
   // Test with a not supported pts_unit
   ASSERT_ERROR(mindspore::dataset::vision::ReadVideoTimestamps(filename, &output, "min"));
 }
+#endif

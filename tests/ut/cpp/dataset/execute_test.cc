@@ -3293,6 +3293,7 @@ TEST_F(MindDataTestExecute, TestPitchShiftWrongArgs1) {
   EXPECT_TRUE(status.IsError());
 }
 
+#ifdef ENABLE_FFMPEG
 /// Feature: Execute DecodeVideo op
 /// Description: Test executing DecodeVideo op with AVI video
 /// Expectation: Output is equal to the expected output and status is okay
@@ -3477,3 +3478,4 @@ TEST_F(MindDataTestExecute, TestDecodeVideoException) {
   input_tensor.push_back(mindspore::MSTensor(std::make_shared<DETensor>(input)));
   ASSERT_ERROR(transform(input_tensor, &output_tensor));
 }
+#endif

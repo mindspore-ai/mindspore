@@ -68,7 +68,9 @@ constexpr char kAutoAugmentOp[] = "AutoAugmentOp";
 constexpr char kAutoContrastOp[] = "AutoContrastOp";
 constexpr char kBoundingBoxAugmentOp[] = "BoundingBoxAugmentOp";
 constexpr char kDecodeOp[] = "DecodeOp";
+#ifdef ENABLE_FFMPEG
 constexpr char kDecodeVideoOp[] = "DecodeVideoOp";
+#endif
 constexpr char kCenterCropOp[] = "CenterCropOp";
 constexpr char kConvertColorOp[] = "ConvertColorOp";
 constexpr char kCutMixBatchOp[] = "CutMixBatchOp";

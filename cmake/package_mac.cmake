@@ -113,20 +113,22 @@ if(ENABLE_MINDDATA)
     install(FILES ${icu4c_LIBPATH}/libicui18n.69.1.dylib
         DESTINATION ${INSTALL_LIB_DIR} RENAME libicui18n.69.dylib COMPONENT mindspore)
 
-    install(FILES ${ffmpeg_LIBPATH}/libavcodec.59.37.100.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libavcodec.59.dylib COMPONENT mindspore)
-    install(FILES ${ffmpeg_LIBPATH}/libavdevice.59.7.100.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libavdevice.59.dylib COMPONENT mindspore)
-    install(FILES ${ffmpeg_LIBPATH}/libavfilter.8.44.100.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libavfilter.8.dylib COMPONENT mindspore)
-    install(FILES ${ffmpeg_LIBPATH}/libavformat.59.27.100.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libavformat.59.dylib COMPONENT mindspore)
-    install(FILES ${ffmpeg_LIBPATH}/libavutil.57.28.100.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libavutil.57.dylib COMPONENT mindspore)
-    install(FILES ${ffmpeg_LIBPATH}/libswresample.4.7.100.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libswresample.4.dylib COMPONENT mindspore)
-    install(FILES ${ffmpeg_LIBPATH}/libswscale.6.7.100.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libswscale.6.dylib COMPONENT mindspore)
+    if(ENABLE_FFMPEG)
+        install(FILES ${ffmpeg_LIBPATH}/libavcodec.59.37.100.dylib
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libavcodec.59.dylib COMPONENT mindspore)
+        install(FILES ${ffmpeg_LIBPATH}/libavdevice.59.7.100.dylib
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libavdevice.59.dylib COMPONENT mindspore)
+        install(FILES ${ffmpeg_LIBPATH}/libavfilter.8.44.100.dylib
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libavfilter.8.dylib COMPONENT mindspore)
+        install(FILES ${ffmpeg_LIBPATH}/libavformat.59.27.100.dylib
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libavformat.59.dylib COMPONENT mindspore)
+        install(FILES ${ffmpeg_LIBPATH}/libavutil.57.28.100.dylib
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libavutil.57.dylib COMPONENT mindspore)
+        install(FILES ${ffmpeg_LIBPATH}/libswresample.4.7.100.dylib
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libswresample.4.dylib COMPONENT mindspore)
+        install(FILES ${ffmpeg_LIBPATH}/libswscale.6.7.100.dylib
+            DESTINATION ${INSTALL_LIB_DIR} RENAME libswscale.6.dylib COMPONENT mindspore)
+    endif()
 
 endif()
 
