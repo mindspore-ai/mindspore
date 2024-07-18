@@ -23,8 +23,8 @@
 namespace mindspore {
 namespace kernel {
 constexpr auto kAcmeQuantBatchMatmulOpName = "QuantBatchMatmul";  // this should be defined in acme
-acme::AcmeOpPtr AcmeQuantBatchMatmul::CreateKernel(acme::InputsImmutableInfoList inputs,
-                                                   acme::OutputsImmutableInfoList outputs,
+acme::AcmeOpPtr AcmeQuantBatchMatmul::CreateKernel(const acme::InputsImmutableInfoList &inputs,
+                                                   const acme::OutputsImmutableInfoList &outputs,
                                                    const std::vector<KernelTensor *> &ms_inputs,
                                                    const std::vector<KernelTensor *> &ms_outputs) {
   acme::MatmulParam param;
