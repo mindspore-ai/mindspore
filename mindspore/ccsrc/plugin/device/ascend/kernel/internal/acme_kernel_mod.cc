@@ -182,13 +182,13 @@ void AcmeKernelMod::GetOrGenerateTiling(const std::vector<KernelTensor *> &input
       // try insert again, ignore the result of the insertion
       (void)AcmeTilingCache::GetInstance().Insert(key, tiling_info_ptr);
     }
-    workspace_size_list_ = acme_op_->GetWorkspaceSize();
-    acme_wss_addr_.resize(workspace_size_list_.size());
     last_item_ = tiling_info_ptr;
   } else {
     acme_op_->SetTilingInfo(tiling_cache_item->tiling_info_);
     last_item_ = tiling_cache_item;
   }
+  workspace_size_list_ = acme_op_->GetWorkspaceSize();
+  acme_wss_addr_.resize(workspace_size_list_.size());
 }
 
 void AcmeKernelMod::GetAcmeKernel(const std::vector<KernelTensor *> &inputs,
