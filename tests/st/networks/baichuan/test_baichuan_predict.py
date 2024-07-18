@@ -40,7 +40,7 @@ def test_baichuan_1p_bs1():
     ret = os.system(
         f"bash {sh_path}/mpirun_launch.sh {sh_path}/configs/predict_baichuan2.yaml 1 {test_case}")
     log_path = f"{sh_path}/{test_case}.log"
-    os.system(f"grep -E 'ERROR|error' {log_path} -C 10")
+    os.system(f"cat {log_path}")
     assert ret == 0
 
     expect_peak_memory = 4422
@@ -62,7 +62,7 @@ def test_baichuan_1p_bs4():
     ret = os.system(
         f"bash {sh_path}/mpirun_launch.sh {sh_path}/configs/predict_baichuan2.yaml 1 {test_case}")
     log_path = f"{sh_path}/{test_case}.log"
-    os.system(f"grep -E 'ERROR|error' {log_path} -C 10")
+    os.system(f"cat {log_path}")
     assert ret == 0
 
     expect_peak_memory = 4422
@@ -82,7 +82,7 @@ def test_baichuan_4p_bs1():
     ret = os.system(
         f"bash {sh_path}/mpirun_launch.sh {sh_path}/configs/predict_baichuan2.yaml 4 {test_case}")
     log_path = f"{sh_path}/{test_case}.log"
-    os.system(f"grep -E 'ERROR|error' {log_path} -C 10")
+    os.system(f"cat {log_path}")
     assert ret == 0
 
     expect_peak_memory = 3240
@@ -102,7 +102,7 @@ def test_baichuan_4p_bs4():
     ret = os.system(
         f"bash {sh_path}/mpirun_launch.sh {sh_path}/configs/predict_baichuan2.yaml 4 {test_case}")
     log_path = f"{sh_path}/{test_case}.log"
-    os.system(f"grep -E 'ERROR|error' {log_path} -C 10")
+    os.system(f"cat {log_path}")
     assert ret == 0
 
     expect_peak_memory = 3240
@@ -122,7 +122,7 @@ def test_baichuan_4p_bs4_bf16():
     ret = os.system(
         f"bash {sh_path}/mpirun_launch.sh {sh_path}/configs/predict_baichuan2.yaml 4 {test_case}")
     log_path = f"{sh_path}/{test_case}.log"
-    os.system(f"grep -E 'ERROR|error' {log_path} -C 10")
+    os.system(f"cat {log_path}")
     assert ret == 0
 
     expect_peak_memory = 3385
