@@ -123,9 +123,12 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
 
   // Create New node
   PrimitivePtr prim = nullptr;
+  std::vector<AnfNodePtr> ori_param_list(3, nullptr);
   AnfNodePtr ori_param = nullptr;
   if (!all_fp32) {
-    ori_param = input_list[kIndex1];
+    ori_param_list[0] = input_list[kIndex1];
+    ori_param_list[1] = input_list[kIndex2];
+    ori_param_list[2] = input_list[kIndex3];
     // depend monad to optimize memory
     input_list[kIndex1] = CreateDependNode(func_graph, input_list[kIndex1], input_list[kIndex11]);
     input_list[kIndex2] = CreateDependNode(func_graph, input_list[kIndex2], input_list[kIndex11]);
@@ -153,12 +156,12 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
   }
 
   // Create New AdamApplyOneWithDecay with three outputs.
-  return CreateAdamApplyOneWithDecay(func_graph, node, ori_param, input_list, new_node_inputs);
+  return CreateAdamApplyOneWithDecay(func_graph, node, ori_param_list, input_list, new_node_inputs);
 }
 
 const AnfNodePtr AdamWeightDecayUnifyMindIR::CreateAdamApplyOneWithDecay(const FuncGraphPtr &func_graph,
                                                                          const AnfNodePtr &node,
-                                                                         const AnfNodePtr &ori_param,
+                                                                         const std::vector<AnfNodePtr> &ori_param,
                                                                          const AnfNodePtrList &input_list,
                                                                          const AnfNodePtrList &new_node_inputs) const {
   auto new_cnode = NewCNode(new_node_inputs, func_graph);
@@ -178,11 +181,16 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::CreateAdamApplyOneWithDecay(const F
   }
 
   // Create assign.
-  auto update_param =
-    CreateCastNode(func_graph, new_cnode_outputs[kIndex2], common::AnfAlgo::GetOutputInferDataType(ori_param, 0));
-  auto assign_param = CreateAssignCNode(func_graph, ori_param, update_param, input_list[kIndex11]);
-  auto assign_m = CreateAssignCNode(func_graph, input_list[kIndex2], new_cnode_outputs[kIndex1], input_list[kIndex11]);
-  auto assign_v = CreateAssignCNode(func_graph, input_list[kIndex3], new_cnode_outputs[kIndex0], input_list[kIndex11]);
+  std::vector<AnfNodePtr> update_param = {
+    CreateCastNode(func_graph, new_cnode_outputs[kIndex2],
+                   common::AnfAlgo::GetOutputInferDataType(ori_param[kIndex0], 0)),
+    CreateCastNode(func_graph, new_cnode_outputs[kIndex1],
+                   common::AnfAlgo::GetOutputInferDataType(ori_param[kIndex1], 0)),
+    CreateCastNode(func_graph, new_cnode_outputs[kIndex0],
+                   common::AnfAlgo::GetOutputInferDataType(ori_param[kIndex2], 0))};
+  auto assign_param = CreateAssignCNode(func_graph, ori_param[kIndex0], update_param[kIndex0], input_list[kIndex11]);
+  auto assign_m = CreateAssignCNode(func_graph, ori_param[kIndex1], update_param[kIndex1], input_list[kIndex11]);
+  auto assign_v = CreateAssignCNode(func_graph, ori_param[kIndex2], update_param[kIndex2], input_list[kIndex11]);
   auto make_tuple = CreateMakeTupleNode(func_graph, std::vector<AnfNodePtr>{assign_param, assign_m, assign_v});
   make_tuple->set_scope(node->scope());
   return make_tuple;

@@ -37,7 +37,8 @@ class AdamWeightDecayUnifyMindIR : public PatternProcessPass {
 
  private:
   const AnfNodePtr CreateAdamApplyOneWithDecay(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                               const AnfNodePtr &ori_param, const AnfNodePtrList &input_list,
+                                               const std::vector<AnfNodePtr> &ori_param,
+                                               const AnfNodePtrList &input_list,
                                                const AnfNodePtrList &new_node_inputs) const;
   const AnfNodePtr CreateAdamApplyOneWithDecayAssign(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                                      const AnfNodePtrList &input_list,
