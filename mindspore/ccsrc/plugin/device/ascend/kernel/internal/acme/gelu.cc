@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-#include "plugin/device/ascend/kernel/internal/gelu.h"
+#include "plugin/device/ascend/kernel/internal/acme/gelu.h"
 
 #include <memory>
-
-#include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
-#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
+#include "kernel/kernel.h"
 
 namespace mindspore {
 namespace kernel {
-internal::OpParamPtr InternalGelu::CreateOpParam(const std::vector<KernelTensor *> &inputs,
-                                                 const std::vector<KernelTensor *> &outputs) {
-  internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
-  param_ptr->opId = internal::OpId::Gelu;
-  return param_ptr;
+acme::AcmeOpPtr AcmeGeLU::CreateKernel(const acme::InputsImmutableInfoList &inputs_ii,
+                                       const acme::OutputsImmutableInfoList &outputs_ii,
+                                       const std::vector<KernelTensor *> &ms_inputs,
+                                       const std::vector<KernelTensor *> &ms_outputs) {
+  return acme::CreateGeLUOp(inputs_ii, outputs_ii, acme::kAcmeGeLUOpName);
 }
-
-MS_INTERNAL_KERNEL_FACTORY_REG(GeLU, InternalGelu);
+MS_ACME_KERNEL_FACTORY_REG(GeLU, acme::kAcmeGeLUOpName, AcmeGeLU);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(GeLU, INPUT_NUM_1, INDEX_0);
+REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(GeLU, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore
