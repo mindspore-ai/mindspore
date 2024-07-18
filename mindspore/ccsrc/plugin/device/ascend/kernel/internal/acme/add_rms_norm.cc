@@ -29,7 +29,7 @@ acme::AcmeOpPtr AcmeAddRmsNorm::CreateKernel(const acme::InputsImmutableInfoList
   param.eps = ms_inputs[kIndex3]->GetValueWithCheck<float>();
   return acme::CreateAddRmsNormOp(inputs_ii, outputs_ii, param, acme::kAcmeAddRmsNormOpName);
 }
-MS_ACME_KERNEL_FACTORY_REG(AddRmsNorm, acme::kAcmeAddRmsNormOpName, AcmeAddRmsNorm);
+// MS_ACME_KERNEL_FACTORY_REG(AddRmsNorm, acme::kAcmeAddRmsNormOpName, AcmeAddRmsNorm);
 REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(AddRmsNorm, INPUT_NUM_3, INDEX_0, INDEX_1, INDEX_2);
 REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(AddRmsNorm, OUTPUT_NUM_3, INDEX_0, INDEX_1, INDEX_2);
 }  // namespace kernel

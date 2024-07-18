@@ -27,7 +27,7 @@ acme::AcmeOpPtr AcmeGeLU::CreateKernel(const acme::InputsImmutableInfoList &inpu
                                        const std::vector<KernelTensor *> &ms_outputs) {
   return acme::CreateGeLUOp(inputs_ii, outputs_ii, acme::kAcmeGeLUOpName);
 }
-MS_ACME_KERNEL_FACTORY_REG(GeLU, acme::kAcmeGeLUOpName, AcmeGeLU);
+// MS_ACME_KERNEL_FACTORY_REG(GeLU, acme::kAcmeGeLUOpName, AcmeGeLU);
 REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(GeLU, INPUT_NUM_1, INDEX_0);
 REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(GeLU, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
