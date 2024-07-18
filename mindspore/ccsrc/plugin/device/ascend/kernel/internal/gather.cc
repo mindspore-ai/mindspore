@@ -60,7 +60,5 @@ internal::OpParamPtr Gather::CreateOpParam(const std::vector<KernelTensor *> &in
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(Gather, Gather);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(Gather, INPUT_NUM_2, INDEX_0, INDEX_1);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(Gather, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

@@ -25,18 +25,11 @@
 namespace mindspore {
 namespace kernel {
 std::string TransAcmeOpName(const std::string &ms_op_name) {
-  static const std::unordered_map<std::string, std::string> kMsOpNameToAcmeOpName = {
-    {kMatMulOpName, acme::kAcmeMatMulOpName},
-    {kAddOpName, acme::kAcmeAddOpName},
-    {kGeLUOpName, acme::kAcmeGeLUOpName},
-    {"AddRmsNorm", acme::kAcmeAddRmsNormOpName},
-    {"QuantBatchMatmul", acme::kAcmeMatMulOpName},
-  };
-  auto iter = kMsOpNameToAcmeOpName.find(ms_op_name);
-  if (iter == kMsOpNameToAcmeOpName.end()) {
-    MS_LOG(EXCEPTION) << "Op " << ms_op_name << " is not supported in Acme";
+  auto acme_name = NameMapper::GetInstance().GetAcmeName(ms_op_name);
+  if (acme_name.empty()) {
+    MS_LOG(EXCEPTION) << "Op " << ms_op_name << " is supported in Acme, but the name is not mapped";
   }
-  return iter->second;
+  return acme_name;
 }
 
 acme::DataType TransAcmeDataType(TypeId ms_type) {
