@@ -39,9 +39,9 @@ internal::OpParamPtr InternalPagedAttention::CreateOpParam(const std::vector<Ker
     op_param.mixType = internal::MixParam::MixType::MIX_PAGED_ATTENTION_MASK_ND;
   }
 
-  op_param.headSize = static_cast<int32_t>(inputs[kIndex5]->GetValueWithCheck<int64_t>());
-  op_param.tor = inputs[kIndex6]->GetValueWithCheck<float>();
-  op_param.kvHead = static_cast<int32_t>(inputs[kIndex7]->GetValueWithCheck<int64_t>());
+  op_param.headSize = static_cast<int32_t>(inputs[kIndex7]->GetValueWithCheck<int64_t>());
+  op_param.tor = inputs[kIndex8]->GetValueWithCheck<float>();
+  op_param.kvHead = static_cast<int32_t>(inputs[kIndex9]->GetValueWithCheck<int64_t>());
   // set kvSeqLen with llm_manager's round_up_max_seq_length
   auto &llm_manager = LLMManager::GetInstance();
   max_seq_len_ = llm_manager.get_current_round_up_max_seq_length();
@@ -63,7 +63,8 @@ uint64_t InternalPagedAttention::GenTilingCacheKey(const std::vector<KernelTenso
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(PagedAttention, InternalPagedAttention);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(PagedAttention, INPUT_NUM_5, INDEX_0, INDEX_1, INDEX_2, INDEX_4, INDEX_3);
+REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(PagedAttention, INPUT_NUM_7, INDEX_0, INDEX_1, INDEX_2, INDEX_4, INDEX_3, INDEX_5,
+                                     INDEX_6);
 REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(PagedAttention, OUTPUT_NUM_1, INDEX_0);
 }  // namespace kernel
 }  // namespace mindspore

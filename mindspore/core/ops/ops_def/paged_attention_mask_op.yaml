@@ -11,6 +11,12 @@ paged_attention_mask:
       dtype: tensor
     context_lens:
       dtype: tensor
+    antiquant_scale:
+      dtype: tensor
+      default: None
+    antiquant_offset:
+      dtype: tensor
+      default: None
     alibi_mask:
       dtype: tensor
       default: None
