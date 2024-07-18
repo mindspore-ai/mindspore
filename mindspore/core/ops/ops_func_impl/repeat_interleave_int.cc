@@ -61,6 +61,12 @@ inline ShapeVector GetInferredShape(const PrimitivePtr &primitive, const ShapeVe
 
 BaseShapePtr RepeatInterleaveIntFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                      const std::vector<AbstractBasePtr> &input_args) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->ascend_soc_version() == kAscendVersion910) {
+    MS_EXCEPTION(RuntimeError) << primitive->name() << " is only supported on Atlas A2 training series.";
+  }
+
   auto x_base_shape = input_args[kInputIndex0]->GetShape();
   auto x_shape = x_base_shape->GetShapeVector();
   auto repeats_opt = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue());
@@ -85,6 +91,12 @@ TypePtr RepeatInterleaveIntFuncImpl::InferType(const PrimitivePtr &primitive,
 
 ShapeArray RepeatInterleaveIntFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                    const ValuePtrList &input_values) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->ascend_soc_version() == kAscendVersion910) {
+    MS_EXCEPTION(RuntimeError) << primitive->name() << " is only supported on Atlas A2 training series.";
+  }
+
   const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
   const auto x_shape = x_tensor->shape();
