@@ -990,8 +990,8 @@ __all__ = [
     # 30
     'searchsorted',
     # 31
-
-    # 32
+    'cummax',
+    'cummin',
     'sub',
     # 33
     'split',

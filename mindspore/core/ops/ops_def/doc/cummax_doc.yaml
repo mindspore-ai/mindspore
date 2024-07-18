@@ -21,10 +21,13 @@ cummax:
             TypeError: If `input` is not a Tensor.
             TypeError: If `axis` is not an int.
             ValueError: If `axis` is out the range of `[-input.ndim, input.ndim - 1]`.
-    
+
+        .. note::
+            O2 mode is not supported in Ascend.
+
         Supported Platforms:
-            ``GPU`` ``CPU``
-    
+            ``Ascend`` ``GPU`` ``CPU``
+
         Examples:
             >>> import mindspore
             >>> import numpy as np
