@@ -1433,7 +1433,7 @@ class HShrink(Cell):
         lambd (number, optional): The threshold :math:`\lambda` defined by the Hard Shrink formula. Default: ``0.5`` .
 
     Inputs:
-        - **input_x** (Tensor) - The input of Hard Shrink. Supported dtypes:
+        - **input** (Tensor) - The input of Hard Shrink. Supported dtypes:
 
           - Ascend: float16, float32, bfloat16.
           - CPU/GPU: float16, float32.
@@ -1443,8 +1443,8 @@ class HShrink(Cell):
 
     Raises:
         TypeError: If `lambd` is not a float, int or bool.
-        TypeError: If `input_x` is not a tensor.
-        TypeError: If dtype of `input_x` is not float16, float32 or bfloat16.
+        TypeError: If `input` is not a tensor.
+        TypeError: If dtype of `input` is not float16, float32 or bfloat16.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1453,9 +1453,9 @@ class HShrink(Cell):
         >>> import mindspore
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> input_x = Tensor(np.array([[0.5, 1, 2.0], [0.0533, 0.0776, -2.1233]]), mindspore.float32)
+        >>> input = Tensor(np.array([[0.5, 1, 2.0], [0.0533, 0.0776, -2.1233]]), mindspore.float32)
         >>> hshrink = nn.HShrink()
-        >>> output = hshrink(input_x)
+        >>> output = hshrink(input)
         >>> print(output)
         [[ 0.      1.      2.    ]
          [ 0.      0.     -2.1233]]
@@ -1465,8 +1465,8 @@ class HShrink(Cell):
         super(HShrink, self).__init__()
         self.hshrink = P.HShrink(lambd)
 
-    def construct(self, input_x):
-        return self.hshrink(input_x)
+    def construct(self, input):
+        return self.hshrink(input)
 
 
 class Threshold(Cell):
