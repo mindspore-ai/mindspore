@@ -37,7 +37,11 @@ BaseShapePtr L1LossBackwardExtFuncImpl::InferShape(const PrimitivePtr &primitive
   MS_EXCEPTION_IF_NULL(primitive);
   const auto &prim_name = primitive->name();
 
-  return BroadCastInferShape(prim_name, input_args);
+  if (input_args.size() < kSize3) {
+    MS_EXCEPTION(ValueError) << "For gradient of L1Loss, the input size is illegal.";
+  }
+  auto temp_shapes = {input_args[kInputIndex1], input_args[kInputIndex2]};
+  return BroadCastInferShape(prim_name, temp_shapes);
 }
 
 TypePtrList L1LossBackwardExtFuncImpl::InferType(const PrimitivePtr &primitive,
@@ -51,7 +55,11 @@ ShapeArray L1LossBackwardExtFuncImpl::InferShape(const PrimitivePtr &primitive,
   MS_EXCEPTION_IF_NULL(primitive);
   const auto &prim_name = primitive->name();
 
-  return {BroadCastInferShape(prim_name, input_values)};
+  if (input_values.size() < kSize3) {
+    MS_EXCEPTION(ValueError) << "For gradient of L1Loss, the input size is illegal.";
+  }
+  auto temp_shapes = {input_values[kInputIndex1], input_values[kInputIndex2]};
+  return {BroadCastInferShape(prim_name, temp_shapes)};
 }
 
 REGISTER_SIMPLE_INFER(kNameL1LossBackwardExt, L1LossBackwardExtFuncImpl)
