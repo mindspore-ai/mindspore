@@ -25,16 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-class AcmeQuantBatchMatmul : public AcmeKernelMod {
- public:
-  AcmeQuantBatchMatmul() : AcmeKernelMod() {}
-  ~AcmeQuantBatchMatmul() = default;
-
- protected:
-  acme::AcmeOpPtr CreateKernel(acme::InputsImmutableInfoList inputs, acme::OutputsImmutableInfoList outputs,
-                               const std::vector<KernelTensor *> &ms_inputs,
-                               const std::vector<KernelTensor *> &ms_outputs) override;
-};
+DECLARE_ACME_KERNEL_MOD(QuantBatchMatmul)
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_ACME_QUANT_BATCH_MATMUL_H_
