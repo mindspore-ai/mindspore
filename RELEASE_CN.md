@@ -18,7 +18,7 @@
 
 - [STABLE] 优化动态图的基础数据结构，提升算子API性能。
 - [STABLE] Tensor支持[register_hook](https://www.mindspore.cn/docs/zh-CN/r2.3.0/api_python/mindspore/Tensor/mindspore.Tensor.register_hook.html)功能，以便用户打印或者修改Tensor对应的梯度。
-- [STABLE] PyNativ模式支持重计算功能，用户可以通过重计算接口降低网络的显存峰值。
+- [STABLE] PyNative模式支持重计算功能，用户可以通过重计算接口降低网络的显存峰值。
 
 #### FrontEnd
 
