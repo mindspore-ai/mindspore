@@ -25,6 +25,7 @@
 #include "ops/test_ops.h"
 #include "ops/ops_func_impl/unique_dim.h"
 #include "ops/test_value_utils.h"
+#include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -66,7 +67,66 @@ TEST_P(TestUniqueDim, dyn_shape) {
   ASSERT_TRUE(*out_shape == *expect_shape);
 }
 
+class TestUniqueDimSimpleInfer : public TestOps, public testing::WithParamInterface<UniqueDimParams> {};
+
+TEST_P(TestUniqueDimSimpleInfer, dyn_shape) {
+  const auto &param = GetParam();
+  auto x = std::make_shared<tensor::BaseTensor>(param.x_type->type_id(), param.x_shape);
+  ValuePtrList input_values;
+  input_values.push_back(std::move(x));
+  input_values.push_back(std::move(param.sorted));
+  input_values.push_back(std::move(param.return_inverse));
+  input_values.push_back(std::move(param.dim));
+
+  UniqueDimFuncImpl unique_dim_func_impl;
+  auto prim = std::make_shared<Primitive>("UniqueDim");
+
+  auto expect_shape = ShapeArray{param.output_shape, param.inverse_indices_shape, param.counts_shape};
+  auto expect_type = TypePtrList{param.output_type, param.inverse_indices_type, param.counts_type};
+
+  auto output_shape = unique_dim_func_impl.InferShape(prim, input_values);
+  auto output_type = unique_dim_func_impl.InferType(prim, input_values);
+
+  ShapeCompare(output_shape, expect_shape);
+  TypeCompare(output_type, expect_type);
+}
+
 INSTANTIATE_TEST_CASE_P(TestUniqueDim, TestUniqueDim,
+                        testing::Values(UniqueDimParams{{3, 4, 5},
+                                                        kFloat32,
+                                                        CreateScalar<bool>(true),
+                                                        CreateScalar<bool>(true),
+                                                        CreateScalar<int64_t>(0),
+                                                        {3, 4, 5},
+                                                        kFloat32,
+                                                        {3},
+                                                        kInt64,
+                                                        {3},
+                                                        kInt64},
+                                        UniqueDimParams{{3, 4, 5},
+                                                        kFloat32,
+                                                        CreateScalar<bool>(false),
+                                                        CreateScalar<bool>(true),
+                                                        CreateScalar<int64_t>(1),
+                                                        {3, 4, 5},
+                                                        kFloat32,
+                                                        {4},
+                                                        kInt64,
+                                                        {4},
+                                                        kInt64},
+                                        UniqueDimParams{{3, 4, 5},
+                                                        kFloat32,
+                                                        CreateScalar<bool>(true),
+                                                        CreateScalar<bool>(false),
+                                                        CreateScalar<int64_t>(2),
+                                                        {3, 4, 5},
+                                                        kFloat32,
+                                                        {5},
+                                                        kInt64,
+                                                        {5},
+                                                        kInt64}));
+
+INSTANTIATE_TEST_CASE_P(TestUniqueDimSimpleInfer, TestUniqueDimSimpleInfer,
                         testing::Values(UniqueDimParams{{3, 4, 5},
                                                         kFloat32,
                                                         CreateScalar<bool>(true),

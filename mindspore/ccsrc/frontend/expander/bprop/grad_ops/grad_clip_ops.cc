@@ -62,7 +62,7 @@ REG_BPROP_BUILDER("ClampTensor").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto min = ib->GetInput(kIndex1);
   auto max = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto zero = ib->Fill(static_cast<int64_t>(0), ib->Shape(dout), ib->GetDtype(dout)->type_id());
+  auto zero = ib->Tensor(0, ib->GetDtype(dout));
   bool min_type_none = ib->GetDtype(min)->isa<TypeNone>();
   bool max_type_none = ib->GetDtype(max)->isa<TypeNone>();
 
@@ -100,7 +100,7 @@ REG_BPROP_BUILDER("ClampScalar").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto min = ib->GetInput(kIndex1);
   auto max = ib->GetInput(kIndex2);
   auto dout = ib->GetInput(kIndex4);
-  auto zero = ib->Fill(static_cast<int64_t>(0), ib->Shape(dout), ib->GetDtype(dout)->type_id());
+  auto zero = ib->Tensor(0, ib->GetDtype(dout));
   bool min_type_none = ib->GetDtype(min)->isa<TypeNone>();
   bool max_type_none = ib->GetDtype(max)->isa<TypeNone>();
 
