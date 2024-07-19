@@ -37,6 +37,7 @@
 #include "mindspore/core/ops/op_name.h"
 #include "tools/common/string_util.h"
 #include "src/common/common.h"
+#include "tools/optimizer/fusion/antiquant_add_mul_matmul_allreduce_fusion.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_one_branch_fusion.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_concat_fusion.h"
 #include "tools/optimizer/fusion/kv_cache_mgr_load_fusion.h"
@@ -64,6 +65,7 @@ void EnableKVCacheFusion(std::vector<opt::PassPtr> *fusions, const std::shared_p
 }
 
 void EnableMatMulAllReduceFusion(std::vector<opt::PassPtr> *fusions, const std::shared_ptr<ConverterPara> &param) {
+  fusions->push_back(std::make_shared<opt::AntiquantAddMulMatMulAllReduceFusion>());
   fusions->push_back(std::make_shared<opt::MatMulAllReduceFusion>());
   fusions->push_back(std::make_shared<opt::QuantFusionXOffsetToBias>());
 }
