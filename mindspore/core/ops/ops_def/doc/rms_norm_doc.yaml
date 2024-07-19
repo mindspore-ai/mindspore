@@ -4,7 +4,7 @@ rms_norm:
         LayerNorm, it retains scaling invariance and removes translation invariance. Its formula is:
 
         .. math::
-            y=\frac{x_i}{\sqrt{\frac{1}{n}}\sum_{i=1}^{n}{ x_i^2}+\varepsilon  }\gamma_i
+            y=\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^{n}{ x_i^2}}+\varepsilon}\gamma_i
 
         .. warning::
             This is an experimental API that is subject to change or deletion. This API is only supported in Atlas A2
