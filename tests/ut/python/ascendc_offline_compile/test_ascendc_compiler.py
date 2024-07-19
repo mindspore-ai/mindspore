@@ -145,8 +145,8 @@ def test_install_custom():
     try:
         custom_ooc = CustomOOC(input_args)
         custom_ooc.install_custom()
-    except RuntimeError as e:
-        assert "Install failed" in str(e)
+    except FileNotFoundError as e:
+        assert "No such file" in str(e)
 
 
 class TestAscendCCompile():
