@@ -463,7 +463,8 @@ bool TCPComm::Connect(const std::string &dst_url, const MemFreeCallback &free_cb
     conn->source = SocketOperation::GetIP(sock_fd) + ":" + std::to_string(SocketOperation::GetPort(sock_fd));
     conn->destination = dst_url;
     dst_url_to_src_ip_[dst_url] = SocketOperation::GetIP(sock_fd);
-    MS_LOG(INFO) << "Connection " << sock_fd << " source: " << conn->source << ", destination: " << conn->destination;
+    MS_LOG(WARNING) << "Connection " << sock_fd << " source: " << conn->source
+                    << ", destination: " << conn->destination;
 
     // Check the state of this new created connection.
     uint32_t interval = 1;

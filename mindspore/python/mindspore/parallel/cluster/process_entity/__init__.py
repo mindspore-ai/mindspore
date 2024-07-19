@@ -15,4 +15,4 @@
 """Interfaces for ms_run"""
 from ._api import _Node, _MetaServerNode, _ComputeGraphNode, _ProcessManager
 
-from ._utils import _generate_cmd, _generate_url, _is_local_ip, _send_scale_num, _get_status_and_params
+from ._utils import _generate_cmd, _generate_url, _is_local_ip, _send_scale_num

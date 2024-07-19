@@ -19,7 +19,7 @@ import sys
 import subprocess
 import mindspore.log as logger
 from ._utils import _generate_cmd_args_list, _generate_cmd_args_list_with_core, _generate_url,\
-                    _is_local_ip, _send_scale_num, _get_status_and_params
+                    _is_local_ip, _send_scale_num
 
 class _Node:
     """
@@ -241,31 +241,39 @@ class _ProcessManager:
             process = cgn.run()
             self.cgn_processes.append(process)
 
-    def heartbeat_with_scheduler(self):
-        """
-        Sends a heartbeat to the scheduler and updates the worker_num and local_worker_num.
-
-        Returns:
-            bool: True if the network has changed, False otherwise.
-
-        """
-        network_changed, worker_num, local_worker_num = _get_status_and_params(self.scheduler_url)
-        self.worker_num = worker_num
-        self.local_worker_num = local_worker_num
-        return network_changed
-
     def join_processes(self):
+        # pylint: disable=unused-variable
         """
         Join all processes to stop.
         If there's any process does not exit normally, logs will be analyzed
         so that understandable root cause of exception could be returned.
         """
         has_exception = False
-        for p in self.cgn_processes:
-            p.wait()
-            if p.returncode != 0:
-                has_exception = True
-                logger.error(f"Worker process {p.pid} exit with exception.")
+        success_cgn_processes = set()
+        while True:
+            # Traversal all workers and kill immediately if any exception happens.
+            for p in self.cgn_processes:
+                ret_code = p.poll()
+                if ret_code is None:
+                    # This means the process is still running, poll next process.
+                    continue
+                elif ret_code != 0:
+                    has_exception = True
+                    logger.error(f"Worker process {p.pid} exit with exception.")
+                    break
+                else:
+                    success_cgn_processes.add(p)
+
+            if has_exception:
+                logger.warning("There's worker exits with exception, kill all other workers.")
+                for p in self.cgn_processes:
+                    if p.poll() is None:
+                        p.kill()
+                break
+            elif len(success_cgn_processes) == len(self.cgn_processes):
+                logger.info("All workers successfully exit!")
+                break
+
 
         if self.msn_process:
             self.msn_process.wait()

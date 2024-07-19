@@ -16,7 +16,6 @@
 import os
 import json
 import socket
-import requests
 import mindspore.log as logger
 
 def _generate_cmd(cmd, cmd_args, output_name):
@@ -25,7 +24,7 @@ def _generate_cmd(cmd, cmd_args, output_name):
     edirecting the output to a log file.
 
     """
-    if cmd not in ['python', 'pytest']:
+    if cmd not in ['python', 'pytest', 'python3']:
         # If user don't set binary file name, defaulty use 'python' to launch the job.
         command = f"python {cmd} {' '.join(cmd_args)} > {output_name} 2>&1 &"
     else:
@@ -99,28 +98,4 @@ def _send_scale_num(url, scale_num):
     Send an HTTP request to a specified URL, informing scale_num.
 
     """
-    try:
-        response = requests.post(url, data={"scale_num": scale_num}, timeout=100)
-        response.raise_for_status()
-        response_data = response.json()
-        response_bool = bool(response_data)
-        return response_bool
-    except requests.exceptions.RequestException:
-        return None
-
-
-def _get_status_and_params(url):
-    """
-    Send an HTTP request to a specified URL to query status and retrieve partial parameters.
-
-    """
-    try:
-        response = requests.get(url, timeout=100)
-        response.raise_for_status()
-        response_data = response.json()
-        network_changed = response_data.get("network_changed")
-        worker_num = response_data.get("worker_num")
-        local_worker_num = response_data.get("local_worker_num")
-        return network_changed, worker_num, local_worker_num
-    except requests.exceptions.RequestException:
-        return None
+    return ""
