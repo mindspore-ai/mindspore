@@ -52,6 +52,9 @@ std::shared_ptr<ValueNode> CreateWeightTensor(TypeId type_id, const std::vector<
 void SortWeightNodeList(AnfNodePtrList *node_list);
 
 std::shared_ptr<ValueNode> ConvertWeightsToNewType(const AnfNodePtr &weight_node);
+
+std::shared_ptr<ValueNode> ConvertFp16BiasToInt32(const AnfNodePtr &bias_node, const AnfNodePtr &scale_node,
+                                                  const bool &with_allreduce);
 }  // namespace opt
 }  // namespace mindspore
 
