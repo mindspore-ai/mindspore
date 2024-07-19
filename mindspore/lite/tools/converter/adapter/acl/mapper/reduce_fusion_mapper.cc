@@ -27,6 +27,7 @@
 #include "ops/auto_generate/gen_lite_ops.h"
 #include "ops/lp_norm.h"
 #include "tools/lite_exporter/fetch_content.h"
+#include "ops/square_sum_v1.h"
 
 namespace mindspore {
 namespace lite {
@@ -95,6 +96,17 @@ STATUS ReduceFusionMapper::Mapper(const CNodePtr &cnode) {
     dst_prim = std::make_shared<acl::ReduceLogSum>();
   } else if (mode == static_cast<int64_t>(ReduceMode::Reduce_Log_Sum_Exp)) {
     dst_prim = std::make_shared<acl::ReduceLogSumExp>();
+  } else if (mode == static_cast<int64_t>(ReduceMode::Reduce_Sum_Square)) {
+    ops::SquareSumV1 reduce_sum_square_op;
+    dst_prim = reduce_sum_square_op.GetPrim();
+    auto axes_ptr = src_prim->GetAttr(ops::kAxes);
+    if (axes_ptr != nullptr) {
+      auto axes = GetValue<std::vector<int32_t>>(axes_ptr);
+      std::vector<int64_t> axes_vec;
+      std::transform(axes.begin(), axes.end(), std::back_inserter(axes_vec),
+                     [](int32_t x) { return static_cast<int64_t>(x); });
+      dst_prim->AddAttr(ops::kAxis, MakeValue<std::vector<int64_t>>(axes_vec));
+    }
   } else {
     MS_LOG(ERROR) << "Not support reduce mode " << static_cast<int64_t>(mode);
     return RET_ERROR;
