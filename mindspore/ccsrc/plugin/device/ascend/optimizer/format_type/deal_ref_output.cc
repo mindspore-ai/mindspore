@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,10 +93,9 @@ session::KernelWithIndex FindRefOriginNode(const AnfNodePtr &node) {
     auto cnode = cur_node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     std::string op_name = common::AnfAlgo::GetCNodeName(cnode);
-    // deal special (trans,cast,reshape) op and nop-node
-    if (op_name == prim::kPrimCast->name() || op_name == prim::kPrimTranspose->name() ||
-        op_name == prim::kPrimTransposeD->name() || op_name == prim::kPrimReshape->name() ||
-        op_name == kTransDataOpName || common::AnfAlgo::IsNopNode(cnode)) {
+    // deal special (identity,cast,reshape) op and nop-node
+    if (op_name == prim::kPrimCast->name() || op_name == prim::kPrimIdentity->name() ||
+        op_name == prim::kPrimReshape->name() || common::AnfAlgo::IsNopNode(cnode)) {
       AnfNodePtr next_node = cnode->input(kIndex1);
       return FindRefOriginNode(next_node);
     }
@@ -143,8 +142,8 @@ void DealRefOutput::AddRefPairToKernelGraph(const FuncGraphPtr &func_graph, cons
   kernel_graph->AddRefCorrespondPairs(final_pair, origin_pair);
 }
 
-// if get_item is nullptr, the additional node will link to the cnode
-// else the additional node will link to the get_item node (the get_item node link to cnode)
+// if get_item is nullptr, the additional node(identity) will link to the cnode
+// else the additional node(identity) will link to the get_item node (the get_item node link to cnode)
 AnfNodePtr DealRefOutput::AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
                                                    size_t output_index, size_t input_index,
                                                    const AnfNodePtr &get_item) const {
@@ -155,8 +154,45 @@ AnfNodePtr DealRefOutput::AddAdditionalToRefOutput(const FuncGraphPtr &func_grap
   MS_LOG(DEBUG) << "DealRefTransAndCast the node input index " << input_index << ", find origin op is "
                 << origin_pair.first->DebugString() << ", index is " << origin_pair.second;
 
+  auto origin_format = AnfAlgo::GetOutputFormat(origin_pair.first, origin_pair.second);
+  auto origin_type = AnfAlgo::GetOutputDeviceDataType(origin_pair.first, origin_pair.second);
+  auto cur_format = AnfAlgo::GetOutputFormat(cnode, output_index);
+  auto cur_type = AnfAlgo::GetOutputDeviceDataType(cnode, output_index);
+  auto cur_shape = common::AnfAlgo::GetOutputInferShape(cnode, output_index);
+  auto detail_shape = AnfAlgo::GetOutputDetailShape(cnode, output_index);
+  bool need_refresh_ref_addr = (origin_format != cur_format && cur_shape.size() > 1) || origin_type != cur_type;
+  // insert identity
+  if (need_refresh_ref_addr) {
+    auto identity_node = NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), final_node}, func_graph);
+    identity_node->set_scope(cnode->scope());
+    abstract::AbstractTensorPtr abs =
+      std::make_shared<abstract::AbstractTensor>(TypeIdToType(origin_type), detail_shape);
+    identity_node->set_abstract(abs);
+    // set kernel build info
+    kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+    builder.SetKernelType(KernelType::ACL_KERNEL);
+    builder.SetInputsFormat({cur_format});
+    builder.SetOutputsFormat({origin_format});
+    builder.SetInputsReshapeType({});
+    builder.SetOutputsReshapeType({});
+    builder.SetInputsDeviceType({cur_type});
+    builder.SetOutputsDeviceType({origin_type});
+    builder.SetInputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+    builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+    AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), identity_node.get());
+
+    final_node = identity_node;
+    MS_LOG(INFO) << "DealRefOutput add Identity node " << final_node->fullname_with_scope();
+  }
+
   // add ref pair
   AddRefPairToKernelGraph(func_graph, cnode, get_item, final_node, output_index, origin_pair);
+  if (need_refresh_ref_addr) {
+    AddRefNodePairToKernelGraph(func_graph, cnode, output_index, input_index);
+    // insert depend
+    final_node = MakeDependency(get_item, final_node, cnode, func_graph);
+    MS_LOG(INFO) << "DealRefOutput add Denpend node " << final_node->fullname_with_scope();
+  }
 
   return final_node;
 }
