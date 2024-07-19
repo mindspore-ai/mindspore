@@ -7,7 +7,7 @@ mindspore.ops.rms_norm
     其公式如下：
 
     .. math::
-        y = \frac{x_i}{\sqrt{\frac{1}{n}}\sum_{i=1}^{n}{ x_i^2}+\varepsilon }\gamma_i
+        y=\frac{x_i}{\sqrt{\frac{1}{n}\sum_{i=1}^{n}{ x_i^2}}+\varepsilon}\gamma_i
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。该API目前只支持在Atlas A2训练系列产品上使用。
