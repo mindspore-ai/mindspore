@@ -13,26 +13,34 @@ if(MSLITE_ENABLE_RUNTIME_CONVERT)
     add_definitions(-DRUNTIME_CONVERT)
 endif()
 
-file(GLOB_RECURSE TEST_UT_SRC
-        ${TEST_DIR}/main.cc
-        ${TEST_DIR}/common/common_test.cc
-        ${TEST_DIR}/ut/src/infer_test.cc
-        ${TEST_DIR}/ut/src/utils_test.cc
-        ${TEST_DIR}/ut/src/scheduler_test.cc
-        ${TEST_DIR}/ut/src/runtime/dynamic_mem_manager_test.cc
-        ${TEST_DIR}/ut/src/registry/registry_test.cc
-        ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
-        ${TEST_DIR}/st/multiple_device_test.cc
-        ${TEST_DIR}/st/mindrt_parallel_runtime_test.cc
-        ${TEST_DIR}/st/mix_data_type_test.cc
-        ${TEST_DIR}/ut/nnacl/infer/*.cc
-        ${TEST_DIR}/ut/src/runtime/kernel/arm/common/*.cc
-        ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
-        ${TEST_DIR}/ut/src/runtime/kernel/arm/string/*.cc
-        ${TEST_DIR}/ut/src/api/context_c_test.cc
-        ${TEST_DIR}/ut/src/api/model_c_test.cc
-        ${TEST_DIR}/ut/src/api/tensor_c_test.cc`
+if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
+    file(GLOB_RECURSE TEST_UT_SRC
+            ${TEST_DIR}/main.cc
+            ${TEST_DIR}/common/common_test.cc
         )
+else()
+    file(GLOB_RECURSE TEST_UT_SRC
+            ${TEST_DIR}/main.cc
+            ${TEST_DIR}/common/common_test.cc
+            ${TEST_DIR}/ut/src/infer_test.cc
+            ${TEST_DIR}/ut/src/utils_test.cc
+            ${TEST_DIR}/ut/src/scheduler_test.cc
+            ${TEST_DIR}/ut/src/runtime/dynamic_mem_manager_test.cc
+            ${TEST_DIR}/ut/src/registry/registry_test.cc
+            ${TEST_DIR}/ut/src/registry/registry_custom_op_test.cc
+            ${TEST_DIR}/st/multiple_device_test.cc
+            ${TEST_DIR}/st/mindrt_parallel_runtime_test.cc
+            ${TEST_DIR}/st/mix_data_type_test.cc
+            ${TEST_DIR}/ut/nnacl/infer/*.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/arm/common/*.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
+            ${TEST_DIR}/ut/src/runtime/kernel/arm/string/*.cc
+            ${TEST_DIR}/ut/src/api/context_c_test.cc
+            ${TEST_DIR}/ut/src/api/model_c_test.cc
+            ${TEST_DIR}/ut/src/api/tensor_c_test.cc
+            )
+endif()
+
 if(MSLITE_ENABLE_SERVER_INFERENCE)
     list(APPEND TEST_UT_SRC ${TEST_DIR}/ut/src/api/model_parallel_runner_test.cc)
 endif()
@@ -85,7 +93,7 @@ if(MSLITE_GPU_BACKEND STREQUAL cuda)
     list(APPEND TEST_UT_SRC ${TEST_GPU_UT_SRC})
 endif()
 
-if(MSLITE_ENABLE_INT8)
+if(MSLITE_ENABLE_INT8 AND NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
     file(GLOB_RECURSE TEST_INT8_UT_SRC
             ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
             ${TEST_DIR}/ut/nnacl/int8/*.cc
@@ -93,7 +101,7 @@ if(MSLITE_ENABLE_INT8)
     list(APPEND TEST_UT_SRC ${TEST_INT8_UT_SRC})
 endif()
 
-if(MSLITE_ENABLE_FP16)
+if(MSLITE_ENABLE_FP16 AND NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
     if(SUPPORT_TRAIN)
         file(GLOB_RECURSE TEST_TRAIN_FP16_SRC
                 ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16_grad/*.cc)
@@ -114,7 +122,16 @@ if(MSLITE_ENABLE_CONVERTER)
                 )
     endif()
     add_definitions(-DPRIMITIVE_WRITEABLE)
-    file(GLOB_RECURSE TEST_CONVERTER_UT_SRC
+
+#    ================================================
+    if(MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE)
+        file(GLOB_RECURSE TEST_CONVERTER_UT_SRC
+                ${TEST_DIR}/ut/tools/converter/adapter/acl/mapper/*.cc
+                ${TEST_DIR}/ut/tools/converter/parser/onnx/*.cc
+                )
+    endif()
+    if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
+        file(GLOB_RECURSE TEST_CONVERTER_UT_SRC
             ${TEST_DIR}/ut/tools/converter/decomposer/svd_test.cc
             ${TEST_DIR}/ut/tools/converter/registry/*.cc
             ${TEST_DIR}/ut/tools/converter/parser/tflite/*.cc
@@ -127,7 +144,8 @@ if(MSLITE_ENABLE_CONVERTER)
             ${TEST_DIR}/ut/tools/optimizer/fusion/*.cc
             ${TEST_DIR}/ut/tools/optimizer/graph/*.cc
             )
-    if(MSLITE_ENABLE_SERVER_INFERENCE)
+    endif()
+    if(MSLITE_ENABLE_SERVER_INFERENCE AND NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
         list(REMOVE_ITEM TEST_CONVERTER_UT_SRC ${TEST_DIR}/st/mindrt_parallel_test.cc)
         list(REMOVE_ITEM TEST_UT_SRC ${TEST_DIR}/st/benchmark_test.cc)
         list(REMOVE_ITEM TEST_CONVERTER_UT_SRC ${TEST_DIR}/st/sub_graph_test.cc)
@@ -138,8 +156,13 @@ if(MSLITE_ENABLE_CONVERTER)
         ${TEST_DIR}/main.cc
         ${TEST_DIR}/ut/utils/build_func_graph.cc
         ${TEST_DIR}/common/common_test.cc
-        ${TEST_DIR}/common/import_from_meta_graphT.cc
         )
+    if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
+        set(TEST_CONVERTER_UT_SRC
+            ${TEST_CONVERTER_UT_SRC}
+            ${TEST_DIR}/common/import_from_meta_graphT.cc
+        )
+    endif()
 endif()
 
 if(MSLITE_ENABLE_KERNEL_EXECUTOR)
@@ -172,7 +195,7 @@ if(MSLITE_ENABLE_TRAIN)
     endif()
 endif()
 
-if(PLATFORM_ARM)
+if(PLATFORM_ARM AND NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
     target_link_libraries(lite-test log)
 else()
     target_link_libraries(lite-test ${SECUREC_LIBRARY} pthread)
@@ -195,45 +218,53 @@ if(MSLITE_ENABLE_CONVERTER AND (NOT MSLITE_ENABLE_RUNTIME_CONVERT))
     add_executable(lite-test-converter ${TEST_CONVERTER_UT_SRC})
     target_compile_definitions(lite-test-converter PRIVATE PRIMITIVE_WRITEABLE USE_GLOG)
     target_link_libraries(lite-test-converter dl mindspore::gtest)
-    if(PLATFORM_ARM)
-        target_link_libraries(lite-test-converter log)
+    if(NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
+        if(PLATFORM_ARM)
+            target_link_libraries(lite-test-converter log)
+        else()
+            target_link_libraries(lite-test-converter ${SECUREC_LIBRARY} pthread)
+        endif()
+        add_dependencies(lite-test-converter fbs_src fbs_inner_src)
+        target_link_libraries(lite-test-converter
+                converter_runtime_mid
+                cpu_ops_mid
+                nnacl_mid
+                cpu_kernel_mid
+                lite_exporter_mid
+                mslite_converter_plugin
+                graph_pass_mid
+                fusion_mid
+                quantizer_mid
+                decomposer_mid
+                proto_mid
+                ccsrc_src_mid
+                converter_src_mid
+                mindspore::protobuf
+                mindspore::json
+                -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
+                mindspore::glog
+                mindspore::flatbuffers
+                preprocess_mid
+                config_parser_mid
+                coder_mid
+                ccsrc_debug_common_mid_
+                mindir_proto_mid
+                _mindspore_transform_express_ir_obj
+                mindir_serializer_mid
+                )
     else()
-        target_link_libraries(lite-test-converter ${SECUREC_LIBRARY} pthread)
+        target_link_libraries(lite-test-converter
+                converter_runtime_mid
+                ascend_pass_plugin
+                )
     endif()
-    add_dependencies(lite-test-converter fbs_src fbs_inner_src)
-    target_link_libraries(lite-test-converter
-            converter_runtime_mid
-            cpu_ops_mid
-            nnacl_mid
-            cpu_kernel_mid
-            lite_exporter_mid
-            mslite_converter_plugin
-            graph_pass_mid
-            fusion_mid
-            quantizer_mid
-            decomposer_mid
-            proto_mid
-            ccsrc_src_mid
-            converter_src_mid
-            mindspore::protobuf
-            mindspore::json
-            -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
-            mindspore::glog
-            mindspore::flatbuffers
-            preprocess_mid
-            config_parser_mid
-            coder_mid
-            ccsrc_debug_common_mid_
-            mindir_proto_mid
-            _mindspore_transform_express_ir_obj
-            mindir_serializer_mid
-            )
+
     if(SUPPORT_TRAIN)
         target_link_libraries(lite-test-converter train_cpu_kernel_mid)
     endif()
 endif()
 
-if(MSLITE_ENABLE_CONVERTER)
+if(MSLITE_ENABLE_CONVERTER AND NOT (MSLITE_ENABLE_CLOUD_FUSION_INFERENCE OR MSLITE_ENABLE_CLOUD_INFERENCE))
     target_link_libraries(lite-test-converter tflite_parser_mid caffe_parser_mid
                                     onnx_parser_mid tf_parser_mid)
 endif()
