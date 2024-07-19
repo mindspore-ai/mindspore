@@ -304,7 +304,7 @@ class Model(BaseModel):
 
         Tutorial Examples:
             - `Dynamic Weight Update
-              <https://www.mindspore.cn/lite/docs/en/r2.3/use/cloud_infer/runtime_python.html#dynamic-weight-update>`_
+              <https://www.mindspore.cn/lite/docs/en/master/use/cloud_infer/runtime_python.html#dynamic-weight-update>`_
         """
         for weight in weights:
             for tensor in weight:

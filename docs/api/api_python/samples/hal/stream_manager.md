@@ -4,7 +4,7 @@
 
 设备流是属于特定设备的线性执行序列。默认情况下，每个设备都使用自己的“默认”流，不需要显式地创建一个设备流。
 
-每个流中的操作都按照它们创建的顺序执行，但是不同流中的操作可以以任何相对顺序并发执行，除非使用显式同步函数（如`synchrize()`或`wait_stream()`)。例如，下面的代码是不正确的：
+每个流中的操作都按照它们创建的顺序执行，但是不同流中的操作可以以任何相对顺序并发执行，除非使用显式同步函数（如`synchrize()`或`wait_stream()`）。例如，下面的代码是不正确的：
 
 ``` python
 ...
@@ -72,7 +72,7 @@ def func(A, s1):
 
 ## 设备事件
 
-设备事件可用于监视设备的进度、精确测量计时以及同步设备流。出于易用性考虑，我们在[Stream](https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/hal/mindspore.hal.Stream.html)类中提供了几个封装接口，比如上面例子中使用的 `wait_stream()` 接口，你可以通过接口文档了解详情。
+设备事件可用于监视设备的进度、精确测量计时以及同步设备流。出于易用性考虑，我们在[Stream](https://www.mindspore.cn/docs/zh-CN/master/api_python/hal/mindspore.hal.Stream.html)类中提供了几个封装接口，比如上面例子中使用的 `wait_stream()` 接口，你可以通过接口文档了解详情。
 
 `ms.hal.Event` 最常见的用法是 `record()` 和 `wait()` 的组合，以确保在多流网络中执行序能够满足用户的期望，如下所示：
 

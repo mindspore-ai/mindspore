@@ -73,7 +73,7 @@ def func(A, s1):
 
 ## Device event
 
-Device events can be used to monitor the device’s progress, to accurately measure timing, and to synchronize device streams. For ease of use, we provide several encapsulation interfaces in the [Stream](https://www.mindspore.cn/docs/en/r2.3/api_python/hal/mindspore.hal.Stream.html) class, such as the `wait_stream()` interface used in the above example, you can see the interface documentation for details.
+Device events can be used to monitor the device’s progress, to accurately measure timing, and to synchronize device streams. For ease of use, we provide several encapsulation interfaces in the [Stream](https://www.mindspore.cn/docs/en/master/api_python/hal/mindspore.hal.Stream.html) class, such as the `wait_stream()` interface used in the above example, you can see the interface documentation for details.
 
 The most common use of `ms.hal.Event` is the combination of `record()` and `wait()` to ensure that the execution order can meet the user's expectations in a multi-stream network, as follows:
 

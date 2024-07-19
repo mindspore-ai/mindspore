@@ -285,7 +285,7 @@ class Context:
 
         In the pipeline parallel scenario, different stage device nodes are in different communication groups. When
         exporting the model, set the `group_ckpt_save_file` parameter in interface
-        [mindspore.set_auto_parallel_context](https://www.mindspore.cn/docs/zh-CN/r2.3/api_python/mindspore/mindspore.set_auto_parallel_context.html)
+        [mindspore.set_auto_parallel_context](https://www.mindspore.cn/docs/zh-CN/master/api_python/mindspore/mindspore.set_auto_parallel_context.html)
         to export the group file information. In addition, in non pipeline parallel scenarios, if there
         are communication operators involving local communication groups, the group file information also needs to be
         exported through the 'group_ckpt_save_file' parameter.
