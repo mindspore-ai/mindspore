@@ -83,10 +83,10 @@ def xlogy_vmap_func(x, y, in_axes=0):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
-def test_ops_xlogy_forward(mode):
+def test_ops_xlogy(mode):
     """
     Feature: pyboost function.
-    Description: test function xlogy forward.
+    Description: test function xlogy.
     Expectation: expect correct result.
     """
     x = generate_random_input((2, 3, 4), np.float32)
@@ -96,26 +96,44 @@ def test_ops_xlogy_forward(mode):
     expect_out2 = generate_expect_forward_output(x, 2)
     expect_out3 = generate_expect_forward_output(2, y)
 
+    expect_doutx, expect_douty = generate_expect_backward_output(x, y)
+    expect_doutx2, _ = generate_expect_backward_output(x, 2)
+    _, expect_douty3 = generate_expect_backward_output(2, y)
+
     if mode == "pynative":
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
         out = xlogy_forward_func(Tensor(x), Tensor(y))
         out2 = xlogy_forward_func(Tensor(x), 2)
         out3 = xlogy_forward_func(2, Tensor(y))
+        doutx, douty = xlogy_backward_func(Tensor(x), Tensor(y))
+        doutx2 = xlogy_backward_func(Tensor(x), 2)
+        douty3 = xlogy_backward_func(2, Tensor(y))
     elif mode == "KBK":
         ms.context.set_context(mode=ms.GRAPH_MODE)
         op = ms.jit(xlogy_forward_func, jit_config=ms.JitConfig(jit_level="O0"))
         out = op(Tensor(x), Tensor(y))
         out2 = op(Tensor(x), 2)
         out3 = op(2, Tensor(y))
+        op = ms.jit(xlogy_backward_func, jit_config=ms.JitConfig(jit_level="O0"))
+        doutx, douty = op(Tensor(x), Tensor(y))
+        doutx2 = op(Tensor(x), 2)
+        douty3 = op(2, Tensor(y))
     else:
         ms.context.set_context(mode=ms.GRAPH_MODE)
         out = xlogy_forward_func(Tensor(x), Tensor(y))
         out2 = xlogy_forward_func(Tensor(x), 2)
         out3 = xlogy_forward_func(2, Tensor(y))
+        doutx, douty = xlogy_backward_func(Tensor(x), Tensor(y))
+        doutx2 = xlogy_backward_func(Tensor(x), 2)
+        douty3 = xlogy_backward_func(2, Tensor(y))
 
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
     np.testing.assert_allclose(out2.asnumpy(), expect_out2, rtol=1e-3)
     np.testing.assert_allclose(out3.asnumpy(), expect_out3, rtol=1e-3)
+    np.testing.assert_allclose(doutx.asnumpy(), expect_doutx, rtol=1e-3)
+    np.testing.assert_allclose(douty.asnumpy(), expect_douty, rtol=1e-3)
+    np.testing.assert_allclose(doutx2.asnumpy(), expect_doutx2, rtol=1e-3)
+    np.testing.assert_allclose(douty3.asnumpy(), expect_douty3, rtol=1e-3)
 
 
 @pytest.mark.level0
@@ -149,95 +167,6 @@ def test_ops_xlogy_forward_910b_nan(mode):
         out = xlogy_forward_func(x, y)
 
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", ["pynative", "KBK"])
-def test_xlog_backward1(mode):
-    """
-    Feature: pyboost function.
-    Description: test function xlogy backward.
-    Expectation: expect correct result.
-    """
-    x = generate_random_input((2, 3, 4), np.float32)
-    y = np.abs(generate_random_input((2, 3, 1), np.float32)) + 0.01
-
-    expect_doutx, expect_douty = generate_expect_backward_output(x, y)
-
-    if mode == "pynative":
-        ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        doutx, douty = xlogy_backward_func(Tensor(x), Tensor(y))
-    elif mode == "KBK":
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-        op = ms.jit(xlogy_backward_func, jit_config=ms.JitConfig(jit_level="O0"))
-        doutx, douty = op(Tensor(x), Tensor(y))
-    else:
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-        doutx, douty = xlogy_backward_func(Tensor(x), Tensor(y))
-
-    np.testing.assert_allclose(doutx.asnumpy(), expect_doutx, rtol=1e-3)
-    np.testing.assert_allclose(douty.asnumpy(), expect_douty, rtol=1e-3)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", ["pynative", "KBK"])
-def test_xlog_backward2(mode):
-    """
-    Feature: pyboost function.
-    Description: test function xlogy backward.
-    Expectation: expect correct result.
-    """
-    x = generate_random_input((2, 3, 4), np.float32)
-
-    expect_doutx2, _ = generate_expect_backward_output(x, 2)
-
-    if mode == "pynative":
-        ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        doutx2 = xlogy_backward_func(Tensor(x), 2)
-    elif mode == "KBK":
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-        op = ms.jit(xlogy_backward_func, jit_config=ms.JitConfig(jit_level="O0"))
-        doutx2 = op(Tensor(x), 2)
-    else:
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-        doutx2 = xlogy_backward_func(Tensor(x), 2)
-
-    np.testing.assert_allclose(doutx2.asnumpy(), expect_doutx2, rtol=1e-3)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", ["pynative", "KBK"])
-def test_xlog_backward3(mode):
-    """
-    Feature: pyboost function.
-    Description: test function xlogy backward.
-    Expectation: expect correct result.
-    """
-    y = np.abs(generate_random_input((2, 3, 1), np.float32)) + 0.01
-
-    _, expect_douty3 = generate_expect_backward_output(2, y)
-
-    if mode == "pynative":
-        ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        douty3 = xlogy_backward_func(2, Tensor(y))
-    elif mode == "KBK":
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-        op = ms.jit(xlogy_backward_func, jit_config=ms.JitConfig(jit_level="O0"))
-        douty3 = op(2, Tensor(y))
-    else:
-        ms.context.set_context(mode=ms.GRAPH_MODE)
-        douty3 = xlogy_backward_func(2, Tensor(y))
-
-    np.testing.assert_allclose(douty3.asnumpy(), expect_douty3, rtol=1e-3)
 
 
 @pytest.mark.level1

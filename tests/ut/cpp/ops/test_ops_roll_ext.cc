@@ -55,11 +55,42 @@ TEST_P(TestRollExt, dyn_shape) {
   ASSERT_TRUE(*out_shape == *expect_shape);
 }
 
+class TestRollExtSimpleInfer : public TestOps, public testing::WithParamInterface<RollExtParams> {};
+
+TEST_P(TestRollExtSimpleInfer, dyn_shape) {
+  const auto &param = GetParam();
+  auto x = std::make_shared<tensor::BaseTensor>(param.x_type->type_id(), param.x_shape);
+  ValuePtrList input_values;
+  input_values.push_back(std::move(x));
+  input_values.push_back(std::move(param.shifts));
+  input_values.push_back(std::move(param.dims));
+
+  RollFuncImpl roll_func_impl;
+  auto prim = std::make_shared<Primitive>("RollExt");
+
+  auto expect_shape = ShapeArray{param.out_shape};
+  auto expect_type = TypePtrList{param.out_type};
+
+  auto output_shape = roll_func_impl.InferShape(prim, input_values);
+  auto output_type = roll_func_impl.InferType(prim, input_values);
+
+  ShapeCompare(output_shape, expect_shape);
+  TypeCompare(output_type, expect_type);
+}
+
 INSTANTIATE_TEST_CASE_P(
   TestRollExtGroup, TestRollExt,
   testing::Values(RollExtParams{{2, 3}, kFloat32, CreateTuple({1}), CreateTuple({1}), {2, 3}, kFloat32},
                   RollExtParams{{-1, 2, 3}, kFloat16, CreateTuple({0}), CreateTuple({0}), {-1, 2, 3}, kFloat16},
                   RollExtParams{{-1, -1}, kInt8, CreateTuple({1}), CreateTuple({1}), {-1, -1}, kInt8},
                   RollExtParams{{-2}, kUInt64, CreateTuple({1}), CreateTuple({1}), {-2}, kUInt64}));
+
+INSTANTIATE_TEST_CASE_P(
+  TestRollExtGroup, TestRollExtSimpleInfer,
+  testing::Values(RollExtParams{{2, 3}, kFloat32, CreateTuple({1}), CreateTuple({1}), {2, 3}, kFloat32},
+                  RollExtParams{{4, 2, 3}, kFloat16, CreateTuple({0}), CreateTuple({0}), {4, 2, 3}, kFloat16},
+                  RollExtParams{{3, 4, 5, 6}, kInt8, CreateTuple({1}), CreateTuple({1}), {3, 4, 5, 6}, kInt8},
+                  RollExtParams{
+                    {3, 4, 5, 6, 7}, kUInt64, CreateTuple({1}), CreateTuple({1}), {3, 4, 5, 6, 7}, kUInt64}));
 }  // namespace ops
 }  // namespace mindspore

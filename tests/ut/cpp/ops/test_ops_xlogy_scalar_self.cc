@@ -25,6 +25,7 @@
 #include "ops/test_ops.h"
 #include "ops/ops_func_impl/xlogy_scalar_self.h"
 #include "ops/test_value_utils.h"
+#include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -55,6 +56,32 @@ TEST_P(TestXlogyScalarSelf, xlogy_scalar_self_dyn_shape) {
   ASSERT_TRUE(*out_dtype == *expect_dtype);
 }
 
+class TestXlogyScalarSelfSimpleInfer : public TestOps,
+                                       public testing::WithParamInterface<std::tuple<XlogyScalarSelfParam>> {};
+
+TEST_P(TestXlogyScalarSelfSimpleInfer, simple_infer) {
+  const auto &param = std::get<0>(GetParam());
+  XLogYScalarSelfFuncImpl xlogy_scalar_self_func_impl;
+
+  auto prim = std::make_shared<Primitive>("XLogYScalarSelf");
+  ASSERT_NE(prim, nullptr);
+
+  auto y = std::make_shared<tensor::BaseTensor>(param.y_type->type_id(), param.y_shape);
+  ASSERT_NE(y, nullptr);
+  ValuePtrList input_values;
+  input_values.push_back(std::move(param.x));
+  input_values.push_back(std::move(y));
+
+  auto expect_shape = ShapeArray{param.out_shape};
+  auto expect_type = TypePtrList{param.out_type};
+
+  auto output_shape = xlogy_scalar_self_func_impl.InferShape(prim, input_values);
+  auto output_type = xlogy_scalar_self_func_impl.InferType(prim, input_values);
+
+  ShapeCompare(output_shape, expect_shape);
+  TypeCompare(output_type, expect_type);
+}
+
 auto XlogyScalarSelfOpShapeTestCases =
   testing::ValuesIn({XlogyScalarSelfParam{CreateScalar<bool>(true), {10}, kFloat32, {10}, kFloat32},
                      XlogyScalarSelfParam{CreateScalar<bool>(true), {10, 1, 2}, kInt64, {10, 1, 2}, kFloat32},
@@ -66,6 +93,16 @@ auto XlogyScalarSelfOpShapeTestCases =
                      XlogyScalarSelfParam{CreateScalar<bool>(true), {}, kInt64, {}, kFloat32},
                      XlogyScalarSelfParam{CreateScalar<int>(2), {}, kInt64, {}, kFloat32}});
 
+auto XlogyScalarSelfOpSimpleInferShapeTestCases =
+  testing::ValuesIn({XlogyScalarSelfParam{CreateScalar<bool>(true), {10}, kFloat32, {10}, kFloat32},
+                     XlogyScalarSelfParam{CreateScalar<bool>(true), {10, 1, 2}, kInt64, {10, 1, 2}, kFloat32},
+                     XlogyScalarSelfParam{CreateScalar<float>(2.0), {10, 4, 2}, kInt64, {10, 4, 2}, kFloat32},
+                     XlogyScalarSelfParam{CreateScalar<float>(2.0), {}, kFloat32, {}, kFloat32},
+                     XlogyScalarSelfParam{CreateScalar<bool>(true), {}, kInt64, {}, kFloat32},
+                     XlogyScalarSelfParam{CreateScalar<int>(2), {}, kInt64, {}, kFloat32}});
+
 INSTANTIATE_TEST_CASE_P(TestXlogyScalarSelf, TestXlogyScalarSelf, testing::Combine(XlogyScalarSelfOpShapeTestCases));
+INSTANTIATE_TEST_CASE_P(TestXlogyScalarSelfSimpleInfer, TestXlogyScalarSelfSimpleInfer,
+                        testing::Combine(XlogyScalarSelfOpSimpleInferShapeTestCases));
 }  // namespace ops
 }  // namespace mindspore
