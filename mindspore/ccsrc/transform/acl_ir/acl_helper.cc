@@ -261,6 +261,13 @@ void SetParameterFormat(const AnfNodePtr &node, const std::string &format, std::
     }
     return;
   }
+  auto parameter = node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(parameter);
+  bool is_weight = common::AnfAlgo::IsParameterWeight(parameter);
+  if (!is_weight) {
+    return;
+  }
+
   const auto &output_with_indexs = common::AnfAlgo::GetAllOutputWithIndex(node);
   std::vector<std::string> output_formats{output_with_indexs.size(), format};
   auto kernel_info = std::dynamic_pointer_cast<device::KernelInfo>(node->kernel_info_ptr());
