@@ -48,7 +48,7 @@ from mindspore.ops.auto_generate import (reflection_pad_1d_op, reflection_pad_2d
                                          constant_pad_nd_op, dropout_ext_op, reverse_v2_impl, avg_pool2d_op)
 from mindspore.ops.auto_generate.gen_ops_prim import embedding_op, Convolution
 from mindspore.common.generator import default_generator
-from mindspore.ops.auto_generate import hardshrink
+from mindspore.ops.auto_generate import hardshrink, hardsigmoid, hardswish
 
 abs_ = P.Abs()
 add_ = P.Add()
@@ -65,7 +65,6 @@ gather_ = P.Gather()
 gather_d_ = P.GatherD()
 gelu_ = P.GeLU()
 greater_ = P.Greater()
-hardswish_ = P.HSwish()
 less_ = P.Less()
 list_to_tensor_ = ListToTensor()
 log_ = P.Log()
@@ -2096,48 +2095,6 @@ def is_floating_point(input):
         False
     """
     return input.dtype in [mstype.float32, mstype.bfloat16, mstype.float16, mstype.float64]
-
-
-def hardswish(x):
-    r"""
-    Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
-
-    Hard swish is defined as:
-
-    .. math::
-
-        \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6}
-
-    where :math:`x_i` is an element of the input Tensor.
-
-    HSwish Activation Function Graph:
-
-    .. image:: ../images/HSwish.png
-        :align: center
-
-    Args:
-        x (Tensor): The input to compute the Hard Swish.
-
-    Returns:
-        Tensor, has the same data type and shape as the input.
-
-    Raises:
-        TypeError: If `x` is not a Tensor.
-        TypeError: If dtype of `x` is not int or float.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-        >>> output = ops.hardswish(x)
-        >>> print(output)
-        [-0.3333  -0.3333  0  1.666  0.6665]
-    """
-    return hardswish_(x)
 
 
 def _is_dim_unknown(shape):
@@ -5790,51 +5747,6 @@ def conv_transpose2d(input, weight, bias=None, stride=1, padding=0, output_paddi
     """
     conv = _get_cache_prim(Convolution)(stride, padding, dilation, True, output_padding, groups)
     return conv(input, weight, bias)
-
-
-def hardsigmoid(input):
-    r"""
-    Hard sigmoid activation function.
-
-    Applies hard sigmoid activation element-wise. The input is a Tensor with any valid shape.
-
-    Hard sigmoid is defined as:
-
-    .. math::
-
-        \text{hsigmoid}(x_{i}) = \max(0, \min(1, \frac{x_{i} + 3}{6}))
-
-    where :math:`x_i` is an element of the input Tensor.
-
-    HSigmoid Activation Function Graph:
-
-    .. image:: ../images/HSigmoid.png
-        :align: center
-
-    Args:
-        input (Tensor): The input Tensor.
-
-    Returns:
-        A Tensor whose dtype and shape are the same as `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If dtype of `input` is not int or float.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, ops
-        >>> x = Tensor(np.array([ -3.5,  0,  4.3]), mindspore.float32)
-        >>> output = ops.hardsigmoid(x)
-        >>> print(output)
-        [0.  0.5 1. ]
-    """
-    hardsigmoid_ = NN_OPS.HSigmoid()
-    return hardsigmoid_(input)
 
 
 def hardtanh(input, min_val=-1.0, max_val=1.0):

@@ -1,7 +1,7 @@
-mindspore.nn.HSigmoid
-=============================
+mindspore.mint.nn.Hardsigmoid
+==============================
 
-.. py:class:: mindspore.nn.HSigmoid
+.. py:class:: mindspore.mint.nn.Hardsigmoid
 
     逐元素计算Hard Sigmoid激活函数。
 

@@ -18,6 +18,8 @@
 #include <string>
 #include <set>
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
+#include "ops/op_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -28,12 +30,30 @@ BaseShapePtr HSigmoidFuncImpl::InferShape(const PrimitivePtr &primitive,
 
 TypePtr HSigmoidFuncImpl::InferType(const PrimitivePtr &primitive,
                                     const std::vector<AbstractBasePtr> &input_args) const {
-  MS_EXCEPTION_IF_NULL(primitive);
-  std::map<std::string, TypePtr> types;
-  const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64};
-  (void)types.emplace("input_x", input_args[0]->GetType());
-  (void)CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, primitive->name());
-  return input_args[0]->GetType()->Clone();
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  auto x_type = input_args[kInputIndex0]->GetType();
+  MS_EXCEPTION_IF_NULL(x_type);
+  const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
+  auto tensor_type = x_type->cast<TensorTypePtr>();
+  auto real_type = tensor_type->element();
+  (void)CheckAndConvertUtils::CheckSubClass("input_x", real_type, valid_types, primitive->name());
+  return x_type->Clone();
 }
+
+TypePtrList HSigmoidFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
+  const auto &input_type = x_tensor->Dtype();
+  (void)CheckAndConvertUtils::CheckSubClass("input_x", input_type, valid_types, primitive->name());
+  return {input_type};
+}
+
+ShapeArray HSigmoidFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
+  MS_EXCEPTION_IF_NULL(x_tensor);
+  return {x_tensor->shape()};
+}
+REGISTER_SIMPLE_INFER(kNameHSigmoid, HSigmoidFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

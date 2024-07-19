@@ -26,6 +26,7 @@
 #include "ops/test_ops_dyn_cases.h"
 #include "ops/ops_func_impl/hsigmoid.h"
 #include "ops/test_value_utils.h"
+#include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -58,8 +59,20 @@ auto HSigmoidOpTypeCases = testing::ValuesIn({
   EltwiseOpTypeParams{kFloat16, kFloat16},
   EltwiseOpTypeParams{kFloat32, kFloat32},
   EltwiseOpTypeParams{kFloat64, kFloat64},
+  EltwiseOpTypeParams{kBFloat16, kBFloat16},
 });
 }
+
+OP_FUNC_IMPL_SIMPLEINFER_TEST_DECLARE(HSigmoid, EltwiseOpParams);
+OP_FUNC_IMPL_SIMPLEINFER_TEST_CASES(HSigmoid,
+                                    testing::Values(EltwiseOpParams{{2, 3, 4}, kInt8, {2, 3, 4}, kInt8, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kInt16, {2, 3, 4}, kInt16, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kInt32, {2, 3, 4}, kInt32, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kInt64, {2, 3, 4}, kInt64, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kFloat16, {2, 3, 4}, kFloat16, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kFloat32, {2, 3, 4}, kFloat32, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kFloat64, {2, 3, 4}, kFloat64, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kBFloat16, {2, 3, 4}, kBFloat16, {}}));
 
 INSTANTIATE_TEST_CASE_P(TestHSigmoid, TestHSigmoid, testing::Combine(EltwiseDynShapeTestCases, HSigmoidOpTypeCases));
 }  // namespace ops

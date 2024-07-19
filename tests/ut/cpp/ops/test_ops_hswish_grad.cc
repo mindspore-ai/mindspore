@@ -50,8 +50,20 @@ auto HSwishGradOpTypeCases = testing::ValuesIn({
   EltwiseGradOpTypeParams{kFloat16, kFloat16, kFloat16},
   EltwiseGradOpTypeParams{kFloat32, kFloat32, kFloat32},
   EltwiseGradOpTypeParams{kFloat64, kFloat64, kFloat64},
+  EltwiseGradOpTypeParams{kBFloat16, kBFloat16, kBFloat16},
 });
 }
+
+OP_FUNC_IMPL_SIMPLEINFER_TEST_DECLARE(HSwishGrad, MultiInputOpParams);
+OP_FUNC_IMPL_SIMPLEINFER_TEST_CASES(
+  HSwishGrad, testing::Values(MultiInputOpParams{{{2, 3}, {2, 3}}, {kInt8, kInt8}, {{2, 3}}, {kInt8}, {}},
+                              MultiInputOpParams{{{2, 3}, {2, 3}}, {kInt16, kInt16}, {{2, 3}}, {kInt16}, {}},
+                              MultiInputOpParams{{{2, 3}, {2, 3}}, {kInt32, kInt32}, {{2, 3}}, {kInt32}, {}},
+                              MultiInputOpParams{{{2, 3}, {2, 3}}, {kInt64, kInt64}, {{2, 3}}, {kInt64}, {}},
+                              MultiInputOpParams{{{2, 3}, {2, 3}}, {kFloat16, kFloat16}, {{2, 3}}, {kFloat16}, {}},
+                              MultiInputOpParams{{{2, 3}, {2, 3}}, {kFloat32, kFloat32}, {{2, 3}}, {kFloat32}, {}},
+                              MultiInputOpParams{{{2, 3}, {2, 3}}, {kFloat64, kFloat64}, {{2, 3}}, {kFloat64}, {}},
+                              MultiInputOpParams{{{2, 3}, {2, 3}}, {kBFloat16, kBFloat16}, {{2, 3}}, {kBFloat16}, {}}));
 
 INSTANTIATE_TEST_CASE_P(TestHSwishGradGroup, TestHSwishGrad,
                         testing::Combine(EltwiseGradDynShapeTestCases, HSwishGradOpTypeCases));

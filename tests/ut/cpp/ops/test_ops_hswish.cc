@@ -47,8 +47,20 @@ auto HSwishOpTypeCases = testing::ValuesIn({
   EltwiseOpTypeParams{kFloat16, kFloat16},
   EltwiseOpTypeParams{kFloat32, kFloat32},
   EltwiseOpTypeParams{kFloat64, kFloat64},
+  EltwiseOpTypeParams{kBFloat16, kBFloat16},
 });
 }
+
+OP_FUNC_IMPL_SIMPLEINFER_TEST_DECLARE(HSwish, EltwiseOpParams);
+OP_FUNC_IMPL_SIMPLEINFER_TEST_CASES(HSwish,
+                                    testing::Values(EltwiseOpParams{{2, 3, 4}, kInt8, {2, 3, 4}, kInt8, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kInt16, {2, 3, 4}, kInt16, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kInt32, {2, 3, 4}, kInt32, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kInt64, {2, 3, 4}, kInt64, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kFloat16, {2, 3, 4}, kFloat16, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kFloat32, {2, 3, 4}, kFloat32, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kFloat64, {2, 3, 4}, kFloat64, {}},
+                                                    EltwiseOpParams{{2, 3, 4}, kBFloat16, {2, 3, 4}, kBFloat16, {}}));
 
 INSTANTIATE_TEST_CASE_P(TestHSwishGroup, TestHSwish, testing::Combine(EltwiseDynShapeTestCases, HSwishOpTypeCases));
 }  // namespace ops

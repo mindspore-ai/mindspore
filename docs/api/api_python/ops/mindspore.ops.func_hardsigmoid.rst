@@ -8,9 +8,12 @@ mindspore.ops.hardsigmoid
     Hard Sigmoid定义为：
 
     .. math::
-        \text{hsigmoid}(x_{i}) = \max(0, \min(1, \frac{x_{i} + 3}{6}))
-
-    其中，:math:`x_i` 是输入Tensor的一个元素。
+        \text{Hardswish}(input) =
+        \begin{cases}
+        0, & \text{ if } input ≤ -3, \\
+        1, & \text{ if } input ≥ +3, \\
+        input/6 + 1/2, & \text{ otherwise }
+        \end{cases}
 
     HSigmoid函数图：
 
@@ -18,11 +21,14 @@ mindspore.ops.hardsigmoid
         :align: center
 
     参数：
-        - **input** (Tensor) - 输入Tensor。
+        - **input** (Tensor) - 输入Tensor。支持数据类型：
+
+          - Ascend：int32、float16、float32、bfloat16。
+          - CPU/GPU：int8、int16、int32、int64、float16、float32、float64。
 
     返回：
         Tensor，shape和数据类型与输入 `input` 相同。
 
     异常：
         - **TypeError** - `input` 不是Tensor。
-        - **TypeError** - `input` 的dtype不是int或者float类型。
+        - **TypeError** - `input` 不是int或者float类型。

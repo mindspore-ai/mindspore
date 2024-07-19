@@ -12,3 +12,5 @@ hswish_grad:
         name: HSwishGrad
     function:
         disable: True
+    dispatch:
+        enable: True

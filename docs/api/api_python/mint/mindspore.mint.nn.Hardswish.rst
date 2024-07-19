@@ -1,7 +1,7 @@
-mindspore.nn.HSwish
-===================
+mindspore.mint.nn.Hardswish
+============================
 
-.. py:class:: mindspore.nn.HSwish
+.. py:class:: mindspore.mint.nn.Hardswish
 
     逐元素计算Hard Swish。
 
@@ -12,7 +12,7 @@ mindspore.nn.HSwish
         \begin{cases}
         0, & \text{ if } input ≤ -3, \\
         input, & \text{ if } input ≥ +3, \\
-        input·(x + 3)/6, & \text{ otherwise }
+        input·(input + 3)/6, & \text{ otherwise }
         \end{cases}
 
     HSwish函数图：

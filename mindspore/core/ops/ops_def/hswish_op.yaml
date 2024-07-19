@@ -1,7 +1,7 @@
 #operator hswish
 hswish:
     args:
-        x:
+        input:
             dtype: tensor
     returns:
         output: 
@@ -9,4 +9,6 @@ hswish:
     class:
         name: HSwish
     function:
-        disable: True
+        name: hardswish
+    dispatch:
+        enable: True
