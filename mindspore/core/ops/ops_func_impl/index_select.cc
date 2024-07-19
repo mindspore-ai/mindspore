@@ -26,10 +26,8 @@ BaseShapePtr IndexSelectFuncImpl::InferShape(const PrimitivePtr &primitive,
   if (MS_UNLIKELY(IsDynamicRank(input_shape))) {
     return std::make_shared<abstract::TensorShape>(ShapeVector({abstract::TensorShape::kShapeRankAny}));
   }
-  int64_t input_rank = SizeToLong(input_shape.size());
-  bool is_empty_input = std::any_of(input_shape.begin(), input_shape.end(), [](const auto &dim) { return dim == 0; });
-  MS_CHECK_VALUE(!is_empty_input, "For 'IndexSelect', index will be out of range when input is empty tensor.");
 
+  int64_t input_rank = SizeToLong(input_shape.size());
   auto axis_opt = GetScalarValue<int64_t>(input_args[kIndex1]->GetValue());
   if (MS_UNLIKELY(!axis_opt.has_value())) {
     return std::make_shared<abstract::TensorShape>(ShapeVector(input_rank, abstract::TensorShape::kShapeDimAny));
