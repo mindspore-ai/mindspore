@@ -99,6 +99,8 @@ class MS_CORE_API IntSymbol final : public ScalarSymbol {
   bool is_positive() const { return is_greater_than(0); }
   /// \brief Check the symbol is ALWAYS negative
   bool is_negative() const { return is_less_than(0); }
+  /// \brief Check the symbol's available value is subset of symbol `s`
+  bool is_subset_of(const IntSymbol *s, bool strict = false) const;
 
   /// \brief Set the two symbols are equal.
   void SetEqual(const IntSymbolPtr &other) {

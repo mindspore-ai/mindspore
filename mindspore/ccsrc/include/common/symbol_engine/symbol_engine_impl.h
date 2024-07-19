@@ -53,6 +53,7 @@ class COMMON_EXPORT SpecialCNodeHelper {
 
 class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
  public:
+  SymbolEngineImpl() : SymbolEngine(nullptr) {}
   explicit SymbolEngineImpl(const FuncGraphPtr &fg) : SymbolEngine(fg), name_(fg->ToString()) {}
   ~SymbolEngineImpl() = default;
   MS_DECLARE_PARENT(SymbolEngineImpl, SymbolEngine)

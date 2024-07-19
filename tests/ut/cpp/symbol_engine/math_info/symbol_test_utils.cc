@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_SWITCH_H_
-#define MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_SWITCH_H_
 
-#include "mindspore/core/ops/symbol_ops_impl/common.h"
+#include "symbol_engine/math_info/symbol_test_utils.h"
 
-namespace mindspore {
-namespace symshape {
-namespace ops {
-constexpr auto kControlFlowJoin = "ControlFlowJoin";
-MS_CORE_API SymbolPtr JoinIntSymbol(const SymbolPtr &s1, const SymbolPtr &s2, const OpPtr &op = nullptr);
-}  // namespace ops
-}  // namespace symshape
-}  // namespace mindspore
-#endif  // MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_SWITCH_H_
+namespace mindspore::symshape::test {
+SymbolPtr SymbolHelper::Emit(const OpPtr &op) {
+  InitSymbolEngine();
+  return symbol_engine_->emitter_->Emit(op);
+}
+
+void SymbolHelper::InitSymbolEngine() {
+  if (symbol_engine_ != nullptr) {
+    return;
+  }
+  symbol_engine_ = std::make_shared<InnerSymbolEngine>();
+  symbol_engine_->emitter_ = std::make_unique<OperationEmitter>(&symbol_engine_->ops_);
+}
+}  // namespace mindspore::symshape::test

@@ -48,7 +48,4 @@ class ConstructGraph {
   std::shared_ptr<session::KernelGraph> graph_;
 };
 }  // namespace mindspore::test
-
-#define UT_CHECK_NULL(pointer) ASSERT_NE(pointer, nullptr)
-
 #endif  // UT_CPP_COMMON_GRAPH_OPTIMIZER_TEST_FRAMEWORK_
