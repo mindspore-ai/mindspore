@@ -20,6 +20,7 @@ from mindspore.ops.extend import array_func, math_func, nn_func
 from mindspore.mint.nn.functional import *
 from mindspore.mint.nn import functional
 from mindspore.mint import linalg
+from mindspore.mint import special
 from mindspore.ops import erf, where, triu
 from mindspore.ops.function.math_func import linspace_ext as linspace
 from mindspore.ops.function.math_func import median_ext as median
@@ -38,6 +39,7 @@ from mindspore.ops.function.math_func import sin
 # 3
 from mindspore.ops.function.clip_func import clamp
 # 4
+from mindspore.ops.auto_generate import sinc
 from mindspore.ops.auto_generate import sinh
 from mindspore.ops.auto_generate import cosh
 from mindspore.ops.function.math_func import xlogy_ext as xlogy
@@ -933,6 +935,7 @@ __all__ = [
     'clamp',
     'xlogy',
     # 4
+    'sinc',
     'sinh',
     'cosh',
     # 5
@@ -1182,3 +1185,4 @@ __all__.extend(functional.__all__)
 __all__.extend(nn.__all__)
 __all__.extend(optim.__all__)
 __all__.extend(linalg.__all__)
+__all__.extend(special.__all__)

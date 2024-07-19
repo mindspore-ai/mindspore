@@ -111,6 +111,7 @@ Pointwise Operations
     mindspore.mint.rsqrt
     mindspore.mint.sigmoid
     mindspore.mint.sin
+    mindspore.mint.sinc
     mindspore.mint.sinh
     mindspore.mint.sqrt
     mindspore.mint.square
@@ -385,3 +386,16 @@ Inverses
     :template: classtemplate.rst
 
     mindspore.mint.linalg.inv
+
+mindspore.mint.special
+----------------------
+
+Sinc
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. msplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.special.sinc

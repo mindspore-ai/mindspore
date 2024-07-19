@@ -21,11 +21,17 @@
 
 namespace mindspore {
 namespace ops {
-OP_FUNC_IMPL_TEST_DECLARE(Sinc, EltwiseOpParams);
+OP_FUNC_IMPL_INFER_TEST_DECLARE(Sinc, EltwiseOpParams);
 
-OP_FUNC_IMPL_TEST_CASES(Sinc, testing::Values(EltwiseOpParams{{2, 3}, kBool, {2, 3}, kFloat32},
-                                             EltwiseOpParams{{-1, 3}, kInt16, {-1, 3}, kFloat32},
-                                             EltwiseOpParams{{-1, -1}, kFloat16, {-1, -1}, kFloat16},
-                                             EltwiseOpParams{{-2}, kComplex64, {-2}, kComplex64}));
+OP_FUNC_IMPL_INFER_TEST_CASES(Sinc, testing::Values(EltwiseOpParams{{2, 3}, kBool, {2, 3}, kFloat32},
+                                                    EltwiseOpParams{{2, 3}, kUInt8, {2, 3}, kFloat32},
+                                                    EltwiseOpParams{{-1, 3}, kInt8, {-1, 3}, kFloat32},
+                                                    EltwiseOpParams{{-1, -1}, kInt16, {-1, -1}, kFloat32},
+                                                    EltwiseOpParams{{2, 3}, kInt32, {2, 3}, kFloat32},
+                                                    EltwiseOpParams{{-1, 3}, kInt64, {-1, 3}, kFloat32},
+                                                    EltwiseOpParams{{-1, -1}, kFloat16, {-1, -1}, kFloat16},
+                                                    EltwiseOpParams{{-1, 3}, kFloat32, {-1, 3}, kFloat32},
+                                                    EltwiseOpParams{{-1, -1}, kFloat64, {-1, -1}, kFloat64},
+                                                    EltwiseOpParams{{-2}, kBFloat16, {-2}, kBFloat16}));
 }  // namespace ops
 }  // namespace mindspore
