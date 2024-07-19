@@ -74,5 +74,32 @@ auto SinhOpTypeTestCases = testing::ValuesIn(
    SinhType{kBFloat16, kBFloat16}});
 
 INSTANTIATE_TEST_CASE_P(TestSinh, TestSinh, testing::Combine(SinhOpShapeTestCases, SinhOpTypeTestCases));
+
+class TestSinhSimpleInfer : public TestOps, public testing::WithParamInterface<std::tuple<SinhShape, SinhType>> {};
+
+TEST_P(TestSinhSimpleInfer, simple_infer) {
+  const auto &shape_param = std::get<0>(GetParam());
+  const auto &dtype_param = std::get<1>(GetParam());
+
+  SinhFuncImpl sinh_func_impl;
+  auto prim = std::make_shared<Primitive>("Sinh");
+  auto input = std::make_shared<abstract::AbstractTensor>(dtype_param.input_type, shape_param.input_shape);
+  auto expect_shape = std::make_shared<abstract::TensorShape>(shape_param.output_shape);
+  auto expect_dtype = std::make_shared<TensorType>(dtype_param.output_type);
+
+  auto output_shape = sinh_func_impl.InferShape(prim, {input});
+  auto output_dtype = sinh_func_impl.InferType(prim, {input});
+  ASSERT_TRUE(*output_shape == *expect_shape);
+  ASSERT_TRUE(*output_dtype == *expect_dtype);
+}
+
+auto SinhOpShapeTestCasesSimpleInfer = testing::ValuesIn({
+  /* static */
+  SinhShape{{2}, {2}},
+  SinhShape{{2, 3, 4}, {2, 3, 4}},
+});
+
+INSTANTIATE_TEST_CASE_P(TestSinhSimpleInfer, TestSinhSimpleInfer,
+                        testing::Combine(SinhOpShapeTestCasesSimpleInfer, SinhOpTypeTestCases));
 }  // namespace ops
 }  // namespace mindspore
