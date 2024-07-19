@@ -98,6 +98,32 @@ class ShapeOpCse {
   ~ShapeOpCse() = default;
   bool operator()(const FuncGraphPtr &func_graph, const OptimizerPtr &optimizer);
 };
+
+/**
+ * Eliminate the unnecessary Reshape-Shape pattern.
+ *
+ * example:
+ * %0 = Shape(p1)
+ * %1 = TupleGetItem(%0, 0)
+ * %2 = TupleGetItem(%0, 1)
+ * %3 = MakeTuple(%1, %2, 16)
+ * %4 = Reshape(p2, %3)
+ * %5 = Shape(%4)  // symbolic value of %5 is always equals to %3
+ * %6 = other_op(%5)
+ * -->
+ * %0 = Shape(p1)
+ * %1 = TupleGetItem(%0, 0)
+ * %2 = TupleGetItem(%0, 1)
+ * %3 = MakeTuple(%1, %2, 16)
+ * %4 = other_op(%3)
+ */
+class FoldSameValue : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override;
+
+ protected:
+  bool Check(const AnfNodePtr &a, const AnfNodePtr &b) const;
+};
 }  // namespace irpass
 }  // namespace opt
 }  // namespace mindspore
