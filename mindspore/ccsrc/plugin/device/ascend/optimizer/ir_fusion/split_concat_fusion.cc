@@ -33,7 +33,7 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CNodePtr &node) {
   std::vector<std::string> outputs_format;
   std::vector<TypeId> inputs_type;
   std::vector<TypeId> outputs_type;
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder fusion_node_builder;
 
   size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
   for (size_t input_index = 0; input_index < input_num; ++input_index) {
@@ -45,11 +45,11 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CNodePtr &node) {
     outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, output_index));
     outputs_format.push_back(kOpFormat_DEFAULT);
   }
-  builder.SetInputsDeviceType(inputs_type);
-  builder.SetInputsFormat(inputs_format);
-  builder.SetOutputsDeviceType(outputs_type);
-  builder.SetOutputsFormat(outputs_format);
-  return builder.Build();
+  fusion_node_builder.SetInputsDeviceType(inputs_type);
+  fusion_node_builder.SetInputsFormat(inputs_format);
+  fusion_node_builder.SetOutputsDeviceType(outputs_type);
+  fusion_node_builder.SetOutputsFormat(outputs_format);
+  return fusion_node_builder.Build();
 }
 
 bool IsConstant(const BaseRef &n) {
@@ -92,7 +92,11 @@ const AnfNodePtr SplitConcatFusion::Process(const FuncGraphPtr &graph, const Anf
   auto split_axis = GetValue<int64_t>(GetValueNode(utils::cast<AnfNodePtr>((*equiv)[split_axis_])));
   auto concat_axis = GetValue<int64_t>(GetValueNode(utils::cast<AnfNodePtr>((*equiv)[concat_axis_])));
   auto output_num = GetValue<int64_t>(GetValueNode(utils::cast<AnfNodePtr>((*equiv)[output_num_])));
-  if (split_axis != 0 || concat_axis != 1 || output_num != global_rank_size_ || shape.size() != 2 || shape[0] != -1) {
+  constexpr size_t expected_shape_size = 2;
+  constexpr int64_t dynamic_shape = -1;
+
+  if (split_axis != 0 || concat_axis != 1 || output_num != global_rank_size_ || shape.size() != expected_shape_size ||
+      shape[0] != dynamic_shape) {
     MS_LOG(INFO) << "split_axis: " << split_axis << " concat_axis: " << concat_axis << " output_num:" << output_num
                  << " shape:" << shape << " is unexpected.";
     return nullptr;
