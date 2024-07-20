@@ -412,9 +412,16 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
     general_input_obj_type_func();
     output_obj_type->push_back(KernelObjectType::SCALAR);
   } else {
-    // For other ops, set TENSOR as output object type by default.
+    // For other ops, get output object type from abstract.
     general_input_obj_type_func();
-    output_obj_type->push_back(KernelObjectType::TENSOR);
+    if (cnode->abstract() == nullptr) {
+      output_obj_type->push_back(KernelObjectType::TENSOR);
+    } else {
+      for (size_t i = 0; i < AnfUtils::GetOutputTensorNum(cnode); ++i) {
+        auto object_type = kernel::TypeIdToKernelObjectType(AnfAlgo::GetOutputObjectType(cnode, i));
+        output_obj_type->push_back(object_type);
+      }
+    }
   }
 
   MS_LOG(DEBUG) << "Generate input and output object types for new node " << cnode->fullname_with_scope() << " "

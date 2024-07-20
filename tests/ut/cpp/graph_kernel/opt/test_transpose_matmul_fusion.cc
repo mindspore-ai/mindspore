@@ -16,14 +16,14 @@
 #include <vector>
 #include <string>
 
-#include "common/common_test.h"
+#include "graph_kernel/common/graph_kernel_common_test_suite.h"
 #include "abstract/abstract_value.h"
 #include "include/common/utils/utils.h"
-#include "backend/graph_optimizer_test_framework.h"
+#include "common/graph_optimizer_test_framework.h"
 #include "pre_activate/common/pattern_to_pattern_pass_utils.h"
 #include "backend/common/graph_kernel/transpose_matmul_fusion.h"
 
-namespace mindspore {
+namespace mindspore::graphkernel::test {
 struct TestParams {
   std::string op_name;
   ShapeVector shape_a;
@@ -34,7 +34,7 @@ struct TestParams {
   bool input_a_transpose;
   bool input_b_transpose;
 };
-class TestTransposeMatMulFusion : public UT::Common, public testing::WithParamInterface<TestParams> {
+class TestTransposeMatMulFusion : public GraphKernelCommonTestSuite, public testing::WithParamInterface<TestParams> {
  public:
   TestTransposeMatMulFusion() {}
 };
@@ -43,28 +43,23 @@ TEST_P(TestTransposeMatMulFusion, test_transpose_matmul_fusion) {
   // get params
   const auto &param = GetParam();
   // construct graph, set abstract and kernel info.
-  test::ConstructGraph c;
-  auto x1 = c.NewTensorInput("x1", kFloat16, param.shape_a);
-  auto x2 = c.NewTensorInput("x2", kFloat16, param.shape_b);
+  ConstructGraph c;
+  AnfNodePtr x1 = c.NewTensorInput("x1", kFloat16, param.shape_a);
+  AnfNodePtr x2 = c.NewTensorInput("x2", kFloat16, param.shape_b);
   auto x3 = c.NewValueNode(MakeValue<bool>(param.ori_trans_a));
   auto x4 = c.NewValueNode(MakeValue<bool>(param.ori_trans_b));
   auto perm = c.NewValueNode(MakeValue(param.perm));
-  AnfNodePtr new_x1 = x1;
-  AnfNodePtr new_x2 = x2;
   if (param.input_a_transpose) {
-    new_x1 = c.NewCNode("Transpose", {x1, perm}, {});
-    c.SetGeneralBuildInfo(new_x1);
+    x1 = c.NewCNodeWithBuildInfo("Transpose", {x1, perm}, {});
   }
   if (param.input_b_transpose) {
-    new_x2 = c.NewCNode("Transpose", {x2, perm}, {});
-    c.SetGeneralBuildInfo(new_x2);
+    x2 = c.NewCNodeWithBuildInfo("Transpose", {x2, perm}, {});
   }
-  auto matmul = c.NewCNode(param.op_name, {new_x1, new_x2, x3, x4}, {});
-  c.SetGeneralBuildInfo(matmul);
+  auto matmul = c.NewCNodeWithBuildInfo(param.op_name, {x1, x2, x3, x4}, {});
   c.SetOutput(matmul);
 
   // run pass for ir transformation
-  test::RunPass(c.GetGraph(), {std::make_shared<graphkernel::TransposeMatmulFusion>()});
+  RunPass(c.GetGraph(), {std::make_shared<TransposeMatmulFusion>()});
   opt::CheckPattern checker;
   checker.src_pattern_.AddVar("x1").AddVar("x2").AddVar("trans_a").AddVar("trans_b").AddCNode(
     param.op_name, {std::make_shared<Primitive>(param.op_name), "x1", "x2", "trans_a", "trans_b"});
@@ -89,4 +84,4 @@ INSTANTIATE_TEST_CASE_P(
                   TestParams{"BatchMatMul", {4, 128, 256}, {1, 512, 256}, {0, 2, 1}, false, false, false, true},
                   TestParams{
                     "BatchMatMul", {3, 4, 128, 256}, {1, 4, 512, 256}, {0, 1, 3, 2}, false, false, false, true}));
-}  // namespace mindspore
+}  // namespace mindspore::graphkernel::test

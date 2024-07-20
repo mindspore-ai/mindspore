@@ -32,11 +32,20 @@ constexpr auto kGraphKernelDumpPath = "graph_kernel_dump";
 constexpr auto kAllTarget = "ALL";
 constexpr auto kOutputsFormat = "outputs_format";
 constexpr auto kAttrToPrim = "to_prim";
+constexpr auto kAttrExpandFrom = "expand_from";
 
 using OpWithLevel = std::tuple<std::string, unsigned int, PrimitivePtr>;
 
 class GkUtils {
  public:
+  /**
+   * @brief Get symbolic shape of node's output[i].
+   * @param[in] node The node
+   * @param[in] i Output index
+   * @return node output[i]'s symbolic shape
+   */
+  static ListSymbolPtr GetOutputSymbolicShape(const AnfNodePtr &node, size_t i);
+
   /**
    * @brief Extract kernel name from nodes, only the real kernel CNode is processed.
    * @param[in] nodes The node list

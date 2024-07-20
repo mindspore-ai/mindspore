@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/graph_optimizer_test_framework.h"
+#include "common/graph_optimizer_test_framework.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -109,6 +109,13 @@ CNodePtr ConstructGraph::NewCNode(const std::string &prim_name, const std::vecto
   return cnode;
 }
 
+CNodePtr ConstructGraph::NewCNodeWithBuildInfo(const std::string &prim_name, const std::vector<AnfNodePtr> &inputs,
+                                               const mindspore::HashMap<std::string, ValuePtr> &attrs) {
+  auto cnode = NewCNode(prim_name, inputs, attrs);
+  SetGeneralBuildInfo(cnode);
+  return cnode;
+}
+
 void ConstructGraph::SetGeneralBuildInfo(const AnfNodePtr &node) {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder info_builder;
   auto cnode = node->cast<CNodePtr>();
@@ -126,7 +133,7 @@ void ConstructGraph::SetGeneralBuildInfo(const AnfNodePtr &node) {
   info_builder.SetOutputsFormat(std::vector<std::string>(output_num, "DefaultFormat"));
   std::vector<TypeId> output_types(output_num);
   for (size_t i = 0; i < output_types.size(); i++) {
-    input_types[i] = common::AnfAlgo::GetOutputInferDataType(node, i);
+    output_types[i] = common::AnfAlgo::GetOutputInferDataType(node, i);
   }
   info_builder.SetOutputsDeviceType(output_types);
   info_builder.SetOutputsKernelObjectType(
