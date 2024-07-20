@@ -175,6 +175,9 @@ void ClearCNodeAbstract(const FuncGraphPtr &func_graph) {
       auto is_load = primitive->GetAttr("is_load");
       if (abstract::GetPrimEvaluator(primitive, nullptr) == nullptr && is_load != nullptr && GetValue<bool>(is_load)) {
         MS_LOG(INFO) << "The primitive is not defined in front end. Primitive: " << primitive->ToString();
+        if (node->abstract() != nullptr) {
+          node->set_abstract(node->abstract()->Broaden());
+        }
         continue;
       }
     }
