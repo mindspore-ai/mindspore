@@ -179,6 +179,19 @@ def test_input_shape_for_ascend(model_path, input_shape_str):
     model.build_from_file(model_path, mslite.ModelType.MINDIR, context)
     input_shape_config = model.get_model_info("input_shape")
 
+def test_model_group_weight_workspace_for_ascend(model_path, in_data_path, input_shapes):
+    # init model group context
+    model_group_context = mslite.Context()
+    model_group_context.target = ["ascend"]
+    model_group_context.ascend.device_id = 0
+    # init model group
+    model_group = mslite.ModelGroup(mslite.ModelGroupFlag.SHARE_WEIGHT_WORKSPACE)
+    model_group.add_model([model_path, model_path])  # test model group api for same model file.
+    model_group.cal_max_size_of_workspace(mslite.ModelType.MINDIR, model_group_context)
+    # use model one for inference
+    test_model_inference_ascend(model_file, in_data_file_list, shapes)
+
+
 if __name__ == '__main__':
     model_file = sys.argv[1]
     in_data_file = sys.argv[2]
@@ -216,6 +229,8 @@ if __name__ == '__main__':
     elif backend == "Ascend_Model_Group":
         test_model_group_for_ascend(model_file, in_data_file_list, shapes)
         print("run model model group for ascend success.")
+        test_model_group_weight_workspace_for_ascend(model_file, in_data_file_list, shapes)
+        print("run model group weight and workspace for ascend success.")
     else:
         raise RuntimeError('not support backend!')
     print("run success.")
