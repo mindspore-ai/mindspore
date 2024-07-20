@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_ADJUST_MATMUL_PASS_H
-#define MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_ADJUST_MATMUL_PASS_H
+#ifndef MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ADJUST_QUANT_MATMUL_H
+#define MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ADJUST_QUANT_MATMUL_H
 
 #include "include/backend/optimizer/pass.h"
 
 namespace mindspore {
 namespace opt {
-class AdjustMatmulPass : public Pass {
+class AdjustQuantMatmulPass : public Pass {
  public:
-  AdjustMatmulPass() : Pass("AdjustMatmulPass") {}
-  ~AdjustMatmulPass() override = default;
+  AdjustQuantMatmulPass() : Pass("AdjustQuantMatmulPass") {}
+  ~AdjustQuantMatmulPass() override = default;
   bool Run(const FuncGraphPtr &func_graph) override;
 };
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_FUSION_ADJUST_MATMUL_PASS_H
+#endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ADJUST_QUANT_MATMUL_H

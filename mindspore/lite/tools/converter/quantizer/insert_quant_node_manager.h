@@ -60,6 +60,8 @@ class InsertQuantNodeManager {
 
   int InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
+  int InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index);
+
   int InsertAscendDeQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
 
   int InsertAscendAntiQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index,
@@ -75,8 +77,6 @@ class InsertQuantNodeManager {
   CNodePtr NewAddNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_1, const AnfNodePtr &input_2);
 
  private:
-  int InsertAscendQuantNode(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t input_index);
-
   int CheckDataType(const AnfNodePtr &input_node, TypeId check_type_id) const;
 
   int NewDynamicQuantNode(const FuncGraphPtr &graph, const CNodePtr &cnode, bool activation_channel = false);

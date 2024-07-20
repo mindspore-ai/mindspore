@@ -20,6 +20,7 @@
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include <string>
 #include <memory>
+#include <vector>
 #include <utility>
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 
@@ -34,6 +35,15 @@ class OnnxQuantizeLinearParser : public OnnxNodeParser {
 
  private:
   tensor::TensorPtr GetConstData(const onnx::GraphProto &onnx_graph, const std::string &input_name);
+
+  template <typename T>
+  std::vector<T> GetConstTData(const onnx::GraphProto &onnx_graph, const std::string &input_name);
+
+  bool SetScaleAttr(const onnx::GraphProto &onnx_graph, const string &onnx_quantize_scale,
+                    const std::unique_ptr<QuantizeLinear> &prim);
+
+  bool SetZeroPointAttr(const onnx::GraphProto &onnx_graph, const string &onnx_quantize_zero_point,
+                        const std::unique_ptr<QuantizeLinear> &prim);
 };
 }  // namespace lite
 }  // namespace mindspore
