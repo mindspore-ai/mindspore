@@ -686,6 +686,8 @@ class ModelGroupFlag(Enum):
     2. `ModelGroupFlag.SHARE_WORKSPACE`, multiple models share weights(including constatns and variables) memory.
     Currently only supported in cloud side Ascend inference and the provider is GE.
 
+    3. 'ModelGroupFlag.SHARE_WEIGHT_WORKSPACE', shared weight memory and workspace memory.
+
     Examples:
         >>> import mindspore_lite as mslite
         >>> context = mslite.Context()
@@ -714,7 +716,8 @@ model_group_flag_py_cxx_map = {
 class ModelGroup:
     """
     The `ModelGroup` class is used to define a MindSpore model group,
-    facilitating multiple models to share workspace memory or weights(including constants and variables) memory.
+    facilitating multiple models to share workspace memory or weights
+    (including constants and variables) memory or both.
 
     Args:
        flags (ModelGroupFlag, optional): Indicates the type of the model group.
