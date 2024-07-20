@@ -100,16 +100,19 @@ class COMMON_EXPORT SymbolEngineImpl : public SymbolEngine {
   bool HasAbstractAny(const AbstractBasePtrList &inputs, const AbstractBasePtr &output);
   bool GeneralizeParamShape(const AnfNodePtr &param, const AbstractBasePtr &input_abs);
   bool GeneralizeParamValue(const AnfNodePtr &param, const AbstractBasePtr &input_abs);
+  void CleanBuildingTmp();
+  void GetAllNodes(const FuncGraphPtr &func_graph);
+  const AnfNodePtrList &GetCNodesOfFuncGraph(const FuncGraphPtr &fg) { return fg_cnodes_[fg.get()]; }
 
   std::string name_;
-  AnfNodePtrList cnodes_;
   OpPtrList ops_;
   std::unique_ptr<OperationEmitter> emitter_;
   bool support_infer_{true};
+  std::mutex infer_mutex_;
   std::map<AnfNodePtr, DependStatus> depend_status_map_;
   std::map<FuncGraph *, size_t> visited_graph_;
   std::map<AnfNodePtr, std::shared_ptr<SpecialCNodeHelper>> special_cnodes_;
-  std::mutex infer_mutex_;
+  std::map<FuncGraph *, AnfNodePtrList> fg_cnodes_;
   std::set<AnfNodePtr> generalized_shape_;
   std::set<AnfNodePtr> generalized_value_;
 };
