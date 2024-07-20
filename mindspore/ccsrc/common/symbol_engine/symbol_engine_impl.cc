@@ -31,32 +31,6 @@
 
 namespace mindspore {
 namespace symshape {
-AnfNodePtrList GetCNodesOfFuncGraph(const FuncGraphPtr &fg) {
-  bool has_node_in_other_graph = false;
-  auto nodes = TopoSort(fg->output(), SuccDeeperSimple, [&has_node_in_other_graph, &fg](const AnfNodePtr &node) {
-    if (!node->isa<CNode>()) {
-      if (GetValuePtr<FuncGraph>(node) != nullptr) {
-        // some nodes of this graph can be linked in other graph.
-        has_node_in_other_graph = true;
-        return FOLLOW;
-      }
-      return EXCLUDE;
-    }
-    if (node->func_graph() != fg) {
-      has_node_in_other_graph = true;
-    }
-    return FOLLOW;
-  });
-  // at frontend, a node may directly links to other node in other graph.
-  if (has_node_in_other_graph) {
-    (void)nodes.erase(
-      std::remove_if(nodes.begin(), nodes.end(),
-                     [&fg](const AnfNodePtr &node) { return !node->isa<CNode>() || node->func_graph() != fg; }),
-      nodes.end());
-  }
-  return nodes;
-}
-
 std::pair<FuncGraphPtr, size_t> GetFuncGraphFromCNode(const CNodePtr &cnode) {
   auto sub_fg = GetCNodeFuncGraph(cnode);
   size_t begin_index = kIndex1;
@@ -177,13 +151,26 @@ class JFuncCaller : public SpecialCNodeHelper {
 };
 
 SymbolEngineImplPtr SymbolEngineImpl::Build(const FuncGraphPtr &func_graph) {
-  if (func_graph->symbol_engine() != nullptr) {
-    CleanSymbols(func_graph);
+  MS_EXCEPTION_IF_NULL(func_graph);
+  SymbolEngineImplPtr engine = nullptr;
+  try {
+    MS_LOG_TRY_CATCH_SCOPE;
+    if (func_graph->symbol_engine() != nullptr) {
+      CleanSymbols(func_graph);
+    }
+    engine = std::make_shared<SymbolEngineImpl>(func_graph);
+    func_graph->set_symbol_engine(engine);
+    engine->PreBuild();
+    engine->BuildImpl();
+    MS_LOG(INFO) << "Build symbol engine for func_graph [" << func_graph->ToString() << "]successfully.";
+  } catch (std::exception &e) {
+    if (engine != nullptr) {
+      engine->CleanBuildingTmp();
+    }
+    MS_LOG(WARNING) << "A problem occurs when building symbol engine for func_graph [" << func_graph->ToString()
+                    << "]: " << e.what();
+    return nullptr;
   }
-  auto engine = std::make_shared<SymbolEngineImpl>(func_graph);
-  func_graph->set_symbol_engine(engine);
-  engine->PreBuild();
-  engine->BuildImpl();
   return engine;
 }
 
@@ -223,10 +210,10 @@ void SymbolEngineImpl::BuildNodesSymbol(const FuncGraphPtr &fg, const AnfNodePtr
 void SymbolEngineImpl::PreBuild() {
   auto func_graph = func_graph_.lock();
   MS_EXCEPTION_IF_NULL(func_graph);
-  cnodes_ = GetCNodesOfFuncGraph(func_graph);
-  visited_graph_[func_graph.get()] = 1;
-  PreBuildQueryDependStatus(cnodes_);
   visited_graph_.clear();
+  visited_graph_[func_graph.get()] = 1;
+  GetAllNodes(func_graph);
+  PreBuildQueryDependStatus(GetCNodesOfFuncGraph(func_graph));
 }
 
 void SymbolEngineImpl::BuildImpl() {
@@ -234,12 +221,18 @@ void SymbolEngineImpl::BuildImpl() {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_LOG(DEBUG) << "Build " << ToString() << " with graph " << func_graph->ToString();
   emitter_ = std::make_unique<OperationEmitter>(&ops_);
+  visited_graph_.clear();
   visited_graph_[func_graph.get()] = 1;
-  BuildNodesSymbol(func_graph, cnodes_);
+  BuildNodesSymbol(func_graph, GetCNodesOfFuncGraph(func_graph));
+  CleanBuildingTmp();
+}
+
+void SymbolEngineImpl::CleanBuildingTmp() {
   emitter_->Clean();
   visited_graph_.clear();
   generalized_shape_.clear();
   generalized_value_.clear();
+  fg_cnodes_.clear();
 }
 
 void SymbolEngineImpl::PreBuildSpecialNode(const CNodePtr &cnode) {
@@ -685,6 +678,15 @@ std::string SymbolEngineImpl::DumpText() const {
   }
   oss << "}\n";
   return oss.str();
+}
+
+void SymbolEngineImpl::GetAllNodes(const FuncGraphPtr &func_graph) {
+  auto nodes = TopoSort(func_graph->output(), SuccDeeperSimple, AlwaysInclude);
+  for (auto &node : nodes) {
+    if (node->isa<CNode>() && !IsPrimitiveCNode(node, prim::kPrimReturn) && node->func_graph() != nullptr) {
+      (void)fg_cnodes_[node->func_graph().get()].emplace_back(node);
+    }
+  }
 }
 
 AbstractBasePtr CloneAbstractIfSymbolExists(const AbstractBasePtr &abs) {

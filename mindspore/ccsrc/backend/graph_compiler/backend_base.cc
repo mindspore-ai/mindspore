@@ -459,9 +459,6 @@ bool EnableSymbolEngine(const FuncGraphPtr &func_graph, device::RunMode run_mode
   if (run_mode != device::RunMode::kKernelMode) {
     return false;
   }
-  if (common::GetEnv("MS_SYMBOL_ENGINE_OPTIMIZE") == "off") {
-    return false;
-  }
   if (!graphkernel::GraphKernelFlags::GetInstance().IsEnableGraphKernel()) {
     return false;
   }
@@ -472,18 +469,12 @@ void BuildSymbolEngine(const FuncGraphPtr &func_graph, device::RunMode run_mode)
   if (func_graph == nullptr) {
     return;
   }
-  MS_LOG(INFO) << "Status record: start build symbol engine for function graph: " << func_graph->ToString();
   if (!EnableSymbolEngine(func_graph, run_mode)) {
     MS_LOG(INFO) << "Status record: skip build symbol engine for function graph: " << func_graph->ToString();
     return;
   }
-  try {
-    MS_LOG_TRY_CATCH_SCOPE;
-    symshape::SymbolEngineImpl::Build(func_graph);
-  } catch (std::exception &e) {
-    MS_LOG(WARNING) << "A problem occurs when build symbol engine for function graph[" << func_graph->ToString()
-                    << "]: " << e.what();
-  }
+  MS_LOG(INFO) << "Status record: start build symbol engine for function graph: " << func_graph->ToString();
+  (void)symshape::SymbolEngineImpl::Build(func_graph);
   MS_LOG(INFO) << "Status record: end build symbol engine for function graph: " << func_graph->ToString();
 }
 }  // namespace
