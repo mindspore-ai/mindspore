@@ -12,3 +12,5 @@ hsigmoid_grad:
         name: HSigmoidGrad
     function:
         disable: True
+    dispatch:
+        enable: True

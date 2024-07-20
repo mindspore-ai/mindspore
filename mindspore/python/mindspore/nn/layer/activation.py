@@ -1171,7 +1171,12 @@ class HSwish(Cell):
     Hard swish is defined as:
 
     .. math::
-        \text{hswish}(x_{i}) = x_{i} * \frac{ReLU6(x_{i} + 3)}{6},
+        \text{Hardswish}(input) =
+        \begin{cases}
+        0, & \text{ if } x ≤ -3, \\
+        input, & \text{ if } x ≥ +3, \\
+        input·(input + 3)/6, & \text{ otherwise }
+        \end{cases}
 
     HSwish Activation Function Graph:
 
@@ -1179,14 +1184,17 @@ class HSwish(Cell):
         :align: center
 
     Inputs:
-        - **x** (Tensor) - The input of HSwish, data type must be float16 or float32.
-          The shape is :math:`(N,*)` where :math:`*` means, any number of additional dimensions.
+        - **input** (Tensor) - The input of HSwish. Supported dtypes:
+
+          - Ascend: float16, float32, bfloat16.
+          - CPU/GPU: int8, int16, int32, int64, float16, float32, float64.
 
     Outputs:
-        Tensor, with the same type and shape as the `x`.
+        Tensor, with the same type and shape as the `input`.
 
     Raises:
-        TypeError: If dtype of `x` is neither float16 nor float32.
+        TypeError: If `input` is not a tensor.
+        TypeError: If `input` is neither int nor float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1195,9 +1203,9 @@ class HSwish(Cell):
         >>> import mindspore
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> input = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hswish = nn.HSwish()
-        >>> result = hswish(x)
+        >>> result = hswish(input)
         >>> print(result)
         [-0.3333 -0.3333  0.      1.667   0.6665]
     """
@@ -1207,8 +1215,8 @@ class HSwish(Cell):
         super(HSwish, self).__init__()
         self.hswish = P.HSwish()
 
-    def construct(self, x):
-        return self.hswish(x)
+    def construct(self, input):
+        return self.hswish(input)
 
 
 class HSigmoid(Cell):
@@ -1218,7 +1226,12 @@ class HSigmoid(Cell):
     Hard sigmoid is defined as:
 
     .. math::
-        \text{hsigmoid}(x_{i}) = \max(0, \min(1, \frac{x_{i} + 3}{6})),
+        \text{Hardsigmoid}(input) =
+        \begin{cases}
+        0, & \text{ if } input ≤ -3, \\
+        1, & \text{ if } input ≥ +3, \\
+        input/6 + 1/2, & \text{ otherwise }
+        \end{cases}
 
     HSigmoid Activation Function Graph:
 
@@ -1226,13 +1239,17 @@ class HSigmoid(Cell):
         :align: center
 
     Inputs:
-        - **input_x** (Tensor) - The input of HSigmoid. Tensor of any dimension.
+        - **input** (Tensor) - The input of HSigmoid. Supported dtypes:
+
+          - Ascend: int32, float16, float32, bfloat16.
+          - CPU/GPU: int8, int16, int32, int64, float16, float32, float64.
 
     Outputs:
-        Tensor, with the same type and shape as the `input_x`.
+        Tensor, with the same type and shape as the `input`.
 
     Raises:
-        TypeError: If `input_x` is not a Tensor.
+        TypeError: If `input` is not a Tensor.
+        TypeError: If `input` is neither int nor float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1241,9 +1258,9 @@ class HSigmoid(Cell):
         >>> import mindspore
         >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> input = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
         >>> hsigmoid = nn.HSigmoid()
-        >>> result = hsigmoid(x)
+        >>> result = hsigmoid(input)
         >>> print(result)
         [0.3333 0.1666 0.5    0.8335 0.6665]
     """
@@ -1253,8 +1270,8 @@ class HSigmoid(Cell):
         super(HSigmoid, self).__init__()
         self.hsigmoid = P.HSigmoid()
 
-    def construct(self, input_x):
-        return self.hsigmoid(input_x)
+    def construct(self, input):
+        return self.hsigmoid(input)
 
 
 class LogSigmoid(Cell):

@@ -1,7 +1,7 @@
 #operator hsigmoid
 hsigmoid:
     args:
-        input_x:
+        input:
             dtype: tensor
     returns:
         output: 
@@ -9,4 +9,6 @@ hsigmoid:
     class:
         name: HSigmoid
     function:
-        disable: True
+        name: hardsigmoid
+    dispatch:
+        enable: True

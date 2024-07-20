@@ -223,6 +223,10 @@ from mindspore.ops.function.math_func import tanh
 from mindspore.ops.function import binary_cross_entropy_with_logits as bce_with_logits
 # 220
 from mindspore.ops.function.nn_func import hardshrink # pylint: disable=W0611
+# 221
+from mindspore.ops.function.nn_func import hardsigmoid  # pylint: disable=W0611
+# 222
+from mindspore.ops.function.nn_func import hardswish  # pylint: disable=W0611
 # 238
 from mindspore.ops.extend import l1_loss_ext as l1_loss # pylint: disable=W0611
 # 323

@@ -5,10 +5,17 @@ hswish:
         Refer to :func:`mindspore.ops.hardswish` for more details.
 
         Inputs:
-            - **input_x** (Tensor) - The input Tensor.
+            - **input** (Tensor) - The input Tensor.Supported dtypes:
+
+              - Ascend: float16, float32, bfloat16.
+              - CPU/GPU: int8, int16, int32, int64, float16, float32, float64.
 
         Outputs:
-            Tensor, with the same type and shape as the `input_x`.
+            Tensor, with the same type and shape as the `input`.
+
+        Raises:
+            TypeError: If `input` is not a Tensor.
+            TypeError: If `input` is neither int nor float.
 
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
@@ -18,7 +25,7 @@ hswish:
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
             >>> hswish = ops.HSwish()
-            >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-            >>> result = hswish(input_x)
+            >>> input = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+            >>> result = hswish(input)
             >>> print(result)
-            [-0.3333  -0.3333  0  1.666  0.6665]
+            [-0.3333  -0.3333  0  1.667  0.6665]

@@ -15,6 +15,7 @@
  */
 
 #include "ops/ops_func_impl/hsigmoid_grad.h"
+#include "ops/ops_func_impl/simple_infer.h"
 #include "ops/op_utils.h"
 
 namespace mindspore {
@@ -28,5 +29,16 @@ TypePtr HSigmoidGradFuncImpl::InferType(const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) const {
   return EltwiseGradInferType(primitive, input_args);
 }
+
+ShapeArray HSigmoidGradFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return EltwiseGradSimpleInferShape(primitive, input_values);
+}
+
+TypePtrList HSigmoidGradFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  return EltwiseGradSimpleInferType(primitive, input_values);
+}
+
+REGISTER_SIMPLE_INFER(kNameHSigmoidGrad, HSigmoidGradFuncImpl)
+
 }  // namespace ops
 }  // namespace mindspore

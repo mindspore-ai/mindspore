@@ -26,6 +26,7 @@
 #include "ops/test_ops_dyn_cases.h"
 #include "ops/ops_func_impl/hsigmoid_grad.h"
 #include "ops/test_value_utils.h"
+#include "ops/test_ops_cmp_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -56,8 +57,15 @@ namespace {
 auto HSigmoidGradOpTypeCases = testing::ValuesIn({
   EltwiseGradOpTypeParams{kFloat16, kFloat16, kFloat16},
   EltwiseGradOpTypeParams{kFloat32, kFloat32, kFloat32},
+  EltwiseGradOpTypeParams{kBFloat16, kBFloat16, kBFloat16},
 });
 }
+
+OP_FUNC_IMPL_SIMPLEINFER_TEST_DECLARE(HSigmoidGrad, MultiInputOpParams);
+OP_FUNC_IMPL_SIMPLEINFER_TEST_CASES(
+  HSigmoidGrad, testing::Values(MultiInputOpParams{{{2, 3}, {2, 3}}, {kFloat16, kFloat16}, {{2, 3}}, {kFloat16}, {}},
+                                MultiInputOpParams{{{2, 3}, {2, 3}}, {kFloat32, kFloat32}, {{2, 3}}, {kFloat32}, {}},
+                                MultiInputOpParams{{{2, 3}, {2, 3}}, {kBFloat16, kBFloat16}, {{2, 3}}, {kBFloat16}, {}}));
 
 INSTANTIATE_TEST_CASE_P(TestHSigmoidGrad, TestHSigmoidGrad,
                         testing::Combine(EltwiseGradDynShapeTestCases, HSigmoidGradOpTypeCases));
