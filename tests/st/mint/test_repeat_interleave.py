@@ -16,8 +16,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor
-from mindspore import ops
-from mindspore.ops.function.array_func import repeat_interleave_ext as repeat_interleave
+from mindspore import ops, mint
 from mindspore import jit, JitConfig
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
@@ -45,7 +44,7 @@ def generate_expect_backward_output(input_tensor, repeats, dim):
 
 @test_utils.run_with_cell
 def repeat_interleave_forward(input_tensor, repeats, dim, output_size=None):
-    return repeat_interleave(input_tensor, repeats, dim, output_size)
+    return mint.repeat_interleave(input_tensor, repeats, dim, output_size)
 
 @test_utils.run_with_cell
 def repeat_interleave_backward(input_tensor, repeats, dim, output_size=None):
@@ -53,12 +52,11 @@ def repeat_interleave_backward(input_tensor, repeats, dim, output_size=None):
     return input_grad
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dim', [0, None])
-def test_repeat_interleave_forward_int(mode, dim):
+def test_repeat_interleave_forward_backward_int(mode, dim):
     """
     Feature: mint.repeat_interleave
     Description: Verify the result of mint.repeat_interleave when `repeats` is integer
@@ -74,18 +72,6 @@ def test_repeat_interleave_forward_int(mode, dim):
         output = (jit(repeat_interleave_forward, jit_config=JitConfig(jit_level="O0")))(Tensor(x), repeats, dim)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
-@pytest.mark.parametrize('dim', [0, None])
-def test_repeat_interleave_backward_int(mode, dim):
-    """
-    Feature: mint.repeat_interleave
-    Description: Verify the result of back propagation for mint.repeat_interleave when `repeats` is integer
-    Expectation: success
-    """
     x = generate_random_input((5, 3), np.float32)
     repeats = 2
     expect = generate_expect_backward_output(x, repeats, dim)
@@ -97,12 +83,11 @@ def test_repeat_interleave_backward_int(mode, dim):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dim', [None, 1])
-def test_repeat_interleave_forward_tensor(mode, dim):
+def test_repeat_interleave_forward_backward_tensor(mode, dim):
     """
     Feature: mint.repeat_interleave
     Description: Verify the result of mint.repeat_interleave when `repeats` is tensor
@@ -124,17 +109,6 @@ def test_repeat_interleave_forward_tensor(mode, dim):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
     np.testing.assert_allclose(output2.asnumpy(), expect, rtol=1e-3)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
-@pytest.mark.parametrize('dim', [None, 1])
-def test_repeat_interleave_backward_tensor(mode, dim):
-    """
-    Feature: mint.repeat_interleave
-    Description: Verify the result of back propagation for mint.repeat_interleave when `repeats` is tensor
-    Expectation: success
-    """
     x = generate_random_input((2, 4), np.float32)
     if dim is None:
         repeats = np.random.randint(10, size=8).tolist()
@@ -180,8 +154,7 @@ def test_repeat_interleave_bfloat16(mode, dim):
 
 @pytest.mark.level0
 @pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_arm_ascend910b_training
 def test_repeat_interleave_dynamic_shape_int():
     """
     Feature: Test dynamic shape.

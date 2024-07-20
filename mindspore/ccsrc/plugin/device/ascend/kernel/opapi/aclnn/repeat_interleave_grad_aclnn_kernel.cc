@@ -33,7 +33,12 @@ bool RepeatInterleaveGradAscend::Launch(const std::vector<KernelTensor *> &input
                                         const std::vector<KernelTensor *> &workspace,
                                         const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], inputs[kIndex1], dim_, outputs[kIndex0]));
+  auto repeats = inputs[kIndex1];
+  auto repeats_shape = repeats->GetShapeVector();
+  if (repeats_shape.empty()) {
+    repeats->SetShapeVector(ShapeVector{1});
+  }
+  ParseGenExecutor(GEN_EXECUTOR_BOOST(op_type_, hash_id_, inputs[kIndex0], repeats, dim_, outputs[kIndex0]));
   RunOp(stream_ptr, workspace);
   return true;
 }

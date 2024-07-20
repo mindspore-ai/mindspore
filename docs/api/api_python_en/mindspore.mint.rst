@@ -166,6 +166,7 @@ Other Operations
     mindspore.mint.broadcast_to
     mindspore.mint.cumsum
     mindspore.mint.flip
+    mindspore.mint.repeat_interleave
     mindspore.mint.searchsorted
 
 mindspore.mint.nn

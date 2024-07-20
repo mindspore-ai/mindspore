@@ -51,6 +51,9 @@ bool check_repeats_dim(const PrimitivePtr &primitive, const ShapeVector &input_s
       return true;
     }
   }
+  if (repeats.empty()) {
+    return true;
+  }
   return false;
 }
 
@@ -61,6 +64,9 @@ inline ShapeVector GetInferredShape(const ShapeVector &input_shape, const ShapeV
     std::accumulate(input_shape.begin(), input_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   int64_t repeats_numel = SizeToLong(repeats.size());
   int64_t repeats_sum = 0;
+  if (repeats.empty()) {
+    repeats_sum = -1;
+  }
   for (size_t i = 0; i < repeats.size(); ++i) {
     if (repeats[i] == -1) {
       repeats_sum = -1;
@@ -118,6 +124,12 @@ ShapeVector GetNewRepeats(const PrimitivePtr &primitive, const ArrayValue<T> rep
 
 BaseShapePtr RepeatInterleaveTensorFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                         const std::vector<AbstractBasePtr> &input_args) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->ascend_soc_version() == kAscendVersion910) {
+    MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', Only support on Atlas A2 training series.";
+  }
+
   auto x_base_shape = input_args[kInputIndex0]->GetShape();
   auto x_shape = x_base_shape->GetShapeVector();
   auto repeats_base_shape = input_args[kInputIndex1]->GetShape();
@@ -142,20 +154,17 @@ BaseShapePtr RepeatInterleaveTensorFuncImpl::InferShape(const PrimitivePtr &prim
   ShapeVector repeats;
   if (repeats_type == kNumberTypeInt32) {
     auto repeats_opt = GetArrayValue<int32_t>(input_args[kInputIndex1]);
-    if (!repeats_opt.has_value()) {
-      return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
+    if (repeats_opt.has_value()) {
+      auto repeats_values = repeats_opt.value();
+      repeats = GetNewRepeats<int32_t>(primitive, repeats_values);
     }
 
-    auto repeats_values = repeats_opt.value();
-    repeats = GetNewRepeats<int32_t>(primitive, repeats_values);
   } else {
     auto repeats_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
-    if (!repeats_opt.has_value()) {
-      return std::make_shared<abstract::TensorShape>(ShapeVector{abstract::TensorShape::kShapeRankAny});
+    if (repeats_opt.has_value()) {
+      auto repeats_values = repeats_opt.value();
+      repeats = GetNewRepeats<int64_t>(primitive, repeats_values);
     }
-
-    auto repeats_values = repeats_opt.value();
-    repeats = GetNewRepeats<int64_t>(primitive, repeats_values);
   }
 
   auto dim = input_args[kInputIndex2]->GetValue();
@@ -175,6 +184,12 @@ TypePtr RepeatInterleaveTensorFuncImpl::InferType(const PrimitivePtr &primitive,
 
 ShapeArray RepeatInterleaveTensorFuncImpl::InferShape(const PrimitivePtr &primitive,
                                                       const ValuePtrList &input_values) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->ascend_soc_version() == kAscendVersion910) {
+    MS_EXCEPTION(RuntimeError) << "For '" << primitive->name() << "', Only support on Atlas A2 training series.";
+  }
+
   const auto &x_tensor = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
   const auto x_shape = x_tensor->shape();

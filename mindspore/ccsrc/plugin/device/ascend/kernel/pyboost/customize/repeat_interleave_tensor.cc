@@ -50,14 +50,24 @@ tensor::BaseTensorPtr RepeatInterleaveTensorAscendCustomize(const std::shared_pt
         int64_t dim_imm = GetValue<int64_t>(*dim);
         auto rank = SizeToLong(output_shape.size());
         dim_imm = (dim_imm < 0) ? (dim_imm + rank) : dim_imm;
-        int64_t output_size_imm = output_size ? GetValue<int64_t>(*output_size) : output_shape[dim_imm];
+        if (output_size.has_value()) {
+          int64_t output_size_imm = GetValue<int64_t>(*output_size);
+          if (output_size_imm != output_shape[dim_imm]) {
+            MS_EXCEPTION(RuntimeError) << "Allocated size does not match required size.";
+          }
+        }
 
         LAUNCH_ACLNN(aclnnRepeatInterleaveWithDim, device_context, op->stream_id(), input_tensor, repeats, dim_imm,
-                     output_size_imm, outputs[0]);
+                     output_shape[dim_imm], outputs[0]);
       } else {
-        int64_t output_size_imm = output_size ? GetValue<int64_t>(*output_size) : output_shape[0];
+        if (output_size.has_value()) {
+          int64_t output_size_imm = GetValue<int64_t>(*output_size);
+          if (output_size_imm != output_shape[0]) {
+            MS_EXCEPTION(RuntimeError) << "Allocated size does not match required size.";
+          }
+        }
 
-        LAUNCH_ACLNN(aclnnRepeatInterleave, device_context, op->stream_id(), input_tensor, repeats, output_size_imm,
+        LAUNCH_ACLNN(aclnnRepeatInterleave, device_context, op->stream_id(), input_tensor, repeats, output_shape[0],
                      outputs[0]);
       }
     }));
