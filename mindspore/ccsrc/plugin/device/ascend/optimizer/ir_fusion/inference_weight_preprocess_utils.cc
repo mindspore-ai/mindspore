@@ -17,11 +17,75 @@
 
 #include "plugin/device/ascend/optimizer/ir_fusion/inference_weight_preprocess_utils.h"
 #include <string>
+#include <limits>
 #include <memory>
 #include <algorithm>
+#include "include/backend/distributed/collective/collective_manager.h"
 
 namespace mindspore {
 namespace opt {
+namespace {
+template <typename SRC_T, typename DST_T>
+void ConvertDataType(void *dst_data, void *ori_data, int64_t len, bool need_rank_offset, uint32_t global_rank_id) {
+  auto rank_offset = need_rank_offset ? global_rank_id * len : 0;
+  SRC_T *ori_data_t = reinterpret_cast<SRC_T *>(ori_data) + rank_offset;
+  DST_T *dst_data_t = reinterpret_cast<DST_T *>(dst_data);
+  for (int i = 0; i < len; i++) {
+    dst_data_t[i] = static_cast<DST_T>(ori_data_t[i]);
+  }
+}
+
+std::shared_ptr<ValueNode> CreateValueNode(const tensor::TensorPtr &assist_tensor, const TensorTypePtr &tensor_type) {
+  tensor::DeviceInfo device_info{kOpFormat_DEFAULT, tensor_type};
+  assist_tensor->set_device_info(device_info);
+  MS_EXCEPTION_IF_NULL(assist_tensor);
+
+  auto assist_const = std::make_shared<ValueNode>(assist_tensor);
+  auto assist_abstract = assist_tensor->ToAbstract();
+  assist_const->set_abstract(assist_abstract);
+  auto assist_kernel_info = std::make_shared<device::KernelInfo>();
+  assist_const->set_kernel_info(assist_kernel_info);
+  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+  builder.SetOutputsFormat({kOpFormat_DEFAULT});
+  builder.SetOutputsDeviceType({common::AnfAlgo::GetOutputInferDataType(assist_const, 0)});
+  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
+  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), assist_const.get());
+  return assist_const;
+}
+}  // namespace
+
+std::shared_ptr<ValueNode> ConvertWeightsToNewType(const AnfNodePtr &weight_node) {
+  auto w_param = GetParamFromLoad(weight_node->cast<CNodePtr>(), true);
+  MS_EXCEPTION_IF_NULL(w_param);
+  auto origin_shape = w_param->shape();
+  auto shape = common::AnfAlgo::GetOutputInferShape(weight_node, kIndex0);
+  if (shape.size() != 1 || origin_shape.size() != 1) {
+    MS_LOG(EXCEPTION) << "shape.size():" << shape.size() << " origin_shape.size():" << origin_shape.size()
+                      << " not all == 1.";
+  }
+  bool need_rank_offset = false;
+  if (origin_shape[0] != shape[0]) {
+    need_rank_offset = true;
+  }
+  auto ori_data = w_param->data_c();
+  auto w_type_id = static_cast<TypeId>(w_param->data_type_c());
+  auto global_rank_id = distributed::collective::CollectiveManager::instance()->global_rank_id();
+  tensor::TensorPtr assist_tensor;
+  TensorTypePtr tensor_type;
+  if (w_type_id == kNumberTypeInt8) {
+    assist_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt32, shape);
+    tensor_type = std::make_shared<TensorType>(kInt32);
+    ConvertDataType<int8_t, int32_t>(assist_tensor->data_c(), ori_data, shape[0], need_rank_offset, global_rank_id);
+  } else if (w_type_id == kNumberTypeFloat16) {
+    assist_tensor = std::make_shared<tensor::Tensor>(kNumberTypeFloat32, shape);
+    tensor_type = std::make_shared<TensorType>(kFloat32);
+    ConvertDataType<float16, float>(assist_tensor->data_c(), ori_data, shape[0], need_rank_offset, global_rank_id);
+  } else {
+    MS_LOG(EXCEPTION) << "type_id " << TypeIdToString(w_type_id) << " is unexpected, only support int8 or fp16.";
+  }
+
+  return CreateValueNode(assist_tensor, tensor_type);
+}
 
 tensor::TensorPtr GetParamFromLoad(const CNodePtr &load, const bool unused) {
   if (IsPrimitiveCNode(load, prim::kPrimLoad)) {
@@ -125,21 +189,7 @@ std::shared_ptr<ValueNode> CreateWeightTensor(TypeId type_id, const std::vector<
   }
 
   TensorTypePtr tensor_type = std::make_shared<TensorType>(w_dtype);
-  tensor::DeviceInfo device_info{kOpFormat_DEFAULT, tensor_type};
-  assist_tensor->set_device_info(device_info);
-  MS_EXCEPTION_IF_NULL(assist_tensor);
-
-  auto assist_const = std::make_shared<ValueNode>(assist_tensor);
-  auto assist_abstract = assist_tensor->ToAbstract();
-  assist_const->set_abstract(assist_abstract);
-  auto assist_kernel_info = std::make_shared<device::KernelInfo>();
-  assist_const->set_kernel_info(assist_kernel_info);
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-  builder.SetOutputsFormat({kOpFormat_DEFAULT});
-  builder.SetOutputsDeviceType({common::AnfAlgo::GetOutputInferDataType(assist_const, 0)});
-  builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
-  AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), assist_const.get());
-  return assist_const;
+  return CreateValueNode(assist_tensor, tensor_type);
 }
 
 void SortWeightNodeList(AnfNodePtrList *node_list) {
@@ -150,6 +200,56 @@ void SortWeightNodeList(AnfNodePtrList *node_list) {
       common::AnfAlgo::GetInputNode(b->cast<CNodePtr>()->inputs()[2]->cast<CNodePtr>(), kIndex0)->cast<ParameterPtr>();
     return para_a->name() < para_b->name();
   });
+}
+
+std::shared_ptr<ValueNode> ConvertFp16BiasToInt32(const AnfNodePtr &bias_node, const AnfNodePtr &scale_node,
+                                                  const bool &with_allreduce) {
+  auto bias_param = GetParamFromLoad(bias_node->cast<CNodePtr>(), true);
+  MS_EXCEPTION_IF_NULL(bias_param);
+  auto scale_param = GetParamFromLoad(scale_node->cast<CNodePtr>(), false);
+  MS_EXCEPTION_IF_NULL(scale_param);
+  auto origin_shape = bias_param->shape();
+  auto shape = common::AnfAlgo::GetOutputInferShape(bias_node, kIndex0);
+  if (shape.size() != 1 || origin_shape.size() != 1) {
+    MS_LOG(EXCEPTION) << "shape.size():" << shape.size() << " origin_shape.size():" << origin_shape.size()
+                      << " not all == 1.";
+  }
+  bool need_rank_offset = false;
+  if (origin_shape[0] != shape[0]) {
+    need_rank_offset = true;
+  }
+  void *bias_data = bias_param->data_c();
+  void *scale_data = scale_param->data_c();
+  auto global_rank_id = distributed::collective::CollectiveManager::instance()->global_rank_id();
+  tensor::TensorPtr assist_tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt32, shape);
+  TensorTypePtr tensor_type = std::make_shared<TensorType>(kInt32);
+  auto len = shape[0];
+
+  auto rank_offset = need_rank_offset ? global_rank_id * len : 0;
+  // logic:
+  // (1) scale[int64] -> scale[int32] -> scale[float32];
+  // (2) bias[fp16] -> bias[fp32];
+  // (3) res = div(bias, scale) [fp64] -> round[fp64]
+  // (4) res[fp64] -> res[int64] -> clamp[int32]
+  const double int32_max = static_cast<double>(std::numeric_limits<int32_t>::max());
+  const double int32_min = static_cast<double>(std::numeric_limits<int32_t>::min());
+  void *dst_data = assist_tensor->data_c();
+  float16 *bias_data_t = reinterpret_cast<float16 *>(bias_data) + rank_offset;
+  int64_t *scale_data_t = reinterpret_cast<int64_t *>(scale_data) + rank_offset;
+  int32_t *dst_data_t = reinterpret_cast<int32_t *>(dst_data);
+  for (int i = 0; i < len; i++) {
+    if (global_rank_id == 0 || (!with_allreduce)) {
+      int32_t scale_int32 = static_cast<int32_t>(scale_data_t[i]);
+      float scale_fp32;
+      std::memcpy(&scale_fp32, &scale_int32, sizeof(scale_fp32));
+      double bias_fp64 = static_cast<double>(bias_data_t[i]);
+      double res_fp64 = std::clamp(round(bias_fp64 / scale_fp32), int32_min, int32_max);
+      dst_data_t[i] = static_cast<int32_t>(res_fp64);
+    } else {
+      dst_data_t[i] = 0;
+    }
+  }
+  return CreateValueNode(assist_tensor, tensor_type);
 }
 
 }  // namespace opt

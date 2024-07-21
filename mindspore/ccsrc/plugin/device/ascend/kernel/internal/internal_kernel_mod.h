@@ -55,6 +55,8 @@ static std::map<std::string, int> ms_op_key_to_internel_op_id = {
   {"RmsNorm", internal::OpId::RmsNorm},
   {"TransData", internal::OpId::TransData},
   {"FastGeLU", internal::OpId::FastGeLU},
+  {"RmsNormQuant", internal::OpId::RmsNormQuant},
+  {"AddRmsNormQuantV2", internal::OpId::AddRmsNormQuant},
   {"AddRmsNorm", internal::OpId::AddRmsNorm},
   {"ReduceSum", internal::OpId::ReduceSum},
   {"FlashAttentionScore", internal::OpId::FlashAttentionScore},

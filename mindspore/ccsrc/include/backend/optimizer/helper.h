@@ -255,6 +255,10 @@ BACKEND_EXPORT AbstractBasePtr CppInferShapeAndType(const PrimitivePtr &prim,
 // Generate kernel build info for created kernel
 BACKEND_EXPORT kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const std::vector<AnfNodePtr> &node_list);
 
+BACKEND_EXPORT kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CNodePtr &node);
+
+BACKEND_EXPORT bool IsConstant(const BaseRef &n);
+
 // Get used number of node's each output
 BACKEND_EXPORT std::vector<int64_t> GetNodeOutputUsedNum(const session::KernelGraph &kernel_graph,
                                                          const AnfNodePtr &node);

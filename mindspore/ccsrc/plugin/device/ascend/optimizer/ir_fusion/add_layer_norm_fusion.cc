@@ -63,30 +63,6 @@ const AnfNodePtr AddLayernormFusion::Process(const FuncGraphPtr &graph, const An
 namespace mindspore {
 namespace opt {
 namespace {
-kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(CNodePtr node) {
-  std::vector<std::string> inputs_format;
-  std::vector<std::string> outputs_format;
-  std::vector<TypeId> inputs_type;
-  std::vector<TypeId> outputs_type;
-  kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
-
-  size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
-  for (size_t input_index = 0; input_index < input_num; ++input_index) {
-    inputs_type.push_back(common::AnfAlgo::GetPrevNodeOutputInferDataType(node, input_index));
-    inputs_format.push_back(kOpFormat_DEFAULT);
-  }
-  size_t output_num = AnfAlgo::GetOutputElementNum(node);
-  for (size_t output_index = 0; output_index < output_num; ++output_index) {
-    outputs_type.push_back(common::AnfAlgo::GetOutputInferDataType(node, output_index));
-    outputs_format.push_back(kOpFormat_DEFAULT);
-  }
-  builder.SetInputsDeviceType(inputs_type);
-  builder.SetInputsFormat(inputs_format);
-  builder.SetOutputsDeviceType(outputs_type);
-  builder.SetOutputsFormat(outputs_format);
-  return builder.Build();
-}
-
 std::vector<std::string> SplitString(const std::string &str, char delim) {
   std::stringstream ss(str);
   std::string item;
