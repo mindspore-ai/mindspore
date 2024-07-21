@@ -87,6 +87,7 @@ class FlashAttentionScoreInfo : public OperatorInfo {
   Status InitExpectedStrategies();
   Status InitAttnMaskStrategies();
   Status InitQKVHeadAndSeqDimFromInputLayout();
+  Status CheckStrategyExpected(const StrategyPtr &strategy);
   std::vector<int64_t> GetSplitIdAndRank();
   std::tuple<int64_t, int64_t> GetAttentionMaskAttrs(const int64_t split_id, const int64_t split_num);
   void LoadBalanceSplitAlongSeqDim(size_t input_index, GenerateGraph *gen_g, AnfNodePtr *split_node,

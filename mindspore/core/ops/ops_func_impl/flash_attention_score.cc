@@ -122,6 +122,34 @@ void CheckFlashAttentionScorePrefix(const AbstractBasePtr &prefix, const std::st
   }
 }
 
+void CheckFlashAttentionScoreSparseMode(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args,
+                                        const std::vector<int64_t> &shape_info, int64_t q_head_num) {
+  auto op_name = primitive->name();
+  int64_t batch_size = shape_info[kIndex0];
+  int64_t q_seq_len = shape_info[kIndex1];
+  int64_t kv_seq_len = shape_info[kIndex2];
+  auto sparse_mode_opt = GetScalarValue<int64_t>(input_args[kFlashAttentionScoreInputSparseModeIndex]->GetValue());
+  if (sparse_mode_opt.has_value()) {
+    auto sparse_mode = sparse_mode_opt.value();
+
+    bool enable_ring_attention = false;
+    if (primitive->HasAttr(kEnableRingAttention)) {
+      auto enable_ring_attention_valueptr = primitive->GetAttr(kEnableRingAttention);
+      if (enable_ring_attention_valueptr->isa<BoolImm>()) {
+        enable_ring_attention = enable_ring_attention_valueptr->cast<BoolImmPtr>()->value();
+      } else {
+        MS_LOG(EXCEPTION) << "enable_ring_attention should be bool";
+      }
+    }
+    if (!enable_ring_attention ||
+        !IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputAttnMaskIndex])) {
+      CheckFlashAttentionScoreAttnMaskShape(input_args[kFlashAttentionScoreInputAttnMaskIndex], op_name, sparse_mode,
+                                            batch_size, q_head_num, q_seq_len, kv_seq_len);
+    }
+    CheckFlashAttentionScorePrefix(input_args[kFlashAttentionScoreInputPrefixIndex], op_name, sparse_mode, batch_size);
+  }
+}
+
 BaseShapePtr ConstructInferShape(const ShapeVector &softmax_shape, const ShapeVector &query_shape) {
   return std::make_shared<abstract::TupleShape>(abstract::BaseShapePtrList(
     {std::make_shared<abstract::Shape>(softmax_shape), std::make_shared<abstract::Shape>(softmax_shape),
@@ -287,25 +315,7 @@ BaseShapePtr FlashAttentionScoreFuncImpl::InferShape(const PrimitivePtr &primiti
                                      op_name, "real_shift", true);
   CheckFlashAttentionScoreInputShape(input_args[kFlashAttentionScoreInputDropMaskIndex],
                                      {batch_size, q_head_num, q_seq_len, kv_seq_len / 8}, op_name, "drop_mask", true);
-  auto sparse_mode_opt = GetScalarValue<int64_t>(input_args[kFlashAttentionScoreInputSparseModeIndex]->GetValue());
-  if (sparse_mode_opt.has_value()) {
-    auto sparse_mode = sparse_mode_opt.value();
-
-    bool enable_ring_attention = false;
-    if (primitive->HasAttr(kEnableRingAttention)) {
-      auto enable_ring_attention_valueptr = primitive->GetAttr(kEnableRingAttention);
-      if (enable_ring_attention_valueptr->isa<BoolImm>()) {
-        enable_ring_attention = enable_ring_attention_valueptr->cast<BoolImmPtr>()->value();
-      } else {
-        MS_LOG(ERROR) << "enable_ring_attention should be bool";
-      }
-    }
-    if (!enable_ring_attention) {
-      CheckFlashAttentionScoreAttnMaskShape(input_args[kFlashAttentionScoreInputAttnMaskIndex], op_name, sparse_mode,
-                                            batch_size, q_head_num, q_seq_len, kv_seq_len);
-    }
-    CheckFlashAttentionScorePrefix(input_args[kFlashAttentionScoreInputPrefixIndex], op_name, sparse_mode, batch_size);
-  }
+  CheckFlashAttentionScoreSparseMode(primitive, input_args, shape_info, q_head_num);
 
   return ConstructInferShape(ShapeVector{batch_size, q_head_num, q_seq_len, kFlashAttentionScoreSoftmaxLastDim},
                              query_shape);

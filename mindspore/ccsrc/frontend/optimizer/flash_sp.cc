@@ -68,6 +68,7 @@ FlashSPInfo::FlashSPInfo(CNodePtr fa_score_node) {
   MS_EXCEPTION_IF_NULL(flash_score_info_ptr);
 
   flashsp_num_ = flash_score_info_ptr->s1_split_num();
+  is_input_passed_ = flash_score_info_ptr->is_input_passed();
   dev_rank_id_ = g_device_manager->global_rank();
 
   auto rankList = flash_score_info_ptr->GetSPRankList();
@@ -336,6 +337,7 @@ tensor::TensorPtr make_mask_tensor(TypeId type_id, ShapeVector shape, uint8_t va
 }
 
 AnfNodePtr GetActualMask(int index, int64_t rank_id, TypeId mask_dtype, ShapeVector mask_shape) {
+  // index: the epoch
   AnfNodePtr actual_mask;
   if (index == 0) {
     auto mask_tensor = make_mask_tensor(mask_dtype, mask_shape, 0, true);
@@ -348,6 +350,11 @@ AnfNodePtr GetActualMask(int index, int64_t rank_id, TypeId mask_dtype, ShapeVec
     actual_mask = NewValueNode(MakeValue(mask_tensor));
   }
   return actual_mask;
+}
+
+int64_t GetUDMaskIndex(int index, int64_t pos, int64_t split_num) {
+  int64_t step_index = pos - index;
+  return step_index >= 0 ? step_index : split_num + step_index;
 }
 
 int64_t GetPosInSpDevice(std::shared_ptr<FlashAttentionScoreInfo> flash_score_info_ptr, int64_t rank_id) {
@@ -440,6 +447,7 @@ CNodePtr CreateReplaceFSPGraph(const FuncGraphManagerPtr &manager,
 
   int64_t sp_num = fsp_info->GetSPNum(), rank_id = fsp_info->GetRankId();
   int64_t send_rank_id = fsp_info->GetSendRankId(), recv_rank_id = fsp_info->GetRecvRankId();
+  std::vector<bool> is_input_passed = fsp_info->GetIsInputPassed();
 
   std::shared_ptr<OperatorInfo> operator_info = fa_score_node->user_data<parallel::OperatorInfo>();
   auto flash_score_info_ptr = std::dynamic_pointer_cast<FlashAttentionScoreInfo>(operator_info);
@@ -448,6 +456,15 @@ CNodePtr CreateReplaceFSPGraph(const FuncGraphManagerPtr &manager,
   auto input_layout = flash_score_info_ptr->input_layout();
   if (input_layout != FASInputLayoutMode::BSH && input_layout != FASInputLayoutMode::BNSD) {
     return nullptr;
+  }
+
+  CNodePtr attn_mask_split_node;
+  if (is_input_passed[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
+    auto attn_mask_shape = operator_info->inputs_tensor_info()[kIndex6].tensor_layout().base_slice_shape().array();
+    auto attn_mask_node =
+      fa_score_node->input(ops::FlashAttentionScoreInputIndex::kFlashAttentionScoreInputAttnMaskIndex + 1);
+    attn_mask_split_node = NewSplitNode(attn_mask_node, attn_mask_shape.size() - kIndex1,
+                                        sp_num);  // mask has been split in the last dim by sp_num
   }
 
   int64_t fa_n1 = GetValue<int64_t>(
@@ -461,6 +478,8 @@ CNodePtr CreateReplaceFSPGraph(const FuncGraphManagerPtr &manager,
   CNodePtr history_max, history_sum, acc_attention;
   AnfNodePtr actual_mask;
   for (int i = 0; i < sp_num; ++i) {
+    // i: the epoch of flash_sp; rank_id:
+    // fa_s1:shape[0]  fa_s2:shape[1]
     std::vector<AnfNodePtr> kv_nodes = {key_node, value_node};
     auto kv_tuple = NewMakeTupleNode(kv_nodes);
     auto kv_concat = NewConcatNode(kv_tuple, 0);
@@ -474,10 +493,17 @@ CNodePtr CreateReplaceFSPGraph(const FuncGraphManagerPtr &manager,
     }
 
     auto pos = GetPosInSpDevice(flash_score_info_ptr, rank_id);
-    actual_mask = GetActualMask(i, pos, TypeId::kNumberTypeUInt8, Shape{fa_s1, fa_s2});
+    // the index of flash_score_info_ptr->GetSPRankList() where the rank_id locates
+    if (is_input_passed[ops::kFlashAttentionScoreInputAttnMaskIndex] && attn_mask_split_node != nullptr) {
+      auto pos_index = GetUDMaskIndex(i, pos, sp_num);
+      actual_mask = NewTupleGetItemNode(attn_mask_split_node, pos_index);
+    } else {
+      actual_mask = GetActualMask(i, pos, TypeId::kNumberTypeUInt8, Shape{fa_s1, fa_s2});
+    }
     fa_inputs[ops::FlashAttentionScoreInputIndex::kFlashAttentionScoreInputKeyIndex] = key_node;
     fa_inputs[ops::FlashAttentionScoreInputIndex::kFlashAttentionScoreInputValueIndex] = value_node;
     fa_inputs[ops::FlashAttentionScoreInputIndex::kFlashAttentionScoreInputAttnMaskIndex] = actual_mask;
+
     local_fa_node = NewFlashAttentionScoreNode(fa_inputs, fa_index, i);
     common::AnfAlgo::CopyNodeAttrs(fa_score_node, local_fa_node);
 
