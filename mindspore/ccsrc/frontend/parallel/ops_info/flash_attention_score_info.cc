@@ -190,6 +190,17 @@ RankList FlashAttentionScoreInfo::GetSPRankList() {
   return group_devices;
 }
 
+int64_t FlashAttentionScoreInfo::GetActualSeqLengthSize() {
+  if (is_input_passed_[ops::kFlashAttentionScoreInputActualSeqQlenIndex]) {
+    auto actual_size = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputActualSeqQlenIndex));
+    if (actual_size.size() != 1) {
+      MS_LOG(EXCEPTION) << name_ << "Shape of actual seq length should be 1.";
+    }
+    return actual_size[0] / batch_split_num_;
+  }
+  return 0;
+}
+
 Status FlashAttentionScoreInfo::InitAttnMaskStrategies() {
   if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
     auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
@@ -280,6 +291,7 @@ Status FlashAttentionScoreInfo::InitExpectedStrategies() {
 Status FlashAttentionScoreInfo::InitQKVTensorMap() {
   int64_t kv_head_num_map = kv_split_ ? dev_matrix_n1_dim_ : -1;
   auto dev_matrix_s2_dim = enable_ring_attention_ ? dev_matrix_s1_dim_ : -1;
+  dev_matrix_s2_dim = enable_flash_sp_ ? dev_matrix_s1_dim_ : dev_matrix_s2_dim;
   switch (input_layout_) {
     case FASInputLayoutMode::BSH:
       inputs_tensor_map_[ops::kFlashAttentionScoreInputQueryIndex] = {dev_matrix_batch_dim_, dev_matrix_s1_dim_,
@@ -378,6 +390,7 @@ Status FlashAttentionScoreInfo::InitAttnMaskSplittableInputs() {
     auto attn_mask_shape = inputs_shape_.at(GetStrategyRealIndex(ops::kFlashAttentionScoreInputAttnMaskIndex));
     int64_t attn_s1_group = is_attn_mask_compressed_ ? 0 : s1_group;
     int64_t attn_s2_group = enable_ring_attention_ ? attn_s1_group : 0;
+    attn_s2_group = enable_flash_sp_ ? attn_s1_group : attn_s2_group;
     if (attn_mask_shape.size() == kSizeTwo) {
       // attn_mask_shape: (S1, S2)
       splittable_inputs_[ops::kFlashAttentionScoreInputAttnMaskIndex] = {attn_s1_group, attn_s2_group};
@@ -400,6 +413,7 @@ Status FlashAttentionScoreInfo::InitSplittableInputs() {
   int64_t n1_group = 1;
   int64_t n2_group = kv_split_ ? n1_group : 0;
   int64_t s2_group = enable_ring_attention_ ? s1_group : 0;
+  s2_group = enable_flash_sp_ ? s1_group : s2_group;
   switch (input_layout_) {
     case FASInputLayoutMode::BSH:
       splittable_inputs_[ops::kFlashAttentionScoreInputQueryIndex] = {batch_group, s1_group, n1_group};
@@ -652,6 +666,24 @@ Status FlashAttentionScoreInfo::InferMirrorOpsByLayout() {
   return SUCCESS;
 }
 
+Status FlashAttentionScoreInfo::CheckInputInRingAttention() {
+  if (input_layout_ != FASInputLayoutMode::BSH && input_layout_ != FASInputLayoutMode::BNSD) {
+    MS_LOG(ERROR) << "Ring attention currently only supports BSH and BNSD layout";
+    return FAILED;
+  }
+  if (sparse_mode_ != 0) {
+    MS_LOG(ERROR) << "Ring attention currently only supports sparse mode 0";
+    return FAILED;
+  }
+  if (keep_prob_ != 1.0) {
+    MS_LOG(ERROR) << "Ring attention currently only supports keep prob 1.0";
+  }
+  if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
+    MS_LOG(INFO) << "Ring attention applies the input attn mask";
+  }
+  return SUCCESS;
+}
+
 Status FlashAttentionScoreInfo::GetAttrs() {
   InitIsInputPassed();
   head_num_ = GetInputValueFromCNode<int64_t>(cnode_, ops::kFlashAttentionScoreInputHeadNumIndex + 1);
@@ -681,18 +713,30 @@ Status FlashAttentionScoreInfo::GetAttrs() {
       MS_LOG(ERROR) << "enable_ring_attention should be bool";
     }
   }
-  if (enable_ring_attention_) {
-    if (input_layout_ != FASInputLayoutMode::BSH && input_layout_ != FASInputLayoutMode::BNSD) {
-      MS_LOG(ERROR) << "Ring attention currently only supports BSH and BNSD layout";
+  auto enable_ra_send_recv_iter = attrs_.find(ENABLE_RA_SEND_RECV);
+  if (enable_ra_send_recv_iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(enable_ra_send_recv_iter->second);
+    if (enable_ra_send_recv_iter->second->isa<BoolImm>()) {
+      enable_ra_send_recv_ = enable_ra_send_recv_iter->second->cast<BoolImmPtr>()->value();
     }
-    if (sparse_mode_ != 0) {
-      MS_LOG(ERROR) << "Ring attention currently only supports sparse mode 0";
+  }
+  if (!enable_ring_attention_ && enable_ra_send_recv_) {
+    MS_LOG(EXCEPTION) << "only in ring attention can set send/recv";
+  }
+  auto enable_flash_sp_iter = attrs_.find("enable_flash_sp");
+  if (enable_flash_sp_iter != attrs_.end()) {
+    MS_EXCEPTION_IF_NULL(enable_flash_sp_iter->second);
+    if (enable_flash_sp_iter->second->isa<BoolImm>()) {
+      enable_flash_sp_ = enable_flash_sp_iter->second->cast<BoolImmPtr>()->value();
+      enable_load_balance_ = false;
+      MS_LOG(WARNING) << "enable_flash_sp_: " << enable_flash_sp_;
+    } else {
+      MS_LOG(ERROR) << "enable_flash_sp should be bool";
     }
-    if (keep_prob_ != 1.0) {
-      MS_LOG(ERROR) << "Ring attention currently only supports keep prob 1.0";
-    }
-    if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
-      MS_LOG(INFO) << "Ring attention applies the input attn mask";
+  }
+  if (enable_ring_attention_ || enable_flash_sp_) {
+    if (CheckInputInRingAttention() != Status::SUCCESS) {
+      return FAILED;
     }
   }
 
@@ -725,6 +769,15 @@ Status FlashAttentionScoreInfo::GetAttrs() {
   return SUCCESS;
 }
 
+Status CheckKVStrategy(const std::string &name, const Shape &key_strategy, const Shape &value_strategy) {
+  if (key_strategy != value_strategy) {
+    MS_LOG(ERROR) << name << ": The in_strategy both of 'key'( " << key_strategy << ") and 'value'" << value_strategy
+                  << ") must be same.";
+    return FAILED;
+  }
+  return SUCCESS;
+}
+
 Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
   if (CheckStrategyValue(strategy, inputs_shape_) != SUCCESS) {
     return FAILED;
@@ -733,11 +786,6 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
   auto query_strategy = strategies[ops::kFlashAttentionScoreInputQueryIndex];
   auto key_strategy = strategies[ops::kFlashAttentionScoreInputKeyIndex];
   auto value_strategy = strategies[ops::kFlashAttentionScoreInputValueIndex];
-  if (key_strategy != value_strategy) {
-    MS_LOG(ERROR) << name_ << ": The in_strategy both of 'key'( " << key_strategy << ") and 'value'" << value_strategy
-                  << ") must be same.";
-    return FAILED;
-  }
   if (head_num_ % query_strategy[qkv_head_dim_] != 0) {
     MS_LOG(ERROR) << name_ << ": head_num % query_strategy[" << qkv_head_dim_ << "] must be 0, but got " << head_num_
                   << "(head_num) and " << query_strategy[qkv_head_dim_] << "(query_strategy[" << qkv_head_dim_ << "])";
@@ -757,7 +805,7 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
     }
   } else {
     auto s2_split_num = key_strategy[qkv_seq_dim_];
-    if (s2_split_num != 1 && !enable_ring_attention_) {
+    if (s2_split_num != 1 && !enable_ring_attention_ && !enable_flash_sp_) {
       MS_LOG(ERROR) << name_ << ": The S-Dimension of input 'key' cannot be split, but got the strategy of key is "
                     << key_strategy;
       return FAILED;
@@ -774,6 +822,7 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
   n1_split_num_ = query_strategy[qkv_head_dim_];
 
   s2_split_num_ = enable_ring_attention_ ? s1_split_num_ : 1;
+  s2_split_num_ = enable_flash_sp_ ? s1_split_num_ : s2_split_num_;
 
   n2_split_num_ = key_strategy[qkv_head_dim_];
 
@@ -790,7 +839,11 @@ Status FlashAttentionScoreInfo::CheckStrategy(const StrategyPtr &strategy) {
          "set the strategy.";
     return FAILED;
   }
-  return CheckStrategyExpected(strategy);
+  if (CheckStrategyExpected(strategy) == SUCCESS && CheckKVStrategy(name_, key_strategy, value_strategy) == SUCCESS) {
+    return SUCCESS;
+  } else {
+    return FAILED;
+  }
 }
 
 Status FlashAttentionScoreInfo::CheckStrategyExpected(const StrategyPtr &strategy) {
@@ -887,6 +940,15 @@ Status FlashAttentionScoreInfo::InferSplitNumAndDevMatrixShapeByLayout() {
     for (auto map_id : query_head_map) {
       n1_split_num_ *= GetSplitNumByMapId(dev_matrix_shape, map_id);
     }
+    batch_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_batch_dim_);
+    s1_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_s1_dim_);
+    if (s1_split_num_ > 1 && GetSplitNumByTensorMap(dev_matrix_shape, query_seq_map) !=
+                               GetSplitNumByTensorMap(dev_matrix_shape, key_seq_map) * s1_split_num_) {
+      MS_LOG(EXCEPTION) << name_ << ": Cannot split the seq-dimension of key. query_seq_slice: "
+                        << GetSplitNumByTensorMap(dev_matrix_shape, query_seq_map)
+                        << ", key_seq_slice: " << GetSplitNumByTensorMap(dev_matrix_shape, key_seq_map)
+                        << ", s1_split_num: " << s1_split_num_ << " when layout is TND";
+    }
   } else {
     if (query_batch_map.size() != 1 || query_seq_map.size() != 1 || query_head_map.size() != 1) {
       MS_LOG(ERROR) << name_
@@ -899,16 +961,10 @@ Status FlashAttentionScoreInfo::InferSplitNumAndDevMatrixShapeByLayout() {
     dev_matrix_s1_dim_ = query_seq_map[0];
     dev_matrix_n1_dim_ = query_head_map[0];
     n1_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_n1_dim_);
+    batch_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_batch_dim_);
+    s1_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_s1_dim_);
   }
-  batch_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_batch_dim_);
-  s1_split_num_ = GetSplitNumByMapId(dev_matrix_shape, dev_matrix_s1_dim_);
-  if (s1_split_num_ > 1 && GetSplitNumByTensorMap(dev_matrix_shape, query_seq_map) !=
-                             GetSplitNumByTensorMap(dev_matrix_shape, key_seq_map) * s1_split_num_) {
-    MS_LOG(EXCEPTION) << name_ << ": Cannot split the seq-dimension of key. query_seq_slice: "
-                      << GetSplitNumByTensorMap(dev_matrix_shape, query_seq_map)
-                      << ", key_seq_slice: " << GetSplitNumByTensorMap(dev_matrix_shape, key_seq_map)
-                      << ", s1_split_num: " << s1_split_num_;
-  }
+
   return SUCCESS;
 }
 

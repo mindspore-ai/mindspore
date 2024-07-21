@@ -39,6 +39,8 @@ constexpr size_t kInputFlashAttentionScoreQueryBSNDRank = 4;
 constexpr size_t kFAGRealShiftCompressionDim = 1024;
 constexpr size_t kInputFlashAttentionScoreAttnMaskCompressionDim = 2048;
 constexpr auto kEnableRingAttention = "enable_ring_attention";
+constexpr auto kEnableFlashSP = "enable_flash_sp";
+constexpr auto kEnableRASendRecv = "enable_ra_send_recv";
 
 // None indicates that the optional input is not passed
 bool IsFlashAttentionScoreOptionalInputNotPass(const AbstractBasePtr &input) {
@@ -141,7 +143,22 @@ void CheckFlashAttentionScoreSparseMode(const PrimitivePtr &primitive, const std
         MS_LOG(EXCEPTION) << "enable_ring_attention should be bool";
       }
     }
-    if (!enable_ring_attention ||
+    if (primitive->HasAttr(kEnableRASendRecv)) {
+      auto enable_ra_sendrecv_valueptr = primitive->GetAttr(kEnableRASendRecv);
+      if (!(enable_ra_sendrecv_valueptr->isa<BoolImm>())) {
+        MS_LOG(EXCEPTION) << "enable_ra_sendrecv should be bool";
+      }
+    }
+    bool enable_flash_sp = false;
+    if (primitive->HasAttr(kEnableFlashSP)) {
+      auto enable_flash_sp_valueptr = primitive->GetAttr(kEnableFlashSP);
+      if (enable_flash_sp_valueptr->isa<BoolImm>()) {
+        enable_flash_sp = enable_flash_sp_valueptr->cast<BoolImmPtr>()->value();
+      } else {
+        MS_LOG(ERROR) << "enable_flash_sp should be bool";
+      }
+    }
+    if ((!enable_ring_attention && !enable_flash_sp) ||
         !IsFlashAttentionScoreOptionalInputNotPass(input_args[kFlashAttentionScoreInputAttnMaskIndex])) {
       CheckFlashAttentionScoreAttnMaskShape(input_args[kFlashAttentionScoreInputAttnMaskIndex], op_name, sparse_mode,
                                             batch_size, q_head_num, q_seq_len, kv_seq_len);

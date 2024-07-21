@@ -352,7 +352,15 @@ constexpr char INNER_PRECISE[] = "inner_precise";
 constexpr char INPUT_LAYOUT[] = "input_layout";
 constexpr char SPARSE_MODE[] = "sparse_mode";
 constexpr char ENABLE_RING_ATTENTION[] = "enable_ring_attention";
+constexpr char ENABLE_RA_SEND_RECV[] = "enable_ra_send_recv";
+constexpr char ENABLE_FLASH_SP[] = "enable_flash_sp";
 constexpr char FLASH_INDEX[] = "FLASH_INDEX";
+constexpr char FLASH_LOSS_NODE[] = "FLASH_LOSS_NODE";
+constexpr char RING_ATTENTION_INDEX[] = "RING_ATTENTION_INDEX";
+constexpr char RING_ATTENTION_POS[] = "RING_ATTENTION_POS";
+constexpr char FLASH_SP_COMM_TYPE[] = "FLASH_SP_COMM_TYPE";
+constexpr char FLASH_SP_COMM_QKV[] = "FLASH_SP_COMM_QKV";
+constexpr char FLASH_SP_COMM_OML[] = "FLASH_SP_COMM_OML";
 constexpr char KEEP_ALIVE[] = "keep_alive";
 
 // Operator

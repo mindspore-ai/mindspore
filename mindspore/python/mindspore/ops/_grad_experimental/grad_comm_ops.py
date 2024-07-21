@@ -108,6 +108,7 @@ def get_bprop_send(self):
 def get_bprop_receive(self):
     """Generate bprop for Receive."""
     tag = self.get_attr_dict()["sr_tag"]
+    flash_tag = self.get_attr_dict().get("flash_tag")
     receive_grad = Send(tag, self.rank, self.group_back)
     receive_grad.add_prim_attr("shape", self.shape)
     depend = P.Depend()
@@ -117,7 +118,7 @@ def get_bprop_receive(self):
 
     def bprop(x, out, dout):
         send_out = receive_grad(dout)
-        if is_opt_shard:
+        if is_opt_shard or (flash_tag == "True"):
             dx = depend(F.zeros_like(x), send_out)
         else:
             dx = depend(cast(out_tensor, F.dtype(x)), send_out)

@@ -2477,6 +2477,7 @@ static LossNodeInfo FindLossCNode(const FuncGraphPtr &func_graph) {
   // return -> loss
   loss_node_info.loss_node = pre_cnode;
   MS_LOG(DEBUG) << "The loss name is " << current_prim->name();
+  loss_node_info.loss_node->AddPrimalAttr(FLASH_LOSS_NODE, MakeValue<std::string>("True"));
   return loss_node_info;
 }
 
