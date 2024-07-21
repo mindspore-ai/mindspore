@@ -645,6 +645,11 @@ void CodeGenerator::Init() {
   for (int i = 0; i < size; ++i) {
     ValueNode *param = nodes_->inputs[i];
     locals_map_[param] = i;
+
+    if (param->GetOpcode() == LOAD_DEREF && kPIJitConfigDefault.GetBoolConfig(GraphJitConfig::kTraceFlag)) {
+      // One-stage mode allows param to be a LOAD_DEREF node, so no need to do the checks below.
+      continue;
+    }
     MS_EXCEPTION_IF_CHECK_FAIL(!IsNonLocalValue(param), "got nonlocal parameter node: " + param->ToString());
   }
 }
@@ -1167,9 +1172,16 @@ void GraphParameterBuilder::Init(const std::vector<ValueNode *> &args, const std
 
 void GraphParameterBuilder::Build(const std::unordered_map<ValueNode *, int> &locals) {
   auto Load = [&locals](ValueNode *param) {
+    // 1.Search from local variables
     auto iter = locals.find(param);
-    MS_EXCEPTION_IF_CHECK_FAIL(iter != locals.end(), "can't find graph parameters from interpret locals");
-    return std::make_unique<Instr>(LOAD_FAST, iter->second);
+    if (iter != locals.end()) {
+      return std::make_unique<Instr>(LOAD_FAST, iter->second);
+    }
+    // 2.Maybe a closure variable
+    if (param->GetOpcode() == LOAD_DEREF) {
+      return std::make_unique<Instr>(LOAD_DEREF, param->GetOparg());
+    }
+    MS_EXCEPTION_IF_CHECK_FAIL(false, "Can't find graph parameters from interpret-locals and closures");
   };
 
   /**

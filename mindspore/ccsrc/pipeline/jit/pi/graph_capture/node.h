@@ -159,10 +159,15 @@ class ValueNode : public InstrNode {
 class CellVarNode : public ValueNode {
  public:
   explicit CellVarNode(Type t) : ValueNode(t, nullptr, -1, CO_CELL_NOT_AN_ARG), val_(nullptr) {}
+
+  // If the cell contains an argument, then this should be the argument index. Plz refer to PyCodeObject.co_cell2arg.
+  // If not an argument, then this index should be CO_CELL_NOT_AN_ARG.
   void SetFromParam(int i) { SetOparg(i); }
   int GetFromParam() const { return GetOparg(); }
+  // The closure index
   void SetIndex(int i) { return SetOpcode(i); }
   int GetIndex() const { return GetOpcode(); }
+  // The object stored in this cell
   auto GetValue() const { return val_; }
   void SetValue(ValueNode *v) { val_ = v; }
   const auto &GetCellOper() const { return cell_oper_; }
