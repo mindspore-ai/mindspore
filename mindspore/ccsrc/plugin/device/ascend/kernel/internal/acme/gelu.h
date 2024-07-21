@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_ACME_GELU_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_ACME_GELU_H_
 
-#include "plugin/device/ascend/kernel/internal/gelu.h"
+#include <string>
+#include <vector>
+#include <utility>
 
-#include <memory>
-
-#include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
-#include "plugin/device/ascend/kernel/internal/internal_kernel_in_out_map.h"
+#include "plugin/device/ascend/kernel/internal/acme_kernel_mod.h"
+#include "acme/include/acme.h"
 
 namespace mindspore {
 namespace kernel {
-internal::OpParamPtr InternalGelu::CreateOpParam(const std::vector<KernelTensor *> &inputs,
-                                                 const std::vector<KernelTensor *> &outputs) {
-  internal::OpParamPtr param_ptr = std::make_shared<internal::OpParam>();
-  param_ptr->opId = internal::OpId::Gelu;
-  return param_ptr;
-}
-
-MS_INTERNAL_KERNEL_FACTORY_REG(GeLU, InternalGelu);
+DECLARE_ACME_KERNEL_MOD(GeLU)
 }  // namespace kernel
 }  // namespace mindspore
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_ACME_GELU_H_
