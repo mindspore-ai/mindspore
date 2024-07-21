@@ -1,0 +1,17 @@
+#operator TransData
+trans_data:
+  args:
+    input_x:
+      dtype: tensor
+  returns:
+    output:
+      dtype: tensor
+  class:
+    disable: True
+  function:
+    disable: True
+  returns:
+    output0:
+      dtype: tensor
+    output1:
+      dtype: tensor

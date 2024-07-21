@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_BUILD_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_BUILD_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_QUANT_V2_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_QUANT_V2_H_
 
-#include <memory>
-#include <string>
 #include <vector>
 
-#include "kernel/kernel.h"
+#include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
-KernelModPtr InternalKernelBuild(const AnfNodePtr &anf_node);
-bool IsRegisteredInternalKernel(const AnfNodePtr &anf_node);
-void GetValidKernelBuildInfoWithInternalFormat(const AnfNodePtr &node, std::vector<std::string> *input_formats,
-                                               std::vector<std::string> *output_formats);
+class InternalQuantV2 : public InternalKernelMod {
+ public:
+  InternalQuantV2() : InternalKernelMod("QuantV2") {}
+  ~InternalQuantV2() = default;
+
+ protected:
+  internal::OpParamPtr CreateOpParam(const std::vector<KernelTensor *> &inputs,
+                                     const std::vector<KernelTensor *> &outputs);
+};
 }  // namespace kernel
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_BUILD_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_INTERNAL_KERNEL_QUANT_V2_H_

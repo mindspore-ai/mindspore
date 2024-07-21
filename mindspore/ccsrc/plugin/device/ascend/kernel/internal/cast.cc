@@ -30,6 +30,9 @@ internal::OpParamPtr InternalCast::CreateOpParam(const std::vector<KernelTensor 
   param_ptr->in_dtype_ = InternalKernelUtils::ToInternalDType(inputs[kIndex0]->dtype_id());
   param_ptr->out_dtype_ = InternalKernelUtils::ToInternalDType(outputs[kIndex0]->dtype_id());
   param_ptr->opId = internal::OpId::Cast;
+  internal::ElewiseParam op_param;
+  op_param.elewiseType = internal::ElewiseParam::ELEWISE_CAST;
+  param_ptr->specificParam = op_param;
   return std::static_pointer_cast<internal::OpParam>(param_ptr);
 }
 

@@ -43,6 +43,7 @@ static std::map<std::string, int> ms_op_key_to_internel_op_id = {
   {"Add", internal::OpId::Add},
   {"Sub", internal::OpId::Sub},
   {"RealDiv", internal::OpId::RealDiv},
+  {"QuantV2", internal::OpId::QuantPerChannel},
   {"Mul", internal::OpId::Mul},
   {"Less", internal::OpId::Less},
   {"LogicalNot", internal::OpId::LogicalNot},
@@ -52,6 +53,8 @@ static std::map<std::string, int> ms_op_key_to_internel_op_id = {
   {"GeLU", internal::OpId::Gelu},
   {"Softmax", internal::OpId::Softmax},
   {"RmsNorm", internal::OpId::RmsNorm},
+  {"TransData", internal::OpId::TransData},
+  {"FastGeLU", internal::OpId::FastGeLU},
   {"AddRmsNorm", internal::OpId::AddRmsNorm},
   {"ReduceSum", internal::OpId::ReduceSum},
   {"FlashAttentionScore", internal::OpId::FlashAttentionScore},
@@ -77,6 +80,8 @@ class InternalKernelMod : public KernelMod {
   explicit InternalKernelMod(std::string &&op_type) : op_type_(std::move(op_type)) {
     ascend_profiler_ = profiler::Profiler::GetInstance(kAscendDevice);
     MS_EXCEPTION_IF_NULL(ascend_profiler_);
+    auto context_ptr = mindspore::MsContext::GetInstance();
+    soc_ = context_ptr->ascend_soc_version();
   }
   virtual ~InternalKernelMod();
 
@@ -107,6 +112,7 @@ class InternalKernelMod : public KernelMod {
   std::string op_type_;
   std::shared_ptr<profiler::Profiler> ascend_profiler_{nullptr};
   std::string fullname_;
+  std::string soc_;
 };
 
 using InternalKernelModPtr = std::shared_ptr<InternalKernelMod>;

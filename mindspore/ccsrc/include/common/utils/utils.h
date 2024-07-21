@@ -54,6 +54,7 @@
 
 namespace mindspore {
 // attr key name
+constexpr auto kAttrInternalSepcialFormat = "internal_special_format";
 constexpr auto kAttrSegment = "segment";
 constexpr auto kAttrAlignCorners = "align_corners";
 constexpr auto kAttrHalfPixelCenters = "half_pixel_centers";

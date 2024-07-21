@@ -17,13 +17,19 @@
 
 #include "plugin/device/ascend/kernel/internal/internal_kernel_utils.h"
 #include <string>
+
 #include "plugin/device/ascend/kernel/internal/internal_kernel_mod.h"
 
 namespace mindspore {
 namespace kernel {
 internal::TensorFormat InternalKernelUtils::ToInternalFormat(Format format) {
-  // some op not support NCHW, NHWC, ... format, current return ND format
-  return internal::TensorFormat::TENSOR_FORMAT_ND;
+  switch (format) {
+    case FRACTAL_NZ:
+      return internal::TensorFormat::TENSOR_FORMAT_FRACTAL_NZ;
+    default:
+      // some op not support NCHW, NHWC, ... format, current return ND format
+      return internal::TensorFormat::TENSOR_FORMAT_ND;
+  }
 }
 
 int InternalKernelUtils::ToInternalOpId(std::string name) {
