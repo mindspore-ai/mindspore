@@ -20,6 +20,7 @@
 #include <string>
 #include "backend/common/pass/dropout_gen_mask_fusion.h"
 #include "backend/common/pass/common_subexpression_elimination.h"
+#include "backend/common/pass/custom_defined_depend.h"
 #include "backend/common/pass/erase_visit_attr.h"
 #include "include/common/debug/anf_ir_dump.h"
 #include "include/common/debug/dump_proto.h"
@@ -107,6 +108,7 @@ void GEBackendOptimization(const KernelGraphPtr &kernel_graph) {
   opt_ge_pm->AddPass(std::make_shared<opt::BroadCastForSelect>());
   opt_ge_pm->AddPass(std::make_shared<opt::AddNoOpToESGrad>());
   opt_ge_pm->AddPass(std::make_shared<opt::BCEWithLogitsLossForGe>());
+  opt_ge_pm->AddPass(std::make_shared<opt::CustomDefinedDepend>(true, kernel_graph->graph_id()));
 
   optimizer->AddPassManager(opt_ge_pm);
   (void)optimizer->Optimize(kernel_graph);
@@ -151,6 +153,7 @@ void GEBackendOptimizeACL(const KernelGraphPtr &kernel_graph) {
   opt_acl_pm->AddPass(std::make_shared<opt::ConvertPadV3GradPaddings>());
   opt_acl_pm->AddPass(std::make_shared<opt::ResizeBilinearAddAttr>());
   opt_acl_pm->AddPass(std::make_shared<opt::AddParallelGroupIdAttr>());
+  opt_acl_pm->AddPass(std::make_shared<opt::CustomDefinedDepend>(false, kernel_graph->graph_id()));
   optimizer->AddPassManager(opt_acl_pm);
   (void)optimizer->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
