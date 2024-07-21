@@ -636,14 +636,25 @@ OperatorInfoPtr PipelineTransformer::CreateOpInfo(const CNodePtr &cnode, int tup
   auto op_info = CreateOperatorInfo(temp_node);
 
   StrategyPtr in_strategy = nullptr, out_strategy = nullptr;
-  if (!StrategyFound(attrs)) {
-    in_strategy = GenerateBatchParallelStrategy(op_info, prim);
-  } else {
-    in_strategy = ExtractStrategy(attrs[IN_STRATEGY]);
-    out_strategy = ExtractStrategy(attrs[OUT_STRATEGY]);
+  std::vector<std::shared_ptr<TensorLayout>> in_tensor_layouts;
+  std::vector<std::shared_ptr<TensorLayout>> out_tensor_layouts;
+  if (ExtractUserConfigLayout(attrs, op_info->inputs_shape(), op_info->outputs_shape(), &in_tensor_layouts,
+                              &out_tensor_layouts) != SUCCESS) {
+    MS_LOG(EXCEPTION) << "Failure:operator " << prim->name() << " extract configured layout failed"
+                      << trace::DumpSourceLines(cnode);
   }
-  MS_EXCEPTION_IF_NULL(in_strategy);
-  if (op_info->Init(in_strategy, out_strategy) == FAILED) {
+
+  if (in_tensor_layouts.empty() && out_tensor_layouts.empty()) {
+    if (!StrategyFound(attrs)) {
+      in_strategy = GenerateBatchParallelStrategy(op_info, prim);
+    } else {
+      in_strategy = ExtractStrategy(attrs[IN_STRATEGY]);
+      out_strategy = ExtractStrategy(attrs[OUT_STRATEGY]);
+    }
+    MS_EXCEPTION_IF_NULL(in_strategy);
+  }
+
+  if (op_info->Init(in_strategy, out_strategy, in_tensor_layouts, out_tensor_layouts) == FAILED) {
     MS_LOG(EXCEPTION) << "operator: " << prim->name() << " init failed.";
   }
   return op_info;

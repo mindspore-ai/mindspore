@@ -416,6 +416,7 @@ constexpr auto kAttrOriginInputShapes = "origin_input_shapes";
 constexpr char kAttrNotRemove[] = "not_remove";
 constexpr const char kAttrValueDepend[] = "value_depend";
 constexpr const char kAttrOnlyDependShape[] = "only_depend_shape";
+constexpr char kAttrFineGrainedInterleavedBlockIndex[] = "fine_grained_interleaved_index";
 
 // FuncGraph Flags
 constexpr auto kFlagIsPynativeBpropGraph = "is_pynative_bprop_graph";

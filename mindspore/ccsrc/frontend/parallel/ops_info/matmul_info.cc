@@ -1334,6 +1334,7 @@ Status MatMul::ComputeReplaceGraphForInterleaved(const CNodePtr &cnode) {
       {gen_g.NewOpInst(forward_op_interleaved_.front().first, forward_op_interleaved_.front().second.first), matmul});
     auto comm_cnode = comm_op->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(comm_cnode);
+    comm_cnode->AddPrimalAttr(kPrimalAttrForwardCommNodeUniqueId, MakeValue<std::string>(matmul->UniqueId()));
     auto comm_prim = GetCNodePrimitive(comm_cnode);
     auto instance_name = comm_prim->instance_name();
     comm_prim->set_instance_name(FORWARD_OP + instance_name);

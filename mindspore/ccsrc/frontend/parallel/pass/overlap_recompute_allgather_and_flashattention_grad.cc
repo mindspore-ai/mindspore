@@ -198,22 +198,20 @@ void OverlapRecomputeAllGatherAndFlashAttentionGrad(const FuncGraphPtr &graph) {
     return;
   }
   auto manager = graph->manager();
-  FuncGraphPtr backward_graph = graph;
   for (const auto &each_graph : manager->func_graphs()) {
     if (IsCellReuseForwardGraph(each_graph)) {
       auto forward_graph = each_graph;
       // need to using the inlined backward_graph
-      backward_graph = GetCellReuseBackwardGraph(forward_graph);
+      auto backward_graph = GetCellReuseBackwardGraph(forward_graph);
       if (backward_graph == nullptr) {
         MS_LOG(WARNING)
           << "Failed to find backward cell reuse graph, skip pass 'overlap_gradmatmul_and_gradallreduce'.";
-        return;
+        continue;
       }
-      break;
+      OverlapRecomputeAGAndFlashAttentionGrad(backward_graph);
+      AddDependForRecomputedAllGatherAndGradientReduceScatter(backward_graph);
     }
   }
-  OverlapRecomputeAGAndFlashAttentionGrad(backward_graph);
-  AddDependForRecomputedAllGatherAndGradientReduceScatter(backward_graph);
 }
 }  // namespace parallel
 }  // namespace mindspore

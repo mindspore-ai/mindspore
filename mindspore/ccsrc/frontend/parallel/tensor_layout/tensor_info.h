@@ -34,8 +34,8 @@ class TensorInfo {
   TensorInfo(const TensorLayout &tensor_layout, Shape shape, Shape slice_shape)
       : tensor_layout_(tensor_layout), shape_(std::move(shape)), slice_shape_(std::move(slice_shape)) {}
   explicit TensorInfo(const TensorLayout &tensor_layout) : tensor_layout_(tensor_layout) {
-    shape_ = tensor_layout.tensor_shape().array();
-    slice_shape_ = tensor_layout.slice_shape().array();
+    shape_ = tensor_layout.base_tensor_shape().array();
+    slice_shape_ = tensor_layout.base_slice_shape().array();
   }
   // trivial default constructor will not initialize c language types.
   TensorInfo() = default;

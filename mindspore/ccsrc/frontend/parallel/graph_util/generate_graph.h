@@ -61,7 +61,7 @@ AnfNodePtr CreateTuple(const std::vector<int64_t> &tuple);
 std::string HashInstanceName(const std::string &name);
 void InsertVirtualPipelineEndNode(const CNodePtr &cnode, const FuncGraphManagerPtr &manager, size_t index,
                                   std::string end_flag = "pipeline_end");
-CNodePtr CreateVirtualConverterBeginNode(const CNodePtr &input_cnode, size_t output_nums);
+CNodePtr CreateVirtualConverterBeginNode(const AnfNodePtr &input_cnode, size_t output_nums);
 CNodePtr CreateVirtualConverterEndNode(const FuncGraphPtr &graph, const std::vector<CNodePtr> &input_cnodes);
 
 class GenerateGraph {

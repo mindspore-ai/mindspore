@@ -30,7 +30,6 @@
 namespace mindspore {
 namespace parallel {
 namespace {
-constexpr char kAttrFineGrainedInterleavedBlockIndex[] = "fine_grained_interleaved_index";
 constexpr size_t kExpectInterleavedNum = 2;
 const size_t interleaved_size = 2;
 

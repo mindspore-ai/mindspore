@@ -68,6 +68,9 @@ std::set<FuncGraphPtr> ForwardGraph(const FuncGraphPtr &root);
 bool CreateGroupsByCkptFile(const std::string &file);
 
 void InsertVirtualOutput(const FuncGraphPtr &root, const std::vector<AnfNodePtr> &all_nodes);
+
+std::shared_ptr<TensorLayout> FindPrevLayout(const AnfNodePtr &node, bool *is_input_param);
+std::shared_ptr<TensorLayout> FindPrevLayoutByParameter(const AnfNodePtr &node, bool *is_input_param);
 }  // namespace parallel
 }  // namespace mindspore
 

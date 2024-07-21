@@ -490,5 +490,6 @@ Status LayerNormInfo::InferForwardCommunicationByLayout() {
 }
 
 REGISTER(LayerNormInfo);
+REGISTER(LayerNormV3Info);
 }  // namespace parallel
 }  // namespace mindspore
