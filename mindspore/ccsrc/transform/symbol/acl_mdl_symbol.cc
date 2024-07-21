@@ -46,6 +46,7 @@ aclmdlLoadFromMemFunObj aclmdlLoadFromMem_ = nullptr;
 aclmdlSetDumpFunObj aclmdlSetDump_ = nullptr;
 aclmdlSetDynamicBatchSizeFunObj aclmdlSetDynamicBatchSize_ = nullptr;
 aclmdlUnloadFunObj aclmdlUnload_ = nullptr;
+aclmdlQuerySizeFromMemFunObj aclmdlQuerySizeFromMem_ = nullptr;
 
 void LoadAclMdlApiSymbol(const std::string &ascend_path) {
   std::string aclmdl_plugin_path = ascend_path + "lib64/libascendcl.so";
@@ -74,6 +75,7 @@ void LoadAclMdlApiSymbol(const std::string &ascend_path) {
   aclmdlGetNumOutputs_ = DlsymAscendFuncObj(aclmdlGetNumOutputs, handler);
   aclmdlGetOutputDataType_ = DlsymAscendFuncObj(aclmdlGetOutputDataType, handler);
   aclmdlGetOutputDims_ = DlsymAscendFuncObj(aclmdlGetOutputDims, handler);
+  aclmdlQuerySizeFromMem_ = DlsymAscendFuncObj(aclmdlQuerySizeFromMem, handler);
   aclmdlGetOutputNameByIndex_ = DlsymAscendFuncObj(aclmdlGetOutputNameByIndex, handler);
   aclmdlGetOutputSizeByIndex_ = DlsymAscendFuncObj(aclmdlGetOutputSizeByIndex, handler);
   aclmdlInitDump_ = DlsymAscendFuncObj(aclmdlInitDump, handler);

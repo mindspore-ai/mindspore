@@ -304,7 +304,7 @@ class Model(BaseModel):
 
         Tutorial Examples:
             - `Dynamic Weight Update
-              <https://www.mindspore.cn/lite/docs/en/r2.3/use/cloud_infer/runtime_python.html#dynamic-weight-update>`_
+              <https://www.mindspore.cn/lite/docs/en/master/use/cloud_infer/runtime_python.html#update-weights>`_
         """
         for weight in weights:
             for tensor in weight:
@@ -703,11 +703,13 @@ class ModelGroupFlag(Enum):
 
     SHARE_WEIGHT = 1
     SHARE_WORKSPACE = 2
+    SHARE_WEIGHT_WORKSPACE = 3
 
 
 model_group_flag_py_cxx_map = {
     ModelGroupFlag.SHARE_WEIGHT: _c_lite_wrapper.ModelGroupFlag.kShareWeight,
     ModelGroupFlag.SHARE_WORKSPACE: _c_lite_wrapper.ModelGroupFlag.kShareWorkspace,
+    ModelGroupFlag.SHARE_WEIGHT_WORKSPACE: _c_lite_wrapper.ModelGroupFlag.kShareWeightAndWorkspace,
 }
 
 
@@ -750,9 +752,12 @@ class ModelGroup:
             flags_inner = _c_lite_wrapper.ModelGroupFlag.kShareWorkspace
         elif flags == ModelGroupFlag.SHARE_WEIGHT:
             flags_inner = _c_lite_wrapper.ModelGroupFlag.kShareWeight
+        elif flags == ModelGroupFlag.SHARE_WEIGHT_WORKSPACE:
+            flags_inner = _c_lite_wrapper.ModelGroupFlag.kShareWeightAndWorkspace
         else:
             raise RuntimeError(
-                f"Parameter flags should be ModelGroupFlag.SHARE_WORKSPACE or ModelGroupFlag.SHARE_WEIGHT")
+                f"Parameter flags should be ModelGroupFlag.SHARE_WORKSPACE or ModelGroupFlag.SHARE_WEIGHT"
+                f" or ModelGroupFlag.kShareWeightAndWorkspace")
         self._model_group = _c_lite_wrapper.ModelGroupBind(flags_inner)
 
     def add_model(self, models):

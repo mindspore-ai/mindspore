@@ -19,6 +19,7 @@
 #include <utility>
 #include <algorithm>
 #include <map>
+#include <thread>
 #include "common/log_adapter.h"
 #include "src/common/utils.h"
 #include "src/common/log_util.h"
@@ -540,6 +541,30 @@ void ModelProcess::DestroyOutputsBuffer() {
   outputs_ = nullptr;
 }
 
+bool ModelProcess::PrepareMutiModelShare(const void *om_data, size_t om_data_size) {
+  size_t work_size = 0;
+  size_t weight_size = 0;
+  auto acl_ret = CALL_ASCEND_API(aclmdlQuerySizeFromMem, om_data, om_data_size, &work_size, &weight_size);
+  if (acl_ret != ACL_ERROR_NONE) {
+    MS_LOG(ERROR) << "Call aclmdlQuerySizeFromMem failed, ret = " << acl_ret;
+    return false;
+  }
+  MS_LOG(INFO) << "work_size: " << work_size << " weight_size: " << weight_size;
+  std::thread::id thread_id = std::this_thread::get_id();
+  auto ret = AclMemManager::GetInstance().UpdateWorkspace(work_size, device_id_, thread_id);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "update workspace failed, ret = " << ret;
+    return false;
+  }
+  auto model_path = options_->model_path;
+  ret = AclMemManager::GetInstance().UpdateWeightspace(model_path, weight_size, device_id_);
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "update weightspace failed, ret = " << ret;
+    return false;
+  }
+  return true;
+}
+
 bool ModelProcess::Load(const void *om_data, size_t om_data_size) {
   if (loaded_) {
     MS_LOG(INFO) << "Model has been loaded";
@@ -547,43 +572,68 @@ bool ModelProcess::Load(const void *om_data, size_t om_data_size) {
   }
   MS_LOG(INFO) << "Start load model model.";
   // model load model
-  size_t work_size = 0;
-  size_t weight_size = 0;
   MS_LOG(INFO) << "multi_model_sharing_mem_prepare: " << options_->multi_model_sharing_mem_prepare;
   MS_LOG(INFO) << "multi_model_sharing_mem: " << options_->multi_model_sharing_mem;
   if (options_->multi_model_sharing_mem_prepare) {
-    auto acl_ret = aclmdlQuerySizeFromMem(om_data, om_data_size, &work_size, &weight_size);
-    if (acl_ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "Call aclmdlQuerySizeFromMem failed, ret = " << acl_ret;
-      return false;
-    }
-    MS_LOG(INFO) << "work_size: " << work_size << " weight_size: " << weight_size;
-    auto ret = AclMemManager::GetInstance().UpdateWorkspace(work_size, weight_size, device_id_);
-    if (ret != lite::RET_OK) {
-      MS_LOG(ERROR) << "update workspace failed, ret = " << ret;
-      return false;
-    }
-    return true;
+    auto ret = PrepareMutiModelShare(om_data, om_data_size);
+    return ret;
   } else if (options_->multi_model_sharing_mem) {
     MS_LOG(INFO) << "using sharing mem by model group.";
-    auto acl_ret = aclmdlQuerySizeFromMem(om_data, om_data_size, &work_size, &weight_size);
+    std::thread::id thread_id = std::this_thread::get_id();
+    size_t work_size = 0;
+    size_t weight_size = 0;
+    auto acl_ret = CALL_ASCEND_API(aclmdlQuerySizeFromMem, om_data, om_data_size, &work_size, &weight_size);
     if (acl_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call aclmdlQuerySizeFromMem failed, ret = " << acl_ret;
       return false;
     }
     AclModelMemInfo acl_work_mem_info;
-    auto ret = AclMemManager::GetInstance().GetModelWorkMem(&acl_work_mem_info, device_id_);
-    if (ret != lite::RET_OK) {
-      MS_LOG(ERROR) << "Get work mem failed.";
-      return ret;
-    }
-    acl_ret = CALL_ASCEND_API(aclrtMalloc, &weight_ptr_, weight_size, ACL_MEM_MALLOC_HUGE_FIRST);
-    if (acl_ret != ACL_ERROR_NONE) {
-      MS_LOG(ERROR) << "aclrtMalloc failed, error_ret = " << acl_ret;
+    AclModelMemInfo acl_weight_mem_info;
+    if (options_->share_workspace) {
+      auto ret = AclMemManager::GetInstance().GetModelWorkMem(&acl_work_mem_info, device_id_, thread_id);
+      if (ret != lite::RET_OK) {
+        MS_LOG(ERROR) << "Get work mem failed!";
+        return ret;
+      }
+      acl_weight_mem_info.mem_size = weight_size;
+      acl_ret = CALL_ASCEND_API(aclrtMalloc, &(acl_weight_mem_info.mem_addr), acl_weight_mem_info.mem_size,
+                                ACL_MEM_MALLOC_HUGE_FIRST);
+      if (acl_ret != ACL_ERROR_NONE) {
+        MS_LOG(ERROR) << "Call aclrtMalloc failed, err_code = " << acl_ret;
+        return lite::RET_ERROR;
+      }
+    } else if (options_->share_weightspace) {
+      auto model_path = options_->model_path;
+      auto ret = AclMemManager::GetInstance().GetModelWeightMem(&acl_weight_mem_info, model_path, device_id_);
+      if (ret != lite::RET_OK) {
+        MS_LOG(ERROR) << "Get weight mem failed!";
+        return ret;
+      }
+      acl_work_mem_info.mem_size = work_size;
+      acl_ret = CALL_ASCEND_API(aclrtMalloc, &(acl_work_mem_info.mem_addr), acl_work_mem_info.mem_size,
+                                ACL_MEM_MALLOC_HUGE_FIRST);
+      if (acl_ret != ACL_ERROR_NONE) {
+        MS_LOG(ERROR) << "Call aclrtMalloc failed, err_code = " << acl_ret;
+        return lite::RET_ERROR;
+      }
+    } else if (options_->share_weightspace_workspace) {
+      auto model_path = options_->model_path;
+      auto ret = AclMemManager::GetInstance().GetModelWeightMem(&acl_weight_mem_info, model_path, device_id_);
+      if (ret != lite::RET_OK) {
+        MS_LOG(ERROR) << "Get weight mem failed!";
+        return ret;
+      }
+      ret = AclMemManager::GetInstance().GetModelWorkMem(&acl_work_mem_info, device_id_, thread_id);
+      if (ret != lite::RET_OK) {
+        MS_LOG(ERROR) << "Get work mem failed!";
+        return ret;
+      }
+    } else {
+      MS_LOG(ERROR) << "Please specify the sharing type!";
       return false;
     }
     acl_ret = aclmdlLoadFromMemWithMem(om_data, om_data_size, &model_id_, acl_work_mem_info.mem_addr, work_size,
-                                       weight_ptr_, weight_size);
+                                       acl_weight_mem_info.mem_addr, weight_size);
     if (acl_ret != ACL_ERROR_NONE) {
       MS_LOG(ERROR) << "Call aclmdlLoadFromMemWithMem failed, ret = " << acl_ret;
       return lite::RET_ERROR;

@@ -467,8 +467,10 @@ Status Evaluate(std::shared_ptr<dataset::Dataset> ds, std::vector<TrainCallBack 
 
 std::vector<char> Model::GetModelInfo(const std::vector<char> &key) {
   std::vector<char> ret;
-  if (CharToString(key) != lite::KModelUserInfo) {
-    MS_LOG(WARNING) << "Unsupported key, only user info is supported.";
+  auto string_key = CharToString(key);
+  if (string_key != lite::KModelUserInfo && string_key != lite::KModelInputShape &&
+      string_key != lite::kDynamicDimsKey) {
+    MS_LOG(WARNING) << "Unsupported key, only user info, input_shape and dynamicDims are supported.";
     return ret;
   }
   if (impl_ == nullptr) {

@@ -33,8 +33,10 @@ class ModelGroupImpl;
 /// multiple models to share workspace memory.
 
 enum class ModelGroupFlag : int {
+  kUnknown = 0x0000,
   kShareWeight = 0x0001,
   kShareWorkspace = 0x0002,
+  kShareWeightAndWorkspace = 0x0003,
 };
 
 class MS_API ModelGroup {
@@ -47,7 +49,7 @@ class MS_API ModelGroup {
   /// \param[in] model_path_list Define the list of model path.
   ///
   /// \return Status.
-  Status AddModel(const std::vector<std::string> &model_path_list);
+  inline Status AddModel(const std::vector<std::string> &model_path_list);
 
   /// \brief Add models that require shared workspace memory.
   ///
@@ -74,6 +76,16 @@ class MS_API ModelGroup {
 
  private:
   std::shared_ptr<ModelGroupImpl> impl_;
+  Status AddModel(const std::vector<std::vector<char>> &model_path_list);
 };
+
+Status ModelGroup::AddModel(const std::vector<std::string> &model_path_list) {
+  std::vector<std::vector<char>> model_path_list_str;
+  for (auto str : model_path_list) {
+    model_path_list_str.push_back(StringToChar(str));
+  }
+  return AddModel(model_path_list_str);
+}
+
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_GROUP_H
