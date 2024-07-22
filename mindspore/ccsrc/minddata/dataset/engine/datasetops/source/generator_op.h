@@ -22,6 +22,8 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "minddata/dataset/api/python/python_mp.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/engine/data_schema.h"
@@ -85,6 +87,10 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
   /// \return Number of parallel workers of the current Op
   int32_t NumWorkers() const override { return num_parallel_workers_; }
 
+  /// Set the instance of python multiprocessing which will passed from python
+  /// \param python_mp PythonMultiprocessingRuntime
+  void SetPythonMp(std::shared_ptr<PythonMultiprocessingRuntime> python_mp);
+
   /// \brief In pull mode, gets the next row
   /// \param row[out] - Fetched TensorRow
   /// \return Status The status code returned
@@ -110,6 +116,8 @@ class GeneratorOp : public PipelineOp, public RandomAccessOp {
 
   bool prepared_data_{false};  // flag to indicate whether the data is prepared before taking for pull mode
   bool eof_received_{false};   // flag to indicate whether end of epoch signal is reached in pull mode
+
+  std::shared_ptr<PythonMultiprocessingRuntime> python_mp_;  // python multiprocessing instance
 
   Status PyRowToTensorRow(py::object py_data, TensorRow *tensor_row);
 

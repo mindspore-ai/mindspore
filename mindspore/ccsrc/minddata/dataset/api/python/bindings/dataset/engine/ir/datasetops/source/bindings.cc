@@ -17,6 +17,7 @@
 
 #include "minddata/dataset/api/python/pybind_conversion.h"
 #include "minddata/dataset/api/python/pybind_register.h"
+#include "minddata/dataset/api/python/python_mp.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/include/dataset/constants.h"
@@ -342,27 +343,27 @@ PYBIND_REGISTER(Food101Node, 2, ([](const py::module *m) {
                     }));
                 }));
 
-PYBIND_REGISTER(GeneratorNode, 2, ([](const py::module *m) {
-                  (void)py::class_<GeneratorNode, DatasetNode, std::shared_ptr<GeneratorNode>>(
-                    *m, "GeneratorNode", "to create a GeneratorNode")
-                    .def(
-                      py::init([](const py::function &generator_function, const std::vector<std::string> &column_names,
-                                  const std::vector<DataType> &column_types, int64_t dataset_len,
-                                  const py::handle &sampler, uint32_t num_parallel_workers) {
-                        auto gen =
-                          std::make_shared<GeneratorNode>(generator_function, column_names, column_types, dataset_len,
-                                                          toSamplerObj(sampler), num_parallel_workers);
-                        THROW_IF_ERROR(gen->ValidateParams());
-                        return gen;
-                      }))
-                    .def(py::init([](const py::function &generator_function, const std::shared_ptr<SchemaObj> &schema,
-                                     int64_t dataset_len, const py::handle &sampler, uint32_t num_parallel_workers) {
-                      auto gen = std::make_shared<GeneratorNode>(generator_function, schema, dataset_len,
-                                                                 toSamplerObj(sampler), num_parallel_workers);
-                      THROW_IF_ERROR(gen->ValidateParams());
-                      return gen;
-                    }));
-                }));
+PYBIND_REGISTER(
+  GeneratorNode, 2, ([](const py::module *m) {
+    (void)py::class_<GeneratorNode, DatasetNode, std::shared_ptr<GeneratorNode>>(*m, "GeneratorNode",
+                                                                                 "to create a GeneratorNode")
+      .def(py::init([](const py::function &generator_function, const std::vector<std::string> &column_names,
+                       const std::vector<DataType> &column_types, int64_t dataset_len, const py::handle &sampler,
+                       uint32_t num_parallel_workers, const std::shared_ptr<PythonMultiprocessingRuntime> &python_mp) {
+        auto gen = std::make_shared<GeneratorNode>(generator_function, column_names, column_types, dataset_len,
+                                                   toSamplerObj(sampler), num_parallel_workers, python_mp);
+        THROW_IF_ERROR(gen->ValidateParams());
+        return gen;
+      }))
+      .def(py::init([](const py::function &generator_function, const std::shared_ptr<SchemaObj> &schema,
+                       int64_t dataset_len, const py::handle &sampler, uint32_t num_parallel_workers,
+                       const std::shared_ptr<PythonMultiprocessingRuntime> &python_mp) {
+        auto gen = std::make_shared<GeneratorNode>(generator_function, schema, dataset_len, toSamplerObj(sampler),
+                                                   num_parallel_workers, python_mp);
+        THROW_IF_ERROR(gen->ValidateParams());
+        return gen;
+      }));
+  }));
 
 PYBIND_REGISTER(GTZANNode, 2, ([](const py::module *m) {
                   (void)py::class_<GTZANNode, DatasetNode, std::shared_ptr<GTZANNode>>(*m, "GTZANNode",
