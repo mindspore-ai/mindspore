@@ -158,7 +158,7 @@ def test_ring_attention_semi_auto_parallel_alltoallv(input_layout):
     Description: semi_auto_parallel with strategy
     Expectation: compile success
     """
-    set_auto_parallel_context(device_num=8, global_rank=0)
+    set_auto_parallel_context(device_num=4, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     context.set_context(save_graphs=True, save_graphs_path="./")
     dp = 1
@@ -193,7 +193,7 @@ def test_ring_attention_semi_auto_parallel_send_recv(input_layout):
     Description: semi_auto_parallel with strategy
     Expectation: compile success
     """
-    set_auto_parallel_context(device_num=8, global_rank=0)
+    set_auto_parallel_context(device_num=4, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     context.set_context(save_graphs=True, save_graphs_path="./")
     dp = 1
@@ -280,7 +280,7 @@ def test_ring_attention_user_define_mask_semi_auto_parallel(input_layout):
     Expectation: compile success
     """
 
-    set_auto_parallel_context(device_num=8, global_rank=0)
+    set_auto_parallel_context(device_num=4, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     dp = 1
     mp = 1
@@ -300,7 +300,7 @@ def test_ring_attention_semi_auto_parallel_eod_reset_attn_mask(input_layout):
     Description: semi_auto_parallel with strategy
     Expectation: compile success
     """
-    set_auto_parallel_context(device_num=8, global_rank=0)
+    set_auto_parallel_context(device_num=4, global_rank=0)
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
     dp = 1
     mp = 1

@@ -187,6 +187,9 @@ RankList FlashAttentionScoreInfo::GetSPRankList() {
   if (dev_matrix.GetDevicesAlongDim(seq_dim, &group_devices) != SUCCESS) {
     MS_LOG(ERROR) << name_ << " get group devices along dim " << seq_dim << " failed.";
   }
+  if (repeated_calc_num_ > 1) {
+    MS_LOG(EXCEPTION) << "ring attention only support full split currently";
+  }
   return group_devices;
 }
 
@@ -667,6 +670,11 @@ Status FlashAttentionScoreInfo::InferMirrorOpsByLayout() {
 }
 
 Status FlashAttentionScoreInfo::CheckInputInRingAttention() {
+  auto parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  if (parallel_mode != kSemiAutoParallel) {
+    MS_LOG(WARNING) << "ring attention & flash sp only supports semi parallel mode";
+    return SUCCESS;
+  }
   if (input_layout_ != FASInputLayoutMode::BSH && input_layout_ != FASInputLayoutMode::BNSD) {
     MS_LOG(ERROR) << "Ring attention currently only supports BSH and BNSD layout";
     return FAILED;
@@ -678,8 +686,8 @@ Status FlashAttentionScoreInfo::CheckInputInRingAttention() {
   if (keep_prob_ != 1.0) {
     MS_LOG(ERROR) << "Ring attention currently only supports keep prob 1.0";
   }
-  if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex]) {
-    MS_LOG(INFO) << "Ring attention applies the input attn mask";
+  if (is_input_passed_[ops::kFlashAttentionScoreInputAttnMaskIndex] && (enable_flash_sp_ || enable_load_balance_)) {
+    MS_LOG(EXCEPTION) << "ring attention load balance don't supports user defined mask";
   }
   return SUCCESS;
 }
@@ -729,7 +737,7 @@ Status FlashAttentionScoreInfo::GetAttrs() {
     if (enable_flash_sp_iter->second->isa<BoolImm>()) {
       enable_flash_sp_ = enable_flash_sp_iter->second->cast<BoolImmPtr>()->value();
       enable_load_balance_ = false;
-      MS_LOG(WARNING) << "enable_flash_sp_: " << enable_flash_sp_;
+      MS_LOG(INFO) << "enable_flash_sp_: " << enable_flash_sp_;
     } else {
       MS_LOG(ERROR) << "enable_flash_sp should be bool";
     }
