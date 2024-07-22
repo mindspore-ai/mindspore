@@ -387,7 +387,7 @@ static inline TypePtr PromoteType(TypePtr a, TypePtr b, const std::string &op_na
     /*         f32  f16  f64  bf16  s8  u8  s16  u16  s32  u32  s64  u64  b1 c64  c128 */
     /* f32 */ {f32, f32, f64, f32, f32, f32, f32, ud, f32, ud, f32, ud, f32, c64, c128},
     /* f16 */ {f32, f16, f64, f32, f16, f16, f16, ud, f16, ud, f16, ud, f16, c64, c128},
-    /* f64 */ {f64, f64, f64, f64, f64, f64, f64, ud, f64, ud, f64, ud, f64, c64, c128},
+    /* f64 */ {f64, f64, f64, f64, f64, f64, f64, ud, f64, ud, f64, ud, f64, c128, c128},
     /* bf16*/ {f32, f32, f64, bf16, bf16, bf16, bf16, ud, bf16, ud, bf16, ud, bf16, c64, c128},
     /* s8  */ {f32, f16, f64, bf16, s8, s16, s16, ud, s32, ud, s64, ud, s8, c64, c128},
     /* u8  */ {f32, f16, f64, bf16, s16, u8, s16, ud, s32, ud, s64, ud, u8, c64, c128},
@@ -398,7 +398,7 @@ static inline TypePtr PromoteType(TypePtr a, TypePtr b, const std::string &op_na
     /* s64 */ {f32, f16, f64, bf16, s64, s64, s64, ud, s64, ud, s64, ud, s64, c64, c128},
     /* u64 */ {ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, ud, u64, ud, ud, ud},
     /* b1  */ {f32, f16, f64, bf16, s8, u8, s16, ud, s32, ud, s64, ud, b1, c64, c128},
-    /* c64 */ {c64, c64, c64, c64, c64, c64, c64, ud, c64, ud, c64, ud, c64, c64, c128},
+    /* c64 */ {c64, c64, c128, c64, c64, c64, c64, ud, c64, ud, c64, ud, c64, c64, c128},
     /* c128*/ {c128, c128, c128, c128, c128, c128, c128, ud, c128, ud, c128, ud, c128, c128, c128},
   };
 

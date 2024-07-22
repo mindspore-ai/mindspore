@@ -1,0 +1,16 @@
+#operator remainder_tensor_scalar
+remainder_tensor_scalar:
+    args:
+        input:
+            dtype: tensor
+        other:
+            dtype: number
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: RemainderTensorScalar
+    dispatch:
+        enable: True
