@@ -53,6 +53,10 @@ int ConstantOfShapeCPUKernel::DoExecute(int task_id) {
       ConstantOfShapeInt32(reinterpret_cast<int32_t *>(output_ptr_), start, start + current_stride,
                            param_->value_.int32_value_);
       break;
+    case kNumberTypeBool:
+      ConstantOfShapeBool(reinterpret_cast<bool *>(output_ptr_), start, start + current_stride,
+                          param_->value_.bool_value_);
+      break;
 #ifdef ENABLE_FP16
     case kNumberTypeFloat16:
       ConstantOfShapeFp16(reinterpret_cast<float16_t *>(output_ptr_), start, start + current_stride,
@@ -100,4 +104,5 @@ REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ConstantOfShape, LiteKernelCr
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_ConstantOfShape, LiteKernelCreator<ConstantOfShapeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_ConstantOfShape, LiteKernelCreator<ConstantOfShapeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_ConstantOfShape, LiteKernelCreator<ConstantOfShapeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_ConstantOfShape, LiteKernelCreator<ConstantOfShapeCPUKernel>)
 }  // namespace mindspore::kernel

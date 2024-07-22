@@ -42,6 +42,9 @@ OpParameter *PopulateConstantOfShapeOpParameter(const BaseOperatorPtr &base_oper
     case kNumberTypeInt32:
       param->value_.int32_value_ = static_cast<int32_t>(value[0]);
       break;
+    case kNumberTypeBool:
+      param->value_.bool_value_ = static_cast<bool>(value[0]);
+      break;
     default:
       MS_LOG(ERROR) << "The value of constant of shape is invalid";
       free(param);

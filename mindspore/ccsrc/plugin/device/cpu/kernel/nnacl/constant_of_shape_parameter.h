@@ -23,6 +23,7 @@ typedef struct ConstantOfShapeParameter {
   union value_ {
     float f32_value_;
     int32_t int32_value_;
+    bool bool_value_;
   } value_;
   int data_type_;
   int element_size_;

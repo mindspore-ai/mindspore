@@ -35,7 +35,7 @@ asm_function ConvDwFp32Row
     mov r6, #4
     mul r5, r5, r6
     cmp r3, #0
-    beq End
+    ble End
 
     LoopNumPixel:
         mov r6, r1   // input_ptr
