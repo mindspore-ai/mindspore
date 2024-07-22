@@ -136,6 +136,8 @@ class GeDeviceResManager : public DeviceResManager {
   bool SyncNotDefaultStreams() const override;
   size_t DefaultStream() const override;
 
+  int StressDetect() const override;
+
   DeviceEventPtr CreateRuntimeEvent(bool enable_blocking, bool enable_record_wait);
   DeviceEventPtr CreateEventWithFlag(bool enable_timing, bool blocking) override;
 

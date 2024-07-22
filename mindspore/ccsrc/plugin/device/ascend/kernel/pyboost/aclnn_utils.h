@@ -92,6 +92,40 @@
   }                                                                                                               \
   (#aclnn_api, device_context, stream_id, __VA_ARGS__)
 
+#define LAUNCH_ACLNN_SYNC_WITH_RETURN(aclnn_api, device_context, stream_id, ...)                                      \
+  [](const std::string &aclnn_name, const device::DeviceContext *device_context, size_t real_stream_id,               \
+     auto &... args) -> auto {                                                                                        \
+    runtime::OpExecutor::GetInstance().WaitAll();                                                                     \
+    runtime::ProfilerRecorder aclnn_profiler(runtime::ProfilerModule::kPynative,                                      \
+                                             runtime::ProfilerEvent::kPyBoostLaunchAclnn, aclnn_name, false);         \
+    auto stream_ptr = device_context->device_res_manager_->GetStream(real_stream_id);                                 \
+    auto use_huge_pages = true;                                                                                       \
+    auto return_values = GEN_EXECUTOR_CUST(aclnn_name, use_huge_pages, args...);                                      \
+    auto ws_size = std::get<0>(return_values);                                                                        \
+    auto executor_handle = std::get<1>(return_values);                                                                \
+    void *workspace_addr = nullptr;                                                                                   \
+    if (ws_size != 0) {                                                                                               \
+      auto workspace_device_address = runtime::DeviceAddressUtils::CreateWorkspaceAddressWithoutKernelTensor(         \
+        device_context, real_stream_id, ws_size, true);                                                               \
+      if (workspace_device_address->GetMutablePtr() == nullptr) {                                                     \
+        MS_LOG(WARNING) << " Can't allocate workspace memory size: " << ws_size << " for " << aclnn_name;             \
+        return 0;                                                                                                     \
+      }                                                                                                               \
+    }                                                                                                                 \
+    static const auto op_api_func = transform::GetOpApiFunc(aclnn_name.c_str());                                      \
+    if (op_api_func == nullptr) {                                                                                     \
+      MS_LOG(EXCEPTION) << aclnn_name << " not in " << transform::GetOpApiLibName() << ", please check!";             \
+    }                                                                                                                 \
+    auto run_api_func = reinterpret_cast<transform::RunApiFunc>(op_api_func);                                         \
+    auto api_ret = run_api_func(workspace_addr, ws_size, executor_handle, stream_ptr);                                \
+    auto snync_ret = CALL_ASCEND_API(aclrtSynchronizeStream, stream_ptr);                                             \
+    if (snync_ret != 0) {                                                                                             \
+      MS_LOG(EXCEPTION) << "Sync stream " << aclnn_name << " failed, detail:" << CALL_ASCEND_API(aclGetRecentErrMsg); \
+    }                                                                                                                 \
+    return api_ret;                                                                                                   \
+  }                                                                                                                   \
+  (#aclnn_api, device_context, stream_id, __VA_ARGS__)
+
 namespace mindspore {
 namespace kernel {
 namespace pyboost {

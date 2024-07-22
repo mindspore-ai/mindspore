@@ -29,6 +29,7 @@
 #include "plugin/device/ascend/hal/device/ascend_event.h"
 #include "plugin/device/ascend/hal/device/ascend_pin_mem_pool.h"
 #include "plugin/device/cpu/hal/device/cpu_device_synchronizer.h"
+#include "plugin/device/ascend/kernel/pyboost/customize/stress_detect.h"
 #include "include/transform/graph_ir/utils.h"
 #include "graph/types.h"
 #include "transform/symbol/acl_rt_symbol.h"
@@ -497,6 +498,15 @@ size_t GeDeviceResManager::DefaultStream() const {
     return SIZE_MAX;
   }
   return AscendStreamMng::GetInstance().default_stream_id();
+}
+
+int GeDeviceResManager::StressDetect() const {
+  if (!BindDeviceToCurrentThread(false)) {
+    MS_LOG(ERROR) << "Bind context to current thread failed";
+    return 0;
+  }
+  MS_EXCEPTION_IF_NULL(device_context_);
+  return kernel::pyboost::StressDetectKernel(device_context_, AscendStreamMng::GetInstance().default_stream_id());
 }
 
 // ACL_EVENT_TIME_LINE: indicates that the number of created events is not limited, and the created events can be used

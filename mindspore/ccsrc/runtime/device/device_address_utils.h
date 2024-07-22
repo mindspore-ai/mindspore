@@ -135,7 +135,8 @@ class BACKEND_EXPORT DeviceAddressUtils {
 
   static device::DeviceAddressPtr CreateWorkspaceAddressWithoutKernelTensor(const DeviceContext *device_context,
                                                                             size_t stream_id,
-                                                                            const size_t &workspace_size);
+                                                                            const size_t &workspace_size,
+                                                                            bool no_exception = false);
 
   static device::DeviceAddressPtr CreateWorkspaceAddress(const DeviceContext *device_context, size_t stream_id,
                                                          const size_t &workspace_size);
