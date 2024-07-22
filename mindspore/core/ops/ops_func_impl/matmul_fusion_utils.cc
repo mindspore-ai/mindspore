@@ -27,12 +27,14 @@ BaseShapePtr MatmulFusionUtils::InferenceMultiMatmulInferShape(const PrimitivePt
   if (IsDynamicRank(x_shape) || IsDynamicRank(w_shape)) {
     MS_LOG(EXCEPTION) << "For " << op_name << ", dynamic rank is not supported";
   }
+  constexpr size_t kSize2 = 2;
+  constexpr size_t kSize3 = 3;
   const size_t x_rank = x_shape.size();
   const size_t w_rank = w_shape.size();
-  MS_CHECK_VALUE(x_rank == 3,
+  MS_CHECK_VALUE(x_rank == kSize3,
                  CheckAndConvertUtils::FormatCommMsg("For '" + primitive->name() + "', x_rank should be 3."));
 
-  MS_CHECK_VALUE(w_rank == 2,
+  MS_CHECK_VALUE(w_rank == kSize2,
                  CheckAndConvertUtils::FormatCommMsg("For '" + primitive->name() + "', w_rank should be 2."));
 
   auto b = x_shape[0];  // in matmul, m = b * s
@@ -46,8 +48,6 @@ BaseShapePtr MatmulFusionUtils::InferenceMultiMatmulInferShape(const PrimitivePt
                  CheckAndConvertUtils::FormatCommMsg("For '" + primitive->name() + "', op must have attr 'n_lens'."));
 
   std::vector<int64_t> n_len_list = GetValue<std::vector<int64_t>>(primitive->GetAttr("n_lens"));
-  constexpr size_t kSize2 = 2;
-  constexpr size_t kSize3 = 3;
   MS_CHECK_VALUE(
     (n_len_list.size() == kSize2 || n_len_list.size() == kSize3),
     CheckAndConvertUtils::FormatCommMsg("For '" + primitive->name() + "', attr 'n_lens' must have 2 or 3 value."));

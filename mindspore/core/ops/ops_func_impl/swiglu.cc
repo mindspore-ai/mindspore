@@ -27,6 +27,7 @@ BaseShapePtr SwigluInferShape(const PrimitivePtr &primitive, const std::vector<A
   MS_EXCEPTION_IF_NULL(primitive);
   auto op_name = primitive->name();
   auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShapeMap(input_args[kInputIndex0]->GetShape())[kShape];
+  constexpr size_t kSplitNum = 2;
   int64_t dim = GetScalarValue<int64_t>(input_args[kInputIndex1]->GetValue()).value();
   if (IsDynamicRank(x_shape)) {
     MS_LOG(EXCEPTION) << "For " << op_name << ", dynamic rank is not supported";
@@ -35,7 +36,7 @@ BaseShapePtr SwigluInferShape(const PrimitivePtr &primitive, const std::vector<A
   if (dim < 0) {
     dim += x_rank;
   }
-  x_shape[dim] = x_shape[dim] / 2;
+  x_shape[dim] = x_shape[dim] / kSplitNum;
   return std::make_shared<abstract::TensorShape>(x_shape);
 }
 

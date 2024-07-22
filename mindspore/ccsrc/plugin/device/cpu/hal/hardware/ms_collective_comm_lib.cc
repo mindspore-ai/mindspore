@@ -60,12 +60,13 @@ bool MsCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_
   cgn_ = std::dynamic_pointer_cast<distributed::cluster::topology::ComputeGraphNode>(
     ClusterContext::instance()->node_base());
 
+  constexpr size_t kSizeNum3 = 3;
   std::string timeout_env = common::GetEnv(kEnvNodeTimeOut);
   if (!timeout_env.empty()) {
     MS_LOG(INFO) << "MS_NODE_TIMEOUT env set by user: " << timeout_env;
-    retry_count_ = std::stoi(timeout_env) / 3;
+    retry_count_ = std::stoi(timeout_env) / kSizeNum3;
   } else {
-    retry_count_ = kMSCollectiveRetryTime / 3;
+    retry_count_ = kMSCollectiveRetryTime / kSizeNum3;
   }
   MS_LOG(INFO) << "Query retry count is " << retry_count_;
 
