@@ -168,7 +168,10 @@ class _Context:
         self._support_binary = False
         self.enable_compile_cache = None
         self._mode = PYNATIVE_MODE
-        self._jit_config = {}
+        self.aoe_config = {}
+        self.jit_config = {}
+        self.ascend_config = {}
+        self.gpu_config = {}
 
     def __getattribute__(self, attr):
         value = object.__getattribute__(self, attr)
@@ -188,7 +191,7 @@ class _Context:
 
     def get_jit_config(self):
         """Get current jit_config."""
-        return self._jit_config
+        return self.jit_config
 
     def set_mode(self, mode):
         """
@@ -351,6 +354,7 @@ class _Context:
                                 f"{supported_modes}, but got {type(ascend_value)}.")
             cfg_setter = ascend_cfg_setters.get(ascend_key)
             cfg_setter(ascend_value)
+        self.ascend_config = ascend_config
 
     def set_gpu_config(self, gpu_config):
         """
@@ -392,6 +396,7 @@ class _Context:
                 self.set_param(ms_ctx_param.conv_allow_tf32, gpu_config[gpu_key])
             if gpu_key == 'matmul_allow_tf32':
                 self.set_param(ms_ctx_param.matmul_allow_tf32, gpu_config[gpu_key])
+            self.gpu_config = gpu_config
 
     def set_jit_config(self, jit_config):
         """
@@ -410,10 +415,10 @@ class _Context:
                                  f"{jit_cfgs}, but got {jit_key}.")
             supported_value = jit_cfgs.get(jit_key)
             if jit_config[jit_key] not in supported_value:
-                raise ValueError(f"For 'jit_cfgs', the value of argument {jit_key} must be one of "
+                raise ValueError(f"For 'jit_config', the value of argument {jit_key} must be one of "
                                  f"{supported_value}, but got {jit_config[jit_key]}.")
-            self._jit_config = jit_config
             self.set_param(key_args_map[jit_key], jit_config[jit_key])
+        self.jit_config = jit_config
 
         if 'infer_boost' in jit_config and jit_config['infer_boost'] == "on" and jit_config['jit_level'] != "O0":
             raise ValueError(f"Only jit_level set O0 can set infer_boost to on.")
@@ -488,6 +493,7 @@ class _Context:
                                  f"{supported_value}, but got {aoe_config[aoe_config_key]}.")
             if aoe_config_key == 'job_type':
                 self.set_param(ms_ctx_param.aoe_job_type, aoe_config[aoe_config_key])
+        self.aoe_config = aoe_config
 
     def set_device_id(self, device_id):
         if device_id < 0 or device_id > 4095:
@@ -1790,11 +1796,11 @@ def set_context(**kwargs):
             continue
         if not _check_target_specific_cfgs(device, key):
             continue
-        if hasattr(ctx, key):
-            setattr(ctx, key, value)
-            continue
         if key in ctx.setters:
             ctx.setters[key](ctx, value)
+            continue
+        if hasattr(ctx, key):
+            setattr(ctx, key, value)
             continue
         # enum variables beginning with '_' are for internal use
         if key in ms_ctx_param.__members__ and key[0] != '_':
