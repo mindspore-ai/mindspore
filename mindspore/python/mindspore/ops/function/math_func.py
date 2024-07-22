@@ -1966,7 +1966,7 @@ def bitwise_and_ext(input, other):
     Args:
         input (Tensor): The input tensor.
         other (Tensor, Number.number): The input tensor or scalar. It has the same shape
-        with `input` or its shape is able to broadcast with `input`.
+            with `input` or its shape is able to broadcast with `input`.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is same as `input`.
@@ -2046,7 +2046,7 @@ def bitwise_or_ext(input, other):
     Args:
         input (Tensor): The input tensor.
         other (Tensor, Number.number): The input tensor or scalar. It has the same shape
-        with `input` or its shape is able to broadcast with `input`.
+            with `input` or its shape is able to broadcast with `input`.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is same as `input`.
@@ -2126,7 +2126,7 @@ def bitwise_xor_ext(input, other):
     Args:
         input (Tensor): The input tensor.
         other (Tensor, Number.number): The input tensor or scalar. It has the same shape
-        with `input` or its shape is able to broadcast with `input`.
+            with `input` or its shape is able to broadcast with `input`.
 
     Returns:
         Tensor, the shape is the same as the one after broadcasting, and the data type is same as `input`.
