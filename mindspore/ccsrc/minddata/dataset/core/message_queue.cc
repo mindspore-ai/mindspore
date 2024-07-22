@@ -62,6 +62,8 @@ Status MessageQueue::GetOrCreateMessageQueueID() {
   return Status::OK();
 }
 
+MessageQueue::State MessageQueue::MessageQueueState() { return state_; }
+
 Status MessageQueue::MsgSnd(int64_t mtype, int shm_id, uint64_t shm_size) {
   RETURN_IF_NOT_OK(GetOrCreateMessageQueueID());
   mtype_ = mtype;
@@ -93,6 +95,10 @@ Status MessageQueue::MsgRcv(int64_t mtype) {
   }
   MS_LOG(DEBUG) << "Exec msgrcv success, mtype: " << mtype << ", shm_id: " << shm_id_ << ", shm_size: " << shm_id_;
   return Status::OK();
+}
+
+int MessageQueue::MsgRcv(int64_t mtype, int msgflg) {
+  return msgrcv(msg_queue_id_, this, sizeof(MessageQueue), mtype, msgflg);
 }
 #endif
 }  // namespace dataset

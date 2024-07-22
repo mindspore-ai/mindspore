@@ -212,5 +212,9 @@ Status SendBridgeOp::GetNextRowPullMode(TensorRow *const row) {
   (*row) = std::move(new_row);
   return Status::OK();
 }
+
+MessageQueue::State SendBridgeOp::MessageQueueState() { return msg_queue_.MessageQueueState(); }
+
+MessageQueue SendBridgeOp::GetMessageQueue() { return msg_queue_; }
 }  // namespace dataset
 }  // namespace mindspore

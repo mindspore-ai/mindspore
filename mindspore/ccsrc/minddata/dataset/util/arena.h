@@ -118,7 +118,9 @@ class Arena : public MemoryPool {
   }
   void Deallocate(void *pVoid) override {
     std::unique_lock<std::mutex> lock(mux_);
-    impl_->Deallocate(pVoid);
+    if (impl_) {
+      impl_->Deallocate(pVoid);
+    }
   }
   uint64_t get_max_size() const override { return impl_->get_max_size(); }
   int PercentFree() const override {
