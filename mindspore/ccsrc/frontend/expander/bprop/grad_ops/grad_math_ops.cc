@@ -1525,16 +1525,17 @@ REG_BPROP_BUILDER("LuUnpack").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("Sinc").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
+  auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
   auto product = ib->Mul(ib->Tensor(pi, ib->GetDtype(x)), x);
-  auto reciprocal = ib->RealDiv(
-    (ib->Sub((ib->Mul(product, (ib->Emit("Cos", {product})))), (ib->Emit("Sin", {product})))), (ib->Mul(product, x)));
-  TypeId rec_type = ib->GetDtypeId(reciprocal);
-  if (rec_type == kNumberTypeComplex64 || rec_type == kNumberTypeComplex128) {
-    reciprocal = ib->Conj(reciprocal);
+  auto dx = ib->Div((ib->Mul((ib->Sub((ib->Emit("Cos", {product})), out)), dout)), x);
+  TypeId x_type = ib->GetDtypeId(x);
+  if (x_type == kNumberTypeComplex64 || x_type == kNumberTypeComplex128) {
+    dx = ib->Conj(dx);
   }
-  auto dx = ib->Mul(reciprocal, dout);
-  return {dx};
+  auto zeros = ib->Emit("ZerosLikeExt", {dout, ib->Value(static_cast<int64_t>(ib->GetDtypeId(dout)))});
+  auto cond = ib->Equal(product, ib->Tensor(0.0, ib->GetDtype(x)));
+  return {ib->Select(cond, zeros, dx)};
 });
 
 REG_BPROP_BUILDER("CumProd").SetBody(BODYFUNC(ib) {

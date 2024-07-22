@@ -111,6 +111,7 @@ Tensor
     mindspore.mint.rsqrt
     mindspore.mint.sigmoid
     mindspore.mint.sin
+    mindspore.mint.sinc
     mindspore.mint.sinh
     mindspore.mint.sqrt
     mindspore.mint.square
@@ -386,3 +387,16 @@ mindspore.mint.linalg
     :template: classtemplate.rst
 
     mindspore.mint.linalg.inv
+
+mindspore.mint.special
+----------------------
+
+三角函数
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. mscnplatwarnautosummary::
+    :toctree: mint
+    :nosignatures:
+    :template: classtemplate.rst
+
+    mindspore.mint.special.sinc
