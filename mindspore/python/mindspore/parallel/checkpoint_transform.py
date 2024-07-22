@@ -132,7 +132,9 @@ def rank_list_for_transform(rank_id, src_strategy_file=None, dst_strategy_file=N
             src_rank_id_start = src_pipeline_stage_id * src_stage_device_num
             result_set.update([src_rank_id_start + rank for rank in needed_rank_list_in_local_stage])
             handled_pipeline_stage.append(src_pipeline_stage_id)
-    return list(result_set)
+    result_list = list(result_set)
+    result_list.sort(reverse=True)
+    return list(result_list)
 
 
 def transform_checkpoint_by_rank(rank_id, checkpoint_files_map, save_checkpoint_file_name,
