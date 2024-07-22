@@ -109,9 +109,18 @@ static std::unordered_map<std::string, std::pair<OpType, int>> op_type_map = {
 TypeId GetValueNodeType(const AnfNodePtr &node) {
   auto valuenode = node->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(valuenode);
-  auto input_tensor = valuenode->value()->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  auto type_id = input_tensor->data_type();
+  auto value = valuenode->value();
+  MS_EXCEPTION_IF_NULL(value);
+  TypeId type_id = TypeId::kTypeUnknown;
+  if (value->isa<tensor::Tensor>()) {
+    auto input_tensor = value->cast<tensor::TensorPtr>();
+    MS_EXCEPTION_IF_NULL(input_tensor);
+    type_id = input_tensor->data_type();
+  } else if (value->isa<Scalar>()) {
+    auto value_type = value->type();
+    MS_EXCEPTION_IF_NULL(value_type);
+    type_id = value_type->type_id();
+  }
   if (type_id != TypeId::kNumberTypeFloat32 && type_id != TypeId::kNumberTypeFloat16 &&
       type_id != TypeId::kNumberTypeInt32) {
     MS_LOG_WITH_NODE(EXCEPTION, node) << "Data type of scalar value input only supports float, but got: "

@@ -326,6 +326,9 @@ tensor::TensorPtr InputValue2Tensor(ValuePtr input_value) {
   } else if (input_value->isa<BoolImm>()) {
     auto input_bool = GetValue<bool>(input_value);
     input_tensor = std::make_shared<tensor::Tensor>(input_bool);
+  } else if (input_value->isa<FP32Imm>()) {
+    auto value = GetValue<float>(input_value);
+    input_tensor = std::make_shared<tensor::Tensor>(value);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported Type in InputValue2Tensor";
   }
