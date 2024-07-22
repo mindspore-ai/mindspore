@@ -18,6 +18,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.nn import Cell, GraphCell
 import mindspore.ops.operations as P
 import numpy as np
+import pytest
 from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')

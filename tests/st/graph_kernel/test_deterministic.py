@@ -18,7 +18,7 @@ import pytest
 import mindspore.context as context
 from mindspore import Tensor, nn
 import mindspore.ops as ops
-from tests.st.ops.graph_kernel.gk_utils import AssertGKEnable
+from tests.st.graph_kernel.gk_utils import AssertGKEnable
 
 
 class ReduceNet(nn.Cell):
