@@ -6,6 +6,7 @@ approvers:
 - huangxinjing
 - liuchongming74
 - HulkTang
+- AllenXiao_O
 
 options:
     no_parent_owners: true
