@@ -9,13 +9,13 @@ xlogy_scalar_self:
 
         Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
 
-        Args:
-            input (number): The first input is a number.
-            other (Tensor): The second input is a tensor.
+        Inputs:
+            - **input** (number) - The first input is a number.
+            - **other** (Tensor) - The second input is a tensor.
 
-        Returns:
-            Tensor, the shape is the same as the second input,
-            and the data type is the one with higher precision or higher digits among the two inputs.
+        Outputs:
+            - **y** (Tensor) - the shape is the same as the second input,
+              and the data type is the one with higher precision or higher digits among the two inputs.
 
         Raises:
             TypeError: If `input` is not a number.
