@@ -68,6 +68,7 @@ class CustomAclnnKernelMod : public AclnnKernelMod {
   }
 
  private:
+  DEFINE_GET_WORKSPACE_FOR_RESIZE()
   template <typename... Ts>
   auto GenExecutor(const std::vector<Ts> &... vecs) {
     const auto &op_type = this->op_type_;
@@ -76,23 +77,6 @@ class CustomAclnnKernelMod : public AclnnKernelMod {
     auto executor_info = std::apply(
       [&op_type, &hash_id](const auto &... args) { return GEN_EXECUTOR_BOOST(op_type, hash_id, args...); }, res_tuple);
     return executor_info;
-  }
-
-  void RunOp(void *stream_ptr, const std::vector<KernelTensor *> &workspace) {
-    if (workspace_size_list_.empty()) {
-      RUN_OP_API_ASYNC(op_type_, nullptr, 0, executor_, stream_ptr, release_func_);
-    } else {
-      if (workspace.empty()) {
-        MS_LOG(EXCEPTION) << "Failed to allocate workspace tensor!";
-      }
-      auto workspace_tensor = workspace[0];
-      if (workspace_tensor->size() != workspace_size_list_[0]) {
-        MS_LOG(EXCEPTION) << "Please check 'GetWorkSpaceInfo' and 'Launch' func. Expected workspace size is"
-                          << workspace_size_list_[0] << ", but get " << workspace_tensor->size();
-      }
-      RUN_OP_API_ASYNC(op_type_, workspace_tensor->device_ptr(), workspace_size_list_[0], executor_, stream_ptr,
-                       release_func_);
-    }
   }
 };
 
