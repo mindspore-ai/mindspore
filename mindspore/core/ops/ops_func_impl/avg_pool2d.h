@@ -18,7 +18,9 @@
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_AVG_POOL2D_H_
 
 #include <memory>
+#include <set>
 #include <vector>
+#include "ir/dtype/number.h"
 #include "mindapi/base/types.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 
@@ -37,6 +39,7 @@ class MIND_API AvgPool2DFuncImpl final : public OpFuncImpl {
   TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 
  private:
+  const std::set<TypePtr> valid_types_{kFloat16, kFloat32};
   const size_t no_batch_rank_ = 3;
   const size_t batch_rank_ = 4;
   const int64_t tuple_min_ele_num_ = 1;

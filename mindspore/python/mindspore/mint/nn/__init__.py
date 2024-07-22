@@ -220,7 +220,7 @@ from mindspore.nn.extend.basic import Linear
 # 98
 
 # 99
-from mindspore.nn.layer.pooling import AvgPool2dExt as AvgPool2d
+from mindspore.nn.layer import AvgPool2dExt as AvgPool2d
 # 100
 from mindspore.ops.auto_generate import BCEWithLogitsLoss as BCEWithLogitsLoss_prim
 

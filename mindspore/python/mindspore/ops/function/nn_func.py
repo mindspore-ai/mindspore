@@ -523,16 +523,20 @@ def avg_pool2d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
         outputs regional average in the :math:`(H_{in}, W_{in})` -dimension.
         Given kernel size :math:`(kH, kW)` and `stride` , the operation is as follows.
 
+        .. note::
+            On the Atlas platform, when calculating the input, the precision is degraded from float32 to float16.
+
         .. math::
             \text{output}(N_i, C_j, h, w) = \frac{1}{kH * kW} \sum_{m=0}^{kH-1} \sum_{n=0}^{kW-1}
             \text{input}(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
 
         Args:
-            input (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})` .
+            input (Tensor): Tensor of shape :math:`(N, C, H_{in}, W_{in})` or :math:`(C, H_{in}, W_{in})`.
             kernel_size (Union[int, tuple[int], list[int]]): The size of kernel used to take the average value.
                 Can be a single number or a tuple :math:`(kH, kW)` .
             stride (Union[int, tuple[int], list[int]], optional): The distance of kernel moving.
-                Can be a single number or a tuple :math:`(sH, sW)` . Default value is `kernel_size` .
+                Can be a single number or a tuple :math:`(sH, sW)` . Default: ``None``,
+                where its value is equal to `kernel_size`.
             padding (Union(int, tuple[int], list[int]), optional): Implicit zero padding to be added on both sides.
                 Can be a single number or a tuple :math:`(padH, padW)` . Default: ``0``.
             ceil_mode (bool, optional): If True, apply ceil instead of floor to compute the output shape.
@@ -543,12 +547,12 @@ def avg_pool2d_ext(input, kernel_size, stride=None, padding=0, ceil_mode=False, 
                 otherwise size of pooling region will be used. Default: ``None``.
 
         Returns:
-            Tensor, with shape :math:`(N, C, H_{out}, W_{out})`.
+            Tensor, with shape :math:`(N, C, H_{out}, W_{out})` or :math:`(C, H_{out}, W_{out})`.
 
             .. math::
                 \begin{array}{ll} \\
-                    H_{out} = \frac{H_{in} + 2 \times padding[0] - kernel_size[0]}{stride[0]} + 1 \\
-                    W_{out} = \frac{W_{in} + 2 \times padding[1] - kernel_size[1]}{stride[1]} + 1
+                    H_{out} = \frac{H_{in} + 2 \times padding[0] - kernel\_size[0]}{stride[0]} + 1 \\
+                    W_{out} = \frac{W_{in} + 2 \times padding[1] - kernel\_size[1]}{stride[1]} + 1
                 \end{array}
 
         Raises:
