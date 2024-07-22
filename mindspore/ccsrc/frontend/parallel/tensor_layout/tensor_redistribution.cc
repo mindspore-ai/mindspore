@@ -736,6 +736,40 @@ RedistributionOpListPtr TensorRedistribution::InferTensorRedistributionOperatorL
       Status::FAILED) {
     return nullptr;
   }
+
+  ConstructOperator constructor;
+  if (from_origin_.base_slice_shape().array() != from_origin_.slice_shape().array()) {
+    reshape_flag_ = true;
+    constructor.UpdateTensorShape(from_origin_.base_slice_shape().array());
+    Arrangement shape = from_origin_.slice_shape();
+    MS_LOG(INFO) << "from_origin_.base_slice_shape is not same with from_origin_.slice_shape: "
+                 << "from_origin_.base_slice_shape=" << from_origin_.base_slice_shape().array()
+                 << ", from_origin_.slice_shape=" << from_origin_.slice_shape().array() << ", reshape to "
+                 << shape.ToString();
+    if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
+      return nullptr;
+    } else {
+      (void)operator_vector.insert(operator_vector.cbegin(), constructor.GetOperator());
+      (void)output_info_vector.insert(output_info_vector.cbegin(), std::make_pair(false, 0));
+    }
+  }
+
+  if (to_origin_.slice_shape().array() != to_origin_.base_slice_shape().array()) {
+    reshape_flag_ = true;
+    constructor.UpdateTensorShape(to_origin_.slice_shape().array());
+    Arrangement shape = to_origin_.base_slice_shape();
+    MS_LOG(INFO) << "to_origin_.slice_shape is not same with to_origin_.base_slice_shape: "
+                 << "to_origin_.slice_shape=" << to_origin_.slice_shape().array()
+                 << ", to_origin_.base_slice_shape=" << to_origin_.base_slice_shape().array() << ", reshape to "
+                 << shape.ToString();
+    if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
+      return nullptr;
+    } else {
+      (void)operator_vector.insert(operator_vector.cend(), constructor.GetOperator());
+      (void)output_info_vector.insert(output_info_vector.cend(), std::make_pair(false, 0));
+    }
+  }
+
   operator_vec_str.clear();
   AppendOperatorVecStr(operator_vector, &operator_vec_str);
   MS_LOG(INFO) << "After InferRedistribution, operator_vector size: " << operator_vector.size()
