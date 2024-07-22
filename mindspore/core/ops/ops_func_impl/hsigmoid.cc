@@ -37,7 +37,7 @@ TypePtr HSigmoidFuncImpl::InferType(const PrimitivePtr &primitive,
   auto tensor_type = x_type->cast<TensorTypePtr>();
   auto real_type = tensor_type->element();
   (void)CheckAndConvertUtils::CheckSubClass("input_x", real_type, valid_types, primitive->name());
-  return x_type->Clone();
+  return x_type;
 }
 
 TypePtrList HSigmoidFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
