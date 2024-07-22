@@ -637,6 +637,72 @@ bool IsNodeValid(const AnfNodePtr &node) {
   return true;
 }
 
+// Check if src_node depends on dst_node.
+bool IsTopoDependNode(const std::set<AnfNodePtr> &checked_calls, const AnfNodePtr &node,
+                      std::set<AnfNodePtr> *checked_node) {
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(checked_node);
+  if (checked_calls.find(node) != checked_calls.end()) {
+    return true;
+  }
+  if (!node->isa<CNode>() || checked_node->find(node) != checked_node->end()) {
+    return false;
+  }
+
+  (void)checked_node->emplace(node);
+  const auto &cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  const auto &inputs = cnode->inputs();
+  for (const auto &input : inputs) {
+    MS_EXCEPTION_IF_NULL(input);
+    if (IsTopoDependNode(checked_calls, input, checked_node)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool HasParallelSwitchCall(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> switch_calls;
+  const auto &nodes = TopoSort(func_graph->get_return());
+  for (const auto &node : nodes) {
+    if (!common::AnfAlgo::IsCallNode(node)) {
+      continue;
+    }
+    const auto &cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr || cnode->size() == 0 || cnode->input(0) == nullptr ||
+        (!common::AnfAlgo::CheckPrimitiveType(cnode->input(0), prim::kPrimSwitch))) {
+      continue;
+    }
+    switch_calls.emplace_back(node);
+  }
+  if (switch_calls.size() <= 1) {
+    return false;
+  }
+  constexpr size_t kMaxSwitchInlineSize = 10;
+  if (switch_calls.size() >= kMaxSwitchInlineSize) {
+    MS_LOG(INFO) << "Disable switch inline for switch node:" << switch_calls.size() << " more than 10.";
+    return true;
+  }
+  std::set<AnfNodePtr> checked_calls{switch_calls.front()};
+  for (size_t i = 1; i < switch_calls.size(); ++i) {
+    std::set<AnfNodePtr> checked_nodes;
+    if (!IsTopoDependNode(checked_calls, switch_calls[i], &checked_nodes)) {
+      MS_LOG(INFO) << "Switch call node:" << switch_calls[i]->DebugString() << " has other parallel call node.";
+      return true;
+    }
+    checked_calls.emplace(switch_calls[i]);
+  }
+  return false;
+}
+
+bool IsFuncGraphSupportSwitchInline(const FuncGraphPtr &graph) {
+  return HasParallelSwitchCall(graph) ||
+         std::any_of(graph->func_graphs_used_total().cbegin(), graph->func_graphs_used_total().cend(),
+                     [](const auto &sub_graph) { return sub_graph != nullptr && HasParallelSwitchCall(sub_graph); });
+}
+
 bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
@@ -697,6 +763,11 @@ bool IsEnableControlFlowInline(const FuncGraphPtr &graph) {
   const auto &mng = graph->manager();
   if (mng != nullptr && std::any_of(mng->all_nodes().begin(), mng->all_nodes().end(),
                                     [](const AnfNodePtr &node) { return !IsNodeValid(node); })) {
+    return false;
+  }
+  MS_LOG(INFO) << "Start check parallel switch call.";
+  if (IsFuncGraphSupportSwitchInline(graph)) {
+    MS_LOG(INFO) << "Disable switch inline for parallel switch call node.";
     return false;
   }
   MS_LOG(INFO) << "Enable switch inline.";
