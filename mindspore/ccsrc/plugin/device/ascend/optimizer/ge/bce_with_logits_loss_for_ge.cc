@@ -41,7 +41,6 @@ const AnfNodePtr BCEWithLogitsLossForGe::Process(const FuncGraphPtr &graph, cons
 
   auto input_type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, kIndex0);
   auto target_type_id = common::AnfAlgo::GetPrevNodeOutputInferDataType(node, kIndex1);
-
   if (input_type_id == target_type_id) {
     return node;
   }
