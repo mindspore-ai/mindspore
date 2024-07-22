@@ -68,6 +68,8 @@
 #include "plugin/device/ascend/optimizer/ir_fusion/matmul_elemwise_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/inference_matmul_split_fusion.h"
 #include "plugin/device/ascend/optimizer/ir_fusion/inference_swiglu_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/inference_qbmm_add_fusion.h"
+#include "plugin/device/ascend/optimizer/ir_fusion/inference_qbmm_allreduce_add_fusion.h"
 #include "utils/phase.h"
 
 namespace mindspore {
@@ -164,6 +166,8 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulElemBiasaddFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulElemReluFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulElemGeluFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::QbmmAddFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::QbmmAllReduceAddFusion>());
 #endif  // ENABLE_INTERNAL_KERNELS
 }
 
