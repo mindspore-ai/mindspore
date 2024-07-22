@@ -21,3 +21,6 @@ mindspore.ops.cummax
         - **TypeError** - 如果 `input` 不是Tensor。
         - **TypeError** - 如果 `axis` 不是int。
         - **ValueError** - 如果 `axis` 不在范围[-input.ndim, input.ndim - 1]内。
+
+    .. note::
+        Ascend不支持O2模式。
