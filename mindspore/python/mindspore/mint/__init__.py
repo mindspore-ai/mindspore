@@ -231,6 +231,9 @@ from mindspore.ops.function.math_func import tanh
 
 # 100
 
+# 109
+from mindspore.ops.auto_generate import argmin_ext as argmin
+
 # 122
 
 # 151
@@ -1123,6 +1126,9 @@ __all__ = [
     # 99
 
     # 100
+
+    # 109
+    'argmin',
 
     # 151
     'acos',

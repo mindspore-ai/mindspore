@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2023 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "plugin/device/ascend/kernel/opapi/aclnn/argmax_ext_aclnn_kernel.h"
+#include "plugin/device/ascend/kernel/opapi/aclnn/argmin_ext_aclnn_kernel.h"
 #include <algorithm>
 #include <vector>
 #include <memory>
@@ -25,15 +25,13 @@
 
 namespace mindspore {
 namespace kernel {
-
-void ArgMaxAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
+void ArgMinAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &outputs) {
   dim_ = 0;
-  keepdim_ = false;
   dim_is_none_ = false;
-  auto in_shape = inputs[kIndex0]->GetShapeVector();
-  input_realshape_ = in_shape;
-  output_realshape_ = outputs[kIndex0]->GetShapeVector();
+  keepdim_ = false;
+  input_real_shape_ = inputs[kIndex0]->GetShapeVector();
+  output_real_shape_ = outputs[kIndex0]->GetShapeVector();
   auto dim_value_opt = inputs[kIndex1]->GetOptionalValueWithCheck<int64_t>();
   if (dim_value_opt.has_value()) {
     dim_ = dim_value_opt.value();
@@ -45,7 +43,8 @@ void ArgMaxAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
   if (dim_is_none_) {
     input_kernel_tensor_ = inputs[kIndex0]->CloneKernelTensor();
 
-    int input_flatten_size = std::accumulate(in_shape.begin(), in_shape.end(), 1, std::multiplies<int64_t>());
+    int input_flatten_size =
+      std::accumulate(input_real_shape_.begin(), input_real_shape_.end(), 1, std::multiplies<int64_t>());
     auto input_flatten_shape = ShapeVector{input_flatten_size};
     input_kernel_tensor_->SetShapeVector(input_flatten_shape);
 
@@ -63,7 +62,7 @@ void ArgMaxAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
   }
 }
 
-bool ArgMaxAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
+bool ArgMinAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                           const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
   if (dim_is_none_) {
@@ -78,6 +77,6 @@ bool ArgMaxAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::
   return true;
 }
 
-MS_ACLNN_KERNEL_FACTORY_REG(ArgMaxExt, ArgMaxAscend);
+MS_ACLNN_KERNEL_FACTORY_REG(ArgMinExt, ArgMinAscend);
 }  // namespace kernel
 }  // namespace mindspore
