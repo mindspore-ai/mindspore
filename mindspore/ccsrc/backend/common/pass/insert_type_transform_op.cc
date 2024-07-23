@@ -414,7 +414,7 @@ void GenerateKernelObjectTypeForNewCNode(const CNodePtr &cnode, std::vector<Kern
   } else {
     // For other ops, get output object type from abstract.
     general_input_obj_type_func();
-    if (cnode->abstract() == nullptr) {
+    if (cnode->abstract() == nullptr || !AnfUtils::IsGraphKernel(cnode)) {
       output_obj_type->push_back(KernelObjectType::TENSOR);
     } else {
       for (size_t i = 0; i < AnfUtils::GetOutputTensorNum(cnode); ++i) {
