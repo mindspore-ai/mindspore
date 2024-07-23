@@ -158,7 +158,6 @@ BaseShapePtr RepeatInterleaveTensorFuncImpl::InferShape(const PrimitivePtr &prim
       auto repeats_values = repeats_opt.value();
       repeats = GetNewRepeats<int32_t>(primitive, repeats_values);
     }
-
   } else {
     auto repeats_opt = GetArrayValue<int64_t>(input_args[kInputIndex1]);
     if (repeats_opt.has_value()) {
