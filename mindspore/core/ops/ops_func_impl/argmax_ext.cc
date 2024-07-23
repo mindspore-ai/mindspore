@@ -20,6 +20,7 @@
 #include "ops/op_utils.h"
 #include "ops/op_name.h"
 #include "utils/check_convert_utils.h"
+#include "ops/ops_func_impl/simple_infer.h"
 
 namespace mindspore {
 namespace ops {
@@ -38,11 +39,21 @@ BaseShapePtr ArgMaxExtFuncImpl::InferShape(const PrimitivePtr &primitive,
       int64_t axis = 0;
       axis = axis_value_scalar.value();
       auto x_rank = SizeToLong(x_shape_vec.size());
+      if (x_rank == 0) {
+        MS_CHECK_VALUE(axis >= -1 && axis < 1,
+                       CheckAndConvertUtils::FormatCheckInRangeMsg("dim", axis, kIncludeLeft, {-1, 1}, primitive));
+        return std::make_shared<abstract::TensorShape>(ShapeVector{});
+      }
       MS_CHECK_VALUE(axis >= -x_rank && axis < x_rank, CheckAndConvertUtils::FormatCheckInRangeMsg(
                                                          "dim", axis, kIncludeLeft, {-x_rank, x_rank}, primitive));
       axis = axis < 0 ? axis + x_rank : axis;
       output_shape = x_shape_vec;
-      auto keepdim = GetScalarValue<bool>(input_args[kInputIndex2]->GetValue());
+      auto keep_dims_value = input_args[kInputIndex2]->GetValue();
+      auto keepdim = GetScalarValue<bool>(keep_dims_value);
+      if (MS_UNLIKELY(!keepdim.has_value())) {
+        ShapeVector out_shape{abstract::TensorShape::kShapeRankAny};
+        return std::make_shared<abstract::TensorShape>(std::move(out_shape));
+      }
       auto keepdim_value = keepdim.value();
       if (keepdim_value) {
         output_shape[axis] = 1;
@@ -69,6 +80,11 @@ ShapeArray ArgMaxExtFuncImpl::InferShape(const PrimitivePtr &primitive, const Va
     const auto &axis_value_scalar = GetScalarValue<int64_t>(input_values[kInputIndex1]);
     int64_t axis = axis_value_scalar.value();
     const auto &x_rank = SizeToLong(x_shape_vec.size());
+    if (x_rank == 0) {
+      MS_CHECK_VALUE(axis >= -1 && axis < 1,
+                     CheckAndConvertUtils::FormatCheckInRangeMsg("dim", axis, kIncludeLeft, {-1, 1}, primitive));
+      return {ShapeVector{}};
+    }
     MS_CHECK_VALUE(axis >= -x_rank && axis < x_rank, CheckAndConvertUtils::FormatCheckInRangeMsg(
                                                        "dim", axis, kIncludeLeft, {-x_rank, x_rank}, primitive));
     axis = axis < 0 ? axis + x_rank : axis;
@@ -95,5 +111,8 @@ TypePtr ArgMaxExtFuncImpl::InferType(const PrimitivePtr &primitive,
 TypePtrList ArgMaxExtFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
   return {kInt64};
 }
+
+REGISTER_SIMPLE_INFER(kNameArgMaxExt, ArgMaxExtFuncImpl)
+REGISTER_SIMPLE_INFER(kNameArgMinExt, ArgMaxExtFuncImpl)
 }  // namespace ops
 }  // namespace mindspore

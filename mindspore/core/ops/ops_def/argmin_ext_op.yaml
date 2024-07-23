@@ -1,0 +1,22 @@
+#operator argmin_ext
+argmin_ext:
+  args:
+    input:
+      dtype: tensor
+    dim:
+      dtype: int
+      default: None
+    keepdim:
+      dtype: bool
+      default: False
+  returns:
+    output:
+      dtype: tensor
+  class:
+    name: ArgMinExt
+  function:
+    name: argmin_ext
+  dispatch:
+    enable: True
+    Ascend: ArgMinAscend
+

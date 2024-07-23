@@ -1,0 +1,29 @@
+argmin_ext:
+    description: |
+        Return the indices of the minimum values of a tensor across a dimension.
+
+        Args:
+            input (Tensor): Input tensor.
+            dim (Union[int, None], optional): The dimension to reduce. If `dim` is ``None`` , the indices of the minimum
+                value within the flattened input will be returned. Default: ``None`` .
+            keepdim (bool, optional): Whether the output tensor retains the specified
+                dimension. Ignored if `dim` is None. Default: ``False`` .
+
+        Returns:
+            Tensor, indices of the minimum values across a dimension.
+
+        Raises:
+            TypeError: If `keepdim` is not bool.
+            ValueError: If `dim` is out of range.
+
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> from mindspore import mint
+            >>> x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
+            >>> output = mint.argmin(x, dim=-1)
+            >>> print(output)
+            [0 1 2]

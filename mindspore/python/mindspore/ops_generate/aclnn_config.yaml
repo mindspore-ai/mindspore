@@ -276,6 +276,9 @@ LeakyReLUGradExt: 'aclnnLeakyReluBackward'
 
 # 100
 
+# 109
+ArgMinExt: 'aclnnArgMin'
+
 # 151
 AcosExt: 'aclnnAcos'
 # 152

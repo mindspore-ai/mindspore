@@ -127,6 +127,7 @@ Reduction Operations
     :template: classtemplate.rst
 
     mindspore.mint.argmax
+    mindspore.mint.argmin
     mindspore.mint.all
     mindspore.mint.any
     mindspore.mint.max
