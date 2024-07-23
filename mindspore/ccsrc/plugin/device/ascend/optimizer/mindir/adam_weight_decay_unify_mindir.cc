@@ -123,12 +123,12 @@ const AnfNodePtr AdamWeightDecayUnifyMindIR::Process(const FuncGraphPtr &func_gr
 
   // Create New node
   PrimitivePtr prim = nullptr;
-  std::vector<AnfNodePtr> ori_param_list(3, nullptr);
+  std::vector<AnfNodePtr> ori_param_list(kShape3dDims, nullptr);
   AnfNodePtr ori_param = nullptr;
   if (!all_fp32) {
-    ori_param_list[0] = input_list[kIndex1];
-    ori_param_list[1] = input_list[kIndex2];
-    ori_param_list[2] = input_list[kIndex3];
+    ori_param_list[kIndex0] = input_list[kIndex1];
+    ori_param_list[kIndex1] = input_list[kIndex2];
+    ori_param_list[kIndex2] = input_list[kIndex3];
     // depend monad to optimize memory
     input_list[kIndex1] = CreateDependNode(func_graph, input_list[kIndex1], input_list[kIndex11]);
     input_list[kIndex2] = CreateDependNode(func_graph, input_list[kIndex2], input_list[kIndex11]);
