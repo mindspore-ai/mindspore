@@ -105,7 +105,7 @@ std::shared_ptr<CNode> CreateTransQuantParamV2(const FuncGraphPtr &func_graph, c
   auto scale_x1 = quant_param_x1.scale;
   auto zero_point_x1 = quant_param_x1.zeroPoint;
   if (zero_point_x1 != 0) {
-    MS_LOG(ERROR) << "Only support zero_point = 0!";
+    MS_LOG(ERROR) << "Only support zero_point = 0! zero_point_x1 is: " << zero_point_x1;
     return nullptr;
   }
   auto quant_params_x2 = quant_params_vec.at(kNumIndex1);
@@ -233,6 +233,9 @@ int QuantBatchMatmulMapper(const CNodePtr &mm_cnode) {
     MS_LOG(INFO) << "Start do double per_tensor(A&W) pass or Start do per_tensor(A) + per_channel(W) pass(The weight "
                     "is already of the int8 type.).";
     return ReplaceMMToQuantBatchMatmul(func_graph, mm_cnode);
+  } else if (quant_params_vec.size() == kSize_3) {
+    MS_LOG(ERROR) << "quant_params_vec size is 3. The matmul node conversion with quantized bias is not supported now!";
+    return RET_ERROR;
   } else {
     MS_LOG(ERROR) << "Dont support! The number of quantization parameters is " << quant_params_vec.size();
     return RET_ERROR;

@@ -113,7 +113,8 @@ bool OnnxQuantizeLinearParser::SetZeroPointAttr(const onnx::GraphProto &onnx_gra
     if (zp_data_type == mindspore::kNumberTypeUInt8) {
       zero_point = *(static_cast<const uint8_t *>(zp_data)) - 128;
     } else if (zp_data_type == mindspore::kNumberTypeInt8) {
-      zero_point = *(static_cast<const int *>(zp_data));
+      auto zero_point_int8 = *(static_cast<const int8_t *>(zp_data));
+      zero_point = static_cast<const int32_t>(zero_point_int8);
     } else {
       MS_LOG(ERROR) << "Invalid zero point data type: " << zp_data_type << ", zero_point is " << zero_point;
       prim->AddAttr(kAttrZeroPoint, MakeValue(zero_point));
