@@ -71,22 +71,22 @@ const BaseRef InferenceSwiGLUFusion::DefinePattern() const {
     return {};
   }
   VectorRef split_ref({split_prim_, input_, split_size_, axis_});
+  auto is_tuple_getitem0 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTupleGetItem>);
+  MS_CHECK_TRUE_RET(is_tuple_getitem0 != nullptr, {});
+  auto is_seq_var0 = std::make_shared<SeqVar>();
+  MS_CHECK_TRUE_RET(is_seq_var0 != nullptr, {});
+  VectorRef tuple_ref0({is_tuple_getitem0, split_ref, is_seq_var0});
   auto is_tuple_getitem1 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTupleGetItem>);
   MS_CHECK_TRUE_RET(is_tuple_getitem1 != nullptr, {});
   auto is_seq_var1 = std::make_shared<SeqVar>();
   MS_CHECK_TRUE_RET(is_seq_var1 != nullptr, {});
   VectorRef tuple_ref1({is_tuple_getitem1, split_ref, is_seq_var1});
-  auto is_tuple_getitem2 = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimTupleGetItem>);
-  MS_CHECK_TRUE_RET(is_tuple_getitem2 != nullptr, {});
-  auto is_seq_var2 = std::make_shared<SeqVar>();
-  MS_CHECK_TRUE_RET(is_seq_var2 != nullptr, {});
-  VectorRef tuple_ref2({is_tuple_getitem2, split_ref, is_seq_var2});
   auto is_activation = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimSiLU>);
   MS_CHECK_TRUE_RET(is_activation != nullptr, {});
-  VectorRef sigmoid_ref({is_activation, tuple_ref2});
+  VectorRef sigmoid_ref({is_activation, tuple_ref1});
   auto is_mul = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimMul>);
   MS_CHECK_TRUE_RET(is_mul != nullptr, {});
-  VectorRef mul_ref({is_mul, tuple_ref1, sigmoid_ref});
+  VectorRef mul_ref({is_mul, tuple_ref0, sigmoid_ref});
   return mul_ref;
 }
 
