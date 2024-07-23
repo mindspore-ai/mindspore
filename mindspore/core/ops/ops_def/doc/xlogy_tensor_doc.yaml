@@ -9,17 +9,17 @@ xlogy:
 
         Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
 
-        Args:
-            input (Tensor, number.Number, bool): The first input is a number.Number or a bool or a tensor whose data
-                type is `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
-            other (Tensor, number.Number, bool): The second input is a number.Number or a bool or a tensor whose data
-                type is `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
-                `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+        Inputs:
+            - **input** (Tensor, number.Number, bool) - The first input is a number.Number or a bool or a tensor whose data
+              type is `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+              `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
+            - **other** (Tensor, number.Number, bool) - The second input is a number.Number or a bool or a tensor whose data
+              type is `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
+              `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
 
-        Returns:
-            Tensor, the shape is the broadcast of `input` and `other`,
-            and the data type is the one with higher precision or higher digits among the two inputs.
+        Outputs:
+            - **y** (Tensor) - the shape is the broadcast of `input` and `other`,
+              and the data type is the one with higher precision or higher digits among the two inputs.
 
         Raises:
             TypeError: If `input` is not a Tensor.
