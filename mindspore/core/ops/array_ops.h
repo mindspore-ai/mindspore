@@ -150,8 +150,6 @@ GVAR_DEF(PrimitivePtr, kPrimSquaredDifference, std::make_shared<Primitive>("Squa
 GVAR_DEF(PrimitivePtr, kPrimReverseSequence, std::make_shared<Primitive>("ReverseSequence"));
 GVAR_DEF(PrimitivePtr, kPrimSort, std::make_shared<Primitive>("Sort"));
 GVAR_DEF(PrimitivePtr, kPrimMaskedScatter, std::make_shared<Primitive>("MaskedScatter"));
-GVAR_DEF(PrimitivePtr, kPrimMaskedSelect, std::make_shared<Primitive>("MaskedSelect"));
-GVAR_DEF(PrimitivePtr, kPrimMaskedSelectGrad, std::make_shared<Primitive>("MaskedSelectGrad"));
 GVAR_DEF(PrimitivePtr, kPrimDiagD, std::make_shared<Primitive>("DiagD"));
 GVAR_DEF(PrimitivePtr, kPrimDiagPart, std::make_shared<Primitive>(kDiagPartOpName));
 GVAR_DEF(PrimitivePtr, kPrimDiagPartD, std::make_shared<Primitive>("DiagPartD"));

@@ -1,0 +1,17 @@
+#operator masked_select_grad
+masked_select_grad:
+  args:
+    input:
+      dtype: tensor
+    mask:
+      dtype: tensor
+    grad:
+      dtype: tensor
+  returns:
+    values:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: MaskedSelectGradAscend

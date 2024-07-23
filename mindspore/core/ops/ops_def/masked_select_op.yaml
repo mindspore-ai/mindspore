@@ -1,0 +1,13 @@
+#operator masked_select
+masked_select:
+  args:
+    input:
+      dtype: tensor
+    mask:
+      dtype: tensor
+  returns:
+    values:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: MaskedSelectAscend
