@@ -497,6 +497,9 @@ Status ModelImpl::ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::
     if (GetValue<bool>(value)) {
       // it does not need to convert, if funcgraph is optimized.
       return kSuccess;
+    } else if (config_info_.find(lite::kInnerModelParallelRunnerSection) != config_info_.end()) {
+      MS_LOG(ERROR) << "Model Parallel Runner is not supported, due to func_graph is not optimized";
+      return kLiteError;
     }
   }
 
