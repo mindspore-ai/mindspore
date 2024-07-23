@@ -167,6 +167,8 @@ class DataPrepareActor : public DebugAwareActor {
 
   // Global execution count for data prepare actor.
   static std::atomic<size_t> execution_count_;
+  // Flatten weights needs to prepare data every step.
+  bool is_sub_data_{false};
 };  // namespace runtime
 
 using DataPrepareActorPtr = std::shared_ptr<DataPrepareActor>;
