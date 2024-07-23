@@ -17,6 +17,7 @@ import shutil
 import os
 from mindspore import context
 
+
 class AssertGKEnable:
     def __init__(self, enable_graph_kernel=True):
         self.enable_gk = enable_graph_kernel
