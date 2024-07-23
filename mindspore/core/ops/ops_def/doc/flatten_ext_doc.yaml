@@ -4,8 +4,6 @@ flatten_ext:
 
         Args:
             input (Tensor): The input Tensor.
-
-        Keyword Args:
             start_dim (int, optional): The first dimension to flatten. Default: ``0`` .
             end_dim (int, optional): The last dimension to flatten. Default: ``-1`` .
 
@@ -25,8 +23,8 @@ flatten_ext:
         Examples:
             >>> import mindspore
             >>> import numpy as np
-            >>> from mindspore import Tensor, mint
+            >>> from mindspore import Tensor, ops
             >>> input_x = Tensor(np.ones(shape=[1, 2, 3, 4]), mindspore.float32)
-            >>> output = mint.flatten(input_x)
+            >>> output = ops.auto_generate.flatten_ext(input_x)
             >>> print(output.shape)
             (24,)
