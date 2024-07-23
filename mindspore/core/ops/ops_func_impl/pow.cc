@@ -45,5 +45,13 @@ TypePtr PowFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<
   MS_EXCEPTION_IF_NULL(x2_type);
   return PromoteType(x1_type, x2_type, primitive->name());
 }
+
+int32_t PowFuncImpl::CheckValidation(const PrimitivePtr &primitive,
+                                     const std::vector<AbstractBasePtr> &input_args) const {
+  const int64_t input_num = 2;
+  CheckAndConvertUtils::CheckInputArgs(input_args, kEqual, input_num, primitive->name());
+  return OP_CHECK_SUCCESS;
+}
+
 }  // namespace ops
 }  // namespace mindspore
