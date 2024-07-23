@@ -129,7 +129,7 @@ void ConstructGraph::SetGeneralBuildInfo(const AnfNodePtr &node) {
   info_builder.SetInputsDeviceType(input_types);
   info_builder.SetInputsKernelObjectType(
     std::vector<kernel::KernelObjectType>(input_num, kernel::KernelObjectType::TENSOR));
-  size_t output_num = common::AnfAlgo::GetOutputNumByAbstract(node->abstract());
+  size_t output_num = AnfUtils::GetOutputTensorNum(node);
   info_builder.SetOutputsFormat(std::vector<std::string>(output_num, "DefaultFormat"));
   std::vector<TypeId> output_types(output_num);
   for (size_t i = 0; i < output_types.size(); i++) {
