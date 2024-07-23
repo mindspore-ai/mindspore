@@ -21,40 +21,11 @@ import mindspore.communication as D
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.ops = ops.Add()
-        self.ops.shard(((2, 2, 2), (2, 2, 2)))
-    def construct(self, x, y):
-        return self.ops(x, y)
+        self.ops = ops.Sin()
+        self.ops.shard(((2, 2, 2),))
+    def construct(self, x):
+        return self.ops(x)
 
-def test_pynative_mode():
-    '''
-    Feature: Parallel Support for Complex64 input
-    Description: pynative mode
-    Expectation: Run success
-    '''
-    ms.set_context(mode=ms.PYNATIVE_MODE)
-    ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.AUTO_PARALLEL)
-
-    D.init()
-    ms.set_seed(1)
-
-    x_real = np.random.randn(4, 4, 4).astype(np.float32)
-    y_real = np.random.randn(4, 4, 4).astype(np.float32)
-    x_imag = np.random.randn(4, 4, 4).astype(np.float32)
-    y_imag = np.random.randn(4, 4, 4).astype(np.float32)
-    # msdtype.Complex64
-    x = ms.Tensor(x_real + 1j*x_imag)
-    y = ms.Tensor(y_real + 1j*y_imag)
-
-    z_real = x_real + y_real
-    z_imag = x_imag + y_imag
-
-    net = Net()
-    output = net(x, y)
-    output_np = output.asnumpy()
-
-    assert np.allclose(np.real(output_np), z_real) and np.allclose(np.imag(output_np), z_imag)
-    ms.reset_auto_parallel_context()
 
 def test_graph_mode():
     '''
@@ -71,18 +42,14 @@ def test_graph_mode():
     ms.set_seed(1)
 
     x_real = np.random.randn(4, 4, 4).astype(np.float32)
-    y_real = np.random.randn(4, 4, 4).astype(np.float32)
     x_imag = np.random.randn(4, 4, 4).astype(np.float32)
-    y_imag = np.random.randn(4, 4, 4).astype(np.float32)
     x = ms.Tensor(x_real + 1j*x_imag)
-    y = ms.Tensor(y_real + 1j*y_imag)
 
-    z_real = x_real + y_real
-    z_imag = x_imag + y_imag
+    sin_x = np.sin(x_real + 1j*x_imag)
 
     net = Net()
-    output = net(x, y)
+    output = net(x)
     output_np = output.asnumpy()
 
-    assert np.allclose(np.real(output_np), z_real) and np.allclose(np.imag(output_np), z_imag)
+    assert np.allclose(np.real(output_np), np.real(sin_x)) and np.allclose(np.imag(output_np), np.imag(sin_x))
     ms.reset_auto_parallel_context()

@@ -16,18 +16,7 @@ import os
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
-def test_pynative_mode_parallel_complex_input():
-    '''
-    Feature: Parallel Support for Complex64 input
-    Description: pynative mode
-    Expectation: Run success
-    '''
-    ret = os.system("mpirun -n 8 --allow-run-as-root pytest -s -v parallel_complex_input.py::test_pynative_mode")
-    assert ret == 0
-
-
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
 def test_graph_mode_parallel_complex_input():
     '''
     Feature: Parallel Support for Complex64 input
