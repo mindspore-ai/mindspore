@@ -57,21 +57,6 @@ int PReluRun(void *cdata, int task_id, float l, float r) {
 int PReluPrepare(KernelBase *self) {
   NNACL_CHECK_FALSE(self->in_size_ < TWO_TENSOR, NNACL_ERR);
   NNACL_CHECK_FALSE(self->out_size_ < ONE_TENSOR, NNACL_ERR);
-  PReluStruct *prelu = (PReluStruct *)self;
-  NNACL_CHECK_NULL_RETURN_ERR(prelu);
-  TensorC *input = self->in_[FIRST_INPUT];
-  NNACL_CHECK_NULL_RETURN_ERR(input);
-  TensorC *slope = self->in_[SECOND_INPUT];
-  NNACL_CHECK_NULL_RETURN_ERR(slope);
-
-  int slope_num = GetElementNum(slope);
-  if (slope_num == Num1) {
-    prelu->channel_shared_ = true;
-  } else if (slope_num == GetChannel(input)) {
-    prelu->channel_shared_ = false;
-  } else {
-    return NNACL_PRELU_SLOPE_NUM_INVALID;
-  }
   return NNACL_OK;
 }
 
@@ -92,6 +77,21 @@ int PReluCompute(KernelBase *self) {
   NNACL_CHECK_NULL_RETURN_ERR(self->in_[SECOND_INPUT]->data_);
   NNACL_CHECK_NULL_RETURN_ERR(self->out_[OUTPUT_INDEX]);
   NNACL_CHECK_NULL_RETURN_ERR(self->out_[OUTPUT_INDEX]->data_);
+  PReluStruct *prelu = (PReluStruct *)self;
+  NNACL_CHECK_NULL_RETURN_ERR(prelu);
+  TensorC *input = self->in_[FIRST_INPUT];
+  NNACL_CHECK_NULL_RETURN_ERR(input);
+  TensorC *slope = self->in_[SECOND_INPUT];
+  NNACL_CHECK_NULL_RETURN_ERR(slope);
+
+  int slope_num = GetElementNum(slope);
+  if (slope_num == Num1) {
+    prelu->channel_shared_ = true;
+  } else if (slope_num == GetChannel(input)) {
+    prelu->channel_shared_ = false;
+  } else {
+    return NNACL_PRELU_SLOPE_NUM_INVALID;
+  }
   return self->env_->ParallelLaunch(self->env_->thread_pool_, PReluRun, self, self->thread_nr_);
 }
 

@@ -227,7 +227,7 @@ STATUS OnnxNodeParser::SetDataTypeAndValue(const onnx::TensorProto &onnx_tensor,
       SetTypeAndValueForFloat(onnx_tensor, value, data_count);
       break;
     case onnx::TensorProto_DataType_BOOL:
-      *type = GetDataTypeFromOnnx(onnx::TensorProto_DataType_INT32);
+      *type = GetDataTypeFromOnnx(onnx::TensorProto_DataType_BOOL);
       SetTypeAndValueForBool(onnx_tensor, value, data_count);
       break;
     default:

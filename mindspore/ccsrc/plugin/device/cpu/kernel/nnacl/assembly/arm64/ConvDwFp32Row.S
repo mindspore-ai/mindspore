@@ -30,7 +30,7 @@ asm_function ConvDwFp32Row
     // x19 ~ x29 should be also preserved
     // whereas our coding style do not permit such amount of parameters
 cmp x3, #0
-beq End
+ble End
 
 mov x9, x0
 mov x12, #4

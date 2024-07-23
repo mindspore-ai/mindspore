@@ -38,6 +38,13 @@ inline int ConstantOfShapeFp32(float *output, int start, int end, float value) {
   return NNACL_OK;
 }
 
+inline int ConstantOfShapeBool(bool *output, int start, int end, bool value) {
+  for (int i = start; i < end; i++) {
+    output[i] = value;
+  }
+  return NNACL_OK;
+}
+
 #ifdef __cplusplus
 }
 #endif
