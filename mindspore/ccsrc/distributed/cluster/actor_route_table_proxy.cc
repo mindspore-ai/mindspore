@@ -46,6 +46,7 @@ topology::ActorAddress ActorRouteTableProxy::LookupRoute(const std::string &acto
   auto timeout_ts = CURRENT_TIMESTAMP_MILLI + lookup_timeout_;
   topology::ActorAddress lookup_route_rsp_msg;
 
+  size_t count = 0;
   do {
     auto route = cgn_->GetMetadata(actor_id);
     if (route.length() == 0) {
@@ -58,7 +59,7 @@ topology::ActorAddress ActorRouteTableProxy::LookupRoute(const std::string &acto
     // An actor route could not be registered yet because another process could be launched slow.
     // If the response actor id is empty, this means the adderess is not registered yet.
     if (lookup_route_rsp_msg.actor_id().empty()) {
-      MS_LOG(WARNING) << "Retry to get the address of actor " << actor_id;
+      MS_LOG(WARNING) << "Retry time: " << ++count << " to get the address of actor " << actor_id;
     }
   } while (!lookup_success && CURRENT_TIMESTAMP_MILLI <= timeout_ts);
 
