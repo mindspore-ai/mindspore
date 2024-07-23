@@ -15,6 +15,7 @@ layer_norm:
             the value must be in [-1, rank(input_x)). Default: ``1`` .
         begin_params_axis (int): The begin axis of the parameter input (`gamma`, `beta`) to
             apply LayerNorm, the value must be in [-1, rank(input_x)). Default: ``1`` .
+            Note: On the Ascend platform, the value of `begin_params_axis` needs to be equal to the value of `begin_norm_axis` .
         epsilon (float): A value added to the denominator for numerical stability(:math:`\epsilon`). Default: ``1e-7`` .
 
     Inputs:
