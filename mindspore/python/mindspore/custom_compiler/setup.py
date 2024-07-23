@@ -24,6 +24,7 @@ OP_HOST = "op_host"
 OP_KERNEL = "op_kernel"
 SUFFIX_CPP = "cpp"
 SUFFIX_H = "h"
+BUILD_OUT = "build_out"
 CONFIG_KEY_CONFIGUREPRESET = "configurePresets"
 CONFIG_KEY_VALUE = "value"
 CONFIG_KEY_VARIABLE = "cacheVariables"
@@ -53,7 +54,6 @@ class CustomOOC():
 
     def __init__(self, args):
         self.args = args
-        self.ori_cmake_preset = ""
         script_path = os.path.abspath(__file__)
         dir_path, _ = os.path.split(script_path)
         self.current_path = dir_path
@@ -138,21 +138,28 @@ class CustomOOC():
             if item.split('.')[-1] in ascend_suffix:
                 os.remove(os.path.join(self.custom_project, OP_KERNEL, item))
 
-    def compile_config(self):
-        """create CMakePresets.json by config"""
-        with open(os.path.join(self.custom_project, 'CMakePresets.json'), 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        self.ori_cmake_preset = data
+    def get_cann_path(self):
+        """get cann path by user set or default"""
         if self.args.ascend_cann_package_path != "":
             cann_package_path = self.args.ascend_cann_package_path
         else:
             cann_package_path = os.environ.get('ASCEND_AICPU_PATH')
             if cann_package_path is None:
-                raise ValueError("Config error!  Can not find cann package path, "
-                                 "please set cann package path by --ascend_cann_package_path.")
+                cann_package_path = "/usr/local/Ascend/latest"
+
         if not os.path.isdir(cann_package_path):
             logger.error(f"The path '{cann_package_path}' is not a valid path.")
-        logger.info("ASCEND_CANN_PACKAGE_PATH is {}".format(cann_package_path))
+
+        return cann_package_path
+
+    def compile_config(self):
+        """create CMakePresets.json by config"""
+        with open(os.path.join(self.custom_project, 'CMakePresets.json'), 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        cann_package_path = self.get_cann_path()
+        self.args.ascend_cann_package_path = cann_package_path
+        logger.info("The ASCEND_CANN_PACKAGE_PATH used for compiling the custom operator is is {}".format(
+            cann_package_path))
         data[CONFIG_KEY_CONFIGUREPRESET][0][CONFIG_KEY_VARIABLE][CONFIG_KEY_CANN_PATH][
             CONFIG_KEY_VALUE] = cann_package_path
 
@@ -185,7 +192,14 @@ class CustomOOC():
         if self.args.install or self.args.install_path != "":
             logger.info("Install custom opp run in {}".format(self.args.install_path))
             os.environ['ASCEND_CUSTOM_OPP_PATH'] = self.args.install_path
-            result = subprocess.run(['bash', self.custom_project + '/build_out/*.run'], stdout=os.fdopen(
+            run_path = []
+            build_out_path = os.path.join(self.custom_project, "build_out")
+            for item in os.listdir(build_out_path):
+                if item.split('.')[-1] == "run":
+                    run_path.append(os.path.join(build_out_path, item))
+            if not run_path:
+                raise RuntimeError("There is no custom run in {}".format(build_out_path))
+            result = subprocess.run(['bash', run_path[0]], stdout=os.fdopen(
                 os.open("install.log", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700), "w"),
                                     stderr=subprocess.STDOUT)
             if result.returncode == 0:
@@ -227,9 +241,15 @@ class CustomOOC():
         self.copy_src()
         log_fd = os.open("build.log", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700)
         log_file = os.fdopen(log_fd, "w")
-        result = subprocess.run(['bash', 'start.sh', self.custom_project],
-                                stdout=log_file,
-                                stderr=subprocess.STDOUT)
+        if self.args.ascend_cann_package_path != "":
+            result = subprocess.run(['bash', 'start.sh', self.custom_project, self.args.ascend_cann_package_path],
+                                    stdout=log_file,
+                                    stderr=subprocess.STDOUT)
+        else:
+            result = subprocess.run(['bash', 'start.sh', self.custom_project],
+                                    stdout=log_file,
+                                    stderr=subprocess.STDOUT)
+
         log_file.close()
         if result.returncode == 0:
             logger.info("Compile custom op successfully!")

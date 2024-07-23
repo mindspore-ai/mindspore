@@ -14,12 +14,16 @@
 # limitations under the License.
 # ============================================================================
 
-expected_args=1
-args_num=$#
-if [ "$args_num" -ne "$expected_args" ]; then
-  echo "Error: Incorrect number of arguments $args_num"
+#!/bin/bash
+if [ "$#" -eq 2 ]; then
+  cann_path=$2
+  source ${cann_path}/bin/setenv.bash &>/dev/null
+  export LD_LIBRARY_PATH=${cann_path}/lib64:$LD_LIBRARY_PATH
+elif [ "$#" -ne 1 ]; then
+  echo "Error: Incorrect number of arguments $#"
   exit 1
 fi
+
 project_path=$1
 unset ASCEND_CUSTOM_OPP_PATH
 cd ${project_path}
