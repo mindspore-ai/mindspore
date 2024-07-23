@@ -2113,6 +2113,7 @@ def get_split_vmap_rule(prim, axis_size):
 
     return vmap_rule
 
+
 @vmap_rules_getters.register(P.SearchSorted)
 def get_searchsorted_vmap_rule(prim, axis_size):
     """VmapRule for `SearchSorted`."""
