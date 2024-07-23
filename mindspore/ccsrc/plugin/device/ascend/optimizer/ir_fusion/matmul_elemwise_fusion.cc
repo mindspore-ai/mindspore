@@ -60,7 +60,6 @@ const AnfNodePtr MatmulElemFusionBase::Process(const FuncGraphPtr &func_graph, c
   if (!enable_matmul_elemwise) {
     return nullptr;
   }
-
   if (elewise_input_num_ != kUnaryInputNum && elewise_input_num_ != kBinaryInputNum) {
     MS_LOG(EXCEPTION) << "Only support elewise unary and binary inputs";
   }
@@ -85,11 +84,10 @@ const AnfNodePtr MatmulElemFusionBase::Process(const FuncGraphPtr &func_graph, c
   MS_CHECK_TRUE_RET(matmul_elemwise_prim, {});
 
   std::string elemwise_type = GetElemwiseType();
-  if (!(elemwise_type == "bias_add" && common::AnfAlgo::GetOutputInferDataType(node, 0) == kFloat16->type_id())) {
+  if (elemwise_type == "bias_add" && common::AnfAlgo::GetOutputInferDataType(node, 0) != kFloat16->type_id()) {
     return nullptr;
   }
   matmul_elemwise_prim->AddAttr("ElemwiseType", MakeValue(elemwise_type));
-
   auto input_trans_a = matmul_cnode->input(kIndex3)->cast<ValueNodePtr>();
   auto input_trans_b = matmul_cnode->input(kIndex4)->cast<ValueNodePtr>();
   matmul_elemwise_prim->AddAttr(kAttrIsTransA, input_trans_a->value());
