@@ -20,6 +20,7 @@
 #include <memory>
 #include <functional>
 #include <vector>
+#include <utility>
 #include "utils/anf_utils.h"
 #include "mindspore/core/ops/framework_ops.h"
 #include "mindspore/core/ops/sequence_ops.h"
@@ -80,18 +81,26 @@ bool SymbolEngineExtender::CheckBaseNode(const AnfNodePtr &node) {
   return true;
 }
 
+bool SymbolEngineExtender::IsValidNode(const CNodePtr &node) const {
+  if (GetCNodePrimitive(node) == nullptr) {
+    return false;
+  }
+  if (AnfUtils::IsRealKernel(node)) {
+    return true;
+  }
+  return IsPrimitiveCNode(node, prim::kPrimTupleGetItem);
+}
+
 void SymbolEngineExtender::FindShapeDependHostNode(const CNodePtr &node, HashSet<AnfNodePtr> *visited,
                                                    HashSet<AnfNodePtr> *valid_nodes) {
   if (!visited->insert(node).second) {
     return;
   }
+  if (!IsValidNode(node)) {
+    return;
+  }
   auto prim = GetCNodePrimitive(node);
-  if (prim == nullptr) {
-    return;
-  }
-  if (!AnfUtils::IsRealKernel(node)) {
-    return;
-  }
+  MS_EXCEPTION_IF_NULL(prim);
   auto depends = symshape::GetShapeDepends(prim, node->size() - 1);
   if (depends.empty()) {
     MS_LOG(DEBUG) << "The node " << node->fullname_with_scope() << " shape depend status is empty.";
@@ -116,13 +125,11 @@ void SymbolEngineExtender::FindValueDependNode(const CNodePtr &node, HashSet<Anf
   if (!visited->insert(node).second) {
     return;
   }
-  if (!AnfUtils::IsRealKernel(node)) {
+  if (!IsValidNode(node)) {
     return;
   }
   auto prim = GetCNodePrimitive(node);
-  if (prim == nullptr) {
-    return;
-  }
+  MS_EXCEPTION_IF_NULL(prim);
   auto depends = symshape::GetValueDepends(prim, node->size() - 1);
   // always try to fuse host op, if the node does not support symbolic value, the whole packet will be dropped.
   // only fuse device op when it supports building symbolic value.
@@ -143,6 +150,18 @@ void SymbolEngineExtender::FindValueDependNode(const CNodePtr &node, HashSet<Anf
       MS_LOG(DEBUG) << "The input[" << i << "] is host op.";
       FindShapeDependHostNode(inp, visited, valid_nodes);
     }
+  }
+}
+
+void SymbolEngineExtender::RemoveWildGetitem(HashSet<AnfNodePtr> *valid_nodes) const {
+  for (auto iter = valid_nodes->begin(); iter != valid_nodes->end();) {
+    if (IsPrimitiveCNode(*iter, prim::kPrimTupleGetItem)) {
+      if (valid_nodes->count((*iter)->cast<CNodePtr>()->input(1)) == 0) {
+        iter = valid_nodes->erase(iter);
+        continue;
+      }
+    }
+    ++iter;
   }
 }
 
@@ -172,7 +191,8 @@ AnfNodePtrList SymbolEngineExtender::FindCandidates(const CNodePtr &base_node) {
     return {};
   }
   (void)valid_nodes.insert(base_node);
-
+  // when the TupleGetItem's input is not in valid_nodes, remove the TupleGetItem.
+  RemoveWildGetitem(&valid_nodes);
   return TopoSort(base_node, SuccIncoming, [&valid_nodes](const AnfNodePtr &node) -> IncludeType {
     return valid_nodes.count(node) > 0 ? FOLLOW : EXCLUDE;
   });
@@ -201,7 +221,8 @@ ValuePtr SymbolEngineExtender::FindOnlyDependShapeInputs(const FuncGraphPtr &fg)
   return MakeValue<std::vector<bool>>(only_depend_shape);
 }
 
-CNodePtr CreatePacketNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub_fg, const AnfNodePtrList &inputs) {
+CNodePtr SymbolEngineExtender::CreatePacketNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub_fg,
+                                                const AnfNodePtrList &inputs) const {
   std::vector<AnfNodePtr> fn_inputs;
   fn_inputs.reserve(inputs.size() + 1);
   (void)fn_inputs.emplace_back(NewValueNode(sub_fg));
@@ -210,6 +231,28 @@ CNodePtr CreatePacketNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub_f
   new_cnode->set_abstract(sub_fg->output()->abstract());
   new_cnode->set_kernel_info(std::make_shared<device::KernelInfo>());
   return new_cnode;
+}
+
+void SymbolEngineExtender::ProcessNopNode(const FuncGraphPtr &fg, AnfNodePtrList *inputs) const {
+  auto real_node = fg->output()->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(real_node);
+  size_t idx = inputs->size();
+  if (common::AnfAlgo::IsNopNode(real_node) && real_node->input(1)->isa<Parameter>()) {
+    auto iter = std::find(fg->parameters().begin(), fg->parameters().end(), real_node->input(1));
+    if (iter == fg->parameters().end()) {
+      return;
+    }
+    idx = iter - fg->parameters().begin();
+  }
+  if (idx < inputs->size()) {
+    fg->set_attr(kAttrNopOp, MakeValue(true));
+    if (idx > 0) {
+      auto new_params = fg->parameters();
+      std::swap(new_params[idx], new_params[0]);
+      std::swap(inputs->at(idx), inputs->at(0));
+      fg->set_parameters(new_params);
+    }
+  }
 }
 
 bool SymbolEngineExtender::ExtendNode(const AnfNodePtr &node, const FuncGraphPtr &main_fg) {
@@ -232,6 +275,7 @@ bool SymbolEngineExtender::ExtendNode(const AnfNodePtr &node, const FuncGraphPtr
     MS_LOG(DEBUG) << "The size of outputs should be 1, but got " << outputs.size();
     return false;
   }
+  ProcessNopNode(fg, &inputs);
   auto symbol_engine = KernelPacketEngine::Build(fg);
   if (!symbol_engine->SupportInfer()) {
     MS_LOG(DEBUG) << "Symbol engine doesn't support infer shape from node: " << node->fullname_with_scope();
