@@ -29,7 +29,11 @@ namespace ops {
 TypePtr L1LossBackwardExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                              const std::vector<abstract::AbstractBasePtr> &input_args) const {
   auto input_type = input_args[kInputIndex1]->GetType();
-  return input_type;
+  auto target_type = input_args[kInputIndex2]->GetType();
+  MS_EXCEPTION_IF_NULL(input_type);
+  MS_EXCEPTION_IF_NULL(target_type);
+  auto input_real_type = input_type->cast<TensorTypePtr>()->element()->type_id();
+  return input_real_type == kNumberTypeInt64 ? target_type : input_type;
 }
 
 BaseShapePtr L1LossBackwardExtFuncImpl::InferShape(const PrimitivePtr &primitive,
@@ -47,7 +51,15 @@ BaseShapePtr L1LossBackwardExtFuncImpl::InferShape(const PrimitivePtr &primitive
 TypePtrList L1LossBackwardExtFuncImpl::InferType(const PrimitivePtr &primitive,
                                                  const ValuePtrList &input_values) const {
   auto input_type = input_values[kInputIndex0]->cast<tensor::BaseTensorPtr>()->Dtype();
-  return {input_type};
+  auto target_type = input_values[kInputIndex1]->cast<tensor::BaseTensorPtr>()->Dtype();
+  MS_EXCEPTION_IF_NULL(input_type);
+  MS_EXCEPTION_IF_NULL(target_type);
+  auto input_real_type = input_type->type_id();
+  if (input_real_type == kNumberTypeInt64) {
+    return {target_type};
+  } else {
+    return {input_type};
+  }
 }
 
 ShapeArray L1LossBackwardExtFuncImpl::InferShape(const PrimitivePtr &primitive,
