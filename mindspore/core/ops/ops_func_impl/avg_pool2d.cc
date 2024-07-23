@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <utility>
 
+#include "ir/dtype/number.h"
 #include "ops/auto_generate/gen_ops_name.h"
 #include "ops/op_name.h"
 #include "ops/op_utils.h"
@@ -182,6 +183,7 @@ TypePtr AvgPool2DFuncImpl::InferType(const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) const {
   MS_EXCEPTION_IF_NULL(input_args.at(kIndex0));
   auto input_type = input_args[kIndex0]->GetType();
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", input_type, valid_types_, primitive->name());
   return input_type;
 }
 
@@ -274,7 +276,9 @@ ShapeArray AvgPool2DFuncImpl::InferShape(const PrimitivePtr &primitive, const Va
 TypePtrList AvgPool2DFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
   const auto &input = input_values[kIndex0]->cast<tensor::BaseTensorPtr>();
   MS_EXCEPTION_IF_NULL(input);
-  return {input->Dtype()};
+  auto input_type = input->Dtype();
+  (void)CheckAndConvertUtils::CheckTypeValid("input", input_type, valid_types_, primitive->name());
+  return {input_type};
 }
 
 REGISTER_SIMPLE_INFER(kNameAvgPool2D, AvgPool2DFuncImpl)
