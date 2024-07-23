@@ -218,16 +218,6 @@ Text Processing
 
     mindspore.ops.NoRepeatNGram
 
-Feature Value Detection
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-.. msplatwarnautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.silent_check.ASDBase
-
 Mathematical Operators
 ------------------------
 
