@@ -1478,7 +1478,7 @@ Status OperatorInfo::InitWithAutoRepeatCalc(const StrategyPtr &in_strategy, cons
 Status OperatorInfo::CheckInputLayout() {
   MS_LOG(ERROR) << "Current op " << name_
                 << " does not support config layout. Please check "
-                   "https://www.mindspore.cn/docs/zh-CN/r2.3.0rc2/note/operator_list_parallel.html to get limitation "
+                   "https://www.mindspore.cn/docs/zh-CN/master/note/operator_list_parallel.html to get limitation "
                    "and more details";
   // Check self_define_shard attribute
   if (!self_define_shard_) {
