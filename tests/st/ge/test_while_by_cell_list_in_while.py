@@ -13,14 +13,15 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(
+    plat_marks=["platform_ascend", "platform_ascend910b"],
+    level_mark="level1",
+    card_mark="onecard",
+    essential_mark="unessential",
+)
 def test_while_by_cell_list_in_while():
     """
     Feature: unify ge and vm backend
@@ -29,5 +30,7 @@ def test_while_by_cell_list_in_while():
     """
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     ret = os.system(f"sh {sh_path}/run_while_by_cell_list_in_while.sh")
-    os.system(f"grep -E 'ERROR|error' {sh_path}/while_by_cell_list_in_while/test_while*log -C 3")
+    os.system(
+        f"grep -E 'ERROR|error' {sh_path}/while_by_cell_list_in_while/test_while*log -C 3"
+    )
     assert ret == 0

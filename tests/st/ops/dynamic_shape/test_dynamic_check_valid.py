@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -38,12 +39,7 @@ class CheckValidDynNet(nn.Cell):
         return self.check_valid(anchor_, image_metas_)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float16])
 def test_dynamic_check_valid(dtype):
     """

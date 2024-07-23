@@ -20,6 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 class Net(nn.Cell):
     def __init__(self, num_sample):
@@ -30,10 +31,7 @@ class Net(nn.Cell):
     def construct(self, logits, seed=0):
         return self.random_categorical(logits, self.num_sample, seed)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_net(mode):

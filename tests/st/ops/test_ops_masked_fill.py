@@ -20,6 +20,7 @@ from mindspore import ops
 from mindspore.ops import masked_fill
 
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
 def np_masked_fill_forward_func(input_x, mask, value):
@@ -41,16 +42,13 @@ def masked_fill_vmap_func(input_x, mask, value):
     return ops.vmap(masked_fill_forward_func)(input_x, mask, value)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_masked_fill_forward(context_mode):
+def test_ops_masked_fill_normal(context_mode):
     """
     Feature: pyboost function.
-    Description: test function masked_fill forward.
+    Description: test function masked_fill forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -62,33 +60,17 @@ def test_ops_masked_fill_forward(context_mode):
     expect_output = np_masked_fill_forward_func(input_x, mask_arry, 0.0)
     np.testing.assert_allclose(output.asnumpy(), expect_output, rtol=1e-3)
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_masked_fill_backward(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function masked_fill backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    input_x = ms.Tensor(np.array([1., 2., 3., 4.]).astype(np.float32))
+    input_x1 = ms.Tensor(np.array([1., 2., 3., 4.]).astype(np.float32))
     mask = ms.Tensor(np.array([True, True, False, True]).astype(np.bool_))
-    input_x_output, mask_output = masked_fill_backward_func(input_x, mask, 0.5)
+    input_x_output, mask_output = masked_fill_backward_func(input_x1, mask, 0.5)
     expect_input_x_output = np.asarray([0., 0., 1., 0.]).astype(np.float32)
     np.testing.assert_allclose(input_x_output.asnumpy(), expect_input_x_output, rtol=1e-3)
     expect_mask_output = np.asarray([0., 0., 0., 0.]).astype(np.float32)
     np.testing.assert_allclose(mask_output.asnumpy(), expect_mask_output, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_masked_fill_vmap(context_mode):
     """
@@ -106,11 +88,8 @@ def test_ops_masked_fill_vmap(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect_out.asnumpy(), rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_masked_fill_forward_dynamic_shape(context_mode):
     """
@@ -138,11 +117,8 @@ def test_ops_masked_fill_forward_dynamic_shape(context_mode):
     np.testing.assert_allclose(output2.asnumpy(), expect_output2, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_masked_fill_forward_dynamic_rank(context_mode):
     """
@@ -170,11 +146,8 @@ def test_ops_masked_fill_forward_dynamic_rank(context_mode):
     np.testing.assert_allclose(output2.asnumpy(), expect_output2, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_masked_fill_backward_dynamic_shape(context_mode):
     """
@@ -211,11 +184,8 @@ def test_ops_masked_fill_backward_dynamic_shape(context_mode):
         del os.environ["MS_DISABLE_KERNEL_BACKOFF"]
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_masked_fill_backward_dynamic_rank(context_mode):
     """
@@ -252,11 +222,8 @@ def test_ops_masked_fill_backward_dynamic_rank(context_mode):
         del os.environ["MS_DISABLE_KERNEL_BACKOFF"]
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('param_jit_level', ["O2", "O0"])
 def test_ops_masked_fill_forward_with_broadcast(context_mode, param_jit_level):

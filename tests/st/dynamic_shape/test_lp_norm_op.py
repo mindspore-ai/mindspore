@@ -19,6 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.ops import operations as P
 from mindspore.common import dtype as ms_type
+from tests.mark_utils import arg_mark
 
 
 class LpNormNet(nn.Cell):
@@ -41,10 +42,7 @@ def lp_norm_np_bencmark(data_type):
     return result
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_lp_norm_dy_shape(data_type):
     """

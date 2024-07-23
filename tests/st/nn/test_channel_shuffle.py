@@ -18,7 +18,7 @@ import pytest
 
 import mindspore as ms
 import mindspore.nn as nn
-
+from tests.mark_utils import arg_mark
 
 class Net(nn.Cell):
     def __init__(self, groups):
@@ -29,13 +29,10 @@ class Net(nn.Cell):
         return self.channel_shuffle(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_channel_shuffle_normal(mode):
     """

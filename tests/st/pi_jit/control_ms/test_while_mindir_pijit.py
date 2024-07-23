@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import context, jit
 from mindspore.common.tensor import Tensor
 from mindspore.train.serialization import export, load
+from tests.mark_utils import arg_mark
 
 
 class SingleWhileNet(nn.Cell):
@@ -33,9 +34,7 @@ class SingleWhileNet(nn.Cell):
         return y
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_jit_function_while():
     """
     Features: Control flow.
@@ -76,9 +75,7 @@ class SingleWhileInlineNet(nn.Cell):
         return y
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_single_while_inline_export():
     """
     Feature: control flow .
@@ -98,9 +95,7 @@ def test_single_while_inline_export():
     assert os.path.exists(mindir_name)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_single_while_inline_load():
     """
     Feature: control flow .

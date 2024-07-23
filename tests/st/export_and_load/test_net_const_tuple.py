@@ -15,12 +15,12 @@
 """Export const tuple net test."""
 import os
 import numpy as np
-import pytest
 
 import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.train.serialization import export
+from tests.mark_utils import arg_mark
 
 
 class ConstTupleNet(nn.Cell):
@@ -32,10 +32,7 @@ class ConstTupleNet(nn.Cell):
         return self.tuple1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_export_const_tuple_net():
     """
     Feature: export AIR.

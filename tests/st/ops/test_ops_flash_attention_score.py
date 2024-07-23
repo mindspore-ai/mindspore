@@ -22,6 +22,7 @@ from mindspore.ops.composite import GradOperation
 from mindspore.ops import flash_attention_score
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
 @test_utils.run_with_cell
@@ -130,9 +131,7 @@ def generate_inputs(B, N1, N2, S1, S2, D, input_layout, dtype, return_tensor=Tru
         Tensor(attn_mask, dtype=mstype.uint8), prefix
     return query, key, value, real_shift, attn_mask, prefix
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [mstype.float16, mstype.bfloat16])
 def test_ops_flash_attention_score(mode, dtype):
@@ -265,9 +264,7 @@ def test_ops_flash_attention_score(mode, dtype):
     np.testing.assert_allclose(dv_diff, expect_dv_diff, rtol=1e-4)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD", "SBH", "BSND", "TND"])
 def test_ops_flash_attention_score_dynamic(input_layout):
     """
@@ -316,9 +313,7 @@ def generate_unpad_full_attn_mask(batch, seq_len, actual_seq_qlen, actual_seq_kv
     return Tensor(attn_mask)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [mstype.float16, mstype.bfloat16])
 def test_ops_flash_attention_score_tnd(mode, dtype):

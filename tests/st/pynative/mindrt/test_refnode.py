@@ -12,11 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
 from mindspore import ops, Tensor, context
 from mindspore.common.parameter import Parameter
 from mindspore.nn import Cell
+from tests.mark_utils import arg_mark
 
 
 class AssignNet(Cell):
@@ -30,12 +30,10 @@ class AssignNet(Cell):
         return self.input_data
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_assign_as_output():
     """
     Feature: PyNative MindRT

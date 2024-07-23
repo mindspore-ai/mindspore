@@ -22,6 +22,7 @@ from mindspore import ops
 from mindspore.ops.function.nn_func import batch_norm_ext
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 @test_utils.run_with_cell
 def batch_norm_forward_func(x, scale, bias, mean, var, training=False, momentum=0.1, eps=1e-5):
@@ -34,9 +35,7 @@ def batch_norm_backward_func(x, scale, bias, mean, var, is_train=False, momentum
     return ops.grad(batch_norm_forward_func, 0)(x, scale, bias, mean, var, is_train, momentum, eps)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("is_training", [True, False])
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_batchnormext_normal(is_training, mode):
@@ -76,9 +75,7 @@ def test_batchnormext_normal(is_training, mode):
     assert np.allclose(grad.asnumpy(), grad_expect, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_bn_vmap(mode):
     """
@@ -107,9 +104,7 @@ def test_bn_vmap(mode):
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bn_dyn():
     """
     Feature: Ops.

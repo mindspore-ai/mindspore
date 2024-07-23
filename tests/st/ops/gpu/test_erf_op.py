@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -34,9 +35,7 @@ class NetErf(nn.Cell):
         return self.erf(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_erf_fp32():
     erf = NetErf()
     x = np.random.rand(3, 8).astype(np.float32)
@@ -45,9 +44,7 @@ def test_erf_fp32():
     tol = 1e-6
     assert (np.abs(output.asnumpy() - expect) < tol).all()
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_erf_fp16():
     erf = NetErf()
     x = np.random.rand(3, 8).astype(np.float16)

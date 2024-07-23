@@ -19,6 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -74,11 +75,8 @@ class UniqueReshapeAdd(nn.Cell):
         return self.add(x, y)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
+          essential_mark='unessential')
 def test_unique():
     """
     Feature: Dynamic shape with heterogeneity.
@@ -94,11 +92,8 @@ def test_unique():
     assert (output[1].asnumpy() == expect2).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
+          essential_mark='unessential')
 def test_unique_square():
     """
     Feature: Dynamic shape with heterogeneity.
@@ -112,11 +107,8 @@ def test_unique_square():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
+          essential_mark='unessential')
 def test_unique_square_relu():
     """
     Feature: Dynamic shape with heterogeneity.
@@ -130,11 +122,8 @@ def test_unique_square_relu():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
+          essential_mark='unessential')
 def test_unique_reshape_add():
     """
     Feature: Dynamic shape with heterogeneity.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -33,10 +34,7 @@ class PadV3Net(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('x_data_type', [np.int16, np.float32])
 @pytest.mark.parametrize('mode', ["constant", "reflect", "edge"])
 @pytest.mark.parametrize('ms_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -69,10 +67,7 @@ def test_padv3_constant_shape_3d(x_data_type, mode, ms_mode):
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('x_data_type', [np.int16, np.float32])
 @pytest.mark.parametrize('mode', ["constant", "reflect", "edge"])
 @pytest.mark.parametrize('ms_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -177,10 +172,7 @@ def test_padv3_constant_shape_4d(x_data_type, mode, ms_mode):
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('x_data_type', [np.int16, np.float32])
 @pytest.mark.parametrize('mode', ["constant", "edge"])
 @pytest.mark.parametrize('ms_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])

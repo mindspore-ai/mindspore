@@ -13,21 +13,18 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import jit
 from mindspore import Tensor, export, load, context
 from mindspore.nn import GraphCell
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_add_tensor():
     """
     Feature: Test MindIR Export jit with decorator.

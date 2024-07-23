@@ -7,11 +7,10 @@ from mindspore.common import dtype as ms
 from mindspore.common import Parameter
 import mindspore.ops.operations as P
 from ..share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_for_multi_if_break_nested_002():
     """
     TEST_SUMMARY:
@@ -48,9 +47,7 @@ def test_control_for_multi_if_break_nested_002():
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_for_multi_if_break_nested_003():
     """
     TEST_SUMMARY:
@@ -89,9 +86,7 @@ def test_control_for_multi_if_break_nested_003():
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_for_multi_if_break_concatenation():
     """
     TEST_SUMMARY:
@@ -135,9 +130,7 @@ def test_control_for_multi_if_break_concatenation():
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_for_multi_if_continue_concatenation():
     """
     TEST_SUMMARY:
@@ -181,9 +174,7 @@ def test_control_for_multi_if_continue_concatenation():
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_while_for_if_combine_break_continue_001():
     """
     TEST_SUMMARY:
@@ -229,9 +220,7 @@ def test_control_while_for_if_combine_break_continue_001():
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_while_for_if_combine_break_continue_002():
     """
     TEST_SUMMARY:
@@ -277,9 +266,7 @@ def test_control_while_for_if_combine_break_continue_002():
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_while_for_if_combine_break_continue_003():
     """
     TEST_SUMMARY:
@@ -325,9 +312,7 @@ def test_control_while_for_if_combine_break_continue_003():
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_while_for_if_combine_break_continue_004():
     """
     TEST_SUMMARY:
@@ -375,9 +360,7 @@ def test_control_while_for_if_combine_break_continue_004():
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_while_for_if_combine_break_continue_005():
     """
     TEST_SUMMARY:
@@ -428,9 +411,7 @@ def test_control_while_for_if_combine_break_continue_005():
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_while_for_if_break_return_001():
     """
     TEST_SUMMARY:
@@ -470,9 +451,7 @@ def test_control_while_for_if_break_return_001():
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_while_for_if_break_return_002():
     """
     TEST_SUMMARY:
@@ -513,9 +492,7 @@ def test_control_while_for_if_break_return_002():
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_while_for_if_condition_define_in_init():
     """
     TEST_SUMMARY:
@@ -549,9 +526,7 @@ def test_control_while_for_if_condition_define_in_init():
     match_array(ps_net(z), pi_net(z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_while_for_if_break_parameter():
     """
     TEST_SUMMARY:
@@ -592,9 +567,7 @@ def test_control_while_for_if_break_parameter():
     match_array(ps_net(x, y, z), pi_net(x, y, z))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_while_for_if_break_plus_continue():
     """
     TEST_SUMMARY:

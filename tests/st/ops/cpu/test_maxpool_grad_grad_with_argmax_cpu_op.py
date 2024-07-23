@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -36,9 +37,7 @@ class NetMaxPoolGradGradWithArgmax(nn.Cell):
         return self.maxpool_grad_grad_argmax_fun(x, grad, argmax)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("argmax_type", [np.int32, np.int64])
 def test_maxpool_grad_grad_argmax_fp16(argmax_type):
     """
@@ -67,9 +66,7 @@ def test_maxpool_grad_grad_argmax_fp16(argmax_type):
     assert np.allclose(output.asnumpy(), expect_result)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("argmax_type", [np.int32, np.int64])
 def test_maxpool_grad_grad_argmax_fp32(argmax_type):
     """
@@ -108,9 +105,7 @@ def test_maxpool_grad_grad_argmax_fp32(argmax_type):
     assert np.allclose(output.asnumpy(), expect_result)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('axis', [2])
 def test_maxpool_grad_grad_argmax_vmap(axis):
     """

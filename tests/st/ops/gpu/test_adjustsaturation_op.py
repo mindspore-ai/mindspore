@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -34,9 +35,7 @@ class AdSaturation(nn.Cell):
         return self.adjustsaturation(input_images, saturation_scale)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_adjustsaturation_float32():
     """
     Feature: None
@@ -52,9 +51,7 @@ def test_adjustsaturation_float32():
     np.allclose(out.asnumpy(), expect_out, 0.0001, 0.0001)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_adjustsaturation_float64():
     """
     Feature: None
@@ -70,9 +67,7 @@ def test_adjustsaturation_float64():
     np.allclose(out.asnumpy(), expect_out, 0.00001, 0.00001)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_adjustsaturation_float16():
     """
     Feature: None

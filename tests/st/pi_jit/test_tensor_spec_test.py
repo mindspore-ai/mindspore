@@ -16,6 +16,7 @@
 import pytest
 from mindspore import Tensor, jit, context
 from mindspore.common import dtype as mstype
+from tests.mark_utils import arg_mark
 
 zero = Tensor([0], mstype.int32)
 one = Tensor([1], mstype.int32)
@@ -36,9 +37,7 @@ def fr(x):
     return z
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('fun', [fr])
 def test_tensor_spec_case(fun):
     """

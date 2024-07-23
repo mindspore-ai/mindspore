@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -51,9 +52,7 @@ def dyn_case():
         assert out[i].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_argminwithvalue_dyn():
     """
     Feature: test ArgminWithValue dynamic shape in cpu.
@@ -66,9 +65,7 @@ def test_argminwithvalue_dyn():
     dyn_case()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argminwithvalue_fp32():
     x = np.array([[1., 20., 5.], [67., 8., 9.], [130., 24., 15.],
                   [-0.5, 25, 100]]).astype(np.float32)
@@ -109,9 +106,7 @@ def test_argminwithvalue_fp32():
     assert np.all(np.abs(output1.asnumpy() - expect1) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argminwithvalue_fp16():
     x = np.array([[1., 20., 5.], [67., 8., 9.], [130., 24., 15.],
                   [-0.5, 25, 100]]).astype(np.float16)
@@ -152,9 +147,7 @@ def test_argminwithvalue_fp16():
     assert np.all(np.abs(output1.asnumpy() - expect1) < error)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_argminwithvalue_tensor():
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(3, 4, 5, 6).astype(np.float16) * prop

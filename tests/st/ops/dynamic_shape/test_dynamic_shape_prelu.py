@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -49,11 +50,7 @@ class PReLUDyNet(nn.Cell):
         return real_x, weight, out
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_shape", [((8, 6, 7), (1,))])
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_dynamic_shape_prelu(data_shape, data_type):

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -58,13 +59,13 @@ def test_fast_gelu_input_dim_10240_768():
     fast_gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_fast_gelu_input_dim_1024_3072():
     input_shape = [1024, 3072]
     fast_gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_fast_gelu_input_dim_1024_4096():
     input_shape = [1024, 4096]
     fast_gelu_forward_cmp(input_shape)
@@ -75,37 +76,37 @@ def test_fast_gelu_input_dim_1280_1024():
     fast_gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_fast_gelu_input_dim_1280_768():
     input_shape = [1280, 768]
     fast_gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_fast_gelu_input_dim_128_3072():
     input_shape = [128, 3072]
     fast_gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_fast_gelu_input_dim_128_4096():
     input_shape = [128, 4096]
     fast_gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_fast_gelu_input_dim_160_1024():
     input_shape = [160, 1024]
     fast_gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_fast_gelu_input_dim_160_768():
     input_shape = [160, 768]
     fast_gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_fast_gelu_input_dim_16384_3072():
     input_shape = [16384, 3072]
     fast_gelu_forward_cmp(input_shape)
@@ -116,7 +117,7 @@ def test_fast_gelu_input_dim_16384_4096():
     fast_gelu_forward_cmp(input_shape)
 
 
-@pytest.mark.lower_bs
+#@pytest.mark.lower_bs
 def test_fast_gelu_input_dim_20_1024():
     input_shape = [20, 1024]
     fast_gelu_forward_cmp(input_shape)
@@ -126,9 +127,7 @@ def test_fast_gelu_input_dim_20480_1024():
     input_shape = [20480, 1024]
     fast_gelu_forward_cmp(input_shape)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fast_gelu_input_dim_20480_1024_bf16():
     """
     Feature: test fast_gelu functional API.

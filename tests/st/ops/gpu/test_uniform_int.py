@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import mindspore.context as context
@@ -32,9 +33,7 @@ class Net(nn.Cell):
     def construct(self, a, b):
         return self.uniformint(self.shape, a, b)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net_1D():
     seed = 10
     shape = (3, 2, 4)
@@ -57,9 +56,7 @@ class DynamicShapeNet(nn.Cell):
         return self.uniformint(input_shape, a, b)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net_dynamic_shape():
     """
     Feature: op dynamic shape

@@ -15,9 +15,9 @@
 
 import os
 import re
-import pytest
 import numpy as np
 from mindspore import context, Tensor, nn
+from tests.mark_utils import arg_mark
 
 def clean_all_ir_files(folder_path):
     if os.path.exists(folder_path):
@@ -49,10 +49,7 @@ class TestConvNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ge_last_ir():
     """
     Feature: dump last ir for ge

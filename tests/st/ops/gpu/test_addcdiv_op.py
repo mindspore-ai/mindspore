@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.nn as nn
@@ -29,9 +30,7 @@ class NetAddcdiv(nn.Cell):
         return self.addcdiv(input_data, x1, x2, value)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_addcdiv_float32_graph(type_s=np.float32):
     """
     Feature: Addcdiv
@@ -54,9 +53,7 @@ def test_addcdiv_float32_graph(type_s=np.float32):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_addcdiv_float64_pynative_value(type_s=np.float64):
     """
     Feature: Addcdiv

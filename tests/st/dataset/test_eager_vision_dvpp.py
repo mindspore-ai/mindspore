@@ -28,6 +28,7 @@ from mindspore.dataset.vision import Inter
 import mindspore as ms
 import mindspore.dataset.vision as vision
 import mindspore.dataset.transforms as transforms
+from tests.mark_utils import arg_mark
 
 # pylint: disable=W0212
 # W0212: protected-access
@@ -37,9 +38,6 @@ input_apple_jpg = "/home/workspace/mindspore_dataset/910B_dvpp/apple.jpg"
 result_data_dir = "/home/workspace/mindspore_dataset/910B_dvpp/testAscend910BDvpp"
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_decode_dvpp():
     """
     Feature: Decode op when Ascend910B
@@ -76,9 +74,7 @@ def test_eager_decode_dvpp():
     assert (img_resize == check_img).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_decode_dvpp_exception():
     """
     Feature: Decode op when Ascend910B with exception
@@ -124,9 +120,6 @@ def test_eager_decode_dvpp_exception():
     assert "Argument device_target with value 123 is not of type [<class 'str'>]," in str(error_info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_resize_dvpp():
     """
     Feature: Resize op when Ascend910B
@@ -214,9 +207,7 @@ def test_eager_resize_dvpp():
     assert img_resize_float_hw3.dtype == np.float32
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_resize_dvpp_exception():
     """
     Feature: Resize op when Ascend910B
@@ -310,9 +301,7 @@ def test_eager_resize_dvpp_exception():
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_resize_dvpp_exception_with_910A():
     """
     Feature: Resize op when Ascend910A
@@ -337,9 +326,6 @@ def test_eager_resize_dvpp_exception_with_910A():
         _ = vision.Resize(size=(64, 32)).device("Ascend")(img)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_normalize_dvpp():
     """
     Feature: Normalize op when Ascend910B
@@ -484,9 +470,7 @@ def test_eager_normalize_dvpp():
     assert (check_result == img_normalize).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_normalize_dvpp_exception():
     """
     Feature: Normalize op when Ascend910B with exception
@@ -574,9 +558,6 @@ def test_eager_normalize_dvpp_exception():
     assert "The input data is not uint8 or float32." in str(error_info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_multi_dvpp_op_dvpp_cpu_dvpp():
     """
     Feature: Multi ops when Ascend910B with global executor
@@ -608,9 +589,6 @@ def test_eager_multi_dvpp_op_dvpp_cpu_dvpp():
     assert img_normalize.dtype == np.float32
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_multi_dvpp_op_dvpp_dvpp_cpu():
     """
     Feature: Multi ops when Ascend910B with global executor
@@ -642,9 +620,6 @@ def test_eager_multi_dvpp_op_dvpp_dvpp_cpu():
     assert img_normalize.dtype == np.float32
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_multi_dvpp_op_cpu_dvpp_dvpp():
     """
     Feature: Multi ops when Ascend910B with global executor
@@ -676,9 +651,6 @@ def test_eager_multi_dvpp_op_cpu_dvpp_dvpp():
     assert img_normalize.dtype == np.float32
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_horizontal_flip_dvpp():
     """
     Feature: Horizontal Flip op when Ascend910B
@@ -705,9 +677,7 @@ def test_eager_horizontal_flip_dvpp():
     assert (img_horizontal_flip == check_img).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_horizontal_flip_dvpp_exception():
     """
     Feature: Horizontal Flip op when Ascend910B
@@ -783,9 +753,6 @@ def test_eager_horizontal_flip_dvpp_exception():
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_vertical_flip_dvpp():
     """
     Feature: Vertical Flip op when Ascend910B
@@ -812,9 +779,7 @@ def test_eager_vertical_flip_dvpp():
     assert (img_vertical_flip == check_img).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_vertical_flip_dvpp_exception():
     """
     Feature: Vertical Flip op when Ascend910B
@@ -890,9 +855,6 @@ def test_eager_vertical_flip_dvpp_exception():
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_resize_crop_dvpp():
     """
     Feature: Resize crop op when Ascend910B
@@ -919,9 +881,7 @@ def test_eager_resize_crop_dvpp():
     assert (img_resize_crop == check_img).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_resize_crop_dvpp_exception():
     """
     Feature: Resize crop op when Ascend910B
@@ -991,9 +951,6 @@ def test_eager_resize_crop_dvpp_exception():
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_perspective_dvpp():
     """
     Feature: Perspective op when Ascend910B
@@ -1023,9 +980,7 @@ def test_eager_perspective_dvpp():
     assert (img_perspective == check_img).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_perspective_dvpp_exception():
     """
     Feature: Perspective op when Ascend910B
@@ -1112,9 +1067,6 @@ def test_eager_perspective_dvpp_exception():
     assert "The input PIL Image cannot be executed on Ascend, " in str(error_info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_compose_dvpp_ops():
     """
     Feature: Compose multi dvpp ops on Ascend910B
@@ -1145,9 +1097,6 @@ def test_eager_compose_dvpp_ops():
     assert "Building Transform ops failed!" in str(error_info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_crop_dvpp():
     """
     Feature: Crop op on Ascend910B
@@ -1190,9 +1139,7 @@ def test_eager_crop_dvpp():
     assert (img_transformed == check_img).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_crop_dvpp_exception():
     """
     Feature: Crop op on Ascend910B
@@ -1228,9 +1175,6 @@ def test_eager_crop_dvpp_exception():
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(error_info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_pad_dvpp():
     """
     Feature: Pad op on Ascend910B
@@ -1273,9 +1217,7 @@ def test_eager_pad_dvpp():
     assert (img_transformed == check_img).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_pad_dvpp_exception():
     """
     Feature: Pad op on Ascend910B
@@ -1317,9 +1259,6 @@ def test_eager_pad_dvpp_exception():
     assert "the input shape should be from [4, 6] to [32768, 32768]" in str(error_info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_gaussian_blur_dvpp():
     """
     Feature: Gaussian blur op on Ascend910B
@@ -1350,9 +1289,7 @@ def test_eager_gaussian_blur_dvpp():
     assert img_transformed.shape == (300, 400)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_gaussian_blur_dvpp_exception():
     """
     Feature: Gaussian blur op on Ascend910B
@@ -1398,9 +1335,6 @@ def test_eager_gaussian_blur_dvpp_exception():
     assert "`kernel_size` only supports values 1, 3, and 5" in str(error_info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_affine_dvpp():
     """
     Feature: Affine op on Ascend910B
@@ -1429,9 +1363,7 @@ def test_eager_affine_dvpp():
     assert img_transformed.shape == (300, 400)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_affine_dvpp_exception():
     """
     Feature: Affine op on Ascend910B
@@ -1466,9 +1398,6 @@ def test_eager_affine_dvpp_exception():
     assert "Invalid interpolation mode, only support BILINEAR and NEAREST" in str(error_info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_equalize_dvpp():
     """
     Feature: Equalize op on Ascend910B
@@ -1505,9 +1434,7 @@ def test_eager_equalize_dvpp():
     assert (img_transformed == check_img).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_equalize_dvpp_exception():
     """
     Feature: Equalize op on Ascend910B
@@ -1557,9 +1484,7 @@ def test_eager_equalize_dvpp_exception():
         _ = vision.Equalize().device("Asscend")
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
 def test_eager_auto_contrast_dvpp():
     """
     Feature: AutoContrast op on Ascend910B
@@ -1587,9 +1512,8 @@ def test_eager_auto_contrast_dvpp():
     check_img = vision.AutoContrast(cutoff=10.0, ignore=[10, 20]).device("CPU")(img_copy)
     np.testing.assert_allclose(img_transformed, check_img, 0.005, 0.005)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_auto_contrast_dvpp_exception():
     """
     Feature: Equalize op on Ascend910B
@@ -1643,9 +1567,7 @@ def test_eager_auto_contrast_dvpp_exception():
         _ = vision.AutoContrast().device("Asscend")
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
 def test_eager_adjust_sharpness_dvpp():
     """
     Feature: AdjustSharpness op on Ascend910B
@@ -1661,9 +1583,8 @@ def test_eager_adjust_sharpness_dvpp():
     logger.info("Image.type: {}, Image.shape: {}".format(img_transformed.dtype, img_transformed.shape))
     assert img_transformed.shape == (2268, 4032, 3)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_adjust_sharpness_dvpp_exception():
     """
     Feature: AdjustSharpness op on Ascend910B
@@ -1710,9 +1631,7 @@ def test_eager_adjust_sharpness_dvpp_exception():
         _ = vision.AdjustSharpness(sharpness_factor=2.0).device("Asscend")
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
 def test_eager_convert_color_dvpp():
     """
     Feature: ConvertColor op on Ascend910B
@@ -1741,9 +1660,7 @@ def test_eager_convert_color_dvpp():
     assert (img_transformed == check_img).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_convert_color_dvpp_exception():
     """
     Feature: ConvertColor op on Ascend910B
@@ -1790,9 +1707,7 @@ def test_eager_convert_color_dvpp_exception():
         _ = vision.ConvertColor(vision.ConvertMode.COLOR_RGB2BGR).device("Asscend")
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
 def test_eager_erase_dvpp():
     """
     Feature: Erase op on Ascend910B
@@ -1820,9 +1735,8 @@ def test_eager_erase_dvpp():
     check_img = vision.Erase(10, 10, 10, 10, (100, 100, 100)).device("CPU")(img_copy)
     assert (img_transformed == check_img).all()
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_erase_dvpp_exception():
     """
     Feature: Erase op on Ascend910B
@@ -1881,9 +1795,7 @@ def test_eager_erase_dvpp_exception():
         _ = vision.Erase(10, 10, 10, 10).device("Asscend")
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
 def test_eager_rotate_dvpp():
     """
     Feature: Rotate op on Ascend910B
@@ -1899,9 +1811,8 @@ def test_eager_rotate_dvpp():
     logger.info("dvpp out Image.type: {}, Image.shape: {}".format(img_transformed.dtype, img_transformed.shape))
     assert img_transformed.shape == (2268, 4032, 3)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_rotate_dvpp_exception():
     """
     Feature: Rotate op on Ascend910B
@@ -1950,9 +1861,6 @@ def test_eager_rotate_dvpp_exception():
     assert "Input device_target is not within the valid set of ['CPU', 'Ascend']" in str(error_info.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_posterize_dvpp():
     """
     Feature: Posterize op on Ascend910B
@@ -1978,9 +1886,7 @@ def test_eager_posterize_dvpp():
     assert (img_transformed == img_transformed2).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_posterize_dvpp_exception():
     """
     Feature: Posterize op on Ascend910B
@@ -2019,9 +1925,6 @@ def test_eager_posterize_dvpp_exception():
     assert "the input shape should be from [4, 6] to [8192, 4096]" in str(error_info.value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_eager_solarize_dvpp():
     """
     Feature: Solarize op on Ascend910B
@@ -2047,10 +1950,7 @@ def test_eager_solarize_dvpp():
     assert (img_transformed == img_transformed2).all()
 
 
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_eager_solarize_dvpp_exception():
     """
     Feature: Solarize op on Ascend910B
@@ -2089,6 +1989,7 @@ def test_eager_solarize_dvpp_exception():
     assert "the input shape should be from [4, 6] to [8192, 4096]" in str(error_info.value)
 
 
+@pytest.mark.skip(reason="similar with ut test_resize.py::test_resize_performance")
 def test_resize_performance():
     """
     Feature: Resize
@@ -2104,6 +2005,47 @@ def test_resize_performance():
     for _ in range(1000):
         _ = vision.Resize(224).device("Ascend")(img_decode)
     assert (time.time() - s) < 5.0  # Probably around 4.43 seconds
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_basic_transforms_dvpp():
+    """
+    Feature: Test DVPP basic transforms
+    Description: Test dvpp basic transforms together to reduce st time.
+    Expectation: SUCCESS
+    """
+    test_eager_decode_dvpp()
+    test_eager_resize_dvpp()
+    test_eager_normalize_dvpp()
+    test_eager_horizontal_flip_dvpp()
+    test_eager_vertical_flip_dvpp()
+    test_eager_resize_crop_dvpp()
+    test_eager_perspective_dvpp()
+    test_eager_compose_dvpp_ops()
+    test_eager_crop_dvpp()
+    test_eager_pad_dvpp()
+    test_eager_gaussian_blur_dvpp()
+    test_eager_affine_dvpp()
+    test_eager_equalize_dvpp()
+    test_eager_auto_contrast_dvpp()
+    test_eager_adjust_sharpness_dvpp()
+    test_eager_convert_color_dvpp()
+    test_eager_erase_dvpp()
+    test_eager_rotate_dvpp()
+    test_eager_posterize_dvpp()
+    test_eager_solarize_dvpp()
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_basic_transforms_dvpp_mix_cpu():
+    """
+    Feature: Mix DVPP & CPU basic transforms
+    Description: Test dvpp basic transforms with cpu transforms together to reduce st time.
+    Expectation: SUCCESS
+    """
+    test_eager_multi_dvpp_op_dvpp_cpu_dvpp()
+    test_eager_multi_dvpp_op_dvpp_dvpp_cpu()
+    test_eager_multi_dvpp_op_cpu_dvpp_dvpp()
 
 
 if __name__ == '__main__':

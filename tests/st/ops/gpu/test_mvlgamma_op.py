@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import torch
 import numpy as np
@@ -57,9 +58,7 @@ def mvlgamma_pynative(nptype, p):
     assert np.allclose(mvlgamma_output, mvlgamma_expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_mvlgamma_graph_float32():
     """
     Feature: ALL To ALL
@@ -69,9 +68,7 @@ def test_mvlgamma_graph_float32():
     mvlgamma(np.float32, 3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_mvlgamma_pynative_float64():
     """
     Feature: ALL To ALL
@@ -81,9 +78,7 @@ def test_mvlgamma_pynative_float64():
     mvlgamma_pynative(np.float64, 3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mvlgamma_functional_api_modes(mode):
     """
@@ -98,9 +93,7 @@ def test_mvlgamma_functional_api_modes(mode):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mvlgamma_tensor_api_modes(mode):
     """
@@ -115,9 +108,7 @@ def test_mvlgamma_tensor_api_modes(mode):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_mvlgamma_tensor_element(mode):
     """

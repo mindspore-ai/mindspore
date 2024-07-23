@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import mindspore.context as context
 from mindspore import Tensor
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 class Net(nn.Cell):
     def __init__(self):
@@ -28,10 +28,8 @@ class Net(nn.Cell):
         return self.ops(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_memory_stats():
     """
     Feature: Hal memory api.
@@ -47,10 +45,8 @@ def test_hal_memory_stats():
     assert isinstance(res, dict)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_memory_reserved():
     """
     Feature: Hal memory api.
@@ -66,10 +62,8 @@ def test_hal_memory_reserved():
     assert isinstance(res, int)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_memory_allocated():
     """
     Feature: Hal memory api.
@@ -84,10 +78,8 @@ def test_hal_memory_allocated():
     assert not res is None
     assert isinstance(res, int)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_max_memory_reserved():
     """
     Feature: Hal memory api.
@@ -103,10 +95,8 @@ def test_hal_max_memory_reserved():
     assert isinstance(res, int)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_max_memory_allocated():
     """
     Feature: Hal memory api.
@@ -122,10 +112,8 @@ def test_hal_max_memory_allocated():
     assert isinstance(res, int)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_memory_summary():
     """
     Feature: Hal memory api.
@@ -141,10 +129,8 @@ def test_hal_memory_summary():
     assert isinstance(res, str)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_reset_peak_memory_stats():
     """
     Feature: Hal memory api.
@@ -160,10 +146,8 @@ def test_hal_reset_peak_memory_stats():
     assert (res["max_reserved_memory"] == 0 and res["max_allocated_memory"] == 0)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_reset_max_memory_reserved():
     """
     Feature: Hal memory api.
@@ -179,10 +163,8 @@ def test_hal_reset_max_memory_reserved():
     assert res == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_hal_reset_max_memory_allocated():
     """
     Feature: Hal memory api.

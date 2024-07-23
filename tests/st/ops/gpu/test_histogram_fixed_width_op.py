@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,9 +32,7 @@ class NetHistogramFixedWidth(nn.Cell):
         return self.histogramfixedwidth(x, range_)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_histogramfixedwidth_1d():
     """
     Feature: HistogramFixedWidth gpu TEST.
@@ -53,9 +52,7 @@ def test_histogramfixedwidth_1d():
     assert np.allclose(except_output_np, output_ms.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_histogramfixedwidth_2d():
     """
     Feature: HistogramFixedWidth gpu TEST.

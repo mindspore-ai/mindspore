@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -33,9 +34,7 @@ class SparseToDenseNet(nn.Cell):
         return self.sparsetodense(indices, output_shape, values, default_value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparsetodense_2d_int32():
     """
     Feature: Converts a sparse representation into a dense tensor.
@@ -55,9 +54,7 @@ def test_sparsetodense_2d_int32():
         assert (output.asnumpy() == sparse_expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparsetodense_2d_double():
     """
     Feature: Converts a sparse representation into a dense tensor.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -81,10 +82,7 @@ def compute_func(ms_net, np_net, is_dyn=False):
     assert np.all(out2.asnumpy() == np2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_adam_apply_one_dyn():
     """
     Feature: Test Dynamic AdamApplyOne.
@@ -96,10 +94,7 @@ def test_adam_apply_one_dyn():
     compute_func(ms_net, np_net, True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_adam_apply_one():
     """
     Feature: Test AdamApplyOne.

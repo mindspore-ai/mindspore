@@ -20,6 +20,7 @@ from mindspore.ops.extend import one_hot
 from mindspore import ops
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 def generate_random_input(num_classes):
     return np.random.permutation(num_classes)
@@ -53,10 +54,7 @@ class Net(Cell):
     def construct(self, x, num_classes):
         return self.one_hot(x, num_classes)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_ops_onehot_forward1(mode):
     """
@@ -73,15 +71,12 @@ def test_ops_onehot_forward1(mode):
     np.testing.assert_allclose(output.asnumpy(), expect_output, rtol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_onehot_forward(mode):
+def test_ops_onehot_normal(mode):
     """
     Feature: pyboost function.
-    Description: test function onehot forward.
+    Description: test function onehot forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=mode)
@@ -92,29 +87,13 @@ def test_ops_onehot_forward(mode):
                               [0, 0, 1]]).astype(np.int64)
     np.testing.assert_allclose(output.asnumpy(), expect_output, rtol=1e-3)
 
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_onehot_backward(mode):
-    """
-    Feature: pyboost function.
-    Description: test function onehot backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=mode)
-    x = generate_random_input(2)
-    output = onehot_backward_func(ms.Tensor(x), 3)
-    expect = generate_expect_backward_output()
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    x1 = generate_random_input(2)
+    output1 = onehot_backward_func(ms.Tensor(x1), 3)
+    expect1 = generate_expect_backward_output()
+    np.testing.assert_allclose(output1.asnumpy(), expect1, rtol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_onehot_vmap(mode):
     """
@@ -133,10 +112,7 @@ def test_ops_onehot_vmap(mode):
 
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_onehot_forward_dynamic_shape(mode):
     """
@@ -164,10 +140,7 @@ def test_ops_onehot_forward_dynamic_shape(mode):
 
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_onehot_forward_dynamic_rank(mode):
     """
@@ -194,10 +167,7 @@ def test_ops_onehot_forward_dynamic_rank(mode):
     np.testing.assert_allclose(output.asnumpy(), expect_output, rtol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_onehot_backward_dynamic_shape(mode):
     """
@@ -222,10 +192,7 @@ def test_ops_onehot_backward_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_onehot_backward_dynamic_rank(mode):
     """
@@ -250,10 +217,7 @@ def test_ops_onehot_backward_dynamic_rank(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_onehot_dynamic_shape_testop():
     """
     Feature: Test onehot with dynamic shape in graph mode using TEST_OP.
@@ -267,10 +231,7 @@ def test_onehot_dynamic_shape_testop():
             disable_yaml_check=True, disable_grad=True)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('param_jit_level', ["O2", "O0"])
 def test_onehot_vmap(param_jit_level):
     """
@@ -306,10 +267,7 @@ def test_onehot_vmap(param_jit_level):
 
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_one_hot_int32(mode):
     """
@@ -326,10 +284,7 @@ def test_ops_one_hot_int32(mode):
                      [0, 0, 1]]
     assert np.allclose(output.asnumpy(), expect_output)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_one_hot_int64(mode):
     """

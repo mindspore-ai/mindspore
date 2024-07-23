@@ -20,6 +20,7 @@ from mindspore import ops
 from mindspore.mint import erf
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -45,11 +46,8 @@ def erf_vmap_func(x):
     return ops.vmap(erf_forward_func)(x)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.0e-3), (np.float32, 1.0e-4)])
 @pytest.mark.parametrize('shape', [(2, 3, 4, 5), (1, 256, 2048), (1, 256, 5120)])
@@ -69,9 +67,7 @@ def test_ops_erf_forward(context_mode, shape, dtype, tol):
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_erf_bf16(context_mode):
     """
@@ -86,11 +82,8 @@ def test_ops_erf_bf16(context_mode):
     np.testing.assert_allclose(output.float().asnumpy(), expect, rtol=5e-3, atol=5e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.0e-3), (np.float32, 1.0e-4)])
 @test_utils.run_test_with_On
@@ -108,11 +101,8 @@ def test_ops_erf_backward(context_mode, dtype, tol):
 
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1.0e-3), (np.float32, 1.0e-4)])
 @pytest.mark.parametrize('shape', [(2, 3, 4, 5), (1, 256, 2048), (1, 256, 5120)])
@@ -132,12 +122,8 @@ def test_ops_erf_vmap(context_mode, shape, dtype, tol):
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 def test_erf_dynamic_shape():
     """
     Feature: Test dynamic shape.

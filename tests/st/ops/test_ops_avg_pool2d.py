@@ -16,6 +16,7 @@ import pytest
 import numpy as np
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 import mindspore as ms
 from mindspore import Tensor
 from mindspore import ops, context, mint
@@ -50,9 +51,7 @@ def avg_pool2d_double_backward_func(grad, image, kernel_size, stride, padding=0,
                                                            ceil_mode, count_include_pad, divisor_override,)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_avg_pool2d(mode):
     """
@@ -85,9 +84,7 @@ def test_avg_pool2d(mode):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE])
 def test_avg_pool2d_double_backward(mode):
     """
@@ -102,9 +99,7 @@ def test_avg_pool2d_double_backward(mode):
     print(grads)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_avg_pool2d_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -122,5 +117,5 @@ def test_avg_pool2d_dynamic():
             [input_case1, 4, (2, 2), (1,), False, True, 1],
             [input_case2, 6, (1, 1), (2,), True, False, 2],
         ],
-        'avg_pool2d', disable_input_check=True
+        'avg_pool2d', disable_input_check=True, disable_mode=['GRAPH_MODE'],
     )

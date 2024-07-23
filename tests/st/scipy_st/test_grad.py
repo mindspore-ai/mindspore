@@ -20,13 +20,13 @@ import mindspore.ops as ops
 from mindspore import context, Tensor
 from mindspore.scipy.linalg import cho_factor, cho_solve, solve_triangular
 from mindspore.ops.operations.linalg_ops import Eigh
+
+from tests.mark_utils import arg_mark
 from tests.st.scipy_st.utils import create_random_rank_matrix, create_sym_pos_matrix, gradient_check
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_cho_factor_grad():
     """
     Feature: ALL TO ALL
@@ -50,10 +50,8 @@ def test_cho_factor_grad():
     assert onp.allclose(c.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('lower', [True, False])
 @pytest.mark.parametrize('shape', [(8, 8)])
 @pytest.mark.parametrize('data_type', [(onp.float32, 1e-2, 1e-3), (onp.float64, 1e-4, 1e-7)])
@@ -88,10 +86,8 @@ def test_cho_solve_grad(lower, shape, data_type):
     assert gradient_check([msp_c, Tensor(b)], cho_solve_net, epsilon) < error
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('compute_eigenvectors', [True, False])
 @pytest.mark.parametrize('lower', [True, False])
 @pytest.mark.parametrize('shape', [(8, 8)])
@@ -131,10 +127,8 @@ def test_eigh_grad(compute_eigenvectors, lower, shape, data_type):
     assert gradient_check(Tensor(a), net, epsilon) < error
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('shapes', [((8, 8), (8, 8)), ((8, 8), (8, 2)), ((8, 8), (8,))])
 @pytest.mark.parametrize('trans', ["N", "T", "C"])
 @pytest.mark.parametrize('lower', [False, True])
@@ -168,10 +162,8 @@ def test_trsm_grad_pynative(shapes, trans, lower, unit_diagonal, data_type):
     assert gradient_check([Tensor(a), Tensor(b)], net, epsilon) < error
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('shapes', [((8, 8), (8, 8)), ((8, 8), (8, 2)), ((8, 8), (8,))])
 @pytest.mark.parametrize('trans', ["N", "T", "C"])
 @pytest.mark.parametrize('lower', [False, True])

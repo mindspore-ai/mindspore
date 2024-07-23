@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -56,9 +57,7 @@ def check_valid_modes(nptype):
     assert np.array_equal(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_check_valid_float32():
     """
     Feature: test CheckValid op given input float32 dtype.
@@ -68,9 +67,7 @@ def test_check_valid_float32():
     check_valid_modes(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_check_valid_float16():
     """
     Feature: test CheckValid op given input float16 dtype.
@@ -80,9 +77,7 @@ def test_check_valid_float16():
     check_valid_modes(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_check_valid_int16():
     """
     Feature: test CheckValid op given input int16 dtype.
@@ -92,9 +87,7 @@ def test_check_valid_int16():
     check_valid_modes(np.int16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_check_valid_uint8():
     """
     Feature: test CheckValid op given input uint8 dtype.
@@ -131,9 +124,7 @@ def test_check_valid_functional():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_check_valid_functional_modes():
     """
     Feature: test check_valid functional API in PyNative and Graph modes.

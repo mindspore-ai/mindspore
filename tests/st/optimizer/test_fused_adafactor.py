@@ -19,12 +19,13 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
+
+from tests.mark_utils import arg_mark
 from tests.st.networks.models.lenet import LeNet
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_lenet(mode):
     '''

@@ -12,16 +12,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import mindspore
 from mindspore.ops import add, elu
 from mindspore import Tensor
 import numpy as np
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_implicit_cast_float16_float32():
     """
     Feature: test implicit conversion
@@ -39,9 +40,10 @@ def test_implicit_cast_float16_float32():
     assert output_b.dtype == mindspore.float32
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_auto_lifting_cast_float16_float32():
     """
     Feature: test auto lifting cast to kernel support attr

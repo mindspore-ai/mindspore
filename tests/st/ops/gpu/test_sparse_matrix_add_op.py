@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import mindspore.context as context
 import mindspore.nn as nn
@@ -69,9 +70,7 @@ def dyn_case():
         assert out[i].asnumpy().shape == exepct_shapes[i]
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparse_matrix_add_dyn():
     """
     Feature: test SparseMatrixAdd in gpu.

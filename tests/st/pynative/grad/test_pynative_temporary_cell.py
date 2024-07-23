@@ -13,13 +13,13 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.ops as P
 from mindspore.nn.optim import Momentum
 from mindspore.common import ParameterTuple
+from tests.mark_utils import arg_mark
 
 
 class GradofParams(nn.Cell):
@@ -34,11 +34,10 @@ class GradofParams(nn.Cell):
         return out
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_temporary_cell_variables():
     context.set_context(mode=context.PYNATIVE_MODE)
 

@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -22,6 +21,7 @@ import mindspore.ops as P
 from mindspore.common import ParameterTuple
 import torch
 import torch.nn as nn_pt
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
@@ -37,10 +37,10 @@ class GradofAllInputsAndParams(nn.Cell):
         out = self.grad(self.net, self.params)(*x)
         return out
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_sit_pynative_diff_shape_with_while_in_construct():
     class WhileNetMs(nn.Cell):
         def __init__(self):

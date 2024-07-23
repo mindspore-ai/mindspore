@@ -13,13 +13,13 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 import mindspore.common.dtype as mstype
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -55,10 +55,7 @@ def test_net():
     print(net.accum.data)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_proximal_adagrad_dynamic():
     """
     Feature: FusedSparseProximalAdagrad

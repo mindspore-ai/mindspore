@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -44,9 +45,7 @@ class NetConv2d(nn.Cell):
         return self.conv(x, w)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv2d_max_device_memory():
     """
     Feature: Test conv2d op with max device memory
@@ -67,9 +66,7 @@ def test_conv2d_max_device_memory():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('algo', ["normal", "performance"])
 @pytest.mark.parametrize('conv_allow_tf32', [True, False])
 def test_conv2d(algo, conv_allow_tf32):
@@ -113,9 +110,7 @@ class NetConv(nn.Cell):
         return self.conv(self.x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     weight = np.array([[[[0.38968208, 0.14398979, 0.7962463],
@@ -217,9 +212,7 @@ class NetConv2dDynamic(nn.Cell):
         return x_conv
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv2d_dynamic():
     x1 = Tensor(np.arange(1 * 3 * 3 * 3).reshape(1, 3, 3, 3).astype(np.float32))
     w1 = Tensor(np.arange(2 * 3 * 1 * 1).reshape(2, 3, 1, 1).astype(np.float32))
@@ -278,9 +271,7 @@ class NetConvNHWC(nn.Cell):
         return self.conv(self.x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv_NHWC():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x1 = Tensor(np.arange(1 * 4 * 4 * 1).reshape(1, 4, 4, 1).astype(np.float32))
@@ -294,9 +285,7 @@ def test_conv_NHWC():
     assert (output.asnumpy() == expected).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_conv2d_vmap():
     """
     Feature: Conv2D op

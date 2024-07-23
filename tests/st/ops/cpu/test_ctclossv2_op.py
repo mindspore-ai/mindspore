@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -119,9 +120,7 @@ def compare_to_numpy(method, input_matrix, target, input_lengths, target_lengths
     assert np.allclose(loss.asnumpy(), expected)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("batch", [1, 10])
 @pytest.mark.parametrize("data_type", [np.float64])
 def test_ctc_loss_v2_un_padded(batch, data_type):
@@ -146,9 +145,7 @@ def test_ctc_loss_v2_un_padded(batch, data_type):
     compare_to_numpy(method, input_matrix, target, input_lengths, target_lengths)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ctc_loss_v2_un_padded_grad():
     """
     Feature: Test CTCLossV2.
@@ -243,9 +240,7 @@ def test_ctc_loss_v2_un_padded_grad():
     np.allclose(grad.asnumpy(), expected_grad)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("batch", [1, 10])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_ctc_loss_v2_padded(batch, data_type):
@@ -275,9 +270,7 @@ def test_ctc_loss_v2_padded(batch, data_type):
     compare_to_numpy(method, input_matrix, target, input_lengths, target_lengths)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ctc_loss_v2_exception():
     """
     Feature: Test CTCLossV2 Exception Case.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import mindspore as ms
 from mindspore.ops import Primitive
@@ -21,9 +22,7 @@ import pytest
 
 tensor_move = Primitive('TensorMove')
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_move():
     """
     Feature: test tensor_move.

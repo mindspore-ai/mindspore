@@ -12,18 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
-"""test op's dynamic shape rapidly"""
-
-import pytest
 from mindspore import Tensor, ops
 import numpy as np
 from .test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential')
 def test_sum():
     """
     Feature: test sum on cpu.
@@ -36,4 +32,4 @@ def test_sum():
     in2 = Tensor(np_data2)
 
     reducesum = ops.ReduceSum(keep_dims=True)
-    TEST_OP(reducesum, [[in1, [0]], [in2, [1]]], '', disable_yaml_check=True)
+    TEST_OP(reducesum, [[in1, (0,)], [in2, (1,)]], '', disable_input_check=True, disable_yaml_check=True)

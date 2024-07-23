@@ -19,6 +19,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
+from tests.mark_utils import arg_mark
 
 
 class MarginRankingLoss(nn.Cell):
@@ -35,13 +36,10 @@ input2 = Tensor(np.array([-0.6012, -1.6681, 1.2928]), ms.float32)
 target = Tensor(np.array([-1, -1, 1]), ms.float32)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('reduction', ["none", "mean", "sum"])
 def test_margin_ranking_loss(mode, reduction):
@@ -63,13 +61,10 @@ def test_margin_ranking_loss(mode, reduction):
     assert np.allclose(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_tensor_dim(mode):
     """

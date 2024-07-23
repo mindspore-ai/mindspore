@@ -19,6 +19,7 @@ from mindspore import Tensor, Parameter, context
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn.optim import FTRL, LazyAdam
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE,
                     device_target="Ascend")
@@ -36,9 +37,12 @@ class NetWithSparseGatherV2(nn.Cell):
         return self.gather(self.weight1, indices, self.axis) + self.weight2
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_ftrl_net():
+    """
+    Feature: Dynamic shape.
+    Description: Test dynamic shape ops.
+    Expectation: No exception.
+    """
     indices = Tensor(np.array([0, 0, 1]).astype(np.int32))
     label = Tensor(np.zeros([2, 1, 2]).astype(np.float32))
     net = NetWithSparseGatherV2()
@@ -56,11 +60,13 @@ def test_ftrl_net():
                                                  [[0.6821311, 0.6821311]]]))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_lazy_adam_net():
+    """
+    Feature: Dynamic shape.
+    Description: Test dynamic shape ops.
+    Expectation: No exception.
+    """
     indices = Tensor(np.array([0, 0, 1]).astype(np.int32))
     label = Tensor(np.zeros([2, 1, 2]).astype(np.float32))
     net = NetWithSparseGatherV2()
@@ -74,11 +80,13 @@ def test_lazy_adam_net():
     np.allclose(net.weight2.asnumpy(), np.array([[[0.9, 0.9]], [[0.9, 0.9]], [[0.9, 0.9]]]))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lazy_adam_net_sparse():
+    """
+    Feature: Dynamic shape.
+    Description: Test dynamic shape ops.
+    Expectation: No exception.
+    """
     indices = Tensor(np.array([0, 0, 1]).astype(np.int32))
     label = Tensor(np.zeros([2, 1, 2]).astype(np.float32))
     net = NetWithSparseGatherV2()

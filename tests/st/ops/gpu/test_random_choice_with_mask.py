@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -58,9 +59,7 @@ class RCWM_1D(nn.Cell):
         return self.RCWM_1D(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_RCWM_3D():
     """
     Feature: RandomChoiceWithMask gpu kernel
@@ -77,9 +76,7 @@ def test_RCWM_3D():
     assert output2.shape == expect2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_RCWM_count_out():
     """
     Feature: RandomChoiceWithMask gpu kernel
@@ -97,9 +94,7 @@ def test_RCWM_count_out():
     assert output2.shape == expect2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_RCWM_count_in():
     """
     Feature: RandomChoiceWithMask gpu kernel
@@ -117,9 +112,7 @@ def test_RCWM_count_in():
     assert output2.shape == expect2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_RCWM_1D():
     """
     Feature: RandomChoiceWithMask gpu kernel

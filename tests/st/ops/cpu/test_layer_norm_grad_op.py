@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -65,9 +66,7 @@ def layer_norm_grad_np(x, dy, gamma, epsilon, begin_norm_axis, begin_params_axis
     return ret
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_layernormgrad0():
     begin_norm_axis = 1
     begin_params_axis = 1
@@ -92,9 +91,7 @@ def test_layernormgrad0():
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-4, atol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_layernormgrad1():
     begin_norm_axis = 1
     begin_params_axis = 1
@@ -119,9 +116,7 @@ def test_layernormgrad1():
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-4, atol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_layernormgrad2():
     begin_norm_axis = -1
     begin_params_axis = -1
@@ -146,9 +141,7 @@ def test_layernormgrad2():
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-4, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_layernormgrad3():
     begin_norm_axis = -1
     begin_params_axis = -1
@@ -172,9 +165,7 @@ def test_layernormgrad3():
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-4, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_layernormgrad4():
     begin_norm_axis = -1
     begin_params_axis = -1
@@ -198,9 +189,7 @@ def test_layernormgrad4():
     assert np.allclose(db_ms.asnumpy(), db_np, rtol=1e-4, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_layernormgrad5():
     begin_norm_axis = 2
     begin_params_axis = 1
@@ -224,9 +213,7 @@ def test_layernormgrad5():
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-4, atol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_layernormgrad_vmap():
     """
     Feature: layernormgrad vmap
@@ -272,9 +259,7 @@ def test_layernormgrad_vmap():
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-4, atol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_layernormgrad_vmap_gamma_inaxes_none():
     """
     Feature: layernormgrad vmap
@@ -371,9 +356,7 @@ def test_layernormgrad_vmap_begin_params_axis_zero():
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-4, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_layernormgrad_dynamic_shape():
     """
     Feature: Test LayerNormGrad dynamic shape.
@@ -404,9 +387,7 @@ def test_layernormgrad_dynamic_shape():
     assert np.allclose(dg_ms.asnumpy(), dg_np, rtol=1e-6, atol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_layernormgrad_double():
     """
     Feature: Test LayerNormGrad double support.

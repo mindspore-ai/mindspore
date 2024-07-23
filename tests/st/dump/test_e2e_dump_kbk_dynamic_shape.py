@@ -20,7 +20,6 @@ import shutil
 import glob
 import numpy as np
 import csv
-import pytest
 import mindspore.context as context
 
 import mindspore
@@ -30,6 +29,7 @@ from mindspore.ops import operations as P
 from mindspore import dataset as ds
 from mindspore.train import Model
 from dump_test_utils import generate_dump_json, check_dump_structure, generate_statistic_dump_json
+from tests.mark_utils import arg_mark
 from tests.security_utils import security_off_wrap
 
 
@@ -105,10 +105,7 @@ def run_trans_flag(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_ascend_kernel_by_kernel_dynamic_shape():
     """
@@ -121,10 +118,7 @@ def test_ascend_kernel_by_kernel_dynamic_shape():
     run_trans_flag("test_e2e_dump_dynamic_shape")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @security_off_wrap
 def test_ascend_kernel_by_kernel_dynamic_shape_custom_statistic():
     """

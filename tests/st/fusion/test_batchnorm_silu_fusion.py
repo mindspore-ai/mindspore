@@ -15,8 +15,8 @@
 import os.path
 
 import numpy as np
-import pytest
 
+from tests.mark_utils import arg_mark
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -80,9 +80,7 @@ def ir_fusion_bn_silu_grad(mode, check_ir):
     return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ir_fusion_bn_silu_wrap():
     """"
     Feature: Test batch norm and silu fusion

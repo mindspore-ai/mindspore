@@ -16,7 +16,6 @@
 This test is used to monitor some features of MindArmour.
 """
 import numpy as np
-import pytest
 
 import mindspore.nn as nn
 from mindspore import context, Tensor
@@ -24,6 +23,8 @@ from mindspore.nn import Cell, WithLossCell, TrainOneStepCell
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.ops.composite import GradOperation
+
+from tests.mark_utils import arg_mark
 
 
 def weight_variable():
@@ -108,10 +109,7 @@ class GradWrapWithLoss(Cell):
         return gout[0]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_grad_values_and_infer_shape():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     inputs_np = np.random.rand(32, 1, 32, 32).astype(np.float32)
@@ -127,10 +125,7 @@ def test_grad_values_and_infer_shape():
     assert out_shape == (64, 10), 'output shape should be (64, 10)'
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_multi_grads():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     sparse = False

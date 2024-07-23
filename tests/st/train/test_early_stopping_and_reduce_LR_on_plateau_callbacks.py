@@ -26,6 +26,7 @@ from mindspore.nn.optim import Momentum
 from mindspore.common.initializer import Normal
 from mindspore.train import RunContext, ReduceLROnPlateau, EarlyStopping
 from mindspore.train.callback import _InternalCallbackParam, _CallbackManager
+from tests.mark_utils import arg_mark
 
 
 def get_data(num, w=4.0, b=5.0):
@@ -52,13 +53,10 @@ def define_model(metrics):
     return model
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_reduce_lr_on_plateau_patience_and_cooldown(mode):
     """
@@ -101,13 +99,10 @@ def test_reduce_lr_on_plateau_patience_and_cooldown(mode):
         assert np.allclose(lrs, lrs_results)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_earlystopping_with_baseline(mode):
     """
@@ -144,13 +139,10 @@ def test_earlystopping_with_baseline(mode):
             assert cur_epoch == stop_epoch
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_earlystopping_final_weights_when_restoring_model_weights(mode):
     """

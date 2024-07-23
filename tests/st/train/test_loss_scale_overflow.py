@@ -20,6 +20,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, Parameter, nn, ops, boost
 from mindspore import dtype as mstype
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -34,12 +35,10 @@ class Net(nn.Cell):
         return output
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'platform_ascend910b'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_train_one_step_with_loss_scale_cell_overflow(mode):
     """
@@ -75,11 +74,10 @@ def test_train_one_step_with_loss_scale_cell_overflow(mode):
     assert outputs == expect_results
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_boost_train_one_step_with_loss_scale_cell_overflow(mode):
     """

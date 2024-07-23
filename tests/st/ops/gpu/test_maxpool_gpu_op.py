@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 from functools import reduce
 import numpy as np
@@ -43,9 +44,7 @@ class Net_Pool2(nn.Cell):
         return self.maxpool_fun(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool2d():
     x = Tensor(np.array([[[
         [0, 1, 2, 3, -4, -5],
@@ -83,9 +82,7 @@ def test_maxpool2d():
     assert (output2.asnumpy() == expect_result2).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_max_pool3d_1():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_shape = (2, 3, 2, 3, 4)
@@ -110,9 +107,7 @@ def test_max_pool3d_1():
     assert (output_ms.asnumpy() == expert_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_max_pool3d_2():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_shape = (2, 3, 2, 3, 4)
@@ -137,9 +132,7 @@ def test_max_pool3d_2():
     assert (output_ms.asnumpy() == expert_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_max_pool3d_3():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_shape = (2, 3, 2, 3, 4)
@@ -158,9 +151,7 @@ def test_max_pool3d_3():
     assert (output_ms.asnumpy() == expert_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_max_pool3d_4():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x_shape = (2, 3, 2, 3, 4)
@@ -209,9 +200,7 @@ def test_max_pool3d_4():
     assert (output_ms.asnumpy() == expert_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_max_pool3d_5():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x_shape = (2, 3, 2, 3, 4)
@@ -260,9 +249,7 @@ def test_max_pool3d_5():
     assert (output_ms.asnumpy() == expert_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_max_pool2d_vmap():
     """
     Feature: Test MaxPool op.

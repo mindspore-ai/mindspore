@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -32,9 +33,7 @@ class NetEqualCount(nn.Cell):
         return self.equalcount(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_equalcount():
     x = Tensor(np.array([1, 20, 5]).astype(np.int32))
     y = Tensor(np.array([2, 20, 5]).astype(np.int32))
@@ -51,9 +50,7 @@ def test_equalcount():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_equalcount_dynamic():
     """
     Feature: EqualCount ops

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ===================================================
+from tests.mark_utils import arg_mark
 import pytest
 import mindspore.context as context
 import mindspore.ops.operations.math_ops as P
@@ -29,9 +30,7 @@ class MulNoNanNet(nn.Cell):
         return self.mulnonan(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_trainingg
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_mulnonan_graph():
     '''
         Description: 1d fp32
@@ -46,9 +45,7 @@ def test_mulnonan_graph():
     assert(res.asnumpy() == res_expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_trainingg
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_mulnonan_pynative():
     '''
         Description: 1d fp32

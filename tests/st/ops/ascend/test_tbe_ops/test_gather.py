@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore
@@ -36,10 +37,7 @@ class GatherNet(nn.Cell):
         return self.gather(input_x, indices, axis)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_graph_mode():
     """
     Feature: gather tensor test on graph mode.
@@ -58,10 +56,7 @@ def test_tensor_graph_mode():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_pynative_mode():
     """
     Feature: gather tensor test on pynative mode.
@@ -80,10 +75,7 @@ def test_tensor_pynative_mode():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_functional_pynative_mode():
     """
     Feature: gather functional test on pynative mode.
@@ -101,10 +93,7 @@ def test_functional_pynative_mode():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_functional_graph_mode():
     """
     Feature: gather functional test on graph mode.
@@ -122,10 +111,7 @@ def test_functional_graph_mode():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_static_pynative_mode():
     """
     Feature: gather static shape test on pynative mode.

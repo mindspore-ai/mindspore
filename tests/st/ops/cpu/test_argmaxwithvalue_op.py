@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -106,9 +107,7 @@ def dyn_case():
         assert out[i].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_argmaxwithvalue_dyn():
     """
     Feature: test ArgmaxWithValue dynamic shape in cpu.
@@ -121,23 +120,17 @@ def test_argmaxwithvalue_dyn():
     dyn_case()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_argmaxwithvalue_base_float32():
     argmaxwithvalue_base(np.float32)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_argmaxwithvalue_base_float16():
     argmaxwithvalue_base(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argmaxwithvalue_3d_float32():
     shape_x = (2, 32, 256)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
@@ -146,18 +139,14 @@ def test_argmaxwithvalue_3d_float32():
     argmaxwithvalue_3d(np.float32, shape_x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argmaxwithvalue_3d_float16():
     shape_x = (2, 64, 128)
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     argmaxwithvalue_3d(np.float16, shape_x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argmaxwithvalue_3d_big_float32():
     shape_x = (128, 1024, 1)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")

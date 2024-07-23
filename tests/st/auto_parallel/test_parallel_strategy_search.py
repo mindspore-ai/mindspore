@@ -13,11 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level2", card_mark="allcards", essential_mark="unessential")
 def test_sit_parallel_strategy_search():
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     ret = os.system(f"sh {sh_path}/run_parallel_strategy_search.sh")

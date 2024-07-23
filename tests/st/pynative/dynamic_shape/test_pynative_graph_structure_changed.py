@@ -13,15 +13,16 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 import mindspore as ms
 from mindspore import nn, value_and_grad
 import torch
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_graph_structure_changed():
     """
     Feature: PyNative dynamic shape for Ascend.

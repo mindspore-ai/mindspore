@@ -14,11 +14,11 @@
 # ============================================================================
 """ test_pynative_heterogeneous """
 import numpy as np
-import pytest
 
 from mindspore import context, Tensor
 from mindspore.nn import Cell
 import mindspore.ops as ops
+from tests.mark_utils import arg_mark
 
 
 class MulRelu(Cell):
@@ -35,9 +35,10 @@ class MulRelu(Cell):
         return y
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_heterogeneous_default_ascend_prim_cpu():
     """
     Feature: PyNative heterogeneous.
@@ -53,9 +54,11 @@ def test_heterogeneous_default_ascend_prim_cpu():
     output_heter = net(inp1, inp2)
     assert np.allclose(output_device.asnumpy(), output_heter.asnumpy(), 1e-6, 1e-6)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_heterogeneous_default_cpu_prim_ascend():
     """
     Feature: PyNative heterogeneous.
@@ -71,9 +74,11 @@ def test_heterogeneous_default_cpu_prim_ascend():
     output_heter = net(inp1, inp2)
     assert np.allclose(output_device.asnumpy(), output_heter.asnumpy(), 1e-6, 1e-6)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_heterogeneous_default_gpu_prim_cpu():
     """
     Feature: PyNative heterogeneous.
@@ -89,9 +94,11 @@ def test_heterogeneous_default_gpu_prim_cpu():
     output_heter = net(inp1, inp2)
     assert np.allclose(output_device.asnumpy(), output_heter.asnumpy(), 1e-6, 1e-6)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_heterogeneous_default_cpu_prim_gpu():
     """
     Feature: PyNative heterogeneous.

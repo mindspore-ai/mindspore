@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import random
 import numpy as np
@@ -32,9 +33,7 @@ class Net(Cell):
         return self.ops(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_int_neg_exp():
     """
     Feature: Support negative exponent when inputs are int datatypes.
@@ -52,9 +51,7 @@ def test_int_neg_exp():
         assert np.allclose(out, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_int_real_datatypes():
     """
     Feature: Support various int and real datatypes.
@@ -88,9 +85,7 @@ def test_int_real_datatypes():
         assert out.shape == expect.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_complex_datatypes():
     """
     Feature: Support various complex datatypes.
@@ -124,9 +119,7 @@ def test_complex_datatypes():
         assert out.shape == expect.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pow_dynamic_shape():
     """
     Feature: test dynamic shape feature of Pow op on GPU.

@@ -8,6 +8,7 @@ from mindspore.common import Parameter
 import numpy as np
 from .ctrl_factory import CtrlFactory
 import pytest
+from tests.mark_utils import arg_mark
 
 
 class CtrlWhileIfContinue(Cell):
@@ -25,9 +26,7 @@ class CtrlWhileIfContinue(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_if_continue_not_relevant_gt():
     '''
     Description: test control flow, loop is parameter in init
@@ -59,9 +58,7 @@ class CtrlWhileContinueIn(Cell):
         return s
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_in_continue():
     '''
     Description: test control flow while continue, use member operator in
@@ -86,9 +83,7 @@ class CtrlWhileCast(Cell):
         return loop
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_continue_cast():
     '''
     Description: test control flow, use op cast
@@ -115,9 +110,7 @@ class CtrlWhileContinueInIf(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_continue_in_if():
     '''
     Description: test control flow, while once continue
@@ -145,9 +138,7 @@ class CtrlWhileContinueInElif(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_continue_in_elif():
     """
     Description:
@@ -181,9 +172,7 @@ class CtrlElifTwoContinue(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_elif_two_continue():
     '''
     Description: test control flow, if-elif in while, both continue
@@ -213,9 +202,7 @@ class CtrlElifContinueOnce(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_once_elif_continue():
     '''
     Description: test control flow, if-elif in while, continue at last
@@ -246,9 +233,7 @@ class CtrlIfContinueElse(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_else_continue_in_if():
     '''
     Description: test control flow, if-elif-else in while
@@ -281,9 +266,7 @@ class CtrlWhileElseContinueInElif(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_else_elif_continue():
     '''
     Description: test control flow, if-elif-else in while, continue in elif
@@ -318,9 +301,7 @@ class CtrlWhileContinueInIfElse(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_continue_in_if_else():
     '''
     Description: test control flow, if-elif-else in while
@@ -353,9 +334,7 @@ class CtrlWhileContinueInElifElse(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_continue_in_elif_else():
     '''
     Description: test control flow, if-elif-else in while
@@ -390,9 +369,7 @@ class CtrlWhile2ElifContinueInElif(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_continue_in_elif_else2():
     '''
     Description: test control flow, if-elif-else in while
@@ -427,9 +404,7 @@ class CtrlWhile2ElifContinueInElse(Cell):
         return t
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_2elif_continue_in_else():
     '''
     Description: test control flow, if-2elif-else in while
@@ -464,9 +439,7 @@ class CtrlWhile2ElifBInIfElif(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_2elif_continue_in_ifelif():
     '''
     Description: test control flow, if-2elif-else in while
@@ -502,9 +475,7 @@ class CtrlWhile2ElifContinueIfElif(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_2elif_continue_in_if_elif_usef():
     '''
     Description: test control flow, if-2elif-else in while
@@ -537,9 +508,7 @@ class CtrlWhile2ElifContinueInElifElse(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_2elif_continue_in_elif_else():
     '''
     Description: test control flow, if-2elif-else in while
@@ -575,9 +544,7 @@ class CtrlWhile2IfContinueTwo(Cell):
 
 
 @pytest.mark.skip(reason="ata_expected = array(4, data_me = array(2.6165862), result match error")
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_2if_continue_second():
     '''
     Description: test control flow, 2if in while

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import os
 import numpy as np
 import pytest
@@ -52,10 +53,7 @@ class NetSort(nn.Cell):
         return y
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_mem_check():
     """
     Feature: mem check.
@@ -76,10 +74,7 @@ def test_gather_mem_check():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_add_mem_check():
     """
     Feature: mem check.
@@ -100,10 +95,7 @@ def test_add_mem_check():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sort_mem_check_graph():
     """
     Feature: mem check in graph mode.

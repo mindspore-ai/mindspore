@@ -18,6 +18,7 @@ import mindspore as ms
 from mindspore import ops
 from mindspore.ops import sigmoid
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
@@ -42,17 +43,13 @@ def sigmoid_vmap_func(x):
     return ops.vmap(sigmoid_forward_func, in_axes=0, out_axes=0)(x)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_ops_sigmoid_forward(mode):
+def test_ops_sigmoid_normal(mode):
     """
     Feature: Pyboost function.
-    Description: Test function sigmoid forward.
+    Description: Test function sigmoid forward and backward.
     Expectation: Correct result.
     """
     ms.context.set_context(mode=mode)
@@ -61,32 +58,13 @@ def test_ops_sigmoid_forward(mode):
     expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
-def test_ops_sigmoid_backward(mode):
-    """
-    Feature: Pyboost function.
-    Description: Test function sigmoid backward.
-    Expectation: Correct result.
-    """
-    ms.context.set_context(mode=mode)
-    x = generate_random_input((2, 3, 4, 5), np.float32)
     output = sigmoid_backward_func(ms.Tensor(x))
     expect = generate_expect_backward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_ops_sigmoid_vmap(mode):
     """
@@ -100,12 +78,8 @@ def test_ops_sigmoid_vmap(mode):
     expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_ops_sigmoid_forward_dynamic_shape(mode):
     """
@@ -129,12 +103,8 @@ def test_ops_sigmoid_forward_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_ops_sigmoid_forward_dynamic_rank(mode):
     """
@@ -159,12 +129,8 @@ def test_ops_sigmoid_forward_dynamic_rank(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_ops_sigmoid_backward_dynamic_shape(mode):
     """
@@ -188,12 +154,8 @@ def test_ops_sigmoid_backward_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 def test_ops_sigmoid_backward_dynamic_rank(mode):
     """

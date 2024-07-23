@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -100,9 +101,7 @@ def dynamic_fill_diagonal_pynative(nptype, fill_value, wrap):
     assert np.allclose(fill_diagonal_output, fill_diagonal_expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fill_diagonal_graph_float32():
     """
     Feature: ALL To ALL
@@ -112,9 +111,7 @@ def test_fill_diagonal_graph_float32():
     fill_diagonal(np.float32, 5., True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fill_diagonal_pynative_int32():
     """
     Feature: ALL To ALL
@@ -124,9 +121,7 @@ def test_fill_diagonal_pynative_int32():
     fill_diagonal_pynative(np.int32, 5., True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fill_diagonal_graph_float32_dynamic():
     """
     Feature: ALL To ALL
@@ -136,9 +131,7 @@ def test_fill_diagonal_graph_float32_dynamic():
     dynamic_fill_diagonal_graph(np.float32, 5., True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fill_diagonal_pynative_int32_dynamic():
     """
     Feature: ALL To ALL

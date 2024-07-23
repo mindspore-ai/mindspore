@@ -24,6 +24,7 @@ from mindspore import Tensor, CSRTensor, context, ops
 from mindspore import dtype as mstype
 from mindspore.nn import Cell
 from mindspore.rewrite import sparsify, ArgType
+from tests.mark_utils import arg_mark
 
 
 def to_tensor(obj, tensor_type):
@@ -110,10 +111,10 @@ def to_np(x):
     return x.asnumpy()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'platform_gpu'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize("mode", [context.PYNATIVE_MODE, context.GRAPH_MODE])
 @pytest.mark.parametrize("tensor_type_a", ["Tensor", "CSRTensor"])
 @pytest.mark.parametrize("tensor_type_m", ["Tensor", "CSRTensor"])

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore
@@ -68,9 +69,7 @@ def space_to_batch_nd_all_dtype():
     space_to_batch_nd_test_case(np.uint64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_space_to_batch_nd_graph():
     """
     Feature: test SpaceToBatchND function interface.
@@ -81,9 +80,7 @@ def test_space_to_batch_nd_graph():
     space_to_batch_nd_all_dtype()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_space_to_batch_nd_pynative():
     """
     Feature: test SpaceToBatchND function interface.
@@ -94,9 +91,7 @@ def test_space_to_batch_nd_pynative():
     space_to_batch_nd_all_dtype()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_space_to_batch_nd_function():
     """
     Feature: test SpaceToBatchND function interface.
@@ -131,9 +126,7 @@ class SpaceToBatchNDDynamicShapeNetMS(nn.Cell):
         return self.space_to_batch_nd(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_space_to_batch_nd_dynamic():
     """
     Feature: test SpaceToBatchND dynamic shape.
@@ -205,9 +198,7 @@ def vmap_case():
         assert np.allclose(output_v[:, i, :, :, :], net(Tensor(data_np[i, :, :, :, :])).asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_space_to_batch_nd_vmap_cpu():
     """
     Feature: test SpactToBatchND vmap on CPU.

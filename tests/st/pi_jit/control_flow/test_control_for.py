@@ -5,7 +5,7 @@ import numpy as np
 from ..share.utils import match_array
 from ..share.grad import GradOfFirstInput
 import mindspore.ops.operations as op
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class ControlOneForAddn(Cell):
@@ -23,9 +23,7 @@ class ControlOneForAddn(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_for_range_addn():
     """
     TEST_SUMMARY:
@@ -66,9 +64,7 @@ class ControlOneForSplit(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_for_split():
     """
     TEST_SUMMARY:
@@ -108,9 +104,7 @@ class ControlOneForOneIf(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_for_if():
     """
     TEST_SUMMARY:
@@ -151,9 +145,7 @@ class ControlOneForOneFor(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_for_in_for():
     """
     TEST_SUMMARY:
@@ -193,9 +185,7 @@ class ControlOneWhileInFor(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_while_in_for():
     """
     TEST_SUMMARY:

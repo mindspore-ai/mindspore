@@ -18,7 +18,6 @@ from __future__ import print_function
 
 import os
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
@@ -27,6 +26,7 @@ from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from tests.st.networks.models.resnetv1_5 import resnet50
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, memory_optimize_level='O0')
 
@@ -63,10 +63,7 @@ class LeNet(nn.Cell):
         return output
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
 def test_resnet():
     '''
     Feature: Mem offload
@@ -99,10 +96,7 @@ def test_resnet():
     assert losses[-1].asnumpy() < 1
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
 def test_lenet():
     '''
     Feature: Mem offload
@@ -128,10 +122,7 @@ def test_lenet():
     assert np.all(diff < 1.e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
 def test_lenet_manual_offload():
     '''
     Feature: Mem offload
@@ -158,10 +149,7 @@ def test_lenet_manual_offload():
     assert np.all(diff < 1.e-6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
 def test_1024_batch_size_resnet():
     """
     Feature: Memory offload

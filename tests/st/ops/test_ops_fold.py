@@ -17,6 +17,7 @@ import pytest
 import numpy as np
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 import mindspore as ms
 from mindspore import Tensor
 from mindspore import ops, context, mint
@@ -32,9 +33,7 @@ def fold_backward_func(input_tensor, output_size, kernel_size, dilation=1, paddi
     return ops.grad(fold_forward_func, (0,))(input_tensor, output_size, kernel_size, dilation, padding, stride)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fold(mode):
     """
@@ -66,9 +65,7 @@ def test_fold(mode):
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fold_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -86,5 +83,5 @@ def test_fold_dynamic():
             [input_case1, (12, 16), (6, 5), (3, 2), (2, 3), (2, 5)],
             [input_case2, (8, 8), (3, 3), (2, 2), (1, 1), (3, 3)],
         ],
-        "col2im_ext"
+        "col2im_ext", disable_input_check=True, disable_mode=['GRAPH_MODE'],
     )

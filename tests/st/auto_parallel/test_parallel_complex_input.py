@@ -13,12 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
+from tests.mark_utils import arg_mark
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 def test_pynative_mode_parallel_complex_input():
     '''
     Feature: Parallel Support for Complex64 input
@@ -28,10 +26,8 @@ def test_pynative_mode_parallel_complex_input():
     ret = os.system("mpirun -n 8 --allow-run-as-root pytest -s -v parallel_complex_input.py::test_pynative_mode")
     assert ret == 0
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 def test_graph_mode_parallel_complex_input():
     '''
     Feature: Parallel Support for Complex64 input

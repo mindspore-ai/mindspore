@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 
 import numpy as np
@@ -36,9 +37,7 @@ class MaxPoolGradWithArgmaxV2(nn.Cell):
         return self.grad(x, grad, argmax)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool_grad_with_argmax_v2():
     """
     Feature: test maxPoolGradWithArgmaxV2 cpu version.
@@ -75,9 +74,7 @@ def test_maxpool_grad_with_argmax_v2():
     assert (actual_output.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool_grad_with_argmax_v2_fp16():
     """
     Feature: test MaxPoolGradWithArgmaxV2 cpu version.
@@ -115,9 +112,7 @@ def test_maxpool_grad_with_argmax_v2_fp16():
     assert (actual_output.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool_grad_with_argmax_v2_vmap():
     """
     Feature: test maxPoolGradWithArgmaxV2 gpu vmap version.
@@ -141,9 +136,7 @@ def test_maxpool_grad_with_argmax_v2_vmap():
     assert actual_output.shape == (1, 1, 1, 6, 6)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool_grad_with_argmax_v2_x_dynamic_shape():
     """
     Feature: test MaxPoolGradWithArgmaxV2 cpu version.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -50,9 +51,7 @@ def scatter_add_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_small_float32():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -63,9 +62,7 @@ def test_scatter_add_small_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_input_updated():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -78,9 +75,7 @@ def test_scatter_add_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_large_shape_float32():
     inputx = Tensor(np.ones((4, 2, 3, 4)).astype(np.float32))
     indices = Tensor(np.array([[0, 2], [3, 1]]).astype(np.int32))
@@ -113,9 +108,7 @@ def test_scatter_add_large_shape_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_small_float32_use_locking_false():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([1, 0]).astype(np.int32))
@@ -126,9 +119,7 @@ def test_scatter_add_small_float32_use_locking_false():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_input_less_than_1_float32():
     inputx = Tensor(np.array([[0.214141, 0.415151, 0.51516],
                               [0.876542, 0.451611, 0.55112],
@@ -145,9 +136,7 @@ def test_scatter_add_input_less_than_1_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_float16():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float16))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -158,9 +147,7 @@ def test_scatter_add_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_large_float16():
     inputx = Tensor(np.zeros((2, 3, 4)).astype(np.float16))
     indices = Tensor(np.array([[0, 0], [1, 1]]).astype(np.int32))
@@ -175,9 +162,7 @@ def test_scatter_add_large_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_disordered_float16():
     inputx = Tensor(np.flip(np.arange(34, 46).reshape(3, 4).astype(np.float16)))
     indices = Tensor(np.array([[[0, 1, 2],
@@ -192,9 +177,7 @@ def test_scatter_add_disordered_float16():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_large_int32():
     inputx = Tensor(np.zeros((2, 3, 4)).astype(np.int32))
     indices = Tensor(np.array([[0, 0], [1, 1]]).astype(np.int32))
@@ -209,9 +192,7 @@ def test_scatter_add_large_int32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_disordered_int32():
     inputx = Tensor(np.flip(np.arange(34, 46).reshape(3, 4).astype(np.int32)))
     indices = Tensor(np.array([[[0, 1, 2],
@@ -226,9 +207,7 @@ def test_scatter_add_disordered_int32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_function():
     """
     Feature: test_scatter_add_function.
@@ -273,9 +252,7 @@ def scatter_sub_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_sub_input_updated():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -288,9 +265,7 @@ def test_scatter_sub_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_sub_large_shape_float32():
     inputx = Tensor(np.ones((4, 2, 3, 4)).astype(np.float32))
     indices = Tensor(np.array([[0, 2], [3, 1]]).astype(np.int32))
@@ -324,9 +299,7 @@ def test_scatter_sub_large_shape_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_sub_small_float32_use_locking_false():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([1, 0]).astype(np.int32))
@@ -362,9 +335,7 @@ def scatter_mul_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_mul_input_updated():
     inputx = Tensor(np.ones((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -377,9 +348,7 @@ def test_scatter_mul_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_mul_output_updated_float32():
     inputx = Tensor(np.ones((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -390,9 +359,7 @@ def test_scatter_mul_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_mul_small_float32_use_locking_false():
     inputx = Tensor(np.ones((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -428,9 +395,7 @@ def scatter_div_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_div_input_updated():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -443,9 +408,7 @@ def test_scatter_div_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_div_output_updated_float32():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -456,9 +419,7 @@ def test_scatter_div_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_div_small_float32_use_locking_false():
     inputx = Tensor(np.ones((2, 3)).astype(np.float32) * 10)
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -469,9 +430,7 @@ def test_scatter_div_small_float32_use_locking_false():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_div_output_int16():
     """
     Feature: test ScatterDiv output and input_x same value.
@@ -485,9 +444,7 @@ def test_scatter_div_output_int16():
     assert np.allclose(output.asnumpy(), input_x.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_div_output_float64():
     """
     Feature: test ScatterDiv output and input_x same value.
@@ -526,9 +483,7 @@ def scatter_max_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_max_input_updated():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -541,9 +496,7 @@ def test_scatter_max_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_max_output_updated_float32():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -554,9 +507,7 @@ def test_scatter_max_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_max_small_float32_use_locking_false():
     inputx = Tensor(np.ones((2, 3)).astype(np.float32) * 10)
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -592,9 +543,7 @@ def scatter_min_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_min_input_updated():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -607,9 +556,7 @@ def test_scatter_min_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_min_output_updated_float32():
     inputx = Tensor(np.ones((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -620,9 +567,7 @@ def test_scatter_min_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_min_small_float32_use_locking_false():
     inputx = Tensor(np.ones((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -658,9 +603,7 @@ def scatter_update_use_locking_false_net(inputx, indices, updates):
     return net()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_update_input_updated():
     inputx = Tensor(np.zeros((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -673,9 +616,7 @@ def test_scatter_update_input_updated():
     np.testing.assert_array_almost_equal(net.inputx.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_update_output_updated_float32():
     inputx = Tensor(np.ones((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -686,9 +627,7 @@ def test_scatter_update_output_updated_float32():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_update_output_updated_huge_tensor_float32():
     """
     Feature: Test huge input tensor case of cpu kernel ScatterUpdate.
@@ -706,9 +645,7 @@ def test_scatter_update_output_updated_huge_tensor_float32():
     np.testing.assert_array_almost_equal(output.asnumpy()[0:2], expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_update_small_float32_use_locking_false():
     inputx = Tensor(np.ones((2, 3)).astype(np.float32))
     indices = Tensor(np.array([[0, 1], [0, 1]]).astype(np.int32))
@@ -729,9 +666,7 @@ class TestScatterAddNetDynamic(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_dynamic_shape():
     """
     Feature: op dynamic shape
@@ -760,9 +695,7 @@ class TestScatterSubNetDynamic(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_sub_dynamic_shape():
     """
     Feature: op dynamic shape
@@ -792,9 +725,7 @@ class TestScatterUpdateNetDynamic(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_update_dynamic_shape():
     """
     Feature: op dynamic shape

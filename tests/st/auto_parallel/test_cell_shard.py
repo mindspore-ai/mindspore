@@ -14,12 +14,10 @@
 # ============================================================================
 
 import os
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_gpu"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 def test_cell_shard_gpu():
     '''
     Feature: shard function for cell to enable parallel execution under PyNative mode

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -22,9 +23,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_topk():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -83,9 +82,7 @@ def test_topk():
     assert np.allclose(ms_output[0].asnumpy(), x_np)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_top_k_functional():
     """
     Feature: test_top_k_functional
@@ -117,9 +114,7 @@ def test_top_k_functional():
     assert np.allclose(ms_output[0].asnumpy(), np_output)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_top_k_tensor():
     """
     Feature: test_top_k_tensor

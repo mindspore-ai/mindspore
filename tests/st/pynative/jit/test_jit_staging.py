@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
 from mindspore import context
 import mindspore.nn as nn
@@ -23,16 +22,17 @@ from mindspore.nn import Momentum
 from mindspore.common.tensor import Tensor
 from mindspore.common.api import jit
 from mindspore.ops import composite as C
+from tests.mark_utils import arg_mark
 
 
 def setup_module():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_staging_together():
     """
     Feature: Pynative stage
@@ -90,10 +90,10 @@ class MomentumWithMsFunc(nn.Cell):
 grad_by_list = C.GradOperation(get_by_list=True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_ms_func_decorate_forward():
     """
     Feature: Auto diff for jit.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -60,8 +61,6 @@ def get_weights_from_gru(gru_nn, has_bias):
     return weights
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 @pytest.mark.parametrize("has_bias", [True, False])
 @pytest.mark.parametrize("is_train", [True, False])
 @pytest.mark.parametrize("dtype", [ms.float16, ms.float32])
@@ -93,8 +92,6 @@ def test_gruv2_op(has_bias, is_train, dtype):
     assert np.allclose(me_hy.asnumpy(), expect_hy.asnumpy(), rtol, atol)
 
 
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_gruv2_op_float64_exception():
     """
     Feature: test GRUV2 with using float64

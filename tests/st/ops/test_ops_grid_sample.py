@@ -16,6 +16,7 @@ import numpy as np
 import pytest
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 from mindspore import ops
 import mindspore as ms
 
@@ -30,10 +31,8 @@ def grid_sample_backward_func(input_x, grid, mode="bilinear", padding_mode="zero
     return ops.grad(grid_sample_forward_func, (0, 1))(input_x, grid, mode, padding_mode, align_corners)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_grid_sampler_2d_forward(mode):
@@ -87,10 +86,8 @@ def test_grid_sampler_2d_forward(mode):
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_grid_sampler_backward(mode):
@@ -158,10 +155,8 @@ def test_grid_sampler_backward(mode):
     assert np.allclose(grads[1].asnumpy(), expect_out2, 1e-04, 1e-04)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_grid_sampler_vmap(mode):
@@ -220,10 +215,8 @@ def test_grid_sampler_vmap(mode):
     assert np.allclose(out.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_5d_forward(mode):
     """
@@ -266,10 +259,8 @@ def test_grid_sampler_5d_forward(mode):
     assert np.allclose(out.asnumpy(), except_out, 1e-04, 1e-04)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_5d_backward(mode):
     """
@@ -324,10 +315,8 @@ def test_grid_sampler_5d_backward(mode):
     assert np.allclose(grads[1].asnumpy(), expect_out2, 1e-04, 1e-04)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_grid_sampler_5d_vmap(mode):
     """
@@ -374,11 +363,8 @@ def test_grid_sampler_5d_vmap(mode):
     assert np.allclose(out.asnumpy(), except_out, 1e-04, 1e-04)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_gridsample_dynamic_shape():
     """
     Feature: Test dynamic shape.

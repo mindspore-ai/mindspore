@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -71,9 +72,7 @@ def generate_test_cases(np_type, mode, loss):
     judge_result_correct(output[0].asnumpy(), expect, loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_hswish_forward_and_backward():
     modes = (context.GRAPH_MODE, context.PYNATIVE_MODE)
     dtypes = (np.float32, np.float16)

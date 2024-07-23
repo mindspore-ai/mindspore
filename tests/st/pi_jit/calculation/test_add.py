@@ -2,6 +2,7 @@ import pytest
 from mindspore import numpy as np
 from mindspore import Tensor, jit, context
 from ..share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
 @jit(mode="PIJit")
@@ -14,9 +15,7 @@ def jit_add(a, b):
     return a + b
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [add])
 @pytest.mark.parametrize('ms_func', [jit_add])
 @pytest.mark.parametrize('test_data', [(1, 100)])
@@ -40,9 +39,7 @@ def test_add_int(func, ms_func, test_data):
     ms_res = a + b
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [add])
 @pytest.mark.parametrize('ms_func', [jit_add])
 @pytest.mark.parametrize('test_data', [(1.0, 100.0)])
@@ -66,9 +63,7 @@ def test_add_float(func, ms_func, test_data):
     ms_res = a + b
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [add])
 @pytest.mark.parametrize('ms_func', [jit_add])
 @pytest.mark.parametrize('test_data', [(2.0, Tensor(np.ones((2, 3)).astype(np.float32)))])
@@ -93,9 +88,7 @@ def test_add_float_tensor(func, ms_func, test_data):
     ms_res = a + b
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [add])
 @pytest.mark.parametrize('ms_func', [jit_add])
 @pytest.mark.parametrize('test_data', [(Tensor(np.ones((2, 3)).astype(np.float32)),
@@ -120,9 +113,7 @@ def test_add_tensor(func, ms_func, test_data):
     ms_res = a + b
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [add])
 @pytest.mark.parametrize('ms_func', [jit_add])
 @pytest.mark.parametrize('test_data', [((1, 2, 3), (4, 5, 6))])
@@ -146,9 +137,7 @@ def test_add_tuple(func, ms_func, test_data):
     ms_res = a + b
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [add])
 @pytest.mark.parametrize('ms_func', [jit_add])
 @pytest.mark.parametrize('test_data', [("Hello", "World")])

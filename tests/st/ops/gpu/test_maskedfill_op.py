@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -64,9 +65,7 @@ def maskedfill_fun(ntype):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedfill_float():
     """
     Feature: Test MaskedFill op.
@@ -76,9 +75,7 @@ def test_maskedfill_float():
     maskedfill_fun(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedfill_float16():
     """
     Feature: Test MaskedFill op.
@@ -88,9 +85,7 @@ def test_maskedfill_float16():
     maskedfill_fun(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedfill_int():
     """
     Feature: Test MaskedFill op.
@@ -100,9 +95,7 @@ def test_maskedfill_int():
     maskedfill_fun(np.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedfill_int8():
     """
     Feature: Test MaskedFill op.
@@ -121,9 +114,7 @@ def maskedfill_value(value):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedfill_float_value():
     """
     Feature: Test MaskedFill op.
@@ -133,9 +124,7 @@ def test_maskedfill_float_value():
     maskedfill_value(0.5)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_func_masked_fill_float():
     """
     Feature: Test func masked_fill.
@@ -150,9 +139,7 @@ def test_func_masked_fill_float():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_masked_fill_float():
     """
     Feature: Test Tensor masked_fill.
@@ -167,9 +154,7 @@ def test_tensor_masked_fill_float():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maskedfill_tensor_value():
     """
     Feature: Test MaskedFill op.
@@ -179,9 +164,7 @@ def test_maskedfill_tensor_value():
     maskedfill_value(Tensor(0.5))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_func_masked_fill_with_8d_broadcast_input():
     """
     Feature: Test func masked_fill.

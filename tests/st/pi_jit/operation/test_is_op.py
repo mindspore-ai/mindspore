@@ -2,6 +2,7 @@ import pytest
 from mindspore import numpy as np
 from mindspore import Tensor, jit, context
 from ..share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
 @jit(mode="PIJit")
@@ -17,9 +18,7 @@ def jit_add(a, b):
     return a + b
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func, ms_func', [(add, jit_add)])
 @pytest.mark.parametrize('a, b', [(1, 1), (1, 2)])
 def test_int_add(func, ms_func, a, b):
@@ -36,9 +35,7 @@ def test_int_add(func, ms_func, a, b):
 
 
 @pytest.mark.skip
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func, ms_func', [(add, jit_add)])
 @pytest.mark.parametrize('a, b',
                          [(Tensor(np.ones((2, 3)).astype(np.float32)), Tensor(np.ones((2, 3)).astype(np.float32)))])

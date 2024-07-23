@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -32,9 +32,7 @@ class Net(nn.Cell):
         return self.ops(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net():
     """
     Feature: ALL To ALL
@@ -82,9 +80,7 @@ def test_net():
     assert out.shape == expect.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_pow_pynative():
     """
     Feature: Tensor interface pow.
@@ -103,9 +99,7 @@ def tensor_pow_func(x, y):
     return x.pow(y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_pow_graph():
     """
     Feature: Tensor interface pow.
@@ -118,9 +112,7 @@ def test_tensor_pow_graph():
     assert np.all(output.asnumpy() == np.array([1, 4, 27]))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pow_functional():
     """
     Feature: Tensor interface pow.
@@ -133,9 +125,7 @@ def test_pow_functional():
     assert np.all(output.asnumpy() == np.array([1, 4, 27]))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pow_vmap():
     """
     Feature: Tensor interface pow.
@@ -149,9 +139,7 @@ def test_pow_vmap():
     assert np.all(output.asnumpy() == np.array([[1, 4, 27], [27, 4, 1]]))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pow_dynamic_shape():
     """
     Feature: test Pow op on CPU.
@@ -170,9 +158,7 @@ def test_pow_dynamic_shape():
     assert output.asnumpy().shape == except_shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pow_complex():
     """
     Feature: Support various complex datatypes。

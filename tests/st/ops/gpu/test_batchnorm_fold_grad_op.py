@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -43,9 +44,7 @@ def np_result(d_batch_mean, d_batch_std, x, batch_mean, batch_std):
     return dx
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_batchnorm_fold_grad1():
     net = Net()
     c = 64
@@ -61,9 +60,7 @@ def test_batchnorm_fold_grad1():
     assert np.allclose(dx.asnumpy(), expect, rtol=1.e-7, atol=1.e-7)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_batchnorm_fold_grad2():
     net = Net()
     c = 64
@@ -79,9 +76,7 @@ def test_batchnorm_fold_grad2():
     assert np.allclose(dx.asnumpy(), expect, rtol=1.e-7, atol=1.e-7)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_batchnorm_fold_grad_freeze():
     net = Net()
     c = 64

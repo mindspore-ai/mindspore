@@ -16,14 +16,11 @@ import os
 import sys
 import tempfile
 import shutil
-import pytest
+from tests.mark_utils import arg_mark
 from dump_test_utils import generate_dump_json, check_ge_dump_structure
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
 def test_dump_hccl():
     """
     Feature: Test async dump for hccl operator.

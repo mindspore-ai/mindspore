@@ -1,3 +1,4 @@
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.nn as nn
@@ -15,9 +16,7 @@ class Net(nn.Cell):
         return self.logit(x, eps)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_logit_graph():
     """
      Feature: Logit gpu TEST.
@@ -35,9 +34,7 @@ def test_logit_graph():
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_logit_pynative():
     """
      Feature: Logit gpu TEST.

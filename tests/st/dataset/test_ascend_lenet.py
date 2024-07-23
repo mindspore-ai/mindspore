@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
 
 import mindspore as ms
 import mindspore.dataset as ds
 import mindspore.nn as nn
 from mindspore.common.initializer import Normal
+from tests.mark_utils import arg_mark
 
 
 class LeNet5(nn.Cell):
@@ -74,10 +74,7 @@ def create_model():
     return trainer
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_net_build_then_train_sink_size_1():
     """
     Feature: Test model.build and model.train in graph mode under Ascend platform

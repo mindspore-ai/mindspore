@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 """
 Test PSROIPoolingGrad.
 """
@@ -149,9 +150,7 @@ def ps_roi_pooling_grad_case(data_type, dynamic_shape=False):
     assert np.allclose(output_ms, output_gt, atol=1e-4, rtol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ps_roi_pooling_grad():
     """
     Feature: PSROIPoolingGrad op.

@@ -19,11 +19,10 @@ import numpy as np
 import mindspore as ms
 from mindspore._c_expression import get_code_extra
 from mindspore import Tensor, jit, context
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_os_env_mapping_get():
     """
     Feature: collections.abc.Mapping.get
@@ -39,9 +38,7 @@ def test_os_env_mapping_get():
     assert jcr["break_count_"] == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_os_env_mapping_get_with_set():
     """
     Feature: collections.abc.Mapping.get
@@ -57,9 +54,7 @@ def test_os_env_mapping_get_with_set():
     assert jcr["break_count_"] == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("a", [ms.Tensor(np.random.randn(2, 2).astype(np.float32))])
 @pytest.mark.parametrize("b", [ms.Tensor(np.random.randn(2, 2).astype(np.float32))])
 def test_os_env_mapping_get_with_tensor(a, b):

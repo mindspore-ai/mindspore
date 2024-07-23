@@ -14,12 +14,12 @@
 # ============================================================================
 
 import numpy as np
-import pytest
 
 import mindspore as ms
 from mindspore import Tensor
 import mindspore.context as context
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 
 def test_half_tensor_api():
@@ -35,10 +35,7 @@ def test_half_tensor_api():
     assert dtype_op(output) == ms.float16
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_half_tensor_api_modes():
     """
     Feature: test half tensor API for different modes.

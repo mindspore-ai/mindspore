@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -63,9 +64,7 @@ class SparseApplyFtrlNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net():
     """
     Feature: FusedSparseFtrl
@@ -91,9 +90,7 @@ def test_net():
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_ftrl_invalid_input_shape_var_accum_not_match():
     """
     Feature: FusedSparseFtrl
@@ -116,9 +113,7 @@ def test_fused_sparse_ftrl_invalid_input_shape_var_accum_not_match():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_ftrl_invalid_input_shape_var_linear_not_match():
     """
     Feature: FusedSparseFtrl
@@ -141,9 +136,7 @@ def test_fused_sparse_ftrl_invalid_input_shape_var_linear_not_match():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_ftrl_invalid_input_shape_grad_indices_not_match():
     """
     Feature: FusedSparseFtrl
@@ -166,9 +159,7 @@ def test_fused_sparse_ftrl_invalid_input_shape_grad_indices_not_match():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_ftrl_invalid_input_shape_indices_rank_invalid():
     """
     Feature: FusedSparseFtrl
@@ -191,9 +182,7 @@ def test_fused_sparse_ftrl_invalid_input_shape_indices_rank_invalid():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_ftrl_invalid_input_shape_grad_rank_invalid():
     """
     Feature: FusedSparseFtrl
@@ -216,9 +205,7 @@ def test_fused_sparse_ftrl_invalid_input_shape_grad_rank_invalid():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_ftrl_invalid_input_shape_indices_grad_not_match():
     """
     Feature: FusedSparseFtrl
@@ -242,9 +229,7 @@ def test_fused_sparse_ftrl_invalid_input_shape_indices_grad_not_match():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_ftrl_invalid_input_type_indices_invalid():
     """
     Feature: FusedSparseFtrl
@@ -267,9 +252,7 @@ def test_fused_sparse_ftrl_invalid_input_type_indices_invalid():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_ftrl_invalid_input_type_indices_invalid2():
     """
     Feature: FusedSparseFtrl
@@ -291,9 +274,7 @@ def test_fused_sparse_ftrl_invalid_input_type_indices_invalid2():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_ftrl_invalid_input_type_gradient_invalid():
     """
     Feature: FusedSparseFtrl
@@ -315,9 +296,7 @@ def test_fused_sparse_ftrl_invalid_input_type_gradient_invalid():
         pass
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fused_sparse_ftrl_dynamic():
     """
     Feature: FusedSparseFtrl
@@ -359,9 +338,7 @@ def test_fused_sparse_ftrl_dynamic():
     assert np.allclose(net.var.data.asnumpy(), expect_var)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparse_apply_ftrl():
     """
     Feature: SparseApplyFtrl
@@ -425,9 +402,7 @@ class VmapNetSparseApplyFtrl(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_vmap_sparseapplyftrl():
     """
     Feature: Vmap feature on SparseApplyFtrl cpu op

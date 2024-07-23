@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -30,9 +31,7 @@ class SincNet(nn.Cell):
         return self.sinc(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sinc_input_float32_output_float32():
     """
     Feature: Sinc gpu TEST.
@@ -49,9 +48,7 @@ def test_sinc_input_float32_output_float32():
     assert np.allclose(output_ms.asnumpy(), expect.astype(np.float32), 0.001, 0.001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sinc_input_float64_output_float64():
     """
     Feature: Sinc gpu TEST.

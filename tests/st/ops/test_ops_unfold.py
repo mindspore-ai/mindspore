@@ -17,6 +17,7 @@ import pytest
 import numpy as np
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 import mindspore as ms
 from mindspore import Tensor
 from mindspore import ops, context, mint
@@ -32,9 +33,7 @@ def unfold_backward_func(input_tensor, kernel_size, dilation=1, padding=0, strid
     return ops.grad(unfold_forward_func, (0,))(input_tensor, kernel_size, dilation, padding, stride)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_unfold(mode):
     """
@@ -66,11 +65,8 @@ def test_unfold(mode):
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_unfold_dynamic(mode):
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_unfold_dynamic():
     """
     Feature: test dynamic by TEST_OP.
     Description: test op Im2ColExt and Col2ImExt.
@@ -87,6 +83,5 @@ def test_unfold_dynamic(mode):
             [input_case1, 10, (4, 3), 2, (7, 8)],
             [input_case2, 4, (2, 3), 3, (4, 5)],
         ],
-        'im2col_ext',
-        disable_input_check=True
+        'im2col_ext', disable_input_check=True, disable_mode=['GRAPH_MODE'],
     )

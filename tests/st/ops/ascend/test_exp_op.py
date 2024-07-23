@@ -1,3 +1,4 @@
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -31,9 +32,7 @@ def test_exp_tensor_api(ms_type):
     assert np.allclose(output, expected, rtol=0.004, atol=0.004)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_exp_tensor_bf16_api():
     """
     Feature: Test exp forward tensor api.

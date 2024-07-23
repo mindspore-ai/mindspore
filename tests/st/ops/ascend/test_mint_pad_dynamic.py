@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 import mindspore as ms
 from mindspore import mint
 
@@ -30,9 +30,7 @@ def pad_reflect_func(x, padding):
 def pad_replicate_func(x, padding):
     return mint.nn.functional.pad(x, padding, 'replicate')
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_constant_dynamic():
     """
     Feature: pyboost function.
@@ -49,11 +47,9 @@ def test_ops_pad_constant_dynamic():
 
     TEST_OP(pad_constant_func, [[ms.Tensor(input1), padding1, value1], [ms.Tensor(input2), padding2, value2]],
             'constant_pad_nd', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_reflect_1d_dynamic():
     """
     Feature: pyboost function.
@@ -68,11 +64,9 @@ def test_ops_pad_reflect_1d_dynamic():
 
     TEST_OP(pad_reflect_func, [[ms.Tensor(input1), padding1], [ms.Tensor(input2), padding2]],
             'reflection_pad_1d', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_reflect_2d_dynamic():
     """
     Feature: pyboost function.
@@ -87,11 +81,9 @@ def test_ops_pad_reflect_2d_dynamic():
 
     TEST_OP(pad_reflect_func, [[ms.Tensor(input1), padding1], [ms.Tensor(input2), padding2]],
             'reflection_pad_2d', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_reflect_3d_dynamic():
     """
     Feature: pyboost function.
@@ -106,11 +98,9 @@ def test_ops_pad_reflect_3d_dynamic():
 
     TEST_OP(pad_reflect_func, [[ms.Tensor(input1), padding1], [ms.Tensor(input2), padding2]],
             'reflection_pad_3d', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_replicate_1d_dynamic():
     """
     Feature: pyboost function.
@@ -125,11 +115,9 @@ def test_ops_pad_replicate_1d_dynamic():
 
     TEST_OP(pad_replicate_func, [[ms.Tensor(input1), padding1], [ms.Tensor(input2), padding2]],
             'replication_pad_1d', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_replicate_2d_dynamic():
     """
     Feature: pyboost function.
@@ -144,11 +132,9 @@ def test_ops_pad_replicate_2d_dynamic():
 
     TEST_OP(pad_replicate_func, [[ms.Tensor(input1), padding1], [ms.Tensor(input2), padding2]],
             'replication_pad_2d', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_pad_replicate_3d_dynamic():
     """
     Feature: pyboost function.
@@ -163,4 +149,4 @@ def test_ops_pad_replicate_3d_dynamic():
 
     TEST_OP(pad_replicate_func, [[ms.Tensor(input1), padding1], [ms.Tensor(input2), padding2]],
             'replication_pad_3d', disable_mode=['GRAPH_MODE'], disable_nontensor_dynamic_type='MUTABLE_LEN',
-            disable_yaml_check=True)
+            disable_input_check=True, disable_yaml_check=True)

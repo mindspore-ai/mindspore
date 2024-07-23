@@ -5,6 +5,7 @@ from ..share.grad import GradOfAllInputs
 from ..share.utils import allclose_nparray
 import numpy as np
 import copy
+from tests.mark_utils import arg_mark
 
 
 class ParserFactory():

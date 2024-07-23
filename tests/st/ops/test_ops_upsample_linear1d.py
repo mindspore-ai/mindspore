@@ -17,6 +17,7 @@ import pytest
 import numpy as np
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 import mindspore as ms
 from mindspore import Tensor
 from mindspore import ops, context, mint
@@ -32,10 +33,7 @@ def upsample_linear1d_backward_func(x, size=None, scale_factor=None, align_corne
     return ops.grad(upsample_linear1d_forward_func, (0,))(x, size, scale_factor, align_corners)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_upsample_linear_1d(mode):
     """
@@ -75,10 +73,7 @@ def test_upsample_linear_1d(mode):
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_upsample_linear_1d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -101,10 +96,7 @@ def test_upsample_linear_1d_size_dynamic():
     )
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_upsample_linear_1d_scales_dynamic():
     """
     Feature: test dynamic by TEST_OP.

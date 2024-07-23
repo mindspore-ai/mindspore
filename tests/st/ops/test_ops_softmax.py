@@ -16,6 +16,8 @@ import pytest
 import numpy as np
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
+
 import mindspore as ms
 from mindspore import Tensor, context
 from mindspore import ops
@@ -51,12 +53,8 @@ def tensor_softmax_forward_func(x, axis=-1):
     return x.softmax(axis)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_softmax_static_shape(mode):
     """
@@ -78,12 +76,8 @@ def test_softmax_static_shape(mode):
     assert grads.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE])
 def test_softmax_double_backward(mode):
     """
@@ -100,12 +94,8 @@ def test_softmax_double_backward(mode):
     print(grads)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_sofmax_vmap(mode):
     """
@@ -126,12 +116,8 @@ def test_sofmax_vmap(mode):
     assert out.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_tensor_softmax(mode):
     """
@@ -148,12 +134,8 @@ def test_tensor_softmax(mode):
     assert np.allclose(output.asnumpy(), expect_out, 1e-04, 1e-04)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_softmax_dynamic():
     """
     Feature: Ops
@@ -171,7 +153,7 @@ def test_softmax_dynamic():
             [input_case1, (-1,)],
             [input_case2, (0,)],
         ],
-        "softmax"
+        "softmax", disable_input_check=True
     )
 
 
@@ -194,9 +176,7 @@ def run_softmax_api(ms_type, nptype):
         np.testing.assert_array_almost_equal(output.asnumpy(), excepted, decimal=6)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_softmax_bfloat16_tensor_api(mode):
     """

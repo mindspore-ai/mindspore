@@ -20,6 +20,7 @@ from mindspore.mint import split
 
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 @test_utils.run_with_cell
 def split_forward_func(x, axis, output_num):
@@ -36,10 +37,7 @@ def split_backward_func(x, axis, output_num):
 def split_dyn_shape_func(x, axis=0, output_num=2):
     return ops.Split(axis, output_num)(x)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_SDV1(context_mode):
     """
@@ -60,10 +58,7 @@ def test_split_ext_int_SDV1(context_mode):
     first_output = out[0]
     assert np.allclose(first_output.shape, expect_shape)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_SD5B(context_mode):
     """
@@ -84,10 +79,7 @@ def test_split_ext_int_SD5B(context_mode):
     first_output = out[0]
     assert np.allclose(first_output.shape, expect_shape)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_SDV2(context_mode):
     """
@@ -108,10 +100,7 @@ def test_split_ext_int_SDV2(context_mode):
     first_output = out[0]
     assert np.allclose(first_output.shape, expect_shape)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_forward(context_mode):
     """
@@ -133,10 +122,7 @@ def test_split_ext_int_forward(context_mode):
     for res, exp in zip(out, expect):
         assert np.allclose(res.asnumpy(), exp)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_backward(context_mode):
     """
@@ -155,10 +141,7 @@ def test_split_ext_int_backward(context_mode):
     expect_shape = x.shape
     assert grads.asnumpy().shape == expect_shape
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_f_split_ext_list_forward(context_mode):
     """
@@ -181,10 +164,7 @@ def test_f_split_ext_list_forward(context_mode):
     for res, exp in zip(out, expect):
         assert np.allclose(res.asnumpy(), exp)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_f_split_ext_list_backward(context_mode):
     """
@@ -205,10 +185,7 @@ def test_f_split_ext_list_backward(context_mode):
     expect_shape = logits.shape
     assert grads.asnumpy().shape == expect_shape
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_f_split_ext_dynamic():
     """
     Feature: test dynamic split.
@@ -221,10 +198,7 @@ def test_f_split_ext_dynamic():
     x2 = ms.Tensor(np_x2, ms.float32)
     TEST_OP(split_forward_func_dynamic, [[x1, 2, 0], [x2, 3, 1]], 'split_tensor')
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_split_dynamic(mode):
     """

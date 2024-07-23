@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 
 import numpy as np
@@ -110,9 +111,7 @@ class PrintTypes(nn.Cell):
 
 
 @security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_print_multiple_types(mode):
     """
@@ -129,9 +128,7 @@ def test_print_multiple_types(mode):
 
 
 @security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
                                    np.bool, np.float64, np.float32, np.float16, np.complex64, np.complex128])
@@ -146,9 +143,7 @@ def test_print_dtype(mode, dtype):
 
 
 @security_off_wrap
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_print_string(mode):
     """
@@ -161,9 +156,7 @@ def test_print_string(mode):
 
 
 @security_off_wrap
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_print_dynamic_shape(mode):
     """
@@ -181,9 +174,7 @@ def test_print_dynamic_shape(mode):
 
 
 @security_off_wrap
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_print_op_tuple():
     """
     Feature: cpu Print op.
@@ -203,9 +194,7 @@ def test_print_op_tuple():
 
 
 @security_off_wrap
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_print_tensor_dtype_in_nested_tuple(mode):
     """
@@ -227,9 +216,7 @@ def test_print_tensor_dtype_in_nested_tuple(mode):
     net(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_print_abs():
     """
     Feature: Print op.
@@ -256,9 +243,7 @@ def test_print_abs():
     print("out:", out)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_print_tensor():
     """
     Feature: Print op.

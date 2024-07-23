@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -36,9 +37,7 @@ class NetMaxPoolGradGrad(nn.Cell):
         return self.maxpool_grad_grad_fun(x, out, grad)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool2d_grad_grad_fp16():
     """
     Feature: MaxPool2dGradGrad cpu kernel
@@ -66,9 +65,7 @@ def test_maxpool2d_grad_grad_fp16():
     assert np.allclose(output.asnumpy(), expect_result)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maxpool2d_grad_grad_fp32():
     """
     Feature: MaxPool2dGradGrad cpu kernel
@@ -105,9 +102,7 @@ def test_maxpool2d_grad_grad_fp32():
     assert np.allclose(output.asnumpy(), expect_result)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('axis', [2])
 def test_maxpool2d_grad_grad_vmap(axis):
     """

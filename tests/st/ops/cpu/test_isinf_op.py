@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -40,9 +41,7 @@ x2 = Tensor(np.array([np.log(0), 1, np.log(0), 3]), mstype.float32)
 x3 = Tensor(np.array([[np.log(0), 2], [np.log(0), np.log(0)]]), mstype.float32)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_nan():
     ms_isinf = NetIsInf()
     output1 = ms_isinf(Tensor(x1))
@@ -58,9 +57,7 @@ def test_nan():
     assert (output3.asnumpy() == expect3).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_is_nan_cpu_dynamic_shape():
     """
     Feature: test FloatStatus op on CPU.
@@ -77,9 +74,7 @@ def test_is_nan_cpu_dynamic_shape():
     assert output.asnumpy().shape == except_shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_isinf_functional_api_modes(mode):
     """
@@ -94,9 +89,7 @@ def test_isinf_functional_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_isinf_tensor_api_modes(mode):
     """

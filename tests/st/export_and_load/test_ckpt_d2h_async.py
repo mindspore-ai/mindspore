@@ -26,6 +26,7 @@ from mindspore.common import dtype as mstype
 from mindspore.dataset.vision import Inter
 from mindspore.train import Model
 from mindspore.common.initializer import Normal
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -104,10 +105,7 @@ def create_dataset(data_path, batch_size=32, num_parallel_workers=1):
     return mnist_ds
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ckpt_d2h_async():
     """
     Feature: ckpt d2h copy async.

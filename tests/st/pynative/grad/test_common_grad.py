@@ -14,7 +14,6 @@
 # ============================================================================
 """ test_bprop """
 import numpy as np
-import pytest
 import mindspore as ms
 from mindspore import grad
 import mindspore.nn as nn
@@ -26,6 +25,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import GradOperation
 from tests.mindspore_test_framework.utils.bprop_util import bprop
 from tests.st.pynative.utils import GradOfFirstInput, GradOfAllInputs, GradOfAllInputsAndParams
+from tests.mark_utils import arg_mark
 
 
 def setup_module():
@@ -95,9 +95,10 @@ def test_bprop_wrt_inputs_and_params():
     print(grads)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_network_with_dict_output():
     """
     Feature: Test sens dict
@@ -129,9 +130,10 @@ def test_network_with_dict_output():
     assert np.allclose(x, grad_out.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_jit_network_with_dict_output():
     """
     Feature: Test sens dict in jit
@@ -165,9 +167,10 @@ def test_jit_network_with_dict_output():
     assert np.allclose(x, grad_out.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_synchronize():
     """
     Feature: Test pynative synchronize
@@ -194,9 +197,10 @@ def test_pynative_synchronize():
         context.set_context(pynative_synchronize=False)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_multi_grad():
     """
     Feature: Test pynative multi grad
@@ -344,9 +348,10 @@ class GradFactory:
                 back_net2(*second_ms_input)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_forward_value_and_grad_0():
     """
     Feature: Test pynative value and grad
@@ -377,9 +382,10 @@ def test_forward_value_and_grad_0():
     fact.first_forward_second_backnet(first_input, second_input)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_forward_value_and_grad_1():
     """
     Feature: Test pynative value and grad
@@ -430,9 +436,10 @@ class CustomNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_requires_grad():
     """
     Feature: Test pynative requires grad
@@ -445,9 +452,10 @@ def test_pynative_requires_grad():
     assert (output[1][0].asnumpy() == np.array([1.0], dtype=np.float32)).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_requires_grad_use_grad_operation():
     """
     Feature: Test pynative requires grad use grad operation
@@ -464,9 +472,10 @@ def test_pynative_requires_grad_use_grad_operation():
     assert (output[1][2].asnumpy() == np.array([1.0], dtype=np.float32)).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_requires_grad_without_params():
     """
     Feature: Test pynative requires grad without params
@@ -483,9 +492,10 @@ def test_pynative_requires_grad_without_params():
     assert (output[1][2].asnumpy() == np.array([1.0], dtype=np.float32)).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_requires_grad_case2():
     """
     Feature: Test pynative requires grad case2

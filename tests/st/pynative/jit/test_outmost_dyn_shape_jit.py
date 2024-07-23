@@ -15,12 +15,12 @@
 
 import platform
 import numpy as np
-import pytest
 import mindspore as ms
 from mindspore import nn
 from mindspore import ops
 from mindspore import context, Tensor
 from mindspore import jit
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -75,12 +75,10 @@ def cmp_func(x, y):
     return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_dyn_shape_outermost_jit():
     """
     Feature: PyNative jit dynamic shape function.

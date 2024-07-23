@@ -13,8 +13,10 @@
 # limitations under the License.
 # ============================================================================
 import os
+from tests.mark_utils import arg_mark
 
 
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
 def test_expand_loss():
     sh_path = os.path.split(os.path.realpath(__file__))[0]
     ret = os.system(f"sh {sh_path}/run_auto_parallel_loss_expand.sh")

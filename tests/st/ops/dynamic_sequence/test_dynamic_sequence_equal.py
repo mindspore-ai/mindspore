@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 
 import mindspore.nn as nn
@@ -34,11 +35,7 @@ class NetTupleEqual(nn.Cell):
         return self.seq_equal(x, y)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_dyn_equal():
     """
     Feature: test sequence equal op
@@ -53,11 +50,7 @@ def test_seq_dyn_equal():
     assert res == expect
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_dyn_equal1():
     """
     Feature: test sequence equal op
@@ -72,11 +65,7 @@ def test_seq_dyn_equal1():
     assert res == expect
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_equal():
     """
     Feature: test sequence equal op
@@ -91,11 +80,7 @@ def test_seq_equal():
     assert res == expect
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_equal_grad():
     """
     Feature: test sequence equal grad op

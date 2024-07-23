@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -64,9 +65,7 @@ def gen_data(x_np, y_np, grad_=None):
     return output
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_min_tensor_grad_4d():
     """
     Feature: test minimum grad on CPU
@@ -81,9 +80,7 @@ def test_min_tensor_grad_4d():
     print(output[1].asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_min_tensor_grad_with_same_input():
     """
     Feature: test minimumgrad on CPU
@@ -102,9 +99,7 @@ def test_min_tensor_grad_with_same_input():
     assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_min_tensor_grad_result():
     """
     Feature: test minimumgrad on CPU
@@ -203,9 +198,7 @@ def test_min_tensor_grad_result():
     assert np.all(np.abs(output[1].asnumpy() - expect1) < error1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_min_grad_vmap():
     """
     Feature: minimumgrad vmap
@@ -230,9 +223,7 @@ def test_min_grad_vmap():
     assert np.allclose(dy.asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_min_grad_vmap_none():
     """
     Feature: minimumgrad vmap
@@ -258,9 +249,7 @@ def test_min_grad_vmap_none():
     assert np.allclose(dy.asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_min_grad_vmap_scalar():
     """
     Feature: minimumgrad vmap
@@ -282,9 +271,7 @@ def test_min_grad_vmap_scalar():
     assert np.allclose(dy.asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_min_grad_vmap_special():
     """
     Feature: minimumgrad vmap
@@ -305,9 +292,7 @@ def test_min_grad_vmap_special():
     assert np.allclose(dy.asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_min_tensor_grad_with_input_nan():
     """
     Feature: test minimumgrad on CPU
@@ -326,9 +311,7 @@ def test_min_tensor_grad_with_input_nan():
     assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_grad_cpu_type():
     """
     Feature: ALL To ALL

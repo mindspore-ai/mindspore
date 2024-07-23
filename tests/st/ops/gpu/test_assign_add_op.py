@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -75,9 +76,7 @@ def assign_add(nptype):
     assert (output2.asnumpy() == expect2).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_fp16():
     """
     Feature: assign add kernel
@@ -87,9 +86,7 @@ def test_assign_add_fp16():
     assign_add(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_fp32():
     """
     Feature: assign add kernel
@@ -99,9 +96,7 @@ def test_assign_add_fp32():
     assign_add(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_fp64():
     """
     Feature: assign add kernel
@@ -111,9 +106,7 @@ def test_assign_add_fp64():
     assign_add(np.float64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_comp64():
     """
     Feature: assign add kernel
@@ -123,9 +116,7 @@ def test_assign_add_comp64():
     assign_add(np.complex64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_comp128():
     """
     Feature: assign add kernel
@@ -135,9 +126,7 @@ def test_assign_add_comp128():
     assign_add(np.complex128)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_int8():
     """
     Feature: assign add kernel
@@ -147,9 +136,7 @@ def test_assign_add_int8():
     assign_add(np.int8)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_uint8():
     """
     Feature: assign add kernel
@@ -159,9 +146,7 @@ def test_assign_add_uint8():
     assign_add(np.uint8)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_int16():
     """
     Feature: assign add kernel
@@ -171,9 +156,7 @@ def test_assign_add_int16():
     assign_add(np.int16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_uint16():
     """
     Feature: assign add kernel
@@ -183,9 +166,7 @@ def test_assign_add_uint16():
     assign_add(np.uint16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_int32():
     """
     Feature: assign add kernel
@@ -195,9 +176,7 @@ def test_assign_add_int32():
     assign_add(np.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_uint32():
     """
     Feature: assign add kernel
@@ -207,9 +186,7 @@ def test_assign_add_uint32():
     assign_add(np.uint32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_int64():
     """
     Feature: assign add kernel
@@ -219,9 +196,7 @@ def test_assign_add_int64():
     assign_add(np.int64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_add_uint64():
     """
     Feature: assign add kernel

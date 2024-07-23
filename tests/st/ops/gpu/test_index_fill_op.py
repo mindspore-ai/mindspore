@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -64,9 +65,7 @@ def compare_with_numpy(x, dim, index, value):
     return np.allclose(ms_result_graph, np_result) and np.allclose(ms_result_pynative, np_result)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('data_type', [np.bool, np.int8, np.int16, np.int32, np.float16, np.float64])
 def test_index_fill_data_type(data_type):
     """
@@ -82,9 +81,7 @@ def test_index_fill_data_type(data_type):
     assert compare_with_numpy(x_np, dim, index_np, value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dim_type', [np.int32, np.int64])
 def test_index_fill_dim_type(dim_type):
     """
@@ -100,9 +97,7 @@ def test_index_fill_dim_type(dim_type):
     assert compare_with_numpy(x_np, dim, index_np, value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dim', [0, 1])
 @pytest.mark.parametrize('data_type', [np.int32])
 def test_index_fill_error(dim, data_type):
@@ -131,9 +126,7 @@ class IndexFillVmapNet(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_index_fill_vmap():
     """
     Feature: IndexFill

@@ -14,12 +14,12 @@
 # ============================================================================
 
 import numpy as np
-import pytest
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from tests.st.pynative.utils import GradOfAllInputs
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
 
@@ -42,9 +42,7 @@ class MaxmumGradNet(Cell):
         return self.maximum_grad(x, y, dy)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_grad_gpu_type():
     """
     Feature: ALL To ALL
@@ -67,9 +65,7 @@ def test_broadcast_grad_gpu_type():
         assert np.allclose(result[1].asnumpy(), dy, rtol=1.e-4, atol=1.e-8, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_max_tensor_grad_with_same_input():
     """
     Feature: test maximumgrad on GPU
@@ -89,9 +85,7 @@ def test_max_tensor_grad_with_same_input():
     assert np.allclose(output[1].asnumpy(), expect1, rtol=1e-6, atol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_max_tensor_grad_with_input_nan():
     """
     Feature: test maximumgrad on GPU

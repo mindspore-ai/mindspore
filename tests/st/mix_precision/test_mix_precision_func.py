@@ -21,13 +21,13 @@ from mindspore import Tensor, Parameter
 from mindspore.common import dtype as mstype
 import mindspore.amp as amp
 import mindspore.context as context
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_static_loss_scaler(mode):
     """
@@ -48,11 +48,10 @@ def test_static_loss_scaler(mode):
     assert (unscaled_grads[1] == grads[1] / 1024.).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_dynamic_loss_scaler(mode):
     """

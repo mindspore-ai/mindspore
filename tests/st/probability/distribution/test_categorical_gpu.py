@@ -14,15 +14,16 @@
 # ============================================================================
 """test cases for categorical distribution"""
 
-import pytest
 import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import Tensor
 from mindspore import dtype as ms
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
 
 def generate_probs(seed, shape):
     np.random.seed(seed)
@@ -51,10 +52,7 @@ class CategoricalProb(nn.Cell):
         return out1, out2, out3, out4, out5, out6
 
 
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_probability_categorical_prob_cdf_probs_none():
     probs = None
     probs1 = generate_probs(3, shape=(2, 2, 1, 64))

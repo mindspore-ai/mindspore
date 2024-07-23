@@ -23,6 +23,7 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 context.set_context(device_target="Ascend")
 
@@ -49,9 +50,7 @@ def test_net():
     print(output.asnumpy())
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_net_bf16(mode):
@@ -69,10 +68,7 @@ def test_net_bf16(mode):
     assert np.allclose(output.float().asnumpy(), except_out, 0.004, 0.004)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_matmul_tensor_api_modes(mode):
     """
@@ -130,10 +126,7 @@ def do_test_matmul_dtypes(valid_dtypes, is_ge_only=False):
                 matmul(x_ms, y_ms)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_matmul_dtypes():
     """
     Feature: Test matmul dtypes.
@@ -143,10 +136,7 @@ def test_matmul_dtypes():
     do_test_matmul_dtypes([mstype.float16, mstype.float32])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matmul_dtypes_ge():
     """
     Feature: Test matmul dtypes.

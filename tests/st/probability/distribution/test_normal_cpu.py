@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """test cases for Normal distribution"""
-import pytest
 import numpy as np
 from scipy import stats
 import mindspore.context as context
@@ -21,6 +20,7 @@ import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 import mindspore.nn.probability.distribution as msd
 from mindspore import Tensor
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -49,9 +49,8 @@ class LogProb2(nn.Cell):
         return self.n.log_prob(x_, loc, scale)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_log_likelihood():
     """
     Test log_pdf.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -32,9 +33,7 @@ class NetBetainc(nn.Cell):
         return self.betainc(a, b, x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_betainc_graph():
     """
     Feature: Betainc
@@ -54,9 +53,7 @@ def test_betainc_graph():
     assert np.allclose(output_ms.asnumpy(), expect, 1e-4, 1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_betainc_pynative():
     """
     Feature: Betainc

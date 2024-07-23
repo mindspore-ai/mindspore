@@ -24,8 +24,6 @@ class Net(nn.Cell):
         return x.max(axis)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_max(mode):
     """

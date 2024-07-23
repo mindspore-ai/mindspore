@@ -18,6 +18,7 @@ import mindspore as ms
 from mindspore import context, Tensor
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -45,13 +46,10 @@ def tanh_vmap_func(x):
 
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_tanh_forward(mode):
+def test_tanh_normal(mode):
     """
     Feature: test tanh operator
     Description: test tanh run by pyboost
@@ -64,32 +62,13 @@ def test_tanh_forward(mode):
     expect = generate_expect_forward_output(x_np, np.float32)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_tanh_backward(mode):
-    """
-    Feature: test tanh operator
-    Description: test tanh run by pyboost
-    Expectation: success
-    """
-    context.set_context(mode=mode)
-    x_np = generate_random_input((2, 3, 4), np.float32)
-    x_tensor = Tensor(x_np, ms.float32)
     output = tanh_backward_func(x_tensor)
     expect = generate_expect_backward_output(x_np, np.float32)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tanh_vmap(mode):
     """
@@ -106,10 +85,7 @@ def test_tanh_vmap(mode):
 
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tanh_dynamic_shape_testop():
     """
     Feature: Test tanh with dynamic shape in graph mode using TEST_OP.

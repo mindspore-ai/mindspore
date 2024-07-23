@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -30,9 +31,7 @@ def np_all_close_with_loss(out, expect):
     return np.allclose(out, expect, 0.0005, 0.0005, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.int32, np.int64])
 def test_data_formata_dim_map_gpu(data_type):
     """
@@ -54,9 +53,7 @@ def test_data_formata_dim_map_gpu(data_type):
     assert np.allclose(output_3_gpu.asnumpy(), output_3_expect_gpu)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.int32, np.int64])
 def test_data_formata_dim_map_vmap_gpu(data_type):
     """

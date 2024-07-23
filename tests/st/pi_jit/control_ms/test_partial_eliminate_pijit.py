@@ -19,7 +19,7 @@ from mindspore.common import Tensor, dtype, Parameter
 from mindspore import jit, context
 
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class Net(Cell):
@@ -41,9 +41,7 @@ class Net(Cell):
         return x + y
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_switch_partial_eliminate():
     """
     Feature: control flow

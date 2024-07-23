@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -47,9 +48,7 @@ class Net2InputsDynRank(nn.Cell):
         return res
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_two_tensors_add():
     """
     Feature: ALL To ALL
@@ -97,9 +96,7 @@ class Net4Inputs(nn.Cell):
         return self.addn((x, y, m, n))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_four_tensors_add():
     """
     Feature: ALL To ALL
@@ -120,9 +117,7 @@ def test_four_tensors_add():
         assert np.array_equal(output.asnumpy(), expect_result)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_addn_support_type():
     """
     Feature: test ops.addn.

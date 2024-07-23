@@ -14,7 +14,7 @@
 # ============================================================================
 import os
 
-import pytest
+from tests.mark_utils import arg_mark
 
 TOKENIZER_PATH = "/home/workspace/mindspore_dataset/llama2/wiki4096/tokenizer.model"
 MODEL_PATH = "/home/workspace/mindspore_ckpt/ckpt/llama2/llama_tiny.ckpt"
@@ -22,9 +22,7 @@ cur_path = os.path.split(os.path.realpath(__file__))[0]
 TOELERANCE = 5e-2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_llama_single_inference():
     """
     Feature: Llama inference in 1p test
@@ -50,9 +48,7 @@ def test_llama_single_inference():
     assert res == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_llama_single_inference_bs8():
     """
     Feature: Llama inference in 1p test

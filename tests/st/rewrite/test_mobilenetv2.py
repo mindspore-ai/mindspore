@@ -3,6 +3,7 @@ import numpy as np
 from mindspore import Tensor
 from mindspore.rewrite import SymbolTree
 from tests.models.official.cv.mobilenetv2.src.mobilenetV2 import MobileNetV2Backbone, MobileNetV2Head, mobilenet_v2
+from tests.mark_utils import arg_mark
 
 
 def define_net():

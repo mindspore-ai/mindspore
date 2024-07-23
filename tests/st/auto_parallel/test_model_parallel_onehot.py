@@ -14,8 +14,10 @@
 # ============================================================================
 
 import os
+from tests.mark_utils import arg_mark
 
 
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="unessential")
 def test_expand_loss():
     ret = os.system("sh run_onehot_model_parallel.sh")
     assert ret == 0

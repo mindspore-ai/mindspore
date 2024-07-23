@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 import pytest
+from tests.mark_utils import arg_mark
 import numpy as np
 
 import mindspore as ms
@@ -25,13 +26,10 @@ class Net(nn.Cell):
         return x.var(axis=0, ddof=True, keepdims=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_var(mode):
     """

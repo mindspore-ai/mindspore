@@ -19,6 +19,7 @@ import mindspore as ms
 from mindspore.common import dtype as mstype
 from mindspore import ops, mint, Tensor, jit, JitConfig
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def ones_like_forward_func(input_tensor, dtype=None):
@@ -31,12 +32,9 @@ def ones_like_backward_func(input_tensor, dtype=None):
     return input_grad
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['GE', 'pynative', 'KBK'])
-def test_ones_like_forward(mode):
+def test_ones_like_normal(mode):
     """
     Feature: Ops.
     Description: test ones_like.
@@ -45,44 +43,24 @@ def test_ones_like_forward(mode):
     input_tensor = Tensor(np.arange(6).reshape(1, 2, 3), dtype=mstype.float32)
     dtype = None
     expect_y = np.ones((1, 2, 3), dtype=np.float32)
-    if mode == 'pynative':
-        ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        y = ones_like_forward_func(input_tensor, dtype)
-    elif mode == 'KBK':
-        y = (jit(ones_like_forward_func, jit_config=JitConfig(jit_level="O0")))(input_tensor, dtype)
-    else:
-        y = (jit(ones_like_forward_func, jit_config=JitConfig(jit_level="O2")))(input_tensor, dtype)
-    np.testing.assert_allclose(y.asnumpy(), expect_y, rtol=1e-5)
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
-def test_ones_like_backward(mode):
-    """
-    Feature: Ops.
-    Description: test ones_like backward.
-    Expectation: expect correct result.
-    """
-    input_tensor = Tensor(np.arange(6).reshape(1, 2, 3), dtype=mstype.float32)
-    dtype = mstype.int32
+    dtype1 = mstype.int32
     expect_grad = 0
     if mode == 'pynative':
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
-        input_grad = ones_like_backward_func(input_tensor, dtype)
+        y = ones_like_forward_func(input_tensor, dtype)
+        input_grad = ones_like_backward_func(input_tensor, dtype1)
     elif mode == 'KBK':
-        input_grad = (jit(ones_like_backward_func, jit_config=JitConfig(jit_level="O0")))(input_tensor, dtype)
+        y = (jit(ones_like_forward_func, jit_config=JitConfig(jit_level="O0")))(input_tensor, dtype)
+        input_grad = (jit(ones_like_backward_func, jit_config=JitConfig(jit_level="O0")))(input_tensor, dtype1)
     else:
-        input_grad = (jit(ones_like_backward_func, jit_config=JitConfig(jit_level="O2")))(input_tensor, dtype)
+        y = (jit(ones_like_forward_func, jit_config=JitConfig(jit_level="O2")))(input_tensor, dtype)
+        input_grad = (jit(ones_like_backward_func, jit_config=JitConfig(jit_level="O2")))(input_tensor, dtype1)
+    np.testing.assert_allclose(y.asnumpy(), expect_y, rtol=1e-5)
     np.testing.assert_allclose(input_grad.asnumpy(), expect_grad, rtol=1e-5)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_ones_like_dynamic_shape():
     """
     Feature: Test ones_like with dynamic shape in graph mode.

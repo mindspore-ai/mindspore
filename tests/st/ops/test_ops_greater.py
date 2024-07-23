@@ -19,6 +19,7 @@ from mindspore import Tensor, ops
 from mindspore.mint import greater
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -44,12 +45,8 @@ def greater_vmap_func(x, y):
     return ops.vmap(greater_forward_func, in_axes=0, out_axes=0)(x, y)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_greater_op_normal(mode):
     """
@@ -70,13 +67,8 @@ def test_greater_op_normal(mode):
     expect2 = np.array([0., 0., 0.]).astype(np.float32)
     assert np.allclose(output2[0].asnumpy(), expect2, rtol=1e-4)
 
-
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_greater_op_forward_case01(mode):
     """
@@ -91,12 +83,8 @@ def test_greater_op_forward_case01(mode):
     assert np.allclose(output.asnumpy(), [True])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_greater_op_vmap(mode):
     """
@@ -112,11 +100,8 @@ def test_greater_op_vmap(mode):
     np.testing.assert_array_equal(output.asnumpy(), expect_out)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_greater_op_dynamic_shape():
     """
     Feature: pyboost function..

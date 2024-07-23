@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import torch
 import numpy as np
@@ -58,9 +59,7 @@ def choleskyinverse_pynative(upper, loss):
     assert np.allclose(choleskyinverse_output.asnumpy(), choleskyinverse_expect.numpy(), loss, loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_choleskyinverse_graph_float():
     """
     Feature: ALL To ALL
@@ -70,9 +69,7 @@ def test_choleskyinverse_graph_float():
     choleskyinverse(True, loss=1.0e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_choleskyinverse_pynative_double():
     """
     Feature: ALL To ALL

@@ -24,7 +24,7 @@ from mindspore.nn import DropoutExt
 from mindspore.ops.function.nn_func import dropout_ext
 from mindspore.nn import Cell
 from tests.st.utils import test_utils
-
+from tests.mark_utils import arg_mark
 
 def generate_random_input(shape, dtype):
     return np.ones(shape).astype(dtype)
@@ -72,10 +72,8 @@ def compare_grad(x, p, grad):
     assert (elem_count * (keep_prob - 0.02)) < nonzero_count < (elem_count * (keep_prob + 0.02))
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 def test_func_dropout_normal(context_mode, dtype):
@@ -97,9 +95,7 @@ def test_func_dropout_normal(context_mode, dtype):
     compare_grad(x1, p1, grad)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_func_dropout_bfloat16(context_mode):
     """
@@ -153,10 +149,8 @@ def compare_func(x, p, output, mask=None):
             assert np.ceil(reduce(lambda a, b: a * b, x.shape) / 128) * 16 == mask.shape[0]
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nn_DropoutExt_normal(context_mode):
     """
@@ -178,9 +172,7 @@ def test_nn_DropoutExt_normal(context_mode):
 
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nn_DropoutExt_bf16(context_mode):
     """
@@ -213,10 +205,8 @@ class DropoutExtCell(Cell):
         return self.dropout_ext(x, p, self.seed, self.offset)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_DropoutExt_normal(context_mode):
     """

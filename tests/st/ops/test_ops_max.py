@@ -20,17 +20,14 @@ from mindspore.ops.extend import max as max_
 
 from tests.st.ops.test_ops_min import (min_max_case, min_max_case_all_dyn, min_max_case_vmap)
 from tests.st.utils.test_utils import compare
+from tests.mark_utils import arg_mark
 
 
 def np_max(input_x):
     return np.max(input_x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],      level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_dtype', [np.float32])
 def test_max(mode, data_dtype):
@@ -43,9 +40,7 @@ def test_max(mode, data_dtype):
     min_max_case(max_, np_max, data_dtype=data_dtype)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_max_nan(mode):
     """
@@ -57,11 +52,8 @@ def test_max_nan(mode):
     min_max_case(max_, np_max, has_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_max_vmap(mode):
     """
@@ -73,9 +65,7 @@ def test_max_vmap(mode):
     min_max_case_vmap(max_)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('data_dtype', [np.float32])
 def test_max_all_dynamic(data_dtype):
     """
@@ -86,11 +76,8 @@ def test_max_all_dynamic(data_dtype):
     min_max_case_all_dyn(max_, data_dtype=data_dtype)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_dtype', [np.float32])
 def test_min_tensor(mode, data_dtype):

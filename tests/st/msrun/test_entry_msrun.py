@@ -13,15 +13,12 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
 import subprocess
 import mindspore as ms
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
 def test_msrun():
     """
     Feature: 'msrun' launch utility.
@@ -37,10 +34,7 @@ def test_msrun():
     assert return_code == 0
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
 def test_msrun_exception():
     """
     Feature: 'msrun' launch utility.

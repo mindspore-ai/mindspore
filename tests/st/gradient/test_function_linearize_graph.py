@@ -21,6 +21,7 @@ from mindspore import context
 from mindspore import Tensor
 from mindspore import jit
 from mindspore.ops.functional import linearize, jvp
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -45,9 +46,7 @@ class MultipleInputMultipleOutputNet(nn.Cell):
         return 2 * x, y**3
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_linearize_single_input_single_output_diverse_v_graph():
     """
     Features: Function linearize
@@ -68,9 +67,7 @@ def test_linearize_single_input_single_output_diverse_v_graph():
     assert np.allclose(grad_1.asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_linearize_single_input_multiple_outputs_diverse_v_graph():
     """
     Features: Function linearize
@@ -101,9 +98,7 @@ def test_linearize_single_input_multiple_outputs_diverse_v_graph():
     assert np.allclose(grad_1[1].asnumpy(), expect_grad_1[1].asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_linearize_multiple_inputs_single_output_diverse_v_graph():
     """
     Features: Function linearize
@@ -125,9 +120,7 @@ def test_linearize_multiple_inputs_single_output_diverse_v_graph():
     assert np.allclose(grad_1.asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_linearize_multiple_inputs_multiple_outputs_diverse_v_graph():
     """
     Features: Function linearize
@@ -158,9 +151,7 @@ def test_linearize_multiple_inputs_multiple_outputs_diverse_v_graph():
     assert np.allclose(grad_1[1].asnumpy(), expect_grad_1[1].asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_linearize_input_function_single_input_single_output_diverse_v_graph():
     """
     Features: Function linearize
@@ -184,9 +175,7 @@ def test_linearize_input_function_single_input_single_output_diverse_v_graph():
     assert np.allclose(grad_1.asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_linearize_jit_function_single_input_single_output_diverse_v_graph():
     """
     Features: Function linearize
@@ -213,9 +202,7 @@ def test_linearize_jit_function_single_input_single_output_diverse_v_graph():
     assert np.allclose(grad_1.asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_linearize_construct_single_input_single_output_diverse_v_graph():
     """
     Features: Function linearize

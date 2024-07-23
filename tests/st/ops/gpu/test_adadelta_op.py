@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -63,9 +64,7 @@ def main_test(var_np, accum_np, accum_update_np, lr_np, rho_np, epsilon_np, grid
            (expect_var_np, res_var_mindspore)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_apply_adadelta_fff():
     """
     Feature: None
@@ -90,9 +89,7 @@ def test_apply_adadelta_fff():
     assert np.all(abs(var[0] - var[1]) < eps_f32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_apply_adadelta_ddd():
     """
     Feature: None

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -44,10 +45,7 @@ class NetGradGrad(nn.Cell):
         return backward_net(dy, shapex, begin, end, strides, dout)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_stridedslice_high_grad_float32():
     """
     Feature: StridedSlice Grad Grad operation

@@ -4,6 +4,7 @@ from mindspore import numpy as np
 import mindspore.nn as nn
 from mindspore import context
 from .share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
 class ListTest():
@@ -48,9 +49,7 @@ class ListTest():
         return elem
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_list():
     """
     Feature: ALL TO ALL
@@ -88,9 +87,7 @@ class CellListTest(nn.Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('input_x', [Tensor(ops.fill(np.float32, (1, 3, 64, 32), 8))])
 def test_celllist(input_x):
     """
@@ -108,9 +105,7 @@ def test_celllist(input_x):
 
 
 @pytest.mark.skip(reason="the pointer[GetDevicePtr] is null")
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('input_x', [Tensor(ops.fill(np.float32, (2, 2), 4))])
 def test_sideeffect(input_x):
     """

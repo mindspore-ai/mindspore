@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -37,9 +38,7 @@ class Net(nn.Cell):
         return C.multinomial(x, self.sample, self.replacement, self.seed)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_multinomial_net():
     x0 = Tensor(np.array([0.9, 0.2]).astype(np.float32))
     x1 = Tensor(np.array([[0.9, 0.2], [0.9, 0.2]]).astype(np.float32))
@@ -74,9 +73,7 @@ class DynamicShapeNet(nn.Cell):
         return self.multinomial(x, 2)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_multinomial_dynamic_shape():
     """
     Feature: test Multinomial dynamic_shape feature.
@@ -114,9 +111,7 @@ def multinomial(prob, num_sample):
     return P.Multinomial(seed=5, seed2=6)(prob, num_sample)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_multinomial_vmap():
     """
     Feature: test Multinomial vmap feature.

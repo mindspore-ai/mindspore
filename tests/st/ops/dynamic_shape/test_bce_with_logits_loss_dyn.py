@@ -15,13 +15,13 @@
 
 import math
 import numpy as np
-import pytest
 
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -47,10 +47,7 @@ def net_run():
     assert math.isclose(output.asnumpy().tolist(), expected, rel_tol=1e-4, abs_tol=1e-4)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_bce_mean_dyn_ascend():
     """
     Feature: Test dynamic shape of BCEWithLogitsLoss op that the reduction is mean on ascend.
@@ -61,10 +58,7 @@ def test_bce_mean_dyn_ascend():
     net_run()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bce_mean_dyn_ascend_pynative():
     """
     Feature: Test dynamic shape of BCEWithLogitsLoss op that the reduction is mean on ascend.

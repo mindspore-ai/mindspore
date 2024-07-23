@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -30,11 +31,7 @@ class NetGetItem(nn.Cell):
         return seq[idx]
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_tensor_getitem():
     """
     Feature: test sequence getitem op
@@ -49,9 +46,7 @@ def test_seq_tensor_getitem():
     assert np.all(res.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_tensor_getitem1():
     """
     Feature: test sequence getitem op
@@ -66,11 +61,7 @@ def test_seq_tensor_getitem1():
     assert np.all(res.asnumpy() == expect.asnumpy())
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_getitem():
     """
     Feature: test sequence getitem op
@@ -85,9 +76,7 @@ def test_seq_getitem():
     assert res == expect
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_getitem_grad():
     """
     Feature: test sequence getitem grad op
@@ -102,11 +91,7 @@ def test_seq_getitem_grad():
     print("grad out1 = ", grad_func(seq, index, dout))
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_getitem_grad_tensor():
     """
     Feature: test sequence getitem grad op
@@ -121,11 +106,7 @@ def test_seq_getitem_grad_tensor():
     print("grad out1 = ", grad_func(seq, index, dout))
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_getitem_grad_scalar():
     """
     Feature: test sequence getitem grad op

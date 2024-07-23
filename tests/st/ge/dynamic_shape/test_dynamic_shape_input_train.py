@@ -15,7 +15,6 @@
 import itertools
 import math
 
-import pytest
 import numpy as np
 from PIL import Image
 import mindspore.common.dtype as mstype
@@ -23,6 +22,7 @@ import mindspore.dataset as ds
 from mindspore.common.initializer import HeNormal, HeUniform, Zero, initializer
 from mindspore.train.callback import LossMonitor
 from mindspore import Model, Tensor, context, nn, ops, set_seed
+from tests.mark_utils import arg_mark
 
 
 set_seed(1)
@@ -176,10 +176,7 @@ def train(batch_size, lr, momentum, epochs, dataset_sink_mode):
     return avg_loss
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dummy_train_without_sink():
     """
     Feature: Training when the inputs is dynamic shape on GE backend without dataset sinked

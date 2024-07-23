@@ -36,6 +36,7 @@ from utils import find_newest_validateir_file
 from utils import clean_all_ir_files
 from functools import wraps
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 def security_off_wrap(func):
     """Wrapper for tests which do not need to run security on."""
@@ -89,11 +90,10 @@ class Net(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 def test_sit_auto_mix_precision_train_o3():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float64)
     label_data = np.random.randn(32, 10).astype(np.float32)
@@ -121,10 +121,7 @@ def test_sit_auto_mix_precision_train_o3():
     assert np.allclose(out.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_sit_auto_mix_precision_model_o0():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float32)
@@ -154,11 +151,10 @@ def test_sit_auto_mix_precision_model_o0():
     clean_all_ir_files('./test_amp_o0/')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @security_off_wrap
 def test_sit_auto_mix_precision_model_o2():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float32)
@@ -194,11 +190,10 @@ def test_sit_auto_mix_precision_model_o2():
     allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @security_off_wrap
 def test_sit_auto_mix_precision_model_o1():
     """
@@ -239,11 +234,10 @@ def test_sit_auto_mix_precision_model_o1():
     allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @security_off_wrap
 def test_custom_mix_precision():
     """
@@ -319,11 +313,10 @@ class TestNet(ms.nn.Cell):
         return out
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @security_off_wrap
 def test_all_subgraph_mix_precision():
     """
@@ -357,10 +350,10 @@ class AddNet(ms.nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dst_type', [ms.float16, ms.bfloat16])
 @test_utils.run_test_with_On
@@ -388,9 +381,8 @@ class TestAmpNet(ms.nn.Cell):
         x = self.relu(x)
         return x
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('amp_level', ["O1", "O2", "O3"])
 def test_amp_bfloat16(amp_level):
     """
@@ -417,9 +409,7 @@ def test_amp_bfloat16(amp_level):
     allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_custom_mixed_precision_bfloat16():
     """
     Feature: to_float

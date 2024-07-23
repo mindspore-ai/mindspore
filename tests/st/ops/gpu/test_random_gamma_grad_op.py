@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore.context as context
@@ -29,9 +30,7 @@ class RandomGammaGradNet(nn.Cell):
         return self.random_gamma_grad(alpha, sample)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_random_gamma_grad_graph():
     """
     Feature:  RandomGammaGrad
@@ -50,9 +49,7 @@ def test_random_gamma_grad_graph():
     assert output.shape == out_expect.shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_random_gamma_grad_pynative():
     """
     Feature:  RandomGammaGrad

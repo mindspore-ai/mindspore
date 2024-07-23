@@ -19,6 +19,7 @@ from mindspore import Tensor
 from mindspore.common.api import _cell_graph_executor
 import numpy as np
 import pytest
+from tests.mark_utils import arg_mark
 
 
 class LeNet5(nn.Cell):
@@ -56,8 +57,7 @@ class LeNet5(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_rewrite_apis():
     """
     Feature: Test rewrite apis.

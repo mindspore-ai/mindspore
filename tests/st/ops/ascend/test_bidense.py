@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import torch
 import numpy as np
@@ -36,10 +37,7 @@ class Net(nn.Cell):
         return self.bidense(x1, x2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net():
     """
     Feature: Assert BiDense output shape
@@ -54,10 +52,7 @@ def test_net():
     assert output.shape == (128, 40)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net_nd():
     """
     Feature: Assert BiDense output shape for n-dimensional input
@@ -72,10 +67,7 @@ def test_net_nd():
     assert output.shape == (128, 4, 40)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_net_1d():
     """
     Feature: Assert BiDense output shape for 1-dimensional input
@@ -112,9 +104,7 @@ def _count_unequal_element(data_expected, data_me, rtol, atol):
             format(data_expected[greater], data_me[greater], error[greater])
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_pynative_precision():
     """
     Feature: Test bidense ops precision

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -31,11 +32,7 @@ class NetSetItem(nn.Cell):
         return F.tuple_setitem(seq, idx, value)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_setitem():
     """
     Feature: test sequence_setitem op
@@ -51,11 +48,7 @@ def test_seq_setitem():
     assert res == expect
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_tensor_setitem():
     """
     Feature: test sequence getitem op
@@ -72,11 +65,7 @@ def test_seq_tensor_setitem():
         assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_tensor_setitem1():
     """
     Feature: test sequence getitem op
@@ -93,11 +82,7 @@ def test_seq_tensor_setitem1():
         assert np.all(res[i].asnumpy() == expect[i].asnumpy())
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_setitem_grad_0():
     """
     Feature: test sequence setitem grad op
@@ -113,11 +98,7 @@ def test_seq_setitem_grad_0():
     print("grad out0 = ", grad_func(input_x, idx, value, dout))
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_setitem_grad_1():
     """
     Feature: test sequence setitem grad op
@@ -133,11 +114,7 @@ def test_seq_setitem_grad_1():
     print("grad out1 = ", grad_func(input_x, idx, value, dout))
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_setitem_grad_2():
     """
     Feature: test sequence setitem grad op

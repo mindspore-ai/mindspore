@@ -19,6 +19,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, nn
 from mindspore.ops.operations.nn_ops import AllFinite
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -31,9 +32,7 @@ class Net(nn.Cell):
         return output
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_all_finite(mode):
     """
@@ -78,9 +77,7 @@ def test_all_finite(mode):
     assert output1.asnumpy() == True
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_all_finite_small(mode):
     """

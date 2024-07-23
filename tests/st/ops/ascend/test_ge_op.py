@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 from mindspore import Tensor, ops
@@ -31,9 +32,7 @@ def test_f_ge_api():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_f_ge_api_modes():
     """
     Feature: test ge functional API in PyNative and Graph modes.

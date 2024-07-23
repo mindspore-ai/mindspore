@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 
 import mindspore.nn as nn
@@ -47,11 +48,7 @@ class GreaterEqualNet(nn.Cell):
         return 0
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_greater_than():
     """
     Feature: test tuple_greater_than op
@@ -68,11 +65,7 @@ def test_seq_greater_than():
     fact.forward_cmp()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_greater_equal():
     """
     Feature: test tuple_greater_equal op
@@ -89,11 +82,7 @@ def test_seq_greater_equal():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_greater_than_grad():
     """
     Feature: test tuple_greater_than grad op
@@ -109,11 +98,7 @@ def test_seq_greater_than_grad():
     assert grad_func(x, y, dout) == expect
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_greater_equal_grad():
     """
     Feature: test tuple_greater_equal grad op

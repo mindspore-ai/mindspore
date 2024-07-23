@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore.context as context
@@ -34,8 +35,6 @@ class NetDeformableOffsetsGrad(nn.Cell):
         return self.grad_op(grad, input_x, offsets)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
 def test_deformable_offsets_grad_nchw(data_type):
     """
@@ -66,8 +65,6 @@ def test_deformable_offsets_grad_nchw(data_type):
     assert np.allclose(output[1].asnumpy(), expect_grad_offset, rtol)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
 def test_deformable_offsets_grad_nhwc(data_type):
     """

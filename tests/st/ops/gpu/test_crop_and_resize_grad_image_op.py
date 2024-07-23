@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 from mindspore import context, Tensor
@@ -29,9 +30,7 @@ class NetCropAndResizeGradImage(nn.Cell):
         return self.op(grads, boxes, box_index, image_size)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("input_type", [np.float32, np.float64])
 @pytest.mark.parametrize("output_type", [np.float16, np.float32, np.float64])
 def test_crop_and_resize_grad_image_bilinear(input_type, output_type):
@@ -68,9 +67,7 @@ def test_crop_and_resize_grad_image_bilinear(input_type, output_type):
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("input_type", [np.float32, np.float64])
 @pytest.mark.parametrize("output_type", [np.float16, np.float32, np.float64])
 def test_crop_and_resize_grad_image_nearest(input_type, output_type):

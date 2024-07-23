@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -102,9 +103,7 @@ def compare(arr: np.ndarray, periods: int, axis: int, fill_value=np.nan):
     assert np.allclose(numpy_result, mindspore_result, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype, fill_value',
                          [(np.float32, 0.0), (np.float32, 5.3), (np.float32, -5.5), (np.float32, np.nan),
                           (np.float64, 0.0), (np.float64, 5.3), (np.float64, -5.5), (np.float64, np.nan),
@@ -117,9 +116,7 @@ def test_no_shift(fill_value, dtype, axis):
     compare(arr, axis=axis, periods=0, fill_value=fill_value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype, fill_value',
                          [(np.float32, 0.0), (np.float32, 5.3), (np.float32, -5.5), (np.float32, np.nan),
                           (np.float64, 0.0), (np.float64, 5.3), (np.float64, -5.5), (np.float64, np.nan),
@@ -138,9 +135,7 @@ def test_fancy_1d(fill_value, dtype, periods):
     compare(arr, axis=3, periods=periods, fill_value=fill_value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype, fill_value',
                          [(np.float32, 0.0), (np.float32, 5.3), (np.float32, -5.5), (np.float32, np.nan),
                           (np.float64, 0.0), (np.float64, 5.3), (np.float64, -5.5), (np.float64, np.nan),
@@ -154,9 +149,7 @@ def test_2d(fill_value, dtype, axis, periods):
     compare(arr, axis=axis, periods=periods, fill_value=fill_value)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype, fill_value',
                          [(np.float32, 0.0), (np.float32, 5.3), (np.float32, -5.5), (np.float32, np.nan),
                           (np.float64, 0.0), (np.float64, 5.3), (np.float64, -5.5), (np.float64, np.nan),

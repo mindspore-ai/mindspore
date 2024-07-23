@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -36,9 +37,7 @@ class NetCeil(nn.Cell):
         return self.ceil(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ceil_fp32():
     """
     Feature: Ceil gpu kernel
@@ -52,9 +51,7 @@ def test_ceil_fp32():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ceil_fp16():
     """
     Feature: Ceil gpu kernel
@@ -68,9 +65,7 @@ def test_ceil_fp16():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_tensor_ceil():
     """
     Feature: ALL TO ALL
@@ -85,9 +80,7 @@ def test_tensor_ceil():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_func_ceil():
     """
     Feature: ALL TO ALL
@@ -102,9 +95,7 @@ def test_func_ceil():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_vmap():
     """
     Feature: ceil vmap.
@@ -127,9 +118,7 @@ def test_vmap():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_vmap2():
     """
     Feature: ceil vmap.

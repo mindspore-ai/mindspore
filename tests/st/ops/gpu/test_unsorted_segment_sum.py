@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -34,9 +35,7 @@ class UnsortedSegmentSumNet(nn.Cell):
         return self.unsorted_segment_sum(data, ids, self.num_segments)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_1D():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     input_x = Tensor([1, 2, 3, 4], mstype.float32)
@@ -49,9 +48,7 @@ def test_1D():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_2D():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     input_x = Tensor([[1, 2, 3, 4],
@@ -69,9 +66,7 @@ def test_2D():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_3D():
     context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
     input_x = Tensor(np.arange(4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3))
@@ -127,9 +122,7 @@ class UnsortedSegmentSumDynNet(nn.Cell):
         return self.unsorted_segment_sum(data, ids, self.num_segments)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dyn_ab():
     """
     Tests for Dynamic shape with both inputs dynamic
@@ -181,9 +174,7 @@ def test_dyn_ab():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dyn_a():
     """
     Tests for Dynamic shape with first input dynamic
@@ -247,9 +238,7 @@ def test_dyn_a():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dyn_b():
     """
     Tests for Dynamic shape with second input dynamic
@@ -313,9 +302,7 @@ def test_dyn_b():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [np.uint8, np.uint16, np.uint32, np.uint64, np.int8, np.int16, np.int32,
                                    np.int64, np.float16, np.float32, np.float64])

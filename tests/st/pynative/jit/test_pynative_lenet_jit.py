@@ -14,7 +14,6 @@
 # ============================================================================
 import time
 import numpy as np
-import pytest
 
 import mindspore.nn as nn
 from mindspore.ops import composite as C
@@ -26,6 +25,7 @@ from mindspore.common.api import jit
 from mindspore import context, Tensor, ParameterTuple
 from mindspore.nn.wrap.cell_wrapper import WithLossCell
 from mindspore.common.initializer import TruncatedNormal
+from tests.mark_utils import arg_mark
 
 np.random.seed(1)
 grad_by_list = C.GradOperation(get_by_list=True)
@@ -161,12 +161,10 @@ class GradWrap(nn.Cell):
         return grad_by_list(self.network, weights)(x, label)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_lenet_ms_func():
     """
     Feature: Jit

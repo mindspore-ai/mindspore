@@ -5,6 +5,7 @@ import mindspore.ops.operations as P
 
 from mindspore import Tensor, jit, context
 from mindspore.common.initializer import TruncatedNormal
+from tests.mark_utils import arg_mark
 
 
 # context.set_context(save_graphs = True, save_graphs_path="./grahp_jit")
@@ -77,9 +78,7 @@ def check(output):
     assert output.size == 320
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('input_data', [Tensor(np.ones([32, 1, 32, 32]).astype(np.float32) * 0.01)])
 def test_cell_lenet(input_data):
     """

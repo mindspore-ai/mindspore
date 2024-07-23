@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -32,9 +33,7 @@ class PopulationCount(Cell):
         return self.populationcount(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_populationcount_1x2_int8():
     """
     Feature: PopulationCount
@@ -48,9 +47,7 @@ def test_populationcount_1x2_int8():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_populationcount_2x2x2_uint8():
     """
     Feature: PopulationCount
@@ -66,9 +63,7 @@ def test_populationcount_2x2x2_uint8():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_populationcount_1x2_int16():
     """
     Feature: PopulationCount
@@ -82,9 +77,7 @@ def test_populationcount_1x2_int16():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_populationcount_2x2x2_uint16():
     """
     Feature: PopulationCount
@@ -100,9 +93,7 @@ def test_populationcount_2x2x2_uint16():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_populationcount_1x2_int32():
     """
     Feature: PopulationCount
@@ -116,9 +107,7 @@ def test_populationcount_1x2_int32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_populationcount_2x2x2_uint32():
     """
     Feature: PopulationCount
@@ -134,9 +123,7 @@ def test_populationcount_2x2x2_uint32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_populationcount_1x2_int64():
     """
     Feature: PopulationCount
@@ -150,9 +137,7 @@ def test_populationcount_1x2_int64():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_populationcount_2x2x2_uint64():
     """
     Feature: PopulationCount

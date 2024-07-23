@@ -18,12 +18,11 @@
 import os
 import sys
 
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_allreduce():
     """
     Feature: CPU data parallel.
@@ -41,9 +40,8 @@ def test_allreduce():
     assert return_code == 0
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 def test_allreduce_small_scale_data():
     """
     Feature: CPU data parallel.

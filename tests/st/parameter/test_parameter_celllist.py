@@ -22,6 +22,7 @@ from mindspore.ops import functional as F
 from mindspore import Tensor, context
 from mindspore.common.parameter import ParameterTuple, Parameter
 from mindspore.common.initializer import initializer
+from tests.mark_utils import arg_mark
 
 
 class FullyConnectedNet(nn.Cell):
@@ -64,10 +65,7 @@ class EmaUpdate(nn.Cell):
         return self.step
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_target_update(mode):
     """
@@ -105,10 +103,10 @@ class DenseNet(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_two_dense_net(mode):
     """
@@ -135,10 +133,10 @@ class InnerNet(nn.Cell):
         return x + self.param
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_two_net(mode):
     """
@@ -168,10 +166,10 @@ class OutNet2(nn.Cell):
         return x + self.param1[0] + self.param2[0]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_inner_out_net_2(mode):
     """

@@ -19,6 +19,7 @@ from mindspore.mint import topk
 import mindspore as ms
 import tests.st.utils.test_utils as test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -49,14 +50,12 @@ def topk_backward_func(x, k, dim=-1, largest=True, issorted=True):
     return ops.grad(topk_forward_func, (0, 1, 2, 3, 4))(x, k, dim, largest, issorted)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
-def test_ops_topk_ext_forward0(context_mode):
+def test_ops_topk_ext_normal0(context_mode):
     """
     Feature: pyboost function.
-    Description: test function topk_ext forward.
+    Description: test function topk_ext forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -71,15 +70,21 @@ def test_ops_topk_ext_forward0(context_mode):
     assert output1.asnumpy().dtype == 'int64'
     assert output1.asnumpy().shape == (7, 8, 3)
 
+    # min & max
+    output = topk_backward_func(ms.Tensor(x), 3, 0)
+    expect = generate_expect_backward_output(x, 3, 0)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    assert output.asnumpy().dtype == 'float32'
+    assert output.asnumpy().shape == (7, 8, 9)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
-def test_ops_topk_ext_forward1(context_mode):
+def test_ops_topk_ext_normal1(context_mode):
     """
     Feature: pyboost function.
-    Description: test function topk_ext forward.
+    Description: test function topk_ext forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -94,16 +99,21 @@ def test_ops_topk_ext_forward1(context_mode):
     assert output1.asnumpy().dtype == 'int64'
     assert output1.asnumpy().shape == (7, 3, 9)
 
+    # min
+    output = topk_backward_func(ms.Tensor(x), 3, 1)
+    expect = generate_expect_backward_output(x, 3, 1)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    assert output.asnumpy().dtype == 'float32'
+    assert output.asnumpy().shape == (7, 8, 9)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
-def test_ops_topk_ext_forward2(context_mode):
+def test_ops_topk_ext_normal2(context_mode):
     """
     Feature: pyboost function.
-    Description: test function topk_ext forward.
+    Description: test function topk_ext forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -118,59 +128,6 @@ def test_ops_topk_ext_forward2(context_mode):
     assert output1.asnumpy().dtype == 'int64'
     assert output1.asnumpy().shape == (3, 8, 9)
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
-def test_ops_topk_ext_backward0(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function topk_ext backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = generate_random_input((7, 8, 9), np.float32)
-    # min & max
-    output = topk_backward_func(ms.Tensor(x), 3, 0)
-    expect = generate_expect_backward_output(x, 3, 0)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    assert output.asnumpy().dtype == 'float32'
-    assert output.asnumpy().shape == (7, 8, 9)
-
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
-def test_ops_topk_ext_backward1(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function topk_ext backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = generate_random_input((7, 8, 9), np.float32)
-    # min
-    output = topk_backward_func(ms.Tensor(x), 3, 1)
-    expect = generate_expect_backward_output(x, 3, 1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
-    assert output.asnumpy().dtype == 'float32'
-    assert output.asnumpy().shape == (7, 8, 9)
-
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
-def test_ops_topk_ext_backward2(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function topk_ext backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = generate_random_input((7, 8, 9), np.float32)
     # max
     output = topk_backward_func(ms.Tensor(x), 3, 2)
     expect = generate_expect_backward_output(x, 3, 2)
@@ -179,9 +136,7 @@ def test_ops_topk_ext_backward2(context_mode):
     assert output.asnumpy().shape == (7, 8, 9)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_topk_ext_dynamic_shape():
     """
     Feature: pyboost function.

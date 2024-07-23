@@ -19,6 +19,7 @@ from mindspore import ops, jit, JitConfig
 from mindspore.mint import narrow
 import tests.st.utils.test_utils as test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -43,9 +44,7 @@ def narrow_backward_func(x, dim, start, length):
     return ops.grad(narrow_forward_func, (0))(x, dim, start, length)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_ops_narrow_forward(context_mode):
     """
@@ -75,9 +74,7 @@ def test_ops_narrow_forward(context_mode):
     np.testing.assert_allclose(output_grad.asnumpy(), expect_grad, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_ops_narrow_forward_case01(context_mode):
     """
@@ -107,9 +104,7 @@ def test_ops_narrow_forward_case01(context_mode):
     np.testing.assert_allclose(output_grad.asnumpy(), expect_grad, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ops_narrow_backward_dynamic_shape():
     """
     Feature: pyboost function.

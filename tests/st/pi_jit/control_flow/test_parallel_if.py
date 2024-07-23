@@ -1,11 +1,10 @@
 from mindspore import Tensor, jit, context
 from mindspore.common import dtype as mstype
 import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_if_raise_raise():
     """
     Feature: Parallel if transformation

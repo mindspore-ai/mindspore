@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -43,9 +44,7 @@ class NetLcm(nn.Cell):
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gcd_int32():
     """
     Feature: Gcd
@@ -62,9 +61,7 @@ def test_gcd_int32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gcd_int64():
     """
     Feature: Gcd
@@ -81,9 +78,7 @@ def test_gcd_int64():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lcm_int32():
     """
     Feature: Lcm
@@ -100,9 +95,7 @@ def test_lcm_int32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lcm_int64():
     """
     Feature: Lcm
@@ -122,9 +115,7 @@ def test_lcm_int64():
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gcd_int64_and_int32():
     """
     Feature: Gcd
@@ -141,9 +132,7 @@ def test_gcd_int64_and_int32():
     assert np.allclose(output_ms.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lcm_int32_and_int64():
     """
     Feature: Lcm

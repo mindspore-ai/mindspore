@@ -20,6 +20,7 @@ from mindspore import Tensor, jit, context, Symbol
 from mindspore.nn import Cell
 from mindspore._c_expression import get_code_extra
 from .share.utils import match_array
+from tests.mark_utils import arg_mark
 
 s=Symbol(max=10,min=1)
 g_relu=nn.ReLU()
@@ -45,10 +46,8 @@ def signature_tuple_test(a, b):
 def dynamic_shape_test(a, b):
     return a + b
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential')
 def test_dynamic_shape_case():
     """
     Feature: Method DynamicShape Testing
@@ -75,10 +74,8 @@ def test_dynamic_shape_case():
 
 
 @pytest.mark.skip(reason="adapter later")
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential')
 def test_signature_case():
     """
     Feature: Method DynamicShape DynamicSymbolic In Signature Testing

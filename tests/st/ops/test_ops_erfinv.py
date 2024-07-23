@@ -21,6 +21,7 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import erfinv
 
 import tests.st.utils.test_utils as test_utils
+from tests.mark_utils import arg_mark
 
 def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
@@ -45,16 +46,13 @@ def erfinv_backward_func(x):
 def erfinv_vmap_func(x):
     return ops.vmap(erfinv_forward_func)(x)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_erfinv_forward(context_mode):
+def test_ops_erfinv_normal(context_mode):
     """
     Feature: pyboost function.
-    Description: test function erfinv forward.
+    Description: test function erfinv forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -63,31 +61,13 @@ def test_ops_erfinv_forward(context_mode):
     expect = generate_expect_forward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect.asnumpy(), rtol=1e-3)
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_ops_erfinv_backward(context_mode):
-    """
-    Feature: pyboost function.
-    Description: test function erfinv backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = Tensor([0, 0.5, -0.9], ms.float32)
     output = erfinv_backward_func(ms.Tensor(x))
     expect = generate_expect_backward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect.asnumpy(), rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_erfinv_vmap(context_mode):
     """

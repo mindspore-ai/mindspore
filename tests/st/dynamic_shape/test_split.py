@@ -17,6 +17,7 @@ import pytest
 import mindspore as ms
 import mindspore.ops.operations as op
 from mindspore import Tensor, nn, ops
+from tests.mark_utils import arg_mark
 
 ms.set_context(mode=ms.PYNATIVE_MODE, device_target="Ascend")
 
@@ -53,10 +54,7 @@ class GradNetWrtX(nn.Cell):
         return grad_fn(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_split_grad_dynamic():
     """
     Feature: Test operator Split grad (i.e. Concat) with dynamic input in PyNative mode

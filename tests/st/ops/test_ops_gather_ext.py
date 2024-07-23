@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 
-
 """test gather"""
 
 import numpy as np
@@ -22,6 +21,7 @@ import pytest
 from mindspore import ops, Tensor, jit, JitConfig, context
 from mindspore.common.api import _pynative_executor
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 import time
 
 
@@ -91,12 +91,8 @@ def gather_ext_backward_func(x, dim, indices):
     return ops.grad(call_gather)(x, dim, indices)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 @pytest.mark.parametrize('input_dtype', [np.float32])
 @pytest.mark.parametrize('index_dtype', [np.int64])
@@ -121,12 +117,8 @@ def test_gather_ext_static_shape(mode, input_dtype, index_dtype):
     assert np.allclose(ms_out.asnumpy(), expect, rtol=1e-4)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 def test_gather_ext_dynamic_shape():
     """
     Feature: Test gather with dynamic shape in graph mode.
@@ -143,12 +135,8 @@ def test_gather_ext_dynamic_shape():
     TEST_OP(call_gather, [[ms_data1, dim1, ms_indices1], [ms_data2, dim2, ms_indices2]], 'gather_d')
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('param_jit_level', ["O2", "O0"])
 def test_gather_ext_vmap(param_jit_level):
     """
@@ -255,12 +243,8 @@ def _test_gather_ext_vmap_perf(batch):
     print(f"improve_times: {foreach_duration / vmap_duration}\n")
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", ['pynative', 'GE', 'KBK'])
 def test_gather_ext_grad(mode):
     """
@@ -282,9 +266,7 @@ def test_gather_ext_grad(mode):
     assert np.allclose(ms_out.asnumpy(), expect, rtol=1e-4)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_gather_ext_unmatch_shape():
     """
     Feature: Test gather .

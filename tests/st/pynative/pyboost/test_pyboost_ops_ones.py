@@ -19,6 +19,7 @@ from mindspore import ops
 from mindspore import Tensor, context
 from mindspore.ops.auto_generate.gen_ops_def import ones
 import test_utils
+from tests.mark_utils import arg_mark
 
 
 @test_utils.run_with_cell
@@ -31,12 +32,10 @@ def ones_backward_func(size, dtype):
     return ops.grad(ones_forward_func, (0,))(size, dtype)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ones_tensor_api(mode):
     """
@@ -52,12 +51,10 @@ def test_ones_tensor_api(mode):
     assert np.allclose(ones_output.asnumpy(), expect_output)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ones_forward(mode):
     """
@@ -72,12 +69,10 @@ def test_ones_forward(mode):
     assert np.allclose(ones_output.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ones_backward(mode):
     """
@@ -92,11 +87,10 @@ def test_ones_backward(mode):
     assert np.allclose(ones_output.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_func
 def test_ones_forward_dynamic_shape(context_mode):
@@ -120,11 +114,10 @@ def test_ones_forward_dynamic_shape(context_mode):
     assert np.allclose(out.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_func
 def test_ones_forward_dynamic_rank(context_mode):
@@ -147,11 +140,10 @@ def test_ones_forward_dynamic_rank(context_mode):
         _ = test_cell(size, ms.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_func
 def test_ones_backward_dynamic_shape(context_mode):
@@ -175,11 +167,10 @@ def test_ones_backward_dynamic_shape(context_mode):
     assert np.allclose(out.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_func
 def test_ones_backward_dynamic_rank(context_mode):

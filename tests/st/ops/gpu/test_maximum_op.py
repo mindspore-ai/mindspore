@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -45,9 +46,7 @@ class Grad(Cell):
         return gout
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maximum():
     x = Tensor(np.array([[1, 2, 3]]).astype(np.float32))
     y = Tensor(np.array([[2]]).astype(np.float32))
@@ -69,9 +68,7 @@ def test_maximum():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maximum_dynamic_shape():
     """
     Feature: test maximum op in cpu
@@ -92,9 +89,7 @@ def test_maximum_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -216,9 +211,7 @@ def test_broadcast():
     assert np.allclose(output_ms[1].asnumpy(), expect_dx2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_diff_dims():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 
@@ -249,9 +242,7 @@ def test_broadcast_diff_dims():
     assert np.allclose(output_ms[1].asnumpy(), expect_dx2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_maximum_int():
     x = Tensor(np.array([[1, 2, 3]]).astype(np.int32))
     y = Tensor(np.array([[2]]).astype(np.int32))
@@ -273,9 +264,7 @@ def test_maximum_int():
     assert np.all(-diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_maximum_tensor_api_modes(mode):
     """

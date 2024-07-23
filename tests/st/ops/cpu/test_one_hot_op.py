@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -44,9 +45,7 @@ class NetOneHot(nn.Cell):
                 self.one_hot_3(indices3), self.one_hot_4(indices4))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_one_hot():
     one_hot = NetOneHot()
     indices1 = Tensor(np.array([[0, 1], [4, 5], [2, 6]]).astype(np.int32))

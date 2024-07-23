@@ -15,12 +15,12 @@
 
 import platform
 import numpy as np
-import pytest
 
 import mindspore as ms
 from mindspore import nn
 from mindspore import ops
 from mindspore import context, Tensor
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -95,12 +95,10 @@ class CmpNet(nn.Cell):
         return x
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_auto_dynamic_shape_with_three_static_shape():
     """
     Feature: PyNative auto dynamic shape.
@@ -138,12 +136,10 @@ def test_pynative_auto_dynamic_shape_with_three_static_shape():
     assert np.allclose(grad[1].asnumpy(), cmp_grad[1].asnumpy(), 0.00001, 0.00001)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_auto_dynamic_shape_mixing_static_shape_and_dynamic_shape_1():
     """
     Feature: PyNative auto dynamic shape.
@@ -183,12 +179,10 @@ def test_pynative_auto_dynamic_shape_mixing_static_shape_and_dynamic_shape_1():
     assert np.allclose(grad[1].asnumpy(), cmp_grad[1].asnumpy(), 0.00001, 0.00001)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_auto_dynamic_shape_mixing_static_shape_and_dynamic_shape_2():
     """
     Feature: PyNative auto dynamic shape.

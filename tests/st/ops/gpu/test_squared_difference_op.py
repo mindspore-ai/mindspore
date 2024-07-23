@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -30,9 +31,7 @@ class SquaredDifference(nn.Cell):
         return self.squaredDiff(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nobroadcast_f16():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -45,9 +44,7 @@ def test_nobroadcast_f16():
     assert np.all(output == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nobroadcast_f32():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -60,9 +57,7 @@ def test_nobroadcast_f32():
     assert np.all(output == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nobroadcast_int32():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -75,9 +70,7 @@ def test_nobroadcast_int32():
     assert np.all(output == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_int32():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -90,9 +83,7 @@ def test_broadcast_int32():
     assert np.all(output == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_f32():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -105,9 +96,7 @@ def test_broadcast_f32():
     assert np.all(output == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_f16():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -120,9 +109,7 @@ def test_broadcast_f16():
     assert np.all(output == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_bool():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -137,9 +124,7 @@ def test_broadcast_bool():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nobroadcast_bool():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -154,9 +139,7 @@ def test_nobroadcast_bool():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_int32_f16():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -171,9 +154,7 @@ def test_broadcast_int32_f16():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_int32_f32():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -188,9 +169,7 @@ def test_broadcast_int32_f32():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nobroadcast_int32_f16():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -205,9 +184,7 @@ def test_nobroadcast_int32_f16():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nobroadcast_int32_f32():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -222,9 +199,7 @@ def test_nobroadcast_int32_f32():
     assert np.all(double_check < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_f32_scalar_tensor():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -237,9 +212,7 @@ def test_broadcast_f32_scalar_tensor():
     assert np.all(output == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_f32_tensor_tensor():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -252,9 +225,7 @@ def test_broadcast_f32_tensor_tensor():
     assert np.all(output == expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_f32_tensor_tensor_dim_over_7():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -267,9 +238,7 @@ def test_broadcast_f32_tensor_tensor_dim_over_7():
         assert True
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_f32_tensor_tensor_cannot_brocast():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -282,9 +251,7 @@ def test_broadcast_f32_tensor_tensor_cannot_brocast():
         assert True
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_int_f32_precision():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -299,9 +266,7 @@ def test_broadcast_int_f32_precision():
     assert np.all(double_thousand < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_broadcast_type_error():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(42)
@@ -314,9 +279,7 @@ def test_broadcast_type_error():
         assert True
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_shape():
     """
     Feature: op dynamic shape

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -44,9 +45,7 @@ class Grad(nn.Cell):
         return gout
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float32, np.float64, np.complex64, np.complex128])
 def test_tanh(data_type):
     """
@@ -80,9 +79,7 @@ def test_tanh(data_type):
     assert np.allclose(output[0].asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tanh_fp16():
     """
     Feature: Tanh
@@ -124,9 +121,7 @@ def test_tanh_fp16():
     assert np.allclose(output[0].asnumpy(), expect, rtol=0.5 * 1e-2, atol=0.5 * 1e-2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
 def test_func(data_type):
     """
@@ -152,9 +147,7 @@ def test_func(data_type):
     np.allclose(out.asnumpy(), y_expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float16, np.float32, np.float64, np.complex64, np.complex128])
 def test_tensor(data_type):
     """

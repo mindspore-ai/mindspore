@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test_training """
-import pytest
 import numpy as np
 
 import mindspore.nn as nn
@@ -21,6 +20,7 @@ from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.nn import WithGradCell, WithLossCell
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 
 def setup_module(module):
@@ -51,9 +51,10 @@ class LeNet5(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_loss_cell_wrapper():
     """ test_loss_cell_wrapper """
     data = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32) * 0.01)
@@ -65,9 +66,10 @@ def test_loss_cell_wrapper():
     assert loss_out.asnumpy().dtype == 'float32' or loss_out.asnumpy().dtype == 'float64'
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_grad_cell_wrapper():
     """ test_grad_cell_wrapper """
     data = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32) * 0.01)

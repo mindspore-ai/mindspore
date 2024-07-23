@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -57,10 +58,7 @@ def grad_dyn_case(is_dynamic_rank):
     test_dynamic.test_dynamic_grad_net([input_matrix, target, input_lengths, target_lengths], is_dynamic_rank)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_grad_dynamic_shape():
     """
     Feature: test CTCLossV2 grad dynamic shape on GPU and CPU.
@@ -71,10 +69,7 @@ def test_grad_dynamic_shape():
     grad_dyn_case(False)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_grad_dynamic_rank():
     """
     Feature: test CTCLossV2 grad dynamic rank on GPU and CPU.
@@ -85,9 +80,7 @@ def test_grad_dynamic_rank():
     grad_dyn_case(True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_grad_dynamic_shape():
     """
     Feature: test CTCLossV2 grad dynamic shape on GPU.
@@ -98,9 +91,7 @@ def test_gpu_grad_dynamic_shape():
     grad_dyn_case(False)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gpu_grad_dynamic_rank():
     """
     Feature: test CTCLossV2 grad dynamic shape on GPU.

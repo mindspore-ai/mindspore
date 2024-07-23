@@ -20,6 +20,7 @@ import mindspore as ms
 from mindspore import context
 from mindspore import ops, Tensor, dtype, jit
 from tests.st.pynative.utils import GradOfFirstInput, GradOfAllInputs, allclose_nparray
+from tests.mark_utils import arg_mark
 
 
 def test_cast():
@@ -43,10 +44,10 @@ def expand_tensor(a, b):
     return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_tile_eliminate():
     """
     Feature: tile_eliminate
@@ -65,12 +66,10 @@ def test_tile_eliminate():
     assert out.shape == (1, 1, 448, 448)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_shape_raise():
     """
     Feature: shape raise.
@@ -84,12 +83,10 @@ def test_shape_raise():
         ops.shape([tensor0, tensor1])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_primitive_user_data():
     """
     Feature: Primitive user data.
@@ -115,9 +112,10 @@ class Abs(nn.Cell):
         return self.abs(inputs)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_primitive_abs():
     """
     Feature: Primitive abs
@@ -159,9 +157,10 @@ class Net2(nn.Cell):
         return int_type, none_type
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_primitive_avgpool():
     """
     Feature: Primitive avgpool
@@ -196,10 +195,10 @@ def test_primitive_avgpool():
     test_inner(net1, net2, input_1, kernel_size, strides, int_type, bool_type, none_type, output_grad)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_bn_with_special_format():
     """
     Feature: PyNative forward RunOp.
@@ -261,10 +260,10 @@ class CumProdTest():
         return input_grad.asnumpy()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_cumprod_with_acl():
     """
     Feature: PyNative forward RunOp.
@@ -277,9 +276,10 @@ def test_cumprod_with_acl():
     fact.grad_mindspore_impl()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_single_ops():
     """
     Feature: PyNative forward RunOp.
@@ -301,9 +301,10 @@ def test_single_ops():
     assert np.allclose(output.asnumpy(), np.array([-1]))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_jit_graph_has_no_parameter():
     """
     Feature: PyNative jit.
@@ -338,9 +339,10 @@ def test_jit_graph_has_no_parameter():
     GradNetWrtX(net)(*inputx, ms_output)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pyboost_cache():
     """
     Feature: PyNative PyBoost.
@@ -362,9 +364,7 @@ class Dropout(nn.Cell):
         return self.op(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dropout():
     """
     Feature: PyNative forward RunOp Dropout need refresh output.

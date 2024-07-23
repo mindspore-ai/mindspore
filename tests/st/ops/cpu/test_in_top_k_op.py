@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -82,9 +83,7 @@ def in_top_k(nptype):
     np.testing.assert_array_equal(output.asnumpy(), expected_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_in_top_k_float16():
     """
     Feature: Test InTopK op.
@@ -94,9 +93,7 @@ def test_in_top_k_float16():
     in_top_k(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_in_top_k_float32():
     """
     Feature: Test InTopK op.
@@ -106,9 +103,7 @@ def test_in_top_k_float32():
     in_top_k(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_in_top_k_invalid_input():
     """
     Feature: Test InTopK op.

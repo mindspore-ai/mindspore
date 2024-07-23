@@ -5,7 +5,7 @@ from mindspore.common import Tensor
 import mindspore.ops.functional as F
 import numpy as np
 from ..share.grad import GradOfFirstInput
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class Net1(Cell):
@@ -28,9 +28,7 @@ class Net1(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_tensor_bool():
     """
     TEST_SUMMARY:
@@ -60,9 +58,7 @@ class Net2(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_tensor_bool_with_x():
     """
     TEST_SUMMARY:

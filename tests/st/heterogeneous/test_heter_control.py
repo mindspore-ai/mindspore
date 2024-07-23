@@ -17,6 +17,7 @@ import mindspore as ms
 from mindspore import Tensor, nn, dtype
 from mindspore.ops import operations as P
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
 class NetHeterogeneous(nn.Cell):
@@ -37,10 +38,7 @@ class NetHeterogeneous(nn.Cell):
         return res
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_heterogeneous(mode):

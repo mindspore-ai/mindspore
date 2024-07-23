@@ -13,13 +13,12 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
-
 import mindspore.context as context
 import mindspore.nn as nn
 import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops.operations.nn_ops import SparseSoftmaxCrossEntropyWithLogitsV2
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -32,11 +31,8 @@ class Net(nn.Cell):
         return self.op(logits, labels)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
 def test_sparse_softmax_cross_entropy_with_logits_v2_dyn():
     """
     Feature: test SparseSoftmaxCrossEntropyWithLogitsV2 ops.

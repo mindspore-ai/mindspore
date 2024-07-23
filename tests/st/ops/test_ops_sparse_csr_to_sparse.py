@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import scipy.sparse
@@ -87,11 +88,7 @@ class DynamicShapeCSRToCOONet(nn.Cell):
         return self.to_coo(shape, x_batch_pointers, x_row_pointers, unqie_col_indices, unique_values)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_2d_csr_to_coo():
     """
     Feature: Test 2D CSR tensor to COO tensor.
@@ -105,11 +102,7 @@ def test_2d_csr_to_coo():
     compare_res(outputs, expects)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_3d_csr_to_coo():
     """
     Feature: Test 3D CSR tensor to COO tensor.
@@ -123,11 +116,7 @@ def test_3d_csr_to_coo():
     compare_res(outputs, expects)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_3d_csr_to_coo_fp64():
     """
     Feature: Test 3D CSR tensor to COO tensor.
@@ -141,11 +130,7 @@ def test_3d_csr_to_coo_fp64():
     compare_res(outputs, expects)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_shape_csr_to_coo():
     """
     Feature: Test dynamic shape.

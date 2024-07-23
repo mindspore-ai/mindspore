@@ -22,6 +22,7 @@ from scipy.fft import idct as sp_idct
 from scipy.fft import dct as sp_dct
 
 import tests.st.utils.test_utils as test_utils
+from tests.mark_utils import arg_mark
 
 ms.context.set_context(device_target="CPU")
 
@@ -59,12 +60,8 @@ def idct_backward_func(x):
     return ops.grad(idct_forward_func, (0))(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_idct_forward(mode):
     """
@@ -79,12 +76,8 @@ def test_ops_idct_forward(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_idct_backward(mode):
     """
@@ -100,12 +93,8 @@ def test_ops_idct_backward(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_idct_forward_dynamic_shape(mode):
     """
@@ -130,12 +119,8 @@ def test_ops_idct_forward_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_idct_forward_dynamic_rank(mode):
     """
@@ -160,12 +145,8 @@ def test_ops_idct_forward_dynamic_rank(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_idct_backward_dynamic_shape(mode):
     """
@@ -190,12 +171,8 @@ def test_ops_idct_backward_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_idct_backward_dynamic_rank(mode):
     """
@@ -251,12 +228,8 @@ def dct_backward_func(x):
     return ops.grad(dct_forward_func, (0))(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_dct_forward(mode):
     """
@@ -271,12 +244,8 @@ def test_ops_dct_forward(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_dct_backward(mode):
     """
@@ -292,12 +261,8 @@ def test_ops_dct_backward(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_dct_forward_dynamic_shape(mode):
     """
@@ -322,12 +287,8 @@ def test_ops_dct_forward_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_dct_forward_dynamic_rank(mode):
     """
@@ -352,12 +313,8 @@ def test_ops_dct_forward_dynamic_rank(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_dct_backward_dynamic_shape(mode):
     """
@@ -382,12 +339,8 @@ def test_ops_dct_backward_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3, atol=1e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_dct_backward_dynamic_rank(mode):
     """

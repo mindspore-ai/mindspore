@@ -16,6 +16,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import mint, context, Tensor
+from tests.mark_utils import arg_mark
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
@@ -43,13 +44,9 @@ def elu_vmap_func(x, alpha):
     return ms.ops.vmap(elu_forward_func, in_axes=(0, None), out_axes=0)(x, alpha)
 
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
-def test_elu_forward(mode):
+def test_elu_normal(mode):
     """
     Feature: test elu operator
     Description: test elu run by pyboost
@@ -64,12 +61,12 @@ def test_elu_forward(mode):
     expect = generate_expect_forward_output(x_np, alpha, np.float32)
     np.testing.assert_allclose(output.asnumpy(), expect, 1e-4, 1e-4)
 
+    output = elu_backward_func(x_tensor, alpha)
+    expect = generate_expect_backward_output(x_np, alpha, np.float32)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_elu_backward_alpha_neg(mode):
     """
@@ -87,33 +84,7 @@ def test_elu_backward_alpha_neg(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
-def test_elu_backward(mode):
-    """
-    Feature: test elu operator
-    Description: test elu run by pyboost
-    Expectation: success
-    """
-    context.set_context(mode=mode)
-
-    alpha = np.random.uniform(0.5, 2)
-    x_np = generate_random_input((2, 3, 4), np.float32)
-    x_tensor = Tensor(x_np, ms.float32)
-    output = elu_backward_func(x_tensor, alpha)
-    expect = generate_expect_backward_output(x_np, alpha, np.float32)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
-
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_elu_vmap(mode):
     """
@@ -131,11 +102,7 @@ def test_elu_vmap(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_elu_dynamic_shape_testop():
     """
     Feature: Test elu with dynamic shape in graph mode using TEST_OP.

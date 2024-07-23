@@ -19,6 +19,7 @@ from mindspore import Tensor, context
 from mindspore.ops import flip
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -43,13 +44,10 @@ def flip_vmap_func(input_x, dims):
     return ms.ops.vmap(flip_forward_func, in_axes=(0, None), out_axes=(0))(input_x, dims)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_flip_forward(mode):
+def test_flip_normal(mode):
     """
     Feature: test flip operator
     Description: test flip run by pyboost
@@ -63,33 +61,13 @@ def test_flip_forward(mode):
     expect = generate_expect_forward_output(np_array, dims)
     assert np.allclose(output.asnumpy(), expect)
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
-def test_flip_backward(mode):
-    """
-    Feature: test flip operator
-    Description: test flip run by pyboost
-    Expectation: success
-    """
-    context.set_context(mode=mode)
-    np_array = np.random.rand(2, 3, 4).astype(np.float32)
-    input_x = Tensor(np_array, ms.float32)
-    dims = (0, 1)
     output = flip_backward_func(input_x, dims)
     expect = generate_expect_backward_output(np_array, dims)
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_flip_vmap(mode):
     """
@@ -106,11 +84,8 @@ def test_ops_flip_vmap(mode):
     np.testing.assert_allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_flip_forward_dynamic_shape(mode):
     """
@@ -136,11 +111,8 @@ def test_ops_flip_forward_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_flip_forward_dynamic_rank(mode):
     """
@@ -166,11 +138,8 @@ def test_ops_flip_forward_dynamic_rank(mode):
     np.testing.assert_allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_flip_backward_dynamic_shape(mode):
     """
@@ -196,11 +165,8 @@ def test_ops_flip_backward_dynamic_shape(mode):
     np.testing.assert_allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_flip_backward_dynamic_rank(mode):
     """
@@ -226,11 +192,8 @@ def test_ops_flip_backward_dynamic_rank(mode):
     np.testing.assert_allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_flip_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -239,4 +202,4 @@ def test_flip_dynamic():
     """
     input_case1 = Tensor(np.random.rand(3, 4, 5, 6).astype(np.float32))
     input_case2 = Tensor(np.random.rand(3, 4).astype(np.float32))
-    TEST_OP(flip_forward_func, [[input_case1, (0, -1)], [input_case2, (-1, 0)]], 'reverse_v2')
+    TEST_OP(flip_forward_func, [[input_case1, (0, -1)], [input_case2, (-1, 0)]], 'reverse_v2', disable_input_check=True)

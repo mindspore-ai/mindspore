@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,9 +32,7 @@ class ReduceProd(nn.Cell):
         return self.reduce_prod(x, axis)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('decimal, dtype',
                          [(1e-10, np.int8), (1e-3, np.float16), (1e-5, np.float32), (1e-8, np.float64)])
 @pytest.mark.parametrize('shape, axis, keep_dims',

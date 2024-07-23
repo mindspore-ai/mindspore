@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -77,9 +78,7 @@ def sparse_count_sparse_output_valuecheck(v_type, w_type):
     compare_results(op_output, expected_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparsecountsparseoutput_checkvalue_difftypes():
     """
     Feature: SparseCountSparseOutput cpu op
@@ -93,9 +92,7 @@ def test_sparsecountsparseoutput_checkvalue_difftypes():
             sparse_count_sparse_output_valuecheck(v_type, w_type)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparsecountsparseoutput_checkvalue_maxvalue():
     """
     Feature: SparseCountSparseOutput cpu op
@@ -116,9 +113,7 @@ def test_sparsecountsparseoutput_checkvalue_maxvalue():
     compare_results(op_output, expected_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparsecountsparseoutput_value_type_error():
     """
     Feature: SparseCountSparseOutput cpu op

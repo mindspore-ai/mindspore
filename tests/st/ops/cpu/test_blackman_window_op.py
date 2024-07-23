@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 from mindspore import Tensor
@@ -34,9 +35,7 @@ def test_blackman_window_functional():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_blackman_window_functional_modes():
     """
     Feature: test blackman_window functional API in PyNative and Graph modes.

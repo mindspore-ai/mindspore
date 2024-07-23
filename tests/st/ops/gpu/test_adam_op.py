@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import os
 import math
@@ -58,9 +59,7 @@ class NetWithSparseGatherV2(nn.Cell):
         return self.gather(self.weight1, indices, self.axis) + self.weight2
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_adam():
     """
     Feature: Adam optimizer
@@ -96,9 +95,7 @@ def test_adam():
     assert losses2[1] > losses2[2]
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lazy_adam():
     """
     Feature: LazyAdam optimizer
@@ -120,9 +117,7 @@ def test_lazy_adam():
     assert np.allclose(output.asnumpy(), expected_output)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_adam_offload_acc():
     """
     Feature: AdamOffload optimizer
@@ -175,9 +170,7 @@ class AdamNetVmap(nn.Cell):
         return self.vmap_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2, epsilon, grad)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_apply_adam_witm_adam_op_vmap():
     """
     Feature: Adam gpu kernel
@@ -203,9 +196,7 @@ def test_apply_adam_witm_adam_op_vmap():
     np.testing.assert_allclose(ms_var, np_var, rtol=error, atol=error)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_adam_net_with_map_tensor():
     """
     Feature: Adam gpu kernel for MapTensor update.

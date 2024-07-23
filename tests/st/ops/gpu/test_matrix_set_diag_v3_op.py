@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -42,9 +43,7 @@ def get_dy_shape(real_shape):
     return part_shape_list
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_matrix_set_diag_v3_dynamic_shape_v2():
     """
     Feature: MatrixSetDiagV3 dynamic shape operator.
@@ -65,9 +64,7 @@ def test_matrix_set_diag_v3_dynamic_shape_v2():
     assert out.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_set_diag_v3_function():
     """
     Feature: matrix_set_diag_v3 functional api.
@@ -85,9 +82,7 @@ def test_matrix_set_diag_v3_function():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_set_diag_v3_ops():
     """
     Feature: MatrixSetDiagV3 operator.
@@ -109,9 +104,7 @@ def test_matrix_set_diag_v3_ops():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_set_diag_v3_ops_band():
     """
     Feature: MatrixSetDiagV3 operator.
@@ -134,9 +127,7 @@ def test_matrix_set_diag_v3_ops_band():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_set_diag_v3_ops_align():
     """
     Feature: MatrixSetDiagV3 operator.
@@ -160,9 +151,7 @@ def test_matrix_set_diag_v3_ops_align():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_set_diag_v3_vmap():
     """
     Feature: MatrixSetDiagV3 operator.
@@ -194,9 +183,7 @@ def test_matrix_set_diag_v3_vmap():
     np.testing.assert_allclose(result, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_matrix_set_diag_v3_dynamic_shape():
     """
     Feature: MatrixSetDiagV3 dynamic shape operator.

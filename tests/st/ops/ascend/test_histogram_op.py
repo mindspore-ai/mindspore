@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 from mindspore import ops
 from mindspore import nn
 from mindspore import Tensor
 from mindspore import dtype as mstype
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -29,10 +29,7 @@ class Net(nn.Cell):
         return self.histogram(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_histogram_normal():
     """
     Feature: Histogram

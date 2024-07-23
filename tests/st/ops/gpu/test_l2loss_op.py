@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,9 +32,7 @@ class L2LossNet(nn.Cell):
     def construct(self, x):
         return self.l2_loss(x)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_pynative_fp32_22():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     error = 1e-4
@@ -43,9 +42,7 @@ def test_gather_pynative_fp32_22():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_pynative_fp16_22():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     error = 1e-4
@@ -55,9 +52,7 @@ def test_gather_pynative_fp16_22():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_pynative_fp32_14():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     error = 1e-4
@@ -67,9 +62,7 @@ def test_gather_pynative_fp32_14():
     diff = output.asnumpy() - expect
     assert np.all(diff < error)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_gather_pynative_fp16_14():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     error = 1e-4

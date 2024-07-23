@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 import numpy as np
-import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
@@ -30,10 +30,11 @@ class Net(nn.Cell):
     def construct(self, x):
         return self.unique(x)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_unqiue():
     x = Tensor(np.array([1, 1, 2, 2, 3, 3]), mstype.int32)
     unique = Net()

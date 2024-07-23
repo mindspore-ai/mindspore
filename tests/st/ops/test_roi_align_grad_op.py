@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -73,10 +74,7 @@ def roi_align_grad_case(data_type=np.float16, is_dyn_shape=False, is_dyn_rank=Fa
     np.testing.assert_almost_equal(output.asnumpy(), expect, decimal=4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_roi_align_grad_float16():
     """
     Feature: Test the operator ROIAlignGrad
@@ -89,12 +87,7 @@ def test_roi_align_grad_float16():
     roi_align_grad_case(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_roi_align_grad_float32():
     """
     Feature: Test the operator ROIAlignGrad
@@ -107,10 +100,7 @@ def test_roi_align_grad_float32():
     roi_align_grad_case(np.float32)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_roi_align_grad_float16_dynamic_shape():
     """
     Feature: Test the operator ROIAlignGrad with dynamic shape inputs
@@ -123,10 +113,7 @@ def test_roi_align_grad_float16_dynamic_shape():
     roi_align_grad_case(np.float16, True)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_roi_align_grad_float32_dynamic_rank():
     """
     Feature: Test the operator ROIAlignGrad with dynamic rank inputs

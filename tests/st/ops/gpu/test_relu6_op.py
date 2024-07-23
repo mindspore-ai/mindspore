@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -43,10 +44,13 @@ class NetRelu6Dynamic(nn.Cell):
         return self.relu6(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_relu6():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.array([[[[-1, 1, 10],
                            [5.9, 6.1, 6],
                            [10, 1, -1]]]]).astype(np.float32))
@@ -65,10 +69,13 @@ def test_relu6():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_relu6_dynamic():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
 
     x1 = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]).astype(np.float32))
     expect1 = np.array([[0, 4, 0,],

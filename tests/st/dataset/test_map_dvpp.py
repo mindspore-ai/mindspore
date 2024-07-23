@@ -26,6 +26,7 @@ import mindspore as ms
 import mindspore.dataset as ds
 from mindspore.dataset.transforms import transforms
 import mindspore.dataset.vision as vision
+from tests.mark_utils import arg_mark
 
 # pylint: disable=W0212
 # W0212: protected-access
@@ -35,9 +36,6 @@ data_dir = "/home/workspace/mindspore_dataset/910B_dvpp/testImageNetData2/train"
 result_data_dir = "/home/workspace/mindspore_dataset/910B_dvpp/testAscend910BDvpp"
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_map_with_pyfunc_with_multi_op_process_mode():
     """
     Feature: Map op with pyfunc contains dvpp ops & cpu ops
@@ -78,9 +76,6 @@ def test_map_with_pyfunc_with_multi_op_process_mode():
         assert item[0].dtype == np.float32
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_map_with_pyfunc_with_multi_op_thread_mode():
     """
     Feature: Map op with pyfunc contains dvpp ops & cpu ops
@@ -299,9 +294,6 @@ def map_with_dvpp_resize(num_workers=1, python_multiprocess=False):
     assert count == 6
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_map_with_dvpp_resize():
     """
     Feature: Map op
@@ -320,9 +312,6 @@ def test_map_with_dvpp_resize():
     map_with_dvpp_resize(8, True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_map_with_dvpp_resize_mixed_op():
     """
     Feature: Map op
@@ -412,9 +401,7 @@ def test_map_with_dvpp_resize_mixed_op():
     assert count == 6
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_map_with_dvpp_resize_with_exception():
     """
     Feature: Map op
@@ -639,9 +626,6 @@ def map_with_dvpp_decode(num_workers=1, python_multiprocess=False):
     assert count == 6
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_map_with_dvpp_decode():
     """
     Feature: Map op
@@ -660,9 +644,6 @@ def test_map_with_dvpp_decode():
     map_with_dvpp_decode(8, True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_map_with_dvpp_decode_with_pre_pyfun():
     """
     Feature: Map op
@@ -694,9 +675,6 @@ def test_map_with_dvpp_decode_with_pre_pyfun():
     assert count == 6
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_map_with_dvpp_decode_mixed_op():
     """
     Feature: Map op
@@ -787,9 +765,7 @@ def test_map_with_dvpp_decode_mixed_op():
     assert count == 6
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_map_with_dvpp_decode_with_exception():
     """
     Feature: Map op
@@ -1153,9 +1129,6 @@ def map_with_dvpp_normalize(num_workers=1, python_multiprocess=False):
     assert count == 6
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_map_with_dvpp_normalize():
     """
     Feature: Map op
@@ -1174,9 +1147,6 @@ def test_map_with_dvpp_normalize():
     map_with_dvpp_normalize(8, True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
 def test_map_with_dvpp_normalize_mixed_op():
     """
     Feature: Map op
@@ -1267,9 +1237,7 @@ def test_map_with_dvpp_normalize_mixed_op():
     assert count == 6
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_map_with_dvpp_normalize_exception():
     """
     Feature: Map op
@@ -1452,9 +1420,7 @@ def test_map_with_dvpp_normalize_exception():
     assert "The input data's channel is not 3 or 1." in str(info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_map_with_dvpp_horizontal_flip_with_exception():
     """
     Feature: Map op
@@ -1529,9 +1495,7 @@ def test_map_with_dvpp_horizontal_flip_with_exception():
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_map_with_dvpp_vertical_flip_with_exception():
     """
     Feature: Map op
@@ -1606,9 +1570,7 @@ def test_map_with_dvpp_vertical_flip_with_exception():
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_map_with_dvpp_resize_crop_with_exception():
     """
     Feature: Map op
@@ -1683,9 +1645,7 @@ def test_map_with_dvpp_resize_crop_with_exception():
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_map_with_dvpp_perspective_with_exception():
     """
     Feature: Map op
@@ -1764,6 +1724,33 @@ def test_map_with_dvpp_perspective_with_exception():
         for _ in dataset3.create_tuple_iterator(num_epochs=1, output_numpy=True):
             count += 1
     assert "The input tensor is not of shape [H,W], [H,W,C] or [N,H,W,C]." in str(info.value)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_basic_transforms_multi_worker_mode():
+    """
+    Feature: Test DVPP transforms with multi-threading/multi-processing mode
+    Description: Test dvpp basic transforms together to reduce st time.
+    Expectation: SUCCESS
+    """
+    test_map_with_pyfunc_with_multi_op_process_mode()
+    test_map_with_pyfunc_with_multi_op_thread_mode()
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_basic_transforms_pipeline():
+    """
+    Feature: Mix DVPP & CPU basic transforms in pipeline mode
+    Description: Test dvpp basic transforms together to reduce st time.
+    Expectation: SUCCESS
+    """
+    test_map_with_dvpp_resize()
+    test_map_with_dvpp_resize_mixed_op()
+    test_map_with_dvpp_decode()
+    test_map_with_dvpp_decode_with_pre_pyfun()
+    test_map_with_dvpp_decode_mixed_op()
+    test_map_with_dvpp_normalize()
+    test_map_with_dvpp_normalize_mixed_op()
 
 
 if __name__ == '__main__':

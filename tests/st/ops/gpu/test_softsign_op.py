@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -34,9 +35,7 @@ def softsign_compute(x):
     return x / (np.abs(x) + 1.)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype, tol', [(np.float16, 1e-3), (np.float32, 1e-4), (np.float64, 1e-5)])
 def test_softsign_net(dtype, tol):
     """

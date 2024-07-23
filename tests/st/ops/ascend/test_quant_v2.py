@@ -22,6 +22,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops.operations._infer_ops import QuantV2
 from mindspore import Tensor, jit, JitConfig
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype, tensor_type):
@@ -49,10 +50,7 @@ def quant_forward_func(data, scale, offset, sqrt_mode, round_mode, out_type):
     return net(data, scale, offset, sqrt_mode, round_mode, out_type)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 @pytest.mark.parametrize('rounding', ['ROUND', 'FLOOR', 'CEIL', 'TRUNC'])
 @pytest.mark.parametrize('support_type', [mstype.float32, mstype.float16, mstype.bfloat16])
@@ -84,10 +82,7 @@ def test_quant_static_shape(mode, rounding, support_type):
     np.testing.assert_allclose(ms_out.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.platform_x86_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('rounding', ['ROUND', 'FLOOR', 'CEIL', 'TRUNC'])
 def test_quant_dynamic_shape(rounding):
     """

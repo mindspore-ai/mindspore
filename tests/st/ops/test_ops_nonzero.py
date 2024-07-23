@@ -19,6 +19,7 @@ from mindspore import ops
 from mindspore.mint import nonzero
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -55,18 +56,15 @@ def nonzero_backward_func(x, as_tuple=False):
     return ops.grad(nonzero_forward_func, (0))(x, as_tuple)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('as_tuple', [True, False])
 @test_utils.run_test_with_On
-def test_ops_nonzero_forward(context_mode, as_tuple):
+def test_ops_nonzero_normal(context_mode, as_tuple):
     """
     Feature: pyboost function.
-    Description: test function nonzero forward.
+    Description: test function nonzero forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -87,10 +85,20 @@ def test_ops_nonzero_forward(context_mode, as_tuple):
             np.testing.assert_array_equal(output.asnumpy(), expect)
             np.testing.assert_array_equal(output_tensor.asnumpy(), expect)
 
+    x = np.array([1, 2, 2, 4, 3]).astype(np.float32)
+    if not as_tuple:
+        output = nonzero_backward_func(ms.Tensor(x), as_tuple)
+        expect = np.array([0., 0., 0., 0., 0.]).astype(np.float32)
+        np.testing.assert_array_equal(output.asnumpy(), expect)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+    if as_tuple and ms.get_context(attr_key='device_target') == 'Ascend':
+        output_tuple = nonzero_backward_func(ms.Tensor(x), as_tuple)
+        expect_tuple = np.array([[0, 0, 0, 0, 0]])
+        for expect, output in zip(expect_tuple, output_tuple):
+            np.testing.assert_array_equal(output.asnumpy(), expect)
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('as_tuple', [True, False])
 @test_utils.run_test_with_On
@@ -116,40 +124,8 @@ def test_ops_nonzero_bf16(context_mode, as_tuple):
             np.testing.assert_array_equal(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.parametrize('as_tuple', [True, False])
-@test_utils.run_test_with_On
-def test_ops_nonzero_backward(context_mode, as_tuple):
-    """
-    Feature: pyboost function.
-    Description: test function nonzero backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-    x = np.array([1, 2, 2, 4, 3]).astype(np.float32)
-    if not as_tuple:
-        output = nonzero_backward_func(ms.Tensor(x), as_tuple)
-        expect = np.array([0., 0., 0., 0., 0.]).astype(np.float32)
-        np.testing.assert_array_equal(output.asnumpy(), expect)
-
-    if as_tuple and ms.get_context(attr_key='device_target') == 'Ascend':
-        output_tuple = nonzero_backward_func(ms.Tensor(x), as_tuple)
-        expect_tuple = np.array([[0, 0, 0, 0, 0]])
-        for expect, output in zip(expect_tuple, output_tuple):
-            np.testing.assert_array_equal(output.asnumpy(), expect)
-
-
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_nonzero_astuple_false_dy_shape():
     """
     Feature: Test dynamic shape.
@@ -162,10 +138,7 @@ def test_nonzero_astuple_false_dy_shape():
             , [[ms.Tensor(ms_data1)], [ms.Tensor(ms_data2)]], 'non_zero')
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_nonzero_astuple_true_dy_shape():
     """
     Feature: Test dynamic shape.

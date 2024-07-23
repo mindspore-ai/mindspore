@@ -16,12 +16,10 @@ import pytest
 import mindspore as ms
 from mindspore import context, Tensor, jit
 from mindspore.common.parameter import Parameter
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_parameter_ms_function_2(mode):
     """

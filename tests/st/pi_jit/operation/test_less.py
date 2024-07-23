@@ -1,11 +1,10 @@
 import numpy as np
 import pytest
 from ..share.ops.primitive.less_ops import LessFactory
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_1d_all_float16():
     """
     Feature: Ops.
@@ -18,9 +17,7 @@ def test_p_less_forward_input_1d_all_float16():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_2d_all_float32():
     """
     Feature: Ops.
@@ -33,9 +30,7 @@ def test_p_less_forward_input_2d_all_float32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_3d_all_int32():
     """
     Feature: Ops.
@@ -48,9 +43,7 @@ def test_p_less_forward_input_3d_all_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_4d_all_int8():
     """
     Feature: Ops.
@@ -63,9 +56,7 @@ def test_p_less_forward_input_4d_all_int8():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_5d_uint8():
     """
     Feature: Ops.
@@ -78,9 +69,7 @@ def test_p_less_forward_input_5d_uint8():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_6d_float32_float16():
     """
     Feature: Ops.
@@ -93,9 +82,7 @@ def test_p_less_forward_input_6d_float32_float16():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_7d_float16_int32():
     """
     Feature: Ops.
@@ -108,9 +95,7 @@ def test_p_less_forward_input_7d_float16_int32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_1d_left_float32_right_bool():
     """
     Feature: Ops.
@@ -123,9 +108,7 @@ def test_p_less_forward_input_1d_left_float32_right_bool():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_right_float():
     """
     Feature: Ops.
@@ -138,9 +121,7 @@ def test_p_less_forward_input_right_float():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_left_int():
     """
     Feature: Ops.
@@ -153,9 +134,7 @@ def test_p_less_forward_input_left_int():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_left_bool():
     """
     Feature: Ops.
@@ -168,9 +147,7 @@ def test_p_less_forward_input_left_bool():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_forward_input_right_bool():
     """
     Feature: Ops.
@@ -183,9 +160,7 @@ def test_p_less_forward_input_right_bool():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_input_list():
     """
     Feature: Ops.
@@ -199,9 +174,7 @@ def test_p_less_input_list():
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_input_trulp():
     """
     Feature: Ops.
@@ -215,9 +188,7 @@ def test_p_less_input_trulp():
         fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_input_all_number():
     """
     Feature: Ops.
@@ -230,9 +201,7 @@ def test_p_less_input_all_number():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_less_input_all_bool():
     """
     Feature: Ops.

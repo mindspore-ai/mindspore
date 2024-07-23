@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 # This example should be run with multiple processes.
 
@@ -39,9 +40,7 @@ class NetApproximateEqual(nn.Cell):
         return output
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_approximate_equal_fp16():
     """
     Feature: ALL To ALL
@@ -57,9 +56,7 @@ def test_approximate_equal_fp16():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_approximate_equal_fp32():
     """
     Feature: ALL To ALL

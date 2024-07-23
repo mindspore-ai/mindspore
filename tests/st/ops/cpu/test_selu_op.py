@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -62,9 +63,7 @@ def selu_np_bencmark(input_x):
     return result
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_shape", [(4,), (3, 4), (4, 5, 7)])
 @pytest.mark.parametrize("data_type", [np.int8, np.int32, np.float32, np.float16])
 def test_selu(data_shape, data_type):
@@ -87,9 +86,7 @@ def test_selu(data_shape, data_type):
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_selu_vmap_cpu():
     """
     Feature: test SeLU vmap on CPU.
@@ -109,9 +106,7 @@ def test_selu_vmap_cpu():
     assert np.allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_selu_dy_shape():
     """
     Feature: Test SeLU DynamicShape.

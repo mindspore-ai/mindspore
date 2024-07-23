@@ -13,12 +13,12 @@
 # limitations under the License.
 # ============================================================================
 
-import pytest
 import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
 
@@ -32,10 +32,7 @@ class Net(nn.Cell):
         return self.ctc(inputs, sequence_length)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_ctc_greedy_deocder_float32():
     """
     Feature: CTCGreedyDecoder cpu op

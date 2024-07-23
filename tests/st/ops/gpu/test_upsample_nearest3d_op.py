@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -34,9 +35,7 @@ class UpsampleNearest3DNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_upsample_nearest_3d_dynamic_shape(mode):
     """
@@ -59,9 +58,7 @@ def test_upsample_nearest_3d_dynamic_shape(mode):
     assert expect_shape == output.asnumpy().shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
 def test_upsample_nearest_3d_output_size_float(data_type):
     """
@@ -93,9 +90,7 @@ def test_upsample_nearest_3d_output_size_float(data_type):
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('data_type', [np.float16, np.float32])
 def test_upsample_nearest_3d_scales_float(data_type):
     """
@@ -128,9 +123,7 @@ def test_upsample_nearest_3d_scales_float(data_type):
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_upsample_nearest_3d_error():
     """
     Feature: UpsampleNearest3D
@@ -175,9 +168,7 @@ def test_upsample_nearest_3d_error():
         net(input_tensor, None, None)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_vmap_upsample_nearest3d():
     """
     Feature:  UpsampleNearest3D GPU op vmap feature.

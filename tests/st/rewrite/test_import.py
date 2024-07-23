@@ -1,10 +1,10 @@
 import pytest
 import mindspore as ms
 from .test_folder import import_net, import_net2
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_import(mode):
     """
@@ -14,8 +14,8 @@ def test_import(mode):
     """
     import_net.run_net_with_import(mode)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_import2(mode):
     """

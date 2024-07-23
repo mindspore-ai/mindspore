@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -56,9 +57,7 @@ class Transpose(nn.Cell):
                 self.transpose(self.x_4D, self.perm_4D), self.transpose(self.x_5D, self.perm_5D))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_transpose():
     transpose = Transpose()
     output = transpose()
@@ -175,9 +174,7 @@ class Transpose_int64(nn.Cell):
                 self.transpose(self.x_4D, self.perm_4D), self.transpose(self.x_5D, self.perm_5D))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_transpose_int64():
     transpose = Transpose_int64()
     output = transpose()
@@ -295,9 +292,7 @@ class Transpose_uint8(nn.Cell):
                 self.transpose(self.x_4D, self.perm_4D), self.transpose(self.x_5D, self.perm_5D))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_transpose_uint8():
     transpose = Transpose_uint8()
     output = transpose()

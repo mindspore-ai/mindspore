@@ -16,7 +16,6 @@
 import time
 
 import numpy as np
-import pytest
 
 import mindspore as ms
 from mindspore import context, nn
@@ -25,7 +24,7 @@ from mindspore.nn.optim import Momentum
 from mindspore.ops import operations as P
 from mindspore.train import Loss, Model
 from mindspore.train.summary.summary_record import _get_summary_tensor_data, _record_summary_tensor_data
-from tests.security_utils import security_off_wrap
+from tests.mark_utils import arg_mark
 from tests.st.summary.dataset import create_mnist_dataset
 
 
@@ -72,12 +71,8 @@ class LeNet5(nn.Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level0", card_mark="onecard",
+          essential_mark="essential")
 def test_graph_summary_ops():
     """
     Feature: Test graph summary ops
@@ -108,12 +103,8 @@ def test_graph_summary_ops():
     assert not np.allclose(0, x_fc3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="onecard",
+          essential_mark="essential")
 def test_pynative_summary_ops():
     """
     Feature: Test pynative summary ops
@@ -143,12 +134,8 @@ def test_pynative_summary_ops():
     assert not np.allclose(0, x_fc3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level0", card_mark="onecard",
+          essential_mark="essential")
 def test_kernel_by_kernel_summary_ops():
     """
     Feature: Test kernel by kernel summary ops
@@ -181,12 +168,8 @@ def test_kernel_by_kernel_summary_ops():
     assert not np.allclose(0, x_fc3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level0", card_mark="onecard",
+          essential_mark="essential")
 def test_dynamic_shape_summary_ops():
     """
     Feature: Test dynamic shape summary ops
@@ -216,12 +199,8 @@ def test_dynamic_shape_summary_ops():
     assert not np.allclose(0, x_fc3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-@security_off_wrap
+@arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="onecard",
+          essential_mark="essential")
 def test_summary_op_in_duplicate_name():
     """
     Feature: Test summary ops

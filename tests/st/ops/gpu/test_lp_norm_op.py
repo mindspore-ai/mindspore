@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -77,9 +78,7 @@ def lp_norm_vmap_case(data_type):
     assert np.allclose(output.asnumpy(), benchmark_output, rtol=error, atol=error)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_lp_norm_op(data_type):
     """
@@ -103,9 +102,7 @@ def test_lp_norm_op(data_type):
     output = lp_norm(Tensor(input_x))
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lp_norm_op_keepdims():
     """
     Feature: Test LpNorm with keep_dims=True.
@@ -123,9 +120,7 @@ def test_lp_norm_op_keepdims():
     output = lp_norm(input_x)
     np.testing.assert_allclose(output.asnumpy(), benchmark_output, rtol=error)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_lp_norm_vmap_gpu(data_type):
     """
@@ -137,9 +132,7 @@ def test_lp_norm_vmap_gpu(data_type):
     lp_norm_vmap_case(data_type)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_lp_norm_dy_shape(data_type):
     """

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -40,10 +41,13 @@ class Net(nn.Cell):
         return z
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_apply_adagrad():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     # numpy op
     grident_np = np.random.rand(3, 3).astype(np.float32)
     expect_accum_np = accum_np + grident_np * grident_np

@@ -13,11 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """ test a list of cell, and getattr by its item """
-import pytest
 import numpy as np
 from mindspore import context, nn, dtype, Tensor, jit, jit_class
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
+
+from tests.mark_utils import arg_mark
 
 
 class Actor(nn.Cell):
@@ -62,12 +63,8 @@ def verify_list_item_getattr(trainer, expect_res, expect_grad_res):
     assert np.array_equal(res2.asnumpy(), expect_grad_res.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_list_item_getattr():
     """
     Feature: getattr by the item from list of cell.
@@ -82,12 +79,8 @@ def test_list_item_getattr():
     verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_cell_list_getattr():
     """
     Feature: getattr by the item from nn.CellList.
@@ -104,12 +97,8 @@ def test_cell_list_getattr():
     verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_msclass_list_getattr():
     """
     Feature: getattr by the item from list of ms_class.
@@ -140,12 +129,8 @@ class Trainer2(nn.Cell):
         return sum_value
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_list_item_getattr2():
     """
     Feature: getattr by the item from list of cell with a Tensor variable.
@@ -160,12 +145,8 @@ def test_list_item_getattr2():
     verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_cell_list_getattr2():
     """
     Feature: getattr by the item from nn.CellList.
@@ -182,12 +163,8 @@ def test_cell_list_getattr2():
     verify_list_item_getattr(trainer, expect_res, expect_grad_res)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_msclass_list_getattr2():
     """
     Feature: getattr by the item from list of ms_class with a Tensor variable.
@@ -244,12 +221,8 @@ def verify_list_item_getattr2(trainer, expect_res, expect_grad_res):
     assert np.array_equal(res2.asnumpy(), expect_grad_res.asnumpy())
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_list_item_getattr3():
     """
     Feature: getattr by the item from list of cell.
@@ -268,12 +241,8 @@ def test_list_item_getattr3():
     verify_list_item_getattr2(trainer, expect_res, expect_grad_res)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_cell_list_getattr3():
     """
     Feature: getattr by the item from list of cell.
@@ -292,12 +261,8 @@ def test_cell_list_getattr3():
     verify_list_item_getattr2(trainer, expect_res, expect_grad_res)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_msclass_list_getattr3():
     """
     Feature: getattr by the item from list of ms_class.

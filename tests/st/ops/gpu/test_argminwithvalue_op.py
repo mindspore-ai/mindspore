@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -112,23 +113,17 @@ def argminwithvalue_tensor(context_mode, np_type):
     return x.argmin_with_value(axis=-1)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_argminwithvalue_base_float32():
     argminwithvalue_base(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argminwithvalue_base_float16():
     argminwithvalue_base(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argminwithvalue_3d_float32():
     shape_x = (2, 32, 256)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
@@ -137,18 +132,14 @@ def test_argminwithvalue_3d_float32():
     argminwithvalue_3d(np.float32, shape_x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argminwithvalue_3d_float16():
     shape_x = (2, 64, 128)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     argminwithvalue_3d(np.float16, shape_x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argminwithvalue_3d_big_float32():
     shape_x = (128, 1024, 1)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
@@ -157,9 +148,7 @@ def test_argminwithvalue_3d_big_float32():
     argminwithvalue_3d(np.float32, shape_x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_argminwithvalue_functional():
     """
     Feature: support min op functional.
@@ -179,9 +168,7 @@ def test_argminwithvalue_functional():
     assert (output.asnumpy() == expect_output).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_argminwithvalue_tensor():
     """
     Feature: support tensor's argmin_with_value op.
@@ -205,9 +192,7 @@ def test_argminwithvalue_tensor():
     assert (output.asnumpy() == expect_output_int16).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_argminwithvalue_dynamic_shape():
     """
     Feature: support argmin_with_value op with dynamic shape.

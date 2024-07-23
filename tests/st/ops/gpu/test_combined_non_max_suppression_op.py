@@ -32,9 +32,6 @@ class NetCombinedNonMaxSuppression(nn.Cell):
                                                  iou_threshold, score_threshold)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def cmp(output, expect):
     output_type = output.asnumpy().dtype
     expect_type = expect.asnumpy().dtype

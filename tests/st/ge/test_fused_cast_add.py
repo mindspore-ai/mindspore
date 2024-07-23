@@ -14,6 +14,7 @@
 # ============================================================================
 import os
 import pytest
+from tests.mark_utils import arg_mark
 from mindspore import context
 from mindspore import Tensor, nn
 from mindspore.ops import operations as P
@@ -51,10 +52,7 @@ def delete_previous_graph(dir_path):
         os.system(f"rm -r {dir_path}")
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('compute_dtype', [mstype.float16, mstype.bfloat16])
 @pytest.mark.parametrize('enable_fused_cast_add_opt', [True, False])
 def test_fused_cast_add(compute_dtype, enable_fused_cast_add_opt):

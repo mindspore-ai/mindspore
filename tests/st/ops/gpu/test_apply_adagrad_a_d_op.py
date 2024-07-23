@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -141,9 +142,7 @@ def ms_forward_impl_vmap2(grad, np_lr, np_l1, np_l2, np_global_step, data_type):
     return output
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_apply_adagrad_da_float():
     """
     Feature: ApplyAdagradDA GPU kernel
@@ -168,9 +167,7 @@ def test_apply_adagrad_da_float():
     np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_apply_adagrad_da_float16():
     """
     Feature: ApplyAdagradDA GPU kernel
@@ -197,9 +194,7 @@ def test_apply_adagrad_da_float16():
     np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_apply_adagrad_da_float16_vmap():
     """
     Feature: ApplyAdagradDA vmap test on GPU
@@ -225,9 +220,7 @@ def test_apply_adagrad_da_float16_vmap():
     np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_apply_adagrad_da_float_vmap():
     """
     Feature: ApplyAdagradDA vmap test on GPU
@@ -252,9 +245,7 @@ def test_apply_adagrad_da_float_vmap():
     np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_apply_adagrad_da_float16_vmap2():
     """
     Feature: ApplyAdagradDA vmap test on GPU
@@ -280,9 +271,7 @@ def test_apply_adagrad_da_float16_vmap2():
     np.testing.assert_allclose(np_out, ms_out.asnumpy(), rtol=error, atol=error)
 
 
-@pytest.mark.level2
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu_training
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_apply_adagrad_da_float_vmap2():
     """
     Feature: ApplyAdagradDA vmap test on GPU

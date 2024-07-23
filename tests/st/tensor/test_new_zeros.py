@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from tests.mark_utils import arg_mark
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -11,13 +12,10 @@ class Net(nn.Cell):
         return x.new_zeros(size, dtype=dtype)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [None, mstype.int32])
 def test_new_zeros(mode, dtype):

@@ -18,6 +18,7 @@ import pytest
 import mindspore as ms
 from mindspore import mint, jit, JitConfig
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -41,10 +42,7 @@ def leaky_relu_backward_func(x, negative_slope):
     return input_grad
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_leaky_relu_std(mode):
     """
@@ -72,10 +70,7 @@ def test_leaky_relu_std(mode):
     assert np.allclose(output_grad.asnumpy(), expect_grad)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_leaky_relu_dynamic_shape():
     """
     Feature: Test leaky relu with dynamic shape in graph mode.
@@ -89,9 +84,7 @@ def test_leaky_relu_dynamic_shape():
             disable_input_check=True, disable_mode=['GRAPH_MODE'])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_leaky_relu_bfloat16(mode):
     """

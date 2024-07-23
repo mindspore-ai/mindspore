@@ -13,7 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """ test_pynative_model """
-import pytest
 import numpy as np
 
 import mindspore.nn as nn
@@ -22,6 +21,7 @@ from mindspore import context
 from mindspore.nn.optim import Momentum
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 
 grad_by_list = C.GradOperation(get_by_list=True)
@@ -44,9 +44,10 @@ class GradWrap(nn.Cell):
         return grad_by_list(self.network, weights)(x, label)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_softmaxloss_grad():
     """ test_softmaxloss_grad """
 
@@ -86,9 +87,10 @@ def test_softmaxloss_grad():
     print(out[0], (out[0]).asnumpy(), ":result")
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_lenet_grad():
     """ test_lenet_grad """
 

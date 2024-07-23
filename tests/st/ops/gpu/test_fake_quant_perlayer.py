@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -42,9 +43,7 @@ class Net(nn.Cell):
         return self.fake_quant(x, minq, maxq)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant1():
     # (8, false, 0.0f, 0.0f, Shape({2, 3}),
     # {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f},
@@ -64,9 +63,7 @@ def test_fake_quant1():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant2():
     # 8, false, -10.0f, 53.75f, Shape({2, 3}),
     # {-10.1f, -10.0f, -9.9f, -9.75f, 53.75f, 53.8f},
@@ -86,9 +83,7 @@ def test_fake_quant2():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant3():
     # WithVarsNoNudging_NarrowRange
     x = np.array([-10.1, -10.0, -9.90, -9.75, 53.5, 53.6]).reshape(2, 3).astype(np.float32)
@@ -106,9 +101,7 @@ def test_fake_quant3():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant4():
     # WithVarsNudgedDown_RegularRange
     x = np.array([-0.1, 0.0, 0.1, 0.25, 63.75, 63.8]).reshape(2, 3).astype(np.float32)
@@ -126,9 +119,7 @@ def test_fake_quant4():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant5():
     # WithVarsNudgedDown_NarrowRange
     x = np.array([-0.1, 0.0, 0.1, 0.25, 63.5, 63.6]).reshape(2, 3).astype(np.float32)
@@ -146,9 +137,7 @@ def test_fake_quant5():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant6():
     # WithVarsNudgedUp_RegularRange
     x = np.array([-0.26, -0.25, -0.24, 0.0, 63.5, 63.6]).reshape(2, 3).astype(np.float32)
@@ -166,9 +155,7 @@ def test_fake_quant6():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant7():
     # WithVarsNudgedUp_NarrowRange
     x = np.array([-0.26, -0.25, -0.24, 0.0, 63.25, 63.3]).reshape(2, 3).astype(np.float32)
@@ -186,9 +173,7 @@ def test_fake_quant7():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant8():
     # WithVarsNudgedZeroIs255_RegularRange
     x = np.array([-63.80, -63.75, -63.70, -63.5, 0.0, 0.1]).reshape(2, 3).astype(np.float32)
@@ -206,9 +191,7 @@ def test_fake_quant8():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant9():
     # WithVarsNudgedZeroIs255_NarrowRange
     x = np.array([-63.6, -63.5, -63.4, -63.25, 0.0, 0.1]).reshape(2, 3).astype(np.float32)
@@ -226,9 +209,7 @@ def test_fake_quant9():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant10():
     # WithVarsNoNudging_4Bits_RegularRange
     x = np.array([-6.1, -6.0, -5.9, -5.5, 1.5, 1.6]).reshape(2, 3).astype(np.float32)
@@ -246,9 +227,7 @@ def test_fake_quant10():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant11():
     # WithVarsNoNudging_4Bits_NarrowRange
     x = np.array([-6.1, -6.0, -5.9, -5.5, 1.0, 1.1]).reshape(2, 3).astype(np.float32)
@@ -266,9 +245,7 @@ def test_fake_quant11():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant12():
     # WithVarsNudgedDown_4Bits_RegularRange
     x = np.array([-0.1, 0.0, 0.1, 0.5, 7.5, 7.6]).reshape(2, 3).astype(np.float32)
@@ -286,9 +263,7 @@ def test_fake_quant12():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant13():
     # WithVarsNudgedDown_4Bits_NarrowRange
     x = np.array([-0.1, 0.0, 0.1, 0.5, 7.0, 7.1]).reshape(2, 3).astype(np.float32)
@@ -306,9 +281,7 @@ def test_fake_quant13():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant14():
     # WithVarsNudgedUp_4Bits_RegularRange
     x = np.array([-0.6, -0.5, -0.24, 0.0, 7.0, 7.1]).reshape(2, 3).astype(np.float32)
@@ -326,9 +299,7 @@ def test_fake_quant14():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant15():
     # WithVarsNudgedUp_4Bits_NarrowRange
     x = np.array([-0.6, -0.5, -0.24, 0.0, 6.5, 6.6]).reshape(2, 3).astype(np.float32)
@@ -346,9 +317,7 @@ def test_fake_quant15():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant16():
     # WithVarsNudgedZero15_4Bits_RegularRange
     x = np.array([-7.6, -7.5, -7.4, -7.2, 0.0, 0.1]).reshape(2, 3).astype(np.float32)
@@ -366,9 +335,7 @@ def test_fake_quant16():
     assert np.all(np.abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fake_quant17():
     # WithVarsNudgedZero15_4Bits_NarrowRange
     x = np.array([-7.1, -7.0, -6.9, -6.5, 0.0, 0.1]).reshape(2, 3).astype(np.float32)

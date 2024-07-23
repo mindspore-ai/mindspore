@@ -7,12 +7,10 @@ from mindspore.common import dtype as mstype
 from mindspore import Tensor, jit, context
 import mindspore.ops.operations as op
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_input_245520():
     """
     Description:
@@ -26,9 +24,7 @@ def test_p_equal_forward_input_245520():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_input_n():
     """
     Description:
@@ -44,9 +40,7 @@ def test_p_equal_forward_input_n():
             fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_input():
     """
     Description:
@@ -64,9 +58,7 @@ def test_p_equal_forward_input():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_normal_outshape_sameas_first_input():
     """
     Description:
@@ -84,9 +76,7 @@ def test_p_equal_normal_outshape_sameas_first_input():
     assert out.shape == (256, 1), out.dtype == ms.bool_
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_dtype_float16_0d():
     """
     Description:
@@ -105,9 +95,7 @@ def test_p_equal_forward_dtype_float16_0d():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_dtype_float64_1d():
     """
     Description:
@@ -121,9 +109,7 @@ def test_p_equal_forward_dtype_float64_1d():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_dtype_float16_2d():
     """
     Description:
@@ -138,9 +124,7 @@ def test_p_equal_forward_dtype_float16_2d():
 
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_dtype_float32_3d():
     """
     Description:
@@ -154,9 +138,7 @@ def test_p_equal_forward_dtype_float32_3d():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_dtype_int8_4d():
     """
     Description:
@@ -170,9 +152,7 @@ def test_p_equal_forward_dtype_int8_4d():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_dtype_int16_4d():
     """
     Description:
@@ -186,9 +166,7 @@ def test_p_equal_forward_dtype_int16_4d():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_dtype_int32_5d():
     """
     Description:
@@ -202,9 +180,7 @@ def test_p_equal_forward_dtype_int32_5d():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_dtype_int64_6d():
     """
     Description:
@@ -218,9 +194,7 @@ def test_p_equal_forward_dtype_int64_6d():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_dtype_uint8_7d():
     """
     Description:
@@ -234,9 +208,7 @@ def test_p_equal_forward_dtype_uint8_7d():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_dtype_int64():
     """
     Description:
@@ -250,9 +222,7 @@ def test_p_equal_forward_dtype_int64():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_input_num():
     """
     Description:
@@ -271,9 +241,7 @@ def test_p_equal_forward_input_num():
     assert out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_input_uint32():
     """
     Description:
@@ -287,9 +255,7 @@ def test_p_equal_forward_input_uint32():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_input_bool_for_gpu():
     """
     Description:
@@ -314,9 +280,7 @@ def test_p_equal_forward_input_bool_for_gpu():
     allclose_nparray(out2[0].numpy(), out1[0].asnumpy(), 0.001, 0.001)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_input_type_float64_for_gpu():
     """
     Description:
@@ -330,9 +294,7 @@ def test_p_equal_forward_input_type_float64_for_gpu():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_forward_dtype_bool_for_gpu():
     """
     Description:
@@ -346,9 +308,7 @@ def test_p_equal_forward_dtype_bool_for_gpu():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_input_dtype_string():
     """
     Description:
@@ -367,9 +327,7 @@ def test_p_equal_input_dtype_string():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_input_dtype_bool():
     """
     Description:
@@ -388,9 +346,7 @@ def test_p_equal_input_dtype_bool():
     fact.forward_cmp()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_p_equal_input_dtype_bool2():
     """
     Description:

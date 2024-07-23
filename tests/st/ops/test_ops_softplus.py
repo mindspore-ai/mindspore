@@ -19,6 +19,7 @@ from mindspore import ops
 from mindspore.mint.nn.functional import softplus
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_random_input(shape, dtype):
@@ -46,9 +47,7 @@ def softplus_vmap_func(x, beta=1, threshold=20):
     return ops.vmap(softplus_forward_func, in_axes=(0, None, None), out_axes=0)(x, beta, threshold)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_softplus_forward(context_mode):
     """
@@ -68,9 +67,7 @@ def test_ops_softplus_forward(context_mode):
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_softplus_bf16(context_mode):
     """
@@ -90,9 +87,7 @@ def test_ops_softplus_bf16(context_mode):
     np.testing.assert_allclose(output2.float().asnumpy(), expect2, rtol=5e-3, atol=5e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_softplus_backward(context_mode):
     """
@@ -112,9 +107,7 @@ def test_ops_softplus_backward(context_mode):
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_softplus_vmap(context_mode):
     """
@@ -134,9 +127,7 @@ def test_ops_softplus_vmap(context_mode):
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_softplus_dynamic_shape():
     """
     Feature: Test dynamic shape.

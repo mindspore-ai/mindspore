@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 """ test loss """
 import numpy as np
 import pytest
@@ -58,10 +59,13 @@ def func_with_dtype(ms_dtype, np_dtype):
     assert np.allclose(x.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_single_output():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     func_with_dtype(ms.float16, np.float16)
     func_with_dtype(ms.float32, np.float32)
@@ -70,10 +74,13 @@ def test_pyfunc_single_output():
     func_with_dtype(ms.int64, np.int64)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_multi_output():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     shape = (40, 40)
     dtype = ms.float32
@@ -98,10 +105,13 @@ class PyFuncGraph(nn.Cell):
     def construct(self, x1, x2):
         return self.func((x1, x2))
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_no_output():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     shape = (40, 40)
     dtype = ms.float32
@@ -120,10 +130,13 @@ def test_pyfunc_no_output():
     assert np.allclose(net_output, expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_pyfunc_scalar():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     shape = ()
     ms_dtype = ms.int32

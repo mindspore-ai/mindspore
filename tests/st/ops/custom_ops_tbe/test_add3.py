@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 from cus_add3 import CusAdd3
@@ -34,8 +35,6 @@ class Net(nn.Cell):
         return self.add3(input1, input2)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_net():
     input1 = np.array([1.0, 4.0, 9.0]).astype(np.float32)
     input2 = np.array([1.0, 2.0, 3.0]).astype(np.float32)

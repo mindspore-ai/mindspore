@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -35,9 +36,7 @@ class RaggedRangeNet(Cell):
         return self.ragged_range(starts, limits, deltas)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ragged_range_int():
     """
     Feature: test int32.
@@ -58,9 +57,7 @@ def test_ragged_range_int():
     np.testing.assert_array_equal(rt_dense_values.asnumpy(), rt_dense_values_expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ragged_range_float():
     """
     Feature: test float32.
@@ -81,9 +78,7 @@ def test_ragged_range_float():
     np.testing.assert_array_equal(rt_dense_values.asnumpy(), rt_dense_values_expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ragged_range_int64():
     """
     Feature: test int64.
@@ -104,9 +99,7 @@ def test_ragged_range_int64():
     np.testing.assert_array_equal(rt_dense_values.asnumpy(), rt_dense_values_expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ragged_range_float64():
     """
     Feature: test float64.
@@ -127,9 +120,7 @@ def test_ragged_range_float64():
     np.allclose(rt_dense_values.asnumpy(), rt_dense_values_expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ragged_range_negative_delta():
     """
     Feature: test negative deltas.
@@ -150,9 +141,7 @@ def test_ragged_range_negative_delta():
     np.allclose(rt_dense_values.asnumpy(), rt_dense_values_expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ragged_range_empty_result():
     """
     Feature: test RaggedRange empty result.
@@ -173,9 +162,7 @@ def test_ragged_range_empty_result():
     np.allclose(rt_dense_values.asnumpy(), rt_dense_values_expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ragged_range_neither_0d_nor_1d():
     """
     Feature: test RaggedRange with tensor is neither 0d nor 1d.
@@ -194,9 +181,7 @@ def test_ragged_range_neither_0d_nor_1d():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ragged_range_invalid_arg_zero_delta():
     """
     Feature: test RaggedRange with zero delta.
@@ -211,9 +196,7 @@ def test_ragged_range_invalid_arg_zero_delta():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ragged_range_shapes_mismatch():
     """
     Feature: test RaggedRange with mismatch shapes.
@@ -230,9 +213,7 @@ def test_ragged_range_shapes_mismatch():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ragged_range_not_tensor():
     """
     Feature: test RaggedRange with non tensor input.
@@ -250,9 +231,7 @@ def test_ragged_range_not_tensor():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ragged_range_not_the_same_type():
     """
     Feature: test RaggedRange with different input types.
@@ -269,9 +248,7 @@ def test_ragged_range_not_the_same_type():
         _pynative_executor.sync()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ragged_range_tsplits_invalid_type():
     """
     Feature: test RaggedRange with invalid type.

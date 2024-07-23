@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -32,9 +33,7 @@ class NetUniqueConsecutive(nn.Cell):
         return ops.unique_consecutive(x, self.return_idx, self.return_counts, self.axis)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_consecutive():
     """
     Feature: UniqueConsecutive operator.
@@ -49,9 +48,7 @@ def test_unique_consecutive():
     assert (out.asnumpy() == exp_out).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_consecutive_return_idx():
     """
     Feature: UniqueConsecutive operator.
@@ -68,9 +65,7 @@ def test_unique_consecutive_return_idx():
     assert (idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_consecutive_return_counts():
     """
     Feature: UniqueConsecutive operator.
@@ -87,9 +82,7 @@ def test_unique_consecutive_return_counts():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_consecutive_set_axis_0():
     """
     Feature: UniqueConsecutive operator.
@@ -108,9 +101,7 @@ def test_unique_consecutive_set_axis_0():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_consecutive_set_axis_1():
     """
     Feature: UniqueConsecutive operator.
@@ -129,9 +120,7 @@ def test_unique_consecutive_set_axis_1():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_consecutive_1d_int32():
     """
     Feature: UniqueConsecutive operator.
@@ -150,9 +139,7 @@ def test_unique_consecutive_1d_int32():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_consecutive_1d_int64():
     """
     Feature: UniqueConsecutive operator.
@@ -171,9 +158,7 @@ def test_unique_consecutive_1d_int64():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_consecutive_1d_half():
     """
     Feature: UniqueConsecutive operator.
@@ -192,9 +177,7 @@ def test_unique_consecutive_1d_half():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_consecutive_1d_float():
     """
     Feature: UniqueConsecutive operator.
@@ -213,9 +196,7 @@ def test_unique_consecutive_1d_float():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_consecutive_0d():
     """
     Feature: UniqueConsecutive operator.
@@ -234,9 +215,7 @@ def test_unique_consecutive_0d():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_consecutive_3d():
     """
     Feature: UniqueConsecutive operator.
@@ -256,9 +235,7 @@ def test_unique_consecutive_3d():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_unique_consecutive_3d_axis():
     """
     Feature: UniqueConsecutive operator.
@@ -284,9 +261,7 @@ class NetTensor(nn.Cell):
         return x.unique_consecutive(return_idx, return_counts, axis)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_return_output():
     """
     Feature: UniqueConsecutive operator.
@@ -301,9 +276,7 @@ def test_tensor_return_output():
     assert (out.asnumpy() == exp_out).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_return_idx():
     """
     Feature: UniqueConsecutive operator.
@@ -320,9 +293,7 @@ def test_tensor_return_idx():
     assert (idx.asnumpy() == exp_idx).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_return_counts():
     """
     Feature: UniqueConsecutive operator.
@@ -339,9 +310,7 @@ def test_tensor_return_counts():
     assert (counts.asnumpy() == exp_counts).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_return_all():
     """
     Feature: UniqueConsecutive operator.
@@ -373,9 +342,7 @@ class NetDynamic(nn.Cell):
         return x_out, x_idx, x_counts, x_split
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic():
     """
     Feature: UniqueConsecutive operator.

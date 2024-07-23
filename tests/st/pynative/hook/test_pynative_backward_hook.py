@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.ops import GradOperation
 from mindspore.common import ParameterTuple
+from tests.mark_utils import arg_mark
 
 
 def forward_pre_hook_fn_add(cell, inp):
@@ -122,12 +122,10 @@ class CmpNetFWHook(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_backward_hook():
     """
     Feature: PyNative hook function.
@@ -173,12 +171,10 @@ def test_pynative_backward_hook():
     assert np.allclose(grad[1].asnumpy(), expect_grady.asnumpy(), 0.000001, 0.000001)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_pynative_hook_base_line():
     """
     Feature: PyNative hook function.

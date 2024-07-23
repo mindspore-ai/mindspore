@@ -1,7 +1,7 @@
 import numpy as np
-import pytest
 from mindspore import Tensor, Model, context, jit
 from mindspore.nn import Cell
+from tests.mark_utils import arg_mark
 
 
 def run_test(netclass, count, dev):
@@ -121,9 +121,7 @@ class PassBranch(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_cont_break():
     """
     Feature: Get container with break

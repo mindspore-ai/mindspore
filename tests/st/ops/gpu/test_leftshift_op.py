@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -30,9 +31,7 @@ class NetLeftShift(nn.Cell):
         return self.leftshift(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_leftshift_1d():
     """
     Feature: LeftShift gpu TEST.
@@ -54,9 +53,7 @@ def test_leftshift_1d():
     assert np.allclose(z_np, z_ms.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_leftshift_2d():
     """
     Feature: LeftShift gpu TEST.

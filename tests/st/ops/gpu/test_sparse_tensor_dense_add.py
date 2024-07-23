@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 """smoke tests for SparseMatrixSoftmax"""
 
 import numpy as np
@@ -41,7 +42,7 @@ def generate_data(datatype="float32", indicetype="int32"):
     return data
 
 
-@pytest.mark.level1
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('indicetype, datatype', [("int32", "int8"),
                                                   ("int32", "int16"),
                                                   ("int32", "int32"),
@@ -60,8 +61,6 @@ def generate_data(datatype="float32", indicetype="int32"):
                                                   ("int64", "float64"),
                                                   ("int64", "complex64"),
                                                   ("int64", "complex128")])
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_sparse_tensor_dense_add(indicetype, datatype):
     """
     Feature: Test sparse tensor dense add ops.
@@ -78,9 +77,7 @@ def test_sparse_tensor_dense_add(indicetype, datatype):
     assert np.all(expected - out < eps)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparse_tensor_dense_add_dyn():
     """
     Feature: test SparseTensorDenseAdd op in gpu.

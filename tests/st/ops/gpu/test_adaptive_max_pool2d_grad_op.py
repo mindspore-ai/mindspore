@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -31,9 +32,7 @@ class NetAdaptiveMaxPool2DGrad(nn.Cell):
         return self.adaptive_max_pool2d_grad_fun(dy, x, argmax)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_adaptive_max_pool2d_grad_fp32():
     """
     Feature: test adaptivemaxpool2dgrad op.
@@ -72,9 +71,7 @@ def test_adaptive_max_pool2d_grad_fp32():
     assert np.allclose(expect_result, output.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_adaptive_max_pool2d_grad_fp16():
     """
     Feature: test adaptivemaxpool2dgrad op.

@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import tests.st.ge.ge_test_utils as utils
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fallback_np():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -29,10 +26,7 @@ def test_fallback_np():
     utils.run_testcase('ge_fallback_numpy', 'test_fallback_np')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fallback_np_asnumpy():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -42,10 +36,7 @@ def test_fallback_np_asnumpy():
     utils.run_testcase('ge_fallback_numpy', 'test_fallback_np_asnumpy')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_tensor_asnumpy():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -55,10 +46,7 @@ def test_tensor_asnumpy():
     utils.run_testcase('ge_fallback_numpy', 'test_tensor_asnumpy')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_jit_tensor_asnumpy():
     """
     Feature: Support JIT Fallback runtime feature.

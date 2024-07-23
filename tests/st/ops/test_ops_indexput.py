@@ -16,6 +16,7 @@
 import numpy as np
 import pytest
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 from mindspore import ops
 import mindspore as ms
 
@@ -30,16 +31,13 @@ def indexput_backward_func(x1, x2, indices, accumulate=0):
     return ops.grad(indexput_forward_func, (0, 1))(x1, x2, indices, accumulate)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
-def test_indexput_op_forward(context_mode):
+def test_indexput_op_normal(context_mode):
     """
     Feature: Ops.
-    Description: test op indexput forward.
+    Description: test op indexput forward and backward.
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
@@ -51,24 +49,6 @@ def test_indexput_op_forward(context_mode):
     expected_out = np.array([[1, 2], [3, 4]], np.float32)
     np.testing.assert_allclose(out.asnumpy(), expected_out, rtol=1e-3)
 
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@test_utils.run_test_with_On
-def test_indexput_op_backward(context_mode):
-    """
-    Feature: Ops.
-    Description: test op indexput backward.
-    Expectation: expect correct result.
-    """
-    ms.context.set_context(mode=context_mode)
-
-    x1 = ms.Tensor([[0, 0], [0, 0]], dtype=ms.float32)
-    x2 = ms.Tensor([1, 2, 3, 4], dtype=ms.float32)
-    indices = (ms.Tensor([0, 0, 1, 1]), ms.Tensor([0, 1, 0, 1]))
     out = indexput_backward_func(x1, x2, indices)
     x1_grad, x2_grad = out[0].asnumpy(), out[1].asnumpy()
     expected_x1_grad = np.zeros(x1.shape)
@@ -77,10 +57,7 @@ def test_indexput_op_backward(context_mode):
     np.testing.assert_allclose(x2_grad, expected_x2_grad, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_indexput_op_forward_accumulate(context_mode):
@@ -99,10 +76,7 @@ def test_indexput_op_forward_accumulate(context_mode):
     np.testing.assert_allclose(out.asnumpy(), expected_out, rtol=1e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_indexput_op_backward_accumulate(context_mode):

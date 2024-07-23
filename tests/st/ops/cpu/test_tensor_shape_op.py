@@ -30,9 +30,7 @@ class Net(nn.Cell):
         return self.op(tensor)
 
 
-@pytest.mark.levle0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test_tensor_shape_dyn():
     """
     Feature: test Shape ops in cpu.

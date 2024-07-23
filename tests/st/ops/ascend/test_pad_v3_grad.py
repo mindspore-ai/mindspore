@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 
 import pytest
@@ -32,8 +33,6 @@ class PadV3GradNet(nn.Cell):
         return self.op(x, paddings)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_padv3grad_circular_3d(mode):
     """
@@ -52,8 +51,6 @@ def test_padv3grad_circular_3d(mode):
     np.testing.assert_almost_equal(expect, output.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_padv3grad_circular_4d(mode):
     """
@@ -72,8 +69,6 @@ def test_padv3grad_circular_4d(mode):
     np.testing.assert_almost_equal(expect, output.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_padv3grad_circular_5d(mode):
     """

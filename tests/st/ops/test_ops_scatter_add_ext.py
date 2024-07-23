@@ -20,6 +20,7 @@ from mindspore.mint import scatter_add
 from mindspore import Tensor, ops
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 @test_utils.run_with_cell
@@ -32,9 +33,7 @@ def scatter_add_ext_backward_func(x, dim, index, src):
     return ops.grad(scatter_add_ext_forward_func, (0, 3))(x, dim, index, src)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatter_add_ext_normal(mode):
     """
@@ -88,9 +87,7 @@ def test_scatter_add_ext_normal(mode):
     assert np.allclose(out1[1].asnumpy(), expect_dsrc)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatter_add_ext_vmap(mode):
     """
@@ -112,9 +109,7 @@ def test_scatter_add_ext_vmap(mode):
     assert np.allclose(out.asnumpy(), expect.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatter_add_ext_bfloat16(mode):
     """
@@ -168,9 +163,7 @@ def test_scatter_add_ext_bfloat16(mode):
     assert np.allclose(out1[1].float().asnumpy(), expect_dsrc, rtol=4e-3, atol=4e-3)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_add_ext_dynamic():
     """
     Feature: test dynamic by TEST_OP.

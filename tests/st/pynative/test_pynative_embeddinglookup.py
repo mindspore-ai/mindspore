@@ -13,11 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """ test_pynative_embeddinglookup """
-import pytest
 import numpy as np
 import mindspore.ops.operations as op
 from mindspore import Tensor, context
 from mindspore.nn import Cell
+from tests.mark_utils import arg_mark
 
 def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
@@ -65,8 +65,11 @@ class EmbeddingLookupFactory(OpsFactory):
         out = net(Tensor(self.input_np), Tensor(self.indices_np))
         return out.asnumpy()
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_embeddinglookup_indices_outrange():
     fact = EmbeddingLookupFactory(params_shape=(2, 4), indices_shape=(2, 3), low=1, high=3, offset=10, dtype=np.int8)
     out = fact.forward_mindspore_impl()

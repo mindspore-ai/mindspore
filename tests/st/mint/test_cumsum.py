@@ -20,6 +20,7 @@ from mindspore import ops, jit, JitConfig
 from mindspore.mint import cumsum
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 def generate_random_input(shape, dim):
     x = np.random.randn(*shape)
@@ -44,12 +45,9 @@ def cumsum_backward_func(x, dim):
     return cumsum_bwd_func(x, dim)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
-def test_cumsum_forward(mode):
+def test_cumsum_normal(mode):
     """
     Feature: Ops.
     Description: test op cumsum.
@@ -57,18 +55,22 @@ def test_cumsum_forward(mode):
     """
     test_shape = (2, 3, 4, 5)
     dim1 = 2
+    dim2 = 0
+
     x, expect = generate_random_input(test_shape, dim1)
+    expect1 = np.flip(np.cumsum(np.flip(np.ones(test_shape), dim2), dim2), dim2)
     if mode == 'pynative':
         ms.set_context(mode=ms.PYNATIVE_MODE)
         output = cumsum_forward_func(ms.Tensor(x), dim1)
+        output1 = cumsum_backward_func(ms.Tensor(x), dim2)
     else:
         output = (jit(cumsum_forward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x), dim1)
+        output1 = (jit(cumsum_backward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x), dim2)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
+    np.testing.assert_allclose(output1.asnumpy(), expect1, rtol=1e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_cumsum_bfloat16(mode):
     """
@@ -87,34 +89,7 @@ def test_cumsum_bfloat16(mode):
     np.testing.assert_allclose(output.float().asnumpy(), expect, rtol=5e-3, atol=5e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
-def test_cumsum_backward(mode):
-    """
-    Feature: Ops.
-    Description: test op cumsum.
-    Expectation: expect correct result.
-    """
-    test_shape = (2, 3, 4, 5)
-    dim1 = 0
-    x, _ = generate_random_input(test_shape, dim1)
-    expect = np.flip(np.cumsum(np.flip(np.ones(test_shape), dim1), dim1), dim1)
-    if mode == 'pynative':
-        ms.set_context(mode=ms.PYNATIVE_MODE)
-        output = cumsum_backward_func(ms.Tensor(x), dim1)
-    else:
-        output = (jit(cumsum_backward_func, jit_config=JitConfig(jit_level="O0")))(ms.Tensor(x), dim1)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
-
-
-
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_cumsum_dynamic_shape():
     """
     Feature: Test dynamic shape.

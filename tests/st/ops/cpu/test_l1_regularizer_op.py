@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 """ Test L1Regularizer """
 import numpy as np
 import pytest
@@ -32,9 +33,7 @@ class Net_l1_regularizer(nn.Cell):
         return self.l1_regularizer(weights)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_l1_regularizer01():
     scale = 0.5
     weights = Tensor(np.array([[1.0, -2.0], [-3.0, 4.0]]).astype(np.float32))
@@ -47,9 +46,7 @@ def test_l1_regularizer01():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_l1_regularizer08():
     scale = 0.5
     net = nn.L1Regularizer(scale)
@@ -60,9 +57,7 @@ def test_l1_regularizer08():
     assert np.all(output.asnumpy() == expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_l1_regularizer_input_int():
     scale = 0.5
     net = nn.L1Regularizer(scale)
@@ -74,9 +69,7 @@ def test_l1_regularizer_input_int():
         assert True
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_l1_regularizer_input_tuple():
     scale = 0.5
     net = nn.L1Regularizer(scale)

@@ -17,6 +17,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import ops, mint, jit, JitConfig
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 
 
 def generate_expect_backward_output(values, indices, x, dim):
@@ -34,10 +35,7 @@ def sort_backward_func(x, dim, descending, stable):
     return ops.grad(sort_forward_func, (0, 1, 2, 3))(x, dim=dim, descending=descending, stable=stable)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("descending", [True, False])
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_sort_std(descending, mode):
@@ -91,10 +89,7 @@ def sort_forward_func_dyn(x, dim):
     return mint.sort(x, dim=dim, descending=True, stable=True)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_sort_dynamic_shape():
     """
     Feature: Test sort with dynamic shape.

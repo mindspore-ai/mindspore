@@ -5,6 +5,7 @@ import mindspore.ops.operations as P
 from mindspore import Parameter
 from mindspore import context, jit
 import numpy as np
+from tests.mark_utils import arg_mark
 
 
 class IfInFor(Cell):
@@ -28,9 +29,7 @@ class IfInFor(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_for_in_for_break_phi_node_eliminate():
     """
     Feature: Phi node eliminate.

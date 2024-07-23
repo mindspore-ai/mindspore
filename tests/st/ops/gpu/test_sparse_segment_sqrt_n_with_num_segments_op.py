@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 import mindspore as ms
@@ -78,9 +79,7 @@ def sparse_segment_sqrt_n_with_num_segments_pynative(loss):
     assert np.allclose(out_ms.asnumpy(), expected, loss, loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_segment_sqrt_n_with_num_segments_graph_float32_int32_int32_int32():
     """
     Feature: ALL To ALL
@@ -90,9 +89,7 @@ def test_sparse_segment_sqrt_n_with_num_segments_graph_float32_int32_int32_int32
     sparse_segment_sqrt_n_with_num_segments(loss=1.0e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_sparse_segment_sqrt_n_with_num_segments_pynative_float64_int64_int64_int64():
     """
     Feature: ALL To ALL
@@ -102,9 +99,7 @@ def test_sparse_segment_sqrt_n_with_num_segments_pynative_float64_int64_int64_in
     sparse_segment_sqrt_n_with_num_segments_pynative(loss=1.0e-5)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_sparse_segment_sqrt_n_with_num_segments_dyn():
     """
     Feature: test SparseSegmentSqrtNWithNumSegments ops in gpu.

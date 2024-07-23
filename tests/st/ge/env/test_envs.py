@@ -12,14 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import tests.st.ge.ge_test_utils as utils
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_ms_format_mode():
     """
     Feature: for MS_FORMAT_MODE
@@ -32,10 +29,7 @@ def test_ms_format_mode():
                                      "GE option: ge.exec.formatMode, value: 1")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ms_disable_ref_mode():
     """
     Feature: for MS_DISABLE_REF_MODE
@@ -50,9 +44,7 @@ def test_ms_disable_ref_mode():
     utils.run_testcase("test_ms_disable_ref_mode", "test_ms_disable_ref_mode_1_pynative_mode")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ms_ascend_check_overflow_mode():
     """
     Feature: for MS_ASCEND_CHECK_OVERFLOW_MODE
@@ -67,10 +59,7 @@ def test_ms_ascend_check_overflow_mode():
                                      "The current overflow detection mode is INFNAN")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ms_enable_io_reuse():
     """
     Feature: for MS_ENABLE_IO_REUSE

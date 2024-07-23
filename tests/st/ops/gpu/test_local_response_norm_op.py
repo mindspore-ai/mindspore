@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -48,9 +49,7 @@ class MSGradNet(nn.Cell):
         return output
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lrn_ms():
     x = Tensor(np.array([[[[1.6243454, -0.6117564],
                            [-0.5281718, -1.0729686]],
@@ -74,9 +73,7 @@ def test_lrn_ms():
     assert np.allclose(output.asnumpy(), y_exp)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lrn_grad():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = Tensor(np.array([[[[1.6243454, -0.6117564],
@@ -99,9 +96,7 @@ def test_lrn_grad():
     assert np.allclose(dx, dx_exp, atol=1.0e-4, rtol=1.0e-4, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lrn_grad_dynamic_shape():
     """
     Feature: test lrn_grad op in gpu.

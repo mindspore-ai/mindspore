@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -63,9 +64,7 @@ def maskedfill_fun(ntype):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_maskedfill_float():
     """
     Feature: Test MaskedFill op.
@@ -75,9 +74,7 @@ def test_maskedfill_float():
     maskedfill_fun(np.float32)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_maskedfill_float16():
     """
     Feature: Test MaskedFill op.
@@ -87,9 +84,7 @@ def test_maskedfill_float16():
     maskedfill_fun(np.float16)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_maskedfill_int():
     """
     Feature: Test MaskedFill op.
@@ -99,9 +94,7 @@ def test_maskedfill_int():
     maskedfill_fun(np.int32)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_maskedfill_int8():
     """
     Feature: Test MaskedFill op.
@@ -120,9 +113,7 @@ def maskedfill_value(value):
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_maskedfill_float_value():
     """
     Feature: Test MaskedFill op.
@@ -132,9 +123,7 @@ def test_maskedfill_float_value():
     maskedfill_value(0.5)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_maskedfill_tensor_value():
     """
     Feature: Test MaskedFill op.

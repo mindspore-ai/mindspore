@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -37,10 +38,13 @@ class Assign(nn.Cell):
         return self.y
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_bool():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.bool_))
     y = Tensor(np.zeros([3, 3]).astype(np.bool_))
     assign = Assign(x, y)
@@ -51,10 +55,13 @@ def test_assign_bool():
     assert np.all(output == output_expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_int8():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.int8))
     y = Tensor(np.zeros([3, 3]).astype(np.int8))
     assign = Assign(x, y)
@@ -65,10 +72,13 @@ def test_assign_int8():
     assert np.all(output == output_expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_uint8():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.uint8))
     y = Tensor(np.zeros([3, 3]).astype(np.uint8))
     assign = Assign(x, y)
@@ -79,10 +89,13 @@ def test_assign_uint8():
     assert np.all(output == output_expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_int16():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.int16))
     y = Tensor(np.zeros([3, 3]).astype(np.int16))
     assign = Assign(x, y)
@@ -93,10 +106,13 @@ def test_assign_int16():
     assert np.all(output == output_expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_uint16():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.uint16))
     y = Tensor(np.zeros([3, 3]).astype(np.uint16))
     assign = Assign(x, y)
@@ -107,10 +123,13 @@ def test_assign_uint16():
     assert np.all(output == output_expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_int32():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.int32))
     y = Tensor(np.zeros([3, 3]).astype(np.int32))
     assign = Assign(x, y)
@@ -121,10 +140,13 @@ def test_assign_int32():
     assert np.all(output == output_expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_uint32():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.uint32))
     y = Tensor(np.zeros([3, 3]).astype(np.uint32))
     assign = Assign(x, y)
@@ -135,10 +157,13 @@ def test_assign_uint32():
     assert np.all(output == output_expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_int64():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.int64))
     y = Tensor(np.zeros([3, 3]).astype(np.int64))
     assign = Assign(x, y)
@@ -149,10 +174,13 @@ def test_assign_int64():
     assert np.all(output == output_expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_uint64():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.ones([3, 3]).astype(np.uint64))
     y = Tensor(np.zeros([3, 3]).astype(np.uint64))
     assign = Assign(x, y)
@@ -163,10 +191,13 @@ def test_assign_uint64():
     assert np.all(output == output_expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_float16():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.array([[0.1, 0.2, 0.3],
                          [0.4, 0.5, 0.5],
                          [0.6, 0.7, 0.8]]).astype(np.float16))
@@ -183,10 +214,13 @@ def test_assign_float16():
     assert np.all(output - output_expect < 1e-6)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_float32():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.array([[0.1, 0.2, 0.3],
                          [0.4, 0.5, 0.5],
                          [0.6, 0.7, 0.8]]).astype(np.float32))
@@ -203,10 +237,13 @@ def test_assign_float32():
     assert np.all(output - output_expect < 1e-6)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_assign_float64():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     x = Tensor(np.array([[0.1, 0.2, 0.3],
                          [0.4, 0.5, 0.5],
                          [0.6, 0.7, 0.8]]).astype(np.float64))

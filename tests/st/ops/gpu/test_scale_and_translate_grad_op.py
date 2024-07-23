@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import mindspore.context as context
@@ -30,9 +31,7 @@ class NetScaleAndTranslateGrad(nn.Cell):
         return self.sclae_and_translate_grad_fun(grads, original_image, scale, translation)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scale_and_translate_grad_graph():
     """
     Feature: test operations in result and output type
@@ -60,9 +59,7 @@ def test_scale_and_translate_grad_graph():
     assert np.all(abs(diff) < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scale_and_translate_grad_pynative():
     """
     Feature: test operations in result and output type

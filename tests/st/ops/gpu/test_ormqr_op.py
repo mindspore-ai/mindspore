@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -29,9 +30,7 @@ class OrmqrNet(nn.Cell):
         return self.ormqr(x, tau, other)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ormqr_rank2_right_double_fp():
     """
     Feature: Ormqr operator.
@@ -56,9 +55,7 @@ def test_ormqr_rank2_right_double_fp():
     assert np.allclose(expect, output_py, rtol=1.e-5, atol=1.e-5)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ormqr_rank3_left_double_fp():
     """
     Feature: Ormqr operator.

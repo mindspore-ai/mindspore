@@ -19,6 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -54,9 +55,7 @@ def dropout_net(*args, is_dynamic=False):
     print("input shape: ", x.shape)
     print("output shape: ", out[0].shape)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_dropout_bf16():
     """
     Feature: test dropout operator in graph and pynative mode.
@@ -96,10 +95,7 @@ def test_dropout(dtype=np.float16):
     dropout_net(net, x, indices, is_dynamic=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_float16():
     """
     Feature: test dropout operator.
@@ -109,10 +105,7 @@ def test_float16():
     test_dropout(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_float32():
     """
     Feature: test dropout operator.

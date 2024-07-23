@@ -21,6 +21,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore import jit
 from mindspore.ops.functional import jvp
+from tests.mark_utils import arg_mark
 
 
 class SingleInputSingleOutputNet(nn.Cell):
@@ -43,9 +44,7 @@ class MultipleInputMultipleOutputNet(nn.Cell):
         return 2*x, y**3
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jvp_single_input_single_output_default_v_graph(mode):
     """
@@ -64,9 +63,7 @@ def test_jvp_single_input_single_output_default_v_graph(mode):
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jvp_single_input_single_output_custom_v_graph(mode):
     """
@@ -85,9 +82,7 @@ def test_jvp_single_input_single_output_custom_v_graph(mode):
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jvp_single_input_multiple_outputs_default_v_graph(mode):
     """
@@ -114,9 +109,7 @@ def test_jvp_single_input_multiple_outputs_default_v_graph(mode):
     assert np.allclose(grad[1].asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jvp_single_input_multiple_outputs_custom_v_graph(mode):
     """
@@ -143,9 +136,7 @@ def test_jvp_single_input_multiple_outputs_custom_v_graph(mode):
     assert np.allclose(grad[1].asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jvp_multiple_inputs_single_output_default_v_graph(mode):
     """
@@ -165,9 +156,7 @@ def test_jvp_multiple_inputs_single_output_default_v_graph(mode):
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jvp_multiple_inputs_single_output_custom_v_graph(mode):
     """
@@ -188,9 +177,7 @@ def test_jvp_multiple_inputs_single_output_custom_v_graph(mode):
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jvp_multiple_inputs_multiple_outputs_default_v_graph(mode):
     """
@@ -218,9 +205,7 @@ def test_jvp_multiple_inputs_multiple_outputs_default_v_graph(mode):
     assert np.allclose(grad[1].asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jvp_multiple_inputs_multiple_outputs_custom_v_graph(mode):
     """
@@ -249,9 +234,7 @@ def test_jvp_multiple_inputs_multiple_outputs_custom_v_graph(mode):
     assert np.allclose(grad[1].asnumpy(), expect_grad_1.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jvp_jit_function_single_input_single_output_default_v_graph(mode):
     """
@@ -276,9 +259,7 @@ def test_jvp_jit_function_single_input_single_output_default_v_graph(mode):
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jvp_input_function_single_input_single_output_default_v_graph(mode):
     """
@@ -300,9 +281,7 @@ def test_jvp_input_function_single_input_single_output_default_v_graph(mode):
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jvp_construct_single_input_single_output_default_v_graph(mode):
     """
@@ -331,9 +310,7 @@ def test_jvp_construct_single_input_single_output_default_v_graph(mode):
     assert np.allclose(grad.asnumpy(), expect_grad.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jvp_multiple_outputs_with_has_aux_graph(mode):
     """

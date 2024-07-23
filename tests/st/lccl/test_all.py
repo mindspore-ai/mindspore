@@ -13,13 +13,11 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
 from mindspore import context
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='allcards', essential_mark='essential')
 def test_lccl_allreduce():
     """
     Feature: lccl operator test.
@@ -33,10 +31,7 @@ def test_lccl_allreduce():
     assert return_code == 0
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='allcards', essential_mark='unessential')
 def test_lccl_allgather():
     """
     Feature: lccl operator test.
@@ -50,10 +45,7 @@ def test_lccl_allgather():
     assert return_code == 0
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='allcards', essential_mark='unessential')
 def test_lccl_reducescatter():
     """
     Feature: lccl operator test.
@@ -67,10 +59,7 @@ def test_lccl_reducescatter():
     assert return_code == 0
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level2', card_mark='allcards', essential_mark='unessential')
 def test_lccl_broadcast():
     """
     Feature: lccl operator test.
@@ -84,9 +73,7 @@ def test_lccl_broadcast():
     assert return_code == 0
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level2', card_mark='allcards', essential_mark='unessential')
 def test_lccl_matmul_allreduce():
     """
     Feature: lccl MatMulAllReduce fustion operator test.

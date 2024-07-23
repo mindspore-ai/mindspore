@@ -20,6 +20,7 @@ import mindspore as ms
 import mindspore.context as context
 from mindspore import Tensor, ops
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 @test_utils.run_with_cell
 def fft_forward_func(x, signal_ndim, inverse, real, norm='backward', onesided=True, signal_sizes=()):
@@ -38,10 +39,7 @@ def fft_backward_func(x, signal_ndim, inverse, real, norm='backward', onesided=T
 def rfft_and_irfft_backward_func(x, signal_ndim, inverse, real, norm='backward', onesided=True, signal_sizes=()):
     return ops.grad(rfft_and_irfft_forward_func, (0,))(x, signal_ndim, inverse, real, norm, onesided, signal_sizes)
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('dtype, eps', [(np.complex64, 1e-6), (np.complex128, 1e-6)])
 def test_fftwithsize_fft_ifft(dtype, eps):
     """
@@ -63,10 +61,7 @@ def test_fftwithsize_fft_ifft(dtype, eps):
     assert np.all(diff_ifft < error)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('dtype, eps', [(np.complex64, 1e-6), (np.complex128, 1e-6)])
 def test_fftwithsize_fft2_ifft2(dtype, eps):
     """
@@ -88,10 +83,7 @@ def test_fftwithsize_fft2_ifft2(dtype, eps):
     assert np.all(diff_ifft2 < error)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fft_with_size_rfft3_forward(mode):
     """
@@ -107,10 +99,7 @@ def test_fft_with_size_rfft3_forward(mode):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fft_with_size_irfft3_forward(mode):
     """
@@ -126,10 +115,7 @@ def test_fft_with_size_irfft3_forward(mode):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fft_with_size_rfft3_backward(mode):
     """
@@ -154,10 +140,7 @@ def test_fft_with_size_rfft3_backward(mode):
     assert np.allclose(output.asnumpy(), expect.real)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_fft_with_size_rfft3_and_irfft3_backward(mode):
     """

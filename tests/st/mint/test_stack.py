@@ -21,6 +21,7 @@ from mindspore import ops
 from mindspore.mint import stack
 from mindspore import jit, JitConfig
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
 def stack_func(x1, x2, axis):
@@ -50,10 +51,7 @@ def stack_fwd_data_prepare(shape, axis=2):
     return tensor_inputs, expect
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_stack_forward_backward(mode):
     """
@@ -79,9 +77,7 @@ def test_stack_forward_backward(mode):
         assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_stack_bfloat16(mode):
     """

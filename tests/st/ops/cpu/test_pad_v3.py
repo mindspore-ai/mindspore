@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -38,9 +39,7 @@ class NetDynamic(nn.Cell):
         return out
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_padv3_circular_dynamic_shape_3d():
     """
     Feature: test padv3 x and padding dynamic shape
@@ -64,9 +63,7 @@ def test_padv3_circular_dynamic_shape_3d():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_padv3_circular_dynamic_shape_4d():
     """
     Feature: test padv3 x and padding dynamic shape
@@ -89,9 +86,7 @@ def test_padv3_circular_dynamic_shape_4d():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_padv3_circular_dynamic_shape_5d():
     """
     Feature: test padv3 x and padding dynamic shape
@@ -115,9 +110,7 @@ def test_padv3_circular_dynamic_shape_5d():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_padv3_x_padding_dynamic_shape():
     """
     Feature: test padv3 x and padding dynamic shape
@@ -147,9 +140,7 @@ def test_padv3_x_padding_dynamic_shape():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_padv3_x_dynamic_shape():
     """
     Feature: test padv3 x dynamic shape
@@ -178,9 +169,7 @@ def test_padv3_x_dynamic_shape():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_padv3_padding_dynamic_shape():
     """
     Feature: test padv3 padding dynamic shape
@@ -209,9 +198,7 @@ def test_padv3_padding_dynamic_shape():
     np.testing.assert_almost_equal(expect, out.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_padv3_padding_list():
     """
     Feature: test padv3 padding dynamic shape

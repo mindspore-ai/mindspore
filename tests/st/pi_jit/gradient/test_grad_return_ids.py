@@ -5,6 +5,7 @@ from mindspore import jit, context, ops
 from mindspore.common import Parameter, Tensor, dtype
 from mindspore.nn import Cell
 from ..share.utils import match_array
+from tests.mark_utils import arg_mark
 
 
 class GradFactory:
@@ -134,9 +135,7 @@ def grad_return_ids_pos_weight(class_name):
     return jit_grad, pijit_grad
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [grad_return_ids_pos0])
 def test_grad_return_ids_pos0_pynative(func):
     """
@@ -161,9 +160,7 @@ def test_grad_return_ids_pos0_pynative(func):
     match_array(jit_grad2, pijit_grad2)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [grad_return_ids_pos01])
 def test_grad_return_ids_pos01_pynative(func):
     """
@@ -188,9 +185,7 @@ def test_grad_return_ids_pos01_pynative(func):
     match_array(jit_grad2, pijit_grad2)
 
 @pytest.mark.skip
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [grad_return_ids_weight_w])
 def test_grad_return_ids_weight_w_pynative(func):
     """
@@ -215,9 +210,7 @@ def test_grad_return_ids_weight_w_pynative(func):
     match_array(jit_grad2, pijit_grad2)
 
 @pytest.mark.skip
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [grad_return_ids_weight_wb])
 def test_grad_return_ids_weight_wb_pynative(func):
     """
@@ -242,9 +235,7 @@ def test_grad_return_ids_weight_wb_pynative(func):
     match_array(jit_grad2, pijit_grad2)
 
 @pytest.mark.skip
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('func', [grad_return_ids_pos_weight])
 def test_grad_return_ids_pos_weight_pynative(func):
     """

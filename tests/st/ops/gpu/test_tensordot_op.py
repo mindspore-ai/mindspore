@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -43,9 +44,7 @@ class GradNetwork(nn.Cell):
         return gout
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_dot_fp32():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     np.random.seed(12876)
@@ -105,9 +104,7 @@ def test_tensor_dot_fp32():
     np.allclose(ms_result_np, np_result)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_tensor_dot_fp16():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     np.random.seed(41329)
@@ -167,9 +164,7 @@ def test_tensor_dot_fp16():
     assert np.allclose(ms_result_np, np_result, rtol=1e-3, atol=6e0)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_dot_outer():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(2746)
@@ -188,9 +183,7 @@ def test_tensor_dot_outer():
     np.testing.assert_array_almost_equal(ms_result_np, np_result)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_dot_reverse_axes():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     np.random.seed(2746)
@@ -265,9 +258,7 @@ def test_tensor_dot_reverse_axes():
     np.testing.assert_array_almost_equal(ms_result_np, expected_result)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_tensor_dot_backprop():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     # TEST 1

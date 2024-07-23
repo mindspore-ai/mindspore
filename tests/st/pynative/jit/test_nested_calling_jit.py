@@ -16,12 +16,12 @@
 #!/usr/bin/env python3
 
 import numpy as np
-import pytest
 
 from mindspore import context, Tensor
 from mindspore.common import dtype as mstype
 from mindspore import jit
 from mindspore import ops
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE)
 input_x = Tensor(np.ones([1, 1, 120, 640]), dtype=mstype.float32)
@@ -29,12 +29,10 @@ input_y = Tensor(np.full((1, 1, 120, 640), 4), dtype=mstype.float32)
 ret_output_2 = Tensor(np.full((1, 1, 120, 640), 3.125), dtype=mstype.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.timeout(60)
-@pytest.mark.env_Ascend_1p
-@pytest.mark.env_Gpu_1p
-@pytest.mark.env_CPU
-@pytest.mark.Function
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_jit_nested_local():
     """
     Feature: Jit graph
@@ -84,12 +82,10 @@ def function11_g(x, y):
     return out
 
 
-@pytest.mark.level1
-@pytest.mark.timeout(60)
-@pytest.mark.env_Ascend_1p
-@pytest.mark.env_Gpu_1p
-@pytest.mark.env_CPU
-@pytest.mark.Function
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_jit_nested_global():
     """
     Feature: Jit graph
@@ -107,12 +103,10 @@ def test_jit_nested_global():
     assert np.allclose(output2.asnumpy(), ret_output_2.asnumpy(), 0.0001, 0.0001)
 
 
-@pytest.mark.level1
-@pytest.mark.timeout(60)
-@pytest.mark.env_Ascend_1p
-@pytest.mark.env_Gpu_1p
-@pytest.mark.env_CPU
-@pytest.mark.Function
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_jit_nested_grad():
     """
     Feature: Nested call of jit

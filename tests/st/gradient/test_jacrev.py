@@ -20,6 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore import jit
 from mindspore.ops import jacrev
+from tests.mark_utils import arg_mark
 
 
 class SingleInputSingleOutputNet(nn.Cell):
@@ -56,9 +57,7 @@ def jac_wrap_with_jit_function(x, y, z):
     return output
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jac_single_input_single_output_cell_graph(mode):
     """
@@ -75,9 +74,7 @@ def test_jac_single_input_single_output_cell_graph(mode):
     assert np.allclose(jac.asnumpy(), expect_jac)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jac_single_input_multiple_outputs_cell_graph(mode):
     """
@@ -97,9 +94,7 @@ def test_jac_single_input_multiple_outputs_cell_graph(mode):
     assert np.allclose(jac[1].asnumpy(), expect_jac_1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jac_multiple_inputs_single_output_cell_graph(mode):
     """
@@ -123,9 +118,7 @@ def test_jac_multiple_inputs_single_output_cell_graph(mode):
     assert np.allclose(jac[1].asnumpy(), expect_jac_1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jac_multiple_inputs_multiple_outputs_cell_graph(mode):
     """
@@ -155,9 +148,7 @@ def test_jac_multiple_inputs_multiple_outputs_cell_graph(mode):
     assert np.allclose(jac[1][1].asnumpy(), expect_jac_3)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jac_wrap_with_jit_function_graph(mode):
     """
@@ -177,9 +168,7 @@ def test_jac_wrap_with_jit_function_graph(mode):
     assert np.allclose(aux.asnumpy(), expect_aux)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jac_with_grad_position_twice_graph(mode):
     """
@@ -203,9 +192,7 @@ def test_jac_with_grad_position_twice_graph(mode):
     assert np.allclose(jac2[1].asnumpy(), expect_jac_1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jac_with_has_aux_graph(mode):
     """
@@ -226,9 +213,7 @@ def test_jac_with_has_aux_graph(mode):
     assert np.allclose(aux.asnumpy(), expect_aux)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_jac_with_function_has_aux_graph(mode):
     """

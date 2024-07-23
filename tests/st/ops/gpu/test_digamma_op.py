@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import torch
 import pytest
@@ -56,9 +57,7 @@ def digamma(dtype, input_x, loss):
     assert np.allclose(digamma_output.asnumpy(), digamma_expect.numpy().astype(nptype), loss, loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_digamma_graph_true_float16():
     """
     Feature: ALL To ALL
@@ -69,9 +68,7 @@ def test_digamma_graph_true_float16():
     digamma(dtype="float16", input_x=input_x, loss=1.0e-3)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_digamma_graph_true_float32():
     """
     Feature: ALL To ALL
@@ -82,9 +79,7 @@ def test_digamma_graph_true_float32():
     digamma(dtype="float32", input_x=input_x, loss=1.0e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_digamma_graph_true_float64():
     """
     Feature: ALL To ALL

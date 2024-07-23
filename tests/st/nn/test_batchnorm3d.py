@@ -21,7 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 
 from tests.st.utils import test_utils
-
+from tests.mark_utils import arg_mark
 
 class Net(nn.Cell):
     def __init__(self):
@@ -33,12 +33,10 @@ class Net(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_batchnorm3d_para_customed_dtype(mode):
     """
@@ -64,9 +62,7 @@ class ParaNet(nn.Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_batchnorm3d_para_customed_dtype_float32(mode):

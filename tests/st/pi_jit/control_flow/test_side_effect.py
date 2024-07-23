@@ -19,6 +19,7 @@ from mindspore._c_expression import get_code_extra
 import dis
 import mindspore
 import types
+from tests.mark_utils import arg_mark
 
 
 class NetAssign0002(Cell):
@@ -32,9 +33,7 @@ class NetAssign0002(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_store_subscr_side_effect_1():
     """
     Feature: STORE SUBSCR + HAS_ARGS
@@ -57,9 +56,7 @@ def test_store_subscr_side_effect_1():
     assert jcr["break_count_"] == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_store_subscr_side_effect_2():
     """
     Feature: STORE_SUBSCR + NO_ARGS + OPERATION
@@ -75,9 +72,7 @@ def test_store_subscr_side_effect_2():
     context.set_context(mode=context.PYNATIVE_MODE)
     assert jcr["break_count_"] == 0
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_del_subscr_side_effect_3():
     """
     Feature: DEL_SUBSCR + NO_ARGS + OPERATION
@@ -98,9 +93,7 @@ def test_del_subscr_side_effect_3():
     context.set_context(mode=context.PYNATIVE_MODE)
     assert jcr["break_count_"] == 0
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dict_pop_side_effect_4():
     """
     Feature: DICT POP side effect
@@ -116,9 +109,7 @@ def test_dict_pop_side_effect_4():
     context.set_context(mode=context.PYNATIVE_MODE)
     assert jcr["break_count_"] == 0
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dict_pop_side_effect_5():
     """
     Feature: DICT POP side effect 2
@@ -133,9 +124,7 @@ def test_dict_pop_side_effect_5():
     context.set_context(mode=context.PYNATIVE_MODE)
     assert jcr["break_count_"] == 0
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_store_global_side_effect_6():
     """
     Feature: STORE_GLOBAL
@@ -153,9 +142,7 @@ def test_store_global_side_effect_6():
     assert jcr["break_count_"] == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_del_global_side_effect_7():
     """
     Feature: DEL GLOBAL side effect
@@ -175,9 +162,7 @@ def test_del_global_side_effect_7():
     context.set_context(mode=context.PYNATIVE_MODE)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_fix_bug_store_subscr_side_effect_1():
     """
     Feature: STORE SUBSCR + FIX BUGS
@@ -198,9 +183,7 @@ def test_fix_bug_store_subscr_side_effect_1():
     assert (result[1] == Tensor([5, 6])).all()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('test_optimize', [True, False])
 def test_modify_mix1(test_optimize):
     """
@@ -227,9 +210,7 @@ def test_modify_mix1(test_optimize):
     assert str(excepted) == str(result)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_modify_mix2():
     """
     Feature: Side-effect handle
@@ -253,9 +234,7 @@ def test_modify_mix2():
     assert x1 == x2
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_global_modified_cross_module():
     """
     Feature: Side-effect handle
@@ -287,9 +266,7 @@ def test_global_modified_cross_module():
     assert Tensor([5]) == result == excepted
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_object_consistency():
     """
     Feature: Test side-effect
@@ -318,9 +295,7 @@ def test_object_consistency():
     assert y.list[0] == 0 and y.test is x and x.f is y.get
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_object_consistency2():
     """
     Feature: Test side-effect

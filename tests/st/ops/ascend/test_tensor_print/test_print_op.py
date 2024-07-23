@@ -21,6 +21,7 @@ import mindspore.nn as nn
 import mindspore as ms
 from mindspore import Tensor, ops
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
 class PrintNet(nn.Cell):
@@ -33,10 +34,7 @@ class PrintNet(nn.Cell):
         return x
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16,
                                    np.uint32, np.uint64, np.bool, np.float64, np.float32, np.float16])
@@ -53,10 +51,7 @@ def test_print_op_dtype(mode, dtype):
     net(x)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_print_op_dynamic_shape(mode):
     """
@@ -73,10 +68,7 @@ def test_print_op_dynamic_shape(mode):
     net(x)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_print_tensor_dtype(mode):
     """
@@ -97,10 +89,7 @@ def test_print_tensor_dtype(mode):
     net(x, y)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_print_tensor_dtype_in_nested_tuple(mode):

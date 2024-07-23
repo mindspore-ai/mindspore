@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import pytest
 import numpy as np
@@ -46,9 +47,7 @@ def strided_slice_test(is_dyn_rank):
     tester.test_dynamic_grad_net([input_x, begin, end, strides], is_dyn_rank)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_strided_slice_dyn_shape():
     """
     Feature: StridedSlice Grad DynamicShape.
@@ -58,9 +57,7 @@ def test_strided_slice_dyn_shape():
     strided_slice_test(False)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_gpu
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_strided_slice_dyn_rank():
     """
     Feature: StridedSlice Grad DynamicRank.
@@ -85,9 +82,7 @@ class StridedSliceNet(Cell):
         out = self.strided_slice(input_x, begin, end, strides)
         return op.add(out, out)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_strided_slice_insert_cast_for_tuple_input():
     """
     Feature: StridedSlice Grad DynamicShape in pynative mode.

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 from mindspore import context, nn, ops, jit
@@ -153,12 +154,7 @@ class TensorSetItem(nn.Cell):
         return tensor1, tensor2
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_int_number():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -174,12 +170,7 @@ def test_dynamic_setitem_int_number():
     fact.grad_impl()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_int_tensor():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -196,12 +187,7 @@ def test_dynamic_setitem_int_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_int_sequence():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -217,12 +203,7 @@ def test_dynamic_setitem_int_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_tensor_number():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -239,12 +220,7 @@ def test_dynamic_setitem_tensor_number():
     fact.grad_impl()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_tensor_tensor():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -262,12 +238,7 @@ def test_dynamic_setitem_tensor_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_tensor_sequence():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -284,12 +255,7 @@ def test_dynamic_setitem_tensor_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_setitem_none_number():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -305,12 +271,7 @@ def test_dynamic_setitem_none_number():
     fact.grad_impl()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_none_tensor():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -327,12 +288,7 @@ def test_dynamic_setitem_none_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_none_sequence():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -348,12 +304,7 @@ def test_dynamic_setitem_none_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_setitem_ellipsis_number():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -369,12 +320,7 @@ def test_dynamic_setitem_ellipsis_number():
     fact.grad_impl()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_ellipsis_tensor():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -391,12 +337,7 @@ def test_dynamic_setitem_ellipsis_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_ellipsis_sequence():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -412,12 +353,7 @@ def test_dynamic_setitem_ellipsis_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_bool_number():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -433,12 +369,7 @@ def test_dynamic_setitem_bool_number():
     fact.grad_impl()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_bool_tensor():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -455,12 +386,7 @@ def test_dynamic_setitem_bool_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_bool_sequence():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -476,12 +402,7 @@ def test_dynamic_setitem_bool_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_list_number():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -497,12 +418,7 @@ def test_dynamic_setitem_list_number():
     fact.grad_impl()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_list_tensor():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -519,12 +435,7 @@ def test_dynamic_setitem_list_tensor():
     fact.grad_impl()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_list_sequence():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -540,12 +451,7 @@ def test_dynamic_setitem_list_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_setitem_slice_sequence():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -561,12 +467,7 @@ def test_dynamic_setitem_slice_sequence():
     fact.grad_impl()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_rank_setitem_with_single_basic_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -613,10 +514,7 @@ def test_dynamic_rank_setitem_with_single_basic_index():
 
 
 @pytest.mark.skip(reason="Need to be fixed.")
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_rank_setitem_tuple_with_basic_index():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -662,10 +560,7 @@ def test_dynamic_rank_setitem_tuple_with_basic_index():
 
 
 @pytest.mark.skip(reason="Need to be fixed.")
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_rank_setitem_tuple_with_mix_index():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -708,12 +603,7 @@ def test_dynamic_rank_setitem_tuple_with_mix_index():
     fact.grad_impl()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_rank_setitem_tuple_with_multi_tensor_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -748,12 +638,7 @@ def test_dynamic_rank_setitem_tuple_with_multi_tensor_index():
     fact.grad_impl()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_rank_setitem_tuple_with_empty_bool_tensor_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -787,12 +672,7 @@ def test_dynamic_rank_setitem_tuple_with_empty_bool_tensor_index():
     fact.grad_impl()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_rank_setitem_with_list_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -824,12 +704,7 @@ def test_dynamic_rank_setitem_with_list_index():
     fact.grad_impl()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_dynamic_rank_setitem_slice_int():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -857,10 +732,7 @@ def test_dynamic_rank_setitem_slice_int():
     fact.grad_impl()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_setitem_with_tensor_index_tensor_value():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.
@@ -877,10 +749,7 @@ def test_setitem_with_tensor_index_tensor_value():
     assert ret == [Tensor([5]), Tensor([2]), Tensor([3])]
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_setitem_with_tensor_index_tensor_value_2():
     """
     Feature: Test index value assignment for dynamic shape Tensor in feed mode.

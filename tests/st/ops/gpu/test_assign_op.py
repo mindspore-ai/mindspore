@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -37,10 +38,13 @@ x = np.array([[1.2, 1], [1, 0]]).astype(np.float32)
 value = np.array([[1, 2], [3, 4.0]]).astype(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     var = Tensor(x)
     assign = Net(var)
@@ -55,10 +59,13 @@ def test_assign():
     assert np.all(-diff2 < error)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_assign_float64():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     var = Tensor(x.astype(np.float64))
     assign = Net(var)

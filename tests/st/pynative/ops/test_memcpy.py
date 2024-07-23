@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import numpy as np
 from mindspore import context, Tensor, dtype
+from tests.mark_utils import arg_mark
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_h2d_copy():
     """
     Feature: test_h2d_copy
@@ -35,12 +36,10 @@ def test_h2d_copy():
     assert np.allclose(output_tensor.asnumpy(), output_np)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='essential')
 def test_h2d_copy_with_from_numpy():
     """
     Feature: test_h2d_copy_with_from_numpy.

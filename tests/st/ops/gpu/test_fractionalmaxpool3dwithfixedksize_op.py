@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -40,9 +41,7 @@ class NetFractionalMaxPool3DGradWithFixedKsize(nn.Cell):
         return self.fractional_max_pool_3d_grad_with_fixed_ksize(origin_input, out_backprop, argmax)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_fractionalmaxpool3dwithfixedksize():
     """
     Feature: FractionalMaxPool3DWithFixedKsize

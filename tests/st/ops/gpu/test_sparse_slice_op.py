@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 """smoke tests for SparseSlice"""
 
 import numpy as np
@@ -33,11 +34,9 @@ def generate_data(input_type="float32"):
     return data
 
 
-@pytest.mark.level1
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('input_type', ["int8", "uint8", "int16", "uint16",
                                         "int32", "int64", "float16", "float32", "float64"])
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
 def test_sparse_slice(input_type):
     """
     Feature: Test sparse slice ops.

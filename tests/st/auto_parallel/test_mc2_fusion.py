@@ -14,12 +14,10 @@
 # ============================================================================
 
 import os
-import pytest
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
 def test_all_gather_matmul_forward():
     '''
     Feature: MC2 fusion.
@@ -30,9 +28,7 @@ def test_all_gather_matmul_forward():
     assert ret == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
 def test_matmul_reduce_scatter_forward():
     '''
     Feature: MC2 fusion.

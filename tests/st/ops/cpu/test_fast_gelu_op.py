@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -50,9 +51,7 @@ def np_all_close_with_loss(out, expect):
     return np.allclose(out, expect, 0.005, 0.005, equal_nan=True)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_fast_gelu_cpu(shape, dtype):
@@ -80,9 +79,7 @@ def test_fast_gelu_cpu(shape, dtype):
     assert np_all_close_with_loss(y_np_cpu, y_nn.asnumpy())
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float32, np.float16])
 def test_fast_gelu_vmap(dtype, shape=(100, 2)):
     """

@@ -14,7 +14,7 @@
 
 import time
 import numpy as np
-import pytest
+from tests.mark_utils import arg_mark
 import mindspore
 from mindspore import context, ops, nn, Tensor, Parameter
 
@@ -126,12 +126,8 @@ def run_multi_actor_fusion(net_name, net, input1, input2, input3, input4, expect
     print(net_name + " avg_time:", total_time/total_count)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend', 'platform_gpu'],
+          level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_non_concurrent():
     """
     Feature: Multi actor fusion with non concurrent.
@@ -144,11 +140,8 @@ def test_non_concurrent():
     run_multi_actor_fusion("non_concurrent", net, input_x, input_x, input_x, input_x, expect)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_non_concurrent_with_while():
     """
     Feature: Multi actor fusion with non concurrent and while.
@@ -162,12 +155,8 @@ def test_non_concurrent_with_while():
     run_multi_actor_fusion("non_concurrent_with_while", net, input_x, input_loop, input_x, input_loop, expect)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend', 'platform_gpu'],
+          level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_concurrent():
     """
     Feature: Multi actor fusion with concurrent.
@@ -183,11 +172,8 @@ def test_concurrent():
     run_multi_actor_fusion("concurrent", net, input1, input2, input3, input4, expect)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
+          level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_concurrent_with_while():
     """
     Feature: Multi actor fusion with concurrent and while.
@@ -203,9 +189,8 @@ def test_concurrent_with_while():
     run_multi_actor_fusion("concurrent_with_while", net, input1, input_loop1, input2, input_loop2, expect)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_parameter_set_data():
     """
     Feature: Runtime performance optimize of data prepare.

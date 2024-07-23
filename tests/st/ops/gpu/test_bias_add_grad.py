@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
@@ -33,9 +34,7 @@ class BiasAddGradNet(nn.Cell):
         return self.op(dout)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_bias_add_grad2d(data_type):
     """
@@ -50,9 +49,7 @@ def test_bias_add_grad2d(data_type):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_bias_add_grad4d(data_type):
     """
@@ -67,9 +64,7 @@ def test_bias_add_grad4d(data_type):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_bias_add_grad5d(data_type):
     """
@@ -84,9 +79,7 @@ def test_bias_add_grad5d(data_type):
     assert np.all(output.asnumpy() == expect_output), "bias_add_grad execute failed, please check current code commit"
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_bias_add_grad4d_dyn_inputs():
     """
     Feature: GPU BiasAddGrad.

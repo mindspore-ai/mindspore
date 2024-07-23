@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 import numpy as np
 import mindspore.nn as nn
@@ -25,11 +26,7 @@ context.set_context(mode=context.GRAPH_MODE)
 context_prepare()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_slice():
     """
     Feature: test sequence_slice op
@@ -56,11 +53,7 @@ def test_seq_slice():
     fact.forward_cmp()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_slice_grad():
     """
     Feature: test sequence_slice grad
@@ -85,9 +78,7 @@ def test_seq_slice_grad():
     print("grad out1 = ", grad_func(seq, start, stop, step, dout))
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_slice_mutable():
     """
     Feature: test sequence_slice mutable
@@ -129,9 +120,7 @@ start_stop_step_ = [
     (8, 1, -2),
     (mutable(3), 5, 1),
 ]
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("sequence_data", sequence_data_)
 @pytest.mark.parametrize("start_stop_step", start_stop_step_)
 def test_seq_slice_mutable_and_tensor(sequence_data, start_stop_step):
@@ -157,9 +146,7 @@ def test_seq_slice_mutable_and_tensor(sequence_data, start_stop_step):
             assert np.allclose(out_item.asnumpy(), ex_item.asnumpy())
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_seq_slice_neg_step():
     """
     Feature: test sequence_slice negative step

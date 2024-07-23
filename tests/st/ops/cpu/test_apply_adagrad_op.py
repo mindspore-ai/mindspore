@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -39,10 +40,13 @@ class Net(nn.Cell):
         return self.apply_adagrad(self.var, self.accum, lr, grad)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_apply_adagrad():
+    """
+    Feature: template
+    Description: template
+    Expectation: template
+    """
     # numpy op
     grident_np = np.random.rand(3, 3).astype(np.float32)
     expect_accum_np = accum_np + grident_np * grident_np

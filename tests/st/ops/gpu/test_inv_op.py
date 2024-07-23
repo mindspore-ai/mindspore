@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -43,9 +44,7 @@ class InvDynamicShapeNet(nn.Cell):
         return F.inv(x)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('shape', [(2,), (4, 5), (3, 4, 5, 6)])
 @pytest.mark.parametrize('dtype, tol',
@@ -66,9 +65,7 @@ def test_inv(mode, shape, dtype, tol):
     assert np.allclose(output.asnumpy(), expect_output, atol=tol, rtol=tol, equal_nan=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_inv_vmap(mode):
     """
@@ -96,9 +93,7 @@ def test_inv_vmap(mode):
     np.testing.assert_almost_equal(output.asnumpy(), expect_output)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_inv_dynamic_shape(mode):
     """

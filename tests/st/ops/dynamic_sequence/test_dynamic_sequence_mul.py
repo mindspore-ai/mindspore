@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import pytest
 
 import mindspore.nn as nn
@@ -34,9 +35,7 @@ class Net(nn.Cell):
         return self.seq_mul(x, y)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_mul_tuple_dy():
     """
     Feature: test sequence_mul op
@@ -51,9 +50,7 @@ def test_seq_mul_tuple_dy():
     assert res == expect
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_seq_mul_scalar_dy():
     """
     Feature: test sequence_mul op
@@ -68,9 +65,7 @@ def test_seq_mul_scalar_dy():
     assert res == expect
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_seq_mul_all_dy():
     """
     Feature: test sequence_mul op
@@ -85,9 +80,7 @@ def test_seq_mul_all_dy():
     assert res == expect
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_seq_mul_grad():
     """
     Feature: test sequence_mul grad op
@@ -102,9 +95,7 @@ def test_seq_mul_grad():
     grad_func(x, y, dout)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_seq_mul_grad_mutable_scalar():
     """
     Feature: test sequence_mul grad op

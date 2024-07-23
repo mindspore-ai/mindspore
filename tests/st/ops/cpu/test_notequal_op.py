@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -33,9 +34,7 @@ class OpNetWrapper(nn.Cell):
         return self.op(*inputs)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_notequal_int():
     op = P.NotEqual()
     op_wrapper = OpNetWrapper(op)
@@ -48,9 +47,7 @@ def test_notequal_int():
     assert np.allclose(outputs.asnumpy(), (True, False, True))
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_notequal_float():
     op = P.NotEqual()
     op_wrapper = OpNetWrapper(op)

@@ -12,8 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import pytest
 import numpy as np
+from tests.mark_utils import arg_mark
 import mindspore as ms
 from mindspore import nn, Tensor, ops
 from .util import Capture, capture
@@ -42,10 +42,7 @@ class AddNet(nn.Cell):
         return z
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_adjust_print_for_ge():
     """
     Feature: Validate opt pass keep node scope and id.

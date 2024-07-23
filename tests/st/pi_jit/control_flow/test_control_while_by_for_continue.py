@@ -4,7 +4,7 @@ from mindspore.common import Tensor
 import mindspore.ops.operations as P
 from mindspore.common import Parameter
 from .ctrl_factory import CtrlFactory
-import pytest
+from tests.mark_utils import arg_mark
 
 
 class CtrlWhileForContinueOne(Cell):
@@ -23,9 +23,7 @@ class CtrlWhileForContinueOne(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_for_param_continue_in_while():
     '''
     Description: test control flow, while by for
@@ -57,9 +55,7 @@ class CtrlWhileForContinueAdd(Cell):
         return out
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_for_continue_no_param():
     '''
     Description: test control flow, while by for
@@ -92,9 +88,7 @@ class CtrlWhileContinueForX(Cell):
 
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_for_continue_in_for_x():
     '''
     Description: test control flow, while for continue
@@ -126,9 +120,7 @@ class CtrlWhileContinueFor(Cell):
 
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_for_continue_in_for():
     '''
     Description: test control flow, while by for
@@ -160,9 +152,7 @@ class CtrlWhileContinueForP(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_for_continue_in_for_param():
     '''
     Description: test control flow, while by for
@@ -194,9 +184,7 @@ class CtrlWhileContinueForN(Cell):
         return x
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_control_flow_while_for_continue_in_for_no():
     '''
     Description: test control flow, while by for

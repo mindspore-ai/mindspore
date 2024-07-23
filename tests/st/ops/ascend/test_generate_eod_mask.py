@@ -12,12 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
 import mindspore
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
 
@@ -78,10 +78,7 @@ def run_generate_eod_mask_on_step(data, element_pos, bit_pos, n_step, n_error_mo
             else:
                 assert (source_data == out.asnumpy()).all()
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_generate_eod_mask_on_each_step():
     """
     Feature: Test bit flip on the first element on 14-th bits on each step in 10 steps

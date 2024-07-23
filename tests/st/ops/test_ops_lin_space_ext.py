@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
+from tests.mark_utils import arg_mark
 from mindspore import ops, Tensor
 from mindspore.ops.function.math_func import linspace_ext
 import mindspore as ms
@@ -34,9 +35,7 @@ def lin_space_ext_backward_func(start, end, steps, dtype=None):
     return ops.grad(lin_space_ext_forward_func, (0, 1))(start, end, steps, dtype)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [ms.float32])
 def test_lin_space_ext_normal(mode, dtype):
@@ -86,9 +85,7 @@ def test_lin_space_ext_normal(mode, dtype):
     assert np.allclose(grads_, expect)
 
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [ms.bfloat16])
 def test_lin_space_ext_bfloat16(mode, dtype):
@@ -130,9 +127,7 @@ def test_lin_space_ext_bfloat16(mode, dtype):
     assert np.allclose(output6.float().asnumpy(), expect6)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_lin_space_ext_dynamic():
     """
     Feature: test dynamic by TEST_OP.

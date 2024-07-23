@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -56,9 +57,7 @@ def polar_pynative(loss):
     assert np.allclose(output.asnumpy(), expected, loss, loss)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_polar_graph_float():
     """
     Feature: ALL To ALL
@@ -68,9 +67,7 @@ def test_polar_graph_float():
     polar(loss=1.0e-4)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_polar_pynative_double():
     """
     Feature: ALL To ALL

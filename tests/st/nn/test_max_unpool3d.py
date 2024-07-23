@@ -19,6 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.context as context
 import mindspore.ops as ops
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -30,11 +31,10 @@ class Net(nn.Cell):
         return self.max_unpool3d(x, indices, output_size)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_max_unpool3d_normal(mode):
     """
@@ -58,11 +58,10 @@ def test_max_unpool3d_normal(mode):
     assert np.allclose(output, expect, rtol=0.0001)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_max_unpool3d_normal_output_size(mode):
     """
@@ -87,11 +86,10 @@ def test_max_unpool3d_normal_output_size(mode):
     assert np.allclose(output, expect, rtol=0.0001)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu'],
+          level_mark='level2',
+          card_mark='onecard',
+          essential_mark='unessential')
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_f_max_unpool3d_normal(mode):
     """

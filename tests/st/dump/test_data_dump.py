@@ -20,7 +20,6 @@ import shutil
 import glob
 import csv
 import numpy as np
-import pytest
 import mindspore.context as context
 
 import mindspore.nn as nn
@@ -32,6 +31,7 @@ from mindspore.nn import Cell
 from mindspore.nn import Dense
 from dump_test_utils import generate_dump_json, generate_statistic_dump_json, check_dump_structure, \
     check_statistic_dump, check_data_dump
+from tests.mark_utils import arg_mark
 from tests.security_utils import security_off_wrap
 
 
@@ -89,18 +89,14 @@ def run_e2e_dump(test_key="test_e2e_dump"):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @security_off_wrap
 def test_cpu_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
     run_e2e_dump()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_cpu_e2e_dump_with_hccl_set():
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -111,18 +107,14 @@ def test_cpu_e2e_dump_with_hccl_set():
     del os.environ['RANK_ID']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @security_off_wrap
 def test_gpu_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     run_e2e_dump()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_gpu_e2e_dump_with_hccl_set():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
@@ -133,10 +125,7 @@ def test_gpu_e2e_dump_with_hccl_set():
     del os.environ['RANK_ID']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @security_off_wrap
 def test_kbk_e2e_set_dump():
     """
@@ -149,10 +138,7 @@ def test_kbk_e2e_set_dump():
     run_e2e_dump(test_key="test_kbk_e2e_set_dump")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 @security_off_wrap
 def test_kbk_e2e_dump_reg():
     """
@@ -180,9 +166,7 @@ class ReluReduceMeanDenseRelu(Cell):
         return x_
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_dump_with_diagnostic_path():
     """
@@ -224,9 +208,7 @@ def run_e2e_dump_execution_graph():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_dump_with_execution_graph():
     """Test dump with execution graph."""
@@ -272,9 +254,7 @@ def run_saved_data_dump_test(scenario, saved_data):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_gpu_e2e_statistic_dump():
     """
@@ -286,9 +266,7 @@ def test_gpu_e2e_statistic_dump():
     run_saved_data_dump_test('test_gpu_e2e_dump', 'statistic')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_gpu_e2e_tensor_dump():
     """
@@ -300,9 +278,7 @@ def test_gpu_e2e_tensor_dump():
     run_saved_data_dump_test('test_gpu_e2e_dump', 'tensor')
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_gpu_e2e_full_dump():
     """
@@ -314,9 +290,7 @@ def test_gpu_e2e_full_dump():
     run_saved_data_dump_test('test_gpu_e2e_dump', 'full')
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_stat_dump_nulls():
     """
@@ -393,9 +367,7 @@ def run_constant_e2e_dump():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @security_off_wrap
 def test_constant_gpu_e2e_dump():
     """
@@ -407,10 +379,7 @@ def test_constant_gpu_e2e_dump():
     run_constant_e2e_dump()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_save_cce_graph():
     """
     Feature: Save cce file for Ascend ops

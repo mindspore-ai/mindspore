@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -33,9 +34,7 @@ class Net(Cell):
         return self.Cast(x, self.dtype)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_bool():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
@@ -58,9 +57,7 @@ def test_cast_bool():
         output = net(tensor)
         assert output.asnumpy().dtype == 'bool'
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_float16():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
@@ -83,9 +80,7 @@ def test_cast_float16():
         output = net(tensor)
         assert output.asnumpy().dtype == 'float16'
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_float32():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
@@ -108,9 +103,7 @@ def test_cast_float32():
         output = net(tensor)
         assert output.asnumpy().dtype == 'float32'
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_float64():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
@@ -133,9 +126,7 @@ def test_cast_float64():
         output = net(tensor)
         assert output.asnumpy().dtype == 'float64'
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_bfloat16():
     """
     Feature: cast
@@ -163,9 +154,7 @@ def test_cast_bfloat16():
         output = net(tensor)
         assert output.dtype == mstype.bfloat16
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_int8():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
@@ -188,9 +177,7 @@ def test_cast_int8():
         output = net(tensor)
         assert output.asnumpy().dtype == 'int8'
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_int16():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
@@ -213,9 +200,7 @@ def test_cast_int16():
         output = net(tensor)
         assert output.asnumpy().dtype == 'int16'
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_int32():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
@@ -238,9 +223,7 @@ def test_cast_int32():
         output = net(tensor)
         assert output.asnumpy().dtype == 'int32'
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_int64():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
@@ -263,9 +246,7 @@ def test_cast_int64():
         output = net(tensor)
         assert output.asnumpy().dtype == 'int64'
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_uint8():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
@@ -288,9 +269,7 @@ def test_cast_uint8():
         output = net(tensor)
         assert output.asnumpy().dtype == 'uint8'
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_uint16():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
@@ -313,9 +292,7 @@ def test_cast_uint16():
         output = net(tensor)
         assert output.asnumpy().dtype == 'uint16'
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_uint32():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))
@@ -338,9 +315,7 @@ def test_cast_uint32():
         output = net(tensor)
         assert output.asnumpy().dtype == 'uint32'
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cast_uint64():
     tensor_to_cast = []
     tensor_to_cast.append(Tensor(np.random.uniform(-2, 2, (3, 2)).astype(np.bool)))

@@ -16,11 +16,11 @@
 Test DecoderKVCache plugin custom ops.
 """
 import numpy as np
-import pytest
 import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor, context
 from mindspore.ops.operations._inner_ops import DecoderKVCache
+from tests.mark_utils import arg_mark
 
 
 b = 26
@@ -96,9 +96,7 @@ def create_np_inputs(cache, update, valid_seq_len):
     return cache.asnumpy(), update.asnumpy(), valid_seq_len.asnumpy()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_decoder_k_v_cache_net():
     """
     Feature: Test DecoderKVCache.

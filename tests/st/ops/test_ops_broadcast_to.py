@@ -22,20 +22,16 @@ from mindspore.ops import operations as P
 from mindspore.nn import Cell
 from mindspore.common.api import _pynative_executor
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
 @test_utils.run_with_cell
 def broadcast_to_forward_func(x, shape):
     return ms.ops.auto_generate.broadcast_to(x, shape)
 
-@pytest.mark.level0
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_broadcast(context_mode):
     """
     Feature: pyboost function.
@@ -97,14 +93,9 @@ def broadcast_to_dtype(dtype):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_broadcast_to_dtype(context_mode):
     """
     Feature: Test supported data types of BroadCastTo.
@@ -118,14 +109,9 @@ def test_broadcast_to_dtype(context_mode):
         broadcast_to_dtype(dtype=dtype)
 
 
-@pytest.mark.level1
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_broadcast_dyn_init(context_mode):
     """
     Feature: pyboost function.
@@ -154,14 +140,9 @@ def test_broadcast_dyn_init(context_mode):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_broadcast_dyn_invalid_init(context_mode):
     """
     Feature: pyboost function.
@@ -195,14 +176,9 @@ class BroadcastToNet(Cell):
         return self.broadcastto(input_x)
 
 
-@pytest.mark.level1
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_broadcast_to_dynamic_shape(context_mode):
     """
     Feature: Test dynamic shape of BroadcastTo operator
@@ -221,14 +197,9 @@ def test_broadcast_to_dynamic_shape(context_mode):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@pytest.mark.level1
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_arm_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
 def test_broadcast_exception(context_mode):
     """
     Feature: Test invalid input and target shape in of BroadcastTo.
@@ -244,11 +215,8 @@ def test_broadcast_exception(context_mode):
         input dimension is 1 or target dimension is -1. But got input_x shape: [const vector][], target shape: \
         [const vector][0]." in str(info.value)
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_x86_cpu
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_arm_ascend_training
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_broadcast_to_forward(mode):

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -37,9 +38,7 @@ def hshrink_grad_op_np_bencmark(grad, input_x, lambd):
     return result
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.float16, np.float32])
 @pytest.mark.parametrize("data_shape", [(3, 4), (4, 5, 6, 7)])
 @pytest.mark.parametrize("lambd", [0.5])

@@ -22,6 +22,7 @@ from mindspore import context
 
 from .utils import rand_int, rand_bool, run_binop_test, run_logical_test, match_res, \
     match_all_arrays, to_tensor
+from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -83,12 +84,8 @@ def onp_not_equal(a, b):
     return onp.not_equal(a, b)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_not_equal():
     run_binop_test(mnp_not_equal, onp_not_equal, test_case)
 
@@ -101,12 +98,8 @@ def onp_less_equal(a, b):
     return onp.less_equal(a, b)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_less_equal():
     run_binop_test(mnp_less_equal, onp_less_equal, test_case)
 
@@ -119,12 +112,8 @@ def onp_less(a, b):
     return onp.less(a, b)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_less():
     run_binop_test(mnp_less, onp_less, test_case)
 
@@ -137,12 +126,8 @@ def onp_greater_equal(a, b):
     return onp.greater_equal(a, b)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_greater_equal():
     run_binop_test(mnp_greater_equal, onp_greater_equal, test_case)
 
@@ -155,12 +140,8 @@ def onp_greater(a, b):
     return onp.greater(a, b)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_greater():
     run_binop_test(mnp_greater, onp_greater, test_case)
 
@@ -185,12 +166,8 @@ def onp_isfinite(x):
     return onp.isfinite(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_isfinite():
     match_res(mnp_isfinite, onp_isfinite, test_case.infs)
 
@@ -203,10 +180,8 @@ def onp_isnan(x):
     return onp.isnan(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_isnan():
     match_res(mnp_isnan, onp_isnan, test_case.infs)
 
@@ -219,10 +194,8 @@ def onp_isinf(x):
     return onp.isinf(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_isinf():
     match_res(mnp_isinf, onp_isinf, test_case.infs)
 
@@ -235,10 +208,8 @@ def onp_isposinf(x):
     return onp.isposinf(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_isposinf():
     match_res(mnp_isposinf, onp_isposinf, test_case.infs)
 
@@ -251,20 +222,14 @@ def onp_isneginf(x):
     return onp.isneginf(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_isneginf():
     match_res(mnp_isneginf, onp_isneginf, test_case.infs)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_isscalar():
     assert mnp.isscalar(1) == onp.isscalar(1)
     assert mnp.isscalar(2.3) == onp.isscalar(2.3)
@@ -274,10 +239,8 @@ def test_isscalar():
     assert mnp.isscalar('numpy') == onp.isscalar('numpy')
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_isclose():
     a = [0, 1, 2, float('inf'), float('inf'), float('nan')]
     b = [0, 1, -2, float('-inf'), float('inf'), float('nan')]
@@ -298,12 +261,8 @@ def test_isclose():
     match_all_arrays(mnp.isclose(to_tensor(a), to_tensor(b)), onp.isclose(a, b))
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_in1d():
     xi = [rand_int(), rand_int(1), rand_int(10)]
     yi = [rand_int(), rand_int(1), rand_int(10)]
@@ -313,12 +272,8 @@ def test_in1d():
             match_res(mnp.in1d, onp.in1d, x, y, invert=True)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_isin():
     xi = [rand_int(), rand_int(1), rand_int(10), rand_int(2, 3)]
     yi = [rand_int(), rand_int(1), rand_int(10), rand_int(2, 3)]
@@ -336,12 +291,8 @@ def onp_logical_or(x1, x2):
     return onp.logical_or(x1, x2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_logical_or():
     run_logical_test(mnp_logical_or, onp_logical_or, test_case)
 
@@ -354,12 +305,8 @@ def onp_logical_xor(x1, x2):
     return onp.logical_xor(x1, x2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_logical_xor():
     run_logical_test(mnp_logical_xor, onp_logical_xor, test_case)
 
@@ -372,12 +319,8 @@ def onp_logical_and(x1, x2):
     return onp.logical_and(x1, x2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_logical_and():
     run_logical_test(mnp_logical_and, onp_logical_and, test_case)
 
@@ -390,12 +333,8 @@ def onp_logical_not(x):
     return onp.logical_not(x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_logical_not():
     for arr in test_case.boolean_arrs:
         expected = onp_logical_not(arr)
@@ -403,10 +342,8 @@ def test_logical_not():
         onp.testing.assert_equal(actual.asnumpy().tolist(), expected.tolist())
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_array_equal():
     a = [0, 1, 2, float('inf'), float('nan')]
     b = [0, 1, 2, float('inf'), float('nan')]
@@ -416,10 +353,8 @@ def test_array_equal():
     assert mnp.array_equal(a, b) == onp.array_equal(a, b)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_array_equiv():
     a = [0, 1, 2, float('inf'), float('nan')]
     b = [0, 1, 2, float('inf'), float('nan')]
@@ -445,12 +380,8 @@ def onp_signbit(*arrs):
     return a, b
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_signbit():
     onp_arrs = [onp.arange(-10, 10).astype('float32'), onp.arange(-10, 10).astype('int32')]
     mnp_arrs = [mnp.arange(-10, 10).astype('float32'), mnp.arange(-10, 10).astype('int32')]
@@ -478,12 +409,8 @@ def onp_sometrue(x):
     return a, b, c, d, e, f
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_sometrue():
     onp_arr = onp.full((3, 2), [True, False])
     mnp_arr = to_tensor(onp_arr)
@@ -491,12 +418,8 @@ def test_sometrue():
         onp.testing.assert_equal(actual.asnumpy().tolist(), expected.tolist())
 
 
-@pytest.mark.level2
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
+          card_mark='onecard', essential_mark='unessential')
 def test_setdiff1d():
     """
     Feature: test setdiff1d.

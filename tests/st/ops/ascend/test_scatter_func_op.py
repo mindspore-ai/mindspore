@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -317,10 +318,7 @@ def scatter_func_updates_nest_vmap():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_func_forward_float16():
     """
     Feature: test scatter_func forward.
@@ -333,10 +331,7 @@ def test_scatter_func_forward_float16():
     scatter_func_forward(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_func_forward_float32():
     """
     Feature: test scatter_func forward.
@@ -349,10 +344,7 @@ def test_scatter_func_forward_float32():
     scatter_func_forward(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_func_forward_int32():
     """
     Feature: test scatter_func forward.
@@ -365,10 +357,7 @@ def test_scatter_func_forward_int32():
     scatter_func_forward(np.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_func_dynamic_indices():
     """
     Feature: test scatter_func dynamic shape.
@@ -381,10 +370,7 @@ def test_scatter_func_dynamic_indices():
     scatter_func_dynamic_indices()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_func_dynamic_updates():
     """
     Feature: test scatter_func dynamic shape.
@@ -397,10 +383,7 @@ def test_scatter_func_dynamic_updates():
     scatter_func_dynamic_updates()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_func_grad_float16():
     """
     Feature: test scatter_func grad.
@@ -413,10 +396,7 @@ def test_scatter_func_grad_float16():
     scatter_func_grad(np.float16)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_func_grad_float32():
     """
     Feature: test scatter_func grad.
@@ -429,10 +409,7 @@ def test_scatter_func_grad_float32():
     scatter_func_grad(np.float32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_func_grad_int32():
     """
     Feature: test scatter_func grad.
@@ -445,10 +422,7 @@ def test_scatter_func_grad_int32():
     scatter_func_grad(np.int32)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_func_indices_vmap():
     """
     Feature: test scatter_func vmap.
@@ -461,10 +435,7 @@ def test_scatter_func_indices_vmap():
     scatter_func_indices_vmap()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_func_updates_vmap():
     """
     Feature: test scatter_func vmap.
@@ -477,10 +448,7 @@ def test_scatter_func_updates_vmap():
     scatter_func_updates_vmap()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_scatter_func_updates_nest_vmap():
     """
     Feature: test scatter_func nest vmap.

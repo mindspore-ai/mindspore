@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -57,9 +58,7 @@ def bbox2delta(proposals, gt, means, stds):
     return deltas
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_boundingbox_encode():
     anchor = np.array([[4, 1, 6, 9], [2, 5, 5, 9]]).astype(np.float32)
     gt = np.array([[3, 2, 7, 7], [1, 5, 5, 8]]).astype(np.float32)
@@ -97,9 +96,7 @@ def test_bounding_box_encode_functional():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_bounding_box_encode_functional_modes():
     """
     Feature: test bounding_box_encode functional API in PyNative and Graph modes.
@@ -112,9 +109,7 @@ def test_bounding_box_encode_functional_modes():
     test_bounding_box_encode_functional()
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_dynamic_shape_boundingbox_encode():
     """
     Feature: Test dynamic shape of BoundingBoxEncode operator

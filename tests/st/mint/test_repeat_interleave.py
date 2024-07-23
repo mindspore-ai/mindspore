@@ -20,6 +20,7 @@ from mindspore import ops, mint
 from mindspore import jit, JitConfig
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
@@ -127,9 +128,7 @@ def test_repeat_interleave_forward_backward_tensor(mode, dim):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
     np.testing.assert_allclose(output2.asnumpy(), expect, rtol=1e-3)
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dim', [None, 1])
 def test_repeat_interleave_bfloat16(mode, dim):
@@ -170,9 +169,7 @@ def test_repeat_interleave_dynamic_shape_int():
     TEST_OP(repeat_interleave_forward, [[input_case1, repeats1, dim1], [input_case2, repeats2, dim2]],
             '', disable_yaml_check=True, disable_mode=['GRAPH_MODE'])
 
-@pytest.mark.level0
-@pytest.mark.env_onecard
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_repeat_interleave_dynamic_shape_tensor():
     """
     Feature: Test dynamic shape.

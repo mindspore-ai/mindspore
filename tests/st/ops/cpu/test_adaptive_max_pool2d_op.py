@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -36,9 +37,7 @@ class NetP(nn.Cell):
         return self.adaptive_max_pool2d(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_adaptivemaxpool2d_cpu_net_normal():
     """
     Feature: test adaptivemaxpool2d op in cpu.
@@ -52,9 +51,7 @@ def test_adaptivemaxpool2d_cpu_net_normal():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_adaptivemaxpool2d_cpu_net_h_none():
     """
     Feature: test adaptivemaxpool2d op in cpu.
@@ -68,9 +65,7 @@ def test_adaptivemaxpool2d_cpu_net_h_none():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_adaptivemaxpool2d_cpu_net_hxh():
     """
     Feature: test adaptivemaxpool2d op in cpu.
@@ -94,9 +89,7 @@ class NetWithIndices(nn.Cell):
         return self.adaptive_max_pool2d(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_adaptivemaxpool2d_cpu_net_with_indices():
     """
     Feature: test adaptivemaxpool2d op in cpu.
@@ -110,9 +103,7 @@ def test_adaptivemaxpool2d_cpu_net_with_indices():
     assert output[1].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_adaptivemaxpool2d_cpu_net_f():
     """
     Feature: test adaptivemaxpool2d op in cpu.
@@ -135,9 +126,7 @@ class Netnn(nn.Cell):
         return self.adaptive_max_pool2d(x)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_adaptivemaxpool2d_cpu_net_nn():
     """
     Feature: test adaptivemaxpool2d op in cpu.
@@ -151,9 +140,7 @@ def test_adaptivemaxpool2d_cpu_net_nn():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_adaptivemaxpool2d_cpu_dynamic_shape():
     """
     Feature: test adaptivemaxpool2d op in cpu.
@@ -170,9 +157,7 @@ def test_adaptivemaxpool2d_cpu_dynamic_shape():
     assert output.asnumpy().shape == expect_shape
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_adaptivemaxpool2d_cpu_vmap():
     """
     Feature: test adaptivemaxpool2d op in cpu.

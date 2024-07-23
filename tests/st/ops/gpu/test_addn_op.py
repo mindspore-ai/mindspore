@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -48,9 +49,7 @@ class DynRankNet(nn.Cell):
         return res
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_net():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float32)
@@ -93,9 +92,7 @@ def test_net():
     assert (output.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_net_float64():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.float64)
@@ -132,9 +129,7 @@ def test_net_float64():
     assert (output.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_net_int64():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     x = np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4).astype(np.int64)
@@ -171,9 +166,7 @@ def test_net_int64():
     assert (output.asnumpy() == expect_result).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_addn_support_type():
     """
     Feature: test ops.addn.

@@ -32,9 +32,7 @@ class NetSparseMatrixNNZ(nn.Cell):
                        values)
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_enecard
+@pytest.mark.skip(reason="never run on ci or smoke test")
 def test_sparse_matrix_nnz_dyn():
     """
     Feature: test SparseMatrixNNZ ops in cpu.

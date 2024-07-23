@@ -13,15 +13,12 @@
 # limitations under the License.
 # ============================================================================
 import os
-import pytest
 from mindspore import context
 from tests.st.utils import test_utils
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 def test_hccl_allreduce():
     """
     Feature: mpi run 8P case
@@ -33,10 +30,7 @@ def test_hccl_allreduce():
     assert return_code == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
 @test_utils.run_test_with_On
 def test_hccl_reduce():
     """
@@ -48,10 +42,7 @@ def test_hccl_reduce():
     assert return_code == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 @test_utils.run_test_with_On
 def test_hccl_barrier():
     """
@@ -63,10 +54,7 @@ def test_hccl_barrier():
     assert return_code == 0
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 def test_hccl_allgather():
     """
     Feature: mpi run 8P case
@@ -78,10 +66,7 @@ def test_hccl_allgather():
     assert return_code == 0
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 def test_hccl_get_process_group_ranks_func_8p():
     """
     Feature: mpi run 8P case
@@ -93,11 +78,7 @@ def test_hccl_get_process_group_ranks_func_8p():
     assert return_code == 0
 
 
-
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
 @test_utils.run_test_with_On
 def test_hccl_batch_isend_irecv():
     """
@@ -109,10 +90,7 @@ def test_hccl_batch_isend_irecv():
     assert return_code == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 @test_utils.run_test_with_On
 def test_hccl_all_to_all_single_with_output_shape():
     """
@@ -124,10 +102,7 @@ def test_hccl_all_to_all_single_with_output_shape():
     assert return_code == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
 @test_utils.run_test_with_On
 def test_hccl_broadcast():
     """
@@ -139,10 +114,7 @@ def test_hccl_broadcast():
     assert return_code == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
 @test_utils.run_test_with_On
 def test_hccl_gather_into_tensor():
     """
@@ -154,10 +126,7 @@ def test_hccl_gather_into_tensor():
     assert return_code == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 @test_utils.run_test_with_On
 def test_hccl_scatter_tensor():
     """
@@ -176,10 +145,7 @@ def test_hccl_scatter_tensor():
     assert return_code == 0
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
 @test_utils.run_test_with_On
 def test_hccl_send_receive():
     """
@@ -190,10 +156,8 @@ def test_hccl_send_receive():
     return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_send_receive.py")
     assert return_code == 0
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_single
+
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="allcards", essential_mark="essential")
 @test_utils.run_test_with_On
 def test_hccl_all_to_all_v():
     """

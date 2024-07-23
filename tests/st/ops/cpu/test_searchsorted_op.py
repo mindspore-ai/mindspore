@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -33,9 +34,7 @@ class SearchSortedNet(nn.Cell):
     def construct(self, sequence, values):
         return self.searchsorted(sequence, values)
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_right_out32():
     np.random.seed(1)
     input1 = np.sort(np.array(np.random.randint(10, size=(2, 3, 9)), dtype=np.int32), axis=-1)
@@ -55,9 +54,7 @@ def test_right_out32():
     assert output.dtype == mstype.int32
     assert (output.asnumpy() == expect).all()
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_out32():
     np.random.seed(1)
     input1 = np.sort(np.array(np.random.randint(10, size=(2, 3, 9)), dtype=np.int64), axis=-1)
@@ -77,9 +74,7 @@ def test_out32():
     assert output.dtype == mstype.int32
     assert (output.asnumpy() == expect).all()
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_right_out64():
     np.random.seed(1)
     input1 = np.sort(np.array(np.random.random((2, 5)), dtype=np.float32), axis=-1)
@@ -96,9 +91,7 @@ def test_right_out64():
     assert (output.asnumpy() == expect).all()
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_out64():
     np.random.seed(1)
     input1 = np.sort(np.array(np.random.random((5)), dtype=np.float64), axis=-1)

@@ -18,11 +18,10 @@ from mindspore.common import mutable
 import mindspore.common.dtype as mstype
 from mindspore import Tensor
 from mindspore import jit, context
+from tests.mark_utils import arg_mark
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_mutable_with_scalar():
     """
     Feature: Set Constants mutable.

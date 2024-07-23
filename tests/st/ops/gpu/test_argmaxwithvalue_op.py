@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -101,23 +102,17 @@ def argmaxwithvalue_3d(data_type, shape_x):
     assert (output[1].asnumpy() == expect2).all()
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_argmaxwithvalue_base_float32():
     argmaxwithvalue_base(np.float32)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_argmaxwithvalue_base_float16():
     argmaxwithvalue_base(np.float16)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_argmaxwithvalue_3d_float32():
     shape_x = (2, 32, 256)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
@@ -126,18 +121,14 @@ def test_argmaxwithvalue_3d_float32():
     argmaxwithvalue_3d(np.float32, shape_x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_argmaxwithvalue_3d_float16():
     shape_x = (2, 64, 128)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     argmaxwithvalue_3d(np.float16, shape_x)
 
 
-@pytest.mark.level2
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_argmaxwithvalue_3d_big_float32():
     shape_x = (128, 1024, 1)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")

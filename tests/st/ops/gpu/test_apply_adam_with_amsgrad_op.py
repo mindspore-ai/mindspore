@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 import math
 import pytest
 import numpy as np
@@ -52,8 +53,6 @@ def numpy_apply_adam_with_amsgrad(var, m, v, vhat, grad, beta1=0.9, beta2=0.999,
     return var
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_apply_adam_with_amsgrad_op(data_type):
     """
@@ -98,8 +97,6 @@ class AmsgradNetVmap(nn.Cell):
         return self.vmap_amsgrad(self.var, self.m, self.v, self.vhat, beta1_power, beta2_power, lr, grad)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_apply_adam_witm_amsgrad_op_vmap():
     """
     Feature: ApplyAdamWithAmsgrad gpu kernel
@@ -144,8 +141,6 @@ class AmsgradNetVmap2(nn.Cell):
         return self.vmap_amsgrad(self.var, self.m, self.v, self.vhat, beta1_power, beta2_power, lr, grad)
 
 
-@pytest.mark.level1
-@pytest.mark.env_onecard
 def test_apply_adam_with_amsgrad_grad_op_vmap2():
     """
     Feature: ApplyAdamWithAmsgrad gpu kernel

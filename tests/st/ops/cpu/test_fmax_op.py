@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 """test Fmax forward and backward broadcast"""
 
@@ -43,9 +44,7 @@ class FmaxGrad(nn.Cell):
         return self.grad(self.forward)(x1, x2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype', [np.int, np.float32, np.float64])
 @pytest.mark.parametrize("context_mode", [mindspore.GRAPH_MODE, mindspore.PYNATIVE_MODE])
 def test_fmax_cpu_broadcast_shape(dtype, context_mode):

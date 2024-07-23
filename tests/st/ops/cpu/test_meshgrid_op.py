@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
@@ -37,9 +38,7 @@ class NetMeshgrid(nn.Cell):
         return self.meshgrid(inputs)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_meshgrid_dshape():
     """
     Feature: Test meshgrid dynamic shape.
@@ -59,9 +58,7 @@ def test_meshgrid_dshape():
     assert output[1].asnumpy().shape == expect_shape
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('dtype',
                          [np.bool, np.uint8, np.uint16, np.uint32, np.uint64, np.int8, np.int16, np.int32, np.int64,
                           np.float16, np.float32, np.float64])
@@ -99,9 +96,7 @@ def test_meshgrid(dtype, indexing):
     assert np.array_equal(output[2].asnumpy(), np_output[2])
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('axis', [2])
 def test_meshgrid_vmap_cpu(axis):
     """
@@ -134,9 +129,7 @@ def test_meshgrid_vmap_cpu(axis):
     assert np.array_equal(output_vmap1.asnumpy(), output_manually1)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('axis0', [2])
 @pytest.mark.parametrize('axis1', [2])
 def test_meshgrid_vmap_cpu_2(axis0, axis1):
