@@ -222,8 +222,8 @@ class EmbeddingService:
         self._ps_table_id_list.append(table_id)
         self._ps_table_name_list.append(name)
 
-        if len(self._ps_table_id_list) > 10:
-            raise ValueError("Now only 10 PS embedding tables can be init.")
+        if len(self._ps_table_id_list) > 1024:
+            raise ValueError("Now only 1024 PS embedding tables can be init.")
         bucket_size = math.ceil(init_vocabulary_size / self._ps_num)
         if optimizer is None:
             self._train_mode = False

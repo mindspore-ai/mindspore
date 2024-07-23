@@ -85,9 +85,6 @@ std::string GetGraphName(const FuncGraphPtr &graph) {
 
 OptionMap GetComputeGraphOptions(const ShapeArray &input_shapes, bool is_dynamic_shape) {
   OptionMap options{};
-  if (IsGeTrain() && GetPhasePrefix() == "train") {
-    (void)options.emplace("ge.exec.variable_acc", "1");
-  }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   auto max_threshold = ms_context->get_param<std::string>(MS_CTX_HOST_SCHEDULING_MAX_THRESHOLD);
