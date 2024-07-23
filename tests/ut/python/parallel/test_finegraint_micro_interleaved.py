@@ -323,6 +323,20 @@ class NetWithSplitAxis0(nn.Cell):
         return out
 
 
+class AddNet(nn.Cell):
+    def __init__(self, add_shape, in_layout=None):
+        super().__init__()
+        self.add = P.Add()
+        self.add.shard(in_layout)
+        self.relu = P.ReLU()
+        self.weight = Parameter(Tensor(np.ones(add_shape).astype(np.float32)), name="add_weight")
+
+    def construct(self, y):
+        out1 = self.add(y, self.weight)
+        out = self.relu(out1)
+        return out
+
+
 def test_interleaved_base():
     """
     Feature: test micro interleaved
@@ -577,3 +591,17 @@ def test_interleaved_with_split_with_error():
             NetWithSplitAxis0((64, 128), in_strategy)))
     with pytest.raises(RuntimeError):
         _ = compile_net(net, x)
+
+
+def test_interleaved_with_add_interleave3():
+    """
+    Feature: test micro interleaved, interleave size 3.
+    Description: dev_num is 8.
+    Expectation: compile success
+    """
+    context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8, global_rank=0)
+    layout = Layout((2, 2, 2, 3), ("dp", "sp", "mp", "interleaved_parallel"))
+    add_layout = (layout(("interleaved_parallel", "dp"), "mp"), layout("None", "mp"))
+    x = Tensor(np.ones([3 * 1024, 1024]), dtype=ms.float32)
+    net = GradWrap(NetWithLoss(AddNet((1, 1024), add_layout)))
+    _ = compile_net(net, x)
