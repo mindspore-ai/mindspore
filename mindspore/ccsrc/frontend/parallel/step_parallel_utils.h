@@ -56,6 +56,7 @@ constexpr char KAttrDevMatrixShape[] = "dev_matrix_shape";
 constexpr char KAttrInputsTensorMap[] = "inputs_tensor_map";
 constexpr char KAttrOutputsTensorMap[] = "outputs_tensor_map";
 constexpr int64_t DYNAMIC_DIM_VAL = -1;
+constexpr int64_t kFineGrainedInterleavedBlockIndexMax = 1000;
 
 extern size_t TOTAL_OPS;
 extern std::map<AnfNodePtr, std::pair<AnfNodePtr, int64_t>> g_RefMap;
