@@ -255,7 +255,7 @@ class Custom(ops.PrimitiveWithInfer):
                  `Quick Start for End-to-End Operator Development
                  <https://www.hiascend.com/document/detail/zh/canncommercial/70RC1/operatordev/Ascendcopdevg/atlas_ascendc_10_0022.html>`_,
                  and for compiling custom operators, you can use the `Offline Compilation of Ascend C Custom Operators
-                 <https://www.mindspore.cn/tutorials/experts/en/master/operation/ascendc_compile.html>` tool.
+                 <https://www.mindspore.cn/tutorials/experts/en/master/operation/op_custom_ascendc.html>` tool.
                  When passing the operator's name into the func parameter, taking AddCustom as an example for the
                  name given in the custom operator implementation, there are several ways to use it:
 
@@ -338,7 +338,7 @@ class Custom(ops.PrimitiveWithInfer):
             or the attributes of `func` differs in different targets.
 
     Supported Platforms:
-        ``GPU`` ``CPU`` ``ASCEND``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import numpy as np
