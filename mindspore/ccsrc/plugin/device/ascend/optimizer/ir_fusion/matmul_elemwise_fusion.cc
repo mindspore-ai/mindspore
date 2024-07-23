@@ -85,6 +85,9 @@ const AnfNodePtr MatmulElemFusionBase::Process(const FuncGraphPtr &func_graph, c
   MS_CHECK_TRUE_RET(matmul_elemwise_prim, {});
 
   std::string elemwise_type = GetElemwiseType();
+  if (!(elemwise_type == "bias_add" && common::AnfAlgo::GetOutputInferDataType(node, 0) == kFloat16->type_id())) {
+    return nullptr;
+  }
   matmul_elemwise_prim->AddAttr("ElemwiseType", MakeValue(elemwise_type));
 
   auto input_trans_a = matmul_cnode->input(kIndex3)->cast<ValueNodePtr>();
@@ -123,6 +126,17 @@ const VectorRef MatmulElemBiasaddFusion::DefineMatmulFusionPattern(const VectorR
   auto biasadd_matmul_bias = VectorRef({is_biasadd, predecessor, bias, format});
 
   return biasadd_matmul_bias;
+}
+
+const VectorRef MatmulElemAddFusion::DefineMatmulFusionPattern(const VectorRef &predecessor) const {
+  auto bias = std::make_shared<Var>();
+  MS_CHECK_TRUE_RET(bias != nullptr, {});
+
+  auto is_add = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimAdd>);
+  MS_CHECK_TRUE_RET(is_add != nullptr, {});
+  auto matmul_add = VectorRef({is_add, predecessor, bias});
+
+  return matmul_add;
 }
 
 const VectorRef MatmulElemReluFusion::DefineMatmulFusionPattern(const VectorRef &predecessor) const {
