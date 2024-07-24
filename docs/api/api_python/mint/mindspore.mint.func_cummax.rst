@@ -1,13 +1,13 @@
-mindspore.mint.cummin
+mindspore.mint.cummax
 ======================
 
-.. py:function:: mindspore.mint.cummin(input, dim)
+.. py:function:: mindspore.mint.cummax(input, dim)
 
-    返回一个元组（最值、索引），其中最值是输入Tensor `input` 沿维度 `dim` 的累积最小值，索引是每个最小值的索引位置。
+    返回一个元组（最值、索引），其中最值是输入Tensor `input` 沿维度 `dim` 的累积最大值，索引是每个最大值的索引位置。
 
     .. math::
         \begin{array}{ll} \\
-            y_{i} = \min(x_{1}, x_{2}, ... , x_{i})
+            y_{i} = \max(x_{1}, x_{2}, ... , x_{i})
         \end{array}
 
     参数：
@@ -15,11 +15,10 @@ mindspore.mint.cummin
         - **dim** (int) - 算子操作的维度，维度的大小范围是[-input.ndim, input.ndim - 1]。
 
     返回：
-        一个包含两个Tensor的元组，分别表示累积最小值和对应索引。每个输出Tensor的形状和输入Tensor的形状相同。
+        一个包含两个Tensor的元组，分别表示累积最大值和对应索引。每个输出Tensor的形状和输入Tensor的形状相同。
 
     异常：
         - **TypeError** - 如果 `input` 不是Tensor。
-        - **TypeError** - 如果 `input` 的Tensor类型是复数或bool。
         - **TypeError** - 如果 `dim` 不是int。
         - **ValueError** - 如果 `dim` 不在范围[-input.ndim, input.ndim - 1]内。
 
