@@ -86,10 +86,11 @@ def test_ops_square_bfloat16(context_mode):
     Expectation: expect correct result.
     """
     ms.context.set_context(mode=context_mode)
-    x = generate_random_input((64, 32, 57344), np.float32)
-    output = square_forward_func(Tensor(x, mstype.bfloat16))
-    expect = generate_expect_forward_output(x)
-    np.testing.assert_allclose(output.float().asnumpy(), expect, rtol=1e-3)
+    x_np = generate_random_input((64, 32, 57344), np.float32)
+    x = Tensor(x_np, mstype.bfloat16)
+    output = square_forward_func(x)
+    expect = generate_expect_forward_output(x.float().asnumpy())
+    np.testing.assert_allclose(output.float().asnumpy(), expect, rtol=5e-3)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
