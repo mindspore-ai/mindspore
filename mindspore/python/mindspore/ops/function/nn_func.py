@@ -7909,17 +7909,21 @@ def incre_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths=
         quant_scale1 (Tensor): Quantitative parametor, the tensor with data type of float32. It is disable now.
         dequant_scale2 (Tensor): Quantitative parametor, the tensor with data type of uint64 or float32. It is
             disable now.
-        quant_scale2 (Tensor): Quantitative parametor, the tensor with data type of float32.
-        quant_offset2 (Tensor): Quantitative parametor, the tensor with data type of float32.
+        quant_scale2 (Tensor): Quantitative parametor, the tensor with data type of float32, supporting
+            per-tensor and per-channel.
+        quant_offset2 (Tensor): Quantitative parametor, the tensor with data type of float32, supporting
+            per-tensor and per-channel.
         antiquant_scale (Tensor): Quantitative parametor, the tensor with data type of float16 or bfloat16.
+            Shape is :math:`(2, N, 1, D)` when input layout is BNSD or :math:`(2, H)` when input layout is BSH.
         antiquant_offset (Tensor): Quantitative parametor, the tensor with data type of float16 or bfloat16.
+            Shape is :math:`(2, N, 1, D)` when input layout is BNSD or :math:`(2, H)` when input layout is BSH.
         block_table (Tensor): The tensor with data type of int32.
         num_heads  (int): The number of heads.
         input_layout (str): The data layout of the input qkv, support `(BSH)` and `(BNSD)`. Default `BSH`.
         scale_value (double): The scale value indicating the scale coefficient, which is used as the scalar of
             Muls in the calculation. Default: 1.0.
         num_key_value_heads (int): Head numbers of key/value which are used in GQA algorithm.
-            The value o indicates if the key and value have the same head nums, use numHeads.  Default: 0.
+            The value 0 indicates if the key and value have the same head nums, use numHeads.  Default: 0.
         block_size (int): The maximum number of tokens stored in each block of KV in page attention. Default: 0.
         inner_precise (int): Default: 1.
         kv_padding_size (Tensor): The tensor with data type of int64.
