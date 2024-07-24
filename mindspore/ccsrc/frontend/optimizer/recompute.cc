@@ -101,7 +101,9 @@ void InsertRecomputedNodes(const FuncGraphPtr &graph) {
     // not be executed until these inputs are ready.
     std::vector<AnfNodePtr> first_target_inputs =
       GetFirstTargetInputs(origin_nodes_topological, max_recomputed_sub_graph, origin_recomputed_nodes, target_nodes);
-    if (first_target_inputs.empty()) {
+    static bool warning_printed = false;
+    if (first_target_inputs.empty() && !warning_printed) {
+      warning_printed = true;
       MS_LOG(WARNING) << "Can not find the nodes to depend, please check the recompute strategy.";
     }
     mindspore::HashMap<CNodePtr, CNodePtr> origin_to_recomputed_nodes;
