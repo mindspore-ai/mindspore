@@ -217,16 +217,6 @@ MindSpore中 `mindspore.ops.primitive` 接口与上一版本相比，新增、�
 
     mindspore.ops.NoRepeatNGram
 
-特征值检测
-^^^^^^^^^^^^
-
-.. mscnplatwarnautosummary::
-    :toctree: ops
-    :nosignatures:
-    :template: classtemplate.rst
-
-    mindspore.ops.silent_check.ASDBase
-
 数学运算算子
 ------------
 
