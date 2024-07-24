@@ -30,7 +30,7 @@ def generate_inputs(bs=1, seq_len=1, num_head=40, head_dim=128, block_size=16, m
     value = Parameter(Tensor(np.ones([bs, seq_len, hidden_size]), dtype=ms.float16), "value")
     key_cache = Parameter(Tensor(np.ones([max_seq, block_size, num_head, head_dim]), dtype=ms.float16), "key_cache")
     value_cache = Parameter(Tensor(np.ones([max_seq, block_size, num_head, head_dim]), dtype=ms.float16), "value_cache")
-    slot_mapping = Parameter(Tensor(np.ones([max_seq]), dtype=ms.int32), "slot_mapping")
+    slot_mapping = Parameter(Tensor(np.ones([bs * seq_len]), dtype=ms.int32), "slot_mapping")
     return key, value, key_cache, value_cache, slot_mapping
 
 
@@ -69,7 +69,7 @@ def test_reshape_and_cache_semi_auto_parallel():
     assert validator.check_parameter_shape('value', [bs, seq_len, hidden_size // mp])
     assert validator.check_parameter_shape('key_cache', [max_seq, blk_size, num_head // mp, head_dim])
     assert validator.check_parameter_shape('value_cache', [max_seq, blk_size, num_head // mp, head_dim])
-    assert validator.check_parameter_shape('slot_mapping', [max_seq])
+    assert validator.check_parameter_shape('slot_mapping', [bs * seq_len])
 
 
 def test_reshape_and_cache_standalone():
