@@ -1,0 +1,35 @@
+cross:
+    description: |
+        Returns the cross product of vectors in dimension `dim` of input and other.
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
+        Refer to :func:`mindspore.ops.cross` for more details.
+
+        Args:
+            dim (int): Spefcified dim along which to cumpute cross product with. Default: ``-65530`` .
+
+        Inputs:
+            - **input** (Tensor) - Input Tensor.
+            - **other** (Tensor) - Another input Tensor, must have the same shape and
+              the same type as `input`, and the size of their `dim` dimension should be 3.
+
+        Outputs:
+            Tensor, has the same shape and type as inputs.
+
+        Supported Platforms:
+            ``Ascend`` ``CPU``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> from mindspore import dtype as mstype
+            >>> from mindspore import ops
+            >>> cross = ops.Cross(dim = 0)
+            >>> x1 = Tensor([1, 2, 3], mstype.int8)
+            >>> x2 = Tensor([1, 2, 3], mstype.int8)
+            >>> output = cross(x1, x2)
+            >>> print(output)
+            [0 0 0]

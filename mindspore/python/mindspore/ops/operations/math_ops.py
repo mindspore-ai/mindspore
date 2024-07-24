@@ -38,7 +38,7 @@ from ..auto_generate import (Add, Addcdiv, Addcmul, ReduceMean, ReduceSum, Reduc
                              Greater, GreaterEqual, Gcd, LogicalNot, LogicalAnd, LogicalOr,
                              LogicalXor, Cos, ACos, Sin, Asin, Abs, Round, Atan, Atanh, Atan2,
                              LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
-                             Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky,
+                             Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky, Cross,
                              FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, DivMod, CumProd,
                              CumSum, Less, LessEqual, AssignAdd, IsFinite, IsClose, TanhGrad, Xlogy)
 
@@ -4250,49 +4250,6 @@ class Polygamma(Primitive):
     def __init__(self):
         """Initialize Polygamma"""
         self.init_prim_io_names(inputs=['a', 'x'], outputs=['y'])
-
-
-class Cross(Primitive):
-    """
-    Returns the cross product of vectors in dimension `dim` of x1 and x2.
-
-    .. warning::
-        This is an experimental API that is subject to change or deletion.
-
-    Refer to :func:`mindspore.ops.cross` for more details.
-
-    Args:
-        dim (int): Spefcified dim along which to cumpute cross product with. Default: ``-65530`` .
-
-    Inputs:
-        - **x1** (Tensor) - Input Tensor.
-        - **x2** (Tensor) - Another input Tensor, must have the same shape and
-          the same type as `x1`, and the size of their `dim` dimension should be 3.
-
-    Outputs:
-        Tensor, has the same shape and type as inputs.
-
-    Supported Platforms:
-        ``Ascend`` ``CPU``
-
-    Examples:
-        >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor
-        >>> from mindspore import dtype as mstype
-        >>> from mindspore import ops
-        >>> cross = ops.Cross(dim = 0)
-        >>> x1 = Tensor([1, 2, 3], mstype.int8)
-        >>> x2 = Tensor([1, 2, 3], mstype.int8)
-        >>> output = cross(x1, x2)
-        >>> print(output)
-        [0 0 0]
-    """
-
-    @prim_attr_register
-    def __init__(self, dim=-65530):
-        validator.check_value_type('dim', dim, [int], self.name)
-        self.init_prim_io_names(inputs=['x1', 'x2'], outputs=['y'])
 
 
 class RaggedRange(Primitive):

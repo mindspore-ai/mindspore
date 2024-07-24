@@ -1,0 +1,19 @@
+#operator cross
+cross:
+  args:
+    input:
+      dtype: tensor
+    other:
+      dtype: tensor
+    dim:
+      dtype: int
+      default: -65530
+      prim_init: True
+  returns:
+    output:
+      dtype: tensor
+  function:
+      disable: True
+  dispatch:
+    enable: True
+    Ascend: CrossAscend

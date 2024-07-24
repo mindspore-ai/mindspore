@@ -1908,15 +1908,14 @@ REG_BPROP_BUILDER("Ger").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   return {dx, dy};
 });
 
-REG_BPROP_BUILDER("Cross").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
-  auto input1 = ib->GetInput(kIndex0);
-  auto input2 = ib->GetInput(kIndex1);
-  auto dout = ib->GetInput(kIndex3);
-  auto dinput1 = input1->need_compute_grad_out() ? ib->Emit("Cross", {input2, dout}, {{"dim", ib->GetAttr("dim")}})
-                                                 : ib->OutZeros(input1);
-  auto dinput2 = input2->need_compute_grad_out() ? ib->Emit("Cross", {dout, input1}, {{"dim", ib->GetAttr("dim")}})
-                                                 : ib->OutZeros(input2);
-  return {dinput1, dinput2};
+REG_BPROP_BUILDER("Cross").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto other = ib->GetInput(kIndex1);
+  auto dim = ib->GetInput(kIndex2);
+  auto dout = ib->GetInput(kIndex4);
+  auto dinput = input->need_compute_grad_out() ? ib->Emit("Cross", {other, dout, dim}) : ib->OutZeros(input);
+  auto dother = other->need_compute_grad_out() ? ib->Emit("Cross", {dout, input, dim}) : ib->OutZeros(other);
+  return {dinput, dother, ib->OutZeros(dim)};
 });
 
 REG_BPROP_BUILDER("Median").SetBody(BODYFUNC(ib) {
