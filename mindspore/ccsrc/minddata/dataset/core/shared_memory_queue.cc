@@ -246,7 +246,7 @@ Status SharedMemoryQueue::Serialize(const TensorRow &in_row) {
                                reinterpret_cast<char *>(item->GetMutableBuffer()), data_len);
       CHECK_FAIL_RETURN_UNEXPECTED(ret_memcpy == item->GetMutableBuffer(), "memcpy the data type of Tensor failed.");
     }
-    offset += data_len;
+    offset += static_cast<uint64_t>(data_len);
     if (tensor_inner_type == kNormalCTensor) {
       // normal array
       MS_LOG(DEBUG) << "Row shape: " << item->shape() << ", row type: " << item->type()

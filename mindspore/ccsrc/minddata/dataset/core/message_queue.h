@@ -44,6 +44,8 @@ namespace dataset {
 const int kMsgQueuePermission = 0600;
 const int kMsgQueueClosed = 2;
 
+const int kWorkerErrorMsg = 111;
+
 const int kWorkerSendDataMsg = 777;
 const int kMasterSendDataMsg = 999;
 
@@ -63,9 +65,14 @@ class DATASET_API MessageQueue {
 
   Status GetOrCreateMessageQueueID();
 
+  State MessageQueueState();
+
   Status MsgSnd(int64_t mtype, int shm_id = 0, uint64_t shm_size = 0);
 
   Status MsgRcv(int64_t mtype);
+
+  // wrapper the msgrcv
+  int MsgRcv(int64_t mtype, int msgflg);
 
   // the below is the message content
   int64_t mtype_;      // the message type

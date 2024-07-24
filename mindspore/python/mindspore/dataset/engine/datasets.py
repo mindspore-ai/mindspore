@@ -3302,7 +3302,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
 
         self.eot = None
         self.watch_dog = None
-        self.ppid = os.getpid()
+        self.ppid = None
         self.hook = None
         self.warning_ctl = None
         # cache thread (get_ident()) to worker_id mapping in Python layer
@@ -3462,7 +3462,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
         Launch Python multiprocessing pool.
 
         Args:
-            pop_id: ID for operation to have Python multiprocessing pool launched
+            op_id: ID for operation to have Python multiprocessing pool launched
 
         Returns:
             Python multiprocssing pool is launched.
@@ -3476,6 +3476,7 @@ class _PythonMultiprocessing(cde.PythonMultiprocessingRuntime):
             logger.warning(message)
             self.terminate()
             self.reset()
+        self.ppid = os.getpid()
         self.create_pool()
 
     def create_pool(self):

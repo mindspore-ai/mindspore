@@ -21,6 +21,9 @@
 #include <string>
 #include <vector>
 
+#ifdef ENABLE_PYTHON
+#include "minddata/dataset/api/python/python_mp.h"
+#endif
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 #include "minddata/dataset/engine/ir/datasetops/epoch_ctrl_node.h"
 #include "minddata/dataset/engine/ir/datasetops/repeat_node.h"
@@ -35,11 +38,12 @@ class GeneratorNode : public MappableSourceNode {
   /// \brief Constructor
   GeneratorNode(py::function generator_function, const std::vector<std::string> &column_names,
                 const std::vector<DataType> &column_types, int64_t source_len, std::shared_ptr<SamplerObj> sampler,
-                uint32_t num_parallel_workers);
+                uint32_t num_parallel_workers, std::shared_ptr<PythonMultiprocessingRuntime> python_mp);
 
   /// \brief Constructor
   GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema, int64_t source_len,
-                std::shared_ptr<SamplerObj> sampler, uint32_t num_parallel_workers);
+                std::shared_ptr<SamplerObj> sampler, uint32_t num_parallel_workers,
+                std::shared_ptr<PythonMultiprocessingRuntime> python_mp);
 
   /// \brief Destructor
   ~GeneratorNode() override = default;
@@ -114,6 +118,7 @@ class GeneratorNode : public MappableSourceNode {
   std::shared_ptr<SamplerObj> sampler_;
   uint32_t num_parallel_workers_;
   int64_t source_len_;  // Length of the dataset source provided by the user, -1 means it's unknown
+  std::shared_ptr<PythonMultiprocessingRuntime> python_mp_;
 
   /// \brief Base-class override for accepting IRNodePass visitor
   /// \param[in] p The node to visit

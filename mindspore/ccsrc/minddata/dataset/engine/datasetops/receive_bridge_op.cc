@@ -35,7 +35,11 @@ namespace mindspore {
 namespace dataset {
 // Constructor of ReceiveBridgeOp
 ReceiveBridgeOp::ReceiveBridgeOp(int32_t op_connector_size, SharedMemoryQueue receive_queue, MessageQueue msg_queue)
-    : ParallelOp(1, op_connector_size), receive_queue_(receive_queue), msg_queue_(msg_queue), subprocess_pid_(-1) {
+    : ParallelOp(1, op_connector_size),
+      receive_queue_(receive_queue),
+      msg_queue_(msg_queue),
+      subprocess_pid_(-1),
+      subprocess_status_(true) {
   receive_info_.normal_row_.sample_ = 0;
   receive_info_.normal_row_.row_step_ = ReceiveBridgeOp::RowStep::kNone;
   receive_info_.eoe_row_.sample_ = 0;
@@ -88,11 +92,18 @@ void ReceiveBridgeOp::Print(std::ostream &out, bool show_all) const {
 
 Status ReceiveBridgeOp::MonitorIndependentDatasetProcess() {
   TaskManager::FindMe()->Post();
-  while (true) {
+  while (!tree_->isFinished()) {
     RETURN_IF_INTERRUPTED();
     if (MonitorSubprocess(subprocess_pid_) != Status::OK() && receive_info_.eof_row_.row_step_ == 0) {
       MS_LOG(WARNING) << "The independent dataset process: " << std::to_string(subprocess_pid_)
-                      << " exits, and the thread of main process exits.";
+                      << " exits, and the main process exits.";
+      subprocess_status_ = false;
+      break;
+    }
+
+    // get error flag from dataset independent process
+    if (msg_queue_.MsgRcv(111, IPC_NOWAIT) > 0) {
+      MS_LOG(ERROR) << "The independent dataset process occur errors.";
       break;
     }
     sleep(1);  // check the independent dataset process status in every 1s
@@ -123,7 +134,15 @@ Status ReceiveBridgeOp::operator()() {
 
   // Get msg from the independent dataset process by msg_queue_
   receive_info_.normal_row_.row_step_ = ReceiveBridgeOp::RowStep::kBeginReceiveMsg;
-  RETURN_IF_NOT_OK(msg_queue_.MsgRcv(kWorkerSendDataMsg));
+  auto status = msg_queue_.MsgRcv(kWorkerSendDataMsg);
+  if (status != Status::OK()) {
+    tree_->SetFinished();
+    if (subprocess_status_ == false) {
+      RETURN_STATUS_UNEXPECTED("Independent Dataset Process reports an error and exit.");
+    } else {
+      return status;
+    }
+  }
   receive_info_.normal_row_.row_step_ = ReceiveBridgeOp::RowStep::kAfterReceiveMsg;
 
   TensorRow new_row;
@@ -150,7 +169,15 @@ Status ReceiveBridgeOp::operator()() {
 
       receive_info_.normal_row_.row_step_ = ReceiveBridgeOp::RowStep::kBeginReceiveMsg;
       // Get msg from the independent dataset process by msg_queue_
-      RETURN_IF_NOT_OK(msg_queue_.MsgRcv(kWorkerSendDataMsg));
+      status = msg_queue_.MsgRcv(kWorkerSendDataMsg);
+      if (status != Status::OK()) {
+        tree_->SetFinished();
+        if (subprocess_status_ == false) {
+          RETURN_STATUS_UNEXPECTED("Independent Dataset Process reports an error and exit.");
+        } else {
+          return status;
+        }
+      }
       receive_info_.normal_row_.row_step_ = ReceiveBridgeOp::RowStep::kAfterReceiveMsg;
 
       RETURN_IF_NOT_OK(receive_queue_.ToTensorRow(&new_row, msg_queue_.shm_id_, msg_queue_.shm_size_));
@@ -169,7 +196,15 @@ Status ReceiveBridgeOp::operator()() {
 
     // Get msg from the independent dataset process by msg_queue_
     receive_info_.eoe_row_.row_step_ = ReceiveBridgeOp::RowStep::kBeginReceiveMsg;
-    RETURN_IF_NOT_OK(msg_queue_.MsgRcv(kWorkerSendDataMsg));
+    status = msg_queue_.MsgRcv(kWorkerSendDataMsg);
+    if (status != Status::OK()) {
+      tree_->SetFinished();
+      if (subprocess_status_ == false) {
+        RETURN_STATUS_UNEXPECTED("Independent Dataset Process reports an error and exit.");
+      } else {
+        return status;
+      }
+    }
     receive_info_.eoe_row_.row_step_ = ReceiveBridgeOp::RowStep::kAfterReceiveMsg;
 
     RETURN_IF_NOT_OK(receive_queue_.ToTensorRow(&new_row, msg_queue_.shm_id_, msg_queue_.shm_size_));
