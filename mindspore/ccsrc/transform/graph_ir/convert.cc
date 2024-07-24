@@ -230,34 +230,38 @@ AnfNodeWeakPtrList SuccIncludeFv(const FuncGraphPtr &fg, const AnfNodePtr &node,
     return vecs;
   }
 
-  if (node->isa<CNode>()) {
-    auto cnode = node->cast<CNodePtr>();
-    bool is_fv = mark_fv && node->has_user_data(kIsFreeVariable);
-    auto &weak_inputs = cnode->weak_inputs();
-
-    // Check if free variables used.
-    for (const auto &weak_input : weak_inputs) {
-      auto input = weak_input.lock();
-      MS_EXCEPTION_IF_NULL(input);
-      if (is_fv) {
-        input->set_user_data(kIsFreeVariable, std::make_shared<bool>(true));
-      }
-      auto input_fg = GetValueNode<FuncGraphPtr>(input);
-      if (input_fg) {
-        for (auto &fv : input_fg->free_variables_nodes()) {
-          if (fv->func_graph() == fg && fg->nodes().contains(fv)) {
-            if (mark_fv) {
-              fv->set_user_data(kIsFreeVariable, std::make_shared<bool>(true));
-            }
-            (void)vecs.emplace_back(fv);
-          }
-        }
-      }
-    }
-
-    (void)vecs.insert(vecs.end(), weak_inputs.begin(), weak_inputs.end());
+  if (!node->isa<CNode>()) {
+    return vecs;
   }
 
+  auto cnode = node->cast<CNodePtr>();
+  bool is_fv = mark_fv && node->has_user_data(kIsFreeVariable);
+
+  // Handle free variables.
+  auto &weak_inputs = cnode->weak_inputs();
+  for (const auto &weak_input : weak_inputs) {
+    auto input = weak_input.lock();
+    MS_EXCEPTION_IF_NULL(input);
+    if (is_fv) {
+      input->set_user_data(kIsFreeVariable, std::make_shared<bool>(true));
+    }
+
+    auto input_fg = GetValueNode<FuncGraphPtr>(input);
+    if (input_fg == nullptr) {
+      continue;
+    }
+
+    for (auto &fv : input_fg->free_variables_nodes()) {
+      if (fv->func_graph() == fg && fg->nodes().contains(fv)) {
+        if (mark_fv) {
+          fv->set_user_data(kIsFreeVariable, std::make_shared<bool>(true));
+        }
+        (void)vecs.emplace_back(fv);
+      }
+    }
+  }
+
+  (void)vecs.insert(vecs.end(), weak_inputs.begin(), weak_inputs.end());
   return vecs;
 }
 
