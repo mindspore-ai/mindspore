@@ -34,7 +34,7 @@ def sort_backward_func(x, dim, descending, stable):
     return ops.grad(sort_forward_func, (0, 1, 2, 3))(x, dim=dim, descending=descending, stable=stable)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -91,7 +91,7 @@ def sort_forward_func_dyn(x, dim):
     return mint.sort(x, dim=dim, descending=True, stable=True)
 
 
-@pytest.mark.level0
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
