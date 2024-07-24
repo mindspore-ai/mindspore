@@ -3327,7 +3327,7 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     constexpr size_t script_index = 0;
     const std::string &script = GetScriptStr(args_abs_list[script_index]);
     // Make global and local parameters.
-    py::tuple params = MakeParameters(args_abs_list, script);
+    py::tuple params = MakeParameters(args_abs_list, script, node);
     // Would convert PyInterpret to PyExecute then.
     if (non_const_err_ || fallback::GetJitAnnotationSideEffectFromComment(node)) {
       // Make abstract by type and shape.
@@ -3481,7 +3481,8 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     return;
   }
 
-  py::tuple MakeParameters(const AbstractBasePtrList &args_abs_list, const std::string &script) const {
+  py::tuple MakeParameters(const AbstractBasePtrList &args_abs_list, const std::string &script,
+                           const AnfNodePtr &node) const {
     constexpr int params_size = 3;
     auto args_size = std::count_if(args_abs_list.begin(), args_abs_list.end(),
                                    [](const AbstractBasePtr &arg) -> bool { return !arg->isa<AbstractMonad>(); });
@@ -3496,7 +3497,6 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     constexpr size_t global_index = 1;
     auto global_abs = args_abs_list[global_index];
     const py::object &global_params_dict = GetGlobalObject(global_abs);
-    params[0] = global_params_dict;
 
     // Make the local parameters.
     constexpr size_t local_index = 2;
@@ -3514,9 +3514,38 @@ class PyInterpretEvaluator : public TransitionPrimEvaluator {
     py::dict local_params_dict = ReCheckLocalDict(filtered_local_dict);
     MS_LOG(DEBUG) << "arg_2, python local_params_dict: " << local_dict_value->ToString() << " -> "
                   << py::str(local_params_dict);
-    params[1] = local_params_dict;
     CheckInterpretInput(filtered_local_dict, script);
 
+    // Check if the value node in local dict is free variable.
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    const size_t local_dict_index = 3;
+    auto local_dict_node = cnode->input(local_dict_index);
+    MS_EXCEPTION_IF_NULL(local_dict_node);
+    const size_t local_dict_key_index = 1;
+    const size_t local_dict_value_index = 2;
+    auto local_dict_cnode = local_dict_node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(local_dict_cnode);
+    auto local_key_node = local_dict_cnode->input(local_dict_key_index);
+    auto local_value_node = local_dict_cnode->input(local_dict_value_index);
+    auto func = cnode->func_graph();
+    if (local_key_node->isa<CNode>() && local_value_node->isa<CNode>()) {
+      auto local_value_cnode = local_value_node->cast<CNodePtr>();
+      size_t local_value_num = local_value_cnode->inputs().size();
+      for (size_t index = 1; index < local_value_num; ++index) {
+        auto key_input = local_key_node->cast<CNodePtr>()->input(index);
+        auto value_input = local_value_node->cast<CNodePtr>()->input(index);
+        if (IsValueNode<StringImm>(key_input)) {
+          const auto &key_input_str = GetValue<std::string>(GetValueNode(key_input));
+          // If exist free variable, it need push into global dict.
+          if (value_input->func_graph() != nullptr && value_input->func_graph() != func) {
+            global_params_dict[py::str(key_input_str)] = local_params_dict[py::str(key_input_str)];
+          }
+        }
+      }
+    }
+    params[0] = global_params_dict;
+    params[1] = local_params_dict;
     return params;
   }
 

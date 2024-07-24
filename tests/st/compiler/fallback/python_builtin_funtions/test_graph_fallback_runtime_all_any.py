@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2024 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,9 @@ import pytest
 import numpy as np
 from mindspore import Tensor, jit, context
 import mindspore as ms
+import mindspore.nn as nn
 from tests.mark_utils import arg_mark
+
 
 context.set_context(mode=context.GRAPH_MODE)
 
@@ -124,3 +126,29 @@ def test_fallback_all_dict_get():
     y = ms.Tensor(np.array(20, np.float64))
     out = foo(x, y)
     assert not out[0] and out[1]
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_fallback_all_with_free_variables():
+    """
+    Feature: JIT Fallback
+    Description: Test all() with free_variables in fallback runtime
+    Expectation: No exception
+    """
+    def _check_axes_range(axis):
+        def _check():
+            if not all(axis.count(el) <= 1 for el in axis):
+                raise ValueError(f"duplicate axes in {axis}.")
+        _check()
+        return axis
+
+    class TestNet(nn.Cell):
+        def construct(self, axis):
+            _check_axes_range(axis)
+
+    net = TestNet()
+    input_dyn = Tensor(shape=[3, None], dtype=ms.float32)
+    out = net(input_dyn.shape)
+    assert out is None
