@@ -35,6 +35,20 @@ BaseShapePtr ReshapeAndCacheFuncImpl::InferShape(const PrimitivePtr &primitive,
     return std::make_shared<abstract::Shape>(std::move(dyn_output));
   }
 
+  auto slot_mapping_shape_ptr = input_args[kReshapeAndCacheInputSlotMappingIndex]->GetShape();
+  if (MS_UNLIKELY(IsDynamicRank(slot_mapping_shape_ptr->GetShapeVector()))) {
+    ShapeVector dyn_output{abstract::Shape::kShapeRankAny};
+    return std::make_shared<abstract::Shape>(std::move(dyn_output));
+  }
+
+  if (!IsDynamicShape(key_shape_ptr->GetShapeVector()) && !IsDynamicShape(slot_mapping_shape_ptr->GetShapeVector())) {
+    auto slot_mapping_token_size = slot_mapping_shape_ptr->GetShapeVector()[kInputIndex0];
+    auto key_token_size = key_shape_ptr->GetShapeVector()[kInputIndex0] * key_shape_ptr->GetShapeVector()[kInputIndex1];
+    if (slot_mapping_token_size != key_token_size) {
+      MS_LOG(EXCEPTION) << "The num_tokens of slot mapping and key must be the same, but got slot mapping num_tokens: "
+                        << slot_mapping_token_size << ", key num_tokens: " << key_token_size;
+    }
+  }
   auto shape_element = key_shape_ptr->cast<abstract::ShapePtr>();
   return shape_element;  // output shape
 }
