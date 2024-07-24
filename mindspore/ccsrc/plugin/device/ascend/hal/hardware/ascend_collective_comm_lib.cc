@@ -126,7 +126,7 @@ bool AscendCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_r
       MS_LOG(WARNING)
         << "Launch Ascend distributed job in RankTable manner. This manner will be deprecated in later version of "
            "MindSpore. \n Please switch to 'msrun' or 'mpirun'. You can refer to this link about how to use these "
-           "commands: https://www.mindspore.cn/tutorials/experts/zh-CN/r2.3/parallel/startup_method.html.";
+           "commands: https://www.mindspore.cn/tutorials/experts/zh-CN/master/parallel/startup_method.html.";
       return InitializeHccl();
     } else {
       if (hccl::HcclAdapter::GetInstance().UseHcclCM()) {
