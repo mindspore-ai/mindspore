@@ -29,7 +29,7 @@ mindspore.mint.nn.functional.l1_loss
         - **reduction** (str, 可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
           - ``'none'``：不应用规约方法。
-          - ``'mean'``：计算输出元素的平均值。
+          - ``'mean'``：计算输出元素的平均值。注意：当reduction为 ``'mean'`` 时，input和target的数据类型需要至少有一个是float。
           - ``'sum'``：计算输出元素的总和。
 
     返回：
