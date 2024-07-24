@@ -39,8 +39,9 @@ int StressDetect() {
   runtime::OpExecutor::GetInstance().WaitAll();
   device::MultiStreamController::GetInstance()->Refresh(device_ctx);
   (void)device::MultiStreamController::GetInstance()->SyncAllStreams(device_ctx);
-  device_ctx->device_res_manager_->StressDetect();
-  return 0;
+  MS_EXCEPTION_IF_NULL(device_ctx);
+  MS_EXCEPTION_IF_NULL(device_ctx->device_res_manager_);
+  return device_ctx->device_res_manager_->StressDetect();
 }
 
 void RegStress(py::module *m) { (void)m->def("stress_detect", &mindspore::StressDetect, "Detect stress"); }
