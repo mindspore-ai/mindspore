@@ -524,7 +524,7 @@ void InterleavedScheduler::MemoryOptimizedStablePhaseReorder() {
   auto sorted_bwd_cell = SortBetweenMicro(bwd_cell_, true);
   for (size_t i = bias_; i < LongToSize(micro_size_ * chunk_num_); ++i) {
     if (i == LongToSize(micro_size_ * chunk_num_ - 1)) {
-      if (stage_ != 0) {
+      if (stage_ == stage_num_ - 1) {
         auto prior = sorted_fwd_end[i].second;
         auto last = sorted_bwd_begin[i - bias_].first;
         ControlOrder(prior, last);
@@ -595,7 +595,8 @@ void InterleavedScheduler::MemoryOptimizedStablePhaseReorder() {
         ControlOrder(prior, last);
       }
     }
-    if (stage_ != stage_num_ - 1 || sorted_fwd_end[i].second.chunk != chunk_num_ - 1) {
+    if (stage_ != stage_num_ - 1 || (sorted_fwd_end[i].second.chunk != chunk_num_ - 1 &&
+                                     sorted_bwd_begin[i - bias_].second.chunk != chunk_num_ - 1)) {
       auto prior = sorted_fwd_cell[i].second;
       auto last = sorted_bwd_begin[i - bias_].first;
       ControlOrder(prior, last);
