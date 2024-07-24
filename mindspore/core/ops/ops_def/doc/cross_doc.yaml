@@ -8,7 +8,7 @@ cross:
         Refer to :func:`mindspore.ops.cross` for more details.
 
         Args:
-            dim (int): Spefcified dim along which to cumpute cross product with. Default: ``-65530`` .
+            dim (int): Specified dim along which to compute cross product with. Default: ``-65530`` .
 
         Inputs:
             - **input** (Tensor) - Input Tensor.
