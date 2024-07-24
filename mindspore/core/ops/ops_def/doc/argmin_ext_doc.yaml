@@ -10,7 +10,7 @@ argmin_ext:
                 dimension. Ignored if `dim` is None. Default: ``False`` .
 
         Returns:
-            Tensor, indices of the minimum values across a dimension.
+            Tensor, indices of the minimum values of the input tensor across a dimension.
 
         Raises:
             TypeError: If `keepdim` is not bool.
