@@ -11,7 +11,7 @@ cosh:
                 Supported dtypes: 
 
                 - GPU/CPU: float16, float32, float64, complex64 or complex128.
-                - Ascend: float16, float32, float64, complex64, complex128 or bfloat16.
+                - Ascend: bool, int8, uint8, int16, int32, int64, float16, float32, float64, complex64, complex128 or bfloat16.
     
         Returns:
             Tensor, has the same shape as `input`.
@@ -19,7 +19,7 @@ cosh:
         :raise TypeError: If `input` is not a Tensor.
         :raise TypeError:
             * CPU/GPU: If dtype of `input` is not float16, float32 or float64, complex64, complex128.
-            * Ascend: If dtype of `input` is not float16, float32, float64, complex64, complex128 or bfloat16.
+            * Ascend: If dtype of `input` is not bool, int8, uint8, int16, int32, int64, float16, float32, float64, complex64, complex128 or bfloat16.
     
         Supported Platforms:
             ``Ascend`` ``GPU`` ``CPU``
