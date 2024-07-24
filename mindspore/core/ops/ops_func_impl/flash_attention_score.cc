@@ -146,7 +146,7 @@ void CheckFlashAttentionScoreSparseMode(const PrimitivePtr &primitive, const std
     if (primitive->HasAttr(kEnableRASendRecv)) {
       auto enable_ra_sendrecv_valueptr = primitive->GetAttr(kEnableRASendRecv);
       if (!(enable_ra_sendrecv_valueptr->isa<BoolImm>())) {
-        MS_LOG(EXCEPTION) << "enable_ra_sendrecv should be bool";
+        MS_LOG(EXCEPTION) << "enable_ra_send_recv should be bool";
       }
     }
     bool enable_flash_sp = false;

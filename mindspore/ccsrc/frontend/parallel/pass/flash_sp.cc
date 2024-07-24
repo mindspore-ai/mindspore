@@ -54,7 +54,7 @@
 #include "mindspore/core/ops/ops_func_impl/flash_attention_score.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "mindspore/ccsrc/frontend/parallel/ops_info/flash_attention_score_info.h"
-#include "frontend/optimizer/flash_sp.h"
+#include "frontend/parallel/pass/flash_sp.h"
 #include "frontend/parallel/graph_util/graph_info.h"
 #include "frontend/parallel/parameter_manager.h"
 
@@ -93,6 +93,10 @@ using FSPInfo = FlashSPInfo;
 std::vector<CNodePtr> FindFWFlashAttentionScore(const FuncGraphManagerPtr &manager,
                                                 const std::vector<AnfNodePtr> &origin_nodes_topological) {
   std::vector<CNodePtr> result;
+  auto parallel_mode = ParallelContext::GetInstance()->parallel_mode();
+  if (parallel_mode != kSemiAutoParallel) {
+    return result;
+  }
   for (size_t i = 0; i < origin_nodes_topological.size(); ++i) {
     auto node = origin_nodes_topological[i];
     if (IsPrimitiveCNode(node, prim::kPrimFlashAttentionScore)) {
