@@ -30,7 +30,7 @@ l1_loss_ext:
                     ``'sum'`` . Default: ``'mean'`` .
 
                     - ``'none'``: no reduction will be applied.
-                    - ``'mean'``: compute and return the mean of elements in the output.
+                    - ``'mean'``: compute and return the mean of elements in the output. Notice: At least one of the input and target is float type when the reduction is ``'mean'`` .
                     - ``'sum'``: the output elements will be summed.
 
             Returns:
