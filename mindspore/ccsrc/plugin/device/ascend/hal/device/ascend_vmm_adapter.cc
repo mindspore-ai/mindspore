@@ -105,6 +105,9 @@ void MoveBackMappedHandle(std::map<DeviceMemPtr, aclrtDrvMemHandle> *mapped_vmm_
 };  // namespace
 
 size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr addr, const size_t max_size) {
+  if (common::IsNeedProfileMemory()) {
+    MS_LOG(EXCEPTION) << "VMM is not supported in dry run mode.";
+  }
   MS_EXCEPTION_IF_NULL(addr);
   MS_LOG(DEBUG) << "VMM MmapDeviceMem size:" << size << ", addr:" << addr
                 << ", cached_handle_sets_ size : " << cached_handle_sets_.size() << ".";
@@ -154,9 +157,6 @@ size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr add
 
       auto ret = CALL_ASCEND_API(aclrtMallocPhysical, &handle, kVmmAlignSize, &prop, 0);
       if (ret != ACL_ERROR_NONE) {
-        if (common::IsNeedProfileMemory()) {
-          return size;
-        }
         size_t used_handle_size = 0;
         for (const auto &[k, v] : vmm_map_) {
           if (v != nullptr) {
@@ -180,9 +180,6 @@ size_t AscendVmmAdapter::MmapDeviceMem(const size_t size, const DeviceMemPtr add
 
     auto ret = CALL_ASCEND_API(aclrtMapMem, new_addr, kVmmAlignSize, 0, handle, 0);
     if (ret != ACL_ERROR_NONE) {
-      if (common::IsNeedProfileMemory()) {
-        return size;
-      }
       MS_LOG(ERROR) << "Map memory failed.";
       cached_handle_sets_.insert(handle);
       MoveBackMappedHandle(&mapped_vmm_handle, &vmm_map_, &cached_handle_sets_);
@@ -219,12 +216,11 @@ size_t AscendVmmAdapter::AllocDeviceMem(size_t size, DeviceMemPtr *addr) {
 }
 
 size_t AscendVmmAdapter::EagerFreeDeviceMem(const DeviceMemPtr addr, const size_t size) {
+  if (common::IsNeedProfileMemory()) {
+    MS_LOG(EXCEPTION) << "VMM is not supported in dry run mode.";
+  }
   MS_LOG(DEBUG) << "Eager free device mem addr :" << addr << ", size :" << size
                 << ", cached_handle_sets_ size : " << cached_handle_sets_.size() << ".";
-  if (common::IsNeedProfileMemory()) {
-    return size;
-  }
-
   size_t ret_size = 0;
   auto iter = vmm_map_.lower_bound(addr);
   if (iter == vmm_map_.end()) {
