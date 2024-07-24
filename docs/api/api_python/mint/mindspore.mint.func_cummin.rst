@@ -1,7 +1,7 @@
 mindspore.mint.cummin
 ======================
 
-.. py:function:: mindspore.mint.cummin(input, dim, dtype=None)
+.. py:function:: mindspore.mint.cummin(input, dim)
 
     返回一个元组（最值、索引），其中最值是输入Tensor `input` 沿维度 `dim` 的累积最小值，索引是每个最小值的索引位置。
 
