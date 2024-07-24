@@ -3,7 +3,7 @@ mindspore_lite.ModelGroup
 
 .. py:class:: mindspore_lite.ModelGroup(flags=ModelGroupFlag.SHARE_WORKSPACE)
 
-    `ModelGroup` 类定义MindSpore Lite模型分组信息，用于共享工作空间（Workspace）内存或者权重（包括常量和变量）内存。
+    `ModelGroup` 类定义MindSpore Lite模型分组信息，用于共享工作空间（Workspace）内存或者权重（包括常量和变量）内存以及二者同时共享。
 
     参数：
         - **flags** (ModelGroupFlag，可选) - 指示 `ModelGroup` 的类型。默认： ``ModelGroupFlag.SHARE_WORKSPACE`` 。

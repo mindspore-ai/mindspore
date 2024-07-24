@@ -118,6 +118,16 @@ mindspore_lite.Model
             - **ValueError** -  `inputs` 的size不等于 `dims` 的size。
             - **RuntimeError** - 调整输入形状的大小失败。
 
+    .. py:method:: get_model_info(key)
+
+        获取模型信息。
+
+        参数：
+            - **key** (str) - 获取模型信息关键字，当前支持user_info、input_shape、dynamic_dims、user_info为用户信息，input_shape为模型输入shape，dynamic_dims为动态分档模型支持的尺寸。
+        
+        异常：
+            - key不是str类型。
+
     .. py:method:: update_weights(weights)
 
         对模型中的常量Tensor进行权重更新。

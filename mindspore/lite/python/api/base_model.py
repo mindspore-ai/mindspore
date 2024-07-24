@@ -57,7 +57,10 @@ class BaseModel:
         Obtains model info of the model.
 
         Args:
-            key (str): The key to obtain model info.
+            key (str): Get model information keywords, currently user_info, input_shape,
+                dynamic_dims, user_info indicate user information, input_shape indicates input shape for the model,
+                and dynamic_dims is the binning supported by the model.
+
         Raises:
             TypeError: If the key is not a str.
         """
