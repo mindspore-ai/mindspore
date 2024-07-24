@@ -696,8 +696,7 @@ AnfNodeIndexSet GetActualOpUsers(const AnfNodePtr &node, NodeUsersMap *node_user
                           << "'s range.";
       }
       temp_node = temp_params[IntToSize(index - 1)];
-    } else if (IsPrimitiveCNode(cuser, prim::kPrimLoad) || IsPrimitiveCNode(cuser, prim::kPrimCast) ||
-               IsPrimitiveCNode(cuser, prim::kPrimMirrorSilentCheck)) {
+    } else if (IsPrimitiveCNode(cuser, prim::kPrimLoad) || IsPrimitiveCNode(cuser, prim::kPrimCast)) {
       temp_node = cuser;
     }
     if (temp_node) {

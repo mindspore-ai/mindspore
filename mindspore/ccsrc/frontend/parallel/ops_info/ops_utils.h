@@ -612,7 +612,6 @@ constexpr char MAX[] = "Max";
 constexpr char ROI_ALIGN[] = "ROIAlign";
 constexpr char SQUARE_SUM_ALL[] = "SquareSumAll";
 constexpr char IS_FINITE[] = "IsFinite";
-constexpr char GENERATEEODMASK[] = "GenerateEodMask";
 constexpr char RINT[] = "Rint";
 constexpr char HSHRINK[] = "HShrink";
 constexpr char HSIGMOID[] = "HSigmoid";

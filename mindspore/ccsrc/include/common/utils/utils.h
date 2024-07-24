@@ -534,7 +534,6 @@ constexpr auto kUpdateStateRealInput = 2;
 // index define of Load
 constexpr auto kLoadRealInput = 1;
 constexpr auto kLoadStateInput = 2;
-constexpr auto kGenerateEodMaskOpName = "GenerateEodMask";
 // time transfer unit
 constexpr int kBasicTimeTransferUnit = 1000;
 constexpr int kMaxVectorSize = 10000;

@@ -432,14 +432,6 @@ class IsFiniteInfo : public ActivationOther {
   ~IsFiniteInfo() = default;
 };
 
-class GenerateEodMaskInfo : public ActivationOther {
- public:
-  GenerateEodMaskInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                      const PrimitiveAttrs &attrs)
-      : ActivationOther(name, inputs_shape, outputs_shape, attrs, std::make_shared<IsFiniteCost>()) {}
-  ~GenerateEodMaskInfo() = default;
-};
-
 class MishInfo : public ActivationOther {
  public:
   MishInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,

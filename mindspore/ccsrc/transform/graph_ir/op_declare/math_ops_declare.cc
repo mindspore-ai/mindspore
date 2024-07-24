@@ -536,21 +536,6 @@ ATTR_MAP(Zeta) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Zeta) = {{0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(Zeta, prim::kPrimZeta->name(), ADPT_DESC(Zeta));
 
-// SilentCheck
-INPUT_MAP(SilentCheck) = {{1, INPUT_DESC(val)},     {2, INPUT_DESC(input_grad)}, {3, INPUT_DESC(pre_val)},
-                          {4, INPUT_DESC(min_val)}, {5, INPUT_DESC(max_val)},    {6, INPUT_DESC(val_counter)}};
-OUTPUT_MAP(SilentCheck) = {{0, OUTPUT_DESC(input_grad)},
-                           {1, OUTPUT_DESC(pre_val)},
-                           {2, OUTPUT_DESC(min_val)},
-                           {3, OUTPUT_DESC(max_val)},
-                           {4, OUTPUT_DESC(result)}};
-ATTR_MAP(SilentCheck) = {{"c_min_steps", ATTR_DESC(c_min_steps, AnyTraits<int64_t>())},
-                         {"c_thresh_l1", ATTR_DESC(c_thresh_l1, AnyTraits<float>())},
-                         {"c_coeff_l1", ATTR_DESC(c_coeff_l1, AnyTraits<float>())},
-                         {"c_thresh_l2", ATTR_DESC(c_thresh_l2, AnyTraits<float>())},
-                         {"c_coeff_l2", ATTR_DESC(c_coeff_l2, AnyTraits<float>())}};
-REG_ADPT_DESC(SilentCheck, prim::kPrimSilentCheck->name(), ADPT_DESC(SilentCheck))
-
 // Cross
 INPUT_MAP(Cross) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Cross) = {{"dim", ATTR_DESC(dim, AnyTraits<int64_t>())}};
