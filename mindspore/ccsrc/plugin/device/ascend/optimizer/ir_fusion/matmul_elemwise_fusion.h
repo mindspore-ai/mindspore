@@ -52,6 +52,17 @@ class MatmulElemBiasaddFusion : public MatmulElemFusionBase {
   const std::string GetElemwiseType() const override { return "bias_add"; };
 };
 
+class MatmulElemAddFusion : public MatmulElemFusionBase {
+ public:
+  explicit MatmulElemAddFusion(bool multigraph = true)
+      : MatmulElemFusionBase(multigraph, "matmul_elem_add_fusion", kBinaryInputNum) {}
+  ~MatmulElemAddFusion() override = default;
+
+ protected:
+  const VectorRef DefineMatmulFusionPattern(const VectorRef &predecessor) const override;
+  const std::string GetElemwiseType() const override { return "bias_add"; };
+};
+
 class MatmulElemReluFusion : public MatmulElemFusionBase {
  public:
   explicit MatmulElemReluFusion(bool multigraph = true)

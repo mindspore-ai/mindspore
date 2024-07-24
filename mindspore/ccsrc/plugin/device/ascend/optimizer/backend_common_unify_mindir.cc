@@ -164,6 +164,7 @@ void GetBackendCommonUnifyMindIRPassManager(PassManagerPtr *unify_mindir_pm) {
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::AddCastRmsNormCastFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::SplitConcatFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulElemBiasaddFusion>());
+  (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulElemAddFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulElemReluFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::MatmulElemGeluFusion>());
   (*unify_mindir_pm)->AddPass(std::make_shared<opt::QbmmAddFusion>());

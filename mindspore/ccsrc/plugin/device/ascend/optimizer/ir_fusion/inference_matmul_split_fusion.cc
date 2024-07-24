@@ -279,7 +279,7 @@ CNodePtr InferenceMatmulSplitFusion::CreateMatmulBiasAddSplitNode(const FuncGrap
   MS_EXCEPTION_IF_NULL(matmul_w);
   auto input_bias = biasAdd_cnode->input(kIndex2);
   MS_EXCEPTION_IF_NULL(input_bias);
-  const std::set<TypeId> support_dtype = {kNumberTypeFloat16};
+  const std::set<TypeId> support_dtype = {kNumberTypeFloat16, kNumberTypeBFloat16};
   if (!CheckSupportDataType(matmul_x, support_dtype) || !CheckMatMulDataFormat(matmul_cnode)) {
     return nullptr;
   }
@@ -293,6 +293,31 @@ CNodePtr InferenceMatmulSplitFusion::CreateMatmulBiasAddSplitNode(const FuncGrap
   auto matmul_split_prim = CreateMatmulSplitPrim(split_cnode, split_size_len, pattern_name);
   matmul_split_prim->AddAttr("with_bias", MakeValue<bool>(true));
   std::vector<AnfNodePtr> matmul_split_inputs = {matmul_x, matmul_w, reshape_tuple_node, input_bias};
+  const std::set<TypeId> weight_bf16_dtype = {kNumberTypeBFloat16};
+  if (CheckSupportDataType(input_bias, weight_bf16_dtype)) {
+    auto type_value_f32 = std::make_shared<Int64Imm>(static_cast<int64_t>(TypeId::kNumberTypeFloat32));
+    auto type_node_f32 = kernel_graph->NewValueNode(type_value_f32);
+    std::vector<AnfNodePtr> casted_bias_inputs = {NewValueNode(prim::kPrimCast), input_bias, type_node_f32};
+    auto bias_cast_cnode = func_graph->NewCNode(casted_bias_inputs);
+    MS_EXCEPTION_IF_NULL(bias_cast_cnode);
+    bias_cast_cnode->set_fullname_with_scope(matmul_cnode->fullname_with_scope() + "-Bf162Fp32Cast");
+    auto type_fp32 = TypeIdToType(TypeId::kNumberTypeFloat32);
+    auto cast_abs = std::make_shared<abstract::AbstractTensor>(type_fp32, input_bias->Shape());
+    bias_cast_cnode->set_abstract(cast_abs);
+    bias_cast_cnode->set_scope(matmul_cnode->scope());
+
+    kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
+    TypeId type_id = common::AnfAlgo::GetOutputInferDataType(matmul_cnode, 0);
+    builder.SetInputsDeviceType({type_id, TypeId::kNumberTypeInt});
+    builder.SetInputsFormat({kOpFormat_DEFAULT, kOpFormat_DEFAULT});
+    builder.SetOutputsDeviceType({TypeId::kNumberTypeFloat32});
+    builder.SetOutputsFormat({kOpFormat_DEFAULT});
+    auto build_info = builder.Build();
+    AnfAlgo::SetSelectKernelBuildInfo(build_info, bias_cast_cnode.get());
+
+    const auto bias_in_num = 3;
+    matmul_split_inputs[bias_in_num] = bias_cast_cnode;
+  }
   auto matmul_split_cnode = func_graph->NewCNode(matmul_split_prim, matmul_split_inputs);
   MS_EXCEPTION_IF_NULL(matmul_split_cnode);
 
