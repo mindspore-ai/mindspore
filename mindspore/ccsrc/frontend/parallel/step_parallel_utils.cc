@@ -3397,7 +3397,8 @@ void EraseResVirtualConverterEnd(const FuncGraphPtr &root, bool is_fine_grained)
           auto concat = virtual_converter_end_cnode->func_graph()->NewCNode(concat_inputs);
           (void)manager->Replace(virtual_converter_end_cnode, concat);
           if (is_fine_grained) {
-            GetCNodePrimitive(concat)->AddAttr(kAttrFineGrainedInterleavedBlockIndex, MakeValue<int64_t>(1000));
+            GetCNodePrimitive(concat)->AddAttr(kAttrFineGrainedInterleavedBlockIndex,
+                                               MakeValue<int64_t>(kFineGrainedInterleavedBlockIndexMax));
           }
           continue;
         }

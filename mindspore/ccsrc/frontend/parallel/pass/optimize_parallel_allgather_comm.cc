@@ -114,10 +114,10 @@ void OptimizeParallelAllGatherComm(const FuncGraphPtr &graph) {
       auto all_gather_node_user_list = GetOutputNodesWithFilter(all_gather_cnode, [](const AnfNodePtr &node) {
         return IsOneOfPrimitiveCNode(node, {prim::kPrimLoad, prim::kPrimDepend});
       });
-      for (auto next_node_pair : all_gather_node_user_list) {
-        if (IsPrimitiveCNode(next_node_pair.first, prim::kPrimCast)) {
-          MoveCastBehindAllGather(each_graph, all_gather_cnode, next_node_pair.first->cast<CNodePtr>());
-        }
+      if (all_gather_node_user_list.size() == kSizeOne &&
+          IsPrimitiveCNode(all_gather_node_user_list.front().first, prim::kPrimCast)) {
+        MoveCastBehindAllGather(each_graph, all_gather_cnode,
+                                all_gather_node_user_list.front().first->cast<CNodePtr>());
       }
     }
   }

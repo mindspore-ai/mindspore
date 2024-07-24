@@ -1344,9 +1344,12 @@ Status FlashAttentionScoreInfo::ComputeReplaceGraphForLoadBalance(const CNodePtr
     attn_mask_target = gen_g.virtual_input_node();
   }
 
+  // Insert Depend between fa_keep->fa_target
+  auto q_target_depend = gen_g.PushBack({gen_g.NewOpInst(DEPEND), q_target, attention_out_keep});
+
   AnfNodePtr flash_attention_score_target;
   GetFlashAttentionScoreOpNode(target_split_id * kLoadBalanceSplitNum + 1, s1_split_num_ * kLoadBalanceSplitNum,
-                               q_target, real_shift_target, drop_mask_target, attn_mask_target,
+                               q_target_depend, real_shift_target, drop_mask_target, attn_mask_target,
                                &flash_attention_score_target, &gen_g);
   auto softmax_max_target = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), flash_attention_score_target,
                                             CreatInt64Imm(ops::kFlashAttentionScoreOutputSoftmaxMaxIndex)});
