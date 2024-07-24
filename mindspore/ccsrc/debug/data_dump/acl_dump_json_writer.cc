@@ -56,6 +56,7 @@ void AclDumpJsonWriter::Parse() {
   for (const auto &iter : kernels) {
     MS_LOG(INFO) << iter.dump();
   }
+  layer_.clear();
   auto kernel_strings = dump_parser.GetKernelStrs();
   for (auto iter = kernel_strings.begin(); iter != kernel_strings.end(); iter++) {
     auto kernel_str = iter->first;
