@@ -39,13 +39,7 @@ bool SymbolEngineBuilder::operator()(const FuncGraphPtr &func_graph, const Optim
     MS_LOG(INFO) << "There is no dynamic shape node, the SymbolEngineBuilder is disabled.";
     return false;
   }
-  try {
-    MS_LOG_TRY_CATCH_SCOPE;
-    symshape::SymbolEngineImpl::Build(func_graph);
-    MS_LOG(INFO) << "Build symbol engine successfully.";
-  } catch (std::exception &e) {
-    MS_LOG(WARNING) << "Build symbol engine failed. message: " << e.what();
-  }
+  (void)symshape::SymbolEngineImpl::Build(func_graph);
   return true;
 }
 
