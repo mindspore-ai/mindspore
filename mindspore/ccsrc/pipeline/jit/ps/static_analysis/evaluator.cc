@@ -130,106 +130,6 @@ FuncGraphPtr GetCloneBpropGraph(const MetaFuncGraphPtr &meta_func_graph, const F
     BasicClone(generated_func_graph, false, std::make_shared<UpdateInfo>(scope, bound_cnode->debug_info()));
   return cloned_func_graph;
 }
-
-bool IsSideEffectCNode(const AnfNodePtr &node) {
-  MS_EXCEPTION_IF_NULL(node);
-  const auto &primitive = GetCNodePrimitiveWithoutDoSignature(node);
-  if (primitive != nullptr) {
-    auto effect_info = GetPrimEffectInfo(primitive);
-    if (effect_info.memory || effect_info.io) {
-      MS_LOG(DEBUG) << "Side Effect Primitive CNode: " << node->DebugString();
-      return true;
-    }
-  } else if (node->isa<CNode>()) {
-    // Call side effect node.
-    auto first_node = node->cast<CNodePtr>()->input(0);
-    if (first_node->isa<CNode>() && IsSideEffectCNode(first_node)) {
-      return true;
-    }
-  }
-  return false;
-}
-
-bool HasIsolatedSideEffectNode(const FuncGraphPtr &func_graph);
-
-bool CheckSideEffect(const AnfNodePtr &input) {
-  if (IsSideEffectCNode(input)) {
-    MS_LOG(DEBUG) << "Multiple side-effect node: " << input->DebugString();
-    return true;
-  }
-  // Process {Depend -> StopGradient -> MakeTuple(call function, ...)}.
-  if (input->isa<CNode>()) {
-    auto fn_input = input->cast<CNodePtr>()->input(0);
-    if (IsValueNode<prim::UnpackCall>(fn_input)) {
-      fn_input = input->cast<CNodePtr>()->input(1);
-    }
-    if (IsValueNode<FuncGraph>(fn_input)) {
-      auto func = GetValueNode<FuncGraphPtr>(fn_input);
-      if (IsSideEffectCNode(func->output()) || HasIsolatedSideEffectNode(func)) {
-        MS_LOG(DEBUG) << "Single nested side-effect node: " << input->DebugString();
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-bool HasIsolatedSideEffectNode(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  const auto node = func_graph->output();
-  if (!IsPrimitiveCNode(node, prim::kPrimDepend)) {
-    return false;
-  }
-  auto cnode = dyn_cast<CNode>(node);
-  MS_EXCEPTION_IF_NULL(cnode);
-  auto attr_sort_rhs_first = cnode->GetAttr(kAttrTopoSortRhsFirst);
-  auto sort_rhs_first =
-    attr_sort_rhs_first != nullptr && attr_sort_rhs_first->isa<BoolImm>() && GetValue<bool>(attr_sort_rhs_first);
-  if (!sort_rhs_first) {
-    // Return false if it's definitely not side-effect Depend CNode.
-    return false;
-  }
-
-  // To check side-effect nodes in {Depend -> StopGradient -> MakeTuple(...)}.
-  constexpr size_t stop_gradient_pos = 2;
-  auto stop_gradient_node = cnode->input(stop_gradient_pos);
-  auto stop_gradient_cnode = dyn_cast<CNode>(stop_gradient_node);
-  MS_EXCEPTION_IF_NULL(stop_gradient_cnode);
-  constexpr size_t isolated_node_pos = 1;
-  auto isolated_node = stop_gradient_cnode->input(isolated_node_pos);
-  MS_EXCEPTION_IF_NULL(isolated_node);
-  if (CheckSideEffect(isolated_node)) {
-    return true;
-  }
-  if (IsPrimitiveCNode(isolated_node, prim::kPrimMakeTuple)) {
-    auto isolated_cnode = dyn_cast<CNode>(isolated_node);
-    MS_EXCEPTION_IF_NULL(isolated_cnode);
-    for (size_t i = 1; i < isolated_cnode->size(); ++i) {
-      auto input = isolated_cnode->input(i);
-      if (CheckSideEffect(input)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-// Mark the side effect at output and func graph for later constant folding.
-void PresetCertainSideEffect(const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(func_graph);
-  if (!HasIsolatedSideEffectNode(func_graph)) {
-    return;
-  }
-
-  auto new_return = func_graph->get_return();
-  new_return->set_has_side_effect_node(true);
-  func_graph->set_has_side_effect_node(true);
-  auto output_cnode = dyn_cast<CNode>(func_graph->output());
-  if (output_cnode != nullptr) {
-    output_cnode->set_has_side_effect_node(true);
-  }
-  MS_LOG(DEBUG) << "Set isolated side-effect node flag for " << func_graph->ToString();
-}
 }  // namespace
 
 bool ContainsAbstractAny(const AbstractBasePtrList &args_abs_list) {
@@ -626,7 +526,7 @@ FuncGraphPtr FuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, const Ab
     MS_EXCEPTION_IF_NULL(engine->func_graph_manager());
     engine->func_graph_manager()->AddFuncGraph(generated_graph);
     if (engine->check_side_effect()) {
-      PresetCertainSideEffect(generated_graph);
+      generated_graph->PresetCertainSideEffect();
     }
     res = generated_graph;
   } else {
@@ -680,7 +580,7 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
   MS_EXCEPTION_IF_NULL(engine->func_graph_manager());
   engine->func_graph_manager()->AddFuncGraph(cloned_func_graph);
   if (engine->check_side_effect()) {
-    PresetCertainSideEffect(cloned_func_graph);
+    cloned_func_graph->PresetCertainSideEffect();
   }
   return cloned_func_graph;
 }

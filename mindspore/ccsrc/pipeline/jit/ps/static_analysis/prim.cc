@@ -4211,6 +4211,8 @@ class RaiseEvaluator : public TransitionPrimEvaluator {
       AbstractBasePtr res = std::make_shared<AbstractNegligible>();
       cnode->set_has_side_effect_node(true);
       cur_graph->set_has_side_effect_node(true);
+      MS_LOG(DEBUG) << "Found side-effect, cnode: " << cnode->DebugString()
+                    << ", func_graph: " << cur_graph->ToString();
       auto infer_result = std::make_shared<EvalResult>(res, std::make_shared<AttrValueMap>());
       evaluator_cache_mgr_->SetValue(args_abs_list, infer_result);
       return infer_result;
