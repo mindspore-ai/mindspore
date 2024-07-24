@@ -35,6 +35,7 @@ from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _re
     _need_reset_device_target_for_ps
 from mindspore.parallel._offload_context import _set_offload_context, _get_offload_context
 from mindspore.hal.device import is_initialized
+from mindspore.common import api
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'STRICT', 'COMPATIBLE', 'LAX', 'set_context', 'get_context',
            'set_auto_parallel_context', 'get_auto_parallel_context', 'reset_auto_parallel_context', 'ParallelMode',
@@ -1115,6 +1116,7 @@ def reset_auto_parallel_context():
         >>> ms.reset_auto_parallel_context()
     """
     _reset_auto_parallel_context()
+    api.ms_compile_cache.clear()
 
 
 @args_type_check(offload_config=dict)
