@@ -259,7 +259,7 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar, const std::optional<Ty
   }
 
   TypePtr tensor_dtype = scalar->type();
-  if (dtype.has_value()) {
+  if (dtype.has_value() && dtype.value()->type_id() != kMetaTypeNone) {
     tensor_dtype = dtype.value();
   }
   MS_EXCEPTION_IF_NULL(tensor_dtype);

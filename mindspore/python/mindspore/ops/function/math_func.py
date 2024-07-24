@@ -1661,7 +1661,7 @@ def xlogy_ext(input, other):
 
     .. math::
 
-        out_i = input_{i}\ln{other_{i}}
+        out_i = input_{i}\log{other_{i}}
 
     Inputs of `input` and `other` comply with the implicit type conversion rules to make the data types consistent.
     The inputs must be two tensors or one tensor and one scalar.
@@ -1673,7 +1673,7 @@ def xlogy_ext(input, other):
             `number <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_ or
             `bool_ <https://www.mindspore.cn/docs/en/master/api_python/mindspore.html#mindspore.dtype>`_.
         other (Union[Tensor, number.Number, bool]): The second input is a number.Number or
-            a bool when the first input is a tensor or a tensor whose data type is number or bool\_.
+            a bool or a tensor whose data type is number or bool\_ when the first input is a tensor.
             When the first input is Scalar, the second input must be a Tensor whose data type is number or bool\_.
 
     Returns:

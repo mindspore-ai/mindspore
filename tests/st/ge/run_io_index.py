@@ -18,7 +18,7 @@ import mindspore.ops as P
 import mindspore as ms
 import numpy as np
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", jit_config={"jit_level": "O2"})
 
 def test_io_index_condition_1():
     """

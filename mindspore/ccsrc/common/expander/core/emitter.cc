@@ -318,7 +318,7 @@ NodePtr Emitter::ScalarToTensor(const NodePtr &node, const TypePtr &dtype) {
     return Emit("ScalarToTensor", {node, Value(static_cast<int64_t>(dtype->type_id()))});
   }
   MS_EXCEPTION_IF_NULL(scalar);
-  auto tensor = mindspore::ScalarToTensor(scalar);
+  auto tensor = mindspore::ScalarToTensor(scalar, dtype);
   return EmitValue(tensor);
 }
 
