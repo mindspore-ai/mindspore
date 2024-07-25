@@ -67,7 +67,7 @@ TEST_P(TestReshapeAndCache, DynShape) {
 INSTANTIATE_TEST_CASE_P(
   TestReshapeAndCache, TestReshapeAndCache,
   testing::Values(
-    ReshapeAndCacheShapeParams{{3, 4, 5}, kFloat16, {3, 4, 5}, kFloat16, {2, 3, 4, 5}, kFloat16, {2, 3, 4, 5}, kFloat16, {3}, kInt32},
+    ReshapeAndCacheShapeParams{{3, 4, 5}, kFloat16, {3, 4, 5}, kFloat16, {2, 3, 4, 5}, kFloat16, {2, 3, 4, 5}, kFloat16, {12}, kInt32},
     ReshapeAndCacheShapeParams{{-1, 4, 5}, kFloat16, {-1, 4, 5}, kFloat16, {2, 3, 4, 5}, kFloat16, {2, 3, 4, 5}, kFloat16, {-1}, kInt32}
   ));
 }  // namespace ops
