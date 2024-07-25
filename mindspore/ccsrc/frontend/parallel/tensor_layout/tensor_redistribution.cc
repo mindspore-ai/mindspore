@@ -171,6 +171,9 @@ Status TensorRedistribution::CalculateFromTensorShape(Shape *from_shape, const A
   std::vector<int64_t> known_dims;
   (void)std::copy_if(from_shape->begin(), from_shape->end(), std::back_inserter(known_dims),
                      [](int64_t dim) -> bool { return dim != -1; });
+  (void)std::copy_if(to_shape.begin(), to_shape.end(), std::back_inserter(known_dims),
+                     [](int64_t dim) -> bool { return dim != -1; });
+
   constexpr size_t INVALID_TENSOR_RANK = 9999;
   size_t last_dyn_dim = INVALID_TENSOR_RANK;
   auto last_dyn_dim_iter = std::find(from_shape->rbegin(), from_shape->rend(), -1);
