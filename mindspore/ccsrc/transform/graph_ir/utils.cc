@@ -53,20 +53,8 @@ OpAdapterPtr FindAdapter(const AnfNodePtr node, bool train) {
         name = kNameUpdateState;
       }
     }
-    auto it_adpt = OpAdapterMap::get().find(name);
-    if (it_adpt != OpAdapterMap::get().end()) {
-      return it_adpt->second->Get(train);
-    }
 
-    std::set<std::string> cpu_only_ops{kRealMakeTupleOpName, kRealTupleGetItemOpName};
-    auto iter = cpu_only_ops.find(name);
-    if (iter != cpu_only_ops.end()) {
-      MS_LOG(INFO) << "Can't find OpAdapter for " << name;
-    } else {
-      MS_LOG(WARNING) << "Can't find OpAdapter for " << name;
-    }
-
-    return OpAdapterPtr(nullptr);
+    return FindAdapter(name, train);
   }
 
   if (node->isa<ValueNode>()) {
@@ -506,8 +494,7 @@ bool SinkGraphCheck(const AnfNodePtr &node, bool train) {
       continue;
     }
     if (!cnode->input(it.first)->isa<ValueNode>()) {
-      MS_LOG(DEBUG) << node->fullname_with_scope() << " inputs[" << it.first << "]"
-                    << " is not a ValueNode";
+      MS_LOG(DEBUG) << node->fullname_with_scope() << " inputs[" << it.first << "] is not a ValueNode";
       return false;
     }
   }
@@ -519,8 +506,7 @@ bool SinkGraphCheck(const AnfNodePtr &node, bool train) {
     auto abs = cnode->input(it.first)->abstract();
     MS_EXCEPTION_IF_NULL(abs);
     if (abs->isa<abstract::AbstractAny>()) {
-      MS_LOG(DEBUG) << node->fullname_with_scope() << " inputs[" << it.first << "]"
-                    << " is a AbstractAny";
+      MS_LOG(DEBUG) << node->fullname_with_scope() << " inputs[" << it.first << "] is a AbstractAny";
       return false;
     }
   }
