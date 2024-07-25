@@ -475,21 +475,23 @@ class Cell(Cell_):
         output = self._run_construct(cast_inputs, kwargs)
         return output
 
-    def _run_construct(self, cast_inputs, kwargs):
+    def _run_construct(self, *inputs, **kwargs):
         """Run the construct function"""
         if self._enable_forward_pre_hook:
-            cast_inputs = self._run_forward_pre_hook(cast_inputs)
+            inputs = self._run_forward_pre_hook(inputs)
+
         if self._enable_backward_hook:
-            output = self._backward_hook_construct(*cast_inputs, **kwargs)
+            output = self._backward_hook_construct(*inputs, **kwargs)
         elif hasattr(self, "_shard_fn"):
-            output = self._shard_fn(*cast_inputs, **kwargs)
+            output = self._shard_fn(*inputs, **kwargs)
+        elif self.recompute_cell is not None:
+            output = self.recompute_cell(*inputs, **kwargs)
         else:
-            if self.recompute_cell is not None:
-                output = self.recompute_cell(*cast_inputs, **kwargs)
-            else:
-                output = self.construct(*cast_inputs, **kwargs)
+            output = self.construct(*inputs, **kwargs)
+
         if self._enable_forward_hook:
-            output = self._run_forward_hook(cast_inputs, output)
+            output = self._run_forward_hook(inputs, output)
+
         return output
 
     def _check_construct_args(self, *args):
@@ -714,7 +716,7 @@ class Cell(Cell_):
 
         try:
             _pynative_executor.new_graph(self, *args, **kwargs)
-            output = self._run_construct(args, kwargs)
+            output = self._run_construct(*args, **kwargs)
             _pynative_executor.end_graph(self, output, *args, **kwargs)
         except Exception as err:
             _pynative_executor.clear_res()
@@ -2050,8 +2052,11 @@ class Cell(Cell_):
             (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]), Tensor(shape=[1], dtype=Float32,
             value= [ 2.00000000e+00]))
         """
+        if context._get_mode() == context.GRAPH_MODE:
+            return HookHandle()
         if not check_hook_fn("register_forward_pre_hook", hook_fn):
             return HookHandle()
+
         self._enable_forward_pre_hook = True
         _pynative_executor.set_hook_changed(self)
         if not hasattr(self, '_forward_pre_hook_key'):
@@ -2074,14 +2079,23 @@ class Cell(Cell_):
         Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
         """
+        forward_pre_hook_inputs = inputs
         for fn in self._forward_pre_hook.values():
-            ret = fn(self, inputs)
+            ret = fn(self, forward_pre_hook_inputs)
             if ret is not None:
                 if not isinstance(ret, tuple):
-                    inputs = (ret,)
+                    forward_pre_hook_inputs = (ret,)
                 else:
-                    inputs = ret
-        return inputs
+                    forward_pre_hook_inputs = ret
+
+        if isinstance(inputs, tuple):
+            if not isinstance(forward_pre_hook_inputs, tuple):
+                forward_pre_hook_inputs = (forward_pre_hook_inputs,)
+            if len(forward_pre_hook_inputs) != len(inputs):
+                raise TypeError(
+                    "The forward pre hook return value size is {} not equal to input size {}".format(
+                        len(forward_pre_hook_inputs), len(inputs)))
+        return forward_pre_hook_inputs
 
     def register_forward_hook(self, hook_fn):
         """
@@ -2142,8 +2156,11 @@ class Cell(Cell_):
             (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]), Tensor(shape=[1], dtype=Float32,
             value= [ 2.00000000e+00]))
         """
+        if context._get_mode() == context.GRAPH_MODE:
+            return HookHandle()
         if not check_hook_fn("register_forward_hook", hook_fn):
             return HookHandle()
+
         self._enable_forward_hook = True
         _pynative_executor.set_hook_changed(self)
         if not hasattr(self, '_forward_hook_key'):
@@ -2167,11 +2184,20 @@ class Cell(Cell_):
         Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
         """
+        forward_hook_output = output
         for fn in self._forward_hook.values():
-            ret = fn(self, inputs, output)
+            ret = fn(self, inputs, forward_hook_output)
             if ret is not None:
-                output = ret
-        return output
+                forward_hook_output = ret
+
+        if isinstance(output, tuple):
+            if not isinstance(forward_hook_output, tuple):
+                forward_hook_output = (forward_hook_output,)
+            if len(forward_hook_output) != len(output):
+                raise TypeError(
+                    "The forward hook return value size is {} not equal to output size {}".format(
+                        len(forward_hook_output), len(output)))
+        return forward_hook_output
 
     def register_backward_hook(self, hook_fn):
         """
@@ -2230,8 +2256,11 @@ class Cell(Cell_):
             >>> print(output)
             (Tensor(shape=[1], dtype=Float32, value= [ 2.00000000e+00]),)
         """
+        if context._get_mode() == context.GRAPH_MODE:
+            return HookHandle()
         if not check_hook_fn("register_backward_hook", hook_fn):
             return HookHandle()
+
         if self._cell_backward_hook is None:
             self._enable_backward_hook = True
             self._cell_backward_hook = inner.CellBackwardHook(self.cls_name + "(" + str(id(self)) + ")")
@@ -2256,21 +2285,25 @@ class Cell(Cell_):
         Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
         """
-        if len(inputs) > 1:
-            inputs = self._cell_backward_hook(inputs)
-        else:
-            inputs = self._cell_backward_hook(*inputs)
-            inputs = (inputs,)
+        # cell_backward_hook has CellBackwardHook op, so keep input args as they are.
+        outputs = self._cell_backward_hook(*inputs)
+        # If the inputs has more than two args, the outputs will also have more than two args and will be wrapped into
+        # a tuple, so need do unwrap.
+        is_need_unwrap = False
+        if isinstance(outputs, tuple) and len(inputs) > 1:
+            is_need_unwrap = True
+
         if self.recompute_cell is not None:
-            if isinstance(inputs, tuple):
-                outputs = self.recompute_cell(*inputs, **kwargs)
+            if is_need_unwrap:
+                outputs = self.recompute_cell(*outputs, **kwargs)
             else:
-                outputs = self.recompute_cell(inputs, **kwargs)
+                outputs = self.recompute_cell(outputs, **kwargs)
         else:
-            if isinstance(inputs, tuple):
-                outputs = self.construct(*inputs, **kwargs)
+            if is_need_unwrap:
+                outputs = self.construct(*outputs, **kwargs)
             else:
-                outputs = self.construct(inputs, **kwargs)
+                outputs = self.construct(outputs, **kwargs)
+
         outputs = self._cell_backward_hook(outputs)
         return outputs
 

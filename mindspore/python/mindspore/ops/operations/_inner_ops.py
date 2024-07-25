@@ -1563,9 +1563,7 @@ class CellBackwardHook(PrimitiveWithInfer):
         self.add_prim_attr("cell_id", cell_id)
         self.init_attrs["cell_id"] = cell_id
 
-    def __call__(self, args):
-        if not isinstance(args, tuple):
-            args = (args,)
+    def __call__(self, *args):
         return _run_op(self, self.name, args)
 
     def infer_shape(self, *inputs_shape):
