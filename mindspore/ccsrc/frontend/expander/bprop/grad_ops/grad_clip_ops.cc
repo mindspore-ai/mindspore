@@ -28,14 +28,14 @@ REG_BPROP_BUILDER("ClipByNorm").SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex3);
   auto cast_x = ib->Cast(x, kFloat32);
   auto cast_clip_norm = ib->Cast(clip_norm, kFloat32);
-  auto square_out = ib->Emit("Square", {cast_x});
+  auto square_out = ib->Square(cast_x);
   auto reduce_sum_axis = ib->Value(GetIntList(ib->GetAttr("axis")));
   auto reduce_sum_out = ib->ReduceSum(square_out, reduce_sum_axis, true);
   auto sqrt_out = ib->Sqrt(reduce_sum_out);
   auto max_out = ib->Maximum(sqrt_out, cast_clip_norm);
   auto mul_out = ib->Mul(cast_x, cast_clip_norm);
   auto div_bc_x = ib->Div(dout, max_out);
-  auto div_bc_y = ib->Emit("Neg", {ib->Mul(div_bc_x, out)});
+  auto div_bc_y = ib->Neg(ib->Mul(div_bc_x, out));
   auto tmp_div_out = BinopGradCommon(ib, mul_out, max_out, div_bc_x, div_bc_y);
   auto div_dout_x = tmp_div_out[0];
   auto div_dout_y = tmp_div_out[1];

@@ -34,8 +34,8 @@ NodePtr GetMatrixDiagPartAssit(BpropBuilder *ib, const ShapeVector &x_shape, con
 }
 
 NodePtr GetMatrixDiagAssit(BpropBuilder *ib, const ShapeVector &x_shape, const TypePtr &x_dtype) {
-  auto base_eye = ib->Emit(
-    "Eye", {ib->Value(x_shape[x_shape.size() - 1]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype)});
+  auto base_eye =
+    ib->Eye(ib->Value(x_shape[x_shape.size() - 1]), ib->Value(x_shape[x_shape.size() - 1]), ib->EmitValue(x_dtype));
   base_eye = ib->Reshape(base_eye, {-1});
   ShapeVector tile_shape(x_shape.begin(), x_shape.end() - 1);
   auto tile = ib->Tile(base_eye, tile_shape);
@@ -132,7 +132,7 @@ REG_BPROP_BUILDER("FillTensor").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BODYFU
     auto value_shape = ib->Shape(value);
     auto input_dtype = ib->GetDtype(value)->type_id();
     auto value_dtype = ib->Value(static_cast<int64_t>(input_dtype));
-    auto dvalue_out = ib->Emit("FillTensor", {value_shape, dvalue, value_dtype});
+    auto dvalue_out = ib->FillTensor(value_shape, dvalue, value_dtype);
     return {ib->OutZeros(size), dvalue_out, ib->OutZeros(type)};
   }
   if (!value->shape().empty()) {
@@ -230,7 +230,7 @@ REG_BPROP_BUILDER("DynamicBroadcastTo").SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("SiLU").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto dout = ib->GetInput(kIndex2);
-  auto dx = ib->Emit("SiLUGrad", {dout, x});
+  auto dx = ib->SiLUGrad(dout, x);
   return {dx};
 });
 
@@ -238,9 +238,9 @@ REG_BPROP_BUILDER("SiLUGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
   auto grad = ib->GetInput(kIndex0);
   auto y = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex3);
-  auto sig = ib->Emit("Sigmoid", {y});
+  auto sig = ib->Sigmoid(y);
   auto mul0 = ib->Mul(grad, y);
-  auto sig_grad1 = ib->Emit("SigmoidGrad", {sig, dout});
+  auto sig_grad1 = ib->SigmoidGrad(sig, dout);
   NodePtr dy;
   if (y->need_compute_grad_out()) {
     auto mul1 = ib->Mul(grad, sig_grad1);
@@ -250,7 +250,7 @@ REG_BPROP_BUILDER("SiLUGrad").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
     auto mul4 = ib->Mul(mul2, sub1);
     auto mul5 = ib->Mul(grad, dout);
     auto add1 = ib->Add(mul4, mul5);
-    auto sig_grad2 = ib->Emit("SigmoidGrad", {sig, add1});
+    auto sig_grad2 = ib->SigmoidGrad(sig, add1);
     dy = ib->Add(mul1, sig_grad2);
   } else {
     dy = ib->OutZeros(y);
@@ -345,10 +345,9 @@ REG_BPROP_BUILDER("MatrixSetDiag").SetUnusedInputs({i0, i1, i2, i3}).SetBody(BOD
   diag_shape.push_back(std::min(matrix_shape[0], matrix_shape[1]));
   auto grad_dtype = ib->GetDtype(dout);
   auto assist = GetMatrixDiagPartAssit(ib, grad_shape, grad_dtype);
-  auto dx =
-    x->need_compute_grad_out()
-      ? ib->Emit("MatrixSetDiag", {dout, ib->Emit("Zeros", {ib->Value(diag_shape), ib->EmitValue(grad_dtype)}), assist})
-      : ib->OutZeros(x);
+  auto dx = x->need_compute_grad_out()
+              ? ib->Emit("MatrixSetDiag", {dout, ib->Zeros(ib->Value(diag_shape), ib->EmitValue(grad_dtype)), assist})
+              : ib->OutZeros(x);
   auto dy = y->need_compute_grad_out() ? ib->Emit("MatrixDiagPart", {dout, assist}) : ib->OutZeros(y);
   auto dz = ib->OutZeros(z);
   return {dx, dy, dz};

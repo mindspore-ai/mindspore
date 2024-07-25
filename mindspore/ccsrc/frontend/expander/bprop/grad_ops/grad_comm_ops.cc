@@ -98,7 +98,6 @@ REG_BPROP_BUILDER("_MirrorOperator").SetUnusedInputs({i0, i1}).SetBody(BODYFUNC(
   if (ib->GetAttr("parameter") != nullptr) {
     (void)attrs.emplace_back("parameter", ib->GetAttr("parameter"));
   }
-
   auto dx = ib->Emit(kAllReduceOpName, {dout}, attrs);
   auto ins_name = ib->GetInstanceName();
   dx->set_debug_info("grad_mirror" + ins_name);

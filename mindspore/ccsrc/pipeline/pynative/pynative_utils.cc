@@ -2177,7 +2177,11 @@ ValuePtr WrapCOOTensor(const ValuePtr &coo_out, const ValuePtr &value) {
   auto coo_tensor = coo_out->cast<tensor::COOTensorPtr>();
   MS_EXCEPTION_IF_NULL(coo_tensor);
   auto value_tensor = value->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(value_tensor);
+  if (value_tensor == nullptr) {
+    auto base_tensor = value->cast<tensor::BaseTensorPtr>();
+    MS_EXCEPTION_IF_NULL(base_tensor);
+    value_tensor = std::make_shared<tensor::Tensor>(*base_tensor);
+  }
   auto indices_tensor = coo_tensor->GetIndices();
   auto shape_vector = coo_tensor->shape();
   return std::make_shared<tensor::COOTensor>(indices_tensor, value_tensor, shape_vector);
@@ -2188,7 +2192,11 @@ ValuePtr WrapCSRTensor(const ValuePtr &csr_out, const ValuePtr &value) {
   auto csr_tensor = csr_out->cast<tensor::CSRTensorPtr>();
   MS_EXCEPTION_IF_NULL(csr_tensor);
   auto value_tensor = value->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(value_tensor);
+  if (value_tensor == nullptr) {
+    auto base_tensor = value->cast<tensor::BaseTensorPtr>();
+    MS_EXCEPTION_IF_NULL(base_tensor);
+    value_tensor = std::make_shared<tensor::Tensor>(*base_tensor);
+  }
   auto indptr_tensor = csr_tensor->GetIndptr();
   auto indices_tensor = csr_tensor->GetIndices();
   auto shape_vector = csr_tensor->shape();

@@ -143,6 +143,7 @@ mindspore/ccsrc/plugin/device/gpu/kernel/pyboost/auto_generate/
 mindspore/ccsrc/plugin/device/ascend/kernel/pyboost/auto_generate/
 mindspore/ccsrc/plugin/device/ascend/kernel/opapi/aclnn_kernel_register_auto.cc
 mindspore/ccsrc/plugin/device/ascend/kernel/opapi/aclnn_auto_gen/
+mindspore/ccsrc/pipeline/pynative/grad/function/auto_generate/
 
 # ascendc compile
 mindspore/ccsrc/plugin/device/ascend/kernel/ascendc/build_out/

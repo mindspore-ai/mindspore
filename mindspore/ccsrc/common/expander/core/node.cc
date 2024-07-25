@@ -154,6 +154,22 @@ std::string IrNode::debug_info() const {
 ValuePtr FuncNode::BuildValue() { return value_; }
 InputType FuncNode::input_type() { return input_type_; }
 
+std::vector<int64_t> FuncNode::shape() {
+  if (value_->isa<tensor::BaseTensor>()) {
+    const auto &tensor = value_->cast<tensor::BaseTensorPtr>();
+    return tensor->shape();
+  }
+  return Node::shape();
+}
+
+TypePtr FuncNode::dtype() {
+  if (value_->isa<tensor::BaseTensor>()) {
+    const auto &tensor = value_->cast<tensor::BaseTensorPtr>();
+    return type_ = tensor->Dtype();
+  }
+  return Node::dtype();
+}
+
 AbstractBasePtr FuncNode::abstract() {
   if (abstract_ != nullptr) {
     return abstract_;

@@ -47,9 +47,9 @@ class COMMON_EXPORT Node : public std::enable_shared_from_this<Node> {
   virtual BaseShapePtr GetShape();
   virtual TypePtr GetType();
 
-  std::vector<int64_t> shape();
+  virtual std::vector<int64_t> shape();
   std::vector<std::vector<int64_t>> shapes();
-  TypePtr dtype();
+  virtual TypePtr dtype();
   std::vector<TypePtr> dtypes();
   Emitter *emitter() { return emitter_; }
   virtual std::string ToString() const;
@@ -104,6 +104,8 @@ class COMMON_EXPORT FuncNode : public Node {
       : Node(emitter, value), abstract_(abs), input_type_(input_type) {}
   ValuePtr BuildValue() override;
   InputType input_type() override;
+  std::vector<int64_t> shape() override;
+  TypePtr dtype() override;
   void set_node_type(InputType input_type) { input_type_ = input_type; }
   AbstractBasePtr abstract() override;
   void set_abstract(const AbstractBasePtr &abs) { abstract_ = abs; }

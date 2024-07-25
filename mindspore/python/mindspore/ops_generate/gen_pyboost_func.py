@@ -392,10 +392,10 @@ def get_convert_tensor_template():
     Get convert tensor template
     """
     convert_to_tensor_template = CppTemplate(
-        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToTensor(${input}, ${need_contiguous}, '\
+        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToTensor(${input}, ${need_contiguous}, ' \
         'op_run_info->requires_grad);\n')
     convert_to_tensor_list_template = CppTemplate(
-        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToValueTuple(${input}, ${need_contiguous}, '\
+        'auto ${output} = PyNativeAlgo::Common::ConvertStubNodeToValueTuple(${input}, ${need_contiguous}, ' \
         'op_run_info->requires_grad);\n')
     return convert_to_tensor_template, convert_to_tensor_list_template
 
@@ -527,7 +527,7 @@ def convert_value_type(op_proto: OpProto) -> str:
     :return: str
     """
     convert_template = CppTemplate(
-        "auto $arg_name = ValueConverter::${convert_func}(op_runner_info->inputs, $arg_index);\n")
+        "auto convert_$arg_name = ValueConverter::${convert_func}(op_runner_info->inputs[$arg_index]);\n")
     parser_func_str = ''
     for index, arg in enumerate(op_proto.op_args):
         is_optional = is_optional_param(arg)
@@ -537,9 +537,26 @@ def convert_value_type(op_proto: OpProto) -> str:
     return parser_func_str
 
 
-def contiguous_tensor_value(op_proto: OpProto) -> str:
+def convert_native_value_type(op_proto: OpProto) -> str:
+    """
+    Generate native convert func
+    :param op_proto:
+    :return: str
+    """
+    convert_template = CppTemplate(
+        "auto convert_$arg_name = runtime::ValueConverter::${convert_func}($arg_name->Value());\n")
+    parser_func_str = ''
+    for arg in op_proto.op_args:
+        is_optional = is_optional_param(arg)
+        convert_type_str = get_value_convert_type_str(arg.arg_dtype, is_optional)
+        parser_func_str += convert_template.replace(arg_name=arg.arg_name, convert_func=convert_type_str)
+    return parser_func_str
+
+
+def contiguous_tensor_value(op_proto: OpProto, device_target: str) -> str:
     """
     Generate parser func
+    :param device_target:
     :param op_proto:
     :return: str
     """
@@ -547,13 +564,13 @@ def contiguous_tensor_value(op_proto: OpProto) -> str:
     if op_proto.is_view:
         return ''
     contiguous_template = CppTemplate(
-        "$arg_name = ValueConverter::ContiguousTensorValue(op_runner_info, $arg_name);\n")
+        "convert_$arg_name = runtime::ValueConverter::ContiguousTensorValue($device_target, convert_$arg_name);\n")
     contiguous_func_str = ''
     need_contiguous_dtype = {'tensor', 'tuple[tensor]'}
     for arg in op_proto.op_args:
         if arg.arg_dtype not in need_contiguous_dtype:
             continue
-        contiguous_func_str += contiguous_template.replace(arg_name=arg.arg_name)
+        contiguous_func_str += contiguous_template.replace(arg_name=arg.arg_name, device_target=device_target)
     return contiguous_func_str
 
 
@@ -575,11 +592,12 @@ def generate_pyboost_grad_functions(work_path, yaml_data):
         op_name_str = op_proto.class_name
         op_args_str = [op_arg.arg_name for op_arg in op_proto.op_args]
         convert_value_type_str = convert_value_type(op_proto)
-        convert_value_type_str += contiguous_tensor_value(op_proto)
+        device_target = "op_runner_info->device_target"
+        convert_value_type_str += contiguous_tensor_value(op_proto, device_target)
 
         call_args_str = []
         for op_arg in op_proto.op_args:
-            call_arg = op_arg.arg_name
+            call_arg = 'convert_' + op_arg.arg_name
             call_args_str.append(call_arg)
         pyboost_func_str += template.PYBOOST_GRAD_FUNCTION_TEMPLATE.replace(func_name=op_proto.pyboost_function_name,
                                                                             op_name=op_name_str,
@@ -602,6 +620,69 @@ def generate_pyboost_grad_functions(work_path, yaml_data):
     tmp_file_path = os.path.join(dir_path, "tmp_pyboost_grad_functions.cc")
     dst_file_path = os.path.join(dir_path, "pyboost_grad_functions.cc")
     write_file(tmp_file_path, pyboost_func_file)
+    check_change_and_replace_file(dst_file_path, tmp_file_path)
+
+
+def generate_pyboost_native_grad_functions(work_path, yaml_data):
+    """
+    Generate pyboost native grad  functions file from yaml.
+    """
+    pyboost_func_str = ''
+    pyboost_func_include_headers_str = ''
+    native_function_headers_str = ''
+    native_include_header_template = CppTemplate("#include \"kernel/pyboost/auto_generate/${operator_name}.h\"\n")
+    native_function_header_template = CppTemplate("static NodePtr $func_name(${call_args_with_type});\n")
+    native_function_sigle_output_template = "const auto &output_value = op->outputs()[0];\n"
+    native_function_multi_output_template = template.MULTI_OUTPUT_TEMPLATE
+    for operator_name, operator_data in yaml_data.items():
+        if not is_pyboost_enable(operator_data):
+            continue
+        op_proto = OpProto.load_from_yaml(operator_name, operator_data)
+        if not op_proto.is_dispatch:
+            continue
+        operator_name = op_proto.operator_name
+        op_name_str = op_proto.class_name
+        op_args_str = [op_arg.arg_name for op_arg in op_proto.op_args]
+        convert_value_type_str = convert_native_value_type(op_proto)
+        convert_value_type_str += contiguous_tensor_value(op_proto, "device_target_")
+        first_var_name = op_proto.op_args[0].arg_name
+        call_args_str = []
+        call_args_with_type = []
+        output_expr = native_function_sigle_output_template
+        if op_proto.is_multi_output:
+            output_expr = native_function_multi_output_template
+        for op_arg in op_proto.op_args:
+            call_arg = 'convert_' + op_arg.arg_name
+            call_args_str.append(call_arg)
+            call_args_with_type.append('const NodePtr &' + op_arg.arg_name)
+        pyboost_func_str += \
+            template.PYBOOST_NATIVE_GRAD_FUNCTION_TEMPLATE.replace(func_name=op_name_str,
+                                                                   op_name=op_name_str,
+                                                                   op_args=op_args_str,
+                                                                   convert_body=convert_value_type_str,
+                                                                   call_args=call_args_str,
+                                                                   call_args_with_type=call_args_with_type,
+                                                                   first_var_name=first_var_name,
+                                                                   output_expr=output_expr)
+        pyboost_func_str = pyboost_func_str + template.NEW_LINE
+        pyboost_func_include_headers_str += native_include_header_template.replace(operator_name=operator_name)
+        func_header = native_function_header_template.replace(func_name=op_name_str,
+                                                              call_args_with_type=call_args_with_type)
+        native_function_headers_str += func_header
+    native_grad_func_file = \
+        template.PYBOOST_NATIVE_GRAD_FUNCTIONS_TEMPLATE.replace(include_op_header=pyboost_func_include_headers_str,
+                                                                function_body=pyboost_func_str)
+    native_grad_func_header_file = template.PYBOOST_NATIVE_GRAD_FUNCTIONS_HEADER_TEMPLATE.replace(
+        native_grad_func_def=native_function_headers_str)
+    dir_path = os.path.join(work_path, "mindspore/ccsrc/pipeline/pynative/grad/function/auto_generate")
+    pathlib.Path(dir_path).mkdir(parents=True, exist_ok=True)
+    tmp_file_path = os.path.join(dir_path, "tmp_pyboost_native_grad_functions.cc")
+    dst_file_path = os.path.join(dir_path, "pyboost_native_grad_functions.cc")
+    write_file(tmp_file_path, native_grad_func_file)
+    check_change_and_replace_file(dst_file_path, tmp_file_path)
+    tmp_file_path = os.path.join(dir_path, "tmp_pyboost_native_grad_functions.h")
+    dst_file_path = os.path.join(dir_path, "pyboost_native_grad_functions.h")
+    write_file(tmp_file_path, native_grad_func_header_file)
     check_change_and_replace_file(dst_file_path, tmp_file_path)
 
 
@@ -688,7 +769,6 @@ class OpTemplateConverter:
             call_args_with_types.append("const " + type_name + " &" + arg_name)
         return call_args_with_types
 
-
     @staticmethod
     def parse_need_malloc_tensors(op_args, call_args):
         """
@@ -711,7 +791,6 @@ class OpTemplateConverter:
             else:
                 call_args_with_tensor.append(call_arg)
         return need_malloc_tensors, tensor_list_convert, call_args_with_tensor
-
 
     @staticmethod
     def parse_original_call_args(op_args):
@@ -835,7 +914,7 @@ def gen_pyboost_inner_prim(work_path, op_yaml_data):
             arg_handler = arg_info.get('arg_handler')
             processed_arg = arg_name
             if arg_handler is not None and arg_handler != 'dtype_to_type_id':
-                process_func += f"""converted_{arg_name} = {arg_handler}("{op_proto.class_name}", 
+                process_func += f"""converted_{arg_name} = {arg_handler}("{op_proto.class_name}",
                                   "{arg_name}", {arg_name})\n"""
                 processed_arg = 'converted_' + arg_name
             input_args.append(arg_name)
@@ -961,5 +1040,7 @@ def gen_pyboost_code(work_path, ops_yaml_data, doc_yaml_data):
     generate_pyboost_functions(work_path, ops_yaml_data)
     # generate pyboost grad functions
     generate_pyboost_grad_functions(work_path, ops_yaml_data)
+    # generate pyboost native grad functions
+    generate_pyboost_native_grad_functions(work_path, ops_yaml_data)
     # generate pyboost backend cpp code
     generate_pyboost_op_cpp_code(work_path, ops_yaml_data)

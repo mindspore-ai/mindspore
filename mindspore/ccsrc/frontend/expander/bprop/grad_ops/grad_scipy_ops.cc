@@ -169,7 +169,7 @@ REG_BPROP_BUILDER("Eigh").SetBody(BODYFUNC(ib) {
   auto grad_a_shape = ib->GetShape(grad_a);
   auto eye_node_for_diag =
     EyeTensor(ib, LongToInt(grad_a_shape[grad_a_shape.size() - kDim2]), LongToInt(grad_a_shape.back()));
-  auto eye_tensor_broadcast = ib->Emit("BroadcastTo", {eye_node_for_diag, ib->Shape(grad_a)});
+  auto eye_tensor_broadcast = ib->BroadcastTo(eye_node_for_diag, ib->Shape(grad_a));
 
   auto prod = ib->Mul(grad_a, ib->Cast(eye_tensor_broadcast, ib->GetDtype(grad_a)));
   auto res = ib->ReduceSum(ib->Cast(prod, kFloat32), {-1}, false);

@@ -44,6 +44,18 @@ def is_list(op_arg):
     return False
 
 
+def is_op_multi_output(args):
+    """
+    is multi output
+    :param args:
+    :return: bool
+    """
+    if len(args) > 1:
+        return True
+    if len(args) == 1 and is_tensor_list(args[0]):
+        return True
+    return False
+
 def get_index(index: int):
     """
     get index

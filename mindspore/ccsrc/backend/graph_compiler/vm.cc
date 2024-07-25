@@ -176,6 +176,7 @@ BaseRef FinalVM::Eval(const VectorRef &args) {
   sp_ = 0;
 
   auto riter = args.rbegin();
+  py::gil_scoped_acquire gil_acquire;
   for (; riter != args.rend(); ++riter) {
     if (utils::isa<PyObjectRef>(*riter)) {
       PyObjectRef py_ref = utils::cast<PyObjectRef>(*riter);
