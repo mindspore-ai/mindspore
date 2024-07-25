@@ -77,6 +77,7 @@ enum KernelType {
 
 class NDObject;
 class VKernel;
+class MsProfHelper;
 
 struct ShapeRef {
   ShapeRef() {}
@@ -156,6 +157,7 @@ class Kernel {
 
  private:
   VKernel *kernel_;
+  MsProfHelper *msprof_helper_;
 };
 
 void SetDeterministic(bool enable);
