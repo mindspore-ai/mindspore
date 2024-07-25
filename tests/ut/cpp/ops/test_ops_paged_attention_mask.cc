@@ -57,6 +57,8 @@ TEST_P(TestPagedAttentionMask, DynShape) {
   auto context_lens = std::make_shared<abstract::AbstractTensor>(param.context_lens_type, param.context_lens_shape);
   auto alibi_mask = std::make_shared<abstract::AbstractTensor>(param.alibi_mask_type, param.alibi_mask_shape);
   auto attn_mask = std::make_shared<abstract::AbstractNone>();
+  auto antiquant_scale = std::make_shared<abstract::AbstractNone>();
+  auto antiquant_offset = std::make_shared<abstract::AbstractNone>();
   auto query_shape = std::make_shared<abstract::Shape>(param.query_shape);
   auto expect_shape = query_shape;
   auto expect_type = param.query_type;
@@ -67,11 +69,13 @@ TEST_P(TestPagedAttentionMask, DynShape) {
   PagedAttentionMaskFuncImpl func_impl;
   auto prim = std::make_shared<Primitive>("PagedAttentionMask");
 
-  auto out_dtype = func_impl.InferType(prim, {query, key_cache, value_cache, block_tables, context_lens, alibi_mask,
-                                              attn_mask, num_head, scale_value, kv_head});
+  auto out_dtype =
+    func_impl.InferType(prim, {query, key_cache, value_cache, block_tables, context_lens, alibi_mask, antiquant_scale,
+                               antiquant_offset, attn_mask, num_head, scale_value, kv_head});
   ASSERT_TRUE(*out_dtype == *expect_type);
-  auto out_shape = func_impl.InferShape(prim, {query, key_cache, value_cache, block_tables, context_lens, alibi_mask,
-                                               attn_mask, num_head, scale_value, kv_head});
+  auto out_shape =
+    func_impl.InferShape(prim, {query, key_cache, value_cache, block_tables, context_lens, alibi_mask, antiquant_scale,
+                                antiquant_offset, attn_mask, num_head, scale_value, kv_head});
   ASSERT_TRUE(*out_shape == *expect_shape);
 }
 

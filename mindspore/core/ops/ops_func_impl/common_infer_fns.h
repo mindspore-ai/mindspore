@@ -27,6 +27,8 @@ namespace ops {
 
 // The infershape in the scene where the shapes of the two inputs and outputs are both equal
 BaseShapePtr BinaryOpShapesEqualInfer(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
+
+bool IsOptionalInputNone(const AbstractBasePtr &input);
 }  // namespace ops
 }  // namespace mindspore
 

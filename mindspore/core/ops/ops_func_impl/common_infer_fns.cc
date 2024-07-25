@@ -57,5 +57,10 @@ BaseShapePtr BinaryOpShapesEqualInfer(const PrimitivePtr &primitive, const std::
   }
   return std::make_shared<abstract::TensorShape>(output_shape);
 }
+
+bool IsOptionalInputNone(const AbstractBasePtr &input) {
+  MS_EXCEPTION_IF_NULL(input);
+  return input->GetType()->type_id() == kMetaTypeNone;
+}
 }  // namespace ops
 }  // namespace mindspore

@@ -34,6 +34,8 @@ enum PagedAttentionInputIndex : size_t {
   kPagedAttentionInputValueCacheIndex,
   kPagedAttentionInputBlockTablesIndex,
   kPagedAttentionInputContextLensIndex,
+  kPagedAttentionInputAntiquantScaleIndex,
+  kPagedAttentionInputAntiquantOffsetIndex,
   kPagedAttentionInputNumHeadIndex,
   kPagedAttentionInputScaleValueIndex,
   kPagedAttentionInputNumKVHeadIndex,

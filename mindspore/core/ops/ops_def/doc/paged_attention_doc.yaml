@@ -1,7 +1,7 @@
 paged_attention:
     description: |
         The PagedAttention is the fusion of block-wise KV Cache access and self-attention computing.
-    
+
         Args:
             query (Tensor): The query tensor with data type of float16.
               :math:`(num\_tokens, num\_head, head\_dim)`.
@@ -13,7 +13,13 @@ paged_attention:
               :math:`(num\_tokens, max_num_blocks_per_batch)`.
             context_lens (Tensor): The context length of each sequence with data type of int32.
               :math:`(num\_tokens,)`.
-                        
+            antiquant_scale (Tensor): The antiquant scale of key_cache and value_cache
+              with data type of float16. key_cache and value_cache will be the type of int8.
+              :math:`(2, num\_head * head\_dim,)`.
+            antiquant_offset (Tensor): The antiquant offset of key_cache and value_cache
+              with data type of float16. key_cache and value_cache will be the type of int8.
+              :math:`(2, num\_head * head\_dim,)`.
+
         Outputs:
             attention output.
 
