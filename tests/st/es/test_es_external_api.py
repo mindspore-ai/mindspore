@@ -17,11 +17,13 @@ import os
 import sys
 import numpy as np
 import mindspore as ms
-from  mindspore import nn, ops, Tensor
+import mindspore.dataset as ds
+from mindspore import nn, ops, Tensor
+from mindspore import context
+from mindspore.train import Callback
 from mindspore.nn.layer.embedding_service import EmbeddingService
 from mindspore.nn.layer.embedding_service_layer import EsEmbeddingLookup
 from mindspore.communication import init, release, get_rank
-from mindspore import context
 
 
 class Net(nn.Cell):
@@ -67,6 +69,60 @@ class NetworkWithLoss(nn.Cell):
         return loss
 
 
+class ModelCallback(Callback):
+    """
+    ModelCallback
+    """
+    def __init__(self):
+        super(ModelCallback, self).__init__()
+        self.loss_list = []
+
+    def step_end(self, run_context):
+        cb_params = run_context.original_args()
+        loss = cb_params.net_outputs.asnumpy()
+        assert loss.shape == (2, 8, 12), 'loss shape should be (2, 8, 12)'
+        if np.any(np.isnan(loss)):
+            raise ValueError(f"loss should not be nan on step {cb_params.cur_step_num}!")
+        self.loss_list.append(loss.mean())
+        print("epoch: {}, step: {}, loss: {}".format(
+            cb_params.cur_epoch_num, cb_params.cur_step_num, np.mean(loss)))
+
+
+class NetworkWithGrad(nn.TrainOneStepCell):
+    """
+    NetworkWithGrad
+    """
+    def __init__(self, network, optimizer):
+        super(NetworkWithGrad, self).__init__(network, optimizer)
+        self.depend = ops.Depend()
+
+    def construct(self, data, label):
+        loss = self.network(data, label)
+        sens = ops.fill(loss.dtype, loss.shape, self.sens)
+        grads = self.grad(self.network, self.weights)(data, label, (sens))
+        grads = self.grad_reducer(grads)
+        loss = self.depend(loss, self.optimizer(grads))
+        return loss
+
+
+def create_dataset():
+    # Iterable object as input source
+    class Iterable:
+        def __init__(self):
+            self._data = np.ones((20, 8), dtype=np.float32)
+            self._label = np.ones((20, 8, 12), dtype=np.float32)
+
+        def __getitem__(self, index):
+            return self._data[index], self._label[index]
+
+        def __len__(self):
+            return len(self._data)
+
+    dataset = ds.GeneratorDataset(Iterable(), column_names=["data", "label"], num_parallel_workers=4)
+    dataset = dataset.batch(2, drop_remainder=True)
+    return dataset
+
+
 def train():
     """
     train net.
@@ -107,20 +163,15 @@ def train():
 
     net = Net(embedding_dim, feature_length, table_id_dict, es_initializer, es_counter_filter,
               es_padding_keys, es_completion_keys)
+    net.set_train()
     loss_fn = ops.SigmoidCrossEntropyWithLogits()
     optimizer = nn.Adam(params=net.trainable_params(), learning_rate=1e-3)
     net_with_loss = NetworkWithLoss(net, loss_fn)
-    train_network = nn.TrainOneStepCell(net_with_loss, optimizer=optimizer)
-    train_network.set_train()
-    data = Tensor(np.array(np.ones((2, 8)), dtype=np.float32))
-    label = Tensor(np.array(np.ones((2, 8, 12)), dtype=np.float32))
-    for i in range(10):
-        loss = train_network(data, label)
-        assert loss.shape == (2, 8, 12), 'loss shape should be (2, 8, 12)'
-        eval_out = net(data)
-        assert eval_out.shape == (2, 8, 12), 'eval_out shape should be (2, 8, 12)'
-        if np.any(np.isnan(loss.asnumpy())) or np.any(np.isnan(eval_out.asnumpy())):
-            raise ValueError(f"loss or eval_out should not be nan on epoch: {i}!")
+    net_with_grads = NetworkWithGrad(net_with_loss, optimizer=optimizer)
+    model = ms.Model(net_with_grads)
+
+    train_dataset = create_dataset()
+    model.train(1, train_dataset, callbacks=ModelCallback(), dataset_sink_mode=True)
 
     rank = get_rank()
     if rank == 0:
