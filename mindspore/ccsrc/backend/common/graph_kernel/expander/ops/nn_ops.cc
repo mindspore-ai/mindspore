@@ -182,4 +182,71 @@ REG_EXPANDER_FUNC("BiasAdd").SetBody(BODYFUNC(ib) {
   auto result = ib->Add(input_x, input_y);
   return {result};
 });
+
+REG_EXPANDER_FUNC("RmsNorm").SetBody(BODYFUNC(ib) {
+  auto x = ib->input(kIndex0);
+  auto x_shape = x->GetShape();
+  if (IsDynamicRank(x_shape) || x_shape.empty() || x_shape.back() <= 0) {
+    MS_LOG(DEBUG) << "Skip shape: " << x_shape;
+    return {};
+  }
+  auto gamma = ib->input(kIndex1);
+  auto eps = ib->input(kIndex2);
+
+  auto compute_type = kNumberTypeFloat32;
+  auto x_type = x->GetDtype()->type_id();
+  auto need_cast = x_type != compute_type;
+  if (need_cast) {
+    x = ib->Cast(x, compute_type);
+    gamma = ib->Cast(gamma, compute_type);
+  }
+  auto x2 = ib->Mul(x, x);
+  auto x2_mean = ib->ReduceSum(ib->Mul(x2, ib->Tensor(1.0 / x_shape.back(), x->GetDtype())), ib->Value(ShapeVector{-1}),
+                               ib->Value(true));  // mean square of x
+  auto rstd = ib->Rsqrt(ib->Add(x2_mean, eps));
+  auto x_scale = ib->Mul(x, rstd);
+  auto y = ib->Mul(x_scale, gamma);
+  if (need_cast) {
+    y = ib->Cast(y, x_type);
+  }
+  return {y, rstd};
+});
+
+REG_EXPANDER_FUNC("RmsNormGrad").SetBody(BODYFUNC(ib) {
+  auto x = ib->input(kIndex1);
+  auto x_shape = x->GetShape();
+  if (IsDynamicRank(x_shape) || x_shape.empty() || x_shape.back() <= 0) {
+    MS_LOG(DEBUG) << "Skip shape: " << x_shape;
+    return {};
+  }
+  auto dy = ib->input(kIndex0);
+  auto rstd = ib->input(kIndex2);
+  auto gamma = ib->input(kIndex3);
+
+  auto compute_type = kNumberTypeFloat32;
+  auto x_type = x->GetDtype()->type_id();
+  auto need_cast = x_type != compute_type;
+  if (need_cast) {
+    dy = ib->Cast(dy, compute_type);
+    x = ib->Cast(x, compute_type);
+    gamma = ib->Cast(gamma, compute_type);
+  }
+  ShapeVector reduce_axis;
+  for (int64_t i = 0; i < SizeToLong(x_shape.size()) - 1; ++i) {
+    reduce_axis.push_back(i);
+  }
+  // dgamma
+  auto x_rstd = ib->Mul(x, rstd);
+  auto dgamma = ib->ReduceSum(ib->Mul(dy, x_rstd), ib->Value(reduce_axis), ib->Value(false));
+  // dx
+  auto dy_gamma = ib->Mul(dy, gamma);
+  auto dy_gamma_sum = ib->ReduceSum(ib->Mul(x, dy_gamma), ib->Value(ShapeVector{-1}), ib->Value(true));
+  auto t0 = ib->Mul(ib->Mul(ib->Mul(rstd, rstd), rstd), dy_gamma_sum);
+  auto t1 = ib->Mul(t0, ib->Tensor(-1.0 / x_shape.back(), x->GetDtype()));
+  auto dx = ib->Add(ib->Mul(t1, x), ib->Mul(rstd, dy_gamma));
+  if (need_cast) {
+    dx = ib->Cast(dx, x_type);
+  }
+  return {dx, dgamma};
+});
 }  // namespace mindspore::graphkernel::expander
