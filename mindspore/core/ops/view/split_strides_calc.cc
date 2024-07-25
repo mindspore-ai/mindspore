@@ -27,7 +27,7 @@ namespace mindspore::ops {
 void SplitInputsCheck(const PrimitivePtr &prim, const int64_t &output_num, const int64_t &axis,
                       const std::vector<int64_t> &tensor_shape) {
   auto prim_name = prim->name();
-  if (output_num < 0) {
+  if (output_num <= 0) {
     MS_EXCEPTION(ValueError) << "For '" << prim_name << "', output_num must be positive, but got " << output_num << ".";
     return;
   }

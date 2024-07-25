@@ -926,7 +926,9 @@ def chunk(input, chunks, axis=0):
     arr_shape = input.shape
     length_along_dim = arr_shape[arr_axis]
 
-    if chunks > length_along_dim:
+    if length_along_dim == 0:
+        res = _get_cache_prim(P.Split)(arr_axis)(input)
+    elif chunks > length_along_dim:
         res = _get_cache_prim(P.Split)(arr_axis, length_along_dim)(input)
     elif length_along_dim % chunks == 0:
         res = _get_cache_prim(P.Split)(arr_axis, chunks)(input)
@@ -4759,7 +4761,9 @@ def _split_int(x, split_size_or_sections, axis):
     """
     arr_shape = x.shape
     length_along_dim = arr_shape[axis]
-    if split_size_or_sections > length_along_dim:
+    if length_along_dim == 0:
+        res = _get_cache_prim(P.Split)(axis)(x)
+    elif split_size_or_sections > length_along_dim:
         res = _get_cache_prim(P.Split)(axis, 1)(x)
     elif length_along_dim % split_size_or_sections == 0:
         sections = length_along_dim // split_size_or_sections
@@ -5072,7 +5076,9 @@ def _tensor_split_sub_int(x, indices_or_sections, axis):
     """
     arr_shape = x.shape
     length_along_dim = arr_shape[axis]
-    if indices_or_sections > length_along_dim:
+    if length_along_dim == 0:
+        res = _get_cache_prim(P.Split)(axis)(x)
+    elif indices_or_sections > length_along_dim:
         res = _get_cache_prim(P.Split)(axis, length_along_dim)(x)
         indices_or_sections_n = [length_along_dim, length_along_dim + 1]
         res2 = _tensor_split_sub_tensors(x, indices_or_sections_n, axis)
