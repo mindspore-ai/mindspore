@@ -21,7 +21,7 @@ rsqrt:
     
         Examples:
             >>> import mindspore as ms
-            >>> import mindspore.ops as ops
+            >>> from mindspore import ops
             >>> input = ms.Tensor([-0.0370,  0.2970,  1.5420, -0.9105])
             >>> output = ops.rsqrt(input)
             >>> print(output)
