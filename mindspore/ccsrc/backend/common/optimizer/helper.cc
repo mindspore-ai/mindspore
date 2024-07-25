@@ -311,7 +311,6 @@ AnfNodePtr CreateTensorInput(const KernelGraphPtr &kernel_graph, const AnfNodePt
   if (kernel_graph != nullptr) {
     tensor_input = kernel_graph->NewValueNode(tensor_input);
     kernel_graph->AddValueNodeToGraph(tensor_input);
-    kernel_graph->FrontBackendlMapUpdate(input_node, tensor_input);
   } else {
     tensor_input = MakeValueNode(tensor_input);
   }
