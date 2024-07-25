@@ -16,7 +16,7 @@ mindspore.nn.Adadelta
             w_{t} = w_{t-1} - \gamma * update_{t}
         \end{array}
 
-    其中 :math:`g` 代表 `grads` ， :math:`\gamma` 代表 `learning_rate` ， :math:`p` 代表 `rho` ，
+    其中 :math:`g` 代表 `grads` ， :math:`\gamma` 代表 `learning_rate` ， :math:`\rho` 代表 `rho` ，
     :math:`\epsilon` 代表 `epsilon` ， :math:`w` 代表 `params` ，
     :math:`accum` 表示累加器， :math:`accum\_update` 表示累加器更新，
     :math:`t` 代表当前step。

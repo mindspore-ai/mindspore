@@ -55,7 +55,7 @@ class Adadelta(Optimizer):
             w_{t} = w_{t-1} - \gamma * update_{t}
         \end{array}
 
-    where :math:`g` represents `grads`, :math:`\gamma` represents `learning_rate`, :math:`p` represents `rho`,
+    where :math:`g` represents `grads`, :math:`\gamma` represents `learning_rate`, :math:`\rho` represents `rho`,
     :math:`\epsilon` represents `epsilon`, :math:`w` represents `params`,
     :math:`accum` represents accumulation, :math:`accum\_update` represents accumulation update,
     :math:`t` represents current step.
