@@ -21,7 +21,8 @@ from mindspore.common.api import _cell_graph_executor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 import mindspore.dataset as de
-from mindspore.dataset.vision import transforms as c_vision
+import mindspore.dataset.vision as vision
+import mindspore.dataset.transforms as transforms
 from tests.mark_utils import arg_mark
 
 DATA_DIR = "/home/workspace/mindspore_dataset/cifar-10-verify-bin"
@@ -35,13 +36,13 @@ def dataset_cifar(dataset_path=None, batch_size=32, repeat_num=1, num_rows=9600,
     ds = de.Cifar10Dataset(dataset_path, num_samples=num_rows, num_shards=distribution_num, shard_id=shard_id,
                            shuffle=shuffle, usage=usage, num_parallel_workers=num_workers)
 
-    typecast_op = c_trans.TypeCast(mstype.int32)
+    typecast_op = transforms.TypeCast(mstype.int32)
     ds = ds.map(input_columns="label", operations=typecast_op, num_parallel_workers=num_workers)
 
-    image_op_list = [c_vision.Resize(resize_size),
-                     c_vision.Rescale(1.0 / 255.0, 0.0),
-                     c_vision.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-                     c_vision.HWC2CHW()]
+    image_op_list = [vision.Resize(resize_size),
+                     vision.Rescale(1.0 / 255.0, 0.0),
+                     vision.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+                     vision.HWC2CHW()]
     ds = ds.map(input_columns="image", operations=image_op_list, num_parallel_workers=num_workers)
 
     ds = ds.batch(batch_size, drop_remainder=drop_remainder, num_parallel_workers=num_workers)
