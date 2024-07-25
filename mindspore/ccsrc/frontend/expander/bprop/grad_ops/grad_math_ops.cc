@@ -1523,7 +1523,7 @@ REG_BPROP_BUILDER("LuUnpack").SetUnusedInputs({i1, i2}).SetBody(BODYFUNC(ib) {
   return {lu_data_grad, ib->OutZeros(lu_pivots)};
 });
 
-REG_BPROP_BUILDER("Sinc").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
+REG_BPROP_BUILDER("Sinc").SetBody(BODYFUNC(ib) {
   auto x = ib->GetInput(kIndex0);
   auto out = ib->GetInput(kIndex1);
   auto dout = ib->GetInput(kIndex2);
