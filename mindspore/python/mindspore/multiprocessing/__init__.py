@@ -20,6 +20,7 @@ import types
 import signal
 import multiprocessing as mp
 from multiprocessing import *
+from multiprocessing import pool as mp_pool
 from mindspore._c_expression import fork_utils
 
 __all__ = []
@@ -59,7 +60,7 @@ class Process(mp.Process): # pylint: disable=function-redefined
 _MsProcess = Process
 
 
-class Pool(mp.pool.Pool): # pylint: disable=function-redefined, abstract-method
+class Pool(mp_pool.Pool):  # pylint: disable=function-redefined, abstract-method
     """
     Trigger fork callbacks by overriding native multiprocessing methods.
     """
