@@ -45,6 +45,7 @@ STATUS ConstantOfShapeMapper::Mapper(const CNodePtr &cnode) {
         value_param = opt::BuildFloatVecParameterNode(func_graph, values, cnode->fullname_with_scope() + "_values");
       }
       break;
+    case kNumberTypeBool:
     case kNumberTypeInt:
     case kNumberTypeInt32: {
       if (values.size() == 1) {
