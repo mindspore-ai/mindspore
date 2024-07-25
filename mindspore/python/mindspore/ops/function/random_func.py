@@ -1072,7 +1072,7 @@ def rand_ext(*size, generator=None, dtype=None):
         ``Ascend``
 
     Examples:
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> print(ops.function.random_func.rand_ext(2, 3).shape)
         (2, 3)
     """
