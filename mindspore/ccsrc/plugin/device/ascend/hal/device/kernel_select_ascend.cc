@@ -646,6 +646,11 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
     return result;
   }
 
+  if (common::AnfAlgo::HasNodeAttr(kAttrKernelPacketNode, node)) {
+    GenerateKernelPacketBuildInfo(node);
+    return result;
+  }
+
   auto kernel_type = transform::AclHelper::GetKernelInfoFromGe(node, &acl_err_type);
   if (kernel_type == KernelType::ACL_KERNEL) {
     GenerateKernelBuildInfo(node, kernel_type);
@@ -666,11 +671,6 @@ std::tuple<bool, std::string, ExceptionType> SelectKernelInfoWithMsg(const Kerne
       MS_VLOG(VL_ASCEND_KERNEL_SELECT) << op_name << " select hccl kernel.";
       MS_LOG(INFO) << op_name << " select hccl kernel.";
     }
-    return result;
-  }
-
-  if (common::AnfAlgo::HasNodeAttr(kAttrKernelPacketNode, node)) {
-    GenerateKernelPacketBuildInfo(node);
     return result;
   }
 

@@ -37,6 +37,11 @@ class SymbolEngineExtender : public opt::Pass {
   void FindValueDependNode(const CNodePtr &node, HashSet<AnfNodePtr> *visited, HashSet<AnfNodePtr> *valid_nodes);
   void FindShapeDependHostNode(const CNodePtr &node, HashSet<AnfNodePtr> *visited, HashSet<AnfNodePtr> *valid_nodes);
   ValuePtr FindOnlyDependShapeInputs(const FuncGraphPtr &fg) const;
+  void RemoveWildGetitem(HashSet<AnfNodePtr> *valid_nodes) const;
+  bool IsValidNode(const CNodePtr &node) const;
+  CNodePtr CreatePacketNode(const FuncGraphPtr &main_fg, const FuncGraphPtr &sub_fg,
+                            const AnfNodePtrList &inputs) const;
+  void ProcessNopNode(const FuncGraphPtr &fg, AnfNodePtrList *inputs) const;
 };
 }  // namespace mindspore::graphkernel::packet
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_GRAPH_KERNEL_KERNEL_PACKET_SYMBOL_ENGINE_EXTENDER_H_
