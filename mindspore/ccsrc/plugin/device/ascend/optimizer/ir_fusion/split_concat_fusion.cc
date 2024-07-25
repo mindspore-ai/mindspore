@@ -60,15 +60,14 @@ const AnfNodePtr SplitConcatFusion::Process(const FuncGraphPtr &graph, const Anf
   auto output_num = GetValue<int64_t>(GetValueNode(utils::cast<AnfNodePtr>((*equiv)[output_num_])));
   constexpr size_t expected_shape_size = 2;
   constexpr int64_t dynamic_shape = -1;
+  auto concat_size = shape[1];
 
   if (split_axis != 0 || concat_axis != 1 || output_num != global_rank_size_ || shape.size() != expected_shape_size ||
-      shape[0] != dynamic_shape) {
+      shape[0] != dynamic_shape || concat_size == dynamic_shape) {
     MS_LOG(INFO) << "split_axis: " << split_axis << " concat_axis: " << concat_axis << " output_num:" << output_num
                  << " shape:" << shape << " is unexpected.";
     return nullptr;
   }
-
-  auto concat_size = shape[1];
 
   ShapeVector target_shape1 = {output_num, -1, concat_size};
   ShapeVector target_shape2 = {-1, concat_size * output_num};
