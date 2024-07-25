@@ -80,6 +80,10 @@ bool GetBatchDimByInput(std::vector<int64_t> *params_shape, std::vector<int64_t>
 
 BaseShapePtr GatherFuncImpl::InferShape(const PrimitivePtr &primitive,
                                         const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex1]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex2]);
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex3]);
   auto params_shape = input_args[kInputIndex0]->GetShape()->GetShapeVector();
   auto indices_shape = input_args[kInputIndex1]->GetShape()->GetShapeVector();
   if (IsDynamicRank(params_shape) || IsDynamicRank(indices_shape)) {
@@ -156,6 +160,7 @@ BaseShapePtr GatherFuncImpl::InferShape(const PrimitivePtr &primitive,
 }
 
 TypePtr GatherFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const {
+  MS_EXCEPTION_IF_NULL(input_args[kInputIndex0]);
   return input_args[kInputIndex0]->GetType()->Clone();
 }
 }  // namespace ops
