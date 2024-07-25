@@ -2649,10 +2649,6 @@ std::shared_ptr<FlashAttentionParm> FlashAttentionFusion::ParseFAParam() const {
           return nullptr;
         }
       } else if (attr.first == "inner_precise") {
-        if (FlashAttentionFusion::GetSocVersion() == kSocVersionAscend310P) {
-          MS_LOG(WARNING) << "FA inner_precise is not supported on Ascend310P.";
-          return nullptr;
-        }
         int inner_precise = std::atoi(attr_value.c_str());
         if (std::to_string(inner_precise) == attr_value && (inner_precise == 0 || inner_precise == 1)) {
           MS_LOG(INFO) << "Use user config, FA inner_precise is: " << attr_value;
