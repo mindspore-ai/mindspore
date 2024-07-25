@@ -49,6 +49,18 @@ void ConnectedEventHandler(int fd, uint32_t events, void *context) {
   if (conn == nullptr || conn->socket_operation == nullptr) {
     return;
   }
+  // Calling time of ConnEstablishedEventHandler is different for tcp and ssl.
+  if (conn->enable_ssl) {
+    MS_LOG(INFO) << "For ssl, call ConnEstablishedEventHandler first.";
+    conn->socket_operation->ConnEstablishedEventHandler(fd, events, context);
+    if (conn->state == ConnectionState::kDisconnecting) {
+      DoDisconnect(fd, conn, error, soError);
+      return;
+    } else if (conn->state != ConnectionState::kConnected) {
+      return;
+    }
+  }
+
   if (conn->state == ConnectionState::kDisconnecting) {
     DoDisconnect(fd, conn, error, soError);
     return;
@@ -61,9 +73,12 @@ void ConnectedEventHandler(int fd, uint32_t events, void *context) {
   if (conn->write_callback) {
     conn->write_callback(conn);
   }
-  MS_LOG(WARNING) << "Connection from " << conn->source << " to " << conn->destination << "is successfully created "
-                  << strerror(errno);
-  conn->socket_operation->ConnEstablishedEventHandler(fd, events, context);
+
+  if (!conn->enable_ssl) {
+    MS_LOG(WARNING) << "Connection from " << conn->source << " to " << conn->destination << "is successfully created "
+                    << strerror(errno);
+    conn->socket_operation->ConnEstablishedEventHandler(fd, events, context);
+  }
   return;
 }
 
