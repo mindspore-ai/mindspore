@@ -896,7 +896,8 @@ class Profiler:
         ProfilerInfo.set_profiling_start_time(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
         ProfilerInfo.set_system_cnt(c_expression.get_clock_syscnt())
         ProfilerInfo.set_system_time(int(c_expression.get_clock_time() * 1e3)) # cast us to ns
-        _framework_profiler_enable_mi()
+        if self._host_stack:
+            _framework_profiler_enable_mi()
 
     def stop(self):
         """
