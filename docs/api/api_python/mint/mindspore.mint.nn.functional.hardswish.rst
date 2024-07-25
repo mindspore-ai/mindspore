@@ -1,7 +1,7 @@
-mindspore.ops.hardswish
-=======================
+mindspore.mint.nn.functional.hardswish
+=======================================
 
-.. py:function:: mindspore.ops.hardswish(input)
+.. py:function:: mindspore.mint.nn.functional.hardswish(input)
 
     逐元素计算Hard Swish。输入是一个Tensor，具有任何有效的shape。
 

@@ -1,16 +1,26 @@
 hswish:
     description: |
-        Hard swish activation function.
+        Applies hswish-type activation element-wise. The input is a Tensor with any valid shape.
 
-        Refer to :func:`mindspore.ops.hardswish` for more details.
+        Hard swish is defined as:
 
-        Inputs:
-            - **input** (Tensor) - The input Tensor.Supported dtypes:
+        .. math::
+            \text{Hardswish}(input) =
+            \begin{cases}
+            0, & \text{ if } input ≤ -3, \\
+            input, & \text{ if } input ≥ +3, \\
+            input·(input + 3)/6, & \text{ otherwise }
+            \end{cases}
 
-              - Ascend: float16, float32, bfloat16.
-              - CPU/GPU: int8, int16, int32, int64, float16, float32, float64.
+        HSwish Activation Function Graph:
 
-        Outputs:
+        .. image:: ../images/HSwish.png
+            :align: center
+
+        Args:
+            input (Tensor): The input Tensor.
+
+        Returns:
             Tensor, with the same type and shape as the `input`.
 
         Raises:
@@ -24,8 +34,7 @@ hswish:
             >>> import mindspore
             >>> import numpy as np
             >>> from mindspore import Tensor, ops
-            >>> hswish = ops.HSwish()
             >>> input = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-            >>> result = hswish(input)
-            >>> print(result)
+            >>> output = ops.hardswish(input)
+            >>> print(output)
             [-0.3333  -0.3333  0  1.667  0.6665]
