@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-#include "graph_kernel/common/graph_kernel_common_test_suite.h"
-#include "ops/framework_ops.h"
-#include "backend/common/graph_kernel/kernel_packet/symbol_engine_extender.h"
+#include "graph_kernel/kernel_packet/kernel_packet_common_test_suite.h"
 
 namespace mindspore::graphkernel::test {
 /// Feature: KernelPacket
 /// Description: the "Reshape"'s value-depend nodes have a "Depend"
 /// Expectation: the virtual node should not be fused.
-TEST_F(GraphKernelCommonTestSuite, kernelpacket_no_virtual_node) {
+TEST_F(TestKernelPacket, no_virtual_node) {
   ConstructGraph gb;
   auto p1 = gb.NewTensorInput("p1", kFloat32, {-1, -1, -1, 1152});
   auto p2 = gb.NewCNodeWithBuildInfo("TensorToScalar", {gb.NewTensorInput("p2", kInt64, {})});
