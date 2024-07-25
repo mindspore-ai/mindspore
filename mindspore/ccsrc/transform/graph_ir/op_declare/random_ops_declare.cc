@@ -101,11 +101,11 @@ OUTPUT_MAP(Dropout) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Dropout, kDropoutOpName, ADPT_DESC(Dropout))
 
 // RandomUniformInt
-CUST_INPUT_MAP(RandomUniformInt) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(min)}, {3, INPUT_DESC(max)}};
-CUST_ATTR_MAP(RandomUniformInt) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
-                                   {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
-CUST_OUTPUT_MAP(RandomUniformInt) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(RandomUniformInt, kUniformIntOpName, CUST_ADPT_DESC(RandomUniformInt))
+INPUT_MAP(RandomUniformInt) = {{1, INPUT_DESC(shape)}, {2, INPUT_DESC(min)}, {3, INPUT_DESC(max)}};
+ATTR_MAP(RandomUniformInt) = {{"seed", ATTR_DESC(seed, AnyTraits<int64_t>())},
+                              {"seed2", ATTR_DESC(seed2, AnyTraits<int64_t>())}};
+OUTPUT_MAP(RandomUniformInt) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(RandomUniformInt, kUniformIntOpName, ADPT_DESC(RandomUniformInt))
 
 // RandomUniform
 INPUT_MAP(RandomUniform) = {{1, INPUT_DESC(shape)}};
