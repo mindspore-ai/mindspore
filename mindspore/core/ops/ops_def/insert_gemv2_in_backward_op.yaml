@@ -1,0 +1,42 @@
+#operator InsertGemV2InBackward
+insert_gem_v2_in_backward:
+    args:
+        input:
+            dtype: tensor
+        ele_pos:
+            dtype: tensor
+        cur_step:
+            dtype: tensor
+        seed:
+            dtype: tensor
+        offset:
+            dtype: tensor
+        start:
+            dtype: int
+            default: 0
+        steps:
+            dtype: tuple[int]
+            type_cast: int, list[int]
+            default: 1
+        error_mode:
+            dtype: int
+            default: "'cycle'"
+            arg_handler: str_to_enum
+        flip_mode:
+            dtype: int
+            default: "'bitflip'"
+            arg_handler: str_to_enum
+        multiply_factor:
+            dtype: float
+            default: 0.
+        bit_pos:
+            dtype: int
+            default: 0
+        flip_probability:
+            dtype: float
+            default: 0.
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True

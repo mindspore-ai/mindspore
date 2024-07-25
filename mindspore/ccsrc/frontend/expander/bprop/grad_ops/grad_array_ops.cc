@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <iterator>
 #include <numeric>
 #include <vector>
 #include "ops/op_utils.h"
@@ -2752,5 +2753,29 @@ REG_BPROP_BUILDER("RepeatInterleaveTensor").SetUnusedInputs({i0}).SetBody(BODYFU
   return {result, ib->OutZeros(repeats), ib->OutZeros(axis), ib->OutZeros(output_size)};
 });
 
+REG_BPROP_BUILDER("GenerateEodMaskV2").SetBody(BODYFUNC(ib) {
+  const auto &all_inputs = ib->GetInputs();
+  // dx
+  NodePtrList gradients{ib->GetInput(kIndex13)};
+  // other gradients are all zeros
+  std::transform(all_inputs.begin() + i1, all_inputs.begin() + all_inputs.size() - i2, std::back_inserter(gradients),
+                 [&ib](const NodePtr &node) { return ib->OutZeros(node); });
+  return gradients;
+});
+
+REG_BPROP_BUILDER("InsertGemV2InBackward").SetBody(BODYFUNC(ib) {
+  const auto &all_inputs = ib->GetInputs();
+  // fetch dx
+  auto dout = all_inputs[all_inputs.size() - i1];
+  NodePtrList gem_inputs{dout};
+  gem_inputs.insert(gem_inputs.end(), all_inputs.begin() + i1, all_inputs.begin() + all_inputs.size() - i2);
+  auto dx = ib->Emit("GenerateEodMaskV2", gem_inputs);
+  // gradients
+  NodePtrList gradients{dx};
+  // other gradients are all zeros
+  std::transform(all_inputs.begin() + i1, all_inputs.begin() + all_inputs.size() - i2, std::back_inserter(gradients),
+                 [&ib](const NodePtr &node) { return ib->OutZeros(node); });
+  return gradients;
+});
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

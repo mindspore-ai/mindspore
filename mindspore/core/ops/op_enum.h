@@ -49,6 +49,10 @@ enum GridSamplerPaddingMode : int64_t { ZEROS = 0, BORDER = 1, REFLECTION = 2 };
 enum KVCacheAlignMode : int64_t { RIGHT = 0, LEFT = 1 };
 
 enum FASInputLayoutMode : int64_t { BSH = 0, BNSD = 1, SBH = 2, BSND = 3, TND = 4 };
+
+enum ErrorMode : int64_t { CYCLE = 0, SPECIFIC = 1 };
+
+enum FlipMode : int64_t { BITFLIP = 0, BITFLIP_DESIGNED = 1, MULTIPLY = 2, MULTIPLY_MAX = 3 };
 }  // namespace ops
 }  // namespace mindspore
 #endif  //  MINDSPORE_CORE_OPS_ENUM_H_

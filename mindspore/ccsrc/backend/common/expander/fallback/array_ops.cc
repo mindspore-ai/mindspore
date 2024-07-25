@@ -387,5 +387,7 @@ REG_FALLBACK_BUILDER("Chunk").SetBody(BODYFUNC(ib) {
     return SplitTensorFallbackFunc(ib, in_tensor, ib->Value(split_size), dim_value);
   }
 });
+
+REG_FALLBACK_BUILDER("InsertGemV2InBackward").SetBody(BODYFUNC(ib) { return {ib->GetInput(kIndex0)}; });
 }  // namespace expander
 }  // namespace mindspore
