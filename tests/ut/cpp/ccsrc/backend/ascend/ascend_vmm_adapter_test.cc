@@ -48,7 +48,7 @@ class TestAscendVmmAdapter : public UT::Common {
 /// Expectation: can alloc memory and can not throw exception.
 TEST_F(TestAscendVmmAdapter, test_basic_allocation) {
   size_t block = ascend_vmm_adapter_.kVmmAlignSize;
-  DeviceMemPtr addr = reinterpret_cast<DeviceMemPtr>(block);;
+  DeviceMemPtr addr = reinterpret_cast<DeviceMemPtr>(block);
   size_t size = 1024;
   size_t ret = ascend_vmm_adapter_.AllocDeviceMem(size, &addr);
   EXPECT_EQ(ret, ascend_vmm_adapter_.kVmmAlignSize);

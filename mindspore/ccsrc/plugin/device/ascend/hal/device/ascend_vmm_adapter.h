@@ -79,6 +79,11 @@ class AscendVmmAdapter {
       return false;
     }
 
+    if (common::IsNeedProfileMemory()) {
+      MS_LOG(INFO) << "Dry run, vmm is disabled.";
+      return false;
+    }
+
     if (common::IsEnableAlllocConfig(common::kAllocEnableVmm)) {
       MS_LOG(INFO) << "VMM is explicitly enabled.";
       return true;
