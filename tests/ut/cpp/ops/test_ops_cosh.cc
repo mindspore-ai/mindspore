@@ -24,6 +24,8 @@
 #include "ops/test_ops.h"
 #include "ops/ops_func_impl/cosh.h"
 #include "ops/test_value_utils.h"
+#include "ops/test_ops_cmp_utils.h"
+#include "ops/auto_generate/gen_ops_name.h"
 
 namespace mindspore {
 namespace ops {
@@ -53,6 +55,13 @@ TEST_P(TestCosh, cosh_dyn_shape) {
   ASSERT_TRUE(*out_shape == *expect_shape);
   auto out_dtype = cosh_func_impl.InferType(prim, {x});
   ASSERT_TRUE(*out_dtype == *expect_dtype);
+
+  // simple infer
+  auto x_value = std::make_shared<tensor::Tensor>(dtype_param.x_type->type_id(), shape_param.x_shape);
+  auto expect_shape_simple_infer = {shape_param.out_shape};
+  auto expect_dtype_simple_infer = {dtype_param.out_type};
+  DoFuncImplSimpleInferAndCompare<CoshFuncImpl>(kNameCosh, {x_value}, {expect_shape_simple_infer},
+                                                {expect_dtype_simple_infer});
 }
 
 auto CoshOpShapeTestCases = testing::ValuesIn({
@@ -83,32 +92,5 @@ auto CoshOpTypeTestCases = testing::ValuesIn({
 });
 
 INSTANTIATE_TEST_CASE_P(TestCosh, TestCosh, testing::Combine(CoshOpShapeTestCases, CoshOpTypeTestCases));
-
-class TestCoshSimpleInfer : public TestOps, public testing::WithParamInterface<std::tuple<CoshShape, CoshType>> {};
-
-TEST_P(TestCoshSimpleInfer, simple_infer) {
-  const auto &shape_param = std::get<0>(GetParam());
-  const auto &dtype_param = std::get<1>(GetParam());
-
-  CoshFuncImpl cosh_func_impl;
-  auto prim = std::make_shared<Primitive>("Cosh");
-  auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
-  auto expect_shape = std::make_shared<abstract::TensorShape>(shape_param.out_shape);
-  auto expect_dtype = std::make_shared<TensorType>(dtype_param.out_type);
-
-  auto out_shape = cosh_func_impl.InferShape(prim, {x});
-  ASSERT_TRUE(*out_shape == *expect_shape);
-  auto out_dtype = cosh_func_impl.InferType(prim, {x});
-  ASSERT_TRUE(*out_dtype == *expect_dtype);
-}
-
-auto CoshOpShapeTestCasesSimpleInfer = testing::ValuesIn({
-  /* static */
-  CoshShape{{2}, {2}},
-  CoshShape{{2, 3, 4}, {2, 3, 4}},
-});
-
-INSTANTIATE_TEST_CASE_P(TestCoshSimpleInfer, TestCoshSimpleInfer,
-                        testing::Combine(CoshOpShapeTestCasesSimpleInfer, CoshOpTypeTestCases));
 }  // namespace ops
 }  // namespace mindspore
