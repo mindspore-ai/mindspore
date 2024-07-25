@@ -200,7 +200,6 @@ cust_op_lists = [
     "randomcategorical",
     "randomshuffle",
     "randomchoicewithmask",
-    "randomuniformint",
     "real",
     "reciprocal",
     "reciprocalgrad",
