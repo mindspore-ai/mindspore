@@ -23,6 +23,7 @@
 
 namespace mindspore {
 namespace ops {
+size_t MIND_API CalCrossDimFromDefaultValue(const ShapeVector &input_shape, const ShapeVector &other_shape);
 class MIND_API CrossFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

@@ -16,6 +16,7 @@
 
 #include "plugin/device/ascend/kernel/pyboost/customize/cross.h"
 #include "kernel/pyboost/pyboost_utils.h"
+#include "ops/ops_func_impl/cross.h"
 #include "plugin/device/ascend/kernel/pyboost/aclnn_utils.h"
 #include "plugin/device/ascend/hal/device/ascend_stream_manager.h"
 
@@ -30,14 +31,9 @@ tensor::BaseTensorPtr CrossAscendCustomize(const std::shared_ptr<OpRunner> &op, 
   auto dim_imm = GetValue<int64_t>(dim);
   const int64_t default_dim = -65530;
   if (dim_imm == default_dim) {
-    int64_t dim_size_value = 3;
-    const auto &shape = input_tensor->shape();
-    for (size_t i = 0; i < shape.size(); i++) {
-      if (shape[i] == dim_size_value) {
-        dim_imm = SizeToLong(i);
-        break;
-      }
-    }
+    const auto &input_shape = input_tensor->shape();
+    const auto &other_shape = other_tensor->shape();
+    dim_imm = SizeToLong(ops::CalCrossDimFromDefaultValue(input_shape, other_shape));
   }
   PyBoostUtils::PrepareOpInputs(op->device_context(), op->stream_id(), input_tensor, other_tensor);
 
