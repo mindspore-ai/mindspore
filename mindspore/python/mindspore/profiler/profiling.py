@@ -21,7 +21,6 @@ import time
 import json
 from json import JSONDecodeError
 import glob
-import subprocess
 import csv
 import socket
 from enum import Enum
@@ -53,7 +52,6 @@ from mindspore.profiler.parser.minddata_analyzer import MinddataProfilingAnalyze
 from mindspore.profiler.parser.minddata_pipeline_parser import \
     MinddataPipelineParser
 from mindspore.profiler.parser.step_trace_parser import GpuStepTraceParser, AscendStepTraceParser
-from mindspore.profiler.parser.msadvisor_analyzer import Msadvisor
 from mindspore.profiler.parser.profiler_info import ProfilerInfo
 from mindspore.common.api import _pynative_executor
 from mindspore.profiler.parser.ascend_msprof_exporter import AscendMsprofExporter
@@ -1500,26 +1498,6 @@ class Profiler:
         finally:
             pass
 
-    def _ascend_graph_msadvisor_analyse(self, job_id):
-        """Call MSAdvisor function."""
-        logger.info("MSAdvisor starts running.")
-        msadvisor = Msadvisor(job_id, self._rank_id, self._output_path, pretty=self._pretty_json)
-        try:
-            msadvisor.analyse()
-        except FileNotFoundError as err:
-            logger.warning("MSAdvisor: command not found,"
-                           "please check if installed ascend-toolkit and set environment path correctly. %s", err)
-        except OSError as err:
-            logger.warning("Cannot execute binary file: Exec format error. %s", err)
-        except subprocess.CalledProcessError:
-            logger.warning("MSAdvisor running failed, please check MSAdvisor running log.")
-        except (ValueError, ProfilerFileNotFoundException) as err:
-            logger.warning("MSAdvisor running failed. %s", err)
-        finally:
-            pass
-        if context.get_context("mode") == context.PYNATIVE_MODE:
-            logger.warning("Pynative mode does not support MSAdvisor analyzer currently.")
-
     def _get_kernel_op_map(self, op_summary, kernels: List[CANNEvent]) -> List:
         """Get the mapping between framework operator and device kernel."""
         if not kernels:
@@ -1585,7 +1563,6 @@ class Profiler:
             self._ascend_graph_memory_analyse(points)
             self._ascend_ms_analyze(mindstudio_profiler_output)
             self._ascend_graph_hccl_analyse(mindstudio_profiler_output, steptrace)
-            self._ascend_graph_msadvisor_analyse(job_id)
             self._minddata_aicpu_analyse(self._output_path, job_id)
             ProfilerInfo.set_graph_ids(graph_ids)
         try:
