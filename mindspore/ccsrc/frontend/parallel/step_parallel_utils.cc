@@ -460,7 +460,7 @@ std::vector<std::pair<AnfNodePtr, int>> NextNodeUsers(const AnfNodePtr &node) {
       return IsPrimitiveCNode(anode, prim::kPrimLoad) || IsPrimitiveCNode(anode, prim::kPrimCast);
     });
     (void)std::partition(node_set.begin(), node_set.end(), [](const std::pair<std::shared_ptr<AnfNode>, int> &pair) {
-      if (!pair.first->has_user_data<OperatorInfo>()) {
+      if (!pair.first->has_user_data<OperatorInfo>() || IsPrimitiveCNode(pair.first, prim::kPrimReshape)) {
         return false;
       }
       auto tensor_info = GetInputsTensorInfo(pair);
@@ -3235,7 +3235,7 @@ std::vector<CNodePtr> DoSplitForNotParallelCareOpsInterleaved(const FuncGraphMan
        ++interleveaved_index) {
     std::vector<AnfNodePtr> splited_node_inputs = {virtual_converter_begin_input_cnode->input(kIndex0)};
     for (size_t i = 0; i < new_inputs.size(); ++i) {
-      if (!IsPrimitiveCNode(new_inputs[i])) {
+      if (!IsPrimitiveCNode(new_inputs[i]) || IsPrimitiveCNode(new_inputs[i], prim::kPrimUpdateState)) {
         splited_node_inputs.push_back(new_inputs[i]);
         continue;
       }
@@ -3278,12 +3278,32 @@ void SplitNotParallelCareOpsInterleaved(const FuncGraphPtr &root) {
   }
 }
 
-bool UserIsSend(const CNodePtr &cnode) {
+int64_t SendRecvInterleavedAxis(const CNodePtr &send_recv) {
+  if (send_recv->has_user_data<TensorLayout>()) {
+    auto layout = send_recv->user_data<TensorLayout>();
+    if (layout->IsInterleavedParallel()) {
+      auto inter_layout = layout->LayoutForRedistribution();
+      auto new_slice_shape = inter_layout.base_slice_shape().array();
+      auto slice_shape = layout->base_slice_shape().array();
+      if (new_slice_shape.size() != slice_shape.size()) {
+        MS_LOG(INTERNAL_EXCEPTION) << "The size of shape between interleaved and no interleaved is not equal.";
+      }
+      for (size_t i = 0; i < new_slice_shape.size(); ++i) {
+        if (new_slice_shape[i] != slice_shape[i]) {
+          return SizeToLong(i);
+        }
+      }
+    }
+  }
+  return 0;
+}
+
+int64_t UserIsSend(const CNodePtr &cnode) {
   auto end_users = GetOutputNodesWithFilter(cnode, [&](const AnfNodePtr &anode) {
     return IsPrimitiveCNode(anode, prim::kPrimMakeTuple) || IsPrimitiveCNode(anode, prim::kPrimDepend);
   });
   if (end_users.size() == 1 && IsPrimitiveCNode(end_users.front().first, prim::kPrimSend)) {
-    return true;
+    return SendRecvInterleavedAxis(end_users.front().first->cast<CNodePtr>());
   }
   if (end_users.size() == 1 && IsPrimitiveCNode(end_users.front().first, prim::kPrimReturn)) {
     auto func_graph = cnode->func_graph();
@@ -3294,19 +3314,21 @@ bool UserIsSend(const CNodePtr &cnode) {
         return IsPrimitiveCNode(anode, prim::kPrimLoad) || IsPrimitiveCNode(anode, prim::kPrimDepend) ||
                IsPrimitiveCNode(anode, prim::kPrimTupleGetItem);
       });
+      int64_t axis = -1;
       for (const auto &fg_user_pair : fg_users) {
         if (IsPrimitiveCNode(fg_user_pair.first, prim::kPrimUpdateState)) {
           continue;
         }
         if (!IsPrimitiveCNode(fg_user_pair.first, prim::kPrimSend)) {
           MS_LOG(INFO) << "The user of call func in cell reuse is not send.";
-          return false;
+          return -1;
         }
+        axis = SendRecvInterleavedAxis(fg_user_pair.first->cast<CNodePtr>());
       }
-      return true;
+      return axis;
     }
   }
-  return false;
+  return -1;
 }
 
 void MoveVirtualConverterEndInsideCallFunc(const FuncGraphPtr &root) {
@@ -3390,9 +3412,10 @@ void EraseResVirtualConverterEnd(const FuncGraphPtr &root, bool is_fine_grained)
           (void)manager->Replace(virtual_converter_end_cnode, make_tuple_cnode);
           continue;
         }
-        if (UserIsSend(virtual_converter_end_cnode)) {
+        auto concat_axis = UserIsSend(virtual_converter_end_cnode);
+        if (concat_axis >= 0) {
           auto make_tuple_cnode = MakeMakeTupleByCNode(virtual_converter_end_cnode);
-          AnfNodePtr axis = NewValueNode(MakeValue<int64_t>(0));
+          AnfNodePtr axis = NewValueNode(MakeValue<int64_t>(concat_axis));
           std::vector<AnfNodePtr> concat_inputs{NewValueNode(prim::kPrimConcat->Clone()), make_tuple_cnode, axis};
           auto concat = virtual_converter_end_cnode->func_graph()->NewCNode(concat_inputs);
           (void)manager->Replace(virtual_converter_end_cnode, concat);
@@ -3437,7 +3460,8 @@ void EraseVirtualConverter(const FuncGraphPtr &root) {
                                                 [&](const CNodePtr &cnode) { return std::make_pair(false, 1); });
       if (real_node && IsPrimitiveCNode(real_node, prim::kPrimReceive)) {
         // Create Split op
-        AnfNodePtr axis = NewValueNode(MakeValue<int64_t>(0));
+        auto split_axis = SendRecvInterleavedAxis(real_node->cast<CNodePtr>());
+        AnfNodePtr axis = NewValueNode(MakeValue<int64_t>(split_axis));
         auto v_begin_prim = GetCNodePrimitive(virtual_converter_begin);
         auto output_num = v_begin_prim->GetAttr("output_nums");
         AnfNodePtr split_size = NewValueNode(output_num);
