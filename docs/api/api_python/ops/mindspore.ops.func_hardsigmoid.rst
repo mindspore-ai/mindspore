@@ -21,10 +21,7 @@ mindspore.ops.hardsigmoid
         :align: center
 
     参数：
-        - **input** (Tensor) - 输入Tensor。支持数据类型：
-
-          - Ascend：int32、float16、float32、bfloat16。
-          - CPU/GPU：int8、int16、int32、int64、float16、float32、float64。
+        - **input** (Tensor) - 输入Tensor。
 
     返回：
         Tensor，shape和数据类型与输入 `input` 相同。

@@ -1184,10 +1184,7 @@ class HSwish(Cell):
         :align: center
 
     Inputs:
-        - **input** (Tensor) - The input of HSwish. Supported dtypes:
-
-          - Ascend: float16, float32, bfloat16.
-          - CPU/GPU: int8, int16, int32, int64, float16, float32, float64.
+        - **input** (Tensor) - The input of HSwish.
 
     Outputs:
         Tensor, with the same type and shape as the `input`.
@@ -1239,10 +1236,7 @@ class HSigmoid(Cell):
         :align: center
 
     Inputs:
-        - **input** (Tensor) - The input of HSigmoid. Supported dtypes:
-
-          - Ascend: int32, float16, float32, bfloat16.
-          - CPU/GPU: int8, int16, int32, int64, float16, float32, float64.
+        - **input** (Tensor) - The input of HSigmoid
 
     Outputs:
         Tensor, with the same type and shape as the `input`.

@@ -21,10 +21,7 @@ mindspore.nn.HSigmoid
         :align: center
 
     输入：
-        - **input** (Tensor) - Hard Sigmoid的输入。支持数据类型：
-
-          - Ascend：int32、float16、float32、bfloat16。
-          - CPU/GPU：int8、int16、int32、int64、float16、float32、float64。
+        - **input** (Tensor) - Hard Sigmoid的输入。
 
     输出：
         Tensor，数据类型和shape与 `input` 的相同。

@@ -21,10 +21,7 @@ mindspore.nn.HSwish
         :align: center
 
     输入：
-        - **input** (Tensor) - Hard Swish的输入。支持数据类型：
-
-          - Ascend：float16、float32、bfloat16。
-          - CPU/GPU：int8、int16、int32、int64、float16、float32、float64。
+        - **input** (Tensor) - Hard Swish的输入。
 
     输出：
         Tensor，具有与 `input` 相同的数据类型和shape。
