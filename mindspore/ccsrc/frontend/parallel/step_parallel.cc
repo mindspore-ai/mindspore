@@ -20,7 +20,6 @@
 #include <algorithm>
 #include <chrono>
 #include <map>
-#include <unordered_map>
 #include <memory>
 #include <set>
 #include <string>
@@ -48,7 +47,6 @@
 #include "frontend/parallel/pipeline_transformer/pipeline_interleave.h"
 #include "frontend/parallel/graph_util/grad_accumulation_utils.h"
 #include "frontend/parallel/node_check.h"
-#include "frontend/parallel/silent_check/silent_check.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/ops_info/matmul_info.h"
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
@@ -77,7 +75,6 @@ namespace parallel {
 static const std::set<std::string> INVALID_LOSS_OPS = {GET_NEXT, VIRTUALLOSS, LOAD, UPDATESTATE};
 static const std::set<std::string> NO_INPUT_TENSOR_OPS = {UNIFORM_REAL, STANDARD_NORMAL};
 const uint32_t MAX_BFS_DEPTH = 7;
-const char kSilentCheckEnvEnable[] = "1";
 
 static void SetAllReduceRecomputeFlag(const std::vector<AnfNodePtr> &new_node_input, const CNodePtr &node) {
   if (new_node_input.empty()) {
@@ -1187,22 +1184,6 @@ static CNodePtr SkipTrivialNodesMoveUp(CNodePtr node) {
   }
 }
 
-static void CreateMirrorForParam(const ParameterPtr param_ptr, OperatorVector *backward_op, bool *is_shared_param) {
-  std::string opt_shard_mirror_group;
-  if (param_ptr->user_data<TensorLayout>()) {
-    opt_shard_mirror_group = param_ptr->user_data<TensorLayout>()->opt_shard_mirror_group();
-    *is_shared_param = param_ptr->user_data<TensorLayout>()->is_shared_param();
-  }
-  if (!opt_shard_mirror_group.empty()) {
-    // mirror ops is covered in not fully use opt shard case
-    uint32_t group_rank_size = 0;
-    if (!CommManager::GetInstance().GetRankSize(opt_shard_mirror_group, &group_rank_size)) {
-      MS_LOG(EXCEPTION) << "Got the group size from the group " << opt_shard_mirror_group << " failed";
-    }
-    *backward_op = CreateMirrorOps(opt_shard_mirror_group, static_cast<size_t>(group_rank_size));
-  }
-}
-
 static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_ops, const CNodePtr &node) {
   FuncGraphPtr func_graph = node->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -1236,7 +1217,19 @@ static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_
         MS_LOG(INFO) << param_name << " do not need gradient. Skip inserting mirror.";
         continue;
       }
-      CreateMirrorForParam(param_ptr, &backward_op, &is_shared_param);
+      std::string opt_shard_mirror_group;
+      if (param_ptr->user_data<TensorLayout>()) {
+        opt_shard_mirror_group = param_ptr->user_data<TensorLayout>()->opt_shard_mirror_group();
+        is_shared_param = param_ptr->user_data<TensorLayout>()->is_shared_param();
+      }
+      if (!opt_shard_mirror_group.empty()) {
+        // mirror ops is covered in not fully use opt shard case
+        uint32_t group_rank_size = 0;
+        if (!CommManager::GetInstance().GetRankSize(opt_shard_mirror_group, &group_rank_size)) {
+          MS_LOG(EXCEPTION) << "Got the group size from the group " << opt_shard_mirror_group << " failed";
+        }
+        backward_op = CreateMirrorOps(opt_shard_mirror_group, static_cast<size_t>(group_rank_size));
+      }
     }
     // not a RefKey
     std::string mirror_op_name = MirrorOpName();
@@ -1266,8 +1259,7 @@ static void DoInsertMirrorOps(const FuncGraphPtr &root, const MirrorOps &mirror_
       MS_LOG(EXCEPTION) << "backward_op size must be 1, real is " << backward_op.size();
     }
     auto op = backward_op[0];
-    if (pre_node->cast<CNodePtr>() && (InsertMirrorBeforeCast(node, index) || is_shared_param ||
-                                       IsPrimitiveCNode(pre_node, prim::kPrimMirrorSilentCheck))) {
+    if (pre_node->cast<CNodePtr>() && (InsertMirrorBeforeCast(node, index) || is_shared_param)) {
       // assume Load is inserted next to parameter
       // skip Load moving up and insert mirror next to the parameter
       CNodePtr load_node = SkipTrivialNodesMoveUp(pre_node->cast<CNodePtr>());
@@ -1344,9 +1336,6 @@ static std::pair<AnfNodePtr, int64_t> FindParallelCareNode(const AnfNodePtr &nod
     CNodePtr cnode = node_pair.first->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     if (!IsValueNode<Primitive>(cnode->input(0))) {
-      continue;
-    }
-    if (IsPrimitiveCNode(cnode, prim::kPrimMirrorSilentCheck) && node_pair.second != 1) {
       continue;
     }
     ValueNodePtr prim_node_anf = cnode->input(0)->cast<ValueNodePtr>();
@@ -3620,19 +3609,6 @@ bool IsVirtualDatasetDynamicShape(const FuncGraphPtr &func_graph) {
   return false;
 }
 
-static void HandleSilentCheck(const FuncGraphPtr &root, const FuncGraphManagerPtr &mng) {
-  auto env = common::GetEnv(NPU_ASD_ENABLE);
-  if (env != kSilentCheckEnvEnable) {
-    return;
-  }
-  auto sdc = std::make_shared<SilentCheck>(root, mng);
-  if (sdc == nullptr) {
-    MS_LOG(EXCEPTION) << "The silent check env got nullptr;";
-  }
-  sdc->GetLossScale();
-  sdc->ModifySilentCheckOps();
-}
-
 static void ParallelPartProcess(const std::vector<AnfNodePtr> &all_nodes, const FuncGraphPtr &root,
                                 const FuncGraphManagerPtr &manager) {
   ReshapeInit(all_nodes);
@@ -3776,7 +3752,6 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   MicroBatchPreProcess(root, manager, all_nodes);
   // mark the forward cnodes, parallel only care these nodes
   MarkForwardCNode(root);
-  HandleSilentCheck(root, manager);
   // tag dynamic shape graph
   TagDynamicShapeFuncGraph(root);
   UpdateMicroBatchInterleavedStatus(all_nodes);

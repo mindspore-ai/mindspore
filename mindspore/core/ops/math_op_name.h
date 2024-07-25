@@ -199,7 +199,6 @@ constexpr auto kXdivyOpName = "Xdivy";
 constexpr auto kEpsOpName = "Eps";
 constexpr auto kMatmulReduceScatterOpName = "MatmulReduceScatter";
 constexpr auto kAllGatherMatmulOpName = "AllGatherMatmul";
-constexpr auto kSilentCheckOpName = "SilentCheck";
 constexpr auto kFusedMatMulElemUnaryOpName = "FusedMatMulElemUnary";
 constexpr auto kFusedMatMulElemBinaryOpName = "FusedMatMulElemBinary";
 }  // namespace mindspore
