@@ -1054,6 +1054,7 @@ SendAttr PipelineTransformer::InsertSend(const AnfNodePtr &parameter, int64_t us
   // for FetchSends
   send->set_user_data<int64_t>(DEST_RANK, std::make_shared<int64_t>(dest_rank));
   send->set_user_data<int64_t>(USER_NODE_STAGE, std::make_shared<int64_t>(user_node_stage));
+  send->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_info.tensor_layout()));
   return send_out;
 }
 
@@ -1486,6 +1487,9 @@ AnfNodePtr PipelineTransformer::GenNewSendFromOld(const AnfNodePtr &node, const 
     abstract = care_node->abstract();
   }
   send->set_abstract(abstract);
+  if (old->has_user_data<TensorLayout>()) {
+    send->set_user_data<TensorLayout>(old->user_data<TensorLayout>());
+  }
   return send;
 }
 

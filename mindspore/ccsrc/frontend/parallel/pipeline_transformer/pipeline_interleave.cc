@@ -847,8 +847,11 @@ void PipelinePostProcess::ModifySendRecvAttr(const std::vector<AnfNodePtr> &all_
       auto tensor_info = op_info->outputs_tensor_info();
       if (pre_node_pair.second != -1 && tensor_info.size() > 1) {
         slice_shape = tensor_info.at(pre_node_pair.second).slice_shape();
+        node->set_user_data<TensorLayout>(
+          std::make_shared<TensorLayout>(tensor_info.at(pre_node_pair.second).tensor_layout()));
       } else {
         slice_shape = tensor_info.at(0).slice_shape();
+        node->set_user_data<TensorLayout>(std::make_shared<TensorLayout>(tensor_info.at(0).tensor_layout()));
       }
     }
     auto abstract = node->abstract();
