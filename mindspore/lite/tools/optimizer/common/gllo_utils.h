@@ -43,6 +43,7 @@ namespace opt {
 constexpr auto kInferDone = "infer_done";
 // used for control_flow op(while and if), which corresponding value is a boolean vec.
 constexpr auto kInferFlags = "infer_flags";
+inline constexpr int kInputIndexZero = 0;
 inline constexpr int kInputIndexOne = 1;
 inline constexpr int kInputIndexTwo = 2;
 inline constexpr int kInputIndexThree = 3;

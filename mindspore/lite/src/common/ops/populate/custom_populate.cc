@@ -177,7 +177,7 @@ OpParameter *PopulateCustomParameter(const void *prim) {
   } else if (type == "IsInf") {
     return CreateCustomIsInfParameter();
   } else {
-    MS_LOG(ERROR) << "Unsupported custom type: " << type;
+    MS_LOG(WARNING) << "Unsupported custom type: " << type;
   }
   return nullptr;
 }
