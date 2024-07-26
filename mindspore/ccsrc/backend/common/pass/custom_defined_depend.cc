@@ -35,7 +35,7 @@ void InsertDepend(const AnfNodePtr &prior_node, const AnfNodePtr &post_node, con
   auto post_cnode = post_node->cast<CNodePtr>();
   if (IsPrimitiveCNode(post_cnode->input(1))) {
     auto cnode = post_cnode->input(1)->cast<CNodePtr>();
-    if (GetCNodePrimitive(cnode)->name() == prim::kPrimDepend->name() && post_cnode->inputs().size() >= 2 &&
+    if (GetCNodePrimitive(cnode)->name() == prim::kPrimDepend->name() && post_cnode->inputs().size() >= kIndex2 &&
         post_cnode->input(kIndex2) == prior_node) {
       return;
     }
@@ -143,6 +143,10 @@ bool GetStageDependList(std::string depend_config_path, bool *get_full_op_name_l
 }
 
 void MergeCsv(std::vector<string> csv_path_list, string csv_full_path) {
+  auto ret = FileUtils::GetRealPath(csv_full_path.c_str());
+  if (!ret.has_value()) {
+    MS_LOG(EXCEPTION) << "Cannot get real path of full csv file.";
+  }
   std::ofstream file(csv_full_path, std::ios::out | std::ios::trunc);
   file << "name"
        << ","
@@ -169,6 +173,10 @@ bool CustomDefinedDepend::Run(const FuncGraphPtr &graph) {
   auto is_ge = !ms_context->IsKByKExecutorMode();
   if (depend_config_path.empty() || is_ge != is_ge_) {
     return false;
+  }
+  auto ret = FileUtils::GetRealPath(depend_config_path.c_str());
+  if (!ret.has_value()) {
+    MS_LOG(EXCEPTION) << "Cannot get real path of depend config file.";
   }
   if (!FileExists(depend_config_path)) {
     MS_LOG_EXCEPTION << depend_config_path << " does not exist, please check!";
@@ -210,6 +218,10 @@ bool CustomDefinedDepend::Run(const FuncGraphPtr &graph) {
     for (int64_t i = 0; i <= graph_id_; i++) {
       std::string csv_path_part =
         json_dir.value() + "/rank_id" + rank_id + "/custom_depend_graph_" + std::to_string(i) + ".csv";
+      ret = FileUtils::GetRealPath(csv_path_part.c_str());
+      if (!ret.has_value()) {
+        MS_LOG(EXCEPTION) << "Cannot get real path of csv file.";
+      }
       if (FileExists(csv_path_part)) {
         (void)csv_path_list.emplace_back(csv_path_part);
       }
