@@ -1779,6 +1779,7 @@ AnfNodePtr NewMicroMirrorPrimByMicroMirror(const FuncGraphPtr &func_graph, const
   (void)prim->SetAttrs(prim_origin->attrs());
   new_mirror_node->set_attrs(micro_mirror->attrs());
   new_mirror_node->set_primal_attrs(micro_mirror->primal_attrs());
+  new_mirror_node->set_in_forward_flag(true);
   return new_mirror_node;
 }
 
