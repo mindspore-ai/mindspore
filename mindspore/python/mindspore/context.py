@@ -248,6 +248,16 @@ class _Context:
         else:
             self.set_param(ms_ctx_param.memory_optimize_level, 1)
 
+    def set_exec_order(self, exec_order):
+        """
+        The execution order mode, support "bfs", "gpto".
+        """
+        exec_order_modes = ["bfs", "gpto"]
+        if exec_order not in exec_order_modes:
+            raise ValueError(f"For 'context.set_context', the argument 'exec_order' must be one of "
+                             f"{exec_order_modes}, but got {exec_order}.")
+        self.set_param(ms_ctx_param.exec_order, exec_order)
+
     def set_memory_offload(self, memory_offload):
         """
         Enable memory offload or not, support "ON", "OFF".
@@ -626,6 +636,7 @@ class _Context:
         'inter_op_parallel_num': set_inter_op_parallel_num,
         'runtime_num_threads': set_runtime_num_threads,
         'memory_optimize_level': set_memory_optimize_level,
+        'exec_order': set_exec_order,
         'op_timeout': set_op_timeout,
         'memory_offload': set_memory_offload,
         'deterministic': set_deterministic,

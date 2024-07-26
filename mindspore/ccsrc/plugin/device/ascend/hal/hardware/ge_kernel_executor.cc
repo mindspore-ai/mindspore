@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "plugin/device/ascend/hal/hardware/ge_kernel_executor.h"
+#include <string>
 #include <utility>
 #include <algorithm>
 #include <deque>
@@ -29,6 +30,7 @@
 #include "plugin/device/ascend/hal/common/ascend_utils.h"
 #include "plugin/device/ascend/hal/hardware/acl_somas.h"
 #include "plugin/device/ascend/hal/hardware/acl_stream_assign.h"
+#include "plugin/device/ascend/hal/hardware/gpto.h"
 #include "plugin/device/ascend/kernel/rts/rt_kernel_build.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_metadata.h"
 #include "plugin/device/ascend/kernel/hccl/hccl_kernel_build.h"
@@ -967,7 +969,8 @@ void CreateEventKernelMod(const KernelGraphPtr &kernel_graph) {
 }
 }  // namespace
 
-void GeKernelExecutor::DoStreamAssign(const KernelGraphPtr &kernel_graph) {
+void GeKernelExecutor::DoStreamAssign(const KernelGraphPtr &kernel_graph,
+                                      const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events) {
   MS_LOG(DEBUG) << "Status record: start stream assign.";
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -976,7 +979,7 @@ void GeKernelExecutor::DoStreamAssign(const KernelGraphPtr &kernel_graph) {
   if (common::IsDisableRuntimeConfig(common::kRuntimeMultiStream)) {
     MS_LOG(INFO) << "Force single stream.";
   } else {
-    AclStreamAssign::GetInstance().AssignStream(NOT_NULL(kernel_graph));
+    AclStreamAssign::GetInstance().AssignStream(NOT_NULL(kernel_graph), sched_events);
   }
   CreateEventKernelMod(kernel_graph);
 #ifdef ENABLE_DUMP_IR
@@ -992,14 +995,15 @@ void GeKernelExecutor::DoStreamAssign(const KernelGraphPtr &kernel_graph) {
   MS_LOG(DEBUG) << "Status record: end stream assign.";
 }
 
-void GeKernelExecutor::DoSomas(const FuncGraphPtr &graph) {
+void GeKernelExecutor::DoSomas(const FuncGraphPtr &graph,
+                               const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   MS_EXCEPTION_IF_NULL(graph);
   auto kernel_graph = graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
   if (!ms_context->IsEnableInferBoost()) {
-    DoStreamAssign(kernel_graph);
+    DoStreamAssign(kernel_graph, sched_events);
   }
   // somas
   MS_LOG(DEBUG) << "Status record: start do somas.";
@@ -1072,7 +1076,16 @@ void GeKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const {
     }
   }
 
-  DoSomas(NOT_NULL(graph));
+  std::vector<std::pair<CNodePtr, CNodePtr>> sched_events;
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto ms_context_exec_order = ms_context->get_param<std::string>(MS_CTX_EXEC_ORDER);
+  MS_LOG(INFO) << "Current Exec Order Algo in MS Context is " << ms_context_exec_order;
+  const std::string kExecOrderGpto = "gpto";
+  if (ms_context_exec_order == kExecOrderGpto) {
+    mindspore::gpto::GPTO(kernel_graph, &sched_events);
+  }
+  DoSomas(NOT_NULL(graph), sched_events);
 
   profiler::CollectHostInfo("Ascend", "PreprocessBeforeRun", "GePreprocess", 1, 0, 1);
 }

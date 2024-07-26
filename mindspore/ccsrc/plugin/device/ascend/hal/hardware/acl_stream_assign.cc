@@ -96,7 +96,8 @@ void AddStreamIdForCommunicationOp(const AnfNodePtr &node, bool is_pp_interleave
 }
 }  // namespace
 
-void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) {
+void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph,
+                                   const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events) {
   auto kernels = kernel_graph->execution_order();
   if (kernels.empty()) {
     return;
@@ -138,6 +139,7 @@ void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) 
     }
   }
   kernel_graph->set_enable_multi_stream(enable_multi_stream);
+
   for (size_t i = 1; i < kernels.size(); ++i) {
     if (common::AnfAlgo::GetCNodeName(kernels[i - 1]) == kMemSetOpName) {
       auto stream_id = AnfAlgo::GetStreamId(kernels[i]);
@@ -145,7 +147,7 @@ void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph) 
       common::AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue(stream_id), kernels[i - 1]);
     }
   }
-  InsertEventForNonTaskSink(kernel_graph);
+  InsertEventForNonTaskSink(kernel_graph, sched_events);
   auto event_num = AscendStreamMng::GetInstance().cur_event_num();
   if (event_num > kEventThreshold) {
     MS_LOG(WARNING) << "The number of events is " << event_num
@@ -282,6 +284,7 @@ void AclStreamAssign::UpdateEventsToExecutionOrder(
   std::map<size_t, std::set<size_t>> no_event_streams;  // wait_stream -> record_stream
   auto exec_kernels = kernel_graph->execution_order();
   std::vector<CNodePtr> new_exec_orders;
+
   std::set<size_t> streams_set;
   for (auto &kernel : exec_kernels) {
     auto process_stream_id = AnfAlgo::GetStreamId(kernel);
@@ -342,7 +345,6 @@ void AclStreamAssign::UpdateEventsToExecutionOrder(
   for (const auto &stream : streams_set) {
     AddBoundarySendRecvKernel(kernel_graph, stream, kDefaultStreamIndex, &new_exec_orders, &no_event_streams);
   }
-
   kernel_graph->set_execution_order(new_exec_orders);
   MS_LOG(DEBUG) << "Finish UpdateEventsToExecutionOrder.";
 }
@@ -613,12 +615,25 @@ void AclStreamAssign::GenEventsForParallelOp(const NotNull<KernelGraphPtr> &kern
   MS_LOG(DEBUG) << "Finish GenEventsForParallelOp.";
 }
 
-void AclStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph) {
+void AclStreamAssign::InsertEventForNonTaskSink(const NotNull<KernelGraphPtr> &kernel_graph,
+                                                const std::vector<std::pair<CNodePtr, CNodePtr>> &sched_events) {
   mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> kernel_send;
   mindspore::HashMap<AnfNodePtr, std::vector<CNodePtr>> kernel_recv;
   mindspore::HashMap<AnfNodePtr, std::set<size_t>> producer_streams;
   AnfAlgo::SetStreamId(kDefaultStreamIndex, kernel_graph->output().get());
-  GenEventsForParallelOp(kernel_graph, &kernel_send, &kernel_recv, &producer_streams);
+
+  if (sched_events.empty()) {
+    GenEventsForParallelOp(kernel_graph, &kernel_send, &kernel_recv, &producer_streams);
+  } else {
+    // Simple logic should be this, but there seem to be many exceptions tackled in function
+    // GenEventsForParallelOp()
+    for (auto event : sched_events) {
+      const auto &send = event.first;
+      const auto &recv = event.second;
+      InsertEvents(kernel_graph, send, send, &kernel_send, &kernel_recv, recv);
+    }
+  }
+
   UpdateEventsToExecutionOrder(kernel_graph, kernel_send, kernel_recv, producer_streams);
 }
 }  // namespace ascend
