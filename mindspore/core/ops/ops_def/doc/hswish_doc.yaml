@@ -7,9 +7,9 @@ hswish:
         .. math::
             \text{Hardswish}(input) =
             \begin{cases}
-            0, & \text{ if } input ≤ -3, \\
-            input, & \text{ if } input ≥ +3, \\
-            input·(input + 3)/6, & \text{ otherwise }
+            0, & \text{ if } input <= -3, \\
+            input, & \text{ if } input >= +3, \\
+            input*(input + 3)/6, & \text{ otherwise }
             \end{cases}
 
         HSwish Activation Function Graph:
