@@ -98,6 +98,10 @@ class COMMON_EXPORT Emitter {
   NodePtr RealDiv(const NodePtr &lhs, const NodePtr &rhs) {
     return UnifyDtypeAndEmit(mindspore::kRealDivOpName, lhs, rhs);
   }
+  NodePtr DivMod(const NodePtr &lhs, const NodePtr &rhs, int64_t rounding_mode) {
+    auto [a, b] = UnifyDtype(lhs, rhs);
+    return Emit(kDivModOpName, {a, b, Value(rounding_mode)});
+  }
   NodePtr Mod(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit("Mod", lhs, rhs); }
   NodePtr Pow(const NodePtr &lhs, const NodePtr &rhs) { return UnifyDtypeAndEmit(kPowOpName, lhs, rhs); }
   NodePtr MatMul(const NodePtr &a, const NodePtr &b, bool transpose_a = false, bool transpose_b = false);

@@ -396,6 +396,7 @@ from .math_func import (
     kron,
     rot90,
     remainder,
+    remainder_ext,
     iou,
     bmm,
     trapz,

@@ -22,6 +22,7 @@
 #include "ops/math_ops.h"
 #include "utils/ms_context.h"
 #include "ops/op_utils.h"
+#include "ops/op_enum.h"
 
 namespace mindspore::expander::bprop {
 NodePtrList AddnGradFunc(BpropBuilder *ib) {
@@ -1685,6 +1686,24 @@ REG_BPROP_BUILDER("FloorMod").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
     bc_dy = ib->Cast(bc_dy, ib->GetDtype(y));
   }
   return {BinopGradCommon(ib, x, y, bc_dx, bc_dy)};
+});
+
+REG_BPROP_BUILDER("RemainderTensorScalar").SetUnusedInputs({i0, i2}).SetBody(BODYFUNC(ib) {
+  auto other = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  return {dout, ib->OutZeros(other)};
+});
+
+REG_BPROP_BUILDER("RemainderTensorTensor").SetUnusedInputs({i2}).SetBody(BODYFUNC(ib) {
+  auto input = ib->GetInput(kIndex0);
+  auto other = ib->GetInput(kIndex1);
+  auto dout = ib->GetInput(kIndex3);
+  NodePtr d_input = dout;
+  NodePtr d_other = nullptr;
+  if (other->need_compute_grad_out()) {
+    d_other = (-dout) * (ib->DivMod(input, other, ops::RoundingMode::FLOOR));
+  }
+  return {BinopGradCommon(ib, input, other, d_input, d_other)};
 });
 
 REG_BPROP_BUILDER("TruncateDiv").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);

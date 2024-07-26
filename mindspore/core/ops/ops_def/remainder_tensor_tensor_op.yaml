@@ -1,0 +1,16 @@
+#operator remainder_tensor_tensor
+remainder_tensor_tensor:
+    args:
+        input:
+            dtype: tensor
+        other:
+            dtype: tensor
+    returns:
+        output:
+            dtype: tensor
+    function:
+        disable: True
+    class:
+        name: RemainderTensorTensor
+    dispatch:
+        enable: True

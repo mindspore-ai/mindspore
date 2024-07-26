@@ -32,7 +32,8 @@ from mindspore.ops.composite.multitype_ops import _constexpr_utils as const_util
 from mindspore.ops.primitive import constexpr, _primexpr
 from mindspore.ops.operations._inner_ops import TileSize
 from mindspore.ops.auto_generate import Cummin, BatchMatMul, lin_space_ext_op, Norm, BitwiseAndScalar, BitwiseAndTensor,\
-    BitwiseOrScalar, BitwiseOrTensor, BitwiseXorScalar, BitwiseXorTensor
+    BitwiseOrScalar, BitwiseOrTensor, BitwiseXorScalar, BitwiseXorTensor, RemainderTensorTensor, RemainderTensorScalar,\
+    RemainderScalarTensor
 from mindspore.ops import auto_generate
 from mindspore.ops.operations.math_ops import STFT
 from mindspore.ops.operations.math_ops import LuUnpack
@@ -243,7 +244,9 @@ bitwise_xor_tensor_ = BitwiseXorTensor()
 #####################################
 # Element-wise Operation Functions.
 #####################################
-
+remainder_tensor_tensor_ = RemainderTensorTensor()
+remainder_tensor_scalar_ = RemainderTensorScalar()
+remainder_scalar_tensor_ = RemainderScalarTensor()
 
 def addn(x):
     """
@@ -9121,6 +9124,53 @@ def remainder(input, other):
 
     out = input - tensor_floordiv(input, other) * other
     return out
+
+
+def remainder_ext(input, other):
+    r"""
+    Computes the remainder of `input` divided by `other` element-wise. The result has the same sign as the divisor and
+    its absolute value is less than that of `other`.
+
+    Supports broadcasting to a common shape and implicit type promotion.
+
+    .. math::
+
+        remainder(input, other) = input - input.div(other, rounding\_mode="floor") * other
+
+    Note:
+        Complex inputs are not supported. At least one input need to be tensor, but not both are bool tensors.
+
+    Args:
+        input (Union[Tensor, numbers.Number]): The dividend.
+        other (Union[Tensor, numbers.Number]): The divisor.
+
+    Returns:
+        Tensor, with dtype promoted and shape broadcasted.
+
+    Raises:
+        TypeError: If `input` and `other` are not of types: (tensor, tensor), (tensor, number) or (number, tensor).
+        ValueError: If `input` and `other` are not broadcastable.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor, ops
+        >>> x = Tensor(np.array([-4.0, 5.0, 6.0]).astype(np.float32))
+        >>> y = Tensor(np.array([3.0, 2.0, 3.0]).astype(np.float64))
+        >>> output = ops.remainder_ext(x, y)
+        >>> print(output)
+        [2.  1.  0.]
+    """
+
+    if isinstance(input, Tensor) and isinstance(other, Tensor):
+        return remainder_tensor_tensor_(input, other)
+    if isinstance(input, Tensor) and isinstance(other, numbers.Number):
+        return remainder_tensor_scalar_(input, other)
+    if isinstance(input, numbers.Number) and isinstance(other, Tensor):
+        return remainder_scalar_tensor_(input, other)
+    raise TypeError(f"For 'remainder', inputs should either be two tensors, or a tensor and a scalar.")
 
 
 def accumulate_n(x):
