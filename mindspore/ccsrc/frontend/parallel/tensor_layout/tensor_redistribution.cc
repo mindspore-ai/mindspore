@@ -1047,8 +1047,8 @@ Status TensorRedistribution::InferReshape(const TensorLayout &from_layout, const
     reshape_flag_ = true;
     constructor.UpdateTensorShape(to_origin_.slice_shape().array());
     Arrangement shape = to_origin_.base_slice_shape();
-    MS_LOG(INFO) << "to_origin_.slice_shape is not same with to_origin_.base_slice_shape: "
-                 << "to_origin_.slice_shape=" << to_origin_.slice_shape().array()
+    MS_LOG(INFO) << "to_origin_.Slice_Shape is not same with to_origin_.base_slice_shape: "
+                 << "to_origin_.Slice_Shape=" << to_origin_.slice_shape().array()
                  << ", to_origin_.base_slice_shape=" << to_origin_.base_slice_shape().array() << ", reshape to "
                  << shape.ToString();
     if (constructor.ReshapeOP(shape.array()) == Status::FAILED) {
