@@ -77,25 +77,18 @@ CNodePtr QbmmAddFusion::CreateQbmmAddNode(const FuncGraphPtr &func_graph, const 
 bool QbmmAddFusion::Init() const {
   x_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(x_ != nullptr, false);
-
   w_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(w_ != nullptr, false);
-
   scale_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(scale_ != nullptr, false);
-
   offset_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(offset_ != nullptr, false);
-
   bias_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(bias_ != nullptr, false);
-
   trans_a_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(trans_a_ != nullptr, false);
-
   trans_b_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(trans_b_ != nullptr, false);
-
   out_dtype_ = std::make_shared<Var>();
   MS_CHECK_TRUE_RET(out_dtype_ != nullptr, false);
   qbmm_prim_ = std::make_shared<CondVar>(IsSpecifiedNode<&prim::kPrimQuantBatchMatmul>);
