@@ -394,25 +394,6 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
   }
 }
 
-void CopyOriginalInputs(const FuncGraphPtr &bprop_fg, const CNodePtr &node, const AnfNodePtr &depend_nodes,
-                        std::vector<AnfNodePtr> *new_inputs) {
-  (void)std::transform(
-    node->inputs().begin(), node->inputs().end(), std::back_inserter(*new_inputs),
-    [&bprop_fg](const AnfNodePtr &input) -> AnfNodePtr {
-      // Make sure there is only one u monad fv.
-      if (HasAbstractUMonad(input) && input->func_graph() != nullptr && input->func_graph() != bprop_fg) {
-        return NewValueNode(kUMonad);
-      }
-      return input;
-    });
-  // The recomputed cell should insert depend node at all inputs.
-  if (!IsRecomputeCell(GetValueNode<FuncGraphPtr>(node->input(0)))) {
-    auto depend = bprop_fg->NewCNode({NewValueNode(prim::kPrimDepend), (*new_inputs)[1], depend_nodes});
-    depend->AddAttr(kRecomputeInsert, MakeValue(true));
-    (*new_inputs)[1] = depend;
-  }
-}
-
 CNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGraphPtr &bprop_fg, const CNodePtr &node,
                             const AnfNodePtr &depend_nodes,
                             std::unordered_map<CNodePtr, CNodePtr> *origin_to_new_nodes) {
@@ -426,7 +407,10 @@ CNodePtr MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGraphP
       return node;
     }
     if (!HasRecomputedInput(node)) {
-      CopyOriginalInputs(bprop_fg, node, depend_nodes, &new_inputs);
+      (void)std::copy(node->inputs().begin(), node->inputs().end(), std::back_inserter(new_inputs));
+      auto depend = bprop_fg->NewCNode({NewValueNode(prim::kPrimDepend), new_inputs[1], depend_nodes});
+      depend->AddAttr(kRecomputeInsert, MakeValue(true));
+      new_inputs[1] = depend;
     } else {
       for (auto &input : node->inputs()) {
         if (!input->isa<CNode>()) {
