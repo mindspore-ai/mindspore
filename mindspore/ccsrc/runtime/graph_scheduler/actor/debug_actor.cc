@@ -363,6 +363,8 @@ bool DebugActor::CheckOverflow(const DeviceContext *device_context, const std::v
   MS_EXCEPTION_IF_NULL(check_kernel_tensors[0]);
   const auto &stream_id =
     check_kernel_tensors[0]->managed_by_somas() ? kDefaultStreamIndex : check_kernel_tensors[0]->stream_id();
+  const auto &kernel_stream_id = check_kernel_tensors[0]->stream_id();
+
   auto &stream_id_to_output_device_address = finite_output_device_addresses_[device_context];
   if (stream_id_to_output_device_address.find(stream_id) == stream_id_to_output_device_address.end()) {
     auto finite_output_addr = device_context->device_res_manager_->AllocateMemory(1, stream_id);
@@ -384,7 +386,7 @@ bool DebugActor::CheckOverflow(const DeviceContext *device_context, const std::v
   const auto &output_kernel_tensor = output_device_address->kernel_tensor();
   MS_EXCEPTION_IF_NULL(output_kernel_tensor);
 
-  void *stream_ptr = device_context->device_res_manager_->GetStream(stream_id);
+  void *stream_ptr = device_context->device_res_manager_->GetStream(kernel_stream_id);
   MS_EXCEPTION_IF_NULL(stream_ptr);
   bool ret = finite_kernel_mod->Launch(check_kernel_tensors, {}, {output_kernel_tensor.get()}, stream_ptr);
   if (!ret) {
