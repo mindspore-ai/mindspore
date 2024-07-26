@@ -71,7 +71,7 @@ struct Common {
                                   mindspore::HashSet<size_t> *input_to_attr_index);
   static ValueNodePtr CreateValueNodeByValue(const ValuePtr &v, const abstract::AbstractBasePtr &abs = nullptr);
   static void SetOutputUsedInBpropGraph(const ValuePtr &value);
-  static ValuePtr CreateFakeValueWithoutDeviceAddress(const ValuePtr &value);
+  static ValuePtr CreateFakeValueWithoutDeviceAddress(const ValuePtr &value, bool is_force_create_fake = false);
   static tensor::TensorPtr CreateFakeTensorWithoutDeviceAddress(const tensor::TensorPtr &tensor);
   static inline bool IsParam(InputType grad_type) {
     return grad_type == InputType::kParameter || grad_type == InputType::kInput;
@@ -160,13 +160,14 @@ struct DataConvert {
   static ValuePtr ConvertValueDictToValueTuple(const ValuePtr &v);
   static void PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                        size_t index, const TopCellInfoPtr &top_cell);
-  static void ConvertValueTensorId(const ValuePtr &value, std::vector<std::string> *converted_tensor_id);
+  static void GetTensorIdFromOutputValue(const ValuePtr &value, std::vector<std::string> *converted_tensor_id);
   static void ConvertTupleValueToTensor(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
                                         size_t index, const TopCellInfoPtr &top_cell);
   static void MarkInputs(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v, size_t index,
                          const TopCellInfoPtr &top_cell);
   static bool RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_run_info, const ValuePtr &v,
                                            size_t input_index);
+  static void TransformValueNodeBaseTensorToTensor(const ValueNodePtr &value_node);
 };
 
 struct PyBoost {
@@ -216,6 +217,7 @@ struct PyBoost {
     return ret;
   }
   static void DataSyncForGraph(const kernel::pyboost::OpPtr &op, ValuePtrList &&op_inputs);
+  static void MarkPyBoostInputs(const OpGradInfoPtr &op_grad_info, const TopCellInfoPtr &top_cell);
 };
 
 // Used for auto grad, like func_grad and ir grad
@@ -231,8 +233,10 @@ struct AutoGrad {
   static AnfNodePtr BuildSparseTensorNode(const KernelGraphPtr &tape, const ValuePtr &sparse_value,
                                           const AnfNodePtr &dout_value_node);
   static void SetGradMetaData(const ValuePtr &value, const VariablePtr &variable, const ParameterPtr &param = nullptr);
-  static void SetGradInfoForInputs(const ValuePtr &value, const VariablePtr &variable,
-                                   const ParameterPtr &param = nullptr);
+  static void SetGradInfoForInputs(
+    const ValuePtr &value, const VariablePtr &variable,
+    std::vector<std::pair<tensor::BaseTensorPtr, AutoGradMetaDataPtr>> *param_meta_grad_info,
+    const ParameterPtr &param = nullptr);
 
   // Create fake bprop
   static void BuildFakeBpropCNode(const CNodePtr &cnode, std::vector<CNodePtr> *outputs);

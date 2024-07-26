@@ -154,94 +154,6 @@ void PlantTupleParam(const FuncGraphPtr &bprop_graph, const abstract::AbstractSe
   }
 }
 
-ValuePtr GetContiguousGradTensor(const ValuePtr &v) {
-  const auto &tensor = v->cast<tensor::BaseTensorPtr>();
-  MS_EXCEPTION_IF_NULL(tensor);
-  if (tensor->storage_info() == nullptr) {
-    return nullptr;
-  }
-
-  auto old_device_address = std::dynamic_pointer_cast<device::DeviceAddress>(tensor->device_address());
-  MS_EXCEPTION_IF_NULL(old_device_address);
-  const auto &device_target = old_device_address->device_name();
-  if (device_target != kAscendDevice) {
-    // GPU/CPU contiguous tensor when convert stub node, contiguous before grad.
-    return nullptr;
-  }
-
-  MS_LOG(DEBUG) << "tensor id:" << tensor->id();
-  auto stream_id = old_device_address->stream_id();
-  const auto &old_storage_info = old_device_address->GetTensorStorageInfo();
-  MS_EXCEPTION_IF_NULL(old_storage_info);
-
-  const auto &device_context = runtime::OpRunner::GetDeviceContext(old_device_address->device_name());
-  MS_EXCEPTION_IF_NULL(device_context);
-  auto address_size = GetTypeByte(TypeIdToType(old_device_address->type_id())) * SizeOf(old_storage_info->shape);
-  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(
-    nullptr, address_size, Format::DEFAULT_FORMAT, old_device_address->type_id(), old_storage_info->shape,
-    device_context->device_context_key().device_name_, device_context->device_context_key().device_id_);
-  kernel_tensor->SetType(std::make_shared<TensorType>(TypeIdToType(old_device_address->type_id())));
-  kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(old_storage_info->shape));
-  kernel_tensor->set_stream_id(stream_id);
-
-  auto new_device_address = device_context->device_res_manager_->CreateDeviceAddress(kernel_tensor);
-  new_device_address->set_device_shape(old_storage_info->shape);
-  new_device_address->set_original_ref_count(SIZE_MAX);
-  new_device_address->ResetRefCount();
-
-  device::DeviceAddressPtrList input_addr_list{old_device_address};
-  device::DeviceAddressPtrList output_addr_list{new_device_address};
-  GilReleaseWithCheck release_gil;
-  if (!device_context->GetKernelExecutor(false)->ExecuteKernelTask(runtime::KernelTaskType::kCONTIGUOUS_TASK,
-                                                                   input_addr_list, output_addr_list, stream_id)) {
-    MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
-  }
-
-  MS_LOG(DEBUG) << "Update contiguous address, old_device_address:" << old_device_address
-                << ", new_device_address:" << new_device_address;
-
-  auto new_tensor = std::make_shared<tensor::Tensor>(*tensor);
-  new_tensor->set_device_address(new_device_address);
-  return new_tensor;
-}
-
-void RefreshGradContiguousTensor(const FrontendOpRunInfoPtr &op_run_info, size_t index) {
-  const auto &unused_inputs = BpropExpander::GetUnusedInputs(op_run_info->op_grad_info->op_prim->name());
-  // Input is not used in bprop, no need to contiguous.
-  if (unused_inputs.find(index) != unused_inputs.end()) {
-    return;
-  }
-
-  const auto &v = op_run_info->op_grad_info->input_value[index];
-  if (v->isa<tensor::BaseTensor>()) {
-    const auto &new_tensor = GetContiguousGradTensor(v);
-    if (new_tensor != nullptr) {
-      op_run_info->op_grad_info->input_value[index] = new_tensor;
-    }
-  } else if (v->isa<ValueSequence>()) {
-    const auto &vec = v->cast<ValueSequencePtr>()->value();
-    if (vec.empty() || !vec[0]->isa<tensor::BaseTensor>()) {
-      return;
-    }
-    // Tensor tuple need contiguous tensor.
-    bool need_refresh_tuple = false;
-    std::vector<ValuePtr> new_vec(vec.size());
-    for (size_t i = 0; i < vec.size(); i++) {
-      const auto &new_tensor = GetContiguousGradTensor(vec[i]);
-      if (new_tensor == nullptr) {
-        new_vec[i] = vec[i];
-      } else {
-        // Not-contiguous tensor in input_value, need refresh tuple after contiguous tensor.
-        need_refresh_tuple = true;
-        new_vec[i] = new_tensor;
-      }
-    }
-    if (need_refresh_tuple) {
-      op_run_info->op_grad_info->input_value[index] = MakeValue(new_vec);
-    }
-  }
-}
-
 const mindspore::HashSet<std::string> kNotRealOP{
   kMakeTupleOpName,
   kMakeListNewOpName,
@@ -915,15 +827,15 @@ void Common::SetOutputUsedInBpropGraph(const ValuePtr &value) {
   }
 }
 
-ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value) {
+ValuePtr Common::CreateFakeValueWithoutDeviceAddress(const ValuePtr &value, bool is_force_create_fake) {
   MS_EXCEPTION_IF_NULL(value);
   if (value->isa<tensor::BaseTensor>()) {
     const auto &v_t = value->cast<tensor::BaseTensorPtr>();
     // If the tensor used in bprop graph, no need create fake value
-    if (v_t->used_in_bprop_graph()) {
+    if (!is_force_create_fake && (v_t->is_parameter() || v_t->used_in_bprop_graph())) {
       return value;
     }
-    auto t = std::make_shared<tensor::Tensor>(*v_t);
+    auto t = std::make_shared<tensor::BaseTensor>(*v_t);
     if (v_t->is_parameter()) {
       t->set_param_info(v_t->param_info());
     }
@@ -962,19 +874,18 @@ InputType Common::SetValueGradInfo(const ValuePtr &value, const TopCellInfoPtr &
         return auto_grad_meta_data->input_type();
       }
       MS_LOG(DEBUG) << "Set input type for tensor " << tensor_value->id();
-    } else {
+    } else if (grad_type != InputType::kConstant || tensor_value->is_parameter()) {
       MS_LOG(DEBUG) << "Create new auto grad meta for tensor " << tensor_value->id();
       auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
       tensor::RegisterHook::UpdateTensorBackwardHook(auto_grad_meta_data, tensor_value->id());
       tensor_value->set_auto_grad_meta_data(auto_grad_meta_data);
     }
-
-    if (tensor_value->is_parameter() && grad_type != InputType::kInput) {
-      grad_type = InputType::kParameter;
-    }
-    auto_grad_meta_data->set_input_type(grad_type);
-    if (top_cell != nullptr && IsParam(grad_type)) {
-      top_cell->AddMetaGradInfo(tensor_value, auto_grad_meta_data);
+    // Scalar tensor auto grad meta data is nullptr
+    if (auto_grad_meta_data != nullptr) {
+      if (tensor_value->is_parameter() && grad_type != InputType::kInput) {
+        grad_type = InputType::kParameter;
+      }
+      auto_grad_meta_data->set_input_type(grad_type);
     }
     return grad_type;
   } else if (value->isa<ValueSequence>()) {
@@ -1012,7 +923,7 @@ InputType Common::SetTensorGradInfo(const tensor::BaseTensorPtr &tensor, const T
       return auto_grad_meta_data->input_type();
     }
     MS_LOG(DEBUG) << "Set input type for tensor " << tensor->id();
-  } else {
+  } else if (tensor->is_parameter()) {
     MS_LOG(DEBUG) << "Create new auto grad meta for tensor " << tensor->id();
     auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
     tensor::RegisterHook::UpdateTensorBackwardHook(auto_grad_meta_data, tensor->id());
@@ -1021,13 +932,8 @@ InputType Common::SetTensorGradInfo(const tensor::BaseTensorPtr &tensor, const T
   // Set weight tensor grad type
   if (tensor->is_parameter()) {
     auto_grad_meta_data->set_input_type(InputType::kParameter);
-    if (top_cell != nullptr) {
-      top_cell->AddMetaGradInfo(tensor, auto_grad_meta_data);
-    }
     return InputType::kParameter;
   }
-  // Is a constant input tensor, but not constant scalar value
-  auto_grad_meta_data->set_input_type(InputType::kConstant);
   return InputType::kConstant;
 }
 
@@ -1049,6 +955,7 @@ void Common::SetGraphInputAndWeightsInfo(const FrontendOpRunInfoPtr &op_run_info
       continue;
     }
     // Must weight param
+    // Parameters current used in inner graph, and no used in outer graph
     const auto &param = original_params[i]->cast<ParameterPtr>();
     const auto tensor_value = GetTensorFromParam(original_params[i]);
     MS_EXCEPTION_IF_NULL(tensor_value);
@@ -1681,6 +1588,17 @@ bool DataConvert::RunOpConvertConstInputToAttr(const FrontendOpRunInfoPtr &op_ru
   return true;
 }
 
+void DataConvert::TransformValueNodeBaseTensorToTensor(const ValueNodePtr &value_node) {
+  MS_EXCEPTION_IF_NULL(value_node);
+  const auto &v = value_node->value();
+  MS_EXCEPTION_IF_NULL(v);
+  if (!v->isa<tensor::BaseTensor>()) {
+    return;
+  }
+  const auto &tensor = v->cast<tensor::BaseTensorPtr>();
+  value_node->set_value(std::make_shared<tensor::Tensor>(*tensor));
+}
+
 FrontendOpRunInfoPtr PyBoost::Init(const PrimitivePtr &prim, const py::list &args) {
   const auto &pynative_executor = Common::GetPyNativeExecutor();
   const auto &forward_executor = pynative_executor->forward_executor();
@@ -1844,26 +1762,53 @@ void PyBoost::DoGrad(const kernel::pyboost::OpPtr &op, const FrontendOpRunInfoPt
   const auto &forward = pynative_executor->forward_executor();
   op_run_info->op_grad_info->output_size = op->outputs().size();
   if (op->output_value_simple_info() == nullptr) {
-    if (op->input_abs().size() != op_run_info->input_size) {
-      MS_LOG(EXCEPTION) << "Op " << op_run_info->base_op_run_info.op_name << " input size is "
-                        << op_run_info->input_size << " but got input abstract size " << op->input_abs().size();
-    }
-    SetAnyValueForAbstract(op);
     op_run_info->op_grad_info->input_abs = op->input_abs();
     op_run_info->base_op_run_info.abstract = op->output_abs();
   }
-
+  // Check and set input auto grad meta info and InputType
   if (MS_LIKELY(!forward->grad()->top_cell()->is_bprop_need_get_forward_graph())) {
-    // Check and set input auto grad meta info and InputType
-    op_run_info->op_grad_info->input_value_grad_type.resize(op_run_info->input_size);
-    for (size_t index = 0; index < op_run_info->input_size; ++index) {
-      // Inplace input_value with contiguous tensor.
-      RefreshGradContiguousTensor(op_run_info, index);
-      const ValuePtr &input_object = op_run_info->op_grad_info->input_value[index];
-      DataConvert::MarkInputs(op_run_info, input_object, index, forward->grad()->top_cell());
-    }
+    MarkPyBoostInputs(op_run_info->op_grad_info, forward->grad()->top_cell());
   }
   forward->ForwardOpGradImpl(op_run_info);
+}
+
+void PyBoost::MarkPyBoostInputs(const OpGradInfoPtr &op_grad_info, const TopCellInfoPtr &top_cell) {
+  MS_EXCEPTION_IF_NULL(op_grad_info);
+  size_t input_size = op_grad_info->input_value.size();
+  op_grad_info->input_value_grad_type.resize(input_size);
+  for (size_t index = 0; index < input_size; ++index) {
+    const auto &v = op_grad_info->input_value[index];
+    if (v->isa<tensor::BaseTensor>()) {
+      op_grad_info->input_value_grad_type[index] =
+        Common::SetTensorGradInfo(v->cast<tensor::BaseTensorPtr>(), top_cell);
+    } else if (v->isa<ValueSequence>()) {
+      const auto &value_sequence = v->cast<ValueSequencePtr>();
+      const auto &tuple_inputs = value_sequence->value();
+      if (!tuple_inputs.empty() && tuple_inputs[0]->isa<tensor::BaseTensor>()) {
+        op_grad_info->input_value_grad_type[index] = InputType::kOpOutput;
+        for (const auto &elem : tuple_inputs) {
+          auto grad_type = Common::SetTensorGradInfo(elem->cast<tensor::BaseTensorPtr>(), top_cell);
+          if (Common::IsParam(grad_type)) {
+            op_grad_info->input_value_grad_type[index] = InputType::kParameter;
+          }
+        }
+      }
+    } else if (v->isa<tensor::MapTensor>()) {
+      op_grad_info->input_value_grad_type[index] = Common::SetTensorGradInfo(v->cast<tensor::MapTensorPtr>(), top_cell);
+    } else if (v->isa<tensor::CSRTensor>()) {
+      const auto &csr_tensor = v->cast<tensor::CSRTensorPtr>();
+      auto fn = [&op_grad_info, index](const auto &csr_tensor_input) {
+        auto grad_type = Common::SetTensorGradInfo(csr_tensor_input, nullptr);
+        if (Common::IsParam(grad_type)) {
+          op_grad_info->input_value_grad_type[index] = InputType::kParameter;
+        }
+      };
+      op_grad_info->input_value_grad_type[index] = InputType::kOpOutput;
+      fn(csr_tensor->GetIndptr());
+      fn(csr_tensor->GetIndices());
+      fn(csr_tensor->GetValues());
+    }
+  }
 }
 
 void DataConvert::PlantTensorTupleToVector(const FrontendOpRunInfoPtr &op_run_info, const ValueSequencePtr &value_seq,
@@ -1970,17 +1915,17 @@ void DataConvert::ConvertCSRTensorToTensorList(const FrontendOpRunInfoPtr &op_ru
   }
 }
 
-void DataConvert::ConvertValueTensorId(const ValuePtr &value, std::vector<std::string> *converted_tensor_id) {
+void DataConvert::GetTensorIdFromOutputValue(const ValuePtr &value, std::vector<std::string> *converted_tensor_id) {
   if (value->isa<tensor::BaseTensor>()) {
     (void)converted_tensor_id->emplace_back(value->cast<tensor::BaseTensorPtr>()->id());
     MS_LOG(DEBUG) << "Get top cell output tensor id " << converted_tensor_id->back();
   } else if (value->isa<ValueSequence>()) {
     const auto &seq = value->cast<ValueSequencePtr>();
     for (const auto &val : seq->value()) {
-      ConvertValueTensorId(val, converted_tensor_id);
+      GetTensorIdFromOutputValue(val, converted_tensor_id);
     }
   } else if (value->isa<ValueDictionary>()) {
-    ConvertValueTensorId(ConvertValueDictToValueTuple(value), converted_tensor_id);
+    GetTensorIdFromOutputValue(ConvertValueDictToValueTuple(value), converted_tensor_id);
   }
 }
 
@@ -2216,13 +2161,14 @@ bool AutoGrad::NeedGrad(const std::vector<ValuePtr> &input_values) {
       tensor::BaseTensorPtr input_tensor = nullptr;
       input_tensor = input_arg->cast<tensor::BaseTensorPtr>();
       auto auto_grad_meta_data = input_tensor->auto_grad_meta_data();
-      MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
-      if (auto_grad_meta_data->input_type() == InputType::kParameter && Common::IsParamRequiresGrad(input_tensor)) {
-        return true;
-      }
-      auto variable = auto_grad_meta_data->variable();
-      if (variable != nullptr) {
-        return true;
+      if (auto_grad_meta_data != nullptr) {
+        if (auto_grad_meta_data->input_type() == InputType::kParameter && Common::IsParamRequiresGrad(input_tensor)) {
+          return true;
+        }
+        auto variable = auto_grad_meta_data->variable();
+        if (variable != nullptr) {
+          return true;
+        }
       }
     } else if (input_arg->isa<ValueSequence>()) {
       auto value_seq = input_arg->cast<ValueSequencePtr>()->value();
@@ -2378,11 +2324,10 @@ AnfNodePtr AutoGrad::BuildSparseTensorNode(const KernelGraphPtr &tape, const Val
 
 void AutoGrad::SetGradMetaData(const ValuePtr &value, const VariablePtr &variable, const ParameterPtr &param) {
   if (value->isa<tensor::BaseTensor>()) {
-    tensor::BaseTensorPtr tensor = nullptr;
-    tensor = value->cast<tensor::BaseTensorPtr>();
+    const auto &tensor = value->cast<tensor::BaseTensorPtr>();
     auto auto_grad_meta_data = tensor->auto_grad_meta_data();
     if (auto_grad_meta_data == nullptr) {
-      MS_LOG(DEBUG) << "tensor has no auto_grad_meta_data";
+      MS_LOG(DEBUG) << "Tensor " << tensor->id() << " has no auto_grad_meta_data, create it";
       auto_grad_meta_data = std::make_shared<AutoGradMetaData>();
       tensor->set_auto_grad_meta_data(auto_grad_meta_data);
     }
@@ -2404,21 +2349,24 @@ void AutoGrad::SetGradMetaData(const ValuePtr &value, const VariablePtr &variabl
   }
 }
 
-void AutoGrad::SetGradInfoForInputs(const ValuePtr &value, const VariablePtr &variable, const ParameterPtr &param) {
+void AutoGrad::SetGradInfoForInputs(
+  const ValuePtr &value, const VariablePtr &variable,
+  std::vector<std::pair<tensor::BaseTensorPtr, AutoGradMetaDataPtr>> *param_meta_grad_info, const ParameterPtr &param) {
   if (value->isa<tensor::BaseTensor>()) {
     const auto &input_tensor = value->cast<tensor::BaseTensorPtr>();
     const auto &auto_grad_meta_data = input_tensor->auto_grad_meta_data();
     MS_EXCEPTION_IF_NULL(auto_grad_meta_data);
     auto_grad_meta_data->set_variable(variable);
     auto_grad_meta_data->set_parameter(param);
+    param_meta_grad_info->emplace_back(input_tensor, auto_grad_meta_data);
   } else if (value->isa<tensor::COOTensor>()) {
     const auto &coo_tensor = value->cast<tensor::COOTensorPtr>();
     const auto &indices_tensor = coo_tensor->GetIndices();
-    SetGradInfoForInputs(indices_tensor, variable, param);
+    SetGradInfoForInputs(indices_tensor, variable, param_meta_grad_info, param);
   } else if (value->isa<tensor::CSRTensor>()) {
     const auto &csr_tensor = value->cast<tensor::CSRTensorPtr>();
     const auto &indices_tensor = csr_tensor->GetIndices();
-    SetGradInfoForInputs(indices_tensor, variable, param);
+    SetGradInfoForInputs(indices_tensor, variable, param_meta_grad_info, param);
   }
 }
 
@@ -2550,27 +2498,29 @@ void AutoGrad::CheckRecomputeInputs(const GradParamPtr &grad_param) {
 TopCellInfoPtr AutoGrad::FindPreTopcell(const GradExecutor *grad_executor, const OpGradInfoPtr &op_grad_info,
                                         const std::string &op_info, const ValuePtr &value) {
   const auto &cur_top_cell = grad_executor->top_cell();
-  auto pre_top_cell = grad_executor->GetAlreadyRunTopCell(cur_top_cell->already_run_cell_id());
-  if (pre_top_cell == nullptr || cur_top_cell->use_dynamic_shape_process()) {
-    pre_top_cell = grad_executor->GetPipelineRunTopCell(cur_top_cell->already_run_cell_id());
-    if (pre_top_cell == nullptr) {
-      // First run top cell, save op output info for replacement
-      cur_top_cell->SaveTensorIdWithOpInfo(op_info, value);
-      cur_top_cell->use_dynamic_shape_process()
-        ? MS_LOG(DEBUG) << "Current top cell is in dynamic process"
-        : MS_LOG(DEBUG) << "Top cell " << cur_top_cell->already_run_cell_id() << " run firstly, op info " << op_info;
-    }
-  }
-
-  // First step or in dynamic process, no need forward output replaces
-  if (pre_top_cell == nullptr || grad_executor->top_cell()->use_dynamic_shape_process()) {
+  // If top cell is ir grad, which must be first step and pre top cell can not be find
+  if (cur_top_cell->is_ir_grad()) {
+    // First run top cell, save op output info for replacement
+    cur_top_cell->SaveTensorIdWithOpInfo(op_info, value);
+    MS_LOG(DEBUG) << "Top cell " << cur_top_cell << " with " << cur_top_cell->already_run_cell_id()
+                  << " run firstly, op info " << op_info;
+    // First step or in dynamic process, no need forward output replaces
     op_grad_info->need_do_forward_output_replace = false;
-  } else {
-    // Not first step and top cell is not dynamic shape
-    const auto &op_info_with_tensor_object = pre_top_cell->replace_info().op_info_with_tensor_object;
-    op_grad_info->used_in_bprop_graph =
-      op_info_with_tensor_object.find(op_grad_info->op_info) != op_info_with_tensor_object.end();
+    return nullptr;
   }
+  if (cur_top_cell->use_dynamic_shape_process()) {
+    MS_LOG(DEBUG) << "Current top cell " << cur_top_cell << " is in dynamic process";
+    return nullptr;
+  }
+  // Not first step
+  auto pre_top_cell = grad_executor->GetAlreadyRunTopCell(cur_top_cell->already_run_cell_id());
+  if (pre_top_cell == nullptr) {
+    pre_top_cell = grad_executor->GetPipelineRunTopCell(cur_top_cell->already_run_cell_id());
+    MS_EXCEPTION_IF_NULL(pre_top_cell);
+  }
+  const auto &op_info_with_tensor_object = pre_top_cell->replace_info().op_info_with_tensor_object;
+  op_grad_info->used_in_bprop_graph =
+    op_info_with_tensor_object.find(op_grad_info->op_info) != op_info_with_tensor_object.end();
   return pre_top_cell;
 }
 

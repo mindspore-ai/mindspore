@@ -20,12 +20,15 @@
 #include <utility>
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "ir/anf.h"
 #include "pipeline/pynative/base.h"
 #include "pipeline/pynative/grad/ir/ir_bprop.h"
 
 namespace mindspore::pynative::autograd {
+using MetaGradInfoList = std::vector<std::pair<tensor::BaseTensorPtr, AutoGradMetaDataPtr>>;
+
 class AutoGrad {
  public:
   AutoGrad() = default;
@@ -44,10 +47,14 @@ class AutoGrad {
   // Update top cell output, record last_node
   virtual void UpdateOutputNodeOfTopCell(const ValuePtr &sens_out) {}
 
+  // Store grad meta grad info
+  MetaGradInfoList &param_meta_grad_info() { return param_meta_grad_info_; }
+
  protected:
   bool grad_by_value_{true};
   std::string device_target_;
   IrBpropPtr ir_bprop_;
+  MetaGradInfoList param_meta_grad_info_;
 };
 using AutoGradPtr = std::shared_ptr<AutoGrad>;
 }  // namespace mindspore::pynative::autograd

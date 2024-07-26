@@ -185,8 +185,8 @@ class DynamicShape {
   }
 
   void Clear() {
-    node_dynamic_detect_ptr_->Clear();
     top_cell_dynamic_detect_ptr_->Clear();
+    node_dynamic_detect_ptr_->Clear();
   }
 
  private:

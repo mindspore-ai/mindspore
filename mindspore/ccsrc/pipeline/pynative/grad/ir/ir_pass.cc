@@ -547,7 +547,6 @@ AnfNodePtr IrPassForward::PassBackwardHook(const ValuePtr &value, const AnfNodeP
     ir_bprop_->ad_param()->tape_->set_flag(kFlagPyNativeBpropGraphWithBpropCut, true);
     ir_bprop_->set_bprop_graph_run_by_single_op(true);
   }
-  auto_grad_meta->ClearBackwardHooks();
   return res;
 }
 

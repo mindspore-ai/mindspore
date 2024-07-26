@@ -69,7 +69,7 @@ std::string GenerateDumpPath(uint32_t graph_id, uint32_t rank_id, bool is_cst) {
 void GetFileKernelName(NotNull<std::string *> kernel_name) {
   const std::string strsrc_to_replace[4] = {"/", "\\", ".", " "};
   const std::string strdst = "_";
-  for (const std::string strsrc : strsrc_to_replace) {
+  for (const auto &strsrc : strsrc_to_replace) {
     std::string::size_type pos = 0;
     std::string::size_type srclen = strsrc.size();
     std::string::size_type dstlen = strdst.size();

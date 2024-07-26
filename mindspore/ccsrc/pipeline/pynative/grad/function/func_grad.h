@@ -41,7 +41,7 @@ class FuncBackwardNode : public BackwardNode {
         node_inputs_(std::move(node_inputs)),
         func_(std::move(func)),
         emitter_(std::move(emitter)) {
-    op_output_ = node_inputs_[node_inputs_.size() - 1]->Value();
+    op_output_ = node_inputs_.back()->Value();
   }
   ~FuncBackwardNode() override = default;
   ValuePtrList CallBackward(const ValuePtrList &grads) override;

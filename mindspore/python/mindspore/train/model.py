@@ -589,6 +589,10 @@ class Model:
         if self._backbone_is_train != is_train:
             network.set_train(is_train)
             self._backbone_is_train = is_train
+        # Mode train and eval are the same net, network will be set_grad in _build_train_network.
+        # But if mode just want to  do predict or eval, must set network set_grad False
+        if not is_train:
+            network.set_grad(False)
         return network
 
     def _check_need_ckpt(self, callbacks):

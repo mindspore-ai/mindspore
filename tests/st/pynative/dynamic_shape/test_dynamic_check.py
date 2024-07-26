@@ -20,8 +20,7 @@ from mindspore import nn
 from mindspore import ops
 from mindspore import context, Tensor
 from mindspore.common.parameter import Parameter, ParameterTuple
-from tests.st.pynative.utils.tools import clean_all_ir_files, count_ir_files_num, clear_folder, \
-    get_flag_from_ir_file_line
+from tests.st.pynative.utils.tools import _CheckPyNativeRunMode
 
 
 def setup_module():
@@ -75,33 +74,25 @@ def test_net_input_shape_changed():
     """
     net = Net()
     grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
-    context.set_context(save_graphs=True, save_graphs_path="ir")
 
-    try:
-        clean_all_ir_files("ir")
+    with _CheckPyNativeRunMode() as check:
         # run first shape, save the first launch_bprop_graph.ir
         input_x = Tensor(np.random.rand(2, 3, 6, 4).astype(np.float32) * 2)
         input_y = Tensor(np.random.rand(2, 3, 6, 4).astype(np.float32) * 5)
         _ = grad_op(net)(input_x, input_y)
-        assert count_ir_files_num("ir", "launch_bprop_graph") == 1
-        assert get_flag_from_ir_file_line("ir", "launch_bprop_graph", "enable_run_graph_by_single_op") == 0
+        assert check.is_run_by_actor(), True
 
         # run second shape, store 2 static shape
         input_x2 = Tensor(np.random.rand(2, 3, 6, 16).astype(np.float32) * 2)
         input_y2 = Tensor(np.random.rand(2, 3, 6, 16).astype(np.float32) * 5)
         _ = grad_op(net)(input_x2, input_y2)
-        assert count_ir_files_num("ir", "launch_bprop_graph") == 2
-        assert get_flag_from_ir_file_line("ir", "launch_bprop_graph", "enable_run_graph_by_single_op") == 0
+        assert check.is_run_by_actor(), True
 
-        clean_all_ir_files("ir")
         # run third shape, set top cell use dynamic, use func grad
         input_x = Tensor(np.random.rand(2, 3, 6, 8).astype(np.float32) * 2)
         input_y = Tensor(np.random.rand(2, 3, 6, 8).astype(np.float32) * 5)
         _ = grad_op(net)(input_x, input_y)
-        assert count_ir_files_num("ir", "launch_bprop_graph") == 0
-    finally:
-        clear_folder("ir")
-
+        assert check.is_run_by_func_grad(), True
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -177,23 +168,18 @@ def test_net_bprop_dynamic_shape():
     grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
     context.set_context(save_graphs=True, save_graphs_path="ir")
 
-    try:
-        clean_all_ir_files("ir")
+    with _CheckPyNativeRunMode() as check:
         # run first shape, save the first launch_bprop_graph.ir
         input_x = Tensor(np.random.rand(2, 3, 6, 4).astype(np.float32) * 2)
         _ = grad_op(net)(input_x)
-        assert count_ir_files_num("ir", "launch_bprop_graph") == 1
-        assert get_flag_from_ir_file_line("ir", "launch_bprop_graph", "enable_run_graph_by_single_op") == 1
+        assert check.is_run_by_single_op(), True
 
         # run second shape, dynamic shape
-        clean_all_ir_files("ir")
         input_x2 = Tensor(np.random.rand(2, 3, 6, 16).astype(np.float32) * 2)
         _ = grad_op(net)(input_x2)
-        assert count_ir_files_num("ir", "launch_bprop_graph") == 0
+        assert check.is_run_by_func_grad(), True
 
         # run third shape, dynamic shape
         input_x = Tensor(np.random.rand(2, 3, 6, 8).astype(np.float32) * 2)
         _ = grad_op(net)(input_x)
-        assert count_ir_files_num("ir", "launch_bprop_graph") == 0
-    finally:
-        clear_folder("ir")
+        assert check.is_run_by_func_grad(), True
