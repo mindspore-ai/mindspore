@@ -550,7 +550,7 @@ def cummax(input, dim):
         >>> import mindspore
         >>> import numpy as np
         >>> from mindspore import Tensor
-        >>> import mindspore.ops as ops
+        >>> from mindspore import ops
         >>> x = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
         >>> output = mint.cummax(x, dim=0)
         >>> print(output[0])

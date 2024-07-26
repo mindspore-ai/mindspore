@@ -10,7 +10,7 @@ mindspore.hal.get_device_capability
 
     参数：
         - **device_id** (int) - 要查询的设备id。
-        - **device_target** (str，可选) - 默认值：``None``，必须是 ``"CPU"`` ， ``"GPU"`` 以及 ``"Ascend"`` 的其中一个。
+        - **device_target** (str，可选) - 默认值：``None``，必须是 ``"CPU"`` 、 ``"GPU"`` 以及 ``"Ascend"`` 的其中一个。
 
     返回：
         对于GPU后端，返回tuple(int, int)。
