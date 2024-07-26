@@ -57,7 +57,6 @@ std::string NextFlashIndex(std::string flash_index, int64_t sp_num) {
 
   std::string second_number_str = flash_index.substr(underscore_pos + 1);
   int second_number = std::stoi(second_number_str) + 1;
-
   if (second_number > sp_num) {
     return "";
   }
@@ -78,10 +77,6 @@ void FindTargetNode(std::vector<AnfNodePtr> *origin_nodes_topological, std::map<
     CNodePtr node = anf_node->cast<CNodePtr>();
     if (node != nullptr && node->HasPrimalAttr(FLASH_LOSS_NODE)) {
       (*loss_node) = node;
-    }
-    if (!IsPrimitiveCNode(node, prim::kPrimSend) && !IsPrimitiveCNode(node, prim::kPrimReceive) &&
-        !IsPrimitiveCNode(node, prim::kPrimFlashAttentionScoreGrad)) {
-      continue;
     }
 
     if (IsPrimitiveCNode(node, prim::kPrimFlashAttentionScoreGrad)) {
@@ -150,21 +145,24 @@ void GetPreCommNode(const std::string &new_str, int64_t index, std::map<std::str
                     std::map<std::string, AnfNodePtr> *grad_recv_qkv_map,
                     std::map<std::string, AnfNodePtr> *grad_send_oml_map,
                     std::map<std::string, AnfNodePtr> *grad_recv_oml_map, CNodePtr *pre_grad_comm_node) {
-  if (index == 0 && (*grad_send_qkv_map).find(new_str) != (*grad_send_qkv_map).end()) {
+  if (index == kIndex0 && (*grad_send_qkv_map).find(new_str) != (*grad_send_qkv_map).end()) {
     (*pre_grad_comm_node) = (*grad_send_qkv_map).at(new_str)->cast<CNodePtr>();
-  } else if (index == 1 && (*grad_recv_qkv_map).find(new_str) != (*grad_recv_qkv_map).end()) {
+  } else if (index == kIndex1 && (*grad_recv_qkv_map).find(new_str) != (*grad_recv_qkv_map).end()) {
     (*pre_grad_comm_node) = (*grad_recv_qkv_map).at(new_str)->cast<CNodePtr>();
-  } else if (index == 2 && (*grad_send_oml_map).find(new_str) != (*grad_send_oml_map).end()) {
+  } else if (index == kIndex2 && (*grad_send_oml_map).find(new_str) != (*grad_send_oml_map).end()) {
     (*pre_grad_comm_node) = (*grad_send_oml_map).at(new_str)->cast<CNodePtr>();
-  } else if (index == 3 && (*grad_recv_oml_map).find(new_str) != (*grad_recv_oml_map).end()) {
+  } else if (index == kIndex3 && (*grad_recv_oml_map).find(new_str) != (*grad_recv_oml_map).end()) {
     (*pre_grad_comm_node) = (*grad_recv_oml_map).at(new_str)->cast<CNodePtr>();
   }
 }
 }  // namespace
 void OverlapGradFlashSP(const FuncGraphPtr &graph) {
   auto manager = graph->manager();
-  std::map<std::string, AnfNodePtr> grad_fa_map, grad_send_qkv_map, grad_recv_qkv_map, grad_send_oml_map,
-    grad_recv_oml_map;
+  std::map<std::string, AnfNodePtr> grad_fa_map;
+  std::map<std::string, AnfNodePtr> grad_send_qkv_map;
+  std::map<std::string, AnfNodePtr> grad_recv_qkv_map;
+  std::map<std::string, AnfNodePtr> grad_send_oml_map;
+  std::map<std::string, AnfNodePtr> grad_recv_oml_map;
   auto ret = graph->get_return();
   auto origin_nodes_topological = DeepScopedGraphSearch(ret);
   CNodePtr loss_node;
@@ -178,7 +176,11 @@ void OverlapGradFlashSP(const FuncGraphPtr &graph) {
         grad_recv_oml_map.find(it->first) == grad_recv_oml_map.end()) {
       continue;
     }
-    CNodePtr grad_fa_node, grad_send_qkv_node, grad_recv_qkv_node, grad_send_oml_node, grad_recv_oml_node;
+    CNodePtr grad_fa_node;
+    CNodePtr grad_send_qkv_node;
+    CNodePtr grad_recv_qkv_node;
+    CNodePtr grad_send_oml_node;
+    CNodePtr grad_recv_oml_node;
     grad_fa_node = it->second->cast<CNodePtr>();
     auto sp_num = GetValue<int64_t>(grad_fa_node->GetPrimalAttr("sp_num"));
     GetGradNode(&grad_send_qkv_map, &grad_recv_qkv_map, &grad_send_oml_map, &grad_recv_oml_map, &grad_send_qkv_node,
@@ -197,15 +199,6 @@ void OverlapGradFlashSP(const FuncGraphPtr &graph) {
         if (GetValue<std::string>(pre_grad_fa_node->GetPrimalAttr("comm_order")) != "") {
           auto pre_comm_order = GetValue<std::string>(pre_grad_fa_node->GetPrimalAttr("comm_order"));
           auto pre_comm_order_list = GetCommOrder(pre_comm_order);
-          // if (pre_comm_order_list[0] == 0 && grad_send_qkv_map.find(new_str) != grad_send_qkv_map.end()) {
-          //   pre_grad_comm_node = grad_send_qkv_map.at(new_str)->cast<CNodePtr>();
-          // } else if (pre_comm_order_list[0] == 1 && grad_recv_qkv_map.find(new_str) != grad_recv_qkv_map.end()) {
-          //   pre_grad_comm_node = grad_recv_qkv_map.at(new_str)->cast<CNodePtr>();
-          // } else if (pre_comm_order_list[0] == 2 && grad_send_oml_map.find(new_str) != grad_send_oml_map.end()) {
-          //   pre_grad_comm_node = grad_send_oml_map.at(new_str)->cast<CNodePtr>();
-          // } else if (pre_comm_order_list[0] == 3 && grad_recv_oml_map.find(new_str) != grad_recv_oml_map.end()) {
-          //   pre_grad_comm_node = grad_recv_oml_map.at(new_str)->cast<CNodePtr>();
-          // }
           GetPreCommNode(new_str, pre_comm_order_list[0], &grad_send_qkv_map, &grad_recv_qkv_map, &grad_send_oml_map,
                          &grad_recv_oml_map, &pre_grad_comm_node);
           break;

@@ -63,7 +63,7 @@ void FindTargetNode(std::vector<AnfNodePtr> *origin_nodes_topological, std::map<
     if (node != nullptr && node->HasPrimalAttr(FLASH_LOSS_NODE)) {
       (*loss_node) = node;
     }
-    if (!IsPrimitiveCNode(node, prim::kPrimSend) && !IsPrimitiveCNode(node, prim::kPrimReceive) &&
+    if (!IsPrimitiveCNode(node, prim::kPrimReceive) && !IsPrimitiveCNode(node, prim::kPrimSend) &&
         !IsPrimitiveCNode(node, prim::kPrimFlashAttentionScoreGrad)) {
       continue;
     }
@@ -95,6 +95,9 @@ void FindTargetNode(std::vector<AnfNodePtr> *origin_nodes_topological, std::map<
 }
 
 CNodePtr CreateDepend(const AnfNodePtr &latter_node, const AnfNodePtr &former_node, const CNodePtr &node) {
+  if (former_node == nullptr) {
+    return latter_node->cast<CNodePtr>();
+  }
   std::vector<AnfNodePtr> depend_inputs{NewValueNode(prim::kPrimDepend), latter_node, former_node};
   auto depend_node = node->func_graph()->NewCNode(depend_inputs);
   MS_EXCEPTION_IF_NULL(depend_node);
@@ -113,7 +116,9 @@ void GetPreNode(CNodePtr *pre_grad_recv_node, CNodePtr *pre_grad_send_node, cons
 }  // namespace
 void OverlapGradRingAttention(const FuncGraphPtr &graph) {
   auto manager = graph->manager();
-  std::map<std::string, AnfNodePtr> grad_fa_map, grad_send_map, grad_recv_map;
+  std::map<std::string, AnfNodePtr> grad_fa_map;
+  std::map<std::string, AnfNodePtr> grad_send_map;
+  std::map<std::string, AnfNodePtr> grad_recv_map;
   auto ret = graph->get_return();
   auto origin_nodes_topological = DeepScopedGraphSearch(ret);
   CNodePtr loss_node;
@@ -127,17 +132,14 @@ void OverlapGradRingAttention(const FuncGraphPtr &graph) {
     auto grad_recv_node = grad_recv_map.at(it->first)->cast<CNodePtr>();
     auto grad_send_node = it->second->cast<CNodePtr>();
 
-    CNodePtr pre_grad_recv_node, pre_grad_send_node;
+    CNodePtr pre_grad_recv_node;
+    CNodePtr pre_grad_send_node;
     auto new_str = GetNewStr(it->first);
-    // if (grad_recv_map.find(new_str) != grad_recv_map.end() && grad_send_map.find(new_str) != grad_send_map.end()) {
-    //   pre_grad_recv_node = grad_recv_map.at(new_str)->cast<CNodePtr>();
-    //   pre_grad_send_node = grad_send_map.at(new_str)->cast<CNodePtr>();
-    // }
     GetPreNode(&pre_grad_recv_node, &pre_grad_send_node, new_str, &grad_recv_map, &grad_send_map);
 
     auto grad_recv_pos = GetValue<int64_t>(grad_recv_node->GetPrimalAttr(RING_ATTENTION_POS));
     // auto grad_send_pos = GetValue<int64_t>(grad_send_node->GetPrimalAttr(RING_ATTENTION_POS));
-    if (grad_recv_pos % 2 == 0) {
+    if (grad_recv_pos % kIndex2 == 0) {
       auto grad_send_input = grad_send_node->input(1);
       for (size_t i = 0; i < grad_fa_node->size(); i++) {
         auto grad_fa_input_node = grad_fa_node->input(i);
@@ -145,9 +147,7 @@ void OverlapGradRingAttention(const FuncGraphPtr &graph) {
           grad_send_input = CreateDepend(grad_send_input, grad_fa_input_node, grad_send_node);
         }
       }
-      if (loss_node != nullptr) {
-        grad_send_input = CreateDepend(grad_send_input, loss_node, grad_send_node);
-      }
+      grad_send_input = CreateDepend(grad_send_input, loss_node, grad_send_node);
       manager->SetEdge(grad_send_node, 1, grad_send_input);
 
       auto grad_fa_node_input = grad_fa_node->input(1);
@@ -182,9 +182,7 @@ void OverlapGradRingAttention(const FuncGraphPtr &graph) {
           grad_recv_input = CreateDepend(grad_recv_input, grad_fa_input_node, grad_recv_node);
         }
       }
-      if (loss_node != nullptr) {
-        grad_recv_input = CreateDepend(grad_recv_input, loss_node, grad_recv_node);
-      }
+      grad_recv_input = CreateDepend(grad_recv_input, loss_node, grad_recv_node);
       manager->SetEdge(grad_recv_node, 1, grad_recv_input);
 
       auto grad_fa_node_input = grad_fa_node->input(1);
