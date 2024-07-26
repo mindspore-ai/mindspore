@@ -523,7 +523,8 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const std::vector
           std::string arg_name = (ge_input_info.type == Ms2GeParamInfo::DYNAMIC ? ge_input_info.name + std::to_string(i)
                                                                                 : ge_input_info.name);
           auto new_address = UpdateKernelTensorAddress(ms_tensor, ge_idx_len, i);
-          auto [acl_desc, acl_data] = ConvertTensorToAclDesc(new_address, new_input_param, arg_name, dump_str_pointer);
+          auto [acl_desc, acl_data] =
+            ConvertTensorToAclDesc(new_address, new_input_param, arg_name, dump_str_pointer, true);
           runner_.SetInput(input_info.ge_real_idx[i], acl_desc, acl_data);
           if (transform::AclHelper::IsPrintDebugString()) {
             input_str_[input_info.ge_real_idx[i]] = dump_str;
@@ -540,13 +541,13 @@ void AclConverter::ConvertToAclInput(const PrimitivePtr &prim, const std::vector
           std::string arg_name = (ge_input_info.type == Ms2GeParamInfo::DYNAMIC ? ge_input_info.name + std::to_string(i)
                                                                                 : ge_input_info.name);
           if (std::holds_alternative<KernelTensor *>(input_param)) {
-            auto [acl_desc, acl_data] = ConvertTensorToAclDesc(std::get<KernelTensor *>(input_param),
-                                                               input_params[ms_real_idx], arg_name, dump_str_pointer);
+            auto [acl_desc, acl_data] = ConvertTensorToAclDesc(
+              std::get<KernelTensor *>(input_param), input_params[ms_real_idx], arg_name, dump_str_pointer, true);
             runner_.SetInput(ge_real_idx, acl_desc, acl_data);
           } else {
             auto &host_input = std::get<AclHostInfoPtr>(input_param);
             auto [acl_desc, acl_data] =
-              ConvertTensorToAclDesc(host_input, input_params[ms_real_idx], arg_name, dump_str_pointer);
+              ConvertTensorToAclDesc(host_input, input_params[ms_real_idx], arg_name, dump_str_pointer, true);
             if (set_const && host_input->is_const) {
               (void)CALL_ASCEND_API(aclSetTensorConst, acl_desc, host_input->host_addr, host_input->size);
             }
@@ -616,7 +617,7 @@ void AclConverter::ConvertToAclOutput(const std::string &kernel_name, const std:
       size_t acl_real_output_idx = ge_start_idx + i;
       MS_LOG(DEBUG) << "Fill acl real output " << acl_real_output_idx << " use ms real output " << ms_real_idx;
       auto [acl_desc, acl_data] =
-        ConvertTensorToAclDesc(outputs[ms_real_idx], output_params[ms_real_idx], arg_name, dump_str_pointer);
+        ConvertTensorToAclDesc(outputs[ms_real_idx], output_params[ms_real_idx], arg_name, dump_str_pointer, false);
       runner_.SetOutput(acl_real_output_idx, acl_desc, acl_data);
       if (transform::AclHelper::IsPrintDebugString()) {
         output_str_[acl_real_output_idx] = dump_str;
@@ -992,7 +993,8 @@ aclFormat AclConverter::ConvertFormat(const std::string &format) {
 std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc(const AddressPtr &address,
                                                                                  const TensorParams &params,
                                                                                  const std::string &desc_name,
-                                                                                 AclDumpString *dump_str) const {
+                                                                                 AclDumpString *dump_str,
+                                                                                 bool is_input) const {
   AclTensorDescMaker tensor;
   if (dump_str != nullptr) {
     dump_str->tensor_name = desc_name;
@@ -1021,7 +1023,7 @@ std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc
   MS_EXCEPTION_IF_NULL(acl_desc);
 
   // Create buf.
-  auto buffer_maker = std::make_shared<AclTensorBufferMaker>(address->addr, address->size, params.data_type);
+  auto buffer_maker = std::make_shared<AclTensorBufferMaker>(address->addr, address->size, params.data_type, is_input);
   auto acl_data = buffer_maker->Get();
   MS_EXCEPTION_IF_NULL(acl_data);
 
@@ -1031,7 +1033,8 @@ std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc
 std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc(const KernelTensor *ori_tensor,
                                                                                  const TensorParams &params,
                                                                                  const std::string &desc_name,
-                                                                                 AclDumpString *dump_str) const {
+                                                                                 AclDumpString *dump_str,
+                                                                                 bool is_input) const {
   AclTensorDescMaker tensor;
   if (dump_str != nullptr) {
     dump_str->tensor_name = desc_name;
@@ -1061,7 +1064,7 @@ std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc
 
   // Create buf.
   auto buffer_maker =
-    std::make_shared<AclTensorBufferMaker>(ori_tensor->device_ptr(), ori_tensor->size(), params.data_type);
+    std::make_shared<AclTensorBufferMaker>(ori_tensor->device_ptr(), ori_tensor->size(), params.data_type, is_input);
   auto acl_data = buffer_maker->Get();
   MS_EXCEPTION_IF_NULL(acl_data);
 
@@ -1071,7 +1074,8 @@ std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc
 std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc(const AclHostInfoPtr &acl_host_info,
                                                                                  const TensorParams &params,
                                                                                  const std::string &desc_name,
-                                                                                 AclDumpString *dump_str) const {
+                                                                                 AclDumpString *dump_str,
+                                                                                 bool is_input) const {
   AclTensorDescMaker tensor;
   if (dump_str != nullptr) {
     dump_str->tensor_name = desc_name;
@@ -1098,8 +1102,8 @@ std::pair<aclTensorDesc *, aclDataBuffer *> AclConverter::ConvertTensorToAclDesc
   MS_EXCEPTION_IF_NULL(acl_desc);
 
   // Create buf.
-  auto buffer_maker =
-    std::make_shared<AclTensorBufferMaker>(acl_host_info->host_addr, acl_host_info->size, acl_host_info->dtype_id);
+  auto buffer_maker = std::make_shared<AclTensorBufferMaker>(acl_host_info->host_addr, acl_host_info->size,
+                                                             acl_host_info->dtype_id, is_input);
   auto acl_data = buffer_maker->Get();
   MS_EXCEPTION_IF_NULL(acl_data);
 

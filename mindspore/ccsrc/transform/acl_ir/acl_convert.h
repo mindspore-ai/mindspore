@@ -141,15 +141,15 @@ class AclConverter {
   std::pair<aclTensorDesc *, aclDataBuffer *> ConvertTensorToAclDesc(const AddressPtr &address,
                                                                      const TensorParams &params,
                                                                      const std::string &desc_name,
-                                                                     AclDumpString *dump_str) const;
+                                                                     AclDumpString *dump_str, bool is_input) const;
   std::pair<aclTensorDesc *, aclDataBuffer *> ConvertTensorToAclDesc(const KernelTensor *ori_tensor,
                                                                      const TensorParams &params,
                                                                      const std::string &desc_name,
-                                                                     AclDumpString *dump_str) const;
+                                                                     AclDumpString *dump_str, bool is_input) const;
   std::pair<aclTensorDesc *, aclDataBuffer *> ConvertTensorToAclDesc(const AclHostInfoPtr &address,
                                                                      const TensorParams &params,
                                                                      const std::string &desc_name,
-                                                                     AclDumpString *dump_str) const;
+                                                                     AclDumpString *dump_str, bool is_input) const;
   std::pair<aclTensorDesc *, aclDataBuffer *> ConvertTensorToAclDesc(const tensor::TensorPtr &host_tensor,
                                                                      const TensorParams &params,
                                                                      const std::string &desc_name,

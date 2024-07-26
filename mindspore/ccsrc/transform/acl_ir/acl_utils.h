@@ -156,15 +156,10 @@ class AclTensorDescMaker {
 
 class AclTensorBufferMaker {
  public:
-  AclTensorBufferMaker(void *addr, size_t size, TypeId type = kTypeUnknown) {
-    size_t type_size = 1;
-    if (type != kTypeUnknown) {
-      type_size = GetTypeByte(TypeIdToType(type));
-    }
-    auto real_size = type_size * size;
+  AclTensorBufferMaker(void *addr, size_t size, TypeId type = kTypeUnknown, bool is_input = true) {
     if (type == kObjectTypeString) {
       data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, addr, size);
-    } else if (addr == nullptr || real_size == 0) {
+    } else if (addr == nullptr || (size == 0 && is_input)) {  // must alloc addr for output
       data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, nullptr, 0);
     } else {
       data_buffer_ = CALL_ASCEND_API(aclCreateDataBuffer, addr, size);
