@@ -97,7 +97,7 @@ class MsCollectiveCommLib : public CollectiveCommunicationLib {
   // Indicates whether the collective node has to synchronize the addresses of all the collective nodes.
   bool synchronized_{true};
 
-  uint64_t retry_count_;
+  uint64_t retry_count_{kMSCollectiveRetryTime};
 
   // Random retry interval.
   std::uniform_int_distribution<> rand_distrib_;

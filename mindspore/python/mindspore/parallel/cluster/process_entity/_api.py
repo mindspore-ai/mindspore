@@ -242,7 +242,6 @@ class _ProcessManager:
             self.cgn_processes.append(process)
 
     def join_processes(self):
-        # pylint: disable=unused-variable
         """
         Join all processes to stop.
         If there's any process does not exit normally, logs will be analyzed

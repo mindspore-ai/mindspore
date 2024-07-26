@@ -308,7 +308,7 @@ bool ComputeGraphNode::Heartbeat() {
         delete response;
       }
 
-      uint32_t interval = distrib(gen);
+      uint32_t interval = IntToUint(distrib(gen));
       MS_LOG(DEBUG) << "Heart beat interval " << interval;
       (void)sleep(interval);
     }
