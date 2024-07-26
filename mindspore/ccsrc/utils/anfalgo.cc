@@ -1237,18 +1237,22 @@ bool AnfAlgo::IsInplaceNode(const mindspore::AnfNodePtr &kernel, const string &t
   return true;
 }
 
-bool AnfAlgo::IsCommunicationOp(const AnfNodePtr &node) {
+bool AnfAlgo::IsCommunicationOp(const std::string &prim_name) {
   static const std::set<std::string> kCommunicationOpNames = {
     kAllReduceOpName,       kAllGatherOpName,       kBroadcastOpName, kReduceScatterOpName,     kSendOpName,
     kReceiveOpName,         kAlltoAllOpName,        kAllToAllOpName,  kAllToAllvOpName,         kMuxReceiveOpName,
     kMuxSendOpName,         kReduceOpName,          kBarrierOpName,   kCollectiveScatterOpName, kCollectiveGatherOpName,
     kMatMulAllReduceOpName, kBatchISendIRecvOpName, kAlltoAllVOpName};
+  return (kCommunicationOpNames.find(prim_name) != kCommunicationOpNames.end());
+}
+
+bool AnfAlgo::IsCommunicationOp(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
     return false;
   }
   auto kernel_name = AnfAlgo::GetCNodeName(node);
-  return (kCommunicationOpNames.find(kernel_name) != kCommunicationOpNames.end());
+  return IsCommunicationOp(kernel_name);
 }
 
 bool AnfAlgo::IsDtypeFormatSensitiveOp(const AnfNodePtr &node) {
