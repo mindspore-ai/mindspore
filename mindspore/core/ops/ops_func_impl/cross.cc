@@ -44,6 +44,17 @@ void CheckCrossDim(const std::string &prim_name, const ShapeVector &input_shape,
 }
 }  // namespace
 
+size_t CalCrossDimFromDefaultValue(const ShapeVector &input_shape, const ShapeVector &other_shape) {
+  const int64_t dim_size_value = 3;
+  auto broadcast_shape = CalBroadCastShape(input_shape, other_shape, "cross");
+  for (size_t i = 0; i < broadcast_shape.size(); i++) {
+    if (broadcast_shape[i] == dim_size_value) {
+      return i;
+    }
+  }
+  MS_EXCEPTION(ValueError) << "For cross, the size of inputs dim must contain 3, but got " << broadcast_shape << ".";
+}
+
 BaseShapePtr CrossFuncImpl::InferShape(const PrimitivePtr &primitive,
                                        const std::vector<AbstractBasePtr> &input_args) const {
   for (const auto &item : input_args) {
@@ -57,12 +68,12 @@ BaseShapePtr CrossFuncImpl::InferShape(const PrimitivePtr &primitive,
     auto &other_shape = other_shape_ptr->GetShapeVector();
     bool is_dynamic = IsDynamic(input_shape) || IsDynamic(other_shape);
     if (!is_dynamic) {
-      MS_CHECK_VALUE(input_shape == other_shape,
-                     CheckAndConvertUtils::FormatCheckMsg("input_shape", input_shape, kEqual, other_shape, primitive));
+      auto broadcast_shape = CalBroadCastShape(input_shape, other_shape, primitive->name(), "input", "other");
       auto dim = GetScalarValue<int64_t>(input_args[kInputIndex2]->GetValue());
       if (dim.has_value()) {
-        CheckCrossDim(primitive->name(), input_shape, dim.value());
+        CheckCrossDim(primitive->name(), broadcast_shape, dim.value());
       }
+      return std::make_shared<abstract::TensorShape>(broadcast_shape);
     }
   }
   return input_shape_ptr->Clone();
@@ -89,12 +100,12 @@ ShapeArray CrossFuncImpl::InferShape(const PrimitivePtr &primitive, const ValueP
   auto other_shape = other_tensor->shape();
   bool is_dynamic = IsDynamic(input_shape) || IsDynamic(other_shape);
   if (!is_dynamic) {
-    MS_CHECK_VALUE(input_shape == other_shape,
-                   CheckAndConvertUtils::FormatCheckMsg("input_shape", input_shape, kEqual, other_shape, primitive));
+    auto broadcast_shape = CalBroadCastShape(input_shape, other_shape, primitive->name(), "input", "other");
     const auto &dim = input_values[kInputIndex2]->cast<Int64ImmPtr>();
     MS_EXCEPTION_IF_NULL(dim);
     auto dim_value = dim->value();
-    CheckCrossDim(primitive->name(), input_shape, dim_value);
+    CheckCrossDim(primitive->name(), broadcast_shape, dim_value);
+    return {broadcast_shape};
   }
   return {input_shape};
 }

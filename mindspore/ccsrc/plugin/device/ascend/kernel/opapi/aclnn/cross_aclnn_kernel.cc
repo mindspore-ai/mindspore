@@ -15,6 +15,7 @@
  */
 #include "plugin/device/ascend/kernel/opapi/aclnn/cross_aclnn_kernel.h"
 #include "ir/tensor.h"
+#include "ops/ops_func_impl/cross.h"
 #include "runtime/device/kernel_runtime.h"
 
 namespace mindspore {
@@ -25,14 +26,9 @@ void CrossAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
   dim_ = transform::ConvertKernelTensor<int64_t>(inputs[kIndex2]);
   const int64_t default_dim = -65530;
   if (dim_ == default_dim) {
-    int64_t dim_size_value = 3;
-    const auto &shape = inputs[kIndex0]->GetShape()->GetShapeVector();
-    for (size_t i = 0; i < shape.size(); i++) {
-      if (shape[i] == dim_size_value) {
-        dim_ = SizeToLong(i);
-        break;
-      }
-    }
+    const auto &input_shape = inputs[kIndex0]->GetShape()->GetShapeVector();
+    const auto &other_shape = inputs[kIndex1]->GetShape()->GetShapeVector();
+    dim_ = SizeToLong(ops::CalCrossDimFromDefaultValue(input_shape, other_shape));
   }
   GetWorkspaceForResize(inputs[kIndex0], inputs[kIndex1], dim_, outputs[kIndex0]);
 }

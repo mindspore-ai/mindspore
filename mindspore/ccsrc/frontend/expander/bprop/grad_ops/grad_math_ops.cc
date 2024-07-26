@@ -1934,7 +1934,9 @@ REG_BPROP_BUILDER("Cross").SetUnusedInputs({i3}).SetBody(BODYFUNC(ib) {
   auto dout = ib->GetInput(kIndex4);
   auto dinput = input->need_compute_grad_out() ? ib->Emit("Cross", {other, dout, dim}) : ib->OutZeros(input);
   auto dother = other->need_compute_grad_out() ? ib->Emit("Cross", {dout, input, dim}) : ib->OutZeros(other);
-  return {dinput, dother, ib->OutZeros(dim)};
+  std::vector<NodePtr> ret = BinopGradCommon(ib, input, other, dinput, dother);
+  ret.emplace_back(ib->OutZeros(dim));
+  return ret;
 });
 
 REG_BPROP_BUILDER("Median").SetBody(BODYFUNC(ib) {
