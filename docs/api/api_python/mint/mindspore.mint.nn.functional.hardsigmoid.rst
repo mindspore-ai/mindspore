@@ -10,8 +10,8 @@ mindspore.mint.nn.functional.hardsigmoid
     .. math::
         \text{Hardswish}(input) =
         \begin{cases}
-        0, & \text{ if } input ≤ -3, \\
-        1, & \text{ if } input ≥ +3, \\
+        0, & \text{ if } input \leq -3, \\
+        1, & \text{ if } input \geq +3, \\
         input/6 + 1/2, & \text{ otherwise }
         \end{cases}
 

@@ -1173,9 +1173,9 @@ class HSwish(Cell):
     .. math::
         \text{Hardswish}(input) =
         \begin{cases}
-        0, & \text{ if } x ≤ -3, \\
-        input, & \text{ if } x ≥ +3, \\
-        input·(input + 3)/6, & \text{ otherwise }
+        0, & \text{ if } input \leq -3, \\
+        input, & \text{ if } input \geq +3, \\
+        input*(input + 3)/6, & \text{ otherwise }
         \end{cases}
 
     HSwish Activation Function Graph:
@@ -1225,8 +1225,8 @@ class HSigmoid(Cell):
     .. math::
         \text{Hardsigmoid}(input) =
         \begin{cases}
-        0, & \text{ if } input ≤ -3, \\
-        1, & \text{ if } input ≥ +3, \\
+        0, & \text{ if } input \leq -3, \\
+        1, & \text{ if } input \geq +3, \\
         input/6 + 1/2, & \text{ otherwise }
         \end{cases}
 
@@ -1236,7 +1236,7 @@ class HSigmoid(Cell):
         :align: center
 
     Inputs:
-        - **input** (Tensor) - The input of HSigmoid
+        - **input** (Tensor) - The input of HSigmoid.
 
     Outputs:
         Tensor, with the same type and shape as the `input`.
