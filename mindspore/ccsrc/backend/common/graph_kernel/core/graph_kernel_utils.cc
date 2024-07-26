@@ -283,6 +283,7 @@ FuncGraphPtr GkUtils::LiteGraph2AnfGraph(const inner::LiteGraphPtr &lite_graph, 
     }
     auto cnode = NewRealCNode(inputs, func_graph, output_info_list, cb);
     MS_EXCEPTION_IF_NULL(cnode);
+    cnode->set_attrs(op->GetCNodeAttrs());
     node_map[op_node] = cnode;
   }
   if (lite_graph->GetOutputs().empty()) {
@@ -396,6 +397,7 @@ inner::LiteGraphPtr GkUtils::AnfGraph2LiteGraph(const FuncGraphPtr &func_graph,
       inputs.push_back(input_node);
     }
     auto op = gb.Op(AnfUtils::GetCNodeName(node), ExtractBuildInfo(node), inputs, prim->attrs());
+    op->SetCNodeAttrs(cnode->attrs());
     node_map[node] = op;
     if (op_node_map != nullptr) {
       (*op_node_map)[op] = node;

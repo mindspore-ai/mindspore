@@ -53,6 +53,10 @@ struct BACKEND_EXPORT NodeBase {
 };
 using NodeBaseList = std::vector<NodeBase>;
 
+struct BACKEND_EXPORT ExtraInfo {
+  DAttrs cnode_attrs_;
+};
+
 class BACKEND_EXPORT Node;
 using NodePtr = std::shared_ptr<Node>;
 using NodePtrList = std::vector<NodePtr>;
@@ -74,6 +78,8 @@ class BACKEND_EXPORT Node : public NodeBase, public std::enable_shared_from_this
   void SetAttrs(const DAttrs &attrs) { attrs_ = attrs; }
   void SetAttr(const std::string &key, const ValuePtr &value) { attrs_[key] = value; }
   void SetDebugName(const std::string &debug_name) { debug_name_ = debug_name; }
+  void SetCNodeAttrs(const DAttrs &attrs) { extra_info_.cnode_attrs_ = attrs; }
+  const DAttrs &GetCNodeAttrs() { return extra_info_.cnode_attrs_; }
 
   template <typename T>
   std::shared_ptr<T> As() {
@@ -98,6 +104,7 @@ class BACKEND_EXPORT Node : public NodeBase, public std::enable_shared_from_this
   // save output tensor info when the node is a multi-output operator.
   // it should keep empty when the node is single-output.
   NodeBaseList outputs_;
+  ExtraInfo extra_info_;
 
  private:
   // the nodes' users are only maintained by AddInput/SetInput.

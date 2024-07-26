@@ -26,32 +26,61 @@ namespace mindspore::graphkernel {
 namespace {
 using RectifyFunc = std::function<void(const CNodePtr &)>;
 
-void RectifySiLUGrad(const CNodePtr &node) {
-  if (IsPrimitiveCNode(node, prim::kPrimMul)) {
-    auto x0_shape = GkUtils::GetOutputSymbolicShape(node->input(kIndex1), 0);
-    auto x1_shape = GkUtils::GetOutputSymbolicShape(node->input(kIndex2), 0);
-    auto out_shape = GkUtils::GetOutputSymbolicShape(node, 0);
-    if (x0_shape != nullptr && x1_shape != nullptr && out_shape != nullptr && x0_shape->size() == x1_shape->size()) {
-      for (size_t i = 0; i < x0_shape->size(); ++i) {
-        auto sh0 = x0_shape->item(i);
-        auto sh1 = x1_shape->item(i);
-        auto sho = out_shape->item(i);
-        if (sh0 == nullptr || sh1 == nullptr || sho == nullptr || sh0->EqualsTo(sh1)) {
-          continue;
-        }
-        MS_LOG(DEBUG) << "Set symbols equal: " << sh0->ToString() << ", " << sh1->ToString() << ", " << sho->ToString()
-                      << " node: " << node->fullname_with_scope();
-        sh0->as<IntSymbol>()->SetEqual(sh1->as_sptr<IntSymbol>());
-        sh0->as<IntSymbol>()->SetEqual(sho->as_sptr<IntSymbol>());
+void SetSymbolShapeEqual(const std::vector<ListSymbolPtr> &shapes) {
+  if (shapes.empty() || shapes[0] == nullptr) {
+    return;
+  }
+  for (size_t i = 1; i < shapes.size(); ++i) {
+    if (shapes[i] == nullptr || shapes[i]->size() != shapes[0]->size()) {
+      continue;
+    }
+    for (size_t idx = 0; idx < shapes[0]->size(); ++idx) {
+      auto a = shapes[0]->item(idx);
+      auto b = shapes[i]->item(idx);
+      if (a == nullptr || b == nullptr || a->EqualsTo(b)) {
+        continue;
+      }
+      auto ia = a->as_sptr<IntSymbol>();
+      auto ib = b->as_sptr<IntSymbol>();
+      if (!ia->is_const()) {
+        MS_LOG(DEBUG) << "Set symbols equal: " << a->ToString() << ", " << b->ToString();
+        ia->SetEqual(ib);
+      } else if (!ib->is_const()) {
+        MS_LOG(DEBUG) << "Set symbols equal: " << a->ToString() << ", " << b->ToString();
+        ib->SetEqual(ia);
       }
     }
   }
 }
 
+void SetBinaryOpSymbolShapeEqual(const CNodePtr &node) {
+  auto x0_shape = GkUtils::GetOutputSymbolicShape(node->input(kIndex1), 0);
+  auto x1_shape = GkUtils::GetOutputSymbolicShape(node->input(kIndex2), 0);
+  auto out_shape = GkUtils::GetOutputSymbolicShape(node, 0);
+  SetSymbolShapeEqual({x0_shape, x1_shape, out_shape});
+}
+
+void RectifySiLUGrad(const CNodePtr &node) {
+  if (IsPrimitiveCNode(node, prim::kPrimMul)) {
+    SetBinaryOpSymbolShapeEqual(node);
+  }
+}
+
+void RectifyAddN(const CNodePtr &node) {
+  if (IsPrimitiveCNode(node, prim::kPrimAdd)) {
+    SetBinaryOpSymbolShapeEqual(node);
+  }
+}
+
+void RectifyRmsNormGrad(const CNodePtr &node) {
+  if (IsPrimitiveCNode(node, prim::kPrimAdd) || IsPrimitiveCNode(node, prim::kPrimMul)) {
+    SetBinaryOpSymbolShapeEqual(node);
+  }
+}
+
 void RectifySymbol(const FuncGraphPtr &func_graph) {
   static std::map<std::string, RectifyFunc> funcs{
-    {"SiLUGrad", RectifySiLUGrad},
-  };
+    {"SiLUGrad", RectifySiLUGrad}, {"AddN", RectifyAddN}, {"RmsNormGrad", RectifyRmsNormGrad}};
 
   MS_EXCEPTION_IF_NULL(func_graph);
   auto nodes = TopoSort(func_graph->get_return());
