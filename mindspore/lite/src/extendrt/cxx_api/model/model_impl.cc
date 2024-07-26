@@ -486,10 +486,14 @@ Status ModelImpl::Build(const std::string &model_path, ModelType model_type,
 
 Status ModelImpl::ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::shared_ptr<Context> &model_context) {
   MS_ASSERT(func_graph != nullptr);
+  bool is_device_ascend = false;
   auto device_list = model_context->MutableDeviceInfo();
   for (const auto &device_info : device_list) {
     if (device_info == nullptr) {
       continue;
+    }
+    if (device_info->GetDeviceType() == kAscend) {
+      is_device_ascend = true;
     }
   }
   auto value = func_graph->get_attr(lite::kIsOptimized);
@@ -497,8 +501,8 @@ Status ModelImpl::ConvertGraphOnline(const FuncGraphPtr &func_graph, const std::
     if (GetValue<bool>(value)) {
       // it does not need to convert, if funcgraph is optimized.
       return kSuccess;
-    } else if (config_info_.find(lite::kInnerModelParallelRunnerSection) != config_info_.end()) {
-      MS_LOG(ERROR) << "Model Parallel Runner is not supported, due to func_graph is not optimized";
+    } else if (config_info_.find(lite::kInnerModelParallelRunnerSection) != config_info_.end() && is_device_ascend) {
+      MS_LOG(ERROR) << "Model Parallel Runner is not supported on Ascend, due to the func_graph is unoptimized!";
       return kLiteError;
     }
   }
