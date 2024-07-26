@@ -2476,56 +2476,6 @@ class FFN(Primitive):
         validator.check_value_type("inner_precise", inner_precise, [int], cls_name)
 
 
-class _MirrorSilentCheck(PrimitiveWithInfer):
-    """
-    The operator _MirrorSilentCheck implements accuracy-sensitive detection on the tensor input in backpropagator.
-    Call _MirrorSilentCheck in method __call__ of derived class to implement accuracy-sensitive detection.
-
-    Inputs:
-        - **input** (Tensor) : The tensor used for detection.
-          Its data type must be mindspore.float16, mindspore.float32 or mindspore.bfloat16.
-        - **pre_val** (Parameter(Tensor)) : Support parameter in accuracy-sensitive detection.
-        - **min_val** (Parameter(Tensor)) : Support parameter in accuracy-sensitive detection.
-        - **max_val** (Parameter(Tensor)) : Support parameter in accuracy-sensitive detection.
-        - **cnt** (Parameter(Tensor)) : Support parameter in accuracy-sensitive detection.
-          After each invocation of _MirrorSilentCheck, increment the value of cnt by one.
-
-    Outputs:
-        - **output** (Tensor) - Same shape, type and value as `input`.
-    """
-    @prim_attr_register
-    def __init__(self, min_steps=8):
-        upper_thresh, sigma_thresh = self.get_thresh()
-        self.min_steps = min_steps
-        self.thresh_l1 = upper_thresh[0]
-        self.coeff_l1 = sigma_thresh[0]
-        self.thresh_l2 = upper_thresh[1]
-        self.coeff_l2 = sigma_thresh[1]
-        self.add_prim_attr('side_effect_mem', True)
-
-    def parse_thresh(self, env_var_name, default_value, min_value):
-        env_var = os.environ.get(env_var_name, default=default_value)
-        thresh = [value.strip() for value in env_var.split(",")]
-        if len(thresh) != 2 or not all(value.isdigit() for value in thresh):
-            thresh = default_value.split(",")
-        thresh = [float(max(int(value), min_value)) for value in thresh]
-        if thresh[0] <= thresh[1]:
-            thresh = [float(value) for value in default_value.split(",")]
-
-        return thresh
-
-    def get_thresh(self):
-        upper_thresh = self.parse_thresh("NPU_ASD_UPPER_THRESH", "1000000,10000", 3)
-        sigma_thresh = self.parse_thresh("NPU_ASD_SIGMA_THRESH", "100000,5000", 3)
-        return upper_thresh, sigma_thresh
-
-    def infer_shape(self, x_shape, pre_shape, min_shape, max_shape, n_step, loss_scale_shape):
-        return x_shape
-
-    def infer_dtype(self, x_dtype, pre_dtype, min_dtype, max_dtype, n_dtype, loss_scale_dtype):
-        return x_dtype
-
-
 class _VirtualConverterEnd(PrimitiveWithInfer):
     """
     Auto parallel virtual operator.

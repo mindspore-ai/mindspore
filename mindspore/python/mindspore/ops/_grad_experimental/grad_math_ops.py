@@ -18,12 +18,9 @@
 import numpy as np
 import mindspore.numpy as mnp
 from mindspore.common import dtype as mstype
-import mindspore.ops as ops
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore import Tensor
-from mindspore.ops.operations.math_ops import SilentCheck
-from mindspore.ops.operations._inner_ops import _MirrorSilentCheck
 from mindspore.ops.operations.math_ops import CumulativeLogsumexp
 from mindspore.ops.operations.math_ops import MatrixSolve
 from mindspore.ops.operations.math_ops import MatrixSolveLs
@@ -803,22 +800,3 @@ def get_bprop_tensor_add(self):
         return binop_grad_common(x, y, dout, dout)
 
     return bprop
-
-
-@bprop_getters.register(_MirrorSilentCheck)
-def get_bprop_mirror_silent_check(self):
-    """Grad definition for '_MirrorSilentCheck' op"""
-    silent_check = SilentCheck(self.min_steps, self.thresh_l1, self.coeff_l1, self.thresh_l2, self.coeff_l2)
-    out_tensor = Tensor([0.0], mstype.float32)
-
-    def bporp(x, pre_val, min_val, max_val, n_step, loss_scale, out, dout):
-        if dout.dtype == mstype.float16:
-            return (dout, out_tensor, out_tensor, out_tensor, out_tensor, out_tensor)
-        if loss_scale is not None:
-            gnorm = ops.norm(dout / loss_scale)
-        else:
-            gnorm = ops.norm(dout)
-        dx, _, _, _, _ = silent_check(gnorm, dout, pre_val, min_val, max_val, n_step)
-        return (dx, out_tensor, out_tensor, out_tensor, out_tensor, out_tensor)
-
-    return bporp
