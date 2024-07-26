@@ -40,16 +40,16 @@ class QbmmAllReduceAddFusion : public PatternProcessPass {
                                       const EquivPtr &equiv) const;
 
  protected:
+  mutable VarPtr qbmm_prim_ = nullptr;
   mutable VarPtr x_ = nullptr;
   mutable VarPtr w_ = nullptr;
   mutable VarPtr scale_ = nullptr;
-  mutable VarPtr offset_ = nullptr;
-  mutable VarPtr bias_ = nullptr;
+  mutable VarPtr unused_offset_ = nullptr;
+  mutable VarPtr orig_bias_ = nullptr;
   mutable VarPtr trans_a_ = nullptr;
   mutable VarPtr trans_b_ = nullptr;
   mutable VarPtr out_dtype_ = nullptr;
   mutable VarPtr bias_tensor_ = nullptr;
-  mutable VarPtr qbmm_prim_ = nullptr;
 };
 }  // namespace opt
 }  // namespace mindspore

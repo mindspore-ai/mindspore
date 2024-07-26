@@ -52,6 +52,16 @@ std::shared_ptr<ValueNode> CreateValueNode(const tensor::TensorPtr &assist_tenso
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), assist_const.get());
   return assist_const;
 }
+
+float int32_to_float(std::int32_t int_value) {
+  union {
+    std::int32_t i;
+    float f;
+  } converter;
+  converter.i = int_value;
+  return converter.f;
+}
+
 }  // namespace
 
 std::shared_ptr<ValueNode> ConvertWeightsToNewType(const AnfNodePtr &weight_node) {
@@ -226,11 +236,13 @@ std::shared_ptr<ValueNode> ConvertFp16BiasToInt32(const AnfNodePtr &bias_node, c
   auto len = shape[0];
 
   auto rank_offset = need_rank_offset ? global_rank_id * len : 0;
-  // logic:
-  // (1) scale[int64] -> scale[int32] -> scale[float32];
-  // (2) bias[fp16] -> bias[fp32];
-  // (3) res = div(bias, scale) [fp64] -> round[fp64]
-  // (4) res[fp64] -> res[int64] -> clamp[int32]
+  /**
+   * logic:
+   * (1) scale[int64] -> scale[int32] -> scale[float32];
+   * (2) bias[fp16] -> bias[fp32];
+   * (3) res = div(bias, scale) [fp64] -> round[fp64]
+   * (4) res[fp64] -> res[int64] -> clamp[int32]
+   */
   const double int32_max = static_cast<double>(std::numeric_limits<int32_t>::max());
   const double int32_min = static_cast<double>(std::numeric_limits<int32_t>::min());
   void *dst_data = assist_tensor->data_c();
@@ -240,8 +252,7 @@ std::shared_ptr<ValueNode> ConvertFp16BiasToInt32(const AnfNodePtr &bias_node, c
   for (int i = 0; i < len; i++) {
     if (global_rank_id == 0 || (!with_allreduce)) {
       int32_t scale_int32 = static_cast<int32_t>(scale_data_t[i]);
-      float scale_fp32;
-      std::memcpy(&scale_fp32, &scale_int32, sizeof(scale_fp32));
+      float scale_fp32 = int32_to_float(scale_int32);
       double bias_fp64 = static_cast<double>(bias_data_t[i]);
       double res_fp64 = std::clamp(round(bias_fp64 / scale_fp32), int32_min, int32_max);
       dst_data_t[i] = static_cast<int32_t>(res_fp64);
