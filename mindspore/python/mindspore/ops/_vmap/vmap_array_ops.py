@@ -2132,10 +2132,7 @@ def get_searchsorted_vmap_rule(prim, axis_size):
         if sorter is not None and sorter_dim is not None:
             sorter = _bdim_at_front(sorter, sorter_dim, axis_size)
 
-        dtype, _ = dtype_bdim
-        right, _ = right_bdim
-
-        outputs = prim(sequence, values, sorter, dtype, right)
+        outputs = prim(sequence, values, sorter, dtype_bdim[0], right_bdim[0])
 
         return outputs, 0
 
