@@ -43,7 +43,5 @@ internal::OpParamPtr ApplyRotaryPosEmb::CreateOpParam(const std::vector<KernelTe
 }
 
 MS_INTERNAL_KERNEL_FACTORY_REG(ApplyRotaryPosEmb, ApplyRotaryPosEmb);
-REG_MS_TO_INTERNAL_IN_TENSOR_IDX_MAP(ApplyRotaryPosEmb, INPUT_NUM_5, INDEX_0, INDEX_1, INDEX_2, INDEX_3, INDEX_4);
-REG_MS_TO_INTERNAL_OUT_TENSOR_IDX_MAP(ApplyRotaryPosEmb, OUTPUT_NUM_2, INDEX_0, INDEX_1);
 }  // namespace kernel
 }  // namespace mindspore

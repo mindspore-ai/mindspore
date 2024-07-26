@@ -167,6 +167,8 @@ void AcmeKernelMod::GetOrGenerateTiling(const std::vector<KernelTensor *> &input
     auto tiling_info = std::make_shared<acme::TilingInfo>(device_addr, nullptr);
     acme_op_->SetTilingInfo(tiling_info);
     tiling_info->host_run_info_ = host_run_info_ptr;
+    workspace_size_list_ = acme_op_->GetWorkspaceSize();
+    tiling_info->host_run_info_->SetWorkSpaceSize(workspace_size_list_);
     auto tiling_info_ptr = std::make_shared<TilingCacheItem>(tiling_info, host_addr, tiling_size);
     auto ret = AcmeTilingCache::GetInstance().Insert(key, tiling_info_ptr);
     if (!ret) {
@@ -185,9 +187,9 @@ void AcmeKernelMod::GetOrGenerateTiling(const std::vector<KernelTensor *> &input
     last_item_ = tiling_info_ptr;
   } else {
     acme_op_->SetTilingInfo(tiling_cache_item->tiling_info_);
+    workspace_size_list_ = tiling_cache_item->tiling_info_->host_run_info_->GetWorkspaceSize();
     last_item_ = tiling_cache_item;
   }
-  workspace_size_list_ = acme_op_->GetWorkspaceSize();
   acme_wss_addr_.resize(workspace_size_list_.size());
 }
 
@@ -275,7 +277,7 @@ void AcmeKernelMod::UpdateAddr(const std::vector<KernelTensor *> &inputs, const 
 bool AcmeKernelMod::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                            const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   UpdateAddr(inputs, outputs, workspace);
-  acme::AcmeStatus status = acme::AcmeStatus::kAcmeOk;
+  acme::AcmeStatus status;
   if (ascend_profiler_->GetEnableFlag()) {
     status =
       acme_op_->LaunchWithProfiling(acme_inputs_addr_, acme_outputs_addr_, acme_wss_addr_, stream_ptr, fullname_);
