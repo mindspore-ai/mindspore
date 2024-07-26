@@ -50,7 +50,7 @@ class Layout():
         >>> layout = Layout((2, 2, 2), ("dp", "sp", "mp"))
         >>> layout0 = layout("dp", "mp")
         >>> print(layout0.to_dict())
-        {"device_matrix": (2, 2, 2), "tensor_map": (2, 0)}
+        {"device_matrix": (2, 2, 2), "tensor_map": (2, 0), "interleaved_parallel": False}
         >>> # Total device num is 4, but split the tensor in local device into two copies.
         >>> layout = Layout((2, 2, 2), ("dp", "sp", "interleaved_parallel"))
         >>> layout1 = layout(("dp", "interleaved_parallel"), "sp")

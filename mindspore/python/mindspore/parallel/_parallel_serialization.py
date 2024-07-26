@@ -341,14 +341,15 @@ def _rank_list_for_transform_parallel_checkpoint(rank_id, src_strategy_list, dst
         from_dev_matrix, from_tensor_map, from_opt_shard_step, from_opt_shard_size = _extract_layout_item(
             src_strategy_list.get(param_name))
         from_device_num = np.prod(from_dev_matrix)
-        fake_tensor_shape = [8] * len(from_tensor_map)
         to_dev_matrix = [1]
-        to_tensor_map = [-1] * len(fake_tensor_shape)
+        to_tensor_map = [-1] * len(from_tensor_map)
         to_opt_shard_step = 0
         to_opt_shard_size = 0
         if dst_strategy_list is not None:
             to_dev_matrix, to_tensor_map, to_opt_shard_step, to_opt_shard_size = _extract_layout_item(
                 dst_strategy_list.get(param_name))
+        to_device_num = np.prod(to_dev_matrix)
+        fake_tensor_shape = [max(from_device_num, to_device_num)] * len(from_tensor_map)
         handled_key = (from_dev_matrix, from_tensor_map, from_opt_shard_step, from_opt_shard_size,
                        to_dev_matrix, to_tensor_map, to_opt_shard_step, to_opt_shard_size)
         if handled_key in handled_layout:
