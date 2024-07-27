@@ -1353,3 +1353,42 @@ def test_parallel_dynamic_shape_with_prime_dim():
     validator = ParallelValidator(model, phase)
     assert validator.check_node_inputs('AllGather-0', ['Add-0'])
     assert validator.check_node_inputs('Reshape-0', ['Concat-0', (48, -1, 10240)])
+
+
+def test_parallel_dynamic_shape_with_prime_dim_in_to_layout():
+    """
+    Feature: Test tensor redistribution in dynamic shape.
+    Description: Test PanGu multi-batch qkv reshape.
+    Expectation: Compile success and assertion passed.
+    """
+
+    class PanguInferNet(nn.Cell):
+        def __init__(self):
+            super(PanguInferNet, self).__init__()
+            mul_np = np.full((1, 1), 0.5, dtype=np.float32)
+            self.mul_weight = Parameter(Tensor(mul_np), name="mul_weight")
+            self.add = P.Add().shard(((1, 8), (1, 1)))
+            self.reshape = P.Reshape()
+            self.transpose = P.Transpose()
+
+        def construct(self, x):
+            x = self.add(x, self.mul_weight)
+            x = self.reshape(x, (48, -1, 64, 128))
+            x = self.transpose(x, (0, 2, 1, 3))
+            return x
+
+    dump_ir_path = "./test_parallel_dynamic_shape_with_prime_dim_in_to_layout"
+    context.set_context(save_graphs=True, save_graphs_path=dump_ir_path)
+    dataset_shard = (1, 8)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL,
+                                      global_rank=0, device_num=8,
+                                      dataset_strategy=(dataset_shard,))
+    model = PanguInferNet()
+    model = _VirtualDatasetCell(model)
+    model._virtual_dataset.add_prim_attr("repeat_dim_direct", "right")
+    x = Tensor(shape=(None, 8192), dtype=mstype.float32)
+    model.set_inputs(x)
+    phase = compile_net(model, x)
+    validator = ParallelValidator(model, phase)
+    assert validator.check_node_inputs('AllGather-0', ['Add-0'])
+    assert validator.check_node_inputs('Reshape-0', ['Concat-0', (48, -1, 64, 128)])
