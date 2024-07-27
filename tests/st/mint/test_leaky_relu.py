@@ -33,7 +33,7 @@ def generate_expect_backward_output(x, negative_slope):
 
 
 def leaky_relu_forward_func(x, negative_slope):
-    return mint.leaky_relu(x, negative_slope)
+    return mint.nn.functional.leaky_relu(x, negative_slope)
 
 
 def leaky_relu_backward_func(x, negative_slope):

@@ -51,7 +51,7 @@ def full_backward_func(size, fill_value, dtype=None):
     return value_grad
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

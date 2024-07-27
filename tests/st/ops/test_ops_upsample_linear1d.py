@@ -32,7 +32,7 @@ def upsample_linear1d_backward_func(x, size=None, scale_factor=None, align_corne
     return ops.grad(upsample_linear1d_forward_func, (0,))(x, size, scale_factor, align_corners)
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -75,7 +75,7 @@ def test_upsample_linear_1d(mode):
     assert np.all(diff < error)
 
 
-@pytest.mark.level1
+@pytest.mark.level3
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -101,7 +101,7 @@ def test_upsample_linear_1d_size_dynamic():
     )
 
 
-@pytest.mark.level1
+@pytest.mark.level3
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard

@@ -19,7 +19,7 @@ import pytest
 import mindspore as ms
 from mindspore import ops, JitConfig
 from mindspore.nn import Cell
-from mindspore.ops.extend import sub
+from mindspore.ops.auto_generate.gen_ops_def import sub_ext as sub
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 
 rtol = 1e-3

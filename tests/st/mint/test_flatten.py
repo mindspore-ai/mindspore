@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops
-from mindspore.mint import flatten
+import mindspore.mint as mint
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.utils import test_utils
 
@@ -26,7 +26,7 @@ def generate_random_input(shape, dtype):
 
 
 def flatten_func(x, start_dim=0, end_dim=-1):
-    return flatten(x, start_dim, end_dim)
+    return mint.flatten(x, start_dim, end_dim)
 
 
 @test_utils.run_with_cell
@@ -43,7 +43,7 @@ def flatten_backward_func(x, start_dim=0, end_dim=-1):
     return flatten_bwd_func(x, start_dim, end_dim)
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -67,7 +67,7 @@ def test_flatten_forward(mode):
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
 
 
-@pytest.mark.level1
+@pytest.mark.level3
 @pytest.mark.platform_arm_ascend910b_training
 @pytest.mark.env_onecard
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -90,7 +90,7 @@ def test_flatten_bfloat16(mode):
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=5e-3, atol=5e-3)
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
@@ -114,7 +114,7 @@ def test_flatten_backward(mode):
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.env_onecard
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training

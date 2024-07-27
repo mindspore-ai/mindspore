@@ -38,7 +38,7 @@ def upsample_nearest3d_grad(gradOut, input_size, output_size, scale_factor):
     return op(gradOut, input_size, output_size, scale_factor)
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -83,7 +83,7 @@ def test_upsample_nearest_1d(mode):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
@@ -135,7 +135,7 @@ def test_upsample_nearest_2d(mode):
     assert np.all(diff < error)
 
 
-@pytest.mark.level0
+@pytest.mark.level3
 @pytest.mark.platform_x86_cpu
 @pytest.mark.platform_arm_cpu
 @pytest.mark.platform_x86_gpu_training

@@ -44,7 +44,7 @@ class ComplexNet(nn.Cell):
         self.addn = P.AddN()
 
     def construct(self, x, y):
-        a = ops.extend.add(x, y, 0.1) + 4
+        a = ops.auto_generate.gen_ops_def.add_ext(x, y, 0.1) + 4
         b = x - y - 5
         c = self.gelu(x)
         d = self.reduce_sum(c, (0,))

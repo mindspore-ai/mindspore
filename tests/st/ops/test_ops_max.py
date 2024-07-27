@@ -16,7 +16,7 @@ import pytest
 import numpy as np
 from mindspore import context
 from mindspore import Tensor
-from mindspore.ops.extend import max as max_
+from mindspore.ops.function.array_func import max_ext as max_
 
 from tests.st.ops.test_ops_min import (min_max_case, min_max_case_all_dyn, min_max_case_vmap)
 from tests.st.utils.test_utils import compare

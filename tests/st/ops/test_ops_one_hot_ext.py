@@ -16,7 +16,7 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore.nn import Cell
-from mindspore.ops.extend import one_hot
+from mindspore.ops.function.array_func import one_hot_ext as one_hot
 from mindspore import ops
 from tests.st.utils import test_utils
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
@@ -36,7 +36,7 @@ def onehot_dyn_shape_func(tensor):
 
 def call_onehot(tensor, num_classes):
     """call_one_hot_ext"""
-    out = ops.extend.one_hot(tensor, num_classes)
+    out = ops.function.array_func.one_hot_ext(tensor, num_classes)
     return out
 
 def generate_expect_backward_output():

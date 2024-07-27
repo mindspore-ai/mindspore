@@ -15,7 +15,7 @@
 import pytest
 import numpy as np
 from mindspore import Tensor, context
-from mindspore.ops.extend import min as min_
+from mindspore.ops.function.array_func import min_ext as min_
 import mindspore.common.dtype as mstype
 from mindspore import ops
 

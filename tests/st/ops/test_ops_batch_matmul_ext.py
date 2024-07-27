@@ -18,7 +18,7 @@ import pytest
 
 import mindspore as ms
 from mindspore.nn import Cell
-from mindspore.ops.extend import bmm
+from mindspore.ops.auto_generate.gen_ops_def import bmm_ext as bmm
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.pynative.utils import allclose_nparray
 

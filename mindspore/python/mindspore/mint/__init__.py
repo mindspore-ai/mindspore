@@ -15,16 +15,14 @@
 """mint module."""
 from __future__ import absolute_import
 import mindspore.ops as ops
-from mindspore.ops.extend import gather, conv2d, max, min
-from mindspore.ops.extend import array_func, math_func, nn_func
-from mindspore.mint.nn.functional import *
+from mindspore.ops.function.array_func import gather_ext as gather, max_ext as max, min_ext as min
+from mindspore.mint.nn.functional import sigmoid, tanh
 from mindspore.mint.nn import functional
 from mindspore.mint import linalg
 from mindspore.mint import special
-from mindspore.ops import erf, where, triu
+from mindspore.ops import erf, where
 from mindspore.ops.function.math_func import linspace_ext as linspace
 from mindspore.ops.function.math_func import median_ext as median
-from mindspore.ops.function.array_func import full_ext as full
 from mindspore.ops.function.array_func import ones_like_ext as ones_like
 from mindspore.ops.function.array_func import zeros_like_ext as zeros_like
 from mindspore.ops.function.array_func import unique_ext as unique
@@ -66,7 +64,7 @@ from mindspore.ops.functional import flip
 # 14
 
 # 15
-from mindspore.ops.auto_generate import flatten_ext as flatten
+
 # 16
 from mindspore.ops.functional import matmul
 from mindspore.ops.auto_generate import bmm_ext as bmm
@@ -213,7 +211,7 @@ from mindspore.mint import nn, optim
 # 87
 
 # 88
-from mindspore.ops.function.array_func import chunk_ext as chunk
+
 # 89
 
 # 90
@@ -225,7 +223,7 @@ from mindspore.ops.function.array_func import chunk_ext as chunk
 # 93
 
 # 94
-from mindspore.ops.function.math_func import tanh
+
 # 95
 
 # 96
@@ -263,7 +261,6 @@ from mindspore.ops.function.math_func import arcsinh_ext as arcsinh
 from mindspore.ops.function.math_func import atan2_ext as atan2
 from mindspore.ops.function.math_func import arctan2_ext as arctan2
 
-
 # 208
 from mindspore.ops.function.array_func import eye
 from mindspore.ops.function.random_func import rand_ext as rand
@@ -276,6 +273,8 @@ from mindspore.ops.function.math_func import inverse_ext as inverse
 from mindspore.ops.function.math_func import remainder_ext as remainder
 # 285
 from mindspore.ops.function.array_func import scatter_add_ext as scatter_add
+
+
 # 301
 
 
@@ -455,7 +454,6 @@ def all(input, dim=None, keepdim=False):
         [False True]
     """
     return ops.function.math_func.all(input, dim, keepdim)
-
 
 
 def cat(tensors, dim=0):
@@ -974,13 +972,11 @@ def zeros(size, *, dtype=None):
 
 
 __all__ = [
-    'full',
     'ones_like',
     'zeros_like',
     'abs',
     'erf',
     'where',
-    'linspace',
     'isclose',
     # 1
     'div',
@@ -1017,7 +1013,7 @@ __all__ = [
     # 14
 
     # 15
-    'flatten',
+
     # 16
     'matmul',
     'bmm',
@@ -1171,7 +1167,7 @@ __all__ = [
     # 87
 
     # 88
-    'chunk',
+
     # 89
 
     # 90
@@ -1239,11 +1235,8 @@ __all__ = [
     # 304
 
     # 305
-    'triu',
+
 ]
-__all__.extend(array_func.__all__)
-__all__.extend(math_func.__all__)
-__all__.extend(nn_func.__all__)
 __all__.extend(functional.__all__)
 __all__.extend(nn.__all__)
 __all__.extend(optim.__all__)

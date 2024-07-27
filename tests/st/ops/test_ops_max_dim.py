@@ -15,7 +15,7 @@
 import pytest
 import numpy as np
 from mindspore import context, Tensor
-from mindspore.ops.extend import max as max_
+from mindspore.ops.function.array_func import max_ext as max_
 
 from tests.st.ops.dynamic_shape.test_op_utils import TEST_OP
 from tests.st.ops.test_ops_min_dim import (argmin_with_value_argmax_case, argmin_with_value_argmax_case_dyn,

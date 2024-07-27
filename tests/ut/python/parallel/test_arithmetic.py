@@ -112,7 +112,7 @@ def test_matmul_subext():
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
-            out = ops.extend.sub(out, b, 1.0)
+            out = ops.auto_generate.gen_ops_def.sub_ext(out, b, 1.0)
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
@@ -140,7 +140,7 @@ def test_matmul_subext_dynamic():
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
-            out = ops.extend.sub(out, b, 1.0)
+            out = ops.auto_generate.gen_ops_def.sub_ext(out, b, 1.0)
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
@@ -199,7 +199,7 @@ def test_matmul_addext():
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
-            out = ops.extend.add(out, b, 1.0)
+            out = ops.auto_generate.gen_ops_def.add_ext(out, b, 1.0)
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
@@ -227,7 +227,7 @@ def test_matmul_addext_dynamic():
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)
-            out = ops.extend.add(out, b, 1.0)
+            out = ops.auto_generate.gen_ops_def.add_ext(out, b, 1.0)
             return out
 
     context.set_auto_parallel_context(device_num=8, global_rank=0)
