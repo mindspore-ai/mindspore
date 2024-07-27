@@ -72,7 +72,7 @@ class ProgramSpecializer {
   void SetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func, const AbstractFunctionPtr &new_abs_func,
                               const CNodePtr &cnode, const AnfNodePtr &func);
   AbstractFunctionPtr GetSpecializedAbstract(const AbstractFunctionPtr &old_abs_func);
-  void SpecializeCNodeInput0FuncGraph();
+  void SpecializeFuncGraph();
 
   std::vector<std::pair<AbstractSequencePtr, AnfNodePtr>> &sequence_abstract_list() { return sequence_abstract_list_; }
   std::vector<std::pair<AnfNodePtr, size_t>> &dead_node_list() { return dead_node_list_; }

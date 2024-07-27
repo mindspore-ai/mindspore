@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -467,48 +467,44 @@ class SideEffectFinder {
     scc_map_ = std::move(scc_finder.scc_map());
   }
 
-  // Gets branch graph from a switch cnode at given input index.
-  FuncGraphPtr GetSwitchBranch(const CNodePtr &cnode, size_t index) const {
-    MS_EXCEPTION_IF_NULL(cnode);
-    const auto &branch_node = cnode->input(index);
-    AnfNodePtr branch_fg_node = branch_node;
-    if (IsPrimitiveCNode(branch_node, prim::kPrimPartial)) {
-      auto branch_abs = branch_node->abstract();
-      constexpr auto recursive_level = 2;
-      MS_LOG(DEBUG) << "branch_node: " << branch_node->DebugString(recursive_level)
-                    << ", abstract: " << (branch_abs != nullptr ? branch_abs->ToString() : "null");
-      auto branch_cnode = branch_node->cast_ptr<CNode>();
-      MS_EXCEPTION_IF_NULL(branch_cnode);
-      branch_fg_node = branch_cnode->input(1);
-      MS_EXCEPTION_IF_NULL(branch_fg_node);
-      MS_LOG(DEBUG) << "branch_fg_node: " << branch_fg_node->DebugString(recursive_level);
+  FuncGraphPtr GetFuncFromAbstract(const abstract::AbstractBasePtr abs) const {
+    auto func_graph_abstract = dyn_cast<abstract::FuncGraphAbstractClosure>(abs);
+    if (func_graph_abstract != nullptr) {
+      if (!func_graph_abstract->specialized()) {
+        MS_LOG(WARNING) << "Unspecialized func graph, partial abs: " << abs->ToString()
+                        << ", partial fn abs: " << func_graph_abstract->ToString();
+      } else {
+        auto func = func_graph_abstract->func_graph();
+        return func;
+      }
     }
-    return GetValueNode<FuncGraphPtr>(branch_fg_node);
+    return nullptr;
   }
 
   // Gets branch graphs from a switch cnode.
   std::vector<FuncGraphPtr> GetSwitchBranches(const CNodePtr &cnode) const {
     MS_EXCEPTION_IF_NULL(cnode);
-    constexpr size_t switch_cnode_size = 4;
-    constexpr size_t true_index = 2;
-    constexpr size_t false_index = 3;
-    // Check size.
-    if (cnode->size() != switch_cnode_size) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid switch: " << cnode->DebugString();
-    }
-    // Add both branches, in some case, only one branch is set.
+    auto cnode_abs = cnode->abstract();
+    MS_EXCEPTION_IF_NULL(cnode_abs);
     std::vector<FuncGraphPtr> branches;
-    auto true_branch = GetSwitchBranch(cnode, true_index);
-    if (true_branch != nullptr) {
-      (void)branches.emplace_back(true_branch);
+    if (cnode_abs->isa<abstract::FuncGraphAbstractClosure>()) {
+      auto func = GetFuncFromAbstract(cnode_abs);
+      if (func != nullptr) {
+        (void)branches.emplace_back(func);
+        return branches;
+      }
     }
-    auto false_branch = GetSwitchBranch(cnode, false_index);
-    if (false_branch != nullptr) {
-      (void)branches.emplace_back(false_branch);
-    }
-    if (branches.empty()) {
-      constexpr auto recursive_level = 2;
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid switch: " << cnode->DebugString(recursive_level);
+
+    if (cnode_abs->isa<abstract::AbstractFuncUnion>()) {
+      auto func_union_abstract = dyn_cast<abstract::AbstractFuncUnion>(cnode_abs);
+      const auto &func_list = func_union_abstract->func_list();
+      for (auto func_abs : func_list) {
+        auto func = GetFuncFromAbstract(func_abs);
+        if (func != nullptr) {
+          (void)branches.emplace_back(func);
+        }
+      }
+      return branches;
     }
     return branches;
   }
@@ -687,165 +683,20 @@ class SideEffectFinder {
   // Gets branch graphs from a switch_layer cnode.
   std::vector<FuncGraphPtr> GetSwitchLayerBranches(const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(cnode);
-    constexpr size_t func_tuple_index = 2;
-    constexpr int recursive_level = 2;
-    if (cnode->size() <= func_tuple_index) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid switch_layer: " << cnode->DebugString(recursive_level);
-    }
-    auto func_tuple = cnode->input(func_tuple_index);
-    return GetGraphsFromTuple(func_tuple);
-  }
-
-  FuncGraphPtr GetGraphFromSwitchWithDeadNode(const CNodePtr &cnode) const {
-    MS_EXCEPTION_IF_NULL(cnode);
-    auto input = cnode->input(0);
-    MS_EXCEPTION_IF_NULL(input);
-    if (!IsPrimitiveCNode(input, prim::kPrimSwitch)) {
-      return nullptr;
-    }
-    auto node = input->cast_ptr<CNode>();
-    if (node->size() < kSwitchInputSize) {
-      MS_LOG(EXCEPTION) << "Switch inputs size: " << node->size() << "less than " << kSwitchInputSize;
-    }
-    auto cond_node = node->input(kSwitchCondIndex);
-    auto cond_abs = cond_node->abstract();
-    MS_EXCEPTION_IF_NULL(cond_abs);
-    auto cond_abs_val = cond_abs->BuildValue();
-    MS_EXCEPTION_IF_NULL(cond_abs_val);
-    if (cond_abs_val->ContainsValueAny()) {
-      return nullptr;
-    }
-    auto cond_abs_bool_val = dyn_cast<BoolImm>(cond_abs_val);
-    MS_EXCEPTION_IF_NULL(cond_abs_bool_val);
-    auto branch =
-      cond_abs_bool_val->value() ? node->input(kSwitchTrueBranchIndex) : node->input(kSwitchFalseBranchIndex);
-    return GetValueNode<FuncGraphPtr>(branch);
-  }
-
-  // Get and trace graphs from a tuple of func node for switch_layer.
-  std::vector<FuncGraphPtr> GetGraphsFromTuple(const AnfNodePtr &func_tuple) {
-    // The functions make tuple CNode.
-    if (IsPrimitiveCNode(func_tuple, prim::kPrimMakeTuple)) {
-      return GetGraphsFromMakeTuple(func_tuple->cast<CNodePtr>());
-    }
-    // The functions value tuple.
-    if (IsValueNode<ValueTuple>(func_tuple)) {
-      return GetGraphsFromValueTuple(func_tuple->cast<ValueNodePtr>());
-    }
-    // Trace tuple from parameter.
-    auto para = dyn_cast<Parameter>(func_tuple);
-    if (para != nullptr) {
-      std::vector<FuncGraphPtr> graphs;
-      ForEachRealArguments(para,
-                           [this, &graphs](const AnfNodePtr &arg) { graphs = std::move(GetGraphsFromTuple(arg)); });
-      return graphs;
-    }
-    // Trace tuple returned from func graph call.
-    auto cnode = dyn_cast<CNode>(func_tuple);
-    MS_EXCEPTION_IF_NULL(cnode);
-    auto func_graph = GetFuncGraph(cnode);
-    if (func_graph != nullptr) {
-      return GetGraphsFromTuple(func_graph->output());
-    }
-    // Trace tuple returned from func graph call including switch with dead node.
-    func_graph = GetGraphFromSwitchWithDeadNode(cnode);
-    if (func_graph != nullptr) {
-      return GetGraphsFromTuple(func_graph->output());
-    }
-    MS_LOG(INTERNAL_EXCEPTION) << "Invalid input for switch_layer: func_graph is nullptr.";
-  }
-
-  // Get graphs from a tuple of funcs make node for switch_layer.
-  std::vector<FuncGraphPtr> GetGraphsFromMakeTuple(const CNodePtr &make_tuple) const {
-    MS_EXCEPTION_IF_NULL(make_tuple);
-    constexpr int recursive_level = 2;
-    if (make_tuple->size() <= 1) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_tuple for switch_layer: " << make_tuple->DebugString(recursive_level);
-    }
-    std::vector<FuncGraphPtr> graphs;
-    graphs.reserve(make_tuple->size() - 1);
-    for (size_t i = 1; i < make_tuple->size(); ++i) {
-      auto func_graph = GetValueNode<FuncGraphPtr>(make_tuple->input(i));
-      if (func_graph == nullptr) {
-        MS_LOG(WARNING) << "Non-graph found in switch_layer input: " << make_tuple->DebugString(recursive_level)
-                        << ", index: " << i;
-        continue;
+    auto cnode_abs = cnode->abstract();
+    MS_EXCEPTION_IF_NULL(cnode_abs);
+    std::vector<FuncGraphPtr> branches;
+    if (cnode_abs->isa<abstract::AbstractFuncUnion>()) {
+      auto func_union_abstract = dyn_cast<abstract::AbstractFuncUnion>(cnode_abs);
+      const auto &func_list = func_union_abstract->func_list();
+      for (auto func_abs : func_list) {
+        auto func = GetFuncFromAbstract(func_abs);
+        if (func != nullptr) {
+          (void)branches.emplace_back(func);
+        }
       }
-      graphs.push_back(func_graph);
     }
-    return graphs;
-  }
-
-  // Get graphs from a tuple of functions value tuple for switch_layer.
-  std::vector<FuncGraphPtr> GetGraphsFromValueTuple(const ValueNodePtr &value_node) const {
-    MS_EXCEPTION_IF_NULL(value_node);
-    const auto &value = value_node->value();
-    MS_EXCEPTION_IF_NULL(value);
-    auto value_tuple = value->cast_ptr<ValueTuple>();
-    MS_EXCEPTION_IF_NULL(value_tuple);
-    std::vector<FuncGraphPtr> graphs;
-    graphs.reserve(value_tuple->size());
-    const auto &tuple_elements = value_tuple->value();
-    for (size_t i = 0; i < tuple_elements.size(); ++i) {
-      const auto &tuple_element = tuple_elements[i];
-      MS_EXCEPTION_IF_NULL(tuple_element);
-      auto func_graph = tuple_element->cast<FuncGraphPtr>();
-      if (func_graph == nullptr) {
-        MS_LOG(WARNING) << "Non-graph found in switch_layer input: " << value_node->DebugString() << ", index: " << i;
-        continue;
-      }
-      graphs.push_back(func_graph);
-    }
-    return graphs;
-  }
-
-  // Trace effect info from tuple_getitem cnode.
-  EffectInfo TraceGetItemEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
-    MS_EXCEPTION_IF_NULL(cnode);
-    MS_EXCEPTION_IF_NULL(indexes);
-    constexpr size_t tuple_or_list_or_dict_input = 1;
-    constexpr size_t index_input = 2;
-    constexpr size_t cnode_size = 3;
-    if (cnode->size() != cnode_size) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid getitem: " << cnode->DebugString();
-    }
-    // Get item index.
-    auto &index_node = cnode->input(index_input);
-    auto index_value = dyn_cast<ValueNode>(index_node);
-    if (index_value == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "getitem with non-const index, cnode: " << cnode->DebugString();
-    }
-
-    // Get tuple, list or dict value.
-    const auto &tuple_or_list_or_dict_node = cnode->input(tuple_or_list_or_dict_input);
-    // Push tuple, list or dict index.
-    indexes->push(index_value->value());
-    return TraceTupleListOrDictEffectInfo(tuple_or_list_or_dict_node, indexes);
-  }
-
-  EffectInfo TraceTupleListOrDictEffectInfo(const AnfNodePtr &node, std::stack<ValuePtr> *indexes) {
-    MS_EXCEPTION_IF_NULL(indexes);
-    auto para = dyn_cast<Parameter>(node);
-    if (para != nullptr) {
-      return TraceTupleListParaEffectInfo(para, *indexes);
-    }
-    auto cnode = dyn_cast<CNode>(node);
-    if (cnode != nullptr) {
-      return TraceTupleListCNodeEffectInfo(cnode, indexes);
-    }
-    // Should not reach here.
-    MS_LOG(INTERNAL_EXCEPTION) << "Side effects untraceable: cnode is nullptr. Invalid node: " << node->DebugString();
-  }
-
-  EffectInfo TraceTupleListParaEffectInfo(const ParameterPtr &para, const std::stack<ValuePtr> &indexes) {
-    EffectInfo info{EffectInfo::kDetected, false, false, false, false};
-    ForEachRealArguments(para, [this, &info, indexes](const AnfNodePtr &arg) {
-      // Merge real argument effect info.
-      auto indexes_copy = indexes;
-      auto arg_info = TraceTupleListOrDictEffectInfo(arg, &indexes_copy);
-      info.Merge(arg_info);
-    });
-    return info;
+    return branches;
   }
 
   size_t GetInputIndex(const ValuePtr &top_index_value, const CNodePtr &origin_cnode, size_t inputs_size) {
@@ -870,157 +721,6 @@ class SideEffectFinder {
       MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_tuple: " << origin_cnode->DebugString() << " index=" << top_index;
     }
     return input_index;
-  }
-
-  EffectInfo TraceMakeTupleListEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
-    constexpr int recursive_level = 2;
-    if (indexes->empty()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected make_tuple or make_list: " << cnode->DebugString(recursive_level);
-    }
-    // Pop out tuple index.
-    auto top_index_value = indexes->top();
-    indexes->pop();
-    auto input_index = GetInputIndex(top_index_value, cnode, cnode->size());
-    if (indexes->empty()) {
-      // Trace non-tuple.
-      return TraceEffectInfo(cnode->input(input_index));
-    }
-    // This is the tuple of tuple case.
-    return TraceTupleListOrDictEffectInfo(cnode->input(input_index), indexes);
-  }
-
-  EffectInfo TraceMakeDictEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
-    constexpr int recursive_level = 2;
-    if (indexes->empty()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected make_dict: " << cnode->DebugString(recursive_level);
-    }
-    // Pop out dict index.
-    auto top_key_value = indexes->top();
-    MS_EXCEPTION_IF_NULL(top_key_value);
-    indexes->pop();
-    constexpr size_t keys_node_index = 1;
-    constexpr size_t values_node_index = 2;
-    auto keys_node = cnode->input(keys_node_index);
-    MS_EXCEPTION_IF_NULL(keys_node);
-    auto keys = GetValueNode<ValueTuplePtr>(keys_node);
-    if (keys == nullptr) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Invalid make_dict: " << cnode->DebugString()
-                                 << ", the keys node: " << keys_node->DebugString();
-    }
-    for (size_t i = 0; i < keys->size(); ++i) {
-      MS_EXCEPTION_IF_NULL(keys->value()[i]);
-      if (*(keys->value()[i]) == *top_key_value) {
-        // The values_node is a make_dict.
-        indexes->push(MakeValue(SizeToLong(i)));
-        return TraceTupleListOrDictEffectInfo(cnode->input(values_node_index), indexes);
-      }
-    }
-    MS_LOG(WARNING) << "make_dict untraceable from: " << cnode->DebugString(recursive_level);
-    return {EffectInfo::kDetected, false, false, false};
-  }
-
-  EffectInfo TraceDictItemsEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
-    constexpr int recursive_level = 2;
-    // Pop dict_getitem index.
-    if (indexes->empty()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected dict_items: " << cnode->DebugString(recursive_level);
-    }
-    auto list_getitem_index_value = indexes->top();
-    indexes->pop();
-    // Pop dict_getitem index.
-    if (indexes->empty()) {
-      MS_LOG(INTERNAL_EXCEPTION) << "Unexpected dict_items: " << cnode->DebugString(recursive_level);
-    }
-    auto tuple_getitem_index_value = indexes->top();
-    indexes->pop();
-    constexpr size_t key_and_value_tuple_size = 2;
-    auto tuple_getitem_index = GetInputIndex(tuple_getitem_index_value, cnode, key_and_value_tuple_size + 1);
-    // If the item is a value_node, skip.
-    if (tuple_getitem_index == 1) {
-      MS_LOG(INFO) << "dict_items untraceable from: " << cnode->DebugString(recursive_level);
-      return {EffectInfo::kDetected, false, false, false};
-    }
-    // dict_items(make_dict(keys_value_tuple, make_tuple()))
-    if (!IsPrimitiveCNode(cnode->input(1), prim::kPrimMakeDict)) {
-      MS_LOG(WARNING) << "dict_items untraceable from: " << cnode->DebugString(recursive_level);
-      return {EffectInfo::kDetected, false, false, false};
-    }
-    // Trace the make_tuple.
-    auto make_dict_cnode = cnode->input(1)->cast<CNodePtr>();
-    constexpr size_t values_node_index = 2;
-    indexes->push(list_getitem_index_value);
-    return TraceTupleListOrDictEffectInfo(make_dict_cnode->input(values_node_index), indexes);
-  }
-
-  EffectInfo TraceTupleListCNodeEffectInfo(const CNodePtr &cnode, std::stack<ValuePtr> *indexes) {
-    MS_EXCEPTION_IF_NULL(indexes);
-    MS_EXCEPTION_IF_NULL(cnode);
-    auto prim = GetCNodePrimitiveWithoutDoSignature(cnode);
-    constexpr int recursive_level = 2;
-    // Trace MakeTuple or MakeList.
-    if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
-      return TraceMakeTupleListEffectInfo(cnode, indexes);
-    }
-    // Trace MakeDict.
-    if (IsPrimitiveEquals(prim, prim::kPrimMakeDict)) {
-      return TraceMakeDictEffectInfo(cnode, indexes);
-    }
-    // Trace the case of tuple, list or dict nested.
-    if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem) || IsPrimitiveEquals(prim, prim::kPrimListGetItem) ||
-        IsPrimitiveEquals(prim, prim::kPrimDictGetItem)) {
-      return TraceGetItemEffectInfo(cnode, indexes);
-    }
-    if (IsPrimitiveEquals(prim, prim::kPrimDictGetValues) && IsPrimitiveCNode(cnode->input(1), prim::kPrimMakeDict)) {
-      auto make_dict_cnode = cnode->input(1)->cast<CNodePtr>();
-      constexpr size_t values_node_index = 2;
-      return TraceTupleListOrDictEffectInfo(make_dict_cnode->input(values_node_index), indexes);
-    }
-    if (IsPrimitiveEquals(prim, prim::kPrimDictItems)) {
-      return TraceDictItemsEffectInfo(cnode, indexes);
-    }
-    // Trace primitive propagating side effect from its input, such as Depend, etc.
-    int input_index = GetSideEffectPropagate(prim);
-    if (input_index > 0 && input_index < static_cast<int>(cnode->size())) {
-      return TraceTupleListOrDictEffectInfo(cnode->input(static_cast<size_t>(input_index)), indexes);
-    }
-    // Tuple returned from func graph call.
-    auto func_graph = GetFuncGraph(cnode);
-    if (func_graph != nullptr) {
-      return TraceTupleListOrDictEffectInfo(func_graph->output(), indexes);
-    }
-    // Tuple returned from a Switch call.
-    if (cnode->size() == 1 && IsPrimitiveCNode(cnode->input(0), prim::kPrimSwitch)) {
-      return TraceTupleFromSwitch(cnode->input(0)->cast<CNodePtr>(), *indexes);
-    }
-    // Tuple is returned from J().
-    //   %1 = J(primal)
-    //   tuple = %1(args)
-    if (cnode->size() > 0 && IsPrimitiveCNode(cnode->input(0), prim::kPrimJ)) {
-      MS_LOG(DEBUG) << "Tuple from J: " << cnode->DebugString(recursive_level);
-      constexpr size_t func_index = 1;
-      auto j_conde = cnode->input(0)->cast<CNodePtr>();
-      auto j_func = j_conde->input(func_index);
-      auto func_info = TraceEffectInfo(j_func);
-      // In order to add the Umonad arg to the bprop_top_cell in advance,
-      // so that the side effects in the bprop graph are sorted earlier than the side effects of the optimizer.
-      return {EffectInfo::kDetected, false, false, false, func_info.back_mem};
-    }
-    // Rare case.
-    MS_LOG(WARNING) << "Tuple untraceable from: " << cnode->DebugString(recursive_level);
-    return {EffectInfo::kDetected, false, false, false};
-  }
-
-  // Trace effect info from a Switch node that output is a tuple.
-  EffectInfo TraceTupleFromSwitch(const CNodePtr &switch_cnode, const std::stack<ValuePtr> &tuple_indexes) {
-    auto branches = GetSwitchBranches(switch_cnode);
-    EffectInfo info = {EffectInfo::kDetected, false, false, false, false};
-    for (auto &branch : branches) {
-      MS_EXCEPTION_IF_NULL(branch);
-      auto tuple_indexes_copy = tuple_indexes;
-      EffectInfo branch_info = TraceTupleListOrDictEffectInfo(branch->output(), &tuple_indexes_copy);
-      info.Merge(branch_info);
-    }
-    return info;
   }
 
   // Setup all branches according the effect info.
@@ -1052,6 +752,50 @@ class SideEffectFinder {
     return info;
   }
 
+  EffectInfo TraceGetItemEffectInfo(const CNodePtr &cnode) {
+    EffectInfo info{EffectInfo::kDetected, false, false, false, false};
+    auto abs = cnode->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    auto func = GetFuncFromAbstract(abs);
+    if (func != nullptr) {
+      info = ObtainEffectInfoForFuncGraph(func);
+    }
+    MS_LOG(INFO) << "CNode has no side effect: " << cnode->DebugString();
+    return info;
+  }
+
+  EffectInfo TraceSequenceEffectInfo(const CNodePtr &cnode) {
+    EffectInfo info{EffectInfo::kDetected, false, false, false, false};
+    for (size_t i = 1; i < cnode->size(); ++i) {
+      auto input_info = TraceEffectInfo(cnode->input(i));
+      info.Merge(input_info);
+    }
+    return info;
+  }
+
+  // Trace effect info from abstract of output of the cnode.
+  EffectInfo TraceOutputEffectInfo(const CNodePtr &cnode) {
+    auto abs = cnode->abstract();
+    MS_EXCEPTION_IF_NULL(abs);
+    EffectInfo info{EffectInfo::kDetected, false, false, false, false};
+    if (abs->isa<abstract::FuncGraphAbstractClosure>()) {
+      auto func = GetFuncFromAbstract(abs);
+      if (func != nullptr) {
+        info = TraceEffectInfo(func->output());
+      }
+    } else if (abs->isa<abstract::AbstractFuncUnion>()) {
+      auto func_union_abstract = dyn_cast<abstract::AbstractFuncUnion>(abs);
+      const auto &func_list = func_union_abstract->func_list();
+      for (auto func_abs : func_list) {
+        auto func = GetFuncFromAbstract(func_abs);
+        if (func != nullptr) {
+          info.Merge(TraceEffectInfo(func->output()));
+        }
+      }
+    }
+    return info;
+  }
+
   // Trace a cnode for effect info.
   EffectInfo TraceEffectInfoForCNode(const CNodePtr &cnode) {
     MS_EXCEPTION_IF_NULL(cnode);
@@ -1069,18 +813,12 @@ class SideEffectFinder {
     if (IsPrimitiveEquals(prim, prim::kPrimTupleGetItem) || IsPrimitiveEquals(prim, prim::kPrimListGetItem) ||
         IsPrimitiveEquals(prim, prim::kPrimDictGetItem)) {
       // Trace tuple_getitem or list_getitem or dict_getitem.
-      std::stack<ValuePtr> indexes;
-      return TraceGetItemEffectInfo(cnode, &indexes);
+      return TraceGetItemEffectInfo(cnode);
     }
 
     if (IsPrimitiveEquals(prim, prim::kPrimMakeTuple) || IsPrimitiveEquals(prim, prim::kPrimMakeList)) {
       // Trace make_tuple or make_list.
-      EffectInfo info{EffectInfo::kDetected, false, false, false, false};
-      for (size_t i = 1; i < cnode->size(); ++i) {
-        auto input_info = TraceEffectInfo(cnode->input(i));
-        info.Merge(input_info);
-      }
-      return info;
+      return TraceSequenceEffectInfo(cnode);
     }
 
     // For high-order primitive such as Partial,
@@ -1141,21 +879,6 @@ class SideEffectFinder {
     return {EffectInfo::kDetected, false, false, false, false};
   }
 
-  // Trace effect info from output of the cnode.
-  EffectInfo TraceOutputEffectInfo(const CNodePtr &cnode) {
-    MS_EXCEPTION_IF_NULL(cnode);
-    std::vector<ValuePtr> values;
-    GetOutputValues(cnode, &values);
-    if (values.size() == 1) {
-      return ObtainEffectInfoForValue(values.front());
-    }
-    EffectInfo info{EffectInfo::kDetected, false, false, false, false};
-    for (auto &value : values) {
-      info.Merge(ObtainEffectInfoForValue(value));
-    }
-    return info;
-  }
-
   EffectInfo ObtainEffectInfoForValue(const ValuePtr &value) {
     MS_EXCEPTION_IF_NULL(value);
     // FuncGraph.
@@ -1170,73 +893,6 @@ class SideEffectFinder {
     }
     MS_LOG(INFO) << "Value side effect unknown: " << value->ToString();
     return {EffectInfo::kDetected, false, false, false, false};
-  }
-
-  void GetOutputValues(const CNodePtr &cnode, std::vector<ValuePtr> *values) {
-    MS_EXCEPTION_IF_NULL(cnode);
-    // CNode is a func graph call.
-    auto graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
-    if (graph != nullptr) {
-      GetOutputValues(graph, values);
-      return;
-    }
-    // CNode is applying another cnode.
-    auto func_cnode = dyn_cast<CNode>(cnode->input(0));
-    if (func_cnode != nullptr) {
-      GetOutputValues(func_cnode, values);
-      return;
-    }
-    // Primitive cnode.
-    auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
-    if (IsPrimitiveEquals(prim, prim::kPrimSwitch)) {
-      // Switch.
-      auto branches = GetSwitchBranches(cnode);
-      GetOutputValues(branches, values);
-      return;
-    }
-    if (IsPrimitiveEquals(prim, prim::kPrimSwitchLayer)) {
-      // Switch layer.
-      auto branches = GetSwitchLayerBranches(cnode);
-      GetOutputValues(branches, values);
-      return;
-    }
-    if (IsPrimitiveEquals(prim, prim::kPrimPartial)) {
-      // Partial.
-      auto fg = GetValueNode<FuncGraphPtr>(cnode->input(1));
-      if (fg != nullptr) {
-        GetOutputValues(fg, values);
-        return;
-      }
-    }
-    // Other cases not supported yet.
-    MS_LOG(INFO) << "Output unknown: " << cnode->DebugString();
-  }
-
-  void GetOutputValues(const FuncGraphPtr &graph, std::vector<ValuePtr> *values) {
-    MS_EXCEPTION_IF_NULL(graph);
-    MS_EXCEPTION_IF_NULL(values);
-    auto output = graph->output();
-    // Output is a value node.
-    auto value = GetValueNode(output);
-    if (value != nullptr) {
-      (void)values->emplace_back(value);
-      return;
-    }
-
-    // Output is a cnode.
-    auto cnode = dyn_cast<CNode>(output);
-    if (cnode != nullptr) {
-      GetOutputValues(cnode, values);
-      return;
-    }
-    MS_EXCEPTION_IF_NULL(output);
-    MS_LOG(INFO) << "Unexpected output: " << output->DebugString();
-  }
-
-  void GetOutputValues(const std::vector<FuncGraphPtr> &graphs, std::vector<ValuePtr> *values) {
-    for (auto &graph : graphs) {
-      GetOutputValues(graph, values);
-    }
   }
 
   // Trace an AnfNode for effect info.
