@@ -108,7 +108,7 @@ bool CustomOpAclKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   auto input_names = GetValue<std::vector<std::string>>(input_names_v);
   for (size_t i = 0; i < inputs.size(); i++) {
     auto [acl_desc, acl_data] =
-      converter_->ConvertTensorToAclDesc(inputs[i], input_params_[i], input_names[i], nullptr);
+      converter_->ConvertTensorToAclDesc(inputs[i], input_params_[i], input_names[i], nullptr, true);
     converter_->runner().SetInput(i, acl_desc, acl_data);
   }
 
@@ -117,7 +117,7 @@ bool CustomOpAclKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
   auto output_names = GetValue<std::vector<std::string>>(output_names_v);
   for (size_t i = 0; i < outputs.size(); i++) {
     auto [acl_desc, acl_data] =
-      converter_->ConvertTensorToAclDesc(outputs[i], output_params_[i], output_names[i], nullptr);
+      converter_->ConvertTensorToAclDesc(outputs[i], output_params_[i], output_names[i], nullptr, false);
     converter_->runner().SetOutput(i, acl_desc, acl_data);
   }
 
