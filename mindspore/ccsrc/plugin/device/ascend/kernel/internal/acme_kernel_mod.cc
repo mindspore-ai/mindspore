@@ -187,7 +187,7 @@ void AcmeKernelMod::GetOrGenerateTiling(const std::vector<KernelTensor *> &input
     last_item_ = tiling_info_ptr;
   } else {
     acme_op_->SetTilingInfo(tiling_cache_item->tiling_info_);
-    workspace_size_list_ = tiling_cache_item->tiling_info_->host_run_info_->GetWorkspaceSize();
+    workspace_size_list_ = tiling_cache_item->tiling_info_->host_run_info_->GetWorkSpaceSize();
     last_item_ = tiling_cache_item;
   }
   acme_wss_addr_.resize(workspace_size_list_.size());
