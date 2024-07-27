@@ -19,6 +19,7 @@
 
 #include <set>
 #include <vector>
+#include <memory>
 #include "ops/ops_func_impl/ones.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 #include "ops/base_operator.h"
@@ -46,7 +47,7 @@ class MIND_API RandExtFuncImpl : public OnesFuncImpl {
     auto infer_type = TypeIdToType(static_cast<TypeId>(val));
     CheckAndConvertUtils::CheckTypeValid("dtype", infer_type, {kFloat16, kFloat32, kFloat64, kBFloat16},
                                          primitive->name());
-    return infer_type;
+    return std::make_shared<TensorType>(infer_type);
   }
 };
 }  // namespace ops
