@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace opt {
 void AddRecomputeSubGraphForBpNodes(const std::vector<CNodePtr> &origin_nodes_topological) {
-  std::vector<CNodePtr> candicate_bp_cnodes;
+  std::unordered_map<std::string, CNodePtr> candicate_bp_cnodes_hash_map;
   mindspore::HashMap<int32_t, std::vector<CNodePtr>> recomputed_block_node_in_orders;
   for (const auto &cnode : origin_nodes_topological) {
     if (cnode->HasAttr(kAttrDuplicated)) {
@@ -42,7 +42,7 @@ void AddRecomputeSubGraphForBpNodes(const std::vector<CNodePtr> &origin_nodes_to
         recomputed_block_node_in_orders[recompute_block_id].push_back(cnode);
       }
     } else {
-      candicate_bp_cnodes.push_back(cnode);
+      candicate_bp_cnodes_hash_map[GetValue<std::string>(cnode->GetPrimalAttr(kPrimalAttrForwardUniqueId))] = cnode;
     }
   }
 
@@ -53,15 +53,10 @@ void AddRecomputeSubGraphForBpNodes(const std::vector<CNodePtr> &origin_nodes_to
       if (!recomputed_cnode->HasPrimalAttr(kPrimalAttrUniqueId)) {
         continue;
       }
-      for (const auto &candi_node : candicate_bp_cnodes) {
-        if (!candi_node->HasPrimalAttr(kPrimalAttrForwardUniqueId)) {
-          continue;
-        }
-        if (GetValue<std::string>(candi_node->GetPrimalAttr(kPrimalAttrForwardUniqueId)) !=
-            GetValue<std::string>(recomputed_cnode->GetPrimalAttr(kPrimalAttrUniqueId))) {
-          continue;
-        }
-        candi_node->AddAttr(kAttrRecomputeSubGraph, MakeValue<size_t>(recomputed_sub_graph_id));
+      auto unique_id = GetValue<std::string>(recomputed_cnode->GetPrimalAttr(kPrimalAttrUniqueId));
+      auto iter = candicate_bp_cnodes_hash_map.find(unique_id);
+      if (iter != candicate_bp_cnodes_hash_map.end()) {
+        iter->second->AddAttr(kAttrRecomputeSubGraph, MakeValue<size_t>(recomputed_sub_graph_id));
       }
     }
   }
