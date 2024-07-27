@@ -58,9 +58,10 @@ std::string GetNewStr(std::string origin_str) {
 void FindTargetNode(std::vector<AnfNodePtr> *origin_nodes_topological, std::map<std::string, AnfNodePtr> *grad_fa_map,
                     std::map<std::string, AnfNodePtr> *grad_recv_map, std::map<std::string, AnfNodePtr> *grad_send_map,
                     CNodePtr *loss_node) {
+  auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
   for (auto &anf_node : *origin_nodes_topological) {
     CNodePtr node = anf_node->cast<CNodePtr>();
-    if (node != nullptr && node->HasPrimalAttr(FLASH_LOSS_NODE)) {
+    if (node != nullptr && node->HasPrimalAttr(FLASH_LOSS_NODE) && pipeline_stages <= 1) {
       (*loss_node) = node;
     }
     if (!IsPrimitiveCNode(node, prim::kPrimReceive) && !IsPrimitiveCNode(node, prim::kPrimSend) &&

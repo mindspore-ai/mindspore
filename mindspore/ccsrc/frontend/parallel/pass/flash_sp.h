@@ -35,8 +35,8 @@ class FlashSPInfo {
  public:
   explicit FlashSPInfo(CNodePtr fa_score_node);
   ~FlashSPInfo() = default;
-  int64_t GetSPNum() const { return flashsp_num_; }
-  int64_t GetRankId() const { return dev_rank_id_; }
+  size_t GetSPNum() const { return flashsp_num_; }
+  size_t GetRankId() const { return dev_rank_id_; }
   int64_t GetSendRankId() const { return send_rank_id_; }
   int64_t GetRecvRankId() const { return recv_rank_id_; }
   int64_t actual_seq_length_size() const { return actual_seq_length_size_; }
@@ -49,10 +49,10 @@ class FlashSPInfo {
   }
 
  private:
-  int64_t flashsp_num_;
+  size_t flashsp_num_;
   int64_t send_rank_id_;
   int64_t recv_rank_id_;
-  int64_t dev_rank_id_;
+  size_t dev_rank_id_;
   int64_t actual_seq_length_size_;
 };
 }  // namespace parallel
