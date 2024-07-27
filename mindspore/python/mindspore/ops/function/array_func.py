@@ -329,7 +329,7 @@ def arange_ext(start=0, end=None, step=1, *, dtype=None):
         [7 5 3]
         >>> print(output.dtype)
         Int64
-        >>> output = ops.arange_ext(12, 2, -1, dtype=ms.bfloat16))
+        >>> output = ops.arange_ext(12, 2, -1, dtype=ms.bfloat16)
         >>> print(output)
         [12. 11. 10.  9.  8.  7.  6.  5.  4.  3.]
         >>> print(output.dtype)
