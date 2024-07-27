@@ -191,13 +191,15 @@ Status SharedMemoryQueue::Serialize(const TensorRow &in_row) {
   uint32_t tensor_row_flag = in_row.Flags();
   int ret_code =
     memcpy_s(reinterpret_cast<char *>(shm_addr_) + offset, kTensorRowType, &tensor_row_flag, kTensorRowType);
-  CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "memcpy_s the flag of TensorRow failed.");
+  CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK,
+                               "memcpy_s the flag of TensorRow failed. err code: " + std::to_string(ret_code));
   offset += kTensorRowType;
 
   uint32_t tensor_row_size = in_row.size();
   ret_code = memcpy_s(reinterpret_cast<char *>(shm_addr_) + offset, kTensorSizeInTensorRow, &tensor_row_size,
                       kTensorSizeInTensorRow);
-  CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "memcpy_s the size of TensorRow failed.");
+  CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK,
+                               "memcpy_s the size of TensorRow failed. err code: " + std::to_string(ret_code));
   offset += kTensorSizeInTensorRow;
 
   for (auto &item : in_row) {
@@ -206,7 +208,8 @@ Status SharedMemoryQueue::Serialize(const TensorRow &in_row) {
       tensor_inner_type = kPythonDictObject;
     }
     ret_code = memcpy_s(reinterpret_cast<char *>(shm_addr_) + offset, kTensorType, &tensor_inner_type, kTensorType);
-    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "memcpy_s the type of Tensor failed.");
+    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK,
+                                 "memcpy_s the type of Tensor failed. err code: " + std::to_string(ret_code));
     offset += kTensorType;
 
     if (tensor_inner_type == kNormalCTensor) {  // tensor is normal data_ or python_array_
@@ -214,12 +217,14 @@ Status SharedMemoryQueue::Serialize(const TensorRow &in_row) {
       auto tensor_shape_size = item->shape().Size();
       ret_code =
         memcpy_s(reinterpret_cast<char *>(shm_addr_) + offset, kTensorShapeDims, &tensor_shape_size, kTensorShapeDims);
-      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "memcpy_s the size of Tensor's shape failed.");
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK,
+                                   "memcpy_s the size of Tensor's shape failed. err code: " + std::to_string(ret_code));
       offset += kTensorShapeDims;
 
       for (auto &shape : item->shape().AsVector()) {
         ret_code = memcpy_s(reinterpret_cast<char *>(shm_addr_) + offset, kTensorShapeType, &shape, kTensorShapeType);
-        CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "memcpy_s the shape of Tensor's shape[i] failed.");
+        CHECK_FAIL_RETURN_UNEXPECTED(
+          ret_code == EOK, "memcpy_s the shape of Tensor's shape[i] failed. err code: " + std::to_string(ret_code));
         offset += kTensorShapeType;
       }
 
@@ -227,26 +232,31 @@ Status SharedMemoryQueue::Serialize(const TensorRow &in_row) {
       auto tensor_data_type = (uint32_t)item->type().value();
       ret_code =
         memcpy_s(reinterpret_cast<char *>(shm_addr_) + offset, kTensorDataType, &tensor_data_type, kTensorDataType);
-      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "memcpy_s the data type of Tensor failed.");
+      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK,
+                                   "memcpy_s the data type of Tensor failed. err code: " + std::to_string(ret_code));
       offset += kTensorDataType;
     }
 
     // copy the data
     int64_t data_len = item->SizeInBytes();
     ret_code = memcpy_s(reinterpret_cast<char *>(shm_addr_) + offset, kTensorDataLen, &data_len, kTensorDataLen);
-    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "memcpy_s the size of Tensor's data failed.");
+    CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK,
+                                 "memcpy_s the size of Tensor's data failed. err code: " + std::to_string(ret_code));
     offset += kTensorDataLen;
 
-    if (data_len < SECUREC_MEM_MAX_LEN) {
-      ret_code = memcpy_s(reinterpret_cast<char *>(shm_addr_) + offset, data_len,
-                          reinterpret_cast<char *>(item->GetMutableBuffer()), data_len);
-      CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK, "memcpy_s the data type of Tensor failed.");
-    } else {
-      auto ret_memcpy = memcpy(reinterpret_cast<char *>(shm_addr_) + offset,
-                               reinterpret_cast<char *>(item->GetMutableBuffer()), data_len);
-      CHECK_FAIL_RETURN_UNEXPECTED(ret_memcpy == item->GetMutableBuffer(), "memcpy the data type of Tensor failed.");
+    if (data_len != 0) {
+      if (data_len < SECUREC_MEM_MAX_LEN) {
+        ret_code = memcpy_s(reinterpret_cast<char *>(shm_addr_) + offset, data_len,
+                            reinterpret_cast<char *>(item->GetMutableBuffer()), data_len);
+        CHECK_FAIL_RETURN_UNEXPECTED(ret_code == EOK,
+                                     "memcpy_s the data type of Tensor failed. err code: " + std::to_string(ret_code));
+      } else {
+        auto ret_memcpy = memcpy(reinterpret_cast<char *>(shm_addr_) + offset,
+                                 reinterpret_cast<char *>(item->GetMutableBuffer()), data_len);
+        CHECK_FAIL_RETURN_UNEXPECTED(ret_memcpy == item->GetMutableBuffer(), "memcpy the data type of Tensor failed.");
+      }
+      offset += static_cast<uint64_t>(data_len);
     }
-    offset += static_cast<uint64_t>(data_len);
     if (tensor_inner_type == kNormalCTensor) {
       // normal array
       MS_LOG(DEBUG) << "Row shape: " << item->shape() << ", row type: " << item->type()
@@ -303,8 +313,13 @@ Status SharedMemoryQueue::Deserialize(TensorRow *in_row) {
       offset += kTensorDataLen;
 
       std::shared_ptr<Tensor> output_tensor;
-      RETURN_IF_NOT_OK(Tensor::CreateFromMemory(
-        tensor_shape, tensor_type, reinterpret_cast<unsigned char *>(shm_addr_) + offset, *data_len, &output_tensor));
+      uint64_t update_data_len = *data_len;
+      if (*data_len == 0 && tensor_type.IsString()) {
+        update_data_len = (tensor_shape.NumOfElements() + 1) * kOffsetSize + tensor_shape.NumOfElements();
+      }
+      RETURN_IF_NOT_OK(Tensor::CreateFromMemory(tensor_shape, tensor_type,
+                                                reinterpret_cast<unsigned char *>(shm_addr_) + offset, update_data_len,
+                                                &output_tensor));
       in_row->push_back(output_tensor);
       offset += *data_len;
       MS_LOG(DEBUG) << "Row shape: " << tensor_shape << ", row type: " << tensor_type << ", row data len: " << *data_len

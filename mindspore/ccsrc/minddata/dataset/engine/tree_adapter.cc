@@ -538,9 +538,15 @@ Status TreeAdapter::LaunchSubprocess() {
   auto ret = tree_->Launch();
   if (ret != Status::OK()) {
     // here should prompt error because it's in subprocess
-    MS_LOG(ERROR) << "[Independent Dataset Process] Process pid: " << std::to_string(process_id_) << ", launch failed.";
+    MS_LOG(ERROR) << "[Independent Dataset Process] Process pid: " << std::to_string(process_id_)
+                  << ", parent pid: " << std::to_string(parent_process_id_) << ", launch failed.";
 
-    // send the INDEPENDENT ERROR flag to main process
+    // send the INDEPENDENT error message to main process
+    if (message_queue.SerializeStatus(ret) != Status::OK()) {
+      MS_LOG(EXCEPTION) << "[Independent Dataset Process] Process pid: " << std::to_string(process_id_)
+                        << ", parent pid: " << std::to_string(parent_process_id_) << ", thread id: " << ss.str()
+                        << " serialize Status failed.";
+    }
     message_queue.MsgSnd(kWorkerErrorMsg);
 
     // Infinite loop
@@ -564,12 +570,18 @@ Status TreeAdapter::LaunchSubprocess() {
     sleep(main_thread_sleep_interval);
 
     // got error from dataset pipeline
-    if (tree_->AllTasks()->GetTaskErrorIfAny() != Status::OK()) {
+    ret = tree_->AllTasks()->GetTaskErrorIfAny();
+    if (ret != Status::OK()) {
       MS_LOG(ERROR) << "[Independent Dataset Process] Process pid: " << std::to_string(process_id_)
                     << ", parent pid: " << std::to_string(parent_process_id_) << ", thread id: " << ss.str()
-                    << ". Got error info in independent dataset pipeline. Process will exit.";
+                    << ". Got error info in independent dataset pipeline.";
 
-      // send the INDEPENDENT ERROR flag to main process
+      // send the INDEPENDENT error message to main process
+      if (message_queue.SerializeStatus(ret) != Status::OK()) {
+        MS_LOG(EXCEPTION) << "[Independent Dataset Process] Process pid: " << std::to_string(process_id_)
+                          << ", parent pid: " << std::to_string(parent_process_id_) << ", thread id: " << ss.str()
+                          << " serialize Status failed.";
+      }
       message_queue.MsgSnd(kWorkerErrorMsg);
       break;
     }
@@ -579,7 +591,7 @@ Status TreeAdapter::LaunchSubprocess() {
     if (state == MessageQueue::State::kReleased) {
       MS_LOG(INFO) << "[Independent Dataset Process] Process pid: " << std::to_string(process_id_)
                    << ", parent pid: " << std::to_string(parent_process_id_) << ", thread id: " << ss.str()
-                   << ". Message queue had been released by main process. Process will exit.";
+                   << ". Message queue had been released by main process.";
       tree_->AllTasks()->interrupt_all();
       break;
     }

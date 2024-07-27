@@ -92,9 +92,9 @@ class DATASET_API SharedMemoryQueue {
 
   uint64_t GetShmSize();
 
- private:
   Status ReleaseCurrentShm();
 
+ private:
   Status CreateShmBySize(const uint64_t &size);
 
   Status UpdateShmBySize(const uint64_t &size);

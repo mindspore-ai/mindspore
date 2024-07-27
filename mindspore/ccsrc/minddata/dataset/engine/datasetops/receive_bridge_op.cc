@@ -39,7 +39,7 @@ ReceiveBridgeOp::ReceiveBridgeOp(int32_t op_connector_size, SharedMemoryQueue re
       receive_queue_(receive_queue),
       msg_queue_(msg_queue),
       subprocess_pid_(-1),
-      subprocess_status_(true) {
+      err_status_(Status::OK()) {
   receive_info_.normal_row_.sample_ = 0;
   receive_info_.normal_row_.row_step_ = ReceiveBridgeOp::RowStep::kNone;
   receive_info_.eoe_row_.sample_ = 0;
@@ -92,26 +92,34 @@ void ReceiveBridgeOp::Print(std::ostream &out, bool show_all) const {
 
 Status ReceiveBridgeOp::MonitorIndependentDatasetProcess() {
   TaskManager::FindMe()->Post();
+
   while (!tree_->isFinished()) {
     RETURN_IF_INTERRUPTED();
     if (MonitorSubprocess(subprocess_pid_) != Status::OK() && receive_info_.eof_row_.row_step_ == 0) {
-      MS_LOG(WARNING) << "The independent dataset process: " << std::to_string(subprocess_pid_)
-                      << " exits, and the main process exits.";
-      subprocess_status_ = false;
+      err_status_ = STATUS_ERROR(StatusCode::kMDUnexpectedError,
+                                 "The independent dataset process: " + std::to_string(subprocess_pid_) +
+                                   " exits, and the main process will exits.");
       break;
     }
 
     // get error flag from dataset independent process
-    if (msg_queue_.MsgRcv(111, IPC_NOWAIT) > 0) {
-      MS_LOG(ERROR) << "The independent dataset process occur errors.";
+    if (msg_queue_.MsgRcv(kWorkerErrorMsg, IPC_NOWAIT) > 0) {
+      err_status_ = msg_queue_.DeserializeStatus();
       break;
     }
     sleep(1);  // check the independent dataset process status in every 1s
   }
 
-  // del the message queue id
+  // release the message queue
   msg_queue_.SetReleaseFlag(true);
-  msg_queue_.~MessageQueue();
+
+  // this will break hung by MsgRcv which is in ReceiveBridgeOp::operator()
+  msg_queue_.ReleaseQueue();
+
+  // release the shm memory queue
+  if (receive_queue_.ReleaseCurrentShm() != Status::OK()) {
+    MS_LOG(ERROR) << "Release the shm memory failed.";
+  }
 
   // Quit all workers, this code might never be reached if EpochCtrl is -1.
   for (int32_t wkr_id = 0; wkr_id < num_workers_; wkr_id++) {
@@ -133,12 +141,13 @@ Status ReceiveBridgeOp::operator()() {
   TaskManager::FindMe()->Post();
 
   // Get msg from the independent dataset process by msg_queue_
+  receive_info_.normal_row_.sample_ = 0;
   receive_info_.normal_row_.row_step_ = ReceiveBridgeOp::RowStep::kBeginReceiveMsg;
   auto status = msg_queue_.MsgRcv(kWorkerSendDataMsg);
   if (status != Status::OK()) {
-    tree_->SetFinished();
-    if (subprocess_status_ == false) {
-      RETURN_STATUS_UNEXPECTED("Independent Dataset Process reports an error and exit.");
+    if (err_status_ != Status::OK()) {
+      MS_LOG(INFO) << "The independent dataset process exit, please check the error message.";
+      return err_status_;
     } else {
       return status;
     }
@@ -171,9 +180,9 @@ Status ReceiveBridgeOp::operator()() {
       // Get msg from the independent dataset process by msg_queue_
       status = msg_queue_.MsgRcv(kWorkerSendDataMsg);
       if (status != Status::OK()) {
-        tree_->SetFinished();
-        if (subprocess_status_ == false) {
-          RETURN_STATUS_UNEXPECTED("Independent Dataset Process reports an error and exit.");
+        if (err_status_ != Status::OK()) {
+          MS_LOG(INFO) << "The independent dataset process exit, please check the error message.";
+          return err_status_;
         } else {
           return status;
         }
@@ -198,9 +207,9 @@ Status ReceiveBridgeOp::operator()() {
     receive_info_.eoe_row_.row_step_ = ReceiveBridgeOp::RowStep::kBeginReceiveMsg;
     status = msg_queue_.MsgRcv(kWorkerSendDataMsg);
     if (status != Status::OK()) {
-      tree_->SetFinished();
-      if (subprocess_status_ == false) {
-        RETURN_STATUS_UNEXPECTED("Independent Dataset Process reports an error and exit.");
+      if (err_status_ != Status::OK()) {
+        MS_LOG(INFO) << "The independent dataset process exit, please check the error message.";
+        return err_status_;
       } else {
         return status;
       }
