@@ -188,6 +188,7 @@ install(
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/mint
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/multiprocessing
     ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/hal
+    ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/utils
     DESTINATION ${INSTALL_PY_DIR}
     COMPONENT mindspore
 )
