@@ -1126,7 +1126,8 @@ def set_offload_context(offload_config):
 
     Note:
         The offload configuration is only used if the memory offload feature is enabled
-        via mindspore.set_context(memory_offload="ON").
+        via mindspore.set_context(memory_offload="ON"), and the memory_optimize_level must be set to O0. On the Ascend
+        hardware platform, the graph compilation level must be O0.
 
     Args:
         offload_config (dict): A dict contains the keys and values for setting the offload context
