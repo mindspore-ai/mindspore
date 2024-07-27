@@ -30,7 +30,8 @@ from mindspore.version import __version__
 from mindspore.profiler import Profiler, EnvProfiler
 from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_algo_parameters, \
     rank_list_for_transform, transform_checkpoint_by_rank, transform_checkpoints, merge_pipeline_strategys, shard, \
-    Layout, sync_pipeline_shared_parameters, parameter_broadcast, load_segmented_checkpoints
+    Layout, sync_pipeline_shared_parameters, parameter_broadcast, load_segmented_checkpoints, \
+    safetensors_to_ckpt, ckpt_to_safetensors
 from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType
 from mindspore.safeguard import obfuscate_ckpt, load_obf_params_into_net
 from mindspore._check_jit_forbidden_api import get_obj_module_and_name_info, is_jit_forbidden_module, \

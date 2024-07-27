@@ -92,6 +92,7 @@ mindspore
     mindspore.async_ckpt_thread_status
     mindspore.build_searched_strategy
     mindspore.check_checkpoint
+    mindspore.ckpt_to_safetensors
     mindspore.convert_model
     mindspore.export
     mindspore.load
@@ -107,6 +108,7 @@ mindspore
     mindspore.parse_print
     mindspore.rank_list_for_transform
     mindspore.restore_group_info_list
+    mindspore.safetensors_to_ckpt
     mindspore.save_checkpoint
     mindspore.save_mindir
     mindspore.transform_checkpoint_by_rank

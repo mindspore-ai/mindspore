@@ -24,7 +24,6 @@ from mindspore.parallel._tensor import _get_tensor_strategy, _construct_from_to_
     _generate_transform_operator_stack, _apply_tensor_transform_operators, _construct_tensor_layout_for_opt_shard, \
     _extract_layout_item
 
-
 MAX_PATH_LENGTH = 1024
 
 
@@ -174,6 +173,8 @@ def _build_json_strategy(strategy_filename):
 
 def _build_searched_strategy(strategy_filename):
     """build searched strategy"""
+    if strategy_filename is None:
+        return strategy_filename
     _check_strategy_file(strategy_filename)
     if strategy_filename[-5:] != ".json":
         return _build_protobuf_strategy(strategy_filename)
@@ -239,7 +240,10 @@ def _extract_layout_map(strategy_file, rank_id=None):
     """Extract layout map"""
     layout_map = None
     if strategy_file is not None:
-        src_strategy = _build_searched_strategy(strategy_file)
+        if not isinstance(strategy_file, dict):
+            src_strategy = _build_searched_strategy(strategy_file)
+        else:
+            src_strategy = strategy_file
         layout_map = _convert_to_list(src_strategy, rank_id)
     return layout_map
 
@@ -248,7 +252,10 @@ def _extract_pipeline_stage_num(strategy_file):
     """extract pipeline stage num"""
     pipeline_stage_num = 1
     if strategy_file is not None:
-        src_strategy = _build_searched_strategy(strategy_file)
+        if not isinstance(strategy_file, dict):
+            src_strategy = _build_searched_strategy(strategy_file)
+        else:
+            src_strategy = strategy_file
         layout_map = _convert_to_list(src_strategy)
         pipeline_stage_set = set()
         for _, layout in layout_map.items():
@@ -323,7 +330,10 @@ def _get_device_num_from_strategy(strategy_file=None):
     """Get device num from strategy file"""
     if strategy_file is None:
         return 1
-    src_strategy = _build_searched_strategy(strategy_file)
+    if not isinstance(strategy_file, dict):
+        src_strategy = _build_searched_strategy(strategy_file)
+    else:
+        src_strategy = strategy_file
     strategy_list = _convert_to_list(src_strategy)
     device_mat = list(strategy_list.values())[0][0]
     return np.prod(device_mat)
@@ -432,7 +442,6 @@ def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, s
             raise ValueError("The checkpoint of rank {} is missing.".format(rank_id % device_num))
         param_rank_map = _get_needed_rank_transform_operator_map_by_layouts(from_tensor_layout, to_tensor_layout,
                                                                             device_list, rank_id)
-
 
         from_info_tuple = (from_opt_shard_size, from_dev_matrix, from_tensor_map, from_full_tensor_shape)
         to_info_tuple = (to_opt_shard_size, to_dev_matrix_origin, to_tensor_map_origin, origin_tensor_shape)

@@ -1,7 +1,7 @@
 mindspore.save_checkpoint
 =========================
 
-.. py:function:: mindspore.save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM", choice_func=None, crc_check=False, **kwargs)
+.. py:function:: mindspore.save_checkpoint(save_obj, ckpt_file_name, integrated_save=True, async_save=False, append_dict=None, enc_key=None, enc_mode="AES-GCM", choice_func=None, crc_check=False, format="ckpt", **kwargs)
 
     将网络权重保存到checkpoint文件中。
 
@@ -18,6 +18,7 @@ mindspore.save_checkpoint
         - **enc_mode** (str) - 该参数在 `enc_key` 不为 ``None`` 时有效，指定加密模式，目前仅支持 ``"AES-GCM"`` ， ``"AES-CBC"`` 和 ``"SM4-CBC"`` 。默认值： ``"AES-GCM"`` 。
         - **choice_func** (function) - 一个用于自定义控制保存参数的函数。函数的输入值为字符串类型的Parameter名称，并且返回值是一个布尔值。如果返回 ``True`` ，则匹配自定义条件的Parameter将被保存。 如果返回 ``False`` ，则未匹配自定义条件的Parameter不会被保存。默认值： ``None`` 。
         - **crc_check** (bool) - 是否在保存checkpoint时进行crc32校验，并把计算结果写到文件中。默认值： ``False`` 。
+        - **format** (str) - 输出文件的格式，可以是 "ckpt" 或 "safetensors"。默认值：``"ckpt"``。
         - **kwargs** (dict) - 配置选项字典。
 
     异常：

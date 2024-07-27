@@ -1,7 +1,7 @@
 mindspore.load_checkpoint
 ==========================
 
-.. py:function:: mindspore.load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None, crc_check=False, remove_redundancy=False)
+.. py:function:: mindspore.load_checkpoint(ckpt_file_name, net=None, strict_load=False, filter_prefix=None, dec_key=None, dec_mode="AES-GCM", specify_prefix=None, choice_func=None, crc_check=False, remove_redundancy=False, format="ckpt")
 
     加载checkpoint文件。
 
@@ -21,6 +21,7 @@ mindspore.load_checkpoint
         - **choice_func** (Union[None, function]) - 函数的输入值为字符串类型的Parameter名称，并且返回值是一个布尔值。如果返回 ``True`` ，则匹配自定义条件的Parameter将被加载。 如果返回 ``False`` ，则匹配自定义条件的Parameter将被删除。默认值： ``None`` 。
         - **crc_check** (bool) - 是否在加载checkpoint时进行crc32校验。默认值： ``False`` 。
         - **remove_redundancy** (bool) - 是否开启加载去冗余保存的checkpoint。去冗余是指去除数据并行模式下的冗余数据。默认值： ``false``，不开启去冗余加载。
+        - **format** (str) - 输入文件的格式，可以是 "ckpt" 或 "safetensors"。默认值：``"ckpt"``。
 
     返回：
         字典，key是参数名称，value是Parameter类型。当使用 :func:`mindspore.save_checkpoint` 的 `append_dict` 参数和 :class:`mindspore.train.CheckpointConfig` 的 `append_info` 参数保存

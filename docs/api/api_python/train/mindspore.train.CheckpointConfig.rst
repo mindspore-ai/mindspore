@@ -1,7 +1,7 @@
 mindspore.train.CheckpointConfig
 ================================
 
-.. py:class:: mindspore.train.CheckpointConfig(save_checkpoint_steps=1, save_checkpoint_seconds=0, keep_checkpoint_max=5, keep_checkpoint_per_n_minutes=0, integrated_save=True, async_save=False, saved_network=None, append_info=None, enc_key=None, enc_mode='AES-GCM', exception_save=False, crc_check=False, remove_redundancy=False, **kwargs)
+.. py:class:: mindspore.train.CheckpointConfig(save_checkpoint_steps=1, save_checkpoint_seconds=0, keep_checkpoint_max=5, keep_checkpoint_per_n_minutes=0, integrated_save=True, async_save=False, saved_network=None, append_info=None, enc_key=None, enc_mode='AES-GCM', exception_save=False, crc_check=False, remove_redundancy=False, format="ckpt", **kwargs)
 
     保存checkpoint时的配置策略。
 
@@ -23,6 +23,7 @@ mindspore.train.CheckpointConfig
         - **exception_save** (bool) - 当有异常发生时，是否保存当前checkpoint文件。默认值： ``False`` 。
         - **crc_check** (bool) - 是否在保存checkpoint时进行crc32计算，并将计算结果保存到ckpt尾部。默认值： ``False`` 。
         - **remove_redundancy** (bool) - 是否开启去冗余保存checkpoint。去冗余是指去除数据并行模式下的冗余数据。默认值： ``false``，不开启去冗余保存。
+        - **format** (str) - 输出文件的格式，可以是 "ckpt" 或 "safetensors"。默认值：``"ckpt"``。
         - **kwargs** (dict) - 配置选项字典。
 
     异常：
