@@ -990,6 +990,9 @@ bool ShapeMapIsDynamicShape(std::map<std::string, std::vector<int64_t>> input_sh
 }
 
 int ConverterImpl::UnifyInputShape(const std::shared_ptr<ConverterPara> &param) {
+  if (param->device.find("Ascend") == std::string::npos) {
+    return RET_OK;
+  }
   auto input_shape_param = param->input_shape;
   std::string input_shape_config_str = "";
   auto config_infos = param->config_infos;
@@ -1044,7 +1047,7 @@ std::string ConvertMapToString(const std::map<std::string, std::vector<int64_t>>
 }
 
 int ConverterImpl::RecordSupportedDynamicDims(const std::shared_ptr<ConverterPara> &param, FuncGraphPtr func_graph) {
-  if (param->device != "Ascend") {
+  if (param->device.find("Ascend") == std::string::npos) {
     return RET_OK;
   }
   std::string input_shape_config_str = "";
