@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,6 +222,7 @@ class FuncGraphSpecializer : public std::enable_shared_from_this<FuncGraphSpecia
   // Try to build unique argvals from the broaded arg vals if it is unique.
   std::pair<AbstractBasePtrList, AbstractBasePtr> BuildFromBroadedArgs(const EvaluatorPtr &eval);
   void UpdateNewCNodeInputs(const AnfNodePtr &node, const AnfNodePtr &new_node);
+  bool GetIgnoreBuildValueFlag(const AnfNodePtr &node_input);
 };
 using FuncGraphSpecializerPtr = std::shared_ptr<FuncGraphSpecializer>;
 }  // namespace abstract

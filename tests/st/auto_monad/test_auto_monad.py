@@ -20,6 +20,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 import mindspore.ops.operations as P
+import mindspore.ops as ops
 import mindspore.nn as nn
 import mindspore.common.dtype as mstype
 from mindspore.nn import Cell
@@ -1955,3 +1956,93 @@ def test_return_none_with_side_effect_mutil_func():
     res = net(input_x)
     assert res[0] == 4
     assert res[1] == 12
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bprop_print_func():
+    """
+    Feature: Support side effect node in bprop.
+    Description: Support side effect node in bprop.
+    Expectation: No exception.
+    """
+
+    print_data = P.Print()
+    def my_print(data):
+        print_data(data)
+
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            return x, y
+        def bprop(self, x, y, out, dout):
+            my_print(x)
+            dx = x + 1
+            dy = y + 1
+            return dx, dy
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation(get_all=True)
+
+        def construct(self, x, y):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(x, y)
+
+
+    cap = Capture()
+    with capture(cap):
+        x = ms.Tensor([1], dtype=ms.int32)
+        y = ms.Tensor([2], dtype=ms.int32)
+        out = GradNet(Net())(x, y)
+        assert out[0] == (x + 1)
+        assert out[1] == (y + 1)
+        sys.stdout.flush()
+        time.sleep(0.1)
+
+    patterns = {'Tensor(shape=[1], dtype=Int32, value=[1])'}
+    check_output(cap.output, patterns)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bprop_assign_func():
+    """
+    Feature: Support side effect node in bprop.
+    Description: Support side effect node in bprop.
+    Expectation: No exception.
+    """
+
+    assign_data = P.Assign()
+    def my_assign(param, data):
+        assign_data(param, data)
+
+    class Net(nn.Cell):
+        def construct(self, x, y):
+            return x, y
+
+        def bprop(self, x, y, out, dout):
+            my_assign(x, y * 2)
+            dx = x + 1
+            dy = y + 1
+            return dx, dy
+
+    class GradNet(nn.Cell):
+        def __init__(self, net):
+            super(GradNet, self).__init__()
+            self.net = net
+            self.grad_op = ops.GradOperation(get_all=True)
+
+        def construct(self, x, y):
+            gradient_function = self.grad_op(self.net)
+            return gradient_function(x, y)
+
+    x = Parameter(Tensor([1], dtype=ms.int32), name='para')
+    y = ms.Tensor([2], dtype=ms.int32)
+    out = GradNet(Net())(x, y)
+    print("out:", out)
+    assert out[0] == 5
+    assert out[1] == 3

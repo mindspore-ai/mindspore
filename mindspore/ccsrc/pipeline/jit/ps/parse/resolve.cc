@@ -887,6 +887,7 @@ bool ResolveFuncGraph(const FuncGraphPtr &func_graph, const pipeline::ResourceBa
 
   MS_EXCEPTION_IF_NULL(opt_resolve);
   (void)opt_resolve->step(func_graph, use_profile);
+  func_graph->PresetCertainSideEffect();
   return true;
 }
 

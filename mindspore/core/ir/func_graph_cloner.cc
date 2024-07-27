@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,6 +146,13 @@ void Cloner::CloneCNodeWithoutInputs(const AnfNodePtr &node, const FuncGraphPtr 
     scope = ((node->scope() == kDefaultScope) && (this->scope() != nullptr)) ? this->scope() : node->scope();
   }
   new_node->set_scope(scope);
+  auto new_cnode = new_node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(new_cnode);
+  new_cnode->set_has_side_effect_node(old_node->has_side_effect_node());
+  if (old_node->has_side_effect_node()) {
+    target->set_has_side_effect_node(true);
+    MS_LOG(DEBUG) << "Set isolated side-effect node flag for " << target->ToString();
+  }
   replicated_node_[node] = std::move(new_node);
 }
 

@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -440,12 +440,19 @@ class MS_CORE_API FuncGraph : public FuncGraphBase, public EffectInfoHolder {
   void set_reserved(bool reserved) { reserved_ = reserved; }
   bool reserved() const { return reserved_; }
 
+  // Process the side effect information for func_graph.
+  void PresetCertainSideEffect();
+
  private:
   // Only used for func_graph manager to control resource free.
   void IncAttachedMngCnt() { attached_mng_cnt_++; }
   void DecAttachedMngCnt() { attached_mng_cnt_--; }
   // Clear all info from manager.
   void ClearAllResource();
+
+  bool HasIsolatedSideEffectNode();
+  bool CheckSideEffect(const AnfNodePtr &input);
+  bool IsSideEffectCNode(const AnfNodePtr &node);
 
   // Graph is manipulated by manager and others.
   friend FuncGraphManager;

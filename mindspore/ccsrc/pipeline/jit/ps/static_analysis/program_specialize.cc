@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -981,6 +981,26 @@ void FuncGraphSpecializer::EliminateUnusedSequenceItem(const CNodePtr &cnode) co
   }
 }
 
+bool FuncGraphSpecializer::GetIgnoreBuildValueFlag(const AnfNodePtr &node_input) {
+  bool ignore_build_value = false;
+  MS_EXCEPTION_IF_NULL(specializer_->engine());
+  bool back_prop = false;
+  if (node_input->isa<CNode>()) {
+    auto func = node_input->cast<CNodePtr>()->func_graph();
+    back_prop = func->has_flag(mindspore::kFuncGraphFlagBackPropEntry);
+  }
+  bool need_check_side_effect = specializer_->engine()->check_side_effect() || back_prop;
+  if (need_check_side_effect) {
+    auto cnode_input = dyn_cast_ptr<CNode>(node_input);
+    ignore_build_value = (cnode_input != nullptr && cnode_input->has_side_effect_node());
+    if (ignore_build_value) {
+      MS_LOG(INFO) << "Don't build value node for CNode which contains isolated side-effect inputs, node: "
+                   << cnode_input->DebugString() << ", flag: " << cnode_input->has_side_effect_node();
+    }
+  }
+  return ignore_build_value;
+}
+
 void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   ScopeGuard scope_guard(node->scope());
@@ -1041,17 +1061,8 @@ void FuncGraphSpecializer::ProcessNode(const AnfNodePtr &node) {
       real_abs = abs->inplace_abstract();
       MS_LOG(INFO) << "Use inplace abstract, " << abs->ToString() << " -> " << real_abs->ToString();
     }
-    bool ignore_build_value = false;
+    bool ignore_build_value = GetIgnoreBuildValueFlag(node_input);
     AnfNodePtr replace_node = nullptr;
-    MS_EXCEPTION_IF_NULL(specializer_->engine());
-    if (specializer_->engine()->check_side_effect()) {
-      auto cnode_input = dyn_cast_ptr<CNode>(node_input);
-      ignore_build_value = (cnode_input != nullptr && cnode_input->has_side_effect_node());
-      if (ignore_build_value) {
-        MS_LOG(INFO) << "Don't build value node for CNode which contains isolated side-effect inputs, node: "
-                     << cnode_input->DebugString() << ", flag: " << cnode_input->has_side_effect_node();
-      }
-    }
     if (!ignore_build_value) {
       // First try to check if node_input can be replaced by a ValueNode. If cannot, then try to check if
       // can be replaced by another CNode from anfnode_config_map, otherwise use the replicated node.

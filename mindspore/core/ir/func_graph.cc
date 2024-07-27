@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2023 Huawei Technologies Co., Ltd
+ * Copyright 2019-2024 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@
 #include "abstract/abstract_function.h"
 #include "ir/func_graph_cloner.h"
 #include "utils/phase.h"
+#include "frontend/operator/composite/unpack_call.h"
+#include "mindspore/core/ops/sequence_ops.h"
 
 namespace mindspore {
 /*
@@ -902,6 +904,105 @@ void FuncGraph::set_used_forward_nodes(const AnfNodePtrList &used_forward_nodes)
 }
 
 AnfNodePtrList FuncGraph::TopoSort(const AnfNodePtr &node) { return mindspore::TopoSort(node); }
+
+bool FuncGraph::IsSideEffectCNode(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  const auto &primitive = GetCNodePrimitiveWithoutDoSignature(node);
+  if (primitive != nullptr) {
+    auto effect_info = GetPrimEffectInfo(primitive);
+    if (effect_info.memory || effect_info.io) {
+      MS_LOG(DEBUG) << "Side Effect Primitive CNode: " << node->DebugString();
+      node->cast<CNodePtr>()->set_has_side_effect_node(true);
+      return true;
+    }
+  } else if (node->isa<CNode>()) {
+    // Call side effect node.
+    auto first_node = node->cast<CNodePtr>()->input(0);
+    if (first_node->isa<CNode>() && IsSideEffectCNode(first_node)) {
+      first_node->cast<CNodePtr>()->set_has_side_effect_node(true);
+      node->cast<CNodePtr>()->set_has_side_effect_node(true);
+      MS_LOG(DEBUG) << "Side Effect Primitive CNode: " << first_node->DebugString();
+      MS_LOG(DEBUG) << "Side Effect Primitive CNode: " << node->DebugString();
+      return true;
+    }
+  }
+  return false;
+}
+
+bool FuncGraph::CheckSideEffect(const AnfNodePtr &input) {
+  if (IsSideEffectCNode(input)) {
+    MS_LOG(DEBUG) << "Multiple side-effect node: " << input->DebugString();
+    return true;
+  }
+  // Process {Depend -> StopGradient -> MakeTuple(call function, ...)}.
+  if (input->isa<CNode>()) {
+    auto fn_input = input->cast<CNodePtr>()->input(0);
+    if (IsValueNode<prim::UnpackCall>(fn_input)) {
+      fn_input = input->cast<CNodePtr>()->input(1);
+    }
+    if (IsValueNode<FuncGraph>(fn_input)) {
+      auto func = GetValueNode<FuncGraphPtr>(fn_input);
+      if (IsSideEffectCNode(func->output()) || func->HasIsolatedSideEffectNode()) {
+        MS_LOG(DEBUG) << "Single nested side-effect node: " << input->DebugString();
+        input->cast<CNodePtr>()->set_has_side_effect_node(true);
+        if (func->output()->isa<CNode>()) {
+          func->output()->cast<CNodePtr>()->set_has_side_effect_node(true);
+        }
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool FuncGraph::HasIsolatedSideEffectNode() {
+  const auto node = output();
+  if (!IsPrimitiveCNode(node, prim::kPrimDepend)) {
+    return false;
+  }
+  auto cnode = dyn_cast<CNode>(node);
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto attr_sort_rhs_first = cnode->GetAttr(kAttrTopoSortRhsFirst);
+  auto sort_rhs_first =
+    attr_sort_rhs_first != nullptr && attr_sort_rhs_first->isa<BoolImm>() && GetValue<bool>(attr_sort_rhs_first);
+  if (!sort_rhs_first) {
+    // Return false if it's definitely not side-effect Depend CNode.
+    return false;
+  }
+
+  // To check side-effect nodes in {Depend -> StopGradient -> MakeTuple(...)}.
+  constexpr size_t stop_gradient_pos = 2;
+  auto stop_gradient_node = cnode->input(stop_gradient_pos);
+  auto stop_gradient_cnode = dyn_cast<CNode>(stop_gradient_node);
+  MS_EXCEPTION_IF_NULL(stop_gradient_cnode);
+  constexpr size_t isolated_node_pos = 1;
+  auto isolated_node = stop_gradient_cnode->input(isolated_node_pos);
+  MS_EXCEPTION_IF_NULL(isolated_node);
+  if (CheckSideEffect(isolated_node)) {
+    stop_gradient_cnode->set_has_side_effect_node(true);
+    return true;
+  }
+  if (IsPrimitiveCNode(isolated_node, prim::kPrimMakeTuple)) {
+    auto isolated_cnode = dyn_cast<CNode>(isolated_node);
+    MS_EXCEPTION_IF_NULL(isolated_cnode);
+    for (size_t i = 1; i < isolated_cnode->size(); ++i) {
+      auto input = isolated_cnode->input(i);
+      if (CheckSideEffect(input)) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+// Mark the side effect at output and func graph for later constant folding.
+void FuncGraph::PresetCertainSideEffect() {
+  if (!HasIsolatedSideEffectNode()) {
+    return;
+  }
+  set_has_side_effect_node(true);
+  MS_LOG(DEBUG) << "Set isolated side-effect node flag for " << ToString();
+}
 
 SeenNum NewFgSeenGeneration() {
   static SeenNum fg_seen_generation = 0;
