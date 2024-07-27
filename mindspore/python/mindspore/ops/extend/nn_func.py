@@ -287,7 +287,7 @@ def max_pool2d(input, kernel_size, stride=None, padding=0, dilation=1, *, ceil_m
         >>> from mindspore import Tensor, ops
         >>> input = Tensor(np.arange(20 * 16 * 50 * 32).reshape((20, 16, 50, 32)), mindspore.float32)
         >>> output_tensor, argmax = ops.extend.max_pool2d(input, kernel_size=(3, 2), stride=(2, 1),
-                                                          ceil_mode=False, return_indices=True)
+        ...                                               ceil_mode=False, return_indices=True)
         >>> print(output_tensor.shape)
         (20, 16, 24, 31)
         >>> print(argmax.shape)
