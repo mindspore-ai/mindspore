@@ -6,7 +6,7 @@ mindspore.set_offload_context
     配置异构训练详细参数，来调整offload策略。
 
     .. note::
-        offload配置只有在通过mindspore.set_context(memory_offload="ON")开启offload功能才会被使用。
+        offload配置只有在通过mindspore.set_context(memory_offload="ON")开启offload功能才会被使用，并且memory_optimize_level必须设置为O0。在Ascend硬件平台上，图编译等级必须为O0。
 
     参数：
         - **offload_config** (dict) - 输入格式为{"offload_path": "./offload","offload_cpu_size":"512GB","hbm_ratio":0.9}。支持以下参数配置：
