@@ -143,10 +143,6 @@ bool GetStageDependList(std::string depend_config_path, bool *get_full_op_name_l
 }
 
 void MergeCsv(std::vector<string> csv_path_list, string csv_full_path) {
-  auto ret = FileUtils::GetRealPath(csv_full_path.c_str());
-  if (!ret.has_value()) {
-    MS_LOG(EXCEPTION) << "Cannot get real path of full csv file.";
-  }
   std::ofstream file(csv_full_path, std::ios::out | std::ios::trunc);
   file << "name"
        << ","
@@ -218,10 +214,6 @@ bool CustomDefinedDepend::Run(const FuncGraphPtr &graph) {
     for (int64_t i = 0; i <= graph_id_; i++) {
       std::string csv_path_part =
         json_dir.value() + "/rank_id" + rank_id + "/custom_depend_graph_" + std::to_string(i) + ".csv";
-      ret = FileUtils::GetRealPath(csv_path_part.c_str());
-      if (!ret.has_value()) {
-        MS_LOG(EXCEPTION) << "Cannot get real path of csv file.";
-      }
       if (FileExists(csv_path_part)) {
         (void)csv_path_list.emplace_back(csv_path_part);
       }
