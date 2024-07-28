@@ -78,7 +78,7 @@ FlashSPInfo::FlashSPInfo(CNodePtr fa_score_node) {
   auto rankList = flash_score_info_ptr->GetSPRankList();
   size_t pos = -1;
   for (size_t i = 0; i < rankList.size(); ++i) {
-    if (dev_rank_id_ == rankList[i]) {
+    if (dev_rank_id_ == LongToSize(rankList[i])) {
       pos = i;
     }
   }
@@ -762,13 +762,13 @@ void DismantleRecvOMLTensor(const AnfNodePtr &recv_oml_tensor, CNodePtr *cur_att
                                            {q_shape[0], q_shape[1], q_shape[2], q_shape[3] + 16}, {1, 1, 1, 1});
 }
 
-int64_t GetSendQKVDstRank(int64_t rank, size_t step, int64_t sp_size) { return (rank + step + 1) % sp_size; }
+int64_t GetSendQKVDstRank(size_t rank, size_t step, size_t sp_size) { return (rank + step + 1) % sp_size; }
 
-int64_t GetRecvQKVSrcRank(int64_t rank, size_t step, int64_t sp_size) { return (rank + sp_size - step - 1) % sp_size; }
+int64_t GetRecvQKVSrcRank(size_t rank, size_t step, size_t sp_size) { return (rank + sp_size - step - 1) % sp_size; }
 
-int64_t GetSendOMLDstRank(int64_t rank, size_t step, int64_t sp_size) { return (rank + sp_size - step) % sp_size; }
+int64_t GetSendOMLDstRank(size_t rank, size_t step, size_t sp_size) { return (rank + sp_size - step) % sp_size; }
 
-int64_t GetRecvOMLSrcRank(int64_t rank, size_t step, int64_t sp_size) { return (rank + step) % sp_size; }
+int64_t GetRecvOMLSrcRank(size_t rank, size_t step, size_t sp_size) { return (rank + step) % sp_size; }
 
 enum TagType {
   query = 0,
