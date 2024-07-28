@@ -111,7 +111,7 @@ class BACKEND_EXPORT DumpJsonParser {
     DUMP_LITE_EXCEPTION = 4
   };
   enum JosonSampleMode { DUMP_NORMAL = 0, DUMP_HEAD_AND_TAIL = 1 };
-  static bool IsAclDump();
+  static bool IsGeDump();
   nlohmann::json GetKernelsJson() { return kernels_json_; }
   std::map<std::string, std::regex> GetKernelRegs() { return kernel_regs_; }
   std::map<std::string, uint32_t> GetKernelStrs() { return kernel_strings_; }

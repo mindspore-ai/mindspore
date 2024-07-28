@@ -73,3 +73,31 @@ def test_exception_dump():
                 time.sleep(2)
         check_dump_structure(dump_path, dump_config_path, 1, 1, 1, execution_history=False)
         del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_single
+def test_acl_dump_exception():
+    """
+    Feature: Test exception dump.
+    Description: abnormal node should be dumped.
+    Expectation: The exception data is save.
+    """
+    if sys.platform != 'linux':
+        return
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'test_acl_dump_exception')
+        dump_config_path = os.path.join(tmp_dir, 'test_acl_dump_exception.json')
+        generate_dump_json(dump_path, dump_config_path, 'test_acl_dump_exception', 'exception_data')
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        exec_network_cmd = ('cd {0}; python -c "from test_exception_dump import run_exception_net;'
+                            'run_exception_net()"').format(os.getcwd())
+        _ = os.system(exec_network_cmd)
+        exception_file_path = "./extra-info"
+        for _ in range(3):
+            if not os.path.exists(exception_file_path):
+                time.sleep(2)
+        assert os.path.exists(exception_file_path)
+        del os.environ['MINDSPORE_DUMP_CONFIG']

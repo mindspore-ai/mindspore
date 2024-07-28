@@ -39,9 +39,6 @@
 namespace mindspore {
 namespace runtime {
 void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &graphs, bool is_kbyk) {
-  std::string env_enable_str = common::GetEnv("MS_ACL_DUMP_CFG_PATH");
-  std::string dump_enable_str = common::GetEnv("MINDSPORE_DUMP_CONFIG");
-
   std::vector<std::string> all_kernel_names;
   for (const auto &graph : graphs) {
     auto all_kernels = graph->execution_order();
@@ -58,11 +55,11 @@ void DebugActor::ACLDump(uint32_t device_id, const std::vector<KernelGraphPtr> &
     auto graph = graphs[0];
     is_dataset_sink = graph->IsDatasetGraph();
   }
+  auto enable_ge_dump = common::GetEnv("ENABLE_MS_GE_DUMP");
   if (DumpJsonParser::GetInstance().async_dump_enabled() &&
-      ((DumpJsonParser::GetInstance().IsDumpIter(step_count_num) && is_kbyk) ||
-       (env_enable_str == dump_enable_str && !is_kbyk))) {
+      ((DumpJsonParser::GetInstance().IsDumpIter(step_count_num) && is_kbyk) || (enable_ge_dump != "1" && !is_kbyk))) {
     bool is_init = false;
-    if ((env_enable_str == dump_enable_str) && !(DumpJsonParser::GetInstance().IsDumpIter(step_count_num))) {
+    if ((enable_ge_dump != "1") && !(DumpJsonParser::GetInstance().IsDumpIter(step_count_num))) {
       is_init = true;
     } else {
       std::string dump_path = DumpJsonParser::GetInstance().path();
@@ -224,7 +221,7 @@ void DebugActor::DebugOnStepBegin(const std::vector<KernelGraphPtr> &graphs,
   if ((profiler == nullptr || !profiler->IsInitialized()) &&
       device_ctx_->GetDeviceType() == device::DeviceType::kAscend) {
     auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    if (common::GetEnv("MS_ACL_DUMP_CFG_PATH") == common::GetEnv("MINDSPORE_DUMP_CONFIG")) {
+    if (common::GetEnv("ENABLE_MS_GE_DUMP") != "1") {
       ACLDump(device_id, graphs, is_kbyk);
     }
   }

@@ -95,12 +95,13 @@ def check_ge_dump_structure_acl(dump_path, num_iteration, device_num=1, check_ov
     assert os.path.isdir(dump_path)
     iteration_path = os.path.join(dump_path, str(num_iteration))
     assert os.path.isdir(iteration_path)
+    dump_device_num = 0
     sub_paths = os.listdir(iteration_path)
     for sub_path in sub_paths:
         time_path = os.path.join(iteration_path, sub_path)
         assert os.path.isdir(time_path)
         device_paths = os.listdir(time_path)
-        assert len(device_paths) == device_num
+        dump_device_num += len(device_paths)
         for device_path in device_paths:
             assert device_path.isdigit()
             abs_device_path = os.path.join(time_path, device_path)
@@ -109,6 +110,7 @@ def check_ge_dump_structure_acl(dump_path, num_iteration, device_num=1, check_ov
                 check_acldump_wholegraph(abs_device_path, check_overflow, saved_data)
             else:
                 check_aclnn_dump(abs_device_path)
+    assert dump_device_num == device_num
 
 
 def run_ge_dump(test_name):
@@ -119,6 +121,7 @@ def run_ge_dump(test_name):
         dump_config_path = os.path.join(tmp_dir, 'ge_dump.json')
         generate_dump_json(dump_path, dump_config_path, test_name)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        os.environ['ENABLE_MS_GE_DUMP'] = "1"
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
         add = Net()
@@ -141,9 +144,10 @@ def run_ge_dump(test_name):
             assert (y_output == y).all()
             assert (add_output == output.asnumpy()).all()
         del os.environ['MINDSPORE_DUMP_CONFIG']
+        del os.environ['ENABLE_MS_GE_DUMP']
 
 
-def run_ge_dump_complex(test_name, dtype):
+def run_ge_dump_complex(test_name, dtype, enable_ge_dump=True):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(jit_level="O2")
     with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
@@ -151,6 +155,8 @@ def run_ge_dump_complex(test_name, dtype):
         dump_config_path = os.path.join(tmp_dir, 'ge_dump.json')
         generate_dump_json(dump_path, dump_config_path, test_name)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        if enable_ge_dump:
+            os.environ['ENABLE_MS_GE_DUMP'] = "1"
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
         add = Net()
@@ -176,6 +182,8 @@ def run_ge_dump_complex(test_name, dtype):
         assert (y_output == y_complex).all()
         assert (add_output == output.asnumpy()).all()
         del os.environ['MINDSPORE_DUMP_CONFIG']
+        if enable_ge_dump:
+            del os.environ['ENABLE_MS_GE_DUMP']
 
 
 def run_ge_dump_acl(test_name):
@@ -186,7 +194,6 @@ def run_ge_dump_acl(test_name):
         dump_config_path = os.path.join(tmp_dir, 'acl_dump.json')
         generate_dump_json(dump_path, dump_config_path, test_name)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
-        os.environ['MS_ACL_DUMP_CFG_PATH'] = dump_config_path
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
         os.mkdir(dump_path)
@@ -194,7 +201,6 @@ def run_ge_dump_acl(test_name):
         add(Tensor(x), Tensor(y))
         check_ge_dump_structure_acl(dump_path, 0, 1)
         del os.environ['MINDSPORE_DUMP_CONFIG']
-        del os.environ['MS_ACL_DUMP_CFG_PATH']
 
 
 @pytest.mark.level1
@@ -211,9 +217,7 @@ def test_ge_dump():
     run_ge_dump("test_ge_dump")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ge_dump_acl():
@@ -225,9 +229,7 @@ def test_ge_dump_acl():
     run_ge_dump_acl("test_acl_dump")
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ge_dump_acl_assign_ops_by_regex():
@@ -271,6 +273,7 @@ def test_ge_dump_net_multi_layer_mode1():
         json_file_path = os.path.join(tmp_dir, "test_ge_dump_net_multi_layer_mode1.json")
         generate_dump_json(dump_path, json_file_path, 'test_ge_dump_net_multi_layer_mode1', 'test')
         os.environ['MINDSPORE_DUMP_CONFIG'] = json_file_path
+        os.environ['ENABLE_MS_GE_DUMP'] = "1"
         weight = Tensor(np.ones((1000, 2048)).astype(np.float32))
         bias = Tensor(np.ones((1000,)).astype(np.float32))
         net = ReluReduceMeanDenseRelu(weight, bias, 2048, 1000)
@@ -285,6 +288,7 @@ def test_ge_dump_net_multi_layer_mode1():
         _ = train_network(inputs, label)
         check_ge_dump_structure(dump_path, 1, 1)
         del os.environ['MINDSPORE_DUMP_CONFIG']
+        del os.environ['ENABLE_MS_GE_DUMP']
 
 
 @pytest.mark.level1
@@ -304,6 +308,7 @@ def test_ge_dump_with_diagnostic_path():
         dump_config_path = os.path.join(tmp_dir, 'ge_dump.json')
         generate_dump_json('', dump_config_path, 'test_ge_dump')
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        os.environ['ENABLE_MS_GE_DUMP'] = "1"
         diagnose_path = os.path.join(tmp_dir, 'ge_dump')
         os.environ['MS_DIAGNOSTIC_DATA_PATH'] = diagnose_path
         add = Net()
@@ -312,6 +317,7 @@ def test_ge_dump_with_diagnostic_path():
         check_ge_dump_structure(dump_path, 1, 1)
         del os.environ['MINDSPORE_DUMP_CONFIG']
         del os.environ['MS_DIAGNOSTIC_DATA_PATH']
+        del os.environ['ENABLE_MS_GE_DUMP']
 
 
 def run_overflow_dump():
@@ -325,6 +331,7 @@ def run_overflow_dump():
         dump_config_path = os.path.join(tmp_dir, 'overflow_dump.json')
         generate_dump_json_with_overflow(dump_path, dump_config_path, 'test_ge_dump', 3)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        os.environ['ENABLE_MS_GE_DUMP'] = "1"
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
         add = Net()
@@ -333,6 +340,7 @@ def run_overflow_dump():
         print("output_np: ", output_np)
         check_ge_dump_structure(dump_path, 1, 1, True)
         del os.environ['MINDSPORE_DUMP_CONFIG']
+        del os.environ['ENABLE_MS_GE_DUMP']
 
 
 def run_saved_data_dump_test_bf16(scenario, saved_data):
@@ -344,6 +352,7 @@ def run_saved_data_dump_test_bf16(scenario, saved_data):
         dump_config_path = os.path.join(tmp_dir, 'test_saved_data.json')
         generate_statistic_dump_json(dump_path, dump_config_path, scenario, saved_data)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        os.environ['ENABLE_MS_GE_DUMP'] = "1"
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
 
@@ -376,6 +385,7 @@ def run_saved_data_dump_test_bf16(scenario, saved_data):
                     assert row[8] == "bfloat16"
                     break
         del os.environ['MINDSPORE_DUMP_CONFIG']
+        del os.environ['ENABLE_MS_GE_DUMP']
 
 
 @pytest.mark.level0
@@ -417,7 +427,7 @@ def run_train():
     add(Tensor(x), Tensor(y))
 
 
-def run_saved_data_dump_test(scenario, saved_data):
+def run_saved_data_dump_test(scenario, saved_data, enable_ge_dump=True):
     """Run dump on GE backend, testing statistic dump"""
     if sys.platform != 'linux':
         return
@@ -426,10 +436,17 @@ def run_saved_data_dump_test(scenario, saved_data):
         dump_config_path = os.path.join(tmp_dir, 'test_saved_data.json')
         generate_statistic_dump_json(dump_path, dump_config_path, scenario, saved_data)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        if enable_ge_dump:
+            os.environ['ENABLE_MS_GE_DUMP'] = "1"
         exec_network_cmd = 'cd {0}; python -c "from test_ge_dump import run_train; run_train()"'.format(os.getcwd())
         _ = os.system(exec_network_cmd)
-        check_ge_dump_structure(dump_path, 1, 1, saved_data=saved_data)
+        if enable_ge_dump:
+            check_ge_dump_structure(dump_path, 1, 1, saved_data=saved_data)
+        else:
+            check_ge_dump_structure_acl(dump_path, 0, 1, False, saved_data)
         del os.environ['MINDSPORE_DUMP_CONFIG']
+        if enable_ge_dump:
+            del os.environ['ENABLE_MS_GE_DUMP']
 
 
 @pytest.mark.level0
@@ -551,19 +568,15 @@ def run_ge_dump_acl_dynamic_shape(test_name):
         dump_config_path = os.path.join(tmp_dir, 'acl_dump.json')
         generate_dump_json(dump_path, dump_config_path, test_name)
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
-        os.environ['MS_ACL_DUMP_CFG_PATH'] = dump_config_path
         if os.path.isdir(dump_path):
             shutil.rmtree(dump_path)
         os.mkdir(dump_path)
         train_dynamic_net()
         check_ge_dump_structure_acl(dump_path, 0, 1, saved_data="tensor", is_kbk=True)
         del os.environ['MINDSPORE_DUMP_CONFIG']
-        del os.environ['MS_ACL_DUMP_CFG_PATH']
 
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.level1
 @pytest.mark.env_onecard
 @security_off_wrap
 def test_ge_dump_acl_dynamic_shape():
@@ -573,3 +586,127 @@ def test_ge_dump_acl_dynamic_shape():
     Expectation: dump data are generated as protobuf file format (suffix with timestamp)
     """
     run_ge_dump_acl_dynamic_shape("test_acl_dump_dynamic_shape")
+
+
+def run_overflow_acl_dump():
+    """Run async dump and generate overflow"""
+    if sys.platform != 'linux':
+        return
+    context.set_context(mode=mindspore.GRAPH_MODE, jit_level="O2")
+    overflow_x = np.array([60000, 60000]).astype(np.float16)
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
+        dump_path = os.path.join(tmp_dir, 'overflow_dump')
+        dump_config_path = os.path.join(tmp_dir, 'overflow_dump.json')
+        generate_dump_json_with_overflow(dump_path, dump_config_path, 'test_overflow_acl_dump', 3)
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        if os.path.isdir(dump_path):
+            shutil.rmtree(dump_path)
+        add = Net()
+        output = add(Tensor(overflow_x), Tensor(overflow_x))
+        output_np = output.asnumpy()
+        print("output_np: ", output_np)
+        check_ge_dump_structure_acl(dump_path, 0, 1, True)
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_overflow_acl_dump():
+    """
+    Feature: overflow dump using acl dump.
+    Description: test acl dump with  overflow dump enabled.
+    Expectation:overflow  dump data are generated.
+    """
+    run_overflow_acl_dump()
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_acl_statistic_dump():
+    """
+    Feature: Ascend Statistics Dump on GE backend
+    Description: Test Ascend statistics dump
+    Expectation: Statistics are stored in statistic.csv files
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_saved_data_dump_test('test_acl_dump', 'statistic', False)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_acl_tensor_dump():
+    """
+    Feature: Ascend Tensor Dump on GE backend
+    Description: Test Ascend tensor dump
+    Expectation: Tensors are stored in npy files
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_saved_data_dump_test('test_acl_dump', 'tensor', False)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_acl_full_dump():
+    """
+    Feature: Ascend Full Dump on GE backend
+    Description: Test Ascend full dump
+    Expectation: Tensors are stored in npy files and their statistics stored in statistic.csv
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    run_saved_data_dump_test('test_acl_dump', 'full', False)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_acl_dump_complex64():
+    """
+    Feature:acl dump on Ascend.
+    Description: test acl dump with file_format set to npy in complex64 dtype
+    Expectation: dump data are generated as npy files, and the value is correct
+    """
+    run_ge_dump_complex("test_acl_dump_complex", "complex64", False)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_acl_dump_complex128():
+    """
+    Feature: acl dump on Ascend.
+    Description: test acl dump with file_format set to npy in complex128 dtype
+    Expectation: dump data are generated as npy files, and the value is correct
+    """
+    run_ge_dump_complex("test_acl_dump_complex", "complex128", False)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@security_off_wrap
+def test_acl_dump_with_diagnostic_path():
+    """
+    Feature: acl dump  when the MS_DIANOSTIC_DATA_PATH is set.
+    Description: Test acl dump when path is not set (set to empty) in dump json file and
+     MS_DIAGNOSTIC_DATA_PATH is set.
+    Expectation: Data is expected to be dumped into MS_DIAGNOSTIC_DATA_PATH/debug_dump.
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+    context.set_context(jit_level="O2")
+    with tempfile.TemporaryDirectory(dir='/tmp') as tmp_dir:
+        dump_config_path = os.path.join(tmp_dir, 'acl_dump.json')
+        generate_dump_json('', dump_config_path, 'test_acl_dump')
+        os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
+        diagnose_path = os.path.join(tmp_dir, 'acl_dump')
+        os.environ['MS_DIAGNOSTIC_DATA_PATH'] = diagnose_path
+        add = Net()
+        add(Tensor(x), Tensor(y))
+        dump_path = os.path.join(diagnose_path, 'debug_dump')
+        check_ge_dump_structure_acl(dump_path, 0, 1)
+        del os.environ['MINDSPORE_DUMP_CONFIG']
+        del os.environ['MS_DIAGNOSTIC_DATA_PATH']

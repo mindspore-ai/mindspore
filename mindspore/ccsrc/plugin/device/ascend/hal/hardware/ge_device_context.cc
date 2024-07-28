@@ -337,8 +337,10 @@ void GeDeviceContext::GetGeOptions(const std::shared_ptr<MsContext> &ms_context_
   MS_EXCEPTION_IF_NULL(ge_options);
 
   SetHcclOptions(ms_context_ptr, ge_options);
-  SetDumpOptions(ge_options);
-
+  auto enable_ge_dump = common::GetEnv("ENABLE_MS_GE_DUMP");
+  if (enable_ge_dump == "1") {
+    SetDumpOptions(ge_options);
+  }
   (*ge_options)["ge.exec.jobId"] = "0";
   MS_LOG(INFO) << "Set ge.exec.jobId to default value 0";
 
@@ -382,7 +384,7 @@ void GeDeviceContext::SetDumpOptions(std::map<std::string, std::string> *ge_opti
   // set up dump options
   auto &dump_parser = DumpJsonParser::GetInstance();
   dump_parser.Parse();
-  if (dump_parser.async_dump_enabled() && !dump_parser.IsAclDump()) {
+  if (dump_parser.async_dump_enabled()) {
     (*ge_options)["ge.exec.enableDump"] = std::to_string(static_cast<int>(dump_parser.async_dump_enabled()));
     auto dump_path = FileUtils::CreateNotExistDirs(dump_parser.path());
     if (!dump_path.has_value()) {
