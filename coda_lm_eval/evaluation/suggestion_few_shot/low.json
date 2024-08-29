@@ -1,0 +1,5 @@
+{
+    "reference": "The ego car should maintain a safe distance from the white SUV ahead, and prepare to navigate around the roadwork or damaged road surface. It should also observe for any instructions from the traffic lights once they become visible.",
+    "prediction": "The ego car should maintain a safe distance from the other cars and the truck to avoid collisions. It should be cautious of pedestrians and cyclists, as they might be crossing the street or sharing the road and follow the speed limits and any posted road signs to ensure a safe driving experience for all road users.",
+    "response": "The prediction text deviates from the reference text by introducing irrelevant elements like pedestrians, cyclists, road signs, and a truck, while omitting key details like roadwork and traffilc light. It always describes general safe driving practices, lacking the specific analysis required for the given scenario. So, Rating: [[2]]"
+}
