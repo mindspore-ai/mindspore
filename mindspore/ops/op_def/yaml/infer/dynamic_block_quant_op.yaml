@@ -1,0 +1,29 @@
+#operator dynamic_block_quant
+dynamic_block_quant:
+  args:
+    x:
+      dtype: tensor
+    min_scale:
+      dtype: float
+      default: 0.0
+    round_mode:
+      dtype: str
+      default: "'rint'"
+    dst_type:
+      dtype: TypeId
+      default: mstype.float8_e5m2
+      arg_handler: dtype_to_type_id
+    row_block_size:
+      dtype: int
+      default: 1
+    col_block_size:
+      dtype: int
+      default: 128
+  returns:
+    y:
+      dtype: tensor
+    scale:
+      dtype: tensor
+  dispatch:
+    enable: True
+    Ascend: DynamicBlockQuantAscend

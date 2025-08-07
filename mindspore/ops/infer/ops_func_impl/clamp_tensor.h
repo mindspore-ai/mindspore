@@ -18,19 +18,15 @@
 #define MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_CLAMP_TENSOR_H_
 
 #include <vector>
-#include "mindapi/base/macros.h"
-#include "infer/ops_func_impl/binary_op.h"
+#include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
 class OPS_API ClampTensorFuncImpl : public OpFuncImpl {
  public:
-  TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-  BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
-
-  // simply infer
-  ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
-  TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
+  ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
+  std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
+  bool GeneralInferRegistered() const override { return true; }
 };
 }  // namespace ops
 }  // namespace mindspore

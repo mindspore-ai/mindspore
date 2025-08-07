@@ -13,149 +13,114 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <vector>
-#include <memory>
-#include "ir/tensor_new.h"
-#include "common/common_test.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
-#include "ir/primitive.h"
-#include "abstract/abstract_value.h"
-#include "include/backend/common/pass_manager/helper.h"
-#include "ops/test_ops.h"
-#include "infer/ops_func_impl/clamp_scalar.h"
-#include "infer/ops_func_impl/clamp_tensor.h"
+#include "ops/utils/general_infer_utils.h"
 #include "ops/test_value_utils.h"
-#include "ops/test_ops_cmp_utils.h"
 
+namespace mindspore::ops {
+namespace {
+std::vector<GeneralInferParam> prepare_clamp_tensor_params() {
+  GeneralInferParamGenerator generator;
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{3, 4, 5}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{3, 4, 1}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{3, 1, 5}, kNumberTypeFloat32}})
+    .FeedExpectedOutput({{3, 4, 5}}, {kNumberTypeFloat32});
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{3, 4, 5}, kNumberTypeInt64},
+                    InferInfoParam{ShapeVector{3, 4, 1}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{3, 1, 5}, kNumberTypeFloat32}})
+    .FeedExpectedOutput({{3, 4, 5}}, {kNumberTypeFloat32});
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{3, 4, 5}, kNumberTypeInt64},
+                    InferInfoParam{ShapeVector{3, 4, 1}, kNumberTypeInt64},
+                    InferInfoParam{ShapeVector{3, 1, 5}, kNumberTypeInt64}})
+    .FeedExpectedOutput({{3, 4, 5}}, {kNumberTypeInt64});
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{3, 4, 5}, kNumberTypeFloat16},
+                    InferInfoParam{ShapeVector{3, 4, 1}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{3, 1, 5}, kNumberTypeFloat32}})
+    .FeedExpectedOutput({{3, 4, 5}}, {kNumberTypeFloat32});
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{-1, -1, -1}, kNumberTypeInt32},
+                    InferInfoParam{ShapeVector{1}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{1}, kNumberTypeFloat32}})
+    .FeedExpectedOutput({{-1, -1, -1}}, {kNumberTypeFloat32});
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{-2}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{1}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{1}, kNumberTypeFloat32}})
+    .FeedExpectedOutput({{-2}}, {kNumberTypeFloat32});
 
-namespace mindspore {
-namespace ops {
-struct ClampShapeParams {
-  ShapeVector x_shape;
-  TypePtr x_type;
-  ShapeVector min_shape;
-  TypePtr min_type;
-  ShapeVector max_shape;
-  TypePtr max_type;
-};
-
-class TestClampTensor : public TestOps, public testing::WithParamInterface<ClampShapeParams> {};
-
-TEST_P(TestClampTensor, clamp_dyn_shape) {
-  const auto &param = GetParam();
-  auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
-  auto min = std::make_shared<abstract::AbstractTensor>(param.min_type, param.min_shape);
-  auto max = std::make_shared<abstract::AbstractTensor>(param.max_type, param.max_shape);
-
-  auto expect_shape = std::make_shared<abstract::Shape>(param.x_shape);
-  auto expect_type = std::make_shared<TensorType>(param.x_type);
-
-  ClampTensorFuncImpl clamp_func_impl;
-  auto prim = std::make_shared<Primitive>("ClampTensor");
-
-  auto out_dtype = clamp_func_impl.InferType(prim, {x, min, max});
-  ASSERT_TRUE(*out_dtype == *expect_type);
-  auto out_shape = clamp_func_impl.InferShape(prim, {x, min, max});
-  ASSERT_TRUE(*out_shape == *expect_shape);
+  // Exception: min and max are both None.
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{3, 4, 5}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{}, kMetaTypeNone, mindspore::kNone},
+                    InferInfoParam{ShapeVector{}, kMetaTypeNone, mindspore::kNone}})
+    .CaseShouldThrow();
+  // Exception: bool dtype is not allowed.
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{3, 4, 5}, kNumberTypeBool},
+                    InferInfoParam{ShapeVector{3, 4, 1}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{3, 1, 5}, kNumberTypeFloat32}})
+    .CaseShouldThrow();
+  // Exception: min shape can not broadcast to input shape.
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{2, 3}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{4}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{1}, kNumberTypeFloat32}})
+    .CaseShouldThrow();
+  return generator.Generate();
 }
 
-class TestClampTensorSimpleInfer : public TestOps, public testing::WithParamInterface<ClampShapeParams> {};
+std::vector<GeneralInferParam> prepare_clamp_scalar_params() {
+  GeneralInferParamGenerator generator;
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{3, 4, 5}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<float>(0.0f)},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<float>(1.0f)}})
+    .FeedExpectedOutput({{3, 4, 5}}, {kNumberTypeFloat32});
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{3, 4, 5}, kNumberTypeInt64},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<float>(0.0f)},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<float>(1.0f)}})
+    .FeedExpectedOutput({{3, 4, 5}}, {kNumberTypeFloat32});
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{3, 4, 5}, kNumberTypeInt64},
+                    InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(0)},
+                    InferInfoParam{ShapeVector{}, kNumberTypeInt64, CreateScalar<int64_t>(1)}})
+    .FeedExpectedOutput({{3, 4, 5}}, {kNumberTypeInt64});
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{3, 4, 5}, kNumberTypeFloat16},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<float>(0.0f)},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<float>(1.0f)}})
+    .FeedExpectedOutput({{3, 4, 5}}, {kNumberTypeFloat16});
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{-1, -1, -1}, kNumberTypeInt32},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<float>(0.0f)},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<float>(1.0f)}})
+    .FeedExpectedOutput({{-1, -1, -1}}, {kNumberTypeFloat32});
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{-2}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<float>(0.0f)},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<float>(1.0f)}})
+    .FeedExpectedOutput({{-2}}, {kNumberTypeFloat32});
 
-TEST_P(TestClampTensorSimpleInfer, clamp_dyn_shape) {
-  const auto &param = GetParam();
-  auto x = tensor::from_spec(param.x_type->type_id(), param.x_shape, device::DeviceType::kCPU);
-  auto min = tensor::from_spec(param.min_type->type_id(), param.min_shape, device::DeviceType::kCPU);
-  auto max = tensor::from_spec(param.max_type->type_id(), param.max_shape, device::DeviceType::kCPU);
-  ValuePtrList input_values;
-  input_values.push_back(std::move(x));
-  input_values.push_back(std::move(min));
-  input_values.push_back(std::move(max));
-
-  ClampTensorFuncImpl clamp_func_impl;
-  auto prim = std::make_shared<Primitive>("ClampTensor");
-
-  auto expect_shape = ShapeArray{param.x_shape};
-  auto expect_type = TypePtrList{param.x_type};
-
-  auto output_shape = clamp_func_impl.InferShape(prim, input_values);
-  auto output_type = clamp_func_impl.InferType(prim, input_values);
-
-  ShapeCompare(output_shape, expect_shape);
-  TypeCompare(output_type, expect_type);
+  // Exception: min and max are both None.
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{3, 4, 5}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{}, kMetaTypeNone, mindspore::kNone},
+                    InferInfoParam{ShapeVector{}, kMetaTypeNone, mindspore::kNone}})
+    .CaseShouldThrow();
+  // Exception: bool dtype is not allowed.
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{3, 4, 5}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{}, kNumberTypeBool, CreateScalar<bool>(false)},
+                    InferInfoParam{ShapeVector{}, kNumberTypeFloat32, CreateScalar<float>(1.0f)}})
+    .CaseShouldThrow();
+  return generator.Generate();
 }
+}  // namespace
 
-INSTANTIATE_TEST_CASE_P(TestClampTensor, TestClampTensor,
-                        testing::Values(ClampShapeParams{{3, 4, 5}, kFloat32, {3, 4, 1}, kFloat32, {3, 4, 1}, kFloat32},
-                                        ClampShapeParams{{3, 4, 5}, kInt64, {}, kFloat32, {}, kFloat32},
-                                        ClampShapeParams{{3, 4, 5}, kInt64, {}, kInt64, {}, kInt64},
-                                        ClampShapeParams{{3, 4, 5}, kFloat16, {}, kFloat32, {}, kFloat32},
-                                        ClampShapeParams{{-1, -1, -1}, kInt32, {}, kFloat32, {}, kFloat32},
-                                        ClampShapeParams{{-2}, kFloat32, {}, kFloat32, {}, kFloat32}));
-INSTANTIATE_TEST_CASE_P(TestClampTensorSimpleInfer, TestClampTensorSimpleInfer,
-                        testing::Values(ClampShapeParams{{3, 4, 5}, kFloat32, {3, 4, 1}, kFloat32, {3, 4, 1}, kFloat32},
-                                        ClampShapeParams{{3, 4, 5}, kInt64, {}, kFloat32, {}, kFloat32},
-                                        ClampShapeParams{{3, 4, 5}, kInt64, {}, kInt64, {}, kInt64},
-                                        ClampShapeParams{{3, 4, 5}, kFloat16, {}, kFloat32, {}, kFloat32}));
-
-class TestClampScalar : public TestOps, public testing::WithParamInterface<ClampShapeParams> {};
-
-TEST_P(TestClampScalar, clamp_dyn_shape) {
-  const auto &param = GetParam();
-  auto x = std::make_shared<abstract::AbstractTensor>(param.x_type, param.x_shape);
-  auto min = std::make_shared<abstract::AbstractScalar>(kValueAny, param.min_type);
-  auto max = std::make_shared<abstract::AbstractScalar>(kValueAny, param.max_type);
-
-  auto expect_shape = std::make_shared<abstract::Shape>(param.x_shape);
-  auto expect_type = std::make_shared<TensorType>(param.x_type);
-
-  ClampScalarFuncImpl clamp_func_impl;
-  auto prim = std::make_shared<Primitive>("ClampScalar");
-
-  auto out_dtype = clamp_func_impl.InferType(prim, {x, min, max});
-  ASSERT_TRUE(*out_dtype == *expect_type);
-  auto out_shape = clamp_func_impl.InferShape(prim, {x, min, max});
-  ASSERT_TRUE(*out_shape == *expect_shape);
-}
-
-class TestClampScalarSimpleInfer : public TestOps, public testing::WithParamInterface<ClampShapeParams> {};
-
-TEST_P(TestClampScalarSimpleInfer, clamp_dyn_shape) {
-  const auto &param = GetParam();
-  auto x = tensor::from_spec(param.x_type->type_id(), param.x_shape, device::DeviceType::kCPU);
-  auto min = tensor::from_spec(param.min_type->type_id(), param.min_shape, device::DeviceType::kCPU);
-  auto max = tensor::from_spec(param.max_type->type_id(), param.max_shape, device::DeviceType::kCPU);
-  ValuePtrList input_values;
-  input_values.push_back(std::move(x));
-  input_values.push_back(std::move(min));
-  input_values.push_back(std::move(max));
-
-  ClampScalarFuncImpl clamp_func_impl;
-  auto prim = std::make_shared<Primitive>("ClampTensor");
-
-  auto expect_shape = ShapeArray{param.x_shape};
-  auto expect_type = TypePtrList{param.x_type};
-
-  auto output_shape = clamp_func_impl.InferShape(prim, input_values);
-  auto output_type = clamp_func_impl.InferType(prim, input_values);
-
-  ShapeCompare(output_shape, expect_shape);
-  TypeCompare(output_type, expect_type);
-}
-
-INSTANTIATE_TEST_CASE_P(TestClampScalar, TestClampScalar,
-                        testing::Values(ClampShapeParams{{3, 4, 5}, kFloat32, {}, kFloat32, {}, kFloat32},
-                                        ClampShapeParams{{3, 4, 5}, kInt64, {}, kFloat32, {}, kFloat32},
-                                        ClampShapeParams{{3, 4, 5}, kInt64, {}, kInt64, {}, kInt64},
-                                        ClampShapeParams{{3, 4, 5}, kFloat16, {}, kFloat32, {}, kFloat32},
-                                        ClampShapeParams{{-1, -1, -1}, kInt32, {}, kFloat32, {}, kFloat32},
-                                        ClampShapeParams{{-2}, kFloat32, {}, kFloat32, {}, kFloat32}));
-INSTANTIATE_TEST_CASE_P(TestClampScalarSimpleInfer, TestClampScalarSimpleInfer,
-                        testing::Values(ClampShapeParams{{3, 4, 5}, kFloat32, {}, kFloat32, {}, kFloat32},
-                                        ClampShapeParams{{3, 4, 5}, kInt64, {}, kFloat32, {}, kFloat32},
-                                        ClampShapeParams{{3, 4, 5}, kInt64, {}, kInt64, {}, kInt64},
-                                        ClampShapeParams{{3, 4, 5}, kFloat16, {}, kFloat32, {}, kFloat32}));
-
-}  // namespace ops
-}  // namespace mindspore
+INSTANTIATE_TEST_CASE_P(ClampTensor, GeneralInferTest, testing::ValuesIn(prepare_clamp_tensor_params()));
+INSTANTIATE_TEST_CASE_P(ClampScalar, GeneralInferTest, testing::ValuesIn(prepare_clamp_scalar_params()));
+}  // namespace mindspore::ops
