@@ -20,6 +20,12 @@
 #include <map>
 #include <set>
 #include <functional>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include <string>
+
 #include "primitive/ascend_op_name.h"
 #include "primitive/math_op_name.h"
 #include "primitive/lite_op_name.h"
@@ -784,6 +790,20 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetMutableOutputAddr(const AnfNodePtr &nod
   return addr;
 }
 
+TensorStorageInfoPtr AnfRuntimeAlgorithm::GetMutableOutputStorageInfo(const AnfNodePtr &node, size_t output_idx,
+                                                                      bool skip_nop_node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (common::AnfAlgo::IsNopNode(node) && (skip_nop_node || common::AnfAlgo::IsNeedSkipNopOpAddr(node))) {
+    auto cnode = node->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    return AnfRuntimeAlgorithm::GetPrevNodeMutableOutputStorageInfo(cnode, 0);
+  }
+  // Critical path performance optimization: `KernelInfo` is unique subclass of `KernelInfoDevice`
+  auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  return kernel_info->GetMutableOutputStorageInfo(output_idx);
+}
+
 // get output device addr of anf_node
 bool AnfRuntimeAlgorithm::OutputAddrExist(const AnfNodePtr &node, size_t output_idx, bool skip_nop_node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -825,6 +845,13 @@ DeviceAddressPtr AnfRuntimeAlgorithm::GetPrevNodeMutableOutputAddr(const AnfNode
                                                                    bool skip_nop_node) {
   KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, input_idx);
   return AnfRuntimeAlgorithm::GetMutableOutputAddr(kernel_with_index.first, kernel_with_index.second, skip_nop_node);
+}
+
+TensorStorageInfoPtr AnfRuntimeAlgorithm::GetPrevNodeMutableOutputStorageInfo(const AnfNodePtr &anf_node,
+                                                                              size_t input_idx, bool skip_nop_node) {
+  KernelWithIndex kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(anf_node, input_idx);
+  return AnfRuntimeAlgorithm::GetMutableOutputStorageInfo(kernel_with_index.first, kernel_with_index.second,
+                                                          skip_nop_node);
 }
 
 std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> AnfRuntimeAlgorithm::GetAbstractInfo(const AnfNodePtr &node,
@@ -1022,8 +1049,9 @@ KernelTensorPtr AnfRuntimeAlgorithm::CreateKernelTensor(const abstract::BaseShap
   // Currently, address_common and device_address are not unified. Kernel tensor may use info from address_common
   // or device_address, so all info keep to kernel tensor.
   // Only device address are keep for construct after unified.
-  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(device_address, shape, type, value, device_ptr, size,
-                                                              format, dtype_id, host_shape, device_name, user_data);
+  auto kernel_tensor =
+    std::make_shared<kernel::KernelTensor>(device_address, nullptr, shape, type, value, device_ptr, size, format,
+                                           dtype_id, host_shape, device_name, user_data);
   MS_LOG(DEBUG) << "Create kernel tensor:" << kernel_tensor->ToString();
   return kernel_tensor;
 }
@@ -1035,7 +1063,7 @@ KernelTensorPtr AnfRuntimeAlgorithm::CreateKernelTensor(void *device_ptr, size_t
   auto device_address =
     std::make_shared<device::DeviceAddress>(device_ptr, size, device::GetDeviceTypeByName(device_name), 0);
   MS_EXCEPTION_IF_NULL(device_address);
-  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(device_address, dtype_id, host_shape, user_data);
+  auto kernel_tensor = std::make_shared<kernel::KernelTensor>(device_address, nullptr, dtype_id, host_shape, user_data);
   MS_LOG(DEBUG) << "Create kernel tensor:" << kernel_tensor->ToString();
   return kernel_tensor;
 }
@@ -1062,7 +1090,8 @@ size_t AnfRuntimeAlgorithm::GetOutputAddressNum(const AnfNodePtr &node) {
 }
 
 // set output device addr of anf_node
-void AnfRuntimeAlgorithm::SetOutputAddr(const DeviceAddressPtr &addr, size_t output_idx, const AnfNodePtr &node) {
+void AnfRuntimeAlgorithm::SetOutputAddr(const DeviceAddressPtr &addr, const TensorStorageInfoPtr &storage_info,
+                                        size_t output_idx, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
@@ -1080,11 +1109,12 @@ void AnfRuntimeAlgorithm::SetOutputAddr(const DeviceAddressPtr &addr, size_t out
                   << ", Shape: " << shape->ToString() << ", Type: " << type->ToString()
                   << ", Value: " << (value ? value->ToString() : "nullptr");
 
-    auto out_tensor = std::make_shared<kernel::KernelTensor>(shape, type, value);
-    out_tensor->set_device_address(addr);
-    SetOutputKernelTensor(out_tensor, output_idx, node.get());
+    auto out_kernel_tensor = std::make_shared<kernel::KernelTensor>(shape, type, value);
+    out_kernel_tensor->set_device_address(addr);
+    out_kernel_tensor->set_tensor_storage_info(storage_info);
+    SetOutputKernelTensor(out_kernel_tensor, output_idx, node.get());
   }
-  if (!kernel_info->SetOutputAddr(addr, output_idx)) {
+  if (!kernel_info->SetOutputAddr(addr, storage_info, output_idx)) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << "set output index:" << output_idx << " fail."
                       << trace::DumpSourceLines(node);
   }
@@ -1120,19 +1150,20 @@ void AnfRuntimeAlgorithm::SetAllocStreamId(const KernelTensorPtr &kernel_tensor,
 }
 
 // set workspace device addr of anf_node
-void AnfRuntimeAlgorithm::SetWorkspaceAddr(const DeviceAddressPtr &addr, size_t output_idx, const AnfNodePtr &node) {
+void AnfRuntimeAlgorithm::SetWorkspaceAddr(const DeviceAddressPtr &addr, const TensorStorageInfoPtr &storage_info,
+                                           size_t output_idx, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   MS_EXCEPTION_IF_NULL(kernel_info);
   if (!kernel_info->WorkspaceKernelTensorExist(output_idx)) {
-    auto out_tensor = std::make_shared<kernel::KernelTensor>(addr);
+    auto out_tensor = std::make_shared<kernel::KernelTensor>(addr, storage_info);
     MS_LOG(DEBUG) << "Create kernel tensor: " << out_tensor << ", device address: " << addr;
     if (!kernel_info->SetWorkspaceKernelTensor(out_tensor, output_idx)) {
       MS_LOG(EXCEPTION) << "Node " << node->DebugString() << "set output index:" << output_idx << " fail."
                         << trace::DumpSourceLines(node);
     }
   }
-  if (!kernel_info->SetWorkspaceAddr(addr, output_idx)) {
+  if (!kernel_info->SetWorkspaceAddr(addr, storage_info, output_idx)) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << "set output index:" << output_idx << " fail."
                       << trace::DumpSourceLines(node);
   }
@@ -2021,7 +2052,7 @@ void AnfRuntimeAlgorithm::FlattenInputArg(const BaseRef &arg, const AnfNodePtr &
     (void)flatten_tensors->emplace_back(ScalarToTensor(utils::cast<ScalarPtr>(arg)));
   } else if (utils::isa<Monad>(arg)) {
     // If value is a monad, replace it with an unused tensor.
-    flatten_tensors->push_back(tensor::from_scalar(int64_t(0), kBool));
+    flatten_tensors->push_back(tensor::from_scalar(static_cast<int64_t>(0), kBool));
   } else if (utils::isa<ValueSequencePtr>(arg)) {
     auto value_sequence = utils::cast<ValueSequencePtr>(arg);
     MS_EXCEPTION_IF_NULL(value_sequence);

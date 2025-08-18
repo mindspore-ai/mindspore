@@ -141,20 +141,21 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
   KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value);
 
   // Constructor of KernelTensor by device info.
-  KernelTensor(const DeviceAddressPtr &device_address, TypeId dtype_id, const ShapeVector &host_shape,
-               const UserDataPtr &user_data = nullptr);
+  KernelTensor(const DeviceAddressPtr &device_address, const TensorStorageInfoPtr &storage_info, TypeId dtype_id,
+               const ShapeVector &host_shape, const UserDataPtr &user_data = nullptr);
 
   // Constructor of KernelTensor by shape, type, value and device info.
-  KernelTensor(const DeviceAddressPtr &device_address, const abstract::BaseShapePtr &shape, const TypePtr &type,
-               const ValuePtr &value, void *device_ptr, size_t size, const std::string &format, TypeId dtype_id,
-               const ShapeVector &host_shape, const string &device_name, const UserDataPtr &user_data = nullptr);
+  KernelTensor(const DeviceAddressPtr &device_address, const TensorStorageInfoPtr &storage_info,
+               const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value, void *device_ptr,
+               size_t size, const std::string &format, TypeId dtype_id, const ShapeVector &host_shape,
+               const string &device_name, const UserDataPtr &user_data = nullptr);
 
-  // Constructor of KernelTensor by shape, type, value and device info.
-  KernelTensor(const DeviceAddressPtr &device_address, const abstract::BaseShapePtr &shape, const TypePtr &type,
-               const ValuePtr &value);
+  // Constructor of KernelTensor by shape, type, value storage info and device info.
+  KernelTensor(const DeviceAddressPtr &device_address, const TensorStorageInfoPtr &storage_info,
+               const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value);
 
-  explicit KernelTensor(const DeviceAddressPtr &device_address)
-      : KernelTensor(device_address, nullptr, nullptr, nullptr) {}
+  explicit KernelTensor(const DeviceAddressPtr &device_address, const TensorStorageInfoPtr &storage_info = nullptr)
+      : KernelTensor(device_address, storage_info, nullptr, nullptr, nullptr) {}
 
   KernelTensor(const KernelTensor &other);
   KernelTensor &operator=(const KernelTensor &) = delete;
@@ -437,16 +438,8 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
   // max shape is only used in compute-depended ops
   ShapeVector GetMaxShape() const;
 
-  const TensorStorageInfoPtr tensor_storage_info() const { return device_address_->GetTensorStorageInfo(); }
-  void set_tensor_storage_info(const TensorStorageInfoPtr &storage_info) {
-    if (storage_info) {
-      auto ori_shape = storage_info->ori_shape;
-      auto type_size = GetTypeByte(TypeIdToType(dtype_id()));
-      storage_info->ori_size =
-        std::accumulate(ori_shape.begin(), ori_shape.end(), type_size, std::multiplies<size_t>());
-    }
-    device_address_->set_tensor_storage_info(storage_info);
-  }
+  const TensorStorageInfoPtr tensor_storage_info() const { return tensor_storage_info_; }
+  void set_tensor_storage_info(const TensorStorageInfoPtr &storage_info) { tensor_storage_info_ = storage_info; }
 
   size_t GetSize() const {
     MS_EXCEPTION_IF_NULL(device_address_);
@@ -591,6 +584,9 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
   RefCountPtr ref_cnt_;
   // stream id for memory alloc
   uint32_t alloc_stream_id_{0};
+
+  // tensor storage info
+  TensorStorageInfoPtr tensor_storage_info_{nullptr};
 };
 
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;

@@ -274,9 +274,9 @@ tensor::TensorPtr PyBoostUtils::CreateOutputTensor(const DeviceContext *device_c
   auto output_device_address = std::make_shared<device::DeviceAddress>(
     nullptr, input_device_address->GetSize(), device_context->GetDeviceType(), input_device_address->stream_id());
   MS_EXCEPTION_IF_NULL(output_device_address);
-  output_device_address->set_tensor_storage_info(storage_info);
   output_device_address->set_device_pointer(input_device_address->device_pointer());
   output_tensor->set_device_address(output_device_address);
+  output_tensor->set_storage_info(storage_info);
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString() << " with " << storage_info->ToString();
 
   return output_tensor;
@@ -329,12 +329,12 @@ void PyBoostUtils::CreateOutputTensor(
   }
 }
 
-void PyBoostUtils::MallocForInput(const DeviceContext *device_context, const tensor::TensorPtr &tensor, bool is_view) {
-  MallocForInput(device_context, CurrentStream::id(), tensor, is_view);
+void PyBoostUtils::MallocForInput(const DeviceContext *device_context, const tensor::TensorPtr &tensor) {
+  MallocForInput(device_context, CurrentStream::id(), tensor);
 }
 
 void PyBoostUtils::MallocForInput(const DeviceContext *device_context, size_t stream_id,
-                                  const tensor::TensorPtr &tensor, bool is_view) {
+                                  const tensor::TensorPtr &tensor) {
   if (tensor == nullptr) {
     return;
   }
@@ -373,21 +373,20 @@ void PyBoostUtils::MallocForInput(const DeviceContext *device_context, size_t st
   }
 }
 
-void PyBoostUtils::MallocForInput(const DeviceContext *device_context, const std::vector<tensor::TensorPtr> &tensors,
-                                  bool is_view) {
+void PyBoostUtils::MallocForInput(const DeviceContext *device_context, const std::vector<tensor::TensorPtr> &tensors) {
   for (const auto &tensor : tensors) {
-    MallocForInput(device_context, tensor, is_view);
+    MallocForInput(device_context, tensor);
   }
 }
 
 void PyBoostUtils::MallocForInput(const DeviceContext *device_context, size_t stream_id,
-                                  const std::vector<tensor::TensorPtr> &tensors, bool is_view) {
+                                  const std::vector<tensor::TensorPtr> &tensors) {
   for (const auto &tensor : tensors) {
-    MallocForInput(device_context, stream_id, tensor, is_view);
+    MallocForInput(device_context, stream_id, tensor);
   }
 }
 
-void PyBoostUtils::MallocForInput(const DeviceContext *device_context, const ValueTuplePtr &value_tuple, bool is_view) {
+void PyBoostUtils::MallocForInput(const DeviceContext *device_context, const ValueTuplePtr &value_tuple) {
   MS_EXCEPTION_IF_NULL(value_tuple);
   const auto &values = value_tuple->value();
   std::vector<tensor::TensorPtr> tensors;
@@ -397,15 +396,14 @@ void PyBoostUtils::MallocForInput(const DeviceContext *device_context, const Val
       tensors.push_back(GetValue<tensor::TensorPtr>(value));
     }
   }
-  return PyBoostUtils::MallocForInput(device_context, tensors, is_view);
+  return PyBoostUtils::MallocForInput(device_context, tensors);
 }
 
-void PyBoostUtils::MallocForInput(const DeviceContext *device_context, const std::optional<tensor::TensorPtr> &val,
-                                  bool is_view) {
+void PyBoostUtils::MallocForInput(const DeviceContext *device_context, const std::optional<tensor::TensorPtr> &val) {
   if (!val.has_value()) {
     return;
   }
-  MallocForInput(device_context, val.value(), is_view);
+  MallocForInput(device_context, val.value());
 }
 
 AbstractBasePtr PyBoostUtils::InferByOpDef(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_abs) {
@@ -485,6 +483,7 @@ void PyBoostUtils::GetKernelTensor(const DeviceContext *device_context, size_t s
   auto value = tmp_abs->GetValue();
   auto kernel_tensor = std::make_shared<KernelTensor>(shape, type, value);
   kernel_tensor->set_device_address(device_address);
+  kernel_tensor->set_tensor_storage_info(tensor->storage_info());
   kernel_tensor->SetShapeVector(tensor->shape());
   kernel_tensor->set_format(tensor->format());
   kernel_tensor->set_dtype_id(tensor->data_type());
@@ -898,7 +897,7 @@ void ProfileTracker::TrackerInputTensors(const PrimitivePtr &primitive, const st
       }
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
         MarkTensorAsInput, "PyNative", device::GetDeviceNameByType(device_address->GetDeviceType()),
-        device_address->GetPtr(), tensor->data_type(), tensor->shape(), device_address->GetTensorStorageInfo());
+        device_address->GetPtr(), tensor->data_type(), tensor->shape(), tensor->storage_info());
     }
   }));
 }
@@ -921,7 +920,7 @@ void ProfileTracker::TrackerOutputTensors(const PrimitivePtr &primitive,
       }
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
         MarkTensorAsOutput, "PyNative", device::GetDeviceNameByType(device_address->GetDeviceType()),
-        device_address->GetPtr(), tensor->data_type(), tensor->shape(), device_address->GetTensorStorageInfo());
+        device_address->GetPtr(), tensor->data_type(), tensor->shape(), tensor->storage_info());
     }
     device::tracker::CALL_MEMORY_TRACKER(DelNestedTask);
   }));

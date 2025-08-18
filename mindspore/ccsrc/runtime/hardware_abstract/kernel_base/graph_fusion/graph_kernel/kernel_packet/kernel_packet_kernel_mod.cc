@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 #include "runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel/kernel_packet/kernel_packet_kernel_mod.h"
-
+#include <utility>
+#include <vector>
 #include <algorithm>
 #include <functional>
 #include <map>
@@ -184,7 +185,7 @@ int KernelPacketKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
                     << ". Its shape is " << shape->ToString() << ", the type is " << ori->GetType();
       std::string device_name = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET);
       auto device_address = std::make_shared<device::DeviceAddress>(device::GetDeviceTypeByName(device_name));
-      inputs_cache_[i] = std::make_shared<KernelTensor>(device_address, shape, ori->GetType(), kValueAny);
+      inputs_cache_[i] = std::make_shared<KernelTensor>(device_address, nullptr, shape, ori->GetType(), kValueAny);
       if (inputs_cache_[i]->user_data() == nullptr) {
         inputs_cache_[i]->set_user_data(std::make_shared<UserData>());
       }
@@ -278,7 +279,7 @@ KernelPacketKernelMod::AddressArgs KernelPacketKernelMod::GetLaunchArgs(const st
       res_inputs[i] = inputs_cache_[i].get();
     }
   }
-  MS_LOG(DEBUG) << "Worspaces size: " << workspaces.size();
+  MS_LOG(DEBUG) << "Workspaces size: " << workspaces.size();
   MS_LOG(DEBUG) << "input_workspace_map_ size: " << input_workspace_map_.size();
   std::vector<KernelTensor *> res_workspace(workspaces.begin() + input_workspace_map_.size(), workspaces.end());
   return {res_inputs, res_workspace};

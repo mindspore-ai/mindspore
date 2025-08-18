@@ -224,8 +224,10 @@ void GraphAdapter::UpdateForwardOutputInBpropGraph(const KernelGraphPtr &graph,
     auto value = abs->GetValue();
     const auto &kernel_tensor = std::make_shared<kernel::KernelTensor>(shape, type, value);
     kernel_tensor->set_device_address(device_address);
+    kernel_tensor->set_tensor_storage_info(nullptr);
     kernel_tensor->SetShapeVector(tensor->shape());
     tensor->set_device_address(device_address);
+    tensor->set_storage_info(nullptr);
     auto front_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
     MS_EXCEPTION_IF_NULL(front_node);
     MS_EXCEPTION_IF_NULL(device_address);
@@ -323,12 +325,13 @@ void GraphAdapter::SensTensorToDevice(const KernelGraphPtr &graph, const device:
         MS_EXCEPTION_IF_NULL(node_kernel_tensor);
         auto node_address = node_kernel_tensor->device_address();
         MS_EXCEPTION_IF_NULL(node_address);
-        AnfAlgo::SetOutputAddr(node_address, 0, value_node);
+        AnfAlgo::SetOutputAddr(node_address, node_kernel_tensor->tensor_storage_info(), 0, value_node);
         MS_LOG(DEBUG) << "Start to copy sens tensor to device";
         if (!CopyTensorData(tensor, node_kernel_tensor, value_node, device_context)) {
           MS_LOG(EXCEPTION) << "ValueNode host to device copy failed";
         }
         tensor->set_device_address(node_address);
+        tensor->set_storage_info(node_kernel_tensor->tensor_storage_info());
       }
     }
   }

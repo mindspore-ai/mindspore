@@ -82,7 +82,7 @@ void PagedAttention::Call(const std::shared_ptr<pyboost::OpRunner> &op, const ui
   auto new_context_lens = inputs[kIndex4] == nullptr ? nullptr : std::make_shared<tensor::Tensor>(*inputs[kIndex4]);
   inputs[kIndex4] = new_context_lens;
   runtime::DeviceAddressUtils::CreateInputTensorAddress(op->device_context(), op->stream_id(), 0, new_context_lens);
-  pyboost::PyBoostUtils::MallocForInput(op->device_context(), inputs[kIndex4], false);
+  pyboost::PyBoostUtils::MallocForInput(op->device_context(), inputs[kIndex4]);
 
   has_attn_mask_ = attn_mask.has_value();
   has_alibi_mask_ = alibi_mask.has_value();

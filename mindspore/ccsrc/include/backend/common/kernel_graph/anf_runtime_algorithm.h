@@ -111,6 +111,13 @@ class BACKEND_COMMON_EXPORT AnfRuntimeAlgorithm {
   static DeviceAddressPtr GetMutableOutputAddr(const KernelWithIndex &node_output_index, bool skip_nop_node) {
     return GetMutableOutputAddr(node_output_index.first, node_output_index.second, skip_nop_node);
   }
+  // get storage_info
+  static TensorStorageInfoPtr GetMutableOutputStorageInfo(const AnfNodePtr &node, size_t output_idx,
+                                                          bool skip_nop_node = true);
+  static TensorStorageInfoPtr GetMutableOutputStorageInfo(const KernelWithIndex &node_output_index,
+                                                          bool skip_nop_node) {
+    return GetMutableOutputStorageInfo(node_output_index.first, node_output_index.second, skip_nop_node);
+  }
   // check whether output addr is exist or not
   static bool OutputAddrExist(const AnfNodePtr &node, size_t output_idx, bool skip_nop_node = false);
   // check whether workspace addr is exist or not
@@ -120,7 +127,9 @@ class BACKEND_COMMON_EXPORT AnfRuntimeAlgorithm {
                                                     bool skip_nop_node = true);
   static DeviceAddressPtr GetPrevNodeMutableOutputAddr(const AnfNodePtr &anf_node, size_t input_idx,
                                                        bool skip_nop_node = true);
-
+  // get storage_info from prev node,input_index is the input index of current node related to prev node
+  static TensorStorageInfoPtr GetPrevNodeMutableOutputStorageInfo(const AnfNodePtr &anf_node, size_t input_idx,
+                                                                  bool skip_nop_node = true);
   // Get shape, devie type and value information.
   static std::tuple<abstract::BaseShapePtr, TypePtr, ValuePtr> GetAbstractInfo(const AnfNodePtr &node,
                                                                                size_t output_idx);
@@ -168,13 +177,15 @@ class BACKEND_COMMON_EXPORT AnfRuntimeAlgorithm {
 
   static size_t GetOutputAddressNum(const AnfNodePtr &node);
   // set output device addr of anf_node
-  static void SetOutputAddr(const DeviceAddressPtr &addr, size_t output_idx, const AnfNodePtr &node);
+  static void SetOutputAddr(const DeviceAddressPtr &addr, const TensorStorageInfoPtr &storage_info, size_t output_idx,
+                            const AnfNodePtr &node);
   // set output kernel tensor of anf node
   static void SetOutputKernelTensor(const KernelTensorPtr &kernel_tensor, size_t output_idx, AnfNode *node);
   // set alloc stream id
   static void SetAllocStreamId(const KernelTensorPtr &kernel_tensor, uint32_t stream_id, const AnfNodePtr &node);
   // set workspace device addr of anf_node
-  static void SetWorkspaceAddr(const DeviceAddressPtr &addr, size_t output_idx, const AnfNodePtr &node);
+  static void SetWorkspaceAddr(const DeviceAddressPtr &addr, const TensorStorageInfoPtr &storage_info,
+                               size_t output_idx, const AnfNodePtr &node);
   // set workspace kernel tensor of anf_node
   static void SetWorkspaceKernelTensor(const KernelTensorPtr &kernel_tensor, size_t output_idx, AnfNode *node);
   // get workspace device addr of anf_node

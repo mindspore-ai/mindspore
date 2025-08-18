@@ -15,9 +15,11 @@
  */
 
 #include "kernel/ascend/acl_ir/op_api_cache.h"
+#include <string>
+#include <utility>
+#include <vector>
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
-
 namespace mindspore::device::ascend {
 namespace {
 constexpr size_t kSizeFive = 5;
@@ -223,24 +225,6 @@ void RefreshAddr(mindspore::kernel::KernelTensor *tensor) {
 
   add_tensor_addr_to_cached_list_func(tensor->device_ptr());
 }
-
-void RefreshAddr(device::DeviceAddress *device_address) {
-  if (device_address == nullptr) {
-    return;
-  }
-
-  static const auto add_tensor_addr_to_cached_list = device::ascend::GetOpApiFunc("AddTensorAddrToCachedList");
-  if (add_tensor_addr_to_cached_list == nullptr) {
-    MS_LOG(EXCEPTION) << "AddTensorAddrToCachedList not in " << device::ascend::GetOpApiLibName() << ", please check!";
-  }
-  AddTensorAddrToCachedList add_tensor_addr_to_cached_list_func =
-    reinterpret_cast<AddTensorAddrToCachedList>(add_tensor_addr_to_cached_list);
-  MS_EXCEPTION_IF_NULL(add_tensor_addr_to_cached_list_func);
-
-  add_tensor_addr_to_cached_list_func(device_address->GetMutablePtr());
-}
-
-void RefreshAddr(const device::DeviceAddressPtr &device_address) { RefreshAddr(device_address.get()); }
 
 void RefreshAddr(const mindspore::tensor::TensorPtr &tensor) {
   if (tensor == nullptr) {

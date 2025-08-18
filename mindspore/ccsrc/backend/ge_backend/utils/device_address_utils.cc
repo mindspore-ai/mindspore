@@ -308,7 +308,7 @@ std::vector<KernelTensorPtr> DeviceAddressUtils::CreateKernelTensorForTensorValu
       if (output_address->GetDeviceType() == device::GetDeviceTypeByName(node_target)) {
         // We need to set tensor->device_address to ValueNode even if the tensor is a forward_output tensor
         // in PyNative Bprop graph. ValueNode device_address is necessary for GraphSchedule::Transform.
-        AnfAlgo::SetOutputAddr(tensor->device_address(), output_idx, value_node);
+        AnfAlgo::SetOutputAddr(tensor->device_address(), tensor->storage_info(), output_idx, value_node);
         auto kernel_tensor = AnfAlgo::GetOutputKernelTensor(value_node, output_idx, false);
         MS_EXCEPTION_IF_NULL(kernel_tensor);
         kernel_tensor->set_format(tensor->format());
@@ -413,6 +413,8 @@ KernelTensorPtr DeviceAddressUtils::CloneEmptyKernelTensor(const KernelTensorPtr
     std::make_shared<device::DeviceAddress>(old_device_address->device_pointer()->ptr(), old_device_address->size(),
                                             device::GetDeviceTypeByName(device_name), old_device_address->stream_id());
   new_kernel_tensor->set_device_address(new_device_address);
+  new_kernel_tensor->set_tensor_storage_info(nullptr);
+
   new_kernel_tensor->SetDeviceType(device::GetDeviceTypeByName(device_name));
   new_kernel_tensor->set_device_ptr(nullptr);
   new_kernel_tensor->set_user_data(old_kernel_tensor->user_data());
@@ -428,32 +430,20 @@ KernelTensorPtr DeviceAddressUtils::CloneEmptyKernelTensor(const KernelTensorPtr
 }
 
 bool DeviceAddressUtils::IsContiguousTensor(const tensor::TensorPtr &tensor) {
-  if (tensor == nullptr || tensor->storage_info() == nullptr) {
+  const auto &storage_info = tensor->storage_info();
+  if (tensor == nullptr || storage_info == nullptr) {
     MS_LOG(DEBUG) << "It is not a view tensor, tensor: " << tensor;
     return true;
   }
 
-  auto device_address = tensor->device_address();
-  const auto &old_storage_info = device_address->GetTensorStorageInfo();
-  if (old_storage_info == nullptr) {
+  auto shape_size = SizeOf(storage_info->shape);
+  auto ori_shape_size = SizeOf(storage_info->ori_shape);
+  if (storage_info->storage_offset == 0 && storage_info->is_contiguous && shape_size == ori_shape_size) {
     MS_LOG(DEBUG) << "It is not a view tensor, tensor: " << tensor;
     return true;
   }
-
-  auto new_storage_info = tensor->storage_info();
-  if (new_storage_info->shape == new_storage_info->ori_shape) {
-    MS_LOG(DEBUG) << "It is not a view tensor, tensor: " << tensor;
-    return true;
-  }
-
-  auto shape_size = SizeOf(new_storage_info->shape);
-  auto ori_shape_size = SizeOf(new_storage_info->ori_shape);
-  if (new_storage_info->storage_offset == 0 && new_storage_info->is_contiguous && shape_size == ori_shape_size) {
-    MS_LOG(DEBUG) << "It is not a view tensor, tensor: " << tensor;
-    return true;
-  }
-  MS_LOG(ERROR) << "It is a view tensor, tensor: " << tensor << ", new_storage_info: " << new_storage_info->ToString()
-                << ", old_storage_info: " << old_storage_info->ToString();
+  MS_LOG(ERROR) << "It is a view tensor, tensor: " << tensor << ", storage_info: " << storage_info->ToString()
+                << ", storage_info: " << storage_info->ToString();
   return false;
 }
 }  // namespace ge_backend

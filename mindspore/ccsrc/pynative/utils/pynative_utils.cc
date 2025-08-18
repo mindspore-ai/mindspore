@@ -484,6 +484,7 @@ void Common::ClearDeviceAddress(const ValuePtr &value) {
   TensorValueToTensor(value, &tensors);
   for (const auto &tensor : tensors) {
     tensor->set_device_address(nullptr);
+    tensor->set_storage_info(nullptr);
   }
 }
 

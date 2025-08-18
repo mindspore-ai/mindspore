@@ -506,6 +506,7 @@ void TensorPybind::Offload(const TensorPtr &tensor, bool release) {
   auto cpu_tensor = MakeCpuTensor(tensor);
   tensor->set_device_address(cpu_tensor->device_address());
   tensor->set_format(cpu_tensor->format());
+  tensor->set_storage_info(cpu_tensor->storage_info());
   if (release) {
     device_address->ClearDeviceMemory();
   }
@@ -544,6 +545,7 @@ void TensorPybind::Load(const Tensor &tensor) {
   }
   const_cast<tensor::Tensor &>(tensor).set_device_address(new_device_address);
   const_cast<tensor::Tensor &>(tensor).set_format(Format::DEFAULT_FORMAT);
+  const_cast<tensor::Tensor &>(tensor).set_storage_info(nullptr);
 }
 
 bool TensorPybind::SharedMemory(const TensorPtr &tensor) {
@@ -583,6 +585,7 @@ bool TensorPybind::SharedMemory(const TensorPtr &tensor) {
     MS_EXCEPTION_IF_NULL(device_address_);
     tensor->set_device_address(device_address_);
     tensor->set_format(Format::DEFAULT_FORMAT);
+    tensor->set_storage_info(nullptr);
     const auto &device_address_new = std::dynamic_pointer_cast<device::DeviceAddress>(device_address_);
     device_address_new->set_allocator(shared_mem_allocator);
 
@@ -643,6 +646,7 @@ void TensorPybind::SetDeviceAddress(const TensorPtr &tensor, uintptr_t addr, con
     auto device_address = std::make_shared<device::MbufDeviceAddress>(data, data_size, shape, data_type, kAscendDevice);
     const_cast<TensorPtr &>(tensor)->set_device_address(device_address);
     const_cast<TensorPtr &>(tensor)->set_format(Format::DEFAULT_FORMAT);
+    const_cast<TensorPtr &>(tensor)->set_storage_info(nullptr);
   } else {
     device_sync_->set_ptr(data);
   }

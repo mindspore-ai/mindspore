@@ -13,9 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "backend/ge_backend/runtime/actor/control_flow/exit_actor.h"
 
 #include <algorithm>
-#include "backend/ge_backend/runtime/actor/control_flow/exit_actor.h"
+#include <memory>
+#include <utility>
+#include <vector>
+#include <string>
+
 #include "backend/ge_backend/runtime/actor/output_actor.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "include/runtime/hardware_abstract/device_context/device_context.h"
@@ -267,6 +272,8 @@ void ExitActor::CopyDeviceAddress(OpContext<KernelTensor> *const context) {
   for (size_t i = 0; i < input_kernel_tensors_.size(); ++i) {
     auto input_device_tensor =
       input_kernel_tensors_[i] == nullptr ? nullptr : input_kernel_tensors_[i]->device_address();
+    auto input_storage_info =
+      input_kernel_tensors_[i] == nullptr ? nullptr : input_kernel_tensors_[i]->tensor_storage_info();
     if (!IsNeedCopyDeviceAddress(input_kernel_tensors_[i], i)) {
       (void)new_kernel_tensors.emplace_back(input_kernel_tensors_[i]);
       continue;

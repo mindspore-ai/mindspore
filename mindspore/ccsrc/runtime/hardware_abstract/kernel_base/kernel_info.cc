@@ -15,7 +15,8 @@
  */
 
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
-
+#include <utility>
+#include <vector>
 namespace mindspore {
 namespace device {
 const kernel::KernelBuildInfo *KernelInfo::select_kernel_build_info() const { return select_kernel_build_info_.get(); }
@@ -118,6 +119,20 @@ DeviceAddressPtr KernelInfo::GetMutableOutputAddr(size_t index) const {
   return output_kernel_tensor->device_address();
 }
 
+TensorStorageInfoPtr KernelInfo::GetMutableOutputStorageInfo(size_t index) const {
+  if (index >= output_kernel_tensor_list_.size()) {
+    MS_LOG(DEBUG) << "Index [" << index << "] out of range, kernel tensor list size "
+                  << output_kernel_tensor_list_.size();
+    return nullptr;
+  }
+  const auto &output_kernel_tensor = output_kernel_tensor_list_[index];
+  if (output_kernel_tensor == nullptr) {
+    MS_LOG(INFO) << "Index [" << index << "] has no kernel tensor.";
+    return nullptr;
+  }
+  return output_kernel_tensor->tensor_storage_info();
+}
+
 bool KernelInfo::OutputAddrExist(size_t index) const {
   if (index >= output_kernel_tensor_list_.size()) {
     MS_LOG(DEBUG) << "Index [" << index << "] out of range";
@@ -131,7 +146,8 @@ bool KernelInfo::OutputAddrExist(size_t index) const {
   return output_kernel_tensor->device_address() != nullptr;
 }
 
-bool KernelInfo::SetOutputAddr(const DeviceAddressPtr &output_address, size_t index) {
+bool KernelInfo::SetOutputAddr(const DeviceAddressPtr &output_address, const TensorStorageInfoPtr &storage_info,
+                               size_t index) {
   // parameter and valuenode
   if (kernel_mod_ == nullptr && index >= output_kernel_tensor_list_.size()) {
     for (size_t i = output_kernel_tensor_list_.size(); i <= index; i++) {
@@ -154,6 +170,7 @@ bool KernelInfo::SetOutputAddr(const DeviceAddressPtr &output_address, size_t in
     return false;
   }
   output_kernel_tensor->set_device_address(output_address);
+  output_kernel_tensor->set_tensor_storage_info(storage_info);
   return true;
 }
 
@@ -203,7 +220,8 @@ bool KernelInfo::WorkspaceAddrExist(size_t index) const {
   return workspace_kernel_tensor_list_[index] != nullptr;
 }
 
-bool KernelInfo::SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t index) {
+bool KernelInfo::SetWorkspaceAddr(const DeviceAddressPtr &output_address, const TensorStorageInfoPtr &storage_info,
+                                  size_t index) {
   if (workspace_kernel_tensor_list_.empty()) {
     // parameter and valuenode
     if (kernel_mod_ == nullptr) {
@@ -226,6 +244,7 @@ bool KernelInfo::SetWorkspaceAddr(const DeviceAddressPtr &output_address, size_t
     return false;
   }
   workspace_kernel_tensor->set_device_address(output_address);
+  workspace_kernel_tensor->set_tensor_storage_info(storage_info);
   return true;
 }
 

@@ -16,6 +16,12 @@
 
 #include <algorithm>
 #include <queue>
+#include <map>
+#include <memory>
+#include <utility>
+#include <set>
+#include <vector>
+#include <string>
 #include "primitive/sequence_ops.h"
 #include "primitive/framework_ops.h"
 #include "backend/ge_backend/runtime/scheduler_helper.h"
@@ -143,7 +149,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
     size_t output_num = AnfAlgo::GetOutputTensorNum(input_node);
     for (size_t index = 0; index < output_num; ++index) {
       if (AnfAlgo::OutputAddrExist(input_node, index)) {
-        AnfAlgo::SetOutputAddr(nullptr, index, input_node);
+        AnfAlgo::SetOutputAddr(nullptr, nullptr, index, input_node);
       }
     }
   }
@@ -153,7 +159,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
     auto front_value_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
     DeviceTensorStore::GetInstance().Remove(front_value_node.get());
     if (AnfAlgo::OutputAddrExist(value_node, 0)) {
-      AnfAlgo::SetOutputAddr(nullptr, 0, value_node);
+      AnfAlgo::SetOutputAddr(nullptr, nullptr, 0, value_node);
     }
   }
 
@@ -162,7 +168,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
     size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t index = 0; index < output_num; ++index) {
       if (AnfAlgo::OutputAddrExist(cnode, index)) {
-        AnfAlgo::SetOutputAddr(nullptr, index, cnode);
+        AnfAlgo::SetOutputAddr(nullptr, nullptr, index, cnode);
       }
     }
   }
@@ -205,7 +211,7 @@ void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<Kernel
       const auto &node = front_value_node.first;
       size_t index = front_value_node.second;
       if (AnfAlgo::OutputAddrExist(node, index)) {
-        AnfAlgo::SetOutputAddr(nullptr, index, node);
+        AnfAlgo::SetOutputAddr(nullptr, nullptr, index, node);
       }
     }
   }

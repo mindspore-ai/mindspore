@@ -81,7 +81,7 @@ void TrackInputOutputMemory(const std::vector<KernelTensor *> &input_launch_tens
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
       MarkTensorAsInput, actor_name, device::GetDeviceNameByType(device_addr->GetDeviceType()), device_addr->GetPtr(),
       input_launch_tensors[i]->dtype_id(), input_launch_tensors[i]->GetShapeVector(),
-      device_addr->GetTensorStorageInfo());
+      input_launch_tensors[i]->tensor_storage_info());
   }
   for (size_t i = 0, end = output_launch_tensors.size(); i < end; i++) {
     auto device_addr = output_launch_tensors[i]->device_address().get();
@@ -91,7 +91,7 @@ void TrackInputOutputMemory(const std::vector<KernelTensor *> &input_launch_tens
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
       MarkTensorAsOutput, actor_name, device::GetDeviceNameByType(device_addr->GetDeviceType()), device_addr->GetPtr(),
       output_launch_tensors[i]->dtype_id(), output_launch_tensors[i]->GetShapeVector(),
-      device_addr->GetTensorStorageInfo());
+      output_launch_tensors[i]->tensor_storage_info());
   }
 }
 
@@ -603,14 +603,15 @@ void KernelActor::ConvertInputContiguous(OpContext<KernelTensor> *const context)
     if (input_kernel_tensors_[i] == nullptr) {
       continue;
     }
-    auto input_device_tensor = input_kernel_tensors_[i]->device_address().get();
+    auto input_kernel_tensor = input_kernel_tensors_[i];
+    auto input_device_tensor = input_kernel_tensor->device_address().get();
     if (input_device_tensor == nullptr) {
       continue;
     }
     if (i >= contiguous_tensors_.size()) {
       SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, (*context), " input out of range.");
     }
-    const auto old_storage_info = input_device_tensor->GetTensorStorageInfo();
+    const auto old_storage_info = input_kernel_tensor->tensor_storage_info();
     if (old_storage_info) {
       // input addr is contiguous and shape size is equal to origin.
       if ((SizeOf(old_storage_info->shape) == SizeOf(old_storage_info->ori_shape)) && old_storage_info->is_contiguous) {
@@ -665,7 +666,7 @@ void KernelActor::ConvertInputContiguous(OpContext<KernelTensor> *const context)
         auto address_size = GetTypeByte(TypeIdToType(input_tensor->dtype_id())) * SizeOf(old_storage_info->shape);
         new_kernel_tensor->set_size(address_size);
       }
-      new_device_address->set_tensor_storage_info(nullptr);
+      new_kernel_tensor->set_tensor_storage_info(nullptr);
       // Launch CopyInplace to make tensor contiguous.
       if (!device_contexts_[0]->GetKernelExecutor()->ExecuteKernelTask(runtime::KernelTaskType::kCONTIGUOUS_TASK,
                                                                        {input_kernel_tensors_[i].get()},
@@ -832,11 +833,12 @@ void KernelActor::FetchWorkspaceDeviceTensor() {
       kernel_tensor->set_stream_id(stream_id);
       AnfAlgo::SetAllocStreamId(kernel_tensor, stream_id, kernel_);
 
-      auto device_address = kernel_tensor->device_address();
+      const auto &device_address = kernel_tensor->device_address();
       MS_EXCEPTION_IF_NULL(device_address);
       MS_VLOG(VL_RUNTIME_FRAMEWORK_DEVICE_ADDRESS)
         << "Create kernel tensor for node:" << kernel_->fullname_with_scope() << " addr:" << kernel_tensor->ToString();
-      AnfAlgo::SetWorkspaceAddr(device_address, i, kernel_);  // set to kernel_info
+      AnfAlgo::SetWorkspaceAddr(device_address, kernel_tensor->tensor_storage_info(), i,
+                                kernel_);  // set to kernel_info
       (void)workspace_kernel_tensors_.emplace_back(kernel_tensor);
       if (recorder_aid_ != nullptr) {
         (void)mem_info_.workspaces_.emplace_back(std::make_shared<Address>());
@@ -1065,7 +1067,7 @@ void KernelActor::CopyInputDeviceTensor(KernelTensorPtr kernel_tensor, size_t in
                              std::to_string(input_index);
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(strategy_, *context, error_info);
   }
-  if (!IsContiguousStorage(device_tensor->GetTensorStorageInfo())) {
+  if (!IsContiguousStorage(kernel_tensor->tensor_storage_info())) {
     std::stringstream error_info;
     error_info << "Not support non-contiguous heter input:" << kernel_tensor->ToString() << " for actor:" << GetAID()
                << " input index:" << input_index;
@@ -1279,8 +1281,14 @@ void KernelActor::UpdateRefDeviceAddress(OpContext<KernelTensor> *const context,
     MS_EXCEPTION_IF_NULL(output_device_tensor);
     output_kernel_tensors_[pair.first]->set_pointer_ref_count(input_kernel_tensors_[pair.second].get());
     output_kernel_tensors_[pair.first]->IncreaseNewRefCount(GetAID().Name());
-    if (input_device_tensor->GetTensorStorageInfo() != nullptr && need_ref_for_storage_info_) {
-      output_device_tensor->set_tensor_storage_info(input_device_tensor->GetTensorStorageInfo());
+    auto input_storage_info = input_kernel_tensors_[pair.second]->tensor_storage_info();
+    if (input_storage_info != nullptr && need_ref_for_storage_info_) {
+      output_kernel_tensors_[pair.first]->set_tensor_storage_info(input_storage_info);
+    }
+    // When output has view information, the size of the device tensor will be inconsistent with shape_vector_,
+    // and this size needs to be updated from the input device tensor.
+    if (output_kernel_tensors_[pair.first]->tensor_storage_info() != nullptr) {
+      output_device_tensor->SetSize(input_device_tensor->GetSize());
     }
     MS_VLOG(VL_RUNTIME_FRAMEWORK_DEVICE_ADDRESS)
       << "Actor:" << GetAID()

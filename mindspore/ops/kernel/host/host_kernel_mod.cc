@@ -48,6 +48,12 @@ int HostKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const std::
     return ret;
   }
   GetWorkSpaceInfo(inputs, outputs);
+  for (size_t i = 0; i < outputs.size(); i++) {
+    if (outputs[i]->tensor_storage_info() != nullptr) {
+      output_size_list_[i] =
+        SizeOf(outputs[i]->tensor_storage_info()->ori_shape) * abstract::TypeIdSize(outputs[i]->dtype_id());
+    }
+  }
   return ret;
 }
 }  // namespace kernel

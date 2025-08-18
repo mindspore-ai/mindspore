@@ -523,6 +523,7 @@ tensor::TensorPtr ConcatAscendDvm::Call(const ValueTuplePtr &tensors_tensor_list
       device_address->SetSize(sz);
       output_tensor_i->set_device_address(device_address);
       output_tensor_i->set_format(outputs[0]->format());
+      output_tensor_i->set_storage_info(outputs[0]->storage_info());
       LAUNCH_ACLNN(aclnnInplaceCopy, device_context, op->stream_id(), output_tensor_i, tensors_tensor_list_vector[i]);
       offset += sz;
     }

@@ -274,13 +274,14 @@ std::pair<std::vector<size_t>, std::vector<size_t>> GPUResManager::AllocDeviceMe
     MS_EXCEPTION_IF_NULL(host_context);
     MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
     host_context->device_res_manager_->SyncAllStreams();
-    DeviceAddressExtPtr src_ext =
-      std::make_shared<DeviceAddressExt>(tensor->format(), tensor->data_type(), tensor->shape());
+    DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(tensor->format(), tensor->data_type(),
+                                                                     tensor->shape(), tensor->storage_info());
     DeviceAddressExtPtr dst_ext =
       std::make_shared<DeviceAddressExt>(Format::DEFAULT_FORMAT, tensor->data_type(), tensor->shape());
     SyncCopy(device_address, tensor->device_address(), device_address->stream_id(), src_ext, dst_ext);
     tensor->set_device_address(device_address);
     tensor->set_format(Format::DEFAULT_FORMAT);
+    tensor->set_storage_info(nullptr);
   }
   return std::make_pair(before_padding_sizes, after_padding_sizes);
 }
@@ -302,6 +303,7 @@ tensor::TensorPtr GPUResManager::GetSliceByTensorListIndexHandle(const std::vect
   auto stream_id = DefaultStream();
   auto device_address = std::make_shared<device::DeviceAddress>(ptr, size, device::DeviceType::kGPU, stream_id);
   tensor->set_device_address(device_address);
+  tensor->set_storage_info(nullptr);
   return tensor;
 }
 
@@ -322,6 +324,7 @@ tensor::TensorPtr GPUResManager::GetSliceByPaddingShapeHandle(const tensor::Tens
   MS_LOG(DEBUG) << "Create DeviceAddress, offset size to ptr0:" << offset_size << ", tensor_size:" << tensor_size
                 << ", shape:" << shape << ", data_type:" << TypeIdToString(type_id);
   tensor->set_device_address(device_address);
+  tensor->set_storage_info(nullptr);
   return tensor;
 }
 

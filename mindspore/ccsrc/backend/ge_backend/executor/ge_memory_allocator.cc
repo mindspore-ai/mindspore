@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "backend/ge_backend/executor/ge_memory_allocator.h"
+
 #include <tuple>
 #include <functional>
 #include <algorithm>
@@ -22,6 +23,9 @@
 #include <set>
 #include <sstream>
 #include <vector>
+#include <memory>
+#include <string>
+
 #include "backend/ge_backend/graph_ir/utils.h"
 #include "include/utils/utils.h"
 #include "mindspore/ccsrc/utils/ir_dump/draw.h"
@@ -114,9 +118,8 @@ void SetKernelInfo(const AnfNodePtr &node) {
   kernel_info->set_select_kernel_build_info(build_info);
 }
 
-device::DeviceAddressPtr CreateOutputDeviceAddress(const KernelGraphPtr &kernel_graph,
-                                                   const KernelWithIndex &output_with_index,
-                                                   size_t need_alloc_output_cnt, GeDeviceResManagerPtr res_manager) {
+KernelTensorPtr CreateOutputKernelTensor(const KernelGraphPtr &kernel_graph, const KernelWithIndex &output_with_index,
+                                         size_t need_alloc_output_cnt, GeDeviceResManagerPtr res_manager) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto output_node = output_with_index.first;
   MS_EXCEPTION_IF_NULL(output_node);
@@ -175,7 +178,7 @@ device::DeviceAddressPtr CreateOutputDeviceAddress(const KernelGraphPtr &kernel_
     output_device_addr->set_from_persistent_mem(true);
     output_device_addr->set_need_recycle(true);
   }
-  return output_device_addr;
+  return kernel_tensor;
 }
 
 void AllocParameterMemory(const KernelGraphPtr &kernel_graph, std::set<KernelGraphPtr> *memo) {
@@ -239,9 +242,11 @@ void AllocOutputMemory(const KernelGraphPtr &kernel_graph, GeDeviceResManagerPtr
       continue;
     }
 
-    auto output_device_addr =
-      CreateOutputDeviceAddress(kernel_graph, output_with_index, need_alloc_output_cnt, res_manager);
-    AnfAlgo::SetOutputAddr(output_device_addr, output_with_index.second, output_node);
+    auto output_kernel_tensor =
+      CreateOutputKernelTensor(kernel_graph, output_with_index, need_alloc_output_cnt, res_manager);
+    auto output_device_addr = output_kernel_tensor->device_address();
+    AnfAlgo::SetOutputAddr(output_device_addr, output_kernel_tensor->tensor_storage_info(), output_with_index.second,
+                           output_node);
     MS_LOG(INFO) << "Output node info: (name " << output_node->fullname_with_scope() << ", "
                  << output_node->DebugString() << " ), output size: " << output_device_addr->GetSize()
                  << ", device_address: " << output_device_addr;

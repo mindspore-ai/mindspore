@@ -201,7 +201,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
     size_t output_num = AnfAlgo::GetOutputTensorNum(input_node);
     for (size_t index = 0; index < output_num; ++index) {
       if (AnfAlgo::OutputAddrExist(input_node, index)) {
-        AnfAlgo::SetOutputAddr(nullptr, index, input_node);
+        AnfAlgo::SetOutputAddr(nullptr, nullptr, index, input_node);
       }
     }
   }
@@ -211,7 +211,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
     auto front_value_node = AnfAlgo::FetchFrontNodeByBackendNode(value_node, *graph);
     DeviceTensorStore::GetInstance().Remove(front_value_node.get());
     if (AnfAlgo::OutputAddrExist(value_node, 0)) {
-      AnfAlgo::SetOutputAddr(nullptr, 0, value_node);
+      AnfAlgo::SetOutputAddr(nullptr, nullptr, 0, value_node);
     }
   }
 
@@ -220,7 +220,7 @@ void ClearNodeInfo(const KernelGraphPtr &graph) {
     size_t output_num = AnfAlgo::GetOutputTensorNum(cnode);
     for (size_t index = 0; index < output_num; ++index) {
       if (AnfAlgo::OutputAddrExist(cnode, index)) {
-        AnfAlgo::SetOutputAddr(nullptr, index, cnode);
+        AnfAlgo::SetOutputAddr(nullptr, nullptr, index, cnode);
       }
     }
   }
@@ -571,7 +571,7 @@ void GraphScheduler::Clear(const ActorInfo &actor_info, const std::vector<Kernel
       const auto &node = front_value_node.first.first;
       size_t index = front_value_node.first.second;
       if (AnfAlgo::OutputAddrExist(node, index)) {
-        AnfAlgo::SetOutputAddr(nullptr, index, node);
+        AnfAlgo::SetOutputAddr(nullptr, nullptr, index, node);
       }
     }
   }
@@ -1791,6 +1791,7 @@ void GraphScheduler::BuildGraphParameterStore(const GraphCompilerInfo &graph_com
         auto cloned_device_tensor = cur_device_tensor->CloneDeviceAddress();
         cloned_device_tensor->set_ptr(nullptr);
         cur_kernel_tensor->set_device_address(cloned_device_tensor);
+        cur_kernel_tensor->set_tensor_storage_info(cur_kernel_tensor->tensor_storage_info());
       }
 
       (void)cur_graph_parameter_store->Push(real_outer_idx, real_inner_idx, cur_kernel_tensor, 0);

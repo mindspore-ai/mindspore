@@ -57,8 +57,9 @@ TEST_P(TestUnique2, dyn_shape) {
     std::vector<abstract::BaseShapePtr>{std::make_shared<abstract::Shape>(param.output_shape),
                                         std::make_shared<abstract::Shape>(param.inverse_indices_shape),
                                         std::make_shared<abstract::Shape>(param.counts_shape)});
-  auto expect_dtype = std::make_shared<Tuple>(std::vector<TypePtr>{std::make_shared<TensorType>(param.output_type),
-                                                                   param.inverse_indices_type, param.counts_type});
+  auto expect_dtype = std::make_shared<Tuple>(std::vector<TypePtr>{
+    std::make_shared<TensorType>(param.output_type), std::make_shared<TensorType>(param.inverse_indices_type),
+    std::make_shared<TensorType>(param.counts_type)});
 
   Unique2FuncImpl unique2_func_impl;
   auto prim = std::make_shared<Primitive>("Unique2");

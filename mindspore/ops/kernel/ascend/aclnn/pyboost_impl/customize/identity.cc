@@ -51,11 +51,12 @@ void IdentityCustomizeCallWithoutContigous(const std::shared_ptr<OpRunner> &op, 
     }
 
     auto identity_kernel = std::make_shared<kernel::AclKernelMod>();
-    auto input_x_address = std::dynamic_pointer_cast<device::DeviceAddress>(x_tensor->device_address());
+    const auto &input_x_address = x_tensor->device_address();
     auto abs = x_tensor->ToAbstract()->Broaden();
     MS_EXCEPTION_IF_NULL(abs);
     auto input_kernel_tensor = std::make_shared<KernelTensor>(abs->GetShape(), abs->GetType(), nullptr);
     input_kernel_tensor->set_device_address(input_x_address);
+    input_kernel_tensor->set_tensor_storage_info(x_tensor->storage_info());
     input_kernel_tensor->SetShapeVector(x_tensor->shape());
     input_kernel_tensor->set_format(x_tensor->format());
     if (!input_kernel_tensor->host_info_exist()) {
@@ -114,12 +115,13 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
     PyBoostUtils::MallocOpOutputs(device_context, outputs);
 
     auto identity_kernel = std::make_shared<kernel::AclKernelMod>();
-    auto input_x_address = std::dynamic_pointer_cast<device::DeviceAddress>(x_tensor->device_address());
-    auto output_address = std::dynamic_pointer_cast<device::DeviceAddress>(outputs[0]->device_address());
+    const auto &input_x_address = x_tensor->device_address();
+    const auto &output_address = outputs[0]->device_address();
     auto x_abs = x_tensor->ToAbstract()->Broaden();
     MS_EXCEPTION_IF_NULL(x_abs);
     auto input_kernel_tensor = std::make_shared<KernelTensor>(x_abs->GetShape(), x_abs->GetType(), nullptr);
     input_kernel_tensor->set_device_address(input_x_address);
+    input_kernel_tensor->set_tensor_storage_info(x_tensor->storage_info());
     input_kernel_tensor->SetShapeVector(x_tensor->shape());
     input_kernel_tensor->set_format(x_tensor->format());
     if (!input_kernel_tensor->host_info_exist()) {
@@ -130,6 +132,7 @@ void IdentityCustomizeCall(const std::shared_ptr<OpRunner> &op, const TensorPtr 
     MS_EXCEPTION_IF_NULL(out_abs);
     auto output_kernel_tensor = std::make_shared<KernelTensor>(out_abs->GetShape(), out_abs->GetType(), nullptr);
     output_kernel_tensor->set_device_address(output_address);
+    output_kernel_tensor->set_tensor_storage_info(outputs[0]->storage_info());
     output_kernel_tensor->set_format(outputs[0]->format());
     output_kernel_tensor->SetShapeVector(outputs[0]->shape());
     if (!output_kernel_tensor->host_info_exist()) {

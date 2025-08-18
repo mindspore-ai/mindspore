@@ -228,6 +228,8 @@ mindspore/mindspore/ccsrc/backend/ms_backend/runtime/graph_scheduler/base/graph_
 mindspore/mindspore/ccsrc/backend/ms_backend/runtime/actors/base/kernel_runner.cc:mindspore::runtime::KernelRunner::CopyInputDeviceTensor
 mindspore/mindspore/ccsrc/backend/ms_backend/runtime/actors/base/kernel_actor.cc:mindspore::runtime::KernelActor::CopyInputDeviceTensor
 mindspore/mindspore/ccsrc/backend/ms_backend/runtime/actors/base/output_actor.cc:mindspore::runtime::OutputActor::CreateOutputTensor
+mindspore/mindspore/ccsrc/backend/ge_backend/runtime/actor/data_prepare_actor.cc:mindspore::ge_backend::runtime::DataPrepareActor::PrepareDataForWeightNode
+mindspore/mindspore/ccsrc/backend/ge_backend/runtime/actor/control_flow/control_actor.cc:mindspore::ge_backend::runtime::ControlActor::MergeDeviceAddress
 
 # AICPU migration
 mindspore/mindspore/ops/kernel/ascend/aicpu/aicpu_ops/cpu_kernel/ms_kernel/bias_add_grad.cc:aicpu::BiasAddGradCpuKernel::BiasAddGradCompute

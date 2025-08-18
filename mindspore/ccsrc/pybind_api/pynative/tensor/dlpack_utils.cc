@@ -249,7 +249,6 @@ TensorPtr DLPackUtils::FromDLPack(DLManagedTensor *dlpack) {
   auto device_address =
     std::make_shared<device::DeviceAddress>(nullptr, address_size, device_context->GetDeviceType(), stream_id);
 
-  device_address->set_tensor_storage_info(storage_info);
   tensor->set_device_address(device_address);
   tensor->set_contiguous_callback([device_context](const TensorPtr &self) -> DeviceAddressPtr {
     MS_EXCEPTION_IF_NULL(self);

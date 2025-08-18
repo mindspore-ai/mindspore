@@ -25,7 +25,7 @@ inline static ${return_type} ${op_name}_inner(${call_args_with_type}) {
     std::make_shared<runtime::PyBoostDeviceTask>(
       [device_context, ${call_tensors}](){
         MS_LOG(DEBUG) << "View device task ${op_name} start";
-        PyBoostUtils::MallocOpInputsForView(device_context, ${call_tensors});
+        PyBoostUtils::MallocOpInputs(device_context, ${call_tensors});
         MS_LOG(DEBUG) << "View device task ${op_name} end";
       }
     )

@@ -20,12 +20,11 @@
 #include <exception>
 #include <iomanip>
 #include <functional>
-#include <type_traits>
+#include <memory>
 #include <utility>
 #include <algorithm>
 #include <map>
 #include <vector>
-#include <memory>
 #include <string>
 
 #include "mindapi/base/type_id.h"
@@ -63,6 +62,7 @@ Tensor::Tensor(const Tensor &tensor)
       version_(tensor.version_),
       format_(tensor.format_),
       device_sync_(tensor.device_sync_),
+      storage_info_(tensor.storage_info_),
       auto_grad_meta_data_(tensor.auto_grad_meta_data_),
       base_shape_ptr_(tensor.base_shape_ptr_),
       cache_tensor_ptr_(tensor.cache_tensor_ptr_),
@@ -111,6 +111,7 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
   version_ = tensor.version_;
   format_ = tensor.format_;
   device_sync_ = tensor.device_sync_;
+  storage_info_ = tensor.storage_info_;
   need_pipeline_sync_ = tensor.need_pipeline_sync_;
   lazy_callback_ = tensor.lazy_callback_;
   contiguous_callback_ = tensor.contiguous_callback_;
@@ -171,6 +172,7 @@ Tensor &Tensor::AssignValue(const Tensor &tensor) {
     contiguous_callback_ = tensor.contiguous_callback_;
     MetaTensor::operator=(tensor);
     device_sync_ = tensor.device_address();
+    set_storage_info(tensor.storage_info());
     set_format(tensor.format());
     need_pipeline_sync_ = tensor.need_pipeline_sync_;
     sync_status_ = tensor.sync_status_;
@@ -199,6 +201,7 @@ void Tensor::shallow_copy_from(const Tensor &other) {
     MetaTensor::operator=(other);
     contiguous_callback_ = other.contiguous_callback_;
     device_sync_ = other.device_address();
+    storage_info_ = other.storage_info();
     device_info_ = CopyDeviceInfo(other.device_info_);
     need_pipeline_sync_ = other.need_pipeline_sync();
   }
@@ -266,16 +269,19 @@ TypeId Tensor::set_data_type(TypeId data_type) {
       auto cpu_tensor = cpu();
       device_sync_ = cpu_tensor->device_address();
       format_ = cpu_tensor->format();
+      storage_info_ = nullptr;
     }
     auto new_dtype_address = MakeDeviceAddress(data_type, shape_, true);
     MS_EXCEPTION_IF_NULL(new_dtype_address);
-    DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(this->format(), this->data_type(), shape_);
+    DeviceAddressExtPtr src_ext =
+      std::make_shared<DeviceAddressExt>(this->format(), this->data_type(), this->shape(), this->storage_info());
     DeviceAddressExtPtr dst_ext = std::make_shared<DeviceAddressExt>(Format::DEFAULT_FORMAT, data_type, shape_);
     if (!SyncCopy(new_dtype_address, device_sync_, device_sync_->stream_id(), src_ext, dst_ext)) {
       MS_LOG(EXCEPTION) << "Sync copy failed";
     }
     device_sync_ = new_dtype_address;
     format_ = dst_ext->format_;
+    storage_info_ = nullptr;
     id_ = MakeId();
     return MetaTensor::set_data_type(data_type);
   }
@@ -346,20 +352,22 @@ const DeviceAddressPtr &Tensor::device_address() const { return device_sync_; }
 void Tensor::set_device_address(const DeviceAddressPtr &device_sync, bool need_update_ref_count) {
   device_sync_ = device_sync;
 }
+
 void Tensor::set_(DeviceAddressPtr &&device_sync, const TensorStorageInfoPtr &storage_info, const ShapeVector &shape) {
-  device_sync->set_tensor_storage_info(storage_info);
   set_device_address(device_sync);
   set_storage_info(storage_info);
   set_shape(shape);
 }
-TensorStorageInfoPtr Tensor::storage_info() const {
-  if (device_sync_ != nullptr) {
-    return device_sync_->GetTensorStorageInfo();
-  }
-  return storage_info_;
-}
+
+TensorStorageInfoPtr Tensor::storage_info() const { return storage_info_; }
 
 void Tensor::set_storage_info(const TensorStorageInfoPtr &storage_info) { storage_info_ = storage_info; }
+
+TensorStorageInfoPtr Tensor::implicit_copy_storage_info() const { return implicit_copy_storage_info_; }
+
+void Tensor::set_implicit_copy_storage_info(const TensorStorageInfoPtr &storage_info) {
+  implicit_copy_storage_info_ = storage_info;
+}
 
 bool Tensor::is_contiguous() const {
   const auto &storage = storage_info();
@@ -448,12 +456,16 @@ void *Tensor::data_c() const {
 TensorPtr Tensor::cpu() const {
   ExecuteLazyTask();
   DeviceAddressPtr device_address;
+  TensorStorageInfoPtr storage_info;
   auto contiguous_address = CallContiguousCallback();
   if (contiguous_address != nullptr) {
     device_address = contiguous_address;
+    storage_info = nullptr;
   } else {
     device_address = device_sync_;
+    storage_info = storage_info_;
   }
+
   if (device_address == nullptr) {
     MS_LOG(WARNING) << "Can't do cpu() for uninitialized tensor " << ToString();
     auto ret = std::make_shared<Tensor>(data_type_, shape_, MakeDeviceAddress(data_type_, shape_, true));
@@ -463,18 +475,23 @@ TensorPtr Tensor::cpu() const {
   if (device_address->GetDeviceType() == device::DeviceType::kCPU) {
     auto ret = std::make_shared<Tensor>(data_type_, shape_, device_address);
     ret->set_format(format_);
+    ret->set_storage_info(storage_info);
     ret->set_need_pipeline_sync(true);
     return ret;
   }
+
   auto dst = MakeDeviceAddress(data_type_, shape_, true);
   MS_EXCEPTION_IF_NULL(dst);
-  DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(this->format(), data_type_, shape_);
+  DeviceAddressExtPtr src_ext =
+    std::make_shared<DeviceAddressExt>(this->format(), data_type_, shape_, storage_info);
   DeviceAddressExtPtr dst_ext = std::make_shared<DeviceAddressExt>(Format::DEFAULT_FORMAT, data_type_, shape_);
   if (!SyncCopy(dst, device_address, CurrentStream::id(), src_ext, dst_ext)) {
     MS_LOG(EXCEPTION) << "SyncCopy failed for " << ToString();
   }
   auto ret = std::make_shared<Tensor>(data_type_, shape_, dst);
+  ret->set_storage_info(nullptr);
   ret->set_need_pipeline_sync(true);
+
   return ret;
 }
 
@@ -815,7 +832,8 @@ std::string ShapeToString(const ShapeVector &shape) {
 }  // namespace tensor
 namespace {
 DeviceAddressExtPtr MakeDeviceAddressExt(const tensor::TensorPtr &tensor) {
-  return std::make_shared<DeviceAddressExt>(tensor->format(), tensor->data_type(), tensor->shape());
+  return std::make_shared<DeviceAddressExt>(tensor->format(), tensor->data_type(), tensor->shape(),
+                                            tensor->storage_info());
 }
 }  // namespace
 

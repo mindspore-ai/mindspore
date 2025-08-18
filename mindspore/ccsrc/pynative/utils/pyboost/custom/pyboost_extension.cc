@@ -20,6 +20,11 @@
 #include <cxxabi.h>
 #endif
 
+#include <tuple>
+#include <string>
+#include <vector>
+#include <memory>
+
 #include "utils/stream_guard.h"
 #include "include/pynative/utils/pyboost/custom/tensor.h"
 #include "include/utils/tensor_utils.h"
@@ -140,7 +145,7 @@ void PyboostRunner::_MallocDeviceAddress() {
       if (!inp.is_defined()) {
         continue;
       }
-      mindspore::kernel::pyboost::PyBoostUtils::MallocForInput(_device_context_, inp.tensor(), false);
+      mindspore::kernel::pyboost::PyBoostUtils::MallocForInput(_device_context_, inp.tensor());
     }
   }
   {

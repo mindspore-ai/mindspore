@@ -47,9 +47,9 @@ TensorStorageInfoPtr ConvTranspose2DAscend::CreateTensorStorageInfo(const Kernel
     // create new tensor info
     auto new_strides(strides);
     new_strides.insert(new_strides.begin(), shape[0] * strides[0]);
-    return std::make_shared<TensorStorageInfo>(
-      new_shape, new_strides, old_tensor_storage_info->storage_offset, old_tensor_storage_info->ori_shape,
-      old_tensor_storage_info->ori_strides, old_tensor_storage_info->is_contiguous, old_tensor_storage_info->ori_size);
+    return std::make_shared<TensorStorageInfo>(new_shape, new_strides, old_tensor_storage_info->storage_offset,
+                                               old_tensor_storage_info->ori_shape, old_tensor_storage_info->ori_strides,
+                                               old_tensor_storage_info->is_contiguous);
   }
   std::vector<int64_t> new_strides(new_shape.size(), 1);
   for (size_t i = new_shape.size() - 1; i > 0; --i) {

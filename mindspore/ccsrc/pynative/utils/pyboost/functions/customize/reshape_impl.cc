@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <vector>
 #include "mindspore/ccsrc/pynative/utils/pyboost/functions/customize/view_impl.h"
 #include "view/reshape_strides_calc.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
@@ -51,7 +52,7 @@ mindspore::tensor::TensorPtr reshape_impl(const mindspore::tensor::TensorPtr &in
     // Async
     kernel::pyboost::PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([input, device_context]() {
       MS_LOG(DEBUG) << "View device task Reshape start";
-      kernel::pyboost::PyBoostUtils::MallocOpInputsForView(device_context, input);
+      kernel::pyboost::PyBoostUtils::MallocOpInputs(device_context, input);
       MS_LOG(DEBUG) << "View device task Reshape end";
     }));
 

@@ -15,6 +15,8 @@
  */
 
 #include "backend/ge_backend/runtime/actor/data_source_actor.h"
+#include <vector>
+#include <string>
 #include "backend/ge_backend/runtime/actor/memory_manager_actor.h"
 #include "backend/ge_backend/runtime/actor/output_actor.h"
 #include "backend/ge_backend/runtime/actor/recorder_actor.h"
@@ -162,6 +164,7 @@ void CopyHostTensorToKernelTensor(const tensor::TensorPtr &host_tensor, const ke
   MS_EXCEPTION_IF_NULL(context);
   auto device_tensor = kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_tensor);
+  const auto &device_storage_info = kernel_tensor->tensor_storage_info();
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);

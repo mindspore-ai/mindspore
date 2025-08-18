@@ -111,11 +111,12 @@ KernelTensor::KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &t
   }
 }
 
-KernelTensor::KernelTensor(const DeviceAddressPtr &device_address, TypeId dtype_id, const ShapeVector &host_shape,
-                           const UserDataPtr &user_data) {
+KernelTensor::KernelTensor(const DeviceAddressPtr &device_address, const TensorStorageInfoPtr &storage_info,
+                           TypeId dtype_id, const ShapeVector &host_shape, const UserDataPtr &user_data) {
   MS_EXCEPTION_IF_NULL(device_address);
   device_address_ = device_address;
   shape_vector_ = host_shape;
+  tensor_storage_info_ = storage_info;
   user_data_ = user_data;
   if (dtype_id == kTypeUnknown) {
     SetType(TypeIdToType(dtype_id));
@@ -125,12 +126,13 @@ KernelTensor::KernelTensor(const DeviceAddressPtr &device_address, TypeId dtype_
   ref_cnt_ = std::make_shared<RefCount>();
 }
 
-KernelTensor::KernelTensor(const DeviceAddressPtr &device_address, const abstract::BaseShapePtr &shape,
-                           const TypePtr &type, const ValuePtr &value, void *device_ptr, size_t size,
-                           const std::string &format, TypeId dtype_id, const ShapeVector &host_shape,
-                           const string &device_name, const UserDataPtr &user_data)
+KernelTensor::KernelTensor(const DeviceAddressPtr &device_address, const TensorStorageInfoPtr &storage_info,
+                           const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value,
+                           void *device_ptr, size_t size, const std::string &format, TypeId dtype_id,
+                           const ShapeVector &host_shape, const string &device_name, const UserDataPtr &user_data)
     : KernelTensor(shape, type, value) {
   MS_EXCEPTION_IF_NULL(device_address);
+  tensor_storage_info_ = storage_info;
   device_address_ = device_address;
   device_address_->device_pointer()->set_ptr(device_ptr);
   device_address_->SetSize(size);
@@ -144,10 +146,11 @@ KernelTensor::KernelTensor(const DeviceAddressPtr &device_address, const abstrac
   ref_cnt_ = std::make_shared<RefCount>();
 }
 
-KernelTensor::KernelTensor(const DeviceAddressPtr &device_address, const abstract::BaseShapePtr &shape,
-                           const TypePtr &type, const ValuePtr &value) {
+KernelTensor::KernelTensor(const DeviceAddressPtr &device_address, const TensorStorageInfoPtr &storage_info,
+                           const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(device_address);
   device_address_ = device_address;
+  tensor_storage_info_ = storage_info;
 
   host_info_ = std::make_unique<KernelHostInfo>();
   if (type) {
@@ -185,6 +188,7 @@ KernelTensor::KernelTensor(const KernelTensor &other) {
   MS_EXCEPTION_IF_NULL(other.device_address_);
   device_address_ = other.device_address_->CloneDeviceAddress();
   ref_cnt_ = std::make_shared<RefCount>();
+  tensor_storage_info_ = other.tensor_storage_info();
 }
 
 inline void KernelTensor::CheckHostInfoValid() {
@@ -607,7 +611,7 @@ bool KernelTensor::SyncDataFromDeviceToHost() const {
   MS_EXCEPTION_IF_NULL(host_ptr);
 
   MS_EXCEPTION_IF_NULL(device_address_);
-  const auto &tensor_storage_info = device_address_->GetTensorStorageInfo();
+  const auto &tensor_storage_info = this->tensor_storage_info();
   if (tensor_storage_info != nullptr && (SizeOf(tensor_storage_info->shape) != SizeOf(tensor_storage_info->ori_shape) ||
                                          !tensor_storage_info->is_contiguous)) {
     MS_LOG(EXCEPTION) << "Not support get value from non-contiguous input:" << ToString();
@@ -833,10 +837,12 @@ bool SyncCopy(kernel::KernelTensor *const dst_kernel_tensor, kernel::KernelTenso
   MS_EXCEPTION_IF_NULL(src_kernel_tensor);
   MS_EXCEPTION_IF_NULL(dst_kernel_tensor->device_address());
   MS_EXCEPTION_IF_NULL(src_kernel_tensor->device_address());
-  DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(
-    src_kernel_tensor->format(), src_kernel_tensor->dtype_id(), src_kernel_tensor->GetShapeVector());
-  DeviceAddressExtPtr dst_ext = std::make_shared<DeviceAddressExt>(
-    dst_kernel_tensor->format(), dst_kernel_tensor->dtype_id(), dst_kernel_tensor->GetShapeVector());
+  DeviceAddressExtPtr src_ext =
+    std::make_shared<DeviceAddressExt>(src_kernel_tensor->format(), src_kernel_tensor->dtype_id(),
+                                       src_kernel_tensor->GetShapeVector(), src_kernel_tensor->tensor_storage_info());
+  DeviceAddressExtPtr dst_ext =
+    std::make_shared<DeviceAddressExt>(dst_kernel_tensor->format(), dst_kernel_tensor->dtype_id(),
+                                       dst_kernel_tensor->GetShapeVector(), dst_kernel_tensor->tensor_storage_info());
   MS_LOG(DEBUG) << "Sync copy from kernel tensor:" << src_kernel_tensor->ToString()
                 << " src ext:" << src_ext->ToString() << " to:" << dst_kernel_tensor->ToString()
                 << " dst ext:" << dst_ext->ToString() << " stream id:" << stream_id;
@@ -850,10 +856,12 @@ bool AsyncCopy(kernel::KernelTensor *const dst_kernel_tensor, kernel::KernelTens
   MS_EXCEPTION_IF_NULL(src_kernel_tensor);
   MS_EXCEPTION_IF_NULL(dst_kernel_tensor->device_address());
   MS_EXCEPTION_IF_NULL(src_kernel_tensor->device_address());
-  DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(
-    src_kernel_tensor->format(), src_kernel_tensor->dtype_id(), src_kernel_tensor->GetShapeVector());
-  DeviceAddressExtPtr dst_ext = std::make_shared<DeviceAddressExt>(
-    dst_kernel_tensor->format(), dst_kernel_tensor->dtype_id(), dst_kernel_tensor->GetShapeVector());
+  DeviceAddressExtPtr src_ext =
+    std::make_shared<DeviceAddressExt>(src_kernel_tensor->format(), src_kernel_tensor->dtype_id(),
+                                       src_kernel_tensor->GetShapeVector(), src_kernel_tensor->tensor_storage_info());
+  DeviceAddressExtPtr dst_ext =
+    std::make_shared<DeviceAddressExt>(dst_kernel_tensor->format(), dst_kernel_tensor->dtype_id(),
+                                       dst_kernel_tensor->GetShapeVector(), dst_kernel_tensor->tensor_storage_info());
   MS_LOG(DEBUG) << "Async copy from kernel tensor:" << src_kernel_tensor->ToString()
                 << " src ext:" << src_ext->ToString() << " to:" << dst_kernel_tensor->ToString()
                 << " dst ext:" << dst_ext->ToString() << " stream id:" << stream_id;
@@ -866,10 +874,11 @@ bool SyncCopy(kernel::KernelTensor *const dst_kernel_tensor, tensor::Tensor *con
   MS_EXCEPTION_IF_NULL(src_tensor);
   MS_EXCEPTION_IF_NULL(dst_kernel_tensor->device_address());
   MS_EXCEPTION_IF_NULL(src_tensor->device_address());
-  DeviceAddressExtPtr src_ext =
-    std::make_shared<DeviceAddressExt>(src_tensor->format(), src_tensor->data_type(), src_tensor->shape());
-  DeviceAddressExtPtr dst_ext = std::make_shared<DeviceAddressExt>(
-    dst_kernel_tensor->format(), dst_kernel_tensor->dtype_id(), dst_kernel_tensor->GetShapeVector());
+  DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(src_tensor->format(), src_tensor->data_type(),
+                                                                   src_tensor->shape(), src_tensor->storage_info());
+  DeviceAddressExtPtr dst_ext =
+    std::make_shared<DeviceAddressExt>(dst_kernel_tensor->format(), dst_kernel_tensor->dtype_id(),
+                                       dst_kernel_tensor->GetShapeVector(), dst_kernel_tensor->tensor_storage_info());
   MS_LOG(DEBUG) << "Sync copy from tensor:" << src_tensor->ToString() << " addr:" << src_tensor
                 << " src ext:" << src_ext->ToString() << " to kernel tensor:" << dst_kernel_tensor->ToString()
                 << " dst ext:" << dst_ext->ToString() << " stream id:" << stream_id;
@@ -882,10 +891,11 @@ bool AsyncCopy(kernel::KernelTensor *const dst_kernel_tensor, tensor::Tensor *co
   MS_EXCEPTION_IF_NULL(src_tensor);
   MS_EXCEPTION_IF_NULL(dst_kernel_tensor->device_address());
   MS_EXCEPTION_IF_NULL(src_tensor->device_address());
-  DeviceAddressExtPtr src_ext =
-    std::make_shared<DeviceAddressExt>(src_tensor->format(), src_tensor->data_type(), src_tensor->shape());
-  DeviceAddressExtPtr dst_ext = std::make_shared<DeviceAddressExt>(
-    dst_kernel_tensor->format(), dst_kernel_tensor->dtype_id(), dst_kernel_tensor->GetShapeVector());
+  DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(src_tensor->format(), src_tensor->data_type(),
+                                                                   src_tensor->shape(), src_tensor->storage_info());
+  DeviceAddressExtPtr dst_ext =
+    std::make_shared<DeviceAddressExt>(dst_kernel_tensor->format(), dst_kernel_tensor->dtype_id(),
+                                       dst_kernel_tensor->GetShapeVector(), dst_kernel_tensor->tensor_storage_info());
   MS_LOG(DEBUG) << "Async copy from tensor:" << src_tensor->ToString() << " addr:" << src_tensor
                 << " src ext:" << src_ext->ToString() << " to kernel tensor:" << dst_kernel_tensor->ToString()
                 << " dst ext:" << dst_ext->ToString() << " stream id:" << stream_id;
@@ -898,10 +908,11 @@ bool SyncCopy(const tensor::TensorPtr &dst_tensor, kernel::KernelTensor *const s
   MS_EXCEPTION_IF_NULL(src_kernel_tensor);
   MS_EXCEPTION_IF_NULL(dst_tensor->device_address());
   MS_EXCEPTION_IF_NULL(src_kernel_tensor->device_address());
-  DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(
-    src_kernel_tensor->format(), src_kernel_tensor->dtype_id(), src_kernel_tensor->GetShapeVector());
-  DeviceAddressExtPtr dst_ext =
-    std::make_shared<DeviceAddressExt>(dst_tensor->format(), dst_tensor->data_type(), dst_tensor->shape());
+  DeviceAddressExtPtr src_ext =
+    std::make_shared<DeviceAddressExt>(src_kernel_tensor->format(), src_kernel_tensor->dtype_id(),
+                                       src_kernel_tensor->GetShapeVector(), src_kernel_tensor->tensor_storage_info());
+  DeviceAddressExtPtr dst_ext = std::make_shared<DeviceAddressExt>(dst_tensor->format(), dst_tensor->data_type(),
+                                                                   dst_tensor->shape(), dst_tensor->storage_info());
   MS_LOG(DEBUG) << "Sync copy from kernel tensor:" << src_kernel_tensor->ToString()
                 << " src ext:" << src_ext->ToString() << " to tensor:" << dst_tensor->ToString()
                 << " addr:" << dst_tensor.get() << " dst ext:" << dst_ext->ToString() << " stream id:" << stream_id;
@@ -914,10 +925,11 @@ bool AsyncCopy(const tensor::TensorPtr &dst_tensor, kernel::KernelTensor *const 
   MS_EXCEPTION_IF_NULL(src_kernel_tensor);
   MS_EXCEPTION_IF_NULL(dst_tensor->device_address());
   MS_EXCEPTION_IF_NULL(src_kernel_tensor->device_address());
-  DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(
-    src_kernel_tensor->format(), src_kernel_tensor->dtype_id(), src_kernel_tensor->GetShapeVector());
-  DeviceAddressExtPtr dst_ext =
-    std::make_shared<DeviceAddressExt>(dst_tensor->format(), dst_tensor->data_type(), dst_tensor->shape());
+  DeviceAddressExtPtr src_ext =
+    std::make_shared<DeviceAddressExt>(src_kernel_tensor->format(), src_kernel_tensor->dtype_id(),
+                                       src_kernel_tensor->GetShapeVector(), src_kernel_tensor->tensor_storage_info());
+  DeviceAddressExtPtr dst_ext = std::make_shared<DeviceAddressExt>(dst_tensor->format(), dst_tensor->data_type(),
+                                                                   dst_tensor->shape(), dst_tensor->storage_info());
   MS_LOG(DEBUG) << "Async copy from kernel tensor:" << src_kernel_tensor->ToString()
                 << " src ext:" << src_ext->ToString() << " to tensor:" << dst_tensor->ToString()
                 << " addr:" << dst_tensor.get() << " dst ext:" << dst_ext->ToString() << " stream id:" << stream_id;

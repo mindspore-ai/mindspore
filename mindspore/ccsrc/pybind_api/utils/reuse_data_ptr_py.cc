@@ -70,12 +70,14 @@ void ReuseDataPtr(const py::object &dst_, const py::object &src_, size_t offset)
     if (!host_context->device_res_manager_->SyncAllStreams()) {
       MS_LOG(ERROR) << "Sync stream failed.";
     }
-    DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(src->format(), src->data_type(), src->shape());
+    DeviceAddressExtPtr src_ext =
+      std::make_shared<DeviceAddressExt>(src->format(), src->data_type(), src->shape(), src->storage_info());
     DeviceAddressExtPtr dst_ext =
       std::make_shared<DeviceAddressExt>(Format::DEFAULT_FORMAT, src->data_type(), src->shape());
     SyncCopy(src_device_address, src->device_address(), src_device_address->stream_id(), src_ext, dst_ext);
     src->set_device_address(src_device_address);
     src->set_format(dst_ext->format_);
+    src->set_storage_info(nullptr);
   }
 
   // create device address with src ptr
@@ -98,6 +100,7 @@ void ReuseDataPtr(const py::object &dst_, const py::object &src_, size_t offset)
   // set device address to dst
   dst->set_device_address(dst_device_address);
   dst->set_format(Format::DEFAULT_FORMAT);
+  dst->set_storage_info(nullptr);
 }
 
 void RegReuseDataPtr(py::module *m) {
