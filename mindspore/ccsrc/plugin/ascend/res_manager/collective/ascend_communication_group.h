@@ -47,12 +47,8 @@ class AscendCommunicationGroup : public CommunicationGroup {
 
   void *GenerateRootInfo(size_t *root_info_size) override;
 
-  // Set global comm information for nslb-dp feature.
-  bool SetGlobalCommInfo(uint32_t master_ip, uint32_t master_port, uint32_t total_rank_size, uint32_t node_rank,
-                         uint32_t local_rank_size) override;
-
   // Check if CANN so supports the target HCCL comm config parameters.
-  bool IsSupportConfigParameter(HcclCommConfigCapability config_parameter);
+  bool IsSupportConfigParameter(uint32_t config_parameter);
 
   // Return HcclCommConfig based on users' options configuration.
   HcclCommConfig CreateHcclCommConfig();
@@ -76,6 +72,9 @@ class AscendCommunicationGroup : public CommunicationGroup {
 
   // Initialpize HCCL config parameters, such as hcclBufferSize and hcclDeterministic.
   void InitHcclCommConfig(HcclCommConfig *config);
+
+  // Set JobId and NodeId to HCCL comm config for nslb.
+  void SetNslbCommConfig(HcclCommConfig *config);
 
   // The HCCL unique id for this group. Used to initialize this group's communicator.
   HcclRootInfo unique_id_;

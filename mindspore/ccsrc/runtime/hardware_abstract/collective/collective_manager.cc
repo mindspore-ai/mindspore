@@ -15,9 +15,6 @@
  */
 
 #include "include/backend/distributed/collective/collective_manager.h"
-#if !defined(_WIN32) && !defined(_WIN64)
-#include <arpa/inet.h>
-#endif
 #include <algorithm>
 #include <string>
 #include <iostream>
@@ -909,50 +906,6 @@ bool CollectiveManager::ResumeHcclComm() {
   return true;
 }
 
-void CollectiveManager::SetGlobalCommInfo(CommunicationGroupPtr group, const std::string &group_name) {
-#if !defined(_WIN32) && !defined(_WIN64)
-  // Only hccl_world_group will call SetGlobalCommInfo.
-  if (group_name != "hccl_world_group") {
-    return;
-  }
-
-  MS_LOG(INFO) << "Begin setting global communication info: " << group_name;
-  std::string master_addr = common::GetEnv("MS_SCHED_HOST");
-  if (master_addr.empty()) {
-    MS_LOG(INFO) << "MS_SCHED_HOST is not set, will not call HcclSetGlobalCommInfo.";
-    return;
-  }
-  struct sockaddr_in sa;
-  inet_pton(AF_INET, master_addr.c_str(), &(sa.sin_addr));
-  uint32_t master_ip = ntohl(sa.sin_addr.s_addr);
-  if (common::GetEnv("MS_SCHED_PORT").empty()) {
-    MS_LOG(INFO) << "MS_SCHED_PORT is not set, will not call HcclSetGlobalCommInfo.";
-    return;
-  }
-  uint32_t master_port = static_cast<uint32_t>(std::stoi(common::GetEnv("MS_SCHED_PORT")));
-  uint32_t node_rank;
-  std::string env_node_rank = common::GetEnv("MS_NODE_RANK");
-  if (env_node_rank.empty() || std::stoi(env_node_rank) < 0) {
-    std::string worker_addr = common::GetEnv("MS_WORKER_IP");
-    if (worker_addr.empty()) {
-      MS_LOG(INFO) << "MS_WORKER_IP is not set while MS_NODE_RANK is not set to a non-negative integer, will not call "
-                      "HcclSetGlobalCommInfo.";
-      return;
-    }
-    struct sockaddr_in sa_worker;
-    inet_pton(AF_INET, worker_addr.c_str(), &(sa_worker.sin_addr));
-    node_rank = ntohl(sa_worker.sin_addr.s_addr);
-  } else {
-    node_rank = static_cast<uint32_t>(std::stoi(env_node_rank));
-  }
-  if (!group->SetGlobalCommInfo(master_ip, master_port, global_rank_size_, node_rank, local_rank_size_)) {
-    MS_LOG(WARNING) << "Failed to SetGlobalCommInfo " << group_name;
-    return;
-  }
-  MS_LOG(INFO) << "End set global communication info: " << group_name;
-#endif
-}
-
 bool CollectiveManager::CreateDeviceCommunicator(const std::string &group_name, const int32_t buffsize) {
   MS_LOG(INFO) << "Create device communicator for " << group_name;
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
@@ -963,8 +916,6 @@ bool CollectiveManager::CreateDeviceCommunicator(const std::string &group_name, 
     MS_LOG(INFO) << "Begin to Create mccl group " << group_name;
   }
   MS_EXCEPTION_IF_NULL(group);
-
-  SetGlobalCommInfo(group, group_name);
 
   // Step 1: Generate and broadcast device information of the root node (required for NPU backend without rank table).
   static bool use_ranktable = !common::GetEnv("RANK_TABLE_FILE").empty();

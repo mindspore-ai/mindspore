@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+This test is for msrun launch.
+"""
 import os
 import subprocess
 import json
@@ -24,16 +27,27 @@ from tests.mark_utils import arg_mark
 def test_msrun():
     """
     Feature: 'msrun' launch utility.
-    Description: Launch distributed training job with dynamic cluster using msrun.
-    Expectation: All workers are successfully spawned and running training.
+    Description: 1. Launch distributed training job with dynamic cluster using msrun.
+                 2. Customize the IP and port on the host side, and enable the NSLB-DP feature.
+    Expectation: 1. All workers are successfully spawned and running training.
+                 2. The derived JobID and WorldRankID are as expected.
     """
-    ms.set_context(jit_level='O0')
-    return_code = os.system(
-        "msrun --worker_num=4 --local_worker_num=4 --master_addr=127.0.0.1 "\
-        "--master_port=10969 --join=True "\
-        "test_msrun.py --device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist"
-    )
+    master_ip = "127.0.0.1"
+    master_port = 10969
+    env_cmd = 'export ASCEND_SLOG_PRINT_TO_STDOUT=1'
+    msrun_cmd = f"msrun --worker_num=4 --local_worker_num=4 --master_addr={master_ip} --master_port={master_port} "\
+                "--join=True --log_dir=msrun_log test_msrun.py"
+    arg_cmd = "--device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist"
+    return_code = os.system(f"{env_cmd}; {msrun_cmd} {arg_cmd}")
     assert return_code == 0
+    # JobID derived from 127.0.0.1:10969 is 47113626976257.
+    expected_jobid = "47113626976257"
+    actual_jobid = subprocess.getoutput(r"grep -oP 'GetConfigJobID = \K\d+' ./msrun_log/worker_3.log")
+    assert actual_jobid == expected_jobid
+    # WorldRankID for worker_3 is 3.
+    expected_world_rank_id = "3"
+    actual_world_rank_id = subprocess.getoutput(r"grep -oP 'GetConfigWorldRankID = \K\d+' ./msrun_log/worker_3.log")
+    assert actual_world_rank_id == expected_world_rank_id
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
@@ -70,7 +84,7 @@ def _create_rank_table_file(save_json_to_path, rank_table_dict):
     """
     create rank table file for train or test
     """
-    with open(save_json_to_path, "w") as f:
+    with open(save_json_to_path, "w", encoding="utf-8") as f:
         json.dump(rank_table_dict, f)
 
 
@@ -304,8 +318,8 @@ def test_msrun_with_correct_hostname():
     hostname = socket.gethostname()
     ipaddr = socket.gethostbyname(hostname)
     print(f"The hostname of this node is {hostname}, ip address is {ipaddr}.")
-    cmd = (f"msrun --worker_num=4 --local_worker_num=4 --master_addr={hostname} --master_port=10969 --join=True "\
-            "test_msrun_only_init.py --device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist")
+    cmd = f"msrun --worker_num=4 --local_worker_num=4 --master_addr={hostname} --master_port=10969 --join=True "\
+           "test_msrun_only_init.py --device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist"
     result = subprocess.getoutput(cmd)
     assert result.find(f"Convert input host name:{hostname} to ip address:{ipaddr}.") != -1
 
@@ -321,8 +335,8 @@ def test_msrun_with_wrong_hostname():
     ms.set_context(jit_level='O0')
     hostname = "wrong_hostname"
     print(f"The hostname of this node is {hostname}.")
-    cmd = (f"msrun --worker_num=4 --local_worker_num=4 --master_addr={hostname} --master_port=10969 --join=True "\
-            "test_msrun_only_init.py --device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist")
+    cmd = f"msrun --worker_num=4 --local_worker_num=4 --master_addr={hostname} --master_port=10969 --join=True "\
+           "test_msrun_only_init.py --device_target=Ascend --dataset_path=/home/workspace/mindspore_dataset/mnist"
     result = subprocess.getoutput(cmd)
     assert result.find("DNS resolution has failed") != -1
 
@@ -333,6 +347,7 @@ def _extract_json_data(input_file, header):
 
     inside_json = False
     json_lines = []
+    json_data = []
     for line in lines:
         stripped_line = line.strip()
         if header in stripped_line:

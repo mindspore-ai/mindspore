@@ -15,6 +15,9 @@
  */
 
 #include "plugin/ascend/res_manager/collective/ascend_communication_group.h"
+#if !defined(_WIN32) && !defined(_WIN64)
+#include <arpa/inet.h>
+#endif
 #include <map>
 #include <variant>
 #include <unordered_map>
@@ -35,6 +38,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+constexpr uint32_t kHcclCommConfigNslbDp = 6;
 AscendCommunicationGroup::AscendCommunicationGroup(
   const std::string &name, const std::vector<uint32_t> &group_ranks, uint32_t global_rank, uint32_t local_group_rank,
   uint32_t local_group_size,
@@ -141,6 +145,8 @@ bool AscendCommunicationGroup::Finalize() {
 }
 
 void AscendCommunicationGroup::InitHcclCommConfig(HcclCommConfig *config) {
+  MS_LOG(INFO) << "Start to initialize communication config by HcclCommConfigInit for " << name_;
+  MS_EXCEPTION_IF_NULL(config);
   HcclCommConfigInit(config);
   uint32_t buffsize = GetHcclBufferSize(name_, group_ranks_);
   config->hcclBufferSize = buffsize == 0 ? HCCL_COMM_DEFAULT_BUFFSIZE : buffsize;
@@ -152,11 +158,50 @@ void AscendCommunicationGroup::InitHcclCommConfig(HcclCommConfig *config) {
   config->hcclDeterministic = MsContext::GetInstance()->get_param<std::string>(MS_CTX_DETERMINISTIC) == "ON"
                                 ? 1
                                 : (env_hccl_deterministic == "true" ? 1 : 0);
+  MS_LOG(INFO) << "End to initialize communication config by HcclCommConfigInit for " << name_;
+}
+
+void AscendCommunicationGroup::SetNslbCommConfig(HcclCommConfig *config) {
+#if !defined(_WIN32) && !defined(_WIN64)
+  MS_EXCEPTION_IF_NULL(config);
+  if (!IsSupportConfigParameter(kHcclCommConfigNslbDp)) {
+    MS_LOG(DEBUG) << "Unsupported HCCL config version, NSLB-DP feature disabled!";
+    return;
+  }
+
+  if (common::GetEnv("MS_SCHED_PORT").empty()) {
+    MS_LOG(DEBUG) << "MS_SCHED_PORT unconfigured, NSLB-DP feature disabled!";
+    return;
+  }
+  uint32_t master_port = static_cast<uint32_t>(std::stoi(common::GetEnv("MS_SCHED_PORT")));
+
+  std::string master_addr = common::GetEnv("MS_SCHED_HOST");
+  if (master_addr.empty()) {
+    MS_LOG(DEBUG) << "MS_SCHED_HOST unconfigured, NSLB-DP feature disabled!";
+    return;
+  }
+  struct sockaddr_in sa;
+  if (inet_pton(AF_INET, master_addr.c_str(), &sa.sin_addr) != 1) {
+    MS_LOG(DEBUG) << "Invalid IPv4 address: " << master_addr << ", NSLB-DP feature disabled!";
+    return;
+  }
+  uint32_t master_ip = ntohl(sa.sin_addr.s_addr);
+
+  // The hcclJobID(uint64_t) is composed of port(uint32_t) in its high-order 32 bits and ip(uint32_t) in its low-order
+  // 32 bits.
+  uint64_t job_id = (static_cast<uint64_t>(master_port) << 32) | master_ip;
+  config->hcclJobID = job_id;
+  config->hcclWorldRankID = global_rank_;
+  MS_LOG(INFO) << "Successfully set NSLB-DP comm config for group: " << name_ << ", hcclJobID: " << job_id
+               << ", hcclWorldRankID: " << global_rank_;
+#endif
 }
 
 HcclCommConfig AscendCommunicationGroup::CreateHcclCommConfig() {
   HcclCommConfig config;
   InitHcclCommConfig(&config);
+  // Set up NSLB-DP config.
+  SetNslbCommConfig(&config);
 
   if (hccl_config_.empty()) {
     return config;
@@ -276,24 +321,7 @@ void *AscendCommunicationGroup::GenerateRootInfo(size_t *root_info_size) {
   return &unique_id_;
 }
 
-bool AscendCommunicationGroup::SetGlobalCommInfo(uint32_t master_ip, uint32_t master_port, uint32_t total_rank_size,
-                                                 uint32_t node_rank, uint32_t local_rank_size) {
-  MS_LOG(WARNING) << "Start to SetGlobalCommInfo for " << name_ << ", master_ip:" << master_ip
-                  << ", master_port:" << master_port << ", node_rank:" << node_rank
-                  << ", total_rank_size:" << total_rank_size << ", local_rank_size" << local_rank_size;
-  int32_t ret = hccl::HcclAdapter::GetInstance().HcclSetGlobalCommInfo(master_ip, master_port, total_rank_size,
-                                                                       node_rank, local_rank_size);
-  if (ret == static_cast<int32_t>(HCCL_E_NOT_SUPPORT)) {
-    MS_LOG(INFO) << "HcclSetGlobalCommInfo is not supported.";
-  } else if (ret != static_cast<int32_t>(HCCL_SUCCESS)) {
-    MS_LOG(ERROR) << "Failed to set HCCL global comm info: " << CALL_ASCEND_API(aclGetRecentErrMsg);
-    return false;
-  }
-  MS_LOG(WARNING) << "End to SetGlobalCommInfo for " << name_;
-  return true;
-}
-
-bool AscendCommunicationGroup::IsSupportConfigParameter(HcclCommConfigCapability config_parameter) {
+bool AscendCommunicationGroup::IsSupportConfigParameter(uint32_t config_parameter) {
   return config_parameter < hccl::HcclAdapter::GetInstance().HcclGetCommConfigCapability();
 }
 

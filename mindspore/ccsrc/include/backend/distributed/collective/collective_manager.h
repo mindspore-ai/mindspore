@@ -59,7 +59,7 @@ using InitCommTaskQueue = std::queue<std::pair<std::string, int32_t>>;
 // Group list to be initialized in order. The element will not be deleted.
 using InitCommTaskList = std::vector<std::string>;
 // Initialization task results for each group.
-// Key is group name. Value is a pair of result(true/flase) and error info(if false).
+// Key is group name. Value is a pair of result(true/false) and error info(if false).
 using GroupToResultMap = std::unordered_map<std::string, std::pair<bool, std::string>>;
 
 // Interval of initializing each communicator in queue is 300 milliseconds.
@@ -91,9 +91,6 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
 
   // Destroy device communication group for resume training.
   bool DestroyDeviceSideCommunicationGroup(const std::string &group_name);
-
-  // Call HcclSetGlobalCommInfo to pass necessary info in world group.
-  void SetGlobalCommInfo(CommunicationGroupPtr group, const std::string &group_name);
 
   // Get the inner comm name of the specified group.
   std::string GetCommName(const std::string &group_name);

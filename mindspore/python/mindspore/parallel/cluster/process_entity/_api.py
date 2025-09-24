@@ -72,7 +72,7 @@ class _MetaServerNode(_Node):
         """
         super().run()
         os.environ["MS_ROLE"] = "MS_SCHED"
-        with open(self.output_file, "w") as file_handle:
+        with open(self.output_file, "w", encoding="utf-8") as file_handle:
             return subprocess.Popen(self.args_list, stdout=file_handle, stderr=subprocess.STDOUT)
 
 
@@ -81,12 +81,11 @@ class _ComputeGraphNode(_Node):
     Worker node for dynamic networking. Inherits from the Node class.
     """
 
-    def __init__(self, worker_num, sched_host, sched_port, timeout, node_id, node_rank, args_list, output_file,
+    def __init__(self, worker_num, sched_host, sched_port, timeout, node_id, args_list, output_file,
                  tail_worker_log, join, is_simulation):
         super().__init__(worker_num, sched_host, sched_port, timeout, args_list, output_file,
                          tail_worker_log, join, is_simulation)
         self.node_id = node_id
-        self.node_rank = node_rank
 
     def run(self):
         """
@@ -98,8 +97,6 @@ class _ComputeGraphNode(_Node):
         super().run()
         if self.node_id is not None:
             os.environ["MS_NODE_ID"] = str(self.node_id)
-        if self.node_rank is not None:
-            os.environ["MS_NODE_RANK"] = str(self.node_rank)
         # If simulation level is set, environment variable 'MS_ROLE' will not be set.
         if not self.is_simulation:
             os.environ["MS_ROLE"] = "MS_WORKER"
@@ -110,7 +107,7 @@ class _ComputeGraphNode(_Node):
                            f"which doesn't contain this worker {self.node_id}."
                            f" So this worker {self.node_id}'s log will not be output to console. Reset "
                            "'--tail_worker_log', if you want to output this worker's log to console.")
-        with open(self.output_file, "w") as file_handle:
+        with open(self.output_file, "w", encoding="utf-8") as file_handle:
             worker_process = subprocess.Popen(self.args_list, preexec_fn=os.setsid, stdout=file_handle,
                                               stderr=subprocess.STDOUT)
             if self.join and is_tail_worker_log:
@@ -195,7 +192,7 @@ class _ProcessManager:
         if self.is_simulation and self.local_worker_num > 128:
             self.local_worker_num = 1
             self.sim_rank_id = 0
-            logger.warning(f"In dryrun case, local worker num is set to larger than 128. "
+            logger.warning("In dryrun case, local worker num is set to larger than 128. "
                            "To avoid a system clash, local worker num is set to 1.")
 
         self.cmd = args.task_script
@@ -238,11 +235,11 @@ class _ProcessManager:
                                               "MONITOR": self.monitor_rank_status
                                               })
         if not ret:
-            logger.warning(f"Register callback to mindx failed, process controlled by msrun.")
+            logger.warning("Register callback to mindx failed, process controlled by msrun.")
             self.enable_mindx = False
             self.handler = None
             return
-        logger.warning(f"Mindx enabled, process controlled by mindx.")
+        logger.warning("Mindx enabled, process controlled by mindx.")
         os.environ["MS_ENABLE_RECOVERY"] = str(1)
 
     def run(self):
@@ -296,7 +293,7 @@ class _ProcessManager:
         os.environ["DEVICE_ID"] = str(local_rank)
         node_id, log_name = self._get_node_id_and_log_path(local_rank)
         if node_id is None:
-            logger.warning(f"Rank ids will be assigned automatically, "
+            logger.warning("Rank ids will be assigned automatically, "
                            "please use 'grep -rn 'rank id:' command to check each worker log's rank id.")
         else:
             # If node_id is generated in '_get_node_id_and_log_path' method, export 'RANK_ID' environment variable.
@@ -318,8 +315,7 @@ class _ProcessManager:
         else:
             cmd = _generate_cmd_args_list(self.cmd, self.cmd_args)
         cgn = _ComputeGraphNode(self.worker_num, self.master_addr, self.master_port, self.cluster_time_out,
-                                node_id, self.node_rank, cmd, log_name, self.tail_worker_log, self.join,
-                                self.is_simulation)
+                                node_id, cmd, log_name, self.tail_worker_log, self.join, self.is_simulation)
         process, tail_process = cgn.run()
         self.cgn_processes.append(process)
         self.tail_cgn_processes.append(tail_process)
@@ -364,19 +360,18 @@ class _ProcessManager:
                 if ret_code is None:
                     # This means the process is still running, poll next process.
                     continue
-                elif ret_code != 0:
+                if ret_code != 0:
                     has_exception = True
                     logger.error(f"Worker process {p.pid} exit with exception. Error code: {ret_code}.")
                     break
-                else:
-                    success_cgn_processes.add(p)
+                success_cgn_processes.add(p)
 
             if has_exception:
                 logger.warning("There's worker exits with exception, kill all other workers.")
                 self.kill_worker_processes()
                 self.kill_tail_log_processes()
                 break
-            elif len(success_cgn_processes) == len(self.cgn_processes):
+            if len(success_cgn_processes) == len(self.cgn_processes):
                 logger.info("All workers successfully exit!")
                 self.kill_tail_log_processes()
                 break
@@ -531,7 +526,7 @@ class _ProcessManager:
                 logger.info(f"Process rank {rank_id} has not been initialized.")
                 return {"pid": None, "status": 200, "global_rank": global_rank_id}
         else:
-            logger.warning(f"Invalid rank id!")
+            logger.warning("Invalid rank id!")
         return {}
 
     def start_all_workers(self):
