@@ -11,12 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Test element wise function operations."""
 
 import re
 import numpy as np
-
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.graph.api import _cell_graph_executor
@@ -35,7 +35,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -46,7 +46,7 @@ class NetWithLoss(nn.Cell):
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
-        super(GradWrap, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, x, y, b):
@@ -831,12 +831,13 @@ def test_matmul_cast():
     strategy1 = ((2, 2), (2, 2))
     strategy2 = ((4, 2),)
     strategy3 = ((1, 4), (4, 2))
-    net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
+
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
 
     x = Tensor(np.ones([128, 32]), dtype=ms.float32)
     y = Tensor(np.ones([32, 64]), dtype=ms.float32)
-    b = Tensor(np.ones([64, 64]), dtype=ms.int32)
+    b = Tensor(np.ones([64, 64]), dtype=ms.float16)
+    net = GradWrap(NetWithLoss(Net(strategy1, strategy2, strategy3)))
     compile_net(net, x, y, b)
 
 

@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test pynative control flow operations."""
+
 import numpy as np
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 import mindspore.common.dtype as mstype
 import mindspore.ops as P
@@ -73,7 +75,7 @@ def test_sit_pynative_diff_shape_with_while_in_construct():
     flag = 2
     out = net(input_ms, flag)
     backnet = GradofAllInputsAndParams(net)
-    backout = backnet(input_ms, Tensor(flag, mstype.int32))
+    backout = backnet(input_ms, Tensor(flag, mstype.float32))
 
     comparenet = WhileNetPt()
     torch_input = torch.from_numpy(input_ms.asnumpy())
@@ -89,7 +91,7 @@ def test_sit_pynative_diff_shape_with_while_in_construct():
 
     flag = 3
     out = net(input_ms, flag)
-    backout = backnet(input_ms, Tensor(flag, mstype.int32))
+    backout = backnet(input_ms, Tensor(flag, mstype.float32))
     torch_flag = torch.from_numpy(np.array(flag))
     torch_flag.requires_grad = False
     comparenet.zero_grad()
@@ -103,7 +105,7 @@ def test_sit_pynative_diff_shape_with_while_in_construct():
 
     input_ms = Tensor(np.random.rand(1, 1, 112, 112).astype(np.float32))
     flag = 4
-    backout = backnet(input_ms, Tensor(flag, mstype.int32))
+    backout = backnet(input_ms, Tensor(flag, mstype.float32))
     torch_input = torch.from_numpy(input_ms.asnumpy())
     torch_input.requires_grad = True
     torch_flag = torch.from_numpy(np.array(flag))

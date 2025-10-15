@@ -451,8 +451,8 @@ def test_grad_if_ith_train_one_step():
     class SingleIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.weight_x = Parameter(Tensor(2, mstype.int32), name="weightx")
-            self.weight_y = Parameter(Tensor(5, mstype.int32), name="weighty")
+            self.weight_x = Parameter(Tensor(2, mstype.float32), name="weightx")
+            self.weight_y = Parameter(Tensor(5, mstype.float32), name="weighty")
 
         def construct(self, x, y):
             if self.weight_x < self.weight_y:
@@ -485,8 +485,8 @@ def test_grad_if_ith_train_one_step():
             return (forward, grads_g, grads_d)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor(2, mstype.int32)
-    y = Tensor(5, mstype.int32)
+    x = Tensor(2, mstype.float32)
+    y = Tensor(5, mstype.float32)
     if_net = SingleIfNet()
     train_one_if_net = MyTrainOneStepCell(if_net)
     train_one_if_net(x, y)
@@ -503,7 +503,7 @@ def test_grad_net_d_net_g():
     class NetD(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.weight_d = Parameter(Tensor(2, mstype.int32), name="weightd")
+            self.weight_d = Parameter(Tensor(2, mstype.float32), name="weightd")
 
         def construct(self, x, y):
             if self.weight_d < x:
@@ -515,7 +515,7 @@ def test_grad_net_d_net_g():
     class NetG(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.weight_g = Parameter(Tensor(2, mstype.int32), name="weightg")
+            self.weight_g = Parameter(Tensor(2, mstype.float32), name="weightg")
 
         def construct(self, x, y):
             if self.weight_g < x:
@@ -579,8 +579,8 @@ def test_grad_net_d_net_g():
             return (grads_g, grads_d)
 
     context.set_context(mode=context.PYNATIVE_MODE)
-    x = Tensor(2, mstype.int32)
-    y = Tensor(5, mstype.int32)
+    x = Tensor(2, mstype.float32)
+    y = Tensor(5, mstype.float32)
     network = Backbone()
     train_one_net = MyTrainOneStepCell(network)
     train_one_net(x, y)

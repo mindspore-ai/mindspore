@@ -43,7 +43,6 @@ def test_p_dtype_input_1x12x1x1_dtype_bool():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -190,7 +189,6 @@ def test_p_dtype_input_1x12x1x1_dtype_int8():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -211,7 +209,6 @@ def test_p_dtype_forward_input_1x12x1x1_dtype_int16():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -232,7 +229,6 @@ def test_p_dtype_input_1x12x1x1_dtype_int32():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -253,7 +249,6 @@ def test_p_dtype_input_1x12x1x1_dtype_int64():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -274,7 +269,6 @@ def test_p_dtype_input_1x12x1x1_dtype_uint8():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -295,7 +289,6 @@ def test_p_dtype_input_1x12x1x1_dtype_uint16():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -316,7 +309,6 @@ def test_p_dtype_input_1x12x1x1_dtype_uint32():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -337,7 +329,6 @@ def test_p_dtype_input_1x12x1x1_dtype_uint64():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -379,7 +370,6 @@ def test_p_dtype_input_int():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -487,7 +477,6 @@ def test_p_dtype_input_tuple_int():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -508,7 +497,6 @@ def test_p_dtype_input_tuple_bool():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -571,7 +559,6 @@ def test_p_dtype_input_tuple_int_bool():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -655,7 +642,6 @@ def test_p_dtype_input_list_int():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -676,7 +662,6 @@ def test_p_dtype_input_list_bool():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -739,7 +724,6 @@ def test_p_dtype_input_list_int_bool():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -823,4 +807,3 @@ def test_p_dtype_input_bool():
     jit(net.construct, capture_mode="bytecode")(Tensor(input_np))
     context.set_context(mode=context.PYNATIVE_MODE)
     fact.forward_cmp(net)
-    fact.grad_cmp(net)

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_bprop_exception.py """
 
 import pytest
 import mindspore as ms
@@ -36,7 +37,7 @@ def test_self_define_cell_output_not_tuple():
 
     class ForwardNet(ms.nn.Cell):
         def __init__(self):
-            super(ForwardNet, self).__init__()
+            super().__init__()
             self.self_defined_cell = SelfDefineCell()
 
         def construct(self, x):
@@ -46,7 +47,7 @@ def test_self_define_cell_output_not_tuple():
 
     class TestNet(ms.nn.Cell):
         def __init__(self):
-            super(TestNet, self).__init__()
+            super().__init__()
             self.forward_net = ForwardNet()
             self.grad_op = ops.GradOperation(get_all=True)
 
@@ -56,7 +57,7 @@ def test_self_define_cell_output_not_tuple():
 
     with pytest.raises(TypeError) as info:
         net = TestNet()
-        x_input = ms.Tensor([1])
+        x_input = ms.Tensor([1.])
         out = net(x_input)
         print("out:", out)
     assert "For bprop function, output should be a tuple" in str(info.value)

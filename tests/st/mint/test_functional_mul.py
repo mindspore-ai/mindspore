@@ -23,7 +23,7 @@ from mindspore import dtype as mstype
 from mindspore.graph.api import _pynative_executor
 
 from tests.mark_utils import arg_mark
-from tests.st.pynative.utils import GradOfAllInputs, allclose_nparray
+from tests.st.pynative.utils import allclose_nparray
 from tests.st.ops.test_tools.test_op import TEST_OP
 
 
@@ -112,10 +112,13 @@ class TestMulModule:
             input_y = self.y_np
         else:
             input_y = Tensor(self.y_np, self.ms_type_y)
-
+        grad_position = []
+        if is_float_type(self.ms_type_x):
+            grad_position.append(0)
+        if is_float_type(self.ms_type_y):
+            grad_position.append(1)
         net = MulOperatorNet() if use_operator else MulNet()
-        grad_net = GradOfAllInputs(net)
-        grad_net.set_train()
+        grad_net = ms.ops.GradOperation(get_by_position=True, sens_param=True)(net, grad_position=tuple(grad_position))
 
         # Generate random sensitivity
         # Fix: sens dtype should match output dtype
@@ -133,7 +136,16 @@ class TestMulModule:
             grads = grad_net(input_x, input_y, sens)
 
         self.sens_np = sens.float().asnumpy() if sens.dtype == mstype.bfloat16 else sens.asnumpy()
-        return grads
+        grad_x = None
+        grad_y = None
+        if is_float_type(self.ms_type_x) and len(grad_position) == 1:
+            grad_x = grads
+        elif is_float_type(self.ms_type_y) and len(grad_position) == 1:
+            grad_y = grads
+        elif is_float_type(self.ms_type_x) and is_float_type(self.ms_type_y):
+            grad_x = grads[0]
+            grad_y = grads[1]
+        return (grad_x, grad_y)
 
     def grad_torch_impl(self):
         input_x = torch.from_numpy(self.x_np)

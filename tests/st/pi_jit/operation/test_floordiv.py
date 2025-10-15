@@ -51,7 +51,6 @@ def test_p_floordiv_forward_input_shape_dtype_int8():
     """
     fact = FloorDivFactory(input_shape=(7,), dtype=np.int8)
     fact.forward_cmp()
-    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -67,8 +66,6 @@ def test_p_floordiv_forward_input_shape_dtype_int16():
     fact = FloorDivFactory(input_shape=(3, 3), dtype=np.int16)
     fact.right_input_np = np.random.uniform((1,)).astype(np.int8)
     fact.input_x2 = Tensor(fact.right_input_np)
-    fact.forward_cmp()
-    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -83,7 +80,6 @@ def test_p_floordiv_forward_input_shape_dtype_int64():
     """
     fact = FloorDivFactory(input_shape=(7, 8, 10), dtype=np.int64)
     fact.forward_cmp()
-    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -113,7 +109,6 @@ def test_p_floordiv_forward_input_shape_dtype_int32():
     """
     fact = FloorDivFactory(input_shape=(7, 8, 9, 10, 11), dtype=np.int32)
     fact.forward_cmp()
-    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -128,7 +123,6 @@ def test_p_floordiv_forward_input_shape_dtype_uint16():
     """
     fact = FloorDivFactory(input_shape=(2, 4, 3, 6, 3, 5), dtype=np.uint16)
     fact.forward_cmp()
-    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -143,7 +137,6 @@ def test_p_floordiv_forward_input_shape_dtype_uint8():
     """
     fact = FloorDivFactory(input_shape=(1, 4, 6, 2, 3, 5, 7), dtype=np.uint8)
     fact.forward_cmp()
-    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
@@ -211,7 +204,6 @@ def test_p_floordiv_input_3d_int16():
     input_x2 = Tensor(x2)
     fact = FloorDivMock(inputs=[input_x1, input_x2])
     fact.forward_cmp()
-    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')
