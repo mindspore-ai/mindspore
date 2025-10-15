@@ -1144,10 +1144,10 @@ def test_grad_tuple_position_and_no_param(mode):
             return 3 * x + 4 * y + z
 
     ms.set_context(mode=mode)
-    x = Tensor([10], mstype.int32)
-    y = Tensor([20], mstype.int32)
-    z = Tensor([30], mstype.int32)
-    expect = ((Tensor([4], mstype.int32), Tensor([1], mstype.int32)), ())
+    x = Tensor([10], mstype.float32)
+    y = Tensor([20], mstype.float32)
+    z = Tensor([30], mstype.float32)
+    expect = ((Tensor([4], mstype.float32), Tensor([1], mstype.float32)), ())
     net = Net()
     out = grad(net, grad_position=(1, 2), weights=net.trainable_params())(x, y, z)
     check_grad_result(out, expect)

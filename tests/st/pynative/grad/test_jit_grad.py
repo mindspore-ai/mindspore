@@ -190,7 +190,7 @@ def test_jit_network_with_list_inplace():
     class ListInplaceNet(nn.Cell):
         @jit
         def construct(self, input1, input2):
-            x1 = [[1], [2], [3], [4]]
+            x1 = [[1.], [2.], [3.], [4.]]
             for i in range(1, len(x1)):
                 y = x1[Tensor([i])]
                 y.extend([4])
@@ -202,13 +202,12 @@ def test_jit_network_with_list_inplace():
             return x1
 
     class ListInplaceGradCell(nn.Cell):
-        def __init__(self, network, get_all=False, get_by_list=False, sens_param=False):
+        def __init__(self, network):
             super().__init__()
             self.network = network
-            self.grad = C.GradOperation(get_all, get_by_list, sens_param)
 
         def construct(self, *inputs):
-            grads = self.grad(self.network)(*inputs)
+            grads = ms.grad(self.network, grad_position=(1,))(*inputs)
             return grads
 
     input1 = Tensor([2])
@@ -216,7 +215,7 @@ def test_jit_network_with_list_inplace():
     list_inplace_net = ListInplaceNet()
     list_inplace_grad = ListInplaceGradCell(list_inplace_net)
     out_grad = list_inplace_grad(input1, input2)
-    assert out_grad == 0
+    assert out_grad == ()
 
 
 @arg_mark(plat_marks=['cpu_linux'],
@@ -289,7 +288,7 @@ def test_grad_jit_with_multiple_output_contain_list():
         x = [a + 1, a + 2]
         return x, a + 1
 
-    x = ms.Tensor([1])
+    x = ms.Tensor([1.])
     out = GradOperation()(func)(x)
     assert out == 3
 
@@ -308,7 +307,7 @@ def test_grad_jit_with_string_output():
     def func(x):
         return "aaa", x + 1
 
-    x = Tensor([1])
+    x = Tensor([1.])
     grad1 = GradOperation()(func)(x)
     assert grad1 == 1
 
@@ -375,7 +374,7 @@ def test_grad_jit_stop_gradient():
 
     class StopGradientNet(nn.Cell):
         def __init__(self):
-            super(StopGradientNet, self).__init__()
+            super().__init__()
             self.p1 = Parameter(Tensor([2], dtype=ms.float32))
 
         @jit

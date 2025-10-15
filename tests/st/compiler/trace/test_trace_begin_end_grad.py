@@ -25,8 +25,8 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
-import mindspore.ops as ops
-import mindspore.nn as nn
+from mindspore import ops
+from mindspore import nn
 from mindspore.train import Model
 from mindspore.graph.jit_begin_end import _jit_begin as jit_begin
 from mindspore.graph.jit_begin_end import _jit_end as jit_end
@@ -49,7 +49,7 @@ def test_trace_begin_end_1():
     """
     class TraceNet(ms.nn.Cell):
         def __init__(self):
-            super(TraceNet, self).__init__()
+            super().__init__()
             self.x = ms.Tensor(1)
 
         def construct(self, x, y):
@@ -63,7 +63,7 @@ def test_trace_begin_end_1():
 
     class GradNet(ms.nn.Cell):
         def __init__(self):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = TraceNet()
 
         def construct(self, x, y):
@@ -73,14 +73,14 @@ def test_trace_begin_end_1():
             return z3 * z3
 
     grad_net = GradNet()
-    res1 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
-    res2 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
-    res3 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
-    res4 = grad(grad_net)(ms.Tensor(1), ms.Tensor(3))
+    res1 = grad(grad_net)(ms.Tensor(1.), ms.Tensor(3))
+    res2 = grad(grad_net)(ms.Tensor(1.), ms.Tensor(3.))
+    res3 = grad(grad_net)(ms.Tensor(1.), ms.Tensor(3.))
+    res4 = grad(grad_net)(ms.Tensor(1.), ms.Tensor(3.))
     print(f'res1: {res1}, res2: {res2}, res3: {res3}, res4: {res4}')
-    assert res1 == res2
-    assert res2 == res3
-    assert res3 == res4
+    assert np.allclose(res1.asnumpy(), res2.asnumpy())
+    assert np.allclose(res2.asnumpy(), res3.asnumpy())
+    assert np.allclose(res3.asnumpy(), res4.asnumpy())
 
 
 GRADIENT_CLIP_TYPE = 1
@@ -112,7 +112,7 @@ def _clip_grad(clip_type, clip_value, gradient):
 
 class TrainOneStepWithLossScaleCell(nn.Cell):
     def __init__(self, network, optimizer, scale_update_cell=None):
-        super(TrainOneStepWithLossScaleCell, self).__init__(auto_prefix=False)
+        super().__init__(auto_prefix=False)
         self.network = network
         self.weights = optimizer.parameters
         self.optimizer = optimizer
@@ -168,7 +168,7 @@ class TrainOneStepWithLossScaleCell(nn.Cell):
 
 class DatasetLenet(MindData):
     def __init__(self, predict, label, length=3):
-        super(DatasetLenet, self).__init__(size=length)
+        super().__init__(size=length)
         self.predict = predict
         self.label = label
         self.index = 0
@@ -189,7 +189,7 @@ class DatasetLenet(MindData):
 
 class LoopLayer(nn.Cell):
     def __init__(self):
-        super(LoopLayer, self).__init__()
+        super().__init__()
         self.matmul = P.MatMul()
         self.relu = P.ReLU()
         self.matmul_weight = Parameter(
@@ -203,7 +203,7 @@ class LoopLayer(nn.Cell):
 
 class Net1(nn.Cell):
     def __init__(self):
-        super(Net1, self).__init__()
+        super().__init__()
         self.exp = P.Exp()
         self.mean = P.ReduceMean()
         layers = []
@@ -225,7 +225,7 @@ class Net1(nn.Cell):
 
 class Net2(nn.Cell):
     def __init__(self):
-        super(Net2, self).__init__()
+        super().__init__()
         self.exp = P.Exp()
         self.mean = P.ReduceMean()
         layers = []
@@ -261,7 +261,7 @@ def test_trace_begin_end_train_1():
     net = TrainOneStepWithLossScaleCell(net, opt, update_cell)
     model = Model(network=net)
     model.train(2, dataset, dataset_sink_mode=False)
-    assert [x for x in net.get_parameters()][0].value()[0][0] != 1
+    assert list(net.get_parameters())[0].value()[0][0] != 1
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=2.00)
@@ -280,13 +280,13 @@ def test_trace_begin_end_train_2():
     net = TrainOneStepWithLossScaleCell(net, opt, update_cell)
     model = Model(network=net)
     model.train(2, dataset, dataset_sink_mode=False)
-    assert [x for x in net.get_parameters()][0].value()[0][0] != 1
+    assert list(net.get_parameters())[0].value()[0][0] != 1
 
 
 class ResNet(nn.Cell):
 
     def __init__(self, block, num_classes=100, batch_size=32):
-        super(ResNet, self).__init__()
+        super().__init__()
         self.batch_size = batch_size
         self.num_classes = num_classes
 
@@ -453,7 +453,7 @@ def test_trace_while_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
 
         def construct(self, *inputs):
@@ -505,7 +505,7 @@ def test_while_with_param_grad():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = ParameterTuple(net.trainable_params())
 

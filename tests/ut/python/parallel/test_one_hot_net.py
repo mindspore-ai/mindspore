@@ -11,19 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+""" test_one_hot_net.py """
 
 import numpy as np
 import pytest
 
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn.cell import Cell
 from mindspore.nn.optim.momentum import Momentum
-from mindspore.ops import composite as C
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.train import Model
@@ -38,8 +38,6 @@ from parallel.utils.utils import BasicValidator
 def setup_function():
     context.set_auto_parallel_context(dataset_strategy="full_batch")
 
-
-grad_all = C.GradOperation(get_all=True)
 
 device_num = 16
 device_id = 2
@@ -85,7 +83,7 @@ class Args():
 
 class SemiAutoOneHotNet(Cell):
     def __init__(self, args, strategy, use_onehot_ext=False):
-        super(SemiAutoOneHotNet, self).__init__()
+        super().__init__()
         self.a = args.a
         self.b = args.b
         self.c = args.c
@@ -209,7 +207,7 @@ class SemiAutoOneHotNet(Cell):
 
 class OneHotWithMulNet(Cell):
     def __init__(self, onehot_strategy, mul_strategy, use_onehot_ext=False):
-        super(OneHotWithMulNet, self).__init__()
+        super().__init__()
         if use_onehot_ext:
             self.onehot = OneHotExt().shard(onehot_strategy)
         else:
@@ -227,7 +225,7 @@ class OneHotWithMulNet(Cell):
 
 class Dataset(MindData):
     def __init__(self, predict, label, length=3, input_num=2):
-        super(Dataset, self).__init__(size=length)
+        super().__init__(size=length)
         self.predict = predict
         self.label = label
         self.index = 0
@@ -251,7 +249,7 @@ class Dataset(MindData):
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -261,12 +259,13 @@ class NetWithLoss(nn.Cell):
 
 
 class GradWrap(nn.Cell):
-    def __init__(self, network):
-        super(GradWrap, self).__init__()
+    def __init__(self, network, grad_position):
+        super().__init__()
         self.network = network
+        self.grad = ms.grad(self.network, grad_position=grad_position)
 
     def construct(self, x, b):
-        return grad_all(self.network)(x, b)
+        return self.grad(x, b)
 
 
 def bn_with_initialize(out_channels):
@@ -280,7 +279,7 @@ def fc_with_initialize(input_channels, out_channels):
 
 class BNReshapeDenseBNNet(nn.Cell):
     def __init__(self):
-        super(BNReshapeDenseBNNet, self).__init__()
+        super().__init__()
         self.batch_norm = bn_with_initialize(2)
         self.reshape = P.Reshape()
         self.batch_norm2 = nn.BatchNorm1d(512, affine=False)
@@ -303,7 +302,7 @@ def test_bn_reshape_dense_bn_train_loss():
     input_ = Tensor(np.ones([batch_size, 2, 32, 32]).astype(np.float32) * 0.01)
     label = Tensor(np.ones([batch_size]), dtype=ms.int32)
 
-    net = GradWrap(NetWithLoss(BNReshapeDenseBNNet()))
+    net = GradWrap(NetWithLoss(BNReshapeDenseBNNet()), (0,))
 
     net.set_train()
     _cell_graph_executor.compile(net, input_, label)
@@ -323,7 +322,7 @@ def test_semi_one_hot_net_batch(use_onehot_ext):
     label = Tensor(np.ones([batch_size]), dtype=ms.int32)
 
     net = SemiAutoOneHotNet(args=Args(), strategy=StrategyBatch(), use_onehot_ext=use_onehot_ext)
-    net = GradWrap(NetWithLoss(net))
+    net = GradWrap(NetWithLoss(net), (0,))
 
     net.set_train()
     _cell_graph_executor.compile(net, input_, label)
@@ -366,9 +365,9 @@ class TestOneHotNet(BasicValidator):
         context.set_auto_parallel_context(device_num=device_num, global_rank=0, full_batch=True)
         context.set_auto_parallel_context(parallel_mode="semi_auto_parallel")
         input_ = Tensor(np.ones([batch_size]).astype(np.int32))
-        label = Tensor(np.ones([batch_size]), dtype=ms.int32)
+        label = Tensor(np.ones([batch_size]), dtype=ms.float32)
 
-        net = GradWrap(NetWithLoss(OneHotWithMulNet(onehot_strategy=((1, 4), (), ()), mul_strategy=((1, 4), ()))))
+        net = GradWrap(NetWithLoss(OneHotWithMulNet(onehot_strategy=((1, 4), (), ()), mul_strategy=((1, 4), ()))), (1,))
 
         net.set_train()
         _cell_graph_executor.compile(net, input_, label)

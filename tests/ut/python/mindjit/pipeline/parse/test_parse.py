@@ -23,7 +23,7 @@ import pytest
 import numpy as np
 
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.ops import composite as C
@@ -58,7 +58,7 @@ class Net(nn.Cell):
     """ Net definition """
 
     def __init__(self, dim):
-        super(Net, self).__init__()
+        super().__init__()
         self.softmax1 = nn.Softmax(dim)
         self.softmax2 = nn.Softmax(dim + 1)
 
@@ -115,6 +115,7 @@ g_x = Tensor(np.ones([3, 3]).astype(np.float32))
 @jit
 def tensor_add_global(x):
     """ tensor_add_global """
+    # pylint: disable=global-variable-not-assigned
     global g_x
     res = tensor_add(x, g_x)
     return res
@@ -133,9 +134,9 @@ class NetWithNDarray(nn.Cell):
     """ NetWithNDarray definition """
 
     def __init__(self, dim):
-        super(NetWithNDarray, self).__init__()
+        super().__init__()
         self.softmax = nn.Softmax(dim)
-        self.x = ms.Tensor(np.ones(shape=(1)).astype(np.float32))
+        self.x = ms.Tensor(np.ones(shape=1).astype(np.float32))
 
     def construct(self, input_data):
         return self.softmax(input_data) * self.x
@@ -154,7 +155,7 @@ def test_bprop_with_wrong_output_num(enable_check_bprop):
     class BpropWithWrongOutputNum(PrimitiveWithInfer):
         @prim_attr_register
         def __init__(self):
-            super(BpropWithWrongOutputNum, self).__init__('BpropWithWrongOutputNum')
+            super().__init__('BpropWithWrongOutputNum')
 
         def __call__(self, x, y):
             return x
@@ -179,15 +180,15 @@ def test_bprop_with_wrong_output_num(enable_check_bprop):
             return BpropWithWrongOutputNum()(x, y)
 
     with pytest.raises(ValueError):
-        grad_all(BpropWithWrongOutputNumCell())(Tensor(np.array(1).astype(np.int32)),
-                                                Tensor(np.array(2).astype(np.int32)))
+        grad_all(BpropWithWrongOutputNumCell())(Tensor(np.array(1).astype(np.float32)),
+                                                Tensor(np.array(2).astype(np.float32)))
 
 
 def test_bprop_with_wrong_output_type(enable_check_bprop):
     class BpropWithWrongOutputType(PrimitiveWithInfer):
         @prim_attr_register
         def __init__(self):
-            super(BpropWithWrongOutputType, self).__init__('BpropWithWrongOutputType')
+            super().__init__('BpropWithWrongOutputType')
 
         def __call__(self, x):
             return x
@@ -212,14 +213,14 @@ def test_bprop_with_wrong_output_type(enable_check_bprop):
             return BpropWithWrongOutputType()(x)
 
     with pytest.raises(TypeError):
-        grad_all(BpropWithWrongOutputTypeCell())(Tensor(np.ones([64, 10]).astype(np.int32)))
+        grad_all(BpropWithWrongOutputTypeCell())(Tensor(np.ones([64, 10]).astype(np.float32)))
 
 
 def test_bprop_with_wrong_output_shape(enable_check_bprop):
     class BpropWithWrongOutputShape(PrimitiveWithInfer):
         @prim_attr_register
         def __init__(self):
-            super(BpropWithWrongOutputShape, self).__init__('BpropWithWrongOutputShape')
+            super().__init__('BpropWithWrongOutputShape')
 
         def __call__(self, x):
             return x
@@ -233,7 +234,7 @@ def test_bprop_with_wrong_output_shape(enable_check_bprop):
     @bprop_getters.register(BpropWithWrongOutputShape)
     def get_bprop_with_wrong_output_shape(self):
         """Generate bprop for BpropWithWrongOutputShape"""
-        ones = Tensor(np.ones([2,]).astype(np.int32))
+        ones = Tensor(np.ones([2,]).astype(np.float32))
 
         def bprop(x, out, dout):
             return (ones,)
@@ -247,14 +248,14 @@ def test_bprop_with_wrong_output_shape(enable_check_bprop):
     with pytest.raises(ValueError):
         net = BpropWithWrongOutputShapeCell()
         net.set_grad()
-        grad_all(net)(Tensor(np.ones([64, 10]).astype(np.int32)))
+        grad_all(net)(Tensor(np.ones([64, 10]).astype(np.float32)))
 
 
 class AssignWhenInsertGrad(nn.Cell):
     """ NetWithNDarray definition """
 
     def __init__(self):
-        super(AssignWhenInsertGrad, self).__init__()
+        super().__init__()
         self.gather = P.Gather()
         self.damping = Tensor(np.array([0.03, 0.03]).astype(np.float32))
         self.cov_step = ms.Parameter(0, name="cov_step", requires_grad=False)
@@ -277,7 +278,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class GradNet(nn.Cell):
     def __init__(self, net):
-        super(GradNet, self).__init__()
+        super().__init__()
         self.net = net
 
     def construct(self, *inputs):
@@ -297,7 +298,7 @@ class Assign(nn.Cell):
     """ NetWithNDarray definition """
 
     def __init__(self):
-        super(Assign, self).__init__()
+        super().__init__()
         self.cov_step = ms.Parameter(0.0, name="cov_step", requires_grad=False)
 
     def construct(self, x):
@@ -308,7 +309,7 @@ class Assign(nn.Cell):
 def test_assign(enable_check_bprop):
     context.set_context(mode=context.GRAPH_MODE)
     net = Assign()
-    input_data = ms.Tensor(np.array(1).astype(np.int32))
+    input_data = ms.Tensor(np.array(1).astype(np.float32))
     net_back = GradNet(net)
     net_back(input_data)
 
@@ -317,7 +318,7 @@ class AssignCheck(nn.Cell):
     """ NetWithNDarray definition """
 
     def __init__(self):
-        super(AssignCheck, self).__init__()
+        super().__init__()
         self.cov_step = ms.Parameter(0.0, name="cov_step", requires_grad=False)
 
     def construct(self, x):

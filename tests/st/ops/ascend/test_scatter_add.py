@@ -12,20 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Test scatter add."""
+
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 import mindspore
-import mindspore.context as context
-import mindspore.nn as nn
-import mindspore.ops as ops
+from mindspore import context
+from mindspore import nn
+from mindspore import ops
 from mindspore import Tensor, Parameter
 
 
 class TestScatterAddNet(nn.Cell):
     def __init__(self, input_x):
-        super(TestScatterAddNet, self).__init__()
+        super().__init__()
 
         self.scattre_add = ops.ScatterAdd()
         self.input_x = Parameter(input_x, name="input_x")

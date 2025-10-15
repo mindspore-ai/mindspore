@@ -360,9 +360,9 @@ def test_tensor_view_inplace_grad_check6():
             return self.func(input_tensor1_1, input_tensor2_1)
 
     net = Net()
-    out_expect = grad(net, grad_position=(0, 1))(Tensor([1, 2]), Tensor([3, 4]))
+    out_expect = grad(net, grad_position=(0, 1))(Tensor([1., 2]), Tensor([3., 4]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net, grad_position=(0, 1))(Tensor([1, 2]), Tensor([3, 4]))
+    out_jit = grad(net, grad_position=(0, 1))(Tensor([1., 2]), Tensor([3., 4]))
     assert np.allclose(out_expect[0].asnumpy(), out_jit[0].asnumpy())
     assert np.allclose(out_expect[1].asnumpy(), out_jit[1].asnumpy())
 
@@ -446,15 +446,15 @@ def test_setitem_simple_case1():
     try:
         os.environ["MS_DEV_TENSOR_INDEX_BOOST"] = '1'
         net = Net()
-        x = Tensor([[2, 2, 2], [3, 3, 3]])
-        a = Tensor([1, 1, 1])
+        x = Tensor([[2., 2, 2], [3, 3, 3]])
+        a = Tensor([1., 1, 1])
         grad_net = ops.grad(net, grad_position=0)
         x_grad = grad_net(x, a)
-        assert np.all(x_grad.asnumpy() == Tensor([[0, 0, 0], [1, 1, 1]]).asnumpy())
+        assert np.allclose(x_grad.asnumpy(), Tensor([[0, 0, 0], [1, 1, 1]]).asnumpy())
 
         grad_net = ops.grad(net, grad_position=1)
         a_grad = grad_net(x, a)
-        assert np.all(a_grad.asnumpy() == Tensor([1, 1, 1]).asnumpy())
+        assert np.allclose(a_grad.asnumpy(), Tensor([1, 1, 1]).asnumpy())
     finally:
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
@@ -477,15 +477,15 @@ def test_setitem_simple_case2():
     try:
         os.environ["MS_DEV_TENSOR_INDEX_BOOST"] = '1'
         net = Net()
-        x = Tensor([[2, 2, 2], [3, 3, 3]])
-        a = Tensor([3])
+        x = Tensor([[2., 2, 2], [3., 3, 3]])
+        a = Tensor([3.])
         grad_net = ops.grad(net, grad_position=0)
         x_grad = grad_net(x, a)
-        assert np.all(x_grad.asnumpy() == Tensor([[1, 1, 1], [0, 1, 1]]).asnumpy())
+        assert np.allclose(x_grad.asnumpy(), Tensor([[1, 1, 1], [0, 1, 1]]).asnumpy())
 
         grad_net = ops.grad(net, grad_position=1)
         a_grad = grad_net(x, a)
-        assert np.all(a_grad.asnumpy() == Tensor([1]).asnumpy())
+        assert np.allclose(a_grad.asnumpy(), Tensor([1]).asnumpy())
     finally:
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
@@ -508,15 +508,15 @@ def test_setitem_simple_case3():
     try:
         os.environ["MS_DEV_TENSOR_INDEX_BOOST"] = '1'
         net = Net()
-        x = Tensor([[2, 2, 2], [3, 3, 3]])
-        a = Tensor([3])
+        x = Tensor([[2., 2, 2], [3, 3, 3]])
+        a = Tensor([3.])
         grad_net = ops.grad(net, grad_position=0)
         x_grad = grad_net(x, a)
-        assert np.all(x_grad.asnumpy() == Tensor([[0, 0, 0], [0, 1, 1]]).asnumpy())
+        assert np.allclose(x_grad.asnumpy(), Tensor([[0, 0, 0], [0, 1, 1]]).asnumpy())
 
         grad_net = ops.grad(net, grad_position=1)
         a_grad = grad_net(x, a)
-        assert np.all(a_grad.asnumpy() == Tensor([1]).asnumpy())
+        assert np.allclose(a_grad.asnumpy(), Tensor([1]).asnumpy())
     finally:
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 

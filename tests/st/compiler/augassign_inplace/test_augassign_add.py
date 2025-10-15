@@ -39,7 +39,8 @@ def foo3(x, y):
     return x
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard', mem_peak=4.00)
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level0',
+          card_mark='onecard', mem_peak=4.00)
 @pytest.mark.parametrize("y", [2, Tensor(2)])
 def test_augassign_add(y):
     """
@@ -47,20 +48,21 @@ def test_augassign_add(y):
     Description: Support augassign inplace.
     Expectation: Run success.
     """
-    x1 = Tensor(1)
+    x1 = Tensor(1.)
     graph_ret = foo1(x1, y)
 
-    x2 = Tensor(1)
+    x2 = Tensor(1.)
     ge_graph_ret = foo2(x2, y)
 
-    x3 = Tensor(1)
+    x3 = Tensor(1.)
     pynative_ret = foo3(x3, y)
     assert graph_ret == pynative_ret
     assert ge_graph_ret == pynative_ret
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level1', card_mark='onecard', mem_peak=2048.01)
-@pytest.mark.parametrize("y", [2, Tensor(2)])
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level1',
+          card_mark='onecard', mem_peak=2048.01)
+@pytest.mark.parametrize("y", [2, Tensor(2.)])
 @pytest.mark.parametrize("grad", [ops.GradOperation(), ops.GradOperation(get_all=True)])
 def test_augassign_add_grad(y, grad):
     """
@@ -68,13 +70,13 @@ def test_augassign_add_grad(y, grad):
     Description: Support augassign inplace in grad.
     Expectation: Run success.
     """
-    x1 = Tensor(1)
+    x1 = Tensor(1.)
     graph_ret = grad(foo1)(x1, y)
 
-    x2 = Tensor(1)
+    x2 = Tensor(1.)
     ge_graph_ret = grad(foo2)(x2, y)
 
-    x3 = Tensor(1)
+    x3 = Tensor(1.)
     pynative_ret = grad(foo3)(x3, y)
     assert graph_ret == pynative_ret
     assert ge_graph_ret == pynative_ret

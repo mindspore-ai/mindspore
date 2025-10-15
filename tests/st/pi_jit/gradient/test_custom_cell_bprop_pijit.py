@@ -75,9 +75,9 @@ def test_grad_inline_mul_add():
     """
     context.set_context(mode=context.PYNATIVE_MODE)
     inline_mul_add = InlineMulADD()
-    x = Tensor(1, dtype=ms.int32)
-    y = Tensor(2, dtype=ms.int32)
-    assert grad_all(inline_mul_add)(x, y) == (3, 6)
+    x = Tensor(1, dtype=ms.float32)
+    y = Tensor(2, dtype=ms.float32)
+    assert grad_all(inline_mul_add)(x, y) == (3., 6.)
 
 
 class WithNoBprop(nn.Cell):
@@ -784,9 +784,9 @@ def test_dde_self_define_cell_output_not_use():
 
     context.set_context(mode=context.PYNATIVE_MODE)
     net = TestNet()
-    x_input = ms.Tensor([1])
+    x_input = ms.Tensor([1.])
     out = net(x_input)
-    assert out[0] == ms.Tensor([3])
+    assert out[0] == ms.Tensor([3.])
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')

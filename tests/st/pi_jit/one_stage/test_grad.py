@@ -55,8 +55,8 @@ def test_base_grad_operation():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1., 1.])
+    b = Tensor([2., 2., 2.])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -94,8 +94,8 @@ def test_base_grad_operation_2():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1., 1.])
+    b = Tensor([2., 2., 2.])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -120,7 +120,7 @@ def test_base_grad_operation_3():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.w = Parameter(Tensor([1]), name='w')
+            self.w = Parameter(Tensor([1.]), name='w')
 
         def construct(self, x, y):
             ret = self.w * x + y
@@ -141,8 +141,8 @@ def test_base_grad_operation_3():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1., 1.])
+    b = Tensor([2., 2., 2.])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -166,7 +166,7 @@ def test_base_grad_operation_4():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.w = Parameter(Tensor([1]), name='w')
+            self.w = Parameter(Tensor([1.]), name='w')
 
         def construct(self, x, y):
             ret = self.w * x + y
@@ -187,8 +187,8 @@ def test_base_grad_operation_4():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1., 1.])
+    b = Tensor([2., 2., 2.])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -215,7 +215,7 @@ def test_base_grad_operation_5():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.w = Parameter(Tensor([1]), name='w')
+            self.w = Parameter(Tensor([1.]), name='w')
 
         def construct(self, x, y):
             ret = self.w * x + y
@@ -226,7 +226,7 @@ def test_base_grad_operation_5():
             super(GradNet, self).__init__()
             self.net = net
             self.params = ParameterTuple(self.net.trainable_params())
-            self.sense = Tensor([5, 5, 5])
+            self.sense = Tensor([5., 5., 5.])
             self.grad_op = GradOperation(False, False, True)
 
         @jit(capture_mode="bytecode")
@@ -237,8 +237,8 @@ def test_base_grad_operation_5():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -260,7 +260,7 @@ def test_base_grad_operation_6():
     class Net(nn.Cell):
         def __init__(self):
             super(Net, self).__init__()
-            self.w = Parameter(Tensor([1]), name='w')
+            self.w = Parameter(Tensor([1.]), name='w')
 
         def construct(self, x, y):
             ret = self.w * x + y
@@ -270,7 +270,7 @@ def test_base_grad_operation_6():
         def __init__(self, net, ):
             super(GradNet, self).__init__()
             self.net = net
-            self.sense = Tensor([5, 5, 5])
+            self.sense = Tensor([5., 5., 5.])
             self.params = ParameterTuple(self.net.trainable_params())
             self.grad_op = GradOperation(True, True, True)
 
@@ -282,8 +282,8 @@ def test_base_grad_operation_6():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1., 1.])
+    b = Tensor([2., 2., 2.])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -331,8 +331,8 @@ def test_base_grad_operation_7():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -416,8 +416,8 @@ def test_base_grad_operation_with_keywords_args():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -456,8 +456,8 @@ def test_base_grad_operation_with_keywords_args_2():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -495,8 +495,8 @@ def test_base_grad_operation_with_vargs():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([[1, 1], [2, 2]])
-    b = Tensor([4, 5])
+    a = Tensor([[1., 1], [2, 2]])
+    b = Tensor([4., 5])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -537,8 +537,8 @@ def test_functional_grad():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -579,8 +579,8 @@ def test_functional_grad_2():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -625,8 +625,8 @@ def test_functional_grad_3():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -673,8 +673,8 @@ def test_functional_grad_4():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -722,8 +722,8 @@ def test_functional_grad_5():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1., 1.])
+    b = Tensor([2., 2., 2.])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -813,8 +813,8 @@ def test_grad_with_invalid_output():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -852,8 +852,8 @@ def test_grad_with_invalid_output_2():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -891,8 +891,8 @@ def test_grad_with_invalid_output_3():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     jit_mode_pi_disable()
     pynative_res = grad_net(a, b)
     jit_mode_pi_enable()
@@ -939,8 +939,8 @@ def test_with_no_grad():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1., 1.])
+    b = Tensor([2., 2., 2.])
     o1 = grad_net(a, b)
 
     net.block.construct = pi_jit_with_config(net.block.construct)
@@ -976,15 +976,15 @@ def test_value_and_grad_operation():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     ret = grad_net(a, b)
     jcr = get_code_extra(GradNet.construct.__wrapped__)
     assert jcr["break_count_"] == 0
     assert isinstance(ret, tuple)
     assert len(ret) == 2
-    assert np.all(ret[0].asnumpy() == np.array([3, 3, 3]))
-    assert np.all(ret[1].asnumpy() == np.array([1, 1, 1]))
+    assert np.allclose(ret[0].asnumpy(), np.array([3, 3, 3]))
+    assert np.allclose(ret[1].asnumpy(), np.array([1, 1, 1]))
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
@@ -1015,15 +1015,15 @@ def test_value_and_grad_operation_with_kwargs():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1, 1, 1])
-    b = Tensor([2, 2, 2])
+    a = Tensor([1., 1, 1])
+    b = Tensor([2., 2, 2])
     ret = grad_net(a, b)
     jcr = get_code_extra(GradNet.construct.__wrapped__)
     assert jcr["break_count_"] == 0
     assert isinstance(ret, tuple)
     assert len(ret) == 2
-    assert np.all(ret[0].asnumpy() == np.array([3, 3, 3]))
-    assert np.all(ret[1].asnumpy() == np.array([1, 1, 1]))
+    assert np.allclose(ret[0].asnumpy(), np.array([3, 3, 3]))
+    assert np.allclose(ret[1].asnumpy(), np.array([1, 1, 1]))
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
@@ -1052,18 +1052,18 @@ def test_value_and_grad_operation_with_invalid_output():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1,])
-    b = Tensor([2,])
+    a = Tensor([1.,])
+    b = Tensor([2.,])
     ret = grad_net(a, b)
     jcr = get_code_extra(GradNet.construct.__wrapped__)
     assert jcr["break_count_"] == 0
     assert isinstance(ret, tuple)
     assert len(ret) == 2
-    assert np.all(ret[0][0].asnumpy() == np.array([3,]))
-    assert ret[0][1] == slice(Tensor([1,]), 1, 2)
+    assert np.allclose(ret[0][0].asnumpy(), np.array([3,]))
+    ret[0][1] == slice(Tensor([1,]), 1, 2)
     assert ret[0][2] is None
     assert ret[0][3] == "a"
-    assert np.all(ret[1].asnumpy() == np.array([1,]))
+    assert np.allclose(ret[1].asnumpy(), np.array([1,]))
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard')
@@ -1093,15 +1093,15 @@ def test_value_and_grad_operation_with_side_effect():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1,])
-    b = Tensor([2,])
+    a = Tensor([1.,])
+    b = Tensor([2.,])
     ret = grad_net(a, b)
     jcr = get_code_extra(GradNet.construct.__wrapped__)
     assert jcr["break_count_"] == 0
     assert isinstance(ret, tuple)
     assert len(ret) == 2
-    assert np.all(ret[0][0].asnumpy() == np.array([3,]))
-    assert ret[0][1] == slice(Tensor([1,]), 1, 2)
+    assert np.allclose(ret[0][0].asnumpy(), np.array([3,]))
+    ret[0][1] == slice(Tensor([1,]), 1, 2)
     assert ret[0][2] is None
     assert ret[0][3] == "a"
     assert net.a == 1
@@ -1134,18 +1134,18 @@ def test_value_and_grad_operation_with_side_effect_2():
     context.set_context(mode=context.PYNATIVE_MODE)
     net = Net()
     grad_net = GradNet(net)
-    a = Tensor([1,])
-    b = Tensor([2,])
+    a = Tensor([1.,])
+    b = Tensor([2.,])
     ret = grad_net(a, b)
     jcr = get_code_extra(GradNet.construct.__wrapped__)
     assert jcr["break_count_"] == 0
     assert isinstance(ret, tuple)
     assert len(ret) == 2
-    assert np.all(ret[0][0].asnumpy() == np.array([3,]))
+    assert np.allclose(ret[0][0].asnumpy(), np.array([3,]))
     assert ret[0][1] == slice(Tensor([1,]), 1, 2)
     assert ret[0][2] is None
     assert ret[0][3] == "a"
-    assert np.all(net.a.asnumpy() == np.array([-1,]))
+    assert np.allclose(net.a.asnumpy(), np.array([-1,]))
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard')

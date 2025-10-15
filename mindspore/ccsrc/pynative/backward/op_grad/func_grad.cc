@@ -464,6 +464,12 @@ std::vector<TensorMeta> GenerateInputsMeta(const std::vector<ValuePtr> &inputs) 
       }
       MS_EXCEPTION_IF_CHECK_FAIL(grad_meta->output_index() < grad_node->mutable_metadata().size(),
                                  "Output index out of range of metadata!");
+      // Bool/int has default input meta.
+      const auto &meta = grad_node->mutable_metadata()[grad_meta->output_index()];
+      if (meta.is_default()) {
+        (void)input_meta.emplace_back(TensorMeta(tensor->shape(), tensor->Dtype()));
+        continue;
+      }
       (void)input_meta.emplace_back(grad_node->mutable_metadata()[grad_meta->output_index()]);
     } else {
       (void)input_meta.emplace_back();
@@ -547,7 +553,7 @@ void ProcessForwardOutput(const ValuePtrList &flatten_outputs, const TensorPtrSe
         auto view_meta = impl::GetViewAutogradMetaImpl(base_tensor);
         if (view_meta != nullptr && flatten_outputs.size() > 1) {
           MS_LOG(EXCEPTION) << "A view is one of output for multi output operator, "
-                            << "which is forbidden. You can use out-of-place op to repalce.";
+                            << "which is forbidden. You can use out-of-place op to replace.";
         }
         // For dirty input tensor, we should rebase variable to new tensor.
         OpGradInfoPtr info = GenerateOpGradInfoForCustomFunction(inputs, input_value_grad_type);
@@ -685,6 +691,36 @@ void ProcessHookBackwardNode(const PrimitivePtr &prim, const ValuePtrList &flatt
     UpdateVersion(op_grad_info, flatten_outputs);
   }
   SetVariableCustom(flatten_inputs, flatten_outputs, grad_node);
+}
+
+void CheckTensorDifferentiable(const ValuePtr &t) {
+  auto tensor = PyNativeAlgo::Common::GetTensorFromSparseTensor(t);
+  if (tensor != nullptr && !autograd::impl::IsDifferentiable(tensor->Dtype()->type_id())) {
+    MS_EXCEPTION(TypeError) << "Compute grad need real or complex type inputs, but got " << tensor->Dtype()->ToString()
+                            << ", please check your inputs of network.";
+  }
+}
+
+void CheckArgsValidation(const std::vector<ValuePtr> &inputs, const std::vector<size_t> &grad_positions,
+                         const autograd::GradAttr &grad_attr) {
+  if (inputs.empty()) {
+    return;
+  }
+  if (grad_attr.grad_all_inputs) {
+    for (const auto &input : inputs) {
+      CheckTensorDifferentiable(input);
+    }
+  }
+  if (!grad_attr.get_by_position) {
+    return;
+  }
+  for (const auto idx : grad_positions) {
+    if (idx >= inputs.size()) {
+      MS_EXCEPTION(RuntimeError) << "Position index " << idx << " is exceed input size."
+                                 << " Please check your inputs of grad of network! Inputs size: " << inputs.size();
+    }
+    CheckTensorDifferentiable(inputs[idx]);
+  }
 }
 }  // namespace
 
@@ -1349,6 +1385,7 @@ ValuePtr AutoDiff::GetGrads(const ValuePtrList &inputs, const std::vector<Backwa
   // If there are input nodes, return gradient of first input node.
   // Tuple, List, scalar will be ignore
   if (IsValidTensorInput(inputs[kIndex0])) {
+    CheckTensorDifferentiable(inputs[kIndex0]);
     return GetTensorGrad(inputs[kIndex0], true);
   }
   MS_LOG(DEBUG) << "Get first input node is not tensor " << inputs[0]->ToString();
@@ -1370,9 +1407,6 @@ ValuePtr AutoDiff::GetInputGrads(const ValuePtrList &inputs, bool grad_all_input
   input_grads.reserve(inputs.size());
   if (!inputs.empty()) {
     for (size_t index : grad_pos_list) {
-      if (index >= inputs.size()) {
-        MS_LOG(EXCEPTION) << "Position index " << index << " is exceed input size.";
-      }
       // Tuple, List, scalar will be ignore
       if (!IsValidTensorInput(inputs[index])) {
         MS_LOG(DEBUG) << inputs[index]->ToString() << "is no tensor";
@@ -1902,6 +1936,7 @@ void AutoDiff::PruningInput(const EdgeList &inputs, bool accumulate_grad) {
 ValuePtr AutoDiff::RunGradFunc(const ValuePtr &output, const ValuePtrList &inputs, const tensor::TensorPtrList &weights,
                                const std::vector<size_t> &grad_position, const GradAttr &grad_attr,
                                bool collect_default_weights, const ValuePtr &sens) {
+  CheckArgsValidation(inputs, grad_position, grad_attr);
   Initialize(output);
   CheckSensShapeAndType(sens);
   GilReleaseWithCheck gil_release;
