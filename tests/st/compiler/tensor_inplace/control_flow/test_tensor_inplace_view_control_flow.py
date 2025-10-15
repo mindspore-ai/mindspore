@@ -152,9 +152,9 @@ def test_view_in_control_flow4():
             return input_tensor1
 
     net = Net()
-    out_expect = grad(net, grad_position=1)(Tensor(0), Tensor([1, 2]))
+    out_expect = grad(net, grad_position=1)(Tensor(0.), Tensor([1., 2]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net, grad_position=1)(Tensor(0), Tensor([1, 2]))
+    out_jit = grad(net, grad_position=1)(Tensor(0.), Tensor([1., 2]))
     assert (out_expect.asnumpy() == out_jit.asnumpy()).all()
 
 
@@ -360,9 +360,9 @@ def test_view_in_control_flow10_2():
 
     with pytest.raises(RuntimeError) as err:
         net = Net()
-        out_expect = grad(net, grad_position=1)(Tensor([3, 4]), Tensor([1, 2]))
+        out_expect = grad(net, grad_position=1)(Tensor([3., 4]), Tensor([1., 2]))
         net.construct = ms.jit(net.construct, backend="ms_backend")
-        out_jit = grad(net, grad_position=1)(Tensor([3, 4]), Tensor([1, 2]))
+        out_jit = grad(net, grad_position=1)(Tensor([3., 4]), Tensor([1., 2]))
         assert np.allclose(out_expect.asnumpy(), out_jit.asnumpy())
     assert ("In backpropagation, inplace modification of the output of view operations within control flow is not "
             "supported.") in str(err.value)
@@ -629,9 +629,9 @@ def test_tensor_view_inplace_grad_check4():
             return self.func(input_tensor1_1, input_tensor2_1)
 
     net = Net()
-    out_expect = grad(net)(Tensor([1, 2]), Tensor([3, 4]))
+    out_expect = grad(net)(Tensor([1., 2.]), Tensor([3., 4.]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net)(Tensor([1, 2]), Tensor([3, 4]))
+    out_jit = grad(net)(Tensor([1., 2]), Tensor([3., 4]))
     assert np.allclose(out_expect.asnumpy(), out_jit.asnumpy())
 
 
@@ -717,9 +717,9 @@ def test_tensor_view_inplace_grad_new_method():
             return self.func(input_tensor1_1, input_tensor2_1)
 
     net = Net()
-    out_expect = grad(net, grad_position=1)(Tensor([1, 2]), Tensor([3, 4]))
+    out_expect = grad(net, grad_position=1)(Tensor([1, 2]), Tensor([3., 4.]))
     net.construct = ms.jit(net.construct, backend="ms_backend")
-    out_jit = grad(net, grad_position=1)(Tensor([1, 2]), Tensor([3, 4]))
+    out_jit = grad(net, grad_position=1)(Tensor([1, 2]), Tensor([3., 4.]))
     assert np.allclose(out_expect.asnumpy(), out_jit.asnumpy())
 
 

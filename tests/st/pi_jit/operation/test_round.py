@@ -121,7 +121,6 @@ def test_p_round_input_16x1024():
     """
     fact = RoundFactory(input_shape=(16, 1024), dtype=np.int32)
     fact.forward_cmp()
-    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -157,7 +156,6 @@ def test_p_round_input_32x16x128x8_int64():
     """
     fact = RoundFactory(input_shape=(32, 16, 128, 8), dtype=np.int64)
     fact.forward_cmp()
-    fact.grad_cmp()
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -169,4 +167,4 @@ def test_p_round_input_32x4x28x8x6_int64():
     """
     fact = RoundFactory(input_shape=(32, 4, 28, 8, 6), dtype=np.int64)
     fact.forward_cmp()
-    fact.grad_cmp()
+

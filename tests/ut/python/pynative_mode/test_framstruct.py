@@ -15,7 +15,7 @@
 """ test_framstruct """
 import numpy as np
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter, ParameterTuple
@@ -148,15 +148,16 @@ def test_if_always_true():
 @non_graph_engine
 def test_f():
     """ test_f """
-    res = mainf(Tensor(3, dtype=ms.int32), Tensor(2, dtype=ms.int32))
+    res = mainf(Tensor(3, dtype=ms.float32), Tensor(2, dtype=ms.float32))
     assert res == (2, 3)
 
 
 @non_graph_engine
 def test_grad_add_mul():
     """ test_grad_add_mul """
-    res = grad_add_mul(Tensor(3, dtype=ms.int32), Tensor(2, dtype=ms.int32))
-    assert res == (2, 7)
+    res = grad_add_mul(Tensor(3, dtype=ms.float32), Tensor(2, dtype=ms.float32))
+    assert np.allclose(res[0], np.array(2.))
+    assert np.allclose(res[1], np.array(7.))
 
 
 def f(x):
@@ -287,12 +288,14 @@ def grad_if(x, y):
 
 def test_grad_if():
     """ test_grad_if """
-    assert grad_if(Tensor(5, dtype=ms.int32), Tensor(4, dtype=ms.int32)) == (3, 0)
+    res = grad_if(Tensor(5, dtype=ms.float32), Tensor(4, dtype=ms.float32))
+    assert np.allclose(res[0], np.array(3.))
+    assert np.allclose(res[1], np.array(0.))
 
 
 class ConvNet(nn.Cell):
     def __init__(self):
-        super(ConvNet, self).__init__()
+        super().__init__()
         out_channel = 16
         kernel_size = 3
         self.conv = P.Conv2D(out_channel,
@@ -372,8 +375,8 @@ def grad_while(x):
 
 def test_grad_while():
     """ test_grad_while """
-    assert grad_while(Tensor(5, dtype=ms.int32)) == (60,)
-
+    res = grad_while(Tensor(5, dtype=ms.float32))
+    assert np.allclose(res[0], np.array(60.))
 
 @jit
 def factorial(n):
@@ -613,7 +616,9 @@ def grad_refactor_simple_1(x, y):
 
 
 def test_grad_refactor_simple_1():
-    assert grad_all(grad_refactor_simple_1)(Tensor(2, dtype=ms.int32), Tensor(1, dtype=ms.int32)) == (4, 2)
+    res = grad_all(grad_refactor_simple_1)(Tensor(2, dtype=ms.float32), Tensor(1, dtype=ms.float32))
+    assert np.allclose(res[0], np.array(4.))
+    assert np.allclose(res[1], np.array(2.))
 
 
 def grad_refactor_simple_2(x, y, z):
@@ -622,10 +627,13 @@ def grad_refactor_simple_2(x, y, z):
 
 
 def test_grad_refactor_simple_2():
-    x = Tensor(2, dtype=ms.int32)
-    y = Tensor(3, dtype=ms.int32)
-    z = Tensor(0, dtype=ms.int32)
-    assert grad_all(grad_refactor_simple_2)(x, y, z) == (7, 4, 7)
+    x = Tensor(2., dtype=ms.float32)
+    y = Tensor(3., dtype=ms.float32)
+    z = Tensor(0., dtype=ms.float32)
+    res = grad_all(grad_refactor_simple_2)(x, y, z)
+    assert np.allclose(res[0], np.array(7.))
+    assert np.allclose(res[1], np.array(4.))
+    assert np.allclose(res[2], np.array(7.))
 
 
 def grad_refactor_1(a, b):
@@ -638,7 +646,9 @@ def grad_refactor_1(a, b):
 
 
 def test_grad_refactor_1():
-    assert grad_all(grad_refactor_1)(Tensor(2, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (3, 2)
+    res = grad_all(grad_refactor_1)(Tensor(2, dtype=ms.float32), Tensor(3, dtype=ms.float32))
+    assert np.allclose(res[0], np.array(3.))
+    assert np.allclose(res[1], np.array(2.))
 
 
 def grad_refactor_2(a, b):
@@ -651,7 +661,9 @@ def grad_refactor_2(a, b):
 
 
 def test_grad_refactor_2():
-    assert grad_all(grad_refactor_2)(Tensor(2, dtype=ms.int32), Tensor(3, dtype=ms.int32)) == (27, 54)
+    res = grad_all(grad_refactor_2)(Tensor(2, dtype=ms.float32), Tensor(3, dtype=ms.float32))
+    assert np.allclose(res[0], np.array(27.))
+    assert np.allclose(res[1], np.array(54.))
 
 
 def grad_refactor_3(a):
@@ -669,7 +681,8 @@ def grad_refactor_4(a):
 
 
 def test_grad_refactor_4():
-    assert grad_all(grad_refactor_4)(Tensor(4, dtype=ms.int32)) == (3,)
+    res = grad_all(grad_refactor_4)(Tensor(4, dtype=ms.float32))
+    assert np.allclose(res[0], np.array(3.))
 
 
 def grad_refactor_5(a):
@@ -687,7 +700,9 @@ def grad_refactor_6(a, b):
 
 
 def test_grad_refactor_6():
-    assert grad_all(grad_refactor_6)(Tensor(3, dtype=ms.int32), Tensor(2, dtype=ms.int32)) == (3, 1)
+    res = grad_all(grad_refactor_6)(Tensor(3, dtype=ms.float32), Tensor(2, dtype=ms.float32))
+    assert np.allclose(res[0], np.array(3.))
+    assert np.allclose(res[1], np.array(1.))
 
 
 def grad_refactor_while(x):
@@ -710,7 +725,8 @@ def grad_refactor__while_1(x):
 
 def test_grad_refactor_10():
     """ test_grad_while """
-    assert grad_all(grad_refactor__while_1)(Tensor(5, dtype=ms.int32)) == (60,)
+    res = grad_all(grad_refactor__while_1)(Tensor(5, dtype=ms.float32))
+    assert np.allclose(res[0], np.array(60.))
 
 
 def test_grad_refactor_11():
@@ -728,7 +744,7 @@ def test_grad_refactor_12():
         """ Net definition """
 
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
 
         def construct(self, x, y):
@@ -743,7 +759,7 @@ def test_grad_refactor_13():
         """ Net definition """
 
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.z = Parameter(Tensor(np.ones([2]).astype(np.float32)), name='z')
 
         def construct(self, x, y):
@@ -781,6 +797,7 @@ class IfDeferInline(nn.Cell):
     def construct(self, inputs):
         x = self.mul(inputs, self.mul_weight)
         if True:
+            # pylint: disable=self-assigning-variable
             x = x
         return x
 
@@ -796,7 +813,7 @@ def test_grad_if_defer_inline():
 def test_dict_const():
     class Net(nn.Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.res = {'1': 10}
 
         def construct(self):

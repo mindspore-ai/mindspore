@@ -16,7 +16,7 @@
 import functools
 import numpy as np
 
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore.ops import operations as P
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -30,7 +30,7 @@ class SeqConvBnRelu(nn.Cell):
     """ SeqConvBnRelu definition """
 
     def __init__(self, in_ch, out_ch):
-        super(SeqConvBnRelu, self).__init__()
+        super().__init__()
         self.conv = nn.Conv2d(in_ch, out_ch, 3)
         self.bn = nn.BatchNorm2d(out_ch)
         self.relu = P.ReLU()
@@ -125,7 +125,8 @@ test_case_reid_ops = [
     ('LogicalNot', {
         'block': P.LogicalNot(),
         'desc_inputs': [convert([256], np.bool_)],
-        'desc_bprop': [convert([256], np.bool_)]}),
+        'desc_bprop': [convert([256], np.bool_)],
+        'skip': ['backward']}),
     ('Equal', {
         'block': P.Equal(),
         'desc_inputs': [convert([256], np.float16), convert([256], np.float16)],

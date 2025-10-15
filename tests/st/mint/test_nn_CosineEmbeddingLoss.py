@@ -27,7 +27,7 @@ from mindspore.common import dtype as mstype
 from mindspore.nn import Cell
 
 from tests.mark_utils import arg_mark
-from tests.st.pynative.utils import GradOfAllInputs, allclose_nparray
+from tests.st.pynative.utils import GradByPositionWithSens, allclose_nparray
 from tests.st.ops.test_tools.test_op import TEST_OP
 
 
@@ -102,9 +102,8 @@ class TestNNCELModule:
         else:
             ms_output_grad = Tensor(self.out_grad_np, out.dtype)
         net = CosineEmbeddingLossNet(self.margin, self.reduction)
-        grad_net = GradOfAllInputs(net)
-        grad_net.set_train()
-        gx, gy, _ = grad_net(self.input1, self.input2, self.target, ms_output_grad)
+        grad_net = GradByPositionWithSens(net, (0, 1))
+        gx, gy = grad_net(self.input1, self.input2, self.target, ms_output_grad)
         if self.ms_dtype == mstype.bfloat16:
             return gx.astype(mstype.float32), gy.astype(mstype.float32)
         return gx, gy

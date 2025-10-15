@@ -101,8 +101,8 @@ class IfAfterIfNet3(nn.Cell):
 class IfAfterIfNet4(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
     def construct(self, x, y):
         while x < 0:
@@ -211,8 +211,8 @@ def test_if_after_if_04():
     Expectation: No exception.
     """
 
-    x = Tensor(2, mstype.int32)
-    y = Tensor(5, mstype.int32)
-    expect1 = Tensor(23, mstype.int32)
-    expect2 = (Tensor(5, mstype.int32), Tensor(2, mstype.int32))
+    x = Tensor(2, mstype.float32)
+    y = Tensor(5, mstype.float32)
+    expect1 = Tensor(23, mstype.float32)
+    expect2 = (Tensor(5, mstype.float32), Tensor(2, mstype.float32))
     control_flow_if_after_if(IfAfterIfNet4, x, y, expect1, expect2)

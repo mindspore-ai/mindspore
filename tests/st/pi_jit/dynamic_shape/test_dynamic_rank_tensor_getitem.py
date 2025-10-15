@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import mindspore
 from mindspore.nn import Cell
+from mindspore.ops.composite.base import _is_differentiable_type
 from mindspore import context, jit
 from mindspore.common import dtype as mstype
 from mindspore.common import Tensor
@@ -22,7 +24,7 @@ from ..share.compare_base import comparebase
 from ..share.grad import GradOfAllInputs
 from tests.st.pi_jit.share.utils import pi_jit_with_config
 import sys
-import pytest 
+import pytest
 from tests.mark_utils import arg_mark
 
 
@@ -41,28 +43,29 @@ class IndexFactory:
 
         # compare
         comparebase.compare_nparray(pi_out.asnumpy(), ps_out.asnumpy(), 0.0001, 0.0001)
-
-
-        grad_net = GradOfAllInputs(self.ps_net, False)
+        grad_position = [idx for idx, t in enumerate(inputs) if isinstance(t, Tensor) and _is_differentiable_type(t.dtype)]
+        grad_net = mindspore.value_and_grad(self.ps_net, grad_position=tuple(grad_position))
         grad_net(*inputs)
 
-
     def compare_forward_grad(self, *inputs):
+        grad_position = [idx for idx, t in enumerate(inputs) if isinstance(t, Tensor) and _is_differentiable_type(t.dtype)]
         context.set_context(mode=context.GRAPH_MODE)
         jit(function=self.ps_net.construct, capture_mode="ast")(*inputs)
         ps_out = self.ps_net(*inputs)
-        grad_net = GradOfAllInputs(self.ps_net, False)
-        ps_grads = grad_net(*inputs)
+        grad_net = mindspore.value_and_grad(self.ps_net, grad_position=tuple(grad_position))
+        _, ps_grads = grad_net(*inputs)
 
         context.set_context(mode=context.PYNATIVE_MODE)
         pi_jit_with_config(function=self.pi_net.construct)(*inputs)
         pi_out = self.pi_net(*inputs)
-        grad_net = GradOfAllInputs(self.pi_net, False)
-        pi_grads = grad_net(*inputs)
+        grad_net = mindspore.value_and_grad(self.pi_net, grad_position=tuple(grad_position))
+        _, pi_grads = grad_net(*inputs)
 
         # compare
         comparebase.compare_nparray(pi_out.asnumpy(), ps_out.asnumpy(), 0.0001, 0.0001)
-
+        if len(grad_position) == 1:
+            comparebase.compare_nparray(ps_grads.asnumpy(), pi_grads.asnumpy(), 0.0001, 0.0001)
+            return
         for s, i in zip(ps_grads, pi_grads):
             if i is None:
                 continue

@@ -60,11 +60,11 @@ def test_unsortedsegmentmin_grad():
     Description: Verify the result of UnsortedSegmentMin with grad.
     Expectation: success
     """
-    input_x = Tensor([1, 2, 3, 4], dtype.int32)
+    input_x = Tensor([1, 2, 3, 4], dtype.float32)
     segment_ids = Tensor([0, 0, 1, 2], dtype.int32)
     num_segments = 4
     net = OpsCell(P.UnsortedSegmentMin())
-    net_me = ops.GradOperation(sens_param=False)(net)
+    net_me = ops.GradOperation(get_by_position=True)(net, grad_position=(0,))
     output = net_me(input_x, segment_ids, num_segments)
     expect = [1, 0, 1, 1]
     assert (output.asnumpy() == expect).all()
@@ -78,11 +78,11 @@ def test_unsortedsegmentmax_grad():
     Description: Verify the result of UnsortedSegmentMax with grad.
     Expectation: success
     """
-    input_x = Tensor([1, 2, 3, 4], dtype.int32)
+    input_x = Tensor([1, 2, 3, 4], dtype.float32)
     segment_ids = Tensor([0, 0, 1, 2], dtype.int32)
     num_segments = 4
     net = OpsCell(P.UnsortedSegmentMax())
-    net_me = ops.GradOperation(sens_param=False)(net)
+    net_me = ops.GradOperation(get_by_position=True)(net, grad_position=(0,))
     output = net_me(input_x, segment_ids, num_segments)
     expect = [0, 1, 1, 1]
     assert (output.asnumpy() == expect).all()
@@ -101,25 +101,12 @@ def test_Gatherdgrad_grad():
     index = Tensor(np.array([0, 0, 1, 2]), dtype.int32)
     expect = np.array([2, 1, 1, 0], np.float32)
     net = OpsCell(P.GatherD())
-    grad_net = ops.GradOperation(get_all=True)(net)
+    grad_net = ops.GradOperation(get_by_position=True)(net, grad_position=(0,))
     output = grad_net(x, dim, index)
-    assert (output[0].asnumpy() == expect).all()
+    assert (output.asnumpy() == expect).all()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential', mem_peak=2.00)
-def test_embeddinglookup_grad():
-    """
-    Feature: EmbeddingLookup
-    Description: Verify the result of EmbeddingLookup with grad.
-    Expectation: success
-    """
-    net = OpsCell(nn.EmbeddingLookup(4, 2, dtype=dtype.float32))
-    x = Tensor(np.array([[1, 0], [3, 2]]), dtype.int32)
-    grad_net = ops.GradOperation(get_all=True)(net)
-    output = grad_net(x)
-    expect = np.array([[0, 0], [0, 0]], np.float32)
-    assert (output[0].asnumpy() == expect).all()
+
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard',
@@ -228,8 +215,8 @@ def test_minimum_grad():
     Description: test minimum with grad
     Expectation: success
     """
-    input_x = Tensor([1, 2, 3, 4], dtype.int32)
-    input_y = Tensor([0, 0, 5, 6], dtype.int32)
+    input_x = Tensor([1, 2, 3, 4], dtype.float32)
+    input_y = Tensor([0, 0, 5, 6], dtype.float32)
     net = OpsCell(P.Minimum())
     net_me = ops.GradOperation(get_all=True)(net)
     output = net_me(input_x, input_y)
@@ -245,8 +232,8 @@ def test_maximum_grad():
     Description: test maximum with grad
     Expectation: success
     """
-    input_x = Tensor([1, 2, 3, 4], dtype.int32)
-    input_y = Tensor([0, 0, 5, 6], dtype.int32)
+    input_x = Tensor([1, 2, 3, 4], dtype.float32)
+    input_y = Tensor([0, 0, 5, 6], dtype.float32)
     net = OpsCell(P.Maximum())
     net_me = ops.GradOperation(get_all=True)(net)
     output = net_me(input_x, input_y)
@@ -666,9 +653,9 @@ def test_polygamma_grad():
     x_ms = np.array([1, 0.4273, 9, -3.12, 12246.345]).astype(np.float16)
     expect_output = np.array(
         [-2.4043, -26.578, -0.013794, 1181, -0.0]).astype(np.float32)
-    net_me = ops.GradOperation(get_all=True)(polygamma_net)
+    net_me = ops.GradOperation(get_by_position=True)(polygamma_net, grad_position=(1,))
     output = net_me(Tensor(a), Tensor(x_ms))
-    assert np.allclose(output[1].asnumpy(), expect_output)
+    assert np.allclose(output.asnumpy(), expect_output)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',

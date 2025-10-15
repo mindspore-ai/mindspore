@@ -202,7 +202,7 @@ def test_grad_validation():
         x *= y
         return x, y
 
-    x = Tensor(1)
+    x = Tensor(1.)
     y = -2.5
     grad(foo)(x, y)
 

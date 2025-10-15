@@ -29,8 +29,8 @@ grad_all = C.GradOperation(get_all=True)
 class IfInIfNet(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
     def construct(self, x):
         if self.param_a > self.param_b:
@@ -44,8 +44,8 @@ class IfInIfNet(nn.Cell):
 class IfInIfNet1(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
     def construct(self, x):
         if self.param_a > self.param_b:
@@ -66,8 +66,8 @@ class IfInIfNet1(nn.Cell):
 class IfInIfNet2(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
         self.tensor_true = Tensor([True])
         self.tensor_false = Tensor([False])
 
@@ -97,8 +97,8 @@ class IfInIfNet2(nn.Cell):
 class IfInIfNet3(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
     def construct(self, x):
         if self.func(x) > self.param_a:
@@ -120,8 +120,8 @@ class IfInIfNet3(nn.Cell):
 class IfInIfNet4(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.param_a = Parameter(Tensor(5, mstype.int32), name='a')
-        self.param_b = Parameter(Tensor(4, mstype.int32), name='b')
+        self.param_a = Parameter(Tensor(5, mstype.float32), name='a')
+        self.param_b = Parameter(Tensor(4, mstype.float32), name='b')
 
     def construct(self, x):
         while x < 1:
@@ -172,9 +172,9 @@ def test_if_in_if():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    expect1 = Tensor(17, mstype.int32)
-    expect2 = (Tensor(1, mstype.int32),)
+    x = Tensor(2, mstype.float32)
+    expect1 = Tensor(17, mstype.float32)
+    expect2 = (Tensor(1, mstype.float32),)
     control_flow_if_in_if(IfInIfNet, x, expect1, expect2)
 
 
@@ -186,9 +186,9 @@ def test_if_in_if_01():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    expect1 = Tensor(22, mstype.int32)
-    expect2 = (Tensor(1, mstype.int32),)
+    x = Tensor(2, mstype.float32)
+    expect1 = Tensor(22, mstype.float32)
+    expect2 = (Tensor(1, mstype.float32),)
     control_flow_if_in_if(IfInIfNet1, x, expect1, expect2)
 
 
@@ -200,9 +200,9 @@ def test_if_in_if_02():
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    expect1 = Tensor(5, mstype.int32)
-    expect2 = (Tensor(1, mstype.int32),)
+    x = Tensor(2, mstype.float32)
+    expect1 = Tensor(5, mstype.float32)
+    expect2 = (Tensor(1, mstype.float32),)
     control_flow_if_in_if(IfInIfNet2, x, expect1, expect2)
 
 
@@ -215,20 +215,21 @@ def test_if_in_if_03():
     Expectation: No exception.
     """
 
-    x = Tensor(2, mstype.int32)
-    expect1 = Tensor(22, mstype.int32)
-    expect2 = (Tensor(1, mstype.int32),)
+    x = Tensor(2, mstype.float32)
+    expect1 = Tensor(22, mstype.float32)
+    expect2 = (Tensor(1, mstype.float32),)
     control_flow_if_in_if(IfInIfNet3, x, expect1, expect2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential', mem_peak=2048.01)
 def test_if_in_if_04():
     """
     Feature: Control flow
     Description: Test control flow in graph mode.
     Expectation: No exception.
     """
-    x = Tensor(2, mstype.int32)
-    expect1 = Tensor(22, mstype.int32)
-    expect2 = (Tensor(1, mstype.int32),)
+    x = Tensor(2, mstype.float32)
+    expect1 = Tensor(22, mstype.float32)
+    expect2 = (Tensor(1, mstype.float32),)
     control_flow_if_in_if(IfInIfNet4, x, expect1, expect2)

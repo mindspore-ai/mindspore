@@ -60,8 +60,8 @@ def test_for_after_for_in_if():
             return grad_all(self.net)(*inputs)
 
     # graph mode
-    x0 = Tensor(5, mstype.int32)
-    x1 = Tensor(5, mstype.int32)
+    x0 = Tensor(5, mstype.float32)
+    x1 = Tensor(5, mstype.float32)
     context.set_context(mode=context.GRAPH_MODE)
     for_after_for_in_if_net = ForAfterForInIfNet()
     net = GradNet(for_after_for_in_if_net)
@@ -71,8 +71,8 @@ def test_for_after_for_in_if():
     graph_backward_res = net(x1)
 
     # pynative mode
-    x2 = Tensor(5, mstype.int32)
-    x3 = Tensor(5, mstype.int32)
+    x2 = Tensor(5, mstype.float32)
+    x3 = Tensor(5, mstype.float32)
     context.set_context(mode=context.PYNATIVE_MODE)
     for_after_for_in_if_net = ForAfterForInIfNet()
     net = GradNet(for_after_for_in_if_net)

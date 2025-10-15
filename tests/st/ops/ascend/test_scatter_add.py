@@ -12,20 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""Test scatter add."""
+
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 import mindspore
-import mindspore.context as context
-import mindspore.nn as nn
-import mindspore.ops as ops
+from mindspore import context
+from mindspore import nn
+from mindspore import ops
 from mindspore import Tensor, Parameter
 
 
 class TestScatterAddNet(nn.Cell):
     def __init__(self, input_x):
-        super(TestScatterAddNet, self).__init__()
+        super().__init__()
 
         self.scattre_add = ops.ScatterAdd()
         self.input_x = Parameter(input_x, name="input_x")
@@ -63,7 +65,8 @@ def test_scattre_add_forward_float16():
     scattre_add_forward(np.float16)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential', mem_peak=0.01)
 def test_scattre_add_forward_float32():
     """
     Feature: test scattre_add forward.
@@ -117,7 +120,8 @@ def scattre_add_dynamic_updates():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential', mem_peak=0.01)
 def test_scattre_add_dynamic_updates():
     """
     Feature: test scattre_add dynamic shape.

@@ -176,5 +176,5 @@ def test_parser_fallback_modify_args_to_control_branch():
     assert out1 == 3
     assert out2 == 3
 
-    ms_grad = GradNet(ModifyNet())(Tensor([2]))
+    ms_grad = GradNet(ModifyNet())(Tensor([2.]))
     assert ms_grad == 0

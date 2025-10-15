@@ -382,7 +382,8 @@ class ScatterNonAliasingAddNet(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential', mem_peak=1024.01)
 def test_scatter_non_aliasing_add():
     """
     Feature: Auto monad feature.
@@ -512,8 +513,8 @@ def test_side_effect_scalarsummary_in_bprop():
             gradient_function = self.grad_op(self.net)
             return gradient_function(x, y)
 
-    x = Tensor([3], dtype=ms.int32)
-    y = Tensor([4], dtype=ms.int32)
+    x = Tensor([3], dtype=ms.float32)
+    y = Tensor([4], dtype=ms.float32)
     net = Net()
     _ = net(x, y)
     out_grad = GradNet(Net())(x, y)

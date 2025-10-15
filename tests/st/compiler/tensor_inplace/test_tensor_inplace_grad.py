@@ -356,8 +356,8 @@ def test_inplace_backward_with_control_flow():
         return ms.grad(net, grad_position=1)(x, y)
 
     ms.set_context(mode=0)
-    x = ms.Tensor([1])
-    y = ms.Tensor([4])
+    x = ms.Tensor([1.])
+    y = ms.Tensor([4.])
     net = Net()
     grads = func(x, y, net)
     assert grads == 1
@@ -381,11 +381,11 @@ def test_inplace_backward_param_replace():
         return ms.grad(net, grad_position=1)(x, y)
 
     ms.set_context(mode=0)
-    x = ms.Tensor([1])
-    y = ms.Tensor([4])
+    x = ms.Tensor([1.])
+    y = ms.Tensor([4.])
     net = Net()
     grads = func(x, y, net)
-    assert grads == 1
+    assert np.allclose(grads.asnumpy(), np.array(1.))
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
@@ -409,11 +409,11 @@ def test_inplace_backward_param_replace2():
         return ms.grad(net, grad_position=1)(x, y)
 
     ms.set_context(mode=0)
-    x = ms.Tensor([1])
-    y = ms.Tensor([4])
+    x = ms.Tensor([1.])
+    y = ms.Tensor([4.])
     net = Net()
     grads = func(x, y, net)
-    assert grads == 2
+    assert np.allclose(grads.asnumpy(), np.array(2.))
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
@@ -452,8 +452,8 @@ def test_inplace_backward_param_assign():
     class Net(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.param_a = Parameter(Tensor(2, dtype=mstype.int32), name="a")
-            self.param_b = Parameter(Tensor(1, dtype=mstype.int32), name="b")
+            self.param_a = Parameter(Tensor(2, dtype=mstype.float32), name="a")
+            self.param_b = Parameter(Tensor(1, dtype=mstype.float32), name="b")
 
         def construct(self, x):
             out = self.param_a
@@ -464,15 +464,15 @@ def test_inplace_backward_param_assign():
             out = out.mul_(x)
             return out
 
-    x0 = Tensor(3, dtype=mstype.int32)
-    x1 = Tensor(3, dtype=mstype.int32)
+    x0 = Tensor(3, dtype=mstype.float32)
+    x1 = Tensor(3, dtype=mstype.float32)
     graph_forward_res = Net()(x0)
     grad_ops = ops.GradOperation()
     graph_backward_res = grad_ops(Net())(x1)
 
     ms.set_context(mode=ms.PYNATIVE_MODE)
-    x2 = Tensor(3, dtype=mstype.int32)
-    x3 = Tensor(3, dtype=mstype.int32)
+    x2 = Tensor(3, dtype=mstype.float32)
+    x3 = Tensor(3, dtype=mstype.float32)
     pynative_forward_res = Net()(x2)
     pynative_backward_res = grad_ops(Net())(x3)
 
@@ -495,8 +495,8 @@ def test_inplace_gradjit_inplace_node_reuse():
             out = y * x
             return out
 
-    x = Tensor(3, dtype=mstype.int32)
-    y = Tensor(2, dtype=mstype.int32)
+    x = Tensor(3, dtype=mstype.float32)
+    y = Tensor(2, dtype=mstype.float32)
     context.set_context(mode=1)
     grad_ops = ops.GradOperation()
     graph_backward_res = grad_ops(Net())(x, y)
@@ -518,8 +518,8 @@ def test_inplace_gradjit_load_node_reuse():
             y = ops.AssignAdd()(y, 10)
             return out
 
-    x = Tensor(3, dtype=mstype.int32)
-    y = Tensor(2, dtype=mstype.int32)
+    x = Tensor(3, dtype=mstype.float32)
+    y = Tensor(2, dtype=mstype.float32)
     context.set_context(mode=1)
     grad_ops = ops.GradOperation()
     graph_backward_res = grad_ops(Net())(x, y)

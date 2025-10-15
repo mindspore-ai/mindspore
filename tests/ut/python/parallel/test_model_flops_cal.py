@@ -11,19 +11,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+""" test_model_flops_cal.py """
 
 import numpy as np
 import pytest
 
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore.graph.api import _cell_graph_executor
 from mindspore.context import set_auto_parallel_context
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.ops.composite import GradOperation
 from mindspore.ops.operations.nn_ops import FlashAttentionScore
 from mindspore.graph.api import flops_collection
 from mindspore.train import Model, FlopsUtilizationCollector
@@ -42,7 +42,7 @@ grad_all = C.GradOperation(get_all=True)
 
 class NetWithLoss(nn.Cell):
     def __init__(self, network):
-        super(NetWithLoss, self).__init__()
+        super().__init__()
         self.loss = VirtualLoss()
         self.network = network
 
@@ -53,7 +53,7 @@ class NetWithLoss(nn.Cell):
 
 class GradWrap(nn.Cell):
     def __init__(self, network):
-        super(GradWrap, self).__init__()
+        super().__init__()
         self.network = network
 
     def construct(self, *inputs):
@@ -310,7 +310,7 @@ def generate_inputs(B, N, S, D, input_layout, use_mqa=False, with_real_shift=Tru
         key = Tensor(np.ones((B * S, N_KV, D), dtype=np.float16))
         value = Tensor(np.ones((B * S, N_KV, D), dtype=np.float16))
     else:
-        raise ValueError(f"input_layout is invalid.")
+        raise ValueError("input_layout is invalid.")
     real_shift = Tensor(np.ones((B, N, S, S), dtype=np.float16)
                         ) if with_real_shift else None
     if sparse_mode not in compressed_mask_mode:
@@ -343,17 +343,16 @@ def test_flash_attention_semi_auto_parallel_flops(input_layout, use_mqa, with_re
     class Grad(nn.Cell):
         def __init__(self, network):
             super().__init__()
-            self.grad = GradOperation(get_all=True, sens_param=False)
             self.network = network
 
         def construct(self, *inputs):
-            gout = self.grad(self.network)(*inputs)
+            gout = ms.grad(self.network, grad_position=(0, 1, 2, 3))(*inputs)
             return gout
 
     class Net(nn.Cell):
         def __init__(self, head_num, keep_prob=0.9, input_layout="BSH", sparse_mode=0, use_mqa=False,
                      with_real_shift=True, dp=None, mp=None, sp=1):
-            super(Net, self).__init__()
+            super().__init__()
             self.reshape = P.Reshape()
             self.drop_gen_mask = P.DropoutGenMask()
             self.keep_prob = Tensor(keep_prob, ms.float16)
