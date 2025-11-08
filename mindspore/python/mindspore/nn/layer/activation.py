@@ -465,17 +465,16 @@ class ELU(Cell):
 
 class ReLU(Cell):
     r"""
-    Applies ReLU (Rectified Linear Unit activation function) element-wise.
+    Apply ReLU (rectified linear unit activation function) element-wise.
 
     .. math::
 
         \text{ReLU}(input) = (input)^+ = \max(0, input),
 
-    It returns element-wise :math:`\max(0, input)`.
+    Compute the element-wise :math:`\max(0, input)`.
 
     .. note::
-        The neurons with the negative output
-        will be suppressed and the active neurons will stay the same.
+        Neurons with negative outputs are suppressed, while active neurons stay the same.
 
     ReLU Activation Function Graph:
 
@@ -483,24 +482,19 @@ class ReLU(Cell):
         :align: center
 
     Inputs:
-        - **input** (Tensor) - The input of ReLU is a Tensor of any dimension.
+        - **input** (Tensor) - The input tensor of any dimension.
 
     Outputs:
-        Tensor, with the same type and shape as the `input`.
-
-    Raises:
-        TypeError: If dtype of `input` is not supported.
+        Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import numpy as np
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
-        >>> input = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
-        >>> relu = nn.ReLU()
-        >>> output = relu(input)
+        >>> relu = mindspore.nn.ReLU()
+        >>> input_tensor = mindspore.tensor([-1.0, 2.0, -3.0, 2.0, -1.0], mindspore.float32)
+        >>> output = relu(input_tensor)
         >>> print(output)
         [0. 2. 0. 2. 0.]
     """
