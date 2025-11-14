@@ -15,8 +15,14 @@
  */
 #include "minddata/dataset/engine/datasetops/batch_op.h"
 
+#include <algorithm>
 #include <limits>
+#include <memory>
+#include <set>
+#include <string>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "utils/ms_utils.h"
 #ifdef ENABLE_PYTHON
@@ -206,7 +212,7 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *tensor_row_dequeu
     *batched_tensor_row = std::move((*tensor_row_dequeue)->front());
     (*tensor_row_dequeue)->pop_front();
 
-    for (const auto &tensor : (*batched_tensor_row)) {
+    for (auto &tensor : (*batched_tensor_row)) {
       // If concat batch rows, the result should not be expend dimension.
       if (!concat_batch) {
 #ifdef ENABLE_PYTHON
@@ -214,15 +220,20 @@ Status BatchOp::BatchRows(const std::unique_ptr<TensorQTable> *tensor_row_dequeu
           py::gil_scoped_acquire gil_acquire;
           py::dict python_dict;
           RETURN_IF_NOT_OK(tensor->GetDataAsPythonObject(&python_dict));
+          // Create a new python dict to avoid modifying the original one.
+          py::dict expanded_python_dict;
           for (const auto &[key, value] : python_dict) {
             py::list list;
             list.append(value);
             try {
-              python_dict[key] = py::array(list);
+              // Expand dimension then convert to numpy array.
+              expanded_python_dict[key] = py::array(list);
             } catch (const py::error_already_set &e) {
               RETURN_STATUS_UNEXPECTED("Failed to batch data in type of Python dictionary: " + std::string(e.what()));
             }
           }
+          // Convert the expanded dict to Tensor.
+          RETURN_IF_NOT_OK(Tensor::CreateFromPythonObject(expanded_python_dict, &tensor));
         } else {
           RETURN_IF_NOT_OK(tensor->ExpandDim(0));
         }
