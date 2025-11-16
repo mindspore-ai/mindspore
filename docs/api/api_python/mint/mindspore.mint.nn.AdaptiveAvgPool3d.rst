@@ -3,7 +3,10 @@ mindspore.mint.nn.AdaptiveAvgPool3d
 
 .. py:class:: mindspore.mint.nn.AdaptiveAvgPool3d(output_size)
 
-    对输入Tensor，运用三维的自适应平均池化操作。即对于输入任何尺寸，指定输出的尺寸均为 :math:`(D, H, W)`。但输入和输出特征的数量不会变化。
+    对由多个输入平面组成的输入信号，运用三维自适应平均池化。
+    
+    即对于输入任何尺寸，指定输出的尺寸均为 :math:`(D, H, W)`。
+    输出特征的数量等于输入平面的数量。
 
     假设输入 `input` 最后三维大小分别为 :math:`(inD, inH, inW)`，则输出的最后三维大小分别为 :math:`(outD, outH, outW)`。运算如下：
 
@@ -25,15 +28,11 @@ mindspore.mint.nn.AdaptiveAvgPool3d
         对于Ascend，仅支持 Atlas A2 训练系列产品。
 
     参数：
-        - **output_size** (Union[int, tuple]) - 指定输出特征图的尺寸，可以是tuple :math:`(D, H, W)`，也可以是一个int值D来表示输出尺寸为 :math:`(D, D, D)` 。:math:`D`，:math:`H` 和 :math:`W` 可以是int值或者None，其中None表示输出大小与对应的输入的大小相同。
+        - **output_size** (Union[int, tuple]) - 目标输出尺寸。可以是tuple :math:`(D, H, W)`，也可以是一个int值 `D` 来表示输出尺寸为 :math:`(D, D, D)`。:math:`D`、:math:`H` 和 :math:`W` 可以是int值或者None，其中None表示输出大小与对应的输入的大小相同。
 
     输入：
-        - **input** (Tensor) - AdaptiveAvgPool3d的输入，是4D或者5D的Tensor。
+        - **input** (Tensor) - 输入tensor，shape为 :math:`(N, C, D, H, W)` 或 :math:`(C, D, H, W)`。
 
     输出：
-        Tensor，与输入 `input` 的数据类型相同。
+        Tensor。
 
-    异常：
-        - **TypeError** - `input` 不是Tensor。
-        - **ValueError** - `input` 维度不是4D或者5D。
-        - **ValueError** - `output_size` 的值不是正数。
