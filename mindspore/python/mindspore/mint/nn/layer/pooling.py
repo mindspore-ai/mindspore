@@ -68,29 +68,30 @@ class AdaptiveAvgPool1d(_AdaptiveAvgPoolNd):
 
 class AdaptiveAvgPool2d(_AdaptiveAvgPoolNd):
     r"""
-    Applies a 2D adaptive average pooling over an input signal composed of several input planes.
+    Apply a 2-D adaptive average pooling over an input signal composed of several input planes.
 
-    The output is of size :math:`H x W` , for any input size.
+    The output is of size :math:`H \times W`, for any input size.
     The number of output features is equal to the number of input planes.
 
     Args:
-        output_size (Union(int, tuple[int])): the target output size of the image of the form :math:`H x W` .
-            Can be a tuple :math:`(H, W)` or a single :math:`H` for square image :math:`H x H` .
-            :math:`H` and :math:`W` can be either a ``int`` , or ``None`` which means the size will
+        output_size (Union[int, tuple[int]]): The target output size of the image of the form :math:`H \times W`.
+            Can be a tuple :math:`(H, W)` or a single :math:`H` for square image :math:`H \times H`.
+            :math:`H` and :math:`W` can be either an ``int``, or ``None`` which means the size will
             be the same as that of the input.
 
     Inputs:
-        - **input** (Tensor) - The input with shape :math:`(N, C, H, W)` or :math:`(C, H, W)` .
+        - **input** (Tensor) - The input tensor with shape :math:`(N, C, H, W)` or :math:`(C, H, W)`.
+
+    Outputs:
+        Tensor.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> input = Tensor(np.array([[[2, 1, 2], [2, 3, 5]]]), mindspore.float16)
-        >>> net = mint.nn.AdaptiveAvgPool2d((2, 2))
+        >>> input = mindspore.tensor([[[2, 1, 2], [2, 3, 5]]], mindspore.float16)
+        >>> net = mindspore.mint.nn.AdaptiveAvgPool2d((2, 2))
         >>> output = net(input)
         >>> print(output)
         [[[1.5 1.5]
