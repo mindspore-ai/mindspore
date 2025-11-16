@@ -255,7 +255,7 @@ class GPUEnvChecker(EnvChecker):
 
     def _read_version(self, file_path):
         """Get gpu version info in version.txt."""
-        with open(file_path, 'r') as f:  # pylint: disable=W1514
+        with open(file_path, 'r', encoding='utf-8') as f:
             all_info = f.readlines()
             for line in all_info:
                 if line.startswith("CUDA Version"):
@@ -269,7 +269,7 @@ class AscendEnvChecker(EnvChecker):
 
     def __init__(self, library_path):
         self.library_path = library_path
-        self.version = ["7.8", "8.2", "8.3"]
+        self.version = ["8.2", "8.3", "8.5"]
 
         # env
         self.path = os.getenv("PATH")
@@ -298,7 +298,7 @@ class AscendEnvChecker(EnvChecker):
         cur_version = self._read_version(self.compiler_version)
         custom_version_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                            "../lib/plugin/ascend/custom_ascendc_910b/version.info")
-        with open(custom_version_path, 'r', encoding="utf-8") as f:
+        with open(custom_version_path, 'r', encoding='utf-8') as f:
             all_info = f.readlines()
             for line in all_info:
                 full_version = line.strip().split("=")[1]
@@ -410,7 +410,7 @@ class AscendEnvChecker(EnvChecker):
 
     def _read_version(self, file_path):
         """get ascend version info"""
-        with open(file_path, 'r', encoding="utf-8") as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             all_info = f.readlines()
             for line in all_info:
                 if line.startswith("Version="):

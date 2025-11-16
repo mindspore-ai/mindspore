@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""test tools related funcitonalities used in mstt"""
 
 import os
 import tempfile
@@ -47,7 +48,7 @@ setattr(inner.CellBackwardHook, '__call__', wrap_backward_hook_call_func(ori_cal
 
 
 def get_max_relative_error(test_value, target_value):
-    zero_mask = (target_value == 0)
+    zero_mask = target_value == 0
     test_value[zero_mask] += np.finfo(float).eps
     target_value[zero_mask] += np.finfo(float).eps
     relative_err = np.divide((test_value - target_value), target_value)
@@ -92,10 +93,7 @@ def test_interfaces_used_in_mstt():
     assert get_max_relative_error(grads[0].numpy(), target_grads[0].numpy()) <= 0.001
     assert get_max_relative_error(grads[1].numpy(), target_grads[1].numpy()) <= 0.001
 
-    # check acldumpRegCallback in libmindspore_ascend.so.2
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    command = os.path.join(script_dir, 'check_adump_so.sh')
-    assert os.system(f"bash {command}") == 0
 
     with tempfile.TemporaryDirectory(dir=script_dir) as tmp_dir:
         run_net(tmp_dir)

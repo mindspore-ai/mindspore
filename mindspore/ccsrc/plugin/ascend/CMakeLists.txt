@@ -66,7 +66,6 @@ find_library(ACL_DVPP_MPI acl_dvpp_mpi ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOL
 find_library(PLATFORM platform ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 find_library(PROFILING msprofiler ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 find_library(OPT_FEATURE opt_feature ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
-find_library(adump_server libadump_server.a ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 find_library(CANN_KB cann_kb ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 find_library(COMPRESS compress ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
 find_library(OPSKERNEL opskernel ${ASCEND_CANN_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
@@ -81,4 +80,3 @@ target_link_libraries(mindspore_ascend PRIVATE ${RUNTIME_LIB} ${TSDCLIENT} ${DAT
         -Wl,--no-as-needed ${PLATFORM} ${ACL} ${OPT_FEATURE}
         ${PROFILING} ${CANN_KB} ${COMPRESS} ${OPSKERNEL} ${HOST_CPU_ENGINE} ${SLICE} ${AOE_EXECUTOR}
         ${ACL_DVPP_OP} ${ACL_DVPP_MPI})
-target_link_libraries(mindspore_ascend PRIVATE ${adump_server})

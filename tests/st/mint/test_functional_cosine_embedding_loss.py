@@ -191,7 +191,7 @@ def _set_mode(mode):
         context.set_context(mode=ms.PYNATIVE_MODE, device_target='Ascend')
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1', card_mark='onecard',
           essential_mark='essential')
 @pytest.mark.parametrize('data_type', [
     mstype.bool_, mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
@@ -257,7 +257,7 @@ def test_functional_cel_forward_backward_2d_bf16(data_type, reduction, margin, c
     assert double_golden_compare(g_th[1], g_th_bf16[1], g_ms[1], OpTypes.CV_FUSION)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize('data_type', [mstype.float16, mstype.float32, mstype.float64])
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_forward_backward_1d_scalar_target(data_type, context_mode):

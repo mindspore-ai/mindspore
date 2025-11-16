@@ -92,7 +92,6 @@ void AscendDeviceContext::InitializeForAclop() const {
   }
   // should be called after ge initialize.
   SetAclOpDebugOption();
-  REGISTER_COMMON_CALLBACK(acldumpRegCallback);
   initialized_aclop_ = true;
   MS_LOG(INFO) << "End initializing for acl.";
 }
