@@ -669,7 +669,7 @@ class ReplicationPad1d(ReplicationPadNd_):
 
 class ReplicationPad2d(ReplicationPadNd_):
     """
-    Pad the last 2 dimension of `input` tensor using the replication of the input boundary.
+    Pad the last 2-D dimensions of `input` tensor using the replication of the input boundary.
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
 
@@ -678,27 +678,27 @@ class ReplicationPad2d(ReplicationPadNd_):
 
     Args:
         padding (Union[int, tuple, list]): Specifies padding size.
+          - If it's int, fill all boundaries with the same size.
+          - If it's a tuple or a list, the order is :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down})`.
 
     Inputs:
-        - **input** (Tensor) - 3D or 4D input Tensor with shape: :math:`(C, H_{in}, W_{in})`
-          or :math:`(N, C, H_{in}, W_{in})`.
+        - **input** (Tensor) - The input tensor with shape 
+          :math:`(C, H_{in}, W_{in})` or :math:`(N, C, H_{in}, W_{in})`,
+          where `N` is the batch size, `C` is the number of channels, `H_{in}` is the feature height,
+          and `W_{in}` is the feature width.
 
     Outputs:
-        Tensor, the tensor after padding.
-
-    Raises:
-        TypeError: If `padding` is not an integer of a list or tuple of 4 integers.
-        TypeError: If `input` is not Tensor.
-        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
+        Tensor，with shape :math:(C, H_{out}, W_{out}) or :math:(N, C, H_{out}, W_{out})。where:
+        :math: H_{out} = H_{in} + pad_{up} + pad_{down}
+        :math: W_{out} = W_{in} + pad_{left} + pad_{right} .
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> pad2d = ms.mint.nn.ReplicationPad2d(2)
-        >>> input = ms.Tensor(np.arange(0, 9).reshape(1, 1, 3, 3), ms.float32)
+        >>> import mindspore
+        >>> pad2d = mindspore.mint.nn.ReplicationPad2d(2)
+        >>> input = mindspore.tensor(mindspore.mint.arange(0, 9).reshape(1, 1, 3, 3), mindspore.float32)
         >>> print(input)
         [[[[0. 1. 2.]
            [3. 4. 5.]
@@ -712,7 +712,7 @@ class ReplicationPad2d(ReplicationPadNd_):
            [6. 6. 6. 7. 8. 8. 8.]
            [6. 6. 6. 7. 8. 8. 8.]
            [6. 6. 6. 7. 8. 8. 8.]]]]
-        >>> pad2d = ms.mint.nn.ReplicationPad2d((1, 1, 2, 0))
+        >>> pad2d = mindspore.mint.nn.ReplicationPad2d((1, 1, 2, 0))
         >>> out = pad2d(input)
         >>> print(out)
         [[[[0. 0. 1. 2. 2.]
