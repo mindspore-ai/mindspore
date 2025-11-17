@@ -116,8 +116,8 @@ class ConstantPad1d(ConstantPadNd_):
 
 
 class ConstantPad2d(ConstantPadNd_):
-    """
-    Pad the last 2 dimensions of `input` tensor using `padding` and `value`.
+    r"""
+    Pad the last 2-D dimensions of `input` tensor using `padding` and `value`.
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
 
@@ -129,15 +129,13 @@ class ConstantPad2d(ConstantPadNd_):
         value (Union[int, float]): Specifies padding value.
 
     Inputs:
-        - **input** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+        - **input** (Tensor) - The input tensor with shape :math:`(N, *)`, 
+            where :math:`*` means any number of additional dimensions.
 
     Outputs:
         Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `padding` is not an integer of a list or tuple of 4 integers.
-        TypeError: If `input` is not Tensor.
-        TypeError: If `value` is not int or float.
         ValueError: If `padding` contains negative value.
         ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
 
@@ -145,13 +143,12 @@ class ConstantPad2d(ConstantPadNd_):
         ``Ascend``
 
     Examples:
+        >>> import mindspore
         >>> import numpy as np
-        >>> import mindspore as ms
-        >>> x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
-        >>> x = ms.Tensor(x)
+        >>> x = mindspore.tensor(mindspore.mint.ones(shape=(1, 2, 3, 4)).astype(np.float32))
         >>> padding = (1, 1, 0, 1)
         >>> value = 0.5
-        >>> pad2d = ms.mint.nn.ConstantPad2d(padding, value)
+        >>> pad2d = mindspore.mint.nn.ConstantPad2d(padding, value)
         >>> out = pad2d(x)
         >>> print(out)
         [[[[0.5  1.  1.  1.  1.  0.5]
