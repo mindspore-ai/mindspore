@@ -11,13 +11,16 @@ mindspore.mint.nn.ReplicationPad3d
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **padding** (Union[int, tuple, list]) - 指定填充的大小。
+        - **padding** (Union[int, tuple, list]) - 填充的大小。
+          - 如果为int，则对所有边界进行相同大小的填充。
+          - 如果为tuple或list，则顺序为 :math:`(pad_{left}, pad_{right}, pad_{up}, pad_{down}, pad_{front}, pad_{back})`。
 
     输入：
-        - **input** (Tensor) - 输入 tensor，shape为 :math:`(N, D_{in}, H_{in}, W_{in})` 或 :math:`(N, C, D_{in}, H_{in}, W_{in})`，其中 `N` 是批处理大小，`C` 是通道数，`D_{in}` 是特征深度，`H_{in}` 是特征高度，`W_{in}` 是特征宽度。
+        - **input** (Tensor) - 输入tensor，shape为 :math:`(N, D_{in}, H_{in}, W_{in})` 或 :math:`(N, C, D_{in}, H_{in}, W_{in})`。
 
     输出：
-        Tensor，填充后的 tensor。
-
-    异常：
-        - **ValueError** - `padding` 是tuple或list，且长度和 tensor 的维度不匹配。
+        Tensor，shape为 :math:(C, H_{out}, W_{out}) 或 :math:(N, C, H_{out}, W_{out})。其中:
+        :math:`D_{out} = D_{in} + pad_{front} + pad_{back}` 
+        :math:`H_{out} = H_{in} + pad_{up} + pad_{down}`
+        :math:`W_{out} = W_{in} + pad_{left} + pad_{right}`
+        
