@@ -3,7 +3,7 @@ mindspore.mint.nn.ReflectionPad1d
 
 .. py:class:: mindspore.mint.nn.ReflectionPad1d(padding)
 
-    使用输入边界的反射，对输入的最后1维 `input` 进行填充。
+    使用输入边界的反射，对输入 `input` 的最后一维进行填充。
 
     更多参考详见 :func:`mindspore.mint.nn.functional.pad`。
 
@@ -12,15 +12,12 @@ mindspore.mint.nn.ReflectionPad1d
 
     参数：
         - **padding** (Union[int, tuple, list]) - 指定填充的大小。
+            - 如果为int，则对所有边界进行相同大小的填充。
+            - 如果为tuple或list，则顺序为 :math:`(pad_{left}, pad_{right})`。
 
     输入：
-        - **input** (Tensor) - 输入Tensor，2D或3D。shape为 :math:`(C, W_{in})` 或 :math:`(N, C, W_{in})` 。
+        - **input** (Tensor) - 输入tensor，shape为 :math:`(C, W_{in})` 或 :math:`(N, C, W_{in})`，其中 `N` 是批处理大小，`C` 是通道数，`W_{in}` 是输入宽度。
 
     输出：
-        Tensor，填充后的Tensor。
+        Tensor，填充后的tensor。
 
-    异常：
-        - **TypeError** - `padding` 不是一个integer，或包含2个int的tuple，或list。
-        - **TypeError** - `input` 不是Tensor。
-        - **ValueError** - `padding` 含有负数。
-        - **ValueError** - `padding` 是tuple或list，且长度和Tensor的维度不匹配。
