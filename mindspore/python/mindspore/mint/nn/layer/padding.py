@@ -536,7 +536,7 @@ class ReflectionPad2d(ReflectionPadNd_):
 
 class ReflectionPad3d(ReflectionPadNd_):
     """
-    Pad the last 3 dimension of `input` tensor using the reflection of the input boundary.
+    Pad the last 3-D dimensions of `input` tensor using the reflection of the input boundary.
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
 
@@ -547,15 +547,14 @@ class ReflectionPad3d(ReflectionPadNd_):
         padding (Union[int, tuple, list]): Specifies padding size.
 
     Inputs:
-        - **input** (Tensor) - 4D or 5D input Tensor with shape: :math:`(N, D_{in}, H_{in}, W_{in})`
-          or :math:`(N, C, D_{in}, H_{in}, W_{in})`.
+        - **input** (Tensor) - The input tensor with shape :math:`(N, D_{in}, H_{in}, W_{in})` or :math:`(N, C, D_{in}, H_{in}, W_{in})`,
+          where `N` is the batch size, `C` is the number of channels, `D_{in}` is the feature depth,
+          `H_{in}` is the feature height, and `W_{in}` is the feature width.
 
     Outputs:
         Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `padding` is not an integer of a list or tuple of 6 integers.
-        TypeError: If `input` is not Tensor.
         ValueError: If `padding` contains negative value.
         ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
 
@@ -563,19 +562,13 @@ class ReflectionPad3d(ReflectionPadNd_):
         ``Ascend``
 
     Examples:
+        >>> import mindspore
         >>> import numpy as np
-        >>> import mindspore as ms
-        >>> arr = np.arange(8).astype(np.float32).reshape((1, 2, 2, 2))
-        >>> x = ms.Tensor(arr)
-        >>> # x has shape (1, 2, 2, 2)
+        >>> arr = mindspore.mint.arange(8).astype(np.float32).reshape((1, 2, 2, 2))
+        >>> x = mindspore.tensor(arr)
         >>> padding = (1, 1, 1, 0, 0, 1)
-        >>> pad3d = ms.mint.nn.ReflectionPad3d(padding)
+        >>> pad3d = mindspore.mint.nn.ReflectionPad3d(padding)
         >>> out = pad3d(x)
-        >>> # The first dimension of x remains the same.
-        >>> # The second dimension of x: D_out = D_in + pad_front + pad_back = 2 + 0 + 1 = 3
-        >>> # The third dimension of x: H_out = H_in + pad_up + pad_down = 2 + 1 + 0 = 3
-        >>> # The last dimension of x: W_out = W_in + pad_left + pad_right = 2 + 1 + 1 = 4
-        >>> # The shape of out is (1, 3, 3, 4)
         >>> print(out)
         [[[[3. 2. 3. 2.]
            [1. 0. 1. 0.]
