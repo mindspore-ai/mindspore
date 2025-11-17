@@ -49,7 +49,7 @@ class ConstantPadNd_(Cell):
 
 class ConstantPad1d(ConstantPadNd_):
     r"""
-    Pad the last dimension of `input` tensor using `padding` and `value`.
+    Apply a 1-D constant padding to the last dimension of the `input` tensor using `padding` and `value`.
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
 
@@ -57,34 +57,28 @@ class ConstantPad1d(ConstantPadNd_):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        padding (Union[int, tuple, list]): Specifies padding size.
-        value (Union[int, float]): Specifies padding value.
+        padding (Union[int, tuple[int], list[int]]): Specifies the padding size. 
+            - If an int, the same padding is applied to all boundaries.
+            - If a tuple or list, the order is :math:`(pad_{left}, pad_{right})`.
+        value (Union[int, float]): Specifies the padding value.
 
     Inputs:
-        - **input** (Tensor) - shape is :math:`(N, *)`, where :math:`*` means, any number of additional dimensions.
+        - **input** (Tensor) - The input tensor with shape :math:`(N, *)`, where :math:`*` means any number
+          of additional dimensions.
 
     Outputs:
-        Tensor, the tensor after padding.
-
-    Raises:
-        TypeError: If `padding` is not an integer of a list or tuple of 2 integers.
-        TypeError: If `input` is not Tensor.
-        TypeError: If `value` is not int or float.
-        ValueError: If `padding` contains negative value.
-        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
+        Tensor, the result after padding, with the same dtype as `input`.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
-        >>> x = ms.Tensor(x)
+        >>> x = mindspore.mint.ones((1, 2, 3, 4), dtype=ms.float32)
+        >>> x = mindspore.tensor(x)
         >>> # padding is tuple
         >>> padding = (0, 1)
         >>> value = 0.5
-        >>> pad1d = ms.mint.nn.ConstantPad1d(padding, value)
+        >>> pad1d = mindspore.mint.nn.ConstantPad1d(padding, value)
         >>> out = pad1d(x)
         >>> print(out)
         [[[[1.  1.  1.  1.  0.5]
@@ -98,7 +92,7 @@ class ConstantPad1d(ConstantPadNd_):
         >>> # padding is int
         >>> padding = 1
         >>> value = 0.5
-        >>> pad1d = ms.mint.nn.ConstantPad1d(padding, value)
+        >>> pad1d = mindspore.mint.nn.ConstantPad1d(padding, value)
         >>> out = pad1d(x)
         >>> print(out)
         [[[[0.5 1.  1.  1.  1.  0.5]

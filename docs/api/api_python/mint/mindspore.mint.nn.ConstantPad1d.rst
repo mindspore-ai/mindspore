@@ -3,7 +3,7 @@ mindspore.mint.nn.ConstantPad1d
 
 .. py:class:: mindspore.mint.nn.ConstantPad1d(padding, value)
 
-    根据参数 `padding` 以及 `value` 对输入 `input` 最后1维进行填充。
+    根据 `padding` 和 `value` 对输入tensor的最后一维进行填充。
 
     更多参考详见 :func:`mindspore.mint.nn.functional.pad`。
 
@@ -11,18 +11,13 @@ mindspore.mint.nn.ConstantPad1d
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **padding** (Union[int, tuple, list]) - 指定填充的大小。
+        - **padding** (Union[int, tuple[int], list[int]]) - 填充的大小。
+            - 如果为int，则对所有边界进行相同大小的填充。
+            - 如果为tuple或list，则顺序为 :math:`(pad_{left}, pad_{right})`。
         - **value** (Union[int, float]) - 指定填充值。
 
     输入：
-        - **input** (Tensor) - 输入Tensor，shape为 :math:`(N, *)`，其中 :math:`*` 表示任意维度。
+        - **input** (Tensor) - 输入tensor，shape为 :math:`(N, *)`，其中 :math:`*` 表示任意附加维度。
 
     输出：
-        Tensor，填充后的Tensor。
-
-    异常：
-        - **TypeError** - `padding` 不是一个integer或包含2个int的tuple或者list。
-        - **TypeError** - `input` 不是Tensor。
-        - **TypeError** - `value` 既不是int，也不是float。
-        - **ValueError** - `padding` 含有负数。
-        - **ValueError** - `padding` 是tuple或list，且长度和Tensor的维度不匹配。
+        Tensor，填充后的tensor。
