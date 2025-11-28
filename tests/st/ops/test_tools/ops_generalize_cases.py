@@ -83,6 +83,10 @@ def set_debug_status_info(mode_name, case_name):
     DEBUG_STATUS_INFO = f"{mode_name} {case_name}"
 
 
+def ms_tensor_supports_grad(t):
+    return isinstance(t, (Tensor, Parameter)) and (t.dtype.is_floating_point or t.dtype.is_complex)
+
+
 def get_ndarray_md5(tensor):
     if tensor.dtype == ms.bfloat16:
         arr = tensor.float().asnumpy()
@@ -616,7 +620,7 @@ def test_grad_by_requirement(fn, inputs, mode_name, disable_case, jit_config, ca
 
     grad_by_requirement_position = []
     for i, arg in enumerate(inputs):
-        if isinstance(arg, Tensor):
+        if ms_tensor_supports_grad(arg):
             if case_config and "skip_grad_position" in case_config and i in case_config["skip_grad_position"]:
                 warning_log(f"{mode_name} GradByRequirement grad position {i} is skipped.")
             else:
@@ -713,7 +717,7 @@ def test_deterministic(fn, inputs, mode_name, disable_case, jit_config, case_con
         if case_config and "disable_grad" in case_config and case_config["disable_grad"]:
             warning_log("case_config['disable_grad'] is True, Deterministic case with backward is skipped.")
         else:
-            grad_position = tuple(i for i, arg in enumerate(inputs) if isinstance(arg, Tensor))
+            grad_position = tuple(i for i, arg in enumerate(inputs) if ms_tensor_supports_grad(arg))
             if not grad_position:
                 warning_log("Deterministic backward is skipped because no tensor inputs for grad.")
                 continue
