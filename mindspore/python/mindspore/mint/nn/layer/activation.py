@@ -22,7 +22,7 @@ from mindspore.nn.cell import Cell
 
 class SiLU(Cell):
     r"""
-    Calculates the SiLU activation function element-wise. It is also sometimes referred to as Swish
+    Calculate the SiLU activation function element-wise. It is also sometimes referred to as Swish
     function.
 
     The SiLU function is defined as follows:
@@ -47,27 +47,23 @@ class SiLU(Cell):
 
     Args:
         inplace (bool, optional): If it is ``True``, enable the in-place update function.
-            Default value: ``False``.
+            Default: ``False``.
 
     Inputs:
-        - **input** (Tensor) - `input` is :math:`x` in the preceding formula.
-          Input with the data type float16 or float32. Tensor of any dimension.
+        - **input** (Tensor) - The input tensor, which is :math:`x` in the preceding formula.
+          Data type must be mindspore.float16 or mindspore.float32. Tensor of any dimension.
 
     Outputs:
         Tensor, with the same type and shape as the `input`.
-
-    Raises:
-        TypeError: If dtype of `input` is neither float16 nor float32.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
         >>> import numpy as np
-        >>> input = Tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
-        >>> silu = mint.nn.SiLU(inplace=False)
+        >>> input = mindspore.tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
+        >>> silu = mindspore.mint.nn.SiLU(inplace=False)
         >>> output = silu(input)
         >>> print(output)
         [-0.269  1.762  -0.1423  1.762  -0.269]
