@@ -9,20 +9,20 @@ mindspore.mint.nn.BatchNorm3d
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
-    在mini-batch上按维度计算平均值和标准方差。:math:`\gamma` 和 :math:`\beta` 是一个大小为 `C` 的可学习参数向量。
-    默认情况下，:math:`\gamma` 中的元素被赋值为1。:math:`\beta` 的元素则被赋值为0.
+    在mini-batch上按维度计算平均值和标准差。:math:`\gamma` 和 :math:`\beta` 是大小为 `C` 的可学习参数向量。
+    默认情况下，:math:`\gamma` 中的元素被赋值为1，:math:`\beta` 的元素被赋值为0。
 
     .. warning::
         该接口不支持动态Rank。
 
     参数：
         - **num_features** (int) - 输入的shape :math:`(N, C, D, H, W)` 中的 `C` 值。
-        - **eps** (float, 可选) - :math:`\epsilon` 加在分母上的值，以确保数值稳定。默认值： ``1e-5`` 。
-        - **momentum** (float, 可选) - 动态均值和动态方差所使用的动量。当想计算累计平均值时，可设置为 ``None``。默认值： ``0.1`` 。
-        - **affine** (bool, 可选) - bool类型。设置为 ``True`` 时，可学习到反射参数值。默认值： ``True`` 。
+        - **eps** (float, 可选) - :math:`\epsilon` 加在分母上的值，以确保数值稳定。默认 ``1e-5`` 。
+        - **momentum** (float, 可选) - 动态均值和动态方差所使用的动量。当想计算累计平均值时，可设置为 ``None``。默认 ``0.1`` 。
+        - **affine** (bool, 可选) - bool类型。设置为 ``True`` 时，可学习到仿射参数值。默认 ``True`` 。
         - **track_running_stats** (bool, 可选) - bool类型。设置为 ``True`` 时，会跟踪运行时的均值和方差。当设置为 ``False`` 时，
-          则不会跟踪这些统计信息。且在tran和eval模式下，该cell总是使用batch的统计信息。默认值： ``True`` 。
-        - **dtype** (:class:`mindspore.dtype`, 可选) - Parameters的dtype。默认值： ``None`` 。
+          则不会跟踪这些统计信息。且在train和eval模式下，该cell总是使用batch的统计信息。默认 ``True`` 。
+        - **dtype** (:class:`mindspore.dtype`, 可选) - 参数的数据类型。默认 ``None`` 。
 
     输入：
         - **input** (Tensor) - 输入shape为 :math:`(N, C, D, H, W)` 。
@@ -31,6 +31,4 @@ mindspore.mint.nn.BatchNorm3d
         Tensor，类型和shape与 `input` 一致。
 
     异常：
-        - **TypeError** - `num_features` 不是整数。
-        - **TypeError** - `eps` 不是浮点数。
         - **ValueError** - `num_features` 小于1。
