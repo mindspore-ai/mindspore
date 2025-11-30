@@ -385,12 +385,12 @@ class Dropout2d(Cell):
 
 class Dropout2dExt(Cell):
     r"""
-    During training, randomly zeroes some channels of the input tensor with probability `p`
-    from a Bernoulli distribution (For a 4-dimensional tensor with a shape of :math:`NCHW`,
-    the channel feature map refers to a 2-dimensional feature map with the shape of :math:`HW`).
+    During training, randomly zero some channels of the input tensor with probability `p`
+    (For a 4-D tensor with a shape of :math:`(N, C, H, W)`, the channel feature map refers to a 2-D feature map
+    with the shape of :math:`(H, W)`).
 
-    For example, the :math:`j\_th` channel of the :math:`i\_th` sample in the batched input is a to-be-processed
-    `2D` tensor input[i,j].
+    For example, the :math:`j`-th channel of the :math:`i`-th sample in the batched input is a to-be-processed
+    2-D tensor input[i,j].
     Each channel will be zeroed out independently on every forward call with probability `p` using samples
     from a Bernoulli distribution.
 
@@ -406,10 +406,8 @@ class Dropout2dExt(Cell):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> dropout = mint.nn.Dropout2d(p=0.5)
-        >>> x = Tensor(np.ones([2, 1, 2, 3]), mindspore.float32)
+        >>> dropout = mindspore.nn.Dropout2dExt(p=0.5)
+        >>> x = mindspore.mint.ones(([2, 1, 2, 3]), dtype=mindspore.float32)
         >>> output = dropout(x)
         >>> print(output.shape)
         (2, 1, 2, 3)
