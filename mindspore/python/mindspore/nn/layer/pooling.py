@@ -1021,8 +1021,8 @@ class AvgPool3d(_PoolNd):
 
 class AvgPool3dExt(Cell):
     r"""
-    Applies a 3D average pooling over an input Tensor which can be regarded as
-    a composition of 3D input planes.
+    Apply a 3-D average pooling over an input tensor which can be regarded as
+    a composition of 3-D input planes.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -1033,14 +1033,15 @@ class AvgPool3dExt(Cell):
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
-        >>> pool = ms.nn.AvgPool3dExt(kernel_size=3, stride=1)
-        >>> x = ms.ops.randn(1, 2, 4, 4, 5).astype(ms.float32)
+        >>> import mindspore
+        >>> import numpy as np
+        >>> pool = mindspore.nn.AvgPool3dExt(kernel_size=3, stride=1)
+        >>> x = mindspore.tensor(mindspore.mint.randn(1, 2, 4, 4, 5).astype(np.float32))
         >>> output = pool(x)
         >>> print(output.shape)
         (1, 2, 2, 2, 3)
-        >>> x1 = ms.ops.randn(6, 5, 7, 7, 5).astype(ms.float32)
-        >>> pool2 = ms.nn.AvgPool3dExt(4, stride=2, padding=(2, 2, 1), divisor_override=10)
+        >>> x1 = mindspore.tensor(mindspore.mint.randn(6, 5, 7, 7, 5).astype(np.float32))
+        >>> pool2 = mindspore.nn.AvgPool3dExt(4, stride=2, padding=(2, 2, 1), divisor_override=10)
         >>> output2 = pool2(x1)
         >>> print(output2.shape)
         (6, 5, 4, 4, 2)
