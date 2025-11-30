@@ -283,45 +283,37 @@ class _AdaptiveMaxPoolNd(Cell):
 
 class AdaptiveMaxPool1d(_AdaptiveMaxPoolNd):
     r"""
-    Applies a 1D adaptive max pooling over an input signal composed of several input planes.
+    Apply a 1-D adaptive max pooling over an input signal composed of several input planes.
 
-    The output is of size :math:`L_{out}` , for any input size.
+    The output is of size :math:`L_{out}`, for any input size.
     The number of output features is equal to the number of input planes.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        output_size (Union[int, tuple]): the target output size :math:`L_{out}` .
-        return_indices (bool, optional): Whether to return the index of the maximum value. Default: ``False`` .
+        output_size (Union[int, tuple]): The target output size :math:`L_{out}`.
+        return_indices (bool, optional): Whether to return the index of the maximum value. Default: ``False``.
 
     Inputs:
-        - **input** (Tensor) - The input with shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})` .
+        - **input** (Tensor) - The input tensor with shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`,
+          where `N` is the batch size, `C` is the number of channels, and `L_{in}` is the input length.
 
     Outputs:
         Union(Tensor, tuple(Tensor, Tensor)).
 
         - If `return_indices` is False, output is a Tensor, with shape :math:`(N, C, L_{out})`. It has the same data
-          type as `x`.
+          type as `input`.
         - If `return_indices` is True, output is a Tuple of 2 Tensors, representing the result and where the max
           values are generated.
-
-    Raises:
-        TypeError: If `input` is not a tensor.
-        TypeError: If dtype of `input` is not float16, float32 or float64.
-        TypeError: If `output_size` is not int or tuple.
-        TypeError: If `return_indices` is not a bool.
-        ValueError: If `output_size` is a tuple and the length of `output_size` is not 1.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> input = Tensor(np.array([[[2, 1, 2], [2, 3, 5]]]), mindspore.float16)
-        >>> net = mint.nn.AdaptiveMaxPool1d(3)
+        >>> input = mindspore.tensor([[[2, 1, 2], [2, 3, 5]]], mindspore.float16)
+        >>> net = mindspore.mint.nn.AdaptiveMaxPool1d(3)
         >>> output = net(input)
         >>> print(output)
         [[[2. 1. 2.]
