@@ -250,7 +250,7 @@ class GLU(Cell):
     where :math:`a` is the first half of the `input` Tensor after `input` is split and :math:`b` is the second half.
 
     Here :math:`\sigma` is the sigmoid function, and :math:`\otimes` is the Hadamard product.
-    See `Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>`_ .
+    See `Language Modeling with Gated Convolutional Networks <https://arxiv.org/abs/1612.08083>`_ .
 
     Args:
         dim (int, optional): The dimension to split the input `input`. The value range is `[-r, r)` where `r`
@@ -266,7 +266,6 @@ class GLU(Cell):
         Tensor, the same dtype as the `input`, with the shape :math:`(\ast_1, M, \ast_2)` where :math:`M=N/2`.
 
     Raises:
-        TypeError: If `input` is not a Tensor or `dim` is not an int.
         IndexError: If the value of `dim` is out of the range of `[-r, r)`, where `r` is the number
             of dimensions of `input`.
         RuntimeError: If dtype of `input` is not supported.
@@ -276,9 +275,9 @@ class GLU(Cell):
         ``Ascend`` ``CPU``
 
     Examples:
-        >>> from mindspore import mint, Tensor
-        >>> glu = mint.nn.GLU()
-        >>> input = Tensor([[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]])
+        >>> import mindspore 
+        >>> glu = mindspore.mint.nn.GLU()
+        >>> input = mindspore.tensor([[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]])
         >>> output = glu(input)
         >>> print(output)
         [[0.05744425 0.11973753]
