@@ -1321,7 +1321,7 @@ class Unfold(Cell):
 
 class UnfoldExt(Cell):
     r"""
-    Extracts sliding local blocks from a batched input tensor.
+    Extracts sliding local blocks from a batched input tensor into a column matrix.
 
     For details, please refer to :func:`mindspore.mint.nn.functional.unfold`.
 
@@ -1331,9 +1331,8 @@ class UnfoldExt(Cell):
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor, nn
-        >>> input = Tensor(np.random.rand(4, 4, 32, 32), mindspore.float64)
-        >>> unfold = nn.UnfoldExt(kernel_size=3, dilation=1, stride=1)
+        >>> input = mindspore.tensor(np.random.rand(4, 4, 32, 32), mindspore.float32)
+        >>> unfold = mindspore.nn.UnfoldExt(kernel_size=3, dilation=1, stride=1)
         >>> output = unfold(input)
         >>> print(output.shape)
         (4, 36, 900)
