@@ -222,29 +222,22 @@ class DropoutExt(Cell):
         - Parameter `p` means the probability of the element of the input tensor to be zeroed.
 
     Args:
-        p (float, optional): The dropout rate of input neurons, E.g. `p` =0.9, dropping out 90% of input neurons.
-            Default: ``0.5`` .
-        inplace (bool, optional): Whether to enable the operation in-place.
-            If set to ``True`` , will do this operation in-place. Default: ``False`` .
+        p (float, optional): Probability of an element to be zeroed. Default: ``0.5``.
+        inplace (bool, optional): Whether to enable the operation in-place. Default: ``False``.
 
     Inputs:
-        - **input** (Tensor) - The input of Dropout.
+        - **input** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, output tensor with the same shape as the `input`.
-
-    Raises:
-        TypeError: If the dtype of `inplace` is not bool.
+        Tensor.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
-        >>> import numpy as np
-        >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
-        >>> net = nn.DropoutExt(p=0.2)
+        >>> x = mindspore.tensor([2, 2, 3], mindspore.float32)
+        >>> net = mindspore.mint.nn.Dropout(p=0.2)
         >>> net.set_train()
         >>> output = net(x)
         >>> print(output.shape)
