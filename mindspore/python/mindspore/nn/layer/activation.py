@@ -1317,9 +1317,9 @@ class PReLUExt(Cell):
 
 class HSwish(Cell):
     r"""
-    Applies Hard Swish activation function element-wise.
+    Applies the Hard Swish activation function element-wise.
 
-    Hard swish is defined as:
+    Hard Swish is defined as:
 
     .. math::
         \text{HSwish}(input) =
@@ -1335,24 +1335,19 @@ class HSwish(Cell):
         :align: center
 
     Inputs:
-        - **input** (Tensor) - The input of HSwish.
+        - **input** (Tensor) - The input tensor to be processed by Hard Swish.
 
     Outputs:
         Tensor, with the same type and shape as the `input`.
-
-    Raises:
-        TypeError: If `input` is not a tensor.
-        TypeError: If `input` is neither int nor float.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
         >>> import numpy as np
-        >>> input = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-        >>> hswish = nn.HSwish()
+        >>> input = mindspore.Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
+        >>> hswish = mindspore.nn.HSwish()
         >>> result = hswish(input)
         >>> print(result)
         [-0.3333 -0.3333  0.      1.667   0.6665]
