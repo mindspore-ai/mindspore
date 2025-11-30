@@ -166,23 +166,22 @@ class EmbeddingExt(Cell):
     Args:
         num_embeddings (int): Size of the dictionary of embeddings.
         embedding_dim (int): The size of each embedding vector.
-        padding_idx (int, optional): If the value is not None, the corresponding row of embedding vector
-            will not be updated in training. The value of embedding vector at `padding_idx` will default
-            to zeros when the Embedding layer is newly constructed. The value should be in range
-            `[-num_embeddings, num_embeddings)` if it's not ``None``. Default ``None``.
-        max_norm (float, optional): If the value is not None, firstly get the p-norm result of the embedding
+        padding_idx (int, optional): If specified, the embedding vector at padding_idx is not updated during training.
+            For a newly constructed Embedding, the embedding vector at padding_idx will default to all zeros.
+            The value should be in range `[-num_embeddings, num_embeddings)`. Default: ``None``.
+        max_norm (float, optional): If given, each embedding vector with norm larger than max_norm is renormalized to have norm max_norm.
             vector specified by `input` where p is specified by `norm_type`; if the result is larger then `max_norm`,
-            update the embedding vector with :math:`\frac{max\_norm}{result+1e^{-7}}`. Default ``None``.
-        norm_type (float, optional): Indicated the value of p in p-norm. Default ``2.0``.
-        scale_grad_by_freq (bool, optional): If ``True`` the gradients will be scaled by the inverse of frequency
-            of the index in `input`. Default ``False``.
+            update the embedding vector with :math:`\frac{max\_norm}{result+1e^{-7}}`. Default: ``None``.
+        norm_type (float, optional): Indicate the value of p in p-norm. Default: ``2.0``.
+        scale_grad_by_freq (bool, optional): If ``True`` the gradient will be scaled by the inverse of frequency
+            of the index in `input`. Default: ``False``.
         sparse (bool, optional): If ``True``, gradient w.r.t. `weight` matrix will be a sparse tensor which
             has not been supported. Default: ``False``.
-        _weight (Tensor, optional): Used to initialize the `weight` of Embedding. If ``None``, the weight will be
-            initialized from normal distribution :math:`{N}(\text{sigma=1.0}, \text{mean=0.0})`. Default ``None``.
-        _freeze(bool, optional): If `weight` , the learnable weights of this module, should be freezed.
+        _weight (Tensor, optional): Use to initialize the `weight` of Embedding. If ``None``, the weight will be
+            initialized from normal distribution :math:`{N}(\text{sigma=1.0}, \text{mean=0.0})`. Default: ``None``.
+        _freeze(bool, optional): If `weight`, the learnable weight of this module, should be frozen.
             Default: ``False``.
-        dtype (mindspore.dtype, optional) : Dtype of Embedding's `weight` . It is meaningless when `_weight` is
+        dtype (mindspore.dtype, optional): Dtype of Embedding's `weight`. It is meaningless when `_weight` is
             not None. Default: ``None``.
 
     Variables:
@@ -190,32 +189,19 @@ class EmbeddingExt(Cell):
           initialized from :math:`{N}(\text{sigma=1.0}, \text{mean=0.0})` or `_weight` .
 
     Inputs:
-        - **input** (Tensor) - The indices used to lookup in the embedding vector. The data type must be
-          int32 or int64, and the value should be in range `[0, num_embeddings)`.
+        - **input** (Tensor) - The input tensor containing the indices to extract, which in range `[0, num_embeddings)`.
 
     Outputs:
-        Tensor, has the same data type as weight, the shape is :math:`(*input.shape, embedding\_dim)`.
-
-    Raises:
-        TypeError: If `num_embeddings` is not an int.
-        TypeError: If `embedding_dim` is not an int.
-        ValueError: If `padding_idx` is out of valid range.
-        TypeError: If `max_norm` is not a float.
-        TypeError: If `norm_type` is not a float.
-        TypeError: If `scale_grad_by_freq` is not a bool.
-        ValueError: If `weight.shape` is invalid.
-        TypeError: If `dtype` is not one of mindspore.dtype.
+        Tensor.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, nn
         >>> mindspore.set_seed(0)
-        >>> input = Tensor([[1, 0, 1, 1], [0, 0, 1, 0]])
-        >>> embedding = nn.EmbeddingExt(num_embeddings=10, embedding_dim=3)
+        >>> input = mindspore.tensor([[1, 0, 1, 1], [0, 0, 1, 0]])
+        >>> embedding = mindspore.nn.layer.embedding.EmbeddingExt(num_embeddings=10, embedding_dim=3)
         >>> output = embedding(input)
         >>> print(output)
         [[[ 0.6712398   0.5407775   1.0317237]
