@@ -1096,8 +1096,8 @@ class AvgPool1dExt(Cell):
 
 class AvgPool2dExt(Cell):
     r"""
-    Applies a 2D average pooling over an input Tensor which can be regarded as
-    a composition of 2D input planes.
+    Apply a 2-D average pooling over an input tensor which can be regarded as
+    a composition of 2-D input planes.
 
     For details, please refer to :func:`mindspore.mint.nn.functional.avg_pool2d`.
 
@@ -1105,11 +1105,9 @@ class AvgPool2dExt(Cell):
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import Tensor, nn
-        >>> from mindspore import dtype as mstype
-        >>> input = Tensor(np.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mstype.float32)
-        >>> net = nn.AvgPool2dExt(kernel_size=2, stride=1)
+        >>> import mindspore
+        >>> input = mindspore.tensor(mindspore.mint.arange(1 * 3 * 3 * 4).reshape(1, 3, 3, 4), mindspore.float32)
+        >>> net = mindspore.nn.AvgPool2dExt(kernel_size=2, stride=1)
         >>> output = net(input)
         >>> print(output.shape)
         (1, 3, 2, 3)
