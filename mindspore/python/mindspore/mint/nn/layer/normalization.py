@@ -456,10 +456,11 @@ class SyncBatchNorm(_BatchNorm):
     r"""
     Sync Batch Normalization layer over a N-dimension input.
 
-    Sync Batch Normalization is cross device synchronized Batch Normalization. The implementation of Batch
-    Normalization only normalizes the data within each device. Sync Batch Normalization will normalize the input
-    within the group. It has been described in the paper `Batch Normalization: Accelerating Deep Network Training by
-    Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
+    Sync Batch Normalization is cross device synchronized Batch Normalization. In contrast to BN's implementation, 
+    which only batches normalizes data in a single device, synchronous BN batches normalizes inputs on all devices 
+    within a specified communication group.
+    It has been described in the paper `Batch Normalization: Accelerating Deep Network 
+    Training by Reducing Internal Covariate Shift <https://arxiv.org/abs/1502.03167>`_. It rescales and recenters the
     feature using a mini-batch of data and the learned parameters which can be described in the following formula.
 
     .. math::
@@ -486,14 +487,12 @@ class SyncBatchNorm(_BatchNorm):
         dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default: ``None`` .
 
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(N, C_{in}, +)`.
+        - **x** (Tensor) - Tensor of shape :math:`(N, C, +)`.
 
     Outputs:
-        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out}, +)`.
+        Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C, +)`.
 
     Raises:
-        TypeError: If `num_features` is not an int.
-        TypeError: If `eps` is not a float.
         ValueError: If `num_features` is less than 1.
         ValueError: If `momentum` is not in range [0, 1].
         ValueError: If rank_id in `process_group` is not in range [0, rank_size).
@@ -517,18 +516,16 @@ class SyncBatchNorm(_BatchNorm):
         >>> # Firstly, preparing test_syncbn.py:
         >>> import numpy as np
         >>> import mindspore
-        >>> import mindspore.context as context
-        >>> from mindspore.mint.nn.layer import SyncBatchNorm
-        >>> from mindspore import Tensor
-        >>> from mindspore.communication import init, create_group, get_local_rank
-        >>> init()
-        >>> context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+        >>> mindspore.communication.init()
+        >>> mindspore.context.set_context(mode=mindspore.context.PYNATIVE_MODE, device_target="Ascend")
         >>> group = "0-1"
         >>> rank_ids = [0, 1]
-        >>> create_group(group, rank_ids)
-        >>> sync_batch_norm = SyncBatchNorm(num_features=2, process_group=group, dtype=mindspore.float32)
+        >>> mindspore.communication.create_group(group, rank_ids)
+        >>> sync_batch_norm = mindspore.mint.nn.layer.SyncBatchNorm(
+        ...     num_features=2, process_group=group, dtype=mindspore.float32
+        ... )
         >>> sync_batch_norm.set_train(False)
-        >>> input_x = Tensor(np.linspace(0, 5, 2*2*2*2), mindspore.float32).reshape(2, 2, 2, 2)
+        >>> input_x = mindspore.tensor(np.linspace(0, 5, 2*2*2*2), mindspore.float32).reshape(2, 2, 2, 2)
         >>> output_data = sync_batch_norm(input_x)
         >>> # Then, executing the command such as the following:
         >>> # msrun --worker_num=2 --local_worker_num=2 --master_port=8975 --log_dir=msrun_log --join=True
