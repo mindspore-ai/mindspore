@@ -828,48 +828,32 @@ class Linear(Cell):
     Args:
         in_features (int): The number of features in the input space.
         out_features (int): The number of features in the output space.
-        bias (bool, optional): Specifies whether the layer uses a bias vector :math:`\text{bias}`. Default: ``True``.
+        bias (bool, optional): Specify whether the layer use a bias vector :math:`\text{bias}`. Default: ``True``.
         weight_init (Union[Tensor, str, Initializer, numbers.Number], optional):
             The trainable weight_init parameter. The dtype
             is same as `x`. The values of str refer to the function :func:`mindspore.common.initializer.initializer`.
-            Default: ``None`` ,
+            Default: ``None``,
             weight will be initialized using HeUniform.
         bias_init (Union[Tensor, str, Initializer, numbers.Number], optional):
             The trainable bias_init parameter. The dtype is
             same as `x`. The values of str refer to the function :func:`mindspore.common.initializer.initializer`.
-            Default: ``None`` ,
+            Default: ``None``,
             bias will be initialized using Uniform.
-        dtype (:class:`mindspore.dtype`, optional): Data type of Parameter. Default: ``None`` .
-            If `dtype` is ``None`` , `dtype` is set to ``mstype.float32`` when initializing the method.
-            When `weight_init` is Tensor, Parameter has the same data type as `weight_init` ,
-            in other cases, Parameter has the same data type as `dtype`, the same goes for `bias_init`.
-
+        dtype (:class:`mindspore.dtype`, optional): Data type of parameter. Default: ``None``.
+        
     Inputs:
-        - **x** (Tensor) - Tensor of shape :math:`(*, in\_features)`. The `in_features` in `Args` should be equal
-          to :math:`in\_features` in `Inputs`.
+        - **x** (Tensor) - Tensor of shape :math:`(*, in\_features)`. 
 
     Outputs:
         Tensor of shape :math:`(*, out\_features)`.
-
-    Raises:
-        TypeError: If `in_features` or `out_features` is not an int.
-        TypeError: If `bias` is not a bool.
-        ValueError: If length of shape of `weight_init` is not equal to 2 or shape[0] of `weight_init`
-                    is not equal to `out_features` or shape[1] of `weight_init` is not equal to `in_features`.
-        ValueError: If length of shape of `bias_init` is not equal to 1
-                    or shape[0] of `bias_init` is not equal to `out_features`.
-        RuntimeError: On the Ascend platform, if `bias` is ``False`` and `x` is greater than 6D in PYNATIVE or KBK mode.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor
-        >>> from mindspore import mint
-        >>> import numpy as np
-        >>> x = Tensor(np.array([[180, 234, 154], [244, 48, 247]]), mindspore.float32)
-        >>> net = mint.nn.Linear(3, 4)
+        >>> x = mindspore.tensor([[180, 234, 154], [244, 48, 247]], mindspore.float32)
+        >>> net = mindspore.mint.nn.Linear(3, 4)
         >>> output = net(x)
         >>> print(output.shape)
         (2, 4)
