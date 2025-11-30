@@ -689,7 +689,7 @@ class Hardtanh(Cell):
 
 class ReLU6(Cell):
     r"""
-    Activation function ReLU6.
+    Apply ReLU6 (rectified linear unit capped at 6) element-wise.
 
     Refer to :func:`mindspore.mint.nn.functional.relu6` for more details.
 
@@ -703,14 +703,12 @@ class ReLU6(Cell):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> relu6 = mint.nn.ReLU6()
-        >>> output = relu6(input)
+        >>> relu6 = mindspore.mint.nn.ReLU6(inplace=True)
+        >>> input_tensor = mindspore.tensor([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], mindspore.float32)
+        >>> output = relu6(input_tensor)
         >>> print(output)
         [[0. 4. 0.]
-        [2. 0. 6.]]
+         [2. 0. 6.]]
     """
 
     def __init__(self, inplace=False):
