@@ -229,10 +229,10 @@ class BatchNorm2d(_BatchNorm):
 
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
 
-    The mean and standard-deviation are calculated per-dimension over
-    the mini-batches and :math:`\gamma` and :math:`\beta` are learnable parameter vectors
-    of size `C` (where `C` is the number of features or channels of the input). By default, the
-    elements of :math:`\gamma` are set to 1 and the elements of :math:`\beta` are set to 0.
+    The mean and standard deviation are calculated per-dimension over
+    the mini-batches. :math:`\gamma` and :math:`\beta` are learnable parameter vectors
+    of size `C` (where `C` is the number of features or channels of the input). By default,
+    the elements of :math:`\gamma` are set to 1, and the elements of :math:`\beta` are set to 0.
 
     .. warning::
         - This API does not support Dynamic Rank.
@@ -249,7 +249,7 @@ class BatchNorm2d(_BatchNorm):
             cell tracks the running mean and variance, and when set to ``False``,
             this cell does not track such statistics. And this cell always uses batch statistics
             in both train and eval modes. Default: ``True`` .
-        dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): Dtype of parameters. Default: ``None`` .
 
     Inputs:
         - **input** (Tensor) - The input with shape :math:`(N, C, H, W)`.
@@ -258,8 +258,6 @@ class BatchNorm2d(_BatchNorm):
         Tensor, has the same type and shape as `input`.
 
     Raises:
-        TypeError: If `num_features` is not an int number.
-        TypeError: If `eps` is not a float.
         ValueError: If `num_features` is less than 1.
 
     Supported Platforms:
@@ -267,8 +265,7 @@ class BatchNorm2d(_BatchNorm):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> input_x = mindspore.Tensor([0.3, 0.4, 0.5, 0.3])
+        >>> input_x = mindspore.tensor([0.3, 0.4, 0.5, 0.3])
         >>> input_x = input_x.reshape((2, 2, 1, 1))
         >>> net = mint.nn.BatchNorm2d(2)
         >>> output = net(input_x)
