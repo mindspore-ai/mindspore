@@ -1516,7 +1516,7 @@ class LRN(Cell):
 
 class SoftShrink(Cell):
     r"""
-    Applies the SoftShrink function element-wise.
+    Apply the SoftShrink function element-wise.
 
     .. math::
         \text{SoftShrink}(x) =
@@ -1532,32 +1532,25 @@ class SoftShrink(Cell):
         :align: center
 
     Args:
-        lambd (number, optional): The threshold :math:`\lambda` defined by the Soft Shrink formula.
-            It should be greater than or equal to 0, default: ``0.5`` .
+        lambd (number, optional): The threshold :math:`\lambda` defined by the Soft Shrink formula,
+            no less than zero.Default: ``0.5``.
 
     Inputs:
-        - **input** (Tensor) - The input of Soft Shrink. Supported dtypes:
+        - **input** (Tensor) - The input tensor. Supported dtypes:
 
-          - Ascend: float16, float32, bfloat16.
-          - CPU/GPU: float16, float32.
+          - Ascend: mindspore.float16, mindspore.float32, mindspore.bfloat16.
+          - CPU/GPU: mindspore.float16, mindspore.float32.
 
     Outputs:
-        Tensor, the same shape and data type as the input.
-
-    Raises:
-        TypeError: If `lambd` is not a float, int or bool.
-        TypeError: If `input` is not a tensor.
-        TypeError: If dtype of `input` is not float16, float32 or bfloat16.
+        Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
-        >>> import numpy as np
-        >>> input = Tensor(np.array([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]]), mindspore.float16)
-        >>> softshrink = nn.SoftShrink()
+        >>> input = mindspore.tensor([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]], mindspore.float16)
+        >>> softshrink = mindspore.nn.Softshrink()
         >>> output = softshrink(input)
         >>> print(output)
         [[ 0.02979  0.287    0.676  ]
