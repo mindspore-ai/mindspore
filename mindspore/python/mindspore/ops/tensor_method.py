@@ -754,7 +754,7 @@ def tensor_le(input, other):
 
 # 53 less
 def tensor_less(input, other):
-    return F.less(input, other)
+    return ops.auto_generate.less_op(input, other)
 
 
 # 54 less_equal

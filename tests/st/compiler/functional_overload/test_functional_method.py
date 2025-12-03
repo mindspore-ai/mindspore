@@ -432,7 +432,7 @@ def test_method_wrong_args_num_of_1_candidate_2():
     """
     @ms.jit
     def func(x):
-        return x.less()
+        return x.gcd()
 
     with pytest.raises(TypeError) as raise_info:
         func(Tensor(1))

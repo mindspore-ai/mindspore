@@ -23,7 +23,7 @@ from tests.st.ops.share._op_info.op_database import get_op_info, binary_op_db, b
 ops_params_dict = {
     'test_binary_op_reference_forward' : (['pynative'], binary_op_db),
     'test_binary_op_reference_backward' : (['pynative'], binary_op_db),
-    'test_binary_op_type_promotion': (['pynative'], ['mint.add', 'mint.sub']),
+    'test_binary_op_type_promotion': (['pynative'], ['mint.add', 'mint.sub', '<']),
     'test_binary_op_reference_forward_kbk' : (['kbk'], binary_op_kbk_db),
     'test_binary_op_reference_backward_kbk' : (['kbk'], binary_op_kbk_db),
     'test_binary_op_dynamic_forward': (['kbk'], binary_op_kbk_db),

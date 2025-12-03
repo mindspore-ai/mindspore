@@ -13,11 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "common/common_test.h"
-#include "ir/primitive.h"
+#include <vector>
+#include <memory>
 #include "abstract/abstract_value.h"
-#include "ops/test_ops.h"
+#include "abstract/dshape.h"
+#include "common/common_test.h"
+#include "ir/dtype/type.h"
+#include "ir/primitive.h"
 #include "infer/ops_func_impl/less.h"
+#include "ops/test_ops.h"
+#include "ops/utils/general_infer_utils.h"
+#include "ir/tensor_new.h"
+#include "ops/test_value_utils.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "ops/op_def.h"
+#include "ops/infer_info/abstract_infer_info_adapter.h"
 
 namespace mindspore {
 namespace ops {
@@ -60,5 +71,73 @@ INSTANTIATE_TEST_CASE_P(TestLessGroup, TestLess,
                         testing::Values(LessOpParams{{2, 3, 4}, kFloat32, {2, 1, 4}, kFloat32, {2, 3, 4}, kBool},
                                         LessOpParams{{2, 3, 4}, kFloat32, {-1, -1, -1}, kFloat32, {2, 3, 4}, kBool},
                                         LessOpParams{{2, 3, 4}, kFloat32, {1}, kFloat32, {2, 3, 4}, kBool}));
+
+struct LessInferValueParams {
+  tensor::TensorPtr x;
+  tensor::TensorPtr y;
+  tensor::TensorPtr out;
+};
+
+class TestLessInferValue : public TestOps, public testing::WithParamInterface<LessInferValueParams> {};
+
+TEST_P(TestLessInferValue, infer_value_cases) {
+  const auto &param = GetParam();
+  ASSERT_NE(param.x, nullptr);
+  ASSERT_NE(param.y, nullptr);
+  auto x_abs = param.x->ToAbstract();
+  auto y_abs = param.y->ToAbstract();
+  auto primitive = std::make_shared<Primitive>("Less");
+  ASSERT_NE(primitive, nullptr);
+
+  auto input_args = abstract::AbstractBasePtrList{x_abs, y_abs};
+  auto value_opt = abstract::InferValueByFuncImpl(primitive, input_args);
+  ASSERT_TRUE(value_opt.has_value());
+  auto infer_out = value_opt.value();
+  ASSERT_NE(infer_out, nullptr);
+  auto infer_tensor = infer_out->cast<tensor::TensorPtr>();
+  ASSERT_NE(infer_tensor, nullptr);
+  ASSERT_TRUE(infer_tensor->ValueEqual(*param.out));
+}
+
+static tensor::TensorPtr CreateTensorF32(const ShapeVector &shape, const std::vector<float> &vals) {
+  return CreateTensor<float>(kNumberTypeFloat32, shape, vals);
+}
+
+static tensor::TensorPtr CreateTensorF16(const ShapeVector &shape, const std::vector<float16> &vals) {
+  return CreateTensor<float16>(kNumberTypeFloat16, shape, vals);
+}
+
+static tensor::TensorPtr CreateTensorI32(const ShapeVector &shape, const std::vector<int32_t> &vals) {
+  return CreateTensor<int32_t>(kNumberTypeInt32, shape, vals);
+}
+
+static tensor::TensorPtr CreateTensorI64(const ShapeVector &shape, const std::vector<int64_t> &vals) {
+  return CreateTensor<int64_t>(kNumberTypeInt64, shape, vals);
+}
+
+static tensor::TensorPtr CreateTensorBool(const ShapeVector &shape, const std::vector<bool> &vals) {
+  std::vector<uint8_t> int_vals(vals.begin(), vals.end());
+  return CreateTensor<uint8_t>(kNumberTypeBool, shape, int_vals);
+}
+
+INSTANTIATE_TEST_CASE_P(
+  TestLessInferValue, TestLessInferValue,
+  testing::Values(
+    // same type
+    LessInferValueParams{CreateTensorF32({2}, {1.0, 2.0}), CreateTensorF32({2}, {3.0, 1.0}),
+                         CreateTensorBool({2}, {true, false})},
+    LessInferValueParams{CreateTensorF16({2}, {float16(1.0), float16(2.0)}),
+                         CreateTensorF16({2}, {float16(3.0), float16(1.0)}), CreateTensorBool({2}, {true, false})},
+    LessInferValueParams{CreateTensorI32({2}, {1, 2}), CreateTensorI32({2}, {3, 1}),
+                         CreateTensorBool({2}, {true, false})},
+    // mixed type
+    LessInferValueParams{CreateTensorF32({2}, {1.0, 2.0}), CreateTensorI32({2}, {3, 1}),
+                         CreateTensorBool({2}, {true, false})},
+    LessInferValueParams{CreateTensorF16({2}, {float16(1.0), float16(2.0)}), CreateTensorI32({2}, {3, 1}),
+                         CreateTensorBool({2}, {true, false})},
+    LessInferValueParams{CreateTensorF32({2}, {1.0, 2.0}), CreateTensorF16({2}, {float16(3.0), float16(1.0)}),
+                         CreateTensorBool({2}, {true, false})},
+    LessInferValueParams{CreateTensorI32({2}, {1, 2}), CreateTensorI64({2}, {3, 1}),
+                         CreateTensorBool({2}, {true, false})}));
 }  // namespace ops
 }  // namespace mindspore

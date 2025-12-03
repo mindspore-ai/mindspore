@@ -12,7 +12,7 @@ less:
        Support implicit type conversion.
 
     Args:
-        input (Union[Tensor, Number, bool]): The first input.
+        input (Tensor): The first input.
         other (Union[Tensor, Number, bool]): The second input.
 
     Returns:

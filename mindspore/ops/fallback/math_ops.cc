@@ -811,5 +811,18 @@ REG_FALLBACK_BUILDER("BitwiseAndTensor").SetBody(BODYFUNC(ib) {
   }
   return {out};
 });
+
+REG_FALLBACK_BUILDER("LessScalar").SetBody(BODYFUNC(ib) {
+  auto x = ib->GetInput(kIndex0);
+  auto y = ib->GetInput(kIndex1);
+  auto x_type = ib->GetDtype(x)->type_id();
+  auto y_type = ib->GetDtype(y)->type_id();
+  TypeId promote_type_id = ops::PromoteTensorScalarType(x_type, y_type);
+  auto promote_type = TypeIdToType(promote_type_id);
+  MS_EXCEPTION_IF_NULL(promote_type);
+  auto x_cast = ib->Cast(x, promote_type);
+  auto y_cast = ib->ScalarToTensor(y, promote_type);
+  return {ib->Less(x_cast, y_cast)};
+});
 }  // namespace expander
 }  // namespace mindspore

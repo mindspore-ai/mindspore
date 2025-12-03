@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test cases for less operation."""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -20,7 +21,7 @@ from mindspore.ops.auto_generate import less
 from tests.st.ops.test_tools.test_op import TEST_OP
 from tests.mark_utils import arg_mark
 
-import tests.st.utils.test_utils as test_utils
+from tests.st.utils import test_utils
 
 
 def generate_random_input(shape, dtype):
@@ -114,9 +115,8 @@ def test_ops_less_number_to_number_forward(context_mode):
     ms.context.set_context(mode=context_mode)
     x = 5
     other = 6
-    output = less_forward_func(x, other)
-    expect = generate_expect_forward_output(x, other)
-    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+    with pytest.raises(TypeError):
+        less_forward_func(x, other)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',

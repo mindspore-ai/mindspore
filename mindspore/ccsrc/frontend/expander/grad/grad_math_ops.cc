@@ -2215,6 +2215,8 @@ REG_BPROP_BUILDER("InplaceUpdateV2").SetUnusedInputs({i0, i1, i2, i3, i4}).SetBo
 
 REG_BPROP_BUILDER("Less").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
 
+REG_BPROP_BUILDER("LessScalar").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
+
 REG_BPROP_BUILDER("LessEqual").SetUnusedInputs({i0, i1, i2, i3}).SetBody(ReturnZeros);
 
 REG_BPROP_BUILDER("LogicalNot").SetUnusedInputs({i0, i1, i2}).SetBody(ReturnZeros);
