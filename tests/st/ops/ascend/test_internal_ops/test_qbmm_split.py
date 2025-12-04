@@ -96,7 +96,7 @@ def run_expect_split(x_np, wq_np, wk_np, wv_np, b0_np, b1_np, b2_np, s0_np, s1_n
 
 def qbmm_split(m, k, n0=0, n1=0, n2=0, is_dyn=False, profiling=False):
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
 

@@ -148,7 +148,7 @@ def fast_gelu_np(x):
 
 def matmul_biasadd(m, k, n, trans_a=False, trans_b=False, mstype=ms.float16, is_dyn=False, profiling=False):
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
 
@@ -184,7 +184,7 @@ def matmul_biasadd(m, k, n, trans_a=False, trans_b=False, mstype=ms.float16, is_
 def matmul_unary(m, k, n, trans_a=False, trans_b=False, mstype=ms.float16,
                  elemtype="gelu", is_dyn=False, profiling=False):
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True, save_graphs_path="./graph")
     context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
 

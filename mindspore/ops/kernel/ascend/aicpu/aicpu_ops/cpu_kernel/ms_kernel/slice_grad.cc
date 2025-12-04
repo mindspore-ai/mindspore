@@ -17,9 +17,9 @@
 #include <functional>
 #include "securec.h"
 #include "base/bfloat16.h"
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 #include "utils/kernel_util.h"
 
 namespace aicpu {

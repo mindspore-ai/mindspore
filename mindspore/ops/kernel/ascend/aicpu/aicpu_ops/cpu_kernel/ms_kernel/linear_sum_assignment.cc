@@ -22,7 +22,7 @@
 
 #include "linear_sum_assignment.h"
 #include "securec.h"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 #include "utils/kernel_util.h"
 #include "utils/eigen_tensor.h"
 

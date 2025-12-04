@@ -193,7 +193,7 @@ class PagedAttentionBase:
             "kv_cache_quant_mode": first_case.get("kv_cache_quant_mode", "DEFAULT")
         }
         if "ASCEND_HOME_PATH" not in os.environ:
-            os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+            os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
         context.set_context(mode=self.ctx_mode, device_target="Ascend")
         if first_case.get("mask_mode", "MASK_DEFAULT") != "MASK_DEFAULT":
             i_init["mask_mode"] = first_case.get("mask_mode", "MASK_DEFAULT")

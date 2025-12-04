@@ -21,9 +21,9 @@
 #include "inc/kernel_log.h"
 #include "utils/kernel_util.h"
 #include "cpu_types.h"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 
 namespace {
 const char *const kIsInf = "IsInf";

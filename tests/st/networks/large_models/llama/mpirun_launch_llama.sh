@@ -25,7 +25,7 @@ TEST_CASE=$4
 MF_PATH=${BASE_PATH}/../../mindformers
 pip install -r ${MF_PATH}/requirements.txt
 
-export PATH=${ASCEND_HOME_PATH}/latest/tools/profiler/bin:$PATH
+export PATH=${ASCEND_HOME_PATH}/tools/profiler/bin:$PATH
 
 if [ "$TEST_MODE" == "predict" ]; then
   mpirun --allow-run-as-root -n ${USE_DEVICE_NUM} \

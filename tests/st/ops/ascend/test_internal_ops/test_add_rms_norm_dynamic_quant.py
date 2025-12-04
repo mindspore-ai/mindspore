@@ -68,7 +68,7 @@ def _test_add_rms_norm_dynamic_quant_fusion(shape, dtype, has_smooth_scale, inte
     context.set_context(jit_config={"jit_level": "O0", "infer_boost": infer_boost})
     os.environ['MS_SYNC_RUN'] = "on"
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
 
     np_dtype_map = {"float16": np.float16,
                     "bfloat16": np.float32,

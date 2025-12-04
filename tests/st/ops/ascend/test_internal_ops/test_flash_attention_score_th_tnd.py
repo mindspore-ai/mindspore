@@ -217,7 +217,7 @@ class FlashAttentionScoreNet(Cell):
 
 def _test_internal_asd_flash_attention_score(parma_dict, in_layout, ms_dtype, is_dyn, enable_alibi, mode):
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     context.set_context(mode=mode, device_target="Ascend")
     context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
 

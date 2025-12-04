@@ -350,7 +350,7 @@ class AscendEnvChecker(EnvChecker):
         # pylint: disable=broad-except
         except Exception as e:
             logger.error(f"CheckFailed: {e}")
-            logger.critical("MindSpore relies on whl packages of \"te\" in the \"latest\" folder of the "
+            logger.critical("MindSpore relies on whl package \"te\" in "
                             "Ascend AI software package (Ascend Data Center Solution). Please check whether they are "
                             "installed correctly or not, refer to the match info on: https://www.mindspore.cn/install")
         if attention_warning:

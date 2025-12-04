@@ -76,7 +76,7 @@ class QbmmAdd(ms.nn.Cell):
 def qbmm(m, k, n, trans_a=False, trans_b=False, scale_dtype=ms.int64, with_outer_add=False,
          bias_none=False, pertoken_scale_none=True, is_dyn=False):
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
 

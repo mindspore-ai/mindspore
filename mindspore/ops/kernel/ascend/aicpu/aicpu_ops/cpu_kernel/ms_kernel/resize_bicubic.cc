@@ -24,10 +24,10 @@ Additional modifications made by Huawei Technologies Co., Ltd in 2021.
 #include <limits>
 
 #include "include/securec.h"
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "inc/kernel_log.h"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 #include "utils/kernel_util.h"
 #include "utils/sparse_tensor.h"
 

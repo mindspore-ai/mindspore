@@ -29,7 +29,7 @@ steps = 50
 
 ascend_home_path = os.getenv('ASCEND_HOME_PATH')
 if not ascend_home_path:
-    os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+    os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
 
 context.set_context(mode=context.GRAPH_MODE, jit_config={"jit_level": "O0", "infer_boost": "on"}, max_call_depth=6000)
 

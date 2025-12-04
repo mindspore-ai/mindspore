@@ -21,7 +21,7 @@
 
 #include <memory>
 
-#include "context/common/status.h"
+#include "context/utils/status.h"
 #include "cpu_kernel/format_transfer/format_transfer_utils.h"
 #include "cpu_kernel/format_transfer/formats_definitions.h"
 #include "inc/kernel_log.h"

@@ -70,7 +70,7 @@ class QuantPerChannel(ms.nn.Cell):
 
 def run(shape, shape1, is_dyn=False, in_dtype=np.float16):
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ["ASCEND_HOME_PATH"] = "/usr/local/Ascend/latest"
+        os.environ["ASCEND_HOME_PATH"] = "/usr/local/Ascend/cann"
     ms.set_context(device_target="Ascend", mode=context.GRAPH_MODE)
     ms.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
     net = QuantPerChannel()

@@ -22,8 +22,8 @@
 #include "include/securec.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "inc/kernel_log.h"
-#include "context/common/status.h"
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/utils/status.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "utils/kernel_util.h"
 

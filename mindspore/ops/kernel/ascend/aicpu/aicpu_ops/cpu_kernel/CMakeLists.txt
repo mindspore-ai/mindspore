@@ -1,9 +1,10 @@
-set(CANN_CONTEXT "${ASCEND_PATH}/latest/tools/msopgen/template/custom_operator_sample/AICPU/Tensorflow/cpukernel/")
+set(CANN_CONTEXT "${ASCEND_PATH}/cann/include/aicpu_common/")
 if(NOT EXISTS ${CANN_CONTEXT})
     message(FATAL_ERROR "${CANN_CONTEXT} not exists. Please check if the cann package is installed properly.")
 endif()
 
 include_directories(${CANN_CONTEXT})
+include_directories(${CANN_CONTEXT}/context/cpu_proto/)
 include_directories(${ASCEND_CANN_AICPU_KERNEL_PATH})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -49,19 +50,14 @@ target_link_libraries(mindspore_cpu_kernels PRIVATE
     -pthread
     )
 
-set(ASCEND_SOC_VERSION $ENV{AICPU_SOC_VERSION})
-if(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/${ASCEND_SOC_VERSION}/libcpu_kernels_context.a")
-    set(CONTEXT_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/${ASCEND_SOC_VERSION}/libcpu_kernels_context.a")
-elseif(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/libcpu_kernels_context.a")
-    set(CONTEXT_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/libcpu_kernels_context.a")
+if(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend/libcpu_kernels_context.a")
+    set(CONTEXT_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend/libcpu_kernels_context.a")
 else()
     message(FATAL_ERROR "Can not find libcpu_kernels_context.a in the environment."
                         "Please check if the cann package is installed properly.")
 endif()
 
-if(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/${ASCEND_SOC_VERSION}/libascend_protobuf.a")
-    set(PROTOBUF_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/libascend_protobuf.a")
-elseif(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend/libascend_protobuf.a")
+if(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend/libascend_protobuf.a")
     set(PROTOBUF_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend/libascend_protobuf.a")
 else()
     message(FATAL_ERROR "Can not find libascend_protobuf.a in the environment."

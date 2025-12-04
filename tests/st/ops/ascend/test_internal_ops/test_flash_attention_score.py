@@ -150,7 +150,7 @@ class FlashAttentionScoreTest:
         }
 
         if "ASCEND_HOME_PATH" not in os.environ:
-            os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+            os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
         context.set_context(mode=self.ctx_mode, device_target="Ascend")
         context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
         self.net = net_function(**i_init)

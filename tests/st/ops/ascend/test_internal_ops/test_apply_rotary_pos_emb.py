@@ -142,7 +142,7 @@ def _test_rope(query_dtype, cos_dtype, cos_format, batch_size, seq_len, num_head
     max_seq_len = 4096
     np.random.seed(0)
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     ms.set_context(device_target="Ascend", mode=mode)
     ms.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
     net = RotaryEmbedding(hidden_dim, base, max_seq_len, cos_dtype, cos_format)

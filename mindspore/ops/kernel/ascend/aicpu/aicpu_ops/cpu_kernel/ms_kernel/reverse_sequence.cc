@@ -15,7 +15,7 @@
  */
 #include "reverse_sequence.h"
 #include "Eigen/Core"
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "log.h"
 #include "utils/kernel_util.h"
 

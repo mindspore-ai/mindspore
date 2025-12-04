@@ -21,7 +21,7 @@
 #include <random>
 #include "include/securec.h"
 
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "random/utils.h"
 #include "inc/kernel_log.h"
 #include "utils/kernel_util.h"

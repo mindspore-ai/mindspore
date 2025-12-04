@@ -25,7 +25,7 @@
 #include "utils/kernel_util.h"
 #include "inc/kernel_log.h"
 #include "include/securec.h"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 
 namespace aicpu {
 namespace formats {

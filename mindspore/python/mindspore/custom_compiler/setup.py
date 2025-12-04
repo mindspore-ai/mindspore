@@ -128,8 +128,8 @@ class CustomOOC():
 
     def copy_compile_project(self):
         """create compile project by template"""
-        template_path = "../latest/tools/op_project_templates/ascendc/"
-        sample_path = "../latest/tools/msopgen/template/operator_demo_projects/ascendc_operator_sample"
+        template_path = "../tools/op_project_templates/ascendc/"
+        sample_path = "../tools/msopgen/template/operator_demo_projects/ascendc_operator_sample"
         customize_dir = os.path.join(self.args.ascend_cann_package_path, template_path, "customize")
         common_dir = os.path.join(self.args.ascend_cann_package_path, template_path, "common")
         sample_dir = os.path.join(self.args.ascend_cann_package_path, sample_path)
@@ -191,7 +191,7 @@ class CustomOOC():
         else:
             cann_package_path = os.environ.get('ASCEND_AICPU_PATH')
             if cann_package_path is None:
-                cann_package_path = "/usr/local/Ascend/latest"
+                cann_package_path = "/usr/local/Ascend/cann"
 
         if not os.path.isdir(cann_package_path):
             logger.error(f"The path '{cann_package_path}' is not a valid path.")
