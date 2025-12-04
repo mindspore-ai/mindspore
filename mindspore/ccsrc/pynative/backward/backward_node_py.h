@@ -25,8 +25,10 @@ struct BackwardNodePy {
   PyObject_HEAD BackwardNodePtr cdata;
 };
 
+bool IsBackwardNodePy(const py::handle &obj);
 PYNATIVE_EXPORT PyObject *Wrap(const BackwardNodePtr &backward_node);
 PyObject *BackwardNode_get_next_edges(const BackwardNodePtr &backward_node);
+PyObject *BackwardNode_set_next_edge(const BackwardNodePtr &backward_node, PyObject *args);
 PyObject *BackwardNode_register_pre_hook(const BackwardNodePtr &backward_node, PyObject *hook_fn);
 PyObject *BackwardNode_register_post_hook(const BackwardNodePtr &backward_node, PyObject *hook_fn);
 }  // namespace mindspore::pynative::autograd

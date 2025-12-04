@@ -274,7 +274,7 @@ class AutoDiff : public AutoDiffInterface {
   /// \param output
   /// \param high_order
   /// \param is_run_recompute
-  AutoDiff(const ValuePtr &output, bool keep_graph, bool high_order, bool is_run_recompute);
+  AutoDiff(bool keep_graph, bool high_order, bool is_run_recompute);
   DISABLE_COPY_AND_ASSIGN(AutoDiff)
   /// Calculate gradients of leaf nodes from outputs.
   /// \param inputs
@@ -285,11 +285,11 @@ class AutoDiff : public AutoDiffInterface {
   /// \param has_aux
   /// \param sens
   /// \return grads of weights and inputs.
-  ValuePtr RunGradFunc(const ValuePtrList &inputs, const tensor::TensorPtrList &weights,
+  ValuePtr RunGradFunc(const ValuePtr &output, const ValuePtrList &inputs, const tensor::TensorPtrList &weights,
                        const std::vector<size_t> &grad_position, const GradAttr &grad_attr,
                        bool collect_default_weights, const ValuePtr &sens = nullptr);
 
-  ValuePtr RunBackward(const ValuePtrList &inputs, const ValuePtr &sens, bool accumulate_grad);
+  ValuePtr RunBackward(const EdgeList &outputs, const EdgeList &inputs, const ValuePtrList &sens, bool accumulate_grad);
   /// Check the given node is in exec grad graph.
   /// \param node
   /// \return true if in grad graph
@@ -309,7 +309,11 @@ class AutoDiff : public AutoDiffInterface {
   void Clear();
 
  private:
+  /// Initialize otuput.
+  /// \param output
+  inline void Initialize(const ValuePtr &output);
   /// Check grad func input sens shape and type.
+  /// \param output
   /// \param sens_gradient
   void CheckSensShapeAndType(const ValuePtr &sens_gradient);
 
@@ -317,6 +321,9 @@ class AutoDiff : public AutoDiffInterface {
   /// \param sens_gradient
   void BuildGraphRoot(const ValuePtr &sens_gradient);
 
+  /// Construct grad graph root node for edge list.
+  /// \param sens_gradient
+  void BuildGraphRoot(const EdgeList &outputs, const ValuePtrList &sens_gradient);
   /// Pruning input grad of grad graph, if input do not need grad.
   /// \param inputs
   /// \param grad_attr
@@ -324,7 +331,7 @@ class AutoDiff : public AutoDiffInterface {
   void PruningInput(const ValuePtrList &inputs, const GradAttr &grad_attr, const std::vector<size_t> &grad_position);
   /// Pruning input grad of grad graph
   /// \param inputs
-  void PruningInput(const ValuePtrList &inputs, bool accumulate_grad);
+  void PruningInput(const EdgeList &inputs, bool accumulate_grad);
   /// Pruning grad graph.
   /// \param inputs
   /// \param weights
@@ -372,12 +379,17 @@ class AutoDiff : public AutoDiffInterface {
   /// this is just for fix zeros3 bug.
   /// \param fn
   /// \return grad
-  ValuePtr LeafNodeNotInGradButHasTensorHook(const std::shared_ptr<LeafNode> &fn) const;
+  TensorPtr LeafNodeNotInGradButHasTensorHook(const std::shared_ptr<LeafNode> &fn) const;
 
   /// Ones op for sens.
   /// \param sens
   /// \return values
   ValuePtrList OnsLike(const ValuePtrList &sens);
+
+  /// Ones for inputs.
+  /// \param inputs
+  /// \return
+  ValuePtrList Ones(const EdgeList &inputs);
 
   /// Get grads from leaf nodes.
   /// \param inputs
@@ -395,13 +407,15 @@ class AutoDiff : public AutoDiffInterface {
   /// \return grads
   ValuePtr GetInputGrads(const ValuePtrList &inputs, bool grad_all_inputs, bool get_by_position,
                          const std::vector<size_t> &grad_position);
-
+  /// Get grad from edge.
+  /// \param input
+  /// \return
+  TensorPtr GetTensorGrad(const Edge &input, bool is_run_grad_func);
   /// Get grad from tensor.
   /// \param val
-  /// \param get_grad_from_tensor whether get grad from tensor.
   /// \param run_tensor_hook whether execute hook of leaf node which not in grad graph.
   /// \return grad
-  ValuePtr GetTensorGrad(const ValuePtr &val, bool get_grad_from_tensor, bool is_run_backward_api);
+  ValuePtr GetTensorGrad(const ValuePtr &val, bool is_run_grad_func);
   /// Get grad from grad node.
   /// \param grad_node
   /// \return grad

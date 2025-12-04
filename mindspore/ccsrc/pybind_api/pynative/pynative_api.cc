@@ -47,6 +47,7 @@ void RegPyNativeModule(py::module *m) {
   mindspore::pynative::distributed::RegReducer(m);
   mindspore::pynative::autograd::RegBackwardFunction(m);
   mindspore::pynative::autograd::RegBackwardNode(m);
+  mindspore::pynative::autograd::RegTensorMeta(m);
   mindspore::pynative::autograd::RegFunctionBase(m);
   mindspore::pytree::RegPyTree(m);
   RegTensorDoc(m);

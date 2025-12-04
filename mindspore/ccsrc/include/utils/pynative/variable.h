@@ -196,6 +196,8 @@ struct Edge {
   size_t input_index;
 };
 
+using EdgeList = std::vector<Edge>;
+
 using CppTensorHookList = std::vector<std::unique_ptr<CppTensorBackwardNodePreHook>>;
 using PyTensorHookMap = OrderedMap<uint64_t, std::unique_ptr<PyTensorBackwardNodePreHook>>;
 using RetainGradHookMap = std::unordered_map<size_t, std::unique_ptr<RetainGradHook>>;
@@ -296,6 +298,9 @@ class COMMON_EXPORT BackwardNode : public std::enable_shared_from_this<BackwardN
 
   /// \brief Set next edges for backward node.
   void set_next_edges(std::vector<Edge> &&next_edges) { next_edges_ = next_edges; }
+
+  /// \brief Set next edges for backward node.
+  void set_next_edges(const std::vector<Edge> &next_edges) { next_edges_ = next_edges; }
 
   /// \brief Add next edges for backward node.
   void add_next_edge(Edge edge) { (void)next_edges_.emplace_back(std::move(edge)); }

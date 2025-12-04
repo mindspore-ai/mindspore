@@ -66,6 +66,14 @@ PyObject *PyObjManager::GetTensorPythonClass() {
   return tensor_python_class_;
 }
 
+PyObject *PyObjManager::GetGradientEdgeClass() {
+  if (gradient_edge_class_ == nullptr) {
+    const auto api_module = PyImport_ImportModule("mindspore.graph.api");
+    gradient_edge_class_ = PyObject_GetAttrString(api_module, "_GradientEdge");
+  }
+  return gradient_edge_class_;
+}
+
 PyTypeObject *PyObjManager::GetTensorPythonType() {
   if (python_tensor_type_ == nullptr) {
     python_tensor_type_ = reinterpret_cast<PyTypeObject *>(GetTensorPythonClass());
