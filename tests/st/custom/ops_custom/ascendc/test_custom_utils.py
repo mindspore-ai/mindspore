@@ -32,18 +32,17 @@ def test_info_generator_add():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
-def test_info_generator_maxpool():
+def test_info_generator_grouped_matmul():
     """
     Feature: Custom op testcase
     Description: Test case for generating info of MaxPool op.
     Expectation: The generated registration info matches the expected structure.
     """
-    info_generator = CustomInfoGenerator("aclnnMaxPool")
+    info_generator = CustomInfoGenerator("aclnnGroupedMatmul")
     aclnn_api_types = info_generator.get_aclnn_api_types()
-    expected_api_types = ['aclTensor*', 'aclIntArray*', 'aclIntArray*', 'int64_t', 'aclIntArray*', 'aclIntArray*',
-                          'int64_t', 'aclTensor*',
-                          'uint64_t*',
-                          'aclOpExecutor**']
+    expected_api_types = ['aclTensorList*', 'aclTensorList*', 'aclTensorList*', 'aclTensorList*', 'aclTensorList*',
+                          'aclTensorList*', 'aclTensorList*', 'aclIntArray*', 'int64_t', 'aclTensorList*',
+                          'uint64_t*', 'aclOpExecutor**']
     assert aclnn_api_types == expected_api_types
 
 

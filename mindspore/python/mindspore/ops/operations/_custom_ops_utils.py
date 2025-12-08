@@ -752,13 +752,13 @@ class CustomInfoGenerator:
         """
 
         soc_version = MSContext.get_instance().get_ascend_soc_version()
-        op_info_json = f"aic-{soc_version}-ops-info.json"
-        op_info_json_path = os.path.join("op_impl/ai_core/tbe/config", soc_version, op_info_json)
+        op_info_json_prefix = f"aic-{soc_version}-ops-info"
+        op_info_json_subdir = os.path.join("op_impl/ai_core/tbe/config", soc_version)
 
         if self.env_ascend_custom_opp_path is not None:
             custom_opp_paths = self.env_ascend_custom_opp_path.split(":")
             for custom_opp_path in custom_opp_paths:
-                op_info_path = os.path.join(custom_opp_path, op_info_json_path)
+                op_info_path = os.path.join(custom_opp_path, op_info_json_subdir, f"{op_info_json_prefix}.json")
                 if self._get_op_info_from_file(op_info_path):
                     return
 
@@ -767,12 +767,17 @@ class CustomInfoGenerator:
         if os.path.exists(opp_vendors_config_path):
             priorities = CustomInfoGenerator._parse_load_priority(opp_vendors_config_path)
             for priority in priorities:
-                op_info_path = os.path.join(opp_vendors_path, priority.strip(), op_info_json_path)
+                op_info_path = os.path.join(opp_vendors_path, priority.strip(), op_info_json_subdir,
+                                            f"{op_info_json_prefix}.json")
                 if self._get_op_info_from_file(op_info_path):
                     return
-        opp_info_path = os.path.join(self.env_ascend_opp_path, "built-in", op_info_json_path)
-        if self._get_op_info_from_file(opp_info_path):
-            return
+
+        builtin_dir = os.path.join(self.env_ascend_opp_path, "built-in", op_info_json_subdir)
+        for fname in os.listdir(builtin_dir):
+            if fname.startswith(op_info_json_prefix) and fname.endswith(".json"):
+                op_info_path = os.path.join(builtin_dir, fname)
+                if self._get_op_info_from_file(op_info_path):
+                    return
 
         paths = ",".join(str(item) for item in self.op_info_paths)
         raise RuntimeError(f"Cannot find operator [{self.pure_op_name}] in JSON files [{paths}]")

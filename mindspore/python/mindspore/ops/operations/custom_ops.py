@@ -1444,6 +1444,7 @@ class CustomOpBuilder:
 
         if self.backend == "Ascend":
             include_list.append(os.path.join(self.ascend_cann_path, "include"))
+            include_list.append(os.path.join(self.ascend_cann_path, "include/external"))
             if self.enable_atb:
                 include_list.append(os.path.join(self.atb_home_path, "include"))
         include_list += self._get_ms_inner_includes()
