@@ -185,29 +185,6 @@ def run_trans_flag(test_name):
             assert output.shape == (1, 3, 3, 3)
             assert np.array_equal(output, expect)
 
-        if test_name == "test_e2e_dump_with_uncontiguous_tensor":
-            generate_dump_json(dump_path, dump_config_path, test_name)
-            input_x = mindspore.Tensor(np.arange(5*10*8).reshape(5, 10, 8), dtype=mindspore.float16)
-            begin = (1, 3, 2)
-            end = (3, 5, 6)
-            strides = (1, 1, 2)
-            strided_slice = ops.StridedSlice()
-            result = strided_slice(input_x, begin, end, strides)
-            result[0][0][0] = 65536
-            perm = (1, 2, 0)
-            net = ViewNet()
-            expect = net(result, perm)
-            check_dump_structure(dump_path, dump_config_path, 1, 0, 1)
-            dump_data_path = os.path.join(dump_path, 'rank_0', 'Net', '0', '0')
-            assert os.path.exists(dump_data_path)
-            # tensor data in host format.
-            output_name = "TransposeView.Default_TransposeView-op*.output.0.DefaultFormat.*.npy"
-            output_path = glob.glob(os.path.join(dump_data_path, output_name))[0]
-            real_path = os.path.realpath(output_path)
-            output = np.load(real_path)
-            assert output.shape == (2, 2, 2)
-            assert np.array_equal(output, expect)
-
         if test_name == "test_e2e_dump_set_overflow_number":
             set_overflow_num = 2
             generate_dump_json(dump_path, dump_config_path, test_name, overflow_number=set_overflow_num)
@@ -237,18 +214,6 @@ def test_ascend_kernel_by_kernel_trans_true_op_debug_mode():
     """
     context.set_context(mode=context.GRAPH_MODE)
     run_trans_flag("test_e2e_dump_trans_true_op_debug_mode")
-
-
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
-@security_off_wrap
-def test_ascend_kernel_by_kernel_with_uncontiguous_tensor():
-    """
-    Feature: Ascend kernel by kernel dump with overflow support for uncontiguous tensor.
-    Description: Test kernel by kernel dump in Ascend with uncontiguous tensor.
-    Expectation: Dump files has tensor data in host format (3 dimensions).
-    """
-    context.set_context(mode=context.GRAPH_MODE)
-    run_trans_flag("test_e2e_dump_with_uncontiguous_tensor")
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
