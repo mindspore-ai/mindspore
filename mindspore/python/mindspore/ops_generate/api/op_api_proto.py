@@ -35,6 +35,7 @@ class OpApiProto:
                  py_method,
                  kw_only_args,
                  varargs,
+                 disable_scalar_tensor,
                  ascend,
                  gpu,
                  cpu):
@@ -43,6 +44,7 @@ class OpApiProto:
         self.py_method = py_method
         self.kw_only_args = kw_only_args
         self.varargs = varargs
+        self.disable_scalar_tensor = disable_scalar_tensor
         self.ascend = ascend
         self.gpu = gpu
         self.cpu = cpu
@@ -53,7 +55,7 @@ def get_tensor_method_ast_dict():
         Generates a dictionary mapping function names to their Abstract Syntax Tree (AST) nodes
         for all functions defined in the 'tensor_method.py' file.
     """
-    tensor_method_ast_dict = dict()
+    tensor_method_ast_dict = {}
     tensor_method_file = os.path.join(
         K.WORK_DIR, K.PY_MS_DIR, 'ops/tensor_method.py')
     with open(tensor_method_file, "r", encoding="utf-8") as file:
@@ -72,6 +74,56 @@ class OpApiProtoLoader(ResourceLoader):
         self.op_api_data = safe_load_yaml_from_dir(os.path.join(K.WORK_DIR, K.MS_OP_API_YAML_PATH))
         self.op_protos = op_protos + func_op_protos
         self.deprecated_op_protos = deprecated_op_protos
+
+    def _deal_with_varargs(self, func_data, op_name):
+        """
+        deal with varargs in func_data.
+        """
+        varargs = func_data.get('varargs', None)
+        if varargs:
+            varargs = [item.strip() for item in varargs.split(',')]
+            check_varargs(varargs, op_name)
+        return varargs
+
+    def _deal_with_disable_scalar_tensor(self, func_data, op_name):
+        """
+        deal with disable_scalar_tensor in func_data.
+        """
+        disable_scalar_tensor = func_data.get('disable_scalar_tensor', None)
+        if disable_scalar_tensor:
+            disable_scalar_tensor = [item.strip() for item in disable_scalar_tensor.split(',')]
+            check_disable_scalar_tensor(disable_scalar_tensor, op_name)
+        return disable_scalar_tensor
+
+    def _deal_with_backend(self, func_data):
+        """
+        deal with backend in func_data.
+        """
+        ascend = func_data.get('Ascend', 'aclnn')
+        gpu = func_data.get('GPU', 'aclnn')
+        cpu = func_data.get('CPU', 'aclnn')
+        return ascend, gpu, cpu
+
+    def _deal_with_interface(self, func_data, func_name):
+        """
+        deal with interface in func_data.
+        """
+        interface = func_data.get('interface')
+        if interface is None:
+            raise ValueError(
+                f"For generating tensor or functional interfaces, field interface must exist. "
+                f"Op name is {func_name}")
+
+        interface = ', '.join(part.strip()
+                                for part in interface.split(','))
+
+        if interface not in {'tensor', 'function', 'tensor, function', 'function, tensor'}:
+            raise ValueError(
+                f"The value of field 'interface' must be one of 'tensor', 'function', "
+                f"'tensor, function', or 'function, tensor'. File name is {func_name}.yaml"
+            )
+
+        return interface
 
     def load(self):
         """
@@ -114,30 +166,15 @@ class OpApiProtoLoader(ResourceLoader):
                                     for item in kw_only_args.split(',')]
                     check_kwonlyargs(func_data, kw_only_args, op_name,
                                      op_proto, py_method, tensor_method_def_ast_dict)
-                varargs = func_data.get('varargs', None)
-                if varargs:
-                    varargs = [item.strip() for item in varargs.split(',')]
-                    check_varargs(varargs, op_name)
-                ascend = func_data.get('Ascend', 'aclnn')
-                gpu = func_data.get('GPU', 'aclnn')
-                cpu = func_data.get('CPU', 'aclnn')
-                interface = func_data.get('interface')
-                if interface is None:
-                    raise ValueError(
-                        f"For generating tensor or functional interfaces, field interface must exist. "
-                        f"Op name is {func_name}")
-
-                interface = ', '.join(part.strip()
-                                      for part in interface.split(','))
-
-                if interface not in {'tensor', 'function', 'tensor, function', 'function, tensor'}:
-                    raise ValueError(
-                        f"The value of field 'interface' must be one of 'tensor', 'function', "
-                        f"'tensor, function', or 'function, tensor'. File name is {func_name}.yaml"
-                    )
+                varargs = self._deal_with_varargs(func_data, op_name)
+                disable_scalar_tensor = self._deal_with_disable_scalar_tensor(func_data, op_name)
+                ascend, gpu, cpu  = self._deal_with_backend(func_data)
+                interface = self._deal_with_interface(func_data, func_name)
 
                 proto = OpApiProto(func_name=func_name, op_proto=op_proto, py_method=py_method,
-                                   kw_only_args=kw_only_args, varargs=varargs, ascend=ascend, gpu=gpu, cpu=cpu)
+                                   kw_only_args=kw_only_args, varargs=varargs,
+                                   disable_scalar_tensor=disable_scalar_tensor,
+                                   ascend=ascend, gpu=gpu, cpu=cpu)
 
                 if 'tensor' in interface:
                     tensor_method_protos[func_name].append(proto)
@@ -178,6 +215,12 @@ def check_varargs(varargs, op_name):
     if len(varargs) != 1:
         raise ValueError(
             f'There must be only one variable argument. But got {len(varargs)} in {op_name}')
+
+
+def check_disable_scalar_tensor(disable_scalar_tensor, op_name):
+    if len(disable_scalar_tensor) < 1:
+        raise ValueError(
+            f'There must be at least one argument. But got {len(disable_scalar_tensor)} in {op_name}')
 
 
 def _get_op_name_from_op_yaml(func_name: str, func_data: dict) -> str:

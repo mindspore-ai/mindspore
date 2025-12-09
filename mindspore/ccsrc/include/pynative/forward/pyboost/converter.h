@@ -118,11 +118,12 @@ class PYNATIVE_EXPORT ParserDefaultObjects {
 struct FunctionParameter {
   explicit FunctionParameter(const std::string &fmt, bool is_kw_only);
   bool Check(PyObject *obj, ConvertPair &convert_type, int &error_idx) const;
+  bool TypeCheck(PyObject *obj, const ops::OP_DTYPE &type, int &idx, ConvertPair &convert_type) const;
   void SetDefaultObj(const std::string &str);
   PyObject *GetDefaultValue() { return ParserDefaultObjects::GetInstance().Get(default_str_); }
 
   ops::OP_DTYPE type_{ops::OP_DTYPE::DT_END};
-  std::vector<ops::OP_DTYPE> cast_types_;
+  std::vector<ops::OP_DTYPE> cast_types_{};
   std::string default_str_{""};
   bool optional_{false};
   bool allow_none_{false};
@@ -130,6 +131,7 @@ struct FunctionParameter {
   std::string name_;
   bool is_any_{false};
   bool allow_vararg_{false};
+  bool allow_scalar_tensor_{true};
 };
 
 // single overload

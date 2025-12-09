@@ -79,11 +79,14 @@ ValuePtr ConvertSingleElementToSequence(const py::object &obj) {
 }
 
 // convert PyObject to c++ type
-COMMON_EXPORT bool ParseUtilsCheckInt(PyObject *obj);
-COMMON_EXPORT bool ParseUtilsCheckFloat(PyObject *obj);
-COMMON_EXPORT bool ParseUtilsCheckBool(PyObject *obj);
-COMMON_EXPORT bool ParseUtilsCheckScalar(PyObject *obj);
+COMMON_EXPORT bool ParseUtilsCheckInt(PyObject *obj, bool allow_scalar_tensor = true);
+COMMON_EXPORT bool ParseUtilsCheckFloat(PyObject *obj, bool allow_scalar_tensor = true);
+COMMON_EXPORT bool ParseUtilsCheckBool(PyObject *obj, bool allow_scalar_tensor = true);
+COMMON_EXPORT bool ParseUtilsCheckScalar(PyObject *obj, bool allow_scalar_tensor = true);
 COMMON_EXPORT bool IsGeneralizedInt(PyObject *obj);
+COMMON_EXPORT std::optional<int64_t> ParseUtilsConvertInt(PyObject *obj);
+COMMON_EXPORT std::optional<double> ParseUtilsConvertFloat(PyObject *obj);
+COMMON_EXPORT std::optional<bool> ParseUtilsConvertBool(PyObject *obj);
 COMMON_EXPORT std::optional<int64_t> ConvertGeneralizedIntToBasicInt(PyObject *obj);
 }  // namespace py_parse
 }  // namespace mindspore

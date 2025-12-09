@@ -151,8 +151,12 @@ class OpPrimPyGenerator(BaseOpPrimPyGenerator):
         """
         call_args_list_str = ""
         replace_node_dict = {}
+        pyboost_call_args_list_str = ""
+        pyboost_arg_handlers_black_list = pyboost_utils.get_pyboost_arg_handlers_black_list()
+
         if inputs_args:
             args_with_handler = []
+            pyboost_args_with_handler = []
             for arg in inputs_args:
                 if arg in args_handlers:
                     is_optional = inputs_default.get(arg) == "None"
@@ -162,38 +166,57 @@ class OpPrimPyGenerator(BaseOpPrimPyGenerator):
                     args_with_handler.append("new_generated_" + arg)
                 else:
                     args_with_handler.append(arg)
+
+                if arg in args_handlers and args_handlers[arg] not in pyboost_arg_handlers_black_list:
+                    is_optional = inputs_default.get(arg) == "None"
+                    new_arg = _generate_arg_handler(
+                        op_proto.op_class.name, arg, args_handlers[arg], is_optional)
+                    pyboost_args_with_handler.append(new_arg)
+                else:
+                    pyboost_args_with_handler.append(arg)
+
             call_args_list_str += ", ".join(args_with_handler)
+            pyboost_call_args_list_str += ", ".join(pyboost_args_with_handler)
+
         if init_args:
             call_args_list_str += ", "
             call_args_list_str += ", ".join([f'self.{arg}' for arg in init_args])
+            pyboost_call_args_list_str += ", "
+            pyboost_call_args_list_str += ", ".join([f'self.{arg}' for arg in init_args])
 
         call_method_body_str = ""
+
+        pyboost_call_method_body_str = ""
         is_pyboost = op_proto.op_dispatch and op_proto.op_dispatch.enable
+        if is_pyboost:
+            pyboost_func_name = pyboost_utils.get_pyboost_name(op_proto.op_name)
+            pyboost_call_method_body_str = f"""
+        res = {pyboost_func_name}(self, [{pyboost_call_args_list_str}])
+        if not jit_context():
+            return res"""
+        call_method_body_str += pyboost_call_method_body_str
+
         node_pass = ""
         for name, inner in replace_node_dict.items():
             call_method_body_str += f"""
         new_generated_{name} = {inner}"""
             node_pass += f"""
-            jit_context().pass_trace_node({name}, new_generated_{name})"""
+        jit_context().pass_trace_node({name}, new_generated_{name})"""
+
         if is_pyboost:
-            call_method_body_str += """
-        # Add for jit context.
-        if jit_context():
-            if jit_context().compiled:
-                return jit_context().default_output()"""
-            call_method_body_str += node_pass
-            pyboost_func_name = pyboost_utils.get_pyboost_name(op_proto.op_name)
-            call_method_body_str += f"""
-        res = {pyboost_func_name}(self, [{call_args_list_str}])"""
-            call_method_body_str += f"""
-        # Add for jit context.
-        if jit_context():
-            return jit_context().run_op(self, res, {call_args_list_str})
-        return res\n"""
+            jit_context_call_method_body_str = """
+        if jit_context().compiled:
+            return jit_context().default_output()"""
+            jit_context_call_method_body_str += node_pass
+            jit_context_call_method_body_str += f"""
+        return jit_context().run_op(self, res, {call_args_list_str})"""
+            call_method_body_str += jit_context_call_method_body_str
         else:
             if node_pass != "":
                 call_method_body_str += """
         if jit_context():"""
+                node_pass = node_pass.replace('jit_context().pass_trace_node',
+                                              '    jit_context().pass_trace_node')
             call_method_body_str += node_pass
             call_method_body_str += f"""
         return super().__call__({call_args_list_str})\n"""

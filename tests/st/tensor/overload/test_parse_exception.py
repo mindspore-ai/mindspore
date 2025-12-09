@@ -103,8 +103,8 @@ def test_multiple_sig_exception():
     assert "Failed calling max with" in str(raise_info.value)
     assert "max(dim=<int>, keepdim=<bool>)" in str(raise_info.value)
     assert "incorrect keyword name: a, b" in str(raise_info.value)
-    assert ("max(axis=<None, Tensor, int, list of int, tuple of int>, keepdims=<bool>, *, "
-            "initial=<None, Number, Tensor>, where=<Tensor, bool>, return_indices=<bool>)") in str(raise_info.value)
+    assert ("max(axis=<None, int, list of int, tuple of int>, keepdims=<bool>, *, "
+            "initial=<None, Number>, where=<Tensor, bool>, return_indices=<bool>)") in str(raise_info.value)
     assert "incorrect keyword name: a, b" in str(raise_info.value)
 
     with pytest.raises(TypeError) as raise_info:

@@ -53,18 +53,6 @@ class OpTemplateParser:
             "parse_args.src_types_[${idx}] = ops::OP_DTYPE::DT_BEGIN;\n"
             "parse_args.dst_types_[${idx}] = ${new_type};\n"
         )
-        # _scalar_tensor_to_xxx doesn't handle scalar input
-        # for scalar case, the original type cast info should be reserved
-        self.arg_handler_scalar_tensor_template = Template(
-            "const auto arg_handler_input_${idx} = parse_args.arg_list_[${idx}];\n"
-            "parse_args.arg_list_[${idx}] = "
-            "pynative::${func_str}(\"${func_name}\", \"${op_arg_name}\", parse_args.arg_list_[${idx}]);\n"
-            "if (arg_handler_input_${idx} != parse_args.arg_list_[${idx}]) {\n"
-            "  trace::PassNodeInArg(arg_handler_input_${idx}, parse_args.arg_list_[${idx}]);\n"
-            "  parse_args.src_types_[${idx}] = ops::OP_DTYPE::DT_BEGIN;\n"
-            "  parse_args.dst_types_[${idx}] = ${new_type};\n"
-            "}\n"
-        )
         self.arg_handler_optional_template = Template(
             'if (!py::isinstance<py::none>(parse_args.arg_list_[${idx}])) {\n'
             '  ${arg_handler_str}\n'
@@ -75,14 +63,11 @@ class OpTemplateParser:
                                      "to_kernel_size": "ops::OP_DTYPE::DT_TUPLE_INT",
                                      "to_strides": "ops::OP_DTYPE::DT_TUPLE_INT",
                                      "str_to_enum": "ops::OP_DTYPE::DT_INT",
-                                     "_normalize_int_sequence": "ops::OP_DTYPE::DT_TUPLE_INT",
-                                     "_scalar_tensor_to_scalar": "ops::OP_DTYPE::DT_NUMBER",
-                                     "_scalar_tensor_to_int": "ops::OP_DTYPE::DT_INT",
-                                     "_scalar_tensor_to_float": "ops::OP_DTYPE::DT_FLOAT",
                                      "to_pair": "ops::OP_DTYPE::DT_TUPLE_INT",
                                      "to_dilations": "ops::OP_DTYPE::DT_TUPLE_INT",
                                      "to_output_padding": "ops::OP_DTYPE::DT_TUPLE_INT",
                                      "to_rates": "ops::OP_DTYPE::DT_TUPLE_INT"}
+        self.black_list_for_arg_handlers = pyboost_utils.get_pyboost_arg_handlers_black_list()
 
     @staticmethod
     def _parse_call_args_types(op_proto, basic_type=False, is_convert=False):
@@ -370,13 +355,44 @@ class OpTemplateParser:
 
         return op_outputs, call_outputs
 
-    def generate_signature_str(self, kw_only_args=None, varargs=None, *, is_tensor_api: bool) -> str:
+    def _generate_signature_arg_dtype_str(self, arg, disable_scalar_tensor):
+        """
+        Generate argument dtype string with arg_handler and disable_scalar_tensor configuration.
+
+        Args:
+            arg (OpArg): The operation argument object.
+            disable_scalar_tensor (list[str]): List of argument names that disable scalar tensor conversion.
+
+        Returns:
+            str: Formatted argument dtype string.
+        """
+        arg_handler = arg.arg_handler
+        if arg_handler and arg_handler not in self.black_list_for_arg_handlers:
+            if arg_handler in K.ARG_HANDLER_MAP:
+                arg_dtype = K.ARG_HANDLER_MAP[arg_handler]
+            else:
+                raise ValueError(
+                    f"Generate failed. Check if {arg_handler} is registered in TensorFuncRegCppGenerator.")
+        else:
+            arg_dtype = arg.arg_dtype
+            for cast_type in arg.type_cast:
+                arg_dtype += f'|{cast_type}'
+
+        # handle disable scalar tensor
+        if disable_scalar_tensor and arg.arg_name in disable_scalar_tensor:
+            arg_dtype += '|!tensor'
+
+        return arg_dtype
+
+    def generate_signature_str(self, kw_only_args=None, varargs=None,
+                               disable_scalar_tensor=None, *, is_tensor_api: bool) -> str:
         """
         Generates a single function signature string for the given operation prototype.
 
         Args:
             kw_only_args (list[str]): List of keyword-only argument names.
             varargs (list[str]): List of variable args names.
+            disable_scalar_tensor (list[str]): List of args names which disable tensor to scalar.
 
         Kwargs:
             is_tensor_api (bool): Whether this function is used in the Tensor API scenario.
@@ -401,21 +417,7 @@ class OpTemplateParser:
             if not first_arg:
                 single_arg = ', '
 
-            arg_handler = arg.arg_handler
-            if arg_handler:
-                if arg_handler in K.ARG_HANDLER_MAP:
-                    arg_dtype = K.ARG_HANDLER_MAP[arg_handler]
-                    if arg_handler[0] == '_': # default arg handlers
-                        for cast_type in arg.type_cast:
-                            arg_dtype += f'|{cast_type}'
-                else:
-                    raise ValueError(
-                        f"Generate failed. Check if {arg_handler} is registered in TensorFuncRegCppGenerator.")
-            else:
-                arg_dtype = arg.arg_dtype
-                for cast_type in arg.type_cast:
-                    arg_dtype += f'|{cast_type}'
-
+            arg_dtype = self._generate_signature_arg_dtype_str(arg, disable_scalar_tensor)
             # handle varargs params
             if varargs and arg_name in varargs and arg_index == 0:
                 single_arg += f"{arg_dtype} *{arg_name}"
@@ -451,23 +453,15 @@ class OpTemplateParser:
         op_args = op_proto.op_args
         for idx, op_arg in enumerate(op_args):
             arg_handler = op_arg.arg_handler
-            func_str = ''.join(word.capitalize()
-                               for word in arg_handler.split('_'))
-            if arg_handler:
+            if arg_handler and arg_handler not in self.black_list_for_arg_handlers:
+                func_str = ''.join(word.capitalize() for word in arg_handler.split('_'))
                 op_arg_name = op_arg.arg_name
                 new_type = self.arg_handler_type_map.get(arg_handler, "Not exist")
-                if func_str.startswith("ScalarTensorTo") or func_str == "NormalizeIntSequence":
-                    arg_handler_str = self.arg_handler_scalar_tensor_template.replace(func_str=func_str,
-                                                                                     func_name=func_name,
-                                                                                     op_arg_name=op_arg_name,
-                                                                                     idx=idx,
-                                                                                     new_type=new_type)
-                else:
-                    arg_handler_str = self.arg_handler_template.replace(func_str=func_str,
-                                                                    func_name=func_name,
-                                                                    op_arg_name=op_arg_name,
-                                                                    idx=idx,
-                                                                    new_type=new_type)
+                arg_handler_str = self.arg_handler_template.replace(func_str=func_str,
+                                                                func_name=func_name,
+                                                                op_arg_name=op_arg_name,
+                                                                idx=idx,
+                                                                new_type=new_type)
 
                 if op_arg.default == "None":
                     arg_handler_str = self.arg_handler_optional_template.replace(idx=idx,

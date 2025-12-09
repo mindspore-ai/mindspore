@@ -5,10 +5,8 @@ select_ext_view:
             dtype: tensor
         dim:
             dtype: int
-            disable_tensor_to_scalar: True
         index:
             dtype: int
-            disable_tensor_to_scalar: True
     returns:
         output:
             dtype: tensor

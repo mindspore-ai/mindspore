@@ -3,7 +3,6 @@ xlogy_scalar_self:
     args:
         input:
             dtype: number
-            disable_tensor_to_scalar: True
         other:
             dtype: tensor
     returns:

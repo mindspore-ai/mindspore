@@ -7,7 +7,6 @@ inplace_masked_fill_scalar:
             dtype: tensor
         value:
             dtype: number
-            disable_tensor_to_scalar: True
     args_signature:
         rw_write: input
     returns:

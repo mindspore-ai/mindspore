@@ -30,7 +30,7 @@ from common.op_proto import OpProto
 from common.base_generator import BaseGenerator
 
 from .op_template_parser import OpTemplateParser
-
+from .pyboost_utils import get_pyboost_arg_handlers_black_list
 
 class PyboostInnerPrimGenerator(BaseGenerator):
     """
@@ -122,7 +122,7 @@ class PyboostInnerPrimGenerator(BaseGenerator):
             arg_name = arg.arg_name
             arg_handler = arg.arg_handler
             processed_arg = arg_name
-            if arg_handler not in ('', 'dtype_to_type_id'):
+            if arg_handler not in ('', 'dtype_to_type_id') and arg_handler not in get_pyboost_arg_handlers_black_list():
                 process_func += \
                     f"""converted_{arg_name} = {arg_handler}('{operator_name}', '{arg_name}', {arg_name})\n"""
                 processed_arg = 'converted_' + arg_name

@@ -286,7 +286,8 @@ class TensorFuncRegCppGenerator(BaseGenerator):
             device_dispatcher_str = self._get_device_dispatchers_str(
                 func_proto)
             signature_str = self._generate_single_signature_str(
-                func_proto.op_proto, func_proto.kw_only_args, func_proto.varargs
+                func_proto.op_proto, func_proto.kw_only_args,
+                func_proto.varargs, func_proto.disable_scalar_tensor
             )
             op_args = func_proto.op_proto.op_args
             max_size = len(op_args)
@@ -377,12 +378,14 @@ class TensorFuncRegCppGenerator(BaseGenerator):
                 sig_str += ',\n'
             first_sig = False
             sig_str += self._generate_single_signature_str(
-                op_proto, tensor_proto.kw_only_args, tensor_proto.varargs)
+                op_proto, tensor_proto.kw_only_args, tensor_proto.varargs, tensor_proto.disable_scalar_tensor)
         return sig_str
 
-    def _generate_single_signature_str(self, op_proto: OpProto, kw_only_args, varargs) -> str:
+    def _generate_single_signature_str(self, op_proto: OpProto, kw_only_args,
+                                       varargs, disable_scalar_tensor) -> str:
         op_parser = OpTemplateParser(op_proto)
-        return op_parser.generate_signature_str(kw_only_args, varargs, is_tensor_api=True)
+        return op_parser.generate_signature_str(kw_only_args, varargs,
+                                                disable_scalar_tensor, is_tensor_api=True)
 
     def _get_input_tensor_index(self, func_proto):
         """

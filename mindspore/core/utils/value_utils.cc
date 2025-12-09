@@ -29,6 +29,7 @@
 #include "abstract/abstract_value.h"
 #include "mindapi/base/macros.h"
 #include "base/bfloat16.h"
+#include "base/float16.h"
 
 namespace mindspore {
 template <typename T>
@@ -385,27 +386,4 @@ TENSOR_ITEM_TEMPLATE(bfloat16);
 TENSOR_ITEM_TEMPLATE(bool);
 TENSOR_ITEM_TEMPLATE(std::complex<float>);
 TENSOR_ITEM_TEMPLATE(std::complex<double>);
-
-std::optional<int64_t> FetchTensorIntValue(const tensor::TensorPtr &tensor) {
-  const auto &tensor_type_id = tensor->data_type();
-  static const std::unordered_map<TypeId, std::function<int64_t(const tensor::TensorPtr &tensor)>> valid_integral{
-    {kNumberTypeUInt8,
-     [](const tensor::TensorPtr &tensor) -> int64_t { return static_cast<int64_t>(TensorItem<uint8_t>(tensor)); }},
-    {kNumberTypeInt8,
-     [](const tensor::TensorPtr &tensor) -> int64_t { return static_cast<int64_t>(TensorItem<int8_t>(tensor)); }},
-    {kNumberTypeInt16,
-     [](const tensor::TensorPtr &tensor) -> int64_t { return static_cast<int64_t>(TensorItem<int16_t>(tensor)); }},
-    {kNumberTypeInt,
-     [](const tensor::TensorPtr &tensor) -> int64_t { return static_cast<int64_t>(TensorItem<int>(tensor)); }},
-    {kNumberTypeInt32,
-     [](const tensor::TensorPtr &tensor) -> int64_t { return static_cast<int64_t>(TensorItem<int32_t>(tensor)); }},
-    {kNumberTypeInt64,
-     [](const tensor::TensorPtr &tensor) -> int64_t { return static_cast<int64_t>(TensorItem<int64_t>(tensor)); }},
-  };
-  auto it = valid_integral.find(tensor_type_id);
-  if (MS_UNLIKELY(it == valid_integral.end())) {
-    return std::nullopt;
-  }
-  return it->second(tensor);
-}
 }  //  namespace mindspore

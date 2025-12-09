@@ -5,7 +5,6 @@ inplace_adds_ext:
       dtype: tensor
     other:
       dtype: number
-      disable_tensor_to_scalar: True
     alpha:
       dtype: number
       default: 1

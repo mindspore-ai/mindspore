@@ -4,6 +4,7 @@ greater_equal:
     Ascend: pyboost
     CPU: py_method
     GPU: py_method
+    disable_scalar_tensor: other
     interface: tensor, function
 
   - op_yaml: greater_equal_op.yaml
