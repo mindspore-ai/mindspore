@@ -641,8 +641,7 @@ class CustomInfoGenerator:
                 aclnn_api_file_path = os.path.join(opp_vendors_path, priority.strip(), "op_api/include/")
                 if self._get_aclnn_api_from_file(aclnn_api_file_path):
                     return
-        aclnn_api_file_path = os.path.join(self.env_ascend_opp_path,
-                                           "built-in/op_impl/ai_core/tbe/op_api/include/aclnnop")
+        aclnn_api_file_path = os.path.join(self.env_ascend_opp_path, "../include/aclnnop")
         if self._get_aclnn_api_from_file(aclnn_api_file_path):
             return
 
