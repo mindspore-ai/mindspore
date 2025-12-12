@@ -26,9 +26,9 @@ namespace mindspore {
 namespace runtime {
 
 namespace {
-void PrintCache(const std::set<TensorInfo> &cache) {
+void PrintCache(const TensorInfoPtrSet &cache) {
   for (const auto &cc : cache) {
-    MS_VLOG(VL_HYPER_OFFLOAD_DEBUG) << cc.kernel_tensor << " " << cc.status << " " << cc.next_use_idx;
+    MS_VLOG(VL_HYPER_OFFLOAD_DEBUG) << cc->kernel_tensor << " " << cc->status << " " << cc->next_use_idx;
   }
 }
 }  // namespace
@@ -51,19 +51,20 @@ size_t MemCountedCache::GetActualHorizon(size_t cur_idx) {
   return next_conditionswitch_idx_ - cur_idx;
 }
 
-TensorInfoList MemCountedCache::GetCanOffloadTensorInfo(size_t first_offload_idx) {
-  TensorInfoList ret;
+TensorInfoPtrList MemCountedCache::GetCanOffloadTensorInfo(size_t first_offload_idx) {
+  TensorInfoPtrList ret;
   for (auto it = device_cache_.rbegin(); it != device_cache_.rend(); ++it) {
-    if (it->next_use_idx < first_offload_idx) {
+    const auto &ptr = *it;
+    if (ptr->next_use_idx < first_offload_idx) {
       break;
     }
-    if (it->status != TensorStatus::kReady) {
+    if (ptr->status != TensorStatus::kReady) {
       continue;
     }
-    if (std::find(cur_inputs_.begin(), cur_inputs_.end(), it->kernel_tensor) != cur_inputs_.end()) {
+    if (std::find(cur_inputs_.begin(), cur_inputs_.end(), ptr->kernel_tensor) != cur_inputs_.end()) {
       continue;
     }
-    ret.emplace_back(*it);
+    ret.emplace_back(ptr);
   }
   return ret;
 }
@@ -80,56 +81,32 @@ KernelTensorPtrPairList MemCountedCache::Offload(size_t first_offloadable_idx, s
   auto record_wait_before_action =
     std::make_shared<RemoteAction>(HyperOffloadEventType::kRecordWaitPairEvent, nullptr, stream_id, to_host_stream_);
   (void)mem_action_mgr_->CreateRemoteEvents(RemoteActionPtrList{record_wait_before_action}, device_context);
-  std::vector<KernelTensorPtr> to_erase;
-  for (auto it = can_offload_tensors.begin(); it != can_offload_tensors.end(); ++it) {
-    auto action =
-      std::make_shared<RemoteAction>(HyperOffloadEventType::kDeviceToHost, it->kernel_tensor, to_host_stream_);
+  for (auto it : can_offload_tensors) {
+    auto action = std::make_shared<RemoteAction>(HyperOffloadEventType::kDeviceToHost, it->kernel_tensor, to_host_stream_);
     auto offload_pairs = mem_action_mgr_->CreateRemoteEvents(RemoteActionPtrList{action}, device_context);
-    if (offload_pairs.empty()) {
+    if (offload_pairs.size() != 1) {
       continue;
     }
-    if (offload_pairs.begin()->first == nullptr || offload_pairs.begin()->second == nullptr) {
+    const auto &copy_kernel_tensor_pair = offload_pairs.front();
+    if (copy_kernel_tensor_pair.first == nullptr || copy_kernel_tensor_pair.second == nullptr) {
       continue;
     }
-    for (auto &pair : offload_pairs) {
-      auto record_after_action = std::make_shared<RemoteAction>(HyperOffloadEventType::kRecordWithMemoryEvent,
-                                                                pair.first, to_host_stream_, stream_id);
-      auto wait_after_action = std::make_shared<RemoteAction>(HyperOffloadEventType::kWaitWithMemoryEvent, pair.first,
-                                                              to_host_stream_, stream_id);
-      (void)mem_action_mgr_->CreateRemoteEvents(RemoteActionPtrList{record_after_action, wait_after_action},
-                                                device_context);
-      ret.emplace_back(pair);
-      TensorInfo new_info(pair.second, it->next_use_idx, false, TensorStatus::kReady);
-      host_cache_.insert(new_info);
-      to_erase.emplace_back(pair.first);
-    }
-    has_free_size += it->kernel_tensor->GetSize();
+    auto record_after_action = std::make_shared<RemoteAction>(
+      HyperOffloadEventType::kRecordWithMemoryEvent, copy_kernel_tensor_pair.first, to_host_stream_, stream_id);
+    auto wait_after_action = std::make_shared<RemoteAction>(HyperOffloadEventType::kWaitWithMemoryEvent,
+                                                            copy_kernel_tensor_pair.first, to_host_stream_, stream_id);
+    (void)mem_action_mgr_->CreateRemoteEvents(RemoteActionPtrList{record_after_action, wait_after_action},
+                                              device_context);
+    ret.emplace_back(copy_kernel_tensor_pair);
+    auto new_info = std::make_shared<TensorInfo>(copy_kernel_tensor_pair.second, it->next_use_idx, false,
+                                                 TensorStatus::kReady, copy_kernel_tensor_pair.first);
+    host_cache_.insert(new_info);
+    UpdateTensorStatus(copy_kernel_tensor_pair.first, HyperOffloadEventType::kDeviceToHost);
+    has_free_size += it->kernel_tensor->size();
     if (has_free_size >= need_size) {
       break;
     }
   }
-  for (auto &erase_tensor : to_erase) {
-    UpdateTensorStatus(erase_tensor, HyperOffloadEventType::kDeviceToHost);
-  }
-
-  return ret;
-}
-
-std::pair<size_t, size_t> MemCountedCache::GetAvailableMemSize() {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  device::DeviceContextKey device_key = {device::DeviceType::kAscend, device_id};
-  device::DeviceContext *device_context =
-    device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(device_key);
-  size_t total_used_mem = device_context->device_res_manager_->GetTotalMemStatistics();
-  size_t idle_mem = device_context->device_res_manager_->GetTotalIdleMemStatistics();
-  if (total_used_mem > max_mem_) {
-    MS_EXCEPTION(RuntimeError) << "Device memory not enough.";
-  }
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "***************used_mem***************: " << total_used_mem;
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "***************available mem***************: " << max_mem_ - total_used_mem;
-  std::pair<size_t, size_t> ret{max_mem_ - total_used_mem, max_mem_ - total_used_mem + idle_mem};
   return ret;
 }
 
@@ -200,30 +177,33 @@ void MemCountedCache::CheckInputsAvailable(size_t idx,
     cur_inputs_.emplace_back(kernel_tensor_info.first);
     KernelTensorPtr kernel_tensor = kernel_tensor_info.first;
     size_t next_use_idx = kernel_tensor_info.second;
-    auto it = std::find_if(device_cache_.begin(), device_cache_.end(), [&kernel_tensor](const TensorInfo &info) {
-      return info.kernel_tensor.get() == kernel_tensor.get();
+    auto it = std::find_if(device_cache_.begin(), device_cache_.end(), [&kernel_tensor](const TensorInfoPtr &info) {
+      return info->kernel_tensor.get() == kernel_tensor.get();
     });
-    auto it_host = std::find_if(host_cache_.begin(), host_cache_.end(), [&kernel_tensor](const TensorInfo &info) {
-      return info.kernel_tensor.get() == kernel_tensor.get();
+    auto it_host = std::find_if(host_cache_.begin(), host_cache_.end(), [&kernel_tensor](const TensorInfoPtr &info) {
+      return info->kernel_tensor.get() == kernel_tensor.get();
     });
     if (it != device_cache_.end()) {
-      if (it->status == TensorStatus::kReady) {
-        TensorInfo new_tensor_info(kernel_tensor, next_use_idx, false, TensorStatus::kReady);
+      auto ptr = *it;
+      if (ptr->status == TensorStatus::kReady) {
+        TensorInfoPtr new_tensor_info =
+          std::make_shared<TensorInfo>(kernel_tensor, next_use_idx, false, TensorStatus::kReady);
         if (next_use_idx == SIZE_MAX) {
-          new_tensor_info.next_use_idx = idx;
-          new_tensor_info.need_free = true;
+          new_tensor_info->next_use_idx = idx;
+          new_tensor_info->need_free = true;
         }
         device_cache_.erase(it);
         device_cache_.insert(new_tensor_info);
-      } else if (it->status == TensorStatus::kCopyingToDevice) {
-        MS_EXCEPTION_IF_NULL(it->old_kernel_tensor);
-        auto action = std::make_shared<RemoteAction>(HyperOffloadEventType::kWaitWithMemoryEvent, it->old_kernel_tensor,
+      } else if (ptr->status == TensorStatus::kCopyingToDevice) {
+        MS_EXCEPTION_IF_NULL(ptr->old_kernel_tensor);
+        auto action = std::make_shared<RemoteAction>(HyperOffloadEventType::kWaitWithMemoryEvent, ptr->old_kernel_tensor,
                                                      to_device_stream_, kernel_tensor->stream_id());
         (void)mem_action_mgr_->CreateRemoteEvents(RemoteActionPtrList{action}, device_context);
-        TensorInfo new_tensor_info(kernel_tensor, next_use_idx, false, TensorStatus::kReady);
+        TensorInfoPtr new_tensor_info =
+          std::make_shared<TensorInfo>(kernel_tensor, next_use_idx, false, TensorStatus::kReady);
         if (next_use_idx == SIZE_MAX) {
-          new_tensor_info.next_use_idx = idx;
-          new_tensor_info.need_free = true;
+          new_tensor_info->next_use_idx = idx;
+          new_tensor_info->need_free = true;
         }
         device_cache_.erase(it);
         device_cache_.insert(new_tensor_info);
@@ -232,10 +212,10 @@ void MemCountedCache::CheckInputsAvailable(size_t idx,
       MS_EXCEPTION(RuntimeError) << "CopyToDevice Error: can't find kernel tensor in device_cache, memory not enough.";
     } else {
       // Insert target kernel tensor to device cache
-      TensorInfo new_info(kernel_tensor, next_use_idx, false, TensorStatus::kReady);
+      TensorInfoPtr new_info = std::make_shared<TensorInfo>(kernel_tensor, next_use_idx, false, TensorStatus::kReady);
       if (next_use_idx == SIZE_MAX) {
-        new_info.next_use_idx = idx;
-        new_info.need_free = true;
+        new_info->next_use_idx = idx;
+        new_info->need_free = true;
       }
       device_cache_.insert(new_info);
     }
@@ -267,7 +247,6 @@ KernelTensorPtrPairList MemCountedCache::CheckOutputsEnough(
   if (device_available_size >= total_output_size || idle_size >= total_output_size) {
     return ret;
   }
-
   ret = Offload(idx + 1, total_output_size, stream_id, device_context);
 
   MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "***************CheckOutputsEnough end***************";
@@ -276,11 +255,12 @@ KernelTensorPtrPairList MemCountedCache::CheckOutputsEnough(
 
 void MemCountedCache::CleanExpiredDeviceTensors(size_t current_idx) {
   for (auto it = device_cache_.begin(); it != device_cache_.end();) {
-    if (it->next_use_idx > current_idx) {
+    auto ptr = *it;
+    if (ptr->next_use_idx > current_idx) {
       break;
     }
-    if ((it->next_use_idx == current_idx && it->need_free) || it->next_use_idx < current_idx) {
-      MS_VLOG(VL_HYPER_OFFLOAD_DEBUG) << "Clean expired data: " << it->kernel_tensor;
+    if ((ptr->next_use_idx == current_idx && ptr->need_free) || ptr->next_use_idx < current_idx) {
+      MS_VLOG(VL_HYPER_OFFLOAD_DEBUG) << "Clean expired data: " << ptr->kernel_tensor;
       it = device_cache_.erase(it);
     } else {
       ++it;
@@ -291,10 +271,11 @@ void MemCountedCache::CleanExpiredDeviceTensors(size_t current_idx) {
 void MemCountedCache::InsertNewTensorsToDevice(
   size_t idx, const std::vector<std::pair<KernelTensorPtr, size_t>> &kernel_tensors_info) {
   for (auto &kernel_tensor_info : kernel_tensors_info) {
-    TensorInfo info(kernel_tensor_info.first, kernel_tensor_info.second, false, TensorStatus::kReady);
+    TensorInfoPtr info =
+      std::make_shared<TensorInfo>(kernel_tensor_info.first, kernel_tensor_info.second, false, TensorStatus::kReady);
     if (kernel_tensor_info.second == SIZE_MAX) {
-      info.next_use_idx = idx;
-      info.need_free = true;
+      info->next_use_idx = idx;
+      info->need_free = true;
     }
     device_cache_.insert(info);
   }
@@ -306,17 +287,17 @@ KernelTensorPtrPairList MemCountedCache::LoadAllWithinHorizon(size_t current_idx
   RemoteActionPtrList host_to_device_actions;
   std::unordered_map<KernelTensorPtr, size_t> tensor_to_idx;
   for (auto it = host_cache_.begin(); it != host_cache_.end(); ++it) {
-    if (it->next_use_idx > current_idx + horizon) {
+    auto ptr = *it;
+    if (ptr->next_use_idx > current_idx + horizon) {
       break;
     }
-    // Todo when idx == cur_idx  + 1 and tensor status not ready, insert wait event?
-    if (it->status != TensorStatus::kReady) {
+    if (ptr->status != TensorStatus::kReady) {
       continue;
     }
     auto action =
-      std::make_shared<RemoteAction>(HyperOffloadEventType::kHostToDevice, it->kernel_tensor, to_device_stream_);
+      std::make_shared<RemoteAction>(HyperOffloadEventType::kHostToDevice, ptr->kernel_tensor, to_device_stream_);
     host_to_device_actions.emplace_back(action);
-    tensor_to_idx.emplace(it->kernel_tensor, it->next_use_idx);
+    tensor_to_idx.emplace(ptr->kernel_tensor, ptr->next_use_idx);
   }
   KernelTensorPtrPairList kernel_tensor_pair_list;
   if (!host_to_device_actions.empty()) {
@@ -333,8 +314,9 @@ KernelTensorPtrPairList MemCountedCache::LoadAllWithinHorizon(size_t current_idx
       auto record_action = std::make_shared<RemoteAction>(HyperOffloadEventType::kRecordWithMemoryEvent,
                                                           kernel_tensor_pair.first, to_device_stream_, stream_id);
       record_action_list.emplace_back(record_action);
-      TensorInfo new_tensor_info(kernel_tensor_pair.second, tensor_to_idx[kernel_tensor_pair.first], false,
-                                 TensorStatus::kCopyingToDevice, kernel_tensor_pair.first);
+      TensorInfoPtr new_tensor_info =
+        std::make_shared<TensorInfo>(kernel_tensor_pair.second, tensor_to_idx[kernel_tensor_pair.first], false,
+                                     TensorStatus::kCopyingToDevice, kernel_tensor_pair.first);
       device_cache_.insert(new_tensor_info);
     }
     (void)mem_action_mgr_->CreateRemoteEvents(record_action_list, device_context);
@@ -367,7 +349,7 @@ KernelTensorPtrPairList MemCountedCache::ProcessOutput(
   MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Cur idx: " << idx << " , horizon: " << horizon;
 
   size_t total_load_size = 0;
-  for (auto it = host_cache_.begin(); it != host_cache_.end(); ++it) {
+  for (auto it : host_cache_) {
     if (it->next_use_idx > idx + horizon) {
       break;
     }
@@ -380,11 +362,12 @@ KernelTensorPtrPairList MemCountedCache::ProcessOutput(
 
   size_t device_available_size = GetDeviceAvailableMemSize();
   size_t idle_size = GetIdleMemSize();
-  if (device_available_size >= total_load_size + buffer_size_ || idle_size >= total_load_size + buffer_size_) {
+  total_load_size += buffer_size_;
+  if (device_available_size >= total_load_size || idle_size >= total_load_size) {
     return LoadAllWithinHorizon(idx, horizon, stream_id, device_context);
   }
 
-  KernelTensorPtrPairList ret = Offload(idx + horizon + 1, total_load_size + buffer_size_, stream_id, device_context);
+  KernelTensorPtrPairList ret = Offload(idx + horizon + 1, total_load_size, stream_id, device_context);
   auto load_pairs = LoadAllWithinHorizon(idx, horizon, stream_id, device_context);
   ret.insert(ret.end(), load_pairs.begin(), load_pairs.end());
   return ret;
@@ -392,8 +375,8 @@ KernelTensorPtrPairList MemCountedCache::ProcessOutput(
 
 void MemCountedCache::UpdateTensorStatus(const KernelTensorPtr &kernel_tensor, HyperOffloadEventType event_type) {
   if (event_type == HyperOffloadEventType::kDeviceToHost) {
-    auto it = std::find_if(device_cache_.begin(), device_cache_.end(), [&kernel_tensor](const TensorInfo &info) {
-      return info.kernel_tensor.get() == kernel_tensor.get();
+    auto it = std::find_if(device_cache_.begin(), device_cache_.end(), [&kernel_tensor](const TensorInfoPtr &info) {
+      return info->kernel_tensor.get() == kernel_tensor.get();
     });
     if (it != device_cache_.end()) {
       device_cache_.erase(it);
@@ -401,8 +384,8 @@ void MemCountedCache::UpdateTensorStatus(const KernelTensorPtr &kernel_tensor, H
   }
 
   if (event_type == HyperOffloadEventType::kHostToDevice) {
-    auto it = std::find_if(host_cache_.begin(), host_cache_.end(), [&kernel_tensor](const TensorInfo &info) {
-      return info.kernel_tensor.get() == kernel_tensor.get();
+    auto it = std::find_if(host_cache_.begin(), host_cache_.end(), [&kernel_tensor](const TensorInfoPtr &info) {
+      return info->kernel_tensor.get() == kernel_tensor.get();
     });
     if (it != host_cache_.end()) {
       host_cache_.erase(it);
