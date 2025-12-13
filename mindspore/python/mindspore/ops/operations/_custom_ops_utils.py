@@ -605,18 +605,32 @@ class CustomInfoGenerator:
         with open(file_path, 'r') as file:
             content = file.read()
 
-            start_marker = "aclnnStatus " + self.prefix_op_name + "GetWorkspaceSize("
+            func_marker = self.prefix_op_name + "GetWorkspaceSize("
             end_marker = ");"
 
-            start_pos = content.find(start_marker)
-            if start_pos == -1:
-                raise ValueError(f"Can not find function [{start_marker}] in file [{file_path}]")
+            start_pos = 0
+            func_pos = -1
+            while True:
+                func_pos = content.find(func_marker, start_pos)
+                if func_pos == -1:
+                    break
 
-            end_pos = content.find(end_marker, start_pos)
+                if re.search(r'(\s+|\n|^)\baclnnStatus\b\s*$', content[:func_pos]):
+                    break
+
+                start_pos = func_pos + 1
+
+            if func_pos == -1:
+                raise ValueError(
+                    f"Can not find 'aclnnStatus' followed by function "
+                    f"[{func_marker}] in file [{file_path}]"
+                )
+
+            end_pos = content.find(end_marker, func_pos)
             if end_pos == -1:
                 raise ValueError(f"Can not find function [{start_marker}] in file [{file_path}]")
 
-            self.aclnn_api = content[start_pos:end_pos + len(end_marker)]
+            self.aclnn_api = content[func_pos:end_pos + len(end_marker)]
             return True
 
     def _get_aclnn_api_params(self):
