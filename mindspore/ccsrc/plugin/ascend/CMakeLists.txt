@@ -76,5 +76,5 @@ find_library(SLICE slice ${ASCEND_CANN_RUNTIME_PATH})
 find_library(AOE_EXECUTOR aoe_executor ${ASCEND_CANN_RUNTIME_PATH})
 
 target_link_libraries(mindspore_ascend PRIVATE ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
-        -Wl,--no-as-needed ${PLATFORM} ${ACL} ${PROFILING} ${CANN_KB} ${COMPRESS} ${OPSKERNEL} 
+        -Wl,--no-as-needed ${PLATFORM} ${ACL} ${PROFILING} ${CANN_KB} ${COMPRESS} ${OPSKERNEL}
         ${HOST_CPU_ENGINE} ${SLICE} ${AOE_EXECUTOR} ${ACL_DVPP_OP} ${ACL_DVPP_MPI})

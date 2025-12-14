@@ -166,10 +166,20 @@ def do_test_generate_eod_mask_v2(mode):
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_generate_eod_mask_v2_ge():
+    """
+    Feature: test op GenerateEodMoaskV2 ge
+    Description: test op GenerateEodMoaskV2 ge
+    Expectation: expect results
+    """
     do_test_generate_eod_mask_v2("GE")
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", ["KBK", "PYBOOST"])
 def test_generate_eod_mask_v2(mode):
+    """
+    Feature: test op GenerateEodMoaskV2
+    Description: test op GenerateEodMoaskV2
+    Expectation: expect results
+    """
     do_test_generate_eod_mask_v2(mode)
