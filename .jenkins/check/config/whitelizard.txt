@@ -200,6 +200,7 @@ mindspore/mindspore/ops/kernel/cpu/native/crop_and_resize_cpu_kernel.cc:mindspor
 mindspore/mindspore/ops/kernel/cpu/native/cast_cpu_kernel.cc:mindspore::kernel::Cast
 mindspore/mindspore/ccsrc/frontend/ir/tensor_py.cc:mindspore::tensor::GetPyTypeFormat
 mindspore/mindspore/ops/kernel/cpu/native/sparse_add_cpu_kernel.cc:mindspore::kernel::sparse_add_cpu::SparseAddCpuKernelMod::LaunchKernel
+mindspore/mindspore/ccsrc/frontend/ir/tensor_py.cc:mindspore::tensor::GetBaseDataType
 mindspore/mindspore/core/ir/dtype/type.cc:mindspore::NormalizeTypeId
 mindspore/mindspore/ops/infer/sparse_to_dense_v2.cc:mindspore::ops::SparseToDenseV2InferShape
 mindspore/mindspore/ops/infer/ops_func_impl/div.cc:mindspore::ops::DivFrontendFuncImpl::InferValue
