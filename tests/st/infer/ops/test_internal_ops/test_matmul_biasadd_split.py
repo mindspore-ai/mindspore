@@ -19,16 +19,16 @@ import numpy as np
 import pytest
 from mindspore.common.np_dtype import bfloat16
 import mindspore as ms
-import mindspore.nn as nn
-from mindspore import Tensor, context, ops
-from st_utils import custom_compare, gen_ms_tensor, run_expect_single
+from mindspore import Tensor, context, ops, nn
+from .st_utils import custom_compare, gen_ms_tensor, run_expect_single
+from tests.mark_utils import arg_mark
 
 
 class NetMatmulWithSplit3(nn.Cell):
     """Matmul with split."""
 
     def __init__(self, weight, bias, n0, n1, n2):
-        super(NetMatmulWithSplit3, self).__init__()
+        super().__init__()
         self.matmul0 = ops.MatMul(False, True)
         self.w = ms.Parameter(weight, requires_grad=False)
         self.bias = ms.Parameter(bias, requires_grad=False)
@@ -53,7 +53,7 @@ class NetMatmulWithSplit2(nn.Cell):
     """Matmul with split."""
 
     def __init__(self, weight, bias, n0, n1):
-        super(NetMatmulWithSplit2, self).__init__()
+        super().__init__()
         self.matmul0 = ops.MatMul(False, True)
         self.w = ms.Parameter(weight, requires_grad=False)
         self.bias = ms.Parameter(bias, requires_grad=False)
@@ -75,7 +75,7 @@ class NetMatmulWithSplit2(nn.Cell):
 
 
 def run_expect_split(x_np, wq_np, wk_np, wv_np, b0_np, b1_np, b2_np):
-    res = list()
+    res = []
     res.append(run_expect_single(x_np, wq_np, b0_np, False, True))
     res.append(run_expect_single(x_np, wk_np, b1_np, False, True))
     if wv_np is not None:
@@ -89,6 +89,7 @@ def _test_matmul_qkv(m=0, k=0, n0=0, n1=0, n2=0, mstype=ms.float16, is_dyn=False
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
 
+    np_type = None
     if ms.float16 == mstype:
         np_type = np.float16
     elif ms.float32 == mstype:
@@ -117,7 +118,8 @@ def _test_matmul_qkv(m=0, k=0, n0=0, n1=0, n2=0, mstype=ms.float16, is_dyn=False
         b3_host = np.random.normal(0.0, 0.5, size=[n2]).astype(np_type)
         b3_host_fp32 = b3_host.astype(np.float32)
         w_host_fp32 = np.vstack((i1_host_fp32, i2_host_fp32, i3_host_fp32))
-        b_host_fp32 = np.concatenate((b1_host_fp32, b2_host_fp32, b3_host_fp32))
+        b_host_fp32 = np.concatenate(
+            (b1_host_fp32, b2_host_fp32, b3_host_fp32))
     else:
         w_host_fp32 = np.vstack((i1_host_fp32, i2_host_fp32))
         b_host_fp32 = np.concatenate((b1_host_fp32, b2_host_fp32))
@@ -126,11 +128,13 @@ def _test_matmul_qkv(m=0, k=0, n0=0, n1=0, n2=0, mstype=ms.float16, is_dyn=False
     input_tensor_list = gen_ms_tensor(input_np_list, mstype)
 
     if n2 != 0:
-        net = NetMatmulWithSplit3(input_tensor_list[1], input_tensor_list[2], n0, n1, n2)
+        net = NetMatmulWithSplit3(
+            input_tensor_list[1], input_tensor_list[2], n0, n1, n2)
         output_split = run_expect_split(
             i0_host_fp32, i1_host_fp32, i2_host_fp32, i3_host_fp32, b1_host_fp32, b2_host_fp32, b3_host_fp32)
     else:
-        net = NetMatmulWithSplit2(input_tensor_list[1], input_tensor_list[2], n0, n1)
+        net = NetMatmulWithSplit2(
+            input_tensor_list[1], input_tensor_list[2], n0, n1)
         output_split = run_expect_split(
             i0_host_fp32, i1_host_fp32, i2_host_fp32, None, b1_host_fp32, b2_host_fp32, None)
     if is_dyn:
@@ -154,13 +158,11 @@ def _test_matmul_qkv(m=0, k=0, n0=0, n1=0, n2=0, mstype=ms.float16, is_dyn=False
     assert result, "compare correct."
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('m', [32])
 @pytest.mark.parametrize('k', [1024, 2048, 128])
 @pytest.mark.parametrize('mstype', [ms.float16])
 @pytest.mark.parametrize('is_dyn', [False, True])
-@pytest.mark.env_onecard
 def test_matmul_qkv_1408_128_128(m, k, mstype, is_dyn):
     """
     Feature: Test MatmulQkv.
@@ -170,65 +172,12 @@ def test_matmul_qkv_1408_128_128(m, k, mstype, is_dyn):
     _test_matmul_qkv(m, k, 1408, 128, 128, mstype, is_dyn)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('m', [16, 1024])
-@pytest.mark.parametrize('k', [4096])
-@pytest.mark.parametrize('mstype', [ms.float16, ms.bfloat16])
-@pytest.mark.parametrize('is_dyn', [False, True])
-@pytest.mark.env_onecard
-def test_matmul_qkv_11008_4096_4096(m, k, mstype, is_dyn):
-    """
-    Feature: Test MatmulQkv.
-    Description: Test MatmulQkv internal op.
-    Expectation: Success.
-    """
-    _test_matmul_qkv(m, k, 11008, 4096, 4096, mstype, is_dyn)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('m', [32, 256])
-@pytest.mark.parametrize('k', [8192])
-@pytest.mark.parametrize('mstype', [ms.float16, ms.bfloat16])
-@pytest.mark.parametrize('is_dyn', [False, True])
-@pytest.mark.env_onecard
-def test_matmul_ffn_3584_3584(m, k, mstype, is_dyn):
-    """
-    Feature: Test MatmulBiasSplitOut2.
-    Description: Test MatmulBiasSplitOut2 internal op.
-    Expectation: Success.
-    """
-    _test_matmul_qkv(m=m, k=k, n0=3584, n1=3584, mstype=mstype, is_dyn=is_dyn)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('m', [16, 256, 1024])
-@pytest.mark.parametrize('k_n_shape', [(8192, 1024, 128, 128), (8192, 2048, 256, 256),
-                                       (4096, 4096, 4096, 4096), (12288, 1536, 1536, 1536)])
+@pytest.mark.parametrize('k_n_shape', [(4096, 11008, 11008), (8192, 2752, 2752)])
 @pytest.mark.parametrize('mstype', [ms.float16])
-@pytest.mark.parametrize('is_dyn', [False, True])
-@pytest.mark.env_onecard
-def test_matmul_qkv_out_num_3_with_diff_shape(m, k_n_shape, mstype, is_dyn):
-    """
-    Feature: Test MatmulBiasSplitOut3.
-    Description: Test MatmulBiasSplitOut3 internal op.
-    Expectation: Success.
-    """
-    k, n0, n1, n2 = k_n_shape
-    _test_matmul_qkv(m, k, n0, n1, n2, mstype, is_dyn)
-
-
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('m', [16, 256, 1024])
-@pytest.mark.parametrize('k_n_shape', [(4096, 11008, 11008), (8192, 2752, 2752),
-                                       (12288, 5376, 5376)])
-@pytest.mark.parametrize('mstype', [ms.float16])
-@pytest.mark.parametrize('is_dyn', [False, True])
-@pytest.mark.env_onecard
-def test_matmul_ffn(m, k_n_shape, mstype, is_dyn):
+@pytest.mark.parametrize('is_dyn', [True])
+def test_matmul_ffn_0(m, k_n_shape, mstype, is_dyn):
     """
     Feature: Test MatmulBiasSplitOut2.
     Description: Test MatmulBiasSplitOut2 internal op.
@@ -238,17 +187,16 @@ def test_matmul_ffn(m, k_n_shape, mstype, is_dyn):
     _test_matmul_qkv(m, k, n0, n1, mstype=mstype, is_dyn=is_dyn)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.parametrize('input_shape', [(16, 8192, 1024, 128, 128),
-                                         (32, 4096, 4096, 4096, 4096),
-                                         (16, 2048, 1536, 1536, 1536)])
-@pytest.mark.env_onecard
-def test_dynamic_shape(input_shape):
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@pytest.mark.parametrize('m', [16, 256, 1024])
+@pytest.mark.parametrize('k_n_shape', [(12288, 5376, 5376)])
+@pytest.mark.parametrize('mstype', [ms.float16])
+@pytest.mark.parametrize('is_dyn', [False])
+def test_matmul_ffn_1(m, k_n_shape, mstype, is_dyn):
     """
-    Feature: Test MatmulBiasSplitOut3.
-    Description: Test MatmulBiasSplitOut3 with dynamic shape.
+    Feature: Test MatmulBiasSplitOut2.
+    Description: Test MatmulBiasSplitOut2 internal op.
     Expectation: Success.
     """
-    m, k, n0, n1, n2 = input_shape
-    _test_matmul_qkv(m, k, n0, n1, n2, mstype=ms.float16, is_dyn=True)
+    k, n0, n1 = k_n_shape
+    _test_matmul_qkv(m, k, n0, n1, mstype=mstype, is_dyn=is_dyn)

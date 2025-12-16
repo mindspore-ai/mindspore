@@ -19,8 +19,7 @@ import os
 from enum import Enum
 import numpy as np
 import pytest
-import mindspore.nn as nn
-from mindspore import Tensor, context, Parameter, ops
+from mindspore import Tensor, context, Parameter, ops, nn
 from mindspore.common.np_dtype import bfloat16
 
 from tests.mark_utils import arg_mark
@@ -31,6 +30,7 @@ b = 26
 s = 32
 h = 40
 d = 128
+
 
 class CacheConfig(Enum):
     KEY_VALUE_CACHE = 0
@@ -48,7 +48,8 @@ class ReshapeAndCacheNet(nn.Cell):
         self.reshape_and_cache = ops.ReshapeAndCache()
 
     def construct(self, key, value, key_cache, value_cache, slot_map):
-        out = self.reshape_and_cache(key, value, key_cache, value_cache, slot_map)
+        out = self.reshape_and_cache(
+            key, value, key_cache, value_cache, slot_map)
         return out
 
 
@@ -62,8 +63,10 @@ class ReshapeAndCacheAll(nn.Cell):
         self.reshape_and_cache = ops.ReshapeAndCache()
 
     def construct(self, key, value=None, key_cache=None, value_cache=None, slot_map=None):
-        out = self.reshape_and_cache(key, value, key_cache, value_cache, slot_map)
+        out = self.reshape_and_cache(
+            key, value, key_cache, value_cache, slot_map)
         return out
+
 
 def np_inference(key, value, key_cache, value_cache, slot_map):
     """
@@ -109,7 +112,8 @@ def create_np_inputs(dtype=np.float16, kv_dim=3):
         update_shape = (b, s, h * d)
         num_tokens = update_shape[0] * update_shape[1]
     else:
-        raise Exception("Key's dim should be 2 or 3, but got {0}".format(kv_dim))
+        raise Exception(
+            "Key's dim should be 2 or 3, but got {0}".format(kv_dim))
     update_shape = (b, s, h * d)
     key_update = np.random.rand(*update_shape).astype(dtype)
     value_update = np.random.rand(*update_shape).astype(dtype)
@@ -122,7 +126,7 @@ def create_np_inputs(dtype=np.float16, kv_dim=3):
     return key_update, value_update, key_cache, value_cache, slot_map
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('np_dtype', [np.float16, bfloat16, np.int8])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_reshape_and_cache_net(np_dtype, mode):
@@ -138,20 +142,26 @@ def test_reshape_and_cache_net(np_dtype, mode):
 
     net = ReshapeAndCacheNet()
 
-    np_k, np_v, np_k_cache, np_v_cache, np_slot_map = create_np_inputs(np_dtype)
-    np_k_cache_out, np_v_cache_out = np_inference(np_k, np_v, np_k_cache, np_v_cache, np_slot_map)
+    np_k, np_v, np_k_cache, np_v_cache, np_slot_map = create_np_inputs(
+        np_dtype)
+    np_k_cache_out, np_v_cache_out = np_inference(
+        np_k, np_v, np_k_cache, np_v_cache, np_slot_map)
 
-    ms_k, ms_v, ms_k_cache, ms_v_cache, ms_slot_map = create_ms_inputs(np_k, np_v, np_k_cache, np_v_cache, np_slot_map)
+    ms_k, ms_v, ms_k_cache, ms_v_cache, ms_slot_map = create_ms_inputs(
+        np_k, np_v, np_k_cache, np_v_cache, np_slot_map)
     _ = net(ms_k, ms_v, ms_k_cache, ms_v_cache, ms_slot_map)
 
     if np_dtype == bfloat16:
-        assert np.allclose(ms_k_cache.float().asnumpy(), np_k_cache_out.astype(np.float32), 0.001, 0.001)
-        assert np.allclose(ms_v_cache.float().asnumpy(), np_v_cache_out.astype(np.float32), 0.001, 0.001)
+        assert np.allclose(ms_k_cache.float().asnumpy(),
+                           np_k_cache_out.astype(np.float32), 0.001, 0.001)
+        assert np.allclose(ms_v_cache.float().asnumpy(),
+                           np_v_cache_out.astype(np.float32), 0.001, 0.001)
     else:
         assert np.allclose(ms_k_cache.asnumpy(), np_k_cache_out, 0.001, 0.001)
         assert np.allclose(ms_v_cache.asnumpy(), np_v_cache_out, 0.001, 0.001)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('np_dtype', [np.float16, np.int8, bfloat16])
 @pytest.mark.parametrize('kv_dim', [2, 3])
 def test_reshape_and_cache_key(np_dtype, kv_dim):

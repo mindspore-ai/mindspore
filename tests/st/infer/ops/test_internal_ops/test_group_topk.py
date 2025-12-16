@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Tests for group topk operator.
+"""
 import numpy as np
 import pytest
 
-import mindspore.ops as ops
-import mindspore.nn as nn
+from mindspore import ops, nn
 import mindspore as ms
 from mindspore.common.np_dtype import bfloat16
 from tests.mark_utils import arg_mark
@@ -29,16 +31,15 @@ def get_ms_dtype(np_dtype):
         ms_dtype = ms.float16
     elif np_dtype == bfloat16:
         ms_dtype = ms.bfloat16
+    else:
+        ms_dtype = ms.float32  # default
     return ms_dtype
 
 
 ms.set_context(device_target="Ascend",
                mode=ms.GRAPH_MODE,
                jit_config={"jit_level": "O0", "infer_boost": "on"},
-               pynative_synchronize=True,
-               #    save_graphs=True,
-               #    save_graphs_path="./group_topk_graph",
-               )
+               pynative_synchronize=True)
 
 np.random.seed(42)
 
@@ -122,7 +123,7 @@ def run(input_param, token_dtype, is_dynamic=False):
             ms_out.astype(ms.float32).asnumpy(), golden_out.astype(np.float32), rtol=1e-2, atol=1e-2)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('token_dtype', [np.float16, bfloat16])
 @pytest.mark.parametrize('input_param', [[64, 1024, 8, 3, 2], [359, 256, 8, 4, 2]])
 @pytest.mark.parametrize('is_dynamic', [False, True])

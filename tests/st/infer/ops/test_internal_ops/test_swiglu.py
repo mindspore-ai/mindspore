@@ -17,16 +17,16 @@ import os
 import numpy as np
 import pytest
 import mindspore as ms
-import mindspore.nn as nn
 from mindspore.common.np_dtype import bfloat16
-from mindspore import Tensor, context
+from mindspore import Tensor, context, nn
+from tests.mark_utils import arg_mark
 
 
 class NetSwiGlu(nn.Cell):
     """SwiGlu."""
 
     def __init__(self, shape, dim):
-        super(NetSwiGlu, self).__init__()
+        super().__init__()
         self.silu = nn.SiLU()
         self.mul = ms.ops.Mul()
         self.split_with_size = ms.ops.auto_generate.SplitWithSize()
@@ -80,13 +80,11 @@ def _test_swiglu(shape, dim, np_dtype, is_dyn):
     np.testing.assert_array_almost_equal(output_np, expected, decimal=2)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('shape', [(1, 6144), (16, 5504)])
 @pytest.mark.parametrize('dim', [-1])
 @pytest.mark.parametrize('dtype', [np.float32, np.float16, bfloat16])
 @pytest.mark.parametrize('is_dyn', [False, True])
-@pytest.mark.env_onecard
 def test_swiglu(shape, dim, dtype, is_dyn):
     """
     Feature: Test SwiGlu.
@@ -96,10 +94,8 @@ def test_swiglu(shape, dim, dtype, is_dyn):
     _test_swiglu(shape, dim, dtype, is_dyn)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('shape', [(1, 3584), (256, 6144), (16, 5376)])
-@pytest.mark.env_onecard
 def test_swiglu_dyn_shape(shape):
     """
     Feature: Test SwiGlu.
