@@ -101,6 +101,7 @@ class CustomOOC():
         if self.args.soc_version != "":
             support_soc_version = {"ascend310p", "ascend310b", "ascend910", "ascend910b", "ascend910_93"}
             for item in self.args.soc_version.split(';'):
+
                 if item not in support_soc_version:
                     raise ValueError(
                         f"Config error! Unsupported soc version {self.args.soc_version}! "
@@ -128,8 +129,8 @@ class CustomOOC():
 
     def copy_compile_project(self):
         """create compile project by template"""
-        template_path = "../tools/op_project_templates/ascendc/"
-        sample_path = "../tools/msopgen/template/operator_demo_projects/ascendc_operator_sample"
+        template_path = "tools/op_project_templates/ascendc/"
+        sample_path = "tools/msopgen/template/operator_demo_projects/ascendc_operator_sample"
         customize_dir = os.path.join(self.args.ascend_cann_package_path, template_path, "customize")
         common_dir = os.path.join(self.args.ascend_cann_package_path, template_path, "common")
         sample_dir = os.path.join(self.args.ascend_cann_package_path, sample_path)
@@ -171,7 +172,7 @@ class CustomOOC():
             CONFIG_KEY_VALUE] = "ascend310p;ascend310b;ascend910;ascend910b;ascend910_93"
         with os.fdopen(
                 os.open(cmake_preset_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                        0o700), "w") as f:
+                        0o700), "w", encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
         ascend_suffix = {SUFFIX_CPP, SUFFIX_H}
         for item in os.listdir(os.path.join(self.custom_project, OP_HOST)):
@@ -217,14 +218,14 @@ class CustomOOC():
 
         with os.fdopen(
                 os.open(os.path.join(self.custom_project, 'CMakePresets.json'), os.O_WRONLY | os.O_CREAT | os.O_TRUNC,
-                        0o700), "w") as f:
+                        0o700), "w", encoding='utf-8') as f:
             json.dump(data, f, ensure_ascii=False, indent=4)
 
     def clear(self):
         """clear log and build out"""
         if self.args.clear:
             command = ['rm', '-rf', 'build_out', 'install.log', 'build.log', 'generate.log']
-            result = subprocess.run(command, shell=False, stderr=subprocess.STDOUT)
+            result = subprocess.run(command, shell=False, stderr=subprocess.STDOUT, check=False)
             if result.returncode == 0:
                 logger.info("Delete build_out install.log build.log successfully!")
             else:
@@ -246,7 +247,7 @@ class CustomOOC():
                 raise RuntimeError("There is no custom run in {}".format(build_out_path))
             result = subprocess.run(['bash', run_path[0]], stdout=os.fdopen(
                 os.open("install.log", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700), "w"),
-                                    stderr=subprocess.STDOUT)
+                                    stderr=subprocess.STDOUT, check=False)
             if result.returncode == 0:
                 logger.info("Install custom run opp successfully!")
                 logger.info(
@@ -254,7 +255,7 @@ class CustomOOC():
                     "make the custom operator effective in the current path.".format(
                         self.args.install_path, self.args.vendor_name))
             else:
-                with open('install.log', 'r') as file:
+                with open('install.log', 'r', encoding='utf-8') as file:
                     for line in file:
                         logger.error(line.strip())
                 raise RuntimeError("Install failed!")
@@ -289,17 +290,17 @@ class CustomOOC():
         if self.args.ascend_cann_package_path != "":
             result = subprocess.run(['bash', 'start.sh', self.custom_project, self.args.ascend_cann_package_path],
                                     stdout=log_file,
-                                    stderr=subprocess.STDOUT)
+                                    stderr=subprocess.STDOUT, check=False)
         else:
             result = subprocess.run(['bash', 'start.sh', self.custom_project],
                                     stdout=log_file,
-                                    stderr=subprocess.STDOUT)
+                                    stderr=subprocess.STDOUT, check=False)
 
         log_file.close()
         if result.returncode == 0:
             logger.info("Compile custom op successfully!")
         else:
-            with open('build.log', 'r') as file:
+            with open('build.log', 'r', encoding='utf-8') as file:
                 for line in file:
                     logger.error(line.strip())
             raise RuntimeError("Compile failed! Please see build.log in current directory for detail info.")
