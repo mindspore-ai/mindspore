@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/ms_backend/graph_fusion/convert_bfloat16.h"
+#include "backend/ms_backend/graph_fusion/convert_data_type.h"
 #include <vector>
 #include <string>
 #include <memory>
 #include <utility>
+#include <map>
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "primitive/math_ops.h"
 #include "primitive/framework_ops.h"
 #include "backend/ms_backend/graph_fusion/core/graph_kernel_utils.h"
 #include "backend/ms_backend/graph_fusion/graph_kernel_helper.h"
+#include "backend/ms_backend/graph_fusion/graph_kernel_cse.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
@@ -33,6 +35,7 @@
 #include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "ir/tensor_new.h"
 #include "ir/graph_utils.h"
+#include "mindspore/ops/ops_utils/op_utils.h"
 
 namespace mindspore::graphkernel {
 namespace {
@@ -57,6 +60,38 @@ AbstractBasePtr UpdateAbstractDataType(const AbstractBasePtr &orig_abs, TypePtr 
     return std::make_shared<abstract::AbstractTuple>(abstracts);
   }
   return orig_abs;
+}
+
+void UpdateBuildInfoInputDataType(const AnfNodePtr &node, size_t input_idx, TypeId new_type) {
+  if (node->kernel_info() == nullptr) {
+    return;
+  }
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
+  if (build_info != nullptr) {
+    auto inputs_type = build_info->GetAllInputDeviceTypes();
+    if (input_idx >= inputs_type.size()) {
+      MS_LOG(EXCEPTION) << "input_idx " << input_idx << " is out of range[0, " << inputs_type.size() << ") for node "
+                        << node->fullname_with_scope();
+    }
+    inputs_type[input_idx] = new_type;
+    build_info->SetInputsDeviceType(inputs_type);
+  }
+}
+
+void UpdateBuildInfoOutputDataType(const AnfNodePtr &node, size_t output_idx, TypeId new_type) {
+  if (node->kernel_info() == nullptr) {
+    return;
+  }
+  auto build_info = AnfAlgo::GetSelectKernelBuildInfo(node);
+  if (build_info != nullptr) {
+    auto outputs_type = build_info->GetAllOutputDeviceTypes();
+    if (output_idx >= outputs_type.size()) {
+      MS_LOG(EXCEPTION) << "output_idx " << output_idx << " is out of range[0, " << outputs_type.size() << ") for node "
+                        << node->fullname_with_scope();
+    }
+    outputs_type[output_idx] = new_type;
+    build_info->SetOutputsDeviceType(outputs_type);
+  }
 }
 
 void UpdateBuildInfoInputDataType(const AnfNodePtr &node, TypeId orig_type, TypeId new_type) {
@@ -86,6 +121,7 @@ void UpdateBuildInfoOutputDataType(const AnfNodePtr &node, TypeId orig_type, Typ
 }
 
 AnfNodePtr NewCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node, TypeId dst_type) {
+  MS_EXCEPTION_IF_NULL(func_graph);
   auto cb = Callback::Instance();
   MS_EXCEPTION_IF_NULL(cb);
   auto src_type = cb->GetOutputType(input_node, 0);
@@ -131,6 +167,57 @@ AnfNodePtr NewCastNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_n
   return cast_node;
 }
 
+template <typename S, typename T>
+void CastTensorData(void *src, void *dst, size_t size) {
+  MS_EXCEPTION_IF_NULL(src);
+  MS_EXCEPTION_IF_NULL(dst);
+  auto *src_data = reinterpret_cast<S *>(src);
+  auto *dst_data = reinterpret_cast<T *>(dst);
+  for (size_t i = 0; i < size; ++i) {
+    dst_data[i] = static_cast<T>(src_data[i]);
+  }
+}
+
+const std::map<std::pair<TypeId, TypeId>, std::function<void(void *, void *, size_t)>> cast_map = {
+  {{kNumberTypeFloat16, kNumberTypeFloat32},
+   [](void *src, void *dst, size_t size) { CastTensorData<float16, float>(src, dst, size); }},
+  {{kNumberTypeBFloat16, kNumberTypeFloat32},
+   [](void *src, void *dst, size_t size) { CastTensorData<bfloat16, float>(src, dst, size); }},
+  {{kNumberTypeInt32, kNumberTypeFloat32},
+   [](void *src, void *dst, size_t size) { CastTensorData<int32_t, float>(src, dst, size); }},
+  {{kNumberTypeInt32, kNumberTypeFloat16},
+   [](void *src, void *dst, size_t size) { CastTensorData<int32_t, float16>(src, dst, size); }},
+};
+
+AnfNodePtr CastTensor(const ValueNodePtr &value_node, TypeId src_type, TypeId dst_type) {
+  MS_EXCEPTION_IF_NULL(value_node);
+  auto value = value_node->value();
+  MS_EXCEPTION_IF_NULL(value);
+  auto tensor = value->cast<tensor::TensorPtr>();
+  MS_EXCEPTION_IF_NULL(tensor);
+  auto new_tensor = tensor::from_spec(dst_type, tensor->shape(), device::DeviceType::kCPU);
+  MS_EXCEPTION_IF_NULL(new_tensor);
+  auto it = cast_map.find({src_type, dst_type});
+  if (it == cast_map.end()) {
+    MS_LOG(EXCEPTION) << "Not supported convert " << TypeIdToString(src_type) << " to " << TypeIdToString(dst_type);
+  }
+  it->second(tensor->data_c(), new_tensor->data_c(), tensor->DataSize());
+  // create new value node
+  auto new_value_node = NewValueNode(new_tensor);
+  new_value_node->set_abstract(new_tensor->ToAbstract());
+  if (value_node->kernel_info() != nullptr) {
+    auto build_info = AnfAlgo::GetSelectKernelBuildInfo(value_node);
+    if (build_info != nullptr) {
+      // set build info for new value node
+      new_value_node->set_kernel_info(std::make_shared<device::KernelInfo>());
+      auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(build_info);
+      builder->SetOutputsDeviceType(std::vector<TypeId>{dst_type});
+      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), new_value_node.get());
+    }
+  }
+  return new_value_node;
+}
+
 // {prim_name, {inputs_keep_index}}
 const HashMap<std::string, std::vector<size_t>> kNeedKeepBF16Ops = {{ops::kNameAssign, {kIndex2}},
                                                                     {ops::kNameMatMul, {kIndex1, kIndex2}},
@@ -163,45 +250,13 @@ AnfNodePtr ConvertBFloat16::GetCastedInput(const AnfNodePtr &input_node, TypeId 
   return cast_nodes_[input_node];
 }
 
-AnfNodePtr ConvertBFloat16::CastTensor(const ValueNodePtr &value_node) {
-  MS_EXCEPTION_IF_NULL(value_node);
-  auto value = value_node->value();
-  MS_EXCEPTION_IF_NULL(value);
-  auto tensor = value->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(tensor);
-  auto *src_data = reinterpret_cast<bfloat16 *>(tensor->data_c());
-  MS_EXCEPTION_IF_NULL(src_data);
-  // create float32 tensor
-  auto new_tensor = tensor::from_spec(kNumberTypeFloat32, tensor->shape(), device::DeviceType::kCPU);
-  MS_EXCEPTION_IF_NULL(new_tensor);
-  auto *dst_data = reinterpret_cast<float *>(new_tensor->data_c());
-  MS_EXCEPTION_IF_NULL(dst_data);
-  for (size_t i = 0; i < tensor->DataSize(); ++i) {
-    dst_data[i] = static_cast<float>(src_data[i]);
-  }
-  // create new value node
-  auto new_value_node = NewValueNode(new_tensor);
-  new_value_node->set_abstract(new_tensor->ToAbstract());
-  if (value_node->kernel_info() != nullptr) {
-    auto build_info = AnfAlgo::GetSelectKernelBuildInfo(value_node);
-    if (build_info != nullptr) {
-      // set build info for new value node
-      new_value_node->set_kernel_info(std::make_shared<device::KernelInfo>());
-      auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(build_info);
-      builder->SetOutputsDeviceType(std::vector<TypeId>{kNumberTypeFloat32});
-      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), new_value_node.get());
-    }
-  }
-  return new_value_node;
-}
-
 void ConvertBFloat16::CastInput(const CNodePtr &cnode, size_t input_idx, const FuncGraphPtr &func_graph) {
   input_idx += 1;
   auto input_node = cnode->input(input_idx);
   TypeId target_input_type = kNumberTypeFloat32;
   if (input_node->isa<ValueNode>()) {
     auto value_node = input_node->cast<ValueNodePtr>();
-    auto new_input = CastTensor(value_node);
+    auto new_input = CastTensor(value_node, kNumberTypeBFloat16, target_input_type);
     cnode->set_input(input_idx, new_input);
   } else if (IsPrimitiveCNode(input_node, prim::kPrimCast)) {
     // directly link cast's input to current node(because cast bf16 to fp32 needs more intermediate cast)
@@ -322,7 +377,115 @@ bool ConvertBFloat16::Process(const FuncGraphPtr &func_graph) {
   return changed;
 }
 
-bool ConvertBFloat16::Run(const FuncGraphPtr &func_graph) {
+void ConvertMixType::CastInput(const CNodePtr &cnode, size_t input_idx, TypeId cur_type, TypeId target_type) {
+  if (cur_type == target_type) {
+    return;
+  }
+  MS_LOG(DEBUG) << "node: " << cnode->fullname_with_scope() << " input_idx: " << input_idx << " "
+                << TypeIdToString(cur_type) << " --> " << TypeIdToString(target_type);
+  input_idx += 1;
+  auto input_node = cnode->input(input_idx);
+  MS_EXCEPTION_IF_NULL(input_node);
+  auto new_input_node = input_node->isa<ValueNode>()
+                          ? CastTensor(input_node->cast<ValueNodePtr>(), cur_type, target_type)
+                          : NewCastNode(cnode->func_graph(), input_node, target_type);
+  cnode->set_input(input_idx, new_input_node);
+  // update node input build info
+  UpdateBuildInfoInputDataType(cnode, input_idx - 1, target_type);
+}
+
+void ConvertMixType::CastOutput(const CNodePtr &cnode, size_t output_idx, TypeId cur_type, TypeId target_type) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto output_num = AnfAlgo::GetOutputTensorNum(cnode);
+  if (output_num != 1) {
+    MS_LOG(EXCEPTION) << "Multiple outputs not supported now! node: " << cnode->fullname_with_scope();
+  }
+  if (cur_type == target_type) {
+    return;
+  }
+  MS_LOG(DEBUG) << "node: " << cnode->fullname_with_scope() << " output_idx: " << output_idx << " "
+                << TypeIdToString(cur_type) << " --> " << TypeIdToString(target_type);
+  // update node output abstract
+  cnode->set_abstract(UpdateAbstractDataType(cnode->abstract(), TypeIdToType(target_type)));
+  // update node output build info
+  UpdateBuildInfoOutputDataType(cnode, output_idx, target_type);
+  // update node users
+  auto new_node = NewCastNode(cnode->func_graph(), cnode, cur_type);
+  auto func_graph = cnode->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto mng = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(mng);
+  const auto &users = mng->node_users()[cnode];
+  for (const auto &user : users) {
+    auto user_node = user.first;
+    size_t user_index = IntToSize(user.second);
+    if (user_node != nullptr && user_node->isa<CNode>()) {
+      auto user_cnode = user_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(user_cnode);
+      user_cnode->set_input(user_index, new_node);
+    }
+  }
+}
+
+bool ConvertMixType::ProcessBinary(const CNodePtr &cnode) {
+  auto cb = Callback::Instance();
+  MS_EXCEPTION_IF_NULL(cb);
+  auto x0_type = cb->GetInputType(cnode, 0);
+  auto x1_type = cb->GetInputType(cnode, 1);
+  auto out_type = cb->GetOutputType(cnode, 0);
+  if (x0_type == out_type && x1_type == out_type) {
+    return false;
+  }
+  auto compute_type = ops::PromoteType(x0_type, x1_type, cnode->fullname_with_scope());
+  if (compute_type == kNumberTypeBFloat16) {
+    compute_type = kNumberTypeFloat32;
+  }
+  CastInput(cnode, 0, x0_type, compute_type);
+  CastInput(cnode, 1, x1_type, compute_type);
+  CastOutput(cnode, 0, out_type, compute_type);
+  return true;
+}
+
+bool ConvertMixType::Process(const FuncGraphPtr &func_graph) {
+  using ProcessFunc = bool (ConvertMixType::*)(const CNodePtr &);
+  static const std::map<std::string, ProcessFunc> funcs = {
+    {ops::kNameMul, &ConvertMixType::ProcessBinary},
+  };
+
+  bool changed = false;
+  auto mng = func_graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(func_graph, true);
+    func_graph->set_manager(mng);
+  }
+  auto nodes = TopoSort(func_graph->get_return());
+  for (const auto &node : nodes) {
+    if (node != nullptr && node->isa<CNode>()) {
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(cnode);
+      auto op_name = AnfUtils::GetCNodeName(cnode);
+      auto it = funcs.find(op_name);
+      if (it != funcs.end()) {
+        changed = (this->*(it->second))(cnode) || changed;
+      }
+    }
+  }
+  if (changed) {
+    mng->RemoveRoots();
+    mng->KeepRoots({func_graph});
+  }
+  return changed;
+}
+
+bool ConvertMixType::Run(const FuncGraphPtr &func_graph) {
+  auto changed = ConvertDataType::Run(func_graph);
+  if (changed) {
+    changed = std::make_shared<GraphKernelCSE>()->Run(func_graph) || changed;
+  }
+  return changed;
+}
+
+bool ConvertDataType::Run(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto mng = func_graph->manager();
   if (mng == nullptr) {
