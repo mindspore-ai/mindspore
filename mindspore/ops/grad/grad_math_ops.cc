@@ -6203,5 +6203,73 @@ REG_BPROP_BUILDER("Frac").FreeUselessValues_IO({i0}, {}).SetBody(BODYFUNC(ib) {
   return {dout};
 });
 REG_BPROP_BUILDER("BitwiseNot").FreeUselessValues_IO({i0}, {}).SetBody(ReturnZeros);
+
+REG_BPROP_BUILDER("SparseFlashAttention").SetUnusedInputs({i5, i16}).SetBody(BODYFUNC(ib) {
+  // Forward inputs:
+  // i0: query, i1: key, i2: value, i3: sparse_indices, i4: scale_value
+  // i5: block_table, i6: actual_seq_lengths_query, i7: actual_seq_lengths_kv
+  // i8: query_rope, i9: key_rope, i10: sparse_block_size
+  // i11: layout_query, i12: layout_kv, i13: sparse_mode
+  // i14: pre_tokens, i15: next_tokens, i16: attention_mode, i17: return_softmax_lse
+  // i18: forward_output (attention_out, softmax_max, softmax_sum)
+  // i19: dout
+
+  auto query = ib->GetInput(i0);
+  auto key = ib->GetInput(i1);
+  auto value = ib->GetInput(i2);
+  auto sparse_indices = ib->GetInput(i3);
+  auto scale_value = ib->GetInput(i4);
+  auto actual_seq_lengths_query = ib->GetInput(i6);
+  auto actual_seq_lengths_kv = ib->GetInput(i7);
+  auto query_rope = ib->GetInput(i8);
+  auto key_rope = ib->GetInput(i9);
+  auto sparse_block_size = ib->GetInput(i10);
+  auto layout_query = ib->GetInput(i11);
+  auto sparse_mode = ib->GetInput(i13);
+  auto pre_tokens = ib->GetInput(i14);
+  auto next_tokens = ib->GetInput(i15);
+
+  // Forward output: [attention_out, softmax_max, softmax_sum]
+  auto forward_output = ib->GetInput(i18);
+  auto attention_out = ib->TupleGetItem(forward_output, 0);
+  auto softmax_max = ib->TupleGetItem(forward_output, 1);
+  auto softmax_sum = ib->TupleGetItem(forward_output, 2);
+
+  auto dout = ib->GetInput(i19);
+  auto grad_attention_out = ib->TupleGetItem(dout, 0);
+
+  // Call SparseFlashAttentionGrad for backward computation
+  // Note: attention_mode is not used by aclnnSparseFlashAttentionGrad
+  auto grad_out = ib->Emit("SparseFlashAttentionGrad",
+                           {query, key, value, sparse_indices, grad_attention_out, attention_out, softmax_max,
+                            softmax_sum, scale_value, sparse_block_size, query_rope, key_rope, actual_seq_lengths_query,
+                            actual_seq_lengths_kv, layout_query, sparse_mode, pre_tokens, next_tokens});
+
+  auto grad_query = ib->TupleGetItem(grad_out, 0);
+  auto grad_key = ib->TupleGetItem(grad_out, 1);
+  auto grad_value = ib->TupleGetItem(grad_out, 2);
+  auto grad_query_rope = ib->TupleGetItem(grad_out, 3);
+  auto grad_key_rope = ib->TupleGetItem(grad_out, 4);
+
+  return {grad_query,
+          grad_key,
+          grad_value,
+          ib->OutZeros(sparse_indices),
+          ib->OutZeros(scale_value),
+          ib->OutZeros(ib->GetInput(i5)),
+          ib->OutZeros(actual_seq_lengths_query),
+          ib->OutZeros(actual_seq_lengths_kv),
+          grad_query_rope,
+          grad_key_rope,
+          ib->OutZeros(sparse_block_size),
+          ib->OutZeros(layout_query),
+          ib->OutZeros(ib->GetInput(i12)),
+          ib->OutZeros(sparse_mode),
+          ib->OutZeros(pre_tokens),
+          ib->OutZeros(next_tokens),
+          ib->OutZeros(ib->GetInput(i16)),  // attention_mode
+          ib->OutZeros(ib->GetInput(i17))};
+});
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

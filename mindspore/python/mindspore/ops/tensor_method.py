@@ -1251,7 +1251,7 @@ def deprecated_tensor_unique(input, sorted=True, return_inverse=False, return_co
     """
     if not F.isconstant(return_inverse) or not F.isconstant(return_counts):
         raise ValueError(
-            f"For 'unique_ext', 'return_inverse' and 'return_counts' cannot be mutable")
+            "For 'unique_ext', 'return_inverse' and 'return_counts' cannot be mutable")
     if dim is None:
         y, inverse_, counts = unique2_(
             input, sorted, return_inverse, return_counts)
@@ -1634,7 +1634,7 @@ def deprecated_tensor_addmm(input, mat1, mat2, *, beta=1, alpha=1):
 
 # 543
 def tensor_put_(input, index, source, accumulate=False):
-    raise RuntimeError(f"There is no branch to go function tensor_put_!")
+    raise RuntimeError("There is no branch to go function tensor_put_!")
 
 
 # 790
@@ -2009,3 +2009,12 @@ def tensor_imag(input):
     For details, please refer to :func:`mindspore.ops.imag`.
     """
     return ops.imag(input)
+
+def _tensor_sparse_flash_attention(query, key, value, sparse_indices, scale_value, *,
+                                   block_table=None, actual_seq_lengths_query=None, actual_seq_lengths_kv=None,
+                                   query_rope=None, key_rope=None, sparse_block_size=1,
+                                   layout_query='BSND', layout_kv='BSND', sparse_mode=3,
+                                   pre_tokens=9223372036854775807, next_tokens=9223372036854775807,
+                                   attention_mode=0, return_softmax_lse=False):
+    """Placeholder for unsupported devices: sparse_flash_attention."""
+    raise RuntimeError("'sparse_flash_attention' is only supported on Ascend.")
