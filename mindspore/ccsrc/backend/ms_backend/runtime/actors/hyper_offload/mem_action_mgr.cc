@@ -25,6 +25,16 @@ namespace mindspore {
 namespace runtime {
 constexpr size_t KStandardRefCount = 1;
 
+namespace {
+device::DeviceContext *GetDeviceContextPtr(device::DeviceType device_type) {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  device::DeviceContextKey device_key = {device_type, device_id};
+  return device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(device_key);
+}
+}  // namespace
+
 bool MemActionMgr::IsKernelTensorCanBeMoved(const KernelTensorPtr &kernel_tensor) {
   size_t ref_count = kernel_tensor->new_ref_count();
   if (ref_count > KStandardRefCount) {
@@ -38,11 +48,7 @@ bool MemActionMgr::IsKernelTensorCanBeMoved(const KernelTensorPtr &kernel_tensor
     return true;
   }
 
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  device::DeviceContextKey src_key = {src_type, device_id};
-  auto src_ctx = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(src_key);
+  auto *src_ctx = GetDeviceContextPtr(src_type);
   MS_EXCEPTION_IF_NULL(src_ctx);
   if (!src_ctx->device_res_manager_->IsNotEventUsedMemory(src_addr.get())) {
     MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Unable free: " << kernel_tensor->ToString() << " , src_addr: " << src_addr;
@@ -101,12 +107,7 @@ kernel::KernelTensorPtr MemActionMgr::InsertCopyDataTask(uint32_t stream_id,
     MS_LOG(EXCEPTION) << "Device type error: " << src_addr->GetDeviceType();
   }
 
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-
-  device::DeviceContextKey dst_key = {dst_ty, device_id};
-  auto dst_ctx = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(dst_key);
+  auto *dst_ctx = GetDeviceContextPtr(dst_ty);
   MS_EXCEPTION_IF_NULL(dst_ctx);
   auto dst_addr = std::make_shared<device::DeviceAddress>(dst_ctx->GetDeviceType());
   auto new_tensor =
@@ -151,11 +152,7 @@ bool MemActionMgr::InsertWaitWithMemoryEvent(uint32_t stream_id, const device::D
   kernel_events_map.erase(it);
 
   // Free src kernel tensor
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  device::DeviceContextKey src_key = {kernel_tensor->GetDeviceType(), device_id};
-  auto src_ctx = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(src_key);
+  auto *src_ctx = GetDeviceContextPtr(kernel_tensor->GetDeviceType());
   MS_EXCEPTION_IF_NULL(src_ctx);
   auto &src_addr = kernel_tensor->device_address();
   src_ctx->device_res_manager_->FreeMemory(src_addr.get());
@@ -175,7 +172,7 @@ bool MemActionMgr::InsertRecordWithMemoryEvent(uint32_t stream_id, const device:
 
 bool MemActionMgr::InsertRecordWaitEvents(uint32_t src_stream_id, uint32_t dst_stream_id,
                                           const device::DeviceContext *device_context) {
-  // Insert record wait pair betweetn src_stream_id and dst_stream_id
+  // Insert record wait pair between src_stream_id and dst_stream_id
   if (src_stream_id == dst_stream_id) {
     MS_LOG(EXCEPTION) << "No need insert events";
   }
@@ -185,12 +182,10 @@ bool MemActionMgr::InsertRecordWaitEvents(uint32_t src_stream_id, uint32_t dst_s
     device_context->device_context_key().device_type_);
   MS_EXCEPTION_IF_NULL(multi_stream_controller);
   bool result = multi_stream_controller->DispatchRecordWaitEvent(dst_stream_id, src_stream_id);
-  auto last_task_id_on_stream = multi_stream_controller->GetTaskIdOnStream(src_stream_id);
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Get current task id: " << last_task_id_on_stream
-                                 << " , stream id: " << src_stream_id;
-  auto last_task_id_on_stream2 = multi_stream_controller->GetTaskIdOnStream(dst_stream_id);
-  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Get current task id: " << last_task_id_on_stream2
-                                 << " , stream id: " << dst_stream_id;
+  auto src_task_id = multi_stream_controller->GetTaskIdOnStream(src_stream_id);
+  auto dst_task_id = multi_stream_controller->GetTaskIdOnStream(dst_stream_id);
+  MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Get current src task id: " << src_task_id << " , src stream id: " << src_stream_id
+                                 << " , dst task id: " << dst_task_id << " , dst stream id: " << dst_stream_id;
   return result;
 }
 
