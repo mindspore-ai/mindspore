@@ -53,14 +53,20 @@ class MS_CORE_API KernelTensorValue : public Value {
 
   KernelTensorValue(float16 scalar, const TypePtr &t) : Value(t) {
     auto scalar_data = std::vector<uint8_t>(sizeof(float16));
-    std::memcpy(scalar_data.data(), &scalar, sizeof(float16));
+    auto err = memcpy_s(scalar_data.data(), scalar_data.size(), &scalar, sizeof(float16));
+    if (err != EOK) {
+      MS_LOG(EXCEPTION) << "memcpy_s failed for type float16, error code: " << err;
+    }
     const_data_ = std::move(scalar_data);
     obj_type_id_ = kObjectTypeNumber;
   }
 
   KernelTensorValue(bfloat16 scalar, const TypePtr &t) : Value(t) {
     auto scalar_data = std::vector<uint8_t>(sizeof(bfloat16));
-    std::memcpy(scalar_data.data(), &scalar, sizeof(float16));
+    auto err = memcpy_s(scalar_data.data(), scalar_data.size(), &scalar, sizeof(bfloat16));
+    if (err != EOK) {
+      MS_LOG(EXCEPTION) << "memcpy_s failed for type float16, error code: " << err;
+    }
     const_data_ = std::move(scalar_data);
     obj_type_id_ = kObjectTypeNumber;
   }
