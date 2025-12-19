@@ -221,12 +221,6 @@ def cumsum_ext_forward_func(x, dim):
 def inplace_relu_forward_func(x):
     mint.nn.functional.relu_(x)
 
-@test_utils.run_with_cell
-def view_func(x):
-    out = expand_dims_view_op(x, 1)
-    mint.nn.functional.relu_(out)
-    return out
-
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
           essential_mark='essential')
@@ -289,6 +283,12 @@ def test_view_op(mode):
     Description: Test op_plugin kernel for view feature. Disabled for now
     Expectation: Correct result.
     """
+
+    @test_utils.run_with_cell
+    def view_func(x):
+        out = expand_dims_view_op(x, 1)
+        mint.nn.functional.relu_(out)
+        return out
     set_mode(mode)
     x = Tensor([-1.0, 4.0, -8.0, 2.0, -5.0, 9.0], ms.float32)
     expected_x_after_inplace_relu = np.maximum(x.asnumpy(), 0.0)
@@ -297,6 +297,16 @@ def test_view_op(mode):
     assert np.allclose(x.asnumpy(), expected_x_after_inplace_relu)
     assert np.allclose(view.asnumpy(), expect_view)
     assert expect_view.shape == view.shape
+
+    @test_utils.run_with_cell
+    def view_grad_func(x):
+        x_copy = x * 1
+        out = expand_dims_view_op(x_copy, 1)
+        mint.nn.functional.relu_(out)
+        return out
+    grad_fn = ms.ops.grad(view_grad_func, (0,))
+    output_grad = grad_fn(x).asnumpy()
+    assert np.allclose(output_grad, [0., 1., 0., 1., 0., 1.])
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
           essential_mark='essential')
