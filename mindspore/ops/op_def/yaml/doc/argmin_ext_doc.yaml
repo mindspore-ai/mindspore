@@ -4,26 +4,19 @@ argmin_ext:
 
         Args:
             input (Tensor): Input tensor.
-            dim (Union[int, None], optional): Specify the axis for calculation. If `dim` is ``None`` , the indices of the minimum
-                value within the flattened input will be returned. Default: ``None`` .
-            keepdim (bool, optional): Whether the output tensor retains the specified
-                dimension. Ignored if `dim` is None. Default: ``False`` .
+            dim (Union[int, None], optional): Specify the dimension for computation. If ``None``, compute all elements in the `input` . Default ``None``.
+            keepdim (bool, optional): Whether the output tensor has dim retained. Default ``False``.
 
         Returns:
-            Tensor, indices of the minimum values of the input tensor across a dimension.
-
-        Raises:
-            TypeError: If `keepdim` is not bool.
-            ValueError: If `dim` is out of range.
+            Tensor
 
         Supported Platforms:
             ``Ascend``
 
         Examples:
+            >>> import mindspore
             >>> import numpy as np
-            >>> from mindspore import Tensor
-            >>> from mindspore import ops
-            >>> x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
-            >>> output = ops.auto_generate.argmin_ext(x, dim=-1)
+            >>> x = mindspore.tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]), mindspore.float32)
+            >>> output = mindspore.ops.auto_generate.argmin_ext(x, dim=-1, keepdim=False)
             >>> print(output)
             [0 1 2]
