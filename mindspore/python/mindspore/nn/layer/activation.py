@@ -1249,7 +1249,7 @@ class PReLU(Cell):
 
 class PReLUExt(Cell):
     r"""
-    Applies PReLU activation function element-wise.
+    Applie the element-wise PReLU function.
 
     PReLU is defined as:
 
@@ -1269,33 +1269,31 @@ class PReLUExt(Cell):
         :align: center
 
     .. note::
-        - Channel dim is the 2nd dim of input. When input has dims < 2, then there is
-          no channel dim and the number of channels = 1.
+        - Channel dim is the 2nd dim of input. When input has dims < 2, then there 
+          is no channel dim and the number of channels = 1.
         - In GE mode, the rank of the input tensor must be greater than 1;
           otherwise, an error will be triggered.
 
     Args:
-        num_parameters (int, optional): number of `w` to learn. Although it takes an int as input,
-            there is only two legitimate values: 1, or the number of channels at Tensor `input`. Default: ``1`` .
+        num_parameters (int, optional): number of `w` to learn. Legitimate values: 1, 
+            or the number of channels at tensor `input`. Default: `1` .
         init (float, optional): the initial value of `w`. Default: ``0.25`` .
         dtype (mindspore.dtype, optional): the type of `w`. Default: ``None`` . Supported data type
             is {float16, float32, bfloat16}.
 
     Inputs:
-        - **input** (Tensor) - The input of PReLU.
+        - **input** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, with the same dtype and shape as the `input`.
+        Tensor.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
-        >>> import numpy as np
-        >>> x = Tensor(np.array([[[[0.1, 0.6], [0.9, 0.9]]]]), mindspore.float32)
-        >>> prelu = nn.PReLUExt()
+        >>> x = mindspore.tensor([[[[0.1, 0.6], [0.9, 0.9]]]], mindspore.float32)
+        >>> prelu = mindspore.nn.layer.activation.PReLUExt()
         >>> output = prelu(x)
         >>> print(output)
         [[[[0.1 0.6]
