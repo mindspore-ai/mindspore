@@ -1,0 +1,51 @@
+#operator lightning_indexer
+lightning_indexer:
+  args:
+    query:
+      dtype: tensor
+    key:
+      dtype: tensor
+    weights:
+      dtype: tensor
+    actual_seq_lengths_query:
+      dtype: tensor
+      default: None
+    actual_seq_lengths_key:
+      dtype: tensor
+      default: None
+    block_table:
+      dtype: tensor
+      default: None
+    layout_query:
+      dtype: int
+      default: "'BSND'"
+      arg_handler: str_to_enum
+    layout_key:
+      dtype: int
+      default: "'BSND'"
+      arg_handler: str_to_enum
+    sparse_count:
+      dtype: int
+      default: 2048
+    sparse_mode:
+      dtype: int
+      default: 3
+    pre_tokens:
+      dtype: int
+      default: 9223372036854775807
+    next_tokens:
+      dtype: int
+      default: 9223372036854775807
+    return_value:
+      dtype: bool
+      default: False
+  returns:
+    sparse_indices:
+      dtype: tensor
+    sparse_values:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: LightningIndexerAscend
