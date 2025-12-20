@@ -50,19 +50,17 @@ class SiLU(Cell):
             Default: ``False``.
 
     Inputs:
-        - **input** (Tensor) - The input tensor, which is :math:`x` in the preceding formula.
-          Data type must be mindspore.float16 or mindspore.float32. Tensor of any dimension.
+        - **input** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, with the same type and shape as the `input`.
+        Tensor.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> input = mindspore.tensor(np.array([-1, 2, -3, 2, -1]), mindspore.float16)
+        >>> input = mindspore.tensor([-1, 2, -3, 2, -1], mindspore.float16)
         >>> silu = mindspore.mint.nn.SiLU(inplace=False)
         >>> output = silu(input)
         >>> print(output)

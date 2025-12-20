@@ -29,7 +29,7 @@ mindspore.mint.nn.SiLU
         - **inplace** (bool, 可选) - 若为 ``True`` 则启用原地更新功能。默认 ``False`` 。
 
     输入：
-        - **input** (Tensor) - 输入tensor，即为上述公式中的 :math:`x`。数据类型为mindspore.float16或mindspore.float32。任意维度的tensor。
+        - **input** (Tensor) - 输入tensor。
 
     输出：
-        Tensor，数据类型和shape与 `input` 的相同。
+        Tensor。
