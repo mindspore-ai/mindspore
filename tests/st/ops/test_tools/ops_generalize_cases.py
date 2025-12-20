@@ -12,6 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=missing-module-docstring
+# pylint: disable=global-variable-not-assigned
+# pylint: disable=f-string-without-interpolation
+# pylint: disable=unnecessary-comprehension
+# pylint: disable=dangerous-default-value
+# pylint: disable=consider-using-enumerate
 import os
 import copy
 import hashlib
@@ -47,7 +53,8 @@ CASE_CONFIGS = [
     ["set_random_seed", int],
     ["all_dim_zero", bool],
     ["deterministic_use_origin_inputs", bool],
-    ["ignore_output_index", (int, list)]
+    ["ignore_output_index", (int, list)],
+    ["ignore_grad_index", (int, list)]
 ]
 ENABLE_DETERMINISTIC = False
 ENABLE_DEBUG_INFO = False
@@ -635,6 +642,10 @@ def test_grad_by_requirement(fn, inputs, mode_name, disable_case, jit_config, ca
             else:
                 grad_by_requirement_position.append(i)
 
+    ignore_grad_index = []
+    if case_config and "ignore_grad_index" in case_config:
+        ignore_grad_index = case_config["ignore_grad_index"]
+
     info_log("Start to test all grads")
     debug_log_args(grad_by_requirement_position, tag="grad_by_requirement_position")
     net = OpsGeneralizeNetHelper(fn, jit_config, inplace_update=inplace_update)
@@ -655,7 +666,7 @@ def test_grad_by_requirement(fn, inputs, mode_name, disable_case, jit_config, ca
         info_log("Start to compare grad by requirement with all grads")
         debug_log_args(all_grads_out, tag="all_grads_out")
         debug_log_args(requires_grads, tag="requires_grads")
-        compare(all_grads_out, requires_grads)
+        compare(all_grads_out, requires_grads, ignore_output_index=ignore_grad_index)
     else:
         info_log(f"Start to test grad by requirement on position {grad_by_requirement_position[0]}")
         net.init_net(grad=True, grad_position=(grad_by_requirement_position[0],))

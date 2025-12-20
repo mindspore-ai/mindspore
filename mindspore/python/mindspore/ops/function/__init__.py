@@ -581,6 +581,7 @@ from .nn_func import (
     channel_shuffle,
     hardsigmoid,
     group_norm,
+    lightning_indexer,
 )
 from .linalg_func import (
     cond,

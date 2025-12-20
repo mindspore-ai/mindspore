@@ -1,0 +1,8 @@
+lightning_indexer:
+  - op_yaml: lightning_indexer_op.yaml
+    py_method: tensor_lightning_indexer
+    kwonlyargs: actual_seq_lengths_query, actual_seq_lengths_key, block_table, layout_query, layout_key, sparse_count, sparse_mode, pre_tokens, next_tokens, return_value
+    Ascend: pyboost
+    CPU: py_method
+    GPU: py_method
+    interface: function
