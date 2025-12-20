@@ -238,8 +238,7 @@ TensorPtr DLPackUtils::FromDLPack(DLManagedTensor *dlpack) {
   // Get current device type from MindSpore context
   auto ms_context = MsContext::GetInstance();
   auto ms_device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  device::DeviceContextKey host_key;
-  host_key = {DeviceTypeUtils::DLDeviceTypeToMsDeviceTarget(device_type), ms_device_id};
+  device::DeviceContextKey host_key = {DeviceTypeUtils::DLDeviceTypeToMsDeviceTarget(device_type), ms_device_id};
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->Initialize();
