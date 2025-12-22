@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+"""test paged_attention op"""
 import os
 import csv
 import numpy as np
@@ -74,16 +75,14 @@ class PagedAttentionTest(PagedAttentionBase):
         self.mode = mode
         self.ctx_mode = ipt.get('ctx_mode', context.GRAPH_MODE)
 
-        self.names = list()  # testcases name list
-        self.i_test_dict = dict()
+        self.names = []  # testcases name list
+        self.i_test_dict = {}
         self.check_dynamic_shape(ipt)
 
         self.net = None
         self.npu_init(PagedAttentionNet)
 
         self.i_test = self.i_test_dict[self.names[0]]
-        if self.i_test["layout"] == "TH":
-            raise Exception("[Error] layout 'TH' can only be in Asdop kernel")
         self.set_inputs()
 
         # construct
@@ -91,10 +90,10 @@ class PagedAttentionTest(PagedAttentionBase):
         for k in self.names:
             print(k, "start")
             self.i_test = self.i_test_dict[k]
-            self.gen = dict()
-            self.load = dict()
-            self.i_construct = dict()
-            self.o_ascend = dict()
+            self.gen = {}
+            self.load = {}
+            self.i_construct = {}
+            self.o_ascend = {}
             self.calc_expect_func()
             self.calc_actual_func()
             self.compare()
@@ -132,7 +131,10 @@ class PagedAttentionTest(PagedAttentionBase):
             query = [None, None, None, None]
         self.i_construct["query"] = ms.Tensor(shape=query, dtype=q_type)
         # key_cache value_cache
-        key_value = [None, None, None, None]
+        if self.i_test.get("fuse_key_cache", False):
+            key_value = [None, None, None]
+        else:
+            key_value = [None, None, None, None]
         self.i_construct["key_cache"] = ms.Tensor(
             shape=key_value, dtype=kv_type)
         self.i_construct["value_cache"] = ms.Tensor(
@@ -258,6 +260,8 @@ class PagedAttentionTest(PagedAttentionBase):
             self.gen["value_cache"],
             newshape=[block_num, block_size, N, D_V])
         self.i_construct["key_cache"] = ms.Tensor(key_cache, dtype=kv_type)
+        if self.i_test.get("fuse_key_cache", False):
+            self.i_construct["key_cache"] = self.i_construct["key_cache"].reshape(block_num, block_size, N * D)
         if self.i_test.get("mla_kvcombined", False):
             self.i_construct["value_cache"] = self.i_construct["key_cache"]
         else:
@@ -349,7 +353,7 @@ class PagedAttentionTest(PagedAttentionBase):
         csv_file = 'tmp_data/pa_tmp_data.csv'
 
         # 写入数据到 CSV 文件
-        with open(csv_file, mode='a+', newline='') as file:
+        with open(csv_file, mode='a+', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
 
             # 检查文件是否为空，如果是，则写入表头
@@ -369,7 +373,7 @@ def test_paged_attention_bnsd(ctx_mode):
     Expectation: the result is correct
     """
     env_var = os.environ.get('KERNEL_RUN_TIMES')
-    i_test_dict = dict()
+    i_test_dict = {}
 
     i_test = {
         "ctx_mode": ctx_mode,
@@ -566,7 +570,7 @@ def test_paged_attention_lookahead1(ctx_mode):
     Expectation: the result is correct
     """
     env_var = os.environ.get('KERNEL_RUN_TIMES')
-    i_test_dict = dict()
+    i_test_dict = {}
 
     i_test = {
         "ctx_mode": ctx_mode,
@@ -1135,5 +1139,38 @@ def test_paged_attention_mla_combine_cache_norm(blk_sz, dtype, ctx_mode):
         "mla_kvcombined": True,
         "blk_sparse": 0,
         "msprof": 0
+    }
+    PagedAttentionTest(i_test)
+
+@pytest.mark.level1
+@pytest.mark.platform_ascend310p
+@pytest.mark.env_onecard
+def test_paged_attention_swft():
+    """
+    Feature: test swft PagedAttention op in tp4 mode
+    Description: test PagedAttention op with deepseek mla.
+    Expectation: the result is correct
+    """
+    env_var = os.environ.get('KERNEL_RUN_TIMES')
+    i_test = {
+        "type": "float16",
+        "layout": "BSH",
+        "b": 1,
+        "sq": 1,
+        "skv": 5,
+        "max_skv": 8192,
+        "nq": 32,
+        "nkv": 1,
+        "d": 576,
+        "d_vo": 512,
+        "mla_kvcombined": True,
+        "blk_sz": 16,
+        "drop_prop": 0.0,
+        "quant_mode": 0,
+        "is_alibi": 0,
+        "is_amask": 0,
+        "blk_sparse": 0,
+        "msprof": int(env_var) if env_var else 0,
+        "fuse_key_cache": True
     }
     PagedAttentionTest(i_test)

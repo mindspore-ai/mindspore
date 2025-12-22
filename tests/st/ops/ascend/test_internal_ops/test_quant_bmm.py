@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 
+"""test QuantBatchMatmul op"""
 import os
 import numpy as np
 import pytest
@@ -27,45 +28,53 @@ def process_deq_scale(deq_scale) -> np.ndarray:
     return new_deq_scale.astype(np.int64)
 
 
-def np_qbmm_compute(a, b, tmp, bias=None):
+def np_qbmm_compute(a, b, tmp_scale, bias=None, tmp_pertoken_scale=None):
     c = np.dot(a.astype(np.float32), b.astype(np.float32)).astype(np.int32)
     if bias is not None:
         c = c + bias
-    c = c.astype(np.float32) * tmp
+    c = c.astype(np.float32) * tmp_scale
+    if tmp_pertoken_scale is not None:
+        pertoken_scale = tmp_pertoken_scale[:, np.newaxis]
+        c = c * pertoken_scale
     c = c.astype(np.float16)
     return c
 
 
 class Qbmm(ms.nn.Cell):
-    def __init__(self, weight, scale, bias, ta, tb, dst_dtype):
+    def __init__(self, weight, scale, bias, pertoken_scale, trans_a, trans_b, dst_dtype):
         super().__init__()
-        self.dbmm = QuantBatchMatmul(transpose_x1=ta,
-                                     transpose_x2=tb,
-                                     dtype=dst_dtype)
+        self.qbmm = QuantBatchMatmul(
+            transpose_x1=trans_a,
+            transpose_x2=trans_b,
+            dtype=dst_dtype
+        )
         self.weight = ms.Parameter(weight, requires_grad=False)
         self.scale = ms.Parameter(scale, requires_grad=False)
-        self.bias = ms.Parameter(bias, requires_grad=False)
+        self.bias = bias
+        self.pertoken_scale = pertoken_scale
 
     def construct(self, x):
-        return self.dbmm(x, self.weight, self.scale, None, self.bias)
+        return self.qbmm(x, self.weight, self.scale, None, self.bias, self.pertoken_scale)
 
 
 class QbmmAdd(ms.nn.Cell):
-    def __init__(self, weight, scale, bias, ta, tb, dst_dtype):
+    def __init__(self, weight, scale, bias, pertoken_scale, trans_a, trans_b, dst_dtype):
         super().__init__()
-        self.dbmm = QuantBatchMatmul(transpose_x1=ta,
-                                     transpose_x2=tb,
+        self.dbmm = QuantBatchMatmul(transpose_x1=trans_a,
+                                     transpose_x2=trans_b,
                                      dtype=dst_dtype)
         self.add = ms.ops.Add()
         self.weight = ms.Parameter(weight, requires_grad=False)
         self.scale = ms.Parameter(scale, requires_grad=False)
-        self.bias = ms.Parameter(bias, requires_grad=False)
+        self.bias = bias
+        self.pertoken_scale = pertoken_scale
 
     def construct(self, x):
-        return self.add(self.dbmm(x, self.weight, self.scale, None, None), self.bias)
+        return self.add(self.dbmm(x, self.weight, self.scale, None, None, self.pertoken_scale), self.bias)
 
 
-def qbmm(m, k, n, trans_a=False, trans_b=False, with_outer_add=False, is_dyn=False):
+def qbmm(m, k, n, trans_a=False, trans_b=False, scale_dtype=ms.int64, with_outer_add=False,
+         bias_none=False, pertoken_scale_none=True, is_dyn=False):
     if "ASCEND_HOME_PATH" not in os.environ:
         os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -80,10 +89,20 @@ def qbmm(m, k, n, trans_a=False, trans_b=False, with_outer_add=False, is_dyn=Fal
     np.random.seed(seed)
     bias = np.random.randint(-10, 10, (n)).astype(np.int32)
     np.random.seed(seed)
-    tmp = np.random.rand(n).astype(np.float32) / 1000
-    scale = process_deq_scale(tmp)
-    bias_fp16 = bias * tmp
-    expect_np = np_qbmm_compute(a, b, tmp, bias)
+    tmp_scale = np.random.rand(n).astype(np.float32) / 1000
+    scale = process_deq_scale(tmp_scale)
+    bias_fp16 = bias * tmp_scale
+    if bias_none:
+        bias = None
+
+    np.random.seed(seed)
+    tmp_pertoken_scale = np.random.rand(m).astype(np.float32)
+    pertoken_scale_ms = ms.Tensor(tmp_pertoken_scale, ms.float32)
+    if pertoken_scale_none:
+        tmp_pertoken_scale = None
+        pertoken_scale_ms = None
+
+    expect_np = np_qbmm_compute(a, b, tmp_scale, bias, tmp_pertoken_scale)
 
     if trans_a:
         a = np.transpose(a, (1, 0))
@@ -93,14 +112,20 @@ def qbmm(m, k, n, trans_a=False, trans_b=False, with_outer_add=False, is_dyn=Fal
     a_ms = ms.Tensor(a, ms.int8)
     b_ms = ms.Tensor(b, ms.int8)
 
-    scale_ms = ms.Tensor(scale, ms.int64)
+    if scale_dtype == ms.float32:
+        scale_ms = ms.Tensor(tmp_scale, ms.float32)
+    else:
+        scale_ms = ms.Tensor(scale, ms.int64)
+
     net = None
     if not with_outer_add:
         bias_ms = ms.Tensor(bias, ms.int32)
-        net = Qbmm(b_ms, scale_ms, bias_ms, trans_a, trans_b, dst_dtype=ms.float16)
+        if bias_none:
+            bias_ms = None
+        net = Qbmm(b_ms, scale_ms, bias_ms, pertoken_scale_ms, trans_a, trans_b, dst_dtype=ms.float16)
     else:
         bias_ms = ms.Tensor(bias_fp16, ms.float16)
-        net = QbmmAdd(b_ms, scale_ms, bias_ms, trans_a, trans_b, dst_dtype=ms.float16)
+        net = QbmmAdd(b_ms, scale_ms, bias_ms, pertoken_scale_ms, trans_a, trans_b, dst_dtype=ms.float16)
 
     if is_dyn:
         input_dyn = ms.Tensor(shape=(None, None), dtype=ms.int8)
@@ -155,3 +180,19 @@ def test_qbmm_add_continuous():
     qbmm(128, 128, 256, trans_a=False, trans_b=True, with_outer_add=True, is_dyn=False)
     qbmm(128, 64, 256, trans_a=False, trans_b=True, with_outer_add=True, is_dyn=False)
     qbmm(1280, 128, 256, trans_a=False, trans_b=False, with_outer_add=True, is_dyn=True)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_ascend310p
+@pytest.mark.parametrize('m', [1, 128, 1024])
+@pytest.mark.env_onecard
+def test_qbmm_with_pertoken_ds(m):
+    """
+    Feature: test qbmm operator in graph mode
+    Description: test qbmm.
+    Expectation: the result is correct
+    """
+    qbmm(m, 7168, 36864, trans_b=True, bias_none=True, scale_dtype=ms.float32,
+         pertoken_scale_none=False)
+    qbmm(m, 7168, 18432, trans_b=True, bias_none=True, scale_dtype=ms.float32,
+         pertoken_scale_none=False)
