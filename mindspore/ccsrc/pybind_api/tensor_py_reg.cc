@@ -1050,6 +1050,7 @@ extern PyObject *TensorPython_set_device_address(PyObject *self, PyObject *args)
   TypePtr type_ptr = py::cast<TypePtr>(py::handle(type_ptr_obj));
   PyType<TensorPy> *tensor = (PyType<TensorPy> *)self;
   auto tensorTmp = tensor->value.GetTensor();
+  runtime::Pipeline::Get().WaitForward();
   TensorPybind::SetDeviceAddress(tensorTmp, addr, shape, type_ptr);
 
   Py_RETURN_NONE;
