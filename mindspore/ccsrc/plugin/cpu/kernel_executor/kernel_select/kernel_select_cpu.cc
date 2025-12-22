@@ -17,10 +17,12 @@
 #include "plugin/cpu/kernel_executor/kernel_select/kernel_select_cpu.h"
 #include <algorithm>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string>
 #include <unordered_set>
-#include <mutex>
+#include <utility>
+#include <vector>
 #include "utils/convert_utils.h"
 #include "include/utils/utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/oplib/oplib.h"
@@ -54,42 +56,44 @@ namespace cpu {
 using AnfAlgo = mindspore::session::AnfRuntimeAlgorithm;
 using mindspore::kernel::KernelBuildInfo;
 namespace {
-static const std::set<std::string> kVmapCPUWhiteList = {kUnsortedSegmentMinOpName,
-                                                        kUnsortedSegmentMaxOpName,
-                                                        kUnsortedSegmentSumOpName,
-                                                        kUnsortedSegmentProdOpName,
-                                                        kUniqueWithPadOpName,
-                                                        kMaskedFillOpName,
-                                                        kDataFormatDimMapOpName,
-                                                        kSTFTOpName,
-                                                        kRandomChoiceWithMaskOpName,
-                                                        kAdamOpName,
-                                                        kUniformCandidateSamplerOpName,
-                                                        kSplitOpName,
-                                                        kLinSpaceOpName,
-                                                        kSquareSumAllOpName,
-                                                        kApplyAdaMaxOpName,
-                                                        kApplyAdadeltaOpName,
-                                                        kApplyProximalAdagradOpName,
-                                                        kApplyGradientDescentOpName,
-                                                        kApplyProximalGradientDescentOpName,
-                                                        kApplyPowerSignOpName,
-                                                        kApplyAdagradV2OpName,
-                                                        kApplyAdagradDAOpName,
-                                                        kApplyRMSPropOpName,
-                                                        kApplyCenteredRMSPropOpName,
-                                                        kSparseApplyAdagradOpName,
-                                                        kSparseApplyAdagradV2OpName,
-                                                        kSparseApplyFtrlOpName,
-                                                        kRandomShuffleOpName,
-                                                        kApplyAdamWithAmsgradOpName,
-                                                        kApplyAdamWithAmsgradV2OpName,
-                                                        kApplyFtrlOpName,
-                                                        kMatrixBandPartOpName,
-                                                        kGerOpName,
-                                                        ops::kNameCdist,
-                                                        ops::kNameCdistGrad,
-                                                        kSparseSegmentMeanOpName};
+static const std::set<std::string> kVmapCPUWhiteList = {
+  kUnsortedSegmentMinOpName,
+  kUnsortedSegmentMaxOpName,
+  kUnsortedSegmentSumOpName,
+  kUnsortedSegmentProdOpName,
+  kUniqueWithPadOpName,
+  kMaskedFillOpName,
+  kDataFormatDimMapOpName,
+  kSTFTOpName,
+  kRandomChoiceWithMaskOpName,
+  kAdamOpName,
+  kUniformCandidateSamplerOpName,
+  kSplitOpName,
+  kLinSpaceOpName,
+  kSquareSumAllOpName,
+  kApplyAdaMaxOpName,
+  kApplyAdadeltaOpName,
+  kApplyProximalAdagradOpName,
+  kApplyGradientDescentOpName,
+  kApplyProximalGradientDescentOpName,
+  kApplyPowerSignOpName,
+  kApplyAdagradV2OpName,
+  kApplyAdagradDAOpName,
+  kApplyRMSPropOpName,
+  kApplyCenteredRMSPropOpName,
+  kSparseApplyAdagradOpName,
+  kSparseApplyAdagradV2OpName,
+  kSparseApplyFtrlOpName,
+  kRandomShuffleOpName,
+  kApplyAdamWithAmsgradOpName,
+  kApplyAdamWithAmsgradV2OpName,
+  kApplyFtrlOpName,
+  kMatrixBandPartOpName,
+  kGerOpName,
+  ops::kNameCdist,
+  ops::kNameCdistGrad,
+  kSparseSegmentMeanOpName,
+};
 
 void GetOutputDtypes(const CNodePtr &kernel_node, std::vector<TypeId> *output_types) {
   size_t output_num = kernel::GetOutputNum(kernel_node);
@@ -500,6 +504,27 @@ bool CheckKernelInfo(const std::shared_ptr<KernelBuildInfo> &alternative_kernel_
   return true;
 }
 
+void UpdateInputObjectTypesFromOpDef(const std::string &op_name, const ops::OpDefPtr op_def,
+                                     std::vector<mindspore::kernel::KernelObjectType> *input_object_types) {
+  if (op_def == nullptr || input_object_types == nullptr) {
+    return;
+  }
+  auto &types = *input_object_types;
+  for (size_t i = 0; i < op_def->args_.size(); ++i) {
+    const auto &input_dtype = op_def->args_[i].arg_dtype_;
+    const bool need_tuple =
+      (input_dtype > ops::DT_ANY && input_dtype < ops::DT_TYPE && input_dtype != ops::DT_TUPLE_TENSOR);
+    if (!need_tuple) {
+      continue;
+    }
+    if (i >= types.size()) {
+      MS_LOG(EXCEPTION) << "For op '" << op_name << "', the input object types size (" << types.size()
+                        << ") is less than the op definition args size (" << op_def->args_.size() << ").";
+    }
+    types[i] = mindspore::kernel::KernelObjectType::TUPLE;
+  }
+}
+
 void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
@@ -545,17 +570,7 @@ void UpdateCustomKernelBuildInfo(const CNodePtr &kernel_node, bool is_akg_op) {
   }
   auto input_object_types = kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllInputObjectType(kernel_node));
   const auto &op_def = ops::GetOpDef(op_name);
-  if (op_def != nullptr) {
-    for (size_t i = 0; i < op_def->args_.size(); ++i) {
-      const auto &input_dtype = op_def->args_[i].arg_dtype_;
-      if (input_dtype > ops::DT_ANY && input_dtype < ops::DT_TYPE && input_dtype != ops::DT_TUPLE_TENSOR) {
-        if (i >= input_object_types.size()) {
-          MS_LOG(EXCEPTION) << "The input object types size is less than the op definition size.";
-        }
-        input_object_types[i] = kernel::KernelObjectType::TUPLE;
-      }
-    }
-  }
+  UpdateInputObjectTypesFromOpDef(op_name, op_def, &input_object_types);
 
   auto output_object_types =
     kernel::TypeIdToKernelObjectTypeForTupleUnfold(AnfAlgo::GetAllOutputObjectType(kernel_node));
