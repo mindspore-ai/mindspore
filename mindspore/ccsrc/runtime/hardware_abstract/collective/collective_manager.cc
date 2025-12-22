@@ -210,8 +210,18 @@ bool CollectiveManager::Initialize(std::string group_name) {
     PROF_END(CreateGlobalCommunicationGroup);
   }
 
+  if (group_name.empty()) {
+    default_global_rank_id_ = global_rank_id_;
+    default_global_rank_size_ = global_rank_size_;
+    default_local_rank_id_ = local_rank_id_;
+    default_local_rank_size_ = local_rank_size_;
+    default_global_group_ranks_ = global_group_ranks_;
+    default_all_host_hashs_ = all_host_hashs_;
+  }
+
   host_comm_lib_instance_->UpdateToDefaultInfo();
   device_comm_lib_instance_->UpdateToDefaultInfo();
+  UpdateToDefaultInfo();
 
   MS_LOG(INFO) << "End initializing collective communication for backend: " << device_type;
   inited_ = true;
@@ -219,6 +229,15 @@ bool CollectiveManager::Initialize(std::string group_name) {
   need_reinit_ = false;
   SetDistributedMeta();
   return true;
+}
+
+void CollectiveManager::UpdateToDefaultInfo() {
+  global_rank_id_ = default_global_rank_id_;
+  global_rank_size_ = default_global_rank_size_;
+  local_rank_id_ = default_local_rank_id_;
+  local_rank_size_ = default_local_rank_size_;
+  global_group_ranks_ = default_global_group_ranks_;
+  all_host_hashs_ = default_all_host_hashs_;
 }
 
 bool CollectiveManager::InitializeDummyCommLib() {

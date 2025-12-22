@@ -205,6 +205,8 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
   // bypassing CollectiveManager module.
   void SetDistributedMeta();
 
+  void UpdateToDefaultInfo();
+
   std::atomic_bool inited_;
   std::atomic_bool finalized_;
 
@@ -247,6 +249,13 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
 
   // The num of processes on this local node.
   uint32_t local_rank_size_;
+
+  uint32_t default_global_rank_id_;
+  uint32_t default_global_rank_size_;
+  uint32_t default_local_rank_id_;
+  uint32_t default_local_rank_size_;
+  std::vector<uint32_t> default_global_group_ranks_;
+  std::vector<size_t> default_all_host_hashs_;
 
   // Global group ranks.
   std::vector<uint32_t> global_group_ranks_;
