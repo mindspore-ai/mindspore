@@ -1317,6 +1317,7 @@ def infer_value_for_Tile(input, dims):
     c = Tensor(b)
     return c
 
+
 def infer_value_for_EqualExt(x, y):
     """Infer value for EqualExt op."""
     if x is None or y is None:
