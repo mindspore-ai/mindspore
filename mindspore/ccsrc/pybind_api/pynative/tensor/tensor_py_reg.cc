@@ -1001,6 +1001,7 @@ extern PyObject *TensorPython_pin_memory(PyObject *self, PyObject *args) {
     Py_INCREF(self);
     return self;
   }
+  runtime::Pipeline::Get().WaitBackend();
   return tensor::PackTensor(TensorPybind::MakePinMemoryTensor(value));
   HANDLE_MS_EXCEPTION_END
 }
