@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-#include <string>
+#include "kernel/gpu/cuda/arrays/gathernd_gpu_kernel.h"
+
 #include <algorithm>
 #include <functional>
+#include <string>
 #include <utility>
+#include <vector>
 
-#include "kernel/gpu/cuda/arrays/gathernd_gpu_kernel.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/complex.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/cuda_common.h"
 
@@ -54,11 +56,8 @@ bool GatherNdFwdGpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &in
   return true;
 }
 
-#define REG_INDEX_ND(DT1, DT2, T1, T2)                                   \
-  {                                                                      \
-    KernelAttr().AddInputAttr(DT1).AddInputAttr(DT2).AddOutputAttr(DT1), \
-      &GatherNdFwdGpuKernelMod::LaunchKernel<T1, T2>                     \
-  }
+#define REG_INDEX_ND(DT1, DT2, T1, T2) \
+  {KernelAttr().AddInputAttr(DT1).AddInputAttr(DT2).AddOutputAttr(DT1), &GatherNdFwdGpuKernelMod::LaunchKernel<T1, T2>}
 
 #define GATHER_ND_GPU_REGISTER(DT, T) \
   REG_INDEX_ND(DT, kNumberTypeInt64, T, int64_t), REG_INDEX_ND(DT, kNumberTypeInt32, T, int32_t)
@@ -75,7 +74,8 @@ std::vector<std::pair<KernelAttr, GatherNdFwdGpuKernelMod::GatherNdFwdFunc>> Gat
   GATHER_ND_GPU_REGISTER(kNumberTypeInt64, int64_t),
   GATHER_ND_GPU_REGISTER(kNumberTypeUInt8, uchar),
   GATHER_ND_GPU_REGISTER(kNumberTypeUInt32, uint),
-  GATHER_ND_GPU_REGISTER(kNumberTypeBool, bool)};
+  GATHER_ND_GPU_REGISTER(kNumberTypeBool, bool),
+};
 
 bool GatherNdFwdGpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
                                    const std::vector<KernelTensor *> &outputs) {
