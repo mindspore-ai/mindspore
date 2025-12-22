@@ -4654,7 +4654,9 @@ FunctionBlockPtr Parser::BaseCtxBlock(const FunctionBlockPtr &block, const py::o
   auto original_body_block = body_block;
 
   auto arg_nodes = NewBaseCtxArgsNode(block, context_expr_obj);
-  if (base_ctx_type == 1) {
+  constexpr int64_t kStreamCtxType = 1;
+  constexpr int64_t kStreamLimitCtxType = 2;
+  if (base_ctx_type == kStreamCtxType) {
     stream_ctx_count_++;
     if (stream_ctx_count_ > 1) {
       MS_LOG(EXCEPTION) << "Nested with StreamCtx statements are not supported in graph mode.";
@@ -4679,10 +4681,10 @@ FunctionBlockPtr Parser::BaseCtxBlock(const FunctionBlockPtr &block, const py::o
   MS_EXCEPTION_IF_NULL(after_func);
   auto get_stream_info_op = NewValueNode(prim::kPrimGetStreamInfo);
   AnfNodePtrList nodes_inputs;
-  if (base_ctx_type == 1) {
+  if (base_ctx_type == kStreamCtxType) {
     // GetStreamInfo(kFuncGraphFlagStreamCtxAfter, stream_id_node) add to after_func
     nodes_inputs = {get_stream_info_op, NewValueNode(kFuncGraphFlagStreamCtxAfter), stream_id_node};
-  } else if (base_ctx_type == 2) {
+  } else if (base_ctx_type == kStreamLimitCtxType) {
     // GetStreamInfo(kFuncGraphFlagStreamLimitCtxAfter, stream_id_node) add to StreamLimitCTx after_func.
     nodes_inputs = {get_stream_info_op, NewValueNode(kFuncGraphFlagStreamLimitCtxAfter), stream_id_node};
   }
@@ -4696,7 +4698,7 @@ FunctionBlockPtr Parser::BaseCtxBlock(const FunctionBlockPtr &block, const py::o
   if (body_func->get_return() == nullptr) {
     body_block->Jump(after_block, {});
   }
-  if (base_ctx_type == 1) {
+  if (base_ctx_type == kStreamCtxType) {
     // GetStreamInfo(kFuncGraphFlagStreamId, stream_id_node) add to body_func
     AnfNodePtrList with_stream_node_inputs{get_stream_info_op, NewValueNode(kFuncGraphFlagStreamId), stream_id_node};
     if (original_body_func != body_func) {
@@ -4708,7 +4710,7 @@ FunctionBlockPtr Parser::BaseCtxBlock(const FunctionBlockPtr &block, const py::o
       body_func->set_flag(FUNC_GRAPH_FLAG_NO_INLINE, true);
       body_block->AddIsolatedNode(with_stream_node);
     }
-  } else if (base_ctx_type == 2) {
+  } else if (base_ctx_type == kStreamLimitCtxType) {
     // GetStreamInfo(kFuncGraphFlagStreamLimitId, stream_id_node, cube_num_node, vector_num_node)
     // add to StreamLimitCTx body_func.
     AnfNodePtrList with_stream_node_inputs{get_stream_info_op, NewValueNode(kFuncGraphFlagStreamLimitId),
