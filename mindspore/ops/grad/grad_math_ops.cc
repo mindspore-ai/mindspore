@@ -2945,7 +2945,7 @@ REG_BPROP_BUILDER("IndexSelect").FreeUselessValues_IO({i0}, {}).SetBody(BODYFUNC
   auto axis = ib->GetInput(i1);
   auto index = ib->GetInput(i2);
   auto dout = ib->GetInput(i4);
-  auto zeros = ib->ZerosLikeExt(input, ib->Value(static_cast<int64_t>(ib->GetDtypeId(dout))));
+  auto zeros = ib->Zeros(ib->Shape(input), ib->Value(static_cast<int64_t>(ib->GetDtypeId(dout))));
   auto dx = ib->Emit("InplaceIndexAddExt", {zeros, axis, index, dout, ib->Value<int64_t>(1LL)});
   return {dx, ib->OutZeros(axis), ib->OutZeros(index)};
 });
