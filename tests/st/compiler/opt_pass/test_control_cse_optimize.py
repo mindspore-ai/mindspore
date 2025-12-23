@@ -116,7 +116,7 @@ def test_ctrl_cse_optimize_with_if():
     assert len(conv2d_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ctrl_cse_optimize_with_while():
     """
     Feature: Control-flow aware CSE optimization.
@@ -159,7 +159,7 @@ def test_ctrl_cse_optimize_with_while():
 
     net = Net()
     fake_data = ms.Tensor(np.random.randn(1, 1, 32, 32), dtype=ms.float32)
-    ms.jit(net)(fake_data)
+    ms.jit(net, backend="ms_backend")(fake_data)
     content = read_file(saved_graphs_path)
     conv2d_num = re.findall(r'Conv2D\(', content)
     assert len(conv2d_num) == 1
@@ -431,7 +431,7 @@ def test_ctrl_cse_optimize_with_subnet_and_sink():
     assert len(conv2d_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_ctrl_cse_optimize_with_heterogeneous_and_parameter():
     """
     Feature: Control-flow aware CSE optimization.
@@ -482,7 +482,7 @@ def test_ctrl_cse_optimize_with_heterogeneous_and_parameter():
 
     net = Net()
     fake_data = ms.Tensor(np.random.randn(1, 1, 32, 32), dtype=ms.float32)
-    ms.jit(net)(fake_data)
+    ms.jit(net, backend="ms_backend")(fake_data)
     content = read_file(saved_graphs_path)
     conv2d_num = re.findall(r'Conv2D\(', content)
     assert len(conv2d_num) == 1

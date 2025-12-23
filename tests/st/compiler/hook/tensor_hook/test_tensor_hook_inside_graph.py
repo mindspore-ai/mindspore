@@ -568,7 +568,6 @@ class Net12(nn.Cell):
         super().__init__()
         self.k = 2
 
-    @ms.jit
     def construct(self, x):
         y = Tensor(x.asnumpy())
         y.register_hook(double_fn)
@@ -576,7 +575,7 @@ class Net12(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_parse_hook_register_middle_fallback():
     """
     Feature: Tensor.register_hook(hook_fn) inside graph.
@@ -587,6 +586,6 @@ def test_parse_hook_register_middle_fallback():
     input_x = Tensor(input_np, dtype.float32)
     net = Net12()
     grad_net = ops.grad(net)
-    grad_ms = grad_net(input_x)
+    grad_ms = ms.jit(grad_net, backend="ms_backend")(input_x)
 
     np.allclose(np.zeros([2, 3], np.float32), grad_ms.asnumpy(), 0.001, 0.001)

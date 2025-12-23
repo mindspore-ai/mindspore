@@ -1580,7 +1580,7 @@ def test_setitem_nested_tuple_as_value_false(mode):
             mode(net)(input_me)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_setitem_nested_list_as_value_ok():
     """
     Feature: tensor setitem.
@@ -1620,13 +1620,13 @@ def test_setitem_nested_list_as_value_ok():
     net_pt = NetPytorch1()
     ms_input = ms.Tensor(input_np)
     pt_input = torch.tensor(input_np, requires_grad=True)
-    ms_out = ms.jit(net_ms)(ms_input)
+    ms_out = ms.jit(net_ms, backend="ms_backend")(ms_input)
     pt_out = net_pt(pt_input)
     assert np.allclose(ms_out.asnumpy(), pt_out.detach().numpy())
     np_sens = np.random.randn(*ms_out.shape).astype(np.float32)
     ms_sens = ms.Tensor(np_sens)
     pt_sens = torch.tensor(np_sens)
-    ms_grad = ms.jit(ms.grad(net_ms, sens_param=True))(ms_input, ms_sens)
+    ms_grad = ms.jit(ms.grad(net_ms, sens_param=True), backend="ms_backend")(ms_input, ms_sens)
     pt_grad = torch.autograd.grad(pt_out, pt_input, grad_outputs=pt_sens)
     assert np.allclose(ms_grad.asnumpy(), pt_grad[0].detach().numpy())
 

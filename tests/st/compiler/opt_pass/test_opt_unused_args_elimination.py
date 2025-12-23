@@ -347,7 +347,7 @@ class PNet(Cell):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_parse_opt_unused_args_lazy_inline():
     """
     Feature: Unused argument elimination.

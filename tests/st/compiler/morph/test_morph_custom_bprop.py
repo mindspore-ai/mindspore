@@ -400,5 +400,5 @@ def test_morph_custom_bprop_fn_inputs_and_outputs_not_match():
     grad_net = grad_op(net, net.trainable_params())
     with pytest.raises(TypeError) as e:
         _ = ms.jit(grad_net)(input_x)
-    assert "The params of function 'bprop' of Primitive or Cell requires the forward"\
+    assert "The params of function 'bprop' of Primitive or Cell requires the forward "\
         "inputs as well as the 'out' and 'dout'" in str(e.value)
