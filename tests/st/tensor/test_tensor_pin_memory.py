@@ -11,11 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+""" test tensor pin_memory """
+
 import numpy as np
 import pytest
 import mindspore as ms
 from mindspore.common import dtype as mstype
-from mindspore import Tensor
+from mindspore import mint, Tensor
 from tests.mark_utils import arg_mark
 
 class Net(ms.nn.Cell):
@@ -49,3 +51,19 @@ def test_tensor_pin_memory(mode):
 
     x_share_mem = x._shared_host_memory_with_device_() # pylint: disable=W0212
     assert not x_share_mem.is_pinned()
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
+def test_tensor_pin_memory_after_empty_like(mode):
+    """
+    Feature: copy tensor to pin memory.
+    Description: test tensor.pin_memory() after mint.empty_like().
+    Expectation: expect correct result.
+    """
+    ms.context.set_context(mode=mode)
+    t = mint.rand((100, 100))
+    assert not t.is_pinned()
+    t1 = mint.empty_like(t, device='CPU').pin_memory()
+    assert t1.is_pinned()
+    assert t1.shape == t.shape
