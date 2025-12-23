@@ -42,6 +42,8 @@ class RUNTIME_PIPELINE_EXPORT Pipeline {
   // No need to wait bprop queue finish.
   void WaitForward();
 
+  void WaitBackend();
+
   void WaitFrontend();
 
   void WaitBpropStage();
