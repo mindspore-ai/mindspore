@@ -38,7 +38,7 @@ AbsoluteDistanceList GenerateAbsoluteDistanceList(const UserInfo &user_info, con
   auto node = user_info.node.first;
   auto node_iter = std::find(execution_order.begin(), execution_order.end(), node);
   MS_EXCEPTION_IF_CHECK_FAIL(node_iter != execution_order.end(), "Failed to find node in execution order.");
-  auto node_distance = std::distance(execution_order.begin(), node_iter);
+  size_t node_distance = std::distance(execution_order.begin(), node_iter);
   AbsoluteDistanceList absolute_distance_list{AbsoluteDistance{user_info.node, node_distance}};
   const auto &node_users = user_info.users;
   for (const auto &node_user : node_users) {
@@ -61,18 +61,17 @@ RelativeDistanceList GenerateRelativeDistanceList(const AbsoluteDistanceList &ab
   for (size_t i = 1; i < absolute_distance_list.size(); ++i) {
     int current_distance =
       absolute_distance_list[i].absolute_distance - absolute_distance_list[i - 1].absolute_distance;
-    (void)relative_distance_list.emplace_back(RelativeDistance{absolute_distance_list[i - 1].node,
-                                                               absolute_distance_list[i].node,
-                                                               IntToSize(current_distance)});
+    (void)relative_distance_list.emplace_back(RelativeDistance{
+      absolute_distance_list[i - 1].node, absolute_distance_list[i].node, IntToSize(current_distance)});
   }
   return relative_distance_list;
 }
 
 ReplaceInfoList GenerateReplaceInfoList(const RelativeDistanceList &relative_distance_list) {
-  static int select_distance = HyperOffloadConfig::GetInstance().select_distance();
+  static size_t select_distance = HyperOffloadConfig::GetInstance().select_distance();
   std::vector<bool> need_offload;
   for (const auto &cur_distance_element : relative_distance_list) {
-    (void)need_offload.emplace_back(((int)cur_distance_element.distance > select_distance));
+    (void)need_offload.emplace_back((cur_distance_element.distance > select_distance));
   }
   ReplaceInfoList replace_info_list;
   if (!std::any_of(need_offload.begin(), need_offload.end(), [](bool offload) { return offload; })) {
@@ -138,8 +137,11 @@ OffloadInfoList DistanceBaseHyperOffloadStrategy::Run(const KernelGraphPtr &kern
   return offload_info_list;
 }
 
-OffloadInfoList OffloadInfoFilterByNumber::Filter(const OffloadInfoList& offload_info_list) {
-  static int offload_total_number = HyperOffloadConfig::GetInstance().select_num();
+OffloadInfoList OffloadInfoFilterByNumber::Filter(const OffloadInfoList &offload_info_list) {
+  static size_t offload_total_number = HyperOffloadConfig::GetInstance().select_num();
+  if (offload_info_list.size() <= offload_total_number) {
+    return offload_info_list;
+  }
   OffloadInfoList filtered_offload_list{offload_info_list.begin(), offload_info_list.begin() + offload_total_number};
   return filtered_offload_list;
 }

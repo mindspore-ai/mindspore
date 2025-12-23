@@ -42,7 +42,7 @@ constexpr auto kSwitchTrueBranchNum = "TrueBranchNodeNum";
 constexpr auto kSwitchFalseBranchNum = "FalseBranchNodeNum";
 
 void InsertHyperOffloadNodes(const OffloadInfo &offload_info, const std::vector<KernelWithIndex> &outputs,
-                                       const KernelGraphPtr &kernel_graph, CNodePtrList &new_execution_order) {
+                             const KernelGraphPtr &kernel_graph, CNodePtrList &new_execution_order) {
   const auto &data_node_info = offload_info.data_node;
   auto data_node = data_node_info.first;
   auto data_node_abstract = data_node->abstract();
@@ -275,6 +275,10 @@ void UpdateInlineInfo(const KernelGraphPtr &kernel_graph, const CNodePtr &node,
 
 void InsertHyperOffloadOpsForInputParameters(const KernelGraphPtr &kernel_graph, const CNodePtr &node,
                                              CNodePtrList &execution_order) {
+  if (IsPrimitiveCNode(node, prim::kPrimConditionSwitch)) {
+    (void)execution_order.emplace_back(node);
+    return;
+  }
   CNodePtrList to_remote_nodes{};
   const auto &inline_sub_graph_kernels = kernel_graph->inline_sub_graph_kernels();
   const auto &inline_info_iter = inline_sub_graph_kernels.find(node);
@@ -318,27 +322,30 @@ void PrefetchH2DNode(const CNodePtr &node, CNodePtrList &execution_order) {
     (void)execution_order.emplace_back(node);
     return;
   }
-  static int prefetch_distance = HyperOffloadConfig::GetInstance().prefetch_distance();
+  static size_t prefetch_distance = HyperOffloadConfig::GetInstance().prefetch_distance();
   constexpr size_t data_index = 1;
   auto data_node = node->input(data_index);
   size_t upper_bound_index = 0;
   if (data_node->isa<CNode>()) {
+    // todo: This is caused by condition switch. Need to fix later.
+    if (!IsD2HNode(data_node)) {
+      (void)execution_order.emplace_back(node);
+      return;
+    }
     auto upper_bound_iter = std::find(execution_order.begin(), execution_order.end(), data_node);
     MS_EXCEPTION_IF_CHECK_FAIL(upper_bound_iter != execution_order.end(), "Fail to find data node");
     upper_bound_index = std::distance(execution_order.begin(), upper_bound_iter) + 1;
   }
   MS_LOG(INFO) << "For node: " << node->fullname_with_scope() << ", upper bound index: " << upper_bound_index
                << ", lower bound index: " << (execution_order.size() - 1);
-  if (execution_order.size() - 1 - prefetch_distance <= upper_bound_index) {
-    MS_LOG(EXCEPTION) << "Prefetch distance is too large";
-  }
+  // todo: need to add bound check.
   (void)execution_order.insert(execution_order.begin() + execution_order.size() - prefetch_distance, node);
 }
 
 void GenerateEventForD2HNode(const KernelGraphPtr &kernel_graph, const CNodePtr &node,
                              const UserInfoList &all_node_users, CNodePtrList &execution_order,
                              std::unordered_map<AnfNodePtr, AnfNodePtrList> &event_map) {
-  static int distance = HyperOffloadConfig::GetInstance().release_distance();
+  static size_t distance = HyperOffloadConfig::GetInstance().release_distance();
   const auto &nodes = kernel_graph->execution_order();
   auto process_stream_id = AnfAlgo::GetStreamId(node);
   constexpr size_t wait_stream_id = 0;
@@ -405,6 +412,9 @@ void HyperOffloadOptimizer::Run(const KernelGraphPtr &kernel_graph) {
 void HyperOffloadOptimizer::OffloadActivation(const KernelGraphPtr &kernel_graph) {
   auto hyper_offload_strategy = std::make_unique<DistanceBaseHyperOffloadStrategy>();
   const auto &offload_info_list = hyper_offload_strategy->Run(kernel_graph);
+  if (offload_info_list.empty()) {
+    return;
+  }
   auto offload_info_filter = std::make_unique<OffloadInfoFilterByNumber>();
   const auto &filtered_offload_info_list = offload_info_filter->Filter(offload_info_list);
 

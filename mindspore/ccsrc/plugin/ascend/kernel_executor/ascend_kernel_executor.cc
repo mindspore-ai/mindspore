@@ -1271,7 +1271,6 @@ void AscendKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const 
   }
   ResetNodeIds({kernel_graph});
   hyper_offload::ReorderControlFlowNodes(kernel_graph);
-  // todo: 改成非static的，记录一些中间结果。
   hyper_offload::HyperOffloadOptimizer::Run(kernel_graph);
   DoStreamAssign(kernel_graph);
   hyper_offload::HyperOffloadOptimizer::AddEventToHyperOffloadOps(kernel_graph);

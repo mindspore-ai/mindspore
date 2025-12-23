@@ -53,18 +53,18 @@ class HyperOffloadConfig {
   HyperOffloadConfig() {
     enable_hyper_offload_ = (common::GetEnv("MS_DEV_HYPER_OFFLOAD") == "1");
     if (enable_hyper_offload_) {
-      select_distance_ = std::stoi(common::GetCompileConfig("HYPER_OFFLOAD_SELECT_DISTANCE"));
-      select_num_ = std::stoi(common::GetCompileConfig("HYPER_OFFLOAD_SELECT_NUM"));
-      prefetch_distance_ = std::stoi(common::GetCompileConfig("HYPER_OFFLOAD_PREFETCH_DISTANCE"));
-      release_distance_ = std::stoi(common::GetCompileConfig("HYPER_OFFLOAD_RELEASE_DISTANCE"));
+      select_distance_ = std::stoul(common::GetCompileConfig("HYPER_OFFLOAD_SELECT_DISTANCE"));
+      select_num_ = std::stoul(common::GetCompileConfig("HYPER_OFFLOAD_SELECT_NUM"));
+      prefetch_distance_ = std::stoul(common::GetCompileConfig("HYPER_OFFLOAD_PREFETCH_DISTANCE"));
+      release_distance_ = std::stoul(common::GetCompileConfig("HYPER_OFFLOAD_RELEASE_DISTANCE"));
     }
   }
 
   bool enable_hyper_offload_ = false;
-  int select_distance_ = 0;
-  int select_num_ = 0;
-  int prefetch_distance_ = 0;
-  int release_distance_ = 0;
+  size_t select_distance_ = 0;
+  size_t select_num_ = 0;
+  size_t prefetch_distance_ = 0;
+  size_t release_distance_ = 0;
 };
 
 bool IsD2HNode(const AnfNodePtr &node);
