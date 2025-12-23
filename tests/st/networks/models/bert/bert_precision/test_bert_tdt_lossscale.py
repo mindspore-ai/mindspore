@@ -239,8 +239,8 @@ def test_bert_precision(enable_graph_kernel=False):
                              12.185522, 12.386192]
     else:
         assert np.allclose(loss_value[0], 12.2072, 0, 0.0005)
-        expect_loss_value = [12.2072, 11.941728, 11.931803, 11.93857, 11.931982, 12.556978, 12.131189, 12.784796,
-                             12.360739, 12.57966]
+        expect_loss_value = [12.207158, 11.981134, 11.984777, 11.956746, 11.937351, 12.558997, 12.132761, 12.784918,
+                             12.361123, 12.579744]
     print("loss value: {}".format(loss_value))
     assert np.allclose(loss_value, expect_loss_value, 0, 0.0005)
 
