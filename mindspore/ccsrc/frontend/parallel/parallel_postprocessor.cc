@@ -282,7 +282,7 @@ static void InsertDivAndAllReduceForNorm(const NodeUsersMap &node_user_map, cons
     if (cnode->in_forward_flag()) {
       continue;
     }
-    constexpr size_t bfs_depth = 10;
+    constexpr size_t bfs_depth = 100;
     auto expand_dims_node = FindExpandDimsWIthGradScale(cnode, node_user_map, bfs_depth);
     if (!expand_dims_node) {
       continue;
