@@ -280,9 +280,9 @@ bool CollectiveManager::GetLocalGroupRankAndSize(const std::vector<uint32_t> &gr
   MS_EXCEPTION_IF_NULL(local_group_rank);
   MS_EXCEPTION_IF_NULL(local_group_size);
   auto it =
-    std::find_if(group_ranks.begin(), group_ranks.end(), [&](uint32_t rank) { return rank > global_rank_size_; });
+    std::find_if(group_ranks.begin(), group_ranks.end(), [&](uint32_t rank) { return rank >= global_rank_size_; });
   if (it != group_ranks.end()) {
-    MS_LOG(ERROR) << "The rank " << *it << "is out of global rank size.";
+    MS_LOG(ERROR) << "The rank " << *it << " is out of global rank size.";
     return false;
   }
   if (all_host_hashs_.size() != static_cast<size_t>(global_rank_size_)) {
