@@ -535,14 +535,13 @@ void SetBranchInfoForSwitchNode(const ConditionSwitchInfoPtr &switch_info) {
   switch_cnode->AddAttr(kSwitchFalseBranchNum, MakeValue(switch_info->false_branch_node_num));
 }
 
-// Handle the ConditionGather node, process the whole control flow
-void ProcessConditionGatherNode(std::vector<ConditionSwitchInfoPtr> *switch_index, CNodePtrList *true_branch_cnodes,
-                                CNodePtrList *false_branch_cnodes, CNodePtrList *new_execution_order,
-                                const CNodePtr &cnode, const std::string &subgraph_name) {
+// Handle the ConditionGather node, reorder the control flow nodes for the condition gather node
+CNodePtrList ReorderControlFlowNodesForConditionGather(std::vector<ConditionSwitchInfoPtr> *switch_index,
+                                                       CNodePtrList *true_branch_cnodes,
+                                                       CNodePtrList *false_branch_cnodes, const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(switch_index);
   MS_EXCEPTION_IF_NULL(true_branch_cnodes);
   MS_EXCEPTION_IF_NULL(false_branch_cnodes);
-  MS_EXCEPTION_IF_NULL(new_execution_order);
   MS_EXCEPTION_IF_NULL(cnode);
   auto lastest_switch_info = switch_index->back();
   CNodePtrList switch_kernel_cnodes;
@@ -571,20 +570,26 @@ void ProcessConditionGatherNode(std::vector<ConditionSwitchInfoPtr> *switch_inde
   SetBranchInfoForSwitchNode(lastest_switch_info);
   switch_index->pop_back();
 
-  if (switch_index->empty()) {
-    // Single control flow, just append to the execution order
-    new_execution_order->insert(new_execution_order->end(), switch_kernel_cnodes.begin(), switch_kernel_cnodes.end());
+  return switch_kernel_cnodes;
+}
+
+void UpdateOuterSwitchInfo(const std::vector<ConditionSwitchInfoPtr> &switch_index, CNodePtrList *true_branch_cnodes,
+                           CNodePtrList *false_branch_cnodes, const CNodePtrList &switch_kernel_cnodes,
+                           const std::string &subgraph_name) {
+  if (switch_index.empty()) {
+    return;
+  }
+  // Nested control flow, update outer switch info
+  auto &outer_switch_info = switch_index.back();
+  bool is_true_branch = subgraph_name == outer_switch_info->true_subgraph;
+  if (is_true_branch) {
+    MS_EXCEPTION_IF_NULL(true_branch_cnodes);
+    true_branch_cnodes->insert(true_branch_cnodes->end(), switch_kernel_cnodes.begin(), switch_kernel_cnodes.end());
+    outer_switch_info->true_branch_node_num += switch_kernel_cnodes.size();
   } else {
-    // Nested control flow, update outer switch info
-    auto outer_switch_info = switch_index->back();
-    bool is_true_branch = subgraph_name == outer_switch_info->true_subgraph;
-    if (is_true_branch) {
-      true_branch_cnodes->insert(true_branch_cnodes->end(), switch_kernel_cnodes.begin(), switch_kernel_cnodes.end());
-      outer_switch_info->true_branch_node_num += switch_kernel_cnodes.size();
-    } else {
-      false_branch_cnodes->insert(false_branch_cnodes->end(), switch_kernel_cnodes.begin(), switch_kernel_cnodes.end());
-      outer_switch_info->false_branch_node_num += switch_kernel_cnodes.size();
-    }
+    MS_EXCEPTION_IF_NULL(false_branch_cnodes);
+    false_branch_cnodes->insert(false_branch_cnodes->end(), switch_kernel_cnodes.begin(), switch_kernel_cnodes.end());
+    outer_switch_info->false_branch_node_num += switch_kernel_cnodes.size();
   }
 }
 
@@ -779,8 +784,15 @@ void ReorderControlFlowNodes(const KernelGraphPtr &kernel_graph) {
 
     // ConditionGather, process the whole control flow
     if (IsPrimitiveCNode(cnode, prim::kPrimConditionGather)) {
-      ProcessConditionGatherNode(&switch_index, &true_branch_cnodes, &false_branch_cnodes, &new_execution_order, cnode,
-                                 branch_subgraph_name);
+      auto switch_kernel_cnodes =
+        ReorderControlFlowNodesForConditionGather(&switch_index, &true_branch_cnodes, &false_branch_cnodes, cnode);
+      // Single control flow, just append to the execution order
+      if (switch_index.empty()) {
+        new_execution_order.insert(new_execution_order.end(), switch_kernel_cnodes.begin(), switch_kernel_cnodes.end());
+      } else {
+        UpdateOuterSwitchInfo(switch_index, &true_branch_cnodes, &false_branch_cnodes, switch_kernel_cnodes,
+                              branch_subgraph_name);
+      }
       continue;
     }
 

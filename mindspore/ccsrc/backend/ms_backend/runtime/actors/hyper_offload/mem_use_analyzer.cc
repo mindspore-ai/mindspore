@@ -40,8 +40,9 @@ std::vector<std::pair<KernelTensorPtr, size_t>> MemUseAnalyzer::GetDeviceKernelT
   if (!latest_switch_infos_.empty()) {
     auto cur_switch_info = latest_switch_infos_.back();
     min_invalid_idx =
-      cur_switch_info->is_true_branch ? cur_switch_info->start_false_idx : cur_switch_info->start_true_idx;
-    max_invalid_idx = cur_switch_info->is_true_branch ? cur_switch_info->end_false_idx : cur_switch_info->end_true_idx;
+      cur_switch_info->is_running_true_branch ? cur_switch_info->start_false_idx : cur_switch_info->start_true_idx;
+    max_invalid_idx =
+      cur_switch_info->is_running_true_branch ? cur_switch_info->end_false_idx : cur_switch_info->end_true_idx;
     MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Switch idx: " << idx << " , min_invalid_idx: " << min_invalid_idx
                                    << " ,  max_invalid_idx: " << max_invalid_idx;
   }
@@ -274,12 +275,12 @@ void MemUseAnalyzer::LaunchTaskAfter(KernelRunner *kernel_actor, const device::D
     auto &cur_switch_info = switch_info_map_[kernel_actor];
     auto true_branch_first_kernel_runner = kernel_actors_[cur_switch_info->start_true_idx];
     MS_EXCEPTION_IF_NULL(true_branch_first_kernel_runner);
-    bool is_true_branch = *(true_branch_first_kernel_runner->GetEnablePtr());
-    MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Kernel cnode: " << cnode->DebugString() << " , " << is_true_branch;
+    bool is_running_true_branch = *(true_branch_first_kernel_runner->GetEnablePtr());
+    MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Kernel cnode: " << cnode->DebugString() << " , " << is_running_true_branch;
     latest_switch_infos_.emplace_back(cur_switch_info);
-    cur_switch_info->is_true_branch = is_true_branch;
+    cur_switch_info->is_running_true_branch = is_running_true_branch;
     // If execute false branch, set horizon to skip true branch load
-    if (!is_true_branch) {
+    if (!is_running_true_branch) {
       mem_counted_cache_->SetHorizon(old_horizon_ + cur_switch_info->true_branch_node_num);
     }
   } else if (IsPrimitiveCNode(cnode, prim::kPrimConditionGather)) {

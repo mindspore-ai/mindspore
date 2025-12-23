@@ -53,11 +53,12 @@ struct ConditionSwitchBranchInfo {
   size_t end_true_idx;
   size_t start_false_idx;
   size_t end_false_idx;
-  bool is_true_branch;
+  bool is_running_true_branch;
 
   ConditionSwitchBranchInfo(const CNodePtr &switch_cnode, size_t cur_idx)
       : switch_cnode(switch_cnode), cur_idx(cur_idx) {
     RefreshNodeIdx();
+    is_running_true_branch = true;
   }
 
   std::string ToString() const {
