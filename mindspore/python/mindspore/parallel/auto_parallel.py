@@ -707,6 +707,13 @@ class AutoParallel(Cell):
                   - 2: Optimize dataset reader within pipeline stage.
 
                   - 3: Optimize dataset reader with all scenes.
+
+                  .. warning::
+                      When the optimization level is 2 or 3, if `mindspore.lazy_inline` is not configured during graph
+                      compilation, it may conflict with other compilation optimization items of this configuration,
+                      leading to graph cycle issue. If you encounter a graph cycle issue, please close the
+                      corresponding optimization item.
+
                 - allreduce_and_biasadd_swap (bool): Enable node execution order swap communication operators and add
                   operators if ``True``. Only 1-dimension bias node is supported. Default: ``False``.
                 - enable_allreduce_slice_to_reducescatter (bool): Enable allreduce optimization. In the scenario where

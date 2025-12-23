@@ -263,6 +263,9 @@
 
                 - 3: 同时优化场景1和2。
 
+                .. warning::
+                    当优化级别为2或3的时候，且图编译没有配置 `mindspore.lazy_inline` ，可能会与该配置下的其他编译优化项冲突，导致计算图成环问题。如果出现此问题，请关闭相应的优化项。
+
               - **allreduce_and_biasadd_swap** (bool): 为 ``True`` 时表示开启matmul-add结构下，通信算子与Add算子执行顺序互换。当前仅支持bias为一维的情况。默认值： ``False`` 。
               - **enable_allreduce_slice_to_reducescatter** (bool): 为 ``True`` 时，表示开启AllReduce优化。在batchmatmul模型并行引入AllReduce的场景中，如果后续节点是配置了模型并行的StridedSlice算子，在已识别可优化的模式中，将AllReduce优化为ReduceScatter。典型的用在开启了groupwise alltoall的MoE模块。默认值： ``False`` 。
               - **enable_interleave_split_concat_branch** (bool): 为 ``True`` 时，表示针对带enable_interleave属性的Split和Concat算子形成的分支，开启通信计算并行优化。典型的使用场景为MoE模块并行场景，对输入数据进行split后，对各切片数据进行MoE模块运算，再对分支结果进行Concat，开启后各分支的MoE模块进行通信计算并行优化。默认值： ``False`` 。
