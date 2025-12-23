@@ -111,12 +111,14 @@ class _RecomputeState:
         self.is_recomputed = defaultdict(bool)
 
     def wrap_original_inputs(self, *args, **kwargs):
+        """Wrap and store original inputs for later recovery during recomputation."""
         self.kwargs = kwargs
         # pylint: disable=protected-access
         self.hybrid_args = [t._grad_node if isinstance(t, Tensor) and t._grad_node is not None
                             and isinstance(t._grad_node, _OutputSaver) else t for t in args]
 
     def unwrap_original_inputs(self):
+        """Unwrap the stored inputs by recovering saved tensors from _OutputSaver nodes."""
         new_args = [self.kwargs]
         for t in self.hybrid_args:
             if isinstance(t, _OutputSaver):
@@ -126,6 +128,7 @@ class _RecomputeState:
         return new_args
 
     def recover_inputs(self):
+        """Recover inputs from saved state for recomputation during backward pass."""
         if self.input_node is not None:
             # pylint: disable=protected-access
             ctx = self.input_node._grad_node
@@ -141,7 +144,7 @@ class _PlaceHolder:
         pass
 
 
-class _create_placeholder_hook(saved_tensors_hooks):
+class _CreatePlaceholderHook(saved_tensors_hooks):
     """
     Placeholder hook for forward function which need recompute.
     """
@@ -159,7 +162,7 @@ class _create_placeholder_hook(saved_tensors_hooks):
                 new_inputs = state.recover_inputs()
                 prev_grad_flag = _pynative_executor.grad_flag()
                 _pynative_executor.set_grad_flag(True)
-                with _recomputation_hook(weakref.ref(state), engine_id):
+                with _RecomputationHook(weakref.ref(state), engine_id):
                     state.recompute_fn(*new_inputs)
                 _pynative_executor.set_grad_flag(prev_grad_flag)
                 state.is_recomputed[engine_id] = True
@@ -171,7 +174,7 @@ class _create_placeholder_hook(saved_tensors_hooks):
         super().__init__(pack, unpack)
 
 
-class _recomputation_hook(saved_tensors_hooks):
+class _RecomputationHook(saved_tensors_hooks):
     """
     Recompute hook for saved tensor which need get activation value.
     """
@@ -180,7 +183,8 @@ class _recomputation_hook(saved_tensors_hooks):
             # pylint: disable=protected-access
             x = ops.stop_gradient(x) if x._requires_grad else x
             state = weak_state()
-            assert state is not None
+            if state is None:
+                raise RuntimeError("Recompute state has been garbage collected unexpectedly.")
             current_idx = state.placeholder_counter[engine_id]
             state.placeholder_counter[engine_id] += 1
             if current_idx >= len(state.placeholders):
@@ -493,7 +497,7 @@ def recompute_without_reentrant(block, output_recompute, *args, **kwargs):
     else:
         state.wrap_original_inputs(*args, **kwargs)
 
-    with _create_placeholder_hook(state):
+    with _CreatePlaceholderHook(state):
         return wrapper_block(*args, **kwargs)
 
 
