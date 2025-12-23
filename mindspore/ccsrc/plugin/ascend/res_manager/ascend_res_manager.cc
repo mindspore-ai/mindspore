@@ -90,25 +90,9 @@ REGISTER_COMMON_CALLBACK(GetCommName);
 using Callback = std::function<void(void)>;
 typedef HcclResult (*HcclSetConfigFunc)(HcclConfig, HcclConfigValue);
 std::mutex set_opt_mutex;
-std::string GetAscendPath() {
-  Dl_info info;
-  if (dladdr(reinterpret_cast<void *>(aclrtMalloc), &info) == 0) {
-    MS_LOG(ERROR) << "Get dladdr failed.";
-    return "";
-  }
-  auto path_tmp = std::string(info.dli_fname);
-  const std::string kLatest = "latest";
-  auto pos = path_tmp.find(kLatest);
-  if (pos == std::string::npos) {
-    MS_EXCEPTION(ValueError)
-      << "Get ascend path failed, please check whether CANN packages are installed correctly, \n"
-         "and environment variables are set by source ${LOCAL_ASCEND}/ascend-toolkit/set_env.sh.";
-  }
-  return path_tmp.substr(0, pos) + kLatest + "/";
-}
 
 void *GetAclFunc(const std::string &lib_path, const std::string &func_name) {
-  static auto ascend_path = GetAscendPath();
+  static auto ascend_path = device::ascend::GetAscendPath();
   auto load_path = ascend_path + "/lib64/" + lib_path;
 
   auto handler = dlopen(load_path.c_str(), RTLD_LAZY);
