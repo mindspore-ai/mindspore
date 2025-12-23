@@ -28,6 +28,7 @@
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "ir/dtype/tensor_type.h"
 #include "include/utils/pynative/abstract_converter.h"
+#include "ops_utils/op_utils.h"
 ${ops_inc}
 
 namespace mindspore {

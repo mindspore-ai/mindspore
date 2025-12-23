@@ -8,7 +8,8 @@ NodePtr NativeFunc::${func_name}(${call_args_with_type}) {
 #ifndef ENABLE_TEST
   static bool is_kernel_register =
     (kernel::pyboost::PyBoostUtils::IsKernelModRegistered(device_target_, "${func_name}") ||
-    kernel::pyboost::PyBoostUtils::IsPyBoostCustomRegistered(device_target_, "${func_name}"));
+    kernel::pyboost::PyBoostUtils::IsPyBoostCustomRegistered(device_target_, "${func_name}")) ||
+    (ops::IsOpPluginKernel("${func_name}") && device_target_ == device::DeviceType::kCPU);
   if (is_kernel_register) {
     // Run op
     ${convert_body}

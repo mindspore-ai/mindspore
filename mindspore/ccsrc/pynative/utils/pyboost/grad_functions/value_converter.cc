@@ -21,6 +21,7 @@
 #include <vector>
 #include <memory>
 #include "include/pynative/utils/pyboost/auto_generate/contiguous.h"
+#include "ops_utils/op_utils.h"
 
 namespace mindspore::runtime {
 namespace {
@@ -109,16 +110,16 @@ std::optional<int64_t> ValueConverter::ToBasicIntOptional(const ValuePtr &input)
 
 tensor::TensorPtr ValueConverter::ContiguousTensorValue(device::DeviceType device_target,
                                                         const tensor::TensorPtr &tensor) {
-  if (device_target == device::DeviceType::kAscend) {
+  static bool op_plugin_loaded = ops::GetOpPluginHandle() != nullptr;
+  if (device_target == device::DeviceType::kAscend || (op_plugin_loaded && device_target == device::DeviceType::kCPU)) {
     return tensor;
   }
-
   return GetContiguousTensor(device_target, tensor);
 }
-
 ValueTuplePtr ValueConverter::ContiguousTensorValue(device::DeviceType device_target, const ValueTuplePtr &tuple) {
   MS_EXCEPTION_IF_NULL(tuple);
-  if (device_target == device::DeviceType::kAscend) {
+  static bool op_plugin_loaded = ops::GetOpPluginHandle() != nullptr;
+  if (device_target == device::DeviceType::kAscend || (op_plugin_loaded && device_target == device::DeviceType::kCPU)) {
     return tuple;
   }
 

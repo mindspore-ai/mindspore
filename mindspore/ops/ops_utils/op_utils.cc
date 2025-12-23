@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string>
 #include <utility>
@@ -1172,63 +1173,50 @@ bool IsEnableHostNode(const AnfNodePtr &node) {
 }
 
 void *GetOpPluginHandle() {
-  static bool is_initialized = false;
+  static std::once_flag init_flag;
   static void *handle = nullptr;
-  if (is_initialized) {
-    return handle;
-  }
+  std::call_once(init_flag, []() {
+    const char *op_plugin_path = common::EnvHelper::GetInstance()->GetEnv("MS_OP_PLUGIN_PATH");
 
-  is_initialized = true;
-  const char *op_plugin_path = common::EnvHelper::GetInstance()->GetEnv("MS_OP_PLUGIN_PATH");
+    if (op_plugin_path == nullptr) {
+      MS_LOG(INFO) << "MS_OP_PLUGIN_PATH is not set. Op plugin will not be loaded.";
+      return;
+    }
 
-  if (op_plugin_path == nullptr) {
-    MS_LOG(INFO) << "MS_OP_PLUGIN_PATH is not set. Op plugin will not be loaded.";
-    return nullptr;
-  }
-
-  auto real_path = FileUtils::GetRealPath(op_plugin_path).value_or("");
-  if (real_path.empty()) {
-    MS_LOG(ERROR) << "Failed to resolve the real path for MS_OP_PLUGIN_PATH: " << op_plugin_path;
-    return nullptr;
-  }
-  handle = DL_OPEN(real_path);
-  if (handle == nullptr) {
-    MS_LOG(WARNING) << "Failed to open op plugin file: " << real_path << " Error code: " << DL_ERROR();
-  }
-
+    auto real_path = FileUtils::GetRealPath(op_plugin_path).value_or("");
+    if (real_path.empty()) {
+      MS_LOG(ERROR) << "Failed to resolve the real path for MS_OP_PLUGIN_PATH: " << op_plugin_path;
+      return;
+    }
+    handle = DL_OPEN(real_path);
+    if (handle == nullptr) {
+      MS_LOG(WARNING) << "Failed to open op plugin file: " << real_path << " Error code: " << DL_ERROR();
+    }
+    MS_LOG(INFO) << "Op plugin loaded successfully from path: " << real_path;
+  });
   return handle;
 }
 
 bool IsOpPluginKernel(const std::string &op_name) {
-  static bool initialized = false;
-  static bool (*reg_func)(const char *) = nullptr;
-  if (!initialized) {
-    initialized = true;
-    void *handle = GetOpPluginHandle();
-    if (handle == nullptr) {
-      return false;
-    }
-    constexpr auto reg_func_name = "IsKernelRegistered";
-    reg_func = reinterpret_cast<std::add_pointer<bool(const char *)>::type>(DL_SYM(handle, reg_func_name));
-    if (reg_func == nullptr) {
-      MS_LOG(WARNING) << "Error occurs when fetching function '" << reg_func_name
-                      << "' from op plugin library. Error code: " << DL_ERROR();
-      return false;
-    }
+  static const std::unordered_set<std::string> *op_names_cache = nullptr;
+  static std::once_flag cache_flag;
+  std::call_once(cache_flag, []() { op_names_cache = &GetAllOpPluginKernelNames(); });
+  // Early return if no plugins are loaded (empty set)
+  if (op_names_cache->empty()) {
+    return false;
   }
-  return reg_func != nullptr && reg_func(op_name.c_str());
+  return op_names_cache->find(op_name) != op_names_cache->end();
 }
 
 const std::unordered_set<std::string> &GetAllOpPluginKernelNames() {
-  static bool initialized = false;
+  static std::once_flag init_flag;
   static int (*get_op_count)() = nullptr;
   static char **(*get_all_ops)() = nullptr;
   static std::unordered_set<std::string> op_names;
-  if (!initialized) {
-    initialized = true;
+  std::call_once(init_flag, []() {
     void *handle = GetOpPluginHandle();
     if (handle == nullptr) {
-      return op_names;
+      return;
     }
     constexpr auto get_op_count_func_name = "GetRegisteredOpCount";
     constexpr auto get_all_ops_func_name = "GetAllRegisteredOps";
@@ -1237,14 +1225,14 @@ const std::unordered_set<std::string> &GetAllOpPluginKernelNames() {
     if (get_op_count == nullptr || get_all_ops == nullptr) {
       MS_LOG(WARNING) << "Error occurs when fetching function '" << get_op_count_func_name << "' or '"
                       << get_all_ops_func_name << "' from op plugin library. Error code: " << DL_ERROR();
-      return op_names;
+      return;
     }
     int op_count = get_op_count();
     char **op_names_ptr = get_all_ops();
     for (int i = 0; i < op_count; ++i) {
       op_names.insert(std::string(op_names_ptr[i]));
     }
-  }
+  });
   return op_names;
 }
 }  // namespace ops
