@@ -139,6 +139,10 @@ tensor::TensorPtr PyBoostUtils::ScalarToTensor(const ScalarPtr &scalar, const Ty
       return tensor::from_scalar(GetValue<float>(scalar), tensor_dtype);
     case kNumberTypeFloat64:
       return tensor::from_scalar(GetValue<double>(scalar), tensor_dtype);
+    case kNumberTypeFloat16:
+      return tensor::from_scalar(GetValue<float16>(scalar), tensor_dtype);
+    case kNumberTypeBFloat16:
+      return tensor::from_scalar(GetValue<bfloat16>(scalar), tensor_dtype);
     default:
       MS_LOG(EXCEPTION) << "When convert scalar to tensor, the scalar type: " << data_type << " is invalid.";
   }
