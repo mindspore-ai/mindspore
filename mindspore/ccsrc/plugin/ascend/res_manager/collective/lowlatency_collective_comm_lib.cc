@@ -30,7 +30,7 @@ LowlatencyCollectiveCommLib::LowlatencyCollectiveCommLib() { global_group_name_ 
 
 bool LowlatencyCollectiveCommLib::Initialize(uint32_t global_rank, uint32_t global_rank_size, uint32_t local_rank_id) {
   if (initialized_) {
-    return false;
+    MS_LOG(WARNING) << "LowlatencyCollectiveCommLib has already been init.";
   }
 
   global_rank_id_ = global_rank;
