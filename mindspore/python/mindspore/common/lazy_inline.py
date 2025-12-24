@@ -39,8 +39,8 @@ def lazy_inline(fn=None, attrs=None, policy=None):
           reduce compilation time, and this decorator is only allowed to configure on the outermost cell.
 
     Args:
-        fn (function, optional): `__init__` function of a cell. Default: `` None``.
-        attrs (Union[list[string], string], optional): The attributes list to add for the cell. Default: `` None``.
+        fn (function, optional): `__init__` function of a cell. Default: ``None``.
+        attrs (Union[list[string], string], optional): The attributes list to add for the cell. Default: ``None``.
         policy (Union[None, "front"], optional): The policy of inline. Default is ``None``.
 
             - ``None``: The cell will be compiled to sub graph and will not be inline.

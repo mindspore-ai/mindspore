@@ -16,8 +16,8 @@ mindspore.ops.Qr
           将 `x` 的shape定义为 :math:`(..., m, n)` ，p定义为m和n的最小值。
 
     输出：
-        - **q** (Tensor) - `x` 的正交矩阵。如果 `full_matrices` 为True，则shape为 :math:`(m, m)` ，否则shape为 :math:`(m, p)` 。 `q` 的数据类型与 `x` 相同。
-        - **r** (Tensor) - `x` 的上三角形矩阵。如果 `full_matrices` 为True，则shape为 :math:`(m, n)` ，否则shape为 :math:`(p, n)` 。 `r` 的数据类型与 `x` 相同。
+        - **q** (Tensor) - `x` 的正交矩阵。如果 `full_matrices` 为 ``True``，则shape为 :math:`(m, m)` ，否则shape为 :math:`(m, p)` 。 `q` 的数据类型与 `x` 相同。
+        - **r** (Tensor) - `x` 的上三角形矩阵。如果 `full_matrices` 为 ``True``，则shape为 :math:`(m, n)` ，否则shape为 :math:`(p, n)` 。 `r` 的数据类型与 `x` 相同。
 
     异常：
         - **TypeError** - `x` 不是Tensor。

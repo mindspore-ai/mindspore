@@ -34,7 +34,7 @@ mindspore.ops.ParameterizedTruncatedNormal
         - **TypeError** - `shape` 、 `mean` 、 `stdevs` 、 `min` 和 `max` 数据类型不支持。
         - **TypeError** - `mean` 、 `stdevs` 、 `min` 和 `max` 的shape不一致。
         - **TypeError** - `shape` 、 `mean` 、 `stdevs` 、 `min` 和 `max` 不全是Tensor。
-        - **ValueError** -  当其 `shape` 为 :math:`(batch\_size, *)` 时， `mean` 、 `stdevs` 、 `min` 或者 `max` 的shape不是 :math:`()` 或者 :math:`(batch\_size, )` 。
+        - **ValueError** - 当其 `shape` 为 :math:`(batch\_size, *)` 时， `mean` 、 `stdevs` 、 `min` 或者 `max` 的shape不是 :math:`()` 或者 :math:`(batch\_size, )` 。
         - **ValueError** - `shape` 的元素不全大于零。
         - **ValueError** - `stdevs` 的值不全大于零。
         - **ValueError** - `shape` 的元素个数小于2。

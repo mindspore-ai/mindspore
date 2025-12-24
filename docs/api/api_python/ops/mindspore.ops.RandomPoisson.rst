@@ -18,7 +18,7 @@ mindspore.ops.RandomPoisson
     参数：
         - **seed** (int，可选) - 算子层的随机种子，用于生成随机数。必须是非负的。默认值： ``0`` 。
         - **seed2** (int，可选) - 全局的随机种子，和算子层的随机种子共同决定最终生成的随机数。必须是非负的。默认值： ``0`` 。
-        - **dtype** (mindspore.dtype，可选) - 输出数据类型， 默认值： ``mstype.int64`` 。
+        - **dtype** (mindspore.dtype，可选) - 输出数据类型，默认值： ``mstype.int64`` 。
 
     输入：
         - **shape** (tuple) - 待生成的随机Tensor的shape，是一个一维Tensor。数据类型为int32或int64。
