@@ -30,15 +30,15 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameRangeV2 = "RangeV2";
 /// \brief Creates a sequence of numbers in range [start, limit) with step size delta.
-class RangeV2 : public BaseOperator {
+class OPS_API RangeV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RangeV2);
   /// \brief Constructor.
   RangeV2() : BaseOperator(kNameRangeV2) {}
 };
 
-abstract::AbstractBasePtr RangeV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr RangeV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimRangeV2Ptr = std::shared_ptr<RangeV2>;
 }  // namespace ops
 }  // namespace mindspore

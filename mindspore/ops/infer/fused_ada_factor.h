@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameFusedAdaFactor = "FusedAdaFactor";
 constexpr auto kNameFusedAdaFactorWithGlobalNorm = "FusedAdaFactorWithGlobalNorm";
 /// \brief FusedAdaFactor operation. Refer to Python API @ref mindspore.ops.FusedAdaFactor for more details.
-class FusedAdaFactor : public BaseOperator {
+class OPS_API FusedAdaFactor : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FusedAdaFactor);
   /// \brief Constructor.
@@ -63,15 +63,16 @@ class FusedAdaFactor : public BaseOperator {
 
 /// \brief FusedAdaFactorWithGlobalNorm operation. Refer to Python API @ref mindspore.ops.FusedAdaFactorWithGlobalNorm
 /// for more details.
-class FusedAdaFactorWithGlobalNorm : public FusedAdaFactor {
+class OPS_API FusedAdaFactorWithGlobalNorm : public FusedAdaFactor {
  public:
   MIND_API_BASE_MEMBER(FusedAdaFactorWithGlobalNorm);
   /// \brief Constructor.
   FusedAdaFactorWithGlobalNorm() : FusedAdaFactor(kNameFusedAdaFactorWithGlobalNorm) {}
 };
 
-abstract::AbstractBasePtr FusedAdaFactorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr FusedAdaFactorInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseApplyFtrl = "SparseApplyFtrl";
 /// \brief SparseApplyFtrl operation. Refer to Python API @ref mindspore.ops.SparseApplyFtrl for more details.
-class SparseApplyFtrl : public BaseOperator {
+class OPS_API SparseApplyFtrl : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseApplyFtrl);
   /// \brief Constructor.
@@ -74,8 +74,9 @@ class SparseApplyFtrl : public BaseOperator {
   bool get_use_locking() const;
 };
 
-abstract::AbstractBasePtr SparseApplyFtrlInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SparseApplyFtrlInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

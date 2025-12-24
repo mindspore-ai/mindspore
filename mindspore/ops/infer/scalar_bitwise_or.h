@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief
-class bit_or : public BaseOperator {
+class OPS_API bit_or : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(bit_or);
   /// \brief Constructor.

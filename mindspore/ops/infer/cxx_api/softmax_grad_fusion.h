@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftmaxGradFusion = "SoftmaxGradFusion";
 /// \brief SoftmaxGradFusion.
-class SoftmaxGradFusion : public BaseOperator {
+class OPS_API SoftmaxGradFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SoftmaxGradFusion);
   /// \brief Constructor.

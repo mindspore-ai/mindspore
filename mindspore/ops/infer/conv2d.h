@@ -21,7 +21,6 @@
 #include <string>
 #include <vector>
 
-#include "mindapi/base/macros.h"
 #include "mindapi/base/format.h"
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
@@ -30,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2D = "Conv2D";
 /// \brief 2D convolution layer. Refer to Python API @ref mindspore.ops.Conv2D for more details.
-class Conv2D : public BaseOperator {
+class OPS_API Conv2D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Conv2D);
   /// \brief Constructor.

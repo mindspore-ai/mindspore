@@ -23,7 +23,7 @@
 
 namespace mindspore::ops {
 /// \brief Implementation of InferShape and InferType functions for operator 'ImagView'
-class ImagViewFuncImpl : public RealViewFuncImpl {};
+class OPS_API ImagViewFuncImpl : public RealViewFuncImpl {};
 }  // namespace mindspore::ops
 
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_IMAG_VIEW_H_

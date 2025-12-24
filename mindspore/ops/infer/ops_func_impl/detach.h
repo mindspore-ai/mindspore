@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class DetachFuncImpl : public CopyToDeviceFuncImpl {};
+class OPS_API DetachFuncImpl : public CopyToDeviceFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

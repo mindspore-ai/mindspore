@@ -29,15 +29,15 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameAvgPoolV1 = "AvgPoolV1";
 /// \brief Average pooling operation. Refer to Python API @ref mindspore.ops.AvgPoolV1 for more details.
-class AvgPoolV1 : public BaseOperator {
+class OPS_API AvgPoolV1 : public BaseOperator {
  public:
   /// \brief Constructor.
   AvgPoolV1() : BaseOperator(kNameAvgPoolV1) { InitIOName({"value"}, {"output"}); }
   MIND_API_BASE_MEMBER(AvgPoolV1);
 };
 
-abstract::AbstractBasePtr AvgPoolV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr AvgPoolV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<AbstractBasePtr> &input_args);
 using PrimAvgPoolV1Ptr = std::shared_ptr<AvgPoolV1>;
 }  // namespace ops
 }  // namespace mindspore

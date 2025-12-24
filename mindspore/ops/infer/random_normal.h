@@ -24,7 +24,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameRandomNormal = "RandomNormal";
 /// \brief RandomNormal defined RandomNormal operator prototype of lite.
-class RandomNormal : public BaseOperator {
+class OPS_API RandomNormal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RandomNormal);
   /// \brief Constructor.

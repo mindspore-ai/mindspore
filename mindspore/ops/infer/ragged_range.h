@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameRaggedRange = "RaggedRange";
 /// \brief RaggedRange operator prototype.
-class RaggedRange : public BaseOperator {
+class OPS_API RaggedRange : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RaggedRange);
   /// \brief Constructor
@@ -39,8 +39,8 @@ class RaggedRange : public BaseOperator {
   /// \brief Method to init the op.
   void Init() const {}
 };
-abstract::AbstractBasePtr RaggedRangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr RaggedRangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimRaggedRangePtr = std::shared_ptr<RaggedRange>;
 }  // namespace ops
 }  // namespace mindspore

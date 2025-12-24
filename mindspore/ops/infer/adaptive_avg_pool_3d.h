@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAdaptiveAvgPool3D = "AdaptiveAvgPool3D";
-class AdaptiveAvgPool3D : public BaseOperator {
+class OPS_API AdaptiveAvgPool3D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AdaptiveAvgPool3D);
   AdaptiveAvgPool3D() : BaseOperator(kNameAdaptiveAvgPool3D) { InitIOName({"x"}, {"y"}); }

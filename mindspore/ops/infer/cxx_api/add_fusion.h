@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameAddFusion = "AddFusion";
 /// \brief AddFusion defined Add operator prototype of lite.
-class AddFusion : public BaseOperator {
+class OPS_API AddFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AddFusion);
   /// \brief Constructor.

@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameUnsortedSegmentMin = "UnsortedSegmentMin";
 /// \brief Computes the min of a tensor along segments.
 /// Refer to Python API @ref mindspore.ops.UnsortedSegmentMin for more details.
-class UnsortedSegmentMin : public BaseOperator {
+class OPS_API UnsortedSegmentMin : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(UnsortedSegmentMin);
   /// \brief Constructor.

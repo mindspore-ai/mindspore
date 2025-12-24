@@ -24,13 +24,13 @@
 
 namespace mindspore {
 namespace ops {
-class ViewAsFuncImpl : public OpFuncImpl {
+class OPS_API ViewAsFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   bool GeneralInferRegistered() const override { return true; };
 };
-class ViewAsViewFuncImpl : public ViewAsFuncImpl {};
+class OPS_API ViewAsViewFuncImpl : public ViewAsFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

@@ -44,7 +44,7 @@ enum PagedAttentionMaskInputIndex : size_t {
   kPagedAttentionMaskInputsNum
 };
 
-class PagedAttentionMaskFuncImpl : public OpFuncImpl {
+class OPS_API PagedAttentionMaskFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

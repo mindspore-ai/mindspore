@@ -27,14 +27,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPoolGrad = "MaxPoolGrad";
-class MaxPoolGrad : public PoolGrad {
+class OPS_API MaxPoolGrad : public PoolGrad {
  public:
   MIND_API_BASE_MEMBER(MaxPoolGrad);
   MaxPoolGrad() : PoolGrad(kNameMaxPoolGrad) { InitIOName({"x_origin", "out_origin", "grad"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr MaxPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MaxPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMaxPoolGradPtr = std::shared_ptr<MaxPoolGrad>;
 }  // namespace ops
 }  // namespace mindspore

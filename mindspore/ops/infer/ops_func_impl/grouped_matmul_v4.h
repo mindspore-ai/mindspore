@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class GroupedMatmulV4FuncImpl final : public GroupedMatmulBaseFuncImpl {
+class OPS_API GroupedMatmulV4FuncImpl final : public GroupedMatmulBaseFuncImpl {
  public:
   GroupedMatmulV4FuncImpl() {
     idxes_.x = 0;

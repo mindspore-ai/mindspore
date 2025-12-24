@@ -30,7 +30,7 @@ constexpr auto kNameMatrixDiagPartV3 = "MatrixDiagPartV3";
 
 /// \brief Returns the batched diagonal part of a batched tensor.
 /// Refer to Python API @ref mindspore.ops.MatrixDiagPartV3 for more details.
-class MatrixDiagPartV3 : public BaseOperator {
+class OPS_API MatrixDiagPartV3 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixDiagPartV3);
   /// \brief Constructor.
@@ -43,8 +43,9 @@ class MatrixDiagPartV3 : public BaseOperator {
   std::string get_align() const;
 };
 
-abstract::AbstractBasePtr MatrixDiagPartV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MatrixDiagPartV3Infer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimMatrixDiagPartV3Ptr = std::shared_ptr<MatrixDiagPartV3>;
 }  // namespace ops

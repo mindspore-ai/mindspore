@@ -26,13 +26,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamekBNTrainingReduce = "BNTrainingReduce";
-class BNTrainingReduce : public BaseOperator {
+class OPS_API BNTrainingReduce : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BNTrainingReduce);
   BNTrainingReduce() : BaseOperator(kNamekBNTrainingReduce) { InitIOName({"x"}, {"sum", "square_sum"}); }
 };
-abstract::AbstractBasePtr BNTrainingReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr BNTrainingReduceInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimBNTrainingReduce = std::shared_ptr<BNTrainingReduce>;
 }  // namespace ops
 }  // namespace mindspore

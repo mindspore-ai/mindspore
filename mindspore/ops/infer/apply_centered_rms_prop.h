@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyCenteredRMSProp = "ApplyCenteredRMSProp";
-class ApplyCenteredRMSProp : public BaseOperator {
+class OPS_API ApplyCenteredRMSProp : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyCenteredRMSProp);
   ApplyCenteredRMSProp() : BaseOperator(kNameApplyCenteredRMSProp) {
@@ -37,8 +37,9 @@ class ApplyCenteredRMSProp : public BaseOperator {
       {"var", "mean_gradient", "mean_square", "moment"});
   }
 };
-abstract::AbstractBasePtr ApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ApplyCenteredRMSPropInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyCenteredRMSPropPtr = std::shared_ptr<ApplyCenteredRMSProp>;
 }  // namespace ops
 }  // namespace mindspore

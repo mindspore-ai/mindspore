@@ -27,15 +27,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePadV3 = "PadV3";
-class PadV3 : public BaseOperator {
+class OPS_API PadV3 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(PadV3);
   PadV3() : BaseOperator(kNamePadV3) { InitIOName({"x", "paddings", "constant_values"}, {"y"}); }
   std::string get_mode() const;
   bool get_paddings_contiguous() const;
 };
-abstract::AbstractBasePtr PadV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr PadV3Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

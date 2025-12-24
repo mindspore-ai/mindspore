@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameSplice = "Splice";
 /// \brief All defined All operator prototype of lite.
-class Splice : public BaseOperator {
+class OPS_API Splice : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Splice);
   /// \brief Constructor.
@@ -69,8 +69,8 @@ class Splice : public BaseOperator {
   /// \param[in] output_dim Define the output_dim.
   int64_t get_output_dim() const;
 };
-abstract::AbstractBasePtr SpliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SpliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameL2NormalizeFusion = "L2NormalizeFusion";
 /// \brief L2NormalizeFusion defined L2Normalize operator prototype of lite.
-class L2NormalizeFusion : public L2Normalize {
+class OPS_API L2NormalizeFusion : public L2Normalize {
  public:
   MIND_API_BASE_MEMBER(L2NormalizeFusion);
   /// \brief Constructor.

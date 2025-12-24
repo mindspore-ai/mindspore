@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class QuantbatchmatmulSplitOut3FuncImpl : public OpFuncImpl {
+class OPS_API QuantbatchmatmulSplitOut3FuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

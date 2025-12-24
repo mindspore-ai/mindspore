@@ -29,14 +29,14 @@ namespace ops {
 constexpr auto kNameIndexFill = "IndexFill";
 /// \brief Fill self tensor with input values.
 /// Refer to Python API @ref mindspore.ops.IndexFill for more details.
-class IndexFill : public BaseOperator {
+class OPS_API IndexFill : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(IndexFill);
   IndexFill() : BaseOperator(kNameIndexFill) { InitIOName({"x", "dim", "index", "value"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr IndexFillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr IndexFillInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

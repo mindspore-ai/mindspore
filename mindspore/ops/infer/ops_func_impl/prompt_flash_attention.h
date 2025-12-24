@@ -48,7 +48,7 @@ enum PromptFlashAttentionOutputIndex : size_t {
   kPromptFlashAttentionOutputAttentionOutIndex = 0,
   kPromptFlashAttentionOutputsNum,
 };
-class PromptFlashAttentionFuncImpl : public OpFuncImpl {
+class OPS_API PromptFlashAttentionFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kRandomChoiceWithMask = "RandomChoiceWithMask";
-class RandomChoiceWithMask : public BaseOperator {
+class OPS_API RandomChoiceWithMask : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RandomChoiceWithMask);
   RandomChoiceWithMask() : BaseOperator(kRandomChoiceWithMask) { InitIOName({"input_x"}, {"y", "mask"}); }

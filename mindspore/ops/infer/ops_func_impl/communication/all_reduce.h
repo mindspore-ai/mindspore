@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kAllReduce = "AllReduce";
 
-class AllReduce : public BaseOperator {
+class OPS_API AllReduce : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AllReduce);
   AllReduce() : BaseOperator(kAllReduce) { InitIOName({"x"}, {"output"}); }

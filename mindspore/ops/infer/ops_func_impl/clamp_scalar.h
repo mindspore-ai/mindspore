@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class ClampScalarFuncImpl : public OpFuncImpl {
+class OPS_API ClampScalarFuncImpl : public OpFuncImpl {
  public:
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

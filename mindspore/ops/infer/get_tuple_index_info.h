@@ -19,7 +19,6 @@
 
 #include <vector>
 #include <string>
-#include "mindapi/base/macros.h"
 #include "ops/base_operator.h"
 #include "utils/check_convert_utils.h"
 

@@ -23,7 +23,7 @@
 
 namespace mindspore::ops {
 /// \brief Implementation of InferShape and InferType functions for operator 'NarrowView'
-class NarrowViewFuncImpl : public NarrowFuncImpl {};
+class OPS_API NarrowViewFuncImpl : public NarrowFuncImpl {};
 }  // namespace mindspore::ops
 
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_NARROW_VIEW_H_

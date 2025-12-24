@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNegGrad = "NegGrad";
-class NegGrad : public BaseOperator {
+class OPS_API NegGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(NegGrad);
   NegGrad() : BaseOperator(kNameNegGrad) {}

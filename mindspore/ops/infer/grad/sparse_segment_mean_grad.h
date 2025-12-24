@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseSegmentMeanGrad = "SparseSegmentMeanGrad";
-class SparseSegmentMeanGrad : public BaseOperator {
+class OPS_API SparseSegmentMeanGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseSegmentMeanGrad);
   SparseSegmentMeanGrad() : BaseOperator(kNameSparseSegmentMeanGrad) {
@@ -37,8 +37,9 @@ class SparseSegmentMeanGrad : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr SparseSegmentMeanGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SparseSegmentMeanGradInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSparseSegmentMeanGradPtr = std::shared_ptr<SparseSegmentMeanGrad>;
 }  // namespace ops
 }  // namespace mindspore

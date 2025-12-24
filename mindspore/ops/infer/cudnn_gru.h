@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCudnnGRU = "CudnnGRU";
-class CudnnGRU : public BaseOperator {
+class OPS_API CudnnGRU : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CudnnGRU);
 

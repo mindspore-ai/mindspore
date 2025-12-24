@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class ToDtypeFuncImpl : public OpFuncImpl {};
+class OPS_API ToDtypeFuncImpl : public OpFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_OPS_INFER_OPS_FUNC_IMPL_TO_DTYPE_H_

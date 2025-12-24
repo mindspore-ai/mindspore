@@ -28,7 +28,7 @@ constexpr auto kNameTensorScatterMin = "TensorScatterMin";
 /// \brief By comparing the value at the position indicated by the index in input_x with the value in the updates, the
 /// value at the index will eventually be equal to the smallest one to create a new tensor. Refer to Python API @ref
 /// mindspore.ops.TensorScatterMin for more details.
-class TensorScatterMin : public BaseOperator {
+class OPS_API TensorScatterMin : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorScatterMin);
   /// \brief Constructor.

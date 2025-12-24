@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameSquaredDifference = "SquaredDifference";
 /// \brief Subtracts the second input tensor from the first input tensor element-wise and returns square of it.
 /// Refer to Python API @ref mindspore.ops.SquaredDifference for more details.
-class SquaredDifference : public BaseOperator {
+class OPS_API SquaredDifference : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SquaredDifference);
   /// \brief Constructor.
@@ -35,8 +35,9 @@ class SquaredDifference : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr SquaredDifferenceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SquaredDifferenceInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSquaredDifferencePtr = std::shared_ptr<SquaredDifference>;
 }  // namespace ops
 }  // namespace mindspore

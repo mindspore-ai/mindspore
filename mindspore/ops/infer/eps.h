@@ -25,7 +25,7 @@ namespace ops {
 constexpr auto kNameEps = "Eps";
 /// \brief Creates a new tensor. The values of all elements are minimum values of the data type.
 /// Refer to Python API @ref mindspore.ops.OnesLike for more details.
-class Eps : public BaseOperator {
+class OPS_API Eps : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Eps);
   /// \brief Constructor.

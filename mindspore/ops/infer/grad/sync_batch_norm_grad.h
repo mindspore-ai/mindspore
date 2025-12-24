@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSyncBatchNormGrad = "SyncBatchNormGrad";
-class SyncBatchNormGrad : public BaseOperator {
+class OPS_API SyncBatchNormGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SyncBatchNormGrad);
   /// \brief Constructor.
@@ -43,8 +43,9 @@ class SyncBatchNormGrad : public BaseOperator {
   void set_device_num(const int64_t device_num);
 };
 
-abstract::AbstractBasePtr SyncBatchNormGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SyncBatchNormGradInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

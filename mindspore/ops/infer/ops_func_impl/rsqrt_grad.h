@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class RsqrtGradFuncImpl : public OpFuncImpl {
+class OPS_API RsqrtGradFuncImpl : public OpFuncImpl {
  public:
   RsqrtGradFuncImpl() = default;
   ~RsqrtGradFuncImpl() = default;

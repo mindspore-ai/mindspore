@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameSpaceToBatchND = "SpaceToBatchND";
 /// \brief Divides spatial dimensions into blocks and combines the block size with the original batch.
 /// Refer to Python API @ref mindspore.ops.SpaceToBatchND for more details.
-class SpaceToBatchND : public BaseOperator {
+class OPS_API SpaceToBatchND : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SpaceToBatchND);
   /// \brief Constructor.
@@ -50,8 +50,9 @@ class SpaceToBatchND : public BaseOperator {
   /// \return paddings.
   std::vector<std::vector<int64_t>> get_paddings() const;
 };
-abstract::AbstractBasePtr SpaceToBatchNDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SpaceToBatchNDInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

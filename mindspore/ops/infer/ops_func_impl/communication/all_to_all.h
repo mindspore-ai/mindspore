@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kAlltoAll = "AlltoAll";
 
-class AlltoAll : public BaseOperator {
+class OPS_API AlltoAll : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AlltoAll);
   AlltoAll() : BaseOperator(kAlltoAll) { InitIOName({"x"}, {"output"}); }

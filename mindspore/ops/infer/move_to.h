@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMoveTo = "MoveTo";
 /// Refer to Python API @ref mindspore.ops.MoveTo for more details.
-class MoveTo : public BaseOperator {
+class OPS_API MoveTo : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MoveTo);
   /// \brief Constructor.

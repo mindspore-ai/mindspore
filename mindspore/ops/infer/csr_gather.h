@@ -29,14 +29,14 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameCSRGather = "CSRGather";
 /// \brief Returns the values of a CSRTensor indexed from a dense tensor using indptr and indices.
-class CSRGather : public BaseOperator {
+class OPS_API CSRGather : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CSRGather);
   /// \brief Constructor.
   CSRGather() : BaseOperator(kNameCSRGather) { InitIOName({"indptr", "indices", "dense", "dense_shape"}, {"output"}); }
 };
-abstract::AbstractBasePtr CSRGatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr CSRGatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

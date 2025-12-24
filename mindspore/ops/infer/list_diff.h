@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNameListDiff = "ListDiff";
 /// \brief Computes the difference between two lists of numbers.
 /// Refer to Python API @ref mindspore.ops.ListDiff for more details.
-class ListDiff : public BaseOperator {
+class OPS_API ListDiff : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ListDiff);
 

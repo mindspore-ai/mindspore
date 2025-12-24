@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class HistcExtFuncImpl : public OpFuncImpl {
+class OPS_API HistcExtFuncImpl : public OpFuncImpl {
  public:
   HistcExtFuncImpl() = default;
   ~HistcExtFuncImpl() = default;

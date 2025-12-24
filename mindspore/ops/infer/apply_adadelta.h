@@ -28,15 +28,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyAdadelta = "ApplyAdadelta";
-class ApplyAdadelta : public BaseOperator {
+class OPS_API ApplyAdadelta : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyAdadelta);
   ApplyAdadelta() : BaseOperator(kNameApplyAdadelta) {
     InitIOName({"var", "accum", "accum_update", "lr", "rho", "epsilon", "grad"}, {"var", "accum", "accum_update"});
   }
 };
-abstract::AbstractBasePtr ApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyAdadeltaPtr = std::shared_ptr<ApplyAdadelta>;
 }  // namespace ops
 }  // namespace mindspore

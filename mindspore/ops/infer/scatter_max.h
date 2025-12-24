@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScatterMax = "ScatterMax";
-class ScatterMax : public BaseOperator {
+class OPS_API ScatterMax : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScatterMax);
   /// \brief Constructor.

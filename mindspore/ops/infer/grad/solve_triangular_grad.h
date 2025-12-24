@@ -25,14 +25,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSolveTriangularGrad = "SolveTriangularGrad";
-class SolveTriangularGrad : public BaseOperator {
+class OPS_API SolveTriangularGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SolveTriangularGrad);
   SolveTriangularGrad() : BaseOperator(kNameSolveTriangularGrad) {}
   void Init() const {}
 };
-abstract::AbstractBasePtr SolveTriangularGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SolveTriangularGradInfer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SOLVE_TRIANGULAR_GRAD_H_

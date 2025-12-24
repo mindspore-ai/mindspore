@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSegmentMin = "SegmentMin";
-class SegmentMin : public BaseOperator {
+class OPS_API SegmentMin : public BaseOperator {
  public:
   SegmentMin() : BaseOperator(kNameSegmentMin) { InitIOName({"input_x", "segment_ids"}, {"output"}); }
   MIND_API_BASE_MEMBER(SegmentMin);

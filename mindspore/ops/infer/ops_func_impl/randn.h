@@ -23,7 +23,7 @@
 #include "infer/ops_func_impl/rand_ext.h"
 namespace mindspore {
 namespace ops {
-class RandnFuncImpl : public RandExtFuncImpl {};
+class OPS_API RandnFuncImpl : public RandExtFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

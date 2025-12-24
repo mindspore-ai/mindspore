@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNamePReLUFusion = "PReLUFusion";
 /// \brief PReLUFusion defined PReLU operator prototype of lite.
-class PReLUFusion : public BaseOperator {
+class OPS_API PReLUFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(PReLUFusion);
   /// \brief Constructor.

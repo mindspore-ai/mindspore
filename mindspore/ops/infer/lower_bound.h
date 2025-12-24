@@ -28,13 +28,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLowerBound = "LowerBound";
-class LowerBound : public BaseOperator {
+class OPS_API LowerBound : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LowerBound);
   LowerBound() : BaseOperator(kNameLowerBound) { InitIOName({"sorted_x", "values"}, {"y"}); }
 };
-abstract::AbstractBasePtr LowerBoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LowerBoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLowerBound = std::shared_ptr<LowerBound>;
 }  // namespace ops
 }  // namespace mindspore

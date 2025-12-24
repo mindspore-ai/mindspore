@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameEltwise = "Eltwise";
 /// \brief Eltwise defined Element-wise operator prototype.
-class Eltwise : public BaseOperator {
+class OPS_API Eltwise : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Eltwise);
   /// \brief Constructor.

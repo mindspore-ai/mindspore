@@ -30,7 +30,7 @@ constexpr auto kNameReshapeExt = "ReshapeExt";
 
 /// \brief ReshapeExt.
 /// Refer to Python API @ref mindspore.ops.ReshapeExt for more details.
-class ReshapeExt : public BaseOperator {
+class OPS_API ReshapeExt : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ReshapeExt);
   /// \brief Constructor.

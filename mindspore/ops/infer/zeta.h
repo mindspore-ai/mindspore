@@ -27,15 +27,15 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameZeta = "Zeta";
 
-class Zeta : public BaseOperator {
+class OPS_API Zeta : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Zeta);
   Zeta() : BaseOperator(kNameZeta) { InitIOName({"x", "q"}, {"z"}); }
   void Init() const {}
 };
 
-abstract::AbstractBasePtr ZetaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ZetaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_ZETA_H

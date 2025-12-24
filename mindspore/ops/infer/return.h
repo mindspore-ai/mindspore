@@ -22,7 +22,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameReturn = "Return";
 /// \brief Return op is the output node, which is only used in FuncGraph.
-class Return : public BaseOperator {
+class OPS_API Return : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Return);
   /// \brief Constructor.

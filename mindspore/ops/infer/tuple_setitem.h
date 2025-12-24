@@ -22,7 +22,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameTupleSetItem = "tuple_setitem";
 /// \brief RealTupleSetItem op is used to set one item to the specific position in the tuple.
-class tuple_setitem : public BaseOperator {
+class OPS_API tuple_setitem : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(tuple_setitem);
   /// \brief Constructor.

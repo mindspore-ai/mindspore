@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class InplaceSubExtFuncImpl : public InplaceBinaryFuncImpl {};
+class OPS_API InplaceSubExtFuncImpl : public InplaceBinaryFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

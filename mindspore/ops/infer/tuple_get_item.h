@@ -23,7 +23,7 @@ namespace ops {
 constexpr auto kNameTupleGetItem = "TupleGetItem";
 /// \brief TupleGetItem op is added to the multi-output node to describe which output of the node, which is only used
 /// in FuncGraph.
-class TupleGetItem : public BaseOperator {
+class OPS_API TupleGetItem : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TupleGetItem);
   /// \brief Constructor.

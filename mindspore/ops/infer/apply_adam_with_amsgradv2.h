@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyAdamWithAmsgradV2 = "ApplyAdamWithAmsgradV2";
-class ApplyAdamWithAmsgradV2 : public BaseOperator {
+class OPS_API ApplyAdamWithAmsgradV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyAdamWithAmsgradV2);
   ApplyAdamWithAmsgradV2() : BaseOperator(kNameApplyAdamWithAmsgradV2) {
@@ -38,9 +38,9 @@ class ApplyAdamWithAmsgradV2 : public BaseOperator {
   bool get_use_locking() const;
 };
 
-abstract::AbstractBasePtr ApplyAdamWithAmsgradV2Infer(const abstract::AnalysisEnginePtr &,
-                                                      const PrimitivePtr &primitive,
-                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ApplyAdamWithAmsgradV2Infer(const abstract::AnalysisEnginePtr &,
+                                                              const PrimitivePtr &primitive,
+                                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimApplyAdamWithAmsgradV2Ptr = std::shared_ptr<ApplyAdamWithAmsgradV2>;
 }  // namespace ops

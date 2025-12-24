@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameTensorScatterMul = "TensorScatterMul";
 /// \brief By multiple the value at the position indicated by the index in input_x with the value in the update, the
 /// value at the index will eventually be equal to the largest one to create a new tensor.
-class TensorScatterMul : public BaseOperator {
+class OPS_API TensorScatterMul : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorScatterMul);
   /// \brief Constructor.

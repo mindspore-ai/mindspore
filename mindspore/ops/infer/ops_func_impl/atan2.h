@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class Atan2FuncImpl : public BinaryOpFuncImpl {};
+class OPS_API Atan2FuncImpl : public BinaryOpFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

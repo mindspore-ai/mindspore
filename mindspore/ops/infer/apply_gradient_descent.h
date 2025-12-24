@@ -28,14 +28,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyGradientDescent = "ApplyGradientDescent";
-class ApplyGradientDescent : public BaseOperator {
+class OPS_API ApplyGradientDescent : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyGradientDescent);
   ApplyGradientDescent() : BaseOperator(kNameApplyGradientDescent) { InitIOName({"var", "alpha", "delta"}, {"var"}); }
 };
 
-abstract::AbstractBasePtr ApplyGradientDescentInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ApplyGradientDescentInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimApplyGradientDescentPtr = std::shared_ptr<ApplyGradientDescent>;
 }  // namespace ops

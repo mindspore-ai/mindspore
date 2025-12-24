@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameSize = "Size";
 /// \brief Returns the size of a tensor. Refer to Python API @ref mindspore.ops.Size for more details.
-class Size : public BaseOperator {
+class OPS_API Size : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Size);
   /// \brief Constructor.

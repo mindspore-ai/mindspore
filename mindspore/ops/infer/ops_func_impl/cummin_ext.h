@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-class CumminExtFuncImpl : public CumminFuncImpl {
+class OPS_API CumminExtFuncImpl : public CumminFuncImpl {
  public:
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;

@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameFusedSparseAdam = "FusedSparseAdam";
 /// \brief Softmax operation. Refer to Python API @ref mindspore.ops.Softmax for more details.
-class FusedSparseAdam : public BaseOperator {
+class OPS_API FusedSparseAdam : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FusedSparseAdam);
   /// \brief Constructor.
@@ -54,8 +54,9 @@ class FusedSparseAdam : public BaseOperator {
   bool get_use_nesterov() const;
 };
 
-abstract::AbstractBasePtr FusedSparseAdamInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr FusedSparseAdamInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

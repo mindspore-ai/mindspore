@@ -29,7 +29,7 @@ constexpr auto kNameScalarSummary = "ScalarSummary";
 
 /// \brief Outputs a scalar to a protocol buffer through a scalar summary operator.
 /// Refer to Python API @ref mindspore.ops.ScalarSummary for more details.
-class ScalarSummary : public BaseOperator {
+class OPS_API ScalarSummary : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScalarSummary);
   /// \brief Constructor.

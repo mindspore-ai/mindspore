@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kTruncatedNormal = "TruncatedNormal";
-class TruncatedNormal : public BaseOperator {
+class OPS_API TruncatedNormal : public BaseOperator {
   /// \brief Generates random numbers according to the truncatednormal random number distribution.
   /// Refer to Python API @ref mindspore.ops.Truncatednormal for more details.
  public:
@@ -53,8 +53,9 @@ class TruncatedNormal : public BaseOperator {
   int64_t get_seed2() const;
 };
 
-abstract::AbstractBasePtr TruncatedNormalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr TruncatedNormalInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimTruncatedNormalPtr = std::shared_ptr<TruncatedNormal>;
 }  // namespace ops
 }  // namespace mindspore

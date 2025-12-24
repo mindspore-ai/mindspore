@@ -30,7 +30,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPoolGradWithArgmaxV2 = "MaxPoolGradWithArgmaxV2";
 /// \brief Max pooling operation. Refer to Python API @ref mindspore.ops.MaxPoolGradWithArgmaxV2 for more details
-class MaxPoolGradWithArgmaxV2 : public BaseOperator {
+class OPS_API MaxPoolGradWithArgmaxV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaxPoolGradWithArgmaxV2);
   /// \brief Constructor

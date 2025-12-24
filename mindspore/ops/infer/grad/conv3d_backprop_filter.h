@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv3DBackpropFilter = "Conv3DBackpropFilter";
-class Conv3DBackpropFilter : public BaseOperator {
+class OPS_API Conv3DBackpropFilter : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Conv3DBackpropFilter);
   Conv3DBackpropFilter() : BaseOperator(kNameConv3DBackpropFilter) {

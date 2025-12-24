@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameSparseTensorDenseAdd = "SparseTensorDenseAdd";
 /// \brief Add a sparse tensor with a dense tensor.
 /// Refer to Python API @ref mindspore.ops.SparseTensorDenseAdd for more details.
-class SparseTensorDenseAdd : public BaseOperator {
+class OPS_API SparseTensorDenseAdd : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseTensorDenseAdd);
   /// \brief Constructor.

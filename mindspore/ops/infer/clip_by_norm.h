@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameClipByNorm = "ClipByNorm";
 /// \brief Clips tensor value to a maximum `L_2`-norm.
 /// Refer to Python API @ref mindspore.ops.ClipByNorm for more details.
-class ClipByNorm : public BaseOperator {
+class OPS_API ClipByNorm : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ClipByNorm);
   /// \brief Constructor.
@@ -43,8 +43,8 @@ class ClipByNorm : public BaseOperator {
   std::vector<int64_t> GetAxis() const;
 };
 
-abstract::AbstractBasePtr ClipByNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args_abs);
+OPS_API abstract::AbstractBasePtr ClipByNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args_abs);
 
 using ClipByNormPtr = std::shared_ptr<ClipByNorm>;
 }  // namespace ops

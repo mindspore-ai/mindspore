@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameConjugateTranspose = "ConjugateTranspose";
 /// \brief Permutes the dimensions of the input tensor according to input permutation.
-class ConjugateTranspose : public BaseOperator {
+class OPS_API ConjugateTranspose : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ConjugateTranspose);
   /// \brief Constructor.
@@ -34,8 +34,9 @@ class ConjugateTranspose : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr ConjugateTransposeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ConjugateTransposeInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -22,7 +22,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMakeTuple = "MakeTuple";
 /// \brief MakeTuple op is used to pack multiple nodes into a whole, which is only used in FuncGraph.
-class MakeTuple : public BaseOperator {
+class OPS_API MakeTuple : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MakeTuple);
   /// \brief Constructor.

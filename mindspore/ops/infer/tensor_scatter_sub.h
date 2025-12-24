@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameTensorScatterSub = "TensorScatterSub";
 /// \brief Creates a new tensor by subtracting the values from the positions in input_x indicated by indices, with
 /// values from updates. Refer to Python API @ref mindspore.ops.TensorScatterSub for more details.
-class TensorScatterSub : public BaseOperator {
+class OPS_API TensorScatterSub : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorScatterSub);
   /// \brief Constructor.

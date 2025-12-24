@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSigmoidCrossEntropyWithLogitsGrad = "SigmoidCrossEntropyWithLogitsGrad";
-class SigmoidCrossEntropyWithLogitsGrad : public BaseOperator {
+class OPS_API SigmoidCrossEntropyWithLogitsGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SigmoidCrossEntropyWithLogitsGrad);
   SigmoidCrossEntropyWithLogitsGrad() : BaseOperator(kNameSigmoidCrossEntropyWithLogitsGrad) {
@@ -34,7 +34,7 @@ class SigmoidCrossEntropyWithLogitsGrad : public BaseOperator {
   }
   void Init() const {}
 };
-abstract::AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(
+OPS_API abstract::AbstractBasePtr SigmoidCrossEntropyWithLogitsGradInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSigmoidCrossEntropyWithLogitsGradPtr = std::shared_ptr<SigmoidCrossEntropyWithLogitsGrad>;

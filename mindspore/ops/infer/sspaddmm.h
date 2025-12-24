@@ -29,7 +29,7 @@ constexpr auto kNameSspaddmm = "Sspaddmm";
 /// \brief Performs a matrix multiplication of the matrices mat1 and mat2.
 /// The matrix input is added to the final result.
 /// Refer to Python API @ref mindspore.ops.Sspaddmm for more details.
-class Sspaddmm : public BaseOperator {
+class OPS_API Sspaddmm : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Sspaddmm);
   /// \brief Constructor.
@@ -41,8 +41,8 @@ class Sspaddmm : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Sspaddmm for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr SspaddmmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SspaddmmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

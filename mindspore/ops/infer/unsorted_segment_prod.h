@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameUnsortedSegmentProd = "UnsortedSegmentProd";
 /// \brief Computes the prod of a tensor along segments.
 /// Refer to Python API @ref mindspore.ops.UnsortedSegmentProd for more details.
-class UnsortedSegmentProd : public BaseOperator {
+class OPS_API UnsortedSegmentProd : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(UnsortedSegmentProd);
   /// \brief Constructor.

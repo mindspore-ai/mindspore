@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHeaviside = "Heaviside";
-class Heaviside : public BaseOperator {
+class OPS_API Heaviside : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Heaviside);
   Heaviside() : BaseOperator(kNameHeaviside) { InitIOName({"x", "values"}, {"y"}); }

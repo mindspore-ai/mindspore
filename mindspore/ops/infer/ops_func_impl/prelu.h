@@ -22,7 +22,7 @@
 
 namespace mindspore::ops {
 /// \brief Implementation of InferShape and InferType functions for operator 'PReLU'
-class PReLUFuncImpl : public OpFuncImpl {
+class OPS_API PReLUFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
@@ -31,6 +31,6 @@ class PReLUFuncImpl : public OpFuncImpl {
   ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
   TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 };
-bool IsAscend();
+OPS_API bool IsAscend();
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_PRELU_H_

@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameRfft = "Rfft";
 /// \brief Rfft defined the operator prototype of computing discrete fourier transform of a real-valued signal.
-class Rfft : public BaseOperator {
+class OPS_API Rfft : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Rfft);
   /// \brief Constructor.
@@ -46,8 +46,8 @@ class Rfft : public BaseOperator {
   /// \return the FFT length.
   int64_t get_fft_length() const;
 };
-abstract::AbstractBasePtr RfftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr RfftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

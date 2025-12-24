@@ -30,7 +30,7 @@ constexpr auto kNameSquareSumV1 = "SquareSumV1";
 
 /// \brief Returns the square sum of a tensor element-wise. Refer to Python API @ref mindspore.ops.SquareSumV1 for more
 /// details.
-class SquareSumV1 : public BaseOperator {
+class OPS_API SquareSumV1 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SquareSumV1);
   /// \brief Constructor.

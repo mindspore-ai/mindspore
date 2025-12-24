@@ -31,7 +31,7 @@ namespace ops {
 constexpr auto kNameFillDiagonal = "FillDiagonal";
 /// \brief Fill the main diagonal of a tensor that has at least 2-dimensions.
 /// Refer to Python API @ref mindspore.ops.FillDiagonal for more details.
-class FillDiagonal : public BaseOperator {
+class OPS_API FillDiagonal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FillDiagonal);
   /// \brief Constructor.
@@ -48,8 +48,8 @@ class FillDiagonal : public BaseOperator {
   bool get_wrap() const;
 };
 
-abstract::AbstractBasePtr FillDiagonalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr FillDiagonalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

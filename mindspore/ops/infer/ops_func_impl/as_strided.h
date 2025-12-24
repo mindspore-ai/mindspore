@@ -23,7 +23,7 @@
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore::ops {
-class AsStridedFuncImpl : public OpFuncImpl {
+class OPS_API AsStridedFuncImpl : public OpFuncImpl {
  public:
   AsStridedFuncImpl() = default;
   ~AsStridedFuncImpl() = default;
@@ -31,7 +31,7 @@ class AsStridedFuncImpl : public OpFuncImpl {
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &, const std::vector<AbstractBasePtr> &input_args) const override;
 };
-class AsStridedViewFuncImpl : public AsStridedFuncImpl {};
+class OPS_API AsStridedViewFuncImpl : public AsStridedFuncImpl {};
 using AsStridedFuncImplPtr = std::shared_ptr<AsStridedFuncImpl>;
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_FUNC_IMPL_ASSTRIDED_H

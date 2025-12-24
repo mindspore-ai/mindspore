@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief list less equal operation.
-class list_le : public BaseOperator {
+class OPS_API list_le : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(list_le);
   /// \brief Constructor.

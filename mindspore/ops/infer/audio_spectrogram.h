@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameAudioSpectrogram = "AudioSpectrogram";
 /// \brief AudioSpectrogram defined AudioSpectrogram operator prototype.
-class AudioSpectrogram : public BaseOperator {
+class OPS_API AudioSpectrogram : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AudioSpectrogram);
   /// \brief Constructor.
@@ -70,8 +70,9 @@ class AudioSpectrogram : public BaseOperator {
   /// \return a boolean value.
   bool get_mag_square() const;
 };
-abstract::AbstractBasePtr AudioSpectrogramInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr AudioSpectrogramInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

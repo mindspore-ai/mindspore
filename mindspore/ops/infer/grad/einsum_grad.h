@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameEinsumGrad = "EinsumGrad";
-class EinsumGrad : public BaseOperator {
+class OPS_API EinsumGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(EinsumGrad);
   EinsumGrad() : BaseOperator(kNameEinsumGrad) {}
@@ -33,8 +33,8 @@ class EinsumGrad : public BaseOperator {
   void set_equation(const std::string equation);
   std::string get_equation() const;
 };
-abstract::AbstractBasePtr EinsumGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr EinsumGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_OPS_SLICE_TO_INDICES_H_
 
 #include <vector>
-#include "mindapi/base/macros.h"
 #include "ops/base_operator.h"
 #include "mindapi/base/shape_vector.h"
 
@@ -28,7 +27,7 @@ constexpr auto kNameSliceToIndices = "SliceToIndices";
 /// \brief Normalize Slice index info start, stop, step when data shape is dynamic.
 // input: data_shape, init_by_none, start, stop, step
 // outputs: index, value_shape, start, stop, step
-class SliceToIndices : public BaseOperator {
+class OPS_API SliceToIndices : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SliceToIndices);
   /// \brief Constructor.

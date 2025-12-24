@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatMulAllReduce = "MatMulAllReduce";
-class MatMulAllReduce : public BaseOperator {
+class OPS_API MatMulAllReduce : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatMulAllReduce);
   /// \brief Constructor.

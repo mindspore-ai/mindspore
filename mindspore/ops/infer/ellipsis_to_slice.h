@@ -26,14 +26,14 @@ namespace ops {
 constexpr auto kNameEllipsisToSlice = "EllipsisToSlice";
 /// \brief Computes tensor index with ellipsis when tensor shape is dynamic.
 /// Transfer ellipsis to slice.
-class EllipsisToSlice : public BaseOperator {
+class OPS_API EllipsisToSlice : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(EllipsisToSlice);
   /// \brief Constructor.
   EllipsisToSlice() : BaseOperator(kNameEllipsisToSlice) { InitIOName({"inputs"}, {"slices"}); }
   void Init() const {}
 };
-// abstract::AbstractBasePtr EllipsisToSliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
+// OPS_API abstract::AbstractBasePtr EllipsisToSliceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr
 // &primitive,
 //                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops

@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameWhere = "Where";
 /// \brief Where defined the operator prototype of selecting values which meet condition.
-class Where : public BaseOperator {
+class OPS_API Where : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Where);
   /// \brief Constructor.
@@ -36,8 +36,8 @@ class Where : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr WhereInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

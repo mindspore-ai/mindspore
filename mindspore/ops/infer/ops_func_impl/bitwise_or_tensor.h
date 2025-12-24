@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class BitwiseOrTensorFuncImpl : public BitwiseAndTensorFuncImpl {};
+class OPS_API BitwiseOrTensorFuncImpl : public BitwiseAndTensorFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

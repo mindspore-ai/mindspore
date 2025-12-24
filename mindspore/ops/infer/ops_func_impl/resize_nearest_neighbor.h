@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class ResizeNearestNeighborFuncImpl final : public Resize2DBaseFuncImpl {};
+class OPS_API ResizeNearestNeighborFuncImpl final : public Resize2DBaseFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

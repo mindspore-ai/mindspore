@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief Implementation of InferShape and InferType functions for operator 'Cosh'.
-class CoshFuncImpl : public OpFuncImpl {
+class OPS_API CoshFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

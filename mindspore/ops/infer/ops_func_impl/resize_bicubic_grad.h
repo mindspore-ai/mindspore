@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class ResizeBicubicGradFuncImpl : public OpFuncImpl {
+class OPS_API ResizeBicubicGradFuncImpl : public OpFuncImpl {
  public:
   ResizeBicubicGradFuncImpl() = default;
 

@@ -24,9 +24,9 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameUniformCandidateSampler = "UniformCandidateSampler";
 /// \brief samples a set of classes(sampled_candidates) from a given range based on uniform distribution. candidates
-/// are drawn with replacemen or not depending on the input parameter `unique`.
+/// are drawn with replacemen or not dependding on the input parameter `unique`.
 /// Refer to Python API @ref mindspore.ops.UniformCandidateSampler for more details.
-class UniformCandidateSampler : public BaseOperator {
+class OPS_API UniformCandidateSampler : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(UniformCandidateSampler);
   /// \brief Constructor.
@@ -95,8 +95,9 @@ class UniformCandidateSampler : public BaseOperator {
   bool get_remove_accidental_hits() const;
 };
 
-abstract::AbstractBasePtr UniformCandidateSamplerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &,
-                                                       const std::vector<abstract::AbstractBasePtr> &);
+OPS_API abstract::AbstractBasePtr UniformCandidateSamplerInfer(const abstract::AnalysisEnginePtr &,
+                                                               const PrimitivePtr &,
+                                                               const std::vector<abstract::AbstractBasePtr> &);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_UNIFORM_CANDIDATE_SAMPLER_H_

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSort = "Sort";
-class Sort : public BaseOperator {
+class OPS_API Sort : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Sort);
   Sort() : BaseOperator(kNameSort) { InitIOName({"x"}, {"y1", "y2"}); }
@@ -37,8 +37,8 @@ class Sort : public BaseOperator {
   void set_descending(bool descending);
   bool get_descending() const;
 };
-abstract::AbstractBasePtr SortInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SortInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

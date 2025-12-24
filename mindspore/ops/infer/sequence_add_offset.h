@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief Sequence addition offset operation
-class SequenceAddOffset : public BaseOperator {
+class OPS_API SequenceAddOffset : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceAddOffset);
   /// \brief Constructor.

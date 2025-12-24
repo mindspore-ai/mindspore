@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameStreamRecv = "StreamRecv";
-class StreamRecv : public BaseOperator {
+class OPS_API StreamRecv : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(StreamRecv);
   StreamRecv() : BaseOperator(kNameStreamRecv) {}

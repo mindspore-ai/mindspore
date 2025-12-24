@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief TensorToList op is used to convert tensor to tuple.
-class TensorToList : public BaseOperator {
+class OPS_API TensorToList : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorToList);
   /// \brief Constructor.

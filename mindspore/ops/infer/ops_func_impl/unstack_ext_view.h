@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class UnstackExtViewFuncImpl : public OpFuncImpl {
+class OPS_API UnstackExtViewFuncImpl : public OpFuncImpl {
  public:
   UnstackExtViewFuncImpl() = default;
   ~UnstackExtViewFuncImpl() = default;

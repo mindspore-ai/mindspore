@@ -27,13 +27,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kRandomGammaGrad = "RandomGammaGrad";
-class RandomGammaGrad : public BaseOperator {
+class OPS_API RandomGammaGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RandomGammaGrad);
   RandomGammaGrad() : BaseOperator(kRandomGammaGrad) { InitIOName({"alpha", "sample"}, {"output"}); }
 };
-abstract::AbstractBasePtr RandomGammaGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr RandomGammaGradInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameAvgPool3DGrad = "AvgPool3DGrad";
 
-class AvgPool3DGrad : public PoolGrad {
+class OPS_API AvgPool3DGrad : public PoolGrad {
  public:
   MIND_API_BASE_MEMBER(AvgPool3DGrad);
   AvgPool3DGrad() : PoolGrad(kNameAvgPool3DGrad) { InitIOName({"origin_input_size", "grad"}, {"output"}); }
@@ -50,8 +50,8 @@ class AvgPool3DGrad : public PoolGrad {
   int64_t get_divisor_override() const;
 };
 
-abstract::AbstractBasePtr AvgPool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr AvgPool3DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

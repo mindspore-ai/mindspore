@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class RollFuncImpl : public OpFuncImpl {
+class OPS_API RollFuncImpl : public OpFuncImpl {
  public:
   RollFuncImpl() = default;
   ~RollFuncImpl() = default;

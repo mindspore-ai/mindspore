@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameCropAndResizeGradImage = "CropAndResizeGradImage";
 /// \brief Computes the gradient of the crop_and_resize op wrt the input images tensor .
 /// Refer to Python API @ref mindspore.ops.CropAndResizeGradImage for more details.
-class CropAndResizeGradImage : public BaseOperator {
+class OPS_API CropAndResizeGradImage : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CropAndResizeGradImage);
   /// \brief Constructor.
@@ -48,9 +48,9 @@ class CropAndResizeGradImage : public BaseOperator {
   /// \brief Get method.
   ResizeMethod get_method() const;
 };
-abstract::AbstractBasePtr CropAndResizeGradImageInfer(const abstract::AnalysisEnginePtr &,
-                                                      const PrimitivePtr &primitive,
-                                                      const std::vector<AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr CropAndResizeGradImageInfer(const abstract::AnalysisEnginePtr &,
+                                                              const PrimitivePtr &primitive,
+                                                              const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

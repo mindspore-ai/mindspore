@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-class TruncFuncImpl : public EltwiseOpFuncImpl {};
+class OPS_API TruncFuncImpl : public EltwiseOpFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

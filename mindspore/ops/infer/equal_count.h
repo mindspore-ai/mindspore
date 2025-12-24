@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameEqualCount = "EqualCount";
 /// \brief Computes the equivalence between two tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.EqualCount for more details.
-class EqualCount : public BaseOperator {
+class OPS_API EqualCount : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(EqualCount);
   /// \brief Constructor.
@@ -36,8 +36,8 @@ class EqualCount : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr EqualCountInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr EqualCountInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

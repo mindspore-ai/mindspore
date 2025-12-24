@@ -28,7 +28,7 @@ namespace ops {
 constexpr auto kNameSparseReshape = "SparseReshape";
 /// \brief Reshapes a SparseTensor to represent values in a new dense shape.
 /// Refer to Python API @ref mindspore.ops.SparseReshape for more details.
-class SparseReshape : public BaseOperator {
+class OPS_API SparseReshape : public BaseOperator {
  public:
   /// \brief Constructor.
   SparseReshape() : BaseOperator(kNameSparseReshape) {

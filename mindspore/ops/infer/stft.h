@@ -33,7 +33,7 @@ constexpr int64_t kSTFT1DSignalInput = 1;
 constexpr int64_t kSTFT2DSignalInput = 2;
 
 /// \brief 3D Average pooling operation. Refer to Python API @ref mindspore.ops.STFT for more details.
-class STFT : public BaseOperator {
+class OPS_API STFT : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(STFT);
   /// \brief Constructor.
@@ -53,8 +53,8 @@ class STFT : public BaseOperator {
   bool get_return_complex() const;
 };
 
-abstract::AbstractBasePtr STFTInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr STFTInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

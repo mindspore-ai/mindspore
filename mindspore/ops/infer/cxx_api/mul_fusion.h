@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMulFusion = "MulFusion";
 /// \brief MulFusion defined Mul operator prototype of lite.
-class MulFusion : public BaseOperator {
+class OPS_API MulFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MulFusion);
   /// \brief Constructor.

@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class ReduceAnyFuncImpl final : public OpFuncImpl {
+class OPS_API ReduceAnyFuncImpl final : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
 

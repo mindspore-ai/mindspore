@@ -30,7 +30,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameUnpack = "Unpack";
 /// \brief Unstacks tensor in specified axis. Refer to Python API @ref mindspore.ops.Unstack for more details.
-class Unpack : public BaseOperator {
+class OPS_API Unpack : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Unpack);
   /// \brief Constructor.
@@ -44,8 +44,8 @@ class Unpack : public BaseOperator {
   /// \return axis.
   int64_t get_axis() const;
 };
-abstract::AbstractBasePtr UnpackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr UnpackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

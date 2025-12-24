@@ -19,7 +19,6 @@
 
 #include <memory>
 #include <vector>
-#include "mindapi/base/macros.h"
 #include "mindapi/base/types.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 

@@ -27,14 +27,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBesselK0 = "BesselK0";
-class BesselK0 : public BaseOperator {
+class OPS_API BesselK0 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BesselK0);
   BesselK0() : BaseOperator(kNameBesselK0) { InitIOName({"x"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr BesselK0Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr BesselK0Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_Bessel_K0_H_

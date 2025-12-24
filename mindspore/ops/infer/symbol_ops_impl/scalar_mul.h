@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_SCALAR_MUL_H_
 #define MINDSPORE_CORE_OPS_SYMBOL_OPS_IMPL_SCALAR_MUL_H_
 
-#include "mindapi/base/macros.h"
 #include "mindspore/ops/infer/symbol_ops_impl/common.h"
 
 namespace mindspore {

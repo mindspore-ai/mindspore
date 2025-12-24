@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace symshape {
 namespace ops {
-class Reshape : public InferShapeOp {
+class OPS_API Reshape : public InferShapeOp {
  public:
   using InferShapeOp::InferShapeOp;
   Reshape(const SymbolPtr &input, const SymbolPtr &shape) : InferShapeOp({input, shape}) {}

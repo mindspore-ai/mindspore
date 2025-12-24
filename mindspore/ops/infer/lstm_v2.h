@@ -28,7 +28,7 @@ namespace ops {
 constexpr auto kNameLSTMV2 = "LSTMV2";
 /// \brief rnn net.
 /// Refer to Python API @ref mindspore.ops.LSTMV2 for more details.
-class LSTMV2 : public BaseOperator {
+class OPS_API LSTMV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LSTMV2);
   /// \brief Constructor.

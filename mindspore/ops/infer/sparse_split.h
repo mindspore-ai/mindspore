@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseSplit = "SparseSplit";
-class SparseSplit : public BaseOperator {
+class OPS_API SparseSplit : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseSplit);
   SparseSplit() : BaseOperator(kNameSparseSplit) {
@@ -37,8 +37,8 @@ class SparseSplit : public BaseOperator {
     return num_splits;
   }
 };
-abstract::AbstractBasePtr SparseSplitInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SparseSplitInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

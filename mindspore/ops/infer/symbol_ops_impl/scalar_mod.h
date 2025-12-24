@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace symshape {
 namespace ops {
-class ScalarMod : public ScalarIntOp {
+class OPS_API ScalarMod : public ScalarIntOp {
  public:
   using ScalarIntOp::ScalarIntOp;
   ScalarMod(const SymbolPtr &lhs, const SymbolPtr &rhs) : ScalarIntOp({lhs, rhs}) { support_commutative_law_ = true; }

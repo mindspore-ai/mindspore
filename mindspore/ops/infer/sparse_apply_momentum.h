@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseApplyMomentum = "SparseApplyMomentum";
-class SparseApplyMomentum : public BaseOperator {
+class OPS_API SparseApplyMomentum : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseApplyMomentum);
   SparseApplyMomentum() : BaseOperator(kNameSparseApplyMomentum) {}
@@ -45,8 +45,9 @@ class SparseApplyMomentum : public BaseOperator {
   bool get_use_nesterov() const;
 };
 
-abstract::AbstractBasePtr SparseApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SparseApplyMomentumInfer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<AbstractBasePtr> &input_args);
 using kPrimSparseApplyMomentumPtr = std::shared_ptr<SparseApplyMomentum>;
 }  // namespace ops
 }  // namespace mindspore

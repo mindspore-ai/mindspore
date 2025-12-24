@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNameFmin = "Fmin";
 /// \brief Computes the minimum of input tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.Fmin for more details.
-class Fmin : public BaseOperator {
+class OPS_API Fmin : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Fmin);
   /// \brief Constructor.

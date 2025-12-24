@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief bool_not op is used to calculate the input true or false.
-class tuple_equal : public BaseOperator {
+class OPS_API tuple_equal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(tuple_equal);
   /// \brief Constructor.

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameWKVGrad = "WKVGrad";
-class WKVGrad : public BaseOperator {
+class OPS_API WKVGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(WKVGrad);
   /// \brief Constructor.
@@ -36,8 +36,8 @@ class WKVGrad : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr WKVGradInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr WKVGradInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

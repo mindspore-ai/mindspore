@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNameSoftmaxCrossEntropyWithLogits = "SoftmaxCrossEntropyWithLogits";
 /// \brief Gets the softmax cross-entropy value between logits and labels with one-hot encoding.
 /// Refer to Python API @ref mindspore.ops.SoftmaxCrossEntropyWithLogits for more details.
-class SoftmaxCrossEntropyWithLogits : public BaseOperator {
+class OPS_API SoftmaxCrossEntropyWithLogits : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SoftmaxCrossEntropyWithLogits);
   /// \brief Constructor.

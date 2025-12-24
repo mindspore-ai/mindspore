@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class InplaceIndexAddExtFuncImpl : public OpFuncImpl {
+class OPS_API InplaceIndexAddExtFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

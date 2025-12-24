@@ -23,7 +23,6 @@
 #include <string>
 #include <vector>
 
-#include "mindapi/base/macros.h"
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
 
@@ -43,8 +42,8 @@ class OPS_API MatrixSolve : public BaseOperator {
   /// \brief Method to get adjoint attributes.
   bool get_adjoint() const;
 };
-abstract::AbstractBasePtr MatrixSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MatrixSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMatrixSolvePtr = std::shared_ptr<MatrixSolve>;
 }  // namespace ops
 }  // namespace mindspore

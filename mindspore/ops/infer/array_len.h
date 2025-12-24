@@ -29,7 +29,7 @@ constexpr auto kNameArrayLen = "array_len";
 
 /// \brief Returns the shape of the input tensor.
 /// Refer to Python API @ref mindspore.ops.Shape for more details.
-class array_len : public BaseOperator {
+class OPS_API array_len : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(array_len);
   /// \brief Constructor.

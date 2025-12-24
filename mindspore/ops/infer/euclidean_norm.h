@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameEuclideanNorm = "EuclideanNorm";
-class EuclideanNorm : public BaseOperator {
+class OPS_API EuclideanNorm : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(EuclideanNorm);
   EuclideanNorm() : BaseOperator(kNameEuclideanNorm) { InitIOName({"x", "axes"}, {"y"}); }
@@ -37,8 +37,8 @@ class EuclideanNorm : public BaseOperator {
   bool get_keep_dims() const;
 };
 
-abstract::AbstractBasePtr EuclideanNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr EuclideanNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_EUCLIDEAN_NORM_H_

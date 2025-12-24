@@ -22,7 +22,7 @@
 #include "mindapi/base/macros.h"
 
 namespace mindspore::ops {
-class OnesLikeExtFuncImpl : public EltwiseOpFuncImpl {
+class OPS_API OnesLikeExtFuncImpl : public EltwiseOpFuncImpl {
  public:
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
 };

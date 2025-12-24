@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class LinalgVectorNormFuncImpl : public NormFuncImpl {};
+class OPS_API LinalgVectorNormFuncImpl : public NormFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_LINALG_VECTOR_NORM_H_

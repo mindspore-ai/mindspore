@@ -22,7 +22,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameListSetItem = "list_setitem";
 /// \brief RealListSetItem op is used to set one item to the specific position in the list.
-class list_setitem : public BaseOperator {
+class OPS_API list_setitem : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(list_setitem);
   /// \brief Constructor.

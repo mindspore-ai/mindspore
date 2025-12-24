@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief RealTupleGetItem op is used to get tuple[index] value, tuple is a dynamic length tuple or index is variable
-class RealTupleGetItem : public BaseOperator {
+class OPS_API RealTupleGetItem : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RealTupleGetItem);
   /// \brief Constructor.

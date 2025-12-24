@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameCropAndResizeGradBoxes = "CropAndResizeGradBoxes";
 /// \brief Computes the gradient of the crop_and_resize op wrt the input boxes tensor .
 /// Refer to Python API @ref mindspore.ops.CropAndResizeGradBoxes for more details.
-class CropAndResizeGradBoxes : public BaseOperator {
+class OPS_API CropAndResizeGradBoxes : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CropAndResizeGradBoxes);
   /// \brief Constructor.

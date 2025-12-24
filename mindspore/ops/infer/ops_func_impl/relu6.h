@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class ReLU6FuncImpl : public OpFuncImpl {
+class OPS_API ReLU6FuncImpl : public OpFuncImpl {
  public:
   ReLU6FuncImpl() = default;
   ~ReLU6FuncImpl() = default;

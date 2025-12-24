@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPoolFusion = "MaxPoolFusion";
 /// \brief MaxPoolFusion defined MaxPool operator prototype of lite.
-class MaxPoolFusion : public MaxPool {
+class OPS_API MaxPoolFusion : public MaxPool {
  public:
   MIND_API_BASE_MEMBER(MaxPoolFusion);
   /// \brief Constructor.

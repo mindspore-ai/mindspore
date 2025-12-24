@@ -26,15 +26,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyAdaMax = "ApplyAdaMax";
-class ApplyAdaMax : public BaseOperator {
+class OPS_API ApplyAdaMax : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyAdaMax);
   ApplyAdaMax() : BaseOperator(kNameApplyAdaMax) {
     InitIOName({"var", "m", "v", "beta1_power", "lr", "beta1", "beta2", "epsilon", "grad"}, {"var", "m", "v"});
   }
 };
-abstract::AbstractBasePtr ApplyAdaMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ApplyAdaMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimApplyAdaMaxPtr = std::shared_ptr<ApplyAdaMax>;
 }  // namespace ops

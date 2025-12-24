@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNamePadFusion = "PadFusion";
 /// \brief PadFusion defined Pad operator prototype of lite.
-class PadFusion : public Pad {
+class OPS_API PadFusion : public Pad {
  public:
   MIND_API_BASE_MEMBER(PadFusion);
   /// \brief Constructor.

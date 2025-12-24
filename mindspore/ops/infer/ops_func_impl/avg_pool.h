@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief Implementation of InferShape and InferType functions for operator 'AvgPool'.
-class AvgPoolFuncImpl : public OpFuncImpl {
+class OPS_API AvgPoolFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 

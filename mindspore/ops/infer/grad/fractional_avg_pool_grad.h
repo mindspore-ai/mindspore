@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFractionalAvgPoolGrad = "FractionalAvgPoolGrad";
-class FractionalAvgPoolGrad : public BaseOperator {
+class OPS_API FractionalAvgPoolGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FractionalAvgPoolGrad);
   FractionalAvgPoolGrad() : BaseOperator(kNameFractionalAvgPoolGrad) {
@@ -39,8 +39,9 @@ class FractionalAvgPoolGrad : public BaseOperator {
   ///
   /// \return overlapping attributes.
 };
-abstract::AbstractBasePtr FractionalAvgPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr FractionalAvgPoolGradInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFractionalAvgPoolGrad = std::shared_ptr<FractionalAvgPoolGrad>;
 }  // namespace ops
 }  // namespace mindspore

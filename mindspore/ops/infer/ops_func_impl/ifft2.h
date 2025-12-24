@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class IFFT2FuncImpl : public OpFuncImpl {
+class OPS_API IFFT2FuncImpl : public OpFuncImpl {
  public:
   IFFT2FuncImpl() = default;
   ~IFFT2FuncImpl() = default;

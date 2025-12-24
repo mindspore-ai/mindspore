@@ -30,7 +30,7 @@ constexpr auto kNameStatelessDropOutGenMask = "StatelessDropOutGenMask";
 
 /// \brief Generates the mask value for the input shape.
 /// Refer to Python API @ref mindspore.ops.DropoutGenMask for more details.
-class DropoutGenMask : public BaseOperator {
+class OPS_API DropoutGenMask : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DropoutGenMask);
   /// \brief Constructor.
@@ -42,15 +42,16 @@ class DropoutGenMask : public BaseOperator {
 };
 
 /// \brief Generates the mask value for the input shape.
-class StatelessDropOutGenMask : public DropoutGenMask {
+class OPS_API StatelessDropOutGenMask : public DropoutGenMask {
  public:
   MIND_API_BASE_MEMBER(StatelessDropOutGenMask);
   /// \brief Constructor.
   StatelessDropOutGenMask() : DropoutGenMask(kNameStatelessDropOutGenMask) {}
 };
 
-abstract::AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr DropoutGenMaskInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

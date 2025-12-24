@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class ConvTranspose2DFuncImpl final : public ConvBaseFunImpl {
+class OPS_API ConvTranspose2DFuncImpl final : public ConvBaseFunImpl {
  public:
   ConvTranspose2DFuncImpl() {
     idxes_.input_idx = 0;

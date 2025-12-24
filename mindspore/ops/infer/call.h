@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameCall = "call";
 /// \brief Call op means function call in the MindIR. This operator is defined for serialization.
-class Call : public BaseOperator {
+class OPS_API Call : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Call);
   /// \brief Constructor.

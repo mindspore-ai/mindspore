@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFractionalMaxPoolGrad = "FractionalMaxPoolGrad";
-class FractionalMaxPoolGrad : public BaseOperator {
+class OPS_API FractionalMaxPoolGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FractionalMaxPoolGrad);
   FractionalMaxPoolGrad() : BaseOperator(kNameFractionalMaxPoolGrad) {
@@ -38,8 +38,9 @@ class FractionalMaxPoolGrad : public BaseOperator {
   ///
   /// \return overlapping attributes.
 };
-abstract::AbstractBasePtr FractionalMaxPoolGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr FractionalMaxPoolGradInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFractionalMaxPoolGrad = std::shared_ptr<FractionalMaxPoolGrad>;
 }  // namespace ops
 }  // namespace mindspore

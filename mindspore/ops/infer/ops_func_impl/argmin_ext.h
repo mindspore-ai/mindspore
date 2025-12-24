@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class ArgMinExtFuncImpl : public ArgMaxExtFuncImpl {};
+class OPS_API ArgMinExtFuncImpl : public ArgMaxExtFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

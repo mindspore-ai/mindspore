@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameSparseCountSparseOutput = "SparseCountSparseOutput";
 /// \brief Performs sparse-output bin counting for a sparse tensor input.
 /// Refer to Python API @ref mindspore.ops.SparseCountSparseOutput for more details.
-class SparseCountSparseOutput : public BaseOperator {
+class OPS_API SparseCountSparseOutput : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseCountSparseOutput);
   /// \brief Constructor.

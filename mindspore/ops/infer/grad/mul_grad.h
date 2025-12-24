@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMulGrad = "MulGrad";
-class MulGrad : public BaseOperator {
+class OPS_API MulGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MulGrad);
   MulGrad() : BaseOperator(kNameMulGrad) {}

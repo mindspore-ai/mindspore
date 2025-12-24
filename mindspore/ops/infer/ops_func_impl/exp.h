@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class ExpFuncImpl : public EltwiseOpFuncImpl {
+class OPS_API ExpFuncImpl : public EltwiseOpFuncImpl {
  public:
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
 };

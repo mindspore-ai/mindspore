@@ -31,15 +31,15 @@ constexpr int64_t kGerShapeNum1 = 1;
 constexpr int64_t kGerShapeNum2 = 2;
 /// \brief Ger product of `x1` and `x2`. Calculate the outer product of two one-dimensional arrays.
 /// Refer to Python API @ref mindspore.ops.Ger for more details.
-class Ger : public BaseOperator {
+class OPS_API Ger : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Ger);
   /// \brief Constructor.
   Ger() : BaseOperator(kNameGer) { InitIOName({"x", "y"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr GerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr GerInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimGerPtr = std::shared_ptr<Ger>;
 }  // namespace ops
 }  // namespace mindspore

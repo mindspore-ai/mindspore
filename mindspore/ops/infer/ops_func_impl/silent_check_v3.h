@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class SilentCheckV3FuncImpl final : public OpFuncImpl {
+class OPS_API SilentCheckV3FuncImpl final : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
 

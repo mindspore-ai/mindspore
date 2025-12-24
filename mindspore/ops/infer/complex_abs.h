@@ -27,7 +27,7 @@ constexpr auto kNameComplexAbs = "ComplexAbs";
 
 /// \brief Returns a Tensor that is the complex_abs part of the input.
 /// Refer to Python API @ref mindspore.ops.ComplexAbs for more details.
-class ComplexAbs : public BaseOperator {
+class OPS_API ComplexAbs : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ComplexAbs);
   /// \brief Constructor.

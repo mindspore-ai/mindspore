@@ -26,16 +26,16 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameDenseToSparseSetOperation = "DenseToSparseSetOperation";
 /// \brief Applies set operation along last dimension of `Tensor` and `SparseTensor`.
-class DenseToSparseSetOperation : public BaseOperator {
+class OPS_API DenseToSparseSetOperation : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DenseToSparseSetOperation);
   DenseToSparseSetOperation() : BaseOperator(kNameDenseToSparseSetOperation) {
     InitIOName({"x1", "x2_indices", "x2_values", "x2_shape"}, {"y_indices", "y_values", "y_shape"});
   }
 };
-abstract::AbstractBasePtr DenseToSparseSetOperationInfer(const abstract::AnalysisEnginePtr &,
-                                                         const PrimitivePtr &primitive,
-                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr DenseToSparseSetOperationInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using kDenseToSparseSetOperationPtr = std::shared_ptr<DenseToSparseSetOperation>;
 }  // namespace ops
 }  // namespace mindspore

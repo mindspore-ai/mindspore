@@ -25,14 +25,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameRint = "Rint";
-class Rint : public BaseOperator {
+class OPS_API Rint : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Rint);
   Rint() : BaseOperator(kNameRint) { InitIOName({"x"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr RintInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr RintInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimRintPtr = std::shared_ptr<Rint>;
 }  // namespace ops

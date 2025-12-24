@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameMapTensorPut = "MapTensorPut";
 /// \brief Insert or update key value tensor pairs to a map tensor.
 /// Refer to Python API @ref mindspore.ops.MapTensorPut for more details.
-class MapTensorPut : public BaseOperator {
+class OPS_API MapTensorPut : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MapTensorPut);
   /// \brief Constructor.
@@ -36,8 +36,8 @@ class MapTensorPut : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr MapTensorPutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MapTensorPutInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

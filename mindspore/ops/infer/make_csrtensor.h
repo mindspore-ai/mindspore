@@ -26,14 +26,14 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMakeCSRTensor = "MakeCSRTensor";
 /// \brief MakeCSRTensor op is used to construct CSRTensor.
-class MakeCSRTensor : public BaseOperator {
+class OPS_API MakeCSRTensor : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MakeCSRTensor);
   /// \brief Constructor.
   MakeCSRTensor() : BaseOperator(kNameMakeCSRTensor) {}
 };
-abstract::AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &args_spec_list);
+OPS_API abstract::AbstractBasePtr MakeCSRTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &args_spec_list);
 }  // namespace ops
 }  // namespace mindspore
 

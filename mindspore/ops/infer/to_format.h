@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameToFormat = "ToFormat";
-class ToFormat : public BaseOperator {
+class OPS_API ToFormat : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ToFormat);
   ToFormat() : BaseOperator(kNameToFormat) {}

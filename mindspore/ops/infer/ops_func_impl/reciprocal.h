@@ -20,7 +20,7 @@
 #include "infer/ops_func_impl/eltwise_op.h"
 
 namespace mindspore::ops {
-class ReciprocalFuncImpl : public EltwiseOpFuncImpl {
+class OPS_API ReciprocalFuncImpl : public EltwiseOpFuncImpl {
  public:
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
 };

@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class ScalarBoolFuncImpl : public ScalarArithmeticUnaryFuncImpl {
+class OPS_API ScalarBoolFuncImpl : public ScalarArithmeticUnaryFuncImpl {
  public:
   inline TypePtr InferType(const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) const override {

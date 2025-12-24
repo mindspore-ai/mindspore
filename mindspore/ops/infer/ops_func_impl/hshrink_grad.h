@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-class HShrinkGradFuncImpl : public OpFuncImpl {
+class OPS_API HShrinkGradFuncImpl : public OpFuncImpl {
  public:
   void Init(const float &lambd = 0.5);
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

@@ -25,7 +25,7 @@ namespace ops {
 constexpr auto kNameInvertPermutation = "InvertPermutation";
 /// \brief Computes the inverse of an index permutation.
 /// Refer to Python API @ref mindspore.ops.InvertPermutation for more details.
-class InvertPermutation : public BaseOperator {
+class OPS_API InvertPermutation : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(InvertPermutation);
   /// \brief Constructor.

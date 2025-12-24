@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameProposal = "Proposal";
-class Proposal : public BaseOperator {
+class OPS_API Proposal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Proposal);
   Proposal() : BaseOperator(kNameProposal) {}

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class IFFTShiftFuncImpl : public OpFuncImpl {
+class OPS_API IFFTShiftFuncImpl : public OpFuncImpl {
  public:
   IFFTShiftFuncImpl() = default;
   ~IFFTShiftFuncImpl() = default;

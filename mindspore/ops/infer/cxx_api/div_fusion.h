@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameDivFusion = "DivFusion";
 /// \brief DivFusion defined Div operator prototype of lite.
-class DivFusion : public BaseOperator {
+class OPS_API DivFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DivFusion);
   /// \brief Constructor.

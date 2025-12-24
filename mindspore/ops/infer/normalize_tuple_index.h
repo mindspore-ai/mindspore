@@ -18,7 +18,6 @@
 #define MINDSPORE_CORE_OPS_NORMALIZE_TUPLE_INDEX_H_
 
 #include <vector>
-#include "mindapi/base/macros.h"
 #include "ops/base_operator.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"

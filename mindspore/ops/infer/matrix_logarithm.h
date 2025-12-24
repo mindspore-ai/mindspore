@@ -25,14 +25,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatrixLogarithm = "MatrixLogarithm";
-class MatrixLogarithm : public BaseOperator {
+class OPS_API MatrixLogarithm : public BaseOperator {
  public:
   MatrixLogarithm() : BaseOperator(kNameMatrixLogarithm) { InitIOName({"x"}, {"y"}); }
   MIND_API_BASE_MEMBER(MatrixLogarithm);
 };
 
-abstract::AbstractBasePtr MatrixLogarithmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MatrixLogarithmInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMatrixLogarithmPtr = std::shared_ptr<MatrixLogarithm>;
 }  // namespace ops
 }  // namespace mindspore

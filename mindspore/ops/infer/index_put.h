@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameIndexPut = "IndexPut";
 /// \brief Adds values x2 to specified indices of tensor x1.
 /// Refer to Python API @ref mindspore.ops.IndexPut for more details.
-class IndexPut : public BaseOperator {
+class OPS_API IndexPut : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(IndexPut);
   /// \brief Constructor.

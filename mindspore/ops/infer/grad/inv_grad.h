@@ -25,14 +25,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameInvGrad = "InvGrad";
-class InvGrad : public BaseOperator {
+class OPS_API InvGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(InvGrad);
   InvGrad() : BaseOperator(kNameInvGrad) { InitIOName({"x", "grad"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr InvGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr InvGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimInvGrad = std::shared_ptr<InvGrad>;
 }  // namespace ops
 }  // namespace mindspore

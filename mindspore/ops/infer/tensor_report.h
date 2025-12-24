@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameTensorReport = "TensorReport";
 
-class TensorReport : public BaseOperator {
+class OPS_API TensorReport : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorReport);
 

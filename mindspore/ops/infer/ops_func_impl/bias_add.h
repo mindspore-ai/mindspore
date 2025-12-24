@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kBiasAddInputLen = 3;
 /// \brief Returns sum of input and bias tensor. Refer to Python API @ref mindspore.ops.BiasAdd for more details.
-class BiasAddFuncImpl : public OpFuncImpl {
+class OPS_API BiasAddFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 

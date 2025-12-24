@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftplus = "Softplus";
 /// \brief Softplus activation function. Refer to Python API @ref mindspore.ops.Softplus for more details.
-class Softplus : public BaseOperator {
+class OPS_API Softplus : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Softplus);
   /// \brief Constructor.

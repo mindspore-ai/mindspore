@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class SmoothL1LossFuncImpl : public OpFuncImpl {
+class OPS_API SmoothL1LossFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

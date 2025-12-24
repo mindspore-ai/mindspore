@@ -25,14 +25,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameL2Loss = "L2Loss";
-class L2Loss : public BaseOperator {
+class OPS_API L2Loss : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(L2Loss);
   L2Loss() : BaseOperator(kNameL2Loss) { InitIOName({"x"}, {"output"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr L2LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr L2LossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimL2LossPtr = std::shared_ptr<L2Loss>;
 }  // namespace ops
 }  // namespace mindspore

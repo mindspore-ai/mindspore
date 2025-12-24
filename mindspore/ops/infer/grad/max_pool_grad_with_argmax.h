@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPoolGradWithArgmax = "MaxPoolGradWithArgmax";
 /// \brief Max pooling operation.
-class MaxPoolGradWithArgmax : public BaseOperator {
+class OPS_API MaxPoolGradWithArgmax : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaxPoolGradWithArgmax);
   /// \brief Constructor.
@@ -56,8 +56,9 @@ class MaxPoolGradWithArgmax : public BaseOperator {
   std::vector<int64_t> get_strides() const;
 };
 
-abstract::AbstractBasePtr MaxPoolGradWithArgmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MaxPoolGradWithArgmaxInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

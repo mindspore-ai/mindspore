@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameCheckValid = "CheckValid";
 /// \brief Checks whether the bounding box cross data and data border are valid.
 /// Refer to Python API @ref mindspore.ops.CheckValid for more details.
-class CheckValid : public BaseOperator {
+class OPS_API CheckValid : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CheckValid);
   /// \brief Constructor.
@@ -34,8 +34,8 @@ class CheckValid : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.CheckValid for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr CheckValidInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr CheckValidInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

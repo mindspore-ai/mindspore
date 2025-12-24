@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDilation2D = "Dilation2D";
-class Dilation2D : public BaseOperator {
+class OPS_API Dilation2D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Dilation2D);
   Dilation2D() : BaseOperator(kNameDilation2D) { InitIOName({"x", "filter"}, {"y"}); }
@@ -51,8 +51,8 @@ class Dilation2D : public BaseOperator {
   std::string get_format() const;
 };
 
-abstract::AbstractBasePtr Dilation2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr Dilation2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_DILATION2D_H_

@@ -28,14 +28,14 @@ namespace ops {
 constexpr auto kNameTensorMove = "TensorMove";
 /// \brief Updates tensor values by using input indices and value.
 /// Refer to Python API @ref mindspore.ops.TensorMove for more details.
-class TensorMove : public BaseOperator {
+class OPS_API TensorMove : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorMove);
   /// \brief Constructor.
   TensorMove() : BaseOperator(kNameTensorMove) { InitIOName({"input"}, {"output"}); }
 };
-abstract::AbstractBasePtr TensorMoveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr TensorMoveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimTensorMovePtr = std::shared_ptr<TensorMove>;
 }  // namespace ops
 }  // namespace mindspore

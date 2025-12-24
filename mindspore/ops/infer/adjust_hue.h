@@ -28,14 +28,14 @@ namespace ops {
 constexpr auto kNameAdjustHue = "AdjustHue";
 /// \brief Adjust hue of RGB images.
 /// Refer to Python API @ref mindspore.ops.AdjustHue for more details.
-class AdjustHue : public BaseOperator {
+class OPS_API AdjustHue : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AdjustHue);
   AdjustHue() : BaseOperator(kNameAdjustHue) { InitIOName({"images", "delta"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr AdjustHueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr AdjustHueInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<AbstractBasePtr> &input_args);
 using PrimAdjustHuePtr = std::shared_ptr<AdjustHue>;
 }  // namespace ops
 }  // namespace mindspore

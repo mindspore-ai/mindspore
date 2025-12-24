@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameClipByNormNoDivSum = "ClipByNormNoDivSum";
-class ClipByNormNoDivSum : public BaseOperator {
+class OPS_API ClipByNormNoDivSum : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ClipByNormNoDivSum);
   ClipByNormNoDivSum() : BaseOperator(kNameClipByNormNoDivSum) {
@@ -37,8 +37,9 @@ class ClipByNormNoDivSum : public BaseOperator {
   }
   void Init() const {}
 };
-abstract::AbstractBasePtr ClipByNormNoDivSumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ClipByNormNoDivSumInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimClipByNormNoDivSumPtr = std::shared_ptr<ClipByNormNoDivSum>;
 }  // namespace ops
 }  // namespace mindspore

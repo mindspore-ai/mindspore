@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMvlgammaGrad = "MvlgammaGrad";
-class MvlgammaGrad : public BaseOperator {
+class OPS_API MvlgammaGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MvlgammaGrad);
   MvlgammaGrad() : BaseOperator(kNameMvlgammaGrad) { InitIOName({"y_grad", "x"}, {"x_grad"}); }
@@ -38,8 +38,8 @@ class MvlgammaGrad : public BaseOperator {
   int64_t get_p() const;
 };
 
-abstract::AbstractBasePtr MvlgammaGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MvlgammaGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<AbstractBasePtr> &input_args);
 using PrimMvlgammaGradPtr = std::shared_ptr<MvlgammaGrad>;
 }  // namespace ops
 }  // namespace mindspore

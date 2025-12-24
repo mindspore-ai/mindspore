@@ -26,14 +26,14 @@ namespace ops {
 constexpr auto kNameLeftShift = "LeftShift";
 /// \brief Shift x to the Left by y in element-wise.
 /// Refer to Python API @ref mindspore.ops.LeftShift for more details.
-class LeftShift : public BaseOperator {
+class OPS_API LeftShift : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LeftShift);
   /// \brief Constructor.
   LeftShift() : BaseOperator(kNameLeftShift) { InitIOName({"x1", "x2"}, {"y"}); }
 };
-abstract::AbstractBasePtr LeftShiftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LeftShiftInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLeftShift = std::shared_ptr<LeftShift>;
 }  // namespace ops
 }  // namespace mindspore

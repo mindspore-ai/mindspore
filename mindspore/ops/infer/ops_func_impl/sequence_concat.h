@@ -21,6 +21,6 @@
 #include "infer/ops_func_impl/concat.h"
 
 namespace mindspore::ops {
-class SequenceConcatFuncImpl : public ConcatFuncImpl {};
+class OPS_API SequenceConcatFuncImpl : public ConcatFuncImpl {};
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_FUNC_IMPL_SEQUENCE_CONCAT_H

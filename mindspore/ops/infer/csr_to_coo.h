@@ -29,14 +29,14 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameCSR2COO = "CSR2COO";
 /// \brief Converts the indptr of a CSRTensor to the row indices of a COOTensor.
-class CSR2COO : public BaseOperator {
+class OPS_API CSR2COO : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CSR2COO);
   /// \brief Constructor.
   CSR2COO() : BaseOperator(kNameCSR2COO) { InitIOName({"indptr", "nnz"}, {"output"}); }
 };
-abstract::AbstractBasePtr CSR2COOInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr CSR2COOInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

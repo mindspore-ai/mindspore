@@ -70,7 +70,7 @@ const std::map<int64_t, std::string> layoutMap = {
   {ops::FASInputLayoutMode::SBH, "SBH"}, {ops::FASInputLayoutMode::BSND, "BSND"},
   {ops::FASInputLayoutMode::TND, "TND"}, {ops::FASInputLayoutMode::TH, "TH"},
   {ops::FASInputLayoutMode::NSD, "NSD"}, {ops::FASInputLayoutMode::SH, "SH"}};
-class FlashAttentionScoreFuncImpl : public OpFuncImpl {
+class OPS_API FlashAttentionScoreFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

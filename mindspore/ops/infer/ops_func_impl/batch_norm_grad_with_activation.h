@@ -20,7 +20,7 @@
 #include "infer/ops_func_impl/batch_norm_grad.h"
 
 namespace mindspore::ops {
-class BatchNormGradWithActivationFuncImpl : public BatchNormGradFuncImpl {
+class OPS_API BatchNormGradWithActivationFuncImpl : public BatchNormGradFuncImpl {
  protected:
   size_t GetAttrPosZero() const override { return 8; }
 };

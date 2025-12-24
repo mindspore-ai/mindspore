@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kParameterizedTruncatedNormal = "ParameterizedTruncatedNormal";
 /// \brief ParameterizedTruncatedNormal defined ParameterizedTruncatedNormal operator prototype of lite.
-class ParameterizedTruncatedNormal : public BaseOperator {
+class OPS_API ParameterizedTruncatedNormal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ParameterizedTruncatedNormal);
   /// \brief Constructor.
@@ -52,9 +52,9 @@ class ParameterizedTruncatedNormal : public BaseOperator {
   int64_t get_seed2() const;
 };
 
-abstract::AbstractBasePtr ParameterizedTruncatedNormalInfer(const abstract::AnalysisEnginePtr &,
-                                                            const PrimitivePtr &primitive,
-                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ParameterizedTruncatedNormalInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimParameterizedTruncatedNormalPtr = std::shared_ptr<ParameterizedTruncatedNormal>;
 }  // namespace ops
 }  // namespace mindspore

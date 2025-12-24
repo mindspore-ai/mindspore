@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class SeLUExtFuncImpl : public OpFuncImpl {
+class OPS_API SeLUExtFuncImpl : public OpFuncImpl {
  public:
   SeLUExtFuncImpl() = default;
   ~SeLUExtFuncImpl() = default;

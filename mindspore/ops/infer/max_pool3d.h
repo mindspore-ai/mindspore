@@ -30,7 +30,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPool3D = "MaxPool3D";
 /// \brief Max pooling operation. Refer to Python API @ref mindspore.ops.MaxPool3D for more details.
-class MaxPool3D : public BaseOperator {
+class OPS_API MaxPool3D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaxPool3D);
   /// \brief Constructor.

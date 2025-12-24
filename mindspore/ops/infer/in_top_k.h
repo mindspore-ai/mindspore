@@ -28,7 +28,7 @@ namespace ops {
 constexpr auto kNameInTopK = "InTopK";
 /// \brief Determines whether the targets are in the top `k` predictions.
 /// Refer to Python API @ref mindspore.ops.InTopK for more details.
-class InTopK : public BaseOperator {
+class OPS_API InTopK : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(InTopK);
   /// \brief Constructor.

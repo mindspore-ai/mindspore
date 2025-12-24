@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameL2NormalizeGrad = "L2NormalizeGrad";
 /// \brief L2NormalizeGrad operation. Refer to Python API @ref mindspore.ops.L2NormalizeGrad for more details.
-class L2NormalizeGrad : public BaseOperator {
+class OPS_API L2NormalizeGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(L2NormalizeGrad);
   /// \brief Constructor.

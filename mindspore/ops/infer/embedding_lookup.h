@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNameEmbeddingLookup = "EmbeddingLookup";
 /// \brief Returns a slice of input tensor based on the specified indices.
 /// Refer to Python API @ref mindspore.ops.EmbeddingLookup for more details.
-class EmbeddingLookup : public BaseOperator {
+class OPS_API EmbeddingLookup : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(EmbeddingLookup);
   /// \brief Constructor.

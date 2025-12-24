@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace symshape {
 namespace ops {
-class Reduce : public InferShapeOp {
+class OPS_API Reduce : public InferShapeOp {
  public:
   using InferShapeOp::InferShapeOp;
   Reduce(const SymbolPtr &inp, const SymbolPtr &axis, const SymbolPtr &keepdims, const SymbolPtr &skip_mode)

@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameScaleGradFusion = "ScaleGrad";
 /// \brief SliceFusion defined Slice operator prototype of lite.
-class ScaleGrad : public BaseOperator {
+class OPS_API ScaleGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScaleGrad);
   /// \brief Constructor.

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class ReverseV2FuncImpl : public OpFuncImpl {
+class OPS_API ReverseV2FuncImpl : public OpFuncImpl {
  public:
   ReverseV2FuncImpl() = default;
   ~ReverseV2FuncImpl() = default;

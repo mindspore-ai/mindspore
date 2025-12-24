@@ -28,7 +28,7 @@ constexpr auto kNameSquareSumAll = "SquareSumAll";
 
 /// \brief Returns the square sum of a tensor element-wise. Refer to Python API @ref mindspore.ops.SquareSumAll for more
 /// details.
-class SquareSumAll : public BaseOperator {
+class OPS_API SquareSumAll : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SquareSumAll);
   /// \brief Constructor.
@@ -37,8 +37,8 @@ class SquareSumAll : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr SquareSumAllInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SquareSumAllInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

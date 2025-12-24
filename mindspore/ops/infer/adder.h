@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameAdder = "Adder";
 /// \brief All defined All operator prototype of lite.
-class Adder : public BaseOperator {
+class OPS_API Adder : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Adder);
   /// \brief Constructor.

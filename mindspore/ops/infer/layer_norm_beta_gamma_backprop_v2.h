@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameLayerNormBetaGammaBackpropV2 = "LayerNormBetaGammaBackpropV2";
 
-class LayerNormBetaGammaBackpropV2 : public BaseOperator {
+class OPS_API LayerNormBetaGammaBackpropV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LayerNormBetaGammaBackpropV2);
   LayerNormBetaGammaBackpropV2() : BaseOperator(kNameLayerNormBetaGammaBackpropV2) {}
@@ -36,9 +36,9 @@ class LayerNormBetaGammaBackpropV2 : public BaseOperator {
   std::vector<int64_t> get_shape_gamma() const;
 };
 
-abstract::AbstractBasePtr LayerNormBetaGammaBackpropV2Infer(const abstract::AnalysisEnginePtr &,
-                                                            const PrimitivePtr &primitive,
-                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LayerNormBetaGammaBackpropV2Infer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

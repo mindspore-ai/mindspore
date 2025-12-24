@@ -24,7 +24,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameScan = "Scan";
 /// \brief Scan defined the operator prototype of Scan.
-class Scan : public BaseOperator {
+class OPS_API Scan : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Scan);
   /// \brief Constructor.

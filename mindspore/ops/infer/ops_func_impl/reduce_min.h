@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class ReduceMinFuncImpl : public OpFuncImpl {
+class OPS_API ReduceMinFuncImpl : public OpFuncImpl {
  public:
   ReduceMinFuncImpl() = default;
   virtual ~ReduceMinFuncImpl() = default;

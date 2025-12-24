@@ -24,7 +24,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameTensorListSetItem = "TensorListSetItem";
 /// \brief TensorListSetItem defined TensorListSetItem operator prototype of lite.
-class TensorListSetItem : public BaseOperator {
+class OPS_API TensorListSetItem : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorListSetItem);
   /// \brief Constructor.

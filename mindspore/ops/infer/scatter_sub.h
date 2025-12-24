@@ -25,15 +25,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScatterSub = "ScatterSub";
-class ScatterSub : public BaseOperator {
+class OPS_API ScatterSub : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScatterSub);
   /// \brief Constructor.
   ScatterSub() : BaseOperator(kNameScatterSub) { InitIOName({"input_x", "indices", "updates"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr ScatterSubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ScatterSubInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimScatterSubPtr = std::shared_ptr<ScatterSub>;
 }  // namespace ops
 }  // namespace mindspore

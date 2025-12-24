@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameActivation = "Activation";
 /// \brief Activation defined Activation operator prototype of lite.
-class Activation : public BaseOperator {
+class OPS_API Activation : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Activation);
   /// \brief Constructor.

@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameSwitchLayer = "switch_layer";
 /// \brief SwitchLayer defined SwitchLayer operator prototype of lite.
-class SwitchLayer : public BaseOperator {
+class OPS_API SwitchLayer : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SwitchLayer);
   /// \brief Constructor.

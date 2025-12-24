@@ -26,14 +26,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBitwiseOr = "BitwiseOr";
-class BitwiseOr : public BaseOperator {
+class OPS_API BitwiseOr : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BitwiseOr);
   BitwiseOr() : BaseOperator(kNameBitwiseOr) { InitIOName({"x1", "x2"}, {"y"}); }
   explicit BitwiseOr(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x1", "x2"}, {"y"}); }
 };
-abstract::AbstractBasePtr BitwiseOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr BitwiseOrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimBitwiseOrPtr = std::shared_ptr<BitwiseOr>;
 }  // namespace ops
 }  // namespace mindspore

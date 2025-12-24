@@ -28,7 +28,7 @@ namespace ops {
 constexpr auto kNameBatchMatMulReduceScatterAlltoAll = "BatchMatMulReduceScatterAlltoAll";
 /// \brief Fused ops for batchmatmul & reducescatter & alltoall
 /// Refer to Python API @ref mindspore.ops
-class BatchMatMulReduceScatterAlltoAll : public BaseOperator {
+class OPS_API BatchMatMulReduceScatterAlltoAll : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BatchMatMulReduceScatterAlltoAll);
   /// \brief Constructor.

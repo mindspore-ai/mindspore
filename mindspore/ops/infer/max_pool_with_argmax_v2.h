@@ -31,7 +31,7 @@ constexpr auto kNameMaxPoolWithArgmaxV2 = "MaxPoolWithArgmaxV2";
 constexpr int64_t kAiCoreNumTypeInt32 = 3;
 constexpr int64_t kAiCoreNumTypeInt64 = 4;
 /// \brief Max pooling operation. Refer to Python API @ref mindspore.ops.MaxPoolWithArgmaxV2 for more details
-class MaxPoolWithArgmaxV2 : public BaseOperator {
+class OPS_API MaxPoolWithArgmaxV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaxPoolWithArgmaxV2);
   /// \brief Constructor

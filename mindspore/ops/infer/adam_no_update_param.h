@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kAdamNoUpdateParam = "AdamNoUpdateParam";
 
-class AdamNoUpdateParam : public BaseOperator {
+class OPS_API AdamNoUpdateParam : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AdamNoUpdateParam);
   AdamNoUpdateParam() : BaseOperator(kAdamNoUpdateParam) { InitIOName({"x"}, {"output"}); }

@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBNInfer = "BNInfer";
-class BNInfer : public BaseOperator {
+class OPS_API BNInfer : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BNInfer);
   /// \brief Constructor.
@@ -33,8 +33,8 @@ class BNInfer : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr BNInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr BNInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

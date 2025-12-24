@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr size_t kIndex3 = 3;
 constexpr size_t kIndex4 = 4;
-class MaximumGradFuncImpl : public OpFuncImpl {
+class OPS_API MaximumGradFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

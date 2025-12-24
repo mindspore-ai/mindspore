@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropFilterFusion = "Conv2DBackpropFilterFusion";
 /// \brief Conv2DBackpropFilterFusion defined Conv2DBackpropFilter operator prototype of lite.
-class Conv2DBackpropFilterFusion : public Conv2DBackpropFilter {
+class OPS_API Conv2DBackpropFilterFusion : public Conv2DBackpropFilter {
  public:
   MIND_API_BASE_MEMBER(Conv2DBackpropFilterFusion);
   /// \brief Constructor.

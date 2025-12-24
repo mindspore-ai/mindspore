@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class ArgMaxWithValueFuncImpl : public OpFuncImpl {
+class OPS_API ArgMaxWithValueFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

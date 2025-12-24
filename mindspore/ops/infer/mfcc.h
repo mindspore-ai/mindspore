@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMfcc = "Mfcc";
 /// \brief Mfcc defined the operator prototype of extracting Mel-Frequency Cepstral Coefficients.
-class Mfcc : public BaseOperator {
+class OPS_API Mfcc : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Mfcc);
   /// \brief Constructor.
@@ -80,8 +80,8 @@ class Mfcc : public BaseOperator {
   /// \return the output channels to generate per time slice.
   int64_t get_dct_coeff_num() const;
 };
-abstract::AbstractBasePtr MfccInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MfccInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

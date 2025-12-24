@@ -30,7 +30,7 @@ constexpr auto kNameDTypeId = "DTypeId";
 
 /// \brief Returns the data type of the input tensor as mindspore.dtype.
 /// Refer to Python API @ref mindspore.ops.DType for more details.
-class DType : public BaseOperator {
+class OPS_API DType : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DType);
   /// \brief Constructor.
@@ -41,7 +41,7 @@ class DType : public BaseOperator {
 
 /// \brief Returns the data type of the input tensor as mindspore.dtype.
 /// Refer to Python API @ref mindspore.ops.DType for more details.
-class DTypeId : public BaseOperator {
+class OPS_API DTypeId : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DTypeId);
   /// \brief Constructor.

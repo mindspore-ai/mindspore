@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 
-class SoftMarginLossFuncImpl : public OpFuncImpl {
+class OPS_API SoftMarginLossFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

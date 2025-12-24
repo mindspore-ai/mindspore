@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMatrixSolveLs = "MatrixSolveLs";
 
-class MatrixSolveLs : public BaseOperator {
+class OPS_API MatrixSolveLs : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixSolveLs);
 
@@ -35,8 +35,8 @@ class MatrixSolveLs : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr MatrixSolveLsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MatrixSolveLsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimMatrixSolveLsPtr = std::shared_ptr<MatrixSolveLs>;
 }  // namespace ops

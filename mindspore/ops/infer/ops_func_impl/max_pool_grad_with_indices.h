@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class MaxPoolGradWithIndicesFuncImpl final : public MaxPoolGradWithMaskFuncImpl {};
+class OPS_API MaxPoolGradWithIndicesFuncImpl final : public MaxPoolGradWithMaskFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

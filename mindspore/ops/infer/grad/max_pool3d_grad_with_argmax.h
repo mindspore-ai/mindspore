@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPool3DGradWithArgmax = "MaxPool3DGradWithArgmax";
-class MaxPool3DGradWithArgmax : public BaseOperator {
+class OPS_API MaxPool3DGradWithArgmax : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaxPool3DGradWithArgmax);
   MaxPool3DGradWithArgmax() : BaseOperator(kNameMaxPool3DGradWithArgmax) {
@@ -53,9 +53,9 @@ class MaxPool3DGradWithArgmax : public BaseOperator {
   Format get_format() const;
 };
 
-abstract::AbstractBasePtr MaxPool3DGradWithArgmaxInfer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MaxPool3DGradWithArgmaxInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMaxPool3DGradWithArgmax = std::shared_ptr<MaxPool3DGradWithArgmax>;
 }  // namespace ops
 }  // namespace mindspore

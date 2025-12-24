@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameCSRMul = "CSRMul";
 constexpr auto kNameCSRDiv = "CSRDiv";
 /// \brief CSRTensor elementwise operation.
-class CSRMul : public BaseOperator {
+class OPS_API CSRMul : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CSRMul);
   /// \brief Constructor.
@@ -39,7 +39,7 @@ class CSRMul : public BaseOperator {
   }
 };
 
-class CSRDiv : public BaseOperator {
+class OPS_API CSRDiv : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CSRDiv);
   /// \brief Constructor.
@@ -48,8 +48,9 @@ class CSRDiv : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr CSRElementWiseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr CSRElementWiseInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

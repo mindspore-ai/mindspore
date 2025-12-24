@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropInput = "Conv2DBackpropInput";
-class Conv2DBackpropInput : public BaseOperator {
+class OPS_API Conv2DBackpropInput : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Conv2DBackpropInput);
   explicit Conv2DBackpropInput(const std::string &k_name = kNameConv2DBackpropInput) : BaseOperator(k_name) {
@@ -59,8 +59,9 @@ class Conv2DBackpropInput : public BaseOperator {
   Format get_format() const;
   std::vector<int64_t> get_pad_list() const;
 };
-abstract::AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr Conv2DBackpropInputInfer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 
 BaseShapePtr Conv2DBackpropInputInferShape(const PrimitivePtr &primitive,
                                            const std::vector<AbstractBasePtr> &input_args);

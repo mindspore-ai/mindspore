@@ -25,7 +25,7 @@ namespace ops {
 constexpr auto kNameTensorArrayRead = "TensorArrayRead";
 
 /// \brief Assert defined TensorArrayRead operator prototype of lite.
-class TensorArrayRead : public BaseOperator {
+class OPS_API TensorArrayRead : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorArrayRead);
   /// \brief Constructor.

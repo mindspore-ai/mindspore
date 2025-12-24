@@ -29,7 +29,7 @@ constexpr auto kNameImageSummary = "ImageSummary";
 
 /// \brief Outputs a tensor to a protocol buffer through a tensor summary operator.
 /// Refer to Python API @ref mindspore.ops.ImageSummary for more details.
-class ImageSummary : public BaseOperator {
+class OPS_API ImageSummary : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ImageSummary);
   /// \brief Constructor.

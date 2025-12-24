@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMatrixInverse = "MatrixInverse";
-class MatrixInverse : public BaseOperator {
+class OPS_API MatrixInverse : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixInverse);
   MatrixInverse() : BaseOperator(kNameMatrixInverse) { InitIOName({"x"}, {"y"}); }

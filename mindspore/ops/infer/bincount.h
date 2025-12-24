@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameBincount = "Bincount";
 
-class Bincount : public BaseOperator {
+class OPS_API Bincount : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Bincount);
   Bincount() : BaseOperator(kNameBincount) { InitIOName({"array", "size", "weights"}, {"bins"}); }

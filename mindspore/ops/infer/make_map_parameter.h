@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameMakeMapParameter = "MakeMapParameter";
 /// \brief Make a MapParameter, its data is MapTensor.
 /// Refer to Python API @ref mindspore.ops.MakeMapParameter for more details.
-class MakeMapParameter : public BaseOperator {
+class OPS_API MakeMapParameter : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MakeMapParameter);
   /// \brief Constructor.
@@ -36,8 +36,9 @@ class MakeMapParameter : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr MakeMapParameterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MakeMapParameterInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

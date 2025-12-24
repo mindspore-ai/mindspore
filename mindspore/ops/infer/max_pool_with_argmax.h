@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPoolWithArgmax = "MaxPoolWithArgmax";
 /// \brief Max pooling operation. Refer to Python API @ref mindspore.ops.MaxPoolWithArgmax for more details
-class MaxPoolWithArgmax : public BaseOperator {
+class OPS_API MaxPoolWithArgmax : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaxPoolWithArgmax);
   /// \brief Constructor.
@@ -58,8 +58,9 @@ class MaxPoolWithArgmax : public BaseOperator {
   Format get_format() const;
 };
 
-abstract::AbstractBasePtr MaxPoolWithArgmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MaxPoolWithArgmaxInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

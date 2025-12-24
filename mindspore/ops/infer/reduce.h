@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameReduce = "Reduce";
 /// \brief Reduce defined Reduce operator prototype of lite.
-class Reduce : public BaseOperator {
+class OPS_API Reduce : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Reduce);
   /// \brief Constructor.
@@ -62,8 +62,8 @@ class Reduce : public BaseOperator {
   /// \return skip_mode attribute.
   bool get_skip_mode() const;
 };
-abstract::AbstractBasePtr ReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ReduceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

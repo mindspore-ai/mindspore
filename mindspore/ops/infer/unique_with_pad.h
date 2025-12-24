@@ -31,7 +31,7 @@ constexpr auto kNameUniqueWithPad = "UniqueWithPad";
 /// \brief Returns the unique elements of input tensor with pad and also returns a tensor containing
 /// the index of each value of input tensor corresponding to the output unique tensor.
 /// Refer to Python API @ref mindspore.ops.UniqueWithPad for more details.
-class UniqueWithPad : public BaseOperator {
+class OPS_API UniqueWithPad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(UniqueWithPad);
   /// \brief Constructor.

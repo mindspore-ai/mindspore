@@ -20,7 +20,6 @@
 #include <tuple>
 #include <functional>
 #include <vector>
-#include "mindapi/base/macros.h"
 #include "ops/base_operator.h"
 #include "utils/check_convert_utils.h"
 

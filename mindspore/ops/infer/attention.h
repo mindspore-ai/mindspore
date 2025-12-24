@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameAttention = "Attention";
 /// \brief MultiHead-Attention op in MindIR.
-class Attention : public BaseOperator {
+class OPS_API Attention : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Attention);
   /// \brief Constructor.

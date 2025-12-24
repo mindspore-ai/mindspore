@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief RealMakeList op
-class RealMakeTuple : public BaseOperator {
+class OPS_API RealMakeTuple : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RealMakeTuple);
   /// \brief Constructor.

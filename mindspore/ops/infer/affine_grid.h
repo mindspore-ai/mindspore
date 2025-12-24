@@ -19,7 +19,6 @@
 #include <memory>
 #include <vector>
 #include "abstract/abstract_value.h"
-#include "mindapi/base/macros.h"
 #include "mindapi/base/types.h"
 #include "ops/base_operator.h"
 #include "utils/check_convert_utils.h"
@@ -43,8 +42,8 @@ class OPS_API AffineGrid : public BaseOperator {
   /// \return align_corners.
   bool get_align_corners() const;
 };
-abstract::AbstractBasePtr AffineGridInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr AffineGridInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAffineGridPtr = std::shared_ptr<AffineGrid>;
 }  // namespace ops
 }  // namespace mindspore

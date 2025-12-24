@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameLayerNormFusion = "LayerNormFusion";
 /// \brief LayerNormFusion defined LayerNorm operator prototype of lite.
-class LayerNormFusion : public BaseOperator {
+class OPS_API LayerNormFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LayerNormFusion);
   /// \brief Constructor.

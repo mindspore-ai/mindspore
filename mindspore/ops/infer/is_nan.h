@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameIsNan = "IsNan";
-class IsNan : public BaseOperator {
+class OPS_API IsNan : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(IsNan);
   IsNan() : BaseOperator(kNameIsNan) { InitIOName({"x"}, {"y"}); }

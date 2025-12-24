@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMatrixTriangularSolve = "MatrixTriangularSolve";
 
-class MatrixTriangularSolve : public BaseOperator {
+class OPS_API MatrixTriangularSolve : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixTriangularSolve);
   /// \brief Constructor.
@@ -33,8 +33,9 @@ class MatrixTriangularSolve : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.MatrixTriangularSolve for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr MatrixTriangularSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MatrixTriangularSolveInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMatrixTriangularSolvePtr = std::shared_ptr<MatrixTriangularSolve>;
 }  // namespace ops
 }  // namespace mindspore

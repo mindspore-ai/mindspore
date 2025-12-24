@@ -27,7 +27,7 @@ constexpr auto kNameSparseSoftmax = "SparseSoftmax";
 /// \brief Similar to softmax but with the catch that the implicitly zero
 /// elements do not participate. Refer to Python API @ref
 /// mindspore.ops.SparseSoftmax for more details.
-class SparseSoftmax : public BaseOperator {
+class OPS_API SparseSoftmax : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseSoftmax);
   /// \brief Constructor.
@@ -36,8 +36,8 @@ class SparseSoftmax : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr SparseSoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SparseSoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SPARSE_SOFTMAX_H_

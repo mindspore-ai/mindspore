@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameCrop = "Crop";
 /// \brief Crop defined the Crop operator prototype of lite, which can be replaced by slice operator.
-class Crop : public BaseOperator {
+class OPS_API Crop : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Crop);
   /// \brief Constructor.
@@ -58,8 +58,8 @@ class Crop : public BaseOperator {
   /// \return a vector which indicates the start index to slice on the corresponding axis.
   std::vector<int64_t> get_offsets() const;
 };
-abstract::AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr CropInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCrop = std::shared_ptr<Crop>;
 }  // namespace ops
 }  // namespace mindspore

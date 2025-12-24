@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameSparseSegmentMean = "SparseSegmentMean";
 /// \brief Computes the mean along sparse segments of a tensor.
 /// Refer to Python API @ref mindspore.ops.SparseSegmentMean for more details.
-class SparseSegmentMean : public BaseOperator {
+class OPS_API SparseSegmentMean : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseSegmentMean);
   /// \brief Constructor.

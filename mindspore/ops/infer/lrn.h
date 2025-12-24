@@ -28,7 +28,7 @@ namespace ops {
 // An unique id for MS Lite.
 constexpr auto kNameLRN = "LRN";
 /// \brief Local Response Normalization. Refer to Python API @ref mindspore.ops.LRN for more details.
-class LRN : public BaseOperator {
+class OPS_API LRN : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LRN);
   /// \brief Constructor.
@@ -67,8 +67,8 @@ class LRN : public BaseOperator {
   /// \return norm_region.
   std::string get_norm_region() const;
 };
-abstract::AbstractBasePtr LrnInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LrnInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LRN_H_

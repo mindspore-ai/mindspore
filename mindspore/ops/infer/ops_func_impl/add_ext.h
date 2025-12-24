@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class AddExtFuncImpl : public BinaryExtOpFuncImpl {};
+class OPS_API AddExtFuncImpl : public BinaryExtOpFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

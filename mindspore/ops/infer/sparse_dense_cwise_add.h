@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseDenseCwiseAdd = "SparseDenseCwiseAdd";
-class SparseDenseCwiseAdd : public BaseOperator {
+class OPS_API SparseDenseCwiseAdd : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseDenseCwiseAdd);
   SparseDenseCwiseAdd() : BaseOperator(kNameSparseDenseCwiseAdd) {

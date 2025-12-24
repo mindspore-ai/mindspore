@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCumulativeLogsumexp = "CumulativeLogsumexp";
-class CumulativeLogsumexp : public BaseOperator {
+class OPS_API CumulativeLogsumexp : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CumulativeLogsumexp);
   CumulativeLogsumexp() : BaseOperator(kNameCumulativeLogsumexp) { InitIOName({"x", "axis"}, {"y"}); }
@@ -36,8 +36,9 @@ class CumulativeLogsumexp : public BaseOperator {
   int64_t get_axis() const;
 };
 
-abstract::AbstractBasePtr CumulativeLogsumexpInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr CumulativeLogsumexpInfer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CUMULATIVE_LOGSUMEXP_H_

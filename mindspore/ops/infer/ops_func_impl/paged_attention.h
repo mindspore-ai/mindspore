@@ -48,7 +48,7 @@ enum PagedAttentionInputIndex : size_t {
   kPagedAttentionInputsNum
 };
 
-class PagedAttentionFuncImpl : public OpFuncImpl {
+class OPS_API PagedAttentionFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

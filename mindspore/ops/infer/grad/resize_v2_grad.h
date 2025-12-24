@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameResizeV2Grad = "ResizeV2Grad";
-class ResizeV2Grad : public BaseOperator {
+class OPS_API ResizeV2Grad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ResizeV2Grad);
   ResizeV2Grad() : BaseOperator(kNameResizeV2Grad) { InitIOName({"grads", "roi", "scales", "original_size"}, {"y"}); }

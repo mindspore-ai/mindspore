@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameDepthToSpace = "DepthToSpace";
 /// \brief Rearrange blocks of depth data into spatial dimensions.
 /// Refer to Python API @ref mindspore.ops.DepthToSpace for more details.
-class DepthToSpace : public BaseOperator {
+class OPS_API DepthToSpace : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DepthToSpace);
   /// \brief Constructor.
@@ -55,8 +55,8 @@ class DepthToSpace : public BaseOperator {
   std::string get_mode() const;
 };
 
-abstract::AbstractBasePtr DepthToSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr DepthToSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

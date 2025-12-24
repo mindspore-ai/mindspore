@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameSparseMatrixSoftmax = "SparseMatrixSoftmax";
 /// \brief Computes the softmax cross-entropy value between logits and sparse encoding labels.
 /// Refer to Python API @ref mindspore.ops.SparseMatrixSoftMax for more details.
-class SparseMatrixSoftmax : public BaseOperator {
+class OPS_API SparseMatrixSoftmax : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseMatrixSoftmax);
   /// \brief Constructor.

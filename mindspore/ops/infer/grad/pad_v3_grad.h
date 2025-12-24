@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNamePadV3Grad = "PadV3Grad";
 /// \brief Pads the input tensor according to the paddings. Refer to Python API
 /// @ref mindspore.ops.PadV3Grad for more details.
-class PadV3Grad : public BaseOperator {
+class OPS_API PadV3Grad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(PadV3Grad);
   /// \brief Constructor.
@@ -38,8 +38,8 @@ class PadV3Grad : public BaseOperator {
   std::string get_mode() const;
   bool get_paddings_contiguous() const;
 };
-abstract::AbstractBasePtr PadV3GradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr PadV3GradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

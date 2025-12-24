@@ -22,7 +22,7 @@
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore::ops {
-class RemainderTensorScalarFuncImpl : public OpFuncImpl {
+class OPS_API RemainderTensorScalarFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const std::vector<InferInfoPtr> &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive,

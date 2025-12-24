@@ -29,14 +29,14 @@ namespace ops {
 constexpr auto kNameNuclearNorm = "NuclearNorm";
 /// \brief Computes the nuclear norm of the given tensor.
 /// Refer to Python API @ref mindspore.ops.NuclearNorm for more details.
-class NuclearNorm : public BaseOperator {
+class OPS_API NuclearNorm : public BaseOperator {
  public:
   /// \brief Constructor.
   NuclearNorm() : BaseOperator(kNameNuclearNorm) { InitIOName({"x"}, {"y"}); }
   MIND_API_BASE_MEMBER(NuclearNorm);
 };
-abstract::AbstractBasePtr NuclearNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr NuclearNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameMultilabelMarginLoss = "MultilabelMarginLoss";
 /// \brief Creates a criterion that optimizes a multi-class multi-classification hinge loss.
 /// Refer to Python API @ref mindspore.ops.MultilabelMarginLoss for more details.
-class MultilabelMarginLoss : public BaseOperator {
+class OPS_API MultilabelMarginLoss : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MultilabelMarginLoss);
   /// \brief Constructor.
@@ -39,8 +39,9 @@ class MultilabelMarginLoss : public BaseOperator {
   int64_t get_reduction() const;
 };
 
-abstract::AbstractBasePtr MultilabelMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MultilabelMarginLossInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMultilabelMarginLossPtr = std::shared_ptr<MultilabelMarginLoss>;
 }  // namespace ops
 }  // namespace mindspore

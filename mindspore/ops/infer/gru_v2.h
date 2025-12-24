@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNameGRUV2 = "GRUV2";
 /// \brief rnn net.
 /// Refer to Python API @ref mindspore.ops.GRUV2 for more details.
-class GRUV2 : public BaseOperator {
+class OPS_API GRUV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(GRUV2);
   /// \brief Constructor.

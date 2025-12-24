@@ -24,7 +24,7 @@
 #include "primitive/op_name.h"
 
 namespace mindspore::ops {
-class RandLikeExtFuncImpl : public OpFuncImpl {
+class OPS_API RandLikeExtFuncImpl : public OpFuncImpl {
  public:
   TypeIdList InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

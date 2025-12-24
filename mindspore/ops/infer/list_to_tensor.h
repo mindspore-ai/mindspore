@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief ListToTensor op is used to convert list to tensor.
-class ListToTensor : public BaseOperator {
+class OPS_API ListToTensor : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ListToTensor);
   /// \brief Constructor.

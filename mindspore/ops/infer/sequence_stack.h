@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 // constexpr auto kNameSequenceStack = "SequenceStack";
 /// \brief Sequence concat operation
-class SequenceStack : public BaseOperator {
+class OPS_API SequenceStack : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceStack);
   /// \brief Constructor.

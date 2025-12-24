@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFractionalMaxPool3DWithFixedKsize = "FractionalMaxPool3DWithFixedKsize";
-class FractionalMaxPool3DWithFixedKsize : public BaseOperator {
+class OPS_API FractionalMaxPool3DWithFixedKsize : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FractionalMaxPool3DWithFixedKsize);
   FractionalMaxPool3DWithFixedKsize() : BaseOperator(kNameFractionalMaxPool3DWithFixedKsize) {
@@ -56,7 +56,7 @@ class FractionalMaxPool3DWithFixedKsize : public BaseOperator {
   /// \return data format attributes.
 };
 
-abstract::AbstractBasePtr FractionalMaxPool3DWithFixedKsizeInfer(
+OPS_API abstract::AbstractBasePtr FractionalMaxPool3DWithFixedKsizeInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFractionalMaxPool3DWithFixedKsizePtr = std::shared_ptr<FractionalMaxPool3DWithFixedKsize>;

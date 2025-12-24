@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameStreamSend = "StreamSend";
-class StreamSend : public BaseOperator {
+class OPS_API StreamSend : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(StreamSend);
   StreamSend() : BaseOperator(kNameStreamSend) {}
