@@ -57,6 +57,10 @@ tensor::TensorPtr ScalarToTensorByType(const ScalarPtr &scalar, const TypePtr &s
       return tensor::from_scalar(GetValue<float>(scalar), data_type);
     case kNumberTypeFloat64:
       return tensor::from_scalar(GetValue<double>(scalar), data_type);
+    case kNumberTypeFloat16:
+      return tensor::from_scalar(GetValue<float16>(scalar), data_type);
+    case kNumberTypeBFloat16:
+      return tensor::from_scalar(GetValue<bfloat16>(scalar), data_type);
     default:
       MS_LOG(EXCEPTION) << "When convert scalar to tensor, the scalar type: " << data_type << " is invalid.";
   }
