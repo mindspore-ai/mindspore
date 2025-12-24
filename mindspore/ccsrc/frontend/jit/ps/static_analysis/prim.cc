@@ -2649,7 +2649,7 @@ EvalResultPtr FunctionalEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
   AnfNodePtr new_cnode = nullptr;
   // Check if contains Any and convert to PyExecute node.
   if (ContainsAbstractAny(args_abs_list)) {
-    new_cnode = prim::ConvertFunctionalToPyExecute(name_, inputs_list, args_abs_list, cnode, is_method_);
+    new_cnode = prim::ConvertFunctionalToPyExecute(functional_, inputs_list, args_abs_list, cnode, is_method_);
   } else {
     auto eval_func = [&engine, &out_conf](const AnfNodePtr &node) {
       AnfNodeConfigPtr config = engine->MakeConfig(node, out_conf->context(), out_conf->func_graph());

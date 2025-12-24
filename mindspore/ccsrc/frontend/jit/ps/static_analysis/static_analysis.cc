@@ -1384,7 +1384,7 @@ EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<PrimInstance
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<FunctionalAbstractClosure> &func) {
   MS_EXCEPTION_IF_NULL(func);
-  return std::make_shared<FunctionalEvaluator>(func->name(), func->is_method());
+  return std::make_shared<FunctionalEvaluator>(func->name(), func->functional(), func->is_method());
 }
 
 EvaluatorPtr AnalysisEngine::_GetEvaluatorFor(const std::shared_ptr<FuncGraphAbstractClosure> &func) {

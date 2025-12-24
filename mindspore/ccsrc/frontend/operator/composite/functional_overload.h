@@ -95,7 +95,7 @@ AnfNodePtr ConvertFunctionalToPrimitive(const std::string &functional_name, cons
                                         const AbstractBasePtrList &args_abs_list, const CNodePtr &cnode,
                                         const std::function<AbstractBasePtr(const AnfNodePtr &)> &eval_func,
                                         bool is_method);
-AnfNodePtr ConvertFunctionalToPyExecute(const std::string &functional_name, const AnfNodePtrList &inputs_list,
+AnfNodePtr ConvertFunctionalToPyExecute(const FunctionalPtr &functional, const AnfNodePtrList &inputs_list,
                                         const AbstractBasePtrList &args_abs_list, const CNodePtr &cnode,
                                         bool is_method);
 }  // namespace prim

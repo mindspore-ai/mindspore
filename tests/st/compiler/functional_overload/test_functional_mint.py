@@ -16,6 +16,7 @@
 import pytest
 import numpy as np
 import mindspore as ms
+from mindspore import mint
 from mindspore.mint import clamp
 from tests.mark_utils import arg_mark
 
@@ -70,6 +71,22 @@ def test_mint_clamp_any():
     out = func(ms.Tensor([1, 2, 3, 4, 5]), ms.Tensor(2), ms.Tensor(4))
     expect = ms.Tensor([2, 2, 3, 4, 4])
     assert np.all(out.asnumpy() == expect.asnumpy())
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_mint_nn_pixel_shuffle():
+    """
+    Feature: Functional.
+    Description: Test functional feature with pixel_shuffle.
+    Expectation: Run success
+    """
+    @ms.jit
+    def func(x):
+        return mint.nn.functional.pixel_shuffle(ms.Tensor(x.asnumpy()), 3)
+
+    x = ms.Tensor(np.random.randn(1, 9, 4, 4), ms.float32)
+    output = func(x)
+    assert output.shape == (1, 1, 12, 12)
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
