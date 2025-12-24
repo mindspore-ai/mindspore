@@ -7689,7 +7689,7 @@ def linalg_norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
 
 def norm_ext(input, p='fro', dim=None, keepdim=False, *, dtype=None):
     r"""
-    Returns the matrix norm or vector norm of a given tensor.
+    Compute the matrix norm or vector norm of the tensor along a specified dimension.
 
     `p` is the calculation mode of norm. The following norm modes are supported.
 
@@ -7702,27 +7702,19 @@ def norm_ext(input, p='fro', dim=None, keepdim=False, *, dtype=None):
     ====================== ================================ ==========================================
 
     Args:
-        input (Tensor): The shape is :math:`(*)` or :math:`(*, m, n)`
-            where :math:`*` means, any number of additional dimensions.
-        p (Union[bool, int, float, inf, -inf, 'fro', 'nuc'], optional): norm's mode. refer to the table above for
-            behavior. Default: ``fro`` .
-        dim (Union[int, List(int), Tuple(int)], optional): calculate the dimension of vector norm or matrix norm.
-            Default: ``None`` .
-        keepdim (bool, optional): whether the output Tensor retains the original dimension. Default: ``False`` .
+        input (Tensor): The input tensor.
+        p (Union[bool, int, float, inf, -inf, 'fro', 'nuc'], optional): Specify the kind of norm
+         to take. Default ``fro`` .
+        dim (Union[int, List(int), Tuple(int)], optional): Specify the dimension for computation.
+            Default ``None`` .
+        keepdim (bool, optional): Whether the output tensor has dim retained. Default ``False`` .
 
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): When set, `input` will be converted to the specified type,
-            `dtype`, before execution, and dtype of returned Tensor will also be `dtype`. Default: ``None`` .
+            `dtype`, before calculating. Default ``None`` .
 
     Returns:
-        Tensor, the result of norm calculation on the specified dimension, `dim`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        ValueError: If `dim` is out of range.
-        TypeError: If `dim` is neither an int nor a tuple of int.
-        ValueError: If two elements of `dim` is same after normalized.
-        ValueError: If any elements of `dim` is out of range.
+        Tensor
 
     Note:
         Dynamic shape, Dynamic rank and mutable input is not supported in `graph mode (mode=mindspore.GRAPH_MODE)
@@ -7732,13 +7724,12 @@ def norm_ext(input, p='fro', dim=None, keepdim=False, *, dtype=None):
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
-        >>> from mindspore import ops
-        >>> data_range = ops.arange(-13, 13, dtype=ms.float32)
+        >>> import mindspore
+        >>> data_range = mindspore.ops.arange(-13, 13, dtype=mindspore.float32)
         >>> x = data_range[data_range != 0]
         >>> y = x.reshape(5, 5)
-        >>> print(ops.function.math_func.norm_ext(x, 2.0))
-        38.327538
+        >>> print(mindspore.ops.function.math_func.norm_ext(x, 2.0))
+        38.327534
     """
     if not isinstance(input, (Tensor, Tensor_)):
         raise TypeError(f"For `norm_ext`, the `input` must be Tensor!, but get {type(input)}.")
