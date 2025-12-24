@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameSparseMatrixOrderingAMD = "SparseMatrixOrderingAMD";
 /// \brief Computes the mean along sparse segments of a tensor.
 /// Refer to Python API @ref mindspore.ops.SparseMatrixOrderingAMD for more details.
-class SparseMatrixOrderingAMD : public BaseOperator {
+class OPS_API SparseMatrixOrderingAMD : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseMatrixOrderingAMD);
   /// \brief Constructor.

@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class EqScalarFuncImpl : public OpFuncImpl {
+class OPS_API EqScalarFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

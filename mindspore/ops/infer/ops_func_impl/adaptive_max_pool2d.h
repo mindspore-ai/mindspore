@@ -27,7 +27,7 @@ constexpr size_t kOutputSizeAttrSize = 2;
 constexpr int64_t kPyValueNone = -1;
 constexpr int64_t kDynamicRankValue = -2;
 
-class AdaptiveMaxPool2DFuncImpl : public OpFuncImpl {
+class OPS_API AdaptiveMaxPool2DFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

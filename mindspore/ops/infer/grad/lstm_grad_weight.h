@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLSTMGradWeight = "LSTMGradWeight";
-class LSTMGradWeight : public BaseOperator {
+class OPS_API LSTMGradWeight : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LSTMGradWeight);
   LSTMGradWeight() : BaseOperator(kNameLSTMGradWeight) {}
@@ -55,8 +55,9 @@ class LSTMGradWeight : public BaseOperator {
   void set_proj_size(const int64_t proj_size);
   int64_t get_proj_size() const;
 };
-abstract::AbstractBasePtr LstmGradWeightInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LstmGradWeightInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

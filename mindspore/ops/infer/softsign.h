@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftsign = "Softsign";
-class Softsign : public BaseOperator {
+class OPS_API Softsign : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Softsign);
   Softsign() : BaseOperator(kNameSoftsign) { InitIOName({"x"}, {"output"}); }

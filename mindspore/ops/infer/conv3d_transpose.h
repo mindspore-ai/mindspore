@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameConv3DTranspose = "Conv3DTranspose";
 
-class Conv3DTranspose : public BaseOperator {
+class OPS_API Conv3DTranspose : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Conv3DTranspose);
   /// \brief Constructor.

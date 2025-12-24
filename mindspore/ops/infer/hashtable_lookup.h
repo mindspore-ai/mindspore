@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameHashtableLookup = "HashtableLookup";
 /// \brief HashtableLookup defined HashtableLookup operator prototype.
-class HashtableLookup : public BaseOperator {
+class OPS_API HashtableLookup : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(HashtableLookup);
   /// \brief Constructor.
@@ -35,8 +35,9 @@ class HashtableLookup : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr HashtableLookupInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

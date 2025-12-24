@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class SplitFuncImpl : public OpFuncImpl {
+class OPS_API SplitFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 
@@ -32,7 +32,7 @@ class SplitFuncImpl : public OpFuncImpl {
 
   int32_t CheckValidation(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
-class SplitViewFuncImpl : public SplitFuncImpl {};
+class OPS_API SplitViewFuncImpl : public SplitFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

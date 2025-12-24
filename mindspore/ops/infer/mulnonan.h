@@ -26,15 +26,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMulNoNan = "MulNoNan";
-class MulNoNan : public BaseOperator {
+class OPS_API MulNoNan : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MulNoNan);
   MulNoNan() : BaseOperator(kNameMulNoNan) { InitIOName({"x", "y"}, {"output"}); }
   explicit MulNoNan(const std::string k_name) : BaseOperator(k_name) { InitIOName({"x", "y"}, {"output"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr MulNoNanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MulNoNanInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimMulNoNanPtr = std::shared_ptr<MulNoNan>;
 }  // namespace ops
 }  // namespace mindspore

@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNameGetNext = "GetNext";
 /// \brief Returns the next element in the dataset queue.
 /// Refer to Python API @ref mindspore.ops.GetNext for more details.
-class GetNext : public BaseOperator {
+class OPS_API GetNext : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(GetNext);
   /// \brief Constructor.
@@ -37,8 +37,8 @@ class GetNext : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.GetNext for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr GetNextInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GETNEXT_H_

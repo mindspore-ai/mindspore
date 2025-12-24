@@ -25,14 +25,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFlattenGrad = "FlattenGrad";
-class FlattenGrad : public BaseOperator {
+class OPS_API FlattenGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FlattenGrad);
   FlattenGrad() : BaseOperator(kNameFlattenGrad) { InitIOName({"x", "shape"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr FlattenGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr FlattenGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFlattenGrad = std::shared_ptr<FlattenGrad>;
 }  // namespace ops
 }  // namespace mindspore

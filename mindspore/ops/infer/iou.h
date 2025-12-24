@@ -26,15 +26,15 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameIOU = "IOU";
 
-class IOU : public BaseOperator {
+class OPS_API IOU : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(IOU);
   IOU() : BaseOperator(kNameIOU) { InitIOName({"anchor_boxes", "gt_boxes"}, {"output"}); }
   void Init() const {}
 };
 
-abstract::AbstractBasePtr IouInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr IouInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_IOU_H_

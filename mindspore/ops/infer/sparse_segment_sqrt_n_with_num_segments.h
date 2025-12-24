@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseSegmentSqrtNWithNumSegments = "SparseSegmentSqrtNWithNumSegments";
-class SparseSegmentSqrtNWithNumSegments : public BaseOperator {
+class OPS_API SparseSegmentSqrtNWithNumSegments : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseSegmentSqrtNWithNumSegments);
   SparseSegmentSqrtNWithNumSegments() : BaseOperator(kNameSparseSegmentSqrtNWithNumSegments) {
@@ -35,7 +35,7 @@ class SparseSegmentSqrtNWithNumSegments : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr SparseSegmentSqrtNWithNumSegmentsInfer(
+OPS_API abstract::AbstractBasePtr SparseSegmentSqrtNWithNumSegmentsInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSparseSegmentSqrtNWithNumSegmentsPtr = std::shared_ptr<SparseSegmentSqrtNWithNumSegments>;

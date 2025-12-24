@@ -22,12 +22,12 @@
 
 namespace mindspore {
 namespace ops {
-class MeshgridFuncImpl : public OpFuncImpl {
+class OPS_API MeshgridFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
-class MeshgridViewFuncImpl : public MeshgridFuncImpl {};
+class OPS_API MeshgridViewFuncImpl : public MeshgridFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_MESHGRID_H_

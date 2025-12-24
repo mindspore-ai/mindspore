@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGroupConv2DGradInput = "GroupConv2DGradInput";
-class GroupConv2DGradInput : public BaseOperator {
+class OPS_API GroupConv2DGradInput : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(GroupConv2DGradInput);
   GroupConv2DGradInput() : BaseOperator(kNameGroupConv2DGradInput) {}
@@ -64,8 +64,9 @@ class GroupConv2DGradInput : public BaseOperator {
   ActivationType get_activation_type() const;
   bool get_has_bias() const;
 };
-abstract::AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr GroupConv2DGradInputInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

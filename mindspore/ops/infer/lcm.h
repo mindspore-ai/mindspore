@@ -27,14 +27,14 @@ namespace ops {
 constexpr auto kNameLcm = "Lcm";
 /// \brief Computes the least common multiplier element-wise.
 /// Refer to Python API @ref mindspore.ops.Lcm for more details.
-class Lcm : public BaseOperator {
+class OPS_API Lcm : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Lcm);
   /// \brief Constructor.
   Lcm() : BaseOperator(kNameLcm) { InitIOName({"x1", "x2"}, {"y"}); }
 };
-abstract::AbstractBasePtr LcmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LcmInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LCM_H_

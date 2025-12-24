@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class TanhFuncImpl : public OpFuncImpl {
+class OPS_API TanhFuncImpl : public OpFuncImpl {
  public:
   TanhFuncImpl() = default;
   ~TanhFuncImpl() = default;

@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameNeighborExchange = "NeighborExchange";
 /// \brief NeighborExchange sends data from the local rank to ranks in the send_rank_ids.
 /// Refer to Python API @ref mindspore.ops.NeighborExchange for more details.
-class NeighborExchange : public BaseOperator {
+class OPS_API NeighborExchange : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(NeighborExchange);
   /// \brief Constructor.
@@ -34,8 +34,9 @@ class NeighborExchange : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.NeighborExchange for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr NeighborExchangeInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

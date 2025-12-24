@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class TriuFuncImpl : public OpFuncImpl {
+class OPS_API TriuFuncImpl : public OpFuncImpl {
  public:
   TriuFuncImpl() = default;
   ~TriuFuncImpl() = default;

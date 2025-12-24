@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameDeformableOffsets = "DeformableOffsets";
 /// \brief DeformableOffsets. Refer to Python API @ref mindspore.ops.deformable_conv2d for more details.
-class DeformableOffsets : public BaseOperator {
+class OPS_API DeformableOffsets : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DeformableOffsets);
   /// \brief Constructor.
@@ -86,8 +86,9 @@ class DeformableOffsets : public BaseOperator {
   /// \return modulated.
   bool get_modulated() const;
 };
-abstract::AbstractBasePtr DeformableOffsetsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr DeformableOffsetsInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_DEFORMABLE_OFFSETS_H_

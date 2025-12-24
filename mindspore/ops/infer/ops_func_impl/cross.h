@@ -19,13 +19,12 @@
 
 #include <memory>
 #include <vector>
-#include "mindapi/base/macros.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore {
 namespace ops {
-OPS_API size_t CalCrossDimFromDefaultValue(const ShapeVector &input_shape, const ShapeVector &other_shape);
-class CrossFuncImpl : public OpFuncImpl {
+size_t OPS_API CalCrossDimFromDefaultValue(const ShapeVector &input_shape, const ShapeVector &other_shape);
+class OPS_API CrossFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

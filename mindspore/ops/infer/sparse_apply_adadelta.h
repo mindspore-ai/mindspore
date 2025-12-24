@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseApplyAdadelta = "SparseApplyAdadelta";
-class SparseApplyAdadelta : public BaseOperator {
+class OPS_API SparseApplyAdadelta : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseApplyAdadelta);
   SparseApplyAdadelta() : BaseOperator(kNameSparseApplyAdadelta) {
@@ -36,8 +36,9 @@ class SparseApplyAdadelta : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr SparseApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SparseApplyAdadeltaInfer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimSparseApplyAdadeltaPtr = std::shared_ptr<SparseApplyAdadelta>;
 }  // namespace ops

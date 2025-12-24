@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv3DBackpropInput = "Conv3DBackpropInput";
-class Conv3DBackpropInput : public BaseOperator {
+class OPS_API Conv3DBackpropInput : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Conv3DBackpropInput);
   Conv3DBackpropInput() : BaseOperator(kNameConv3DBackpropInput) {

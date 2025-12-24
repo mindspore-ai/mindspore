@@ -30,7 +30,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameSequenceUnstack = "SequenceUnstack";
 
-class SequenceUnstack : public BaseOperator {
+class OPS_API SequenceUnstack : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SequenceUnstack);
   /// \brief Constructor.

@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameDynamicResizeNearestNeighbor = "DynamicResizeNearestNeighbor";
 
-class DynamicResizeNearestNeighbor : public BaseOperator {
+class OPS_API DynamicResizeNearestNeighbor : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DynamicResizeNearestNeighbor);
   DynamicResizeNearestNeighbor() : BaseOperator(kNameDynamicResizeNearestNeighbor) {}

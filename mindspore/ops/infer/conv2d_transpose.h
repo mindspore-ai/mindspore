@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DTranspose = "Conv2DTranspose";
 /// \brief 2D transposed convolution layer. Refer to Python API @ref mindspore.nn.Conv2dTranspose for more details.
-class Conv2DTranspose : public BaseOperator {
+class OPS_API Conv2DTranspose : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Conv2DTranspose);
   /// \brief Constructor.

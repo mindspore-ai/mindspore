@@ -31,7 +31,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameCol2Im = "Col2Im";
 /// \brief Col2Im operation. Refer to Python API @ref mindspore.ops.Col2Im for more details.
-class Col2Im : public BaseOperator {
+class OPS_API Col2Im : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Col2Im);
 
@@ -39,8 +39,8 @@ class Col2Im : public BaseOperator {
   Col2Im() : BaseOperator(kNameCol2Im) { InitIOName({"x", "output_size"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr Col2ImInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr Col2ImInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<AbstractBasePtr> &input_args);
 using PrimCol2ImPtr = std::shared_ptr<Col2Im>;
 }  // namespace ops
 }  // namespace mindspore

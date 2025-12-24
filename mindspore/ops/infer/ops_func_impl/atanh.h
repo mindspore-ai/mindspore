@@ -21,7 +21,7 @@
 #include "infer/ops_func_impl/eltwise_op.h"
 
 namespace mindspore::ops {
-class AtanhFuncImpl : public EltwiseOpFuncImpl {
+class OPS_API AtanhFuncImpl : public EltwiseOpFuncImpl {
  public:
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
 };

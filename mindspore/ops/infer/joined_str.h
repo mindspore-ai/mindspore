@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameJoinedStr = "JoinedStr";
-class JoinedStr : public BaseOperator {
+class OPS_API JoinedStr : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(JoinedStr);
   JoinedStr() : BaseOperator(kNameJoinedStr) {}

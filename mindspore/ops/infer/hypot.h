@@ -25,13 +25,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameHypot = "Hypot";
-class Hypot : public BaseOperator {
+class OPS_API Hypot : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Hypot);
   Hypot() : BaseOperator(kNameHypot) { InitIOName({"x1", "x2"}, {"y"}); }
 };
-abstract::AbstractBasePtr HypotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr HypotInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_HYPOT_H_

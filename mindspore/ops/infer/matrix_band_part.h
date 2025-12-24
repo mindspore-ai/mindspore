@@ -36,7 +36,7 @@ std::vector<T> GetExpandedShape(const std::vector<T> &shape, const size_t expend
   return expanded_shape;
 }
 
-class MatrixBandPart : public BaseOperator {
+class OPS_API MatrixBandPart : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatrixBandPart);
   MatrixBandPart() : BaseOperator(kNameMatrixBandPart) { InitIOName({"x"}, {"y"}); }

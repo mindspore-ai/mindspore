@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameLSTM = "LSTM";
 /// \brief Performs the Long Short-Term Memory (LSTM) on the input.
 /// Refer to Python API @ref mindspore.ops.LSTM for more details.
-class LSTM : public BaseOperator {
+class OPS_API LSTM : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LSTM);
   /// \brief Constructor.

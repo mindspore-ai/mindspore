@@ -26,13 +26,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLstsq = "Lstsq";
-class Lstsq : public BaseOperator {
+class OPS_API Lstsq : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Lstsq);
   Lstsq() : BaseOperator(kNameLstsq) { InitIOName({"matrix", "rhs"}, {"y"}); }
 };
-abstract::AbstractBasePtr LstsqInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LstsqInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLstsqPtr = std::shared_ptr<Lstsq>;
 }  // namespace ops
 }  // namespace mindspore

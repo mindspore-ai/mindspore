@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class GEGraphOpFuncImpl : public OpFuncImpl {
+class OPS_API GEGraphOpFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };

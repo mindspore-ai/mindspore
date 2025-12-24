@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class Conv3DPaddingFuncImpl : public OpFuncImpl {
+class OPS_API Conv3DPaddingFuncImpl : public OpFuncImpl {
  public:
   ShapeArray ConvNdInferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos,
                               const ShapeVector &input_shape, const ShapeVector &weight_shape) const;

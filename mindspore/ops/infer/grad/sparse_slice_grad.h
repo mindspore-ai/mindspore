@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseSliceGrad = "SparseSliceGrad";
-class SparseSliceGrad : public BaseOperator {
+class OPS_API SparseSliceGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseSliceGrad);
 

@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameSparseSegmentMeanWithNumSegments = "SparseSegmentMeanWithNumSegments";
 /// \brief Computes the mean along sparse segments of a tensor, but it is allowed to miss id in segment_ids.
 /// Refer to Python API @ref mindspore.ops.SparseSegmentMeanWithNumSegments for more details.
-class SparseSegmentMeanWithNumSegments : public BaseOperator {
+class OPS_API SparseSegmentMeanWithNumSegments : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseSegmentMeanWithNumSegments);
   /// \brief Constructor.
@@ -39,7 +39,7 @@ class SparseSegmentMeanWithNumSegments : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr SparseSegmentMeanWithNumSegmentsInfer(
+OPS_API abstract::AbstractBasePtr SparseSegmentMeanWithNumSegmentsInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSparseSegmentMeanWithNumSegmentsPtr = std::shared_ptr<SparseSegmentMeanWithNumSegments>;

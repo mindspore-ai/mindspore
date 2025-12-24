@@ -26,7 +26,7 @@
 namespace mindspore::ops {
 constexpr auto kNameShapeCalc = "ShapeCalc";
 constexpr auto kAttrCalcResult = "calc_result";
-class ShapeCalc : public BaseOperator {
+class OPS_API ShapeCalc : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ShapeCalc);
   ShapeCalc() : BaseOperator(kNameShapeCalc) { InitIOName({"inputs"}, {"outputs"}); }

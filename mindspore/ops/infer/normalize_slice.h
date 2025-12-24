@@ -32,7 +32,7 @@ constexpr auto kNameNormalizeSlice = "NormalizeSlice";
 // input: data_shape, init_by_none, start, stop, step
 // attr: tuple_index_types, dim_axis, expand_dims_mask(used in setitem)
 // outputs: start, stop, step
-class NormalizeSlice : public BaseOperator {
+class OPS_API NormalizeSlice : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(NormalizeSlice);
   /// \brief Constructor.

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class UpsampleLinear1DGradFuncImpl final : public UpsampleBackwardBaseFuncImpl {
+class OPS_API UpsampleLinear1DGradFuncImpl final : public UpsampleBackwardBaseFuncImpl {
  protected:
   size_t GetImageRank() const noexcept override { return 3; };
 };

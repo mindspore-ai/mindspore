@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameSigmoidCrossEntropyWithLogits = "SigmoidCrossEntropyWithLogits";
 /// \brief Uses the given logits to compute sigmoid cross entropy between the logits and the label.
 /// Refer to Python API @ref mindspore.ops.SigmoidCrossEntropyWithLogits for more details.
-class SigmoidCrossEntropyWithLogits : public BaseOperator {
+class OPS_API SigmoidCrossEntropyWithLogits : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SigmoidCrossEntropyWithLogits);
   /// \brief Constructor.

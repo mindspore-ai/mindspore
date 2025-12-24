@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDynamicGRUV2 = "DynamicGRUV2";
-class DynamicGRUV2 : public BaseOperator {
+class OPS_API DynamicGRUV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DynamicGRUV2);
 

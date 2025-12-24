@@ -34,7 +34,7 @@ enum SpeedFusionAttentionSparseMode : int64_t {
   BAND_LEFT_UP_CAUSAL
 };
 
-class SpeedFusionAttentionFuncImpl : public OpFuncImpl {
+class OPS_API SpeedFusionAttentionFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

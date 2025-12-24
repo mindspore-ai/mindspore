@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameEmbeddingLookupFusion = "EmbeddingLookupFusion";
 /// \brief EmbeddingLookupFusion defined EmbeddingLookup operator prototype of lite.
-class EmbeddingLookupFusion : public BaseOperator {
+class OPS_API EmbeddingLookupFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(EmbeddingLookupFusion);
   /// \brief Constructor.

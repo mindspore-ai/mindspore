@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDeConv2DGradFilter = "DeConv2DGradFilter";
-class DeConv2DGradFilter : public BaseOperator {
+class OPS_API DeConv2DGradFilter : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DeConv2DGradFilter);
   DeConv2DGradFilter() : BaseOperator(kNameDeConv2DGradFilter) {}

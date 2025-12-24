@@ -25,14 +25,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCOOTensorGetShape = "COOTensorGetShape";
-class COOTensorGetShape : public BaseOperator {
+class OPS_API COOTensorGetShape : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(COOTensorGetShape);
   /// \brief Constructor.
   COOTensorGetShape() : BaseOperator(kNameCOOTensorGetShape) {}
 };
-abstract::AbstractBasePtr COOTensorGetShapeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &args_spec_list);
+OPS_API abstract::AbstractBasePtr COOTensorGetShapeInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &args_spec_list);
 }  // namespace ops
 }  // namespace mindspore
 

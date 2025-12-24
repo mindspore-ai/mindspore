@@ -27,14 +27,14 @@ constexpr auto kNameDiagPart = "DiagPart";
 
 /// \brief Extracts the diagonal part from given tensor.
 /// Refer to Python API @ref mindspore.ops.DiagPart for more details.
-class DiagPart : public BaseOperator {
+class OPS_API DiagPart : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DiagPart);
   /// \brief Constructor.
   DiagPart() : BaseOperator(kNameDiagPart) { InitIOName({"input_x"}, {"output"}); }
 };
-abstract::AbstractBasePtr DiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr DiagPartInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

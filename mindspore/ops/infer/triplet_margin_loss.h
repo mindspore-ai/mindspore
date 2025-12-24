@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTripletMarginLoss = "TripletMarginLoss";
-class TripletMarginLoss : public BaseOperator {
+class OPS_API TripletMarginLoss : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TripletMarginLoss);
   TripletMarginLoss() : BaseOperator(kNameTripletMarginLoss) {
@@ -46,8 +46,9 @@ class TripletMarginLoss : public BaseOperator {
   std::string get_reduction() const;
 };
 
-abstract::AbstractBasePtr TripletMarginLossInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr TripletMarginLossInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimTripletMarginLossPtr = std::shared_ptr<TripletMarginLoss>;
 }  // namespace ops
 }  // namespace mindspore

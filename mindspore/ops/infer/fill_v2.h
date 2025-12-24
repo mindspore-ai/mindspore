@@ -27,14 +27,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFillV2 = "FillV2";
-class FillV2 : public BaseOperator {
+class OPS_API FillV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FillV2);
   FillV2() : BaseOperator(kNameFillV2) { InitIOName({"shape", "value"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr FillV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr FillV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimFillV2Ptr = std::shared_ptr<FillV2>;
 }  // namespace ops

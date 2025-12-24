@@ -25,7 +25,7 @@ constexpr auto kNameUnique = "Unique";
 /// \brief Returns the unique elements of input tensor and also returns a tensor containing
 /// the index of each value of input tensor corresponding to the output unique tensor.
 /// Refer to Python API @ref mindspore.ops.Unique for more details.
-class Unique : public BaseOperator {
+class OPS_API Unique : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Unique);
   /// \brief Constructor.

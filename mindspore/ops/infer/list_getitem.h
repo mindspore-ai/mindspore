@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 /// \brief list_getitem op is added to the multi-output node to describe which output of the node, which is only used
 /// in FuncGraph.
-class list_getitem : public BaseOperator {
+class OPS_API list_getitem : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(list_getitem);
   /// \brief Constructor.

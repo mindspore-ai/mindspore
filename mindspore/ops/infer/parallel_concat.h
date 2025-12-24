@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameParallelConcat = "ParallelConcat";
 /// \brief Connect tensor in the specified axis.
 /// Refer to Python API @ref mindspore.ops.ParallelConcat for more details.
-class ParallelConcat : public BaseOperator {
+class OPS_API ParallelConcat : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ParallelConcat);
   /// \brief Constructor.
@@ -35,8 +35,9 @@ class ParallelConcat : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ParallelConcat for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr ParallelConcatInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ParallelConcatInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_PARALLEL_PARALLEL_CONCAT_H_

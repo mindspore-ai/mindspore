@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class TanhGradFuncImpl : public OpFuncImpl {
+class OPS_API TanhGradFuncImpl : public OpFuncImpl {
  public:
   TanhGradFuncImpl() = default;
   ~TanhGradFuncImpl() = default;

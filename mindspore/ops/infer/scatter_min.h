@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScatterMin = "ScatterMin";
-class ScatterMin : public BaseOperator {
+class OPS_API ScatterMin : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScatterMin);
   /// \brief Constructor.

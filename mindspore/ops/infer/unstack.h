@@ -30,7 +30,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameUnstack = "Unstack";
 /// \brief Unstacks tensor in specified axis. Refer to Python API @ref mindspore.ops.Unstack for more details.
-class Unstack : public BaseOperator {
+class OPS_API Unstack : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Unstack);
   /// \brief Constructor.

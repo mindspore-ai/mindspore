@@ -24,7 +24,7 @@
 
 namespace mindspore::ops {
 /// \brief Leaky ReLU Ext activation function. Refer to Python API @ref mindspore.nn.LeakyReLUExt for more details.
-class LeakyReLUExtFuncImpl : public OpFuncImpl {
+class OPS_API LeakyReLUExtFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

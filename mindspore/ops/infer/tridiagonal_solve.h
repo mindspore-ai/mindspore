@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameTridiagonalSolve = "TridiagonalSolve";
-class TridiagonalSolve : public BaseOperator {
+class OPS_API TridiagonalSolve : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TridiagonalSolve);
   TridiagonalSolve() : BaseOperator(kNameTridiagonalSolve) { InitIOName({"diagonals", "rhs"}, {"y"}); }
@@ -35,8 +35,9 @@ class TridiagonalSolve : public BaseOperator {
   bool get_partial_pivoting() const;
 };
 
-abstract::AbstractBasePtr TridiagonalSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr TridiagonalSolveInfer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_TRIDIAGONAL_SOLVE_H_

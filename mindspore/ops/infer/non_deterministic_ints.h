@@ -28,13 +28,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNonDeterministicInts = "NonDeterministicInts";
-class NonDeterministicInts : public BaseOperator {
+class OPS_API NonDeterministicInts : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(NonDeterministicInts);
   NonDeterministicInts() : BaseOperator(kNonDeterministicInts) { InitIOName({"shape"}, {"output"}); }
 };
-abstract::AbstractBasePtr NonDeterministicIntsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr NonDeterministicIntsInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimNonDeterministicIntsPtr = std::shared_ptr<NonDeterministicInts>;
 }  // namespace ops
 }  // namespace mindspore

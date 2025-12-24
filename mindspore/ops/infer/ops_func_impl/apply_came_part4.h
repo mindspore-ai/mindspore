@@ -26,7 +26,7 @@ namespace ops {
 
 /// \brief . Compute Part 4 of the CAME Optimizer
 /// Refer to Python API @ref mindspore.ops.ApplyCamePart4 for more details.
-class ApplyCamePart4FuncImpl : public OpFuncImpl {
+class OPS_API ApplyCamePart4FuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

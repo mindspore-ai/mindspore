@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-class InplaceBinaryFuncImpl : public OpFuncImpl {
+class OPS_API InplaceBinaryFuncImpl : public OpFuncImpl {
  public:
   // GeneralInfer
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

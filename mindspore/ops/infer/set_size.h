@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSetSize = "SetSize";
-class SetSize : public BaseOperator {
+class OPS_API SetSize : public BaseOperator {
  public:
   SetSize() : BaseOperator(kNameSetSize) { InitIOName({"set_indices", "set_values", "set_shape"}, {"size"}); }
   void Init(const bool validate_indices = true);
@@ -35,8 +35,8 @@ class SetSize : public BaseOperator {
 
   bool get_validate_indices() const;
 };
-abstract::AbstractBasePtr SetSizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SetSizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

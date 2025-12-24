@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFloatStatus = "FloatStatus";
-class FloatStatus : public BaseOperator {
+class OPS_API FloatStatus : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FloatStatus);
   FloatStatus() : BaseOperator(kNameFloatStatus) { InitIOName({"x"}, {"y"}); }

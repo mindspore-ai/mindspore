@@ -29,13 +29,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLuSolve = "LuSolve";
-class LuSolve : public BaseOperator {
+class OPS_API LuSolve : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LuSolve);
   LuSolve() : BaseOperator(kNameLuSolve) { InitIOName({"x", "lu_data", "lu_pivots"}, {"output"}); }
 };
-abstract::AbstractBasePtr LuSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LuSolveInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLuSolvePtr = std::shared_ptr<LuSolve>;
 }  // namespace ops
 }  // namespace mindspore

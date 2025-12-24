@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFractionalMaxPool = "FractionalMaxPool";
-class FractionalMaxPool : public BaseOperator {
+class OPS_API FractionalMaxPool : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FractionalMaxPool);
   FractionalMaxPool() : BaseOperator(kNameFractionalMaxPool) {
@@ -73,8 +73,9 @@ class FractionalMaxPool : public BaseOperator {
   ///
   /// \return pooling seed2 attributes.
 };
-abstract::AbstractBasePtr FractionalMaxPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr FractionalMaxPoolInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimFractionalMaxPool = std::shared_ptr<FractionalMaxPool>;
 }  // namespace ops
 }  // namespace mindspore

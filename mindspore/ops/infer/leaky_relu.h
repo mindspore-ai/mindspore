@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameLeakyRelu = "LeakyRelu";
 /// \brief Leaky ReLU activation function. Refer to Python API @ref mindspore.nn.LeakyReLU for more details.
-class LeakyRelu : public BaseOperator {
+class OPS_API LeakyRelu : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LeakyRelu);
   /// \brief Constructor.
@@ -42,8 +42,8 @@ class LeakyRelu : public BaseOperator {
   float get_negative_slope() const;
 };
 
-abstract::AbstractBasePtr LeakyReluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LeakyReluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

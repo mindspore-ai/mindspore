@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameAngleAtomEnergy = "AngleAtomEnergy";
 /// \brief AngleAtomEnergy operation. Refer to Python API @ref mindspore.ops.AngleAtomEnergy for more details.
-class AngleAtomEnergy : public BaseOperator {
+class OPS_API AngleAtomEnergy : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AngleAtomEnergy);
   /// \brief Constructor.

@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class ReshapeFuncImpl : public OpFuncImpl {
+class OPS_API ReshapeFuncImpl : public OpFuncImpl {
  public:
   ReshapeFuncImpl() = default;
   ~ReshapeFuncImpl() = default;
@@ -30,7 +30,7 @@ class ReshapeFuncImpl : public OpFuncImpl {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 };
-class ReshapeViewFuncImpl : public ReshapeFuncImpl {};
+class OPS_API ReshapeViewFuncImpl : public ReshapeFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RESHAPE_H_

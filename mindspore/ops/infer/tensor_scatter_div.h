@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameTensorScatterDiv = "TensorScatterDiv";
 /// \brief By division the value at the position indicated by the index in input_x with the value in the update, the
 /// value at the index will eventually be equal to the largest one to create a new tensor.
-class TensorScatterDiv : public BaseOperator {
+class OPS_API TensorScatterDiv : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorScatterDiv);
   /// \brief Constructor.

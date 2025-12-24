@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMatMulBiasAddReluFusion = "MatMulBiasAddReluFusion";
 /// \brief MatMulBiasAddReluFusion.
-class MatMulBiasAddReluFusion : public BaseOperator {
+class OPS_API MatMulBiasAddReluFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MatMulBiasAddReluFusion);
   /// \brief Constructor.

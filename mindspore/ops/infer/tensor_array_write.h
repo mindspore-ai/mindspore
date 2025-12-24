@@ -25,7 +25,7 @@ namespace ops {
 constexpr auto kNameTensorArrayWrite = "TensorArrayWrite";
 
 /// \brief Assert defined TensorArrayWrite operator prototype of lite.
-class TensorArrayWrite : public BaseOperator {
+class OPS_API TensorArrayWrite : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorArrayWrite);
   /// \brief Constructor.

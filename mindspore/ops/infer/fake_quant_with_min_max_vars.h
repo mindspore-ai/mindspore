@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameFakeQuantWithMinMaxVars = "FakeQuantWithMinMaxVars";
 /// \brief Fake-quantize the input by minimum and maximum.
 /// Refer to Python API @ref mindspore.ops.FakeQuantWithMinMaxVars for more details.
-class FakeQuantWithMinMaxVars : public BaseOperator {
+class OPS_API FakeQuantWithMinMaxVars : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FakeQuantWithMinMaxVars);
   /// \brief Constructor.
@@ -46,9 +46,9 @@ class FakeQuantWithMinMaxVars : public BaseOperator {
   /// \return num_bits.
   int64_t get_num_bits() const;
 };
-abstract::AbstractBasePtr FakeQuantWithMinMaxVarsInfer(const abstract::AnalysisEnginePtr &,
-                                                       const PrimitivePtr &primitive,
-                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr FakeQuantWithMinMaxVarsInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

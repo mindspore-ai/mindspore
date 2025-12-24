@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class BatchMatMulFuncImpl : public OpFuncImpl {
+class OPS_API BatchMatMulFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
@@ -32,13 +32,14 @@ class BatchMatMulFuncImpl : public OpFuncImpl {
   TypePtrList InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;
 };
 
-void BatchMatMulMakeShape(ShapeVector *output, const ShapeVector xshp, const ShapeVector yshp, bool transpose_a,
-                          bool transpose_b);
-void CheckBatchMatmulInputWhetherCanBeMul(const std::string &name, const ShapeVector &x_shape,
-                                          const ShapeVector &y_shape, bool transpose_a, bool transpose_b);
-void CheckBatchMatmulInputWhetherCanBeBroadcast(const std::string &name, const ShapeVector &x_shape,
-                                                const ShapeVector &y_shape);
-void CheckBatchMatmulInputSize(const std::string &op_name, const std::string &input_name, const ShapeVector &shape);
+OPS_API void BatchMatMulMakeShape(ShapeVector *output, const ShapeVector xshp, const ShapeVector yshp, bool transpose_a,
+                                  bool transpose_b);
+OPS_API void CheckBatchMatmulInputWhetherCanBeMul(const std::string &name, const ShapeVector &x_shape,
+                                                  const ShapeVector &y_shape, bool transpose_a, bool transpose_b);
+OPS_API void CheckBatchMatmulInputWhetherCanBeBroadcast(const std::string &name, const ShapeVector &x_shape,
+                                                        const ShapeVector &y_shape);
+OPS_API void CheckBatchMatmulInputSize(const std::string &op_name, const std::string &input_name,
+                                       const ShapeVector &shape);
 }  // namespace ops
 }  // namespace mindspore
 

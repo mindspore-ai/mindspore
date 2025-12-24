@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceFusion = "ReduceFusion";
 /// \brief ReduceFusion defined Reduce operator prototype of lite.
-class ReduceFusion : public Reduce {
+class OPS_API ReduceFusion : public Reduce {
  public:
   MIND_API_BASE_MEMBER(ReduceFusion);
   /// \brief Constructor.

@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class AGStackInfer : public abstract::OpInferBase {
+class OPS_API AGStackInfer : public abstract::OpInferBase {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 

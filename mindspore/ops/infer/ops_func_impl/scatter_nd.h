@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief Scatters a tensor into a new tensor depending on the specified indices.
-class ScatterNdFuncImpl : public OpFuncImpl {
+class OPS_API ScatterNdFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) const override;
 

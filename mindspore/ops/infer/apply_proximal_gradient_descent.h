@@ -25,16 +25,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameApplyProximalGradientDescent = "ApplyProximalGradientDescent";
-class ApplyProximalGradientDescent : public BaseOperator {
+class OPS_API ApplyProximalGradientDescent : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyProximalGradientDescent);
   ApplyProximalGradientDescent() : BaseOperator(kNameApplyProximalGradientDescent) {
     InitIOName({"var", "alpha", "l1", "l2", "delta"}, {"var"});
   }
 };
-abstract::AbstractBasePtr ApplyProximalGradientDescentInfer(const abstract::AnalysisEnginePtr &,
-                                                            const PrimitivePtr &primitive,
-                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ApplyProximalGradientDescentInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

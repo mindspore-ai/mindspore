@@ -20,7 +20,7 @@
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore::ops {
-class TensorShapeFuncImpl : public OpFuncImpl {
+class OPS_API TensorShapeFuncImpl : public OpFuncImpl {
  public:
   TensorShapeFuncImpl() = default;
   ~TensorShapeFuncImpl() = default;

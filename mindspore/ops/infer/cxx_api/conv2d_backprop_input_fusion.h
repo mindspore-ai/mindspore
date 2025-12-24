@@ -24,7 +24,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropInputFusion = "Conv2DBackpropInputFusion";
 /// \brief Conv2DBackpropInputFusion defined Conv2DBackpropInput operator prototype of lite.
-class Conv2DBackpropInputFusion : public Conv2DBackpropInput {
+class OPS_API Conv2DBackpropInputFusion : public Conv2DBackpropInput {
  public:
   MIND_API_BASE_MEMBER(Conv2DBackpropInputFusion);
   /// \brief Constructor.

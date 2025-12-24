@@ -24,139 +24,139 @@
 #include "abstract/param_validator.h"
 namespace mindspore {
 namespace abstract {
-AbstractBasePtr InferImplReturn(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplInDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplNotInDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                    const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplBpropCut(const AnalysisEnginePtr &, const PrimitivePtr &,
-                                  const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplScalarToArray(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplArrayToScalar(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplBroadcastShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+OPS_API AbstractBasePtr InferImplReturn(const AnalysisEnginePtr &, const PrimitivePtr &,
                                         const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplidentity(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_abs_list);
-
-AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplUnsortedSegmentMax(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplUnsortedSegmentMin(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplMakeKeywordArg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+OPS_API AbstractBasePtr InferImplSwitch(const AnalysisEnginePtr &, const PrimitivePtr &,
                                         const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplExtractKeywordArg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplDictSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplDictGetKeys(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplDictGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplInsertGradientOf(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplArrayLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplGetGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplEnvironAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplUpdateState(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplVirtualViewGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplDebug(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplRowTensorGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplRowTensorGetIndices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+OPS_API AbstractBasePtr InferImplSwitchLayer(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                              const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplRowTensorGetDenseShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplRowTensorAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplScatterSub(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplDiv(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplSubAndFilter(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplMapCacheIdx(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+OPS_API AbstractBasePtr InferImplIs_(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplCacheSwapTable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplSparseApplyProximalAdagrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplAllSwap(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplAllReduce(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplReduceScatter(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+OPS_API AbstractBasePtr InferImplIsNot(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplSGD(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplMinimum(const AnalysisEnginePtr &engine_ptr, const PrimitivePtr &primitive,
-                                 const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplDivNoNan(const AnalysisEnginePtr &engine_ptr, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplLinSpace(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                  const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplIsDimUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplIsShapeUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+OPS_API AbstractBasePtr InferImplInDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                         const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplIsElementUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+OPS_API AbstractBasePtr InferImplNotInDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplIsConstant(const AnalysisEnginePtr &, const PrimitivePtr &,
+                                            const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplBatchNorm(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplBpropCut(const AnalysisEnginePtr &, const PrimitivePtr &,
                                           const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplIsTensorBoolCond(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+OPS_API AbstractBasePtr InferImplScalarToArray(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplArrayToScalar(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplBroadcastShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplidentity(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                           const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                             const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplMapUniform(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplSequenceMask(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplLoad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                              const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplTransData(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplTensorMove(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                    const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplMapTensorGetDefaultValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+
+OPS_API AbstractBasePtr InferImplMakeDict(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplUnsortedSegmentMax(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplUnsortedSegmentMin(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplMakeKeywordArg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplExtractKeywordArg(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplDictGetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplDictSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplDictGetKeys(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplDictGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplDictItems(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplInsertGradientOf(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                                   const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplMapTensorGetPermitFilterValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                       const AbstractBasePtrList &args_abs_list);
-AbstractBasePtr InferImplMapTensorGetEvictFilterValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                      const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplArrayLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplMutable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplGetGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplEnvironAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplStateSetItem(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplDepend(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                        const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplUpdateState(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplVirtualViewGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplDebug(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplMakeRowTensor(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplRowTensorGetValues(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplRowTensorGetIndices(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplRowTensorGetDenseShape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                        const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplRowTensorAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplScatterSub(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplDiv(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplSubAndFilter(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplMapCacheIdx(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplCacheSwapTable(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplSparseApplyProximalAdagrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                            const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplAllSwap(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplAllReduce(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplReduceScatter(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplSGD(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplMinimum(const AnalysisEnginePtr &engine_ptr, const PrimitivePtr &primitive,
+                                         const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplDivNoNan(const AnalysisEnginePtr &engine_ptr, const PrimitivePtr &primitive,
+                                          const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplLinSpace(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplIsDimUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplIsShapeUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplIsElementUnknown(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplIsTensorBoolCond(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplMapUniform(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplSequenceMask(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplLoad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                      const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplTransData(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplTensorMove(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                            const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplMapTensorGetDefaultValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                          const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplMapTensorGetPermitFilterValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                               const AbstractBasePtrList &args_abs_list);
+OPS_API AbstractBasePtr InferImplMapTensorGetEvictFilterValue(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                              const AbstractBasePtrList &args_abs_list);
 
 template <typename T>
 AbstractBasePtr InferTupleOrListOrDictLen(const std::string &op_name, const AbstractBasePtrList &args_abs_list) {

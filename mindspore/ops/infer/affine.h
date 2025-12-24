@@ -28,7 +28,7 @@ constexpr auto kAffineContext = "context";
 constexpr auto kAffineOutputDim = "output_dim";
 
 /// \brief Assert defined Affine operator prototype of lite.
-class Affine : public BaseOperator {
+class OPS_API Affine : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Affine);
   /// \brief Constructor.

@@ -24,7 +24,7 @@
 
 namespace mindspore::ops {
 /// \brief Implementation of InferShape and InferType functions for operator 'RandpermExt'
-class RandpermExtFuncImpl : public OpFuncImpl {
+class OPS_API RandpermExtFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const std::vector<InferInfoPtr> &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive,

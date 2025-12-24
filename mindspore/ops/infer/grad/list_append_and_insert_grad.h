@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief List pop operation 'input_data.pop(index)'.
-class ListAppendAndInsertGrad : public BaseOperator {
+class OPS_API ListAppendAndInsertGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ListAppendAndInsertGrad);
   /// \brief Constructor.

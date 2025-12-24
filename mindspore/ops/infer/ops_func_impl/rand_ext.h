@@ -29,7 +29,7 @@
 
 namespace mindspore {
 namespace ops {
-class RandExtFuncImpl : public OnesFuncImpl {
+class OPS_API RandExtFuncImpl : public OnesFuncImpl {
  public:
   RandExtFuncImpl() : dtype_idx_(3) {}
   TypeIdList InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameFFN = "FFN";
-class FFN : public BaseOperator {
+class OPS_API FFN : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FFN);
   /// \brief Constructor.
@@ -50,8 +50,8 @@ class FFN : public BaseOperator {
   /// \return inner_precise.
   int64_t get_inner_precise() const;
 };
-abstract::AbstractBasePtr FFNInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr FFNInferFunc(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

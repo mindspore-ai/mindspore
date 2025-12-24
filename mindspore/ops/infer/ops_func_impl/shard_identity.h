@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class AShardIdentityFuncImpl : public OpFuncImpl {
+class OPS_API AShardIdentityFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 

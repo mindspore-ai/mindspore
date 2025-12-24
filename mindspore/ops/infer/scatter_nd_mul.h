@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameScatterNdMul = "ScatterNdMul";
-class ScatterNdMul : public BaseOperator {
+class OPS_API ScatterNdMul : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScatterNdMul);
   ScatterNdMul() : BaseOperator(kNameScatterNdMul) { InitIOName({"input_x", "indices", "updates"}, {"y"}); }
@@ -37,8 +37,8 @@ class ScatterNdMul : public BaseOperator {
   bool get_use_locking() const;
 };
 
-abstract::AbstractBasePtr ScatterNdMulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ScatterNdMulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimScatterNdMulPtr = std::shared_ptr<ScatterNdMul>;
 }  // namespace ops
 }  // namespace mindspore

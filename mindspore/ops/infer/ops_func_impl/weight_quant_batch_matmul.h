@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-class WeightQuantBatchMatmulFuncImpl : public OpFuncImpl {
+class OPS_API WeightQuantBatchMatmulFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

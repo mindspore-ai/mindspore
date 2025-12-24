@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameStringToEnum = "StringToEnum";
 
 /// \brief Returns the enum value of the input string.
-class StringToEnum : public BaseOperator {
+class OPS_API StringToEnum : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(StringToEnum);
   /// \brief Constructor.

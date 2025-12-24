@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameROIAlign = "ROIAlign";
 /// \brief ROIAlign defined the ROIAlign operator prototype.
-class ROIAlign : public BaseOperator {
+class OPS_API ROIAlign : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ROIAlign);
   /// \brief Constructor.

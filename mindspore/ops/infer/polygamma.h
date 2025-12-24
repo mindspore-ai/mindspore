@@ -26,14 +26,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNamePolygamma = "Polygamma";
-class Polygamma : public BaseOperator {
+class OPS_API Polygamma : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Polygamma);
   Polygamma() : BaseOperator(kNamePolygamma) { InitIOName({"a", "x"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr PolygammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr PolygammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimPolygammaPtr = std::shared_ptr<Polygamma>;
 }  // namespace ops
 }  // namespace mindspore

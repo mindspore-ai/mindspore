@@ -25,13 +25,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAccumulateNV2 = "AccumulateNV2";
-class AccumulateNV2 : public BaseOperator {
+class OPS_API AccumulateNV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AccumulateNV2);
   AccumulateNV2() : BaseOperator(kNameAccumulateNV2) { InitIOName({"inputs"}, {"sum"}); }
 };
-abstract::AbstractBasePtr AccumulateNV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr AccumulateNV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAccumulateNV2Ptr = std::shared_ptr<AccumulateNV2>;
 }  // namespace ops
 }  // namespace mindspore

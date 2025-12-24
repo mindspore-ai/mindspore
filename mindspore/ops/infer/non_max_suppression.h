@@ -30,7 +30,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameNonMaxSuppression = "NonMaxSuppression";
 /// \brief NonMaxSuppression QuantDTypeCast the NonMaxSuppression operator prototype.
-class NonMaxSuppression : public BaseOperator {
+class OPS_API NonMaxSuppression : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(NonMaxSuppression);
   /// \brief Constructor.
@@ -53,8 +53,9 @@ class NonMaxSuppression : public BaseOperator {
   /// \return an integer value.
   int64_t get_center_point_box() const;
 };
-abstract::AbstractBasePtr NonMaxSuppressionInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr NonMaxSuppressionInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimNonMaxSuppressionPtr = std::shared_ptr<NonMaxSuppression>;
 }  // namespace ops
 }  // namespace mindspore

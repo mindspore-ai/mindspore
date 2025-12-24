@@ -28,7 +28,7 @@ constexpr auto kNameOrmqr = "Ormqr";
 constexpr auto kAttrLeft = "left";
 constexpr auto kAttrTranspose = "transpose";
 /// \brief  Computes the matrix-matrix multiplication of Householder matrices with a general matrix.
-class Ormqr : public BaseOperator {
+class OPS_API Ormqr : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Ormqr);
   /// \brief Constructor.
@@ -49,8 +49,8 @@ class Ormqr : public BaseOperator {
   bool get_transpose() const;
 };
 
-abstract::AbstractBasePtr OrmqrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr OrmqrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimOrmqrPtr = std::shared_ptr<Ormqr>;
 }  // namespace ops
 }  // namespace mindspore

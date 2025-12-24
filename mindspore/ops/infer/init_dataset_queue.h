@@ -24,7 +24,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameInitDataSetQueue = "InitDataSetQueue";
 /// \brief InitDataSetQueue.
-class InitDataSetQueue : public BaseOperator {
+class OPS_API InitDataSetQueue : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(InitDataSetQueue);
   /// \brief Constructor.

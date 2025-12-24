@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameBatchISendIRecv = "BatchISendIRecv";
 
-class BatchISendIRecv : public BaseOperator {
+class OPS_API BatchISendIRecv : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BatchISendIRecv);
   BatchISendIRecv() : BaseOperator(kNameBatchISendIRecv) { InitIOName({"x"}, {"output"}); }

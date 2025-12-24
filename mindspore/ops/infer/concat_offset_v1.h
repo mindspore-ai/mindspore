@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameConcatOffsetV1 = "ConcatOffsetV1";
 /// \brief Computes offsets of concat inputs within its output.
 /// Refer to Python API @ref mindspore.ops.ConcatOffsetV1 for more details.
-class ConcatOffsetV1 : public BaseOperator {
+class OPS_API ConcatOffsetV1 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ConcatOffsetV1);
   /// \brief Constructor.
@@ -35,8 +35,9 @@ class ConcatOffsetV1 : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.ConcatOffsetV1 for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr ConcatOffsetV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ConcatOffsetV1Infer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_CONCAT_OFFSET_V1_H_

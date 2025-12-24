@@ -27,13 +27,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLARSUpdate = "LARSUpdate";
-class LARSUpdate : public BaseOperator {
+class OPS_API LARSUpdate : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LARSUpdate);
   explicit LARSUpdate(const std::string &name = kNameLARSUpdate) : BaseOperator(name) {}
 };
-abstract::AbstractBasePtr LARSUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LARSUpdateInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLARSUpdatePtr = std::shared_ptr<LARSUpdate>;
 }  // namespace ops
 }  // namespace mindspore

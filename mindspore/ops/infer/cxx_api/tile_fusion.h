@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameTileFusion = "TileFusion";
 /// \brief TileFusion defined Tile operator prototype of lite.
-class TileFusion : public BaseOperator {
+class OPS_API TileFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TileFusion);
   /// \brief Constructor.

@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReduceScatter = "ReduceScatter";
-class ReduceScatter : public BaseOperator {
+class OPS_API ReduceScatter : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ReduceScatter);
   ReduceScatter() : BaseOperator(kNameReduceScatter) { InitIOName({"input_x"}, {"output"}); }

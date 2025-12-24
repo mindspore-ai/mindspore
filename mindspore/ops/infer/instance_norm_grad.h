@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameInstanceNormGrad = "InstanceNormGrad";
 /// \brief InstanceNormGrad defined the InstanceNormGrad operator prototype.
-class InstanceNormGrad : public BaseOperator {
+class OPS_API InstanceNormGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(InstanceNormGrad);
   /// \brief Constructor.

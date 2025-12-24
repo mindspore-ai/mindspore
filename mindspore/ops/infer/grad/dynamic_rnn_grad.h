@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDynamicRNNGrad = "DynamicRNNGrad";
-class DynamicRNNGrad : public BaseOperator {
+class OPS_API DynamicRNNGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DynamicRNNGrad);
 
@@ -37,8 +37,9 @@ class DynamicRNNGrad : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr DynamicRNNGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr DynamicRNNGradInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

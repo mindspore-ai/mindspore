@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kReceive = "Receive";
 
-class Receive : public BaseOperator {
+class OPS_API Receive : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Receive);
   Receive() : BaseOperator(kReceive) {}

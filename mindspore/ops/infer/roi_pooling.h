@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameROIPooling = "ROIPooling";
 /// \brief ROIPooling defined the ROIPooling operator prototype.
-class ROIPooling : public BaseOperator {
+class OPS_API ROIPooling : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ROIPooling);
   /// \brief Constructor.
@@ -73,8 +73,8 @@ class ROIPooling : public BaseOperator {
   /// \return the size factor.
   float get_scale() const;
 };
-abstract::AbstractBasePtr ROIPoolingInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ROIPoolingInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

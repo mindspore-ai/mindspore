@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief Sequence less than operation.
-class tuple_lt : public BaseOperator {
+class OPS_API tuple_lt : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(tuple_lt);
   /// \brief Constructor.

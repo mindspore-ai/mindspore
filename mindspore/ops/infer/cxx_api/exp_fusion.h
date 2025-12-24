@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameExpFusion = "ExpFusion";
 /// \brief ExpFusion defined Exp operator prototype of lite.
-class ExpFusion : public BaseOperator {
+class OPS_API ExpFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ExpFusion);
   /// \brief Constructor.

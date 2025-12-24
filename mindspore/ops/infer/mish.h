@@ -20,7 +20,7 @@
 #include "ops/base_operator.h"
 namespace mindspore {
 namespace ops {
-class Mish : public BaseOperator {
+class OPS_API Mish : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Mish);
   Mish() : BaseOperator(kMishOpName) { InitIOName({"x"}, {"output"}); }

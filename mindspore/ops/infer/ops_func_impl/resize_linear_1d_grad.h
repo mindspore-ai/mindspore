@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class ResizeLinear1DGradFuncImpl : public OpFuncImpl {
+class OPS_API ResizeLinear1DGradFuncImpl : public OpFuncImpl {
  public:
   ResizeLinear1DGradFuncImpl() = default;
 

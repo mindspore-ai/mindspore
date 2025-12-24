@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameDataFormatVecPermute = "DataFormatVecPermute";
 /// \brief Permute input tensor from src_format to dst_format.
 /// Refer to Python API @ref mindspore.ops.DataFormatVecPermute for more details.
-class DataFormatVecPermute : public BaseOperator {
+class OPS_API DataFormatVecPermute : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DataFormatVecPermute);
   /// \brief Constructor.
@@ -47,8 +47,9 @@ class DataFormatVecPermute : public BaseOperator {
   std::string get_dst_format() const;
 };
 
-abstract::AbstractBasePtr DataFormatVecPermuteInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr DataFormatVecPermuteInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimDataFormatVecPermutePtr = std::shared_ptr<DataFormatVecPermute>;
 }  // namespace ops

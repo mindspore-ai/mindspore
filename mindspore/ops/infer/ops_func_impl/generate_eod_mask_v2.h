@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class GenerateEodMaskV2FuncImpl : public OpFuncImpl {
+class OPS_API GenerateEodMaskV2FuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 

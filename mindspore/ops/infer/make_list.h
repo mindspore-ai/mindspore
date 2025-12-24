@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief MakeList op is used to pack multiple nodes into a whole, which is only used in FuncGraph.
-class MakeList : public BaseOperator {
+class OPS_API MakeList : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MakeList);
   /// \brief Constructor.

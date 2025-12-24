@@ -22,7 +22,7 @@ namespace symshape {
 namespace ops {
 template <typename DT, typename = std::enable_if_t<std::is_same_v<IntSymbol, DT> || std::is_same_v<FloatSymbol, DT> ||
                                                    std::is_same_v<BoolSymbol, DT>>>
-class ScalarCast : public InferValueOp {
+class OPS_API ScalarCast : public InferValueOp {
  public:
   using DS = typename DT::elem_type;
   using InferValueOp::InferValueOp;

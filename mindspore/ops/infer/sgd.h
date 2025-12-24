@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameSGD = "SGD";
 /// \brief Computes the stochastic gradient descent.
 /// Refer to Python API @ref mindspore.ops.SGD for more details.
-class SGD : public BaseOperator {
+class OPS_API SGD : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SGD);
   /// \brief Constructor.
@@ -54,8 +54,8 @@ class SGD : public BaseOperator {
   /// \return nesterov.
   bool get_nesterov() const;
 };
-abstract::AbstractBasePtr SGDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SGDInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSGD = std::shared_ptr<SGD>;
 }  // namespace ops
 }  // namespace mindspore

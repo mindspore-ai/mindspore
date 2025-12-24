@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameCSRMV = "CSRMV";
 /// \brief Sparse matrix-vector multiplication.
-class CSRMV : public BaseOperator {
+class OPS_API CSRMV : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CSRMV);
   /// \brief Constructor.
@@ -37,8 +37,8 @@ class CSRMV : public BaseOperator {
     InitIOName({"indptr", "indices", "values", "dense_shape", "dense_tensor"}, {"output"});
   }
 };
-abstract::AbstractBasePtr CSRMVInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr CSRMVInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

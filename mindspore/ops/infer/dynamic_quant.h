@@ -30,7 +30,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameDynamicQuant = "DynamicQuant";
 /// \brief the DynamicQuant operator prototype.
-class DynamicQuant : public BaseOperator {
+class OPS_API DynamicQuant : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DynamicQuant);
   /// \brief Constructor.
@@ -102,8 +102,8 @@ class DynamicQuant : public BaseOperator {
   /// \return the preferred axis.
   std::vector<int> get_prefer_axes() const;
 };
-abstract::AbstractBasePtr DynamicQuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr DynamicQuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

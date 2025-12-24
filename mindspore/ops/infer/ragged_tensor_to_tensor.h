@@ -31,7 +31,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameRaggedTensorToTensor = "RaggedTensorToTensor";
 
-class RaggedTensorToTensor : public BaseOperator {
+class OPS_API RaggedTensorToTensor : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RaggedTensorToTensor);
 
@@ -40,8 +40,9 @@ class RaggedTensorToTensor : public BaseOperator {
   }
   void Init() const {}
 };
-abstract::AbstractBasePtr RaggedTensorToTensorInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr RaggedTensorToTensorInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimRaggedTensorToTensorPtr = std::shared_ptr<RaggedTensorToTensor>;
 }  // namespace ops
 }  // namespace mindspore

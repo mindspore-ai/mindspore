@@ -26,15 +26,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxUnpool2DGrad = "MaxUnpool2DGrad";
-class MaxUnpool2DGrad : public BaseOperator {
+class OPS_API MaxUnpool2DGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaxUnpool2DGrad);
   MaxUnpool2DGrad() : BaseOperator(kNameMaxUnpool2DGrad) { InitIOName({"x", "grads", "argmax"}, {"y"}); }
   std::string get_format() const;
 };
 
-abstract::AbstractBasePtr MaxUnpool2DGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MaxUnpool2DGradInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimMaxUnpool2DGradPtr = std::shared_ptr<MaxUnpool2DGrad>;
 }  // namespace ops
 }  // namespace mindspore

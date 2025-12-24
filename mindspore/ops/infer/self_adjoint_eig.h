@@ -24,13 +24,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSelfAdjointEig = "SelfAdjointEig";
-class SelfAdjointEig : public BaseOperator {
+class OPS_API SelfAdjointEig : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SelfAdjointEig);
   SelfAdjointEig() : BaseOperator(kNameSelfAdjointEig) { InitIOName({"x"}, {"eigen_value", "eigen_vector"}); }
 };
-abstract::AbstractBasePtr SelfAdjointEigInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SelfAdjointEigInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_SELFADJOINTEIG_H_

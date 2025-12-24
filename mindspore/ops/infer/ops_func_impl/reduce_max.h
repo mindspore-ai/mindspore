@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class ReduceMaxFuncImpl : public OpFuncImpl {
+class OPS_API ReduceMaxFuncImpl : public OpFuncImpl {
  public:
   ReduceMaxFuncImpl() = default;
   virtual ~ReduceMaxFuncImpl() = default;

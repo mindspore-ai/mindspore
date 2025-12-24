@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftmaxGrad = "SoftmaxGrad";
-class SoftmaxGrad : public BaseOperator {
+class OPS_API SoftmaxGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SoftmaxGrad);
   SoftmaxGrad() : BaseOperator(kNameSoftmaxGrad) { InitIOName({"x", "grad"}, {"y"}); }
@@ -36,8 +36,8 @@ class SoftmaxGrad : public BaseOperator {
   std::vector<int64_t> get_axis() const;
 };
 
-abstract::AbstractBasePtr SoftmaxGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SoftmaxGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

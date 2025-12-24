@@ -21,7 +21,7 @@
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore::ops {
-class TraceFuncImpl : public OpFuncImpl {
+class OPS_API TraceFuncImpl : public OpFuncImpl {
  public:
   TraceFuncImpl() = default;
   ~TraceFuncImpl() = default;

@@ -22,7 +22,7 @@
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore::ops {
-class TransposeFuncImpl : public OpFuncImpl {
+class OPS_API TransposeFuncImpl : public OpFuncImpl {
  public:
   TransposeFuncImpl() = default;
   ~TransposeFuncImpl() = default;

@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNamePriorBox = "PriorBox";
 /// \brief PriorBox defined PriorBox operator prototype of lite.
-class PriorBox : public BaseOperator {
+class OPS_API PriorBox : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(PriorBox);
   /// \brief Constructor.
@@ -163,8 +163,8 @@ class PriorBox : public BaseOperator {
   float get_offset() const;
 };
 
-abstract::AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr PriorBoxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

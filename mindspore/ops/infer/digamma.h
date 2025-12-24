@@ -27,14 +27,14 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameDigamma = "Digamma";
 
-class Digamma : public BaseOperator {
+class OPS_API Digamma : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Digamma);
   Digamma() : BaseOperator(kNameDigamma) { InitIOName({"input"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr DigammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr DigammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_DIGAMMA_H

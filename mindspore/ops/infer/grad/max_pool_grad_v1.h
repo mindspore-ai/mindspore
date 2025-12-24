@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPoolGradV1 = "MaxPoolGradV1";
-class MaxPoolGradV1 : public BaseOperator {
+class OPS_API MaxPoolGradV1 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaxPoolGradV1);
   MaxPoolGradV1() : BaseOperator(kNameMaxPoolGradV1) { InitIOName({"orig_input", "orig_output", "grad"}, {"output"}); }

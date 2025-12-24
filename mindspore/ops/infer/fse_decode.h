@@ -30,7 +30,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameFSEDecode = "FSEDecode";
 /// \brief FSEDecode FSEDecode the FSEDecode operator prototype.
-class FSEDecode : public BaseOperator {
+class OPS_API FSEDecode : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FSEDecode);
   /// \brief Constructor.

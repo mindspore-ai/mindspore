@@ -25,14 +25,15 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameNPUClearFloatStatus = "NPUClearFloatStatus";
-class NPUClearFloatStatus : public BaseOperator {
+class OPS_API NPUClearFloatStatus : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(NPUClearFloatStatus);
   NPUClearFloatStatus() : BaseOperator(kNameNPUClearFloatStatus) { InitIOName({"addr"}, {"data"}); }
   void Init() const {}
 };
-abstract::AbstractBasePtr NPUClearFloatStatusInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr NPUClearFloatStatusInfer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_NPU_CLEAR_FLOATSTATUS_H_

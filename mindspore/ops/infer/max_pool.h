@@ -30,7 +30,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMaxPool = "MaxPool";
 /// \brief Max pooling operation. Refer to Python API @ref mindspore.ops.MaxPool for more details.
-class MaxPool : public BaseOperator {
+class OPS_API MaxPool : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MaxPool);
   /// \brief Constructor.
@@ -79,8 +79,8 @@ class MaxPool : public BaseOperator {
   RoundMode get_round_mode() const;
 };
 
-abstract::AbstractBasePtr MaxPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MaxPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

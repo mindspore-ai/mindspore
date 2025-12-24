@@ -24,7 +24,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameFormatTranspose = "FormatTranspose";
 /// \brief Transpose tensor from specific source format to dest format.
-class FormatTranspose : public BaseOperator {
+class OPS_API FormatTranspose : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FormatTranspose);
   /// \brief Constructor.

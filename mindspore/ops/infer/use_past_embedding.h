@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameUsePastEmbedding = "UsePastEmbedding";
 /// \brief UsePastEmbedding op in MindIR.
-class UsePastEmbedding : public BaseOperator {
+class OPS_API UsePastEmbedding : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(UsePastEmbedding);
   /// \brief Constructor.

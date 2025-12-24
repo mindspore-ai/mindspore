@@ -25,7 +25,7 @@ namespace ops {
 constexpr auto kNameEditDistance = "EditDistance";
 /// \brief Computes the Levenshtein Edit Distance of two sparse tensors.
 /// Refer to Python API @ref mindspore.ops.EditDistance for more details.
-class EditDistance : public BaseOperator {
+class OPS_API EditDistance : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(EditDistance);
   /// \brief Constructor.

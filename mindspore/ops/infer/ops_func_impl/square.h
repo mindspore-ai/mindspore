@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class SquareFuncImpl : public EltwiseOpFuncImpl {};
+class OPS_API SquareFuncImpl : public EltwiseOpFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_SQUARE_H_

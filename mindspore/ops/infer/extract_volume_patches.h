@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameExtractVolumePatches = "ExtractVolumePatches";
 /// \brief Extract patches from input and put them in the "depth" output dimension.
 /// Refer to Python API @ref mindspore.ops.ExtractVolumePatches for more details.
-class ExtractVolumePatches : public BaseOperator {
+class OPS_API ExtractVolumePatches : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ExtractVolumePatches);
   /// \brief Constructor.
@@ -63,8 +63,9 @@ class ExtractVolumePatches : public BaseOperator {
   std::string get_padding() const;
 };
 
-abstract::AbstractBasePtr ExtractVolumePatchesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ExtractVolumePatchesInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimExtractVolumePatchesPtr = std::shared_ptr<ExtractVolumePatches>;
 }  // namespace ops
 }  // namespace mindspore

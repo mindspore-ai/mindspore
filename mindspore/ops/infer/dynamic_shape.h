@@ -20,7 +20,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameDynamicShape = "DynamicShape";
-class DynamicShape : public BaseOperator {
+class OPS_API DynamicShape : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DynamicShape);
   DynamicShape() : BaseOperator(kNameDynamicShape) {}

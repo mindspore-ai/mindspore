@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameApplyAdagradDA = "ApplyAdagradDA";
 /// \brief Update var according to the proximal adagrad scheme.
 /// Refer to Python API @ref mindspore.ops.ApplyAdagradDA for more details.
-class ApplyAdagradDA : public BaseOperator {
+class OPS_API ApplyAdagradDA : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyAdagradDA);
   /// \brief Constructor.
@@ -40,8 +40,9 @@ class ApplyAdagradDA : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr ApplyAdagradDAInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ApplyAdagradDAInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_APPLY_ADAGRAD_D_A_H_

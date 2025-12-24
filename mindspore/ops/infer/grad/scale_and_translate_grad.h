@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameScaleAndTranslateGrad = "ScaleAndTranslateGrad";
 /// \brief Computes gradients of ScaleAndTranslate.
-class ScaleAndTranslateGrad : public BaseOperator {
+class OPS_API ScaleAndTranslateGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ScaleAndTranslateGrad);
   /// \brief Constructor.
@@ -52,8 +52,9 @@ class ScaleAndTranslateGrad : public BaseOperator {
   bool get_antialias() const;
 };
 
-abstract::AbstractBasePtr ScaleAndTranslateGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ScaleAndTranslateGradInfer(const abstract::AnalysisEnginePtr &,
+                                                             const PrimitivePtr &primitive,
+                                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_GRAD_SCALE_AND_TRANSLATE_GRAD_H_

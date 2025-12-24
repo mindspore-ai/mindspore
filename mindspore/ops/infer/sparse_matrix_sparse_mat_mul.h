@@ -33,7 +33,7 @@ constexpr auto kNameSparseMatrixSparseMatMul = "SparseMatrixSparseMatMul";
 /// \brief return a matrix multiplication of a sparse matrix a with a sparse matrix b;
 /// returns a sparse matrix a * b, unless either a or b is transposed or adjointed..
 /// Refer to Python API @ref mindspore.ops.SparseMatrixSparseMatMul for more details.
-class SparseMatrixSparseMatMul : public BaseOperator {
+class OPS_API SparseMatrixSparseMatMul : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseMatrixSparseMatMul);
   /// \brief Constructor.
@@ -61,9 +61,9 @@ class SparseMatrixSparseMatMul : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr SparseMatrixSparseMatMulInfer(const abstract::AnalysisEnginePtr &,
-                                                        const PrimitivePtr &primitive,
-                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SparseMatrixSparseMatMulInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimSparseMatrixSparseMatMul = std::shared_ptr<SparseMatrixSparseMatMul>;
 }  // namespace ops
 }  // namespace mindspore

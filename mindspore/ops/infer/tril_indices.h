@@ -28,7 +28,7 @@ namespace ops {
 constexpr auto kNameTrilIndices = "TrilIndices";
 /// \brief Returns the indices of the lower triangular part of a row-by- col matrix.
 /// Refer to Python API @ref mindspore.ops.TrilIndices for more details.
-class TrilIndices : public BaseOperator {
+class OPS_API TrilIndices : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TrilIndices);
   /// \brief Construct.
@@ -56,8 +56,8 @@ class TrilIndices : public BaseOperator {
   int64_t get_offset() const;
 };
 
-abstract::AbstractBasePtr TrilIndicesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr TrilIndicesInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

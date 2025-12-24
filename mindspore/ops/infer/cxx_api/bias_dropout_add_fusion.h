@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameBiasDropoutAdd = "BiasDropoutAdd";
 /// \brief During training, randomly zeroes some of the elements of the input tensor with probability 1-keep_prob
 //// from a Bernoulli distribution. Refer to Python API @ref mindspore.ops.Dropout for more details.
-class BiasDropoutAdd : public BaseOperator {
+class OPS_API BiasDropoutAdd : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BiasDropoutAdd);
   /// \brief Constructor.

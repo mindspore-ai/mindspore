@@ -26,15 +26,15 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameOrgqr = "Orgqr";
 /// \brief  Computes the first `n` columns of a product of Householder matrices.
-class Orgqr : public BaseOperator {
+class OPS_API Orgqr : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Orgqr);
   /// \brief Constructor.
   Orgqr() : BaseOperator(kNameOrgqr) { InitIOName({"x", "tau"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr OrgqrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr OrgqrInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimOrgqrPtr = std::shared_ptr<Orgqr>;
 }  // namespace ops
 }  // namespace mindspore

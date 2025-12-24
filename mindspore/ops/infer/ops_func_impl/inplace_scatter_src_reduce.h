@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class InplaceScatterSrcReduceFuncImpl : public InplaceScatterSrcFuncImpl {};
+class OPS_API InplaceScatterSrcReduceFuncImpl : public InplaceScatterSrcFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

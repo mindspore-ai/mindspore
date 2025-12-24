@@ -24,7 +24,7 @@ namespace ops {
 /// \brief MakeTuple operator for mindir model of the earlier version.
 /// To ensure the compatibility of the Lite converter_lite tool.
 constexpr auto kNameMakeTupleV2 = "make_tuple";
-class MakeTupleV2 : public BaseOperator {
+class OPS_API MakeTupleV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MakeTupleV2);
   /// \brief Constructor.

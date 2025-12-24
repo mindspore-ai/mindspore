@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameMod = "Mod";
 /// \brief Computes the remainder of dividing the first input tensor by the second input tensor element-wise.
 /// Refer to Python API @ref mindspore.ops.Mod for more details.
-class Mod : public BaseOperator {
+class OPS_API Mod : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Mod);
   /// \brief Constructor.
@@ -34,8 +34,8 @@ class Mod : public BaseOperator {
   /// \brief Init. Refer to the parameters of Python API @ref mindspore.ops.Mod for the inputs.
   void Init() const {}
 };
-abstract::AbstractBasePtr ModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API OPS_API abstract::AbstractBasePtr ModInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimModPtr = std::shared_ptr<Mod>;
 }  // namespace ops
 }  // namespace mindspore

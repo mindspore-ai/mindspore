@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-class SplitWithSizeViewFuncImpl : public SplitWithSizeFuncImpl {};
+class OPS_API SplitWithSizeViewFuncImpl : public SplitWithSizeFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameResizeV2 = "ResizeV2";
-class ResizeV2 : public BaseOperator {
+class OPS_API ResizeV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ResizeV2);
   /// \brief Constructor.

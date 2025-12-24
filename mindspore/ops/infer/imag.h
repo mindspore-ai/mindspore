@@ -28,7 +28,7 @@ constexpr auto kNameImag = "Imag";
 
 /// \brief Returns a Tensor that is the imag part of the input.
 /// Refer to Python API @ref mindspore.ops.Imag for more details.
-class Imag : public BaseOperator {
+class OPS_API Imag : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Imag);
   /// \brief Constructor.

@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameRandomCategorical = "RandomCategorical";
 /// \brief RandomCategorical defined RandomCategorical operator prototype of lite.
-class RandomCategorical : public BaseOperator {
+class OPS_API RandomCategorical : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RandomCategorical);
   /// \brief Constructor.

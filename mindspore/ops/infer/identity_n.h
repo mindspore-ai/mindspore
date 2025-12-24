@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameIdentityN = "IdentityN";
 /// \brief Returns Tensor list with the same shape and contents as input.
 /// Refer to Python API @ref mindspore.ops.IdentityN for more details.
-class IdentityN : public BaseOperator {
+class OPS_API IdentityN : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(IdentityN);
 

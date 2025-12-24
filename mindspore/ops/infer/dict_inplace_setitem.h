@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief Dict inplace setitem operation 'dict[index] = target'.
-class DictInplaceSetItem : public BaseOperator {
+class OPS_API DictInplaceSetItem : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DictInplaceSetItem);
   /// \brief Constructor.

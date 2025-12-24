@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class Conv1DExtFuncImpl final : public ConvBaseFunImpl {
+class OPS_API Conv1DExtFuncImpl final : public ConvBaseFunImpl {
  public:
   Conv1DExtFuncImpl() {
     idxes_.input_idx = 0;

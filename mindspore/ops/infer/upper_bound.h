@@ -28,13 +28,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUpperBound = "UpperBound";
-class UpperBound : public BaseOperator {
+class OPS_API UpperBound : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(UpperBound);
   UpperBound() : BaseOperator(kNameUpperBound) { InitIOName({"sorted_x", "values"}, {"y"}); }
 };
-abstract::AbstractBasePtr UpperBoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr UpperBoundInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimUpperBound = std::shared_ptr<UpperBound>;
 }  // namespace ops
 }  // namespace mindspore

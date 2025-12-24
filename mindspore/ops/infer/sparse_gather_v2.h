@@ -33,12 +33,12 @@ abstract::ShapePtr GatherInferShape(const PrimitivePtr &primitive, const std::ve
 
 TypePtr GatherInferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args);
 
-abstract::AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr GatherInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 
 /// \brief Returns a slice of the input tensor based on the specified indices and axis.
 /// Refer to Python API @ref mindspore.ops.SparseGatherV2 for more details.
-class SparseGatherV2 : public BaseOperator {
+class OPS_API SparseGatherV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseGatherV2);
   /// \brief Constructor.

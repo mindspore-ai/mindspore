@@ -21,7 +21,7 @@
 #include "infer/ops_func_impl/assign_add.h"
 
 namespace mindspore::ops {
-class AssignSubFuncImpl : public AssignAddFuncImpl {};
+class OPS_API AssignSubFuncImpl : public AssignAddFuncImpl {};
 }  // namespace mindspore::ops
 
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_ASSIGN_SUB_H_

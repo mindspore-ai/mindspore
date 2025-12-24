@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCauchy = "Cauchy";
-class Cauchy : public BaseOperator {
+class OPS_API Cauchy : public BaseOperator {
  public:
   Cauchy() : BaseOperator(kNameCauchy) {}
   MIND_API_BASE_MEMBER(Cauchy);

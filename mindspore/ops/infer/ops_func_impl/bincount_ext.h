@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class BincountExtFuncImpl : public OpFuncImpl {
+class OPS_API BincountExtFuncImpl : public OpFuncImpl {
  public:
   BincountExtFuncImpl() = default;
   ~BincountExtFuncImpl() = default;

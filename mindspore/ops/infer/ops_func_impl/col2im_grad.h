@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class Col2ImGradFuncImpl final : public Im2ColExtFuncImpl {
+class OPS_API Col2ImGradFuncImpl final : public Im2ColExtFuncImpl {
  public:
   Col2ImGradFuncImpl() {
     no_batch_rank_ = 3;

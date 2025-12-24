@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCoalesce = "Coalesce";
-class Coalesce : public BaseOperator {
+class OPS_API Coalesce : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Coalesce);
   Coalesce() : BaseOperator(kNameCoalesce) {
@@ -36,8 +36,8 @@ class Coalesce : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr CoalesceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr CoalesceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimCoalescePtr = std::shared_ptr<Coalesce>;
 }  // namespace ops
 }  // namespace mindspore

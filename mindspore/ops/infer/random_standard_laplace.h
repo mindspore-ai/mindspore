@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNameStandardLaplace = "StandardLaplace";
 /// \brief Generate random numbers according to the Standard Laplace random number distribution.
 /// Refer to Python API @ref mindspore.ops.StandardLaplace for more details.
-class StandardLaplace : public BaseOperator {
+class OPS_API StandardLaplace : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(StandardLaplace);
   /// \brief Constructor.
@@ -62,8 +62,9 @@ class StandardLaplace : public BaseOperator {
   int64_t get_seed2() const;
 };
 
-abstract::AbstractBasePtr StandardLaplaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr StandardLaplaceInfer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameApplyMomentum = "ApplyMomentum";
 /// \brief Optimizer that implements the Momentum algorithm.
 /// Refer to Python API @ref mindspore.ops.ApplyMomentum for more details.
-class ApplyMomentum : public BaseOperator {
+class OPS_API ApplyMomentum : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ApplyMomentum);
   /// \brief Constructor.
@@ -58,8 +58,8 @@ class ApplyMomentum : public BaseOperator {
   /// \return gradient_scale.
   float get_gradient_scale() const;
 };
-abstract::AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ApplyMomentumInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimApplyMomentumPtr = std::shared_ptr<ApplyMomentum>;
 }  // namespace ops
 }  // namespace mindspore

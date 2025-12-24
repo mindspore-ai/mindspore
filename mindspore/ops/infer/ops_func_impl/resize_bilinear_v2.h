@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-class ResizeBilinearV2FuncImpl final : public Resize2DBaseFuncImpl {};
+class OPS_API ResizeBilinearV2FuncImpl final : public Resize2DBaseFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RESIZE_BILINEAR_V2_H_

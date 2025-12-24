@@ -24,7 +24,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameSplitWithOverlap = "SplitWithOverlap";
 /// \brief All defined All operator prototype of lite.
-class SplitWithOverlap : public BaseOperator {
+class OPS_API SplitWithOverlap : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SplitWithOverlap);
   /// \brief Constructor.

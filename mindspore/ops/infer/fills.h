@@ -23,15 +23,15 @@
 
 namespace mindspore {
 namespace ops {
-class Fills : public BaseOperator {
+class OPS_API Fills : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Fills);
   /// \brief Create a tensor filled with a scalar value. Refer to Python API @ref mindspore.ops.fills for more details.
   Fills() : BaseOperator(kFillsOpName) { InitIOName({"x", "value"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr FillsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr FillsInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_FILLS_H_

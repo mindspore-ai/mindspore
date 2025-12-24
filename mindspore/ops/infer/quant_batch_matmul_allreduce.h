@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kQuantBatchMatmulAllReduce = "QuantBatchMatmulAllReduce";
-class QuantBatchMatmulAllReduce : public BaseOperator {
+class OPS_API QuantBatchMatmulAllReduce : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(QuantBatchMatmulAllReduce);
   /// \brief Constructor.

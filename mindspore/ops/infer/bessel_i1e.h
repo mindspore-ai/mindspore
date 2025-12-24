@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameBesselI1e = "BesselI1e";
 
-class BesselI1e : public BaseOperator {
+class OPS_API BesselI1e : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BesselI1e);
   BesselI1e() : BaseOperator(kNameBesselI1e) { InitIOName({"x"}, {"output"}); }

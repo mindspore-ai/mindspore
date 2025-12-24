@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNamePack = "Pack";
 /// \brief Stacks a list of tensors in specified axis.
 /// Refer to Python API @ref mindspore.ops.Stack for more details.
-class Pack : public BaseOperator {
+class OPS_API Pack : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Pack);
   /// \brief Constructor.

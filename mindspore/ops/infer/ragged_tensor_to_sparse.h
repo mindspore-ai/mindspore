@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameRaggedTensorToSparse = "RaggedTensorToSparse";
 
-class RaggedTensorToSparse : public BaseOperator {
+class OPS_API RaggedTensorToSparse : public BaseOperator {
  public:
   RaggedTensorToSparse() : BaseOperator(kNameRaggedTensorToSparse) {
     InitIOName({"rt_nested_splits, rt_dense_values"}, {"sparse_indices", "sparse_values", "sparse_dense_shape"});

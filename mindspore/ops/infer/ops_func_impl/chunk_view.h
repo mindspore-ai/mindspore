@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-class ChunkViewFuncImpl : public ChunkFuncImpl {};
+class OPS_API ChunkViewFuncImpl : public ChunkFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

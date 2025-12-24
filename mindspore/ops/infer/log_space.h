@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameLogSpace = "LogSpace";
 /// \brief Returns a Tensor whose value is evenly spaced in the interval start and end (including start and end).
 /// Refer to Python API @ref mindspore.ops.LogSpace for more details.
-class LogSpace : public BaseOperator {
+class OPS_API LogSpace : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LogSpace);
   /// \brief Constructor.
@@ -50,8 +50,8 @@ class LogSpace : public BaseOperator {
   /// \return steps.
   int64_t get_steps() const;
 };
-abstract::AbstractBasePtr LogSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LogSpaceInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

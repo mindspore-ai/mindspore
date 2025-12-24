@@ -26,13 +26,13 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameInvert = "Invert";
 
-class Invert : public BaseOperator {
+class OPS_API Invert : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Invert);
   Invert() : BaseOperator(kNameInvert) { InitIOName({"x"}, {"y"}); }
 };
-abstract::AbstractBasePtr InvertInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr InvertInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimInvertPtr = std::shared_ptr<Invert>;
 }  // namespace ops
 }  // namespace mindspore

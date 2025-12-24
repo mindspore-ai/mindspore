@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DFusion = "Conv2DFusion";
 /// \brief Conv2DFusion defined Conv2D operator prototype of lite.
-class Conv2DFusion : public Conv2D {
+class OPS_API Conv2DFusion : public Conv2D {
  public:
   MIND_API_BASE_MEMBER(Conv2DFusion);
   /// \brief Constructor.

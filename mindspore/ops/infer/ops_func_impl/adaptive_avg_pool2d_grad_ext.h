@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class AdaptiveAvgPool2DGradExtFuncImpl : public OpFuncImpl {
+class OPS_API AdaptiveAvgPool2DGradExtFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameConv2DBackpropFilter = "Conv2DBackpropFilter";
-class Conv2DBackpropFilter : public BaseOperator {
+class OPS_API Conv2DBackpropFilter : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Conv2DBackpropFilter);
   Conv2DBackpropFilter() : BaseOperator(kNameConv2DBackpropFilter) {
@@ -63,8 +63,9 @@ class Conv2DBackpropFilter : public BaseOperator {
   int64_t get_group() const;
   Format get_format() const;
 };
-abstract::AbstractBasePtr Conv2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr Conv2DBackpropFilterInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

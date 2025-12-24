@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBartlettWindow = "BartlettWindow";
-class BartlettWindow : public BaseOperator {
+class OPS_API BartlettWindow : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BartlettWindow);
   BartlettWindow() : BaseOperator(kNameBartlettWindow) { InitIOName({"window_length"}, {"y"}); }
@@ -35,8 +35,9 @@ class BartlettWindow : public BaseOperator {
   bool get_periodic() const;
 };
 
-abstract::AbstractBasePtr BartlettWindowInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr BartlettWindowInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

@@ -28,7 +28,7 @@ constexpr auto kNameSparseSoftmaxCrossEntropyWithLogitsV2 = "SparseSoftmaxCrossE
 /// \brief Computes the softmax cross-entropy value between logits and sparse
 /// encoding labels. Refer to Python API @ref
 /// mindspore.ops.SparseSoftmaxCrossEntropyWithLogitsV2 for more details.
-class SparseSoftmaxCrossEntropyWithLogitsV2 : public BaseOperator {
+class OPS_API SparseSoftmaxCrossEntropyWithLogitsV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseSoftmaxCrossEntropyWithLogitsV2);
   /// \brief Constructor.

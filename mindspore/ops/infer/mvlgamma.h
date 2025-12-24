@@ -31,7 +31,7 @@ namespace ops {
 constexpr auto kNameMvlgamma = "Mvlgamma";
 /// \brief Computes the multivariate log-gamma function with dimension p element-wise.
 /// Refer to Python API @ref mindspore.ops.Mvlgamma for more details.
-class Mvlgamma : public BaseOperator {
+class OPS_API Mvlgamma : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Mvlgamma);
   /// \brief Constructor.
@@ -43,8 +43,8 @@ class Mvlgamma : public BaseOperator {
   int64_t get_p() const;
 };
 
-abstract::AbstractBasePtr MvlgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MvlgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<AbstractBasePtr> &input_args);
 using PrimMvlgammaPtr = std::shared_ptr<Mvlgamma>;
 }  // namespace ops
 }  // namespace mindspore

@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class Dropout2D : public BaseOperator {
+class OPS_API Dropout2D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Dropout2D);
   /// \brief Constructor.
@@ -37,7 +37,7 @@ class Dropout2D : public BaseOperator {
   float get_keep_prob() const;
 };
 
-class Dropout3D : public BaseOperator {
+class OPS_API Dropout3D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Dropout3D);
   /// \brief Constructor.
@@ -50,11 +50,11 @@ class Dropout3D : public BaseOperator {
   float get_keep_prob() const;
 };
 
-abstract::AbstractBasePtr Dropout2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr Dropout2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 
-abstract::AbstractBasePtr Dropout3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr Dropout3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_DROPOUTND_H_

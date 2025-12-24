@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace ops {
-class DiagonalViewFuncImpl : public DiagonalFuncImpl {};
+class OPS_API DiagonalViewFuncImpl : public DiagonalFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

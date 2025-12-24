@@ -23,6 +23,6 @@
 #include "infer/ops_func_impl/transpose.h"
 
 namespace mindspore::ops {
-class TransposeViewFuncImpl : public TransposeFuncImpl {};
+class OPS_API TransposeViewFuncImpl : public TransposeFuncImpl {};
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_FUNC_IMPL_TRANSPOSE_VIEW_H

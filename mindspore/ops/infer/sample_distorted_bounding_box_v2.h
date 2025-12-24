@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameSampleDistortedBoundingBoxV2 = "SampleDistortedBoundingBoxV2";
 /// \brief Generate a single randomly distorted bounding box for an image.
-class SampleDistortedBoundingBoxV2 : public BaseOperator {
+class OPS_API SampleDistortedBoundingBoxV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SampleDistortedBoundingBoxV2);
   /// \brief Constructor.
@@ -48,9 +48,9 @@ class SampleDistortedBoundingBoxV2 : public BaseOperator {
   void set_use_image(const bool use_image);
   bool get_use_image() const;
 };
-abstract::AbstractBasePtr SampleDistortedBoundingBoxV2Infer(const abstract::AnalysisEnginePtr &,
-                                                            const PrimitivePtr &primitive,
-                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SampleDistortedBoundingBoxV2Infer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimSampleDistortedBoundingBoxV2Ptr = std::shared_ptr<SampleDistortedBoundingBoxV2>;
 }  // namespace ops
 }  // namespace mindspore

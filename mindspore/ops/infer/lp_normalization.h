@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameLpNormalization = "LpNormalization";
 /// \brief LpNormalization defined LpNormalization operator prototype of lite.
-class LpNormalization : public BaseOperator {
+class OPS_API LpNormalization : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LpNormalization);
   /// \brief Constructor.

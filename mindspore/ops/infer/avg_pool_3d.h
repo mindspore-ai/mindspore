@@ -29,15 +29,15 @@ namespace ops {
 constexpr auto kNameAvgPool3D = "AvgPool3D";
 
 /// \brief 3D Average pooling operation. Refer to Python API @ref mindspore.ops.AvgPool3D for more details.
-class AvgPool3D : public BaseOperator {
+class OPS_API AvgPool3D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AvgPool3D);
   /// \brief Constructor.
   AvgPool3D() : BaseOperator(kNameAvgPool3D) { InitIOName({"input"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr AvgPool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr AvgPool3DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

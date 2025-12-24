@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace ops {
-class GroupedMatmulBaseFuncImpl : public OpFuncImpl {
+class OPS_API GroupedMatmulBaseFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
 

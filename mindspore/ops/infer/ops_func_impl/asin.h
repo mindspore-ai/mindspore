@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class AsinFuncImpl : public EltwiseOpFuncImpl {};
+class OPS_API AsinFuncImpl : public EltwiseOpFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

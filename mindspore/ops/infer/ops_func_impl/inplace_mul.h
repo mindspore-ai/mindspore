@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class InplaceMulFuncImpl : public OpFuncImpl {
+class OPS_API InplaceMulFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

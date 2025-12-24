@@ -29,7 +29,7 @@ namespace ops {
 constexpr auto kNameDynamicGetNextV2 = "DynamicGetNextV2";
 /// \brief Returns the next element in the dataset queue.
 /// Refer to Python API @ref mindspore.ops.DynamicGetNextV2 for more details.
-class DynamicGetNextV2 : public BaseOperator {
+class OPS_API DynamicGetNextV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(DynamicGetNextV2);
   /// \brief Constructor.

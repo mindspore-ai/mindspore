@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class ReciprocalGradFuncImpl : public OpFuncImpl {
+class OPS_API ReciprocalGradFuncImpl : public OpFuncImpl {
  public:
   ReciprocalGradFuncImpl() = default;
   ~ReciprocalGradFuncImpl() = default;

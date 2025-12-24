@@ -28,15 +28,16 @@ namespace ops {
 constexpr auto kNameAdjustContrastv2 = "AdjustContrastv2";
 /// \brief Adjust the contrast of one or more images.
 /// Refer to Python API @ref mindspore.ops.AdjustContrastv2 for more details.
-class AdjustContrastv2 : public BaseOperator {
+class OPS_API AdjustContrastv2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AdjustContrastv2);
   /// \brief Constructor.
   AdjustContrastv2() : BaseOperator(kNameAdjustContrastv2) { InitIOName({"images", "contrast_factor"}, {"y"}); }
 };
 
-abstract::AbstractBasePtr AdjustContrastv2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr AdjustContrastv2Infer(const abstract::AnalysisEnginePtr &,
+                                                        const PrimitivePtr &primitive,
+                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAdjustContrastv2Ptr = std::shared_ptr<AdjustContrastv2>;
 }  // namespace ops
 }  // namespace mindspore

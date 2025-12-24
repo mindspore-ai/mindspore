@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameLinearSumAssignment = "LinearSumAssignment";
 
-class LinearSumAssignment : public BaseOperator {
+class OPS_API LinearSumAssignment : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LinearSumAssignment);
   /// \brief Constructor.
@@ -33,8 +33,9 @@ class LinearSumAssignment : public BaseOperator {
     InitIOName({"cost_matrix", "dimension_limit", "maximize"}, {"row_idx", "col_idx"});
   }
 };
-abstract::AbstractBasePtr LinearSumAssignmentInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                   const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LinearSumAssignmentInfer(const abstract::AnalysisEnginePtr &,
+                                                           const PrimitivePtr &primitive,
+                                                           const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_LINEAR_SUM_ASSIGNMENT_H_

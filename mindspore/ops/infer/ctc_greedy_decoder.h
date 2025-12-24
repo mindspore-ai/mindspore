@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCTCGreedyDecoder = "CTCGreedyDecoder";
-class CTCGreedyDecoder : public BaseOperator {
+class OPS_API CTCGreedyDecoder : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CTCGreedyDecoder);
   CTCGreedyDecoder() : BaseOperator(kNameCTCGreedyDecoder) {

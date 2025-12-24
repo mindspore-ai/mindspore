@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class IRFFTDoubleFuncImpl : public OpFuncImpl {
+class OPS_API IRFFTDoubleFuncImpl : public OpFuncImpl {
  public:
   IRFFTDoubleFuncImpl() = default;
   ~IRFFTDoubleFuncImpl() = default;

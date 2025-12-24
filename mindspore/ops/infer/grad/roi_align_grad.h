@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameROIAlignGrad = "ROIAlignGrad";
 
-class ROIAlignGrad : public BaseOperator {
+class OPS_API ROIAlignGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ROIAlignGrad);
   ROIAlignGrad() : BaseOperator(kNameROIAlignGrad) { InitIOName({"dy", "rois", "xdiff_shape"}, {"dx"}); }

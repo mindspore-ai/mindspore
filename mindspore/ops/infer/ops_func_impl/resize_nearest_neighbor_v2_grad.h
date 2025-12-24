@@ -20,7 +20,7 @@
 
 namespace mindspore {
 namespace ops {
-class ResizeNearestNeighborV2GradFuncImpl final : public Resize2DBaseFuncImpl {};
+class OPS_API ResizeNearestNeighborV2GradFuncImpl final : public Resize2DBaseFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_OPS_FUNC_IMPL_RESIZE_NEAREST_NEIGHBOR_V2_GRAD_H_

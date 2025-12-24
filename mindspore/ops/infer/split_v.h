@@ -27,15 +27,15 @@ namespace ops {
 constexpr auto kNameSplitV = "SplitV";
 /// \brief Splits the input tensor into num_split tensors along the given dimension.
 /// Refer to Python API @ref mindspore.ops.SplitV for more details.
-class SplitV : public BaseOperator {
+class OPS_API SplitV : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SplitV);
   /// \brief Constructor.
   SplitV() : BaseOperator(kNameSplitV) { InitIOName({"input_x"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr SplitVInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SplitVInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_Split_V_H_

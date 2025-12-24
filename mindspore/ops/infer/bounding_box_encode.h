@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBoundingBoxEncode = "BoundingBoxEncode";
-class BoundingBoxEncode : public BaseOperator {
+class OPS_API BoundingBoxEncode : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BoundingBoxEncode);
   BoundingBoxEncode() : BaseOperator(kNameBoundingBoxEncode) {
@@ -36,8 +36,9 @@ class BoundingBoxEncode : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr BoundingBoxEncodeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr BoundingBoxEncodeInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

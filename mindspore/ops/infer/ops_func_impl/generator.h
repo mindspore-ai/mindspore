@@ -46,7 +46,7 @@ const std::unordered_map<int64_t, std::string> GeneratorEnumToString{{STEP, "ste
                                                                      {INITIAL_SEED, "initial_seed"}};
 }  // namespace generator
 
-class GeneratorFuncImpl : public OpFuncImpl {
+class OPS_API GeneratorFuncImpl : public OpFuncImpl {
  public:
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

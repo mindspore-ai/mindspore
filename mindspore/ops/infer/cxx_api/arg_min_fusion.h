@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameArgMinFusion = "ArgMinFusion";
 /// \brief ArgMinFusion defined ArgMin operator prototype of lite.
-class ArgMinFusion : public BaseOperator {
+class OPS_API ArgMinFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ArgMinFusion);
   /// \brief Constructor.

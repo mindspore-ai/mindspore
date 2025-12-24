@@ -27,14 +27,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAvgPoolGradV1 = "AvgPoolGradV1";
-class AvgPoolGradV1 : public BaseOperator {
+class OPS_API AvgPoolGradV1 : public BaseOperator {
  public:
   AvgPoolGradV1() : BaseOperator(kNameAvgPoolGradV1) { InitIOName({"orig_input_shape", "grad"}, {"output"}); }
   MIND_API_BASE_MEMBER(AvgPoolGradV1);
 };
 
-abstract::AbstractBasePtr AvgPoolGradV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr AvgPoolGradV1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<AbstractBasePtr> &input_args);
 using PrimAvgPoolGradV1Ptr = std::shared_ptr<AvgPoolGradV1>;
 }  // namespace ops
 }  // namespace mindspore

@@ -27,7 +27,7 @@ constexpr auto kNameSparseMatrixMatMul = "SparseMatrixMatMul";
 /// \brief return a matrix multiplication of a sparse matrix a with a dense matrix b;
 /// returns a dense matrix a * b, unless either a or b is transposed or adjointed..
 /// Refer to Python API @ref mindspore.ops.SparseMatrixMatMul for more details.
-class SparseMatrixMatMul : public BaseOperator {
+class OPS_API SparseMatrixMatMul : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseMatrixMatMul);
   /// \brief Constructor.
@@ -38,8 +38,9 @@ class SparseMatrixMatMul : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr SparseMatrixMatMulInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                  const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SparseMatrixMatMulInfer(const abstract::AnalysisEnginePtr &,
+                                                          const PrimitivePtr &primitive,
+                                                          const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

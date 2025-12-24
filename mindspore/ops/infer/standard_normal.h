@@ -30,7 +30,7 @@ constexpr auto kNameStandardNormal = "StandardNormal";
 /// \brief Produces random floating-point values i, uniformly distributed to the interval [0, 1).
 /// Refer to Python API @ref mindspore.ops.StandardNormal for more details.
 
-class StandardNormal : public BaseOperator {
+class OPS_API StandardNormal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(StandardNormal);
   /// \brief Constructor.

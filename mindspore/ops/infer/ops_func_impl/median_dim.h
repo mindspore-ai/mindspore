@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class MedianDimFuncImpl : public OpFuncImpl {
+class OPS_API MedianDimFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   ShapeArray InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const override;

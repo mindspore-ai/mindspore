@@ -23,7 +23,7 @@
 #include "infer/ops_func_impl/rand_ext.h"
 namespace mindspore {
 namespace ops {
-class RandIntFuncImpl : public RandExtFuncImpl {
+class OPS_API RandIntFuncImpl : public RandExtFuncImpl {
  public:
   RandIntFuncImpl() {
     dtype_idx_ = 5;

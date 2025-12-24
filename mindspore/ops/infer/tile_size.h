@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameTileSize = "Slice";
 /// \brief Sequence addition operation
-class TileSize : public BaseOperator {
+class OPS_API TileSize : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TileSize);
   /// \brief Constructor.

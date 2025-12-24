@@ -25,13 +25,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameUnravelIndex = "UnravelIndex";
-class UnravelIndex : public BaseOperator {
+class OPS_API UnravelIndex : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(UnravelIndex);
   UnravelIndex() : BaseOperator(kNameUnravelIndex) { InitIOName({"indices", "dims"}, {"y"}); }
 };
-abstract::AbstractBasePtr UnravelIndexInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr UnravelIndexInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_UNRAVELINDEX_H_

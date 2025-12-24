@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLU = "LU";
-class LU : public BaseOperator {
+class OPS_API LU : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LU);
   LU() : BaseOperator(kNameLU) { InitIOName({"x"}, {"lu", "pivots", "permutation"}); }

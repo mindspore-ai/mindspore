@@ -27,13 +27,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLgamma = "Lgamma";
-class Lgamma : public BaseOperator {
+class OPS_API Lgamma : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Lgamma);
   Lgamma() : BaseOperator(kNameLgamma) { InitIOName({"x"}, {"y"}); }
 };
-abstract::AbstractBasePtr LgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using PrimLgammaPtr = std::shared_ptr<Lgamma>;
 }  // namespace ops

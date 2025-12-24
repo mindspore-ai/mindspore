@@ -21,7 +21,7 @@
 namespace mindspore {
 namespace symshape {
 namespace ops {
-class ElemwiseBinop : public InferShapeOp {
+class OPS_API ElemwiseBinop : public InferShapeOp {
  public:
   using InferShapeOp::InferShapeOp;
   ElemwiseBinop(const SymbolPtr &lhs, const SymbolPtr &rhs) : InferShapeOp({lhs, rhs}) {}

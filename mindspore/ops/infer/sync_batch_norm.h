@@ -30,7 +30,7 @@ namespace ops {
 constexpr auto kNameSyncBatchNorm = "SyncBatchNorm";
 /// \brief Calculates SyncBatchNorm.
 /// Refer to Python API @ref mindspore.nn.SyncBatchNorm for more details.
-class SyncBatchNorm : public BaseOperator {
+class OPS_API SyncBatchNorm : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SyncBatchNorm);
   /// \brief Constructor.
@@ -51,8 +51,8 @@ class SyncBatchNorm : public BaseOperator {
   void set_device_num(const int64_t device_num);
 };
 
-abstract::AbstractBasePtr SyncBatchNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr SyncBatchNormInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

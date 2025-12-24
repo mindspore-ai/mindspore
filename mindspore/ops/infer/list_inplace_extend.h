@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief List inplace extend operation 'input_data.extend()'.
-class ListInplaceExtend : public BaseOperator {
+class OPS_API ListInplaceExtend : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ListInplaceExtend);
   /// \brief Constructor.

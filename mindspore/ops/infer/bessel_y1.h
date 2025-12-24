@@ -30,15 +30,15 @@ constexpr auto kNameBesselY1 = "BesselY1";
 
 /// \brief BesselY1 is used to compute bessel y1 value for input tensor.
 /// \note Param x type must be float16, float32 or float64.
-class BesselY1 : public BaseOperator {
+class OPS_API BesselY1 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BesselY1);
   /// \brief Constructor.
   BesselY1() : BaseOperator(kNameBesselY1) { InitIOName({"x"}, {"output"}); }
 };
 
-abstract::AbstractBasePtr BesselY1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr BesselY1Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_Bessel_Y1_H_

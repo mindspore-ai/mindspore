@@ -24,7 +24,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSparseDenseCwiseDiv = "SparseDenseCwiseDiv";
-class SparseDenseCwiseDiv : public BaseOperator {
+class OPS_API SparseDenseCwiseDiv : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseDenseCwiseDiv);
   SparseDenseCwiseDiv() : BaseOperator(kNameSparseDenseCwiseDiv) {

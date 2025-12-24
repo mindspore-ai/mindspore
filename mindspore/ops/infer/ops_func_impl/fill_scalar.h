@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ops {
-class FillScalarFuncImpl : public FillFuncImpl {
+class OPS_API FillScalarFuncImpl : public FillFuncImpl {
  public:
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   // simply infer

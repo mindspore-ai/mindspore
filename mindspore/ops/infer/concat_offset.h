@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameConcatOffset = "ConcatOffset";
 /// \brief Computes offsets of concat inputs within its output.
 /// Refer to Python API @ref mindspore.ops.ConcatOffset for more details.
-class ConcatOffset : public BaseOperator {
+class OPS_API ConcatOffset : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ConcatOffset);
   /// \brief Constructor.

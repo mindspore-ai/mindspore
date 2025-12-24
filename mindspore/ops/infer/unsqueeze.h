@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameUnsqueeze = "Unsqueeze";
 /// \brief Unsqueeze defined the Unsqueeze operator prototype of lite.
-class Unsqueeze : public BaseOperator {
+class OPS_API Unsqueeze : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Unsqueeze);
   /// \brief Constructor.
@@ -48,8 +48,8 @@ class Unsqueeze : public BaseOperator {
   /// \return dimensions info of expanding.
   std::vector<int64_t> get_axis() const;
 };
-abstract::AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr UnsqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

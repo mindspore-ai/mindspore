@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAffineGridGrad = "AffineGridGrad";
-class AffineGridGrad : public BaseOperator {
+class OPS_API AffineGridGrad : public BaseOperator {
  public:
   AffineGridGrad() : BaseOperator(kNameAffineGridGrad) { InitIOName({"y_grad", "x_size"}, {"x_grad"}); }
   MIND_API_BASE_MEMBER(AffineGridGrad);

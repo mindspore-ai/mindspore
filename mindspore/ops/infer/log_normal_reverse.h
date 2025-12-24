@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLogNormalReverse = "LogNormalReverse";
-class LogNormalReverse : public BaseOperator {
+class OPS_API LogNormalReverse : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LogNormalReverse);
   LogNormalReverse() : BaseOperator(kNameLogNormalReverse) { InitIOName({"x"}, {"y"}); }

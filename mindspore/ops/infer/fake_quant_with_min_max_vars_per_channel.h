@@ -28,7 +28,7 @@ namespace ops {
 constexpr auto kNameFakeQuantWithMinMaxVarsPerChannel = "FakeQuantWithMinMaxVarsPerChannel";
 /// \brief Fake-quantize the input and one of shape: [d], [b, d], [b, h, w, d] by per-channel minimum and maximum.
 /// Refer to Python API @ref mindspore.ops.FakeQuantWithMinMaxVarsPerChannel for more details.
-class FakeQuantWithMinMaxVarsPerChannel : public BaseOperator {
+class OPS_API FakeQuantWithMinMaxVarsPerChannel : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FakeQuantWithMinMaxVarsPerChannel);
   /// \brief Constructor.
@@ -50,7 +50,7 @@ class FakeQuantWithMinMaxVarsPerChannel : public BaseOperator {
   bool get_narrow_range() const;
 };
 
-abstract::AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(
+OPS_API abstract::AbstractBasePtr FakeQuantWithMinMaxVarsPerChannelInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops

@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class BitwiseXorScalarFuncImpl : public BitwiseAndScalarFuncImpl {};
+class OPS_API BitwiseXorScalarFuncImpl : public BitwiseAndScalarFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

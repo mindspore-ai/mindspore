@@ -29,7 +29,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameGRU = "GRU";
 /// \brief GRU defined the GRU operator prototype.
-class GRU : public BaseOperator {
+class OPS_API GRU : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(GRU);
   /// \brief Constructor.

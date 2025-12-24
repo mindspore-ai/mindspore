@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameNonZeroWithValue = "NonZeroWithValue";
 /// \brief Returns the value of elements that are non-zero.
-class NonZeroWithValue : public BaseOperator {
+class OPS_API NonZeroWithValue : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(NonZeroWithValue);
   /// \brief Constructor.

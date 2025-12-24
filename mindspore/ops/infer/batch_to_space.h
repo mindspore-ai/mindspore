@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameBatchToSpace = "BatchToSpace";
 /// \brief Divides batch dimension with blocks and interleaves these blocks back into spatial dimensions.
 /// Refer to Python API @ref mindspore.ops.BatchToSpace for more details.
-class BatchToSpace : public BaseOperator {
+class OPS_API BatchToSpace : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BatchToSpace);
   /// \brief Constructor.

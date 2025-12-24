@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameCollectiveScatter = "CollectiveScatter";
-class CollectiveScatter : public BaseOperator {
+class OPS_API CollectiveScatter : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CollectiveScatter);
   CollectiveScatter() : BaseOperator(kNameCollectiveScatter) { InitIOName({"input_x"}, {"output"}); }

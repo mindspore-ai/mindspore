@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class BitwiseAndTensorFuncImpl : public OpFuncImpl {
+class OPS_API BitwiseAndTensorFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

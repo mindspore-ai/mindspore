@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameBroadcast = "Broadcast";
 /// \brief Broadcasts the tensor to the whole group. Refer to Python API @ref mindspore.ops.Broadcast for more details.
-class Broadcast : public BaseOperator {
+class OPS_API Broadcast : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Broadcast);
   /// \brief Constructor.

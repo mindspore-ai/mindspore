@@ -28,7 +28,7 @@ namespace ops {
 constexpr auto kNameReLUV3 = "ReLUV3";
 /// \brief Computes ReLUV3 (Rectified Linear Unit activation function) of input tensors element-wise.
 /// Refer to Python API @ref mindspore.ops.ReLUV3 for more details.
-class ReLUV3 : public BaseOperator {
+class OPS_API ReLUV3 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ReLUV3);
   /// \brief Constructor.

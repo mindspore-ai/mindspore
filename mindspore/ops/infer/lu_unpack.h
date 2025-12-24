@@ -29,13 +29,13 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLuUnpack = "LuUnpack";
-class LuUnpack : public BaseOperator {
+class OPS_API LuUnpack : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LuUnpack);
   LuUnpack() : BaseOperator(kNameLuUnpack) { InitIOName({"LU_data", "LU_pivots"}, {"pivots", "L", "U"}); }
 };
-abstract::AbstractBasePtr LuUnpackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LuUnpackInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimLuUnpackPtr = std::shared_ptr<LuUnpack>;
 }  // namespace ops
 }  // namespace mindspore

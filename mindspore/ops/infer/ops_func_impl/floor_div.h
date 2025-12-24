@@ -22,13 +22,13 @@
 
 namespace mindspore {
 namespace ops {
-class FloorDivFuncImpl : public OpFuncImpl {
+class OPS_API FloorDivFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   bool GeneralInferRegistered() const override { return true; };
 };
-class FloorDivViewFuncImpl : public FloorDivFuncImpl {};
+class OPS_API FloorDivViewFuncImpl : public FloorDivFuncImpl {};
 }  // namespace ops
 }  // namespace mindspore
 

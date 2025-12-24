@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameRandomStandardNormal = "RandomStandardNormal";
 /// \brief RandomStandardNormal defined RandomStandardNormal operator prototype of lite.
-class RandomStandardNormal : public BaseOperator {
+class OPS_API RandomStandardNormal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RandomStandardNormal);
   /// \brief Constructor.
@@ -61,8 +61,9 @@ class RandomStandardNormal : public BaseOperator {
   int64_t get_seed2() const;
 };
 
-abstract::AbstractBasePtr RandomStandardNormalInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr RandomStandardNormalInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

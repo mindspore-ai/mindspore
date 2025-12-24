@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameRemakeTupleIndex = "RemakeTupleIndex";
 /// \brief Sequence addition operation
-class RemakeTupleIndex : public BaseOperator {
+class OPS_API RemakeTupleIndex : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(RemakeTupleIndex);
   /// \brief Constructor.

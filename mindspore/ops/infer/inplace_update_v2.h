@@ -28,7 +28,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameInplaceUpdateV2 = "InplaceUpdateV2";
 /// \brief InplaceUpdate operation. Refer to Python API @ref mindspore.ops.InplaceUpdateV2 for more details.
-class InplaceUpdateV2 : public BaseOperator {
+class OPS_API InplaceUpdateV2 : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(InplaceUpdateV2);
   /// \brief Constructor.
@@ -37,8 +37,9 @@ class InplaceUpdateV2 : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr InplaceUpdateV2Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                               const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr InplaceUpdateV2Infer(const abstract::AnalysisEnginePtr &,
+                                                       const PrimitivePtr &primitive,
+                                                       const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimInplaceUpdateV2Ptr = std::shared_ptr<InplaceUpdateV2>;
 }  // namespace ops
 }  // namespace mindspore

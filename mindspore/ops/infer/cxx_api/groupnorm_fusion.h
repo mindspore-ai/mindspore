@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameGroupNormFusion = "GroupNormFusion";
 /// \brief GroupNormFusion defined GroupNormFusion operator prototype of lite.
-class GroupNormFusion : public BaseOperator {
+class OPS_API GroupNormFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(GroupNormFusion);
   /// \brief Constructor.

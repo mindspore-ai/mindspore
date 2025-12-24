@@ -23,7 +23,7 @@
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore::ops {
-class ConcatFuncImpl : public OpFuncImpl {
+class OPS_API ConcatFuncImpl : public OpFuncImpl {
  public:
   ConcatFuncImpl() = default;
   ~ConcatFuncImpl() = default;
@@ -34,6 +34,6 @@ class ConcatFuncImpl : public OpFuncImpl {
   std::set<int64_t> GetValueDependArgIndices() const override { return {1}; }
 };
 
-class ConcatViewFuncImpl : public ConcatFuncImpl {};
+class OPS_API ConcatViewFuncImpl : public ConcatFuncImpl {};
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_FUNC_IMPL_CONCAT_H

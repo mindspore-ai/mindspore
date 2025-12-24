@@ -26,15 +26,16 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameAdaptiveAvgPool2D = "AdaptiveAvgPool2D";
-class AdaptiveAvgPool2D : public BaseOperator {
+class OPS_API AdaptiveAvgPool2D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(AdaptiveAvgPool2D);
   AdaptiveAvgPool2D() : BaseOperator(kNameAdaptiveAvgPool2D) { InitIOName({"x"}, {"y"}); }
   explicit AdaptiveAvgPool2D(const std::string &kName) : BaseOperator(kName) { InitIOName({"x"}, {"y"}); }
   std::vector<int64_t> get_output_size() const;
 };
-abstract::AbstractBasePtr AdaptiveAvgPool2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr AdaptiveAvgPool2DInfer(const abstract::AnalysisEnginePtr &,
+                                                         const PrimitivePtr &primitive,
+                                                         const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimAdaptiveAvgPool2DPtr = std::shared_ptr<AdaptiveAvgPool2D>;
 }  // namespace ops
 }  // namespace mindspore

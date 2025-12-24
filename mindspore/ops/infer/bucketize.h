@@ -31,7 +31,7 @@ namespace ops {
 constexpr auto kNameBucketize = "Bucketize";
 /// \brief Bucketizes 'input' based on 'boundaries'.
 /// Refer to Python API @ref mindspore.ops.Bucketize for more details.
-class Bucketize : public BaseOperator {
+class OPS_API Bucketize : public BaseOperator {
  public:
   Bucketize() : BaseOperator(kNameBucketize) { InitIOName({"input"}, {"output"}); }
   MIND_API_BASE_MEMBER(Bucketize);
@@ -40,8 +40,8 @@ class Bucketize : public BaseOperator {
   std::vector<float> get_boundaries() const;
 };
 
-abstract::AbstractBasePtr BucketizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                         const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr BucketizeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                 const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_OPS_BUCKETIZE_H_

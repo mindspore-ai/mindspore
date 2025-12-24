@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace ops {
-class SoftmaxBackwardFuncImpl : public OpFuncImpl {
+class OPS_API SoftmaxBackwardFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 

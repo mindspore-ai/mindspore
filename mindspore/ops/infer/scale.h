@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameScale = "Scale";
 /// \brief Scale defined Scale operator prototype of lite.
-class Scale : public BaseOperator {
+class OPS_API Scale : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Scale);
   /// \brief Constructor.

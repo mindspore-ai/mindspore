@@ -24,7 +24,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameForiLoop = "ForiLoop";
 /// \brief ForiLoop defined the operator prototype of for loop.
-class ForiLoop : public BaseOperator {
+class OPS_API ForiLoop : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ForiLoop);
   /// \brief Constructor.

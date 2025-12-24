@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace ops {
-class FFNExtFuncImpl : public OpFuncImpl {
+class OPS_API FFNExtFuncImpl : public OpFuncImpl {
  public:
   FFNExtFuncImpl() = default;
   ~FFNExtFuncImpl() = default;

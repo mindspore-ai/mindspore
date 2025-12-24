@@ -28,7 +28,7 @@ constexpr auto kNameTensorScatterMax = "TensorScatterMax";
 /// \brief By comparing the value at the position indicated by the index in input_x with the value in the update, the
 /// value at the index will eventually be equal to the largest one to create a new tensor. Refer to Python API @ref
 /// mindspore.ops.TensorScatterMax for more details.
-class TensorScatterMax : public BaseOperator {
+class OPS_API TensorScatterMax : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(TensorScatterMax);
   /// \brief Constructor.

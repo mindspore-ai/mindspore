@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class BatchNormReduceGradFuncImpl : public OpFuncImpl {
+class OPS_API BatchNormReduceGradFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
 

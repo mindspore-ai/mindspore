@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameCustom = "Custom";
 /// \brief Custom defined user-defined operator prototype.
-class Custom : public BaseOperator {
+class OPS_API Custom : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Custom);
   /// \brief Constructor.

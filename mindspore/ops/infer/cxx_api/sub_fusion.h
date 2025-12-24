@@ -23,7 +23,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameSubFusion = "SubFusion";
 /// \brief SubFusion defined Sub operator prototype of lite.
-class SubFusion : public BaseOperator {
+class OPS_API SubFusion : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SubFusion);
   /// \brief Constructor.

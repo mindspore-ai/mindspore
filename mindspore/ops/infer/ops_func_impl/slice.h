@@ -22,14 +22,14 @@
 
 namespace mindspore::ops {
 /// \brief Implementation of InferShape and InferType functions for operator 'Slice'
-class SliceFuncImpl : public OpFuncImpl {
+class OPS_API SliceFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   std::vector<int64_t> InferImplSliceFuncCalInputValue(const PrimitivePtr &primitive,
                                                        const AbstractBasePtr &input_value) const;
 };
-class SliceViewFuncImpl : public SliceFuncImpl {};
+class OPS_API SliceViewFuncImpl : public SliceFuncImpl {};
 }  // namespace mindspore::ops
 
 #endif  // MINDSPORE_CORE_OPS_SLICE_H_

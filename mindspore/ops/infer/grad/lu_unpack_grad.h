@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameLuUnpackGrad = "LuUnpackGrad";
-class LuUnpackGrad : public BaseOperator {
+class OPS_API LuUnpackGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LuUnpackGrad);
   LuUnpackGrad() : BaseOperator(kNameLuUnpackGrad) {
@@ -36,8 +36,8 @@ class LuUnpackGrad : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr LuUnpackGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                            const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr LuUnpackGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

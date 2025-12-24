@@ -28,7 +28,7 @@ namespace ops {
 constexpr auto kNameMultinomial = "Multinomial";
 /// \brief Returns a tensor with the same rows as `x`, each row has num_samples sampled indices.
 /// Refer to Python API @ref mindspore.ops.Multinomial for more details.
-class Multinomial : public BaseOperator {
+class OPS_API Multinomial : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Multinomial);
   /// \brief Constructor.
@@ -51,8 +51,8 @@ class Multinomial : public BaseOperator {
   int64_t get_seed2() const;
 };
 
-abstract::AbstractBasePtr MultinomialInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                           const std::vector<AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MultinomialInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                   const std::vector<AbstractBasePtr> &input_args);
 using PrimMultinomial = std::shared_ptr<Multinomial>;
 }  // namespace ops
 }  // namespace mindspore

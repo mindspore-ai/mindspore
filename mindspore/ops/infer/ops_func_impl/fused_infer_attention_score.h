@@ -69,7 +69,7 @@ enum FusedInferAttentionScoreOutputIndex : size_t {
   kFusedInferAttentionScoreOutputsNum,
 };
 
-class FusedInferAttentionScoreFuncImpl : public OpFuncImpl {
+class OPS_API FusedInferAttentionScoreFuncImpl : public OpFuncImpl {
  public:
   BaseShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override;

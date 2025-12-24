@@ -23,7 +23,7 @@
 #include "primitive/op_name.h"
 
 namespace mindspore::ops {
-class MultinomialExtFuncImpl : public OpFuncImpl {
+class OPS_API MultinomialExtFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

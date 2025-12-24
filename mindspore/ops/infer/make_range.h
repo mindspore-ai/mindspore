@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief Sequence mul integer operation.
-class make_range : public BaseOperator {
+class OPS_API make_range : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(make_range);
   /// \brief Constructor.

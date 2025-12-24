@@ -28,7 +28,7 @@ namespace ops {
 constexpr auto kNamePrint = "Print";
 /// \brief Outputs the tensor or string to stdout.
 /// Refer to Python API @ref mindspore.ops.Print for more details.
-class Print : public BaseOperator {
+class OPS_API Print : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Print);
   /// \brief Constructor.

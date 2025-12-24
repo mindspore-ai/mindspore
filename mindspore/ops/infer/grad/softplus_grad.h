@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameSoftplusGrad = "SoftplusGrad";
-class SoftplusGrad : public BaseOperator {
+class OPS_API SoftplusGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SoftplusGrad);
   SoftplusGrad() : BaseOperator(kNameSoftplusGrad) { InitIOName({"x"}, {"output"}); }

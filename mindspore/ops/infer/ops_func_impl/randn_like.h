@@ -22,6 +22,6 @@
 #include "infer/ops_func_impl/rand_like_ext.h"
 
 namespace mindspore::ops {
-class RandnLikeFuncImpl : public RandLikeExtFuncImpl {};
+class OPS_API RandnLikeFuncImpl : public RandLikeExtFuncImpl {};
 }  // namespace mindspore::ops
 #endif  // MINDSPORE_CORE_OPS_OP_FUNC_IMPL_RANDN_LIKE_H

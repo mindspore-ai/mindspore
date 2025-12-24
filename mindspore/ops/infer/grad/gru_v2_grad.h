@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameGRUV2Grad = "GRUV2Grad";
-class GRUV2Grad : public BaseOperator {
+class OPS_API GRUV2Grad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(GRUV2Grad);
   GRUV2Grad() : BaseOperator(kNameGRUV2Grad) {}

@@ -20,11 +20,10 @@
 #include <set>
 #include <utility>
 #include <vector>
-#include "mindapi/base/macros.h"
 #include "ops/ops_func_impl/op_func_impl.h"
 
 namespace mindspore::ops {
-class TileFuncImpl : public OpFuncImpl {
+class OPS_API TileFuncImpl : public OpFuncImpl {
  public:
   TileFuncImpl() = default;
   ~TileFuncImpl() = default;

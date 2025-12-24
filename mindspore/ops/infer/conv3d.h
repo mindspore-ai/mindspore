@@ -30,7 +30,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameConv3D = "Conv3D";
 
-class Conv3D : public BaseOperator {
+class OPS_API Conv3D : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Conv3D);
   /// \brief Constructor.

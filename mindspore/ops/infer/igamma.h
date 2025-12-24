@@ -28,15 +28,15 @@ namespace ops {
 constexpr auto kNameIgamma = "Igamma";
 /// \brief Calculates lower regularized incomplete Gamma function.
 /// Refer to Python API @ref mindspore.ops.Igamma for more details.
-class Igamma : public BaseOperator {
+class OPS_API Igamma : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Igamma);
   /// \brief Constructor.
   Igamma() : BaseOperator(kNameIgamma) { InitIOName({"a", "x"}, {"z"}); }
 };
 
-abstract::AbstractBasePtr IgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr IgammaInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimIgammaPtr = std::shared_ptr<Igamma>;
 }  // namespace ops
 }  // namespace mindspore

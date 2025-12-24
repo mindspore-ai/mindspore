@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief bool_not op is used to calculate the input true or false.
-class tuple_greater_than : public BaseOperator {
+class OPS_API tuple_greater_than : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(tuple_greater_than);
   /// \brief Constructor.
@@ -31,7 +31,7 @@ class tuple_greater_than : public BaseOperator {
   void Init() const {}
 };
 
-class tuple_greater_equal : public BaseOperator {
+class OPS_API tuple_greater_equal : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(tuple_greater_equal);
   /// \brief Constructor.

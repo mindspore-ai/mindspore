@@ -27,14 +27,14 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameReshard = "Reshard";
-class Reshard : public BaseOperator {
+class OPS_API Reshard : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Reshard);
   Reshard() : BaseOperator(kNameReshard) { InitIOName({"a", "x"}, {"z"}); }
 };
 
-abstract::AbstractBasePtr ReshardInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                       const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr ReshardInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                               const std::vector<abstract::AbstractBasePtr> &input_args);
 using kPrimReshardPtr = std::shared_ptr<Reshard>;
 }  // namespace ops
 }  // namespace mindspore

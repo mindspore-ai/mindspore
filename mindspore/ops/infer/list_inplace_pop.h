@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace ops {
 /// \brief List inplace pop operation 'input_data.pop(target_index)'.
-class ListInplacePop : public BaseOperator {
+class OPS_API ListInplacePop : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(ListInplacePop);
   /// \brief Constructor.

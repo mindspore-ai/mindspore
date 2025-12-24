@@ -24,7 +24,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameClip = "Clip";
 /// \brief Clip defined Clip operator prototype.
-class Clip : public BaseOperator {
+class OPS_API Clip : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Clip);
   /// \brief Constructor.

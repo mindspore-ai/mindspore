@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class HSigmoidGradFuncImpl : public OpFuncImpl {
+class OPS_API HSigmoidGradFuncImpl : public OpFuncImpl {
  public:
   HSigmoidGradFuncImpl() = default;
   ~HSigmoidGradFuncImpl() = default;

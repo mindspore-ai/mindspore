@@ -26,7 +26,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameResize = "Resize";
 /// \brief Resize defined the Resize operator prototype of lite.
-class Resize : public BaseOperator {
+class OPS_API Resize : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Resize);
   /// \brief Constructor.

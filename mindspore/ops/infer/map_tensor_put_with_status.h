@@ -25,7 +25,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameMapTensorPutWithStatus = "MapTensorPutWithStatus";
 /// \brief Insert or update key value tensor pairs with status to a map tensor.
-class MapTensorPutWithStatus : public BaseOperator {
+class OPS_API MapTensorPutWithStatus : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MapTensorPutWithStatus);
   /// \brief Constructor.
@@ -35,9 +35,9 @@ class MapTensorPutWithStatus : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr MapTensorPutWithStatusInfer(const abstract::AnalysisEnginePtr &,
-                                                      const PrimitivePtr &primitive,
-                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MapTensorPutWithStatusInfer(const abstract::AnalysisEnginePtr &,
+                                                              const PrimitivePtr &primitive,
+                                                              const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

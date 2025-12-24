@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameCropAndResize = "CropAndResize";
 /// \brief Extracts crops from the input image tensor and resizes them.
 /// Refer to Python API @ref mindspore.ops.CropAndResize for more details.
-class CropAndResize : public BaseOperator {
+class OPS_API CropAndResize : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(CropAndResize);
   /// \brief Constructor.

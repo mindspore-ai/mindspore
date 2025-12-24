@@ -26,7 +26,7 @@ namespace ops {
 constexpr auto kNameMapTensorErase = "MapTensorErase";
 /// \brief Remove records according the key tensor from a map tensor.
 /// Refer to Python API @ref mindspore.ops.MapTensorErase for more details.
-class MapTensorErase : public BaseOperator {
+class OPS_API MapTensorErase : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(MapTensorErase);
   /// \brief Constructor.
@@ -34,8 +34,9 @@ class MapTensorErase : public BaseOperator {
   /// \brief Init.
   void Init() const {}
 };
-abstract::AbstractBasePtr MapTensorEraseInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                              const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr MapTensorEraseInfer(const abstract::AnalysisEnginePtr &,
+                                                      const PrimitivePtr &primitive,
+                                                      const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

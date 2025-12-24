@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameFusedBatchNorm = "FusedBatchNorm";
 /// \brief FusedBatchNorm defined Enhanced BatchNorm operator prototype.
-class FusedBatchNorm : public BaseOperator {
+class OPS_API FusedBatchNorm : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FusedBatchNorm);
   /// \brief Constructor.

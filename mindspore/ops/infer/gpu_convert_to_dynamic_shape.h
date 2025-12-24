@@ -27,7 +27,7 @@ namespace mindspore {
 namespace ops {
 constexpr auto kNameGpuConvertToDynamicShape = "GpuConvertToDynamicShape";
 /// \brief Gpu convert to dynamic shape.
-class GpuConvertToDynamicShape : public BaseOperator {
+class OPS_API GpuConvertToDynamicShape : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(GpuConvertToDynamicShape);
   /// \brief Constructor.
@@ -37,9 +37,9 @@ class GpuConvertToDynamicShape : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr GpuConvertToDynamicShapeInfer(const abstract::AnalysisEnginePtr &,
-                                                        const PrimitivePtr &primitive,
-                                                        const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr GpuConvertToDynamicShapeInfer(
+  const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+  const std::vector<abstract::AbstractBasePtr> &input_args);
 using PrimGpuConvertToDynamicShapePtr = std::shared_ptr<GpuConvertToDynamicShape>;
 }  // namespace ops
 }  // namespace mindspore

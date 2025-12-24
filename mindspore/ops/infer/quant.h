@@ -26,7 +26,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameQuant = "Quant";
-class Quant : public BaseOperator {
+class OPS_API Quant : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(Quant);
   /// \brief Constructor.
@@ -36,8 +36,8 @@ class Quant : public BaseOperator {
   void Init() const {}
 };
 
-abstract::AbstractBasePtr QuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                     const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr QuantInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                             const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

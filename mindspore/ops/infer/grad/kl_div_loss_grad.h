@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameKLDivLossGrad = "KLDivLossGrad";
 /// \brief Returns the singular value decompositions of one or more matrices.
 /// Refer to Python API @ref mindspore.ops.svd for more details.
-class KLDivLossGrad : public BaseOperator {
+class OPS_API KLDivLossGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(KLDivLossGrad);
   /// \brief Constructor.
@@ -38,8 +38,8 @@ class KLDivLossGrad : public BaseOperator {
   std::string get_reduction() const;
 };
 
-abstract::AbstractBasePtr KLDivLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                             const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr KLDivLossGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                                     const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops
 }  // namespace mindspore
 

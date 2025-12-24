@@ -24,7 +24,7 @@
 
 namespace mindspore {
 namespace ops {
-class Conv2DPaddingFuncImpl final : public ConvPaddingFuncImpl {
+class OPS_API Conv2DPaddingFuncImpl final : public ConvPaddingFuncImpl {
  public:
   Conv2DPaddingFuncImpl() {
     idxes_.input_idx = 0;

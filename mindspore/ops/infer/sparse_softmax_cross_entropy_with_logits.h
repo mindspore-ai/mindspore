@@ -27,7 +27,7 @@ namespace ops {
 constexpr auto kNameSparseSoftmaxCrossEntropyWithLogits = "SparseSoftmaxCrossEntropyWithLogits";
 /// \brief Computes the softmax cross-entropy value between logits and sparse encoding labels.
 /// Refer to Python API @ref mindspore.ops.SparseSoftmaxCrossEntropyWithLogits for more details.
-class SparseSoftmaxCrossEntropyWithLogits : public BaseOperator {
+class OPS_API SparseSoftmaxCrossEntropyWithLogits : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(SparseSoftmaxCrossEntropyWithLogits);
   /// \brief Constructor.
@@ -42,7 +42,7 @@ class SparseSoftmaxCrossEntropyWithLogits : public BaseOperator {
   /// \return is_grad.
   bool get_is_grad() const;
 };
-abstract::AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(
+OPS_API abstract::AbstractBasePtr SparseSoftmaxCrossEntropyWithLogitsInfer(
   const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
   const std::vector<abstract::AbstractBasePtr> &input_args);
 }  // namespace ops

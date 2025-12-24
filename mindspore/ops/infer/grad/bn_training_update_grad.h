@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 constexpr auto kNameBNTrainingUpdateGrad = "BNTrainingUpdateGrad";
-class BNTrainingUpdateGrad : public BaseOperator {
+class OPS_API BNTrainingUpdateGrad : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(BNTrainingUpdateGrad);
   BNTrainingUpdateGrad() : BaseOperator(kNameBNTrainingUpdateGrad) {
@@ -36,8 +36,9 @@ class BNTrainingUpdateGrad : public BaseOperator {
   }
 };
 
-abstract::AbstractBasePtr BNTrainingUpdateGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                    const std::vector<abstract::AbstractBasePtr> &input_args);
+OPS_API abstract::AbstractBasePtr BNTrainingUpdateGradInfer(const abstract::AnalysisEnginePtr &,
+                                                            const PrimitivePtr &primitive,
+                                                            const std::vector<abstract::AbstractBasePtr> &input_args);
 
 using kPrimBNTrainingUpdateGradPtr = std::shared_ptr<BNTrainingUpdateGrad>;
 }  // namespace ops

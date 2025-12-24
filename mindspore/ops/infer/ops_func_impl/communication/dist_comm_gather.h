@@ -21,7 +21,7 @@
 
 namespace mindspore {
 namespace ops {
-class DistCommGatherFuncImpl : public OpFuncImpl {
+class OPS_API DistCommGatherFuncImpl : public OpFuncImpl {
  public:
   ShapeArray InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;
   std::vector<TypeId> InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const override;

@@ -31,7 +31,7 @@ namespace ops {
 constexpr auto kNameLogUniformCandidateSampler = "LogUniformCandidateSampler";
 /// \brief Generates random labels with a log-uniform distribution for sampled_candidates.
 /// Refer to Python API @ref mindspore.ops.log_uniform_candidate_sampler for more details.
-class LogUniformCandidateSampler : public BaseOperator {
+class OPS_API LogUniformCandidateSampler : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(LogUniformCandidateSampler);
   /// \brief Constructor.

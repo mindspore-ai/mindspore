@@ -39,7 +39,7 @@ constexpr auto kAttrKeyLinearQuantParamScale = "linear_quant_scale";
 constexpr auto kAttrKeyLinearQuantParamZeroPoint = "linear_quant_zero_point";
 
 /// \brief the FakeQuantParam operator prototype. FakeQuantParam is an operator for storing quant parameter.
-class FakeQuantParam : public BaseOperator {
+class OPS_API FakeQuantParam : public BaseOperator {
  public:
   MIND_API_BASE_MEMBER(FakeQuantParam);
   /// \brief Constructor.
