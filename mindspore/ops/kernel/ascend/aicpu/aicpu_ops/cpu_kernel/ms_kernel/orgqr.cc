@@ -16,13 +16,13 @@
 
 #include "orgqr.h"
 
-#include "Eigen/Dense"
+#include <numeric>
+#include <iostream>
 
+#include "Eigen/Dense"
 #include "context/common/cpu_kernel_utils.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include <numeric>
-#include <iostream>
 
 using namespace Eigen;
 namespace {

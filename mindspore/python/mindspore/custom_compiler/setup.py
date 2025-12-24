@@ -190,7 +190,7 @@ class CustomOOC():
         if self.args.ascend_cann_package_path != "":
             cann_package_path = self.args.ascend_cann_package_path
         else:
-            cann_package_path = os.environ.get('ASCEND_AICPU_PATH')
+            cann_package_path = os.environ.get('ASCEND_HOME_PATH')
             if cann_package_path is None:
                 cann_package_path = "/usr/local/Ascend/cann"
 

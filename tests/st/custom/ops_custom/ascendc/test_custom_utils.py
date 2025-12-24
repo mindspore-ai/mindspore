@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Test custom ops utils for Ascend platform.
+"""
 from tests.mark_utils import arg_mark
 from mindspore.ops import DataType, CustomRegOp
 from mindspore.ops.operations._custom_ops_utils import CustomInfoGenerator, CustomCodeGenerator
@@ -31,7 +33,7 @@ def test_info_generator_add():
     assert aclnn_api_types == expected_api_types
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
 def test_info_generator_grouped_matmul():
     """
     Feature: Custom op testcase
