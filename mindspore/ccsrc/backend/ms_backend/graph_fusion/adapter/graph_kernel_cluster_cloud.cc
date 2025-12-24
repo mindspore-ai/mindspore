@@ -18,6 +18,8 @@
 #include <functional>
 #include <unordered_map>
 #include <string>
+#include <memory>
+#include <vector>
 #include "primitive/math_ops.h"
 #include "primitive/array_ops.h"
 #include "include/utils/anfalgo.h"
@@ -59,7 +61,19 @@ namespace {
 constexpr int64_t kMaxDimSize = UINT16_MAX - UINT8_MAX;
 constexpr int64_t kMinDimSize = 512;
 
-std::set<TypeId> dvm_float_types{kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeBFloat16};
+bool IsFloatType(TypeId type_id) {
+  switch (type_id) {
+    case kNumberTypeFloat16:
+    case kNumberTypeFloat32:
+    case kNumberTypeBFloat16:
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool IsFloatIntType(TypeId type_id) { return IsFloatType(type_id) || type_id == kNumberTypeInt32; }
+
 class DvmSupportChecker {
  public:
   static DvmSupportChecker &Instance() {
@@ -86,12 +100,27 @@ class DvmSupportChecker {
       return true;
     } else {
       auto node_output_type = GetNodeOutputType(node);
-      return dvm_float_types.find(node_output_type) != dvm_float_types.end() && InputCheck(node, {});
+      return IsFloatType(node_output_type) && InputCheck(node, {});
     }
   }
 
  private:
   DvmSupportChecker() {
+    auto input_same_type = [](const AnfNodePtr &node) {
+      auto cb = Callback::Instance();
+      MS_EXCEPTION_IF_NULL(cb);
+      auto input_num = common::AnfAlgo::GetInputTensorNum(node);
+      if (input_num > 1) {
+        auto base_type = cb->GetInputType(node, 0);
+        for (size_t i = 1; i < input_num; ++i) {
+          auto input_type = cb->GetInputType(node, i);
+          if (input_type != base_type) {
+            return false;
+          }
+        }
+      }
+      return true;
+    };
     auto input_check_all = [](const AnfNodePtr &node) { return InputCheck(node, {}); };
     auto input_check_first = [](const AnfNodePtr &node) { return InputCheck(node, {1}); };
     auto cast_check = [](const AnfNodePtr &node) {
@@ -106,13 +135,13 @@ class DvmSupportChecker {
     };
     auto int_op_check = [](const AnfNodePtr &node) {
       auto node_output_type = GetNodeOutputType(node);
-      return (dvm_float_types.find(node_output_type) != dvm_float_types.end() || node_output_type == kNumberTypeInt32);
+      return IsFloatIntType(node_output_type);
     };
     auto compare_check = [](const AnfNodePtr &node) {
       auto cb = Callback::Instance();
       MS_EXCEPTION_IF_NULL(cb);
       auto node_input_type = cb->GetInputType(node, 0);
-      return (dvm_float_types.find(node_input_type) != dvm_float_types.end() || node_input_type == kNumberTypeInt32);
+      return IsFloatIntType(node_input_type);
     };
     auto transpose_op_check = [](const AnfNodePtr &node) {
       auto node_output_type = GetNodeOutputType(node);
@@ -146,12 +175,12 @@ class DvmSupportChecker {
     // reducesum op
     check_func_["ReduceSum"] = {DvmSupportChecker::DvmReduceSumSupported, input_check_first};
     // cmp op
-    check_func_["Equal"] = {compare_check};
-    check_func_["NotEqual"] = {compare_check};
-    check_func_["Greater"] = {compare_check};
-    check_func_["GreaterEqual"] = {compare_check};
-    check_func_["Less"] = {compare_check};
-    check_func_["LessEqual"] = {compare_check};
+    check_func_["Equal"] = {compare_check, input_same_type};
+    check_func_["NotEqual"] = {compare_check, input_same_type};
+    check_func_["Greater"] = {compare_check, input_same_type};
+    check_func_["GreaterEqual"] = {compare_check, input_same_type};
+    check_func_["Less"] = {compare_check, input_same_type};
+    check_func_["LessEqual"] = {compare_check, input_same_type};
     check_func_["IsFinite"] = {compare_check, [](const AnfNodePtr &node) {
                                  return Callback::Instance()->GetInputType(node, 0) != kNumberTypeInt32;
                                }};
@@ -161,7 +190,7 @@ class DvmSupportChecker {
     // int op
     check_func_["Add"] = {int_op_check, input_check_all};
     check_func_["Sub"] = {int_op_check, input_check_all};
-    check_func_["Mul"] = {int_op_check, input_check_all};
+    check_func_["Mul"] = {FloatIntMixTypeCheck};
     check_func_["Maximum"] = {int_op_check, input_check_all};
     check_func_["Minimum"] = {int_op_check, input_check_all};
     check_func_["Neg"] = {int_op_check, input_check_all};
@@ -214,6 +243,33 @@ class DvmSupportChecker {
     }
     return true;
   }
+
+  static bool MixTypeCheck(const AnfNodePtr &node, const std::function<bool(TypeId)> &type_check,
+                           const std::vector<size_t> &inputs_to_check) {
+    MS_EXCEPTION_IF_NULL(node);
+    auto cb = Callback::Instance();
+    MS_EXCEPTION_IF_NULL(cb);
+    auto output_type = cb->GetOutputType(node, 0);
+    if (!type_check(output_type)) {
+      return false;
+    }
+    std::vector<size_t> inputs(inputs_to_check);
+    size_t input_num = common::AnfAlgo::GetInputTensorNum(node);
+    if (inputs_to_check.empty()) {
+      for (size_t i = 1; i <= input_num; ++i) {
+        inputs.push_back(i);
+      }
+    }
+    for (auto idx : inputs) {
+      auto input_type = cb->GetInputType(node, idx - 1);
+      if (!type_check(input_type)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  static bool FloatIntMixTypeCheck(const AnfNodePtr &node) { return MixTypeCheck(node, IsFloatIntType, {}); }
 
   static bool CheckFormat(const AnfNodePtr &node) {
     if (common::AnfAlgo::IsDynamicRankNode(node)) {
@@ -280,7 +336,7 @@ class DvmSupportChecker {
         return false;
       }
     }
-    return (dvm_float_types.find(node_output_type) != dvm_float_types.end() || node_output_type == kNumberTypeInt32);
+    return IsFloatIntType(node_output_type);
   }
 
   static bool DvmMatMulSupported(const AnfNodePtr &node) {
@@ -363,7 +419,7 @@ class DvmSupportChecker {
         return false;
       }
     }
-    return dvm_float_types.find(node_output_type) != dvm_float_types.end();
+    return IsFloatType(node_output_type);
   }
 
   static bool DvmCubeReshapeSupported(const AnfNodePtr &reshape_node) {
@@ -388,8 +444,9 @@ class DvmSupportChecker {
     if (cb->GetInputType(node, 0) != kNumberTypeBool) {
       return false;
     }
-    return dvm_float_types.find(node_output_type) != dvm_float_types.end();
+    return IsFloatType(node_output_type);
   }
+
   std::unordered_map<std::string, std::vector<std::function<bool(const AnfNodePtr &)>>> check_func_;
 };
 

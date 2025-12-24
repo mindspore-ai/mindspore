@@ -62,7 +62,7 @@
 #include "backend/ms_backend/graph_fusion/convert_call_to_prim.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel/set_infershape_functor.h"
 #include "backend/ms_backend/graph_fusion/convert_input_and_attr.h"
-#include "backend/ms_backend/graph_fusion/convert_bfloat16.h"
+#include "backend/ms_backend/graph_fusion/convert_data_type.h"
 #include "backend/ms_backend/graph_fusion/deal_with_side_effect.h"
 #include "backend/ms_backend/graph_fusion/fold_updatestate.h"
 #include "backend/ms_backend/graph_fusion/transpose_matmul_fusion.h"
@@ -141,6 +141,9 @@ PassManagerPtr GraphKernelOptimizer::Cluster() const {
 
   // Cluster basic kernels and composite kernels
   pm->Add(std::make_shared<StaticShapeCluster>(), OptLevel_1);
+
+  // Add Cast for op's inputs in mix precision case
+  pm->Add(std::make_shared<ConvertMixType>(), OptLevel_1);
 
   // Eliminate the outputs without external user
   pm->Add(std::make_shared<EliminateRedundantOutput>(), OptLevel_1);
