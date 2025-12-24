@@ -178,7 +178,7 @@ class ELU(Cell):
     r"""
     Exponential Linear Unit activation function
 
-    Applies the exponential linear unit function element-wise.The activation function is defined as:
+    Applies the exponential linear unit function element-wise. The activation function is defined as:
 
     .. math::
         ELU_{i} =
@@ -188,7 +188,7 @@ class ELU(Cell):
         \end{cases}
 
     where :math:`x_i` represents the element of the input and :math:`\alpha` represents the `alpha` parameter, and
-    `alpha` represents the smoothness of the ELU.
+    this parameter represents the smoothness of the ELU.
 
     ELU Activation Function Graph:
 
@@ -199,28 +199,26 @@ class ELU(Cell):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        alpha (float, optional): The alpha value of ELU, the data type is float. Default: ``1.0``.
-        inplace (bool, optional): Whether to use inplace mode, the data type is bool. Default: ``False``.
+        alpha (float, optional): The alpha value of ELU formulation. Default: ``1.0``.
+        inplace (bool, optional): Whether to do the operation in-place. Default: ``False``.
 
     Inputs:
-        - **input** (Tensor) - The input of ELU is a Tensor of any dimension.
+        - **input** (Tensor) - The input tensor of any dimension.
 
     Outputs:
         Tensor, with the same shape and type as the `input`.
 
     Raises:
         RuntimeError: If the dtype of `input` is not float16, float32 or bfloat16.
-        TypeError: If the dtype of `alpha` is not float.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
         >>> import numpy as np
-        >>> input = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
-        >>> elu = mint.nn.ELU()
+        >>> input = mindspore.tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
+        >>> elu = mindspore.mint.nn.ELU()
         >>> result = elu(input)
         >>> print(result)
         [-0.63212055  -0.86466473  0.  2.  1.]
