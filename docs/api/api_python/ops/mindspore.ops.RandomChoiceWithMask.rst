@@ -25,5 +25,5 @@
     输出：
         两个Tensor，第一个为索引，第二个为掩码。
 
-        - **index** (Tensor) - 二维Tensor，shape为 :math:`(count, input_x的秩)`。
+        - **index** (Tensor) - 二维Tensor，shape为 :math:`(count, input_x)` 的秩。
         - **mask** (Tensor) - 一维Tensor，shape为 :math:`(count)`。

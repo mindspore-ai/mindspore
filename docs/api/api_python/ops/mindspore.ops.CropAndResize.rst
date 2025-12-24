@@ -24,7 +24,7 @@ mindspore.ops.CropAndResize
         - **crop_size** (Tuple[int]) - 两个int32元素元素组成的tuple：（crop_height, crop_width）。只能是常量。所有裁剪后的图像大小都将调整为此大小，且不保留图像内容的宽高比，裁剪高度和裁剪宽度都需要为正。
 
     输出：
-        四维Tensor，其shape为 :math:`(num\_boxes, crop\_height, crop\_width, depth)` ，数据类型类型为float32。
+        四维Tensor，其shape为 :math:`(num\_boxes, crop\_height, crop\_width, depth)` ，数据类型为float32。
 
     异常：
         - **TypeError** - `x`、 `boxes` 或 `box_index` 不是Tensor。
