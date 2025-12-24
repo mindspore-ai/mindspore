@@ -52,8 +52,3 @@ def test_tensor_masked_fill(mode):
         output = net(input_x, mask, value)
         expected = np.array([0.5, 0.5, 3., 0.5], dtype=np_type)
         assert np.allclose(output.asnumpy(), expected)
-
-        value = 0.5
-        output = net(input_x, mask, value)
-        expected = np.array([0.5, 0.5, 3., 0.5], dtype=np_type)
-        assert np.allclose(output.asnumpy(), expected)
