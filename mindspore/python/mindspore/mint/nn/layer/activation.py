@@ -78,7 +78,7 @@ class SiLU(Cell):
 
 class Sigmoid(Cell):
     r"""
-    Applies sigmoid activation function element-wise.
+    Apply sigmoid activation function element-wise.
 
     Sigmoid function is defined as:
 
@@ -94,25 +94,18 @@ class Sigmoid(Cell):
         :align: center
 
     Inputs:
-        - **input** (Tensor) - `input` is :math:`x` in the preceding formula. Tensor of any dimension,
-          the data type is float16, float32, float64, complex64 or complex128.
+        - **input** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, with the same type and shape as the `input`.
-
-    Raises:
-        TypeError: If dtype of `input` is not float16, float32, float64, complex64 or complex128.
-        TypeError: If `input` is not a Tensor.
+        Tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, nn
-        >>> import numpy as np
-        >>> input = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float16)
-        >>> sigmoid = mint.nn.Sigmoid()
+        >>> input = mindspore.tensor([-1, -2, 0, 2, 1], mindspore.float16)
+        >>> sigmoid = mindspore.mint.nn.Sigmoid()
         >>> output = sigmoid(input)
         >>> print(output)
         [0.2688  0.11914 0.5     0.881   0.7305 ]
