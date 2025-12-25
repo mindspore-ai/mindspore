@@ -576,7 +576,7 @@ class BCEWithLogitsLoss(Cell):
 
 class SELU(Cell):
     r"""
-    Activation function SELU (Scaled exponential Linear Unit).
+    Apply SELU (scaled exponential linear unit) element-wise.
 
     Refer to :func:`mindspore.mint.nn.functional.selu` for more details.
 
@@ -590,14 +590,12 @@ class SELU(Cell):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> input = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> selu = mint.nn.SELU()
-        >>> output = selu(input)
+        >>> selu = mindspore.mint.nn.SELU()
+        >>> input_tensor = mindspore.tensor([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]], mindspore.float32)
+        >>> output = selu(input_tensor)
         >>> print(output)
-        [[-1.1113307 4.202804 -1.7575096]
-        [ 2.101402 -1.7462534 9.456309 ]]
+        [[-1.1113307  4.202804  -1.7575096]
+         [ 2.101402  -1.7462534  9.456309 ]]
     """
 
     def construct(self, input):
