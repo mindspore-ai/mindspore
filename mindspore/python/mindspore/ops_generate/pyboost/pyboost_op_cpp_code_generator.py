@@ -132,10 +132,11 @@ class PyboostOpHeaderGenerator(BaseGenerator):
         """
         template_dict = {"ascend": template.PYBOOST_ASCEND_OP_HEADER_TEMPLATE,
                          "gpu": template.PYBOOST_GPU_OP_HEADER_TEMPLATE,
-                         "cpu": template.PYBOOST_CPU_OP_HEADER_TEMPLATE}
+                         "cpu": template.PYBOOST_CPU_OP_HEADER_TEMPLATE,
+                         "meta": template.PYBOOST_META_OP_HEADER_TEMPLATE}
         if device not in template_dict:
             raise ValueError(
-                f"Device must be ascend, gpu, or cpu, {device} is not supported")
+                f"Device must be ascend, gpu, cpu or meta, {device} is not supported")
         self.PYBOOST_OP_HEADER_TEMPLATE = template_dict[device]
         if device == "ascend":
             self.code_generate_path = f"{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/pyboost_impl/auto_generate/"
@@ -279,6 +280,12 @@ class PyboostOpCppGenerator:
             PYBOOST_SINGLE_OP_SOURCE_TEMPLATE = template.PYBOOST_ASCEND_SINGLE_OP_SOURCE_TEMPLATE
             gen_path = f"{K.MS_OPS_KERNEL_PATH}/gpu/pyboost/auto_generate/"
             self.device_reg_str = "GPU"
+        elif device == 'meta':
+            PYBOOST_CUSTOMIZE_CALL_TEMPLATE = template.PYBOOST_META_CUSTOMIZE_CALL_TEMPLATE
+            PYBOOST_SINGLE_OP_HEADER_TEMPLATE = template.PYBOOST_META_SINGLE_OP_HEADER_TEMPLATE
+            PYBOOST_SINGLE_OP_SOURCE_TEMPLATE = template.PYBOOST_ASCEND_SINGLE_OP_SOURCE_TEMPLATE
+            gen_path = f"{K.MS_OPS_KERNEL_PATH}/meta/pyboost/auto_generate/"
+            self.device_reg_str = "Meta"
         else:
             raise ValueError(
                 f"Device must be ascend, gpu, or cpu, {device} is not supported")
@@ -400,9 +407,11 @@ must be provided for comm op {operator_name}")
             register_custom_kernel = f"MS_REG_PYBOOST_CPU_CUSTOM_KERNEL({op_proto.op_class.name});"
         elif self.device == 'gpu':
             register_custom_kernel = f"MS_REG_PYBOOST_GPU_CUSTOM_KERNEL({op_proto.op_class.name});"
+        elif self.device == 'meta':
+            register_custom_kernel = ''
         else:
             raise ValueError(
-                f"Device must be ascend, gpu, or cpu, {self.device} is not supported")
+                f"Device must be ascend, gpu, cpu or meta, {self.device} is not supported")
         return register_custom_kernel
 
 
@@ -490,9 +499,14 @@ class AclnnOpCppCodeGenerator:
             PYBOOST_SINGLE_OP_SOURCE_TEMPLATE = template.PYBOOST_ASCEND_SINGLE_OP_SOURCE_TEMPLATE
             gen_path = f"{K.MS_OPS_KERNEL_PATH}/gpu/pyboost/auto_generate/"
             self.device_reg_str = "GPU"
+        elif device == 'meta':
+            PYBOOST_CALL_TEMPLATE = template.PYBOOST_META_CALL_TEMPLATE
+            PYBOOST_SINGLE_OP_SOURCE_TEMPLATE = template.PYBOOST_ASCEND_SINGLE_OP_SOURCE_TEMPLATE
+            gen_path = f"{K.MS_OPS_KERNEL_PATH}/meta/pyboost/auto_generate/"
+            self.device_reg_str = "Meta"
         else:
             raise ValueError(
-                f"Device must be ascend, gpu, or cpu, {device} is not supported")
+                f"Device must be ascend, gpu, cpu or meta, {device} is not supported")
         self.PYBOOST_REG_OP_TEMPLATE = Template('MS_REG_PYBOOST_OP(${device}, ${op_name});' \
                                                 '${register_custom_kernel}')
         self.PYBOOST_CALL_TEMPLATE = PYBOOST_CALL_TEMPLATE
@@ -873,13 +887,18 @@ class PyboostOpFunctionGenerator(BaseGenerator):
         self.gpu_op_cpp_generator = PyboostOpCppGenerator('gpu')
         self.gpu_aclnn_cpp_generator = AclnnOpCppCodeGenerator('gpu')
 
+        self.meta_op_cpp_generator = PyboostOpCppGenerator('meta')
+        self.meta_aclnn_cpp_generator = AclnnOpCppCodeGenerator('meta')
+
         self.PYBOOST_ASCEND_OP_SOURCE_TEMPLATE = template.PYBOOST_ASCEND_OP_SOURCE_TEMPLATE
         self.PYBOOST_CPU_OP_SOURCE_TEMPLATE = template.PYBOOST_CPU_OP_SOURCE_TEMPLATE
         self.PYBOOST_GPU_OP_SOURCE_TEMPLATE = template.PYBOOST_GPU_OP_SOURCE_TEMPLATE
+        self.PYBOOST_META_OP_SOURCE_TEMPLATE = template.PYBOOST_META_OP_SOURCE_TEMPLATE
         self.ascend_gen_path = f"{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/pyboost_impl/auto_generate/"
         self.cpu_gen_path = f"{K.MS_OPS_KERNEL_PATH}/cpu/pyboost/auto_generate/"
         self.gpu_gen_path = f"{K.MS_OPS_KERNEL_PATH}/gpu/pyboost/auto_generate/"
         self.hccl_gen_path = "mindspore/ops/kernel/ascend/hccl/pyboost/auto_generate/"
+        self.meta_gen_path = f"{K.MS_OPS_KERNEL_PATH}/meta/pyboost/auto_generate/"
 
     def generate(self, work_path, op_protos):
         """
@@ -902,6 +921,7 @@ class PyboostOpFunctionGenerator(BaseGenerator):
         self._generate_pyboost_ascend_ops(work_path, op_protos)
         self._generate_pyboost_cpu_ops(work_path, op_protos)
         self._generate_pyboost_gpu_ops(work_path, op_protos)
+        self._generate_pyboost_meta_ops(work_path, op_protos)
 
     def _generate_pyboost_ascend_ops(self, work_path, op_protos):
         """
@@ -957,6 +977,43 @@ class PyboostOpFunctionGenerator(BaseGenerator):
             ops_inc=list(sorted(ops_hccl_inc_head_set)))
         save_file(os.path.join(work_path, self.hccl_gen_path), "pyboost_hccl_ops.cc", \
                   hccl_pyboost_op_source)
+
+    def _generate_pyboost_meta_ops(self, work_path, op_protos):
+        """
+        Generates Meta PyBoost ops functions source files after being merged into specific chunk sizes.
+
+        Args:
+            work_path (str): The directory path where the generated C++ source files will be saved.
+            op_protos (list): A list of operation prototypes that define the operations for which
+                              the C++ code will be generated.
+        """
+        meta_merge_op_header = []
+        meta_merge_op_function = []
+        meta_merge_op_inc = []
+        self.meta_op_cpp_generator.generate_customize_op_cpp_code(
+            op_protos, meta_merge_op_header, meta_merge_op_function, meta_merge_op_inc)
+        self.meta_aclnn_cpp_generator.generate_aclnn_op_cpp_code(
+            op_protos, meta_merge_op_header, meta_merge_op_function, meta_merge_op_inc)
+        meta_op_header_merge_by_chunk_size = merge_strings_by_chunk_size(
+            meta_merge_op_header, chunk_size=120)
+        meta_op_function_merge_by_chunk_size = merge_strings_by_chunk_size(
+            meta_merge_op_function, chunk_size=120)
+        op_inc_list = chunk_list(meta_merge_op_inc, n=120)
+
+        new_gen_num = len(meta_op_header_merge_by_chunk_size)
+        self._delete_residual_merged_ops_files(
+            os.path.join(work_path, self.meta_gen_path), new_gen_num)
+
+        for i, op_header, op_function in zip(range(len(meta_op_header_merge_by_chunk_size)),
+                                             meta_op_header_merge_by_chunk_size,
+                                             meta_op_function_merge_by_chunk_size):
+            ops_inc_head_set = set()
+            for op_name_inc in op_inc_list[i]:
+                ops_inc_head_set.add(template.OP_DEF_INC_HEAD_TEMPLATE.replace(prefix_char=op_name_inc[0].lower()))
+            meta_pyboost_op_source = self.PYBOOST_META_OP_SOURCE_TEMPLATE.replace(
+                merge_op_header=op_header, merge_op_function=op_function, ops_inc=list(sorted(ops_inc_head_set)))
+            save_file(os.path.join(work_path, self.meta_gen_path), f"pyboost_meta_ops_{i}.cc",
+                      meta_pyboost_op_source)
 
     def _generate_pyboost_cpu_ops(self, work_path, op_protos):
         """
@@ -1133,7 +1190,7 @@ def delete_residual_files(work_path, op_protos):
     all_operator_name = []
     for op_proto in op_protos:
         all_operator_name.append(op_proto.op_name)
-    devices = ["ascend", "gpu", "cpu"]
+    devices = ["ascend", "gpu", "cpu", "meta"]
     code_generate_path_list = [f"{K.MS_OPS_KERNEL_PATH}/{device}/pyboost/auto_generate/"
                                if device != "ascend" else
                                f"{K.MS_OPS_KERNEL_PATH}/ascend/aclnn/pyboost_impl/auto_generate/"

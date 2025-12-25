@@ -47,6 +47,10 @@ class PYBIND_EXPORT TensorPybind {
 
   static bool IsShared(const TensorPy &tensor);
 
+  /// \brief Check whether the tensor is on meta device.
+  /// \return True if tensor is on meta device, false otherwise.
+  static bool IsMeta(const TensorPy &tensor);
+
   static TensorPtr MakePinMemoryTensor(const TensorPy &tensor);
 
   static py::bytes GetBytes(const Tensor &tensor);
@@ -196,6 +200,9 @@ class PYBIND_EXPORT TensorPyImpl {
  private:
   static TensorPtr InitTensorByInputDta(const py::dict &input, const TypePtr &dtype);
   static TensorPtr InitTensorByShape(const py::dict &input, const TypePtr &dtype);
+  static TensorPtr InitMetaTensor(const py::dict &input, const TypePtr &dtype);
+  static TensorPtr InitMetaTensorByInputData(const py::dict &input, const TypePtr &dtype);
+  static TensorPtr InitMetaTensorByShape(const py::dict &input, const TypePtr &dtype);
 };
 }  // namespace tensor
 }  // namespace mindspore

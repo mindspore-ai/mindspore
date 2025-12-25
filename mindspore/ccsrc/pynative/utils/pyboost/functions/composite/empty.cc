@@ -42,6 +42,15 @@ tensor::TensorPtr empty(const ValueTuplePtr &size, const std::optional<Int64ImmP
   ShapeVector output_shape = GetShape(size);
   TypeId data_type = GetDataType(nullptr, dtype);
   auto device_type = GetDeviceName(nullptr, device);
+  std::vector<tensor::TensorPtr> outputs;
+  if (device_type == device::DeviceType::kMeta) {
+    MS_LOG(DEBUG) << "Create meta tensor in empty function.";
+    PyBoostUtils::CreateMetaOutputTensor(data_type, output_shape, &outputs);
+
+    ProfileTracker::ProfileTrackerInput(prim::kPrimEmpty, skip_tracker, size, dtype, device, pin_memory);
+    ProfileTracker::ProfileTrackerOutput(prim::kPrimEmpty, skip_tracker, outputs[0]);
+    return outputs[0];
+  }
 
   for (size_t i = 0; i < output_shape.size(); ++i) {
     MS_CHECK_VALUE(output_shape[i] >= 0,
@@ -52,7 +61,6 @@ tensor::TensorPtr empty(const ValueTuplePtr &size, const std::optional<Int64ImmP
   auto device_ctx = runtime::OpRunner::GetDeviceContext(device_type);
   MS_EXCEPTION_IF_NULL(device_ctx);
 
-  std::vector<tensor::TensorPtr> outputs;
   PyBoostUtils::CreateOutputTensor(data_type, output_shape, &outputs);
   PyBoostUtils::PrepareOpOutputs(device_ctx, CurrentStream::id(), outputs);
   if (pin_memory->value()) {

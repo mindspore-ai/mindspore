@@ -20,6 +20,12 @@ inline static ${return_type} ${op_name}_view_impl(${call_args_with_type}) {
   PyBoostUtils::PrepareOpInputs(device_context, cur_stream_id, ${call_tensors});
   PyBoostUtils::CreateOutputTensor(device_context, ${input}, view_info, &outputs);
 
+  // return output when device_target is meta, don't need to malloc memory
+  if (device_target == device::DeviceType::kMeta) {
+    MS_LOG(DEBUG) << "View ${op_name} Call end on meta device.";
+    return ${return_values};
+  }
+
   // Async
   PyBoostUtils::DispatchRun(
     std::make_shared<runtime::PyBoostDeviceTask>(

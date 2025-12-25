@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace device {
 enum class RunMode { kUnknown, kKernelMode, kGraphMode };
-enum class DeviceType { kUnknown = 0, kCPU = 1, kAscend = 2, kGPU = 3, kNone = 4, kDeviceEnd };
+enum class DeviceType { kUnknown = 0, kCPU = 1, kAscend = 2, kGPU = 3, kMeta = 4, kNone = 5, kDeviceEnd };
 
 const std::map<RunMode, std::string> run_mode_to_name_map = {
   {RunMode::kUnknown, "Unknown"}, {RunMode::kKernelMode, "KernelMode"}, {RunMode::kGraphMode, "GraphMode"}};
@@ -31,17 +31,20 @@ const std::map<RunMode, std::string> run_mode_to_name_map = {
 const std::map<DeviceType, std::string> device_type_to_name_map = {{DeviceType::kUnknown, "Unknown"},
                                                                    {DeviceType::kAscend, "Ascend"},
                                                                    {DeviceType::kCPU, "CPU"},
-                                                                   {DeviceType::kGPU, "GPU"}};
+                                                                   {DeviceType::kGPU, "GPU"},
+                                                                   {DeviceType::kMeta, "meta"}};
 
 const std::map<std::string, DeviceType> device_name_to_type_map = {{"Unknown", DeviceType::kUnknown},
                                                                    {"Ascend", DeviceType::kAscend},
                                                                    {"CPU", DeviceType::kCPU},
-                                                                   {"GPU", DeviceType::kGPU}};
+                                                                   {"GPU", DeviceType::kGPU},
+                                                                   {"meta", DeviceType::kMeta}};
 
 MS_CORE_API const std::string &GetDeviceNameByType(const DeviceType &type);
 MS_CORE_API DeviceType GetDeviceTypeByName(const std::string &name);
 MS_CORE_API bool IsAscendDeviceType(const DeviceType &type);
 MS_CORE_API bool IsCPUDeviceType(const DeviceType &type);
+MS_CORE_API bool IsMetaDeviceType(const device::DeviceType &type);
 
 }  // namespace device
 }  // namespace mindspore

@@ -49,9 +49,9 @@ namespace mindspore::runtime {
 namespace {
 const std::set<std::string> no_dyn_need_update_ops = {kDynamicGetNextV2OpName, kDynamicGetNextAscendOpName,
                                                       kGetNextOpName, kGetNextFromQueueOpName, kReceiveOpName};
-constexpr size_t kContextSize = 5;
+constexpr size_t kContextSize = 6;
 std::unique_ptr<std::mutex> kDeviceContextMutex = std::make_unique<std::mutex>();
-std::array<DeviceContext *, kContextSize> kDeviceContexts = {nullptr, nullptr, nullptr, nullptr, nullptr};
+std::array<DeviceContext *, kContextSize> kDeviceContexts = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 
 // 1. Device type is different in heterogeneous scenes.
 // 2. The device address format is different.
@@ -881,6 +881,10 @@ DeviceContext *OpRunner::GetDeviceContext(device::DeviceType device_type) {
   auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext({device_type, device_id});
   MS_EXCEPTION_IF_NULL(device_context);
   device_context->Initialize();
+  if (device_type == device::DeviceType::kMeta) {
+    kDeviceContexts[index] = device_context;
+    return device_context;
+  }
 
   MS_EXCEPTION_IF_NULL(device_context->device_res_manager_);
   (void)device_context->device_res_manager_->BindDeviceToCurrentThread(false);

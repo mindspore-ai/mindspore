@@ -23,7 +23,8 @@ device::DeviceType GetDeviceType(Device device) {
   static std::map<Device, device::DeviceType> device_type_map = {{DEVICE_ASCEND, device::DeviceType::kAscend},
                                                                  {DEVICE_NPU_LOWER, device::DeviceType::kAscend},
                                                                  {DEVICE_CPU, device::DeviceType::kCPU},
-                                                                 {DEVICE_CPU_LOWER, device::DeviceType::kCPU}};
+                                                                 {DEVICE_CPU_LOWER, device::DeviceType::kCPU},
+                                                                 {DEVICE_META_LOWER, device::DeviceType::kMeta}};
   auto iter = device_type_map.find(device);
   if (iter == device_type_map.end()) {
     MS_LOG(EXCEPTION) << "Not support to device for " << device;

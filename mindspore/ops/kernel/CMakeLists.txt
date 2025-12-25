@@ -18,6 +18,9 @@ if(ENABLE_D)
     add_subdirectory(ascend)
 endif()
 
+# ===== Meta
+add_subdirectory(meta)
+
 # ===== GPU
 if(ENABLE_GPU)
     add_subdirectory(gpu)

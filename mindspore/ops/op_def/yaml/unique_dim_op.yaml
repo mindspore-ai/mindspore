@@ -24,3 +24,4 @@ unique_dim:
     enable: True
     Ascend: UniqueDimAscend
     GPU: None
+    meta: None

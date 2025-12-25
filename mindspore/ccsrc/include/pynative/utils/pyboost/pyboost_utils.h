@@ -83,6 +83,8 @@ class PYBOOST_API PyBoostUtils {
                                  std::vector<tensor::TensorPtr> *outputs);
   static void CreateOutputTensor(const TypeId &type_id, const ShapeVector &shape_vector,
                                  std::vector<tensor::TensorPtr> *outputs);
+  static void CreateMetaOutputTensor(const TypeId &type_id, const ShapeVector &shape_vector,
+                                     std::vector<tensor::TensorPtr> *outputs);
 
   // Create input device address without kernel tensor
   template <typename... Args>

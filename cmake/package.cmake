@@ -55,6 +55,14 @@ install(
     COMPONENT mindspore
 )
 
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin" AND NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+    install(
+        TARGETS mindspore_meta
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
+endif()
+
 if(ENABLE_TESTCASES)
     install(
         TARGETS proto_input

@@ -65,6 +65,8 @@ class PyboostOverloadFunctionsGenerator(BaseGenerator):
             '  ${cpu_dispatcher}\n'
             '} else if (backend == device::DeviceType::kGPU) {\n'
             '  ${gpu_dispatcher}\n'
+            '} else if (backend == device::DeviceType::kMeta) {\n'
+            '  ${meta_dispatcher}\n'
             '} else {\n'
             '  MS_LOG(ERROR) << "Device target is not supported!";\n'
             '  return py::none();\n'
@@ -335,9 +337,13 @@ class PyboostOverloadFunctionsGenerator(BaseGenerator):
         ascend_dispatcher_str = self._get_single_device_dispatcher_str(func_proto, 'ascend')
         cpu_dispatcher_str = self._get_single_device_dispatcher_str(func_proto, 'cpu')
         gpu_dispatcher_str = self._get_single_device_dispatcher_str(func_proto, 'gpu')
+        # Use ascend here to call pyboost_call for meta dispatcher. Otherwise,
+        # we need to modify all the operator yaml to add 'Meta: pyboost'
+        meta_dispatcher_str = self._get_single_device_dispatcher_str(func_proto, 'ascend')
         device_dispatcher_str = self.device_dispatcher_template.replace(ascend_dispatcher=ascend_dispatcher_str,
                                                                         cpu_dispatcher=cpu_dispatcher_str,
-                                                                        gpu_dispatcher=gpu_dispatcher_str)
+                                                                        gpu_dispatcher=gpu_dispatcher_str,
+                                                                        meta_dispatcher=meta_dispatcher_str)
         return device_dispatcher_str
 
     def _get_single_device_dispatcher_str(self, func_proto, device):

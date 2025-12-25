@@ -96,7 +96,7 @@ TEST_F(TestTensorPy, GetDeviceFromPythonTest) {
         std::string res = TensorPyImpl::GetDeviceFromPython(input);
     } catch (const std::exception &ex) {
         const std::string &exception_str = ex.what();
-        ASSERT_TRUE(exception_str.find("Only 'CPU' is supported for device") != std::string::npos);
+        ASSERT_TRUE(exception_str.find("Only {'CPU', 'meta'} is supported for device") != std::string::npos);
     }
 }
 

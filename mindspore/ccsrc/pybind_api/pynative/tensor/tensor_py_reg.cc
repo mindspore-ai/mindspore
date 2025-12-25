@@ -689,6 +689,17 @@ extern PyObject *TensorPy_update_data(PyObject *self, PyObject *args) {
   HANDLE_MS_EXCEPTION_END
 }
 
+extern PyObject *TensorPython_is_meta(PyObject *self, void *) {
+  HANDLE_MS_EXCEPTION
+  PyType<TensorPy> *tensor = reinterpret_cast<PyType<TensorPy> *>(self);
+  TensorPy &tensor_py = tensor->value;
+  if (TensorPybind::IsMeta(tensor_py)) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+  HANDLE_MS_EXCEPTION_END
+}
+
 static PyGetSetDef PyTensorPython_getseters[] = {
   {"param_info", (getter)TensorPython_get_paramInfo, (setter)TensorPython_set_paramInfo, "paramInfo of the tensor",
    nullptr},
@@ -698,6 +709,18 @@ static PyGetSetDef PyTensorPython_getseters[] = {
    "Whether the tensor is a constant when it is used for the argument of a network.", NULL},
   {"init", (getter)TensorPython_get_init, (setter)TensorPython_set_init, "The information of init data.", NULL},
   {"device", (getter)TensorPython_get_device, nullptr, "This parameter is reserved and does not need to be configured.",
+   NULL},
+  {"is_meta", (getter)TensorPython_is_meta, nullptr, R"mydelimiter(
+                                Check whether the tensor is on meta device.
+
+                                Returns:
+                                    Bool. If the tensor is on meta device, return ``True``. Otherwise, return ``False``.
+
+                                Examples:
+                                    >>> data = mindspore.Tensor(np.ones((2, 1), np.int32), device='meta')
+                                    >>> data.is_meta
+                                    True
+                                )mydelimiter",
    NULL},
   {"parent_tensor_", (getter)TensorPython_get_ParentTensor, (setter)TensorPython_set_ParentTensor,
    "If current Tensor is an index value of another Tensor, set to another Tensor.", NULL},
@@ -844,6 +867,10 @@ extern int TensorPy_pyinit(PyObject *obj, PyObject *args, PyObject *kwargs) {
     py::cast<py::object>(py::handle(argsT.input_data_)), py::cast<py::object>(py::handle(argsT.dtype_)),
     py::cast<py::object>(py::handle(argsT.shape_)), py::cast<py::object>(py::handle(argsT.init_)),
     py::cast<py::object>(py::handle(argsT.const_arg_)), py::cast<py::object>(py::handle(argsT.device_)));
+  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kMetaDevice &&
+      (!p.contains("device") || py::isinstance<py::none>(p["device"]))) {
+    p["device"] = "meta";
+  }
   TensorPtr tensor = TensorPyImpl::InitTensor(p);
   new (&self->value) TensorPy(tensor);
   self->value.SetInitializer(TensorPyImpl::GetInitializerFromPython(p));

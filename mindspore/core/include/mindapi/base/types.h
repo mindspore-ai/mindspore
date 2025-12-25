@@ -148,6 +148,7 @@ enum Device : int64_t {
   DEVICE_NPU_LOWER = 1,
   DEVICE_CPU = 2,
   DEVICE_CPU_LOWER = 3,
+  DEVICE_META_LOWER = 4
 };
 
 // float is a float64 in python. But for some historical reason, python float is converted to float32 in

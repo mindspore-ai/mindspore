@@ -20,6 +20,10 @@ if(ENABLE_CPU)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/cpu_compile_config.cmake)
 endif()
 
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin" AND NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/meta_compile_config.cmake)
+endif()
+
 # gcc flag
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 \
@@ -123,6 +127,12 @@ if(ENABLE_CPU)
     endif()
 endif()
 
+if(ENABLE_CPU)
+    if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin" AND NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+        target_link_libraries(_c_expression PRIVATE -Wl,--no-as-needed mindspore_meta -Wl,--as-needed)
+    endif()
+endif()
+
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set(CMAKE_MACOSX_RPATH 1)
     set(CMAKE_INSTALL_RPATH "@loader_path;@loader_path/lib;@loader_path/lib/plugin")
@@ -158,4 +168,3 @@ endif()
 if(ENABLE_D)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/ascend_compile_config.cmake)
 endif()
-

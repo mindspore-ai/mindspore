@@ -74,6 +74,8 @@ class TensorFuncRegCppGenerator(BaseGenerator):
             '  ${cpu_dispatcher}\n'
             '} else if (backend == device::DeviceType::kGPU) {\n'
             '  ${gpu_dispatcher}\n'
+            '} else if (backend == device::DeviceType::kMeta) {\n'
+            '  ${meta_dispatcher}\n'
             '} else {\n'
             '  MS_LOG(ERROR) << "Device target is not supported!";\n'
             '  Py_RETURN_NONE;\n'
@@ -472,9 +474,12 @@ class TensorFuncRegCppGenerator(BaseGenerator):
             func_proto, 'cpu')
         gpu_dispatcher_str = self._get_single_device_dispatcher_str(
             func_proto, 'gpu')
+        meta_dispatcher_str = self._get_single_device_dispatcher_str(
+            func_proto, 'meta')
         device_dispatcher_str = self.device_dispatcher_template.replace(ascend_dispatcher=ascend_dispatcher_str,
                                                                         cpu_dispatcher=cpu_dispatcher_str,
-                                                                        gpu_dispatcher=gpu_dispatcher_str)
+                                                                        gpu_dispatcher=gpu_dispatcher_str,
+                                                                        meta_dispatcher=meta_dispatcher_str)
         return device_dispatcher_str
 
     def _get_single_device_dispatcher_str(self, func_proto, device):
@@ -488,6 +493,9 @@ class TensorFuncRegCppGenerator(BaseGenerator):
         Returns:
             str: Generated device dispatcher string.
         """
+        # if device is meta, directly return pyboost_call()
+        if device == 'meta':
+            return self.pyboost_return_template.replace()
         func_proto_device = getattr(func_proto, device)
         if func_proto_device == 'pyboost':
             arg_handler_processor_str = self._get_arg_handler_processor(func_proto.func_name, func_proto.op_proto)

@@ -45,6 +45,12 @@ mindspore::tensor::TensorPtr reshape_view_internal(const mindspore::tensor::Tens
   kernel::pyboost::PyBoostUtils::PrepareOpInputs(device_context, cur_stream_id, input);
   kernel::pyboost::PyBoostUtils::CreateOutputTensor(device_context, input, storage_info, &outputs);
 
+  // return output when device_target is meta, don't need to malloc memory
+  if (device_target == device::DeviceType::kMeta) {
+    MS_LOG(DEBUG) << "View Reshape Call end on meta device.";
+    return outputs[0];
+  }
+
   // Async
   kernel::pyboost::PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>([input, device_context]() {
     MS_LOG(DEBUG) << "View device task Reshape start";

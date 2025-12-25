@@ -250,7 +250,8 @@ REG_STRING_TO_ENUM_SPECIAL(approximate, StrToEnumMap{{"NONE", Approximate::NONE}
 StrToEnumMap StrToDeviceMap = {{"Ascend", Device::DEVICE_ASCEND},
                                {"npu", Device::DEVICE_NPU_LOWER},
                                {"CPU", Device::DEVICE_CPU},
-                               {"cpu", Device::DEVICE_CPU_LOWER}};
+                               {"cpu", Device::DEVICE_CPU_LOWER},
+                               {"meta", Device::DEVICE_META_LOWER}};
 REG_STRING_TO_ENUM_SPECIAL(device, StrToDeviceMap);
 }  // namespace
 

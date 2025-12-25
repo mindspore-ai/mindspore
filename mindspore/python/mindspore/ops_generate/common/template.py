@@ -293,6 +293,28 @@ PYBOOST_GPU_CUSTOMIZE_CALL_TEMPLATE = Template.load_from_file(
                  './mindspore/ops/kernel/gpu/pyboost/template'
                  '/pyboost_gpu_customize_call_template.tpl'))
 
+# meta op generate
+PYBOOST_META_OP_HEADER_TEMPLATE = Template.load_from_file(
+    os.path.join(K.WORK_DIR,
+                 f'./{K.MS_OPS_KERNEL_PATH}/meta/pyboost/template/pyboost_meta_header_template.tpl'))
+
+PYBOOST_META_OP_SOURCE_TEMPLATE = Template.load_from_file(
+    os.path.join(K.WORK_DIR,
+                 f'./{K.MS_OPS_KERNEL_PATH}/meta/pyboost/template/pyboost_meta_source_template.tpl'))
+
+PYBOOST_META_SINGLE_OP_HEADER_TEMPLATE = Template.load_from_file(
+    os.path.join(K.WORK_DIR,
+                 f'./{K.MS_OPS_KERNEL_PATH}/meta/pyboost/template/pyboost_meta_single_op_header_template.tpl'))
+
+PYBOOST_META_CALL_TEMPLATE = Template.load_from_file(
+    os.path.join(K.WORK_DIR,
+                 f'./{K.MS_OPS_KERNEL_PATH}/meta/pyboost/template/pyboost_meta_call_template.tpl'))
+
+PYBOOST_META_CUSTOMIZE_CALL_TEMPLATE = Template.load_from_file(
+    os.path.join(K.WORK_DIR,
+                 f'./{K.MS_OPS_KERNEL_PATH}/meta/pyboost/template'
+                 '/pyboost_meta_customize_call_template.tpl'))
+
 # CPU op generate
 PYBOOST_CPU_OP_HEADER_TEMPLATE = Template.load_from_file(
     os.path.join(K.WORK_DIR,

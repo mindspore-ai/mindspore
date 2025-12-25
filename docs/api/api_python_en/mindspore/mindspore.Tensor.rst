@@ -266,6 +266,7 @@ mindspore.Tensor
     mindspore.Tensor.is_contiguous
     mindspore.Tensor.is_floating_point
     mindspore.Tensor.isinf
+    mindspore.Tensor.is_meta
     mindspore.Tensor.isnan
     mindspore.Tensor.isneginf
     mindspore.Tensor.isposinf
