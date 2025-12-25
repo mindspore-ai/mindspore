@@ -257,6 +257,8 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
   std::vector<uint32_t> default_global_group_ranks_;
   std::vector<size_t> default_all_host_hashs_;
 
+  std::unordered_set<std::string> initialized_groups_;
+
   // Global group ranks.
   std::vector<uint32_t> global_group_ranks_;
 

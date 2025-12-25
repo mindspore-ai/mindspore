@@ -143,6 +143,11 @@ bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeou
 }  // namespace
 
 bool CollectiveManager::Initialize(std::string group_name) {
+  if (initialized_groups_.count(group_name) > 0) {
+    MS_LOG(WARNING) << "Init Group " << group_name << " has already been init.";
+    return true;
+  }
+
   need_init_ = true;
   stop_init_comm_ = false;
   if (inited_ && !need_reinit_) {
@@ -227,6 +232,7 @@ bool CollectiveManager::Initialize(std::string group_name) {
   inited_ = true;
   finalized_ = false;
   need_reinit_ = false;
+  initialized_groups_.insert(group_name);
   SetDistributedMeta();
   return true;
 }
