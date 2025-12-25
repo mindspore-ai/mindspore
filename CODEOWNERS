@@ -15,8 +15,6 @@
 /mindspore/ccsrc/backend/ms_backend/graph_fusion/ @gaoxiong1
 /mindspore/ccsrc/cluster/ @zhangyinxia
 /mindspore/ccsrc/cmake/ @nicholas_yhr
-/mindspore/ccsrc/common/ @limingqi107
-/mindspore/ccsrc/common/pynative/ @chujinjin
 /mindspore/ccsrc/frontend/ @ginfung
 /mindspore/ccsrc/frontend/expander/grad/ @liangchenghui
 /mindspore/ccsrc/frontend/operator/meta_dsl/func_op/ @liangchenghui
@@ -60,6 +58,7 @@
 /mindspore/ccsrc/utils/ir_dump/ @ginfung
 /mindspore/ccsrc/utils/pipeline/ @ginfung
 /mindspore/ccsrc/utils/operator/ @ginfung
+/mindspore/ccsrc/utils/pynative/ @chujinjin
 /mindspore/ccsrc/utils/symbol_engine/ @ginfung
 /mindspore/ccsrc/utils/*tensor*.cc @chujinjin
 /mindspore/ccsrc/utils/*utils*.cc @ginfung
@@ -186,6 +185,7 @@
 /tests/st/mindscience/ @yi-zhang95
 /tests/st/mint/ @liangchenghui
 /tests/st/mix_precision/ @changzherui
+/tests/st/networks/large_models/ @suhaibo
 /tests/st/cluster/ @zhangyinxia
 /tests/st/collective_ops/ @zhangyinxia
 /tests/st/nn/ @changzherui
