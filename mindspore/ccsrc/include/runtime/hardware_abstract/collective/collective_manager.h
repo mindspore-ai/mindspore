@@ -128,11 +128,6 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
 
   bool need_init() const { return need_init_.load(); }
 
-  // Set whether need reinitialize collective communication.
-  void set_need_reinit(bool need_reinit) { need_reinit_ = need_reinit; }
-  // Get whether need reinitialize collective communication.
-  bool need_reinit() const { return need_reinit_.load(); }
-
   // Return collective manager is initialized.
   bool initialized() const { return inited_.load(); }
   std::unordered_map<std::string, std::vector<uint32_t>> get_group_map() { return group_map_; }
@@ -207,10 +202,6 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
   // Whether collective communication library should be initialized. This is represents this process is launched as
   // distributed job.
   std::atomic_bool need_init_;
-
-  // Whether need reinitialize collective communication, this value should be set to true once a training process
-  // exits unexpectedly is detected.
-  std::atomic_bool need_reinit_;
 
   // The device context on both host and device side. They are used to access the communication library on different
   // devices.
