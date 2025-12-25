@@ -353,24 +353,18 @@ class Threshold(Cell):
         inplace (bool, optional): Whether to apply erasing inplace. Default: ``False``.
 
     Inputs:
-        - **input** (Tensor) - The input Tensor.
+        - **input** (Tensor) - The input tensor.
 
     Outputs:
-        Tensor, the same shape and data type as the input.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `threshold` is not a float or an int.
-        TypeError: If `value` is not a float or an int.
+        Tensor.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> inputs = mindspore.Tensor([0.0, 2, 3], mindspore.float32)
-        >>> net = mint.nn.Threshold(1, 100)
+        >>> inputs = mindspore.tensor([0.0, 2, 3], mindspore.float32)
+        >>> net = mindspore.mint.nn.Threshold(1, 100)
         >>> outputs = net(inputs)
         >>> print(outputs)
         [100.   2.   3.]
