@@ -453,7 +453,8 @@ class MS_CORE_API FunctionalAbstractClosure final : public AbstractFuncAtom {
   /// \brief Constructor of FunctionalAbstractClosure.
   ///
   /// \param[in] name The name of functional.
-  FunctionalAbstractClosure(const std::string &name, bool is_method) : name_(name), is_method_(is_method) {}
+  FunctionalAbstractClosure(const std::string &name, const FunctionalPtr &functional, bool is_method)
+      : name_(name), functional_(functional), is_method_(is_method) {}
 
   /// \brief Destructor of FunctionalAbstractClosure.
   ~FunctionalAbstractClosure() override = default;
@@ -463,6 +464,11 @@ class MS_CORE_API FunctionalAbstractClosure final : public AbstractFuncAtom {
   ///
   /// \return The name of functional.
   std::string name() const { return name_; }
+
+  /// \brief Get functional.
+  ///
+  /// \return The functional instance.
+  FunctionalPtr functional() const { return functional_; }
 
   /// \brief Check if method.
   ///
@@ -479,6 +485,7 @@ class MS_CORE_API FunctionalAbstractClosure final : public AbstractFuncAtom {
 
  private:
   std::string name_;
+  FunctionalPtr functional_{nullptr};
   bool is_method_{false};
 };
 using FunctionalAbstractClosurePtr = std::shared_ptr<FunctionalAbstractClosure>;

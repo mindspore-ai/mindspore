@@ -34,7 +34,7 @@ abstract::AbstractBasePtr Null::ToAbstract() { return std::make_shared<abstract:
 abstract::AbstractBasePtr Ellipsis::ToAbstract() { return std::make_shared<abstract::AbstractEllipsis>(); }
 
 abstract::AbstractBasePtr Functional::ToAbstract() {
-  return std::make_shared<abstract::FunctionalAbstractClosure>(name(), is_method());
+  return std::make_shared<abstract::FunctionalAbstractClosure>(name(), shared_from_base<Functional>(), is_method());
 }
 
 abstract::AbstractBasePtr MindIRClassType::ToAbstract() {

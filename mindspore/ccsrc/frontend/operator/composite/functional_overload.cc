@@ -750,9 +750,10 @@ AnfNodePtr ConvertFunctionalToPrimitive(const std::string &functional_name, cons
   return prim_node;
 }
 
-AnfNodePtr ConvertFunctionalToPyExecute(const std::string &functional_name, const AnfNodePtrList &inputs_list,
+AnfNodePtr ConvertFunctionalToPyExecute(const FunctionalPtr &functional, const AnfNodePtrList &inputs_list,
                                         const AbstractBasePtrList &args_abs_list, const CNodePtr &cnode,
                                         bool is_method) {
+  auto functional_name = functional->name();
   MS_LOG(DEBUG) << "Functional[" << functional_name << "] receives arguments that contain Any.";
   std::stringstream script_buffer;
   constexpr auto index_fn = 0;
@@ -765,15 +766,11 @@ AnfNodePtr ConvertFunctionalToPyExecute(const std::string &functional_name, cons
     // Convert Functional node to PyExectue("x.method_name(arg1, arg2)", local_keys, local_values)
     script_buffer << data_str << "." << functional_name + "(";
   } else {
-    // Convert Functional node to PyExectue("mint.xxx(x, arg1, arg2)", local_keys, local_values)
-    script_buffer << functional_name << "(" << data_str << ", ";
-    py::object py_functional = python_adapter::GetPyFn("mindspore.mint", functional_name);
-    if (py::isinstance<py::none>(py_functional)) {
-      MS_LOG(INTERNAL_EXCEPTION) << functional_name << " is not a function of mindspore.mint";
-    }
-    auto functional_node = NewValueNode(std::make_shared<parse::InterpretedObject>(py_functional));
-    (void)keys_inputs.emplace_back(NewValueNode(std::make_shared<StringImm>(functional_name)));
-    (void)values_inputs.emplace_back(functional_node);
+    // Convert Functional node to PyExectue("mint_function_str(x, arg1, arg2)", local_keys, local_values)
+    std::string mint_function_str = "__mint_" + functional_name + "__";
+    script_buffer << mint_function_str << "(" << data_str << ", ";
+    (void)keys_inputs.emplace_back(NewValueNode(std::make_shared<StringImm>(mint_function_str)));
+    (void)values_inputs.emplace_back(NewValueNode(std::make_shared<parse::InterpretedObject>(py::cast(functional))));
   }
   for (size_t index = 1; index < inputs_list.size(); ++index) {
     auto internal_arg = fallback::ConvertRealStrToUnicodeStr(functional_name, index);
