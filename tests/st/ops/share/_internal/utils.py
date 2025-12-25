@@ -26,7 +26,8 @@ import numpy as np
 import mindspore as ms
 from mindspore.common.api import _pynative_executor
 from mindspore.common.dtype import _dtype_to_nptype
-from typing import Optional, Tuple
+from mindspore._c_expression import MSContext
+from typing import Optional, Tuple, Union, Dict
 
 class OpSampleInput:
     """Container of a single operation invocation sample.
@@ -43,6 +44,7 @@ class OpSampleInput:
         "op_args",
         "op_kwargs",
         "sample_name",
+        "loss",
     ]
 
     def __init__(
@@ -51,11 +53,13 @@ class OpSampleInput:
             op_args: Optional[tuple] = tuple(),
             op_kwargs: Optional[dict] = None,
             sample_name: Optional[str] = None,
+            loss: Optional[float] = None,
     ):
         self.op_input = op_input
         self.op_args = op_args
         self.op_kwargs = op_kwargs if op_kwargs is not None else {}
         self.sample_name = sample_name if sample_name is not None else "UnknownSample"
+        self.loss = loss
 
     def transform(self, fn, method_name):
         """Apply a transformation recursively to op_input/op_args/op_kwargs.
@@ -97,6 +101,7 @@ class OpSampleInput:
             op_args=transformed_op_args,
             op_kwargs=transformed_op_kwargs,
             sample_name=self.sample_name + "_transformed_" + method_name,
+            loss=self.loss,
         )
 
     def convert_to_args(self, append_dout=None):
@@ -133,6 +138,7 @@ class OpSampleInput:
             op_args=tuple(op_args),
             op_kwargs={},
             sample_name=self.sample_name + ("_to_args_with_dout" if append_dout is not None else "_to_args"),
+            loss=self.loss,
         )
 
     def copy(self):
@@ -261,7 +267,8 @@ class OpSampleInput:
                f"op_input={print_func(self.op_input)},\n" + \
                f"op_args={print_func(self.op_args)},\n" + \
                f"op_kwargs={print_func(self.op_kwargs)},\n" + \
-               f"sample_name={print_func(self.sample_name)})"
+               f"sample_name={print_func(self.sample_name)},\n" + \
+               f"loss={print_func(self.loss)})"
 
 
 class OpErrorInput:
@@ -499,21 +506,67 @@ def make_tensor_with_np_array(
     return result
 
 
-def skip_sample_inputs(input_func, skip_keywords):
+def wrap_sample_inputs(input_func, sample_names, *, skip=False, loss: Optional[Union[float, Dict[str, float]]] = None):
     """
+    Wrap a sample input generator to selectively tweak per-sample behavior.
+
     Args:
-        input_func(function): sample input generator function.
-        skip_keywords(str or list): keyword string or keyword list, used to match sample_name.
+        input_func (function): sample input generator function.
+        sample_names (str or list): keyword string or keyword list, used to match OpSampleInput.sample_name.
+        skip (bool | Iterable[str] | Dict[str, bool]):
+            - bool: True means skip matched samples on all devices; False means don't skip (default).
+            - Iterable[str]: device keys to skip, subset of {"ascend", "ascend910b", "cpu", "gpu"}.
+            - Dict[str, bool]: per-device skip map, keys in {"ascend", "ascend910b", "cpu", "gpu"}.
+        loss (float | Dict[str, float], optional):
+            - float: set matched samples' tolerance (rtol/atol) for all devices.
+            - Dict[str, float]: per-device tolerance map, keys in {"ascend", "ascend910b", "cpu", "gpu"}.
+
     Returns:
         function: wrapped generator function.
     """
-    if isinstance(skip_keywords, str):
-        skip_keywords = [skip_keywords]
+    if isinstance(sample_names, str):
+        sample_names = [sample_names]
+
+    def _get_device_key(device_arg: Optional[str]) -> str:
+        # Prefer explicit device passed by caller; fall back to global context.
+        device = device_arg or ms.context.get_context('device_target')
+        device = str(device).lower()
+        if device == 'ascend':
+            ascend_name = MSContext.get_instance().get_ascend_soc_version()
+            return 'ascend910b' if str(ascend_name).lower() == 'ascend910b' else 'ascend'
+        if device == 'gpu':
+            return 'gpu'
+        if device == 'cpu':
+            return 'cpu'
+        # Unknown device target; keep original string for debugging.
+        return device
+
+    def _should_skip(device_key: str) -> bool:
+        if isinstance(skip, bool):
+            return skip
+        if isinstance(skip, dict):
+            return bool(skip.get(device_key, False))
+        return device_key in set(skip)
+
+    def _get_loss(device_key: str) -> Optional[float]:
+        if loss is None:
+            return None
+        if isinstance(loss, dict):
+            return loss.get(device_key, None)
+        return loss
 
     def wrapped_func(op_info, dtype=None, device=None, **kwargs):
+        device_key = _get_device_key(device)
         for sample_input in input_func(op_info, dtype, device, **kwargs):
-            if any(keyword in sample_input.sample_name for keyword in skip_keywords):
+            is_match = any(name in sample_input.sample_name for name in sample_names)
+            if not is_match:
+                yield sample_input
                 continue
+            if _should_skip(device_key):
+                continue
+            sample_loss = _get_loss(device_key)
+            if sample_loss is not None:
+                sample_input.loss = sample_loss
             yield sample_input
 
     return wrapped_func

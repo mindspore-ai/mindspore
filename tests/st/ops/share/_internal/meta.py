@@ -532,6 +532,9 @@ class OpsFactory():
                     warnings.warn("The input on the grad position you specified are all undifferentiable.")
                     continue
             grad_func = grad_func or ms.grad(self.op_func_without_kwargs, grad_position=selected_grad_position)
+            # Use "ms_backend" to keep forward/backward consistent in kbk mode.
+            if ms.context.get_context('mode') == ms.GRAPH_MODE:
+                grad_func = ms.jit(grad_func, backend="ms_backend")
             grad_outi = grad_func(*args_no_dout)
             if not isinstance(grad_outi, (tuple, list)):
                 # Single grad output: keep only if the first input is tensor
@@ -719,6 +722,7 @@ class OpsFactory():
                 return grads
 
         grad_net = self._op_grad_cell(self.op_func_without_kwargs, grad_position=selected_grad_position)
+        # dynamic inputs for jit must be all keyword arguments, so use set_inputs to set the dynamic inputs.
         grad_net.set_inputs(*compile_inputs)
 
         for running_input in self._dynamic_inputs.op_running_inputs:
@@ -816,13 +820,16 @@ class OpsFactory():
             ms_out = self.forward_mindspore_impl()
             pt_out = self.forward_pytorch_impl()
 
-        for ms_outi, pt_outi in zip(ms_out, pt_out):
+        for sample_input, ms_outi, pt_outi in zip(self._sample_inputs, ms_out, pt_out):
+            sample_loss = getattr(sample_input, "loss", None)
             if isinstance(ms_outi, (tuple, list)) and isinstance(pt_outi, (tuple, list)):
                 # The output of the op maybe a tuple or list for some multi-output ops.
                 for ms_outi_tensor, pt_outi_tensor in zip(ms_outi, pt_outi):
                     self.assert_equal(
                         ms_outi_tensor,
                         pt_outi_tensor,
+                        rtol=sample_loss,
+                        atol=sample_loss,
                         compare_method=self._compare_method,
                         grad_cmp=grad_cmp,
                         ksize=ksize,
@@ -832,6 +839,8 @@ class OpsFactory():
                 self.assert_equal(
                     ms_outi,
                     pt_outi,
+                    rtol=sample_loss,
+                    atol=sample_loss,
                     compare_method=self._compare_method,
                     grad_cmp=grad_cmp,
                     ksize=ksize,
@@ -861,13 +870,20 @@ class OpsFactory():
             ms_out = self.forward_mindspore_dynamic_shape_impl()
             pt_out = self.forward_pytorch_dynamic_shape_impl()
 
-        for ms_outi, pt_outi in zip(ms_out, pt_out):
+        for running_input, ms_outi, pt_outi in zip(self._dynamic_inputs.op_running_inputs, ms_out, pt_out):
+            sample_loss = getattr(running_input, "loss", None)
             if isinstance(ms_outi, (tuple, list)) and isinstance(pt_outi, (tuple, list)):
                 # The output of the op maybe a tuple or list for some multi-output ops.
                 for ms_outi_tensor, pt_outi_tensor in zip(ms_outi, pt_outi):
-                    self.assert_equal(ms_outi_tensor, pt_outi_tensor, grad_cmp=grad_cmp)
+                    self.assert_equal(
+                        ms_outi_tensor,
+                        pt_outi_tensor,
+                        rtol=sample_loss,
+                        atol=sample_loss,
+                        grad_cmp=grad_cmp,
+                    )
             else:
-                self.assert_equal(ms_outi, pt_outi, grad_cmp=grad_cmp)
+                self.assert_equal(ms_outi, pt_outi, rtol=sample_loss, atol=sample_loss, grad_cmp=grad_cmp)
 
     def test_op_reference(
             self,

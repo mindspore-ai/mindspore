@@ -1444,7 +1444,7 @@ def extra_reference_inputs_reduction_op_common_func(
                 sample_name=f'{op_info.name}_extremal_{name_suffix}'
             )
 
-    # Large input tests - numerical stability and parallelism
+    # Large input tests - numerical stability
     LARGE_1D_SIZE = 2 ** 20
     yield OpSampleInput(
         op_input=make_func((LARGE_1D_SIZE,)),
@@ -1456,7 +1456,7 @@ def extra_reference_inputs_reduction_op_common_func(
     yield OpSampleInput(
         op_input=make_func((32, LARGE_2D_SIZE)),
         op_kwargs={'dim': 1},
-        sample_name=f'{op_info.name}_large_2d_parallel'
+        sample_name=f'{op_info.name}_large_2d_stability'
     )
 
     # Noncontiguous tensor tests

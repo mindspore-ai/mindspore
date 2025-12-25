@@ -44,7 +44,7 @@ from tests.st.ops.share._op_info.op_info import (
 )
 from tests.st.ops.share._internal.utils import (
     OpSampleInput, OpDynamicInput, OpErrorInput,
-    make_tensor, skip_sample_inputs, make_tensor_with_np_array
+    make_tensor, wrap_sample_inputs, make_tensor_with_np_array
 )
 from tests.st.ops.share._op_info.op_common import  (
     EXTRA_SMALL_DIM_SIZE,
@@ -5709,8 +5709,8 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         # Todo: empty tensor case result not correct.
-        op_extra_reference_inputs_func=skip_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'empty'
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
         ),
         op_dynamic_inputs_func=None,
     ),
@@ -5731,12 +5731,13 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         # Todo: When dim is default or empty tensor cases, results are not correct.
-        op_basic_reference_inputs_func=skip_sample_inputs(
-            basic_reference_inputs_reduction_op_common_func, '_default_keepdim'
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reference_inputs_reduction_op_common_func, '_default_keepdim', skip=True
         ),
-        op_extra_reference_inputs_func=skip_sample_inputs(
+        op_extra_reference_inputs_func=wrap_sample_inputs(
             extra_reference_inputs_reduction_op_common_func,
-            ['empty', 'discontiguous_default', '_extremal_nan']
+            ['empty', 'discontiguous_default', '_extremal_nan'],
+            skip=True
         ),
         op_dynamic_inputs_func=None,
         supports_multiple_dims=False,
@@ -5760,13 +5761,13 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         # Todo: When dim is default or empty tensor cases,
         # results are not correct.
-        op_basic_reference_inputs_func=skip_sample_inputs(
-            basic_reference_inputs_reduction_op_common_func,
-            '_default_keepdim'
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reference_inputs_reduction_op_common_func, '_default_keepdim', skip=True
         ),
-        op_extra_reference_inputs_func=skip_sample_inputs(
+        op_extra_reference_inputs_func=wrap_sample_inputs(
             extra_reference_inputs_reduction_op_common_func,
-            ['empty', 'discontiguous_default', '_extremal_nan']
+            ['empty', 'discontiguous_default', '_extremal_nan'],
+            skip=True
         ),
         op_dynamic_inputs_func=None,
         supports_multiple_dims=False,
@@ -5803,13 +5804,15 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         # Todo: When dim is default or empty tensor cases,
         # results are not correct.
-        op_basic_reference_inputs_func=skip_sample_inputs(
+        op_basic_reference_inputs_func=wrap_sample_inputs(
             basic_reference_inputs_reduction_op_common_func,
-            ['_default', 'dim0_keepdim', 'dim_last']
+            ['_default', 'dim0_keepdim', 'dim_last'],
+            skip=True
         ),
-        op_extra_reference_inputs_func=skip_sample_inputs(
+        op_extra_reference_inputs_func=wrap_sample_inputs(
             extra_reference_inputs_reduction_op_common_func,
-            ['empty', '_default', '_extremal_nan']
+            ['empty', '_default', '_extremal_nan'],
+            skip=True
         ),
         op_dynamic_inputs_func=None,
         supports_multiple_dims=False,
@@ -5833,13 +5836,13 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         # Todo: When dim is default or empty tensor cases,
         # results are not correct.
-        op_basic_reference_inputs_func=skip_sample_inputs(
-            basic_reference_inputs_reduction_op_common_func,
-            '_default'
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reference_inputs_reduction_op_common_func, '_default', skip=True
         ),
-        op_extra_reference_inputs_func=skip_sample_inputs(
+        op_extra_reference_inputs_func=wrap_sample_inputs(
             extra_reference_inputs_reduction_op_common_func,
-            ['empty', '_default', '_extremal_nan']
+            ['empty', '_default', '_extremal_nan'],
+            skip=True
         ),
         op_dynamic_inputs_func=None,
         supports_multiple_dims=False,
@@ -5854,7 +5857,12 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=(ms.float32,),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        convert_half_to_float=True,
+        # On Ascend 910A, the large-shape input case has about a 3% chance of
+        # failing the accuracy check, so set loss to 0.001 temporarily.
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_reduction_op_common_func, 'large_2d',
+            loss={"ascend": 0.001}
+        ),
     ),
     'Tensor.mean': ReductionOpInfo(
         name='Tensor.mean',
@@ -5871,8 +5879,8 @@ op_db: Dict[str, OpInfo] = {
         op=mint.sum,
         ref=torch.sum,
         op_basic_reference_inputs_func=basic_sample_inputs_mint_sum,
-        op_extra_reference_inputs_func=skip_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'empty'
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
         ),
         op_dynamic_inputs_func=None,
         dtypes_ascend=(ms.float32,),
@@ -5885,11 +5893,11 @@ op_db: Dict[str, OpInfo] = {
         name='mint.max',
         op=mint.max,
         ref=torch.max,
-        op_basic_reference_inputs_func=skip_sample_inputs(
-            basic_reference_inputs_reduction_op_common_func, '_default'
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reference_inputs_reduction_op_common_func, '_default', skip=True
         ),
-        op_extra_reference_inputs_func=skip_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'empty'
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
         ),
         op_dynamic_inputs_func=None,
         dtypes_ascend=(ms.float32,),
@@ -5903,11 +5911,11 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.max',
         op=tensor_max_ms,
         ref=tensor_max_torch,
-        op_basic_reference_inputs_func=skip_sample_inputs(
-            basic_reference_inputs_reduction_op_common_func, '_default'
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reference_inputs_reduction_op_common_func, '_default', skip=True
         ),
-        op_extra_reference_inputs_func=skip_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'empty'
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
         ),
         op_dynamic_inputs_func=None,
         dtypes_ascend=(ms.float32,),
@@ -5921,11 +5929,11 @@ op_db: Dict[str, OpInfo] = {
         name='mint.min',
         op=mint.min,
         ref=torch.min,
-        op_basic_reference_inputs_func=skip_sample_inputs(
-            basic_reference_inputs_reduction_op_common_func, '_default'
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reference_inputs_reduction_op_common_func, '_default', skip=True
         ),
-        op_extra_reference_inputs_func=skip_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, 'empty'
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
         ),
         op_dynamic_inputs_func=None,
         dtypes_ascend=(ms.float32,),
@@ -7225,6 +7233,31 @@ reduction_op_db = [
     'Tensor.max',
 ]
 
+binary_op_kbk_db = [
+    'mint.add',
+    'mint.sub',
+]
+
+unary_op_kbk_db = [
+    'mint.tanh',
+    'mint.nn.functional.relu',
+    'mint.tile',
+]
+
+other_op_kbk_db = [
+    'mint.chunk',
+    'mint.gather',
+]
+
+reduction_op_kbk_db = [
+    'mint.mean',
+    'mint.argmax',
+    'mint.count_nonzero',
+    'Tensor.sum',
+    'Tensor.argmin',
+    'mint.min',
+    'Tensor.max',
+]
 
 def get_op_info(op_name: str, *, op_database: Optional[Dict[str, OpInfo]] = None) -> OpInfo:
     """Return `OpInfo` by name from the provided or default database."""

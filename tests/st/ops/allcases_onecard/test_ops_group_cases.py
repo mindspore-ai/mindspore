@@ -72,7 +72,7 @@ from tests.st.ops import (
     test_binary_ops,
     test_unary_ops,
     test_other_ops,
-    test_reduction_op,
+    test_reduction_ops,
 )
 from tests.st.mint import (
     test_addmv,
@@ -246,19 +246,27 @@ ops_group_cases_registry_level0 = {
     'binary_op': [
         op_db_group_cases_register(test_binary_ops, test_binary_ops.test_binary_op_reference_forward),
         op_db_group_cases_register(test_binary_ops, test_binary_ops.test_binary_op_reference_backward),
+        op_db_group_cases_register(test_binary_ops, test_binary_ops.test_binary_op_reference_forward_kbk),
+        op_db_group_cases_register(test_binary_ops, test_binary_ops.test_binary_op_reference_backward_kbk),
         op_db_group_cases_register(test_binary_ops, test_binary_ops.test_binary_op_type_promotion),
     ],
     'unary_op': [
         op_db_group_cases_register(test_unary_ops, test_unary_ops.test_unary_op_reference_forward),
         op_db_group_cases_register(test_unary_ops, test_unary_ops.test_unary_op_reference_backward),
+        op_db_group_cases_register(test_unary_ops, test_unary_ops.test_unary_op_reference_forward_kbk),
+        op_db_group_cases_register(test_unary_ops, test_unary_ops.test_unary_op_reference_backward_kbk),
     ],
     'reduction_op': [
-        op_db_group_cases_register(test_reduction_op, test_reduction_op.test_reduction_op_reference_forward),
-        op_db_group_cases_register(test_reduction_op, test_reduction_op.test_reduction_op_reference_backward),
+        op_db_group_cases_register(test_reduction_ops, test_reduction_ops.test_reduction_op_reference_forward),
+        op_db_group_cases_register(test_reduction_ops, test_reduction_ops.test_reduction_op_reference_backward),
+        op_db_group_cases_register(test_reduction_ops, test_reduction_ops.test_reduction_op_reference_forward_kbk),
+        op_db_group_cases_register(test_reduction_ops, test_reduction_ops.test_reduction_op_reference_backward_kbk),
     ],
     'other_op': [
-        op_db_group_cases_register(test_other_ops, test_other_ops.test_other_ops_reference_forward),
-        op_db_group_cases_register(test_other_ops, test_other_ops.test_other_ops_reference_backward),
+        op_db_group_cases_register(test_other_ops, test_other_ops.test_other_op_reference_forward),
+        op_db_group_cases_register(test_other_ops, test_other_ops.test_other_op_reference_backward),
+        op_db_group_cases_register(test_other_ops, test_other_ops.test_other_op_reference_forward_kbk),
+        op_db_group_cases_register(test_other_ops, test_other_ops.test_other_op_reference_backward_kbk),
     ]
 }
 
@@ -298,13 +306,17 @@ ops_group_cases_registry_level1 = {
         op_db_group_cases_register(test_binary_ops, test_binary_ops.test_binary_op_dynamic_backward),
         op_db_group_cases_register(test_binary_ops, test_binary_ops.test_binary_op_error),
     ],
+    'unary_op': [
+        op_db_group_cases_register(test_unary_ops, test_unary_ops.test_unary_op_dynamic_forward),
+        op_db_group_cases_register(test_unary_ops, test_unary_ops.test_unary_op_dynamic_backward),
+    ],
     'reduction_op': [
-        op_db_group_cases_register(test_reduction_op, test_reduction_op.test_reduction_op_dynamic_forward),
-        op_db_group_cases_register(test_reduction_op, test_reduction_op.test_reduction_op_dynamic_backward),
+        op_db_group_cases_register(test_reduction_ops, test_reduction_ops.test_reduction_op_dynamic_forward),
+        op_db_group_cases_register(test_reduction_ops, test_reduction_ops.test_reduction_op_dynamic_backward),
     ],
     'other_op': [
-        op_db_group_cases_register(test_other_ops, test_other_ops.test_other_ops_dynamic_forward),
-        op_db_group_cases_register(test_other_ops, test_other_ops.test_other_ops_dynamic_backward),
+        op_db_group_cases_register(test_other_ops, test_other_ops.test_other_op_dynamic_forward),
+        op_db_group_cases_register(test_other_ops, test_other_ops.test_other_op_dynamic_backward),
     ]
 }
 
