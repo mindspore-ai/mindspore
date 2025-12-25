@@ -636,3 +636,18 @@ def test_random_op_with_negative_dimension(mode):
         if mode == 'pynative':
             _pynative_executor.sync()
     assert 'input shape must be greater than or equal to 0, but got -1' in str(err.value)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@pytest.mark.parametrize('mode', ['pynative'])
+def test_randint_default_dtype(mode):
+    """
+    Feature: mint.randn function with default dtype.
+    Description: test default mint.randn dtype is int64
+    Expectation: expect correct result.
+    """
+    low = -3
+    high = 0
+    size = (0, 12)
+    out = run_randint(low, high, size, mode=mode)
+    assert out.dtype == ms.int64
