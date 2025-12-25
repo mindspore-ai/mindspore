@@ -375,3 +375,27 @@ def test_enable_mem_huge_1g():
     transpose(input1, (1, 0))
 
     assert ms.runtime.memory_stats()["total_reserved_memory"] == 1024 * 1024 * 1024
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_memory_stats_with_stream():
+    """
+    Feature: test memory stats with stream.
+    Description: test memory stats with stream.
+    Expectation: memory stats is correct with stream ctx.
+    """
+    set_device()
+    s1 = ms.runtime.Stream()
+
+    @ms.jit
+    def test_func(x):
+        x = x + 1
+        with ms.runtime.StreamCtx(s1):
+            out = x * 1
+            out = out + 2
+        return out
+    out = test_func(ms.Tensor(shape=(1024, 1024), dtype=ms.float32))
+    print(out)
+    # only the 'out' is still in use, so the memory usage is 1024 * 1024 * 4
+    # if the 'total_allocated_memory' is 1024 * 1024 * 4 * 2, it means the 'x' is not free
+    assert int(ms.runtime.memory_stats()["total_allocated_memory"] / (1024 * 1024 * 4)) == 1
