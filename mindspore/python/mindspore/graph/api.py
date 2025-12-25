@@ -1837,6 +1837,18 @@ class _PyNativeExecutor:
         """
         self._executor.end_graph(obj, output, *args, *(kwargs.values()))
 
+    def new_empty_graph(self):
+        """
+        Initialize resources for building empty graph.
+        """
+        self._executor.new_empty_graph()
+
+    def end_empty_graph(self):
+        """
+        Clean resources after building empty graph.
+        """
+        self._executor.end_empty_graph()
+    
     def check_run(self, grad, obj, weights, grad_hash_id, *args, **kwargs):
         """
         Whether the forward graph need to construct.

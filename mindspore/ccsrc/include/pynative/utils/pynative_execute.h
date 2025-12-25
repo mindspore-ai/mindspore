@@ -103,6 +103,8 @@ class PYNATIVE_EXPORT PyNativeExecutor : public std::enable_shared_from_this<PyN
   void EnableFrontendAndBpropPipeline();
   bool IsSavedTensorHookActive();
   int64_t CurrentAutoDiffEngineId();
+  void NewEmptyGraph();
+  void EndEmptyGraph();
 
  private:
   PyNativeExecutor() = default;

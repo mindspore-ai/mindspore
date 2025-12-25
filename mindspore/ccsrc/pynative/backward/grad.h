@@ -121,6 +121,8 @@ class GradExecutor {
     return !input_args_info_stack_.empty() && IsNestedGrad() && top_cell()->grad_order() != grad_order_;
   }
   void QueueFinalCallback(std::function<void()> callback) const;
+  void PushInputArgsInfoStack(const InputArgsInfoPtr &input_args_info);
+  void PopInputArgsInfoStack();
 
  private:
   ForwardExecutorPtr forward() const;
@@ -155,8 +157,6 @@ class GradExecutor {
   }
   TopCellInfoPtr GetTopCell(const std::string &already_run_cell_id, const std::string &input_args_id);
   TopCellInfoPtr PopTopCellStack();
-  void PushInputArgsInfoStack(const InputArgsInfoPtr &input_args_info);
-  void PopInputArgsInfoStack();
   void HandleInputArgsForTopCell(const InputArgsInfoPtr &input_args_info);
   void InitResourceAndDfBuilder(const InputArgsInfoPtr &cell_info);
   void MakeNewTopCell(const InputArgsInfoPtr &input_args_info);

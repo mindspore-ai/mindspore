@@ -3607,7 +3607,7 @@ class Cell(Cell_):
             cell._recompute(False, True)
 
     @args_type_check(mp_comm_recompute=bool, parallel_optimizer_comm_recompute=bool)
-    def recompute(self, *, use_reentrant=True, output_recompute=False, **kwargs):
+    def recompute(self, *, use_reentrant=True, output_recompute=False, early_stop=True, context_fn=None, **kwargs):
         r"""
         Set the cell recomputed. All the primitive in the cell except the outputs will be set recomputed.
         If a primitive set recomputed feeds into some backward nodes for computing gradient, rather than
@@ -3643,6 +3643,18 @@ class Cell(Cell_):
                 recomputation of these two operators will be merged. In this case, the output activation values of the
                 first cell will not be saved. If output_recompute=False, we will not merge adjacent cells.
                 Default: ``False`` .
+            early_stop (bool, optional): This keyword is only valid in PyNative mode when use_reentrant=False.
+                If ``True``, non-reentrant recompute stops recomputation as soon as it has computed all needed Tensors.
+                This can reduce unnecessary computation when the forward function contains operations that don't save
+                tensors at the end (e.g., clone, view operations). This argument is ignored if ``use_reentrant=True``.
+                Note: When ``early_stop=True``, higher-order differentiation is not supported.
+                Higher-order differentiation is only supported when ``early_stop=False``. Default: ``True``.
+            context_fn (Callable, optional): A callable returning a tuple of two context managers.
+                The first context manager is applied during the forward pass, and the second is applied during
+                recomputation. This is useful for applying different settings (e.g., enabling/disabling gradient
+                computation, mixed precision) during forward and recomputation phases.
+                If ``None``, defaults to :func:`noop_context_fn` which returns two null contexts.
+                This argument is ignored if ``use_reentrant=True``. Default: ``None``.
             \*\*kwargs: Other arguments
 
                 - mp_comm_recompute (bool, optional): Specifies whether the model parallel communication operators
@@ -3653,7 +3665,8 @@ class Cell(Cell_):
         """
         if output_recompute:
             use_reentrant = False
-        self._recompute_cell = recompute_registry.get()(self.construct, use_reentrant, output_recompute)
+        self._recompute_cell = recompute_registry.get()(
+            self.construct, use_reentrant, output_recompute, early_stop, context_fn)
         self._recompute(True, output_recompute)
         if 'mp_comm_recompute' in kwargs:
             self._mp_comm_recompute(kwargs.get('mp_comm_recompute', False))

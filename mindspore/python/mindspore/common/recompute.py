@@ -17,6 +17,7 @@
 from types import MethodType
 import weakref
 import uuid
+import contextlib
 from collections import OrderedDict
 from collections import defaultdict
 from mindspore import log as logger
@@ -30,6 +31,48 @@ from mindspore.common.generator import get_rng_state, set_rng_state
 from mindspore.common._grad_function import _Function
 from mindspore.train.amp import AmpDecorator
 from mindspore._c_expression.amp import get_curr_amp_strategy
+
+
+def null_context_fn():
+    """
+    Default context_fn for recompute, returns two null contexts.
+    """
+    return contextlib.nullcontext(), contextlib.nullcontext()
+
+
+class _StopRecomputationError(Exception):
+    """
+    Exception used to early stop recomputation when all needed tensors have been recomputed.
+    This is not an error, but a control flow mechanism to avoid unnecessary computation.
+    """
+
+
+# Global flag to control early stopping behavior
+_enable_recompute_early_stop = None
+
+
+@contextlib.contextmanager
+def _set_recompute_early_stop(enable):
+    """
+    Context manager that sets whether recompute should stop recomputation early.
+
+    By default, non-reentrant recompute stops recomputation as soon as it
+    has computed all needed Tensors. This context manager can be used to disable
+    that feature if it is problematic for your specific application.
+
+    This context manager only needs to be active when forward is run. It does
+    not need to be active during backward.
+
+    Args:
+        enable (bool): Whether to enable early stopping.
+    """
+    global _enable_recompute_early_stop
+    try:
+        prev = _enable_recompute_early_stop
+        _enable_recompute_early_stop = enable
+        yield
+    finally:
+        _enable_recompute_early_stop = prev
 
 
 class _WrapCell(Cell):
@@ -100,7 +143,7 @@ class _RecomputeState:
     """
     Record recompute temp state.
     """
-    def __init__(self, recompute_fn):
+    def __init__(self, recompute_fn, early_stop=True):
         self.input_node = None
         self.hybrid_args = None
         self.kwargs = None
@@ -109,6 +152,8 @@ class _RecomputeState:
         self.placeholder_counter = defaultdict(int)
         self.recomputed_data = defaultdict(weakref.WeakKeyDictionary)
         self.is_recomputed = defaultdict(bool)
+        self.early_stop = early_stop
+        self.forward_completed = False
 
     def wrap_original_inputs(self, *args, **kwargs):
         """Wrap and store original inputs for later recovery during recomputation."""
@@ -162,8 +207,13 @@ class _CreatePlaceholderHook(saved_tensors_hooks):
                 new_inputs = state.recover_inputs()
                 prev_grad_flag = _pynative_executor.grad_flag()
                 _pynative_executor.set_grad_flag(True)
-                with _RecomputationHook(weakref.ref(state), engine_id):
-                    state.recompute_fn(*new_inputs)
+                try:
+                    with _RecomputationHook(weakref.ref(state), engine_id):
+                        _pynative_executor.new_empty_graph()
+                        state.recompute_fn(*new_inputs)
+                        _pynative_executor.end_empty_graph()
+                except _StopRecomputationError:
+                    _pynative_executor.end_empty_graph()
                 _pynative_executor.set_grad_flag(prev_grad_flag)
                 state.is_recomputed[engine_id] = True
             if state.recomputed_data[engine_id].get(holder, default=None) is None:
@@ -180,19 +230,26 @@ class _RecomputationHook(saved_tensors_hooks):
     """
     def __init__(self, weak_state, engine_id):
         def pack(x):
-            # pylint: disable=protected-access
-            x = ops.stop_gradient(x) if x._requires_grad else x
+            x = ops.stop_gradient(x) if x._requires_grad else x  # pylint: disable=protected-access
             state = weak_state()
             if state is None:
                 raise RuntimeError("Recompute state has been garbage collected unexpectedly.")
             current_idx = state.placeholder_counter[engine_id]
             state.placeholder_counter[engine_id] += 1
+
             if current_idx >= len(state.placeholders):
+                if not state.early_stop and not state.forward_completed:
+                    return x
                 raise RuntimeError('This forward function contains non-determinism and is non-reentrant, '
                                    'which cannot be recomputed.')
+
             placeholder = state.placeholders[current_idx]()
             if placeholder is not None:
                 state.recomputed_data[engine_id][placeholder] = x
+
+            # Early stop check: if we have recomputed all needed tensors, stop recomputation
+            if state.early_stop and state.placeholder_counter[engine_id] == len(state.placeholders):
+                raise _StopRecomputationError
             return x
 
         def unpack(x):
@@ -370,7 +427,7 @@ def _check_validation(block, use_reentrant):
         raise TypeError("Recompute function now only support block which inherited from Cell when use_reentrant=True!")
 
 
-def recompute(block, *args, use_reentrant=True, output_recompute=False, **kwargs):
+def recompute(block, *args, use_reentrant=True, output_recompute=False, early_stop=True, context_fn=None, **kwargs):
     r"""
     This function is used to reduce memory, when run block, rather than
     storing the intermediate activation computed in forward pass, we will recompute it in backward pass.
@@ -395,6 +452,16 @@ def recompute(block, *args, use_reentrant=True, output_recompute=False, **kwargs
             the output of one cell serves as the input to the other), the recomputation of these two cells will be
             merged. In this case, the output activation values of the first cell will not be stored. If
             output_recompute=False, we will not merge adjacent cells. Default: ``False``.
+        early_stop (bool, optional): This keyword is only valid in PyNative mode when use_reentrant=False.
+            If ``True``, non-reentrant recompute stops recomputation as soon as it has computed all needed Tensors.
+            This can reduce unnecessary computation when the forward function contains operations that don't save
+            tensors at the end (e.g., clone, view operations). This argument is ignored if ``use_reentrant=True``.
+            Note: Higher-order differentiation is only supported when ``early_stop=False``. Default: ``True``.
+        context_fn (Callable, optional): A callable returning a tuple of two context managers.
+            The first context manager is applied during the forward pass, and the second is applied during
+            recomputation. This is useful for applying different settings (e.g., enabling/disabling gradient
+            computation, mixed precision) during forward and recomputation phases.
+            This argument is ignored if ``use_reentrant=True``. Default: ``None``, returns two null contexts.
         \*\*kwargs: Other arguments.
 
     Returns:
@@ -439,15 +506,21 @@ def recompute(block, *args, use_reentrant=True, output_recompute=False, **kwargs
         use_reentrant = False
     _check_validation(block, use_reentrant)
     if use_reentrant:
+        if context_fn is not None:
+            raise ValueError("context_fn is only supported when use_reentrant=False.")
         return _RecomputeCell(block)(*args, **kwargs)
-    return recompute_without_reentrant(block, output_recompute, *args, **kwargs)
+    if context_fn is None:
+        context_fn = null_context_fn
+    return recompute_without_reentrant(block, output_recompute, early_stop, context_fn, *args, **kwargs)
 
 
-def recompute_without_reentrant(block, output_recompute, *args, **kwargs):
+def recompute_without_reentrant(block, output_recompute, early_stop, context_fn, *args, **kwargs):
     """
     Compute block by recompute function using saved tensors hook.
     :param block:
     :param output_recompute:
+    :param early_stop:
+    :param context_fn:
     :param args:
     :param kwargs:
     :return:
@@ -455,6 +528,12 @@ def recompute_without_reentrant(block, output_recompute, *args, **kwargs):
     save_rng_state = kwargs.pop("save_rng_state", True)
     pre_rng_state = get_rng_state()
     amp_strategy = get_curr_amp_strategy()
+
+    effective_early_stop = early_stop
+    if _enable_recompute_early_stop is not None:
+        effective_early_stop = _enable_recompute_early_stop
+
+    forward_ctx, recompute_ctx = context_fn()
 
     def wrapper_block(*args, **kwargs):
         out = block(*args, **kwargs)
@@ -477,19 +556,20 @@ def recompute_without_reentrant(block, output_recompute, *args, **kwargs):
             set_rng_state(pre_rng_state)
         prev_grad_flag = _pynative_executor.grad_flag()
         _pynative_executor.set_grad_flag(True)
-        if amp_strategy:
-            with AmpDecorator(amp_strategy.get_amp_level(), amp_strategy.get_amp_dtype(),
-                              amp_strategy.get_white_list(), amp_strategy.get_black_list()):
+        with recompute_ctx:
+            if amp_strategy:
+                with AmpDecorator(amp_strategy.get_amp_level(), amp_strategy.get_amp_dtype(),
+                                  amp_strategy.get_white_list(), amp_strategy.get_black_list()):
+                    wrapper_block(*args, **kwargs)
+            else:
                 wrapper_block(*args, **kwargs)
-        else:
-            wrapper_block(*args, **kwargs)
         set_rng_state(cur_rng_state)
         _pynative_executor.set_grad_flag(prev_grad_flag)
 
     if not _pynative_executor.enable_grad():
         return block(*args, **kwargs)
 
-    state = _RecomputeState(recompute_function)
+    state = _RecomputeState(recompute_function, early_stop=effective_early_stop)
     if _pynative_executor.is_saved_tensor_hook_active():
         fake_val = ops.zeros((0,))
         fake_val.requires_grad_()
@@ -497,27 +577,37 @@ def recompute_without_reentrant(block, output_recompute, *args, **kwargs):
     else:
         state.wrap_original_inputs(*args, **kwargs)
 
-    with _CreatePlaceholderHook(state):
-        return wrapper_block(*args, **kwargs)
+    with _CreatePlaceholderHook(state), forward_ctx:
+        result = wrapper_block(*args, **kwargs)
+    # Mark forward as completed for handling grad within recompute scenarios
+    state.forward_completed = True
+    return result
 
 
-def recompute_generator(block, use_reentrant=True, output_recompute=False):
+def recompute_generator(block, use_reentrant=True, output_recompute=False, early_stop=True, context_fn=None):
     """
     generator of recompute object.
     :param output_recompute:
     :param use_reentrant:
+    :param early_stop:
+    :param context_fn:
     :param block:
     :return:
     """
     if use_reentrant:
+        if context_fn is not None:
+            raise ValueError("context_fn is only supported when use_reentrant=False.")
         return _RecomputeCell(block)
 
+    if context_fn is None:
+        context_fn = null_context_fn
+
     def create_recompute_func(*args, **kwargs):
-        return recompute_without_reentrant(block, output_recompute, *args, **kwargs)
+        return recompute_without_reentrant(block, output_recompute, early_stop, context_fn, *args, **kwargs)
     return create_recompute_func
 
 
 recompute_registry.register(recompute_generator)
 
-__all__ = ['recompute']
+__all__ = ['recompute', '_set_recompute_early_stop']
 __all__.sort()

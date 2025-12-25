@@ -383,7 +383,7 @@
 
         `pipeline_stage` 表示当前Cell所在的stage。
 
-    .. py:method:: recompute(*, use_reentrant=True, output_recompute=False, **kwargs)
+    .. py:method:: recompute(*, use_reentrant=True, output_recompute=False, early_stop=True, context_fn=None, **kwargs)
 
         设置Cell重计算。Cell中输出算子以外的所有算子将被设置为重计算。如果一个算子的计算结果被输出到一些反向节点来进行梯度计算，且被设置成重计算，那么我们会在反向传播中重新计算它，而不去存储在前向传播中的中间激活层的计算结果。
 
@@ -398,6 +398,8 @@
         关键字参数：
             - **use_reentrant** (bool，可选) - 该参数只在PyNative模式下有效。若设置为 ``True``，将通过自定义反向传播函数实现重计算，该方式不支持List/Tuple等复杂类型的求导；若设置为 ``False``，将使用 :class:`mindspore.saved_tensors_hooks` 实现重计算，该方式支持对复杂类型内部张量的求导。默认值： ``True`` 。
             - **output_recompute** (bool，可选) - 该参数只在PyNative模式下有效。若设置为 ``True``，默认使用 :class:`mindspore.saved_tensors_hooks` 功能实现重计算。该模块的输出不会被后续需要求导的算子缓存。当存在两个相邻cell均需重计算时（其中一个cell的输出作为另一个cell的输入），这两个cell的重计算将被融合。在此情况下，第一个cell的输出激活值将不会被保存。默认值： ``False`` 。
+            - **early_stop** (bool，可选) - 该参数只在PyNative模式下有效，且仅在 ``use_reentrant=False`` 时生效。若设置为 ``True``，不可重入重计算会在计算完所有需要的张量后立即停止重计算。这可以减少不必要的计算，当前向函数包含在末尾不保存张量的操作时（例如 clone、view 操作）。若 ``use_reentrant=True``，此参数会被忽略。注意：当 ``early_stop=True`` 时，不支持高阶微分；只有当 ``early_stop=False`` 时支持高阶微分。默认值： ``True`` 。
+            - **context_fn** (Callable，可选) - 返回两个上下文管理器元组的可调用对象。第一个上下文管理器在前向传播期间应用，第二个在重计算期间应用。这对于在前向和重计算阶段应用不同设置（例如，启用/禁用梯度计算、混合精度）很有用。若为 ``None``，默认为返回两个空上下文的函数。若 ``use_reentrant=True``，此参数会被忽略。默认值： ``None`` 。
             - **\*\*kwargs** - 其他参数。
 
               - **mp_comm_recompute** (bool，可选) - 表示在自动并行或半自动并行模式下，指定Cell内部由模型并行引入的通信操作是否重计算。默认值： ``True`` 。

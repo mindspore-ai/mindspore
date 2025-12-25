@@ -392,6 +392,10 @@ int64_t PyNativeExecutor::CurrentAutoDiffEngineId() {
                                                  : -1;
 }
 
+void PyNativeExecutor::NewEmptyGraph() { grad_executor_->PushInputArgsInfoStack(nullptr); }
+
+void PyNativeExecutor::EndEmptyGraph() { grad_executor_->PopInputArgsInfoStack(); }
+
 void RegPyNativeExecutor(const py::module *m) {
   using autograd::CreationType;
   py::enum_<CreationType>(*m, "CreationType")
@@ -449,7 +453,9 @@ void RegPyNativeExecutor(const py::module *m) {
     .def("is_saved_tensor_hook_active", &PyNativeExecutor::IsSavedTensorHookActive,
          "is current context saved tensor hook active")
     .def("get_current_autodiff_engine_id", &PyNativeExecutor::CurrentAutoDiffEngineId,
-         "get current auto diff engine ids");
+         "get current auto diff engine ids")
+    .def("new_empty_graph", &PyNativeExecutor::NewEmptyGraph, "new empty graph")
+    .def("end_empty_graph", &PyNativeExecutor::EndEmptyGraph, "end empty graph");
 }
 
 struct PyNativeExecutorRegister {
