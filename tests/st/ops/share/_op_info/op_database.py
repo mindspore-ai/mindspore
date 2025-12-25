@@ -5263,8 +5263,6 @@ op_db: Dict[str, OpInfo] = {
         ascend910b_forward_loss_override={ms.float16: 1e-3, ms.float32: 1e-4},
         ascend_backward_loss_override={ms.float16: 1e-3, ms.float32: 1e-4},
         ascend910b_backward_loss_override={ms.float16: 1e-3, ms.float32: 1e-4},
-        # tanh has precision problem when converting input from half(fp16) to float
-        convert_half_to_float=False,
     ),
     'mint.acos': UnaryOpInfo(
         name='mint.acos',
@@ -6958,9 +6956,8 @@ op_db: Dict[str, OpInfo] = {
         name='mint.nn.functional.selu',
         op=nn_functional_selu_ms,
         ref=nn_functional_selu_torch,
-        # Float16 still has precision issue which needs to be checked.
-        dtypes_ascend=tuple([ms.float32]),
-        dtypes_ascend910b=tuple([ms.float32,]),
+        dtypes_ascend=tuple([ms.float16, ms.float32]),
+        dtypes_ascend910b=tuple([ms.bfloat16, ms.float16, ms.float32,]),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
