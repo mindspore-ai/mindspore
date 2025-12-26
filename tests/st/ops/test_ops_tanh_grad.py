@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Tests for tanh gradient operations.
+"""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -207,6 +210,8 @@ def test_tanh_grad_backward_dynamic_rank(mode):
     Expectation: expect correct result.
     """
     context.set_context(mode=mode)
+    if mode == ms.GRAPH_MODE:
+        context.set_context(jit_level='O0')
 
     y_dyn = Tensor(shape=None, dtype=ms.float32)
     dy_dyn = Tensor(shape=None, dtype=ms.float32)
