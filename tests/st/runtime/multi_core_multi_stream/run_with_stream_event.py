@@ -86,9 +86,6 @@ class MyMsJitStreamCtx(StreamCtx):
 
 a = Tensor(np.ones([3, 3]), ms.float32)
 b = Tensor(np.ones([3, 3]), ms.float32)
-s1 = Stream()
-s2 = Stream()
-s3 = Stream()
 
 
 def test_single_withstream_multi_event():
@@ -97,6 +94,7 @@ def test_single_withstream_multi_event():
     Description: Support event and with stream in graph mode.
     Expectation: Run success.
     """
+    s1 = Stream()
     class EventNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -146,6 +144,10 @@ def test_multi_withstream_single_event():
     Description: Support event and with stream in graph mode.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
+    s3 = Stream()
+
     class EventNet(nn.Cell):
         def __init__(self):
             super().__init__()
@@ -200,6 +202,9 @@ def test_multi_withstream_multi_event():
     Description: Support event and with stream in graph mode.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
+
     class EventNet(nn.Cell):
         def __init__(self):
             super().__init__()
