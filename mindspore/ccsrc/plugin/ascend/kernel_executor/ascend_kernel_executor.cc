@@ -1271,10 +1271,9 @@ void AscendKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const 
   }
   ResetNodeIds({kernel_graph});
   hyper_offload::ReorderControlFlowNodes(kernel_graph);
-  hyper_offload::AdjustExecutionOrderForHyperOffloadOps(kernel_graph);
-  hyper_offload::ExecutionOrderOptimizeWithHyperOffload(kernel_graph);
+  hyper_offload::HyperOffloadOptimizer::Run(kernel_graph);
   DoStreamAssign(kernel_graph);
-  hyper_offload::AddEventToHyperOffloadOps(kernel_graph);
+  hyper_offload::HyperOffloadOptimizer::AddEventToHyperOffloadOps(kernel_graph);
   CreateEventKernelMod(kernel_graph);
   ExecKernelModResize(kernel_graph);
   kernel_graph->PrintGraphExecuteOrder();

@@ -16,7 +16,9 @@
 
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_HYPER_OFFLOAD_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_HYPER_OFFLOAD_H_
+
 #include "include/backend/common/kernel_graph/kernel_graph.h"
+
 namespace mindspore {
 namespace device {
 namespace ascend {
@@ -38,9 +40,21 @@ struct ConditionSwitchInfo {
         false_branch_node_num(0) {}
 };
 
-void AdjustExecutionOrderForHyperOffloadOps(const KernelGraphPtr &kernel_graph);
-void AddEventToHyperOffloadOps(const KernelGraphPtr &kernel_graph);
-void ExecutionOrderOptimizeWithHyperOffload(const KernelGraphPtr &kernel_graph);
+class HyperOffloadOptimizer {
+ public :
+  static void Run(const KernelGraphPtr &kernel_graph);
+  static void AddEventToHyperOffloadOps(const KernelGraphPtr &kernel_graph);
+
+ private:
+  static bool EnableHyperOffloadForGraph(const KernelGraphPtr &kernel_graph);
+  static bool EnableHyperOffloadParameterForGraph(const KernelGraphPtr &kernel_graph);
+  static bool EnableHyperOffloadActivationForGraph(const KernelGraphPtr &kernel_graph);
+  static void AdjustExecutionOrderForHyperOffloadOps(const KernelGraphPtr &kernel_graph);
+  static void OffloadActivation(const KernelGraphPtr &kernel_graph);
+  static void OffloadParameters(const KernelGraphPtr &kernel_graph);
+  static void AdjustHyperOffloadNodePosition(const KernelGraphPtr &kernel_graph);
+};
+
 void ReorderControlFlowNodes(const KernelGraphPtr &kernel_graph);
 }  // namespace hyper_offload
 }  // namespace ascend
