@@ -371,3 +371,5 @@ mindspore/mindspore/ccsrc/frontend/parallel/tensor_layout/tensor_redistribution.
 mindspore/mindspore/ops/infer/ops_func_impl/convolution_str.cc::mindspore::ops::ConvolutionStrFuncImpl::InferShape
 mindspore/mindspore/python/mindspore/parallel/checkpoint_transform.py:transform_checkpoints
 mindspore/mindspore/python/mindspore/parallel/checkpoint_transform.py:load_distributed_checkpoint
+mindspore/mindspore/python/mindspore/ops/operations/manually_defined/ops_def.py:flash_attention_score
+mindspore/mindspore/python/mindspore/ops/operations/manually_defined/ops_def.py:fused_infer_attention_score

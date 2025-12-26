@@ -1545,12 +1545,19 @@ def infer_value_for_Div(input_x, other_x):
     """Infer value for Div op."""
     if input_x is None or other_x is None:
         return None
-    return Tensor(np.true_divide(input_x.asnumpy(), other_x.asnumpy()))
+    # NumPy does not support bfloat16 arithmetic well.
+    if (input_x.dtype == mstype.bfloat16) or (other_x.dtype == mstype.bfloat16):
+        return None
+    # Tensor constructor does not accept some numpy scalar types directly, so wrap as ndarray.
+    out = np.true_divide(input_x.asnumpy(), other_x.asnumpy())
+    return Tensor(out)
 
 
 def infer_value_for_Divs(input_x, other_x):
     """Infer value for Divs op."""
     if input_x is None or other_x is None:
+        return None
+    if input_x.dtype == mstype.bfloat16:
         return None
     tmp = np.true_divide(input_x.asnumpy(), other_x)
     if not input_x.shape:
@@ -1569,6 +1576,8 @@ def infer_value_for_DivMod(input_x, other_x, rounding_mode):
     """Infer value for DivMod op."""
     if input_x is None or other_x is None:
         return None
+    if input_x.dtype == mstype.bfloat16 or other_x.dtype == mstype.bfloat16:
+        return None
     if rounding_mode == 1:
         # trunc
         return Tensor(np.trunc(np.true_divide(input_x.asnumpy(), other_x.asnumpy())))
@@ -1581,6 +1590,8 @@ def infer_value_for_DivMod(input_x, other_x, rounding_mode):
 def infer_value_for_DivMods(input_x, other_x, rounding_mode):
     """Infer value for DivMods op."""
     if input_x is None or other_x is None:
+        return None
+    if input_x.dtype == mstype.bfloat16:
         return None
     if rounding_mode == 1:
         # trunc
