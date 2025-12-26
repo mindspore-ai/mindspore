@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2024-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/dense.h"
+#include <memory>
+#include <vector>
 #include <algorithm>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
@@ -75,6 +77,11 @@ void DenseAscendCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &
   if (w_rank != kDim1 && w_rank != kDim2) {
     MS_EXCEPTION(ValueError) << "For Dense, the dim of weight should be equal to 1 or 2"
                              << ", but got dim of weight is " << w_rank << ".";
+  }
+  size_t x_rank = input_tensor->shape().size();
+  if (x_rank < kDim1) {
+    MS_EXCEPTION(ValueError) << "For Dense, the dim of input should be at least 1"
+                             << ", but got dim of input is " << x_rank << ".";
   }
 
   kernel::pyboost::RequireGradGuard require_grad_guard(false);
