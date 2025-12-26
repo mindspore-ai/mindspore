@@ -235,20 +235,9 @@ REG_FALLBACK_BUILDER("Muls").SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto x_type = ib->GetDtype(x)->type_id();
   auto y_type = ib->GetDtype(y)->type_id();
-  if ((x_type == kNumberTypeUInt16 || x_type == kNumberTypeUInt32 || x_type == kNumberTypeUInt64) &&
-      (y_type == kNumberTypeFloat32 || y_type == kNumberTypeInt64)) {
-    MS_EXCEPTION(TypeError) << "Type implicit conversion between Tensor[" << TypeIdToString(x_type) << "] and "
-                            << TypeIdToString(y_type) << " is not supported.";
-  }
-  std::set<TypeId> kSet = {kNumberTypeUInt8, kNumberTypeInt8, kNumberTypeInt16, kNumberTypeInt32, kNumberTypeInt64};
-  auto promote_type = TypeIdToType(kNumberTypeFloat32);
-  if ((kSet.find(x_type) != kSet.end()) && y_type == kNumberTypeFloat32) {
-    promote_type = TypeIdToType(kNumberTypeFloat32);
-  } else if (x_type == kNumberTypeBool && (y_type == kNumberTypeFloat32 || y_type == kNumberTypeInt64)) {
-    promote_type = TypeIdToType(y_type);
-  } else {
-    promote_type = TypeIdToType(x_type);
-  }
+  TypeId promote_type_id = ops::PromoteTensorScalarType(x_type, y_type);
+  auto promote_type = TypeIdToType(promote_type_id);
+  MS_EXCEPTION_IF_NULL(promote_type);
   auto x_cast = ib->Cast(x, promote_type);
   auto y_cast = ib->ScalarToTensor(y, promote_type);
   return {ib->Mul(x_cast, y_cast)};
@@ -653,8 +642,14 @@ REG_FALLBACK_BUILDER("PowTensorScalar").SetBody(BODYFUNC(ib) {
   auto input = ib->GetInput(kIndex0);
   auto exponent = ib->GetInput(kIndex1);
 
-  auto exp_tensor = ib->ScalarToTensor(exponent, exponent->dtype());
-  auto out = ib->Pow(input, exp_tensor);
+  auto input_type = ib->GetDtype(input)->type_id();
+  auto exponent_type = ib->GetDtype(exponent)->type_id();
+  TypeId promote_type_id = ops::PromoteTensorScalarType(input_type, exponent_type);
+  auto promote_type = TypeIdToType(promote_type_id);
+  MS_EXCEPTION_IF_NULL(promote_type);
+  auto input_cast = ib->Cast(input, promote_type);
+  auto exp_tensor = ib->ScalarToTensor(exponent, promote_type);
+  auto out = ib->Pow(input_cast, exp_tensor);
   return {out};
 });
 
@@ -662,8 +657,14 @@ REG_FALLBACK_BUILDER("PowScalarTensor").SetBody(BODYFUNC(ib) {
   auto input = ib->GetInput(kIndex0);
   auto exponent = ib->GetInput(kIndex1);
 
-  auto input_tensor = ib->ScalarToTensor(input, input->dtype());
-  auto out = ib->Pow(input_tensor, exponent);
+  auto exponent_type = ib->GetDtype(exponent)->type_id();
+  auto input_type = ib->GetDtype(input)->type_id();
+  TypeId promote_type_id = ops::PromoteTensorScalarType(exponent_type, input_type);
+  auto promote_type = TypeIdToType(promote_type_id);
+  MS_EXCEPTION_IF_NULL(promote_type);
+  auto input_tensor = ib->ScalarToTensor(input, promote_type);
+  auto exponent_cast = ib->Cast(exponent, promote_type);
+  auto out = ib->Pow(input_tensor, exponent_cast);
   return {out};
 });
 

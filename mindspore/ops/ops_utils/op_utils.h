@@ -284,6 +284,37 @@ static inline TypeId PromoteType(TypeId a, TypeId b, const std::string &op_name)
   return return_type_id;
 }
 
+// Promote type for Tensor-Scalar binary ops in infer stage.
+// The rule matches current Muls infer: bool < integral < floating < complex.
+static inline TypeId PromoteTensorScalarType(TypeId tensor_type_id, TypeId scalar_type_id) {
+  constexpr int typeLevelBool = 0;
+  constexpr int typeLevelInt = 1;
+  constexpr int typeLevelFloat = 2;
+  constexpr int typeLevelComplex = 3;
+
+  auto is_integral = [](TypeId t) {
+    return t == kNumberTypeInt8 || t == kNumberTypeInt16 || t == kNumberTypeInt32 || t == kNumberTypeInt64 ||
+           t == kNumberTypeUInt8 || t == kNumberTypeUInt16 || t == kNumberTypeUInt32 || t == kNumberTypeUInt64;
+  };
+  auto is_floating = [](TypeId t) {
+    return t == kNumberTypeFloat16 || t == kNumberTypeFloat32 || t == kNumberTypeFloat64 || t == kNumberTypeBFloat16;
+  };
+  auto type_to_level = [&](TypeId t) {
+    if (t == kNumberTypeBool) {
+      return typeLevelBool;
+    }
+    if (is_integral(t)) {
+      return typeLevelInt;
+    }
+    if (is_floating(t)) {
+      return typeLevelFloat;
+    }
+    return typeLevelComplex;
+  };
+
+  return (type_to_level(tensor_type_id) < type_to_level(scalar_type_id)) ? scalar_type_id : tensor_type_id;
+}
+
 static inline TypePtr PromoteType(TypePtr a, TypePtr b, const std::string &op_name) {
   const auto f32 = kNumberTypeFloat32;
   const auto f16 = kNumberTypeFloat16;

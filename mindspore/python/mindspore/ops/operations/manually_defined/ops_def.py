@@ -1548,7 +1548,6 @@ def infer_value_for_Div(input_x, other_x):
     # NumPy does not support bfloat16 arithmetic well.
     if (input_x.dtype == mstype.bfloat16) or (other_x.dtype == mstype.bfloat16):
         return None
-    # Tensor constructor does not accept some numpy scalar types directly, so wrap as ndarray.
     out = np.true_divide(input_x.asnumpy(), other_x.asnumpy())
     return Tensor(out)
 
