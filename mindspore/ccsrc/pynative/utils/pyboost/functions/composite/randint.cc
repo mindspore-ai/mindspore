@@ -17,6 +17,7 @@
 #include "include/pynative/utils/pyboost/functions/composite/randint.h"
 #include "include/pynative/utils/pyboost/functions/composite/empty.h"
 #include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "mindspore/core/include/mindapi/base/type_id.h"
 
 namespace mindspore {
 namespace kernel {
@@ -24,7 +25,12 @@ namespace pyboost {
 tensor::TensorPtr randint(const Int64ImmPtr low, const Int64ImmPtr high, const ValueTuplePtr &shape,
                           const tensor::TensorPtr &seed, const tensor::TensorPtr &offset,
                           const std::optional<Int64ImmPtr> &dtype, const std::optional<Int64ImmPtr> &device) {
-  tensor::TensorPtr output_empty = empty(shape, dtype, device);
+  tensor::TensorPtr output_empty = nullptr;
+  if (dtype.has_value()) {
+    output_empty = empty(shape, dtype, device);
+  } else {
+    output_empty = empty(shape, std::make_shared<Int64Imm>(TypeId::kNumberTypeInt64), device);
+  }
   tensor::TensorPtr output = inplace_random(output_empty, low, high, seed, offset);
   return output;
 }
