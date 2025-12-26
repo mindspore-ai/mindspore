@@ -68,7 +68,7 @@ def test_chunk_forward_backward(mode):
         grad = chunk_backward_func(x, chunks, 0)
     else:
         context.set_context(mode=ms.GRAPH_MODE)
-        grad = (jit(chunk_backward_func, jit_level="O0"))(x, chunks, 0)
+        grad = (jit(chunk_backward_func, jit_level="O0", backend="ms_backend"))(x, chunks, 0)
     assert np.allclose(grad.asnumpy(), expect_grad)
     assert grad.asnumpy().shape == x.shape
 
