@@ -333,6 +333,7 @@ class AnalysisEngine : public std::enable_shared_from_this<AnalysisEngine> {
                                      bool *continue_flag);
   AbstractBasePtr ObtainEvalResult(const AnfNodePtr &node, const AnfNodeConfigPtr &conf);
   bool IsRealToComplexGradient(const CNodePtr &cnode, const AnfNodeConfigPtr &conf);
+  bool IsNoSideEffectGetAttrNode(const CNodePtr &cnode);
 
   const PrimEvaluatorMap &prim_constructors_;
   FuncGraphManagerPtr func_graph_manager_;

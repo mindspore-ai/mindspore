@@ -1083,6 +1083,50 @@ EvalResultPtr AnalysisEngine::EvalCNodeMiscellaneous(const CNodePtr &cnode, cons
   return nullptr;
 }
 
+// When %5 and %6 has_side_effect_node is true, %7 has_side_effect_node also become true.
+// program_specialize->ProcessNode skips %7 and does not perform node replacement.
+// Leading to incorrect type_inference output.
+// Identify scenarios where the input contains %1 (a non-side-effect operator)
+// Do not synchronize the non-side-effect labels.
+// This allows the ProcessNode to proceed with normal node replacement.
+// %0(CNode_0) = resolve(NameSpace[SymbolStr: 'Namespace:mindspore.ops.function.random_func'], P)
+// %1(CNode_1) = getattr(%0, "UniformInt")
+// %2(CNode_2) = resolve(NameSpace[SymbolStr: 'Namespace:mindspore.ops.function.random_func'], _get_seed)
+// %3(CNode_3) = %2(None, "randint")
+// %4(CNode_4) = resolve(NameSpace[CommonOPS: 'Namespace:mindspore._extends.parse.trope'], getitem)
+// %5(seed1) = %4(%3, I64(0))
+// %6(seed2) = %4(%3, I64(1))
+// %7(rand_op) = %1(%5, %6)
+// if rand_op->has_side_effect_node(), in type_reference:
+// %7(rand_op) = ClassType[class 'mindspore.ops.operations.random_ops.UniformInt'](I64(999), I64(0))
+// expected:
+// %7(rand_op) = UniformInt(I64(999), I64(0))
+bool AnalysisEngine::IsNoSideEffectGetAttrNode(const CNodePtr &cnode) {
+  MS_EXCEPTION_IF_NULL(cnode);
+  constexpr size_t attr_index = 2;
+  constexpr size_t prim_index = 0;
+  const auto inputs_size = cnode->size();
+  if (inputs_size <= 0 || !IsPrimitiveCNode(cnode->input(prim_index), prim::kPrimGetAttr)) {
+    return false;
+  }
+
+  auto &get_attr_node = cnode->input(prim_index);
+  auto get_attr_cnode = dyn_cast_ptr<CNode>(get_attr_node);
+  if (get_attr_cnode == nullptr || get_attr_cnode->inputs().size() <= attr_index ||
+      !IsValueNode<StringImm>(get_attr_cnode->input(attr_index))) {
+    return false;
+  }
+
+  const AnfNodePtr &attr_node = get_attr_cnode->input(attr_index);
+  const auto &attr_name = GetValue<std::string>(GetValueNode(attr_node));
+  auto prim = std::make_shared<Primitive>(attr_name);
+  bool mem = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_MEM);
+  bool io = GetPrimitiveFlag(prim, GRAPH_FLAG_SIDE_EFFECT_IO);
+  MS_LOG(DEBUG) << "Check if cnode is no side effect getattr node, cnode: " << cnode->DebugString() << " mem: " << mem
+                << ", io: " << io;
+  return (!mem && !io);
+}
+
 EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConfigPtr &conf) {
   MS_EXCEPTION_IF_NULL(conf);
   MS_EXCEPTION_IF_NULL(cnode);
@@ -1105,11 +1149,12 @@ EvalResultPtr AnalysisEngine::EvalCNode(const CNodePtr &cnode, const AnfNodeConf
   const auto inputs_size = cnode->size();
   ConfigPtrList args_conf_list;
   args_conf_list.reserve(inputs_size - 1);
+  bool is_no_side_effect_get_attr_node = IsNoSideEffectGetAttrNode(cnode);
   // Ignore the first node which is function name.
   for (std::size_t i = 1; i < inputs_size; ++i) {
     const AnfNodePtr &node = cnode->input(i);
     (void)args_conf_list.emplace_back(MakeConfig(node, conf->context(), conf->func_graph()));
-    if (check_side_effect()) {
+    if (!is_no_side_effect_get_attr_node && check_side_effect()) {
       auto input_cnode = dyn_cast_ptr<CNode>(node);
       if (input_cnode != nullptr) {
         contains_side_effect = contains_side_effect || input_cnode->has_side_effect_node();
