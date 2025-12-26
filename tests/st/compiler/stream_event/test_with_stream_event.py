@@ -68,24 +68,6 @@ class MyMsJitStreamCtx(StreamCtx):
 
 a = Tensor(np.ones([3, 3]), ms.float32)
 b = Tensor(np.ones([3, 3]), ms.float32)
-s1 = Stream()
-s2 = Stream()
-
-
-class WithEventNet1(nn.Cell):
-    def __init__(self):
-        super(WithEventNet1, self).__init__()
-        self.depend = ops.Depend()
-
-    def construct(self, x):
-        y = x * 2
-        event = ms.runtime.Event()
-        with MyMsJitStreamCtx(s1):
-            z = a + b + x
-            event = self.depend(event, z)
-            event.record()
-            event.wait()
-        return y + z
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -99,6 +81,22 @@ def test_with_stream_event():
     save_path = "./test_with_stream_event"
     os.environ['MS_DEV_DUMP_IR_PASSES'] = 'validate'
     ms.set_context(jit_config={"jit_level": "O0"}, save_graphs=True, save_graphs_path=save_path)
+
+    s1 = Stream()
+    class WithEventNet1(nn.Cell):
+        def __init__(self):
+            super(WithEventNet1, self).__init__()
+            self.depend = ops.Depend()
+
+        def construct(self, x):
+            y = x * 2
+            event = ms.runtime.Event()
+            with MyMsJitStreamCtx(s1):
+                z = a + b + x
+                event = self.depend(event, z)
+                event.record()
+                event.wait()
+            return y + z
 
     x = Tensor(np.ones([3, 3]), ms.float32)
     net = WithEventNet1()
@@ -124,6 +122,21 @@ def test_with_stream_event_grad():
     Description: Support event and with stream in graph mode.
     Expectation: Run success.
     """
+    s1 = Stream()
+    class WithEventNet1(nn.Cell):
+        def __init__(self):
+            super(WithEventNet1, self).__init__()
+            self.depend = ops.Depend()
+
+        def construct(self, x):
+            y = x * 2
+            event = ms.runtime.Event()
+            with MyMsJitStreamCtx(s1):
+                z = a + b + x
+                event = self.depend(event, z)
+                event.record()
+                event.wait()
+            return y + z
 
     ms.set_context(mode=ms.GRAPH_MODE)
     x = Tensor(np.ones([3, 3]), ms.float32)
@@ -139,7 +152,8 @@ def test_event_multi_with_streams():
     Description: Support event and with stream in graph mode.
     Expectation: Run success.
     """
-
+    s1 = Stream()
+    s2 = Stream()
     class WithEventNet(nn.Cell):
         def __init__(self):
             super(WithEventNet, self).__init__()
@@ -190,6 +204,7 @@ def test_with_stream_multi_events():
     Description: Support event and with stream in graph mode.
     Expectation: Run success.
     """
+    s1 = Stream()
 
     class WithEventNet(nn.Cell):
         def __init__(self):
@@ -239,6 +254,7 @@ def test_with_stream_event_with_morph():
     Description: Support with stream event in morph.
     Expectation: Run success.
     """
+    s1 = Stream()
 
     def infer_dtype(args):
         return args
@@ -293,28 +309,6 @@ def test_with_stream_event_with_morph():
     assert len(event_id_num) == 3
 
 
-class WithEventNet2(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.depend = ops.Depend()
-
-    def construct(self, x, rank_num):
-        y = x * 2
-        event_list = []
-        z = x + 1
-        for _ in range(rank_num):
-            event = ms.runtime.Event()
-            with MyMsJitStreamCtx(s1):
-                z = a + b + x
-                event = self.depend(event, z)
-                event.record()
-                event_list.append(event)
-                event.wait()
-        for event_index in event_list:
-            event_end_recv = event_index.wait()
-            y = self.depend(y, event_end_recv)
-        return y + z
-
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_stream_event_list():
     """
@@ -322,6 +316,29 @@ def test_with_stream_event_list():
     Description: Support event and with stream in graph mode.
     Expectation: Run success.
     """
+    s1 = Stream()
+
+    class WithEventNet2(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.depend = ops.Depend()
+
+        def construct(self, x, rank_num):
+            y = x * 2
+            event_list = []
+            z = x + 1
+            for _ in range(rank_num):
+                event = ms.runtime.Event()
+                with MyMsJitStreamCtx(s1):
+                    z = a + b + x
+                    event = self.depend(event, z)
+                    event.record()
+                    event_list.append(event)
+                    event.wait()
+            for event_index in event_list:
+                event_end_recv = event_index.wait()
+                y = self.depend(y, event_end_recv)
+            return y + z
 
     save_path = "./test_with_stream_event_list"
     os.environ['MS_DEV_DUMP_IR_PASSES'] = 'validate'

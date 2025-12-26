@@ -42,9 +42,6 @@ class MyMsJitStreamCtx(StreamCtx):
 a = Tensor(np.ones([3, 3]), ms.float32)
 b = Tensor(np.ones([3, 3]), ms.float32)
 
-s1 = Stream()
-s2 = Stream()
-
 
 def clean_all_ir_files(folder_path):
     if os.path.exists(folder_path):
@@ -76,6 +73,7 @@ def test_with_stream_limit():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
 
     class MyMsJitStreamCtxNet(nn.Cell):
         def construct(self, x):
@@ -114,6 +112,7 @@ def test_with_stream_limit_runtime():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
 
     class MyMsJitStreamCtxNet(nn.Cell):
         def construct(self, x):
@@ -153,6 +152,8 @@ def test_with_stream_limit_diff_stream():
     Description: Support with stream limit context.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
 
     class MyMsJitStreamCtxNet(nn.Cell):
         def construct(self, x):
@@ -191,6 +192,8 @@ def test_with_stream_event_with_morph_multi():
     Description: Support with stream event in morph.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
 
     def infer_dtype(args):
         return args
@@ -293,9 +296,6 @@ def test_with_stream_limit_runtime_self():
     assert len(vector_num) == 1
     assert len(cube_num) == 1
 
-s4 = Stream()
-s6 = Stream()
-stream_list = [s4, s6]
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_with_stream_limit_diff_stream_list():
@@ -304,7 +304,9 @@ def test_with_stream_limit_diff_stream_list():
     Description: Support with stream limit context.
     Expectation: Run success.
     """
-
+    s4 = Stream()
+    s6 = Stream()
+    stream_list = [s4, s6]
     class MyMsJitStreamCtxNet(nn.Cell):
         def construct(self, x):
             y = x * 2
@@ -342,6 +344,8 @@ def test_with_stream_event_with_morph_multi_cse():
     Description: Support with stream event in morph.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
 
     def infer_dtype(args):
         return args
@@ -414,6 +418,8 @@ def test_with_stream_limit_nested():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
 
     class MyMsJitStreamCtxNet(nn.Cell):
         def construct(self, x):
