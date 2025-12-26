@@ -5,8 +5,6 @@ MindSpore Lite面向不同硬件设备提供轻量化AI推理加速能力，使�
 
 ![MindSpore-Lite 架构图](../../docs/MindSpore-Lite-architecture.png "MindSpore Lite Architecture")
 
-欲了解更多详情，请查看我们的[MindSpore Lite 总体架构](https://www.mindspore.cn/lite/docs/zh-CN/master/reference/architecture_lite.html)。
-
 ## MindSpore Lite技术特点
 
 1. 端云一站式推理部署
