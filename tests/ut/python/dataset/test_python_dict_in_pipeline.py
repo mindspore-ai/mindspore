@@ -1,4 +1,4 @@
-# Copyright 2023 Huawei Technologies Co., Ltd
+# Copyright 2023-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,32 +12,41 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""
-Test generic support of Python dictionaries in dataset pipeline
-"""
+"""Test generic support of Python dictionaries in dataset pipeline."""
+
 import math
 from time import sleep
+
 import numpy as np
 import pytest
 
-import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.common import Tensor
+import mindspore.dataset as ds
 
 
 def index_generator(ds_size):
-    for i in range(ds_size):
-        yield i
+    yield from range(ds_size)
 
 
 def dict_generator(ds_size):
     for i in range(ds_size):
         if i == 118:  # used in a test to verify proper error is raised
-            yield {'integer': i, 'boolean': True, 'string': "MY_EMPTY_STR", "tuple": (1, 2, 3),
-                   1: np.array([i, i + 100], dtype=np.int32)}
+            yield {
+                "integer": i,
+                "boolean": True,
+                "string": "MY_EMPTY_STR",
+                "tuple": (1, 2, 3),
+                1: np.array([i, i + 100], dtype=np.int32),
+            }
         else:
-            yield {'integer': i, 'boolean': True, 'string': "MY_EMPTY_STR", "tuple": (1, 2, 3),
-                   1: np.array([i, i + 100, i + 1000], dtype=np.int32)}
+            yield {
+                "integer": i,
+                "boolean": True,
+                "string": "MY_EMPTY_STR",
+                "tuple": (1, 2, 3),
+                1: np.array([i, i + 100, i + 1000], dtype=np.int32),
+            }
 
 
 def simple_pyfunc(x):
@@ -45,7 +54,7 @@ def simple_pyfunc(x):
 
 
 def build_dict(x):
-    return {"integer": x, "a": x ** 2, "b": 1}
+    return {"integer": x, "a": x**2, "b": 1}
 
 
 def remove_dict(x):
@@ -88,11 +97,9 @@ def test_dict_generator(my_iterator, output_numpy):
     dataset_size = 5
     data1 = ds.GeneratorDataset(dict_generator(dataset_size), ["col1"])
     if my_iterator == "tuple":
-        itr = data1.create_tuple_iterator(
-            num_epochs=1, output_numpy=output_numpy)
+        itr = data1.create_tuple_iterator(num_epochs=1, output_numpy=output_numpy)
     else:
-        itr = data1.create_dict_iterator(
-            num_epochs=1, output_numpy=output_numpy)
+        itr = data1.create_dict_iterator(num_epochs=1, output_numpy=output_numpy)
     for d in itr:
         if my_iterator == "tuple":
             data = d[0]
@@ -145,8 +152,7 @@ def test_dict_generator_map_2():
     Description: Generator operation creates dictionaries while the following map operation's pyfunc accesses them.
     Expectation: Python dict objects are successfully created, maintained, and sent to user.
     """
-    logger.info(
-        "test_dict_generator_map_2 -- Generator(dicts) --> map(simple_pyfunc) --> rename()")
+    logger.info("test_dict_generator_map_2 -- Generator(dicts) --> map(simple_pyfunc) --> rename()")
     dataset_size = 5
     data1 = ds.GeneratorDataset(lambda: dict_generator(dataset_size), ["col1"])
     data1 = data1.map(simple_pyfunc)
@@ -177,8 +183,7 @@ def test_dict_generator_map_3():
         tries to access a non-existing key.
     Expectation: Appropriate error is raised in the dataset pipeline.
     """
-    logger.info(
-        "test_dict_generator_map_3 -- Generator(dicts) --> map(remove_dict_wrong_key) --> rename()")
+    logger.info("test_dict_generator_map_3 -- Generator(dicts) --> map(remove_dict_wrong_key) --> rename()")
     dataset_size = 5
     data1 = ds.GeneratorDataset(dict_generator(dataset_size), ["col1"])
     data1 = data1.map(remove_dict_wrong_key)
@@ -196,8 +201,7 @@ def test_dict_generator_batch_1():
     Description: Batch operation automatically constructs appropriate np arrays for each element in dictionaries.
     Expectation: Python dict objects are successfully created, maintained, and sent to user.
     """
-    logger.info(
-        "test_dict_generator_batch_1 -- Generator(dicts) --> rename() --> batch()")
+    logger.info("test_dict_generator_batch_1 -- Generator(dicts) --> rename() --> batch()")
     dataset_size = 15
     data1 = ds.GeneratorDataset(lambda: dict_generator(dataset_size), ["col1"])
     data1 = data1.rename(["col1"], ["renamed_col1"])
@@ -219,10 +223,12 @@ def test_dict_generator_batch_1():
             assert isinstance(d["renamed_col1"][1], np.ndarray)
             assert d["renamed_col1"][1].dtype == np.int32
             assert d["renamed_col1"][1].shape == (2, 3)
-            np.testing.assert_array_equal(d["renamed_col1"][1],
-                                          np.array([[2 * i, 100 + 2 * i, 1000 + 2 * i],
-                                                    [2 * i + 1, 100 + 2 * i + 1, 1000 + 2 * i + 1]],
-                                                   dtype=np.int32))
+            np.testing.assert_array_equal(
+                d["renamed_col1"][1],
+                np.array(
+                    [[2 * i, 100 + 2 * i, 1000 + 2 * i], [2 * i + 1, 100 + 2 * i + 1, 1000 + 2 * i + 1]], dtype=np.int32
+                ),
+            )
     assert count == 14
 
 
@@ -233,12 +239,10 @@ def test_dict_generator_batch_2():
     Expectation: Python dict objects are successfully created, maintained, and sent to user.
     """
     # input: int, with per_batch_map creating dict
-    logger.info(
-        "test_dict_generator_batch_2 -- Generator() --> batch(create_dict_batch)")
+    logger.info("test_dict_generator_batch_2 -- Generator() --> batch(create_dict_batch)")
     dataset_size = 5
     data1 = ds.GeneratorDataset(lambda: index_generator(dataset_size), ["col1"])
-    data1 = data1.batch(2, per_batch_map=create_dict_batch,
-                        drop_remainder=True)
+    data1 = data1.batch(2, per_batch_map=create_dict_batch, drop_remainder=True)
     itr = data1.create_dict_iterator(num_epochs=2, output_numpy=True)
     count = 0
     for _ in range(2):
@@ -260,13 +264,11 @@ def test_dict_generator_batch_3():
     Description: Batch operation's per_batch_map modifies existing dict objects in the pipeline.
     Expectation: Python dict objects are successfully created, maintained, and sent to user.
     """
-    logger.info(
-        "test_dict_generator_batch_3 -- Generator(dict_generator) --> rename() --> batch(modify_dict_batch)")
+    logger.info("test_dict_generator_batch_3 -- Generator(dict_generator) --> rename() --> batch(modify_dict_batch)")
     dataset_size = 5
     data1 = ds.GeneratorDataset(lambda: dict_generator(dataset_size), ["col1"])
     data1 = data1.rename(["col1"], ["renamed_col1"])
-    data1 = data1.batch(2, per_batch_map=modify_dict_batch,
-                        drop_remainder=True)
+    data1 = data1.batch(2, per_batch_map=modify_dict_batch, drop_remainder=True)
     itr = data1.create_dict_iterator(num_epochs=2, output_numpy=True)
     counter = 0
     for _ in range(2):
@@ -312,14 +314,12 @@ def test_dict_generator_batch_4(wrong_dict_batch):
     Description: Batch operation's per_batch_map modifies existing dict objects in the pipeline.
     Expectation: Appropriate error is raised in the dataset pipeline.
     """
-    logger.info(
-        "test_dict_generator_batch_4 -- Generator(dict_generator) x 2 --> zip() --> batch()")
+    logger.info("test_dict_generator_batch_4 -- Generator(dict_generator) x 2 --> zip() --> batch()")
     dataset_size = 5
     data1 = ds.GeneratorDataset(dict_generator(dataset_size), ["col1"])
     data2 = ds.GeneratorDataset(dict_generator(dataset_size), ["col2"])
     data3 = ds.zip((data1, data2))
-    data3 = data3.batch(2, per_batch_map=wrong_dict_batch,
-                        drop_remainder=True)
+    data3 = data3.batch(2, per_batch_map=wrong_dict_batch, drop_remainder=True)
 
     with pytest.raises(RuntimeError) as error_info:
         for _ in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
@@ -358,14 +358,12 @@ def test_dict_generator_batch_5(my_batch):
     Description: Batch operation's per_batch_map modifies existing dict objects in the pipeline.
     Expectation: Python dict objects are successfully created, maintained, and sent to user.
     """
-    logger.info(
-        "test_dict_generator_batch_5 -- Generator(dict_generator) x 2 --> zip() --> batch()")
+    logger.info("test_dict_generator_batch_5 -- Generator(dict_generator) x 2 --> zip() --> batch()")
     dataset_size = 5
     data1 = ds.GeneratorDataset(dict_generator(dataset_size), ["col1"])
     data2 = ds.GeneratorDataset(dict_generator(dataset_size), ["col2"])
     data3 = ds.zip((data1, data2))
-    data3 = data3.batch(2, per_batch_map=my_batch,
-                        drop_remainder=True)
+    data3 = data3.batch(2, per_batch_map=my_batch, drop_remainder=True)
     counter = 0
     for _ in data3.create_dict_iterator(num_epochs=1, output_numpy=True):
         counter += 1
@@ -378,8 +376,7 @@ def test_dict_generator_batch_6():
     Description: Batch operation detects mismatches between rows for a batch.
     Expectation: Appropriate error is raised in the dataset pipeline.
     """
-    logger.info(
-        "test_dict_generator_batch_6 -- Generator(dicts) --> batch()")
+    logger.info("test_dict_generator_batch_6 -- Generator(dicts) --> batch()")
     dataset_size = 200
     # Note: For dataset_size >= 118, a mismatch for rows is created for this error test
     data1 = ds.GeneratorDataset(lambda: dict_generator(dataset_size), ["col1"])
@@ -388,8 +385,9 @@ def test_dict_generator_batch_6():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data1.create_dict_iterator(num_epochs=2, output_numpy=True):
             pass
-    assert ("Batch: failed to create a NumPy array with primitive types" in str(error_info.value)
-            or "ValueError: setting an array element with a sequence" in str(error_info.value))
+    assert "Batch: failed to create a NumPy array with primitive types" in str(
+        error_info.value
+    ) or "ValueError: setting an array element with a sequence" in str(error_info.value)
 
 
 @pytest.mark.parametrize("batch_size", [5, 12])
@@ -400,8 +398,7 @@ def test_dict_generator_batch_7(batch_size, output_numpy):
     Description: Batch operation works with different sizes, and creates proper np arrays or tensors.
     Expectation: Python dict objects are successfully created, maintained, and sent to user.
     """
-    logger.info(
-        "test_dict_generator_batch_7 -- Generator(dicts) --> batch()")
+    logger.info("test_dict_generator_batch_7 -- Generator(dicts) --> batch()")
     dataset_size = 100
     data1 = ds.GeneratorDataset(lambda: dict_generator(dataset_size), ["col1"])
     data1 = data1.batch(batch_size, drop_remainder=True)
@@ -418,8 +415,7 @@ def test_dict_generator_batch_8(batch_size):
     Description: Batch operation automatically constructs appropriate np arrays when drop_remainder=False.
     Expectation: Python dict objects are successfully created, maintained, and sent to user.
     """
-    logger.info(
-        "test_dict_generator_batch_8 -- Generator(dicts) --> rename() --> batch()")
+    logger.info("test_dict_generator_batch_8 -- Generator(dicts) --> rename() --> batch()")
     dataset_size = 101
     data1 = ds.GeneratorDataset(lambda: dict_generator(dataset_size), ["col1"])
     data1 = data1.rename(["col1"], ["renamed_col1"])
@@ -443,9 +439,14 @@ def test_dict_generator_batch_8(batch_size):
             assert d["renamed_col1"][1].shape[-1] == 3  # other dimensions are different for last batch
             np.testing.assert_array_equal(
                 d["renamed_col1"][1],
-                np.array([[batch_size * i + j, 100 + batch_size * i + j, 1000 + batch_size * i + j]
-                          for j in range(min((i + 1) * batch_size, dataset_size) - i * batch_size)],
-                         dtype=np.int32))
+                np.array(
+                    [
+                        [batch_size * i + j, 100 + batch_size * i + j, 1000 + batch_size * i + j]
+                        for j in range(min((i + 1) * batch_size, dataset_size) - i * batch_size)
+                    ],
+                    dtype=np.int32,
+                ),
+            )
 
     assert count == 2 * math.ceil(dataset_size / batch_size)
 
@@ -506,16 +507,14 @@ def test_dict_generator_mixed(my_iterator, output_numpy):
 
     def mixed_dict_generator(ds_size):
         for i in range(ds_size):
-            yield ({'integer': i, 'boolean': True, 'string': "MY_EMPTY_STR", "tuple": (1, 2, 3)}, True, 4, "String")
+            yield ({"integer": i, "boolean": True, "string": "MY_EMPTY_STR", "tuple": (1, 2, 3)}, True, 4, "String")
 
     dataset_size = 15
     data1 = ds.GeneratorDataset(mixed_dict_generator(dataset_size), ["col1", "col2", "col3", "col4"])
     if my_iterator == "tuple":
-        itr = data1.create_tuple_iterator(
-            num_epochs=1, output_numpy=output_numpy)
+        itr = data1.create_tuple_iterator(num_epochs=1, output_numpy=output_numpy)
     else:
-        itr = data1.create_dict_iterator(
-            num_epochs=1, output_numpy=output_numpy)
+        itr = data1.create_dict_iterator(num_epochs=1, output_numpy=output_numpy)
     count = 0
     for data in itr:
         count += 1
@@ -615,14 +614,14 @@ def test_dict_generator_nested_dicts(output_numpy):
 
 def test_dict_generator_with_batch_size_one():
     """
-    Feature: GeneratorDataset with data in type of Python dict
-    Description: Test applying a batch operation with a batch size of 1
-    Expectation: The dimensions of the data are correctly expanded and the length of dimension 0 is 1
+    Feature: GeneratorDataset with data in type of Python dict.
+    Description: Test applying a batch operation with a batch size of 1.
+    Expectation: The dimensions of the data are correctly expanded and the length of dimension 0 is 1.
     """
 
     def simple_dict_generator():
         for i in range(10):
-            yield {'label': np.array([i])}
+            yield {"label": np.array([i])}
 
     dataset = ds.GeneratorDataset(simple_dict_generator, column_names=["data"])
     dataset = dataset.batch(1)
@@ -631,7 +630,48 @@ def test_dict_generator_with_batch_size_one():
         np.testing.assert_array_equal(sample["data"]["label"], np.expand_dims(np.array([index]), axis=0))
 
 
-if __name__ == '__main__':
+@pytest.mark.parametrize("python_multiprocessing", [True, False])
+def test_batch_referenced_dict_with_batch_size_one(python_multiprocessing):
+    """
+    Feature: Batch Python dict.
+    Description: Test batching a referenced Python dict with a batch size of 1.
+    Expectation: Batch will not modify the original dict.
+    """
+
+    data_array = np.array(range(10))
+
+    class DictDataset:
+        """A dataset that returns a referenced dict."""
+
+        def __init__(self, num_samples):
+            self.num_samples = num_samples
+            self.data = {"number": data_array}
+
+        def __getitem__(self, index):
+            return self.data
+
+        def __len__(self):
+            return self.num_samples
+
+    dict_dataset = DictDataset(10)
+    dataset = ds.GeneratorDataset(
+        dict_dataset, column_names=["data"], python_multiprocessing=python_multiprocessing, num_parallel_workers=2
+    )
+    dataset = dataset.batch(1)
+
+    # test the result has batch dimension
+    for sample in dataset.create_dict_iterator(num_epochs=1, output_numpy=True):
+        assert isinstance(sample["data"], dict)
+        assert sample["data"].keys() == {"number"}
+        np.testing.assert_array_equal(sample["data"]["number"], np.expand_dims(data_array, axis=0))
+
+    # test the original dict is not modified
+    assert isinstance(dict_dataset.data, dict)
+    assert dict_dataset.data.keys() == {"number"}
+    np.testing.assert_array_equal(dict_dataset.data["number"], data_array)
+
+
+if __name__ == "__main__":
     test_dict_generator("tuple", False)
     test_dict_generator_map_1()
     test_dict_generator_map_2()
@@ -648,3 +688,4 @@ if __name__ == '__main__':
     test_dict_generator_mixed("tuple", False)
     test_dict_generator_nested_dicts(True)
     test_dict_generator_with_batch_size_one()
+    test_batch_referenced_dict_with_batch_size_one(python_multiprocessing=False)
