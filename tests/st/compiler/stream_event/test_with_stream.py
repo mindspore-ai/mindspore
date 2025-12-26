@@ -44,9 +44,6 @@ class MyMsJitStreamCtx(MsJitStreamCtx):
 
 a = Tensor(np.ones([3, 3]), ms.float32)
 b = Tensor(np.ones([3, 3]), ms.float32)
-s1 = Stream()
-s2 = Stream()
-s3 = Stream()
 
 
 def clean_all_ir_files(folder_path):
@@ -79,6 +76,7 @@ def test_my_ms_jit_stream_ctx():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
 
     class MyMsJitStreamCtxNet(nn.Cell):
         def construct(self, x):
@@ -118,6 +116,7 @@ def test_my_ms_jit_stream_ctx_runtime():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
 
     class MyMsJitStreamCtxNet(nn.Cell):
         def construct(self, x):
@@ -150,12 +149,14 @@ def test_my_ms_jit_stream_ctx_runtime():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_my_ms_jit_stream_ctx_mutli():
+def test_my_ms_jit_stream_ctx_multi():
     """
     Feature: Support with stream.
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
 
     class MyMsJitStreamCtxMutliNet(nn.Cell):
         def construct(self, x):
@@ -166,7 +167,7 @@ def test_my_ms_jit_stream_ctx_mutli():
                 y = a - y
             return y + z
 
-    save_path = "./test_my_ms_jit_stream_ctx_mutli"
+    save_path = "./test_my_ms_jit_stream_ctx_multi"
     os.environ['MS_DEV_DUMP_IR_PASSES'] = 'validate'
     ms.set_context(jit_config={"jit_level": "O0"}, save_graphs=True, save_graphs_path=save_path)
     net = MyMsJitStreamCtxMutliNet()
@@ -196,6 +197,8 @@ def test_my_ms_jit_stream_ctx_nest():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
 
     class MyMsJitStreamCtxMutliNet(nn.Cell):
         def construct(self, x):
@@ -220,6 +223,7 @@ def test_basic_stream_block_annotation_1():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
 
     class MsJitStreamNet(nn.Cell):
         def construct(self, x, con):
@@ -263,6 +267,8 @@ def test_basic_stream_block_annotation_2():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
 
     class SimpleStreamNet(nn.Cell):
         def construct(self, x):
@@ -306,6 +312,8 @@ def test_nested_stream_blocks():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
 
     class NestedStreamNet(nn.Cell):
         def construct(self, x):
@@ -331,7 +339,9 @@ def test_complex_nested_streams():
     Description: Support with stream.
     Expectation: Run success.
     """
-
+    s1 = Stream()
+    s2 = Stream()
+    s3 = Stream()
     class ComplexStreamsNet(nn.Cell):
         def construct(self, x):
             with MsJitStreamCtx(s1):
@@ -359,6 +369,8 @@ def test_multiple_independent_streams():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
 
     class MutliStreamsNet(nn.Cell):
         def construct(self, x, y):
@@ -409,6 +421,7 @@ def test_stream_with_control_flow():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
 
     class ConditionalStreamNet(nn.Cell):
         def construct(self, x, use_stream):
@@ -440,7 +453,9 @@ def test_switch_like_control_flow_with_streams():
     Description: Support with stream.
     Expectation: Run success.
     """
-
+    s1 = Stream()
+    s2 = Stream()
+    s3 = Stream()
     class ConditionalStreamNet(nn.Cell):
         def construct(self, x, condition):
             result = x * 2
@@ -485,6 +500,7 @@ def test_stream_with_break_statement():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
 
     class StreamWithBreakNet(nn.Cell):
         def construct(self, x, max_iter):
@@ -519,6 +535,7 @@ def test_stream_with_continue_statement():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
 
     class StreamWithContinueNet(nn.Cell):
         def construct(self, x, max_iter):
@@ -553,6 +570,8 @@ def test_stream_with_return_statement():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
 
     class StreamWithReturnNet(nn.Cell):
         def construct(self, x, early_return):
@@ -590,7 +609,9 @@ def test_multiple_returns_in_different_streams():
     Description: Support with stream.
     Expectation: Run success.
     """
-
+    s1 = Stream()
+    s2 = Stream()
+    s3 = Stream()
     class StreamWithReturnNet(nn.Cell):
         def construct(self, x, condition):
             t = Tensor(np.ones([2, 2], dtype=np.float32))
@@ -631,6 +652,7 @@ def test_with_stream_with_morph():
     Description: Support with stream.
     Expectation: Run success.
     """
+    s1 = Stream()
 
     def infer_dtype(args):
         return args
@@ -688,6 +710,8 @@ def test_with_stream_with_morph_2():
     Description: Support with stream with morph.
     Expectation: Run success.
     """
+
+    s1 = Stream()
 
     def infer_dtype(args):
         return args
@@ -770,12 +794,6 @@ def test_my_ms_jit_stream_ctx_self():
         pass
     assert len(stream_id_num) == 1
 
-
-s4 = Stream()
-s6 = Stream()
-stream_list = [s4, s6]
-
-
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_my_ms_jit_stream_ctx_list():
     """
@@ -783,7 +801,9 @@ def test_my_ms_jit_stream_ctx_list():
     Description: Support with stream.
     Expectation: Run success.
     """
-
+    s4 = Stream()
+    s6 = Stream()
+    stream_list = [s4, s6]
     class MyMsJitStreamCtxNet(nn.Cell):
         def construct(self, x):
             y = x * 2
@@ -815,7 +835,8 @@ def test_with_stream_event_with_morph_cse():
     Description: Support with stream event in morph.
     Expectation: Run success.
     """
-
+    s1 = Stream()
+    s2 = Stream()
     def infer_dtype(args):
         return args
 
@@ -887,10 +908,7 @@ def test_with_stream_event_with_morph_cse():
     assert len(stream_recv_num) == 4
 
 
-loop_size = 2
-stream_list_2 = []
-for i in range(loop_size):
-    stream_list_2.append(Stream())
+
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -900,7 +918,10 @@ def test_with_stream_with_morph_for_loop():
     Description: Support with stream in for loop.
     Expectation: Run success.
     """
-
+    loop_size = 2
+    stream_list_2 = []
+    for _ in range(loop_size):
+        stream_list_2.append(Stream())
     def infer_dtype(args):
         return args
 
@@ -948,6 +969,10 @@ def test_with_stream_while_loop():
     Description: Support with stream in while loop.
     Expectation: Run success.
     """
+    loop_size = 2
+    stream_list_2 = []
+    for _ in range(loop_size):
+        stream_list_2.append(Stream())
     class StreamWhileNet(nn.Cell):
         def construct(self, x):
             step_id = 0
