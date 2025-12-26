@@ -17,9 +17,12 @@
 #ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_CUSTOM_KERNEL_INPUT_INFO_IMPL_H_
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_CUSTOM_KERNEL_INPUT_INFO_IMPL_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <optional>
+#include "base/bfloat16.h"
+#include "base/float16.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_tensor.h"
 #include "kernel/cpu/custom/kernel_mod_impl/custom_kernel_input_info.h"
 
@@ -35,9 +38,53 @@ class KernelInputInfoImpl : public KernelInputInfo {
 
   bool GetBoolInput(size_t idx) { return inputs_[idx]->GetValueWithCheck<bool>(); }
 
-  int64_t GetIntInput(size_t idx) { return inputs_[idx]->GetValueWithCheck<int64_t>(); }
+  // Note: op plugin expects GetIntInput/GetFloatInput to provide implicit casts for scalar values
+  // (see comments in ms_op_plugin/op_plugin/utils/op_utils.cc).
+  int64_t GetIntInput(size_t idx) {
+    const auto dtype = inputs_[idx]->dtype_id();
+    switch (dtype) {
+      case TypeId::kNumberTypeInt8:
+        return static_cast<int64_t>(inputs_[idx]->GetValueWithCheck<int8_t>());
+      case TypeId::kNumberTypeInt16:
+        return static_cast<int64_t>(inputs_[idx]->GetValueWithCheck<int16_t>());
+      case TypeId::kNumberTypeInt32:
+        return static_cast<int64_t>(inputs_[idx]->GetValueWithCheck<int32_t>());
+      case TypeId::kNumberTypeInt64:
+      case TypeId::kNumberTypeInt:
+        return inputs_[idx]->GetValueWithCheck<int64_t>();
+      case TypeId::kNumberTypeUInt8:
+        return static_cast<int64_t>(inputs_[idx]->GetValueWithCheck<uint8_t>());
+      case TypeId::kNumberTypeUInt16:
+        return static_cast<int64_t>(inputs_[idx]->GetValueWithCheck<uint16_t>());
+      case TypeId::kNumberTypeUInt32:
+        return static_cast<int64_t>(inputs_[idx]->GetValueWithCheck<uint32_t>());
+      case TypeId::kNumberTypeUInt64:
+      case TypeId::kNumberTypeUInt:
+        return static_cast<int64_t>(inputs_[idx]->GetValueWithCheck<uint64_t>());
+      default:
+        // Fallback to int64 (will throw with a helpful message if size/type mismatch).
+        return inputs_[idx]->GetValueWithCheck<int64_t>();
+    }
+  }
 
-  float GetFloatInput(size_t idx) { return inputs_[idx]->GetValueWithCheck<float>(); }
+  float GetFloatInput(size_t idx) {
+    const auto dtype = inputs_[idx]->dtype_id();
+    switch (dtype) {
+      case TypeId::kNumberTypeFloat16:
+        return static_cast<float>(inputs_[idx]->GetValueWithCheck<float16>());
+      case TypeId::kNumberTypeBFloat16:
+        return static_cast<float>(inputs_[idx]->GetValueWithCheck<bfloat16>());
+      case TypeId::kNumberTypeFloat32:
+      case TypeId::kNumberTypeFloat:
+        return inputs_[idx]->GetValueWithCheck<float>();
+      case TypeId::kNumberTypeFloat64:
+      case TypeId::kNumberTypeDouble:
+        return static_cast<float>(inputs_[idx]->GetValueWithCheck<double>());
+      default:
+        // Fallback to float (will throw with a helpful message if size/type mismatch).
+        return inputs_[idx]->GetValueWithCheck<float>();
+    }
+  }
 
   std::string GetStrInput(size_t idx) { return inputs_[idx]->GetValueWithCheck<std::string>(); }
 
