@@ -287,6 +287,11 @@ def _generate_binary_op_small_value_tensor_inputs_func(
         raise ValueError(f"Unsupported dtype: {dtype}!")
 
     for l_value, r_value in values_group:
+        if ((op_info.input_low and op_info.input_low > l_value)
+            or (op_info.input_high and op_info.input_high < l_value)
+            or (op_info.other_low and op_info.other_low > r_value)
+            or (op_info.other_high and op_info.other_high < r_value)):
+            continue
         _input_values.append(l_value)
         _other_values.append(r_value)
 
@@ -336,6 +341,11 @@ def _generate_binary_op_large_value_tensor_inputs_func(
         raise ValueError(f"Unsupported dtype: {dtype}!")
 
     for l_value, r_value in values_group:
+        if ((op_info.input_low and op_info.input_low > l_value)
+            or (op_info.input_high and op_info.input_high < l_value)
+            or (op_info.other_low and op_info.other_low > r_value)
+            or (op_info.other_high and op_info.other_high < r_value)):
+            continue
         _input_values.append(l_value)
         _other_values.append(r_value)
 
@@ -425,18 +435,23 @@ def _generate_binary_op_scalar_inputs_func(
 
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
 
+    def _make_scalar(low, high):
+        """make scalar in [low, high] range
+        """
+        if dtype.is_complex:
+            return 1.0
+        return make_func((),low=low, high=high).item()
     shapes = (
         (),
         (2,),
         (0, 2),
     )
-    _scalar = 1.0 if dtype.is_complex else make_func(()).item()
 
     if op_info.supports_right_python_scalar:
         for shape in shapes:
             yield OpSampleInput(
                 op_input=make_func(shape, low=op_info.input_low, high=op_info.input_high),
-                op_args=(_scalar,),
+                op_args=(_make_scalar(low=op_info.other_low, high = op_info.other_high),),
                 op_kwargs={},
                 sample_name=f"{op_info.name}_tensorxscalar_inputs",
             )
@@ -444,7 +459,7 @@ def _generate_binary_op_scalar_inputs_func(
     if op_info.supports_left_python_scalar:
         for shape in shapes:
             yield OpSampleInput(
-                op_input=_scalar,
+                op_input=_make_scalar(low=op_info.input_low, high = op_info.input_high),
                 op_args=(make_func(shape, low=op_info.other_low, high=op_info.other_high),),
                 op_kwargs={},
                 sample_name=f"{op_info.name}_scalarxtensor_inputs",
@@ -452,8 +467,8 @@ def _generate_binary_op_scalar_inputs_func(
 
     if op_info.supports_both_python_scalar:
         yield OpSampleInput(
-            op_input=_scalar,
-            op_args=(_scalar,),
+            op_input=_make_scalar(low=op_info.input_low, high = op_info.input_high),
+            op_args=(_make_scalar(low=op_info.other_low, high = op_info.other_high),),
             op_kwargs={},
             sample_name=f"{op_info.name}_scalarxscalar_inputs",
         )
@@ -860,12 +875,19 @@ def _generate_unary_op_small_value_tensor_inputs_func(
         math.pi + 1e-5,
     )
 
+    def _filter_range_values(values, low, high):
+        return list(filter(lambda x: (low is None or x > low)
+                             and (high is None or x < high),
+                             values))
     if dtype.is_floating_point:
-        values = list(_float_vals)
+        values = _filter_range_values(_float_vals, op_info.input_low, op_info.input_high)
     elif dtype.is_complex:
         values = [complex(r, i) for r, i in itertools.product(_float_vals, _float_vals)]
     elif dtype in dtypes_integral and dtype != ms.bool_:
-        values = list(_uint_values) if (dtype in dtypes_extra_uint or dtype == ms.uint8) else list(_int_values)
+        if dtype in dtypes_extra_uint or dtype == ms.uint8:
+            values = _filter_range_values(_uint_values, op_info.input_low, op_info.input_high)
+        else:
+            values = _filter_range_values(_int_values, op_info.input_low, op_info.input_high)
     else:
         raise ValueError(f"Unsupported dtype: {dtype}!")
 
@@ -898,14 +920,19 @@ def _generate_unary_op_large_value_tensor_inputs_func(
     _fp16_values = (-521, 521, -996.9, 996.9, -13141.5, 13141.5)
     _fp32_values = _fp16_values + (-5062757.7, 5062757.7, -1e20, 1e20)
 
+    def _filter_range_values(values, low, high):
+        return list(filter(lambda x: (low is None or x > low)
+                             and (high is None or x < high),
+                             values))
+
     if dtype == ms.float16:
-        values = list(_fp16_values)
+        values = _filter_range_values(_fp16_values, op_info.input_low, op_info.input_high)
     elif dtype.is_floating_point:
-        values = list(_fp32_values)
+        values = _filter_range_values(_fp32_values, op_info.input_low, op_info.input_high)
     elif dtype.is_complex:
         values = [complex(r, i) for r, i in itertools.product(_fp32_values, _fp32_values)]
     elif dtype in (ms.int16, ms.int32, ms.int64):
-        values = list(_int_values)
+        values = _filter_range_values(_int_values, op_info.input_low, op_info.input_high)
     else:
         raise ValueError(f"Unsupported dtype: {dtype}!")
 
@@ -1194,40 +1221,40 @@ def basic_reference_inputs_reduction_op_common_func(
         yield OpSampleInput(
             op_input=make_func(shape),
             op_kwargs={},
-            sample_name=f'{op_info.name}_default'
+            sample_name=f'{op_info.name}_default_dim{ndim}'
         )
 
         # dim=None with keepdim=True
         yield OpSampleInput(
             op_input=make_func(shape),
             op_kwargs={'dim': None, 'keepdim': True},
-            sample_name=f'{op_info.name}_default_keepdim'
+            sample_name=f'{op_info.name}_default_keepdim_dim{ndim}'
         )
 
         yield OpSampleInput(
             op_input=make_func(shape),
             op_kwargs={'dim': 0, 'keepdim': True},
-            sample_name=f'{op_info.name}_dim0_keepdim'
+            sample_name=f'{op_info.name}_dim0_keepdim_dim{ndim}'
         )
 
         yield OpSampleInput(
             op_input=make_func(shape),
             op_kwargs={'dim': -1, 'keepdim': False},
-            sample_name=f'{op_info.name}_dim_last'
+            sample_name=f'{op_info.name}_dim_last_dim{ndim}'
         )
 
         if ndim > 2:
             yield OpSampleInput(
                 op_input=make_func(shape),
                 op_kwargs={'dim': 1, 'keepdim': True},
-                sample_name=f'{op_info.name}_dim1'
+                sample_name=f'{op_info.name}_dim1_dim{ndim}'
             )
 
             if ndim >= 4:
                 yield OpSampleInput(
                     op_input=make_func(shape),
                     op_kwargs={'dim': 3, 'keepdim': False},
-                    sample_name=f'{op_info.name}_dim3'
+                    sample_name=f'{op_info.name}_dim3_dim{ndim}'
                 )
 
         if getattr(op_info, 'supports_multiple_dims', True):
@@ -1238,7 +1265,7 @@ def basic_reference_inputs_reduction_op_common_func(
                     'dim': tuple(range(ndim)),
                     'keepdim': False
                 },
-                sample_name=f'{op_info.name}_dim_all'
+                sample_name=f'{op_info.name}_dim_all_dim{ndim}'
             )
 
             # Test partial multi-dim reduction: first and last
@@ -1246,19 +1273,19 @@ def basic_reference_inputs_reduction_op_common_func(
                 yield OpSampleInput(
                     op_input=make_func(shape),
                     op_kwargs={'dim': (0, -1), 'keepdim': True},
-                    sample_name=f'{op_info.name}_dim_0_last'
+                    sample_name=f'{op_info.name}_dim_0_last_dim{ndim}'
                 )
 
                 if ndim >= 4:
                     yield OpSampleInput(
                         op_input=make_func(shape),
                         op_kwargs={'dim': (0, 2), 'keepdim': False},
-                        sample_name=f'{op_info.name}_dim_0_2'
+                        sample_name=f'{op_info.name}_dim_0_2_dim{ndim}'
                     )
                     yield OpSampleInput(
                         op_input=make_func(shape),
                         op_kwargs={'dim': (1, 3), 'keepdim': True},
-                        sample_name=f'{op_info.name}_dim_1_3'
+                        sample_name=f'{op_info.name}_dim_1_3_dim{ndim}'
                     )
 
 

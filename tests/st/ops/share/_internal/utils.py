@@ -432,7 +432,7 @@ def make_tensor(
             if random_method == 'randn':
                 ndarray = np.clip(np.random.randn(*shape), low, high)
             elif random_method == 'randint':
-                ndarray = np.random.randint(low, high, size=shape)
+                ndarray = np.random.randint(math.ceil(low), high, size=shape)
             elif random_method == 'uniform':
                 ndarray = np.random.uniform(low, high, size=shape)
             else:
@@ -495,7 +495,6 @@ def make_tensor_with_np_array(
 ):
     """Wrap a numpy array into a MindSpore Tensor with optional device/memory tweaks."""
     result = ms.Tensor(np_array, dtype=dtype)
-
     if device is not None and device.lower() in ['ascend', 'cpu']:
         device_str = 'Ascend' if device.lower() == 'ascend' else 'CPU'
         result = result.move_to(device_str)
@@ -506,7 +505,8 @@ def make_tensor_with_np_array(
     return result
 
 
-def wrap_sample_inputs(input_func, sample_names, *, skip=False, loss: Optional[Union[float, Dict[str, float]]] = None):
+def wrap_sample_inputs(input_func, sample_names, *, skip=False,
+                       loss: Optional[Union[float, Dict[str, float]]] = None):
     """
     Wrap a sample input generator to selectively tweak per-sample behavior.
 
@@ -520,7 +520,6 @@ def wrap_sample_inputs(input_func, sample_names, *, skip=False, loss: Optional[U
         loss (float | Dict[str, float], optional):
             - float: set matched samples' tolerance (rtol/atol) for all devices.
             - Dict[str, float]: per-device tolerance map, keys in {"ascend", "ascend910b", "cpu", "gpu"}.
-
     Returns:
         function: wrapped generator function.
     """
@@ -566,6 +565,7 @@ def wrap_sample_inputs(input_func, sample_names, *, skip=False, loss: Optional[U
                 continue
             if _should_skip(device_key):
                 continue
+
             sample_loss = _get_loss(device_key)
             if sample_loss is not None:
                 sample_input.loss = sample_loss
