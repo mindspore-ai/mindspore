@@ -128,3 +128,35 @@ def test_wrong_auto_offload_input():
     with pytest.raises(RuntimeError) as e:
         foo(Tensor([1, 2, 3]))
     assert "auto_offload should only be value of all, weight or activaction but got" in str(e.value)
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_parameter_with_too_long_prefetch_distance():
+    """
+    Feature: Hyper offload auto optimize with execution order.
+    Description: an excessively long prefetch distance does not cause a core dump.
+    Expectation: success.
+    """
+    class TestNet(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.p = Parameter(Tensor(np.ones([2, 2]), dtype=mstype.float32), device="Remote", name="p")
+
+        @jit(auto_offload="weight")
+        def construct(self, x):
+            a = self.p + x
+            ops.assign(self.p, a)
+
+    os.environ['MS_DEV_HYPER_OFFLOAD'] = "1"
+    origin_select_distance = compile_config.HYPER_OFFLOAD_SELECT_DISTANCE
+    origin_select_num = compile_config.HYPER_OFFLOAD_SELECT_NUM
+    origin_prefetch_distance = compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE
+    compile_config.HYPER_OFFLOAD_SELECT_DISTANCE = 100
+    compile_config.HYPER_OFFLOAD_SELECT_NUM = 100
+    compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE = 200
+    net = TestNet()
+    net(Tensor(np.ones([2, 2]), dtype=mstype.float32))
+    assert np.all(net.p.value().asnumpy() == np.array([[2, 2], [2, 2]]))
+    os.environ['MS_DEV_HYPER_OFFLOAD'] = ""
+    compile_config.HYPER_OFFLOAD_SELECT_DISTANCE = origin_select_distance
+    compile_config.HYPER_OFFLOAD_SELECT_NUM = origin_select_num
+    compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE = origin_prefetch_distance
