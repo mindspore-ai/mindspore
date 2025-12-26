@@ -12,11 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+
+"""
+Dense op test case
+"""
+
 import numpy as np
 import pytest
-
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
+from mindspore.common.api import _pynative_executor
 from tests.device_utils import set_device, get_device
 from tests.mark_utils import arg_mark
 
@@ -60,3 +65,23 @@ def test_ops_dense(mode):
                       [-2.31700000e+03, -3.81300000e+03, 1.75410000e+04, -4.13600000e+03],
                       [-7.85900000e+03, 5.04700000e+03, 1.09430000e+04, -5.40000000e+03]]]
     assert np.allclose(output.asnumpy(), expect_output)
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_dense_invalid_shape(mode):
+    """
+    Feature: ops.dense
+    Description: input shape is invalid
+    Expectation: raise error
+    """
+    ms.set_context(mode=mode)
+    x = ms.Tensor(np.random.uniform(-10, 10, size=())).astype(ms.float32)
+    weight = ms.Tensor(np.random.uniform(-10, 10, size=[2, 3])).astype(ms.float32)
+    bias = ms.Tensor(np.random.uniform(-10, 10, size=[2])).astype(ms.float32)
+    with pytest.raises(ValueError):
+        net = Net()
+        _ = net(x, weight, bias)
+        if mode == ms.PYNATIVE_MODE:
+            _pynative_executor.sync()
