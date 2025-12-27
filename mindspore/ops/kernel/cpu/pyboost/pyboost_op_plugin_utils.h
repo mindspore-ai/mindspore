@@ -21,7 +21,7 @@
 #include <type_traits>
 #include "include/pynative/utils/pyboost/op_runner.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
-#include "kernel/cpu/custom/kernel_mod_impl/op_plugin_utils.h"
+#include "kernel/cpu/op_plugin/op_plugin_utils.h"
 
 // Helper to check if a type is optional
 template <typename T>

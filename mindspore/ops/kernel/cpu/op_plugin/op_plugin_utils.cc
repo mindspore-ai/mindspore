@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/cpu/custom/kernel_mod_impl/op_plugin_utils.h"
+#include "kernel/cpu/op_plugin/op_plugin_utils.h"
 #include <unordered_set>
 #include <string>
 #include <algorithm>

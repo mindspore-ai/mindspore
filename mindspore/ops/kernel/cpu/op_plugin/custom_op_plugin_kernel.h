@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_CUSTOM_OP_PLUGIN_CPU_KERNEL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_CUSTOM_OP_PLUGIN_CPU_KERNEL_H_
+#ifndef MINDSPORE_OPS_KERNEL_CPU_OP_PLUGIN_CUSTOM_OP_PLUGIN_CPU_KERNEL_H_
+#define MINDSPORE_OPS_KERNEL_CPU_OP_PLUGIN_CUSTOM_OP_PLUGIN_CPU_KERNEL_H_
 
 #include <vector>
 #include <string>
 #include <map>
-#include "kernel/cpu/custom/kernel_mod_impl/custom_kernel_input_info_impl.h"
+#include "kernel/cpu/op_plugin/custom_kernel_input_info_impl.h"
 #include "kernel/cpu/cpu_kernel.h"
 #include "kernel/cpu/utils/visible.h"
 
@@ -56,4 +56,4 @@ class OPS_HOST_API CustomOpPluginCpuKernelMod : public NativeCpuKernelMod {
 }  // namespace op_plugin
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_CUSTOM_OP_PLUGIN_CPU_KERNEL_H_
+#endif  // MINDSPORE_OPS_KERNEL_CPU_OP_PLUGIN_CUSTOM_OP_PLUGIN_CPU_KERNEL_H_

@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_OP_PLUGIN_UTILS_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_OP_PLUGIN_UTILS_H_
+#ifndef MINDSPORE_OPS_KERNEL_CPU_OP_PLUGIN_OP_PLUGIN_UTILS_H_
+#define MINDSPORE_OPS_KERNEL_CPU_OP_PLUGIN_OP_PLUGIN_UTILS_H_
 
 #include <string>
 #include <vector>
 #include <unordered_set>
-#include "kernel/cpu/custom/kernel_mod_impl/custom_kernel_input_info_impl.h"
+#include "kernel/cpu/op_plugin/custom_kernel_input_info_impl.h"
 #include "kernel/cpu/utils/visible.h"
 
 namespace mindspore::kernel {
@@ -44,4 +44,4 @@ OpPluginKernelParam CreateOpPluginParam(const std::vector<KernelTensor *> &input
 }  // namespace op_plugin
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_OP_PLUGIN_UTILS_H_
+#endif  // MINDSPORE_OPS_KERNEL_CPU_OP_PLUGIN_OP_PLUGIN_UTILS_H_
