@@ -375,9 +375,6 @@ class LogSoftmaxExt(Cell):
     Returns:
         Tensor.
 
-    Raises:
-        ValueError: If `dim` is not in range [-len(input.shape), len(input.shape)).
-
     Supported Platforms:
         ``Ascend``
 
