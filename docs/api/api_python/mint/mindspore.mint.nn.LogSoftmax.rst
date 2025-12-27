@@ -15,6 +15,3 @@ mindspore.mint.nn.LogSoftmax
 
     返回：
         Tensor。
-
-    异常：
-        - **ValueError** - 如果 `dim` 超出范围[-len(input.shape), len(input.shape))。
