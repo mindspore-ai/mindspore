@@ -343,8 +343,13 @@ void PrefetchH2DNode(const CNodePtr &node, CNodePtrList &execution_order) {
   }
   MS_LOG(INFO) << "For node: " << node->fullname_with_scope() << ", upper bound index: " << upper_bound_index
                << ", lower bound index: " << (execution_order.size() - 1);
-  // todo: need to add bound check.
-  (void)execution_order.insert(execution_order.begin() + execution_order.size() - prefetch_distance, node);
+  if (size_t(execution_order.size()) > prefetch_distance) {
+    (void)execution_order.insert(execution_order.begin() + execution_order.size() - prefetch_distance, node);
+  } else {
+    MS_LOG(INFO) << "Execution order size: " << execution_order.size()
+                 << " is smaller than prefetch distance: " << prefetch_distance;
+    (void)execution_order.insert(execution_order.begin(), node);
+  }
 }
 
 void GenerateEventForD2HNode(const KernelGraphPtr &kernel_graph, const CNodePtr &node,
