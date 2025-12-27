@@ -24,7 +24,7 @@ mindspore.ops.NonMaxSuppressionV3
         一维Tensor，表示被选中边框的index，其shape为 :math:`(M)` ，其中M <= `max_output_size` 。
 
     异常：
-        - **TypeError** -  `boxes` 和 `scores` 的数据类型不一致。
+        - **TypeError** - `boxes` 和 `scores` 的数据类型不一致。
         - **TypeError** - `iou_threshold` 和 `score_threshold` 的数据类型不一致。
         - **TypeError** - `boxes` 的数据类型不是float16或者float32。
         - **TypeError** - `scores` 的数据类型不是float16或者float32。
@@ -32,5 +32,5 @@ mindspore.ops.NonMaxSuppressionV3
         - **TypeError** - `iou_threshold` 不是Tensor或者Scalar，或者其数据类型不是float16或float32。
         - **TypeError** - `score_threshold` 不是Tensor或者Scalar，或者其数据类型不是float16或float32。
         - **ValueError** - `boxes` 的shape长度不是2或者第二维度的值不是4。
-        - **ValueError** - `scores` shape长度不是1。
+        - **ValueError** - `scores` 的shape长度不是1。
         - **ValueError** - `max_output_size` 、 `iou_threshold` 或 `score_threshold` 的shape长度不是0。

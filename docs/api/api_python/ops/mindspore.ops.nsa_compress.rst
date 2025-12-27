@@ -49,6 +49,6 @@ mindspore.ops.nsa_compress
         - **RuntimeError** - `compress_stride` 不是 16 的倍数。
         - **RuntimeError** - `compress_stride` 不在 ``[16, compress_block_size]``。
         - **RuntimeError** - `actual_seq_len` 为空。
-        - **RuntimeError** - `actual_seq_len` 非非递减序列。
+        - **RuntimeError** - `actual_seq_len` 不是非递减序列。
         - **RuntimeError** - `actual_seq_len` 包含非正元素。
         - **RuntimeError** - `actual_seq_len` 的末元素不等于 ``T``。
