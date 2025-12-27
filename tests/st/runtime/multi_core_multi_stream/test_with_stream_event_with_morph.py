@@ -29,11 +29,7 @@ ms.set_context(mode=ms.context.GRAPH_MODE, jit_config={'jit_level': 'O0'})
 device_id = int(os.getenv('DEVICE_ID', '0'))
 a = Tensor(np.ones([3, 3]), ms.float32)
 b = Tensor(np.ones([3, 3]), ms.float32)
-s1 = Stream()
-s2 = Stream()
-s3 = Stream()
-s4 = Stream()
-s5 = Stream()
+
 output_path='./stream_event_with_morph_prof'
 
 
@@ -88,6 +84,11 @@ def test_with_stream_event_with_morph():
     Description: Support with stream event in morph.
     Expectation: Run success.
     """
+    s1 = Stream()
+    s2 = Stream()
+    s3 = Stream()
+    s4 = Stream()
+    s5 = Stream()
 
     def infer_dtype(args):
         return args
