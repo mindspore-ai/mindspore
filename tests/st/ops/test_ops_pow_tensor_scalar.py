@@ -13,6 +13,10 @@
 # limitations under the License.
 # ============================================================================
 
+"""
+Test cases for pow with tensor base and scalar exponent.
+"""
+
 import numpy as np
 import pytest
 from tests.st.utils import test_utils
@@ -34,6 +38,28 @@ def pow_forward_func(x, y):
 @test_utils.run_with_cell
 def pow_backward_func(x, y):
     return ops.grad(pow_forward_func, (0, 1))(x, y) # pylint: disable=not-callable
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+          essential_mark='essential')
+@test_utils.run_test_with_On
+def test_pow_tensor_scalar_fallback():
+    """
+    Feature: Ops.
+    Description: test pow_tensor_scalar fallback.
+    Expectation: expect correct result.
+    """
+    # mint.pow it self has no need to support graph mode O2, but backward of some existing
+    # operations may use PowTensorScalar. PowTensorScalar will fallback to Pow in this case.
+    ms.context.set_context(mode=ms.GRAPH_MODE, jit_level='O2')
+    x_np, _ = generate_random_input((2, 3, 4), dtype=np.int32)
+    y_np = 2
+    x = ms.Tensor(x_np)
+    y = y_np
+    out = pow_forward_func(x, y)
+    expect_out = np.power(x_np, y_np)
+    np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-3)
+    assert out.dtype == ms.int32
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',

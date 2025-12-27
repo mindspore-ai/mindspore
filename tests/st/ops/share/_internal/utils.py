@@ -27,7 +27,7 @@ import mindspore as ms
 from mindspore.common.api import _pynative_executor
 from mindspore.common.dtype import _dtype_to_nptype
 from mindspore._c_expression import MSContext
-from typing import Optional, Tuple, Union, Dict
+from typing import Optional, Tuple, Union, Dict, List
 
 class OpSampleInput:
     """Container of a single operation invocation sample.
@@ -513,9 +513,9 @@ def wrap_sample_inputs(input_func, sample_names, *, skip=False, loss: Optional[U
     Args:
         input_func (function): sample input generator function.
         sample_names (str or list): keyword string or keyword list, used to match OpSampleInput.sample_name.
-        skip (bool | Iterable[str] | Dict[str, bool]):
+        skip (bool | List[str] | Dict[str, bool]):
             - bool: True means skip matched samples on all devices; False means don't skip (default).
-            - Iterable[str]: device keys to skip, subset of {"ascend", "ascend910b", "cpu", "gpu"}.
+            - List[str]: device keys to skip, subset of {"ascend", "ascend910b", "cpu", "gpu"}.
             - Dict[str, bool]: per-device skip map, keys in {"ascend", "ascend910b", "cpu", "gpu"}.
         loss (float | Dict[str, float], optional):
             - float: set matched samples' tolerance (rtol/atol) for all devices.
@@ -546,7 +546,9 @@ def wrap_sample_inputs(input_func, sample_names, *, skip=False, loss: Optional[U
             return skip
         if isinstance(skip, dict):
             return bool(skip.get(device_key, False))
-        return device_key in set(skip)
+        if isinstance(skip, List):
+            return device_key in skip
+        raise ValueError(f"Invalid skip type: {type(skip)}")
 
     def _get_loss(device_key: str) -> Optional[float]:
         if loss is None:
