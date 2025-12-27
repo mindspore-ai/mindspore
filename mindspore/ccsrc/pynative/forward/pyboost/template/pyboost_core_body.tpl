@@ -18,7 +18,6 @@ PyObject* ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_DT
         kernel::pyboost::RequireGradGuard require_grad_guard(op_run_info->requires_grad);
 
         auto outputs = kernel::pyboost::${operator_name}(${cast_args});
-        (void)kernel::pyboost::OpRunStatus::Get().GetLastOp();
         tensor::SetPromise(promises, outputs);
       }, [promises]() {
         tensor::SetException(promises);

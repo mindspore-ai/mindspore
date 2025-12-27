@@ -6,9 +6,9 @@ ${return_type} ${op_name}_inner(${input_args_with_type}, CommHandlePtr comm_hand
 
   auto output = op->Call(${input_args});
   static auto ${op_name}_grad_func = AutoGradFactory::Get().ops_auto_grad_registers().${class_name}GradFuncObj;
-  ${op_name}_grad_func(op, ${input_args});
+  // clone_tensor is null now.
+  ${op_name}_grad_func(nullptr, ${input_args}, output);
   MS_LOG(DEBUG) << "Out ${op_name} inner function";
-  OpRunStatus::Get().SetLastOp(op);
   return output;
 }
 

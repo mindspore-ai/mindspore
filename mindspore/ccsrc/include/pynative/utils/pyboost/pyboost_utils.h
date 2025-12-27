@@ -535,6 +535,116 @@ class PYBOOST_API ProfileTracker {
 
   static void TrackerOutputTensors(const PrimitivePtr &primitive, const std::vector<tensor::TensorPtr> &tensors);
 };
+
+inline AbstractConverter &GetAbstractConverter() {
+  static AbstractConverter converter;
+  return converter;
+}
+
+// Convert op outputs to AbstractBasePtr
+// Overload for single TensorPtr
+inline abstract::AbstractBasePtr OpOutputsToAbstract(const tensor::TensorPtr &output) {
+  MS_EXCEPTION_IF_NULL(output);
+  return GetAbstractConverter().ConvertAbstract(output);
+}
+
+// Overload for std::vector<TensorPtr>
+inline abstract::AbstractBasePtr OpOutputsToAbstract(const std::vector<tensor::TensorPtr> &outputs) {
+  if (outputs.empty()) {
+    MS_LOG(EXCEPTION) << "Op outputs is empty";
+  }
+  return GetAbstractConverter().ConvertAbstract(outputs);
+}
+
+// Overload for std::tuple with arbitrary number of elements
+template <typename... Ts>
+inline abstract::AbstractBasePtr OpOutputsToAbstract(const std::tuple<Ts...> &outputs) {
+  std::vector<tensor::TensorPtr> tensor_vec;
+  tensor_vec.reserve(sizeof...(Ts));
+
+  // Helper function to check if a type is tensor::TensorPtr and add it to the vector
+  auto add_tensor_if_valid = [&tensor_vec](const auto &arg) {
+    using T = std::decay_t<decltype(arg)>;
+    if constexpr (std::is_same_v<T, tensor::TensorPtr>) {
+      MS_EXCEPTION_IF_NULL(arg);
+      tensor_vec.push_back(arg);
+    }
+  };
+
+  std::apply([&add_tensor_if_valid](const auto &...args) { (add_tensor_if_valid(args), ...); }, outputs);
+
+  if (tensor_vec.empty()) {
+    MS_LOG(EXCEPTION) << "Op outputs tuple contains no valid tensor outputs";
+  }
+  return GetAbstractConverter().ConvertAbstract(tensor_vec);
+}
+
+// Push op outputs to VectorRef
+// Overload for single TensorPtr
+inline void PushOpOutputs(VectorRef *op_outputs, const tensor::TensorPtr &output) {
+  MS_EXCEPTION_IF_NULL(op_outputs);
+  MS_EXCEPTION_IF_NULL(output);
+  op_outputs->push_back(output);
+}
+
+// Overload for std::vector<TensorPtr>
+inline void PushOpOutputs(VectorRef *op_outputs, const std::vector<tensor::TensorPtr> &outputs) {
+  MS_EXCEPTION_IF_NULL(op_outputs);
+  for (const auto &output : outputs) {
+    MS_EXCEPTION_IF_NULL(output);
+    op_outputs->push_back(output);
+  }
+}
+
+// Overload for std::tuple with arbitrary number of elements
+template <typename... Ts>
+inline void PushOpOutputs(VectorRef *op_outputs, const std::tuple<Ts...> &outputs) {
+  MS_EXCEPTION_IF_NULL(op_outputs);
+
+  // Helper function to check if a type is tensor::TensorPtr and add it to op_outputs
+  auto add_tensor_if_valid = [op_outputs](const auto &arg) {
+    using T = std::decay_t<decltype(arg)>;
+    if constexpr (std::is_same_v<T, tensor::TensorPtr>) {
+      MS_EXCEPTION_IF_NULL(arg);
+      op_outputs->push_back(arg);
+    }
+  };
+
+  std::apply([&add_tensor_if_valid](const auto &...args) { (add_tensor_if_valid(args), ...); }, outputs);
+}
+
+// Convert pyboost outputs to ValuePtr
+// Overload for single TensorPtr
+inline ValuePtr OpOutputsToValues(const tensor::TensorPtr &output) { return output; }
+
+// Overload for std::vector<TensorPtr>
+inline ValuePtr OpOutputsToValues(const std::vector<tensor::TensorPtr> &outputs) {
+  ValuePtrList values;
+  values.reserve(outputs.size());
+  for (const auto &tensor : outputs) {
+    MS_EXCEPTION_IF_NULL(tensor);
+    values.push_back(tensor);
+  }
+  return std::make_shared<ValueTuple>(values);
+}
+
+// Overload for std::tuple with arbitrary number of elements
+template <typename... Ts>
+inline ValuePtr OpOutputsToValues(const std::tuple<Ts...> &outputs) {
+  ValuePtrList values;
+
+  // Helper function to add tensor to values if valid
+  auto add_tensor_if_valid = [&values](const auto &arg) {
+    using T = std::decay_t<decltype(arg)>;
+    if constexpr (std::is_same_v<T, tensor::TensorPtr>) {
+      MS_EXCEPTION_IF_NULL(arg);
+      values.push_back(arg);
+    }
+  };
+
+  std::apply([&add_tensor_if_valid](const auto &...args) { (add_tensor_if_valid(args), ...); }, outputs);
+  return std::make_shared<ValueTuple>(values);
+}
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

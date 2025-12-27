@@ -136,7 +136,7 @@ struct DataConvert {
 struct PyBoost {
   static PyboostOpRunInfoPtr Init_Pyboost(const PrimitivePtr &prim);
   static FrontendOpRunInfoPtr Init(const PrimitivePtr &prim);
-  static void DoGrad(const kernel::pyboost::OpPtr &op, const OpGradInfoPtr &grad_info, const AsyncStatus &async_status);
+  static void DoGrad(const TensorPtr &clone_tensor, const OpGradInfoPtr &grad_info, const AsyncStatus &async_status);
   static void DoGrad(const OpGradInfoPtr &grad_info, const AsyncStatus &async_status);
   PYNATIVE_EXPORT static void MarkSideEffect(PyObject *arg);
   static void UpdateStubOutput(const kernel::pyboost::OpPtr &op, const stub::StubNodePtr &stub_output,
@@ -181,6 +181,24 @@ struct PyBoost {
 
   static void MarkPyBoostInputs(const OpGradInfoPtr &op_grad_info);
   static void BumpVersionAsync(tensor::Version version);
+  inline static void BumpVersionAsync(const TensorPtr &tensor) {
+    MS_EXCEPTION_IF_NULL(tensor);
+    BumpVersionAsync(tensor->version());
+  }
+  inline static void BumpVersionAsync(const std::vector<TensorPtr> &tensors) {
+    if (tensors.empty()) {
+      MS_LOG(EXCEPTION) << "Output tensors is empty. BumpVersion failed.";
+    }
+    const auto &first = tensors[0];
+    MS_EXCEPTION_IF_NULL(first);
+    BumpVersionAsync(first->version());
+  }
+  template <typename... Ts>
+  static void BumpVersionAsync(const std::tuple<Ts...> &tensors) {
+    const auto &first = std::get<0>(tensors);
+    MS_EXCEPTION_IF_NULL(first);
+    BumpVersionAsync(first->version());
+  }
   static void UpdateVersionAsync(const autograd::ViewAutoGradMetaDataPtr &grad_meta, const tensor::Version &version);
   static ValuePtr OutputToValue(const tensor::TensorPtr &output) { return output; }
   static ValuePtr MultiOutputToValue(const std::vector<TensorPtr> &outputs) {

@@ -39,9 +39,6 @@ py::object ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_D
           // Run op
           (void)op->Call(${cast_args});
           ${optional_to_value}
-
-          // Create output value
-          AutoGradUtil::SetInferOutputToGrad(op_run_info, op);
           // Create output value
           auto real_output = AutoGradUtil::Make${is_multi}Output(op_run_info->requires_grad, op${view_arg});
           // Do auto grad

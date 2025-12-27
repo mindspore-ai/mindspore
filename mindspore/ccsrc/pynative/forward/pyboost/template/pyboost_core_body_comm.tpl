@@ -38,7 +38,6 @@ PyObject* ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_DT
                 kernel::pyboost::RequireGradGuard require_grad_guard(op_run_info->requires_grad);
                 // Run op
                 auto outputs = kernel::pyboost::${operator_name}_inner(${cast_args}, comm_handle, target);
-                auto op = kernel::pyboost::OpRunStatus::Get().GetLastOp();
                 tensor::SetPromise(promises, outputs);
                 MS_LOG(DEBUG) << "Run frontend task ${func_name} end";
             },

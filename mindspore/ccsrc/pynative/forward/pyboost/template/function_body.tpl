@@ -10,14 +10,14 @@ ${return_type} ${op_name}_with_grad(${input_args_with_type}) {
 
   OpRunStatus::Get().HeterBarrier(device_target);
   ${create_op}
+  // Get clone_tensor for inplace op.
   ${clone_func}
   auto output = op->Call(${input_args});
 
   static auto ${op_name}_grad_func = AutoGradFactory::Get().ops_auto_grad_registers().${class_name}GradFuncObj;
   if (${op_name}_grad_func){
-    ${op_name}_grad_func(op, ${input_args});
+    ${op_name}_grad_func(clone_tensor, ${input_args}, output);
   }
   MS_LOG(DEBUG) << "Out ${op_name} function";
-  OpRunStatus::Get().SetLastOp(op);
   return output;
 }

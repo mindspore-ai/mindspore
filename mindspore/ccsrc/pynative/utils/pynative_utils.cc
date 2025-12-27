@@ -115,11 +115,9 @@ tensor::TensorPtr GetContiguousTensor(const tensor::TensorPtr &input_tensor, dev
   auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_target);
   auto contiguous_tensor = contiguous_op->Call(input_tensor);
   if (requires_grad) {
-    contiguous_op->CreateOutputSimpleInfo();
     const auto &contiguous_run_info = std::make_shared<FrontendOpRunInfo>();
     contiguous_run_info->requires_grad = true;
     auto real_output = AutoGradUtil::MakeOutput(true, contiguous_op);
-    AutoGradUtil::SetInferOutputToGrad(contiguous_run_info->op_grad_info, contiguous_op);
     PyBoost::UpdateStubOutput(contiguous_op, contiguous_run_info->stub_output, contiguous_op->output_abs(),
                               real_output);
     contiguous_run_info->base_op_run_info.device_target = device_target;
@@ -129,7 +127,8 @@ tensor::TensorPtr GetContiguousTensor(const tensor::TensorPtr &input_tensor, dev
 
     contiguous_run_info->op_grad_info->input_value = {input_tensor};
     contiguous_run_info->op_grad_info->out_value = real_output;
-    PyBoost::DoGrad(contiguous_op, contiguous_run_info->op_grad_info, contiguous_run_info->async_status);
+    PyBoost::DoGrad(contiguous_op->clone_tensor(), contiguous_run_info->op_grad_info,
+                    contiguous_run_info->async_status);
   }
   return contiguous_tensor;
 }
@@ -1053,21 +1052,17 @@ py::object PyBoost::RunPyFunction(const PrimitivePtr &prim, const py::list &args
   return pynative_executor->RunOpStub(wrap_args);
 }
 
-void PyBoost::DoGrad(const kernel::pyboost::OpPtr &op, const OpGradInfoPtr &grad_info,
-                     const AsyncStatus &async_status) {
+void PyBoost::DoGrad(const TensorPtr &clone_tensor, const OpGradInfoPtr &grad_info, const AsyncStatus &async_status) {
   static const std::string kDoGradName = "DoGrad";
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kPyNativeFrontendTask,
                                      kDoGradName, false);
 
   const auto &pynative_executor = Common::GetPyNativeExecutor();
   const auto &forward = pynative_executor->forward_executor();
-  if (op->output_value_simple_info() == nullptr) {
-    MS_LOG(EXCEPTION) << "The simple info of " << op->primitive()->name() << " infer is null";
-  }
   MarkPyBoostInputs(grad_info);
-  if (op->clone_tensor() != nullptr) {
+  if (clone_tensor != nullptr) {
     grad_info->input_value[0] = PyNativeAlgo::Common::CreateFakeValueWithoutDeviceAddress(grad_info->input_value[0]);
-    grad_info->clone_value = op->clone_tensor();
+    grad_info->clone_value = clone_tensor;
   }
   forward->ForwardOpGradImpl(grad_info, async_status);
 }

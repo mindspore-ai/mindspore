@@ -29,7 +29,6 @@ std::make_shared<runtime::PyBoostDeviceTask>(
   }
 )
 );
-op->CreateOutputSimpleInfo();
 ProfileTrackerInput(${call_args});
 ProfileTrackerOutput(${return_values});
 return ${return_values};

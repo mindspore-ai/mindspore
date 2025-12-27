@@ -124,7 +124,7 @@ class FunctionsGenerator(BaseGenerator):
             f'#include "{K.MS_OPS_VIEW_PATH}/${{operator_name}}_strides_calc.h"\n'
         )
         self.clone_inplace_input_template = Template(
-            'GetCloneFunc()(op, prim::kPrim${class_name}, device_target, {${grad_args}});'
+            'auto clone_tensor = GetCloneFunc()(prim::kPrim${class_name}, device_target, {${grad_args}});'
         )
         self.create_aclnn_op_template = Template(
             'auto op = CREATE_PYBOOST_OP(${class_name}, device_target);'
@@ -283,7 +283,7 @@ class FunctionsGenerator(BaseGenerator):
             str: Formatted view or inplace first argument names.
         """
         if not is_inplace_op:
-            return ''
+            return 'TensorPtr clone_tensor = nullptr;'
         return self.clone_inplace_input_template.replace(class_name=class_name, grad_args=grad_args)
 
     def _get_clone_input_args(self, op_proto, has_type, with_optional):
