@@ -786,16 +786,15 @@ class LayerNorm(Cell):
 
 class LayerNormExt(Cell):
     r"""
-    Applies Layer Normalization over a mini-batch of inputs.
+    Layer normalization of the input mini-batch.
 
-    Layer Normalization is widely used in recurrent neural networks. It applies
-    normalization on a mini-batch of inputs for each single training case as described
-    in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_.
+    Layer Normalization applies normalization on a mini-batch of inputs for each single
+    training case as described in the paper `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_.
 
-    Unlike Batch Normalization, Layer Normalization performs exactly the same computation at training and
-    testing time. It is applied across all channels and pixel but only one batch size.
-    :math:`\gamma` is the scale value learned through training and :math:`\beta` is the shift value.
-    It can be described using the following formula:
+    Unlike Batch Normalization and Instance Normalization, which applies scalar scale and bias for 
+    each entire channel/plane with the affine option, Layer Normalization applies per-element scale 
+    and bias with elementwise_affine. :math:`\gamma` is the scale value learned through training 
+    and :math:`\beta` is the shift value. It can be described using the following formula:
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta
@@ -806,34 +805,33 @@ class LayerNormExt(Cell):
     Args:
         normalized_shape (Union(tuple[int], list[int], int)): The normalized shape of `x` for LayerNorm.
         eps (float, optional): A value added to the denominator for numerical stability( :math:`\epsilon` ).
-            Default: ``1e-5`` .
+            Default ``1e-5`` .
         elementwise_affine (bool, optional): Whether affine transformation is required.
-            When this parameter is set to ``True``,
-            the weight parameter is initialized to 1 and the offset is initialized to 0. Default: ``True``.
+            A boolean value that when set to True, 
+            this module has learnable per-element affine parameters initialized to ones (for weights) and zeros (for biases).
+            Default ``True``.
         bias (bool, optional): If set to ``False``, the layer will not learn an additive bias (only relevant if
-             `elementwise_affine` is ``True``). Default: ``True``.
-        dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default: ``None`` .
+             `elementwise_affine` is ``True``). Default ``True``.
+        dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default ``None`` .
 
     Inputs:
-        - **x** (Tensor) - The shape is :math:`(N, *)`, where :math:`*` is equal to normalized_shape.
+        - **x** (Tensor) - The last several dimensions of `x` should match the
+          `normalized_shape`. Its shape is generally :math:`(N, ..., *normalized\_shape)`.
 
     Outputs:
-        Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `x`.
-
-    Raises:
-        TypeError: If `eps` is not a float.
+        - **output** (Tensor) - the normalized and scaled offset tensor, has the same shape and data type as the `x`.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
+        >>> import mindspore
         >>> import numpy as np
-        >>> x = ms.Tensor(np.ones([20, 5, 10, 10]), ms.float32)
+        >>> x = mindspore.Tensor(np.ones([20, 5, 10, 10]), mindspore.float32)
         >>> shape1 = x.shape[1:]
-        >>> m = ms.nn.LayerNormExt(shape1)
-        >>> output = m(x).shape
-        >>> print(output)
+        >>> m = mindspore.nn.LayerNormExt(shape1)
+        >>> output = m(x)
+        >>> print(output.shape)
         (20, 5, 10, 10)
     """
 
