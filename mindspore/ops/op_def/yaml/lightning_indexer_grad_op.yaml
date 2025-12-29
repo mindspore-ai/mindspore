@@ -1,0 +1,44 @@
+#operator lightning_indexer_grad
+lightning_indexer_grad:
+  args:
+    query:
+      dtype: tensor
+    key:
+      dtype: tensor
+    dy:
+      dtype: tensor
+    sparse_indices:
+      dtype: tensor
+    weights:
+      dtype: tensor
+    actual_seq_lengths_query:
+      dtype: tensor
+      default: None
+    actual_seq_lengths_key:
+      dtype: tensor
+      default: None
+    layout_query:
+      dtype: int
+      default: "'BSND'"
+      arg_handler: str_to_enum
+    sparse_mode:
+      dtype: int
+      default: 3
+    pre_tokens:
+      dtype: int
+      default: 9223372036854775807
+    next_tokens:
+      dtype: int
+      default: 9223372036854775807
+  returns:
+    dq:
+      dtype: tensor
+    dk:
+      dtype: tensor
+    dw:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: LightningIndexerGradAscend

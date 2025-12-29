@@ -3999,5 +3999,48 @@ REG_BPROP_BUILDER("KLDiv").SetUnusedInputs({i4}).SetBody((BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("Generator").SetBody(ReturnZeros);
 
+REG_BPROP_BUILDER("LightningIndexer").FreeUselessValues_IO({i5}, {i1}).SetBody((BODYFUNC(ib) {
+  auto query = ib->GetInput(i0);
+  auto key = ib->GetInput(i1);
+  auto weights = ib->GetInput(i2);
+  auto actual_seq_lengths_query = ib->GetInput(i3);
+  auto actual_seq_lengths_key = ib->GetInput(i4);
+  auto block_table = ib->GetInput(i5);
+  auto layout_query = ib->GetInput(i6);
+  auto layout_key = ib->GetInput(i7);
+  auto sparse_count = ib->GetInput(i8);
+  auto sparse_mode = ib->GetInput(i9);
+  auto pre_tokens = ib->GetInput(i10);
+  auto next_tokens = ib->GetInput(i11);
+  auto return_value = ib->GetInput(i12);
+  auto out = ib->GetInput(i13);
+  auto dout = ib->GetInput(i14);
+
+  auto sparse_indices = ib->TupleGetItem(out, i0);
+  auto dy = ib->TupleGetItem(dout, i1);
+
+  auto ret =
+    ib->Emit("LightningIndexerGrad", {query, key, dy, sparse_indices, weights, actual_seq_lengths_query,
+                                      actual_seq_lengths_key, layout_query, sparse_mode, pre_tokens, next_tokens});
+
+  auto dq = ib->TupleGetItem(ret, i0);
+  auto dk = ib->TupleGetItem(ret, i1);
+  auto dw = ib->TupleGetItem(ret, i2);
+
+  return {dq,
+          dk,
+          dw,
+          ib->OutZeros(actual_seq_lengths_query),
+          ib->OutZeros(actual_seq_lengths_key),
+          ib->OutZeros(block_table),
+          ib->OutZeros(layout_query),
+          ib->OutZeros(layout_key),
+          ib->OutZeros(sparse_count),
+          ib->OutZeros(sparse_mode),
+          ib->OutZeros(pre_tokens),
+          ib->OutZeros(next_tokens),
+          ib->OutZeros(return_value)};
+}));
+
 REG_BPROP_BUILDERS_END
 }  // namespace mindspore::expander::bprop

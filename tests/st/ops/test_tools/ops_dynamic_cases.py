@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=global-variable-not-assigned
+# pylint: disable=f-string-without-interpolation
+# pylint: disable=possibly-used-before-assignment
+# pylint: disable=broad-exception-caught
+# pylint: disable=dangerous-default-value
 
 """utils for tesing op's dynamic shape rapidly"""
 
@@ -37,6 +42,7 @@ CASE_CONFIGS = [
     ["disable_grad", bool],
     ["disable_resize", bool],
     ["ignore_output_index", (int, list)],
+    ["ignore_grad_index", (int, list)],
 ]
 
 IR_LEVEL = 2
@@ -231,7 +237,7 @@ def remove_scalar_grad(grad):
     return grad
 
 
-def compare(expect, actual, grad, ignore_output_index):
+def compare(expect, actual, grad, ignore_output_index, ignore_grad_index):
     if not grad:
         compare_result(expect, actual, 'Forward', None, ignore_output_index)
     else:
@@ -244,7 +250,7 @@ def compare(expect, actual, grad, ignore_output_index):
         actual_grad = remove_scalar_grad(actual_grad)
 
         compare_result(expect_forward, actual_forward, 'Forward', None, ignore_output_index)
-        compare_result(expect_grad, actual_grad, 'Grad', None, ignore_output_index)
+        compare_result(expect_grad, actual_grad, 'Grad', None, ignore_grad_index)
 
 
 def compare_result(expect, actual, stage='', index=None, ignore_output_index=None):
@@ -381,6 +387,7 @@ def parse_case_configs(case_config):
     disable_grad = False
     disable_resize = False
     ignore_output_index = None
+    ignore_grad_index = None
 
     if case_config:
         for key, value in case_config.items():
@@ -396,9 +403,11 @@ def parse_case_configs(case_config):
                 disable_resize = value
             if key == "ignore_output_index":
                 ignore_output_index = [value,] if isinstance(value, int) else value
+            if key == "ignore_grad_index":
+                ignore_grad_index = [value,] if isinstance(value, int) else value
 
     return disable_input_check, disable_tensor_dynamic_type, disable_nontensor_dynamic_type, \
-           disable_grad, disable_resize, ignore_output_index
+           disable_grad, disable_resize, ignore_output_index, ignore_grad_index
 
 
 def run_in_dynamic_env(prim, inputs, dump_ir, ir_path, dynamic_type, grad, inplace_update):
@@ -570,13 +579,13 @@ def convert_nontensor_to_mutable(inputs, dynamic_type):
 
 
 def run_and_compare(prim, inputs, mode_name, dump_ir, prefix_dir, post_str, tensor_dynamic_type, expect,
-                    grad, ignore_output_index, inplace_update):
+                    grad, ignore_output_index, ignore_grad_index, inplace_update):
     ir_path = f"{prefix_dir}/{tensor_dynamic_type}_{post_str}"
     print(f"Start DynamicTest testing with [{mode_name}] [{tensor_dynamic_type}] [{post_str}]...")
     out_actual = run_in_dynamic_env(
         prim, inputs, dump_ir, ir_path, tensor_dynamic_type, grad, inplace_update)
 
-    compare(expect, out_actual, grad, ignore_output_index)
+    compare(expect, out_actual, grad, ignore_output_index, ignore_grad_index)
     print("End")
 
 
@@ -631,7 +640,8 @@ def get_dynamic_type(disable_tensor_dynamic_type, disable_nontensor_dynamic_type
 
 
 def run_with_dynamic(prim, inputs_seq, mode_name, disable_tensor_dynamic_type, disable_nontensor_dynamic_type, grad,
-                     dump_ir, prefix_name, expect, expect_second, ignore_output_index, inplace_update):
+                     dump_ir, prefix_name, expect, expect_second, ignore_output_index, ignore_grad_index,
+                     inplace_update):
     """run_with_dynamic"""
     tensor_dynamic_type, nontensor_dynamic_type = get_dynamic_type(disable_tensor_dynamic_type,
                                                                    disable_nontensor_dynamic_type)
@@ -650,7 +660,7 @@ def run_with_dynamic(prim, inputs_seq, mode_name, disable_tensor_dynamic_type, d
         for item in tensor_dynamic_type:
             set_debug_status_info(mode_name, item, 'None')
             run_and_compare(prim, inputs_seq[0], mode_name, dump_ir, prefix_name, 'None', item, expect,
-                            grad, ignore_output_index, inplace_update)
+                            grad, ignore_output_index, ignore_grad_index, inplace_update)
 
     # Test dynamic nontensor
     has_scalar_only = is_has_scalar_only(inputs_seq[0])
@@ -664,14 +674,14 @@ def run_with_dynamic(prim, inputs_seq, mode_name, disable_tensor_dynamic_type, d
         for item in tensor_dynamic_type:
             set_debug_status_info(mode_name, item, 'STATIC_LEN')
             run_and_compare(prim, inputs_new, mode_name, dump_ir, prefix_name, 'VARIABLE_NONTENSOR_STATIC_LEN',
-                            item, expect, grad, ignore_output_index, inplace_update)
+                            item, expect, grad, ignore_output_index, ignore_grad_index, inplace_update)
 
     if 'MUTABLE_LEN' in nontensor_dynamic_type and not has_scalar_only:
         inputs_new = convert_nontensor_to_mutable(inputs_seq[0], 'MUTABLE_LEN')
         for item in tensor_dynamic_type:
             set_debug_status_info(mode_name, item, 'MUTABLE_LEN')
             run_and_compare(prim, inputs_new, mode_name, dump_ir, prefix_name, 'VARIABLE_NONTENSOR_MUTABLE_LEN',
-                            item, expect, grad, ignore_output_index, inplace_update)
+                            item, expect, grad, ignore_output_index, ignore_grad_index, inplace_update)
 
 
 def get_name_by_op(prim):
@@ -811,7 +821,7 @@ def TEST_OP_DYNAMIC(op, inputs_seq, *, disable_mode=[], case_config=None, inplac
     check_args(inputs_seq, disable_mode, case_config, inplace_update, dump_ir, debug_info, debug_level)
 
     disable_input_check, disable_tensor_dynamic_type, disable_nontensor_dynamic_type, disable_grad, disable_resize, \
-    ignore_output_index = parse_case_configs(case_config)
+    ignore_output_index, ignore_grad_index = parse_case_configs(case_config)
 
     global JIT_CONFIG
     global ENABLE_DEBUG_INFO
@@ -888,7 +898,7 @@ def TEST_OP_DYNAMIC(op, inputs_seq, *, disable_mode=[], case_config=None, inplac
             # step 2: run in dynamic mode and compare results
             run_with_dynamic(op, inputs_seq, mode_name, disable_tensor_dynamic_type, disable_nontensor_dynamic_type,
                              grad, dump_ir, ir_dir_path, out_expect, out_expect_second, ignore_output_index,
-                             inplace_update)
+                             ignore_grad_index, inplace_update)
         except Exception as error:
             error_status_log()
             raise error

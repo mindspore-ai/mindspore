@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+#pylint: disable=f-string-without-interpolation
 """Tensor method for overload."""
 
 from mindspore import _checkparam as validator
@@ -1979,6 +1980,11 @@ def tensor_masked_scatter(input, mask, source):
 def tensor_inplace_masked_scatter(input, mask, source):
     return F.inplace_masked_scatter(input, mask, source)
 
+
+def tensor_lightning_indexer(query, key, weights, *, actual_seq_lengths_query=None, actual_seq_lengths_key=None,
+                             block_table=None, layout_query="BSND", layout_key="BSND", sparse_count=2048, sparse_mode=3,
+                             pre_tokens=9223372036854775807, next_tokens=9223372036854775807, return_value=False):
+    raise NotImplementedError("lightning_indexer only supports Ascend.")
 
 def tensor_broadcast_to(x, shape):
     return F.broadcast_to(x, shape)

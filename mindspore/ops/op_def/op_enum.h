@@ -60,7 +60,8 @@ enum FASInputLayoutMode : int64_t {
   TH = 5,
   NSD = 6,
   SH = 7,
-  BNSD_BSND = 8
+  BNSD_BSND = 8,
+  PA_BSND = 9,
 };
 
 enum PagedAttentionKVCacheQuantMode : int64_t { DEFAULT = 0, PERTOKEN = 1 };

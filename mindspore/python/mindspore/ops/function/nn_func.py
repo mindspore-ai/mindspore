@@ -12,6 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+# pylint: disable=consider-using-from-import
+# pylint: disable=f-string-without-interpolation
+# pylint: disable=consider-using-generator
+# pylint: disable=unnecessary-comprehension
+# pylint: disable=unused-import
 
 """Defines nn operators with functional form."""
 from __future__ import absolute_import
@@ -29,6 +34,7 @@ import mindspore.common.dtype as mstype
 from mindspore.ops.function.math_func import logsumexp, div
 from mindspore.ops.function.random_func import _get_seed, _set_prim_op_user_data
 from mindspore.ops.functional_overload import conv2d as conv2d_op
+from mindspore.ops.functional_overload import lightning_indexer
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import TensorPy as Tensor_
 from mindspore.ops._primitive_cache import _get_cache_prim
@@ -9444,5 +9450,6 @@ __all__ = [
     'group_norm',
     'rms_norm',
     'add_rms_norm',
+    'lightning_indexer',
 ]
 __all__.sort()

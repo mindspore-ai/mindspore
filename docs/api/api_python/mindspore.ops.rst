@@ -530,6 +530,7 @@ Reduction函数
     mindspore.ops.group_norm
     mindspore.ops.incre_flash_attention
     mindspore.ops.layer_norm
+    mindspore.ops.lightning_indexer
     mindspore.ops.lp_pool1d
     mindspore.ops.lp_pool2d
     mindspore.ops.lrn
