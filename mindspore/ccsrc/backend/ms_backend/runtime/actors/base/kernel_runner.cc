@@ -1827,7 +1827,8 @@ void KernelRunner::ProcessMultiStreamBeforeKernelLaunch(OpContext<KernelTensor> 
 
 void KernelRunner::ProcessMultiStreamAfterKernelLaunch(OpContext<KernelTensor> *const context) {
   auto stream_id = kernel_info_->stream_id();
-  if (stream_id != kDefaultStreamIndex) {
+  // Record event when op is not in default stream and not in multi stream case.
+  if (stream_id != kDefaultStreamIndex && !kernel_->HasAttr(kAttrStreamId)) {
     for (const auto &workspace_kernel_tensor : workspace_kernel_tensors_) {
       cross_stream_addresses_.emplace_back(kDefaultStreamIndex, workspace_kernel_tensor->device_ptr());
     }
