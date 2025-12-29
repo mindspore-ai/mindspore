@@ -24,7 +24,7 @@
 #include "tile.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "Eigen/Core"
 #include "base/bfloat16.h"
 #include "utils/atomic_op.h"

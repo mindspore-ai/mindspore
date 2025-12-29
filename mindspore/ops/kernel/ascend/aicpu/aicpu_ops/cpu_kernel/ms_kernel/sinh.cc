@@ -21,7 +21,7 @@
 #include <complex>
 #include <vector>
 #include "inc/kernel_log.h"
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "cpu_types.h"
 #include "utils/kernel_util.h"
 

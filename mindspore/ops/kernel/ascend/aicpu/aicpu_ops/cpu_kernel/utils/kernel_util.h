@@ -28,7 +28,7 @@
 
 #include "inc/cpu_context.h"
 #include "inc/kernel_log.h"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 
 namespace aicpu {
 constexpr uint32_t kResvCpuNum = 2;

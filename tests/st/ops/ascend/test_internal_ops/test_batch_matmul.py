@@ -58,7 +58,7 @@ def _test_batch_matmul(m, k, n, b0=0, b1=0, trans_a=False, trans_b=False, mstype
         raise ValueError("this is batch matmul testcase, b can't be 0")
 
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
     if ms.float16 == mstype:

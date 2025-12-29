@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "inc/ms_cpu_kernel.h"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 
 namespace aicpu {
 class IndexFillCpuKernel : public CpuKernel {

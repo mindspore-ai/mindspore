@@ -132,7 +132,7 @@ def test_reshape_and_cache_net(np_dtype, mode):
     Expectation: Assert that results are consistent with numpy.
     """
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     context.set_context(device_target="Ascend", mode=mode)
     context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
 

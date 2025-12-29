@@ -30,7 +30,7 @@ class MsprofCmdTool:
 
     _MSPROF_CMD = "msprof"
     _ASCEND_MARK = "Ascend"
-    _HIAI_MSPROF_TAIL = "Ascend/latest/tools/profiler/bin"
+    _HIAI_MSPROF_TAIL = "Ascend/cann/tools/profiler/bin"
     _MSPROF_PY_PATH = "tools/profiler/profiler_tool/analysis/msprof/msprof.py"
     _MSPROF_INFO_PATH = "tools/profiler/profiler_tool/analysis/interface/get_msprof_info.py"
 

@@ -21,7 +21,7 @@
 #include <iostream>
 #include <utility>
 #include "common/kernel_errcode.h"
-#include "toolchain/slog.h"
+#include "base/dlog_pub.h"
 
 inline int64_t GetTid(void) {
   thread_local static const int64_t tid = syscall(__NR_gettid);
@@ -45,7 +45,7 @@ namespace aicpu {
   dlog_error(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
              ##__VA_ARGS__)
 #define AICPU_LOGEVENT(fmt, ...)                                                                              \
-  dlog_event(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
+  dlog_info(AICPU_MODULE_NAME, "[%s][%s:%d][tid:%lu]:" fmt, KERNEL_MODULE, __FUNCTION__, __LINE__, GetTid(), \
              ##__VA_ARGS__)
 
 #define AICPU_CHK_STATUS_RET(expr...)        \

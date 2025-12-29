@@ -23,10 +23,10 @@
 #include <vector>
 
 #include "Eigen/Core"
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "iostream"
 #include "inc/kernel_log.h"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/kernel_util.h"
 namespace {

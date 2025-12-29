@@ -605,18 +605,32 @@ class CustomInfoGenerator:
         with open(file_path, 'r') as file:
             content = file.read()
 
-            start_marker = "aclnnStatus " + self.prefix_op_name + "GetWorkspaceSize("
+            func_marker = self.prefix_op_name + "GetWorkspaceSize("
             end_marker = ");"
 
-            start_pos = content.find(start_marker)
-            if start_pos == -1:
-                raise ValueError(f"Can not find function [{start_marker}] in file [{file_path}]")
+            start_pos = 0
+            func_pos = -1
+            while True:
+                func_pos = content.find(func_marker, start_pos)
+                if func_pos == -1:
+                    break
 
-            end_pos = content.find(end_marker, start_pos)
+                if re.search(r'(\s+|\n|^)\baclnnStatus\b\s*$', content[:func_pos]):
+                    break
+
+                start_pos = func_pos + 1
+
+            if func_pos == -1:
+                raise ValueError(
+                    f"Can not find 'aclnnStatus' followed by function "
+                    f"[{func_marker}] in file [{file_path}]"
+                )
+
+            end_pos = content.find(end_marker, func_pos)
             if end_pos == -1:
                 raise ValueError(f"Can not find function [{start_marker}] in file [{file_path}]")
 
-            self.aclnn_api = content[start_pos:end_pos + len(end_marker)]
+            self.aclnn_api = content[func_pos:end_pos + len(end_marker)]
             return True
 
     def _get_aclnn_api_params(self):
@@ -641,8 +655,7 @@ class CustomInfoGenerator:
                 aclnn_api_file_path = os.path.join(opp_vendors_path, priority.strip(), "op_api/include/")
                 if self._get_aclnn_api_from_file(aclnn_api_file_path):
                     return
-        aclnn_api_file_path = os.path.join(self.env_ascend_opp_path,
-                                           "built-in/op_impl/ai_core/tbe/op_api/include/aclnnop")
+        aclnn_api_file_path = os.path.join(self.env_ascend_opp_path, "../include/aclnnop")
         if self._get_aclnn_api_from_file(aclnn_api_file_path):
             return
 
@@ -753,13 +766,13 @@ class CustomInfoGenerator:
         """
 
         soc_version = MSContext.get_instance().get_ascend_soc_version()
-        op_info_json = f"aic-{soc_version}-ops-info.json"
-        op_info_json_path = os.path.join("op_impl/ai_core/tbe/config", soc_version, op_info_json)
+        op_info_json_prefix = f"aic-{soc_version}-ops-info"
+        op_info_json_subdir = os.path.join("op_impl/ai_core/tbe/config", soc_version)
 
         if self.env_ascend_custom_opp_path is not None:
             custom_opp_paths = self.env_ascend_custom_opp_path.split(":")
             for custom_opp_path in custom_opp_paths:
-                op_info_path = os.path.join(custom_opp_path, op_info_json_path)
+                op_info_path = os.path.join(custom_opp_path, op_info_json_subdir, f"{op_info_json_prefix}.json")
                 if self._get_op_info_from_file(op_info_path):
                     return
 
@@ -768,12 +781,17 @@ class CustomInfoGenerator:
         if os.path.exists(opp_vendors_config_path):
             priorities = CustomInfoGenerator._parse_load_priority(opp_vendors_config_path)
             for priority in priorities:
-                op_info_path = os.path.join(opp_vendors_path, priority.strip(), op_info_json_path)
+                op_info_path = os.path.join(opp_vendors_path, priority.strip(), op_info_json_subdir,
+                                            f"{op_info_json_prefix}.json")
                 if self._get_op_info_from_file(op_info_path):
                     return
-        opp_info_path = os.path.join(self.env_ascend_opp_path, "built-in", op_info_json_path)
-        if self._get_op_info_from_file(opp_info_path):
-            return
+
+        builtin_dir = os.path.join(self.env_ascend_opp_path, "built-in", op_info_json_subdir)
+        for fname in os.listdir(builtin_dir):
+            if fname.startswith(op_info_json_prefix) and fname.endswith(".json"):
+                op_info_path = os.path.join(builtin_dir, fname)
+                if self._get_op_info_from_file(op_info_path):
+                    return
 
         paths = ",".join(str(item) for item in self.op_info_paths)
         raise RuntimeError(f"Cannot find operator [{self.pure_op_name}] in JSON files [{paths}]")

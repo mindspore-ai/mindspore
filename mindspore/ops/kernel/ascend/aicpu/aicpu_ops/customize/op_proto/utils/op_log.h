@@ -28,7 +28,7 @@
 
 #define LOG_CPP
 #if !defined(__ANDROID__) && !defined(ANDROID)
-#include "toolchain/slog.h"
+#include "base/dlog_pub.h"
 #else
 #include <utils/Log.h>
 #endif
@@ -196,7 +196,7 @@ std::string TbeGetOpType(const T &op) {
 #define D_OP_LOGW(opname, fmt, ...) OpLogSub(OP, DLOG_WARN, opname, fmt, ##__VA_ARGS__)
 #define D_OP_LOGE(opname, fmt, ...) OpLogSub(OP, DLOG_ERROR, opname, fmt, ##__VA_ARGS__)
 #define D_OP_LOGD(opname, fmt, ...) OpLogSub(OP, DLOG_DEBUG, opname, fmt, ##__VA_ARGS__)
-#define D_OP_EVENT(opname, fmt, ...) OpLogSub(OP, DLOG_EVENT, opname, fmt, ##__VA_ARGS__)
+#define D_OP_EVENT(opname, fmt, ...) OpLogSub(OP, DLOG_INFO, opname, fmt, ##__VA_ARGS__)
 #define GE_D_OP_LOGI(opname, fmt, ...) OpLogSub(GE, DLOG_INFO, opname, fmt, ##__VA_ARGS__)
 #define GE_D_OP_LOGW(opname, fmt, ...) OpLogSub(GE, DLOG_WARN, opname, fmt, ##__VA_ARGS__)
 #define GE_D_OP_LOGE(opname, fmt, ...) OpLogSub(GE, DLOG_ERROR, opname, fmt, ##__VA_ARGS__)

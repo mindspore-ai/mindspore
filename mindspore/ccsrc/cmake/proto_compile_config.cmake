@@ -29,11 +29,6 @@ if(ENABLE_DEBUGGER)
         "tools/data_dump/debugger/debug_graph.proto"
     )
     ms_protobuf_generate(DEBUGGER_PROTO_SRCS DEBUGGER_PROTO_HDRS ${DEBUGGER_PROTO_LIST})
-    if(ENABLE_D)
-        file(GLOB_RECURSE DUMP_DATA_PROTO_LIST FOLLOW_SYMLINKS "${ASCEND_PATH}/latest/include/proto/dump_data.proto")
-        ms_protobuf_generate(DUMP_DATA_PROTO_SRCS DUMP_DATA_PROTO_HDRS ${DUMP_DATA_PROTO_LIST})
-        list(APPEND MINDSPORE_PROTO_LIST ${DUMP_DATA_PROTO_SRCS})
-    endif()
     list(APPEND MINDSPORE_PROTO_LIST ${DEBUGGER_PROTO_SRCS})
 endif()
 

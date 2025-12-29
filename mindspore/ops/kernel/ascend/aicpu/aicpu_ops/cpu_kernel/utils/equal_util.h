@@ -16,7 +16,7 @@
 #ifndef AICPU_UTILS_EQUAL_UTIL_H
 #define AICPU_UTILS_EQUAL_UTIL_H
 
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "utils/bcast.h"
 
 namespace aicpu {

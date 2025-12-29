@@ -18,7 +18,7 @@
 #include "common/kernel_errcode.h"
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/kernel_util.h"
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "cpu_kernel/utils/fft_helper.h"
 #include "mindapi/base/types.h"
 #include "base/bfloat16.h"

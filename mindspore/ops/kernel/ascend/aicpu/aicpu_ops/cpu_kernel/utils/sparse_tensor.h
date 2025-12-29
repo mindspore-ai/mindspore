@@ -28,10 +28,10 @@ Additional modifications made by Huawei Technologies Co., Ltd in 2020-2022.
 #include "cpu_tensor.h"
 #include "cpu_kernel/utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "inc/kernel_log.h"
 #include "cpu_kernel/utils/sparse_group.h"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 
 namespace aicpu {
 template <typename T>

@@ -23,9 +23,9 @@
 #include <memory>
 #include "kernel/ascend/aicpu/aicpu_util.h"
 #include "include/utils/contract.h"
-#include "cce/fwk_adpt_struct.h"
+#include "aicpu/fwk_adpt_struct.h"
 #include "external/graph/types.h"
-#include "cce/aicpu_engine_struct.h"
+#include "aicpu/aicpu_engine_struct.h"
 
 namespace mindspore {
 namespace device {

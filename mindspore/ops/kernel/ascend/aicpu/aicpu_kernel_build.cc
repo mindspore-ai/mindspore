@@ -30,9 +30,9 @@
 #include "kernel/ascend/aicpu/aicpu_util.h"
 #include "kernel/ascend/aicpu/aicpu_kernel_load.h"
 #include "include/utils/kernel_base/common_utils.h"
-#include "cce/fwk_adpt_struct.h"
+#include "aicpu/fwk_adpt_struct.h"
 #include "external/graph/types.h"
-#include "cce/aicpu_engine_struct.h"
+#include "aicpu/aicpu_engine_struct.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
 
 namespace mindspore {

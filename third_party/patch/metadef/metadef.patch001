@@ -1,0 +1,13 @@
+diff --git a/inc/common/opskernel/ops_kernel_builder.h b/inc/common/opskernel/ops_kernel_builder.h
+index 4213f276f..f7c4ac3e2 100644
+--- a/inc/common/opskernel/ops_kernel_builder.h
++++ b/inc/common/opskernel/ops_kernel_builder.h
+@@ -11,7 +11,7 @@
+ #define INC_COMMON_OPSKERNEL_OPS_KERNEL_BUILDER_H_
+ 
+ #include "external/ge_common/ge_api_error_codes.h"
+-#include "cce/aicpu_engine_struct.h"
++#include "aicpu/aicpu_engine_struct.h"
+ #include "common/opskernel/ops_kernel_info_types.h"
+ #include "graph/node.h"
+ #include "external/ge_common/ge_api_types.h"

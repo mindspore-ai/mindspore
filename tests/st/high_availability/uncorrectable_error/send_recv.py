@@ -19,48 +19,35 @@ import numpy as np
 import mindspore as ms
 from mindspore import nn, ops, Tensor, Parameter
 from mindspore._c_expression import send_recv
-from mindspore.communication import init
+from mindspore.communication import init, get_rank
 
-class SendNet(nn.Cell):
+
+class Net(nn.Cell):
     def __init__(self):
         super().__init__()
-        self.depend = ops.Depend()
-        self.send = ops.Send(sr_tag=0, dest_rank=1, group="hccl_world_group")
-        self.param = Parameter(Tensor(np.ones([2, 8], dtype=np.float32) * 3), name='param_send')
+        val = 2 if get_rank() == 0 else 3
+        self.param = Parameter(Tensor(np.ones([2, 8], dtype=np.float32) * val), name='param')
 
     def construct(self, x):
-        out = self.depend(x + self.param, self.send(x))
+        out = self.param + x
+        self.param = out
         return out
 
-class ReceiveNet(nn.Cell):
-    def __init__(self):
-        super().__init__()
-        self.recv = ops.Receive(sr_tag=0, src_rank=0, shape=[2, 8], dtype=ms.float32, group="hccl_world_group")
-        self.param = Parameter(Tensor(np.ones([2, 8], dtype=np.float32) * 2), name='param_recv')
-
-    def construct(self):
-        out = self.recv()
-        return out + self.param
-
 init()
-ms.set_context(mode=ms.GRAPH_MODE, jit_level='O2')
+ms.set_context(mode=ms.GRAPH_MODE, jit_level='O0')
 
 if __name__ == '__main__':
-    rank_id = os.environ['RANK_ID']
     rank_size = os.environ['RANK_SIZE']
 
-    print(f'rank_id={rank_id}/{rank_size}')
+    print(f'rank_id={get_rank()}/{rank_size}')
+    input_x = Tensor(np.arange(0, 16, dtype=np.float32).reshape(2, 8))
+    net = Net()
+    out = net(input_x)
 
-    if rank_id == '0':
-        input_x = Tensor(np.arange(0, 16, dtype=np.float32).reshape(2, 8))
-        net_send = SendNet()
-        output_send = net_send(input_x)
-        print(output_send.asnumpy().shape)
-        send_recv([input_x, net_send.param], src_rank=1, dst_rank=0)
-        print('send net param:', net_send.param.value())
-    else:
-        net_recv = ReceiveNet()
-        output_recv = net_recv()
-        print(output_recv.asnumpy().shape)
-        send_recv([output_recv, net_recv.param], src_rank=1, dst_rank=0)
-        print('recv net param:', net_recv.param.value())
+    tag = 'send' if get_rank() == 0 else 'recv'
+    print(f'param before {tag} {out.asnumpy()}', flush=True)
+
+    send_recv([net.param], src_rank=0, dst_rank=1)
+    print(f'param after {tag} {net.param.asnumpy()}', flush=True)
+
+    assert(np.allclose(out.asnumpy(), net.param.asnumpy() + get_rank()))

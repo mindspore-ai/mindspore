@@ -52,14 +52,21 @@ std::string GetAscendPath() {
     return "";
   }
   auto path_tmp = std::string(info.dli_fname);
+  const std::string kCann = "cann";
   const std::string kLatest = "latest";
-  auto pos = path_tmp.rfind(kLatest);
-  if (pos == std::string::npos) {
+  auto posCann = path_tmp.rfind(kCann);
+  auto posLatest = path_tmp.rfind(kLatest);
+  if (posCann != std::string::npos) {
+    return path_tmp.substr(0, posCann) + kCann + "/";
+  } else if (posLatest != std::string::npos) {
+    return path_tmp.substr(0, posLatest) + kLatest + "/";
+  } else {
     MS_EXCEPTION(ValueError)
-      << "Get ascend path failed, please check whether CANN packages are installed correctly, \n"
-         "and environment variables are set by source ${LOCAL_ASCEND}/ascend-toolkit/set_env.sh.";
+      << "Get ascend path from aclrtMalloc path " << path_tmp
+      << " failed, please check whether CANN packages are \n"
+         "installed correctly, and environment variables are set by source ${LOCAL_ASCEND}/cann/set_env.sh.";
   }
-  return path_tmp.substr(0, pos) + kLatest + "/";
+  return "";
 }
 
 void LoadAscendApiSymbols() {

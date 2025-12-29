@@ -108,7 +108,7 @@ class GPUEnvChecker(EnvChecker):
             version_match = True
         if not version_match:
             if self.v == "0":
-                logger.warning("Can not found cuda libs. Please confirm that the correct "
+                logger.warning("Cannot find cuda libs. Please confirm that the correct "
                                "cuda version has been installed. Refer to the "
                                "installation guidelines: https://www.mindspore.cn/install")
             else:
@@ -255,7 +255,7 @@ class GPUEnvChecker(EnvChecker):
 
     def _read_version(self, file_path):
         """Get gpu version info in version.txt."""
-        with open(file_path, 'r') as f:  # pylint: disable=W1514
+        with open(file_path, 'r', encoding='utf-8') as f:
             all_info = f.readlines()
             for line in all_info:
                 if line.startswith("CUDA Version"):
@@ -269,24 +269,22 @@ class AscendEnvChecker(EnvChecker):
 
     def __init__(self, library_path):
         self.library_path = library_path
-        self.version = ["7.8", "8.2", "8.3"]
+        self.version = ["8.5"]
 
         # env
         self.path = os.getenv("PATH")
         self.python_path = os.getenv("PYTHONPATH")
         self.ld_lib_path = os.getenv("LD_LIBRARY_PATH")
         self.ascend_opp_path = os.getenv("ASCEND_OPP_PATH")
-        self.ascend_aicpu_path = os.getenv("ASCEND_AICPU_PATH")
-        if self.ascend_opp_path is not None:
-            self.compiler_version = self.ascend_opp_path.split("opp")[0] + "compiler/version.info"
+        self.ascend_home_path = os.getenv("ASCEND_HOME_PATH")
+        if self.ascend_home_path is not None:
+            self.compiler_version = self.ascend_home_path + "/compiler/version.info"
         else:
             self.compiler_version = ""
         # check content
-        self.path_check = "/compiler/ccec_compiler/bin"
         self.python_path_check = "opp/built-in/op_impl/ai_core/tbe"
         self.ld_lib_path_check_fwk = "/lib64"
-        self.ascend_opp_path_check = "/op"
-        self.ascend_opp_kernel_path_check = "/opp_kernel"
+        self.ascend_opp_path_check = "/opp"
         self.v = ""
 
     def check_custom_version(self):
@@ -298,7 +296,7 @@ class AscendEnvChecker(EnvChecker):
         cur_version = self._read_version(self.compiler_version)
         custom_version_path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                                            "../lib/plugin/ascend/custom_ascendc_910b/version.info")
-        with open(custom_version_path, 'r', encoding="utf-8") as f:
+        with open(custom_version_path, 'r', encoding='utf-8') as f:
             all_info = f.readlines()
             for line in all_info:
                 full_version = line.strip().split("=")[1]
@@ -350,7 +348,7 @@ class AscendEnvChecker(EnvChecker):
         # pylint: disable=broad-except
         except Exception as e:
             logger.error(f"CheckFailed: {e}")
-            logger.critical("MindSpore relies on whl packages of \"te\" in the \"latest\" folder of the "
+            logger.critical("MindSpore relies on whl package \"te\" in "
                             "Ascend AI software package (Ascend Data Center Solution). Please check whether they are "
                             "installed correctly or not, refer to the match info on: https://www.mindspore.cn/install")
         if attention_warning:
@@ -386,31 +384,26 @@ class AscendEnvChecker(EnvChecker):
 
     def _check_env(self):
         """ascend dependence path check"""
-        if self.path is None or self.path_check not in self.path:
-            logger.warning("Can not find ccec_compiler(need by mindspore-ascend). Please check whether the Environment "
-                           "Variable PATH is set. For details, refer to the installation guidelines: "
-                           "https://www.mindspore.cn/install")
-
         if self.python_path is None or self.python_path_check not in self.python_path:
             logger.warning(
-                "Can not find the tbe operator implementation(need by mindspore-ascend). Please check whether the "
+                "Cannot find the tbe operator implementation(need by mindspore-ascend). Please check whether the "
                 "Environment Variable PYTHONPATH is set. For details, refer to the installation guidelines: "
                 "https://www.mindspore.cn/install")
 
         if self.ld_lib_path is None or self.ld_lib_path_check_fwk not in self.ld_lib_path:
-            logger.warning("Can not find driver so(need by mindspore-ascend). Please check whether the "
+            logger.warning("Cannot find driver so(need by mindspore-ascend). Please check whether the "
                            "Environment Variable LD_LIBRARY_PATH is set. For details, refer to the installation "
                            "guidelines: https://www.mindspore.cn/install")
 
         if self.ascend_opp_path is None or self.ascend_opp_path_check not in self.ascend_opp_path:
             logger.warning(
-                "Can not find opp path (need by mindspore-ascend). Please check whether the Environment Variable "
+                "Cannot find opp path (need by mindspore-ascend). Please check whether the Environment Variable "
                 "ASCEND_OPP_PATH is set. For details, refer to the installation guidelines: "
                 "https://www.mindspore.cn/install")
 
     def _read_version(self, file_path):
         """get ascend version info"""
-        with open(file_path, 'r', encoding="utf-8") as f:
+        with open(file_path, 'r', encoding='utf-8') as f:
             all_info = f.readlines()
             for line in all_info:
                 if line.startswith("Version="):

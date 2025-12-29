@@ -74,7 +74,7 @@ using AsdFftExecFunc = int (*)(asdFftHandle handle, aclTensor *input, aclTensor 
 
 inline std::string GetAsdSipLibPath() {
   auto ascend_path = mindspore::device::ascend::GetAscendPath();
-  return ascend_path + "/../../nnal/asdsip/latest/lib/libasdsip.so";
+  return ascend_path + "/../nnal/asdsip/latest/lib/libasdsip.so";
 }
 
 inline uint64_t HashFFTParam(const FFTParam &param) {

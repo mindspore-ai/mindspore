@@ -21,7 +21,7 @@
 #include "include/securec.h"
 #include "cpu_types.h"
 #include "inc/kernel_log.h"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 #include "utils/broadcast_iterator.h"
 #include "utils/kernel_util.h"
 

@@ -18,8 +18,8 @@
 #include <string>
 #include <cstdint>
 
-#include "experiment/ascend_hal/driver/ascend_hal_error.h"
-#include "experiment/ascend_hal/driver/ascend_hal_define.h"
+#include "driver/ascend_hal_error.h"
+#include "driver/ascend_hal_define.h"
 #include "utils/dlopen_macro.h"
 #include "runtime/base_type.h"
 

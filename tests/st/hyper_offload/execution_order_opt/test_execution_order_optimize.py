@@ -65,7 +65,6 @@ def test_net_base():
     assert max_memory < 160
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_parameter():
     """
     Feature: Hyper offload auto optimize with execution order.

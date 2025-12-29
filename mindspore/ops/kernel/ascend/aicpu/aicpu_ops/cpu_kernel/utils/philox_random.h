@@ -23,7 +23,7 @@
 #include <random>
 #include <array>
 #include <stdint.h>
-#include "context/common/status.h"
+#include "context/utils/status.h"
 
 namespace aicpu {
 namespace random {

@@ -24,7 +24,7 @@
 #include "inc/ms_cpu_kernel.h"
 #include "inc/kernel_log.h"
 #include "securec.h"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 #include "utils/bcast.h"
 
 namespace aicpu {

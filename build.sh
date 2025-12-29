@@ -42,6 +42,7 @@ check_on_off()
 update_submodule()
 {
   git submodule update --init metadef
+  cd metadef && git apply ../third_party/patch/metadef/metadef.patch001 2> /dev/null || true
 }
 
 build_exit()

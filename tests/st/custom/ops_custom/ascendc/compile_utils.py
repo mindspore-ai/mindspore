@@ -23,10 +23,10 @@ import subprocess
 def compile_custom_run(workspace_dir):
     if "PATH" in os.environ:
         current_value = os.environ["PATH"]
-        new_value = current_value + ':/usr/local/Ascend/latest/compiler/bin'
+        new_value = current_value + ':/usr/local/Ascend/cann/compiler/bin'
 
     else:
-        new_value = '/usr/local/Ascend/latest/compiler/bin'
+        new_value = '/usr/local/Ascend/cann/compiler/bin'
     os.environ["PATH"] = new_value
     ms_path = ms.__file__
     ms_dir_path, _ = os.path.split(ms_path)

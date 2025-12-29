@@ -23,7 +23,7 @@
 #include "unsupported/Eigen/CXX11/Tensor"
 
 #include "utils/kernel_util.h"
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "include/securec.h"
 #include "inc/kernel_log.h"
 

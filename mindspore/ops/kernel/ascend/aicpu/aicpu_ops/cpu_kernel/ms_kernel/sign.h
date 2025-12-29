@@ -17,7 +17,7 @@
 #define AICPU_KERNELS_NORMALIZED_SIGN_H
 
 #include "inc/ms_cpu_kernel.h"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 
 namespace aicpu {
 class SignCpuKernel : public CpuKernel {

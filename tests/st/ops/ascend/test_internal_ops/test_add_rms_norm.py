@@ -53,7 +53,7 @@ class Add_RmsNorm(nn.Cell):
 def _test_add_rmsnorm_fusion(shape, dtype, internal_kernel, with_cast=False, with_quant=False, is_dynamic=False):
     np.random.seed(0)
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     infer_boost = "on" if internal_kernel else "off"
     context.set_context(mode=0, device_target="Ascend",
                         enable_graph_kernel=False)

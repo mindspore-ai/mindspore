@@ -55,7 +55,7 @@ def compare(out, expect, dtype):
 
 def matmul(m, k, n, trans_a=False, trans_b=False, with_bias=False, mstype=ms.float16, is_dyn=False, profiling=False):
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
 

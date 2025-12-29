@@ -42,7 +42,7 @@ def _test_add_rmsnorm_fusion():
 
     np.random.seed(0)
     if "ASCEND_HOME_PATH" not in os.environ:
-        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/latest"
+        os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
     context.set_context(mode=0, device_target="Ascend",
                         enable_graph_kernel=False)
     context.set_context(

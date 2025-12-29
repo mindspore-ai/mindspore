@@ -16,9 +16,9 @@
 #include "geqrf.h"
 #include <cmath>
 #include <complex>
-#include "context/inc/cpu_kernel_utils.h"
+#include "context/common/cpu_kernel_utils.h"
 #include "inc/kernel_log.h"
-#include "context/common/status.h"
+#include "context/utils/status.h"
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
