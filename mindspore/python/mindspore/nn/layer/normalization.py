@@ -808,7 +808,8 @@ class LayerNormExt(Cell):
             Default ``1e-5`` .
         elementwise_affine (bool, optional): Whether affine transformation is required.
             A boolean value that when set to True, 
-            this module has learnable per-element affine parameters initialized to ones (for weights) and zeros (for biases).
+            this module has learnable per-element affine parameters initialized
+            to ones (for weights) and zeros (for biases).
             Default ``True``.
         bias (bool, optional): If set to ``False``, the layer will not learn an additive bias (only relevant if
              `elementwise_affine` is ``True``). Default ``True``.

@@ -376,10 +376,12 @@ class GroupNorm(Cell):
         - **input** (Tensor) - :math:`(N, C, *)`, where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        - **output** (Tensor) - the normalized and scaled offset tensor, has the same shape and data type as the `input`.
+        - **output** (Tensor) - the normalized and scaled offset tensor,
+          has the same shape and data type as the `input`.
 
     Raises:
-        ValueError: If `num_groups` or `num_channels` is less than 1, or `num_channels` is not divided by `num_groups`.
+        ValueError: If `num_groups` or `num_channels` is less than 1, or `num_channels`
+            is not divided by `num_groups`.
 
     Supported Platforms:
         ``Ascend``
