@@ -988,7 +988,7 @@ void KernelActor::OnMemoryAllocFinish(OpContext<KernelTensor> *const context) {
                               output_kernel_tensors_, device_contexts_[0], context, &GetAID());
   }
 
-  bool skip_launch = CollectiveManager::instance()->need_reinit() || IsSkippedLaunch(kernel_, nullptr);
+  bool skip_launch = IsSkippedLaunch(kernel_, nullptr);
   if (!LaunchKernel(context, skip_launch)) {
     MS_LOG_WITH_NODE(EXCEPTION, kernel_) << "#umsg#Kernel error:#umsg#Launch kernel failed: " +
                                               kernel_->fullname_with_scope()

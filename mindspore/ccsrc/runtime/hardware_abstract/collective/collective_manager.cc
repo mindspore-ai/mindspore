@@ -54,7 +54,6 @@ CollectiveManager::CollectiveManager()
     : inited_(false),
       finalized_(true),
       need_init_(false),
-      need_reinit_(false),
       host_ctx_(nullptr),
       device_ctx_(nullptr),
       host_comm_lib_instance_(nullptr),
@@ -142,7 +141,7 @@ bool ExecuteFuncInThread(const std::function<bool()> &func, const int64_t timeou
 bool CollectiveManager::Initialize() {
   need_init_ = true;
   stop_init_comm_ = false;
-  if (inited_ && !need_reinit_) {
+  if (inited_) {
     return true;
   }
 
@@ -203,7 +202,6 @@ bool CollectiveManager::Initialize() {
   MS_LOG(INFO) << "End initializing collective communication for backend: " << device_type;
   inited_ = true;
   finalized_ = false;
-  need_reinit_ = false;
   SetDistributedMeta();
   return true;
 }
@@ -253,7 +251,6 @@ bool CollectiveManager::InitializeDummyCommLib() {
 
   inited_ = true;
   finalized_ = false;
-  need_reinit_ = false;
   SetDistributedMeta();
   return true;
 }
