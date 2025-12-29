@@ -351,7 +351,7 @@ class BatchNorm3d(_BatchNorm):
 
 class GroupNorm(Cell):
     r"""
-    Group Normalization over a mini-batch of inputs.
+    Group normalization of mini-batch inputs.
 
     Group Normalization is widely used in recurrent neural networks. It applies
     normalization on a mini-batch of inputs for each single training case as described
@@ -373,30 +373,25 @@ class GroupNorm(Cell):
         eps (float, optional): A value added to the denominator for numerical stability. Default: ``1e-05`` .
         affine (bool, optional): The parameters, such as :math:`\gamma` and :math:`\beta`, are learnable
             when set to ``true`` . Default: ``True`` .
-        dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): Dtype of parameters. Default: ``None`` .
 
     Inputs:
-        - **input** (Tensor) - The input feature with shape :math:`(N, C, *)`, where :math:`*` means, any number of
-          additional dimensions.
+        - **input** (Tensor) - :math:`(N, C, *)`, where :math:`*` means, any number of additional dimensions.
 
     Outputs:
-        Tensor, the normalized and scaled offset tensor, has the same shape and data type as the `input`.
+        - **output** (Tensor) - the normalized and scaled offset tensor, has the same shape and data type as the `input`.
 
     Raises:
-        TypeError: If `num_groups` or `num_channels` is not an int.
-        TypeError: If `eps` is not a float.
-        TypeError: If `affine` is not a bool.
-        ValueError: If `num_groups` or `num_channels` is less than 1.
-        ValueError: If `num_channels` is not divided by `num_groups`.
+        ValueError: If `num_groups` or `num_channels` is less than 1, or `num_channels` is not divided by `num_groups`.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
+        >>> import mindspore
         >>> import numpy as np
-        >>> group_norm_op = ms.mint.nn.GroupNorm(2, 2)
-        >>> x = ms.Tensor(np.ones([1, 2, 4, 4], np.float32))
+        >>> group_norm_op = mindspore.mint.nn.GroupNorm(2, 2)
+        >>> x = mindspore.tensor(np.ones([1, 2, 4, 4], np.float32))
         >>> output = group_norm_op(x)
         >>> print(output)
         [[[[0. 0. 0. 0.]
