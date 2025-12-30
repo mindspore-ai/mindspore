@@ -14,11 +14,15 @@
 # ============================================================================
 # pylint: disable=unused-import
 # pylint: disable=E1121
+"""
+Tests for NsaSelectAttention operation.
+"""
 import pytest
 import torch
 import hashlib
 import numpy as np
 import mindspore as ms
+from einops import rearrange
 from mindspore import ops, mint
 from mindspore.common.api import _pynative_executor
 from tests.mark_utils import arg_mark
@@ -27,6 +31,7 @@ from tests.st.ops.test_tools.test_op import TEST_OP
 
 
 _env_has_torch_npu = True
+_ci_environment = True
 try:
     import torch_npu
     from torch_npu import npu_nsa_select_attention
@@ -36,7 +41,6 @@ try:
     print("torch_npu is found")
 except ImportError:
     print("torch_npu or torch_npu.npu_nsa_select_attention not found, benchmark will use torch cpu instead")
-    from einops import rearrange
     _env_has_torch_npu = False
 torch.use_deterministic_algorithms(True)
 
@@ -60,7 +64,7 @@ def nsa_select_attention_backward_func(query, key, value, topk_indices, scale_va
 
 def torch_npu_nsa_select_attention_forward_backward(query, key, value, topk_indices, scale_value, head_num,
                                                     select_block_size, select_block_count, atten_mask=None,
-                                                    actual_seq_qlen=None, actual_seq_kvlen=None):
+                                                    actual_seq_qlen=None, actual_seq_kvlen=None, skip_grad=False):
     query = query.npu()
     key = key.npu()
     value = value.npu()
@@ -68,9 +72,10 @@ def torch_npu_nsa_select_attention_forward_backward(query, key, value, topk_indi
     if atten_mask is not None:
         atten_mask = atten_mask.npu()
 
-    query.requires_grad = True
-    key.requires_grad = True
-    value.requires_grad = True
+    if not skip_grad:
+        query.requires_grad = True
+        key.requires_grad = True
+        value.requires_grad = True
 
     attention_out, softmax_max, softmax_sum = torch_npu.npu_nsa_select_attention(query, key, value, topk_indices,
                                                                                  scale_value, head_num,
@@ -78,9 +83,12 @@ def torch_npu_nsa_select_attention_forward_backward(query, key, value, topk_indi
                                                                                  atten_mask=atten_mask,
                                                                                  actual_seq_qlen=actual_seq_qlen,
                                                                                  actual_seq_kvlen=actual_seq_kvlen)
-    attention_out.backward(gradient=torch.ones_like(attention_out))
-    return attention_out.detach(), softmax_max.detach(), softmax_sum.detach(), \
-        query.grad.detach(), key.grad.detach(), value.grad.detach()
+    if not skip_grad:
+        attention_out.backward(gradient=torch.ones_like(attention_out))
+        return attention_out.detach(), softmax_max.detach(), softmax_sum.detach(), \
+            query.grad.detach(), key.grad.detach(), value.grad.detach()
+
+    return attention_out, softmax_max, softmax_sum, None, None, None
 
 
 class TorchCpuNsaSelectAttention():
@@ -114,7 +122,7 @@ class TorchCpuNsaSelectAttention():
         for i in range(actual_seq_len.size(0)):
             if BS_index < actual_seq_len[i]:
                 return i
-        raise RuntimeError(f"BS_index is greater than max(actual_seq_len).")
+        raise RuntimeError("BS_index is greater than max(actual_seq_len).")
 
     def simple_softmax(self, x, x_max, x_sum):
         x_sub = x.sub(x_max)
@@ -287,7 +295,7 @@ class TorchCpuNsaSelectAttention():
                 softmax_res = self.simple_softmax(qk, x_max, x_sum)
 
                 dp = torch.matmul(grad_cal, v_cal.permute(1, 0))
-                softmax_grad_res = (self.tsoftmax_grad(softmax_res, dp, out_cal, grad_cal))
+                softmax_grad_res = self.tsoftmax_grad(softmax_res, dp, out_cal, grad_cal)
                 dq = torch.matmul(softmax_grad_res, k_cal)
                 dk = torch.matmul(softmax_grad_res.permute(1, 0), q_cal)
                 dv = torch.matmul(softmax_res.permute(1, 0), grad_cal)
@@ -335,24 +343,46 @@ class TorchCpuNsaSelectAttention():
 def torch_cpu_nsa_select_attention_forward_backward(query, key, value, topk_indices, scale_value, head_num,
                                                     select_block_size, select_block_count, atten_mask=None,
                                                     actual_seq_qlen=None, actual_seq_kvlen=None):
-    cpu_gloden_exec = TorchCpuNsaSelectAttention(query, key, value, topk_indices, scale_value, head_num,
+    cpu_golden_exec = TorchCpuNsaSelectAttention(query, key, value, topk_indices, scale_value, head_num,
                                                  select_block_size, select_block_count, atten_mask, actual_seq_qlen,
                                                  actual_seq_kvlen)
-    attention_out, softmax_max, softmax_sum = cpu_gloden_exec.forward()
-    dq, dk, dv = cpu_gloden_exec.backward()
+    attention_out, softmax_max, softmax_sum = cpu_golden_exec.forward()
+    dq, dk, dv = cpu_golden_exec.backward()
     return attention_out, softmax_max, softmax_sum, dq, dk, dv
 
 
-def torch_gloden_expect_forward_backward(query, key, value, topk_indices, scale_value, head_num, select_block_size,
+def torch_npu_cpu_nsa_select_attention_forward_backward(query, key, value, topk_indices, scale_value, head_num,
+                                                        select_block_size, select_block_count, atten_mask=None,
+                                                        actual_seq_qlen=None, actual_seq_kvlen=None):
+
+    attention_out, softmax_max, softmax_sum, _, _, _ = \
+        torch_npu_nsa_select_attention_forward_backward(query, key, value, topk_indices, scale_value, head_num,
+                                                        select_block_size, select_block_count, atten_mask,
+                                                        actual_seq_qlen, actual_seq_kvlen, skip_grad=True)
+
+    cpu_golden_exec = TorchCpuNsaSelectAttention(query, key, value, topk_indices, scale_value, head_num,
+                                                 select_block_size, select_block_count, atten_mask, actual_seq_qlen,
+                                                 actual_seq_kvlen)
+    cpu_golden_exec.attention_out = attention_out.cpu()
+    cpu_golden_exec.softmax_max = softmax_max.cpu()
+    cpu_golden_exec.softmax_sum = softmax_sum.cpu()
+    dq, dk, dv = cpu_golden_exec.backward()
+    return attention_out, softmax_max, softmax_sum, dq, dk, dv
+
+
+def torch_golden_expect_forward_backward(query, key, value, topk_indices, scale_value, head_num, select_block_size,
                                          select_block_count, atten_mask=None, actual_seq_qlen=None,
                                          actual_seq_kvlen=None):
     if _env_has_torch_npu:
-        gloden_func = torch_npu_nsa_select_attention_forward_backward
+        if _ci_environment:
+            golden_func = torch_npu_cpu_nsa_select_attention_forward_backward
+        else:
+            golden_func = torch_npu_nsa_select_attention_forward_backward
     else:
-        gloden_func = torch_cpu_nsa_select_attention_forward_backward
+        golden_func = torch_cpu_nsa_select_attention_forward_backward
 
-    return gloden_func(query, key, value, topk_indices, scale_value, head_num, select_block_size, select_block_count,
-                       atten_mask, actual_seq_qlen, actual_seq_kvlen)
+    return golden_func(query, key, value, topk_indices, scale_value, head_num, select_block_size,
+                       select_block_count, atten_mask, actual_seq_qlen, actual_seq_kvlen)
 
 
 def set_context_mode(mode):
@@ -427,12 +457,18 @@ def get_torch_tensors(query_np, key_np, value_np, topk_indices_np, dtype):
 
 
 def compare_results(torch_out, ms_out, grad=False):
-    def get_ndarray_md5(arr):
-        arr_bytes = np.ascontiguousarray(arr).tobytes()
-        return hashlib.md5(arr_bytes).hexdigest()
-
     def compare_with_torch(ms_out, torch_out):
-        if _env_has_torch_npu:
+        def cpu_cmp(ms_out, torch_out):
+            # CPU scenario: use single_golden_compare for accuracy verification
+            # Refer to nsa_compress: use the last dimension size as ksize
+            for _, (golden_t, actual_t) in enumerate(zip(torch_out, ms_out)):
+                ksize = int(actual_t.shape[-1]) if actual_t.shape else 1
+                assert test_utils.single_golden_compare(golden_t, actual_t, ksize)
+        def npu_cmp(ms_out, torch_out):
+            def get_ndarray_md5(arr):
+                arr_bytes = np.ascontiguousarray(arr).tobytes()
+                return hashlib.md5(arr_bytes).hexdigest()
+
             ms_out_np = [out.float().asnumpy() if out.dtype == ms.bfloat16 else out.asnumpy() for out in ms_out]
             pt_out_np = [
                 out.float().cpu().numpy() if out.dtype == torch.bfloat16 else out.cpu().numpy()
@@ -441,15 +477,17 @@ def compare_results(torch_out, ms_out, grad=False):
             assert get_ndarray_md5(ms_out_np[0]) == get_ndarray_md5(pt_out_np[0])
             assert get_ndarray_md5(ms_out_np[1]) == get_ndarray_md5(pt_out_np[1])
             assert get_ndarray_md5(ms_out_np[2]) == get_ndarray_md5(pt_out_np[2])
-        else:
-            # CPU scenario: use single_golden_compare for accuracy verification
-            # Refer to nsa_compress: use the last dimension size as ksize
-            for _, (golden_t, actual_t) in enumerate(zip(torch_out, ms_out)):
-                ksize = int(actual_t.shape[-1]) if actual_t.shape else 1
-                assert test_utils.single_golden_compare(golden_t, actual_t, ksize)
 
-    print(f"comparing mindspore with torch {'npu' if _env_has_torch_npu else 'cpu'} "
-          f"{('forward' if not grad else 'backward')} results...")
+        if _env_has_torch_npu:
+            if _ci_environment and grad:
+                cpu_cmp(ms_out, torch_out)
+            else:
+                npu_cmp(ms_out, torch_out)
+        else:
+            cpu_cmp(ms_out, torch_out)
+
+    print(f"comparing mindspore with torch {'npu' if _env_has_torch_npu else 'cpu'}"
+          f"{'' if not _ci_environment else '_ci'} {('forward' if not grad else 'backward')} results...")
     # compare mindspore with torch
     compare_with_torch(ms_out, torch_out)
 
@@ -479,7 +517,7 @@ def test_ops_nsa_select_attention_normal(mode, dtype):
     ms_query, ms_key, ms_value, ms_topk_indices = get_ms_tensors(query_np, key_np, value_np, topk_indices_np, dtype)
 
     # torch nsa_select_attention forward and backward
-    torch_out = torch_gloden_expect_forward_backward(pt_query, pt_key, pt_value, pt_topk_indices, scale_value, head_num,
+    torch_out = torch_golden_expect_forward_backward(pt_query, pt_key, pt_value, pt_topk_indices, scale_value, head_num,
                                                      select_block_size, select_block_count, None, actual_seq_qlen,
                                                      actual_seq_kvlen)
     # mindspore nsa_select_attention forward
@@ -890,7 +928,7 @@ def test_ops_nsa_select_attention_non_contiguous(mode, dtype):
     assert not ms_topk_indices_permute.is_contiguous()
 
     # PyTorch nsa_select_attention forward and backward
-    torch_out = torch_gloden_expect_forward_backward(pt_query_permute, pt_key_permute, pt_value_permute,
+    torch_out = torch_golden_expect_forward_backward(pt_query_permute, pt_key_permute, pt_value_permute,
                                                      pt_topk_indices_permute, scale_value, head_num,
                                                      select_block_size, select_block_count, None, actual_seq_qlen,
                                                      actual_seq_kvlen)
@@ -1047,7 +1085,7 @@ def test_ops_nsa_select_attention_scale_value_variants(mode, dtype, scale_value)
     ms_query, ms_key, ms_value, ms_topk_indices = get_ms_tensors(query_np, key_np, value_np, topk_indices_np, dtype)
 
     # PyTorch nsa_select_attention forward and backward
-    torch_out = torch_gloden_expect_forward_backward(pt_query, pt_key, pt_value, pt_topk_indices, scale_value,
+    torch_out = torch_golden_expect_forward_backward(pt_query, pt_key, pt_value, pt_topk_indices, scale_value,
                                                      head_num, select_block_size, select_block_count, None,
                                                      actual_seq_qlen, actual_seq_kvlen)
     # MindSpore nsa_select_attention forward
@@ -1110,8 +1148,8 @@ def test_ops_nsa_select_attention_qkv_inf_nan_values(mode, value):
     Expectation: expect correct computation and match torch precision for inf/nan value handling.
     """
 
-    if not _env_has_torch_npu:
-        print("torch_npu is not installed, skip test because of cpu gloden expect will raise IndexError.")
+    if not _env_has_torch_npu or _ci_environment:
+        print("torch_npu is not installed, skip test because of cpu golden expect will raise IndexError.")
         return
 
     set_context_mode(mode)
@@ -1136,7 +1174,7 @@ def test_ops_nsa_select_attention_qkv_inf_nan_values(mode, value):
     ms_query, ms_key, ms_value, ms_topk_indices = get_ms_tensors(query_np, key_np, value_np, topk_indices_np, 'fp16')
 
     # PyTorch nsa_select_attention forward and backward
-    torch_out = torch_gloden_expect_forward_backward(pt_query, pt_key, pt_value, pt_topk_indices,
+    torch_out = torch_golden_expect_forward_backward(pt_query, pt_key, pt_value, pt_topk_indices,
                                                      scale_value, head_num, select_block_size, select_block_count,
                                                      None, actual_seq_qlen, actual_seq_kvlen)
     # MindSpore nsa_select_attention forward
@@ -1281,8 +1319,8 @@ def test_ops_nsa_select_attention_large_scale_precision(mode, dtype):
     Expectation: expect correct computation results and precise alignment with torch reference.
     """
 
-    if not _env_has_torch_npu:
-        print("torch_npu is not installed, skip test because of cpu gloden expect running too slow.")
+    if not _env_has_torch_npu or _ci_environment:
+        print("torch_npu is not installed, skip test because of cpu golden expect running too slow.")
         return
 
     set_context_mode(mode)
@@ -1309,7 +1347,7 @@ def test_ops_nsa_select_attention_large_scale_precision(mode, dtype):
         query_large, key_large, value_large, topk_indices_large, dtype)
 
     # PyTorch nsa_select_attention forward and backward
-    torch_out_large = torch_gloden_expect_forward_backward(pt_query_large, pt_key_large, pt_value_large,
+    torch_out_large = torch_golden_expect_forward_backward(pt_query_large, pt_key_large, pt_value_large,
                                                            pt_topk_indices_large, scale_value_large, head_num_large,
                                                            select_block_size, select_block_count,
                                                            None, actual_seq_qlen_large, actual_seq_kvlen_large)
@@ -1373,7 +1411,7 @@ def test_ops_nsa_select_attention_batch_processing(mode, dtype):
     ms_query, ms_key, ms_value, ms_topk_indices = get_ms_tensors(query_np, key_np, value_np, topk_indices_np, dtype)
 
     # PyTorch nsa_select_attention forward and backward
-    torch_out = torch_gloden_expect_forward_backward(pt_query, pt_key, pt_value, pt_topk_indices,
+    torch_out = torch_golden_expect_forward_backward(pt_query, pt_key, pt_value, pt_topk_indices,
                                                      scale_value, head_num, select_block_size, select_block_count,
                                                      None, actual_seq_qlen, actual_seq_kvlen)
 
@@ -1494,7 +1532,7 @@ def test_ops_nsa_select_attention_large_seq_len_precision(mode, dtype):
     ms_query, ms_key, ms_value, ms_topk_indices = get_ms_tensors(query_np, key_np, value_np, topk_indices_np, dtype)
 
     # PyTorch nsa_select_attention forward and backward
-    torch_out = torch_gloden_expect_forward_backward(pt_query, pt_key, pt_value, pt_topk_indices,
+    torch_out = torch_golden_expect_forward_backward(pt_query, pt_key, pt_value, pt_topk_indices,
                                                      scale_value, head_num, select_block_size, select_block_count,
                                                      None, actual_seq_qlen, actual_seq_kvlen)
 
@@ -1610,7 +1648,7 @@ def nsa_select_attention_memory_case(TND_params, actual_seq_qkvlen, dtype, grad_
         softmax_sum = torch.abs(softmax_sum).sum()
         return attention_out
 
-    if not _env_has_torch_npu:
+    if not _env_has_torch_npu or _ci_environment:
         print("torch_npu is not installed, skip device memory test")
         return
 
