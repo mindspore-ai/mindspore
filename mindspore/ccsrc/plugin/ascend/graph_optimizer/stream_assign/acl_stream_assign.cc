@@ -82,6 +82,21 @@ void AddStreamIdForCommunicationOp(const AnfNodePtr &node) {
   common::AnfAlgo::SetNodeAttrSafely(kAttrStreamId, MakeValue<uint32_t>(kWorldGroupStreamIndex), node);
 }
 
+void AssignStreamForCopyTo(const AnfNodePtr &node) {
+  auto copy_to_stream = AscendStreamMng::GetInstance().GetCopyToStream();
+  size_t copy_to_stream_id;
+  if (copy_to_stream == nullptr) {
+    AscendStreamMng::GetInstance().CreateStream(&copy_to_stream_id);
+    MS_LOG(INFO) << "Create ascend copy to stream, stream id: " << copy_to_stream_id;
+    copy_to_stream = AscendStreamMng::GetInstance().GetStream(copy_to_stream_id);
+    AscendStreamMng::GetInstance().SetCopyToStream(copy_to_stream);
+  }
+  copy_to_stream_id = AscendStreamMng::GetInstance().GetStreamId(copy_to_stream);
+  AnfAlgo::SetStreamId(copy_to_stream_id, node.get());
+  common::AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue<uint32_t>(copy_to_stream_id), node);
+  common::AnfAlgo::SetNodeAttr(kAttrCopyStreamId, MakeValue<uint32_t>(copy_to_stream_id), node);
+}
+
 void AssignStreamForCopyOut(const AnfNodePtr &node) {
   auto copy_out_stream = AscendStreamMng::GetInstance().GetCopyOutStream();
   size_t copy_out_stream_id;
@@ -224,7 +239,7 @@ void AddStreamIdByGroup(const AnfNodePtr &node, DeviceResManager *device_res_man
                    << ", because it is users set stream operator.";
     } else if (IsOneOfPrimitiveCNode(node,
                                      {prim::kPrimCopyToHost, prim::kPrimCopyToHostExt, prim::kPrimCopyToDevice})) {
-      AssignStreamForCopyOut(node);
+      AssignStreamForCopyTo(node);
     } else if (IsPrimitiveCNode(node, prim::kPrimMoveTo) || IsPrimitiveCNode(node, prim::kPrimMoveAssign)) {
       AssignStreamForMoveTo(node);
     } else {
@@ -521,7 +536,7 @@ void AclStreamAssign::AssignStream(const NotNull<KernelGraphPtr> &kernel_graph, 
         AssignStreamForMoveTo(node);
       } else if (IsOneOfPrimitiveCNode(node,
                                        {prim::kPrimCopyToHost, prim::kPrimCopyToHostExt, prim::kPrimCopyToDevice})) {
-        AssignStreamForCopyOut(node);
+        AssignStreamForCopyTo(node);
       } else {
         AnfAlgo::SetStreamId(kDefaultStreamIndex, node.get());
         common::AnfAlgo::SetNodeAttr(kAttrStreamId, MakeValue<uint32_t>(kDefaultStreamIndex), node);

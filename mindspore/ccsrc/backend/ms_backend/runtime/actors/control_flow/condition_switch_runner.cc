@@ -106,6 +106,16 @@ void ConditionSwitchRunner::UpdateRefDeviceAddress(OpContext<KernelTensor> *cons
     auto output_device_tensor = output_kernel_tensors_[i]->device_address().get();
     MS_EXCEPTION_IF_NULL(output_device_tensor);
     output_kernel_tensors_[i]->set_pointer_ref_count(input_kernel_tensors_[i + 1].get());
+
+    // Check and synchronize device type
+    auto input_device_type = input_device_tensor->GetDeviceType();
+    auto output_device_type = output_device_tensor->GetDeviceType();
+    if (input_device_type != output_device_type) {
+      MS_LOG(DEBUG) << "Adjust device type from " << output_device_type << " to " << input_device_type << " for tensor "
+                    << output_kernel_tensors_[i]->ToString();
+      output_device_tensor->SetDeviceType(input_device_type);
+    }
+
     output_kernel_tensors_[i]->IncreaseNewRefCount(GetAID().Name());
     MS_LOG(DEBUG) << "Actor:" << GetAID() << " increase new ref count:" << output_kernel_tensors_[i]->new_ref_count()
                   << " and set ref kernel tensor:" << output_kernel_tensors_[i]->ToString()

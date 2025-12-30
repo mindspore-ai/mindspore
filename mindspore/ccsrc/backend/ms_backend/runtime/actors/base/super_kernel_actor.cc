@@ -2393,6 +2393,30 @@ void SuperKernelActor::LinkKernelActor(const CNodePtr &kernel, size_t input_inde
   LinkKernelActorByDeviceType(kernel, input_index, input_kernel, output_index);
 }
 
+void SuperKernelActor::CheckDeviceTypeValid(const DeviceTensorPtr &input_device_tensor,
+                                            const DeviceContext *input_device_context, const CNodePtr &kernel,
+                                            const AnfNodePtr &input_kernel, size_t input_index) {
+  // If input tensor device type is not equal to device context type, throw exception.
+  // e.g. ascend_op(d2h(node)).
+  auto *kernel_actor = cnode_to_kernel_actor_[kernel];
+  MS_EXCEPTION_IF_NULL(kernel_actor);
+  const auto *device_context = kernel_actor->device_contexts().front();
+  MS_EXCEPTION_IF_NULL(device_context);
+  static bool enable_hyper_offload = common::GetEnv("MS_DEV_HYPER_OFFLOAD") == "1";
+  bool check_type_valid = device_context->GetDeviceType() == input_device_tensor->GetDeviceType() ||
+                          input_device_tensor->GetDeviceType() == input_device_context->GetDeviceType() ||
+                          SchedulerHelper::IsIgnoredInputAddressV2(kernel_actor, input_index);
+
+  // ConditionSwitch handles heterogeneous inputs by explicit device_type synchronization in its implementation
+  if (enable_hyper_offload && !check_type_valid && !IsPrimitiveCNode(kernel, prim::kPrimConditionSwitch)) {
+    MS_LOG(EXCEPTION) << "Invalid input device tensor type for kernel:" << kernel->fullname_with_scope()
+                      << " with device context type:" << device_context->GetDeviceType() << " but the " << input_index
+                      << "th input device tensor type is " << input_device_tensor->GetDeviceType()
+                      << " for actor:" << kernel_actor->GetAID()
+                      << ", input kernel: " << input_kernel->fullname_with_scope();
+  }
+}
+
 void SuperKernelActor::LinkKernelActorByDeviceType(const CNodePtr &kernel, size_t input_index,
                                                    const AnfNodePtr &input_kernel, size_t output_index) {
   MS_EXCEPTION_IF_NULL(kernel);
@@ -2414,18 +2438,7 @@ void SuperKernelActor::LinkKernelActorByDeviceType(const CNodePtr &kernel, size_
   const auto &input_device_tensor = input_kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(input_device_tensor);
 
-  // If input tensor device type is not equal to device context type, throw exception.
-  // e.g. ascend_op(d2h(node)).
-  static bool enable_hyper_offload = common::GetEnv("MS_DEV_HYPER_OFFLOAD") == "1";
-  bool check_type_valid = device_context->GetDeviceType() == input_device_tensor->GetDeviceType() ||
-                          input_device_tensor->GetDeviceType() == input_device_context->GetDeviceType() ||
-                          SchedulerHelper::IsIgnoredInputAddressV2(kernel_actor, input_index);
-  if (enable_hyper_offload && !check_type_valid) {
-    MS_LOG(EXCEPTION) << "Invalid input device tensor type for kernel:" << kernel->fullname_with_scope()
-                      << " with device context type:" << device_context->GetDeviceType() << " but the " << input_index
-                      << "th input device tensor type is " << input_device_tensor->GetDeviceType()
-                      << " for actor:" << GetAID() << ", input kernel: " << input_kernel->fullname_with_scope();
-  }
+  CheckDeviceTypeValid(input_device_tensor, input_device_context, kernel, input_kernel, input_index);
 
   bool need_not_copy_output_device_addr = (device_context->GetDeviceType() == input_device_context->GetDeviceType()) ||
                                           SchedulerHelper::IsIgnoredInputAddressV2(kernel_actor, input_index);
