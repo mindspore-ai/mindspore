@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Test checkpoint."""
+import io
 import os
 import shutil
 import pytest
@@ -205,3 +206,22 @@ def test_checkpoint_save_checkpoint_param_save_obj_set_init_net_obj(context_mode
     ckpt_dict = load_checkpoint("save_init_net.ckpt")
     np.allclose(net.dense.weight.asnumpy(), ckpt_dict["dense.weight"].data.asnumpy(), 0.0001,
                      0.0001)
+
+
+@pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_checkpoint_save_bytesio_checkpoint_param_save_obj_set_init_net_obj(context_mode):
+    """
+    Feature: test checkpoint with BytesIO input type.
+    Description: test checkpoint.
+    Expectation: the result match with expected result.
+    """
+    file_name = "save_init_net.safetensors"
+    ms.context.set_context(mode=context_mode)
+    fact = CheckpointFactory(input_shape=(32, 2048, 7, 7), dense_input_c=2048, output_c=1000,
+                             has_bias=True)
+    net = ReLUReduceMeanDense(fact.weight, fact.bias, fact.input_channels, fact.output_channels)
+    save_checkpoint(net, file_name, format="safetensors")
+    with io.BytesIO(open(file_name, "rb").read()) as f:
+        ckpt_dict = load_checkpoint(f, format="safetensors")
+    np.allclose(net.dense.weight.asnumpy(), ckpt_dict["dense.weight"].data.asnumpy(), 0.0001,
+                0.0001)

@@ -12,7 +12,7 @@ mindspore.load_checkpoint
         - 当 `net` 不为 ``None`` 时，校验入参 `remove_redundancy` 与所加载的safetensors文件中的去冗余标志位是否相同。如果不同，按照文件的去冗余标志位进行加载。
 
     参数：
-        - **ckpt_file_name** (str) - checkpoint的文件名称。
+        - **ckpt_file_name** (Union[str, io.BytesIO]) - checkpoint的文件名称或BytesIO类型的对象。
         - **net** (Cell, 可选) - 加载checkpoint参数的网络。默认值： ``None`` 。
         - **strict_load** (bool, 可选) - 是否将严格加载参数到网络中。如果是 ``False`` ，它将根据相同的后缀名将参数字典中的参数加载到网络中，并会在精度不匹配时，进行强制精度转换，比如将 `float32` 转换为 `float16` 。默认值： ``False`` 。
         - **filter_prefix** (Union[str, list[str], tuple[str]], 可选) - 废弃（请参考参数 `choice_func`）。以 `filter_prefix` 开头的参数将不会被加载。默认值： ``None`` 。
