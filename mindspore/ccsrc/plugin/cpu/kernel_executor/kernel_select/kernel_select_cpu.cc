@@ -729,7 +729,7 @@ std::pair<std::string, ExceptionType> SetKernelInfoWithMsg(const CNodePtr &kerne
   MS_EXCEPTION_IF_NULL(kernel_node);
   const std::string &op_name = common::AnfAlgo::GetCNodeName(kernel_node);
   static auto op_plugin_path = common::EnvHelper::GetInstance()->GetEnv("MS_OP_PLUGIN_PATH");
-  if (op_plugin_path != nullptr && ops::IsEnableHostNode(kernel_node)) {
+  if (ops::IsEnableHostNode(kernel_node)) {
     UpdateCustomKernelBuildInfo(kernel_node, false);
     return {};
   }

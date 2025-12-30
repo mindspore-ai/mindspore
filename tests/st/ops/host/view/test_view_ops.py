@@ -17,7 +17,6 @@
 from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
-import os
 from mindspore import context
 import mindspore as ms
 from mindspore import nn
@@ -218,7 +217,6 @@ def test_chunk_view_cpu():
     Description: test the Chunk kernel, with view operation.
     Expectation: the output is same as expected
     """
-    os.environ['MS_OP_PLUGIN_PATH'] = 'test'
     chunk_view_kbk()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -237,7 +235,6 @@ def test_diagonal_view_cpu():
     Description: test the Diagonal kernel, with view operation.
     Expectation: the output matches each row of the input.
     """
-    os.environ['MS_OP_PLUGIN_PATH'] = 'test'
     diagonal_view_kbk()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -256,7 +253,6 @@ def test_slice_ext_view_cpu():
     Description: test the Slice kernel, with view operation.
     Expectation: the output is same as expected
     """
-    os.environ['MS_OP_PLUGIN_PATH'] = 'test'
     slice_ext_view_kbk()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -275,7 +271,6 @@ def test_split_with_size_view_cpu():
     Description: test the SplitWithSize kernel, with view operation.
     Expectation: the output is same as expected
     """
-    os.environ['MS_OP_PLUGIN_PATH'] = 'test'
     split_with_size_view_kbk()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -294,7 +289,6 @@ def test_unstack_ext_view_cpu():
     Description: test the UnstackExtView kernel using view operation
     Expectation: the output is same with numpy
     """
-    os.environ['MS_OP_PLUGIN_PATH'] = 'test'
     unstack_ext_view_kbk()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -313,7 +307,6 @@ def test_transpose_view_cpu():
     Description: test the Transpose kernel, with view operation.
     Expectation: the output is same with numpy
     """
-    os.environ['MS_OP_PLUGIN_PATH'] = 'test'
     transpose_view_matmul_kbk()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -332,7 +325,6 @@ def test_broadcast_to_view_cpu():
     Description: test the BroadcastTo kernel, with view operation.
     Expectation: No exception.
     """
-    os.environ['MS_OP_PLUGIN_PATH'] = 'test'
     broadcast_to_view_kbk()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -351,7 +343,6 @@ def test_transpose_ext_view_cpu():
     Description: test the TransposeExt kernel, with view operation.
     Expectation: No exception.
     """
-    os.environ['MS_OP_PLUGIN_PATH'] = 'test'
     transpose_ext_view_kbk()
 
 class ViewOut(nn.Cell):

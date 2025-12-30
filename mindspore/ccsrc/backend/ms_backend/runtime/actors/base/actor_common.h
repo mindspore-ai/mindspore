@@ -572,9 +572,10 @@ inline bool NeedRunMemTracker() {
 // If node is not aclnn or is a Reshape, need convert input into contiguous.
 inline bool NeedCheckInputContiguous(const CNodePtr &cnode) {
   MS_EXCEPTION_IF_NULL(cnode);
+  static auto op_plugin_path = common::EnvHelper::GetInstance()->GetEnv("MS_OP_PLUGIN_PATH");
   auto kernel_type = AnfAlgo::GetKernelType(cnode);
   if (kernel_type != KernelType::OPAPI_KERNEL && kernel_type != KernelType::INTERNAL_KERNEL &&
-      !common::AnfAlgo::IsViewNode(cnode)) {
+      !common::AnfAlgo::IsViewNode(cnode) && op_plugin_path == nullptr) {
     return true;
   }
   return false;
