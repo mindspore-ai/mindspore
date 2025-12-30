@@ -5219,8 +5219,6 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.atan2,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d == ms.float32),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d == ms.float32),
-        #dtypes_cpu=tuple([d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool_] + list(dtypes_extra_uint)),
-        #dtypes_gpu=tuple([d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool_] + list(dtypes_extra_uint)),
         op_basic_reference_inputs_func=basic_sample_inputs_atan2_ext,
         op_dynamic_inputs_func=None,
         op_error_inputs_func=None,
@@ -5236,8 +5234,6 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_atan2_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d == ms.float32),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d == ms.float32),
-        #dtypes_cpu=tuple([d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool_] + list(dtypes_extra_uint)),
-        #dtypes_gpu=tuple([d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool_] + list(dtypes_extra_uint)),
         op_basic_reference_inputs_func=basic_sample_inputs_atan2_ext,
         op_dynamic_inputs_func=None,
         op_error_inputs_func=None,
@@ -5254,8 +5250,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16
                                                            and d != ms.float64)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.float64)),
-        #dtypes_cpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
-        #dtypes_gpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         # tanh has precision problem when comparing with torch_cpu, but its result matches torch_npu bitwise.
@@ -5273,8 +5267,6 @@ op_db: Dict[str, OpInfo] = {
         # int8 255 torch nan
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d == ms.float32),
         # float16 loss accuracy issue
-        #dtypes_cpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
-        #dtypes_gpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5287,8 +5279,6 @@ op_db: Dict[str, OpInfo] = {
         domain=(-1, 1),
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d == ms.float32),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d == ms.float32),
-        #dtypes_cpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
-        #dtypes_gpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5302,8 +5292,6 @@ op_db: Dict[str, OpInfo] = {
                                                            and d != ms.uint32 and d != ms.uint64)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.uint16 and d != ms.uint32
                                                                and d != ms.uint64)),
-        #dtypes_cpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
-        #dtypes_gpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5316,8 +5304,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint16 and d != ms.uint32
                                                            and d != ms.uint64)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d != ms.uint16 and d != ms.uint32 and d != ms.uint64)),
-        #dtypes_cpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
-        #dtypes_gpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5328,11 +5314,8 @@ op_db: Dict[str, OpInfo] = {
         op=mint.acosh,
         ref=torch.acosh,
         domain=(1, None),
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint16 and d != ms.uint32
-                                                           and d != ms.uint64)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d != ms.uint16 and d != ms.uint32 and d != ms.uint64)),
-        #dtypes_cpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
-        #dtypes_gpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5350,8 +5333,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint16
                                                            and d != ms.uint32 and d != ms.uint64)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d != ms.uint16 and d != ms.uint32 and d != ms.uint64)),
-        #dtypes_cpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
-        #dtypes_gpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5364,8 +5345,6 @@ op_db: Dict[str, OpInfo] = {
         domain=(-1, 1),
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d == ms.float32),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d == ms.float32),
-        #dtypes_cpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
-        #dtypes_gpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5378,8 +5357,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint16
                                                            and d != ms.uint32 and d != ms.uint64)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d != ms.uint16 and d != ms.uint32 and d != ms.uint64)),
-        #dtypes_cpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
-        #dtypes_gpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5392,8 +5369,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint16 and d != ms.uint32
                                                            and d != ms.uint64)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d != ms.uint16 and d != ms.uint32 and d != ms.uint64)),
-        #dtypes_cpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
-        #dtypes_gpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5417,8 +5392,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint16
                                                            and d != ms.uint32 and d != ms.uint64)),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d != ms.uint16 and d != ms.uint32 and d != ms.uint64)),
-        #dtypes_cpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
-        #dtypes_gpu=tuple(d for d in dtypes_as_torch if (d.is_floating_point or d.is_complex) and d != ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5716,8 +5689,6 @@ op_db: Dict[str, OpInfo] = {
         name='mint.argmax',
         op=mint.argmax,
         ref=torch.argmax,
-        # Todo: MindSpore additionally supports uint16/32/64 bool and complex
-        # dtype, while PyTorch does not.
         dtypes_ascend=tuple(
             d for d in dtypes_as_torch
             if d not in (ms.bfloat16, ms.bool_, ms.complex64, ms.complex128)
@@ -5745,8 +5716,6 @@ op_db: Dict[str, OpInfo] = {
         name='mint.argmin',
         op=mint.argmin,
         ref=torch.argmin,
-        # To do: MindSpore additionally supports uint16/32/64 dtype,
-        # while PyTorch does not.
         dtypes_ascend=tuple(
             d for d in dtypes_as_torch
             if d not in (ms.bfloat16, ms.bool_, ms.complex64, ms.complex128)
@@ -5776,7 +5745,6 @@ op_db: Dict[str, OpInfo] = {
         op=mint.count_nonzero,
         ref=torch.count_nonzero,
         is_differentiable=False,
-        # To do: MindSpore additionally supports uint16/32/64 dtype, while PyTorch does not.
         op_basic_reference_inputs_func=basic_sample_inputs_reduction_count_nonzero,
         op_extra_reference_inputs_func=extra_sample_inputs_reduction_count_nonzero,
         op_dynamic_inputs_func=None,
@@ -7233,12 +7201,22 @@ reduction_op_db = [
 binary_op_kbk_db = [
     'mint.add',
     'mint.sub',
+    'mint.equal',
+    'mint.eq',
+    'mint.ne',
+]
+
+binary_op_error_db = [
+    'mint.add',
+    'mint.sub',
+    'mint.equal',
 ]
 
 unary_op_kbk_db = [
     'mint.tanh',
     'mint.nn.functional.relu',
     'mint.tile',
+    'mint.acosh',
 ]
 
 other_op_kbk_db = [
