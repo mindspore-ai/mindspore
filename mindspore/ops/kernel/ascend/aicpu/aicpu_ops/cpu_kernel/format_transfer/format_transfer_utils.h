@@ -20,7 +20,11 @@
 #include <memory>
 #include <string>
 #include <vector>
+#if __has_include("context/utils/status.h")
 #include "context/utils/status.h"
+#else
+#include "context/common/status.h"
+#endif
 #include "cpu_kernel/format_transfer/register_format_transfer.h"
 
 namespace aicpu {

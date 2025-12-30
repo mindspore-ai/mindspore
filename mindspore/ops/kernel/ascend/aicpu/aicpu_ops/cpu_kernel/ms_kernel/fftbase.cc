@@ -17,7 +17,11 @@
 #include "cpu_kernel/ms_kernel/fftbase.h"
 #include "common/kernel_errcode.h"
 #include "unsupported/Eigen/CXX11/Tensor"
+#if __has_include("context/common/cpu_kernel_utils.h")
 #include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "utils/kernel_util.h"
 #include "mindapi/base/types.h"
 #include "cpu_kernel/utils/fft_helper.h"

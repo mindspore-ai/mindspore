@@ -18,9 +18,17 @@
 #include <vector>
 #include "include/securec.h"
 
+#if __has_include("aicpu/fwk_adpt_struct.h")
 #include "aicpu/fwk_adpt_struct.h"
+#else
+#include "cce/fwk_adpt_struct.h"
+#endif
 #include "inc/kernel_log.h"
+#if __has_include("context/utils/status.h")
 #include "context/utils/status.h"
+#else
+#include "context/common/status.h"
+#endif
 
 namespace {
 std::unordered_set<uint64_t> g_allocated_ptr;

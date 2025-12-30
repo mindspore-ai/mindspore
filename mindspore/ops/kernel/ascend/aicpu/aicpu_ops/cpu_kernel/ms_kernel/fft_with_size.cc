@@ -16,7 +16,11 @@
 #include "fft_with_size.h"
 #include <iostream>
 #include "Eigen/Dense"
+#if __has_include("context/common/cpu_kernel_utils.h")
 #include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "unsupported/Eigen/FFT"
 #include "utils/eigen_tensor.h"

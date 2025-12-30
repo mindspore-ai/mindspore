@@ -17,7 +17,11 @@
 #define AICPU_KERNELS_NORMALIZED_REVERSE_SEQUENCE_H
 
 #include "inc/ms_cpu_kernel.h"
+#if __has_include("context/utils/status.h")
 #include "context/utils/status.h"
+#else
+#include "context/common/status.h"
+#endif
 
 namespace aicpu {
 class ReverseSequenceMsCpuKernel : public CpuKernel {

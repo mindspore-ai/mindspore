@@ -19,7 +19,11 @@
 
 #include "inc/cpu_context.h"
 #include "include/securec.h"
+#if __has_include("context/common/cpu_kernel_utils.h")
 #include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
 
 namespace aicpu {
 struct SparseGradient {

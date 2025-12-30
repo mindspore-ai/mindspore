@@ -24,7 +24,11 @@
 #include "aicpu/common/aicpu_task_struct.h"
 #include "include/securec.h"
 #include "common/tensor.h"
+#if __has_include("aicpu/fwk_adpt_struct.h")
 #include "aicpu/fwk_adpt_struct.h"
+#else
+#include "cce/fwk_adpt_struct.h"
+#endif
 #include "common/kernel_log.h"
 #include "proto/aicpu_tensor.pb.h"
 

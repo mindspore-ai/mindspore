@@ -23,7 +23,11 @@
 #include "securec.h"
 #include "aicpu/cpu_tensor.h"
 #include "utils/kernel_util.h"
+#if __has_include("context/common/cpu_kernel_utils.h")
 #include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
 namespace aicpu {
 namespace {
 const char *kGenerateEodMaskV2 = "GenerateEodMaskV2";

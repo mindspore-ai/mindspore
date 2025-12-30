@@ -15,7 +15,11 @@
  */
 #include "reverse_sequence.h"
 #include "Eigen/Core"
+#if __has_include("context/common/cpu_kernel_utils.h")
 #include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "log.h"
 #include "utils/kernel_util.h"
 

@@ -16,7 +16,11 @@
 #include "cpu_kernel/ms_kernel/arg_min.h"
 #include <vector>
 #include <algorithm>
+#if __has_include("context/common/cpu_kernel_utils.h")
 #include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 

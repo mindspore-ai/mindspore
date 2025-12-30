@@ -21,7 +21,11 @@
 #include <vector>
 
 #include "inc/kernel_log.h"
+#if __has_include("context/utils/status.h")
 #include "context/utils/status.h"
+#else
+#include "context/common/status.h"
+#endif
 
 namespace {
 const int64_t kNoBroadcastValue = 1;
