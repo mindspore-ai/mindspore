@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Base classes and utilities for paged attention tests.
+"""
 import os
 import sys
 import numpy as np
@@ -21,6 +23,7 @@ from enum import Enum
 import mindspore as ms
 from mindspore import context
 
+np.set_printoptions(precision=2, suppress=True, linewidth=200, threshold=1200)
 
 I8MIN = -128
 I8MAX = 127
@@ -68,7 +71,8 @@ def uint82data(data: np.ndarray):
 
 def rerandom(data: np.ndarray):
     val_max = np.max(np.abs(data))
-    rand = np.random.uniform(low=val_max * -0.1, high=val_max * 0.1, size=data.shape)
+    rand = np.random.uniform(
+        low=val_max * -0.1, high=val_max * 0.1, size=data.shape)
     rand = rand.astype(data.dtype)
     res = data + rand
     return res
@@ -127,15 +131,13 @@ def sq2multi(data: np.ndarray, axis: int, sq: np.ndarray):
     b = sq.shape[0]
     assert sq.ndim == 1  # (b,)
     assert data.shape[axis] == np.sum(sq)
-    res = list()
+    res = []
     cnt = 0
     for i in range(b):
-        string = [":"] * data.ndim
-        string[axis] = "%d: %d" % (cnt, cnt + sq[i])
+        slices = [slice(None)] * data.ndim
+        slices[axis] = slice(cnt, cnt + sq[i])
         cnt += sq[i]
-        string = "data[" + ", ".join(string) + "]"
-        # pylint: disable=eval-used
-        res.append(eval(string))
+        res.append(data[tuple(slices)])
     return res
 
 
@@ -143,14 +145,12 @@ def skv2multi(data: np.ndarray, axis: int, skv: np.ndarray):
     b = skv.shape[0]
     assert skv.ndim == 1  # (b,)
     assert data.shape[0] == b  # same batch
-    res = list()
+    res = []
     for i in range(b):
-        string = [":"] * data.ndim
-        string[0] = "i"
-        string[axis] = ":%d" % skv[i]
-        string = "data[" + ", ".join(string) + "]"
-        # pylint: disable=eval-used
-        res.append(eval(string))
+        slices = [slice(None)] * data.ndim
+        slices[0] = i
+        slices[axis] = slice(None, skv[i])
+        res.append(data[tuple(slices)])
     return res
 
 
@@ -161,7 +161,8 @@ def process_deq_scale(deq_scale, quant_shape) -> np.ndarray:
 
 def reverse_process_deq_scale(int64_array) -> np.ndarray:
     uint32_array = int64_array.astype(np.uint32)  # 取每个 int64 中的低32位
-    float32_array = np.frombuffer(uint32_array.tobytes(), dtype=np.float32)  # 将其转换回 float32
+    float32_array = np.frombuffer(
+        uint32_array.tobytes(), dtype=np.float32)  # 将其转换回 float32
     return float32_array
 
 
@@ -190,18 +191,20 @@ class PagedAttentionBase:
             "head_num": first_case["nq"],  # dtype: int
             "scale_value": 1 / math.sqrt(first_case["d"]),  # dtype: float
             "kv_head_num": first_case["nkv"],  # dtype: int
-            "kv_cache_quant_mode": first_case.get("kv_cache_quant_mode", "DEFAULT")
+            "kv_cache_quant_mode": first_case.get("kv_cache_quant_mode", "DEFAULT"),
         }
         if "ASCEND_HOME_PATH" not in os.environ:
             os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
-        context.set_context(mode=self.ctx_mode, device_target="Ascend")
         if first_case.get("mask_mode", "MASK_DEFAULT") != "MASK_DEFAULT":
             i_init["mask_mode"] = first_case.get("mask_mode", "MASK_DEFAULT")
         if first_case.get("mla_kvcombined", False):
+            # NOTE(yanzhi): 这里init时要传Mla的V Dim，那就不能连跑只init一次了。
             i_init["mla_v_dim"] = first_case.get("d_vo", 0)
             if i_init["mla_v_dim"] == 0:
                 raise ValueError("mla_v_dim == 0 when mla_kvcombined is True.")
-        context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
+        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+        context.set_context(
+            jit_config={"jit_level": "O0", "infer_boost": "on"})
         self.net = net_function(**i_init)
 
     def save_bin(self):
@@ -229,24 +232,50 @@ class PagedAttentionBase:
         self.gen["attention_out"].tofile("o0-attention_out.bin")
 
     def load_bin(self):
-        self.load["query"] = np.fromfile("i0-query.bin", dtype=self.i_test["type"])
+        self.load["query"] = np.fromfile(
+            "i0-query.bin", dtype=self.i_test["type"])
         if self.i_test["is_quant"]:
-            self.load["key_cache"] = np.fromfile("i1-key_cache.bin", dtype=np.int8)
-            self.load["value_cache"] = np.fromfile("i2-value_cache.bin", dtype=np.int8)
-            self.load["antiquant_scale"] = np.fromfile("i5-antiquant_scale.bin", dtype=np.float16)
-            self.load["antiquant_offset"] = np.fromfile("i6-antiquant_offset.bin", dtype=np.float16)
+            self.load["key_cache"] = np.fromfile(
+                "i1-key_cache.bin", dtype=np.int8)
+            self.load["value_cache"] = np.fromfile(
+                "i2-value_cache.bin", dtype=np.int8)
+            self.load["antiquant_scale"] = np.fromfile(
+                "i5-antiquant_scale.bin", dtype=np.float16)
+            self.load["antiquant_offset"] = np.fromfile(
+                "i6-antiquant_offset.bin", dtype=np.float16)
         else:
-            self.load["key_cache"] = np.fromfile("i1-key_cache.bin", dtype=self.i_test["type"])
-            self.load["value_cache"] = np.fromfile("i2-value_cache.bin", dtype=self.i_test["type"])
-        self.load["block_tables"] = np.fromfile("i3-block_tables.bin", dtype=np.int32)
-        self.load["batch_valid_length"] = np.fromfile("i4-batch_valid_length.bin", dtype=np.int32)
+            self.load["key_cache"] = np.fromfile(
+                "i1-key_cache.bin", dtype=self.i_test["type"])
+            self.load["value_cache"] = np.fromfile(
+                "i2-value_cache.bin", dtype=self.i_test["type"])
+        self.load["block_tables"] = np.fromfile(
+            "i3-block_tables.bin", dtype=np.int32)
+        self.load["batch_valid_length"] = np.fromfile(
+            "i4-batch_valid_length.bin", dtype=np.int32)
         if self.i_test["is_alibi"]:
-            self.load["alibi_mask"] = np.fromfile("i7-alibi_mask.bin", dtype=self.i_test["type"])
+            self.load["alibi_mask"] = np.fromfile(
+                "i7-alibi_mask.bin", dtype=self.i_test["type"])
         if self.i_test["is_amask"]:
-            self.load["attn_mask"] = np.fromfile("i8-attn_mask.bin", dtype=np.float16)
+            self.load["attn_mask"] = np.fromfile(
+                "i8-attn_mask.bin", dtype=np.float16)
         self.load["sq"] = np.fromfile("q_seqlen.bin", dtype=np.int32)
         if self.i_test["drop_prop"] > 0.0:
             self.load["dmask_uint8"] = np.fromfile("dmask.bin", dtype=np.uint8)
+
+    def gen_mtp_mask(self, batch_size, sq, skv, max_k_seqlen, mask_factor):
+        mask = np.zeros(shape=(batch_size * sq, max_k_seqlen)
+                        ).astype(np.float16)
+        pre_qseqlen = 0
+        for _ in range(batch_size):
+            qseqlen = sq
+            kseqlen = skv
+            tri = np.ones((qseqlen, qseqlen))
+            tri = np.triu(tri, 1)
+            tri *= mask_factor
+            mask[pre_qseqlen:(pre_qseqlen + qseqlen),
+                 kseqlen-qseqlen:kseqlen] = tri
+            pre_qseqlen += qseqlen
+        return mask
 
     def calc_expect_func(self):
         # get parameters
@@ -267,10 +296,12 @@ class PagedAttentionBase:
         max_skv = self.i_test["max_skv"]
         anti_max_sq = self.i_test.get("anti_max_sq", sys.maxsize)
         if anti_max_sq < max_skv:
-            raise ValueError(f"max_skv={max_skv} should equal or less than anti_max_sq={anti_max_sq}")
+            raise ValueError(
+                f"max_skv={max_skv} should equal or less than anti_max_sq={anti_max_sq}")
         anti_max_b = self.i_test.get("anti_max_b", sys.maxsize)
         if anti_max_b < b:
-            raise ValueError(f"b={b} should equal or less than anti_max_b={anti_max_b}")
+            raise ValueError(
+                f"b={b} should equal or less than anti_max_b={anti_max_b}")
         multi_skv = False
         skv = self.i_test["skv"]
         if skv == "max":
@@ -296,6 +327,11 @@ class PagedAttentionBase:
             raise Exception("[Error] quant mode can only be quant-off=0 "
                             "per-channel=1 per-token=2 but got %s" % quant_mode)
         gen_id = multi_sq * 2 + multi_skv
+        # gen_id multi_sq multi_skv Gen_speed Shape      Detail
+        # 0      False    False     Fast      b, sq
+        # 1      False    True      Slow      b, sq
+        # 2      True     False     Slow      np.sum(sq) multi_skv go to gen_id=3
+        # 3      True     True      Slow      np.sum(sq)
         if gen_id == 2:  # go to 3
             skv = np.array([skv] * b, dtype=np.int32)
         diff_skv = max_skv - skv  # int or tensor
@@ -345,14 +381,16 @@ class PagedAttentionBase:
                 elif gen_id in (2, 3):
                     sz_q = [np.sum(sq), n, g, d]
                 else:
-                    raise Exception("gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+                    raise Exception(
+                        "gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
             else:  # BNSD
                 if gen_id in (0, 1):
                     sz_q = [b, n, g, sq, d]
                 elif gen_id in (2, 3):
                     sz_q = [n, g, np.sum(sq), d]
                 else:
-                    raise Exception("gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+                    raise Exception(
+                        "gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
 
             # generate qkv data
             q = np.random.uniform(-1.0, 1.0, size=sz_q)
@@ -361,7 +399,8 @@ class PagedAttentionBase:
             if mla_kvcombined:
                 v = k[:, :, :, :, :d_vo].copy()
             else:
-                v = np.random.uniform(-1.0, 1.0, size=[b, max_skv, n, 1, d_vo])
+                v = np.random.uniform(-2.0, 2.0, size=[b, max_skv, n, 1, d_vo])
+
             q = q.astype(np.float16).astype(input_type)
             k = k.astype(np.float16).astype(input_type)
             v = v.astype(np.float16).astype(input_type)
@@ -371,21 +410,35 @@ class PagedAttentionBase:
                     quant_shape = (1, 1, n, 1, d)  # "PERCHANNEL"
                     if get_quant_mode_str[quant_mode] == "PERTOKEN":
                         quant_shape = (b, max_skv, 1, 1, 1)
-                    de_scale1_fp32 = np.random.randint(-4, 5, size=quant_shape).astype(np.float32)
-                    k_anti_scale = process_deq_scale(de_scale1_fp32, quant_shape)
-                    de_scale2_fp32 = np.random.randint(-4, 5, size=quant_shape).astype(np.float32)
-                    v_anti_scale = process_deq_scale(de_scale2_fp32, quant_shape)
-                    k_anti_offset = np.random.randint(-10, 10, size=quant_shape).astype(np.int32)
-                    v_anti_offset = np.random.randint(-10, 10, size=quant_shape).astype(np.int32)
-                    k = np.random.uniform(-kv_range, kv_range, size=[b, max_skv, n, 1, d]).astype(np.int8)
-                    v = np.random.uniform(-kv_range, kv_range, size=[b, max_skv, n, 1, d]).astype(np.int8)
-                    antiquant_scale = np.stack([k_anti_scale, v_anti_scale], axis=0)
-                    antiquant_offset = np.stack([k_anti_offset, v_anti_offset], axis=0)
-                else:
-                    k, k_anti_scale, k_anti_offset = quant(k, np.float16, quant_mode)
-                    v, v_anti_scale, v_anti_offset = quant(v, np.float16, quant_mode)
-                    antiquant_scale = np.stack([k_anti_scale, v_anti_scale], axis=0)
-                    antiquant_offset = np.stack([k_anti_offset, v_anti_offset], axis=0)
+                    de_scale1_fp32 = np.random.randint(
+                        -4, 5, size=quant_shape).astype(np.float32)
+                    k_anti_scale = process_deq_scale(
+                        de_scale1_fp32, quant_shape)
+                    de_scale2_fp32 = np.random.randint(
+                        -4, 5, size=quant_shape).astype(np.float32)
+                    v_anti_scale = process_deq_scale(
+                        de_scale2_fp32, quant_shape)
+                    k_anti_offset = np.random.randint(-10,
+                                                      10, size=quant_shape).astype(np.int32)
+                    v_anti_offset = np.random.randint(-10,
+                                                      10, size=quant_shape).astype(np.int32)
+                    k = np.random.uniform(-kv_range, kv_range,
+                                          size=[b, max_skv, n, 1, d]).astype(np.int8)
+                    v = np.random.uniform(-kv_range, kv_range,
+                                          size=[b, max_skv, n, 1, d]).astype(np.int8)
+                    antiquant_scale = np.stack(
+                        [k_anti_scale, v_anti_scale], axis=0)
+                    antiquant_offset = np.stack(
+                        [k_anti_offset, v_anti_offset], axis=0)
+                else:  # FP16_VEC or FP32_VEC(TODO)
+                    k, k_anti_scale, k_anti_offset = quant(
+                        k, np.float16, quant_mode)
+                    v, v_anti_scale, v_anti_offset = quant(
+                        v, np.float16, quant_mode)
+                    antiquant_scale = np.stack(
+                        [k_anti_scale, v_anti_scale], axis=0)
+                    antiquant_offset = np.stack(
+                        [k_anti_offset, v_anti_offset], axis=0)
 
                 actual_antiquant_scale = antiquant_scale
                 actual_antiquant_offset = antiquant_offset
@@ -393,22 +446,27 @@ class PagedAttentionBase:
                     anti_max_batch = self.i_test.get("anti_max_b", b)
                     anti_max_q = self.i_test.get("anti_max_sq", max_skv)
                     actual_antiquant_scale = np.zeros(
-                        shape=(2, anti_max_batch, anti_max_q, 1, 1, 1)).astype(actual_antiquant_scale.dtype)
+                        shape=(2, anti_max_batch, anti_max_q, 1, 1, 1)
+                    ).astype(actual_antiquant_scale.dtype)
                     actual_antiquant_offset = np.zeros(
-                        shape=(2, anti_max_batch, anti_max_q, 1, 1, 1)).astype(actual_antiquant_offset.dtype)
+                        shape=(2, anti_max_batch, anti_max_q, 1, 1, 1)
+                    ).astype(actual_antiquant_offset.dtype)
                     min_batch = min(anti_max_batch, b)
                     min_q = min(anti_max_q, max_skv)
-                    actual_antiquant_scale[:, :min_batch, :min_q, 0, 0,
-                                           0] = antiquant_scale[:, :min_batch, :min_q, 0, 0, 0]
-                    actual_antiquant_offset[:, :min_batch, :min_q, 0, 0,
-                                            0] = antiquant_offset[:, :min_batch, :min_q, 0, 0, 0]
+                    actual_antiquant_scale[:, :min_batch, :min_q, 0, 0, 0] = (
+                        antiquant_scale[:, :min_batch, :min_q, 0, 0, 0]
+                    )
+                    actual_antiquant_offset[:, :min_batch, :min_q, 0, 0, 0] = (
+                        antiquant_offset[:, :min_batch, :min_q, 0, 0, 0]
+                    )
 
             if gen_id in (0, 1):
                 batch_valid_length = np.ones((b,)).astype(np.int32) * skv
             elif gen_id in (2, 3):
                 batch_valid_length = np.stack([skv, sq], axis=0)
             else:
-                raise Exception("gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+                raise Exception(
+                    "gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
             q_seqlen_output = np.ones(b).astype(np.int32) * sq
             # table
             max_num_blocks_per_query = max_skv // block_size
@@ -430,7 +488,8 @@ class PagedAttentionBase:
                 elif gen_id in (2, 3):
                     sz_alibi = [n, g, np.sum(sq), max_skv]
                 else:
-                    raise Exception("gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+                    raise Exception(
+                        "gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
                 alibi = np.random.uniform(-10.0, 0.0, size=sz_alibi)
                 alibi = alibi.astype(np.float16).astype(input_type)
                 self.gen["alibi_mask"] = alibi.copy()
@@ -440,18 +499,33 @@ class PagedAttentionBase:
                 elif gen_id in (2, 3):
                     sz_amask = [1, 1, np.sum(sq), max_skv]
                 else:
-                    raise Exception("gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+                    raise Exception(
+                        "gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+                # normal amask
                 amask = np.random.randint(0, 2, size=sz_amask)
                 amask *= -10000
                 amask = amask.astype(np.float16)
+                if sq > 1 and self.i_test.get("mla_kvcombined", False):
+                    if input_type == "float16":
+                        mask_factor = -10000.
+                    else:
+                        mask_factor = 1.  # bf16
+                    amask = np.reshape(
+                        self.gen_mtp_mask(b, sq, skv, max_skv, mask_factor),
+                        newshape=sz_amask
+                    ).astype(np.float16)
                 self.gen["attn_mask"] = amask.copy()
+                # 在bf16 mtp场景里，expect 计算还是需要是 -10000.
+                if sq > 1 and self.i_test.get("mla_kvcombined", False) and input_type == "float32":
+                    amask *= -10000
             if is_dropout:  # 0 is drop, 1 is keep
                 if gen_id in (0, 1):
                     sz_dmask = [b, 1, 1, sq, max_skv]
                 elif gen_id in (2, 3):
                     sz_dmask = [1, 1, np.sum(sq), max_skv]
                 else:
-                    raise Exception("gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+                    raise Exception(
+                        "gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
                 dmask = np.random.uniform(size=sz_dmask) > drop_prop
                 dmask_uint8 = data2uint8(dmask)
                 self.gen["drop_mask"] = dmask_uint8.copy()
@@ -465,14 +539,16 @@ class PagedAttentionBase:
                 elif gen_id in (2, 3):
                     sz_q = [np.sum(sq), n, g, d]
                 else:
-                    raise Exception("gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+                    raise Exception(
+                        "gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
             else:  # BNSD
                 if gen_id in (0, 1):
                     sz_q = [b, n, g, sq, d]
                 elif gen_id in (2, 3):
                     sz_q = [n, g, np.sum(sq), d]
                 else:
-                    raise Exception("gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+                    raise Exception(
+                        "gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
             q = np.reshape(q, newshape=sz_q)
             # BSH of k and v in pa
             k = np.reshape(k, newshape=[b, max_skv, n, 1, d])
@@ -485,7 +561,8 @@ class PagedAttentionBase:
                 elif gen_id in (2, 3):
                     sz_alibi = [n, g, np.sum(sq), max_skv]
                 else:
-                    raise Exception("gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+                    raise Exception(
+                        "gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
                 alibi = np.reshape(alibi, newshape=sz_alibi)
             if self.i_test["is_amask"]:
                 amask = self.load["attn_mask"].copy()
@@ -494,7 +571,8 @@ class PagedAttentionBase:
                 elif gen_id in (2, 3):
                     sz_amask = [1, 1, np.sum(sq), max_skv]
                 else:
-                    raise Exception("gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+                    raise Exception(
+                        "gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
                 amask = np.reshape(amask, newshape=sz_amask)
             if is_dropout:  # 0 is drop, 1 is keep
                 dmask_uint8 = self.load["drop_mask"].copy()
@@ -504,7 +582,8 @@ class PagedAttentionBase:
                 elif gen_id in (2, 3):
                     sz_dmask = [1, 1, np.sum(sq), max_skv]
                 else:
-                    raise Exception("gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+                    raise Exception(
+                        "gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
                 dmask = np.reshape(dmask, newshape=sz_dmask)
             if quant_mode:
                 antiquant_scale = self.load["antiquant_scale"].copy()
@@ -519,9 +598,12 @@ class PagedAttentionBase:
                 antiquant_scale = np.reshape(
                     reverse_process_deq_scale(antiquant_scale),
                     anti_shape)  # int64 to float32
-                antiquant_offset = np.reshape(antiquant_offset, anti_shape)  # int32
-                k = antiquant(k, antiquant_scale[0], antiquant_offset[0], np.float16)
-                v = antiquant(v, antiquant_scale[1], antiquant_offset[1], np.float16)
+                antiquant_offset = np.reshape(
+                    antiquant_offset, anti_shape)  # int32
+                k = antiquant(
+                    k, antiquant_scale[0], antiquant_offset[0], np.float16)
+                v = antiquant(
+                    v, antiquant_scale[1], antiquant_offset[1], np.float16)
             else:
                 antiquant_scale = np.reshape(antiquant_scale, anti_shape)
                 antiquant_offset = np.reshape(antiquant_offset, anti_shape)
@@ -576,7 +658,8 @@ class PagedAttentionBase:
 
             s3 = np.exp(s2)  # [b, n, g, sq, skv]
             if is_dropout:
-                s3 = s3 * dmask.astype(np.float32) / (1 - np.float32(drop_prop))
+                s3 = s3 * dmask.astype(np.float32) / \
+                    (1 - np.float32(drop_prop))
 
             score_sum = np.sum(s3, axis=-1, keepdims=True)  # [b, n, g, sq, 1]
 
@@ -590,36 +673,43 @@ class PagedAttentionBase:
                 p = concat_zeros(p, 4, diff_skv)  # [b, n, g, sq, max_skv]
 
             if layout in ["BSH", "TH"]:
-                o = np.transpose(o, axes=(0, 3, 1, 2, 4))  # [b, sq, n, g, d_vo]
+                # [b, sq, n, g, d_vo]
+                o = np.transpose(o, axes=(0, 3, 1, 2, 4))
 
         elif gen_id == 1:
             if layout in ["BSH", "TH"]:
                 q = np.transpose(q, axes=(0, 2, 3, 1, 4))  # [b, n, g, sq, d]
             # BSH of k and v in pa
             k = np.transpose(k, axes=(0, 2, 3, 1, 4))  # [b, n, 1, max_skv, d]
-            v = np.transpose(v, axes=(0, 2, 3, 1, 4))  # [b, n, 1, max_skv, d_vo]
+            # [b, n, 1, max_skv, d_vo]
+            v = np.transpose(v, axes=(0, 2, 3, 1, 4))
             # tensor to list
             q = list(q)  # [b, n, g, sq, d] to [n, g, sq, d] * b
-            k = skv2multi(k, 3, skv)  # [b, n, 1, max_skv, d] to [n, 1, skv, d] * b
-            v = skv2multi(v, 3, skv)  # [b, n, 1, max_skv, d_vo] to [n, 1, skv, d_vo] * b
+            # [b, n, 1, max_skv, d] to [n, 1, skv, d] * b
+            k = skv2multi(k, 3, skv)
+            # [b, n, 1, max_skv, d_vo] to [n, 1, skv, d_vo] * b
+            v = skv2multi(v, 3, skv)
             if self.i_test["is_alibi"]:
                 # [b, n, g, sq, max_skv] to [n, g, sq, max_skv] * b
                 alibi = list(alibi)
                 for i in range(b):
                     if diff_skv[i]:  # max_skv to skv
-                        alibi[i] = alibi[i][:, :, :, :skv[i]]  # [n, g, sq, skv]
+                        # [n, g, sq, skv]
+                        alibi[i] = alibi[i][:, :, :, :skv[i]]
             if self.i_test["is_amask"]:
                 # [b, 1, 1, sq, max_skv] to [1, 1, sq, max_skv] * b
                 amask = list(amask)
                 for i in range(b):
                     if diff_skv[i]:  # max_skv to skv
-                        amask[i] = amask[i][:, :, :, :skv[i]]  # [1, 1, sq, skv]
+                        # [1, 1, sq, skv]
+                        amask[i] = amask[i][:, :, :, :skv[i]]
             if is_dropout:  # 0 is drop, 1 is keep
                 # [b, 1, 1, sq, max_skv] to [1, 1, sq, max_skv] * b
                 dmask = list(dmask)
                 for i in range(b):
                     if diff_skv[i]:  # max_skv to skv
-                        dmask[i] = dmask[i][:, :, :, :skv[i]]  # [1, 1, sq, skv]
+                        # [1, 1, sq, skv]
+                        dmask[i] = dmask[i][:, :, :, :skv[i]]
 
             s0 = [None] * b
             score_max = [None] * b
@@ -643,19 +733,23 @@ class PagedAttentionBase:
                 if self.i_test["is_amask"] and self.i_test["sq"] != 1:
                     s1 = s1 + amask[i].astype(np.float32)
                 if self.i_test.get("mask_mode", "MASK_DEFAULT") == "TRAPEZOIDAL":
-                    tri_mask = np.ones(shape=[1, 1, sq, skv[i]]).astype(np.float32)
+                    tri_mask = np.ones(
+                        shape=[1, 1, sq, skv[i]]).astype(np.float32)
                     tri_mask = np.triu(tri_mask, skv[i] - sq + 1)
                     s1 = s1 - tri_mask.astype(np.float32) * np.float32(10000)
 
-                score_max[i] = np.max(s1, axis=-1, keepdims=True)  # [n, g, sq, 1]
+                score_max[i] = np.max(
+                    s1, axis=-1, keepdims=True)  # [n, g, sq, 1]
 
                 s2 = s1 - score_max[i]  # [n, g, sq, skv]
 
                 s3 = np.exp(s2)  # [n, g, sq, skv]
                 if is_dropout:
-                    s3 = s3 * dmask[i].astype(np.float32) / (1 - np.float32(drop_prop))
+                    s3 = s3 * dmask[i].astype(np.float32) / \
+                        (1 - np.float32(drop_prop))
 
-                score_sum[i] = np.sum(s3, axis=-1, keepdims=True)  # [n, g, sq, 1]
+                score_sum[i] = np.sum(
+                    s3, axis=-1, keepdims=True)  # [n, g, sq, 1]
 
                 p[i] = s3 / score_sum[i]  # [n, g, sq, skv]
 
@@ -663,8 +757,10 @@ class PagedAttentionBase:
                 o[i] = o[i].astype(input_type)
 
                 if diff_skv[i]:
-                    s0[i] = concat_zeros(s0[i], 3, diff_skv[i])  # [n, g, sq, max_skv]
-                    p[i] = concat_zeros(p[i], 3, diff_skv[i])  # [n, g, sq, max_skv]
+                    # [n, g, sq, max_skv]
+                    s0[i] = concat_zeros(s0[i], 3, diff_skv[i])
+                    # [n, g, sq, max_skv]
+                    p[i] = concat_zeros(p[i], 3, diff_skv[i])
 
             s0 = np.stack(s0, axis=0)  # [b, n, g, sq, max_skv]
             score_max = np.stack(score_max, axis=0)  # [b, n, g, sq, 1]
@@ -672,36 +768,45 @@ class PagedAttentionBase:
             p = np.stack(p, axis=0)  # [b, n, g, sq, max_skv]
             o = np.stack(o, axis=0)  # [b, n, g, sq, d_vo]
             if layout in ["BSH", "TH"]:
-                o = np.transpose(o, axes=(0, 3, 1, 2, 4))  # [b, sq, n, g, d_vo]
+                # [b, sq, n, g, d_vo]
+                o = np.transpose(o, axes=(0, 3, 1, 2, 4))
 
         elif gen_id in (2, 3):
             if layout in ["BSH", "TH"]:
-                q = np.transpose(q, axes=(1, 2, 0, 3))  # [np.sum(sq), n, g, d] to [n, g, np.sum(sq), d]
+                # [np.sum(sq), n, g, d] to [n, g, np.sum(sq), d]
+                q = np.transpose(q, axes=(1, 2, 0, 3))
             # BSH of k and v in pa
             k = np.transpose(k, axes=(0, 2, 3, 1, 4))  # [b, n, 1, max_skv, d]
-            v = np.transpose(v, axes=(0, 2, 3, 1, 4))  # [b, n, 1, max_skv, d_vo]
+            # [b, n, 1, max_skv, d_vo]
+            v = np.transpose(v, axes=(0, 2, 3, 1, 4))
             # tensor to list
-            q = sq2multi(q, 2, sq)  # [n, g, np.sum(sq), d] to [n, g, sq, d] * b
-            k = skv2multi(k, 3, skv)  # [b, n, 1, max_skv, d] to [n, 1, skv, d] * b
-            v = skv2multi(v, 3, skv)  # [b, n, 1, max_skv, d_vo] to [n, 1, skv, d_vo] * b
+            # [n, g, np.sum(sq), d] to [n, g, sq, d] * b
+            q = sq2multi(q, 2, sq)
+            # [b, n, 1, max_skv, d] to [n, 1, skv, d] * b
+            k = skv2multi(k, 3, skv)
+            # [b, n, 1, max_skv, d_vo] to [n, 1, skv, d_vo] * b
+            v = skv2multi(v, 3, skv)
             if self.i_test["is_alibi"]:
                 # [n, g, np.sum(sq), max_skv] to [n, g, sq, max_skv] * b
                 alibi = sq2multi(alibi, 2, sq)
                 for i in range(b):
                     if diff_skv[i]:  # max_skv to skv
-                        alibi[i] = alibi[i][:, :, :, :skv[i]]  # [n, g, sq, skv]
+                        # [n, g, sq, skv]
+                        alibi[i] = alibi[i][:, :, :, :skv[i]]
             if self.i_test["is_amask"]:
                 # [1, 1, np.sum(sq), max_skv] to [1, 1, sq, max_skv] * b
                 amask = sq2multi(amask, 2, sq)
                 for i in range(b):
                     if diff_skv[i]:  # max_skv to skv
-                        amask[i] = amask[i][:, :, :, :skv[i]]  # [1, 1, sq, skv]
+                        # [1, 1, sq, skv]
+                        amask[i] = amask[i][:, :, :, :skv[i]]
             if is_dropout:  # 0 is drop, 1 is keep
                 # [1, 1, np.sum(sq), max_skv] to [1, 1, sq, max_skv] * b
                 dmask = sq2multi(dmask, 2, sq)
                 for i in range(b):
                     if diff_skv[i]:  # max_skv to skv
-                        dmask[i] = dmask[i][:, :, :, :skv[i]]  # [1, 1, sq, skv]
+                        # [1, 1, sq, skv]
+                        dmask[i] = dmask[i][:, :, :, :skv[i]]
 
             s0 = [None] * b
             score_max = [None] * b
@@ -724,16 +829,21 @@ class PagedAttentionBase:
                     s1 = s1 + alibi[i].astype(np.float32)
                 if self.i_test["is_amask"] and self.i_test["sq"] != 1:
                     s1 = s1 + amask[i].astype(np.float32)
+                if self.i_test.get("mask_mode"):
+                    print("TODO: mask_mode")
 
-                score_max[i] = np.max(s1, axis=-1, keepdims=True)  # [n, g, sq, 1]
+                score_max[i] = np.max(
+                    s1, axis=-1, keepdims=True)  # [n, g, sq, 1]
 
                 s2 = s1 - score_max[i]  # [n, g, sq, skv]
 
                 s3 = np.exp(s2)  # [n, g, sq, skv]
                 if is_dropout:
-                    s3 = s3 * dmask[i].astype(np.float32) / (1 - np.float32(drop_prop))
+                    s3 = s3 * dmask[i].astype(np.float32) / \
+                        (1 - np.float32(drop_prop))
 
-                score_sum[i] = np.sum(s3, axis=-1, keepdims=True)  # [n, g, sq, 1]
+                score_sum[i] = np.sum(
+                    s3, axis=-1, keepdims=True)  # [n, g, sq, 1]
 
                 p[i] = s3 / score_sum[i]  # [n, g, sq, skv]
 
@@ -741,19 +851,25 @@ class PagedAttentionBase:
                 o[i] = o[i].astype(input_type)
 
                 if diff_skv[i]:
-                    s0[i] = concat_zeros(s0[i], 3, diff_skv[i])  # [n, g, sq, max_skv]
-                    p[i] = concat_zeros(p[i], 3, diff_skv[i])  # [n, g, sq, max_skv]
+                    # [n, g, sq, max_skv]
+                    s0[i] = concat_zeros(s0[i], 3, diff_skv[i])
+                    # [n, g, sq, max_skv]
+                    p[i] = concat_zeros(p[i], 3, diff_skv[i])
 
             s0 = np.concatenate(s0, axis=2)  # [n, g, np.sum(sq), max_skv]
-            score_max = np.concatenate(score_max, axis=2)  # [n, g, np.sum(sq), 1]
-            score_sum = np.concatenate(score_sum, axis=2)  # [n, g, np.sum(sq), 1]
+            score_max = np.concatenate(
+                score_max, axis=2)  # [n, g, np.sum(sq), 1]
+            score_sum = np.concatenate(
+                score_sum, axis=2)  # [n, g, np.sum(sq), 1]
             p = np.concatenate(p, axis=2)  # [n, g, np.sum(sq), max_skv]
             o = np.concatenate(o, axis=2)  # [n, g, np.sum(sq), d_vo]
             if layout in ["BSH", "TH"]:
-                o = np.transpose(o, axes=(2, 0, 1, 3))  # [np.sum(sq), n, g, d_vo]
+                # [np.sum(sq), n, g, d_vo]
+                o = np.transpose(o, axes=(2, 0, 1, 3))
 
         else:
-            raise Exception("gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
+            raise Exception(
+                "gen_id can only in (0, 1, 2, 3), but got %d" % gen_id)
 
         self.gen["s"] = s0.astype(np.float32).copy()
         self.gen["score_max"] = score_max.astype(np.float32).copy()
@@ -768,20 +884,23 @@ class PagedAttentionBase:
             actual = actual.to(ms.float32)
         actual = actual.numpy()
         actual = np.reshape(actual, newshape=expect.shape)
+        # print("actual\n", actual)
+        # print("expect\n", expect)
         actual = actual.flatten()
         expect = expect.flatten()
-        denom = np.sqrt(np.dot(actual, actual)) * np.sqrt(np.dot(expect, expect))
-        cos = np.dot(actual, expect) / (denom + 1e-10)
-        print("cosine similarity = ", cos)
+        # denom = np.sqrt(np.dot(actual, actual)) * \
+        #    np.sqrt(np.dot(expect, expect))
+        # cosine similarity = np.dot(actual, expect) / (denom + 1e-10)
         data = [actual, expect]
         nan_inf = [None, None]
         for i in range(2):
             nan_inf[i] = np.isnan(data[i]) + np.isinf(data[i])
             nan_inf[i] = np.sum(nan_inf[i])
         if nan_inf[0] or nan_inf[1]:
-            print("nan and inf counts of actual is %d" % nan_inf[0])
-            print("nan and inf counts of expect is %d" % nan_inf[1])
+            # print("nan and inf counts of actual is %d" % nan_inf[0])
+            # print("nan and inf counts of expect is %d" % nan_inf[1])
             raise Exception("Nan Inf Error")
+
         err_ratio = 0.05
         err_gate = np.abs(expect) * err_ratio
         diff = np.abs(data[0] - data[1])

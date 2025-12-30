@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Utility functions for test_internal_ops.
+"""
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor
@@ -25,8 +27,10 @@ def custom_compare(output, expect, mstype):
         limit = 0.03
     elif mstype == ms.int8:
         limit = 0.01
+    else:
+        limit = 0.01  # default limit
 
-    print("limit = ", limit)
+    #print("limit = ", limit)
     out_flatten = output.flatten()
     expect_flatten = expect.flatten()
 
@@ -36,10 +40,10 @@ def custom_compare(output, expect, mstype):
                      np.abs(expect_flatten) > limit).astype(np.int32)
     limit_cnt = int(size * limit)
     if err_cnt > limit_cnt:
-        print("[FAILED]", "err_cnt = ", err_cnt, "/", limit_cnt)
+        #print("[FAILED]", "err_cnt = ", err_cnt, "/", limit_cnt)
         return False
 
-    print("[SUCCESS]", "err_cnt = ", err_cnt, "/", limit_cnt)
+    #print("[SUCCESS]", "err_cnt = ", err_cnt, "/", limit_cnt)
     return True
 
 
@@ -57,6 +61,6 @@ def run_expect_single(x_np, y_np, b_np=0, trans_a=False, trans_b=True):
         expect = np.matmul(x_np, y_np.T) + b_np
     elif trans_a and (not trans_b):
         expect = np.matmul(x_np.T, y_np) + b_np
-    elif trans_a and trans_b:
+    else:  # trans_a and trans_b
         expect = np.matmul(x_np.T, y_np.T) + b_np
     return expect

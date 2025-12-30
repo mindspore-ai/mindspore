@@ -12,8 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
-"""test QuantBatchMatmul op"""
+"""
+Test quantized batch matmul operator.
+"""
 import os
 import numpy as np
 import pytest
@@ -21,6 +22,7 @@ import pytest
 import mindspore as ms
 from mindspore import context
 from mindspore.ops.auto_generate import QuantBatchMatmul
+from tests.mark_utils import arg_mark
 
 
 def process_deq_scale(deq_scale) -> np.ndarray:
@@ -136,9 +138,7 @@ def qbmm(m, k, n, trans_a=False, trans_b=False, scale_dtype=ms.int64, with_outer
     np.testing.assert_allclose(output_np, expect_np, rtol=0.002, atol=0.002)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('input_shape', [(128, 2560, 5120),
                                          (1024, 1024, 1024)])
 def test_qbmm_False_True(input_shape):
@@ -151,9 +151,7 @@ def test_qbmm_False_True(input_shape):
     qbmm(m, k, n, trans_a=False, trans_b=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('input_shape', [(128, 512, 1024),
                                          (1024, 1024, 1024)])
 @pytest.mark.parametrize('tb', [False, True])
@@ -165,27 +163,27 @@ def test_qbmm_add(input_shape, tb, is_dyn):
     Expectation: the result is correct
     """
     m, k, n = input_shape
-    qbmm(m, k, n, trans_a=False, trans_b=tb, with_outer_add=True, is_dyn=is_dyn)
+    qbmm(m, k, n, trans_a=False, trans_b=tb,
+         with_outer_add=True, is_dyn=is_dyn)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_arm_ascend910b_training
-@pytest.mark.env_onecard
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 def test_qbmm_add_continuous():
     """
     Feature: test qbmm operator in graph mode
     Description: test qbmm.
     Expectation: the result is correct
     """
-    qbmm(128, 128, 256, trans_a=False, trans_b=True, with_outer_add=True, is_dyn=False)
-    qbmm(128, 64, 256, trans_a=False, trans_b=True, with_outer_add=True, is_dyn=False)
-    qbmm(1280, 128, 256, trans_a=False, trans_b=False, with_outer_add=True, is_dyn=True)
+    qbmm(128, 128, 256, trans_a=False, trans_b=True,
+         with_outer_add=True, is_dyn=False)
+    qbmm(128, 64, 256, trans_a=False, trans_b=True,
+         with_outer_add=True, is_dyn=False)
+    qbmm(1280, 128, 256, trans_a=False, trans_b=False,
+         with_outer_add=True, is_dyn=True)
 
 
-@pytest.mark.level1
-@pytest.mark.platform_ascend310p
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('m', [1, 128, 1024])
-@pytest.mark.env_onecard
 def test_qbmm_with_pertoken_ds(m):
     """
     Feature: test qbmm operator in graph mode

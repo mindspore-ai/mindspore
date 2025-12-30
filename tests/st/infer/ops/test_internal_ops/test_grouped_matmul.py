@@ -11,17 +11,20 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""
+Tests for grouped matmul operator.
+"""
 import os
 import numpy as np
 import random
 import pytest
-from tests.mark_utils import arg_mark
-from st_utils import custom_compare
 
 import mindspore as ms
 from mindspore import context
 from mindspore.nn import Cell
 from mindspore.ops.auto_generate import GroupedMatmul
+from .st_utils import custom_compare
+from tests.mark_utils import arg_mark
 
 # GroupedMatmul has 8 inputs and 1 outputs
 # -----------------Input-----------------
@@ -41,17 +44,19 @@ from mindspore.ops.auto_generate import GroupedMatmul
 
 np.set_printoptions(precision=2, suppress=True, linewidth=200)
 
+
 def process_deq_scale(deq_scale) -> np.ndarray:
     new_deq_scale = np.frombuffer(deq_scale.tobytes(), dtype=np.uint32)
     return new_deq_scale.astype(np.int64)
 
+
 def split_x(x, group_list):
     x_split = []
-    for i in range(len(group_list)):
+    for i, group_val in enumerate(group_list):
         if i == 0:
-            x_split.append(x[0: group_list[i],])
+            x_split.append(x[0: group_val, ])
         else:
-            x_split.append(x[group_list[i - 1]: group_list[i],])
+            x_split.append(x[group_list[i - 1]: group_val, ])
     return x_split
 
 
@@ -83,6 +88,7 @@ class GroupedMatmulNet(Cell):
         out = self.gmm(x, [self.weight], group_list=group_list)
         return out
 
+
 class GroupedMatmulQuantNet(Cell):
     def __init__(self, weight, bias=None, scale=None, offset=None, antiquant_scale=None, antiquant_offset=None,
                  split_item=3, group_type=0, trans_a=False, trans_b=False):
@@ -93,8 +99,10 @@ class GroupedMatmulQuantNet(Cell):
         self.bias = bias
 
     def construct(self, x, group_list=None):
-        out = self.gmm(x, [self.weight], self.bias, [self.scale], None, None, None, group_list)
+        out = self.gmm(x, [self.weight], self.bias, [
+                       self.scale], None, None, None, group_list)
         return out
+
 
 def grouped_quant_matmul(m, k, n, e, group_list_np, trans_a=False, trans_b=False, profiling=False,
                          net_phase="increment", bias_none=False):
@@ -116,14 +124,17 @@ def grouped_quant_matmul(m, k, n, e, group_list_np, trans_a=False, trans_b=False
 
     scale = process_deq_scale(np_s_all)
 
-    np_x = split_x(np_x_all, group_list_np)  # use group_list split x. [(G0, n), (G1, n)....(GN, n)]
+    # use group_list split x. [(G0, n), (G1, n)....(GN, n)]
+    np_x = split_x(np_x_all, group_list_np)
     np_w = split_w(np_w_all)  # [(k, n), (k, n)....(k, n)]
     np_b = split_w(np_b_all)  # [(n), (n)....(n)]
     np_s = split_w(np_s_all)  # [(n), (n)....(n)]
     if bias_none:
-        res_np = [np_qbmm_compute(x0, w0, s0) for x0, w0, s0 in zip(np_x, np_w, np_s)]
+        res_np = [np_qbmm_compute(x0, w0, s0)
+                  for x0, w0, s0 in zip(np_x, np_w, np_s)]
     else:
-        res_np = [np_qbmm_compute(x0, w0, s0, b0) for x0, w0, s0, b0 in zip(np_x, np_w, np_s, np_b)]
+        res_np = [np_qbmm_compute(x0, w0, s0, b0)
+                  for x0, w0, s0, b0 in zip(np_x, np_w, np_s, np_b)]
     except_np = np.concatenate(res_np, axis=0)
 
     # ms calculate
@@ -156,6 +167,7 @@ def grouped_quant_matmul(m, k, n, e, group_list_np, trans_a=False, trans_b=False
     res = custom_compare(except_np, output_np, ms.float16)
     assert res, "matmul compare fail."
 
+
 def grouped_matmul(m, k, n, e, group_list_np, trans_a=False, trans_b=False, profiling=False, net_phase="increment"):
     os.environ['INTERNAL_PRINT_TILING'] = "on"
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
@@ -165,7 +177,8 @@ def grouped_matmul(m, k, n, e, group_list_np, trans_a=False, trans_b=False, prof
     # numpy calculate
     np_x_all = np.random.uniform(0.1, 2, size=[m, k]).astype(np.float16)
     np_w_all = np.random.uniform(0.1, 1, size=[e, k, n]).astype(np.float16)
-    np_x = split_x(np_x_all, group_list_np)  # use group_list split x. [(G0, n), (G1, n)....(GN, n)]
+    # use group_list split x. [(G0, n), (G1, n)....(GN, n)]
+    np_x = split_x(np_x_all, group_list_np)
     np_w = split_w(np_w_all)  # [(k, n), (k, n)....(k, n)]
     res_np = [np.matmul(x0, w0) for x0, w0 in zip(np_x, np_w)]
     except_np = np.concatenate(res_np, axis=0)
@@ -196,14 +209,15 @@ def grouped_matmul(m, k, n, e, group_list_np, trans_a=False, trans_b=False, prof
 
 def generate_random_numbers(m, e):
     # 生成e-1个互不相同的随机数，范围是1到n，但不包括m
-    random_numbers = random.choices([i for i in range(1, m+1)], k=e-1)
+    random_numbers = random.choices(list(range(1, m+1)), k=e-1)
     # 将m添加到列表的末尾
     random_numbers.append(m)
     # 将列表从小到大排序
     random_numbers.sort()
     return random_numbers
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('m', [32])
 @pytest.mark.parametrize('k', [32])
 @pytest.mark.parametrize('n', [64])
@@ -215,11 +229,13 @@ def test_gmm_increment(m, k, n, e):
     Expectation: the result is correct
     """
     group_list = np.array(generate_random_numbers(m, e)).astype(np.int32)
-    print("group_list = ", group_list)
+    #print("group_list = ", group_list)
     grouped_matmul(m, k, n, e, group_list, trans_b=True, net_phase="increment")
-    grouped_quant_matmul(m, k, n, e, group_list, trans_b=True, net_phase="increment")
+    grouped_quant_matmul(m, k, n, e, group_list,
+                         trans_b=True, net_phase="increment")
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('m', [1000])
 @pytest.mark.parametrize('k', [256])
 @pytest.mark.parametrize('n', [528])
@@ -231,12 +247,13 @@ def test_gmm_prefill(m, k, n, e):
     Expectation: the result is correct
     """
     group_list = np.array(generate_random_numbers(m, e)).astype(np.int32)
-    print("group_list = ", group_list)
+    #print("group_list = ", group_list)
     grouped_matmul(m, k, n, e, group_list, trans_b=True, net_phase="prefill")
-    grouped_quant_matmul(m, k, n, e, group_list, trans_b=True, net_phase="prefill")
+    grouped_quant_matmul(m, k, n, e, group_list,
+                         trans_b=True, net_phase="prefill")
 
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('m', [32])
 @pytest.mark.parametrize('k', [64])
 @pytest.mark.parametrize('n', [128])
@@ -248,6 +265,8 @@ def test_gmm_quant_with_bias(m, k, n, e):
     Expectation: the result is correct
     """
     group_list = np.array(generate_random_numbers(m, e)).astype(np.int32)
-    print("group_list = ", group_list)
-    grouped_quant_matmul(m, k, n, e, group_list, trans_b=True, net_phase="increment", bias_none=True)
-    grouped_quant_matmul(m, k, n, e, group_list, trans_b=True, net_phase="prefill", bias_none=True)
+    #print("group_list = ", group_list)
+    grouped_quant_matmul(m, k, n, e, group_list, trans_b=True,
+                         net_phase="increment", bias_none=True)
+    grouped_quant_matmul(m, k, n, e, group_list, trans_b=True,
+                         net_phase="prefill", bias_none=True)

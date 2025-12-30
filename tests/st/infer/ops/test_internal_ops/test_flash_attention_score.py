@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Tests for flash attention score operator.
+"""
 import os
 import numpy as np
 import math
@@ -79,8 +81,8 @@ class FlashAttentionScoreTest:
         self.mode = mode
         self.ctx_mode = ipt.get('ctx_mode', context.GRAPH_MODE)
 
-        self.names = list()  # testcases name list
-        self.i_test_dict = dict()
+        self.names = []  # testcases name list
+        self.i_test_dict = {}
         self.check_dynamic_shape(ipt)
 
         self.net = None
@@ -92,16 +94,14 @@ class FlashAttentionScoreTest:
         # construct
         np.random.seed(0)  # lock Skv
         for k in self.names:
-            print(k, "start")
             self.i_test = self.i_test_dict[k]
-            self.gen = dict()
-            self.load = dict()
-            self.i_construct = dict()
-            self.o_ascend = dict()
+            self.gen = {}
+            self.load = {}
+            self.i_construct = {}
+            self.o_ascend = {}
             self.calc_expect_func()
             self.calc_actual_func()
             self.compare()
-            print(k, "success")
 
     def check_dynamic_shape(self, ipt: dict):
         for k in ipt:
@@ -114,45 +114,57 @@ class FlashAttentionScoreTest:
         for i in range(1, len(self.names)):
             if self.i_test_dict[self.names[i]]["nq"] != self.i_test_dict[self.names[0]]["nq"]:
                 raise Exception(
-                    "[Error] nq of %s and %s is not equal in dynamic shape" % (self.names[i], self.names[0])
+                    "[Error] nq of %s and %s is not equal in dynamic shape" % (
+                        self.names[i], self.names[0])
                 )
             if self.i_test_dict[self.names[i]]["drop_prop"] != self.i_test_dict[self.names[0]]["drop_prop"]:
                 raise Exception(
-                    "[Error] drop_prop of %s and %s is not equal in dynamic shape" % (self.names[i], self.names[0])
+                    "[Error] drop_prop of %s and %s is not equal in dynamic shape" % (
+                        self.names[i], self.names[0])
                 )
             if self.i_test_dict[self.names[i]]["d"] != self.i_test_dict[self.names[0]]["d"]:
                 raise Exception(
-                    "[Error] d of %s and %s is not equal in dynamic shape" % (self.names[i], self.names[0])
+                    "[Error] d of %s and %s is not equal in dynamic shape" % (
+                        self.names[i], self.names[0])
                 )
             if self.i_test_dict[self.names[i]]["low_tri"] != self.i_test_dict[self.names[0]]["low_tri"]:
                 raise Exception(
-                    "[Error] low_tri of %s and %s is not equal in dynamic shape" % (self.names[i], self.names[0])
+                    "[Error] low_tri of %s and %s is not equal in dynamic shape" % (
+                        self.names[i], self.names[0])
                 )
             if self.i_test_dict[self.names[i]]["layout"] != self.i_test_dict[self.names[0]]["layout"]:
                 raise Exception(
-                    "[Error] layout of %s and %s is not equal in dynamic shape" % (self.names[i], self.names[0])
+                    "[Error] layout of %s and %s is not equal in dynamic shape" % (
+                        self.names[i], self.names[0])
                 )
             if self.i_test_dict[self.names[i]]["blk_sparse"] != self.i_test_dict[self.names[0]]["blk_sparse"]:
                 raise Exception(
-                    "[Error] blk_sparse of %s and %s is not equal in dynamic shape" % (self.names[i], self.names[0])
+                    "[Error] blk_sparse of %s and %s is not equal in dynamic shape" % (
+                        self.names[i], self.names[0])
                 )
 
     def npu_init(self, net_function):
         i_init = {
             "head_num": self.i_test_dict[self.names[0]]["nq"],  # dtype: int
-            "keep_prob": 1 - self.i_test_dict[self.names[0]]["drop_prop"],  # dtype: float
-            "scale_value": 1 / math.sqrt(float(self.i_test_dict[self.names[0]]["d"])),  # dtype: float
+            # dtype: float
+            "keep_prob": 1 - self.i_test_dict[self.names[0]]["drop_prop"],
+            # dtype: float
+            "scale_value": 1 / math.sqrt(float(self.i_test_dict[self.names[0]]["d"])),
             "pre_tokens": 2147483647,  # dtype: int
-            "next_tokens": 0 if self.i_test_dict[self.names[0]]["low_tri"] else 2147483647,  # dtype: int
+            # dtype: int
+            "next_tokens": 0 if self.i_test_dict[self.names[0]]["low_tri"] else 2147483647,
             "inner_precise": 0,  # dtype: int
-            "input_layout": self.i_test_dict[self.names[0]]["layout"],  # dtype: str
-            "sparse_mode": self.i_test_dict[self.names[0]]["blk_sparse"]  # dtype: int
+            # dtype: str
+            "input_layout": self.i_test_dict[self.names[0]]["layout"],
+            # dtype: int
+            "sparse_mode": self.i_test_dict[self.names[0]]["blk_sparse"]
         }
 
         if "ASCEND_HOME_PATH" not in os.environ:
             os.environ['ASCEND_HOME_PATH'] = "/usr/local/Ascend/cann"
-        context.set_context(mode=self.ctx_mode, device_target="Ascend")
-        context.set_context(jit_config={"jit_level": "O0", "infer_boost": "on"})
+        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+        context.set_context(
+            jit_config={"jit_level": "O0", "infer_boost": "on"})
         self.net = net_function(**i_init)
 
     def save_bin(self):
@@ -177,19 +189,26 @@ class FlashAttentionScoreTest:
         self.gen["attention_out"].tofile("o3-attention_out.bin")
 
     def load_bin(self):
-        self.load["query"] = np.fromfile("i0-query.bin", dtype=self.i_test["type"])
+        self.load["query"] = np.fromfile(
+            "i0-query.bin", dtype=self.i_test["type"])
         self.load["key"] = np.fromfile("i1-key.bin", dtype=self.i_test["type"])
-        self.load["value"] = np.fromfile("i2-value.bin", dtype=self.i_test["type"])
+        self.load["value"] = np.fromfile(
+            "i2-value.bin", dtype=self.i_test["type"])
         if self.i_test["is_alibi"]:
-            self.load["real_shift"] = np.fromfile("i3-real_shift.bin", dtype=self.i_test["type"])
+            self.load["real_shift"] = np.fromfile(
+                "i3-real_shift.bin", dtype=self.i_test["type"])
         if self.i_test["drop_prop"] > 0.0:
-            self.load["dmask_uint8"] = np.fromfile("i4-drop_mask.bin", dtype=np.uint8)
+            self.load["dmask_uint8"] = np.fromfile(
+                "i4-drop_mask.bin", dtype=np.uint8)
         # i5-padding_mask skip
         if self.i_test["is_amask"]:
-            self.load["attn_mask"] = np.fromfile("i6-attn_mask.bin", dtype=np.float16)
+            self.load["attn_mask"] = np.fromfile(
+                "i6-attn_mask.bin", dtype=np.float16)
         # i7-prefix skip
-        self.load["actual_seq_qlen"] = np.fromfile("i8-actual_seq_qlen.bin", dtype=np.int32)
-        self.load["actual_seq_kvlen"] = np.fromfile("i9-actual_seq_kvlen.bin", dtype=np.int32)
+        self.load["actual_seq_qlen"] = np.fromfile(
+            "i8-actual_seq_qlen.bin", dtype=np.int32)
+        self.load["actual_seq_kvlen"] = np.fromfile(
+            "i9-actual_seq_kvlen.bin", dtype=np.int32)
 
     def calc_expect_func(self):
         # get parameters
@@ -204,7 +223,8 @@ class FlashAttentionScoreTest:
         elif skv == "rand-1":
             skv = int(np.random.randint(1, max_skv, 1)[0])
         else:
-            raise Exception("[Error] skv can only be max/int/rand-1 but got %s" % skv)
+            raise Exception(
+                "[Error] skv can only be max/int/rand-1 but got %s" % skv)
 
         diff_skv = max_skv - skv
         nq = self.i_test["nq"]
@@ -216,7 +236,7 @@ class FlashAttentionScoreTest:
                 DIM_MAX, d))
         drop_prop = self.i_test["drop_prop"]
         assert 0.0 <= drop_prop <= 1.0
-        is_dropout = (drop_prop > 0.0)
+        is_dropout = drop_prop > 0.0
         layout = self.i_test["layout"]
         if layout not in LAYOUT_SET:
             raise Exception("[Error] layout can only be %s, but got %s" % (
@@ -251,7 +271,8 @@ class FlashAttentionScoreTest:
             self.gen["actual_seq_kvlen"] = kv_seqlen.copy()
             self.gen["actual_seq_qlen"] = q_seqlen_output.copy()
             if self.i_test["is_alibi"]:
-                alibi = np.random.uniform(-10.0, 0.0, size=[1, n, g, sq, max_skv])
+                alibi = np.random.uniform(-10.0, 0.0,
+                                          size=[1, n, g, sq, max_skv])
                 alibi = alibi.astype(np.float16).astype(input_type)
                 self.gen["real_shift"] = alibi.copy()
             if self.i_test["is_amask"]:
@@ -260,7 +281,8 @@ class FlashAttentionScoreTest:
                 amask = amask.astype(np.float16)
                 self.gen["attn_mask"] = amask.copy()
             if is_dropout:  # 0 is drop, 1 is keep
-                dmask = np.random.uniform(size=[b, 1, 1, sq, max_skv]) > drop_prop
+                dmask = np.random.uniform(
+                    size=[b, 1, 1, sq, max_skv]) > drop_prop
                 dmask_uint8 = data2uint8(dmask)
                 self.gen["drop_mask"] = dmask_uint8.copy()
         else:  # load
@@ -391,8 +413,10 @@ class FlashAttentionScoreTest:
             self.i_construct["drop_mask"] = ms.Tensor(
                 shape=[None, None, None, None], dtype=ms.float16)
         # actual_seq_qlen actual_seq_kvlen
-        self.i_construct["actual_seq_qlen"] = ms.Tensor(shape=[None], dtype=ms.int32)
-        self.i_construct["actual_seq_kvlen"] = ms.Tensor(shape=[None], dtype=ms.int32)
+        self.i_construct["actual_seq_qlen"] = ms.Tensor(
+            shape=[None], dtype=ms.int32)
+        self.i_construct["actual_seq_kvlen"] = ms.Tensor(
+            shape=[None], dtype=ms.int32)
 
         self.net.set_inputs(*tuple(self.i_construct.values()))
 
@@ -433,16 +457,21 @@ class FlashAttentionScoreTest:
         # real_shift drop_mask attn_mask
         if self.i_test["is_alibi"]:
             B, N, G, Sq, MaxSkv = self.gen["real_shift"].shape
-            real_shift = np.reshape(self.gen["real_shift"], newshape=[B, N * G, Sq, MaxSkv])
-            self.i_construct["real_shift"] = ms.Tensor(real_shift, dtype=ms_type)
+            real_shift = np.reshape(self.gen["real_shift"], newshape=[
+                                    B, N * G, Sq, MaxSkv])
+            self.i_construct["real_shift"] = ms.Tensor(
+                real_shift, dtype=ms_type)
         if self.i_test["is_amask"]:
             B, _, _, Sq, MaxSkv = self.gen["attn_mask"].shape
-            amask = np.reshape(self.gen["attn_mask"], newshape=[B, 1, Sq, MaxSkv])
+            amask = np.reshape(self.gen["attn_mask"],
+                               newshape=[B, 1, Sq, MaxSkv])
             self.i_construct["attn_mask"] = ms.Tensor(amask, dtype=ms.float16)
         if self.i_test["drop_prop"] > 0.0:
             B, N, _, Sq, MaxSkv = self.gen["drop_mask"].shape
-            drop_mask = np.reshape(self.gen["drop_mask"], newshape=[B, N, Sq, MaxSkv])
-            self.i_construct["drop_mask"] = ms.Tensor(drop_mask, dtype=ms.uint8)
+            drop_mask = np.reshape(
+                self.gen["drop_mask"], newshape=[B, N, Sq, MaxSkv])
+            self.i_construct["drop_mask"] = ms.Tensor(
+                drop_mask, dtype=ms.uint8)
         # actual_seq_qlen actual_seq_kvlen
         self.i_construct["actual_seq_qlen"] = ms.Tensor(
             self.gen["actual_seq_qlen"], dtype=ms.int32)
@@ -457,20 +486,23 @@ class FlashAttentionScoreTest:
         }
 
         if "msprof" in self.i_test and self.i_test["msprof"]:
-            profiler = Profiler(start_profile=False, output_path="./profiler", data_simplification=False)
+            profiler = Profiler(
+                start_profile=False, output_path="./profiler", data_simplification=False)
             profiler.start()
             for _ in range(self.i_test["msprof"]):
                 self.o_ascend["softmax_max"], \
-                self.o_ascend["softmax_sum"], \
-                self.o_ascend["softmax_out"], \
-                self.o_ascend["attention_out"] = self.net(*tuple(self.i_construct.values()))
+                    self.o_ascend["softmax_sum"], \
+                    self.o_ascend["softmax_out"], \
+                    self.o_ascend["attention_out"] = self.net(
+                        *tuple(self.i_construct.values()))
             profiler.stop()
             profiler.analyse()
         else:
             self.o_ascend["softmax_max"], \
-            self.o_ascend["softmax_sum"], \
-            self.o_ascend["softmax_out"], \
-            self.o_ascend["attention_out"] = self.net(*tuple(self.i_construct.values()))
+                self.o_ascend["softmax_sum"], \
+                self.o_ascend["softmax_out"], \
+                self.o_ascend["attention_out"] = self.net(
+                    *tuple(self.i_construct.values()))
 
     def compare(self):
         expect = self.gen["attention_out"]
@@ -487,8 +519,8 @@ class FlashAttentionScoreTest:
             nan_inf[i] = np.isnan(data[i]) + np.isinf(data[i])
             nan_inf[i] = np.sum(nan_inf[i])
         if nan_inf[0] or nan_inf[1]:
-            print("nan and inf counts of actual is %d" % nan_inf[0])
-            print("nan and inf counts of expect is %d" % nan_inf[1])
+            #print("nan and inf counts of actual is %d" % nan_inf[0])
+            #print("nan and inf counts of expect is %d" % nan_inf[1])
             raise Exception("Nan Inf Error")
         err_ratio = 0.05
         err_gate = np.abs(expect) * err_ratio
@@ -524,7 +556,7 @@ description = {
 }
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_sd(ctx_mode):
     """
@@ -553,7 +585,7 @@ def test_flash_attention_score_sd(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_bnsd_64(ctx_mode):
     """
@@ -582,7 +614,7 @@ def test_flash_attention_score_bnsd_64(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_bsh(ctx_mode):
     """
@@ -611,7 +643,7 @@ def test_flash_attention_score_bsh(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_bsh_mask(ctx_mode):
     """
@@ -639,8 +671,10 @@ def test_flash_attention_score_bsh_mask(ctx_mode):
     }
     FlashAttentionScoreTest(i_test)
 
+# internal
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_bsh_mask_alibi(ctx_mode):
     """
@@ -669,7 +703,7 @@ def test_flash_attention_score_bsh_mask_alibi(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_fa_bsh_small(ctx_mode):
     """
@@ -698,7 +732,7 @@ def test_flash_attention_score_fa_bsh_small(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_d256_amask_fp16(ctx_mode):
     """
@@ -727,7 +761,7 @@ def test_flash_attention_score_d256_amask_fp16(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_d256_low_tri_bf16(ctx_mode):
     """
@@ -756,7 +790,7 @@ def test_flash_attention_score_d256_low_tri_bf16(ctx_mode):
     FlashAttentionScoreTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('ctx_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_flash_attention_score_dynamic(ctx_mode):
     """
@@ -764,7 +798,7 @@ def test_flash_attention_score_dynamic(ctx_mode):
     Description: test FlashAttentionScore op with low-trangle mask in float16.
     Expectation: the result is correct
     """
-    i_test_dict = dict()
+    i_test_dict = {}
 
     i_test = {
         "ctx_mode": ctx_mode,

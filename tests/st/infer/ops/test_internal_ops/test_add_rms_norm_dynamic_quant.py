@@ -20,7 +20,7 @@ import numpy as np
 import pytest
 
 # should be inited before importing mindspore
-from op_checker import InternalOpEnabledChecker
+from .op_checker import InternalOpEnabledChecker
 op_checker = InternalOpEnabledChecker({'MS_SUBMODULE_LOG_v': '{DEVICE:1}'}, True, "./add_rmsnorm_dynamic_quant_log")
 
 import mindspore as ms
@@ -101,7 +101,7 @@ def _test_add_rms_norm_dynamic_quant_fusion(shape, dtype, has_smooth_scale, inte
         output[2].astype(ms.float32).asnumpy()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize("shape", [(1, 93, 6144), (2, 1, 3, 4, 5, 6, 2, 2)])
 @pytest.mark.parametrize('dtype', ["bfloat16", "float16"])
 @pytest.mark.parametrize('has_smooth_scale', [True, False])

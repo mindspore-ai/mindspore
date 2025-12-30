@@ -35,14 +35,14 @@ class InternalOpEnabledChecker:
     def CheckOpExistByKeyword(self, keyword: str, clean_log=True):
         """check op exist"""
         existed = False
-        with open(self.log_file_name, 'r') as f:
+        with open(self.log_file_name, 'r', encoding='utf-8') as f:
             for line in f.readlines():
                 if keyword in line:
                     existed = True
                     break
 
         if clean_log and existed:
-            with open(self.log_file_name, 'w') as f:
+            with open(self.log_file_name, 'w', encoding='utf-8') as f:
                 f.write('')
 
         if not existed:
@@ -51,14 +51,14 @@ class InternalOpEnabledChecker:
 
     def CheckOpNotExistByKeyword(self, keyword: str, clean_log=True):
         """check op not exist"""
-        with open(self.log_file_name, 'r') as f:
+        with open(self.log_file_name, 'r', encoding='utf-8') as f:
             for line in f.readlines():
                 if keyword in line:
                     self.check_failed = True
                     return False
 
         if clean_log:
-            with open(self.log_file_name, 'w') as f:
+            with open(self.log_file_name, 'w', encoding='utf-8') as f:
                 f.write('')
         return True
 
