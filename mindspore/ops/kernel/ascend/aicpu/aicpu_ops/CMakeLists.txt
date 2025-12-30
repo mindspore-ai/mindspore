@@ -1,8 +1,4 @@
-if(DEFINED ENV{ASCEND_CUSTOM_PATH})
-    set(TOOLCHAIN_PATH $ENV{ASCEND_CUSTOM_PATH}/cann/toolkit/toolchain)
-else()
-    set(TOOLCHAIN_PATH /usr/local/Ascend/cann/toolkit/toolchain)
-endif()
+set(TOOLCHAIN_PATH ${ASCEND_PATH}/toolkit/toolchain)
 set(CMAKE_C_COMPILER ${TOOLCHAIN_PATH}/hcc/bin/aarch64-target-linux-gnu-gcc)
 set(CMAKE_CXX_COMPILER ${TOOLCHAIN_PATH}/hcc/bin/aarch64-target-linux-gnu-g++)
 
