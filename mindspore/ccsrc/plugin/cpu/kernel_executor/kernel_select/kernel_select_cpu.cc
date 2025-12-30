@@ -38,7 +38,7 @@
 #include "primitive/sparse_ops.h"
 #include "kernel/cpu/cpu_kernel.h"
 #include "kernel/cpu/custom/kernel_mod_impl/custom_aot_cpu_kernel.h"
-#include "kernel/cpu/custom/kernel_mod_impl/custom_op_plugin_kernel.h"
+#include "kernel/cpu/op_plugin/custom_op_plugin_kernel.h"
 #include "plugin/cpu/kernel_executor/pyfunc/py_func_cpu_kernel.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
 #include "utils/trace_base.h"

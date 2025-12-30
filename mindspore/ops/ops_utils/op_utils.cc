@@ -51,6 +51,7 @@
 #include "ops/ops_func_impl/simple_infer.h"
 #include "utils/ms_context.h"
 #include "ops_utils/dl_utils.h"
+#include "ops_utils/callback.h"
 #include "utils/file_utils.h"
 #include "utils/ms_utils.h"
 
@@ -1172,27 +1173,36 @@ bool IsEnableHostNode(const AnfNodePtr &node) {
   return is_view;
 }
 
+constexpr char kOpPluginLoadPathEnv[] = "MS_OP_PLUGIN_PATH";
+
 void *GetOpPluginHandle() {
   static std::once_flag init_flag;
   static void *handle = nullptr;
   std::call_once(init_flag, []() {
-    const char *op_plugin_path = common::EnvHelper::GetInstance()->GetEnv("MS_OP_PLUGIN_PATH");
+    const char *op_plugin_path = common::EnvHelper::GetInstance()->GetEnv(kOpPluginLoadPathEnv);
 
     if (op_plugin_path == nullptr) {
-      MS_LOG(INFO) << "MS_OP_PLUGIN_PATH is not set. Op plugin will not be loaded.";
+      MS_LOG(INFO) << kOpPluginLoadPathEnv << " is not set. Op plugin will not be loaded.";
       return;
     }
 
     auto real_path = FileUtils::GetRealPath(op_plugin_path).value_or("");
     if (real_path.empty()) {
-      MS_LOG(ERROR) << "Failed to resolve the real path for MS_OP_PLUGIN_PATH: " << op_plugin_path;
+      MS_LOG(ERROR) << "Failed to resolve the real path for " << kOpPluginLoadPathEnv << ": " << op_plugin_path;
       return;
     }
+    (void)DL_ERROR();
+#ifdef _WIN32
+    SetLastError(0);
+#endif
     handle = DL_OPEN(real_path);
     if (handle == nullptr) {
-      MS_LOG(WARNING) << "Failed to open op plugin file: " << real_path << " Error code: " << DL_ERROR();
+      MS_LOG(ERROR) << "Failed to open op plugin file: " << real_path << " Error code: " << DL_ERROR();
+      return;
     }
     MS_LOG(INFO) << "Op plugin loaded successfully from path: " << real_path;
+
+    GET_OPS_CALLBACK(SetupOpPluginConfig, void, void *)(handle);
   });
   return handle;
 }
@@ -1223,8 +1233,8 @@ const std::unordered_set<std::string> &GetAllOpPluginKernelNames() {
     get_op_count = reinterpret_cast<std::add_pointer<int()>::type>(DL_SYM(handle, get_op_count_func_name));
     get_all_ops = reinterpret_cast<std::add_pointer<char **()>::type>(DL_SYM(handle, get_all_ops_func_name));
     if (get_op_count == nullptr || get_all_ops == nullptr) {
-      MS_LOG(WARNING) << "Error occurs when fetching function '" << get_op_count_func_name << "' or '"
-                      << get_all_ops_func_name << "' from op plugin library. Error code: " << DL_ERROR();
+      MS_LOG(ERROR) << "Error occurs when fetching function '" << get_op_count_func_name << "' or '"
+                    << get_all_ops_func_name << "' from op plugin library. Error code: " << DL_ERROR();
       return;
     }
     int op_count = get_op_count();

@@ -451,9 +451,9 @@ inline T AreaPixelComputeScale(int64_t input_size, int64_t output_size, bool ali
     return ComputeScales<T>(scale, input_size, output_size);
   }
 }
+
 OPS_API void *GetOpPluginHandle();
 OPS_API bool IsOpPluginKernel(const std::string &op_name);
 OPS_API const std::unordered_set<std::string> &GetAllOpPluginKernelNames();
 }  // namespace mindspore::ops
-
 #endif  // MINDSPORE_CORE_OPS_OP_UTILS_H

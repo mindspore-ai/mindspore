@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/cpu/custom/kernel_mod_impl/custom_op_plugin_kernel.h"
+#include "kernel/cpu/op_plugin/custom_op_plugin_kernel.h"
 #include "ops_utils/op_utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
 #include "include/utils/callback.h"

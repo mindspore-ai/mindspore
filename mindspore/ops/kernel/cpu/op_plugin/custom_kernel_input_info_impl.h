@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_CUSTOM_KERNEL_INPUT_INFO_IMPL_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_CUSTOM_KERNEL_INPUT_INFO_IMPL_H_
+#ifndef MINDSPORE_OPS_KERNEL_CPU_OP_PLUGIN_CUSTOM_KERNEL_INPUT_INFO_IMPL_H_
+#define MINDSPORE_OPS_KERNEL_CPU_OP_PLUGIN_CUSTOM_KERNEL_INPUT_INFO_IMPL_H_
 
 #include <cstdint>
 #include <string>
@@ -24,7 +24,7 @@
 #include "base/bfloat16.h"
 #include "base/float16.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_tensor.h"
-#include "kernel/cpu/custom/kernel_mod_impl/custom_kernel_input_info.h"
+#include "kernel/cpu/op_plugin/custom_kernel_input_info.h"
 
 namespace mindspore::kernel {
 namespace op_plugin {
@@ -120,4 +120,4 @@ class KernelInputInfoImpl : public KernelInputInfo {
 };
 }  // namespace op_plugin
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_CUSTOM_CUSTOM_KERNEL_INPUT_INFO_IMPL_H_
+#endif  // MINDSPORE_OPS_KERNEL_CPU_OP_PLUGIN_CUSTOM_KERNEL_INPUT_INFO_IMPL_H_

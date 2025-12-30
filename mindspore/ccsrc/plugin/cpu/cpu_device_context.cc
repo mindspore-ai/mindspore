@@ -74,7 +74,7 @@
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "kernel/cpu/contiguous_cpu_kernel.h"
-#include "kernel/cpu/custom/kernel_mod_impl/custom_op_plugin_kernel.h"
+#include "kernel/cpu/op_plugin/custom_op_plugin_kernel.h"
 #include "ops_utils/op_utils.h"
 #include "mindspore/ops/kernel/host/host_kernel_mod.h"
 #include "mindspore/ops/kernel/host/host_kernel_build.h"
