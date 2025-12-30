@@ -53,6 +53,21 @@ def get_max_memory(file_name, log_file_name):
     os.environ['MS_DEV_RUNTIME_CONF']=""
     return memory_useage
 
+def get_max_memory_baseline(file_name, log_file_name):
+    # Clear compile cache folder and log files
+    if os.path.exists(log_file_name):
+        os.remove(log_file_name)
+    os.environ['MS_DEV_RUNTIME_CONF'] = "memory_statistics:True"
+
+    cmd = "python {} > {} 2>&1".format(file_name, log_file_name)
+    subprocess.check_output(cmd, shell=True)
+    assert os.path.exists(log_file_name)
+
+    memory_useage = extract_memory_usage(log_file_name)
+
+    os.remove(log_file_name)
+    os.environ['MS_DEV_RUNTIME_CONF']=""
+    return memory_useage
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_net_base():
@@ -71,8 +86,9 @@ def test_net_parameter():
     Description: Test whether hyper offload auto optimize with can decrease autual used memory.
     Expectation: success.
     """
+    max_memory_baseline = get_max_memory_baseline("run_net_parameter_base.py","parameter_base.txt")
     max_memory = get_max_memory("run_net_parameter.py", "test_net_parameter_result.txt")
-    assert max_memory < 160
+    assert max_memory < max_memory_baseline
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')

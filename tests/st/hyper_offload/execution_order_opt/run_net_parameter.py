@@ -24,15 +24,22 @@ class TestNet(nn.Cell):
     def __init__(self):
         super().__init__()
         self.p = Parameter(Tensor(np.ones([1000, 100, 100]), dtype=mstype.float32), device="Remote", name="p")
+        self.local_p = Parameter(Tensor(np.ones([100, 100]), dtype=mstype.float32), name="local_p")
 
     @jit(auto_offload="weight")
     def construct(self, x):
         m1 = x / 2
-        m3 = m1 * 2
-        m4 = m3 * 2
-        m5 = m3 + m4
-        return (m5 * 2) - m1 + self.p
-
+        m2 = m1 * self.local_p
+        m3 = m2 * 2
+        remote_compute1 = self.p * 3.14
+        remote_compute2 = remote_compute1 + self.p * 0.86
+        remote_compute3 = remote_compute2 / self.p
+        remote_compute4 = remote_compute3 * self.p
+        m4 = m3 + remote_compute4[:, :100, :100]
+        m5 = m4 * 2
+        final_remote = self.p[:, :100, :100] * m5
+        result = final_remote - m1[:, :100, :100]
+        return result
 
 if __name__ == "__main__":
     origin_select_distance = compile_config.HYPER_OFFLOAD_SELECT_DISTANCE
