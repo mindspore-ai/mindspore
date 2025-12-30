@@ -30,7 +30,9 @@ namespace mindspore {
 namespace runtime {
 
 enum class TensorStatus { kReady, kCopyingToDevice, kCopyingToHost };
-constexpr size_t kInitHorizon = 1;
+static const size_t kInitHorizon = 1;
+static const size_t kCopyOutWaitOpNum = 0;
+static const float kBufferSizeScalar = 0.1;
 
 struct TensorInfo {
   KernelTensorPtr kernel_tensor;
@@ -38,6 +40,7 @@ struct TensorInfo {
   bool need_free;
   TensorStatus status;
   KernelTensorPtr old_kernel_tensor;
+  size_t copy_out_wait_op_num;
 
   TensorInfo(const KernelTensorPtr &kernel_tensor, size_t next_use_idx, bool need_free, TensorStatus status,
              const KernelTensorPtr &original_kernel = nullptr)
@@ -45,7 +48,8 @@ struct TensorInfo {
         next_use_idx(next_use_idx),
         need_free(need_free),
         status(status),
-        old_kernel_tensor(original_kernel) {}
+        old_kernel_tensor(original_kernel),
+        copy_out_wait_op_num(kCopyOutWaitOpNum) {}
 
   bool operator<(const TensorInfo &other) const {
     if (next_use_idx == other.next_use_idx) {
@@ -55,8 +59,18 @@ struct TensorInfo {
   }
 };
 
-using TensorInfoList = std::vector<TensorInfo>;
+using TensorInfoPtr = std::shared_ptr<TensorInfo>;
+using TensorInfoPtrList = std::vector<TensorInfoPtr>;
 using MemActionMgrPtr = std::shared_ptr<MemActionMgr>;
+
+struct PtrLess {
+  bool operator()(const TensorInfoPtr &a, const TensorInfoPtr &b) const {
+    if (!a || !b) return static_cast<bool>(b) < static_cast<bool>(a);
+    return *a < *b;
+  }
+};
+
+using TensorInfoPtrSet = std::set<TensorInfoPtr, PtrLess>;
 
 class MemCountedCache {
  public:
@@ -64,7 +78,7 @@ class MemCountedCache {
     horizon_ = kInitHorizon;
     float max_size = runtime::RuntimeConf::GetInstance()->mem_max_size();
     max_mem_ = FloatToSize(max_size * kGBToByte);
-    buffer_size_ = 0.1 * max_mem_;
+    buffer_size_ = kBufferSizeScalar * max_mem_;
   }
 
   ~MemCountedCache() { ClearMCCInstance(); }
@@ -116,23 +130,19 @@ class MemCountedCache {
   }
 
  private:
-  std::pair<size_t, size_t> GetAvailableMemSize();
-
   void CleanExpiredDeviceTensors(size_t current_idx);
   void InsertNewTensorsToDevice(size_t idx, const std::vector<std::pair<KernelTensorPtr, size_t>> &kernel_tensors_info);
   KernelTensorPtrPairList LoadAllWithinHorizon(size_t current_idx, size_t horizon, uint32_t stream_id,
                                                const device::DeviceContext *device_context);
-  KernelTensorPtrPairList OffloadAndPrefetchTensors(size_t current_idx, size_t horizon, uint32_t stream_id,
-                                                    size_t need_load_size, size_t available_mem,
-                                                    const device::DeviceContext *device_context);
-
   KernelTensorPtrPairList Offload(size_t first_offloadable_idx, size_t need_size, size_t stream_id,
                                   const device::DeviceContext *device_context);
   size_t GetIdleMemSize();
   size_t GetDeviceAvailableMemSize();
   size_t GetUsedMemSize();
   size_t GetActualHorizon(size_t cur_idx);
-  TensorInfoList GetCanOffloadTensorInfo(size_t first_offload_idx);
+  size_t GetNeedOffloadSize(size_t need_size);
+  void InsertWaitForCopyOutData(const device::DeviceContext *device_context, size_t must_released_size,
+                                bool decrease_wait_op_num = true);
 
   MemActionMgrPtr mem_action_mgr_{nullptr};
 
@@ -142,9 +152,8 @@ class MemCountedCache {
   size_t to_host_stream_;
   size_t to_device_stream_;
 
-  std::set<TensorInfo> device_cache_;
-  std::set<TensorInfo> host_cache_;
-
+  TensorInfoPtrSet device_cache_;
+  TensorInfoPtrSet host_cache_;
   std::vector<KernelTensorPtr> cur_inputs_;
 
   // Handle condition switch

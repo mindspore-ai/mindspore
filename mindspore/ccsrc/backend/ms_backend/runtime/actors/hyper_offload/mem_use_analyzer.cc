@@ -24,12 +24,8 @@ namespace mindspore {
 namespace runtime {
 KernelTensorPtr MemUseAnalyzer::FindDeviceKernelTensor(const KernelTensorPtr &kernel_tensor) {
   MS_EXCEPTION_IF_NULL(kernel_tensor);
-  auto new_kernel_tensor = kernel_tensor;
-  auto iter = original_tensors_copyed_map_.find(new_kernel_tensor);
-  if (iter != original_tensors_copyed_map_.end()) {
-    new_kernel_tensor = iter->second;
-  }
-  return new_kernel_tensor;
+  auto iter = original_tensors_copyed_map_.find(kernel_tensor);
+  return (iter != original_tensors_copyed_map_.end()) ? iter->second : kernel_tensor;
 }
 
 std::vector<std::pair<KernelTensorPtr, size_t>> MemUseAnalyzer::GetDeviceKernelTensorsInfo(
@@ -50,11 +46,8 @@ std::vector<std::pair<KernelTensorPtr, size_t>> MemUseAnalyzer::GetDeviceKernelT
     if (kernel_tensor == nullptr) {
       continue;
     }
-    bool exists = std::find_if(kernel_users_info.begin(), kernel_users_info.end(),
-                               [&kernel_tensor](const std::pair<KernelTensorPtr, size_t> &pair) {
-                                 return pair.first == kernel_tensor;
-                               }) != kernel_users_info.end();
-    if (exists) {
+    if (std::any_of(kernel_users_info.begin(), kernel_users_info.end(),
+                    [&kernel_tensor](const auto &pair) { return pair.first == kernel_tensor; })) {
       continue;
     }
     auto iter = kernel_tensor_info_.find(kernel_tensor);
@@ -70,13 +63,19 @@ std::vector<std::pair<KernelTensorPtr, size_t>> MemUseAnalyzer::GetDeviceKernelT
       continue;
     }
     auto next_user_idx = user_lists.front();
-    while (next_user_idx <= idx || (next_user_idx <= max_invalid_idx && next_user_idx >= min_invalid_idx)) {
-      if (next_user_idx <= max_invalid_idx && next_user_idx >= min_invalid_idx) {
+    bool is_invalid_range = (next_user_idx <= max_invalid_idx && next_user_idx >= min_invalid_idx);
+    while (next_user_idx <= idx || is_invalid_range) {
+      if (is_invalid_range) {
         MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Skip idx: " << next_user_idx << ", max_invalid_idx: " << max_invalid_idx
                                        << ", min_invalid_idx: " << min_invalid_idx;
       }
       user_lists.pop();
-      next_user_idx = user_lists.empty() ? SIZE_MAX : user_lists.front();
+      if (user_lists.empty()) {
+        next_user_idx = SIZE_MAX;
+        break;
+      }
+      next_user_idx = user_lists.front();
+      is_invalid_range = (next_user_idx <= max_invalid_idx && next_user_idx >= min_invalid_idx);
     }
 
     MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Kernel tensor info: " << new_kernel_tensor
@@ -96,10 +95,13 @@ std::vector<std::pair<KernelTensorPtr, size_t>> MemUseAnalyzer::GetKernelTensorU
   if (!need_output) {
     return GetDeviceKernelTensorsInfo(idx, kernel_actor->input_kernel_tensors(), need_pop_user);
   }
-  auto out_kernel_tensors = kernel_actor->output_kernel_tensors();
-  auto workspace_kernel_tensors = kernel_actor->workspace_kernel_tensors();
-  out_kernel_tensors.insert(out_kernel_tensors.end(), workspace_kernel_tensors.begin(), workspace_kernel_tensors.end());
-  return GetDeviceKernelTensorsInfo(idx, out_kernel_tensors, need_pop_user);
+  const auto &out_kernel_tensors = kernel_actor->output_kernel_tensors();
+  const auto &workspace_kernel_tensors = kernel_actor->workspace_kernel_tensors();
+  KernelTensorPtrList all_output_tensors;
+  all_output_tensors.reserve(out_kernel_tensors.size() + workspace_kernel_tensors.size());
+  all_output_tensors.insert(all_output_tensors.end(), out_kernel_tensors.begin(), out_kernel_tensors.end());
+  all_output_tensors.insert(all_output_tensors.end(), workspace_kernel_tensors.begin(), workspace_kernel_tensors.end());
+  return GetDeviceKernelTensorsInfo(idx, all_output_tensors, need_pop_user);
 }
 
 void MemUseAnalyzer::UpdateCopyKernelTensors(const KernelTensorPtrPairList &kernel_tensors_pair) {
@@ -168,7 +170,7 @@ void MemUseAnalyzer::InitGraphInfo(SuperKernelActor *super_actor, const device::
   for (size_t i = 0; i < kernel_actor_size; ++i) {
     const auto &kernel_actor = kernel_actors_[i];
     MS_EXCEPTION_IF_NULL(kernel_actor);
-    auto kernel_actor_ptr = kernel_actor.get();
+    auto *kernel_actor_ptr = kernel_actor.get();
     MS_EXCEPTION_IF_NULL(kernel_actor_ptr);
     kernel_actor_idx_map_[kernel_actor_ptr] = i;
     auto &cnode = kernel_actor->kernel();
@@ -190,8 +192,9 @@ void MemUseAnalyzer::InitGraphInfo(SuperKernelActor *super_actor, const device::
         MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Param or const input: " << real_input->ToString();
         continue;
       }
-      if (iter->second.empty() || iter->second.back() != i) {
-        iter->second.emplace(i);
+      auto &user_queue = iter->second;
+      if (user_queue.empty() || user_queue.back() != i) {
+        user_queue.emplace(i);
       }
     }
     // Process output kernel tensors, mark kernel tensor
@@ -313,7 +316,7 @@ void MemUseAnalyzer::LaunchTaskAfter(KernelRunner *kernel_actor, const device::D
 void MemUseAnalyzer::ClearGraphInfo(const device::DeviceContext *device_context) {
   MS_VLOG(VL_HYPER_OFFLOAD_INFO) << "Clear graph info";
   kernel_tensor_info_.clear();
-  for (auto &[k, v] : original_tensors_copyed_map_) {
+  for (const auto &[k, v] : original_tensors_copyed_map_) {
     if (k->device_address()->GetDevicePtr() == nullptr) {
       v->device_address()->SetDevicePtr(nullptr);
     }
