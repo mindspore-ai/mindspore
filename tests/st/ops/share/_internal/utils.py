@@ -125,7 +125,7 @@ class OpSampleInput:
                 return [x]
 
         op_args = []
-        op_args.extend(_to_args_list(self.op_input))
+        op_args.append(self.op_input)
         op_args.extend(_to_args_list(self.op_args))
         op_args.extend(_to_args_list(self.op_kwargs))
         if append_dout is not None:
