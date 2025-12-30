@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2019-2024 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -453,8 +453,9 @@ class MS_CORE_API FunctionalAbstractClosure final : public AbstractFuncAtom {
   /// \brief Constructor of FunctionalAbstractClosure.
   ///
   /// \param[in] name The name of functional.
-  FunctionalAbstractClosure(const std::string &name, const FunctionalPtr &functional, bool is_method)
-      : name_(name), functional_(functional), is_method_(is_method) {}
+  FunctionalAbstractClosure(const std::string &name, const FunctionalPtr &functional, bool is_method,
+                            bool is_tensor_type)
+      : name_(name), functional_(functional), is_method_(is_method), is_tensor_type_(is_tensor_type) {}
 
   /// \brief Destructor of FunctionalAbstractClosure.
   ~FunctionalAbstractClosure() override = default;
@@ -475,6 +476,11 @@ class MS_CORE_API FunctionalAbstractClosure final : public AbstractFuncAtom {
   /// \return Whether the functional is used as method.
   bool is_method() const { return is_method_; }
 
+  /// \brief Check if method of Tensor Type, eg: Tensor.transpose(x, 0, 2).
+  ///
+  /// \return Whether the functional is used as method.
+  bool is_tensor_type() const { return is_tensor_type_; }
+
   AbstractFunctionPtr Copy() const override;
 
   bool operator==(const AbstractFunction &other) const override;
@@ -487,6 +493,7 @@ class MS_CORE_API FunctionalAbstractClosure final : public AbstractFuncAtom {
   std::string name_;
   FunctionalPtr functional_{nullptr};
   bool is_method_{false};
+  bool is_tensor_type_{false};
 };
 using FunctionalAbstractClosurePtr = std::shared_ptr<FunctionalAbstractClosure>;
 

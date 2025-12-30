@@ -1446,7 +1446,7 @@ EvalResultPtr InterpretSetAttrNode(const AbstractBasePtrList &args_abs_list, con
 }
 
 EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_conf, const AnfNodeConfigPtr &old_conf,
-                                   REQUIRE_TYPE require_type = REQUIRE_TYPE::METHOD) {
+                                   REQUIRE_TYPE require_type = REQUIRE_TYPE::METHOD, bool is_tensor_type = false) {
   MS_EXCEPTION_IF_NULL(old_conf);
   AbstractBasePtr abstract = ToAbstract(value, AnalysisContext::DummyContext(), old_conf);
   // Create new cnode
@@ -1464,7 +1464,9 @@ EvalResultPtr StaticGetterInferred(const ValuePtr &value, const ConfigPtr &data_
 
   auto conf = dyn_cast_ptr<abstract::AnfNodeConfig>(data_conf);
   MS_EXCEPTION_IF_NULL(conf);
-  input.push_back(conf->node());
+  if (!is_tensor_type) {
+    input.push_back(conf->node());
+  }
   MS_EXCEPTION_IF_NULL(old_conf);
   MS_EXCEPTION_IF_NULL(old_conf->node());
   FuncGraphPtr func_graph = old_conf->node()->func_graph();
@@ -1769,7 +1771,8 @@ EvalResultPtr GetEvaluatedValueForPrimitiveAttr(const AbstractBasePtrList &args_
 }
 
 EvalResultPtr GetEvaluatedValueForFunctionalMethod(const AnalysisEnginePtr &engine, const ValuePtr &method_value,
-                                                   const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf) {
+                                                   const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf,
+                                                   bool is_tensor_type) {
   MS_EXCEPTION_IF_NULL(method_value);
   auto method_str = method_value->cast_ptr<StringImm>();
   MS_EXCEPTION_IF_NULL(method_str);
@@ -1777,12 +1780,20 @@ EvalResultPtr GetEvaluatedValueForFunctionalMethod(const AnalysisEnginePtr &engi
   MS_EXCEPTION_IF_NULL(out_conf);
   MS_EXCEPTION_IF_NULL(out_conf->node());
   FuncGraphPtr func_graph = out_conf->node()->func_graph();
-  // Create node: {Partial, Functional(method_name), Tensor}
-  const auto &functional = BuildMethodFunctional(method_name);
-  auto data_node_conf = dyn_cast_ptr<abstract::AnfNodeConfig>(data_conf);
-  MS_EXCEPTION_IF_NULL(data_node_conf);
-  auto data_node = data_node_conf->node();
-  auto new_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimPartial), NewValueNode(functional), data_node});
+  CNodePtr new_cnode = nullptr;
+  const auto &functional = BuildMethodFunctional(method_name, is_tensor_type);
+  if (is_tensor_type) {
+    // Create node: {Partial, Functional(method_name)}
+    // Tensor.transpose(x, 0, 2), do not push Tensor input to new_cnode.
+    new_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimPartial), NewValueNode(functional)});
+  } else {
+    // Create node: {Partial, Functional(method_name), Tensor}
+    // x.transpose(0, 2), need push x input to new_cnode.
+    auto data_node_conf = dyn_cast_ptr<abstract::AnfNodeConfig>(data_conf);
+    MS_EXCEPTION_IF_NULL(data_node_conf);
+    auto data_node = data_node_conf->node();
+    new_cnode = func_graph->NewCNode({NewValueNode(prim::kPrimPartial), NewValueNode(functional), data_node});
+  }
   MS_LOG(DEBUG) << "Convert py_method '" << method_name << "' to node: " << new_cnode->DebugString();
   AnalysisEnginePtr eng = out_conf->engine();
   AnfNodeConfigPtr fn_conf = eng->MakeConfig(new_cnode, out_conf->context(), out_conf->func_graph());
@@ -1860,8 +1871,8 @@ EvalResultPtr GetEvaluatedValueForAttrOrMethodNotInMap(const AnalysisEnginePtr &
 
 EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePtr &engine,
                                                           const AbstractBasePtrList &args_abs_list,
-                                                          const ConfigPtr &data_conf,
-                                                          const AnfNodeConfigPtr &out_conf) {
+                                                          const ConfigPtr &data_conf, const AnfNodeConfigPtr &out_conf,
+                                                          bool is_tensor_type) {
   constexpr size_t data_index = 0;
   constexpr size_t item_index = 1;
   auto data_args = args_abs_list[data_index];
@@ -1897,10 +1908,15 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   MS_EXCEPTION_IF_NULL(item_str);
   std::string item_name = item_str->value();
   REQUIRE_TYPE require_type = REQUIRE_TYPE::METHOD;
-  Any require = pipeline::Resource::GetMethodPtr(data_type->type_id(), item_name);
+  auto type_id = data_type->type_id();
+  // Tensor.transpose(x, 0, 2) need match the method of kObjectTypeTensorType in method_map.
+  if (is_tensor_type) {
+    type_id = kObjectTypeTensorType;
+  }
+  Any require = pipeline::Resource::GetMethodPtr(type_id, item_name);
   MS_EXCEPTION_IF_NULL(out_conf->node());
   if (require.empty()) {
-    require = pipeline::Resource::GetAttrPtr(data_type->type_id(), item_name);
+    require = pipeline::Resource::GetAttrPtr(type_id, item_name);
     if (require.empty()) {
       return GetEvaluatedValueForAttrOrMethodNotInMap(engine, args_abs_list, out_conf, item_name, data_type);
     }
@@ -1931,7 +1947,7 @@ EvalResultPtr GetEvaluatedValueForBuiltinTypeAttrOrMethod(const AnalysisEnginePt
   } else {
     MS_LOG(EXCEPTION) << "Expect to get string or PrimitivePtr from attr or method map, but got " << require.ToString();
   }
-  return StaticGetterInferred(converted_value, data_conf, out_conf, require_type);
+  return StaticGetterInferred(converted_value, data_conf, out_conf, require_type, is_tensor_type);
 }
 
 EvalResultPtr TransPropertyToFunc(const AnfNodeConfigPtr &out_conf, py::object property_net_obj,
@@ -2038,14 +2054,31 @@ bool CheckHasOverriddenMethod(AnfNodePtr node, ValuePtr item_value) {
   return false;
 }
 
-bool CheckFunctionalMethod(const TypeId &type_id, const ValuePtr &method_value) {
+// Tensor.transpose(x, 0, 2) need check the abstract of Tensor.
+bool IsTensorType(const AbstractBasePtr &data_args) {
+  MS_EXCEPTION_IF_NULL(data_args);
+  TypePtr data_type = data_args->BuildType();
+  MS_EXCEPTION_IF_NULL(data_type);
+  if (data_type->isa<TypeType>()) {
+    ValuePtr data_val = data_args->BuildValue();
+    MS_EXCEPTION_IF_NULL(data_val);
+    constexpr auto tensor_type_str = "class 'mindspore.common.tensor.Tensor'";
+    if (data_val->ToString() == tensor_type_str) {
+      MS_LOG(DEBUG) << "Is Tensor type.";
+      return true;
+    }
+  }
+  return false;
+}
+
+bool CheckFunctionalMethod(const TypeId &type_id, const ValuePtr &method_value, bool is_tensor_type) {
   // ge does not support tensor method overloading.
   auto ge_mode = AnfAlgo::IsBackendGe();
   if (ge_mode) {
     return false;
   }
   // Check if tensor.
-  if (NormalizeTypeId(type_id) != kObjectTypeTensorType) {
+  if (NormalizeTypeId(type_id) != kObjectTypeTensorType && !is_tensor_type) {
     return false;
   }
   // Get method name.
@@ -2053,7 +2086,7 @@ bool CheckFunctionalMethod(const TypeId &type_id, const ValuePtr &method_value) 
     MS_LOG(EXCEPTION) << "Expect a string, but got: " << method_value->ToString();
   }
   auto method_name = method_value->cast_ptr<StringImm>()->value();
-  return prim::IsFunctionalMethod(type_id, method_name);
+  return prim::IsFunctionalMethod(type_id, method_name, is_tensor_type);
 }
 
 EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePtrList &args_abs_list,
@@ -2107,12 +2140,24 @@ EvalResultPtr StaticGetter(const AnalysisEnginePtr &engine, const AbstractBasePt
   bool check_override = CheckHasOverriddenMethod(out_conf->node(), item_value);
   // Not check if the data is from PyExecute CNode, since its Tensor output is pseud.
   auto data_type_id = data_type->type_id();
-  if (!IsPyExecuteData(data_args) && !check_override) {
-    if (CheckFunctionalMethod(data_type_id, item_value)) {
-      return GetEvaluatedValueForFunctionalMethod(engine, item_value, data_conf, out_conf);
+  // The is_tensor_type tag is used to handle two scenarios: Tensor.transpose(x, 0, 2) and x.transpose(0, 2)
+  // These two scenarios involve different inputs for creating nodes.
+  // Tensor.transpose(x, 0, 2), is_tensor_type is True;
+  // x.transpose(0, 2), is_tensor_type is False;
+  auto is_tensor_type = IsTensorType(data_args);
+  MS_LOG(DEBUG) << "is_tensor_type:" << is_tensor_type;
+
+  if ((!IsPyExecuteData(data_args) && !check_override)) {
+    if (CheckFunctionalMethod(data_type_id, item_value, is_tensor_type)) {
+      return GetEvaluatedValueForFunctionalMethod(engine, item_value, data_conf, out_conf, is_tensor_type);
     }
-    if (pipeline::Resource::IsTypeInBuiltInMap(data_type_id)) {
-      return GetEvaluatedValueForBuiltinTypeAttrOrMethod(engine, args_abs_list, data_conf, out_conf);
+    if (is_tensor_type) {
+      data_type_id = kObjectTypeTensorType;
+    }
+    auto is_type_in_builtin_map = pipeline::Resource::IsTypeInBuiltInMap(data_type_id);
+    MS_LOG(DEBUG) << "is_type_in_builtin_map:" << is_type_in_builtin_map;
+    if (is_type_in_builtin_map || is_tensor_type) {
+      return GetEvaluatedValueForBuiltinTypeAttrOrMethod(engine, args_abs_list, data_conf, out_conf, is_tensor_type);
     }
   }
   return GetEvaluatedValueForNameSpace(args_abs_list, out_conf, check_override);
@@ -2636,7 +2681,7 @@ EvalResultPtr FunctionalEvaluator::EvalPrim(const AnalysisEnginePtr &engine, con
     constexpr size_t index_partial_data = 2;
     (void)std::transform(op_cnode->weak_inputs().cbegin() + index_partial_data, op_cnode->weak_inputs().cend(),
                          std::back_inserter(inputs_list), ConvertWeakNode);
-  } else if (is_method_ && IsGetAttrNode(op_node)) {
+  } else if (is_method_ && IsGetAttrNode(op_node) && !is_tensor_type_) {
     auto op_cnode = op_node->cast<CNodePtr>();
     (void)inputs_list.emplace_back(op_cnode->input(index_data));
   }

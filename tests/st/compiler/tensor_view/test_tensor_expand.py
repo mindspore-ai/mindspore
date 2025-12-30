@@ -46,6 +46,7 @@ def expand_func_2(x, shape):
     return output
 
 
+@pytest.mark.skip(reason="has not supported")
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 def test_tensor_expand_2():

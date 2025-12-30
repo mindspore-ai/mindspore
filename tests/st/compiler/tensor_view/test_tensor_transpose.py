@@ -25,7 +25,6 @@ def transpose_func_1(x):
     return output
 
 
-@pytest.mark.skip(reason="GE has not supported")
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 def test_tensor_transpose_1():
@@ -65,7 +64,7 @@ def transpose_func_3(x):
     return output
 
 
-@pytest.mark.skip(reason="GE has not supported")
+@pytest.mark.skip(reason="has not supported")
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 def test_tensor_transpose_3():

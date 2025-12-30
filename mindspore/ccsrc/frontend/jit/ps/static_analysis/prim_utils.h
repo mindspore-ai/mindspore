@@ -60,7 +60,7 @@ CNodePtr GeneratePrimitiveCNode(const PrimitivePtr &primitive, const ops::OpDef 
                                 const AnfNodePtrList &init_args_nodes, const AnfNodePtrList &call_args_nodes,
                                 const std::function<AbstractBasePtr(const AnfNodePtr &)> &eval_func);
 
-std::shared_ptr<Functional> BuildMethodFunctional(const std::string &name);
+std::shared_ptr<Functional> BuildMethodFunctional(const std::string &name, bool is_tensor_type = false);
 
 // Check whether type x is a subtype of model.
 bool IsSubtype(const AbstractBasePtr x, const TypePtr model);

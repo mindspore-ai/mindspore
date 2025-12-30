@@ -526,8 +526,8 @@ std::map<size_t, std::pair<ValuePtr, bool>> &GetFunctionalConvertCache() {
   return functional_convert_cache;
 }
 
-bool IsFunctionalMethod(const TypeId &type_id, const std::string &method_name) {
-  return NormalizeTypeId(type_id) == kObjectTypeTensorType &&
+bool IsFunctionalMethod(const TypeId &type_id, const std::string &method_name, bool is_tensor_type) {
+  return ((NormalizeTypeId(type_id) == kObjectTypeTensorType) || is_tensor_type) &&
          ops::tensor_method_overload_map.find(method_name) != ops::tensor_method_overload_map.end();
 }
 

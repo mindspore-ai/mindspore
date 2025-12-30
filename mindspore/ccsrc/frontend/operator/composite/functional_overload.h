@@ -88,7 +88,7 @@ class PrimitiveConverter {
   bool has_deprecated_ = false;
 };
 
-bool IsFunctionalMethod(const TypeId &type_id, const std::string &method_name);
+bool IsFunctionalMethod(const TypeId &type_id, const std::string &method_name, bool is_tensor_type);
 std::map<size_t, std::pair<ValuePtr, bool>> &GetFunctionalConvertCache();
 std::string BuildArgsTypeString(const TypePtr &arg_abs);
 AnfNodePtr ConvertFunctionalToPrimitive(const std::string &functional_name, const AnfNodePtrList &inputs_list,

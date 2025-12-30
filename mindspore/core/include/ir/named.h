@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2022 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -218,9 +218,13 @@ class MS_CORE_API Functional : public Named {
   std::string ToString() const override { return "Functional_" + name(); }
   void set_is_method(bool flag) { is_method_ = flag; }
   bool is_method() const { return is_method_; }
+  // The method of Tensor Type, eg: Tensor.transpose(x, 0, 2)
+  void set_is_tensor_type(bool flag) { is_tensor_type_ = flag; }
+  bool is_tensor_type() const { return is_tensor_type_; }
 
  private:
   bool is_method_{false};
+  bool is_tensor_type_{false};
 };
 using FunctionalPtr = std::shared_ptr<Functional>;
 }  // namespace mindspore

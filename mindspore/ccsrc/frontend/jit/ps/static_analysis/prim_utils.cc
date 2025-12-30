@@ -456,9 +456,10 @@ CNodePtr GeneratePrimitiveCNode(const PrimitivePtr &primitive, const ops::OpDef 
   return new_cnode;
 }
 
-std::shared_ptr<Functional> BuildMethodFunctional(const std::string &name) {
+std::shared_ptr<Functional> BuildMethodFunctional(const std::string &name, bool is_tensor_type) {
   auto functional = std::make_shared<Functional>(name);
   functional->set_is_method(true);
+  functional->set_is_tensor_type(is_tensor_type);
   return functional;
 }
 

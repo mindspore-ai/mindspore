@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2021 Huawei Technologies Co., Ltd
+ * Copyright 2019-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ abstract::AbstractBasePtr Null::ToAbstract() { return std::make_shared<abstract:
 abstract::AbstractBasePtr Ellipsis::ToAbstract() { return std::make_shared<abstract::AbstractEllipsis>(); }
 
 abstract::AbstractBasePtr Functional::ToAbstract() {
-  return std::make_shared<abstract::FunctionalAbstractClosure>(name(), shared_from_base<Functional>(), is_method());
+  return std::make_shared<abstract::FunctionalAbstractClosure>(name(), shared_from_base<Functional>(), is_method(),
+                                                               is_tensor_type());
 }
 
 abstract::AbstractBasePtr MindIRClassType::ToAbstract() {
