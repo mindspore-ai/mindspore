@@ -1,0 +1,65 @@
+# operator sparse_flash_attention_grad
+sparse_flash_attention_grad:
+  args:
+    query:
+      dtype: tensor
+    key:
+      dtype: tensor
+    value:
+      dtype: tensor
+    sparse_indices:
+      dtype: tensor
+    d_out:
+      dtype: tensor
+    out:
+      dtype: tensor
+    softmax_max:
+      dtype: tensor
+    softmax_sum:
+      dtype: tensor
+    scale_value:
+      dtype: float
+    sparse_block_size:
+      dtype: int
+    query_rope:
+      dtype: tensor
+      default: None
+    key_rope:
+      dtype: tensor
+      default: None
+    actual_seq_qlen:
+      dtype: tensor
+      default: None
+    actual_seq_kvlen:
+      dtype: tensor
+      default: None
+    layout:
+      dtype: int
+      default: "'BSND'"
+      arg_handler: str_to_enum
+    sparse_mode:
+      dtype: int
+      default: 3
+    pre_tokens:
+      dtype: int
+      default: 9223372036854775807
+    next_tokens:
+      dtype: int
+      default: 9223372036854775807
+  returns:
+    d_query:
+      dtype: tensor
+    d_key:
+      dtype: tensor
+    d_value:
+      dtype: tensor
+    d_query_rope:
+      dtype: tensor
+    d_key_rope:
+      dtype: tensor
+  function:
+    disable: True
+  dispatch:
+    enable: True
+    Ascend: SparseFlashAttentionGradAscend
+
