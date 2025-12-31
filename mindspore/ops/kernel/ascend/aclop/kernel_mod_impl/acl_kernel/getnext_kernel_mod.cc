@@ -113,7 +113,9 @@ bool IsGetNextOp(const std::string &op_name) { return op_name == kGetNextOpName 
 
 std::shared_ptr<device::BlockingQueue> GetTdtWingManQueue(const PrimitivePtr &prim) {
   MS_EXCEPTION_IF_NULL(prim);
-  if (!IsGetNextOp(prim->name())) return nullptr;
+  if (!IsGetNextOp(prim->name())) {
+    return nullptr;
+  }
   auto queue_name = GetValue<std::string>(prim->GetAttr("shared_name"));
   if (!device::DataQueueMgr::GetInstance().IsCreated(queue_name)) {
     return nullptr;
@@ -122,12 +124,16 @@ std::shared_ptr<device::BlockingQueue> GetTdtWingManQueue(const PrimitivePtr &pr
 }
 
 std::shared_ptr<device::BlockingQueue> GetTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
-  if (!common::AnfAlgo::IsGetNextNode(node)) return nullptr;
+  if (!common::AnfAlgo::IsGetNextNode(node)) {
+    return nullptr;
+  }
   return GetTdtWingManQueue(common::AnfAlgo::GetCNodePrimitive(node));
 }
 
 void CloseTdtWingManQueue(const PrimitivePtr &prim) {
-  if (!IsGetNextOp(prim->name())) return;
+  if (!IsGetNextOp(prim->name())) {
+    return;
+  }
   auto wingman = GetTdtWingManQueue(prim);
   if (wingman && wingman->IsOpen()) {
     wingman->Close();
@@ -135,8 +141,10 @@ void CloseTdtWingManQueue(const PrimitivePtr &prim) {
 }
 
 void CloseTdtWingManQueue(const std::shared_ptr<AnfNode> &node) {
-  if (!common::AnfAlgo::IsGetNextNode(node)) return;
-  return CloseTdtWingManQueue(common::AnfAlgo::GetCNodePrimitive(node));
+  if (!common::AnfAlgo::IsGetNextNode(node)) {
+    return;
+  }
+  CloseTdtWingManQueue(common::AnfAlgo::GetCNodePrimitive(node));
 }
 }  // namespace kernel
 }  // namespace mindspore

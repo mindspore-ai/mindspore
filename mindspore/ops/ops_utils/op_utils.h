@@ -42,6 +42,8 @@
 
 namespace mindspore::ops {
 constexpr auto kBitSize = 64;
+constexpr double SCALE_ZERO_THRESHOLD = 0.0;
+constexpr double SCALE_ONE = 1.0;
 const std::set<TypePtr> common_valid_types = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
                                               kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
 const std::set<TypePtr> common_valid_types_with_bool = {
@@ -411,8 +413,8 @@ static inline bool UseOptimizedOpImpl() {
 
 template <typename T>
 inline T ComputeScales(const double &scale, const size_t &input_size, const size_t &output_size) {
-  if (scale > 0.) {
-    return static_cast<T>(1.0 / scale);
+  if (scale > SCALE_ZERO_THRESHOLD) {
+    return static_cast<T>(SCALE_ONE / scale);
   } else if (output_size > 0) {
     return (static_cast<T>(input_size) / output_size);
   }
