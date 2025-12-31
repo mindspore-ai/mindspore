@@ -270,6 +270,7 @@ def is_floating_point_mstype(type):
     fp_mstype = (mstype.float16, mstype.float32, mstype.float64)
     return type in fp_mstype
 
+
 def is_number(type_id):
     """
     Check type id is number.

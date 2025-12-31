@@ -212,6 +212,7 @@ abstract::AbstractBasePtr PyExecuteInitializer::PyExecuteInferPy(const Primitive
     MS_LOG(EXCEPTION) << "Invalid script value:" << inputs[0]->ToString();
   }
   const auto &script = dyn_cast<StringImm>(inputs[0]);
+  MS_EXCEPTION_IF_NULL(script);
 
   if (!inputs[1]->isa<ValueSequence>()) {
     MS_LOG(WARNING) << "The keys is not tuple value, but got " << inputs[1]->ToString();

@@ -307,7 +307,6 @@ FuncGraphPtr SplitDynamicMindIR(const std::string &file_name, size_t device_num,
   for (size_t rank_id_iter = 0; rank_id_iter < device_num; rank_id_iter++) {
     auto tmp_func_graph = mindspore::BasicClone(func_graph);
     FuncGraphManagerPtr func_graph_manager = tmp_func_graph->manager();
-
     if (func_graph_manager == nullptr) {
       MS_LOG(INFO) << "func_graph_manager is null";
       std::vector<FuncGraphPtr> graphs{tmp_func_graph};
