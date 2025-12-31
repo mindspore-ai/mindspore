@@ -22,7 +22,11 @@
 #include "include/securec.h"
 #include "cpu_types.h"
 #include "inc/kernel_log.h"
+#if __has_include("context/utils/status.h")
 #include "context/utils/status.h"
+#else
+#include "context/common/status.h"
+#endif
 #include "unsupported/Eigen/CXX11/Tensor"
 #include "utils/kernel_util.h"
 

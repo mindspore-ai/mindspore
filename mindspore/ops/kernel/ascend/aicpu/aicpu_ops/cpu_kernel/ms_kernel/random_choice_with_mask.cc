@@ -18,7 +18,11 @@
 #include <complex>
 #include <algorithm>
 #include "include/securec.h"
+#if __has_include("context/common/cpu_kernel_utils.h")
 #include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "random/utils.h"
 
 namespace {

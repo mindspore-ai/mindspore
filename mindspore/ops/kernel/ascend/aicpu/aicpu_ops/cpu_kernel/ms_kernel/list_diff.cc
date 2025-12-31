@@ -23,9 +23,17 @@
 #include "utils/eigen_tensor.h"
 #include "utils/allocator_utils.h"
 #include "inc/kernel_log.h"
+#if __has_include("context/utils/status.h")
 #include "context/utils/status.h"
+#else
+#include "context/common/status.h"
+#endif
 #include "unsupported/Eigen/CXX11/Tensor"
+#if __has_include("context/common/cpu_kernel_utils.h")
 #include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
 
 namespace {
 const char *kListDiff = "ListDiff";

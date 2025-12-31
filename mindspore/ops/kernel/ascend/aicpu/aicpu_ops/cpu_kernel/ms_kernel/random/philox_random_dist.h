@@ -19,8 +19,16 @@
 
 #include <algorithm>
 #include "ms_kernel/random/utils.h"
+#if __has_include("context/common/cpu_kernel_utils.h")
 #include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
+#if __has_include("context/common/cpu_kernel_utils.h")
 #include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "utils/kernel_util.h"
 #include "utils/philox_random.h"
 namespace aicpu {

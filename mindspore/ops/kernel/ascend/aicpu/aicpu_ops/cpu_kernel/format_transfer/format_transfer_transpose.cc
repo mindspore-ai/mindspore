@@ -21,7 +21,11 @@
 
 #include <memory>
 
+#if __has_include("context/utils/status.h")
 #include "context/utils/status.h"
+#else
+#include "context/common/status.h"
+#endif
 #include "cpu_kernel/format_transfer/format_transfer_utils.h"
 #include "cpu_kernel/format_transfer/formats_definitions.h"
 #include "inc/kernel_log.h"

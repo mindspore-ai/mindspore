@@ -23,7 +23,11 @@
 #include "inc/ms_cpu_kernel.h"
 #include "inc/ms_cpu_kernel.h"
 #include "inc/kernel_log.h"
+#if __has_include("context/utils/status.h")
 #include "context/utils/status.h"
+#else
+#include "context/common/status.h"
+#endif
 
 namespace aicpu {
 class SplitCpuKernel : public CpuKernel {

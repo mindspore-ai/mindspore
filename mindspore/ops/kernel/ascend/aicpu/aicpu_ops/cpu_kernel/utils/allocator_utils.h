@@ -21,7 +21,12 @@
 
 #include "cpu_attr_value.h"
 #include "cpu_context.h"
+#if __has_include("context/cpu_proto/cpu_node_def.h")
 #include "context/cpu_proto/cpu_node_def.h"
+#else
+#include "context/inc/cpu_node_def.h"
+#endif
+
 #include "cpu_tensor.h"
 
 namespace aicpu {

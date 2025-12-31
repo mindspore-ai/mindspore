@@ -17,7 +17,11 @@
 #include <set>
 #include <cmath>
 #include "cpu_kernel/ms_kernel/fft_ortho.h"
+#if __has_include("context/common/cpu_kernel_utils.h")
 #include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "mindapi/base/types.h"
 #include "utils/kernel_util.h"
 #include "cpu_kernel/utils/fft_helper.h"

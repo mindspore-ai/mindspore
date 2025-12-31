@@ -23,8 +23,16 @@
 #include <algorithm>
 
 #include "include/securec.h"
+#if __has_include("context/common/cpu_kernel_utils.h")
 #include "context/common/cpu_kernel_utils.h"
+#else
+#include "context/inc/cpu_kernel_utils.h"
+#endif
+#if __has_include("context/utils/status.h")
 #include "context/utils/status.h"
+#else
+#include "context/common/status.h"
+#endif
 #include "utils/eigen_tensor.h"
 #include "utils/kernel_util.h"
 
@@ -234,9 +242,9 @@ uint32_t IndexPutCpuKernel::IndexPutCompute(CpuKernelContext &ctx) {
   if (data_num >= kParallelDataNumSameShape) {
     uint32_t min_core_num = 1;
     uint32_t temp_core_num = std::max(min_core_num, aicpu::CpuKernelUtils::GetCPUNum(ctx) - kResvCpuNum);
-    uint32_t max_core_num = (temp_core_num >= data_num)
-                              ? data_num
-                              : (data_num <= kParallelDataNumMid) ? std::min(temp_core_num, 4U) : temp_core_num;
+    uint32_t max_core_num = (temp_core_num >= data_num)         ? data_num
+                            : (data_num <= kParallelDataNumMid) ? std::min(temp_core_num, 4U)
+                                                                : temp_core_num;
     auto sharder_index_put = [&](int64_t start, int64_t end) {
       size_t length = (end - start) * sizeof(T);
       auto ret = memcpy_s(y + start, length, x1 + start, length);

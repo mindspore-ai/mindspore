@@ -11,7 +11,9 @@ endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/options.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/check_requirements.cmake)
-include(${CMAKE_SOURCE_DIR}/cmake/ascend_variables.cmake)
+if(ENABLE_D OR ENABLE_TESTCASES)
+    include(${CMAKE_SOURCE_DIR}/cmake/ascend_variables.cmake)
+endif()
 
 #generate code
 if(DEFINED ENV{ENABLE_GEN_CODE})

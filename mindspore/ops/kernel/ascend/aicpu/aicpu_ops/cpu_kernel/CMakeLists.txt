@@ -1,10 +1,17 @@
-set(CANN_CONTEXT "${ASCEND_PATH}/cann/include/aicpu_common/")
-if(NOT EXISTS ${CANN_CONTEXT})
-    message(FATAL_ERROR "${CANN_CONTEXT} not exists. Please check if the cann package is installed properly.")
+string(REGEX MATCH "cann" REGEX_MATCHED_KERNEL ${ASCEND_PATH})
+if(EXISTS "${ASCEND_PATH}/pkg_inc/aicpu_common/")
+    if(REGEX_MATCHED_KERNEL)
+        include_directories(${ASCEND_PATH}/pkg_inc/aicpu_common/context/cpu_proto/)
+    else()
+        include_directories(${ASCEND_PATH}/cann/pkg_inc/aicpu_common/context/cpu_proto/)
+    endif()
+elseif(EXISTS "${ASCEND_PATH}/tools/msopgen/template/custom_operator_sample/AICPU/Tensorflow/cpukernel/")
+    include_directories(${ASCEND_PATH}/tools/msopgen/template/custom_operator_sample/AICPU/Tensorflow/cpukernel/)
+else()
+    message(FATAL_ERROR "Can not find AICPU context include path in the environment."
+                        "Please check if the cann package is installed properly.")
 endif()
 
-include_directories(${CANN_CONTEXT})
-include_directories(${CANN_CONTEXT}/context/cpu_proto/)
 include_directories(${ASCEND_CANN_AICPU_KERNEL_PATH})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
