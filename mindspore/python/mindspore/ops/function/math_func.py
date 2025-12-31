@@ -7180,7 +7180,8 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Note:
-        Currently, complex numbers are not supported.
+        - Currently, complex numbers are not supported.
+        - Depending on the input range of values, the Ascend backend calculation results may have precision errors.
 
     Examples:
         >>> import mindspore
@@ -7671,8 +7672,10 @@ def norm_ext(input, p='fro', dim=None, keepdim=False, *, dtype=None):
         Tensor
 
     Note:
-        Dynamic shape, Dynamic rank and mutable input is not supported in `graph mode (mode=mindspore.GRAPH_MODE)
-        <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_.
+        - Dynamic shape, Dynamic rank and mutable input is not supported in `graph mode (mode=mindspore.GRAPH_MODE)
+          <https://www.mindspore.cn/tutorials/en/master/compile/static_graph.html>`_.
+        - Depending on the input range of values, the Ascend backend calculation results may have precision errors.
+
 
     Supported Platforms:
         ``Ascend``

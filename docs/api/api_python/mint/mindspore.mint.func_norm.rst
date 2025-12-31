@@ -28,5 +28,6 @@ mindspore.mint.norm
         Tensor
 
     .. note::
-        动态shape、动态rank和可变输入不支持在 `图模式(mode=mindspore.GRAPH_MODE)
-        <https://www.mindspore.cn/tutorials/zh-CN/master/compile/static_graph.html>`_ 下执行。
+        - 动态shape、动态rank和可变输入不支持在 `图模式(mode=mindspore.GRAPH_MODE)
+          <https://www.mindspore.cn/tutorials/zh-CN/master/compile/static_graph.html>`_ 下执行。
+        - 大小值域输入情况，Ascend后端的计算结果可能出现精度误差。
