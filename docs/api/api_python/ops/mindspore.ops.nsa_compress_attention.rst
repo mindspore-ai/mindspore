@@ -5,7 +5,6 @@ mindspore.ops.nsa_compress_attention
 
     使用NSA Compress Attention算法进行注意力压缩计算（Ascend）。
 
-
     该算子通过以下步骤计算压缩注意力：
 
     1. 计算注意力分数并应用掩码：
