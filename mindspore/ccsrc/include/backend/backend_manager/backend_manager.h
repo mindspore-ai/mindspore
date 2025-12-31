@@ -113,5 +113,5 @@ class BackendRegister {
 // The register entry of new backend.
 #define MS_REGISTER_BACKEND(BACKEND_NAME, BACKEND_CLASS)                           \
   static const mindspore::backend::BackendRegister g_backend_##BACKEND_NAME##_reg( \
-    BACKEND_NAME, []() { return std::make_shared<BACKEND_CLASS>(); });
+    BACKEND_NAME, []() { return std::make_shared<BACKEND_CLASS>(); })
 #endif  // MINDSPORE_CCSRC_INCLUDE_BACKEND_BACKEND_MANAGER_BACKEND_MANAGER_H_

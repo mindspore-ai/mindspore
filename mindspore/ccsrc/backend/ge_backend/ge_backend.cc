@@ -1987,7 +1987,7 @@ void GEBackend::ConstructOutputs(mindspore::ge_backend::runtime::ActorSet *actor
   }
 }
 
-MS_REGISTER_BACKEND(kGEBackendName, GEBackend)
+MS_REGISTER_BACKEND(kGEBackendName, GEBackend);
 }  // namespace ge_backend
 }  // namespace backend
 }  // namespace mindspore

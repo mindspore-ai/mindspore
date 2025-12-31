@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "plugin/ascend/res_manager/collective/multi_ascend_collective_comm_lib.h"
 #include <unordered_set>
 #include <vector>
 #include <memory>
 #include <string>
 
-#include "plugin/ascend/res_manager/collective/multi_ascend_collective_comm_lib.h"
 #include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
 #include "kernel/ascend/dvm/kernel_mod_impl/dvm_comm_info.h"

@@ -36,6 +36,6 @@ class MSCustomBackendBase : public BackendBase {
     mindspore::backend::BackendManager::GetInstance().Run(BackendType::kMSBackend, graph_id, inputs, outputs);
   }
 };
-MS_REGISTER_BACKEND(kCustomBackendName, MSCustomBackendBase)
+MS_REGISTER_BACKEND(kCustomBackendName, MSCustomBackendBase);
 }  // namespace backend
 }  // namespace mindspore
