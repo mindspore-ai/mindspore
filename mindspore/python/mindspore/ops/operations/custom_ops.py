@@ -1630,14 +1630,14 @@ def _map_type_to_spec(typ: type) -> str:
         return "tensor"
 
     # 2. Scalar
-    _SIGNATURE_TYPE_MAP = {
+    _signature_type_map = {
         Tensor: "tensor",
         int: "int",
         float: "float",
         bool: "bool",
     }
     try:
-        return _SIGNATURE_TYPE_MAP[typ]
+        return _signature_type_map[typ]
     except KeyError:
         pass
 
@@ -1737,7 +1737,7 @@ def _ms_pyfunc(infer_func: Callable[..., Any]) -> Callable[[Callable[..., Any]],
             self.add_prim_attr("infer_func_id", infer_id)
             self.add_prim_attr("prim_py_func", True)
 
-        _PrimCls = type(
+        _prim_cls = type(
             prim_cls_name,
             (Primitive,),
             {
@@ -1745,7 +1745,7 @@ def _ms_pyfunc(infer_func: Callable[..., Any]) -> Callable[[Callable[..., Any]],
                 "__init__": prim_arg_register(__init__),
             },
         )
-        _prim_singleton = _PrimCls()
+        _prim_singleton = _prim_cls()
 
         return _prim_singleton
 

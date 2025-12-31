@@ -59,6 +59,9 @@ class CustomOOC():
         dir_path, _ = os.path.split(script_path)
         self.current_path = dir_path
         self.custom_project = os.path.join(dir_path, "CustomProject")
+        self.bash_path = shutil.which('bash')
+        if not self.bash_path:
+            raise RuntimeError('bash not found in PATH')
 
     @staticmethod
     def check_path(path):
@@ -245,7 +248,7 @@ class CustomOOC():
                     run_path.append(os.path.join(build_out_path, item))
             if not run_path:
                 raise RuntimeError("There is no custom run in {}".format(build_out_path))
-            result = subprocess.run(['bash', run_path[0]], stdout=os.fdopen(
+            result = subprocess.run([self.bash_path, run_path[0]], stdout=os.fdopen(
                 os.open("install.log", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700), "w"),
                                     stderr=subprocess.STDOUT, check=False)
             if result.returncode == 0:
@@ -288,11 +291,12 @@ class CustomOOC():
         log_fd = os.open("build.log", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o700)
         log_file = os.fdopen(log_fd, "w")
         if self.args.ascend_cann_package_path != "":
-            result = subprocess.run(['bash', 'start.sh', self.custom_project, self.args.ascend_cann_package_path],
-                                    stdout=log_file,
-                                    stderr=subprocess.STDOUT, check=False)
+            result = subprocess.run(
+                [self.bash_path, 'start.sh', self.custom_project, self.args.ascend_cann_package_path],
+                stdout=log_file,
+                stderr=subprocess.STDOUT, check=False)
         else:
-            result = subprocess.run(['bash', 'start.sh', self.custom_project],
+            result = subprocess.run([self.bash_path, 'start.sh', self.custom_project],
                                     stdout=log_file,
                                     stderr=subprocess.STDOUT, check=False)
 
