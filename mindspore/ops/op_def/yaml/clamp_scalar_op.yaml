@@ -5,11 +5,9 @@ clamp_scalar:
             dtype: tensor
         min:
             dtype: number
-            disable_tensor_to_scalar: True
             default: None
         max:
             dtype: number
-            disable_tensor_to_scalar: True
             default: None
     returns:
         output:

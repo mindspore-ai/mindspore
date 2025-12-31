@@ -59,9 +59,6 @@ namespace {
 using OP_DTYPE = mindspore::ops::OP_DTYPE;
 
 template <typename T, typename U>
-ValueTuplePtr ConvertList(PyObject *obj);
-
-template <typename T, typename U>
 std::shared_ptr<U> PyCast(PyObject *obj);
 
 template <>
@@ -71,21 +68,15 @@ std::shared_ptr<BoolImm> PyCast<bool, BoolImm>(PyObject *obj) {
 }
 
 template <>
-std::shared_ptr<Int64Imm> PyCast<int64_t, Int64Imm>(PyObject *obj) {
-  return std::make_shared<Int64Imm>(static_cast<int64_t>(PyLong_AsLongLong(obj)));
-}
-
-template <>
 std::shared_ptr<StringImm> PyCast<string, StringImm>(PyObject *obj) {
   const char *obj_str = PyUnicode_AsUTF8(obj);
   return std::make_shared<StringImm>(std::string(obj_str));
 }
 
-template <>
-std::shared_ptr<FP32Imm> PyCast<double, FP32Imm>(PyObject *obj) {
-  auto obj_float32 = static_cast<float>(PyFloat_AsDouble(obj));
-  auto ret = std::make_shared<FP32Imm>(obj_float32);
-  ret->set_prim_value(PyFloat_AsDouble(obj));
+inline static std::shared_ptr<FP32Imm> MakeFP32Imm(double value) {
+  auto value_float32 = static_cast<float>(value);
+  auto ret = std::make_shared<FP32Imm>(value_float32);
+  ret->set_prim_value(value);
   return ret;
 }
 
@@ -103,29 +94,28 @@ BoolImmPtr ConvertBool(PyObject *obj) {
 }
 
 Int64ImmPtr ConvertInt(PyObject *obj) {
-  // bool is also an instance of py::int_
-  if (!py_parse::ParseUtilsCheckInt(obj)) {
-    return nullptr;
+  if (py_parse::ParseUtilsCheckInt(obj)) {
+    return std::make_shared<Int64Imm>(*py_parse::ParseUtilsConvertInt(obj));
   }
-  return PyCast<int64_t, Int64Imm>(obj);
+  return nullptr;
 }
 
 FP32ImmPtr ConvertFloat(PyObject *obj) {
-  if (!py_parse::ParseUtilsCheckFloat(obj)) {
-    return nullptr;
+  if (py_parse::ParseUtilsCheckFloat(obj)) {
+    return MakeFP32Imm(*py_parse::ParseUtilsConvertFloat(obj));
   }
-  return PyCast<double, FP32Imm>(obj);
+  return nullptr;
 }
 
 ScalarPtr ConvertNumber(PyObject *obj) {
   if (py_parse::ParseUtilsCheckFloat(obj)) {
-    return PyCast<double, FP32Imm>(obj);
+    return MakeFP32Imm(*py_parse::ParseUtilsConvertFloat(obj));
   }
   if (py_parse::ParseUtilsCheckBool(obj)) {
-    return PyCast<bool, BoolImm>(obj);
+    return std::make_shared<BoolImm>(*py_parse::ParseUtilsConvertBool(obj));
   }
   if (py_parse::ParseUtilsCheckInt(obj)) {
-    return PyCast<int64_t, Int64Imm>(obj);
+    return std::make_shared<Int64Imm>(*py_parse::ParseUtilsConvertInt(obj));
   }
   return nullptr;
 }
@@ -159,26 +149,16 @@ ValueTuplePtr ConvertIntSequence(PyObject *obj) {
   return std::make_shared<ValueTuple>(std::move(convert));
 }
 
-template <>
-ValueTuplePtr ConvertList<CPythonTuple, Int64Imm>(PyObject *obj) {
-  return ConvertIntSequence<CPythonTuple>(obj);
-}
-
-template <>
-ValueTuplePtr ConvertList<CPythonList, Int64Imm>(PyObject *obj) {
-  return ConvertIntSequence<CPythonList>(obj);
-}
-
-template <>
-ValueTuplePtr ConvertList<CPythonList, BoolImm>(PyObject *obj) {
-  if (!PyList_Check(obj)) {
+template <typename T>
+ValueTuplePtr ConvertBoolSequence(PyObject *obj) {
+  if (!T::TypeCheck(obj)) {
     return nullptr;
   }
-  Py_ssize_t size = PyList_Size(obj);
+  Py_ssize_t size = T::GetSize(obj);
   std::vector<ValuePtr> convert(size);
   for (Py_ssize_t i = 0; i < size; ++i) {
     // borrow reference
-    PyObject *item = PyList_GetItem(obj, i);
+    PyObject *item = T::GetItem(obj, i);
     if (!PyBool_Check(item)) {
       return nullptr;
     }
@@ -191,68 +171,21 @@ ValueTuplePtr ConvertList<CPythonList, BoolImm>(PyObject *obj) {
   return std::make_shared<ValueTuple>(std::move(convert));
 }
 
-template <>
-ValueTuplePtr ConvertList<CPythonTuple, BoolImm>(PyObject *obj) {
-  if (!PyTuple_Check(obj)) {
+template <typename T>
+ValueTuplePtr ConvertFloatSequence(PyObject *obj) {
+  if (!T::TypeCheck(obj)) {
     return nullptr;
   }
-  Py_ssize_t size = PyTuple_Size(obj);
+  Py_ssize_t size = T::GetSize(obj);
   std::vector<ValuePtr> convert(size);
   for (Py_ssize_t i = 0; i < size; ++i) {
     // borrow reference
-    PyObject *item = PyTuple_GetItem(obj, i);
-    if (!PyBool_Check(item)) {
-      return nullptr;
+    PyObject *item = T::GetItem(obj, i);
+    if (py_parse::ParseUtilsCheckFloat(item, false)) {
+      convert[i] = MakeFP32Imm(*py_parse::ParseUtilsConvertFloat(item));
+      continue;
     }
-    auto out = PyCast<bool, BoolImm>(item);
-    if (out == nullptr) {
-      return nullptr;
-    }
-    convert[i] = out;
-  }
-  return std::make_shared<ValueTuple>(std::move(convert));
-}
-
-template <>
-ValueTuplePtr ConvertList<CPythonList, FP32Imm>(PyObject *obj) {
-  if (!PyList_Check(obj)) {
     return nullptr;
-  }
-  Py_ssize_t size = PyList_Size(obj);
-  std::vector<ValuePtr> convert(size);
-  for (Py_ssize_t i = 0; i < size; ++i) {
-    // borrow reference
-    PyObject *item = PyList_GetItem(obj, i);
-    if (!py_parse::ParseUtilsCheckFloat(item)) {
-      return nullptr;
-    }
-    auto out = PyCast<double, FP32Imm>(item);
-    if (out == nullptr) {
-      return nullptr;
-    }
-    convert[i] = out;
-  }
-  return std::make_shared<ValueTuple>(std::move(convert));
-}
-
-template <>
-ValueTuplePtr ConvertList<CPythonTuple, FP32Imm>(PyObject *obj) {
-  if (!PyTuple_Check(obj)) {
-    return nullptr;
-  }
-  Py_ssize_t size = PyTuple_Size(obj);
-  std::vector<ValuePtr> convert(size);
-  for (Py_ssize_t i = 0; i < size; ++i) {
-    // borrow reference
-    PyObject *item = PyTuple_GetItem(obj, i);
-    if (!py_parse::ParseUtilsCheckFloat(item)) {
-      return nullptr;
-    }
-    auto out = PyCast<double, FP32Imm>(item);
-    if (out == nullptr) {
-      return nullptr;
-    }
-    convert[i] = out;
   }
   return std::make_shared<ValueTuple>(std::move(convert));
 }
@@ -269,7 +202,7 @@ void EnablePipelineForTupleTensor(const ValueTuplePtr &tuple) {
 
 std::optional<std::vector<int64_t>> ConvertIntToIntVector(PyObject *obj) {
   if (py_parse::ParseUtilsCheckInt(obj)) {
-    return std::vector<int64_t>({PyLong_AsLongLong(obj)});
+    return std::vector<int64_t>({*py_parse::ParseUtilsConvertInt(obj)});
   }
   return std::nullopt;
 }
@@ -508,7 +441,7 @@ ValueTuplePtr Converter::ToIntList(PyObject *python_args, size_t i) {
   // type of python_args is py::list
   const auto &op_arg = op_def_->args_[i];
   PyObject *obj = PyList_GetItem(python_args, i);
-  ValueTuplePtr convert = ConvertList<T, Int64Imm>(obj);
+  ValueTuplePtr convert = ConvertIntSequence<T>(obj);
   if (convert != nullptr) {
     return convert;
   }
@@ -559,7 +492,7 @@ ValueTuplePtr Converter::ToBoolList(PyObject *python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
   PyObject *obj = PyList_GetItem(python_args, i);
   source_type_[i] = OP_DTYPE::DT_BEGIN;
-  ValueTuplePtr convert = ConvertList<T, BoolImm>(obj);
+  ValueTuplePtr convert = ConvertBoolSequence<T>(obj);
   if (convert != nullptr) {
     return convert;
   }
@@ -611,7 +544,7 @@ ValueTuplePtr Converter::ToFloatList(PyObject *python_args, size_t i) {
   const auto &op_arg = op_def_->args_[i];
   PyObject *obj = PyList_GetItem(python_args, i);
   source_type_[i] = OP_DTYPE::DT_BEGIN;
-  ValueTuplePtr convert = ConvertList<T, FP32Imm>(obj);
+  ValueTuplePtr convert = ConvertFloatSequence<T>(obj);
   if (convert != nullptr) {
     return convert;
   }
@@ -836,7 +769,7 @@ std::optional<int64_t> ConvertTensorToInt64(PyObject *obj) {
 
 std::optional<int64_t> ConvertToInt64(PyObject *obj) {
   if (py_parse::ParseUtilsCheckInt(obj)) {
-    return static_cast<int64_t>(PyLong_AsLongLong(obj));
+    return py_parse::ParseUtilsConvertInt(obj);
   }
   return std::nullopt;
 }
@@ -967,9 +900,9 @@ bool IsStorage(PyObject *obj) {
 
 bool CheckArgsAsIntlist(PyObject *obj, bool as_intlist) {
   int idx;
-  return as_intlist && (py_parse::ParseUtilsCheckInt(obj) ||
-                        CheckPySequenceType<CPythonTuple>(obj, idx, py_parse::IsGeneralizedInt) ||
-                        CheckPySequenceType<CPythonList>(obj, idx, py_parse::IsGeneralizedInt));
+  return as_intlist &&
+         (py_parse::IsGeneralizedInt(obj) || CheckPySequenceType<CPythonTuple>(obj, idx, py_parse::IsGeneralizedInt) ||
+          CheckPySequenceType<CPythonList>(obj, idx, py_parse::IsGeneralizedInt));
 }
 
 std::string GetTypeErrorMsg(bool is_kwd, int error_idx, PyObject *obj, const FunctionParameter &param, size_t arg_pos) {
@@ -1204,18 +1137,34 @@ FunctionParameter::FunctionParameter(const std::string &fmt, bool is_kw_only) {
   if (space == std::string::npos) {
     MS_LOG(EXCEPTION) << "Parse function parameter failed! missing type:" << fmt;
   }
+
   auto types_str = fmt.substr(0, space);
-  cast_types_ = std::vector<ops::OP_DTYPE>{};
   std::istringstream iss(types_str);
+  std::string first_valid_type_str;
   std::string substring;
-  bool first_str = true;
+
+  bool first_token = true;
+  bool first_type = true;
   while (std::getline(iss, substring, '|')) {
-    if (first_str) {
+    // handle disable scalar tensor argument
+    if (substring == "!tensor") {
+      if (first_token) {
+        MS_LOG(EXCEPTION) << "Invalid parameter type format: '!tensor' cannot be the first token. "
+                          << "fmt: " << fmt;
+      }
+      allow_scalar_tensor_ = false;
+      first_token = false;
+      continue;
+    }
+
+    if (first_type) {
       type_ = GetOpDtype(substring);
-      first_str = false;
+      first_valid_type_str = substring;
+      first_type = false;
     } else {
       cast_types_.emplace_back(GetOpDtype(substring));
     }
+    first_token = false;
   }
 
   auto name_str = fmt.substr(space + 1);
@@ -1227,12 +1176,16 @@ FunctionParameter::FunctionParameter(const std::string &fmt, bool is_kw_only) {
     if (value_str == "None") {
       allow_none_ = true;
     }
-    default_str_.assign(substring).append(",").append(value_str);
+    if (first_valid_type_str.empty()) {
+      MS_LOG(EXCEPTION) << "Default value specified but no valid type found: " << fmt;
+    }
+    default_str_.assign(first_valid_type_str).append(",").append(value_str);
     ParserDefaultObjects::GetInstance().Set(type_, value_str, default_str_);
   } else {
     optional_ = false;
     name_ = name_str;
   }
+
   auto varargs = name_str.find('*');
   if (varargs != std::string::npos) {
     allow_vararg_ = true;
@@ -1258,6 +1211,11 @@ static inline std::vector<int64_t> ParseListInt(const std::string &s) {
   return args;
 }
 
+namespace {
+static bool ListElementCheckFloat(PyObject *obj) { return py_parse::ParseUtilsCheckFloat(obj, false); }
+static bool ListElementCheckScalar(PyObject *obj) { return py_parse::ParseUtilsCheckScalar(obj, false); }
+}  // namespace
+
 bool ListTypeCheck(PyObject *obj, const ops::OP_DTYPE &type, int &idx, bool fullcheck = false) {
   switch (type) {
     case OP_DTYPE::DT_ANY:
@@ -1269,25 +1227,25 @@ bool ListTypeCheck(PyObject *obj, const ops::OP_DTYPE &type, int &idx, bool full
     case OP_DTYPE::DT_LIST_INT:
       return CheckPySequenceType<CPythonList>(obj, idx, py_parse::IsGeneralizedInt, fullcheck);
     case OP_DTYPE::DT_LIST_FLOAT:
-      return CheckPySequenceType<CPythonList>(obj, idx, py_parse::ParseUtilsCheckFloat, fullcheck);
+      return CheckPySequenceType<CPythonList>(obj, idx, ListElementCheckFloat, fullcheck);
     case OP_DTYPE::DT_LIST_BOOL:
       return CheckPySequenceType<CPythonList>(obj, idx, IsPyBool, fullcheck);
     case OP_DTYPE::DT_LIST_STR:
       return CheckPySequenceType<CPythonList>(obj, idx, IsPyStr, fullcheck);
     case OP_DTYPE::DT_LIST_NUMBER:
-      return CheckPySequenceType<CPythonList>(obj, idx, py_parse::ParseUtilsCheckScalar, fullcheck);
+      return CheckPySequenceType<CPythonList>(obj, idx, ListElementCheckScalar, fullcheck);
     case OP_DTYPE::DT_TUPLE_ANY:
       return PyTuple_Check(obj);
     case OP_DTYPE::DT_TUPLE_INT:
       return CheckPySequenceType<CPythonTuple>(obj, idx, py_parse::IsGeneralizedInt, fullcheck);
     case OP_DTYPE::DT_TUPLE_FLOAT:
-      return CheckPySequenceType<CPythonTuple>(obj, idx, py_parse::ParseUtilsCheckFloat, fullcheck);
+      return CheckPySequenceType<CPythonTuple>(obj, idx, ListElementCheckFloat, fullcheck);
     case OP_DTYPE::DT_TUPLE_BOOL:
       return CheckPySequenceType<CPythonTuple>(obj, idx, IsPyBool, fullcheck);
     case OP_DTYPE::DT_TUPLE_TENSOR:
       return CheckPySequenceType<CPythonTuple>(obj, idx, IsTensor, fullcheck);
     case OP_DTYPE::DT_TUPLE_NUMBER:
-      return CheckPySequenceType<CPythonTuple>(obj, idx, py_parse::ParseUtilsCheckScalar, fullcheck);
+      return CheckPySequenceType<CPythonTuple>(obj, idx, ListElementCheckScalar, fullcheck);
     default:
       MS_LOG(EXCEPTION) << "Performing a list type check and encountered an unexpected type, which is "
                         << prim::OpDTypeToString(type);
@@ -1302,24 +1260,24 @@ static bool IsConverttablePythonType(PyObject *obj) {
   return false;
 }
 
-bool TypeCheck(PyObject *obj, const ops::OP_DTYPE &type, int &idx, ConvertPair &convert_type) {
+bool FunctionParameter::TypeCheck(PyObject *obj, const ops::OP_DTYPE &type, int &idx, ConvertPair &convert_type) const {
   switch (type) {
     case OP_DTYPE::DT_TENSOR:
       return IsTensor(obj);
     case OP_DTYPE::DT_STORAGE:
       return IsStorage(obj);
     case OP_DTYPE::DT_NUMBER:
-      return py_parse::ParseUtilsCheckScalar(obj);
+      return py_parse::ParseUtilsCheckScalar(obj, allow_scalar_tensor_);
     case OP_DTYPE::DT_FLOAT:
-      if (py_parse::ParseUtilsCheckFloat(obj)) {
+      if (py_parse::ParseUtilsCheckFloat(obj, allow_scalar_tensor_)) {
         return true;
-      } else if (py_parse::ParseUtilsCheckInt(obj)) {
+      } else if (py_parse::ParseUtilsCheckInt(obj, allow_scalar_tensor_)) {
         convert_type.first = OP_DTYPE::DT_INT;
         return true;
       }
       return false;
     case OP_DTYPE::DT_INT:
-      return py_parse::ParseUtilsCheckInt(obj);
+      return py_parse::ParseUtilsCheckInt(obj, allow_scalar_tensor_);
     case OP_DTYPE::DT_BOOL:
       if (PyBool_Check(obj)) {
         return true;
@@ -1627,7 +1585,7 @@ void ParserArgs::PrintConvertError(size_t index) {
     int error_pos = 0;
     PyObject *element;
     const auto expect_type = src_types_[index] == ops::OP_DTYPE::DT_BEGIN ? dst_types_[index] : src_types_[index];
-    ListTypeCheck(obj, expect_type, error_pos, true);
+    (void)ListTypeCheck(obj, expect_type, error_pos, true);
     if (PyTuple_Check(obj)) {
       element = PyTuple_GetItem(obj, error_pos);
     } else {

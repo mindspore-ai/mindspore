@@ -66,7 +66,8 @@ CLASS_KEYS = {'name', 'disable'}
 FUNCTION_KEYS = {'name', 'disable'}
 DISPATCH_KEYS = {'enable', 'is_comm_op', 'Ascend', 'InternalOpAscend', 'GPU', 'CPU'}
 TENSOR_FUNC_KEYS = {'op_yaml', 'py_method', 'kwonlyargs',
-                    'varargs', 'alias', 'Ascend', 'GPU', 'CPU', 'interface'}
+                    'varargs', 'disable_scalar_tensor',
+                    'alias', 'Ascend', 'GPU', 'CPU', 'interface'}
 
 # func signature parsing
 ARG_HANDLER_MAP = {"to_2d_paddings": "int|tuple[int]|list[int]",
@@ -74,10 +75,6 @@ ARG_HANDLER_MAP = {"to_2d_paddings": "int|tuple[int]|list[int]",
                    "to_kernel_size": "int|tuple[int]|list[int]",
                    "to_strides": "int|tuple[int]|list[int]",
                    "str_to_enum": "str",
-                   "_normalize_int_sequence": "tuple[int]|list[int]|int",
-                   "_scalar_tensor_to_scalar": "number|tensor",
-                   "_scalar_tensor_to_int": "int|tensor",
-                   "_scalar_tensor_to_float": "float|tensor",
                    "to_pair": "int|tuple[int]|list[int]|float",
                    "to_dilations": "tuple[int]|list[int]|int",
                    "to_output_padding": "int|tuple[int]|list[int]",

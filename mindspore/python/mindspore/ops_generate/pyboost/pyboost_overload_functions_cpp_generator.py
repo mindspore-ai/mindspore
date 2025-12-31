@@ -184,7 +184,9 @@ class PyboostOverloadFunctionsGenerator(BaseGenerator):
             # Combine dispatch_lambda_def with device_dispatcher for single case
             device_dispatcher_str = dispatch_lambda_def_str + device_dispatcher_str
             signature_str = self._generate_single_signature_str(
-                func_proto.op_proto, func_proto.kw_only_args, func_proto.varargs)
+                func_proto.op_proto, func_proto.kw_only_args,
+                func_proto.varargs, func_proto.disable_scalar_tensor
+            )
             op_args = func_proto.op_proto.op_args
             max_size = len(op_args)
             ut_body = self.TENSOR_FUNC_UT_BODY.replace(py_method=func_proto.py_method)
@@ -264,12 +266,15 @@ class PyboostOverloadFunctionsGenerator(BaseGenerator):
             if not first_sig:
                 sig_str += ',\n'
             first_sig = False
-            sig_str += self._generate_single_signature_str(op_proto, tensor_proto.kw_only_args, tensor_proto.varargs)
+            sig_str += self._generate_single_signature_str(op_proto, tensor_proto.kw_only_args,
+                                                           tensor_proto.varargs, tensor_proto.disable_scalar_tensor)
         return sig_str
 
-    def _generate_single_signature_str(self, op_proto: OpProto, kw_only_args, varargs) -> str:
+    def _generate_single_signature_str(self, op_proto: OpProto, kw_only_args,
+                                       varargs, disable_scalar_tensor) -> str:
         op_parser = OpTemplateParser(op_proto)
-        return op_parser.generate_signature_str(kw_only_args, varargs, is_tensor_api=False)
+        return op_parser.generate_signature_str(kw_only_args, varargs,
+                                                disable_scalar_tensor, is_tensor_api=False)
 
     def _get_dispatch_cases(self, func_protos):
         """

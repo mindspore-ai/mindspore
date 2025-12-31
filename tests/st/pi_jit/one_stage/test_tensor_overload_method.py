@@ -77,22 +77,6 @@ def test_method_clamp_keyword():
 
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
-def test_method_clamp_exception():
-    """
-    Feature: Functional.
-    Description: Test functional feature with Tensor.clamp.
-    Expectation: Raise expected exception.
-    """
-    @pi_jit_with_config(jit_config={"compile_with_try": False})
-    def func(x, min, max):
-        return x.clamp(min, max)
-
-    with pytest.raises(TypeError) as raise_info:
-        func(ms.Tensor([1, 2, 3, 4, 5]), ms.Tensor(2), 4)
-    assert "Failed calling clamp with" in str(raise_info.value)
-
-
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_method_max():
     """
     Feature: Functional.

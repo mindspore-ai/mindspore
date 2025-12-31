@@ -1,9 +1,9 @@
 xlogy:
-  - op_yaml: xlogy_scalar_other_op.yaml
+  - op_yaml: xlogy_op.yaml
     py_method: tensor_xlogy # callback to python function "def tensor_xlogy_tensor"
     Ascend: pyboost
-    CPU: py_method
-    GPU: py_method
+    CPU: pyboost
+    GPU: pyboost
     interface: tensor, function
 
   - op_yaml: xlogy_scalar_self_op.yaml
@@ -13,11 +13,11 @@ xlogy:
     GPU: py_method
     interface: function
 
-  - op_yaml: xlogy_op.yaml
+  - op_yaml: xlogy_scalar_other_op.yaml
     py_method: tensor_xlogy # callback to python function "def tensor_xlogy_tensor"
     Ascend: pyboost
-    CPU: pyboost
-    GPU: pyboost
+    CPU: py_method
+    GPU: py_method
     interface: tensor, function
 
   - op_yaml: deprecated/xlogy_method.yaml

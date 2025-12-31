@@ -79,27 +79,215 @@ TensorPtr ConvertTensorValue(const py::object &obj) {
   return nullptr;
 }
 namespace {
+bool IsNumpyAvailable() {
+  static bool available = []() {
+    if (_import_array() >= 0) {
+      return true;
+    } else {
+      MS_LOG(WARNING) << "Numpy init failed.";
+      return false;
+    }
+  }();
+  return available;
+}
+
+inline static bool IsPythonInt(PyObject *obj) { return !PyBool_Check(obj) && PyLong_Check(obj); }
+
+inline static bool IsNumpyInt(PyObject *obj) { return IsNumpyAvailable() && PyArray_IsScalar(obj, Integer); }
+
+inline static bool IsNumpyBool(PyObject *obj) { return IsNumpyAvailable() && PyArray_IsScalar(obj, Bool); }
+
+inline static bool IsNumpyFloat(PyObject *obj) { return IsNumpyAvailable() && PyArray_IsScalar(obj, Floating); }
+
+inline static bool IsNumpyScalar(PyObject *obj) {
+  return IsNumpyAvailable() &&
+         (PyArray_IsScalar(obj, Integer) || PyArray_IsScalar(obj, Bool) || PyArray_IsScalar(obj, Floating));
+}
+
+inline static bool IsNumpyScalarIntArray(PyObject *obj) {
+  if (!IsNumpyAvailable()) {
+    return false;
+  }
+  // numpy array with empty shape and one int element
+  if (!PyArray_Check(obj)) {
+    return false;
+  }
+  PyArrayObject *array_obj = reinterpret_cast<PyArrayObject *>(obj);
+  if (!PyArray_IsZeroDim(array_obj)) {
+    return false;
+  }
+  static std::set<int> valid_int_types{NPY_SHORT, NPY_USHORT, NPY_INT,      NPY_UINT,
+                                       NPY_LONG,  NPY_ULONG,  NPY_LONGLONG, NPY_ULONGLONG};
+  int array_data_type = PyArray_TYPE(array_obj);
+  return valid_int_types.find(array_data_type) != valid_int_types.end();
+}
+
+inline int64_t ConvertNumpyScalarIntArray(PyObject *obj) {
+  PyArrayObject *array_obj = reinterpret_cast<PyArrayObject *>(obj);
+  void *data = PyArray_DATA(array_obj);
+  int type_num = PyArray_TYPE(array_obj);
+  int64_t value;
+  switch (type_num) {
+    case NPY_SHORT:
+      value = *reinterpret_cast<short *>(data);
+      break;
+    case NPY_USHORT:
+      value = *reinterpret_cast<unsigned short *>(data);
+      break;
+    case NPY_INT:
+      value = *reinterpret_cast<int *>(data);
+      break;
+    case NPY_UINT:
+      value = *reinterpret_cast<unsigned int *>(data);
+      break;
+    case NPY_LONG:
+      value = *reinterpret_cast<long *>(data);
+      break;
+    case NPY_ULONG:
+      value = *reinterpret_cast<unsigned long *>(data);
+      break;
+    case NPY_LONGLONG:
+      value = *reinterpret_cast<long long *>(data);
+      break;
+    case NPY_ULONGLONG:
+      value = *reinterpret_cast<unsigned long long *>(data);
+      break;
+    default:
+      MS_EXCEPTION(ValueError) << "Unsupported data type " << type_num;
+  }
+  return value;
+}
+
+template <typename T, bool allow_size_one>
+static bool IsScalarTensor(PyObject *obj) {
+  static_assert(std::is_same_v<T, int64_t> || std::is_same_v<T, double> || std::is_same_v<T, bool>,
+                "T must be int64_t, double, or bool");
+
+  auto tensor = ConvertPyObjectTensorValue(obj);
+  if (!tensor) {
+    return false;
+  }
+
+  // allow_size_one == true: allow [1], [1,1], ... (size-1 tensors)
+  // allow_size_one == false: require [] (true 0-D scalar)
+  if constexpr (allow_size_one) {
+    auto tensor_size = tensor->DataSize();
+    if (tensor_size != 1) {
+      return false;
+    }
+  } else {
+    if (!tensor->shape().empty()) {
+      return false;
+    }
+  }
+
+  auto tensor_type = tensor->data_type();
+  if constexpr (std::is_same_v<T, int64_t>) {
+    constexpr std::array<TypeId, 6> valid_types{kNumberTypeUInt8, kNumberTypeInt8,  kNumberTypeInt16,
+                                                kNumberTypeInt,   kNumberTypeInt32, kNumberTypeInt64};
+    return std::find(valid_types.begin(), valid_types.end(), tensor_type) != valid_types.end();
+  } else if constexpr (std::is_same_v<T, double>) {
+    constexpr std::array<TypeId, 3> valid_types{kNumberTypeFloat16, kNumberTypeFloat32, kNumberTypeFloat64};
+    return std::find(valid_types.begin(), valid_types.end(), tensor_type) != valid_types.end();
+  } else {
+    return tensor_type == kNumberTypeBool;
+  }
+}
+
+std::optional<int64_t> FetchScalarTensorIntValue(const tensor::TensorPtr &tensor) {
+  const auto &tensor_type_id = tensor->data_type();
+  static const std::unordered_map<TypeId, std::function<int64_t(const tensor::TensorPtr &tensor)>> valid_integral{
+    {kNumberTypeUInt8,
+     [](const tensor::TensorPtr &tensor) -> int64_t { return static_cast<int64_t>(TensorItem<uint8_t>(tensor)); }},
+    {kNumberTypeInt8,
+     [](const tensor::TensorPtr &tensor) -> int64_t { return static_cast<int64_t>(TensorItem<int8_t>(tensor)); }},
+    {kNumberTypeInt16,
+     [](const tensor::TensorPtr &tensor) -> int64_t { return static_cast<int64_t>(TensorItem<int16_t>(tensor)); }},
+    {kNumberTypeInt,
+     [](const tensor::TensorPtr &tensor) -> int64_t { return static_cast<int64_t>(TensorItem<int>(tensor)); }},
+    {kNumberTypeInt32,
+     [](const tensor::TensorPtr &tensor) -> int64_t { return static_cast<int64_t>(TensorItem<int32_t>(tensor)); }},
+    {kNumberTypeInt64,
+     [](const tensor::TensorPtr &tensor) -> int64_t { return static_cast<int64_t>(TensorItem<int64_t>(tensor)); }},
+  };
+  auto it = valid_integral.find(tensor_type_id);
+  if (MS_UNLIKELY(tensor->DataSize() != 1 || it == valid_integral.end())) {
+    return std::nullopt;
+  }
+  return it->second(tensor);
+}
+
+std::optional<double> FetchScalarTensorFloatValue(const tensor::TensorPtr &tensor) {
+  const auto &tensor_type_id = tensor->data_type();
+  static const std::unordered_map<TypeId, std::function<double(const tensor::TensorPtr &tensor)>> valid_integral{
+    {kNumberTypeFloat16,
+     [](const tensor::TensorPtr &tensor) -> double { return static_cast<double>(TensorItem<float16>(tensor)); }},
+    {kNumberTypeFloat32,
+     [](const tensor::TensorPtr &tensor) -> double { return static_cast<double>(TensorItem<float>(tensor)); }},
+    {kNumberTypeFloat64, [](const tensor::TensorPtr &tensor) -> double { return TensorItem<double>(tensor); }}};
+  auto it = valid_integral.find(tensor_type_id);
+  if (MS_UNLIKELY(tensor->DataSize() != 1 || it == valid_integral.end())) {
+    return std::nullopt;
+  }
+  return it->second(tensor);
+}
+
+std::optional<bool> FetchScalarTensorBoolValue(const tensor::TensorPtr &tensor) {
+  const auto &tensor_type_id = tensor->data_type();
+  if (tensor->DataSize() == 1 && tensor_type_id == kNumberTypeBool) {
+    return TensorItem<bool>(tensor);
+  }
+  return std::nullopt;
+}
+
+template <typename T>
+static std::optional<T> ConvertScalarTensor(PyObject *obj) {
+  static_assert(std::is_same_v<T, int64_t> || std::is_same_v<T, double> || std::is_same_v<T, bool>,
+                "T must be int64_t, double, or bool");
+  // convert tensor with one int element to int
+  auto tensor = ConvertPyObjectTensorValue(obj);
+  if (MS_UNLIKELY(tensor == nullptr)) {
+    return std::nullopt;
+  }
+  if constexpr (std::is_same_v<T, int64_t>) {
+    return FetchScalarTensorIntValue(tensor);
+  } else if constexpr (std::is_same_v<T, double>) {
+    return FetchScalarTensorFloatValue(tensor);
+  } else {
+    return FetchScalarTensorBoolValue(tensor);
+  }
+}
+}  // namespace
+
+namespace {
 template <typename T, typename U>
 ValuePtr PyCast(const py::object &obj) {
   return std::make_shared<T>(py::cast<U>(obj));
 }
 
 ValuePtr ConvertIntegerWithType(const py::object &obj) {
-  auto obj_int64 = py::cast<int64_t>(obj);
   // The mutable _Bool class inherits from int, because base class 'bool' is a marked final.
   if (py::hasattr(obj, "__ms_mutable_bool__")) {
+    auto obj_int64 = py::cast<int64_t>(obj);
     bool obj_bool = obj_int64 != 0;
     return std::make_shared<BoolImm>(obj_bool);
   }
-  return std::make_shared<Int64Imm>(obj_int64);
+  return std::make_shared<Int64Imm>(*ParseUtilsConvertInt(obj.ptr()));
 }
 
-ValuePtr ConvertFloatWithType(const py::object &obj) {
-  auto obj_float32 = py::cast<pyfloat>(obj);
-  auto obj_double = py::cast<double>(obj);
+inline static ValuePtr MakeFP32Imm(double obj_double) {
+  auto obj_float32 = static_cast<pyfloat>(obj_double);
   auto ret = std::make_shared<FP32Imm>(obj_float32);
   ret->set_prim_value(obj_double);
   return ret;
+}
+
+ValuePtr ConvertFloatWithType(const py::object &obj) {
+  auto value_opt = ParseUtilsConvertFloat(obj.ptr());
+  if (value_opt) {
+    return MakeFP32Imm(*value_opt);
+  }
+  return nullptr;
 }
 
 ValuePtr ConvertBool(const py::object &obj) {
@@ -123,8 +311,9 @@ ValuePtr ConvertInt(const py::object &obj) {
   return ConvertIntegerWithType(obj);
 }
 
+template <bool allow_scalar_tensor>
 ValuePtr ConvertFloat(const py::object &obj) {
-  if (!ParseUtilsCheckFloat(obj.ptr())) {
+  if (!ParseUtilsCheckFloat(obj.ptr(), allow_scalar_tensor)) {
     return nullptr;
   }
   return ConvertFloatWithType(obj);
@@ -132,7 +321,7 @@ ValuePtr ConvertFloat(const py::object &obj) {
 
 ValuePtr ConvertNumber(const py::object &obj) {
   if (ParseUtilsCheckBool(obj.ptr())) {
-    return PyCast<BoolImm, bool>(obj);
+    return std::make_shared<BoolImm>(*ParseUtilsConvertBool(obj.ptr()));
   }
   if (ParseUtilsCheckInt(obj.ptr())) {
     return ConvertIntegerWithType(obj);
@@ -168,17 +357,17 @@ ValuePtr ConvertSingleElementToTensor(const py::object &obj) {
 }
 
 ValuePtr ConvertNumberToTensor(const py::object &obj) {
-  if (ParseUtilsCheckBool(obj.ptr())) {
+  if (ParseUtilsCheckBool(obj.ptr(), false)) {
     auto v = py::cast<bool>(obj);
     return tensor::from_scalar(v);
   }
 
-  if (ParseUtilsCheckInt(obj.ptr())) {
+  if (ParseUtilsCheckInt(obj.ptr(), false)) {
     auto v = py::cast<int64_t>(obj);
     return tensor::from_scalar(v);
   }
 
-  if (ParseUtilsCheckFloat(obj.ptr())) {
+  if (ParseUtilsCheckFloat(obj.ptr(), false)) {
     auto v = py::cast<pyfloat>(obj);
     return tensor::from_scalar(v);
   }
@@ -496,10 +685,18 @@ ValuePtr ConvertTensorToNumber(const py::object &obj) {
 }
 
 ValuePtr ConvertBoolOrIntToFloat(const py::object &obj) {
-  if (!ParseUtilsCheckInt(obj.ptr()) && !PyBool_Check(obj.ptr())) {
-    return nullptr;
+  if (PyLong_Check(obj.ptr()) || IsNumpyScalar(obj.ptr())) {
+    return MakeFP32Imm(PyFloat_AsDouble(obj.ptr()));
   }
-  return ConvertFloatWithType(obj);
+  if (IsScalarTensor<int64_t, false>(obj.ptr())) {
+    auto value_opt = ConvertScalarTensor<double>(obj.ptr());
+    return value_opt ? MakeFP32Imm(static_cast<double>(*value_opt)) : nullptr;
+  }
+  if (IsScalarTensor<bool, false>(obj.ptr())) {
+    auto value_opt = ConvertScalarTensor<bool>(obj.ptr());
+    return value_opt ? MakeFP32Imm(static_cast<double>(*value_opt)) : nullptr;
+  }
+  return nullptr;
 }
 
 // convert functions without type_cast
@@ -507,20 +704,20 @@ ConverterMap InitBasicConverters() {
   ConverterMap kConverters = {
     {static_cast<int32_t>(mindspore::ops::DT_BOOL), ConvertBool},
     {static_cast<int32_t>(mindspore::ops::DT_INT), ConvertInt},
-    {static_cast<int32_t>(mindspore::ops::DT_FLOAT), ConvertFloat},
+    {static_cast<int32_t>(mindspore::ops::DT_FLOAT), ConvertFloat<true>},
     {static_cast<int32_t>(mindspore::ops::DT_NUMBER), ConvertNumber},
     {static_cast<int32_t>(mindspore::ops::DT_TENSOR), ConvertTensor},
     {static_cast<int32_t>(mindspore::ops::DT_STR), ConvertStr},
     {static_cast<int32_t>(mindspore::ops::DT_TYPE), ConvertDtype},
     {static_cast<int32_t>(mindspore::ops::DT_TUPLE_BOOL), ConvertSequence<py::tuple, ValueTuple, ConvertBool>},
     {static_cast<int32_t>(mindspore::ops::DT_TUPLE_INT), ConvertSequence<py::tuple, ValueTuple, ConvertTensorAndInt>},
-    {static_cast<int32_t>(mindspore::ops::DT_TUPLE_FLOAT), ConvertSequence<py::tuple, ValueTuple, ConvertFloat>},
+    {static_cast<int32_t>(mindspore::ops::DT_TUPLE_FLOAT), ConvertSequence<py::tuple, ValueTuple, ConvertFloat<false>>},
     {static_cast<int32_t>(mindspore::ops::DT_TUPLE_NUMBER), ConvertSequence<py::tuple, ValueTuple, ConvertNumber>},
     {static_cast<int32_t>(mindspore::ops::DT_TUPLE_TENSOR), ConvertSequence<py::tuple, ValueTuple, ConvertTensor>},
     {static_cast<int32_t>(mindspore::ops::DT_TUPLE_STR), ConvertSequence<py::tuple, ValueTuple, ConvertStr>},
     {static_cast<int32_t>(mindspore::ops::DT_LIST_BOOL), ConvertSequence<py::list, ValueTuple, ConvertBool>},
     {static_cast<int32_t>(mindspore::ops::DT_LIST_INT), ConvertSequence<py::list, ValueTuple, ConvertTensorAndInt>},
-    {static_cast<int32_t>(mindspore::ops::DT_LIST_FLOAT), ConvertSequence<py::list, ValueTuple, ConvertFloat>},
+    {static_cast<int32_t>(mindspore::ops::DT_LIST_FLOAT), ConvertSequence<py::list, ValueTuple, ConvertFloat<false>>},
     {static_cast<int32_t>(mindspore::ops::DT_LIST_NUMBER), ConvertSequence<py::list, ValueTuple, ConvertNumber>},
     {static_cast<int32_t>(mindspore::ops::DT_LIST_TENSOR), ConvertSequence<py::list, ValueTuple, ConvertTensor>},
     {static_cast<int32_t>(mindspore::ops::DT_LIST_STR), ConvertSequence<py::list, ValueTuple, ConvertStr>}};
@@ -538,9 +735,9 @@ ConverterMap InitSingleToSequenceConverters() {
                               {CombineTypesForTypeCast(mindspore::ops::DT_INT, mindspore::ops::DT_LIST_INT),
                                ConvertSingleElementToSequence<ValueTuple, ConvertInt>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_FLOAT, mindspore::ops::DT_TUPLE_INT),
-                               ConvertSingleElementToSequence<ValueTuple, ConvertFloat>},
+                               ConvertSingleElementToSequence<ValueTuple, ConvertFloat<false>>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_FLOAT, mindspore::ops::DT_LIST_INT),
-                               ConvertSingleElementToSequence<ValueTuple, ConvertFloat>},
+                               ConvertSingleElementToSequence<ValueTuple, ConvertFloat<false>>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_BOOL, mindspore::ops::DT_TUPLE_INT),
                                ConvertSingleElementToSequence<ValueTuple, ConvertBool>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_BOOL, mindspore::ops::DT_LIST_INT),
@@ -553,7 +750,7 @@ ConverterMap InitSequenceToSequenceConverters() {
   ConverterMap kConverters = {{CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_INT, mindspore::ops::DT_LIST_INT),
                                ConvertSequence<py::tuple, ValueTuple, ConvertTensorAndInt>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_FLOAT, mindspore::ops::DT_LIST_FLOAT),
-                               ConvertSequence<py::tuple, ValueTuple, ConvertFloat>},
+                               ConvertSequence<py::tuple, ValueTuple, ConvertFloat<false>>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_BOOL, mindspore::ops::DT_LIST_BOOL),
                                ConvertSequence<py::tuple, ValueTuple, ConvertBool>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_TUPLE_TENSOR, mindspore::ops::DT_LIST_TENSOR),
@@ -561,7 +758,7 @@ ConverterMap InitSequenceToSequenceConverters() {
                               {CombineTypesForTypeCast(mindspore::ops::DT_LIST_INT, mindspore::ops::DT_TUPLE_INT),
                                ConvertSequence<py::list, ValueTuple, ConvertTensorAndInt>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_LIST_FLOAT, mindspore::ops::DT_TUPLE_FLOAT),
-                               ConvertSequence<py::list, ValueTuple, ConvertFloat>},
+                               ConvertSequence<py::list, ValueTuple, ConvertFloat<false>>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_LIST_BOOL, mindspore::ops::DT_TUPLE_BOOL),
                                ConvertSequence<py::list, ValueTuple, ConvertBool>},
                               {CombineTypesForTypeCast(mindspore::ops::DT_LIST_TENSOR, mindspore::ops::DT_TUPLE_TENSOR),
@@ -671,120 +868,67 @@ OpDefConvertFunc GetConverterByType(int32_t dtype) {
   return it->second;
 }
 
-namespace {
-bool IsNumpyAvailable() {
-  static bool available = []() {
-    if (_import_array() >= 0) {
-      return true;
-    } else {
-      MS_LOG(WARNING) << "Numpy init failed.";
-      return false;
-    }
-  }();
-  return available;
+bool ParseUtilsCheckInt(PyObject *obj, bool allow_scalar_tensor) {
+  if (IsPythonInt(obj) || IsNumpyInt(obj)) {
+    return true;
+  }
+  return allow_scalar_tensor ? IsScalarTensor<int64_t, false>(obj) : false;
 }
 
-inline static bool IsNumpyInt(PyObject *obj) { return IsNumpyAvailable() && PyArray_IsScalar(obj, Integer); }
-
-inline static bool IsNumpyBool(PyObject *obj) { return IsNumpyAvailable() && PyArray_IsScalar(obj, Bool); }
-
-inline static bool IsNumpyFloat(PyObject *obj) { return IsNumpyAvailable() && PyArray_IsScalar(obj, Floating); }
-
-inline static bool IsNumpyScalar(PyObject *obj) {
-  return IsNumpyAvailable() &&
-         (PyArray_IsScalar(obj, Integer) || PyArray_IsScalar(obj, Bool) || PyArray_IsScalar(obj, Floating));
+std::optional<int64_t> ParseUtilsConvertInt(PyObject *obj) {
+  if (IsPythonInt(obj) || IsNumpyInt(obj)) {
+    return static_cast<int64_t>(PyLong_AsLongLong(obj));
+  }
+  return ConvertScalarTensor<int64_t>(obj);
 }
 
-inline static bool IsNumpyScalarIntArray(PyObject *obj) {
-  if (!IsNumpyAvailable()) {
-    return false;
+bool ParseUtilsCheckFloat(PyObject *obj, bool allow_scalar_tensor) {
+  if (PyFloat_Check(obj) || IsNumpyFloat(obj)) {
+    return true;
   }
-  // numpy array with empty shape and one int element
-  if (!PyArray_Check(obj)) {
-    return false;
-  }
-  PyArrayObject *array_obj = reinterpret_cast<PyArrayObject *>(obj);
-  if (!PyArray_IsZeroDim(array_obj)) {
-    return false;
-  }
-  static std::set<int> valid_int_types{NPY_SHORT, NPY_USHORT, NPY_INT,      NPY_UINT,
-                                       NPY_LONG,  NPY_ULONG,  NPY_LONGLONG, NPY_ULONGLONG};
-  int array_data_type = PyArray_TYPE(array_obj);
-  return valid_int_types.find(array_data_type) != valid_int_types.end();
+  return allow_scalar_tensor ? IsScalarTensor<double, false>(obj) : false;
 }
 
-inline int64_t ConvertNumpyScalarIntArray(PyObject *obj) {
-  PyArrayObject *array_obj = reinterpret_cast<PyArrayObject *>(obj);
-  void *data = PyArray_DATA(array_obj);
-  int type_num = PyArray_TYPE(array_obj);
-  int64_t value;
-  switch (type_num) {
-    case NPY_SHORT:
-      value = *reinterpret_cast<short *>(data);
-      break;
-    case NPY_USHORT:
-      value = *reinterpret_cast<unsigned short *>(data);
-      break;
-    case NPY_INT:
-      value = *reinterpret_cast<int *>(data);
-      break;
-    case NPY_UINT:
-      value = *reinterpret_cast<unsigned int *>(data);
-      break;
-    case NPY_LONG:
-      value = *reinterpret_cast<long *>(data);
-      break;
-    case NPY_ULONG:
-      value = *reinterpret_cast<unsigned long *>(data);
-      break;
-    case NPY_LONGLONG:
-      value = *reinterpret_cast<long long *>(data);
-      break;
-    case NPY_ULONGLONG:
-      value = *reinterpret_cast<unsigned long long *>(data);
-      break;
-    default:
-      MS_EXCEPTION(ValueError) << "Unsupported data type " << type_num;
+std::optional<double> ParseUtilsConvertFloat(PyObject *obj) {
+  if (PyFloat_Check(obj) || IsNumpyFloat(obj)) {
+    return PyFloat_AsDouble(obj);
   }
-  return value;
+  return ConvertScalarTensor<double>(obj);
 }
 
-inline static bool IsIntScalarTensor(PyObject *obj) {
-  auto tensor = ConvertPyObjectTensorValue(obj);
-  if (!tensor) {
-    return false;
+bool ParseUtilsCheckBool(PyObject *obj, bool allow_scalar_tensor) {
+  if (PyBool_Check(obj) || IsNumpyBool(obj)) {
+    return true;
   }
-  auto tensor_type = tensor->data_type();
-  auto tensor_size = tensor->DataSize();
-  static const std::set<TypeId> valid_integral{kNumberTypeUInt8, kNumberTypeInt8,  kNumberTypeInt16,
-                                               kNumberTypeInt,   kNumberTypeInt32, kNumberTypeInt64};
-  return (tensor_size == 1 && valid_integral.find(tensor_type) != valid_integral.end());
+  return allow_scalar_tensor ? IsScalarTensor<bool, false>(obj) : false;
 }
-}  // namespace
 
-bool ParseUtilsCheckInt(PyObject *obj) { return (!PyBool_Check(obj) && PyLong_Check(obj)) || IsNumpyInt(obj); }
-bool ParseUtilsCheckFloat(PyObject *obj) { return PyFloat_Check(obj) || IsNumpyFloat(obj); }
-bool ParseUtilsCheckBool(PyObject *obj) { return PyBool_Check(obj) || IsNumpyBool(obj); }
-bool ParseUtilsCheckScalar(PyObject *obj) { return PyFloat_Check(obj) || PyLong_Check(obj) || IsNumpyScalar(obj); }
+std::optional<bool> ParseUtilsConvertBool(PyObject *obj) {
+  if (PyBool_Check(obj) || IsNumpyBool(obj)) {
+    return (PyObject_IsTrue(obj) == 1);
+  }
+  return ConvertScalarTensor<bool>(obj);
+}
+
+bool ParseUtilsCheckScalar(PyObject *obj, bool allow_scalar_tensor) {
+  if (PyFloat_Check(obj) || PyLong_Check(obj) || IsNumpyScalar(obj)) {
+    return true;
+  }
+  return allow_scalar_tensor ? (IsScalarTensor<int64_t, false>(obj) || IsScalarTensor<double, false>(obj) ||
+                                IsScalarTensor<bool, false>(obj))
+                             : false;
+}
 
 bool IsGeneralizedInt(PyObject *obj) {
-  return ParseUtilsCheckInt(obj) || IsNumpyScalarIntArray(obj) || IsIntScalarTensor(obj);
+  return IsPythonInt(obj) || IsNumpyInt(obj) || IsNumpyScalarIntArray(obj) || IsScalarTensor<int64_t, true>(obj);
 }
 
 // convert int, numpy int, numpy scalar int array or scalar int tensor to int
 std::optional<int64_t> ConvertGeneralizedIntToBasicInt(PyObject *obj) {
-  if (ParseUtilsCheckInt(obj)) {
-    return static_cast<int64_t>(PyLong_AsLongLong(obj));
-  }
-  if (IsNumpyScalarIntArray(obj)) {
+  if (MS_UNLIKELY(IsNumpyScalarIntArray(obj))) {
     return ConvertNumpyScalarIntArray(obj);
   }
-  // convert tensor with one int element to int
-  auto tensor = ConvertPyObjectTensorValue(obj);
-  if (MS_UNLIKELY(tensor == nullptr)) {
-    return std::nullopt;
-  }
-  return FetchTensorIntValue(tensor);
+  return ParseUtilsConvertInt(obj);
 }
 }  // namespace py_parse
 }  // namespace mindspore
