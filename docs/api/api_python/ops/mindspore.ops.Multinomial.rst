@@ -14,7 +14,7 @@ mindspore.ops.Multinomial
         - 全局的随机种子和算子层的随机种子都设置了：全局的随机种子和算子层的随机种子拼接。
 
     .. warning::
-        Ascend后端不支持随机数重现功能， `seed0` 和 `seed2` 参数不起作用。
+        Ascend后端不支持随机数重现功能， `seed` 和 `seed2` 参数不起作用。
 
     参数：
         - **seed** (int，可选) - 算子层的随机种子，用于生成随机数。必须是非负的。默认值： ``0`` 。
@@ -30,6 +30,6 @@ mindspore.ops.Multinomial
 
     异常：
         - **TypeError** - 如果 `seed` 或者 `seed2` 不是int类型。
-        - **TypeError** - 如果 `num_sample` 不是int类型。
+        - **TypeError** - 如果 `num_samples` 不是int类型。
         - **TypeError** - 如果 `dtype` 不是int32或者int64类型。
         - **ValueError** - 如果 `seed` 或者 `seed2` 小于零。
