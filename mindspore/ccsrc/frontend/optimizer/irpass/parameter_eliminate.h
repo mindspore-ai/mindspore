@@ -145,31 +145,31 @@ static inline void RemoveUnusedParametersFromGraph(const FuncGraphPtr &fg,
     const auto &param_i = parameters[i];
     if (unused_parameter_indexes.find(i) == unused_parameter_indexes.end()) {
       (void)new_parameters.emplace_back(param_i);
-    } else {
-      // VarArgs, KwArgs, KwOnlyArgs may not following the index as the Positional Arguments.
-      if (param_i == var_arg_node) {
-        fg->set_has_vararg(false);
-        (void)unused_parameter_indexes.erase(i);
-      } else if (param_i == kw_arg_node) {
-        fg->set_has_kwarg(false);
-        (void)unused_parameter_indexes.erase(i);
-      } else {
-        bool is_kw_only_arg = std::any_of(kw_only_args.cbegin(), kw_only_args.cend(),
-                                          [param_i](const auto &kw_only_arg) { return kw_only_arg == param_i; });
-        if (is_kw_only_arg) {
-          if (fg->kwonlyargs_count() <= 0) {
-            MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, fg->return_node())
-              << "The kw_only_args_count is 0 when a kw_only_arg should be removed";
-          }
-          fg->set_kwonlyargs_count(fg->kwonlyargs_count() - 1);
-          (void)unused_parameter_indexes.erase(i);
-        }
-      }
-      if (i >= fv_position) {
-        fg->set_fv_param_count(fg->fv_param_count() - 1);
-      }
-      MS_LOG(DEBUG) << "Erase parameter: " << param_i->DebugString() << ", index: " << i;
+      continue;
     }
+    // VarArgs, KwArgs, KwOnlyArgs may not following the index as the Positional Arguments.
+    if (param_i == var_arg_node) {
+      fg->set_has_vararg(false);
+      (void)unused_parameter_indexes.erase(i);
+    } else if (param_i == kw_arg_node) {
+      fg->set_has_kwarg(false);
+      (void)unused_parameter_indexes.erase(i);
+    } else {
+      bool is_kw_only_arg = std::any_of(kw_only_args.cbegin(), kw_only_args.cend(),
+                                        [param_i](const auto &kw_only_arg) { return kw_only_arg == param_i; });
+      if (is_kw_only_arg) {
+        if (fg->kwonlyargs_count() <= 0) {
+          MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, fg->return_node())
+            << "The kw_only_args_count is 0 when a kw_only_arg should be removed";
+        }
+        fg->set_kwonlyargs_count(fg->kwonlyargs_count() - 1);
+        (void)unused_parameter_indexes.erase(i);
+      }
+    }
+    if (i >= fv_position) {
+      fg->set_fv_param_count(fg->fv_param_count() - 1);
+    }
+    MS_LOG(DEBUG) << "Erase parameter: " << param_i->DebugString() << ", index: " << i;
   }
   manager->SetParameters(fg, new_parameters);
 }

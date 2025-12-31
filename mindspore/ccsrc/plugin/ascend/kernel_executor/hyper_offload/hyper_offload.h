@@ -41,7 +41,7 @@ struct ConditionSwitchInfo {
 };
 
 class HyperOffloadOptimizer {
- public :
+ public:
   static void Run(const KernelGraphPtr &kernel_graph);
   static void AddEventToHyperOffloadOps(const KernelGraphPtr &kernel_graph);
 
