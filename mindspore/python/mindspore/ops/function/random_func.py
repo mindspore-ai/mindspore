@@ -221,12 +221,14 @@ def multinomial_with_replacement(x, seed, offset, numsamples, replacement=False)
     """
     if not isinstance(seed, Tensor):
         if not isinstance(seed, int):
-            raise TypeError("For multinomial_with_replacement, "
+            # PSJit currently only supports the concatenation of f-strings,
+            # and does not support the concatenation of normal strings with f-strings.
+            raise TypeError(f"For multinomial_with_replacement, "
                             f"the input[seed] must be int, but got {type(seed)}.")
         seed = Tensor(seed, dtype=mstype.int64)
     if not isinstance(offset, Tensor):
         if not isinstance(offset, int):
-            raise TypeError("For multinomial_with_replacement, "
+            raise TypeError(f"For multinomial_with_replacement, "
                             f"the input[offset] must be int, but got {type(offset)}.")
         offset = Tensor(offset, dtype=mstype.int64)
     multinomial_with_replacement_ = P.MultinomialWithReplacement(numsamples=numsamples,
