@@ -269,7 +269,7 @@ class AscendEnvChecker(EnvChecker):
 
     def __init__(self, library_path):
         self.library_path = library_path
-        self.version = ["8.5"]
+        self.version = ["8.2", "8.3", "8.5"]
 
         # env
         self.path = os.getenv("PATH")
