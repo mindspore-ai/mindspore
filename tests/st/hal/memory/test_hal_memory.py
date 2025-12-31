@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import mindspore.context as context
+"""
+test memory feature
+"""
+from mindspore import context
 from mindspore import Tensor
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 import mindspore.runtime as rt
 from mindspore.ops import operations as P
 from mindspore.common.api import _pynative_executor
@@ -24,7 +27,7 @@ from tests.device_utils import set_device
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super(Net).__init__()
         self.ops = P.Abs()
 
     def construct(self, x):
@@ -48,6 +51,7 @@ def test_runtime_memory_stats():
     _pynative_executor.sync()
     assert not res is None
     assert isinstance(res, dict)
+    assert res["total_reserved_memory"] != 0
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
