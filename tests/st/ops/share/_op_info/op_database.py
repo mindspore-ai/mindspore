@@ -5090,6 +5090,27 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
+    'mint.xlogy': BinaryOpInfo(
+        name='mint.xlogy',
+        op=mint.xlogy,
+        ref=torch.xlogy,
+        op_basic_reference_inputs_func = wrap_sample_inputs(
+            basic_reference_inputs_binary_op_common_func,
+            '',
+        ),
+        op_extra_reference_inputs_func = wrap_sample_inputs(
+            extra_reference_inputs_binary_op_common_func,
+            '',
+        ),
+        dtypes_ascend=tuple((ms.int8, ms.int16, ms.int32, ms.int64, ms.float32, ms.bool_)),
+        dtypes_ascend910b=tuple((ms.int8, ms.int16, ms.int32, ms.int64, ms.float32, ms.bfloat16, ms.bool_)),
+        op_dynamic_inputs_func=None,
+        supports_both_python_scalar = False,
+        domain=((None, None), (1e-4, None)),
+        ascend910b_forward_loss_override={ms.bfloat16: 1e-2},
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
     'Tensor.sub': BinaryOpInfo(
         name='Tensor.sub',
         op=tensor_sub_ms,
@@ -5399,6 +5420,7 @@ op_db: Dict[str, OpInfo] = {
         disable_large_value_tensor_inputs=True,
         disable_small_value_tensor_inputs=True,
     ),
+
     'Tensor.tanh': UnaryOpInfo(
         name='Tensor.tanh',
         op=tensor_tanh_ms,
@@ -5409,6 +5431,17 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=(),
         # tanh has precision problem when converting input from half(fp16) to float
         convert_half_to_float=False,
+    ),
+    'mint.imag': UnaryOpInfo(
+        name='mint.imag',
+        op=mint.imag,
+        ref=torch.imag,
+        dtypes_ascend=(ms.complex64, ms.complex128),
+        dtypes_ascend910b=(ms.complex64, ms.complex128),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        disable_large_value_tensor_inputs=True,
+        disable_small_value_tensor_inputs = True,
     ),
     'Tensor.cos': UnaryOpInfo(
         name='Tensor.cos',
@@ -5941,6 +5974,28 @@ op_db: Dict[str, OpInfo] = {
         supports_multiple_dims=False,
         is_differentiable=False,
     ),
+    'mint.prod': ReductionOpInfo(
+        name='mint.prod',
+        op=mint.prod,
+        ref=torch.prod,
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reference_inputs_reduction_op_common_func,
+            ['_dim_last_dim0', '_default_keepdim'],
+            skip=True
+        ),
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_reduction_op_common_func, '', skip=True,
+        ),
+        op_dynamic_inputs_func=None,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d!=ms.float32 and d!=ms.float16)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        supports_multiple_dims=False,
+        ascend910b_forward_loss_override={ms.bfloat16: 6.6e+12},
+        ascend910b_backward_loss_override={ms.bfloat16: 1.41e+14},
+        is_differentiable=False,
+    ),
     'mint.tile': UnaryOpInfo(
         name='mint.tile',
         op=mint.tile,
@@ -6128,8 +6183,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         domain=(1e-5, None),
-        disable_small_value_tensor_inputs=True,
-        disable_large_value_tensor_inputs=True,
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7053,6 +7106,7 @@ binary_op_db = [
     'Tensor.floor_divide',
     'mint.pow',
     'mint.atan2',
+    'mint.xlogy',
     'Tensor.atan2',
 ]
 
@@ -7130,6 +7184,7 @@ unary_op_db = [
     'mint.cosh',
     'mint.cos',
     'Tensor.cos',
+    'mint.imag',
     'Tensor.reciprocal',
 ]
 
@@ -7227,6 +7282,7 @@ reduction_op_db = [
     'mint.sum',
     'mint.max',
     'mint.min',
+    'mint.prod',
     'Tensor.max',
 ]
 
