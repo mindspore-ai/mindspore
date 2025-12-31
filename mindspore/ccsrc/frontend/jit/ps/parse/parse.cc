@@ -4305,6 +4305,8 @@ std::string UpdateString(const string &str) {
 }
 
 string ProcessIndentationInScript(const string &script_text) {
+  // PSJit currently only supports the concatenation of f-strings,
+  // and does not support the concatenation of normal strings with f-strings.
   const size_t f_string_num = 2;
   size_t num1 = GetSubStrNum(script_text, "f'");
   size_t num2 = GetSubStrNum(script_text, "f\"");

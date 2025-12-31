@@ -293,7 +293,7 @@ def test_str_format_using_cell():
 
     class TestSubCell(Cell):
         def __init__(self, x):
-            super(TestSubCell, self).__init__()
+            super().__init__()
             self.x = x
 
     class TestCell(Cell):
@@ -321,12 +321,12 @@ def test_str_format_using_cell_in_init():
 
     class TestSubCell(Cell):
         def __init__(self, x):
-            super(TestSubCell, self).__init__()
+            super().__init__()
             self.x = x
 
     class TestCell(Cell):
         def __init__(self):
-            super(TestCell, self).__init__()
+            super().__init__()
             self.test_sub_cell = TestSubCell(123)
 
         def construct(self):
@@ -500,3 +500,23 @@ def test_input_dynamic_len_tuple():
     a, b = net(x, indices, y)
     assert a
     assert b
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_fstring_concat_and_indentation_parsing():
+    """
+    Feature: JIT Fallback
+    Description: Test f-string indentation parsing in jit-fallback.
+    Expectation: No exception.
+    """
+
+    @jit
+    def fn(x: Tensor, seed=50, offset=20, numsamples=10, replacement=True):
+        out = ops.multinomial_with_replacement(
+            x=x, seed=seed, offset=offset, numsamples=numsamples, replacement=replacement
+        )
+        return out
+
+    x = Tensor(np.random.randint(low=10, high=100, size=(2, 4)).astype(np.float32))
+    fn(x)
+    # expect no exception
