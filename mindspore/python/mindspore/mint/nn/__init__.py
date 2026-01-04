@@ -720,8 +720,8 @@ class ReLU6(Cell):
 
 class Mish(Cell):
     r"""
-    Computes MISH (A Self Regularized Non-Monotonic Neural Activation Function)
-    of input tensors element-wise.
+    Compute MISH (A Self Regularized Non-Monotonic Neural Activation Function)
+    activation function element-wise.
 
     Refer to :func:`mindspore.mint.nn.functional.mish` for more details.
 
@@ -735,10 +735,8 @@ class Mish(Cell):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> x = Tensor(np.array([[-1.1, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> mish = mint.nn.Mish()
+        >>> x = mindspore.tensor([[-1.1, 4.0, -8.0], [2.0, -5.0, 9.0]], mindspore.float32)
+        >>> mish = mindspore.mint.nn.Mish()
         >>> output = mish(x)
         >>> print(output)
         [[-3.0764845e-01 3.9974124e+00 -2.6832507e-03]
