@@ -532,11 +532,11 @@ class DynamicProfilerMonitorBase(Callback):
         if not os.path.exists(shm_path):
             return
 
-        MAX_TIME_DIFF = 900  # seconds
+        max_time_diff = 900  # seconds
         time_shm = os.stat(shm_path).st_ctime
         cur_proc_time = self._get_pid_st_ctime(os.getpid())
 
-        if cur_proc_time and abs(cur_proc_time - time_shm) > MAX_TIME_DIFF:
+        if cur_proc_time and abs(cur_proc_time - time_shm) > max_time_diff:
             logger.error("There maybe exist share memory before this task, if you kill last task, "
                          "dynamic profiler will not valid, please remove %s, and retry." % shm_path)
             return
