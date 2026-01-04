@@ -4042,8 +4042,7 @@ def var_ext(input, dim=None, *, correction=1, keepdim=False):
 
 def std_ext(input, dim=None, *, correction=1, keepdim=False):
     r"""
-    Calculates the standard deviation over the dimensions specified by `dim`. `dim` can be a single dimension, list of
-    dimensions, or None to reduce over all dimensions.
+    Calculate the standard deviation over specified dimension(s).
 
     The standard deviation (:math:`\sigma`) is calculated as:
 
@@ -4057,47 +4056,40 @@ def std_ext(input, dim=None, *, correction=1, keepdim=False):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        input (Tensor): The tensor used to calculate the standard deviation.
-        dim (None, int, tuple(int), optional): The dimension or dimensions to reduce. Defaults to ``None``.
-            If ``None``, all dimensions are reduced.
+        input (Tensor): The input tensor.
+        dim (None, int, tuple(int), optional): Specify the dimension. If ``None`` , calculate all elements. 
+            Default ``None``.
 
     Keyword Args:
-        correction (int, optional): The difference between the sample size and sample degrees of freedom. Defaults
-            to Bessel’s correction. Defaults to ``1``.
-        keepdim (bool, optional): Whether the output tensor has dim retained or not. If ``True`` , keep these
-            reduced dimensions and the length is 1. If ``False``, don't keep these dimensions. Defaults to ``False``.
+        correction (int, optional): The difference between the sample size and sample degrees of freedom. Default
+            to Bessel’s correction. Default ``1``.
+        keepdim (bool, optional): Whether the output tensor has dim retained. Default ``False``.
 
     Returns:
-        Tensor, the standard deviation.
-        Suppose the shape of `input` is :math:`(x_0, x_1, ..., x_R)`:
-
-        - If `dim` is () and `keepdim` is set to ``False`` , returns a 0-D Tensor, indicating the standard deviation of
-          all elements in `input`.
-        - If `dim` is int, e.g. ``1`` and `keepdim` is set to ``False`` , then the returned Tensor has shape
-          :math:`(x_0, x_2, ..., x_R)`.
-        - If `dim` is tuple(int) or list(int), e.g. ``(1, 2)`` and `keepdim` is set to ``False`` , then the returned
-          Tensor has shape :math:`(x_0, x_3, ..., x_R)`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `input` is not in bfloat16, float16, float32.
-        TypeError: If `dim` is not one of the followings: None, int, tuple.
-        TypeError: If `correction` is not an int.
-        TypeError: If `keepdim` is not a bool.
-        ValueError: If `dim` is out of range :math:`[-input.ndim, input.ndim)`.
+        Tensor
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> from mindspore import ops, Tensor
-        >>> input = Tensor(np.array([[1, 2, 3], [-1, 1, 4]]).astype(np.float32))
-        >>> output = ops.function.math_func.std_ext(input, dim=1, correction=1, keepdim=False)
-        >>> print(output)
-        [1.      2.5166113]
+        >>> import mindspore
+        >>> input = mindspore.tensor([[1, 2, 3], [-1, 1, 4]], mindspore.float32)
+        >>> mindspore.mint.std(input, dim=1, correction=1, keepdim=False)
+        Tensor(shape=[2], dtype=Float32, value= [ 1.00000000e+00,  2.51661134e+00])
+        >>> mindspore.mint.std(input, dim=1, correction=1, keepdim=True)
+        Tensor(shape=[2, 1], dtype=Float32, value=
+        [[ 1.00000000e+00],
+        [ 2.51661134e+00]])
+        >>> mindspore.mint.std(input, dim=[0, 1], correction=1, keepdim=False)
+        Tensor(shape=[], dtype=Float32, value= 1.75119)
+        >>> mindspore.mint.std(input, dim=[0, 1], correction=1, keepdim=True)
+        Tensor(shape=[1, 1], dtype=Float32, value=
+        [[ 1.75119019e+00]])
+        >>> mindspore.mint.std(input, dim=[0, 1], correction=2, keepdim=True)
+        Tensor(shape=[1, 1], dtype=Float32, value=
+        [[ 1.95789003e+00]])
     """
-    return std_op(input, dim, correction, keepdim)
+    std_op(input, dim, correction, keepdim)
 
 
 def var(input, axis=None, ddof=0, keepdims=False):
