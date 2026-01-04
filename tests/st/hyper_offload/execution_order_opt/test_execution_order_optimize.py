@@ -103,6 +103,18 @@ def test_net_all():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_net_all_trace():
+    """
+    Feature: Hyper offload auto optimize with execution order.
+    Description: Test whether hyper offload auto optimize with can decrease autual used memory.
+    Expectation: success.
+    """
+    max_memory = get_max_memory("run_net_all_trace.py", "test_net_parameter_all_trace.txt")
+    # max memory occupied in pynative execution, this need to fix later.
+    assert max_memory < 400
+
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_parameter_with_remote():
     """
     Feature: Hyper offload auto optimize with execution order.
