@@ -213,7 +213,7 @@ KernelGraphPtr MSBackend::GetGraphById(GraphId graph_id) {
   return graph_compiler_->Fetch(graph_id);
 }
 
-MS_REGISTER_BACKEND(kMSBackendName, MSBackend)
+MS_REGISTER_BACKEND(kMSBackendName, MSBackend);
 }  // namespace ms_backend
 }  // namespace backend
 }  // namespace mindspore
