@@ -276,14 +276,14 @@ class GLU(Cell):
 
 class Tanh(Cell):
     r"""
-    Applies the Tanh function element-wise, returns a new tensor with the hyperbolic tangent of the elements of input.
+    Apply the Tanh function element-wise.
 
     Tanh function is defined as:
 
     .. math::
         tanh(x_i) = \frac{\exp(x_i) - \exp(-x_i)}{\exp(x_i) + \exp(-x_i)} = \frac{\exp(2x_i) - 1}{\exp(2x_i) + 1},
 
-    where :math:`x_i` is an element of the input Tensor.
+    where :math:`x_i` is an element of the input tensor.
 
     Tanh Activation Function Graph:
 
@@ -291,23 +291,19 @@ class Tanh(Cell):
         :align: center
 
     Inputs:
-        - **input** (Tensor) - Tensor of any dimension, input with data type of float16 or float32.
+        - **input** (Tensor) - The input tensor.
+          Data type must be mindspore.float16 or mindspore.float32.
 
     Outputs:
-        Tensor, with the same type and shape as the `input`.
-
-    Raises:
-        TypeError: If dtype of `input` is neither float16 nor float32.
+        Tensor.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> input = Tensor(np.array([1, 2, 3, 2, 1]), mindspore.float16)
-        >>> tanh = mint.nn.Tanh()
+        >>> input = mindspore.tensor([1, 2, 3, 2, 1], mindspore.float16)
+        >>> tanh = mindspore.mint.nn.Tanh()
         >>> output = tanh(input)
         >>> print(output)
         [0.7617 0.964  0.995  0.964  0.7617]
