@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -839,6 +839,9 @@ OptPassGroupMap GetJitOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &
   opt::OptPassConfig updatestate_depend_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateDependEliminater());
   opt::OptPassConfig updatestate_assign_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateAssignEliminater());
   opt::OptPassConfig updatestate_loads_eliminate = opt::OptPassConfig(opt::irpass::UpdatestateLoadsEliminater());
+  opt::OptPassConfig switch_simplify = opt::OptPassConfig({
+    irpass.switch_simplify_,
+  });
 
   OptPassGroupMap map_a(
     {{"c_1", c_1},
@@ -850,7 +853,8 @@ OptPassGroupMap GetJitOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &
      {"call_graph_tuple_transform", opt::OptPassConfig({irpass.call_graph_tuple_transform_})},
      {"tuple_list_get_item_eliminator", opt::OptPassConfig({irpass.tuple_list_get_item_eliminator_})},
      {"none_parameter_eliminate", opt::OptPassConfig(opt::irpass::NoneParameterEliminator())},
-     {"renormalize", opt::OptPassConfig::Renormalize()}});
+     {"renormalize", opt::OptPassConfig::Renormalize()},
+     {kSwitchSimplifyFlag, switch_simplify}});
 
   return map_a;
 }
@@ -867,10 +871,14 @@ OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib 
     irpass.tuple_list_get_item_depend_reorder_,
     irpass.tuple_list_convert_item_index_to_positive_,
   });
+  opt::OptPassConfig switch_simplify = opt::OptPassConfig({
+    irpass.switch_simplify_,
+  });
 
   OptPassGroupMap map_a({{"d_1", d_1},
                          {"none_parameter_eliminate", opt::OptPassConfig(opt::irpass::NoneParameterEliminator())},
-                         {"renormalize", opt::OptPassConfig::Renormalize()}});
+                         {"renormalize", opt::OptPassConfig::Renormalize()},
+                         {kSwitchSimplifyFlag, switch_simplify}});
 
   return map_a;
 }
