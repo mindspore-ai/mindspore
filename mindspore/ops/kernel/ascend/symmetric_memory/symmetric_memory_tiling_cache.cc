@@ -155,6 +155,29 @@ void GatherInfo(const std::optional<string> &s) {
 
 void GatherInfo() {}
 
+// Hash function constants
+constexpr uint64_t HASH_MAGIC_C1 = 9782798678568883157LLU;
+constexpr uint64_t HASH_MAGIC_C2 = 5545529020109919103LLU;
+constexpr uint64_t HASH_CONSTANT_ONE = 1390208809;
+constexpr uint64_t HASH_CONSTANT_TWO = 944331445;
+constexpr int HASH_BLOCK_SIZE = 16;
+constexpr int HASH_WORD_SIZE = 8;
+
+// Rotation constants
+constexpr uint8_t ROTATE_BITS_31 = 31;
+constexpr uint8_t ROTATE_BITS_27 = 27;
+constexpr uint8_t ROTATE_BITS_33 = 33;
+
+// Bit shift constants for tail processing
+constexpr int BIT_SHIFT_0 = 0;
+constexpr int BIT_SHIFT_8 = 8;
+constexpr int BIT_SHIFT_16 = 16;
+constexpr int BIT_SHIFT_24 = 24;
+constexpr int BIT_SHIFT_32 = 32;
+constexpr int BIT_SHIFT_40 = 40;
+constexpr int BIT_SHIFT_48 = 48;
+constexpr int BIT_SHIFT_56 = 56;
+
 constexpr int g_rShift33Bits = 33;
 constexpr uint64_t MIX_STEP1 = 18397679294719823053LLU;
 constexpr uint64_t MIX_STEP2 = 14181476777654086739LLU;
@@ -176,10 +199,6 @@ inline uint64_t mixture(uint64_t x) {
 void gen_hash_tmp(const uint64_t *blocks, const int block_num, const uint32_t seed, uint64_t *rhas, uint64_t *rhax) {
   MS_EXCEPTION_IF_NULL(blocks);
 
-  // use 9782798678568883157 and 5545529020109919103 for blocking and obfuscation of input data
-  const uint64_t c1 = 9782798678568883157LLU;
-  const uint64_t c2 = 5545529020109919103LLU;
-
   uint64_t has = seed;
   uint64_t hax = seed;
   for (int i = 0; i < block_num; i++) {
@@ -187,28 +206,25 @@ void gen_hash_tmp(const uint64_t *blocks, const int block_num, const uint32_t se
     uint64_t tmp1 = blocks[i * even_num];
     uint64_t tmp2 = blocks[i * even_num + 1];
 
-    int8_t bits_31 = 31;
-    tmp1 *= c1;
-    tmp1 = rotating_left(tmp1, bits_31);
-    tmp1 *= c2;
+    tmp1 *= HASH_MAGIC_C1;
+    tmp1 = rotating_left(tmp1, ROTATE_BITS_31);
+    tmp1 *= HASH_MAGIC_C2;
     has ^= tmp1;
 
-    int8_t bits_27 = 27;
-    has = rotating_left(has, bits_27);
+    has = rotating_left(has, ROTATE_BITS_27);
     has += hax;
     // increase randomness by mul by 5 and adding a constant
-    has = has * 5 + 1390208809;
+    has = has * 5 + HASH_CONSTANT_ONE;
 
-    int8_t bits_33 = 33;
-    tmp2 *= c2;
-    tmp2 = rotating_left(tmp2, bits_33);
-    tmp2 *= c1;
+    tmp2 *= HASH_MAGIC_C2;
+    tmp2 = rotating_left(tmp2, ROTATE_BITS_33);
+    tmp2 *= HASH_MAGIC_C1;
     hax ^= tmp2;
 
-    hax = rotating_left(hax, bits_31);
+    hax = rotating_left(hax, ROTATE_BITS_31);
     hax += has;
     // increase randomness by mul by 5 and adding a constant
-    hax = hax * 5 + 944331445;
+    hax = hax * 5 + HASH_CONSTANT_TWO;
   }
 
   *rhas = has;
@@ -218,14 +234,10 @@ void gen_hash_tmp(const uint64_t *blocks, const int block_num, const uint32_t se
 uint64_t gen_hash(const void *key, const int len, const uint32_t seed) {
   const uint8_t *data = (const uint8_t *)key;
   // the length of each block is 16 bytes
-  const int block_num = len / 16;
+  const int block_num = len / HASH_BLOCK_SIZE;
   // has and hax are literal appromix to hash, and hax is the return value of this function.
   uint64_t has = seed;
   uint64_t hax = seed;
-
-  // use 9782798678568883157 and 5545529020109919103 for blocking and obfuscation of input data
-  const uint64_t c1 = 9782798678568883157LLU;
-  const uint64_t c2 = 5545529020109919103LLU;
 
   const uint64_t *blocks = (const uint64_t *)(data);
 
@@ -233,77 +245,78 @@ uint64_t gen_hash(const void *key, const int len, const uint32_t seed) {
   gen_hash_tmp(blocks, block_num, seed, &has, &hax);
 
   // the length of each block is 16 bytes
-  const uint8_t *tail = (const uint8_t *)(data + block_num * 16);
+  const uint8_t *tail = (const uint8_t *)(data + block_num * HASH_BLOCK_SIZE);
   uint64_t t1 = 0;
   uint64_t t2 = 0;
   // because the size of a block is 16, different offsets are calculated for tail blocks
   // for different sizes
-  switch (static_cast<uint64_t>(len) & 15) {
+  auto idx = static_cast<uint64_t>(len) & (HASH_BLOCK_SIZE - 1);
+  switch (idx) {
     case 15:
-      t2 ^= ((uint64_t)tail[14]) << 48;
+      t2 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_48;
       [[fallthrough]];
       {}
     case 14:
-      t2 ^= ((uint64_t)tail[13]) << 40;
+      t2 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_40;
       [[fallthrough]];
       {}
     case 13:
-      t2 ^= ((uint64_t)tail[12]) << 32;
+      t2 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_32;
       [[fallthrough]];
       {}
     case 12:
-      t2 ^= ((uint64_t)tail[11]) << 24;
+      t2 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_24;
       [[fallthrough]];
       {}
     case 11:
-      t2 ^= ((uint64_t)tail[10]) << 16;
+      t2 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_16;
       [[fallthrough]];
       {}
     case 10:
-      t2 ^= ((uint64_t)tail[9]) << 8;
+      t2 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_8;
       [[fallthrough]];
       {}
     case 9:
-      t2 ^= ((uint64_t)tail[8]) << 0;
-      t2 *= c2;
-      t2 = rotating_left(t2, 33);
-      t2 *= c1;
+      t2 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_0;
+      t2 *= HASH_MAGIC_C2;
+      t2 = rotating_left(t2, ROTATE_BITS_33);
+      t2 *= HASH_MAGIC_C1;
       hax ^= t2;
       [[fallthrough]];
       {}
     case 8:
-      t1 ^= ((uint64_t)tail[7]) << 56;
+      t1 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_56;
       [[fallthrough]];
       {}
     case 7:
-      t1 ^= ((uint64_t)tail[6]) << 48;
+      t1 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_48;
       [[fallthrough]];
       {}
     case 6:
-      t1 ^= ((uint64_t)tail[5]) << 40;
+      t1 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_40;
       [[fallthrough]];
       {}
     case 5:
-      t1 ^= ((uint64_t)tail[4]) << 32;
+      t1 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_32;
       [[fallthrough]];
       {}
     case 4:
-      t1 ^= ((uint64_t)tail[3]) << 24;
+      t1 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_24;
       [[fallthrough]];
       {}
     case 3:
-      t1 ^= ((uint64_t)tail[2]) << 16;
+      t1 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_16;
       [[fallthrough]];
       {}
     case 2:
-      t1 ^= ((uint64_t)tail[1]) << 8;
+      t1 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_8;
       [[fallthrough]];
       {}
     case 1:
-      t1 ^= ((uint64_t)tail[0]) << 0;
-      t1 *= c1;
-      t1 = rotating_left(t1, 31);
-      t1 *= c2;
+      t1 ^= ((uint64_t)tail[idx - 1]) << BIT_SHIFT_0;
+      t1 *= HASH_MAGIC_C1;
+      t1 = rotating_left(t1, ROTATE_BITS_31);
+      t1 *= HASH_MAGIC_C2;
       has ^= t1;
       [[fallthrough]];
       {}

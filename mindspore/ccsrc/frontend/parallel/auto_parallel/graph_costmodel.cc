@@ -21,9 +21,9 @@
 #include <vector>
 #include <set>
 
-#include "include/frontend/parallel/graph_costmodel.h"
 #include "frontend/parallel/ops_info/reshape_info.h"
 #include "frontend/parallel/step_auto_parallel.h"
+#include "include/frontend/parallel/graph_costmodel.h"
 
 namespace mindspore {
 namespace parallel {
