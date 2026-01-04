@@ -1492,7 +1492,6 @@ bool AscendKernelExecutor::ExecuteKernelTask(const runtime::KernelTaskType &task
         output_device_address != nullptr && output_device_address->GetDeviceType() == device::DeviceType::kCPU) {
       // for unrefmode, the output is on host, just copy the device ptr
       output_device_address->set_ptr(input_device_address->GetMutablePtr());
-
     } else {
       CustomizeCopyAscend(device_context_, input_tensors[0], output_tensors[0], stream_id);
     }

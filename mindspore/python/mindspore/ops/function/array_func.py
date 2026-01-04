@@ -992,7 +992,7 @@ def chunk_ext(input, chunks, dim=0):
     return chunk_op(input, chunks, dim)
 
 
-def chunk_view(input, chunks, dim=0):
+def chunk_view(input, chunks, dim=0): # pylint: disable=redefined-builtin
     """
     Cut the input Tensor into `chunks` sub-tensors along the specified axis.
 
@@ -1960,7 +1960,7 @@ def unsqueeze(input, dim):
     return expand_dims(input, dim)
 
 
-def unsqueeze_view(input, dim):
+def unsqueeze_view(input, dim): # pylint: disable=redefined-builtin
     """
     Adds an additional dimension to the input tensor at the given dimension.
 

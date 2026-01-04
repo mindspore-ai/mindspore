@@ -22,8 +22,11 @@ import common.gen_constants as K
 
 
 def get_pyboost_arg_handlers_black_list():
-    # Tensor-to-scalar conversion is already handled by ParserArgs and Converter,
-    # so it's not needed in PyBoost.
+    """
+    Tensor-to-scalar conversion is already handled by ParserArgs and Converter,
+    so it's not needed in PyBoost.
+    :return: black list of arg handlers
+    """
     black_list_for_arg_handlers = ["_normalize_int_sequence", "_scalar_tensor_to_scalar",
                                     "_scalar_tensor_to_int", "_scalar_tensor_to_float"]
     return black_list_for_arg_handlers

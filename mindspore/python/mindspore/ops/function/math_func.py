@@ -4089,7 +4089,7 @@ def std_ext(input, dim=None, *, correction=1, keepdim=False):
         Tensor(shape=[1, 1], dtype=Float32, value=
         [[ 1.95789003e+00]])
     """
-    std_op(input, dim, correction, keepdim)
+    return std_op(input, dim, correction, keepdim)
 
 
 def var(input, axis=None, ddof=0, keepdims=False):
@@ -8719,7 +8719,7 @@ def baddbmm_ext(input, batch1, batch2, *, beta=1, alpha=1):
     return ops.auto_generate.baddbmm(input, batch1, batch2, beta, alpha)
 
 
-def log2(input):
+def log2(input): # pylint: disable=redefined-builtin
     r"""
     Compute the logarithm to the base 2 of the input tensor element-wise.
 

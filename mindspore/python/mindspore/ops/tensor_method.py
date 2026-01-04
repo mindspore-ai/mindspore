@@ -1984,9 +1984,11 @@ def tensor_masked_scatter(input, mask, source):
 def tensor_inplace_masked_scatter(input, mask, source):
     return F.inplace_masked_scatter(input, mask, source)
 
+
 def tensor_nsa_select_attention(query, key, value, topk_indices, scale_value, head_num, select_block_size,
                                 select_block_count, *, atten_mask=None, actual_seq_qlen=None, actual_seq_kvlen=None):
     raise NotImplementedError("nsa_select_attention only supports Ascend.")
+
 
 def tensor_broadcast_to(x, shape):
     return F.broadcast_to(x, shape)

@@ -240,7 +240,6 @@ DeviceAddressPtr PyBoostUtils::MakeContiguousDeviceAddress(const tensor::TensorP
 
   auto output_tensor =
     std::make_shared<tensor::Tensor>(input_tensor->data_type(), storage_info->shape, new_device_address);
-
   if (!device_context->GetKernelExecutor()->ExecuteKernelTask(runtime::KernelTaskType::kCONTIGUOUS_TASK, {input_tensor},
                                                               {output_tensor}, stream_id)) {
     MS_LOG(EXCEPTION) << "ExecuteKernelTask failed, task_type:" << runtime::KernelTaskType::kCONTIGUOUS_TASK;
