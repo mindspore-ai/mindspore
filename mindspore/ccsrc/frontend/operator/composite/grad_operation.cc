@@ -93,7 +93,11 @@ void GenerateFuncGraphByPosition(const FuncGraphPtr &fg, const AbstractTuplePtr 
   for (size_t i = 0; i < pos->size(); ++i) {
     auto val = pos->elements()[i]->BuildValue();
     MS_EXCEPTION_IF_NULL(val);
-    auto int_val = LongToSize(dyn_cast<Int64Imm>(val)->value());
+    auto val_imm = dyn_cast<Int64Imm>(val);
+    if (val_imm == nullptr) {
+      MS_LOG(INTERNAL_EXCEPTION) << "Position element must be Int64Imm, but got " << val->ToString();
+    }
+    auto int_val = LongToSize(val_imm->value());
     ++int_val;  // Ignore the env position.
     if (int_val >= tuple_arg->size()) {
       MS_EXCEPTION(IndexError) << "Position index " << (int_val - 1) << " is exceed input size.";
@@ -334,6 +338,7 @@ CNodePtr GradOperation::SetNodeByParameter(const CNodePtr &grad, const FuncGraph
     auto weight_ref = dyn_cast<abstract::AbstractRefTensor>(weight_value_);
     if (weight_ref != nullptr) {
       auto weight_key = weight_ref->ref_key_value()->cast<RefKeyPtr>();
+      MS_EXCEPTION_IF_NULL(weight_key);
       auto param_name = weight_key->value();
       fv_bprop = fg->NewCNodeInOrder({NewValueNode(kPrimMakeTuple), NewValueNode(param_name), grad});
     } else {

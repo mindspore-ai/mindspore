@@ -143,7 +143,7 @@ class ItemData {
 
   ItemType GetItemType() const { return tp_; }
 
-  mutable GuardFailReason fail_reason_;
+  mutable GuardFailReason fail_reason_{GuardFailReason::kReasonUnknown};
 
  protected:
   virtual void SubInfo(InfoPack *info) {}

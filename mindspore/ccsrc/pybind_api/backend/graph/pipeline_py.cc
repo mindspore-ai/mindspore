@@ -260,6 +260,7 @@ bool PyIsCipherFile(const std::string &file_path) { return mindspore::IsCipherFi
 void SwapCache(const py::object &host_, const py::object &device_, const py::object &block_mapping_,
                const bool &is_device_to_host) {
   tensor::TensorPtr block_mapping = tensor::ConvertToTensor(block_mapping_);
+  MS_EXCEPTION_IF_NULL(block_mapping);
   auto block_mapping_shape = block_mapping->shape();
   const size_t num_two = 2;
   if (block_mapping_shape.size() != num_two) {
