@@ -90,6 +90,7 @@ BASE_CONFIG = {
         'sink_mode': True,
         'sink_size': 1
     },
+    'monitor_config': {},
     # optimizer
     'optimizer': {
         'type': "AdamW",
