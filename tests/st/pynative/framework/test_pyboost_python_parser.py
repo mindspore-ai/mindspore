@@ -295,13 +295,13 @@ def test_disable_scalar_tensor_with_mint_min():
     values, index = ms.mint.min(x, 1)
     expect_values = np.array([1., 0.7]).astype(np.float32)
     expect_index = np.array([0, 0])
-    np.allclose(values.asnumpy(), expect_values)
-    np.allclose(index.asnumpy(), expect_index)
+    assert np.allclose(values.asnumpy(), expect_values)
+    assert np.allclose(index.asnumpy(), expect_index)
 
     # mint.min(input, other)
     y = ms.mint.min(x, ms.Tensor(1))
     expect = np.array([[1., 1.], [0.7, 1.]]).astype(np.float32)
-    np.allclose(y.asnumpy(), expect)
+    assert np.allclose(y.asnumpy(), expect)
 
 
 @arg_mark(plat_marks=['platform_ascend'],

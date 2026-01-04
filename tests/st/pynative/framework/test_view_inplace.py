@@ -168,6 +168,15 @@ class TestViewInplace:
         assert self.is_shared_address(output0, output1)
         assert np.allclose(output1.asnumpy(), expect_output)
 
+    def set_data_from_view_tensor_test(self):
+        input_np = np.random.rand(2, 2)
+        expect_np = input_np.transpose((1, 0))
+
+        x = ms.Tensor(input_np)
+        y = x.transpose(-1, -2)
+        x.data = y
+        assert np.allclose(x.asnumpy(), expect_np)
+
     def inplace_with_interneal_overlap_test(self):
         with pytest.raises(RuntimeError,
                            match="This tensor has multi element reference " \
@@ -215,5 +224,6 @@ def test_view_inplace():
         tester.single_view_inplace_test(shape)
         tester.multi_view_inplace_test(shape)
 
+    tester.set_data_from_view_tensor_test()
     tester.inplace_with_interneal_overlap_test()
     tester.inplace_with_partial_overlap_test()
