@@ -276,7 +276,7 @@ void SwapCache(const py::object &host_, const py::object &device_, const py::obj
   MS_EXCEPTION_IF_NULL(device);
   auto in_shape = device->shape();
   tensor::TensorPtr host = tensor::ConvertToTensor(host_);
-  MS_EXCEPTION_IF_NULL(host_);
+  MS_EXCEPTION_IF_NULL(host);
   auto type_byte = GetTypeByte(TypeIdToType(host->data_type()));
   size_t block_size_in_bytes = LongToSize(
     std::accumulate(in_shape.begin() + kIndex1, in_shape.end(), SizeToLong(type_byte), std::multiplies<int64_t>()));
