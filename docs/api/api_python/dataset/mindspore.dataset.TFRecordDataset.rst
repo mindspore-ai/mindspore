@@ -3,7 +3,7 @@ mindspore.dataset.TFRecordDataset
 
 .. py:class:: mindspore.dataset.TFRecordDataset(dataset_files, schema=None, columns_list=None, num_samples=None, num_parallel_workers=None, shuffle=Shuffle.GLOBAL, num_shards=None, shard_id=None, shard_equal_rows=False, cache=None, compression_type=None)
 
-    读取和解析TFData格式的数据文件构建数据集。生成的数据集的列名和列类型取决于TFRecord文件中的保存的列名与类型。
+    读取和解析TFData格式的数据文件构建数据集。生成的数据集的列名和列类型取决于TFRecord文件中保存的列名与类型。
 
     .. note:: Windows平台尚不支持 `TFRecordDataset` 。
 
@@ -17,11 +17,11 @@ mindspore.dataset.TFRecordDataset
 
           - 指定了 `num_samples` 参数，且值大于0，则读取 `num_samples` 条数据。此时 `schema` 参数的numRows字段会失效。
           - 不指定 `num_samples` 参数，指定了 `schema` 参数并定义了numRows字段，且值大于0，则读取numRows条数据。
-          - 不指定 `num_samples` 参数 与 `schema` 参数，读取所有样本数据。
+          - 不指定 `num_samples` 参数与 `schema` 参数，读取所有样本数据。
 
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
-        - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值： ``Shuffle.GLOBAL`` 。
-          如果 `shuffle` 为 ``False`` ，则不混洗，如果 `shuffle` 为 ``True`` ，等同于将 `shuffle` 设置为 ``mindspore.dataset.Shuffle.GLOBAL`` 。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数（8），也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
+        - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型或枚举类型进行指定。默认值： ``Shuffle.GLOBAL`` 。
+          如果 `shuffle` 为 ``False`` ，则不混洗；如果 `shuffle` 为 ``True`` ，等同于将 `shuffle` 设置为 ``Shuffle.GLOBAL`` 。
           通过传入枚举变量设置数据混洗的模式：
 
           - ``Shuffle.GLOBAL`` ：混洗文件和样本。
@@ -31,7 +31,7 @@ mindspore.dataset.TFRecordDataset
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值： ``None`` 。只有当指定了 `num_shards` 时才能指定此参数。
         - **shard_equal_rows** (bool, 可选) - 分布式训练时，为所有分片获取等量的数据行数。默认值： ``False`` 。如果 `shard_equal_rows` 为 ``False`` ，则可能会使得每个分片的数据条目不相等，从而导致分布式训练失败。因此当每个TFRecord文件的数据数量不相等时，建议将此参数设置为 ``True`` 。注意，只有当指定了 `num_shards` 时才能指定此参数。当 `compression_type` 非 ``None`` ，且指定了 `num_samples` 或numRows字段（由参数 `schema` 定义）时，`shard_equal_rows` 会被视为 ``True`` 。
         - **cache** (:class:`~.dataset.DatasetCache`, 可选) - 单节点数据缓存服务，用于加快数据集处理，详情请阅读 `单节点数据缓存 <https://www.mindspore.cn/tutorials/zh-CN/master/dataset/cache.html>`_ 。默认值： ``None`` ，不使用缓存。
-        - **compression_type** (str, 可选) - 用于所有文件的压缩类型，必须是 ``“”`` ， ``“GZIP”`` 或 ``“ZLIB”`` 。默认值： ``None`` ，即空字符串。
+        - **compression_type** (str, 可选) - 用于所有文件的压缩类型，必须是 ``""`` 、 ``"GZIP"`` 或 ``"ZLIB"`` 。默认值： ``None`` ，即空字符串。
           建议在 `compression_type` 为 ``"GZIP"`` 或 ``"ZLIB"`` 时，指定 `num_samples` 或numRows字段（由参数 `schema` 定义）以避免出现为了获取文件大小对同一个文件进行多次解压而导致性能下降的问题。
 
     异常：

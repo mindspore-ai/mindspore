@@ -4049,7 +4049,7 @@ class SemeionDataset(MappableDataset, VisionBaseDataset):
     for machine learning research.
 
     This dataset consists of 1593 records (rows) and 256 attributes (columns). Each record represents
-    a handwritten digit, originally scanned with a resolution of 256 grey scale. Each pixel of the each
+    a handwritten digit, originally scanned with a resolution of 256 grey scale. Each pixel of each
     original scanned image was first stretched, and after scaled between 0 and 1
     (setting to 0 every pixel whose value was under the value 127 of the grey scale (127 included)
     and setting to 1 each pixel whose original value in the grey scale was over 127). Finally, each binary image
@@ -4098,7 +4098,7 @@ class STL10Dataset(MappableDataset, VisionBaseDataset):
             ``'unlabeled'``, ``'train+unlabeled'`` or ``'all'`` . ``'train'`` will read from 5,000
             train samples, ``'test'`` will read from 8,000 test samples,
             ``'unlabeled'`` will read from all 100,000 samples, and ``'train+unlabeled'``
-            will read from 105000 samples, ``'all'`` will read all the samples
+            will read from 105,000 samples, ``'all'`` will read all the samples.
             Default: ``None`` , all samples.
         num_samples (int, optional): The number of images to be included in the dataset.
             Default: ``None`` , all images.
@@ -4444,7 +4444,7 @@ class SVHNDataset(GeneratorDataset):
           author={Yuval Netzer, Tao Wang, Adam Coates, Alessandro Bissacco, Bo Wu, Andrew Y. Ng},
           conference={NIPS Workshop on Deep Learning and Unsupervised Feature Learning 2011.},
           year={2011},
-          publisher={NIPS}
+          publisher={NIPS},
           url={http://ufldl.stanford.edu/housenumbers}
         }
 
@@ -4483,7 +4483,7 @@ class USPSDataset(SourceDataset, VisionBaseDataset):
         shuffle (Union[bool, Shuffle], optional): Perform reshuffling of the data every epoch.
             Bool type and Shuffle enum are both supported to pass in. Default: ``Shuffle.GLOBAL`` .
             If `shuffle` is ``False`` , no shuffling will be performed.
-            If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to ``mindspore.dataset.Shuffle.GLOBAL``.
+            If `shuffle` is ``True`` , it is equivalent to setting `shuffle` to ``Shuffle.GLOBAL``.
             Set the mode of data shuffling by passing in enumeration variables:
 
             - ``Shuffle.GLOBAL`` : Shuffle both the files and samples.
@@ -4580,7 +4580,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
         task (str, optional): Set the task type of reading voc data, now only support ``'Segmentation'`` or
-            ``'Detection'``.  Default: ``'Segmentation'``.
+            ``'Detection'``. Default: ``'Segmentation'``.
         usage (str, optional): Set the task type of ImageSets. Default: ``'train'``. If `task` is ``'Segmentation'``,
             image and annotation list will be loaded in ./ImageSets/Segmentation/usage + ".txt";
             If `task` is 'Detection', image and annotation list will be loaded in ./ImageSets/Main/usage + ".txt";
@@ -4609,7 +4609,7 @@ class VOCDataset(MappableDataset, VisionBaseDataset):
         cache (DatasetCache, optional): Use tensor caching service to speed up dataset processing. More details:
             `Single-Node Data Cache <https://www.mindspore.cn/tutorials/en/master/dataset/cache.html>`_ .
             Default: ``None`` , which means no cache is used.
-        extra_metadata(bool, optional): Flag to add extra meta-data to row. If True, an additional column named
+        extra_metadata (bool, optional): Flag to add extra meta-data to row. If True, an additional column named
             :py:obj:`[_meta-filename, dtype=string]` will be output at the end. Default: ``False``.
         decrypt (callable, optional): Image decryption function, which accepts the path of the encrypted image file
             and returns the decrypted bytes data. Default: ``None`` , no decryption.
@@ -4803,7 +4803,6 @@ class WIDERFaceDataset(MappableDataset, VisionBaseDataset):
         ValueError: If `shard_id` is not in range of [0, `num_shards` ).
         ValueError: If `usage` is not ``'train'``, ``'test'``, ``'valid'``, ``'all'``.
         ValueError: If `num_parallel_workers` exceeds the max thread numbers.
-        ValueError: If `annotation_file` is not exist.
         ValueError: If `dataset_dir` is not exist.
 
     Tutorial Examples:
