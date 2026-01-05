@@ -910,7 +910,9 @@ bool AbstractDynamicMemPool::DoSyncAllEvents() {
   }
   for (auto &mem_buf : carry_event_mem_bufs) {
     if (mem_buf->SyncAllEvents() && mem_buf->status_ == DynamicMemBufStatus::kMemBufUsedByEvent) {
-      (void)DoFreeTensorMem(mem_buf->addr_);
+      if (DoFreeTensorMem(mem_buf->addr_)) {
+        mem_stat_ptr_->used_by_event_size_ -= mem_buf->size_;
+      }
     }
   }
 
