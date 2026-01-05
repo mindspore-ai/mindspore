@@ -56,6 +56,11 @@ BaseShapePtr LayerNormExtFuncImpl::InferShape(const PrimitivePtr &primitive,
                       << " but got gamma shape: " << gamma_shape << ", beta shape: " << beta_shape
                       << " ,normalized_shape: " << normalized_shape_opt.value().ToVector() << ".";
   }
+  if (normalized_shape_opt.value().ToVector() != beta_shape && !IsDynamicShape(beta_shape)) {
+    MS_LOG(EXCEPTION) << "For 'LayerNorm', the shape of gamma and beta must be equal to normalized_shape,"
+                      << " but got gamma shape: " << gamma_shape << ", beta shape: " << beta_shape
+                      << " ,normalized_shape: " << normalized_shape_opt.value().ToVector() << ".";
+  }
   const auto norm_dim = gamma_shape.size();
   const auto input_dim = x_shape.size();
   MS_CHECK_VALUE(input_dim >= norm_dim,
@@ -127,7 +132,11 @@ ShapeArray LayerNormExtFuncImpl::InferShape(const PrimitivePtr &primitive, const
                       << " but got gamma shape: " << gamma_shape << ", beta shape: " << beta_shape
                       << " ,normalized_shape: " << normalized_shape_opt.value().ToVector() << ".";
   }
-
+  if (normalized_shape_opt.value().ToVector() != beta_shape && !IsDynamicShape(beta_shape)) {
+    MS_LOG(EXCEPTION) << "For 'LayerNorm', the shape of gamma and beta must be equal to normalized_shape,"
+                      << " but got gamma shape: " << gamma_shape << ", beta shape: " << beta_shape
+                      << " ,normalized_shape: " << normalized_shape_opt.value().ToVector() << ".";
+  }
   const auto norm_dim = gamma_shape.size();
   const auto input_dim = x_shape.size();
   MS_CHECK_VALUE(input_dim >= norm_dim,
