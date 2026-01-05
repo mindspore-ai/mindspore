@@ -153,7 +153,7 @@ bool PyFuncKernelMod::Init(const std::vector<KernelTensor *> &inputs, const std:
 }
 
 bool PyFuncKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
-                             const std::vector<KernelTensor *> & /*workspace*/,
+                             const std::vector<KernelTensor *> & /* workspace */,
                              const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   if (Py_IsInitialized() == 0) {
     MS_LOG(ERROR) << "Python interpreter is not initialized.";
