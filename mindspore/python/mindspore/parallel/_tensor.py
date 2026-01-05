@@ -369,7 +369,7 @@ def _transform_tensor_by_layout(from_layout, to_layout, device_list, rank_id, en
 
 def _construct_from_to_tensor_layout(from_full_tensor_shape, from_dev_matrix,
                                      from_tensor_map, to_full_tensor_shape,
-                                     to_dev_matrix, to_tensor_map):
+                                     to_dev_matrix, to_tensor_map, param_name=''):
     """construct from_layout and to_layout to the same device num"""
     from_full_tensor_shape = list(from_full_tensor_shape)
     to_full_tensor_shape = list(to_full_tensor_shape)
@@ -380,8 +380,19 @@ def _construct_from_to_tensor_layout(from_full_tensor_shape, from_dev_matrix,
     from_dev_prod = np.prod(from_dev_matrix)
     to_dev_prod = np.prod(to_dev_matrix)
     if len(from_full_tensor_shape) != len(from_tensor_map) or len(to_full_tensor_shape) != len(to_tensor_map):
-        raise ValueError("The tensor map dimensions should be equal to tensor shape dimensions, "
-                         "please check strategy file.")
+        raise ValueError(
+            f"For param '{param_name}', the tensor map dimensions must match the tensor shape dimensions.\n"
+            f"Should be:\n"
+            f"  - len(tensor_map) == len(tensor_shape)\n"
+            f"But got:\n"
+            f"  from_full_tensor_shape = {from_full_tensor_shape}\n"
+            f"  from_dev_matrix        = {from_dev_matrix}\n"
+            f"  from_tensor_map        = {from_tensor_map}\n"
+            f"  to_full_tensor_shape   = {to_full_tensor_shape}\n"
+            f"  to_dev_matrix          = {to_dev_matrix}\n"
+            f"  to_tensor_map          = {to_tensor_map}\n"
+            f"Please check your strategy file."
+        )
     if from_dev_prod > to_dev_prod:
         if from_dev_prod % to_dev_prod != 0:
             raise ValueError("Cannot transform device_num from {} to {}".format(from_dev_prod, to_dev_prod))
@@ -944,7 +955,7 @@ def _get_pipeline_operator_map(from_layout, to_layout, self_rank):
             f"{from_layout[0]}, {from_layout[1]}, {from_layout[2]}, {from_layout[3]}"
             f" -> "
             f"{to_layout[0]}, {to_layout[1]}, {from_layout[2]}, {to_layout[3]}")
-        global COMM_TENSOR_CELL_CACHE
+
         if comm_tensor_cache_key not in COMM_TENSOR_CELL_CACHE:
             logger.debug(f"comm_tensor_cache_key is {comm_tensor_cache_key}, not match cache")
             broadcast_map = _infer_pp_op_map(from_layout, to_layout, self_rank)
@@ -1033,7 +1044,6 @@ def _get_resharding_operator_map(from_layout, to_layout, self_rank):
         f"{from_layout[0]}, {from_layout[1]}, {from_layout[2]}, {from_layout[3]}"
         f" -> "
         f"{to_layout[0]}, {to_layout[1]}, {from_layout[2]}, {to_layout[3]}")
-    global RESHARD_OP_MAP_CACHE
     if reshard_op_cache_key not in RESHARD_OP_MAP_CACHE:
         operator_map = _infer_reshard_op_map(from_layout, to_layout, self_rank)
         op_map_dict = {rank_id: operator_map for rank_id in operator_map}
