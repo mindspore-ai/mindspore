@@ -584,7 +584,7 @@ class TrainFaultTolerance(Callback):
 
         Args:
             run_context (RunContext): Context of the train running. Refer to
-                                      :class:`mindspore.train.RunContext` for detail.
+                :class:`mindspore.train.RunContext` for detail.
         """
         cb_params = run_context.original_args()
         self.cb_params = cb_params
@@ -613,7 +613,13 @@ class TrainFaultTolerance(Callback):
             run_context (RunContext): Context of the train running. Refer to
                                       :class:`mindspore.train.RunContext` for detail.
         """
-        if self._only_enable_tre() or self._only_enable_tsp() or self._only_enable_tre_and_tsp() or \
-                self._only_enable_ckpt_d2h_async():
+        enable_flags = (
+        self._only_enable_tre(),
+        self._only_enable_tsp(),
+        self._only_enable_tre_and_tsp(),
+        self._only_enable_ckpt_d2h_async()
+        )
+
+        if any(enable_flags):
             return
         _tft_handler.unregister_tft()

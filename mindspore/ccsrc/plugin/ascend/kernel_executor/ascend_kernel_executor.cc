@@ -1327,7 +1327,6 @@ bool AscendKernelExecutor::LaunchKernel(const CNodePtr &kernel, const std::vecto
     MS_EXCEPTION_IF_NULL(kernel_mod);
     MS_EXCEPTION_IF_NULL(stream);
     ret = kernel_mod->Launch(inputs, workspace, outputs, stream);
-
     if (!ret) {
       MS_LOG(ERROR) << "Launch kernel failed, kernel full name: " << kernel->fullname_with_scope();
     }
