@@ -79,6 +79,9 @@ bool IsValidOffloadNode(const UserInfo &user_info);
 UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes);
 std::optional<ParameterPtr> FindParameterByRefName(const KernelGraphPtr &kernel_graph, const std::string &name);
 std::optional<ParameterPtr> GetRemoteParameter(const KernelGraphPtr &kernel_graph, const mindspore::AnfNodePtr &node);
+
+void UpdateNodeInput(const KernelGraphPtr &kernel_graph, const CNodePtr &node, const size_t input_index,
+                     const AnfNodePtr &new_input_node);
 }  // namespace hyper_offload
 }  // namespace ascend
 }  // namespace device

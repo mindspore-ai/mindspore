@@ -242,6 +242,8 @@ class BACKEND_COMMON_EXPORT KernelGraph : public FuncGraph {
   void AddRefCorrespondPairs(const AnfWithOutIndex &final_pair, const AnfWithOutIndex &origin_pair);
   // Replace ref pair
   void ReplaceRefPair(const AnfWithOutIndex &old_pair, const AnfWithOutIndex &new_pair);
+  // Replace ref node input
+  void ReplaceRefMapInput(const AnfWithOutIndex &ref_node_pair, const AnfWithOutIndex &new_input_pair);
   // get map
   const std::map<AnfWithOutIndex, AnfWithOutIndex> &GetRefMap() const { return ref_out_in_map_; }
   // update ref map
