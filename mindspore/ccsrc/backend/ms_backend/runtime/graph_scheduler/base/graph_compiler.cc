@@ -318,8 +318,7 @@ void SetRefInfoForKernelGraph(const KernelGraphPtr &graph) {
     }
     auto kernel_info = dynamic_cast<device::KernelInfo *>(kernel->kernel_info());
     MS_EXCEPTION_IF_NULL(kernel_info);
-    static auto op_plugin_path = common::EnvHelper::GetInstance()->GetEnv("MS_OP_PLUGIN_PATH");
-    if (op_plugin_path != nullptr && op_def->is_graph_view_) {
+    if (op_def->is_graph_view_) {
       auto build_info = kernel_info->select_kernel_build_info();
       if (build_info != nullptr) {
         const auto output_size = build_info->GetOutputNum();
