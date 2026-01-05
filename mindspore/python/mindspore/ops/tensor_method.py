@@ -38,7 +38,7 @@ from mindspore import Tensor
 # 3 common import
 from mindspore.common import dtype as mstype
 # 4 common import
-from mindspore.common import COOTensor
+from mindspore.common import COOTensor, CSRTensor
 
 # 5 common import
 from mindspore.ops.function.nn_func import gelu
@@ -887,7 +887,7 @@ def tensor_mul(input, other):
     return mul(input, other)
 
 def deprecated_tensor_mul(input, other):
-    if isinstance(other, COOTensor):
+    if isinstance(other, (COOTensor, CSRTensor)):
         return other * input
     if isinstance(other, (tuple, list)):
         other = sequence_to_tensor(other, F.dtype(input))

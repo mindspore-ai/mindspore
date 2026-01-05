@@ -13,20 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_PROMOTE_CAST_FOR_MUL_H_
-#define MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_PROMOTE_CAST_FOR_MUL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_PROMOTE_CAST_FOR_BINARY_OPS_H_
+#define MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_PROMOTE_CAST_FOR_BINARY_OPS_H_
 
 #include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {
-class PromoteCastForMul : public PatternProcessPass {
+class PromoteCastForBinaryOp : public PatternProcessPass {
  public:
-  explicit PromoteCastForMul(bool multi_graph = true) : PatternProcessPass("promote_cast_for_mul", multi_graph) {}
-  ~PromoteCastForMul() override = default;
+  explicit PromoteCastForBinaryOp(const PrimitivePtr &prim, bool multi_graph = true)
+      : PatternProcessPass("promote_cast_for_" + prim->name(), multi_graph), prim_(prim) {}
+  ~PromoteCastForBinaryOp() override = default;
   const BaseRef DefinePattern() const override;
   const AnfNodePtr Process(const FuncGraphPtr &graph, const AnfNodePtr &node, const EquivPtr &) const override;
+
+ private:
+  PrimitivePtr prim_;
 };
 }  // namespace opt
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_PROMOTE_CAST_FOR_MUL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_GE_BACKEND_PASS_PROMOTE_CAST_FOR_BINARY_OPS_H_
