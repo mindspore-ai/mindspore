@@ -187,8 +187,8 @@ void OptimizeNopNode(KernelGraph *graph) {
     if (ref_node->kernel_info() != nullptr) {
       auto kernel_info = dynamic_cast<KernelInfo *>(ref_node->kernel_info());
       MS_EXCEPTION_IF_NULL(kernel_info);
-      kernel_info->AddRefMap(0, origin_pair.second);
-      MS_LOG(DEBUG) << "Add ref pair: [0, " << origin_pair.second << "] for node:" << ref_node->fullname_with_scope();
+      kernel_info->AddRefMap(0, 0);
+      MS_LOG(DEBUG) << "Add ref pair: [0, 0] for node:" << ref_node->fullname_with_scope();
     } else {
       MS_LOG(DEBUG) << "No kernel info for nopnode:" << ref_node->fullname_with_scope();
     }
