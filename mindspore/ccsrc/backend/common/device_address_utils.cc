@@ -143,7 +143,11 @@ bool IsRemoteParameterTensor(const TensorPtr &tensor) {
   }
   constexpr auto kParameterDeviceUserDataName = "parameter_device";
   const auto &user_data = tensor->user_data<tensor::TensorPyUserData>(kParameterDeviceUserDataName);
-  if (user_data == nullptr || !py::isinstance<py::str>(user_data->obj)) {
+  if (user_data == nullptr) {
+    return false;
+  }
+  py::gil_scoped_acquire acquire;
+  if (!py::isinstance<py::str>(user_data->obj)) {
     return false;
   }
   const auto &device_str = py::cast<std::string>(user_data->obj);
