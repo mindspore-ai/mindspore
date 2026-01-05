@@ -12,15 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test op random choice with mask."""
 from tests.mark_utils import arg_mark
 
 import platform
 import numpy as np
 import pytest
 
-import mindspore.context as context
+from mindspore import context
 import mindspore.common.dtype as mstype
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.common.api import _pynative_executor
@@ -28,7 +29,7 @@ from mindspore.common.api import _pynative_executor
 
 class RCWM_count_in(nn.Cell):
     def __init__(self):
-        super(RCWM_count_in, self).__init__()
+        super().__init__()
         self.RCWM_count_in = P.RandomChoiceWithMask(count=4, seed=1)
 
     def construct(self, x):
@@ -37,7 +38,7 @@ class RCWM_count_in(nn.Cell):
 
 class RCWM_count_out(nn.Cell):
     def __init__(self):
-        super(RCWM_count_out, self).__init__()
+        super().__init__()
         self.RCWM_count_out = P.RandomChoiceWithMask(count=10, seed=1)
 
     def construct(self, x):
@@ -46,7 +47,7 @@ class RCWM_count_out(nn.Cell):
 
 class RCWM_3D(nn.Cell):
     def __init__(self):
-        super(RCWM_3D, self).__init__()
+        super().__init__()
         self.RCWM_3D = P.RandomChoiceWithMask(count=10, seed=1)
 
     def construct(self, x):
@@ -55,7 +56,7 @@ class RCWM_3D(nn.Cell):
 
 class RCWM_1D(nn.Cell):
     def __init__(self):
-        super(RCWM_1D, self).__init__()
+        super().__init__()
         self.RCWM_1D = P.RandomChoiceWithMask(count=10, seed=9)
 
     def construct(self, x):
@@ -64,7 +65,7 @@ class RCWM_1D(nn.Cell):
 
 class RCWM_max_count(nn.Cell):
     def __init__(self):
-        super(RCWM_max_count, self).__init__()
+        super().__init__()
         self.rcwm_max_count = P.RandomChoiceWithMask(count=2051328285, seed=0, seed2=-1024)
 
     def construct(self, x):
@@ -136,7 +137,7 @@ def test_RCWM_max_count_graph():
     Expectation: RuntimeError.
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    input_tensor = Tensor(np.random.uniform(-10, 10, size=[240000, 4, 4])).astype(mstype.bool_)
+    input_tensor = Tensor(np.random.uniform(-10, 10, size=[24, 4, 4])).astype(mstype.bool_)
     with pytest.raises(RuntimeError):
         rcwm = RCWM_max_count()
         rcwm(input_tensor)
@@ -152,7 +153,7 @@ def test_RCWM_max_count_pynative():
     Expectation: RuntimeError.
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    input_tensor = Tensor(np.random.uniform(-10, 10, size=[240000, 4, 4])).astype(mstype.bool_)
+    input_tensor = Tensor(np.random.uniform(-10, 10, size=[24, 4, 4])).astype(mstype.bool_)
     with pytest.raises(RuntimeError):
         rcwm = RCWM_max_count()
         rcwm(input_tensor)
