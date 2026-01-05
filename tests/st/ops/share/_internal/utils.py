@@ -27,7 +27,7 @@ import mindspore as ms
 from mindspore.common.api import _pynative_executor
 from mindspore.common.dtype import _dtype_to_nptype
 from mindspore._c_expression import MSContext
-from typing import Optional, Tuple, Union, Dict, List
+from typing import Optional, Tuple, Union, Dict, List, Any
 
 class OpSampleInput:
     """Container of a single operation invocation sample.
@@ -417,6 +417,7 @@ def make_tensor(
         dtype: ms.dtype,
         low: Optional[float] = None,
         high: Optional[float] = None,
+        exclude_value: Optional[tuple[Any,...]] = None,
         *,
         device: Optional[str] = None,
         discontiguous: Optional[bool] = False,
@@ -424,10 +425,14 @@ def make_tensor(
         random_method: Optional[str] = None,
 ):
     """Create a MindSpore Tensor with random contents for testing.
-
-    Supports integer/float/complex/bfloat16, with multiple random methods.
-    """
-    def _generate_ndarray(shape, dtype, low, high, random_method):
+       Args:
+           exclude_value: exclude values from for random tensor creation
+       """
+    def _generate_ndarray(shape, dtype, low, high, random_method, exclude_value = None):
+        """Create a MindSpore Tensor with random contents for testing.
+            Args:
+              exclude_value: exclude values from for random tensor creation
+            """
         def _generate_ndarray_by_random_method(random_method, shape, dtype, low, high):
             if random_method == 'randn':
                 ndarray = np.clip(np.random.randn(*shape), low, high)
@@ -437,6 +442,7 @@ def make_tensor(
                 ndarray = np.random.uniform(low, high, size=shape)
             else:
                 raise ValueError(f"Invalid random method: {random_method}")
+
             if isinstance(ndarray, np.ndarray):
                 ndarray = ndarray.astype(dtype)
             return ndarray
@@ -463,7 +469,18 @@ def make_tensor(
         random_method = default_random_method if random_method is None else random_method
         low = default_low if low is None else low
         high = default_high if high is None else high
-        return _generate_ndarray_by_random_method(random_method, shape, np_dtype, low, high)
+        ndarray = _generate_ndarray_by_random_method(random_method, shape, np_dtype,
+                                                  low, high)
+        if exclude_value and dtype != ms.bool_ and 0 not in shape:
+            mask = np.isin(ms.Tensor(ndarray, dtype = dtype), exclude_value)
+            time = 100
+            while mask.any():
+                assert time > 0, "generate_ndarry_random loop count exceeds limits 100"
+                ndarray[mask] = _generate_ndarray_by_random_method(random_method, mask.sum()
+                                                                   , np_dtype, low, high)
+                mask = np.isin(ms.Tensor(ndarray, dtype=dtype), exclude_value)
+                time = time - 1
+        return ndarray
 
     if random_seed is not None:
         np.random.seed(random_seed)
@@ -473,7 +490,8 @@ def make_tensor(
         imag = _generate_ndarray(shape, dtype, low, high, random_method)
         result = ms.Tensor((real + 1j * imag), dtype=dtype)
     else:
-        result = ms.Tensor(_generate_ndarray(shape, dtype, low, high, random_method), dtype=dtype)
+        result = ms.Tensor(_generate_ndarray(shape, dtype, low, high, random_method,
+                                             exclude_value = exclude_value), dtype=dtype)
 
     if device is not None and device.lower() in ['ascend', 'cpu']:
         device_str = 'Ascend' if device.lower() == 'ascend' else 'CPU'

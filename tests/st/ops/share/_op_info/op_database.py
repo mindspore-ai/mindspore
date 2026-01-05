@@ -4613,6 +4613,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.nn.functional.hardswish,
         dtypes_ascend=(ms.float16, ms.float32),
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
+        exclude_value=(-3.0,),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -5066,14 +5067,19 @@ op_db: Dict[str, OpInfo] = {
         op=mint.floor_divide,
         ref=torch.floor_divide,
         is_differentiable=False,
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reference_inputs_binary_op_common_func, 'mint.floor_divide', skip=False, loss=1.1
+        ),
+        op_extra_reference_inputs_func=wrap_sample_inputs(
+            extra_reference_inputs_binary_op_common_func, 'mint.floor_divide', skip=False, loss=1.1
+        ),
         # torch donen't support bool
         # ms.float16: Precision assertion failed.
         # ms.int8, ms.int16, ms.int32, ms.int64, ms.uint8: Error message EH9999.
-        dtypes_ascend=(ms.float32, ms.float64,),
-        dtypes_ascend910b=(ms.float32, ms.float64,),
-        domain=((None, None), (1, None)),
-        disable_small_value_tensor_inputs=True,
-        disable_large_value_tensor_inputs=True,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d!=ms.bool_),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d!=ms.bool_ ),
+        domain=((None, None), (None, None)),
+        exclude_value=(None, (0, )),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -5094,14 +5100,6 @@ op_db: Dict[str, OpInfo] = {
         name='mint.xlogy',
         op=mint.xlogy,
         ref=torch.xlogy,
-        op_basic_reference_inputs_func = wrap_sample_inputs(
-            basic_reference_inputs_binary_op_common_func,
-            '',
-        ),
-        op_extra_reference_inputs_func = wrap_sample_inputs(
-            extra_reference_inputs_binary_op_common_func,
-            '',
-        ),
         dtypes_ascend=tuple((ms.int8, ms.int16, ms.int32, ms.int64, ms.float32, ms.bool_)),
         dtypes_ascend910b=tuple((ms.int8, ms.int16, ms.int32, ms.int64, ms.float32, ms.bfloat16, ms.bool_)),
         op_dynamic_inputs_func=None,
@@ -5464,6 +5462,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.float64)),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        ascend_backward_loss_override = {ms.float16:0.008},
         disable_small_value_tensor_inputs=True,
     ),
     'mint.nn.Tanh': UnaryOpInfo(
@@ -5984,7 +5983,7 @@ op_db: Dict[str, OpInfo] = {
             skip=True
         ),
         op_extra_reference_inputs_func=wrap_sample_inputs(
-            extra_reference_inputs_reduction_op_common_func, '', skip=True,
+            extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
         ),
         op_dynamic_inputs_func=None,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d!=ms.float32 and d!=ms.float16)),
