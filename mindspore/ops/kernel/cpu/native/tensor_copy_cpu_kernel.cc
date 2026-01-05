@@ -72,11 +72,16 @@ bool TensorCopyCpuKernelMod::Launch(const std::vector<kernel::KernelTensor *> &i
   MS_EXCEPTION_IF_CHECK_FAIL(copy_size == outputs[0]->size(),
                              "For " + kernel_name_ + ", the size of 'input' and the size of 'output' should be same.");
 
+  if (copy_size == 0) {
+    MS_LOG(INFO) << "For '" << kernel_name_ << "', the size of 'input' and the size of 'output' is 0, skip copy.";
+    return true;
+  }
+
   constexpr size_t kGrainSize = 32768;
   if (copy_size <= kGrainSize) {
     auto ret = memcpy_s(output, outputs[0]->size(), input, inputs[0]->size());
     if (ret != EOK) {
-      MS_LOG(ERROR) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret << "Copy input:" << input
+      MS_LOG(ERROR) << "For '" << kernel_name_ << "', memory copy failed. Error no: " << ret << ", Copy input:" << input
                     << " size=" << inputs[0]->size() << " ,To output:" << output << " size=" << outputs[0]->size();
       return false;
     }

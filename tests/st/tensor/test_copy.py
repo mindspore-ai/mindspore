@@ -127,6 +127,35 @@ def test_tensor_copy_limits(mode):
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b',
                       'platform_gpu',
+                      'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
+@pytest.mark.parametrize("mode", ['pynative', 'kbk', 'ge'])
+@pytest.mark.parametrize("shape", [(0,), (2, 0)])
+@pytest.mark.parametrize("dtype", [ms.int32, ms.int64, ms.uint32, ms.uint64])
+def test_tensor_copy_empty_tensor(mode, shape, dtype):
+    """
+    Feature: Tensor interface copy empty tensor.
+    Description: Test copy forward and backward.
+    Expectation: Expect correct result.
+    """
+    set_mode(mode)
+
+    src = ms.Tensor(np.random.randint(-10, 10, shape), dtype=dtype)
+    dst = copy_forward_func(src)
+    assert dst.shape == src.shape
+    assert dst.dtype == src.dtype
+    np.testing.assert_equal(dst.asnumpy(), src.asnumpy())
+
+    if dtype not in (ms.uint32, ms.uint64):
+        grad = copy_backward_func(src)
+        expect_grad = ms.Tensor(np.ones(shape), dtype=dtype)
+        assert grad.shape == expect_grad.shape
+        assert grad.dtype == expect_grad.dtype
+        np.testing.assert_equal(grad.asnumpy(), expect_grad.asnumpy())
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b',
+                      'platform_gpu',
                       'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
           card_mark='onecard', essential_mark='essential')
 @pytest.mark.parametrize("mode", ['pynative', 'kbk', 'ge'])

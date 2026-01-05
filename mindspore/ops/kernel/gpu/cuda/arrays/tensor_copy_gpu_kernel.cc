@@ -53,6 +53,10 @@ int TensorCopyGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs,
 bool TensorCopyGpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                     const std::vector<KernelTensor *> &workspace,
                                     const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
+  if (copy_size_ == 0) {
+    MS_LOG(INFO) << "For '" << kernel_name_ << "', the size of 'input' and the size of 'output' is 0, skip copy.";
+    return true;
+  }
   auto input = GetDeviceAddress<void>(inputs, 0);
   auto output = GetDeviceAddress<void>(outputs, 0);
 
