@@ -242,8 +242,8 @@ def test_csr_tensor_in_while_cpu():
     assert shape == out.shape
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_batch_csr_ops():
     """
     Feature: Test Batch CSR-related Ops.
@@ -306,8 +306,8 @@ def test_batch_csr_ops():
     assert np.allclose(graph_res_gather.asnumpy(), expect5)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_csr_ops():
     """
     Feature: Test CSR-related Ops.

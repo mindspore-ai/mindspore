@@ -157,6 +157,7 @@ deprecated_tensor_method_map = {
     # 69 minimum
 
     # 70 mul
+    "mul": "deprecated_tensor_mul",
 
     # 71 nan_to_num
 
