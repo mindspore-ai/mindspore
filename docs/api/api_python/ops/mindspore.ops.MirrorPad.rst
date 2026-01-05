@@ -27,6 +27,6 @@ mindspore.ops.MirrorPad
           更直观的理解请参见下面的样例。
 
     异常：
-        - **TypeError** - `input_x` 或 `padings` 不是Tensor。
+        - **TypeError** - `input_x` 或 `paddings` 不是Tensor。
         - **TypeError** - `mode` 不是str。
         - **ValueError** - `paddings.size` 不等于2 * len(`input_x`)。

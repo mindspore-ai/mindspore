@@ -4714,7 +4714,7 @@ class LowerBound(Primitive):
     Args:
         out_type (:class:`mindspore.dtype`, optional): An optional data type of
             ``mindspore.dtype.int32`` and ``mindspore.dtype.int64`` .
-            Default: ``mindspore.dtype.int32`` .
+            Default: ``mstype.int32`` .
 
     Inputs:
         - **sorted_x** (Tensor) - The input tensor whose dtype is real number and

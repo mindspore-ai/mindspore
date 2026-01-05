@@ -5,7 +5,7 @@ mindspore.ops.MatrixPower
 
     计算一个batch的方阵的n次幂。
     如果 :math:`n=0` ，则返回一个batch的单位矩阵。
-    如果n为负数，则为返回每个矩阵（如果可逆）逆矩阵的 :math:`abs(n)` 次幂。
+    如果n为负数，则返回每个矩阵（如果可逆）逆矩阵的 :math:`abs(n)` 次幂。
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

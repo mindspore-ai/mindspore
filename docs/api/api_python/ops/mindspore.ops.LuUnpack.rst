@@ -15,10 +15,8 @@ mindspore.ops.LuUnpack
         - **unpack_pivots** (bool，可选) - 是否将 `LU_pivots` 解压缩为置换矩阵P的标志。如果为 ``False`` ，则返回的P为 ``None`` 。默认值： ``True`` 。
 
     输入：
-        - **LU_data** (Tensor) - Tensor，打包的LU分解数据，shape为 :math:`(*, M, N)` ，其中 :math:`*` 为batch维度，其中 `*` 是batch\
-          维度，数据类型为int8、uint8、int16、int32、int64、float16、float32、float64。 `LU_data` 的维度必须等于或大于2。
-        - **LU_pivots** (Tensor) - Tensor，打包的LU分枢轴，shape为 :math:`(*, min(M, N))` ，其中 :math:`*` 为batch维度，其中 `*` 是batch\
-          维度，数据类型为int8、uint8、int16、int32或int64。
+        - **LU_data** (Tensor) - Tensor，打包的LU分解数据，shape为 :math:`(*, M, N)` ，其中 :math:`*` 为batch维度，数据类型为int8、uint8、int16、int32、int64、float16、float32、float64。 `LU_data` 的维度必须等于或大于2。
+        - **LU_pivots** (Tensor) - Tensor，打包的LU分解枢轴，shape为 :math:`(*, min(M, N))` ，其中 :math:`*` 为batch维度，数据类型为int8、uint8、int16、int32或int64。
 
     输出：
         - **pivots** (Tensor) - LU分解的置换矩阵，shape为 :math:`(*, M, M)` ，数据类型与 `LU_data` 相同。
