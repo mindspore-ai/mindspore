@@ -69,7 +69,7 @@ void InsertHyperOffloadNodes(const OffloadInfo &offload_info, const std::vector<
       MS_EXCEPTION_IF_NULL(change_node);
       int index = change_node_info.second;
       MS_EXCEPTION_IF_CHECK_FAIL(index >= 0, "fail to found index.");
-      change_node->set_input(index, to_device_node);
+      UpdateNodeInput(kernel_graph, change_node, index, to_device_node);
     }
     auto position = std::find(new_execution_order.begin(), new_execution_order.end(), change_nodes_infos[0].first);
     new_execution_order.insert(position, to_device_node);
@@ -88,7 +88,7 @@ void InsertHyperOffloadNodes(const OffloadInfo &offload_info, const std::vector<
     }
     MS_EXCEPTION_IF_CHECK_FAIL(index > 0, "Fail to find index");
     auto to_device_node = BuildToDeviceNode(kernel_graph, to_remote_node);
-    output->set_input(IntToSize(index), to_device_node);
+    UpdateNodeInput(kernel_graph, output, IntToSize(index), to_device_node);
     new_execution_order.emplace_back(to_device_node);
   }
   auto data_iter = std::find(new_execution_order.begin(), new_execution_order.end(), data_node_info.first);
@@ -298,7 +298,7 @@ void InsertHyperOffloadOpsForInputParameters(const KernelGraphPtr &kernel_graph,
       }
       auto to_device_node = BuildToDeviceNode(kernel_graph, data_node);
       to_device_node->set_abstract(real_input->abstract());
-      node->set_input(i, to_device_node);
+      UpdateNodeInput(kernel_graph, node, i, to_device_node);
       UpdateInlineInfo(kernel_graph, to_device_node, inline_info_iter);
       (void)execution_order.emplace_back(to_device_node);
       continue;
@@ -309,7 +309,7 @@ void InsertHyperOffloadOpsForInputParameters(const KernelGraphPtr &kernel_graph,
     }
     auto to_device_node = BuildToDeviceNode(kernel_graph, input);
     to_device_node->set_abstract(dyn_cast<abstract::AbstractRefTensor>(input->abstract())->CloneAsTensor());
-    node->set_input(i, to_device_node);
+    UpdateNodeInput(kernel_graph, node, i, to_device_node);
     UpdateInlineInfo(kernel_graph, to_device_node, inline_info_iter);
     (void)execution_order.emplace_back(to_device_node);
     auto to_remote_node = BuildInplaceToHostNode(kernel_graph, to_device_node, param_res.value(), node);

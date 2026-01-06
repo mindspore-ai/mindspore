@@ -823,6 +823,17 @@ void KernelGraph::ReplaceRefPair(const AnfWithOutIndex &old_pair, const AnfWithO
   }
 }
 
+void KernelGraph::ReplaceRefMapInput(const AnfWithOutIndex &ref_node_pair, const AnfWithOutIndex &new_input_pair) {
+  if (IsInRefOutputMap(ref_node_pair)) {
+    MS_LOG(DEBUG) << "Node: " << ref_node_pair.first->fullname_with_scope() << ", index:" << ref_node_pair.second
+                  << ". Old input: " << ref_out_in_map_[ref_node_pair].first->fullname_with_scope()
+                  << ", index:" << ref_out_in_map_[ref_node_pair].second
+                  << ". New input: " << new_input_pair.first->fullname_with_scope()
+                  << ", index:" << new_input_pair.second;
+    ref_out_in_map_[ref_node_pair] = new_input_pair;
+  }
+}
+
 void KernelGraph::SetOutputNodeToTensor(const KernelMapTensor &node_to_tensor) {
   output_node_to_tensor_ = node_to_tensor;
   for (const auto &item : output_node_to_tensor_) {

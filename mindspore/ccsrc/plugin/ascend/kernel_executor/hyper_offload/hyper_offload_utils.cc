@@ -169,6 +169,12 @@ std::optional<ParameterPtr> GetRemoteParameter(const KernelGraphPtr &kernel_grap
   }
   return parameter;
 }
+
+void UpdateNodeInput(const KernelGraphPtr &kernel_graph, const CNodePtr &node, const size_t input_index,
+                     const AnfNodePtr &new_input_node) {
+  node->set_input(input_index, new_input_node);
+  kernel_graph->ReplaceRefMapInput({node, 0}, {new_input_node, 0});
+}
 }  // namespace hyper_offload
 }  // namespace ascend
 }  // namespace device
