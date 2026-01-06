@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test view"""
 import numpy as np
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import ops
 from tests.mark_utils import arg_mark

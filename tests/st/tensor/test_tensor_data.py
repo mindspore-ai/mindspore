@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test Tensor data"""
 import numpy as np
+import mindspore as ms
+from mindspore import ops, Tensor
 from tests.mark_utils import arg_mark
-from mindspore import Tensor
 
 
 def test_tensor_data_getter_shared_data():
@@ -116,6 +118,21 @@ def test_tensor_data_setter_tensor_version():
     x.data = y
     assert x._version == 1 # pylint:disable=protected-access
 
+
+def test_tensor_data_setter_with_assign():
+    """
+    Feature: test tensor data setter
+    Description: test set a tensor to a tensor's data
+    Expectation: success
+    """
+    t = ms.Tensor(np.ones((2,2)))
+    param = ms.Parameter(np.ones((2,2)))
+    assert np.allclose(param.asnumpy(), np.ones((2,2)))
+    t.data = ops.normal((2,2), 0, 1)
+    param.assign_value(t)
+    assert np.allclose(param.asnumpy(), t.asnumpy())
+
+
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
@@ -136,3 +153,4 @@ def test_tensor_data():
     test_tensor_data_setter_inplace()
     test_tensor_data_setter_grad_info()
     test_tensor_data_setter_tensor_version()
+    test_tensor_data_setter_with_assign()
