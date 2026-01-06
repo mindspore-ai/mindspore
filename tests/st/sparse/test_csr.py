@@ -142,7 +142,7 @@ def test_csr_tensor_in_while():
 
     class CSRTensorWithControlWhile(nn.Cell):
         def __init__(self, shape):
-            super(CSRTensorWithControlWhile, self).__init__()
+            super().__init__()
             self.op1 = CSRTensorValuesDouble()
             self.op2 = CSRTensorValuesAdd2()
             self.shape = shape
@@ -214,7 +214,7 @@ def test_csr_tensor_in_while_cpu():
 
     class CSRTensorWithControlWhile(nn.Cell):
         def __init__(self, shape):
-            super(CSRTensorWithControlWhile, self).__init__()
+            super().__init__()
             self.op1 = CSRTensorValuesDouble()
             self.op2 = CSRTensorValuesAdd2()
             self.shape = shape
@@ -242,8 +242,8 @@ def test_csr_tensor_in_while_cpu():
     assert shape == out.shape
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_batch_csr_ops():
     """
     Feature: Test Batch CSR-related Ops.
@@ -306,8 +306,8 @@ def test_batch_csr_ops():
     assert np.allclose(graph_res_gather.asnumpy(), expect5)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential')
 def test_csr_ops():
     """
     Feature: Test CSR-related Ops.
@@ -380,7 +380,7 @@ def test_csrtensor_export_and_import_mindir():
 
     class TestCSRTensor(nn.Cell):
         def __init__(self, shape):
-            super(TestCSRTensor, self).__init__()
+            super().__init__()
             self.shape = shape
 
         def construct(self, indptr, indices, values):
@@ -417,7 +417,7 @@ def test_csrops_export_and_import_mindir():
 
     class TestCSRNet(nn.Cell):
         def __init__(self, shape):
-            super(TestCSRNet, self).__init__()
+            super().__init__()
             self.shape = shape
 
         def construct(self, indptr, indices, values, dense_tensor, dense_vector):

@@ -42,6 +42,8 @@ static inline bool IsFloatingType(TypeId t) {
   return t == kNumberTypeFloat16 || t == kNumberTypeFloat32 || t == kNumberTypeFloat64 || t == kNumberTypeBFloat16;
 }
 
+static inline bool IsComplexType(TypeId t) { return t == kNumberTypeComplex64 || t == kNumberTypeComplex128; }
+
 static inline int TypeToLevel(TypeId t) {
   if (IsBoolType(t)) {
     return kTypeLevelBool;
@@ -49,9 +51,10 @@ static inline int TypeToLevel(TypeId t) {
     return kTypeLevelInt;
   } else if (IsFloatingType(t)) {
     return kTypeLevelFloat;
-  } else {
+  } else if (IsComplexType(t)) {
     return kTypeLevelComplex;
   }
+  MS_LOG(EXCEPTION) << "The input type is not supported: " << TypeIdLabel(t);
 }
 }  // namespace mul_internal
 
