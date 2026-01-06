@@ -93,7 +93,7 @@ class OpsFactory():
                 sample input builder, compare method, etc.
         """
         self.op = op_info.op
-        self.op_func_without_kwargs = op_info.op_func_without_kwargs
+        self.customize_op_func = op_info.customize_op_func
         self.ref = op_info.ref
         self.op_name = op_info.name
         self.op_basic_reference_inputs_func = op_info.op_basic_reference_inputs_func
@@ -101,6 +101,7 @@ class OpsFactory():
         self.op_dynamic_inputs_func = op_info.op_dynamic_inputs_func
         self.op_error_inputs_func = op_info.op_error_inputs_func
         self.grad_position = op_info.grad_position
+        self.flatten_inputs_for_backward = op_info.flatten_inputs_for_backward
         self._sample_inputs = None
         self._dynamic_inputs = None
 
@@ -512,10 +513,9 @@ class OpsFactory():
             if self._inplace_op:
                 sample_input = sample_input.copy()
             # No-dout args for indexing; with-dout args for actual grad call
-            args_no_dout = sample_input.convert_to_args().op_args
+            args_no_dout = sample_input.convert_to_args(flatten_op_input=self.flatten_inputs_for_backward).op_args
             # Use convert_to_args to append dout as a single positional argument (supports multi-output sens)
             #args_with_dout = sample_input.convert_to_args(append_dout=self._douts[idx]).op_args
-
             # get grad_position (must be int or tuple) and instantiate grad_func
             tensor_indices = tuple(i for i, v in enumerate(args_no_dout) if _ms_tensor_supports_grad(v))
             if not tensor_indices:
@@ -531,7 +531,7 @@ class OpsFactory():
                     grads.append(tuple())
                     warnings.warn("The input on the grad position you specified are all undifferentiable.")
                     continue
-            grad_func = grad_func or ms.grad(self.op_func_without_kwargs, grad_position=selected_grad_position)
+            grad_func = grad_func or ms.grad(self.customize_op_func, grad_position=selected_grad_position)
             # Use "ms_backend" to keep forward/backward consistent in kbk mode.
             if ms.context.get_context('mode') == ms.GRAPH_MODE:
                 grad_func = ms.jit(grad_func, backend="ms_backend")
@@ -565,23 +565,51 @@ class OpsFactory():
         def _torch_dtype_supports_grad(t: torch.Tensor) -> bool:
             return torch.is_floating_point(t) or torch.is_complex(t)
 
+        def _flatten_tensors(obj):
+            """Flatten grad-capable torch.Tensor leaves in a container, preserving order."""
+            if isinstance(obj, torch.Tensor):
+                return [obj] if _torch_dtype_supports_grad(obj) else []
+            elif isinstance(obj, (tuple, list)):
+                return [t for v in obj for t in _flatten_tensors(v)]
+            else:
+                return []
+
         for sample_input in self._sample_inputs:
             if self._inplace_op:
                 sample_input = sample_input.copy()
             sample_input = sample_input.astorch(convert_half_to_float=self._convert_half_to_float)
             op_input, op_args, op_kwargs = sample_input.op_input, sample_input.op_args, sample_input.op_kwargs
-
+            # handle op_input
             tensor_inputs = []
             if isinstance(op_input, torch.Tensor) and _torch_dtype_supports_grad(op_input):
                 if self.grad_position is None or 0 in self.grad_position:
                     op_input.requires_grad = True
                 tensor_inputs.append(('input', op_input))
+            elif isinstance(op_input, (tuple, list)):
+                if not self.flatten_inputs_for_backward:
+                    warnings.warn(
+                        "op_input is a sequence, but torch does not support backward for "
+                        "sequence inputs; please consider setting "
+                        "flatten_inputs_for_backward to True"
+                    )
+                    continue
+                # Some ops (e.g. cat) take a sequence of tensors as the first argument.
+                for t in _flatten_tensors(op_input):
+                    if self.grad_position is None or 0 in self.grad_position:
+                        t.requires_grad = True
+                    tensor_inputs.append(('input', t))
+            # handle op_args
             arg_tensors = []
             for i, arg in enumerate(op_args):
                 if isinstance(arg, torch.Tensor) and _torch_dtype_supports_grad(arg):
                     if self.grad_position is None or i + 1 in self.grad_position:
                         arg.requires_grad = True
                     arg_tensors.append(arg)
+                elif isinstance(arg, (tuple, list)):
+                    for t in _flatten_tensors(arg):
+                        if self.grad_position is None or i + 1 in self.grad_position:
+                            t.requires_grad = True
+                        arg_tensors.append(t)
             tensor_inputs.extend(('arg', t) for t in arg_tensors)
 
             outi = torch_fn(op_input, *op_args, **op_kwargs)
@@ -642,11 +670,11 @@ class OpsFactory():
         """
 
         compile_inputs = self._dynamic_inputs.op_compile_input.convert_to_args().op_args
-        _code = self.op_func_without_kwargs.__code__
+        _code = self.customize_op_func.__code__
         arg_names = _code.co_varnames[:_code.co_argcount]
         dyn_kwargs = {name: val for name, val in zip(arg_names, compile_inputs) if is_op_input_dynamic(val)}
 
-        dyn_op_func = ms.enable_dynamic(**dyn_kwargs)(ms.jit(self.op_func_without_kwargs, backend="ms_backend"))
+        dyn_op_func = ms.enable_dynamic(**dyn_kwargs)(ms.jit(self.customize_op_func, backend="ms_backend"))
         out = []
         for running_input in self._dynamic_inputs.op_running_inputs:
             if self._inplace_op:
@@ -705,7 +733,9 @@ class OpsFactory():
             return isinstance(t, ms.Tensor) and (t.dtype.is_floating_point or t.dtype.is_complex)
 
         grads = []
-        compile_inputs = self._dynamic_inputs.op_compile_input.convert_to_args().op_args
+        compile_inputs = self._dynamic_inputs.op_compile_input.convert_to_args(
+            flatten_op_input=self.flatten_inputs_for_backward
+        ).op_args
         tensor_indices = tuple(i for i, v in enumerate(compile_inputs) if _ms_tensor_supports_grad(v))
         if not tensor_indices:
             grads.append(tuple())
@@ -721,14 +751,14 @@ class OpsFactory():
                 warnings.warn("The input on the grad position you specified are all undifferentiable.")
                 return grads
 
-        grad_net = self._op_grad_cell(self.op_func_without_kwargs, grad_position=selected_grad_position)
+        grad_net = self._op_grad_cell(self.customize_op_func, grad_position=selected_grad_position)
         # dynamic inputs for jit must be all keyword arguments, so use set_inputs to set the dynamic inputs.
         grad_net.set_inputs(*compile_inputs)
 
         for running_input in self._dynamic_inputs.op_running_inputs:
             if self._inplace_op:
                 running_input = running_input.copy()
-            args_no_dout = running_input.convert_to_args().op_args
+            args_no_dout = running_input.convert_to_args(flatten_op_input=self.flatten_inputs_for_backward).op_args
 
             # After convert_to_args, op_input, op_args and op_kwargs are all in op_args now.
             grad_outi = grad_net(*args_no_dout)
@@ -759,6 +789,14 @@ class OpsFactory():
         def _torch_dtype_supports_grad(t: torch.Tensor) -> bool:
             return torch.is_floating_point(t) or torch.is_complex(t)
 
+        def _flatten_tensors(obj):
+            """Flatten grad-capable torch.Tensor leaves in a container, preserving order."""
+            if isinstance(obj, torch.Tensor):
+                return [obj] if _torch_dtype_supports_grad(obj) else []
+            if isinstance(obj, (tuple, list)):
+                return [t for v in obj for t in _flatten_tensors(v)]
+            return []
+
         for running_input in self._dynamic_inputs.op_running_inputs:
             if self._inplace_op:
                 running_input = running_input.copy()
@@ -770,12 +808,23 @@ class OpsFactory():
                 if self.grad_position is None or 0 in self.grad_position:
                     op_input.requires_grad = True
                 tensor_inputs.append(('input', op_input))
+            elif isinstance(op_input, (tuple, list)):
+                # Some ops (e.g. cat) take a sequence of tensors as the first argument.
+                for t in _flatten_tensors(op_input):
+                    if self.grad_position is None or 0 in self.grad_position:
+                        t.requires_grad = True
+                    tensor_inputs.append(('input', t))
             arg_tensors = []
             for i, arg in enumerate(op_args):
                 if isinstance(arg, torch.Tensor) and _torch_dtype_supports_grad(arg):
                     if self.grad_position is None or i + 1 in self.grad_position:
                         arg.requires_grad = True
                     arg_tensors.append(arg)
+                elif isinstance(arg, (tuple, list)):
+                    for t in _flatten_tensors(arg):
+                        if self.grad_position is None or i + 1 in self.grad_position:
+                            t.requires_grad = True
+                        arg_tensors.append(t)
             tensor_inputs.extend(('arg', t) for t in arg_tensors)
 
             outi = torch_fn(op_input, *op_args, **op_kwargs)
@@ -819,6 +868,11 @@ class OpsFactory():
         else:
             ms_out = self.forward_mindspore_impl()
             pt_out = self.forward_pytorch_impl()
+
+        # Some ops are inherently non-deterministic (e.g., random sampling). For those ops, we still
+        # execute forward to catch runtime errors, but skip output comparison.
+        if not grad_cmp and self.op_info.skip_forward_comparison:
+            return
 
         for sample_input, ms_outi, pt_outi in zip(self._sample_inputs, ms_out, pt_out):
             sample_loss = getattr(sample_input, "loss", None)
@@ -869,6 +923,10 @@ class OpsFactory():
         else:
             ms_out = self.forward_mindspore_dynamic_shape_impl()
             pt_out = self.forward_pytorch_dynamic_shape_impl()
+
+        # Still execute forward, but skip output comparison for non-deterministic ops.
+        if not grad_cmp and self.op_info.skip_forward_comparison:
+            return
 
         for running_input, ms_outi, pt_outi in zip(self._dynamic_inputs.op_running_inputs, ms_out, pt_out):
             sample_loss = getattr(running_input, "loss", None)
@@ -1014,6 +1072,9 @@ class OpsFactory():
         else:
             raise ValueError(f"Invalid benchmark: {benchmark}, expected: 'torch', 'numpy'.")
 
+        if self.op_info.skip_forward_comparison:
+            return
+
         for ms_outi, pt_outi in zip(ms_out, pt_out):
             if isinstance(ms_outi, (tuple, list)) and isinstance(pt_outi, (tuple, list)):
                 # The output of the op maybe a tuple or list for some multi-output ops.
@@ -1077,6 +1138,10 @@ class OpsFactory():
             pt_outs = self.forward_pytorch_dynamic_shape_impl()
         else:
             raise ValueError(f"Invalid benchmark: {benchmark}, expected: 'torch'.")
+
+        if self.op_info.skip_forward_comparison:
+            return
+
         for ms_outi, pt_outi in zip(ms_outs, pt_outs):
             if isinstance(ms_outi, (tuple, list)) and isinstance(pt_outi, (tuple, list)):
                 # The output of the op with dynamic shape maybe a tuple or list for some multi-output ops.

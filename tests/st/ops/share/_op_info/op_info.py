@@ -46,7 +46,7 @@ class OpInfo:
     Attributes:
         name: Short op alias used in logs and test names.
         op: MindSpore callable implementation.
-        op_func_without_kwargs: MindSpore callable used for gradient/dynamic nets;
+        customize_op_func: MindSpore callable used for gradient/dynamic nets;
             falls back to ``op`` if not provided (e.g., when kwargs need special handling).
         ref: Reference implementation (e.g., PyTorch/NumPy callable).
 
@@ -66,6 +66,9 @@ class OpInfo:
             compute gradients for all input tensors.
         domain: The [low, high) domain of the operator.
         is_differentiable: Whether gradients are expected/computed for the op.
+        skip_forward_comparison: Whether to skip forward comparison with the reference implementation.
+            This is useful for inherently non-deterministic ops (e.g., random sampling). When enabled,
+            the forward will still be executed (to catch runtime errors), but outputs will not be compared.
         is_inplace_op: Whether the op mutates its input (in-place semantics).
         convert_extra_uint: Whether to convert extra uint dtypes for references
             that do not support them (e.g., PyTorch).
@@ -79,11 +82,15 @@ class OpInfo:
             (rtol/atol) based on dtype.
         default_loss_override: A dictionary of overridden loss for specific dtype. The key is the dtype,
             the value is the loss. Only works for compare_method 'default_golden'.
+        flatten_inputs_for_backward: Whether to flatten (expand) list/tuple/dict inputs into
+            positional arguments for backward/grad execution. This is useful for ops whose
+            forward takes a sequence of tensors as a single argument, while the customized
+            backward wrapper expects flattened positional tensor arguments (e.g. mint.stack/cat).
     """
     # name of primitive, defined in xxx_op.yaml file.
     name: str
     op: Optional[Callable] = None
-    op_func_without_kwargs: Optional[Callable] = None
+    customize_op_func: Optional[Callable] = None
     ref: Optional[Callable] = None
 
     # dtypes supported by each backend
@@ -106,6 +113,8 @@ class OpInfo:
     grad_position: Optional[tuple] = None
     domain: Optional[tuple] = None
     is_differentiable: Optional[bool] = True
+    # skip forward comparison against reference
+    skip_forward_comparison: Optional[bool] = False
     is_inplace_op: Optional[bool] = False
     convert_extra_uint: Optional[bool] = True
     convert_half_to_float: Optional[bool] = True
@@ -121,14 +130,15 @@ class OpInfo:
     cpu_backward_loss_override: Optional[dict] = None
     gpu_forward_loss_override: Optional[dict] = None
     gpu_backward_loss_override: Optional[dict] = None
+    flatten_inputs_for_backward: Optional[bool] = False
 
     def __post_init__(self):
         if not self.dtypes_intersection:
             self.dtypes_intersection = tuple(
                 set(self.dtypes_ascend) & set(self.dtypes_ascend910b) & set(self.dtypes_cpu) & set(self.dtypes_gpu)
             )
-        if self.op_func_without_kwargs is None:
-            self.op_func_without_kwargs = self.op
+        if self.customize_op_func is None:
+            self.customize_op_func = self.op
 
 # basic op_basic_reference_inputs_func for ops
 def basic_reference_inputs_binary_op_common_func(

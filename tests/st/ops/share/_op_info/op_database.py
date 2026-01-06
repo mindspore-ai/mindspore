@@ -385,7 +385,7 @@ def basic_sample_inputs_mint_arange(
         )
 
 
-# NOTE: op_func_without_kwargs, used by gradient comparison only when there are kwargs in op!
+# NOTE: customize_op_func, used by gradient comparison only when there are kwargs in op!
 def add_ext_func_grad_without_kwargs(x, y, alpha=1):
     return mint.add(x, y, alpha=alpha)
 
@@ -1808,13 +1808,6 @@ def empty_like_ms(op_input):
 def empty_like_torch(op_input):
     return torch.empty_like(op_input).shape
 
-# wrap method for normal
-def normal_ms(op_input, *args, **kwargs):
-    return mint.normal(op_input, *args, **kwargs).shape
-
-def normal_torch(op_input, *args, **kwargs):
-    return torch.normal(op_input, *args, **kwargs).shape
-
 # wrap nn method for batchnorm1d
 def nn_batchnorm1d_ms(op_input):
     op = mint.nn.BatchNorm1d(
@@ -2440,6 +2433,27 @@ def extra_sample_inputs_mint_stack(op_info: OpInfo, dtype=None, device=None, **k
             op_kwargs={},
             sample_name=op_info.name,
         )
+
+
+def mint_stack_func_with_flatten_inputs(*args):
+    """A kwargs-free wrapper for mint.stack used by ms.grad in tests.
+
+    Note:
+        OpSampleInput.convert_to_args() expands op_input lists/tuples into multiple
+        positional arguments. For mint.stack, the first argument should be a single
+        sequence of tensors, so this wrapper repacks positional tensor args into
+        a list and treats an optional trailing int as dim.
+    """
+    if not args:
+        raise ValueError("mint_stack_func_with_flatten_inputs expects at least one argument.")
+    dim = 0
+    tensors = args
+    # In our tests, dim is passed as a Python int when present.
+    if isinstance(args[-1], int):
+        dim = args[-1]
+        tensors = args[:-1]
+    return mint.stack(list(tensors), dim=dim)
+
 
 def extra_sample_inputs_mint_gather(op_info: OpInfo, dtype=None, device=None, **kwargs):
     '''
@@ -4039,6 +4053,26 @@ def basic_sample_inputs_mint_cat(op_info: OpInfo, dtype=None, device=None, **kwa
         )
 
 
+def mint_cat_func_with_flatten_inputs(*args):
+    """A kwargs-free wrapper for mint.cat used by ms.grad in tests.
+
+    Note:
+        OpSampleInput.convert_to_args() expands op_input tuples/lists into multiple
+        positional arguments. For mint.cat, the first argument should be a single
+        sequence of tensors, so this wrapper repacks positional tensor args into
+        a tuple and treats an optional trailing int as dim.
+    """
+    if not args:
+        raise ValueError("mint_cat_func_with_flatten_inputs expects at least one argument.")
+    dim = 0
+    tensors = args
+    # In our tests, dim is passed as a Python int when present.
+    if isinstance(args[-1], int):
+        dim = args[-1]
+        tensors = args[:-1]
+    return mint.cat(tuple(tensors), dim=dim)
+
+
 def extra_sample_inputs_mint_cat(op_info: OpInfo, dtype=None, device=None, **kwargs):
     """
     Generate extra sample inputs for mint.cat op.
@@ -4400,7 +4434,7 @@ op_db: Dict[str, OpInfo] = {
     'mint.add': BinaryOpInfo(
         name='mint.add',
         op=mint.add,
-        op_func_without_kwargs=add_ext_func_grad_without_kwargs,
+        customize_op_func=add_ext_func_grad_without_kwargs,
         ref=torch.add,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=dtypes_as_torch,
@@ -4766,7 +4800,7 @@ op_db: Dict[str, OpInfo] = {
     'mint.sub': BinaryOpInfo(
         name='mint.sub',
         op=mint.sub,
-        op_func_without_kwargs=sub_ext_func_grad_without_kwargs,
+        customize_op_func=sub_ext_func_grad_without_kwargs,
         ref=torch.sub,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16 and d != ms.bool_),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.bool_),
@@ -4932,7 +4966,7 @@ op_db: Dict[str, OpInfo] = {
     'mint.div': BinaryOpInfo(
         name='mint.div',
         op=mint.div,
-        op_func_without_kwargs=div_func_grad,
+        customize_op_func=div_func_grad,
         ref=torch.div,
         # Skip FP16 fwd/bwd on Ascend 910A/910B due to out-of-tolerance numerics vs PyTorch-CPU.
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float16),
@@ -4966,7 +5000,7 @@ op_db: Dict[str, OpInfo] = {
     'mint.repeat_interleave': OpInfo(
         name='mint.repeat_interleave',
         op=mint.repeat_interleave,
-        op_func_without_kwargs=repeat_interleave_func_grad,
+        customize_op_func=repeat_interleave_func_grad,
         ref=torch.repeat_interleave,
         dtypes_ascend=tuple(),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float64),
@@ -4992,7 +5026,7 @@ op_db: Dict[str, OpInfo] = {
     'Tensor.repeat_interleave': OpInfo(
         name='Tensor.repeat_interleave',
         op=tensor_repeat_interleave_ms,
-        op_func_without_kwargs=tensor_repeat_interleave_func_grad,
+        customize_op_func=tensor_repeat_interleave_func_grad,
         ref=tensor_repeat_interleave_torch,
         dtypes_ascend=tuple(),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float64),
@@ -6518,6 +6552,7 @@ op_db: Dict[str, OpInfo] = {
     'mint.cat': OpInfo(
         name='mint.cat',
         op=mint.cat,
+        customize_op_func=mint_cat_func_with_flatten_inputs,
         ref=torch.cat,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
@@ -6526,7 +6561,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_cat,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_cat,
         op_dynamic_inputs_func=None,
-        is_differentiable=False,
+        flatten_inputs_for_backward=True,
     ),
     'mint.nn.functional.one_hot': OpInfo(
         name='mint.nn.functional.one_hot',
@@ -6578,8 +6613,8 @@ op_db: Dict[str, OpInfo] = {
     ),
     'mint.normal': OpInfo(
         name='mint.normal',
-        op=normal_ms,
-        ref=normal_torch,
+        op=mint.normal,
+        ref=torch.normal,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d == ms.float32),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d == ms.float32),
         dtypes_cpu=(),
@@ -6587,7 +6622,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_normal,
         op_extra_reference_inputs_func=None,
         op_dynamic_inputs_func=None,
-        is_differentiable=False,
+        skip_forward_comparison=True,
     ),
     'mint.nn.functional.adaptive_avg_pool3d': OpInfo(
         name='mint.nn.functional.adaptive_avg_pool3d',
@@ -6775,6 +6810,7 @@ op_db: Dict[str, OpInfo] = {
     'mint.stack': OpInfo(
         name='mint.stack',
         op=mint.stack,
+        customize_op_func=mint_stack_func_with_flatten_inputs,
         ref=torch.stack,
         dtypes_ascend=(ms.float32, ms.float16),
         dtypes_ascend910b=(ms.float32, ms.float16, ms.bfloat16),
@@ -6783,8 +6819,7 @@ op_db: Dict[str, OpInfo] = {
         op_basic_reference_inputs_func=basic_sample_inputs_mint_stack,
         op_extra_reference_inputs_func=extra_sample_inputs_mint_stack,
         op_dynamic_inputs_func=None,
-        #TODO: the test framework dose not support the backward of tuple input for now
-        is_differentiable=False,
+        flatten_inputs_for_backward=True,
     ),
     'mint.nn.functional.dropout': OpInfo(
         name='mint.nn.functional.dropout',

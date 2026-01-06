@@ -104,7 +104,7 @@ class OpSampleInput:
             loss=self.loss,
         )
 
-    def convert_to_args(self, append_dout=None):
+    def convert_to_args(self, flatten_op_input=False, append_dout=None):
         """Flatten input/args/kwargs (and optional dout) into a single args tuple.
 
         Args:
@@ -125,7 +125,7 @@ class OpSampleInput:
                 return [x]
 
         op_args = []
-        op_args.append(self.op_input)
+        op_args.extend([self.op_input] if not flatten_op_input else _to_args_list(self.op_input))
         op_args.extend(_to_args_list(self.op_args))
         op_args.extend(_to_args_list(self.op_kwargs))
         if append_dout is not None:
@@ -246,10 +246,17 @@ class OpSampleInput:
             if isinstance(x, (ms.Tensor, torch.Tensor, np.ndarray)):
                 sum_info = f"{type(x).__name__}(shape={x.shape}, dtype={x.dtype}"
                 if values:
-                    x_mean = tensor_to_numpy(x).mean()
-                    x_max = tensor_to_numpy(x).max()
-                    x_min = tensor_to_numpy(x).min()
-                    sum_info += f", mean={x_mean}, max={x_max}, min={x_min}"
+                    np_x = tensor_to_numpy(x)
+                    # NOTE: For empty tensors, numpy reduction like max/min raises:
+                    # "zero-size array to reduction operation maximum which has no identity".
+                    # Keep summary robust so debugging/logging never masks the real failure.
+                    if np_x.size == 0:
+                        sum_info += ", empty=True"
+                    else:
+                        x_mean = np_x.mean()
+                        x_max = np_x.max()
+                        x_min = np_x.min()
+                        sum_info += f", mean={x_mean}, max={x_max}, min={x_min}"
                 return sum_info + ")"
             elif isinstance(x, list):
                 return "list[" + ", ".join(map(_tensor_summary, x)) + "]"
