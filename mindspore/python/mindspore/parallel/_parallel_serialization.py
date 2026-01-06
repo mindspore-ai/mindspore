@@ -156,7 +156,7 @@ def _build_protobuf_strategy(strategy_filename):
 
 def _build_json_strategy(strategy_filename):
     """build strategy from json file"""
-    with open(strategy_filename, 'r') as f:
+    with open(strategy_filename, 'r', encoding="utf-8") as f:
         json_content = json.load(f)
     if "parallel_layout_item" not in json_content:
         return {}
@@ -226,7 +226,7 @@ def _merge_json_strategy(src_strategy_files, dst_strategy_file):
     dst_parallel_strategy_map = {"current_stage": 1, "parallel_strategy_item": {}, "parallel_layout_item": {}}
     merged_stage = []
     for src_strategy_file in src_strategy_files:
-        with open(src_strategy_file, 'r') as f:
+        with open(src_strategy_file, 'r', encoding="utf-8") as f:
             json_content = json.load(f)
         layout_items = json_content.get("parallel_layout_item")
         strategy_items = json_content.get("parallel_strategy_item")
@@ -242,7 +242,7 @@ def _merge_json_strategy(src_strategy_files, dst_strategy_file):
             dst_parallel_strategy_map.get("parallel_layout_item").update(new_layout_item)
         dst_parallel_strategy_map.get("parallel_strategy_item").update(strategy_items)
         merged_stage.append(pipeline_stage)
-    with open(dst_strategy_file, "w") as f:
+    with open(dst_strategy_file, "w", encoding="utf-8") as f:
         json.dump(dst_parallel_strategy_map, f)
 
 
@@ -289,13 +289,12 @@ def _extract_src_dst_layout_map_by_src(src_strategy_file=None, dst_strategy_file
     dst_layout_map = _extract_layout_map(dst_strategy_file)
     if dst_layout_map is None:
         return src_layout_map, dst_layout_map
-    for param_name in list(dst_layout_map.keys()):
-        if param_name in src_layout_map.keys():
-            continue
-        dst_layout_map.pop(param_name)
+    keys_to_remove = set(dst_layout_map) - set(src_layout_map)
+    for key in keys_to_remove:
+        dst_layout_map.pop(key)
     stage_id = 0
     if src_strategy_file[-5:] == ".json":
-        with open(src_strategy_file, 'r') as f:
+        with open(src_strategy_file, 'r', encoding="utf-8") as f:
             json_content = json.load(f)
         strategy_items = json_content.get("parallel_strategy_item")
         if not strategy_items:
@@ -340,7 +339,7 @@ def _restore_group_info_list(group_info_file_name):
     if not restore_list:
         raise ValueError("For 'restore_group_info_list', the group information file has no restore rank list.")
 
-    return [rank for rank in restore_list.dim]
+    return list(restore_list.dim)
 
 
 def _get_device_num_from_strategy(strategy_file=None):
@@ -398,9 +397,13 @@ def _rank_list_for_transform_parallel_checkpoint(rank_id, src_strategy_list, dst
         to_dev_matrix, to_tensor_map, to_full_tensor_shape = _construct_tensor_layout_for_opt_shard(
             to_dev_matrix, to_tensor_map, to_opt_shard_step, to_opt_shard_size, origin_tensor_shape)
         # Convert tensor layout to same device num
-        from_tensor_layout, to_tensor_layout = _construct_from_to_tensor_layout(from_full_tensor_shape, from_dev_matrix,
-                                                                                from_tensor_map, to_full_tensor_shape,
-                                                                                to_dev_matrix, to_tensor_map)
+        from_tensor_layout, to_tensor_layout = _construct_from_to_tensor_layout(from_full_tensor_shape,
+                                                                                from_dev_matrix,
+                                                                                from_tensor_map,
+                                                                                to_full_tensor_shape,
+                                                                                to_dev_matrix,
+                                                                                to_tensor_map,
+                                                                                param_name)
         device_list = list(range(0, np.prod(from_tensor_layout[0])))
         param_rank_list = _get_needed_rank_list_by_layouts(from_tensor_layout, to_tensor_layout, device_list, rank_id)
         param_rank_list_new = [rank % from_device_num for rank in param_rank_list]
@@ -456,9 +459,13 @@ def _transform_parallel_checkpoint(rank_id, param_total_dict, param_attr_dict, s
         to_dev_matrix, to_tensor_map, to_full_tensor_shape = _construct_tensor_layout_for_opt_shard(
             to_dev_matrix_origin, to_tensor_map_origin, to_opt_shard_step, to_opt_shard_size, origin_tensor_shape)
         # Convert tensor layout to same device num
-        from_tensor_layout, to_tensor_layout = _construct_from_to_tensor_layout(from_full_tensor_shape, from_dev_matrix,
-                                                                                from_tensor_map, to_full_tensor_shape,
-                                                                                to_dev_matrix, to_tensor_map)
+        from_tensor_layout, to_tensor_layout = _construct_from_to_tensor_layout(from_full_tensor_shape,
+                                                                                from_dev_matrix,
+                                                                                from_tensor_map,
+                                                                                to_full_tensor_shape,
+                                                                                to_dev_matrix,
+                                                                                to_tensor_map,
+                                                                                param_name)
 
         # when the from_layout is less devices, the checkpoint_map for map[device_num] should using map[0]
         device_list = list(range(0, np.prod(from_tensor_layout[0])))
@@ -654,8 +661,10 @@ def _check_predict_strategy(predict_strategy):
             flag = False
 
     if not flag:
-        raise ValueError(f"For 'load_distributed_checkpoint', the argument 'predict_strategy' is dict, "
-                         f"the key of it must be string, and the value of it must be list or tuple that "
-                         f"the first four elements must be dev_matrix (list[int]), tensor_map (list[int]), "
-                         f"param_split_shape (list[int]) and field_size (int, which value is 0)."
-                         f"Please check whether 'predict_strategy' is correct.")
+        raise ValueError(
+            "For 'load_distributed_checkpoint', the argument 'predict_strategy' is dict, "
+            "the key of it must be string, and the value of it must be list or tuple that "
+            "the first four elements must be dev_matrix (list[int]), tensor_map (list[int]), "
+            "param_split_shape (list[int]) and field_size (int, which value is 0)."
+            "Please check whether 'predict_strategy' is correct."
+        )

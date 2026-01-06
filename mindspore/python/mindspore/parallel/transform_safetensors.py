@@ -1040,9 +1040,13 @@ def _transform_parallel_safetensor(rank_id, param_total_dict, param_attr_dict, s
         to_dev_matrix, to_tensor_map, to_full_tensor_shape = _construct_tensor_layout_for_opt_shard(
             to_dev_matrix_origin, to_tensor_map_origin, to_opt_shard_step, to_opt_shard_size, origin_tensor_shape)
         # Convert tensor layout to same device num
-        from_tensor_layout, to_tensor_layout = _construct_from_to_tensor_layout(from_full_tensor_shape, from_dev_matrix,
-                                                                                from_tensor_map, to_full_tensor_shape,
-                                                                                to_dev_matrix, to_tensor_map)
+        from_tensor_layout, to_tensor_layout = _construct_from_to_tensor_layout(from_full_tensor_shape,
+                                                                                from_dev_matrix,
+                                                                                from_tensor_map,
+                                                                                to_full_tensor_shape,
+                                                                                to_dev_matrix,
+                                                                                to_tensor_map,
+                                                                                param_name)
 
         # when the from_layout is less devices, the safetensor_map for map[device_num] should using map[0]
         device_list = list(range(0, np.prod(from_tensor_layout[0])))
@@ -1497,7 +1501,9 @@ def _cal_transform_operator_stack_and_device_num(from_dev_matrix, from_tensor_ma
                                                                             from_dev_matrix,
                                                                             from_tensor_map,
                                                                             to_full_tensor_shape,
-                                                                            to_dev_matrix, to_tensor_map)
+                                                                            to_dev_matrix,
+                                                                            to_tensor_map,
+                                                                            param_name)
 
     # when the from_layout is less devices, the safetensor_map for map[device_num] should using map[0]
     device_list = list(range(0, np.prod(from_tensor_layout[0])))

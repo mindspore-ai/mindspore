@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""Unit tests for transform_tensor in parallel mode."""
 import numpy as np
+import pytest
 from mindspore.parallel._tensor import _transform_tensor_by_layout, _get_needed_rank_list_by_layouts, \
     _get_needed_rank_transform_operator_map_by_layouts, _generate_transform_operator_stack, \
     _apply_tensor_transform_operators, _construct_from_to_tensor_layout, _construct_tensor_layout_for_opt_shard, \
@@ -367,6 +369,24 @@ def test_construct_from_to_tensor_layout():
                                                                             to_dev_matrix, to_tensor_map)
     assert from_tensor_layout == ([2, 8, 8], [-1, 0], [8, 1024])
     assert to_tensor_layout == ([16, 8], [1, -1], [8, 1024])
+
+
+def test_construct_from_to_tensor_layout_error_1():
+    """
+    Feature: construct from and to tensor layout.
+    Description: construct from and to tensor layout.
+    Expectation: assert error with clear info.
+    """
+    tensor_shape = [10240, 1]
+    from_dev_matrix = [1]
+    from_tensor_map = [-1, -1]
+    to_dev_matrix = [4, 1, 8]
+    to_tensor_map = [0]
+    param_name = "decode.layers.0.self_attention.linear_qkv.bias"
+    with pytest.raises(ValueError, match=rf"For param '{param_name}'"):
+        _ = _construct_from_to_tensor_layout(tensor_shape, from_dev_matrix,
+                                             from_tensor_map, tensor_shape,
+                                             to_dev_matrix, to_tensor_map, param_name)
 
 
 def conver_tensor_by_layout(from_dev_matrix, from_tensor_map, from_opt_shard_step, from_opt_shard_size,
