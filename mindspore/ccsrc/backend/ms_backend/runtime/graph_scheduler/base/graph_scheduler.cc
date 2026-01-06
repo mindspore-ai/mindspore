@@ -474,7 +474,7 @@ void CheckInferPerformanceFeature(const GraphCompilerInfo &graph_compiler_info, 
              "multi-stream(communication and computing pperators use different stream), or disable "
              "trace memory feature by export MS_ENABLE_TRACE_MEMORY=off. Note: Disabling the trace "
              "memory feature will degrade memory management performance. Additionally, it will automatically disable "
-             "the kernel group launch(parallel launch) and graph capture features, which may reduce network execution "
+             "the kernel group launch(parallel launch), which may reduce network execution "
              "performance.";
       }
     }
@@ -489,7 +489,7 @@ void CheckInferPerformanceFeature(const GraphCompilerInfo &graph_compiler_info, 
            "kernel) and control flow, or disable trace memory feature by export MS_ENABLE_TRACE_MEMORY=off. Note: "
            "Disabling the trace "
            "memory feature will degrade memory management performance. Additionally, it will automatically disable the "
-           "kernel group launch(parallel launch) and graph capture features, which may reduce network execution "
+           "kernel group launch(parallel launch), which may reduce network execution "
            "performance.";
     }
   }
