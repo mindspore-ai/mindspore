@@ -33,29 +33,30 @@ class _AdaptiveAvgPoolNd(Cell):
 
 class AdaptiveAvgPool1d(_AdaptiveAvgPoolNd):
     r"""
-    Applies a 1D adaptive average pooling over an input signal composed of several input planes.
+    Apply a 1-D adaptive average pooling over an input signal composed of several input planes.
 
-    The output is of size :math:`L_{out}` , for any input size.
+    The output is of size :math:`L_{out}`, for any input size.
     The number of output features is equal to the number of input planes.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        output_size (int): the target output size :math:`L_{out}` .
+        output_size (int): The target output size :math:`L_{out}`.
 
     Inputs:
-        - **input** (Tensor) - The input with shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})` .
+        - **input** (Tensor) - The input tensor with shape :math:`(N, C, L_{in})` or :math:`(C, L_{in})`.
+
+    Outputs:
+        Tensor.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
-        >>> import numpy as np
-        >>> input = Tensor(np.array([[[2, 1, 2], [2, 3, 5]]]), mindspore.float16)
-        >>> net = mint.nn.AdaptiveAvgPool1d(3)
+        >>> input = mindspore.tensor([[[2, 1, 2], [2, 3, 5]]], mindspore.float16)
+        >>> net = mindspore.mint.nn.AdaptiveAvgPool1d(3)
         >>> output = net(input)
         >>> print(output)
         [[[2. 1. 2.]
