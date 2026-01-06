@@ -141,6 +141,12 @@ static inline void RemoveUnusedParametersFromGraph(const FuncGraphPtr &fg,
   const auto &kw_arg_node = fg->GetVariableKwargParameter();
   const auto &kw_only_args = fg->GetKwOnlyArgsParameters();
   const size_t fv_position = parameters.size() - fg->fv_param_count();
+
+  auto is_kw_only_arg = [&kw_only_args](const AnfNodePtr &param) {
+    return std::any_of(kw_only_args.cbegin(), kw_only_args.cend(),
+                       [&param](const auto &kw_only_arg) { return kw_only_arg == param; });
+  };
+
   for (size_t i = 0; i < parameters.size(); i++) {
     const auto &param_i = parameters[i];
     if (unused_parameter_indexes.find(i) == unused_parameter_indexes.end()) {
@@ -154,17 +160,13 @@ static inline void RemoveUnusedParametersFromGraph(const FuncGraphPtr &fg,
     } else if (param_i == kw_arg_node) {
       fg->set_has_kwarg(false);
       (void)unused_parameter_indexes.erase(i);
-    } else {
-      bool is_kw_only_arg = std::any_of(kw_only_args.cbegin(), kw_only_args.cend(),
-                                        [param_i](const auto &kw_only_arg) { return kw_only_arg == param_i; });
-      if (is_kw_only_arg) {
-        if (fg->kwonlyargs_count() <= 0) {
-          MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, fg->return_node())
-            << "The kw_only_args_count is 0 when a kw_only_arg should be removed";
-        }
-        fg->set_kwonlyargs_count(fg->kwonlyargs_count() - 1);
-        (void)unused_parameter_indexes.erase(i);
+    } else if (is_kw_only_arg(param_i)) {
+      if (fg->kwonlyargs_count() <= 0) {
+        MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, fg->return_node())
+          << "The kw_only_args_count is 0 when a kw_only_arg should be removed";
       }
+      fg->set_kwonlyargs_count(fg->kwonlyargs_count() - 1);
+      (void)unused_parameter_indexes.erase(i);
     }
     if (i >= fv_position) {
       fg->set_fv_param_count(fg->fv_param_count() - 1);
