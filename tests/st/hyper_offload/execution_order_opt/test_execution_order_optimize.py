@@ -136,13 +136,12 @@ def test_wrong_auto_offload_input():
     Description: auto_offload should validate input should only be all, weight and activaction.
     Expectation: RuntimeError.
     """
-    @jit(auto_offload="wrong_input")
-    def foo(x):
-        return x + 1
-
-    with pytest.raises(RuntimeError) as e:
+    with pytest.raises(ValueError) as e:
+        @jit(auto_offload="wrong_input")
+        def foo(x):
+            return x + 1
         foo(Tensor([1, 2, 3]))
-    assert "auto_offload should only be value of all, weight or activaction but got" in str(e.value)
+    assert "For 'auto_offload', the value of 'auto_offload' must be one of " in str(e.value)
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_parameter_with_too_long_prefetch_distance():
