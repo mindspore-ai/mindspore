@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test view"""
 import numpy as np
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import ops
 from tests.mark_utils import arg_mark
@@ -24,61 +25,69 @@ from tests.mark_utils import arg_mark
           level_mark='level1',
           card_mark='onecard',
           essential_mark='essential')
-def test_split_single_op():
+def test_unstack_single_op():
     """
-    Feature: split
-    Description: Verify the result of split
+    Feature: unstack
+    Description: Verify the result of unstack
     Expectation: success
     """
     ms.set_context(mode=ms.GRAPH_MODE)
 
     class Net(nn.Cell):
         def construct(self, x, y):
-            return ops.split(x, *y)
+            return ops.unbind(x, dim=y)
 
-    input_x = Tensor(np.array([[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]]), ms.float32)
-    input_perm = (2, 2)
     net = Net()
-    expect_output = net(input_x, input_perm)[0].asnumpy()
+    np_tensor = np.random.randn(10, 1, 1, 20)
+    ms_tensor = Tensor(np_tensor, dtype=ms.float32)
+
+    expect_output_tuple = net(ms_tensor, 0)
+
     grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
-    expect_grad = grad_op(net)(input_x, input_perm)
+    expect_grad_tuple = grad_op(net)(ms_tensor, 0)
 
     ms.set_context(mode=ms.PYNATIVE_MODE)
-    net = Net()
-    output = net(input_x, input_perm)[0].asnumpy()
-    grad = grad_op(net)(input_x, input_perm)
-    np.testing.assert_array_equal(output, expect_output)
-    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    output_tuple = net(ms_tensor, 0)
+    grad_tuple = grad_op(net)(ms_tensor, 0)
+    for expect_output, output in zip(expect_output_tuple, output_tuple):
+        np.testing.assert_array_equal(expect_output.asnumpy(), output.asnumpy())
+
+    for expect_grad, grad in zip(expect_grad_tuple, grad_tuple):
+        np.testing.assert_allclose(expect_grad[0].asnumpy(), grad[0].asnumpy(), 0.00001, 0.00001)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
-def test_split_multiple_op():
+          essential_mark='essential')
+def test_unstack_multiple_op():
     """
-    Feature: split
-    Description: Verify the result of split
+    Feature: unstack
+    Description: Verify the result of unstack
     Expectation: success
     """
     ms.set_context(mode=ms.GRAPH_MODE)
 
     class Net(nn.Cell):
         def construct(self, x, y):
-            temp = ops.split(x, *y)[0]
-            temp = (temp + 1) * 2
-            return ops.split(temp, *y)
+            temp = ops.unbind(x, dim=y)
+            temp = (temp[0] + 1) * 2
+            return ops.unbind(temp, dim=y)
 
-    input_x = Tensor(np.array([[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]]), ms.float32)
-    input_perm = (2, 2)
     net = Net()
-    expect_output = net(input_x, input_perm)[0].asnumpy()
+    np_tensor = np.random.randn(10, 1, 1, 20)
+    ms_tensor = Tensor(np_tensor, dtype=ms.float32)
+
+    expect_output_tuple = net(ms_tensor, 0)
+
     grad_op = ops.GradOperation(get_all=True, get_by_list=False, sens_param=False)
-    expect_grad = grad_op(net)(input_x, input_perm)
+    expect_grad_tuple = grad_op(net)(ms_tensor, 0)
 
     ms.set_context(mode=ms.PYNATIVE_MODE)
-    net = Net()
-    output = net(input_x, input_perm)[0].asnumpy()
-    grad = grad_op(net)(input_x, input_perm)
-    np.testing.assert_array_equal(output, expect_output)
-    np.testing.assert_allclose(grad[0].asnumpy(), expect_grad[0].asnumpy(), 0.00001, 0.00001)
+    output_tuple = net(ms_tensor, 0)
+    grad_tuple = grad_op(net)(ms_tensor, 0)
+    for expect_output, output in zip(expect_output_tuple, output_tuple):
+        np.testing.assert_array_equal(expect_output.asnumpy(), output.asnumpy())
+
+    for expect_grad, grad in zip(expect_grad_tuple, grad_tuple):
+        np.testing.assert_allclose(expect_grad[0].asnumpy(), grad[0].asnumpy(), 0.00001, 0.00001)

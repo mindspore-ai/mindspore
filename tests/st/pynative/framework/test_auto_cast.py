@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""Test auto cast"""
 import mindspore
 from mindspore.ops import add, elu
 from mindspore import Tensor

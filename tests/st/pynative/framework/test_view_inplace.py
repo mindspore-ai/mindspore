@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""Test view + inplace"""
 import numpy as np
 import pytest
 import mindspore as ms
@@ -42,7 +42,7 @@ class TestViewInplace:
     def single_view_test(self, shape):
         input_np = self.generate_input(shape)
         assert len(shape) >= 2
-        perm = [i for i in range(len(shape))]
+        perm = list(range(len(shape)))
         perm[-2], perm[-1] = perm[-1], perm[-2]
         expect_output = input_np.transpose(perm)
 
