@@ -54,10 +54,6 @@ class FunctionalMapCppGenerator(BaseGenerator):
                                 "to_kernel_size": ["tuple[int]", "list[int]", "int"],
                                 "to_strides": ["tuple[int]", "list[int]", "int"],
                                 "str_to_enum": ["str"],
-                                "_normalize_int_sequence": ["tuple[int]", "list[int]", "int"],
-                                "_scalar_tensor_to_scalar": ["tensor", "number"],
-                                "_scalar_tensor_to_int": ["tensor", "int"],
-                                "_scalar_tensor_to_float": ["tensor", "float"],
                                 "to_pair": ["tuple[int]", "list[int]", "int", "float"],
                                 "to_dilations": ["tuple[int]", "list[int]", "int"],
                                 "to_output_padding": ["tuple[int]", "list[int]", "int"],
@@ -238,7 +234,7 @@ class FunctionalMapCppGenerator(BaseGenerator):
             list: Sorted list of valid argument types (descending order).
         """
         arg_handler = arg.arg_handler
-        if arg_handler != '':
+        if arg_handler != '' and arg_handler not in pyboost_utils.get_pyboost_arg_handlers_black_list():
             if arg_handler in self.arg_handler_map:
                 arg_valid_types.extend(self.arg_handler_map[arg_handler])
             else:

@@ -4089,7 +4089,7 @@ def std_ext(input, dim=None, *, correction=1, keepdim=False):
         Tensor(shape=[1, 1], dtype=Float32, value=
         [[ 1.95789003e+00]])
     """
-    std_op(input, dim, correction, keepdim)
+    return std_op(input, dim, correction, keepdim)
 
 
 def var(input, axis=None, ddof=0, keepdims=False):
