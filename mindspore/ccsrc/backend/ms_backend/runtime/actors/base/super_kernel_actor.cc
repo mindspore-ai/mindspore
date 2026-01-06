@@ -2456,7 +2456,7 @@ void SuperKernelActor::LinkKernelActorByDeviceType(const CNodePtr &kernel, size_
       << "). Trace memory feature can not work in this case. Please eliminate heterogeneity(cpu "
          "kernel), or disable trace memory feature by export MS_ENABLE_TRACE_MEMORY=off. Note: Disabling the trace "
          "memory feature will degrade memory management performance. Additionally, it will automatically disable "
-         "the kernel group launch(parallel launch) and graph capture features, which may reduce network execution "
+         "the kernel group launch(parallel launch), which may reduce network execution "
          "performance.";
   }
 

@@ -677,7 +677,7 @@ void KernelRunner::ConvertInputContiguous(OpContext<KernelTensor> *const context
              "non-contiguous input and convert it to contiguous memory layout, or disable trace memory "
              "feature by export MS_ENABLE_TRACE_MEMORY=off. Note: Disabling the trace "
              "memory feature will degrade memory management performance. Additionally, it will automatically disable "
-             "the kernel group launch(parallel launch) and graph capture features, which may reduce network execution "
+             "the kernel group launch(parallel launch), which may reduce network execution "
              "performance.";
       }
       // Launch CopyInplace to make tensor contiguous.
