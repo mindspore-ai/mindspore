@@ -109,8 +109,8 @@ std::pair<DeviceAddressPtr, TensorStorageInfoPtr> CreateSourceStorageDeviceAddr(
   const auto &source_dtype = source_storage.GetTypeId();
   int64_t bytes_size = source_storage.NBytes();
   const std::string &device_name = source_storage.device();
-  int64_t new_bytes_size =
-    ops::ComputeStorageNelements(storage_offset, shape, stride) * GetTypeByte(TypeIdToType(base_tensor->data_type()));
+  int64_t new_bytes_size = ops::ComputeStorageNelements(storage_offset, shape, stride) *
+                           SizeToLong(GetTypeByte(TypeIdToType(base_tensor->data_type())));
   device::DeviceAddressPtr source_device_address;
   if (new_bytes_size <= bytes_size) {
     source_device_address = std::make_shared<device::DeviceAddress>(
@@ -143,8 +143,8 @@ std::pair<DeviceAddressPtr, TensorStorageInfoPtr> CreateSourceTensorDeviceAddr(
   int64_t bytes_size = static_cast<int64_t>(device_address->GetSize());
   const auto &device_type = device_address->GetDeviceType();
   const std::string &device_name = device::GetDeviceNameByType(device_type);
-  int64_t new_bytes_size =
-    ops::ComputeStorageNelements(storage_offset, shape, stride) * GetTypeByte(TypeIdToType(base_tensor->data_type()));
+  int64_t new_bytes_size = ops::ComputeStorageNelements(storage_offset, shape, stride) *
+                           SizeToLong(GetTypeByte(TypeIdToType(base_tensor->data_type())));
   device::DeviceAddressPtr source_device_address;
   if (new_bytes_size <= bytes_size) {
     source_device_address = std::make_shared<device::DeviceAddress>(
