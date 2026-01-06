@@ -74,7 +74,8 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 namespace {
-constexpr uint32_t kDefaultHcclExecTimeout = 1800;
+// The default HCCL_EXEC_TIMEOUT value in CANN is 1836 seconds.
+constexpr uint32_t kDefaultHcclExecTimeout = 1836;
 constexpr size_t kAlignBytes = 32;
 
 // Register callbacks for collective methods.
@@ -340,7 +341,13 @@ void AscendResManager::Initialize() {
   // 310P does not contain the following interfaces
   if (ms_context->ascend_soc_version() != "ascend310p" && ms_context->ascend_soc_version() != "ascend310b") {
     const uint32_t reserve_time = 180;
-    uint32_t op_wait_timeout = notify_wait_timeout + reserve_time;
+    uint32_t op_wait_timeout;
+    if (notify_wait_timeout == 0) {
+      // If notify_wait_timeout is 0, op_wait_timeout should also be 0 to indicate no timeout.
+      op_wait_timeout = 0;
+    } else {
+      op_wait_timeout = notify_wait_timeout + reserve_time;
+    }
     device::ascend::AscendHalManager::GetInstance().SetOpWaitTimeout(op_wait_timeout);
     device::ascend::AscendHalManager::GetInstance().SetOpExecuteTimeOut(op_execute_timeout);
   }
