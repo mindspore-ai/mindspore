@@ -214,7 +214,7 @@ class TrainFaultTolerance(Callback):
             Before running the following examples, you need to configure the communication environment variables.
 
             It's recommended to use the msrun startup method.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 

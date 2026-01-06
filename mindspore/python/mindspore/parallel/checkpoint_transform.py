@@ -650,6 +650,8 @@ def transform_checkpoints(src_checkpoints_dir, dst_checkpoints_dir, ckpt_prefix,
     dst_layout_map = _extract_layout_map(dst_strategy_file)
     pipeline_stage_num = _extract_pipeline_stage_num(src_strategy_file)
     dst_stage_num = _extract_pipeline_stage_num(dst_strategy_file)
+    src_param_keys = None
+    dst_param_keys = None
     if src_layout_map:
         src_param_keys = {param_name for param_name in src_layout_map if
                           not param_name.startswith(("accu_grads", "adam_v", "adam_m"))}
@@ -1024,13 +1026,11 @@ def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_stra
         .. note::
             Before running the following examples, you need to configure the communication environment variables.
 
-            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
-            Please see the `rank table startup
-            <https://www.mindspore.cn/tutorials/en/master/parallel/rank_table.html>`_
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
-
-            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/en/master/parallel/dynamic_cluster.html>`_ .
 
         >>> import os
         >>> import numpy as np
@@ -1127,29 +1127,29 @@ def load_distributed_checkpoint(network, checkpoint_filenames=None, predict_stra
 
     if format == 'safetensors':
         if unified_safetensors_dir is None:
-            raise ValueError(f"For 'load_distributed_checkpoint', 'unified_safetensors_dir' can not be None "
-                             f"when format is 'safetensors'.")
+            raise ValueError("For 'load_distributed_checkpoint', 'unified_safetensors_dir' can not be None "
+                             "when format is 'safetensors'.")
         unsupport_param = [checkpoint_filenames, train_strategy_filename, dec_key]
         for param in unsupport_param:
             if param is not None:
                 raise ValueError(f"For 'load_distributed_checkpoint', {param} must be None "
                                  f"when format is 'safetensors'.")
         if strict_load or dec_mode != 'AES-GCM':
-            raise ValueError(f"For 'load_distributed_checkpoint', strict_load and dec_mode must be default "
-                             f"when format is 'safetensors'.")
+            raise ValueError("For 'load_distributed_checkpoint', strict_load and dec_mode must be default "
+                             "when format is 'safetensors'.")
         if network is not None:
             try:
                 rank_id = get_rank()
             except RuntimeError:
                 rank_id = 0
-                logger.warning(f"Get rank failed, default loading weight for rank 0.")
+                logger.warning("Get rank failed, default loading weight for rank 0.")
             param_dict = _load_parallel_checkpoint(
                 (unified_safetensors_dir, predict_strategy, network, None, rank_id, output_format, name_map,
                  return_param_dict))
             return param_dict
         if dst_safetensors_dir is None:
-            raise ValueError(f"For 'load_distributed_checkpoint', 'dst_safetensors_dir' can not be None "
-                             f"when network is None.")
+            raise ValueError("For 'load_distributed_checkpoint', 'dst_safetensors_dir' can not be None "
+                             "when network is None.")
         if rank_id is not None:
             _load_parallel_checkpoint(
                 (unified_safetensors_dir, predict_strategy, network, dst_safetensors_dir,

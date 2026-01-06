@@ -20,14 +20,14 @@ import itertools
 import numbers
 import hashlib
 import numpy as np
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore.ops import operations as P
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, Initializer
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import constexpr, _primexpr
-import mindspore.context as context
+from mindspore import context
 from mindspore import _checkparam as validator
 from mindspore._extends import cell_attr_register
 from mindspore.communication.management import get_group_size, get_rank
@@ -65,7 +65,7 @@ class _BatchNorm(Cell):
                  data_format='NCHW',
                  dtype=mstype.float32):
         """Initialize _BatchNorm."""
-        super(_BatchNorm, self).__init__()
+        super(_BatchNorm, self).__init__() # pylint: disable=super-with-arguments
         validator.check_value_type('num_features', num_features, [int], self.cls_name)
         if num_features < 1:
             raise ValueError(f"For '{self.cls_name}', the 'num_features' must be at least 1, but got {num_features}.")
@@ -451,7 +451,7 @@ class BatchNorm3d(Cell):
                  use_batch_statistics=None,
                  dtype=mstype.float32):
         """Initialize BatchNorm3d."""
-        super(BatchNorm3d, self).__init__()
+        super(BatchNorm3d, self).__init__() # pylint: disable=super-with-arguments
         self.bn2d = BatchNorm2d(num_features=num_features,
                                 eps=eps,
                                 momentum=momentum,
@@ -487,7 +487,7 @@ SYNCBN_GROUP_DICT = None
 def _syncbatchnorm_group_dict():
     global SYNCBN_GROUP_DICT
     if SYNCBN_GROUP_DICT is None:
-        SYNCBN_GROUP_DICT = dict()
+        SYNCBN_GROUP_DICT = dict() # pylint: disable=use-dict-literal
     return SYNCBN_GROUP_DICT
 
 
@@ -564,16 +564,11 @@ class SyncBatchNorm(_BatchNorm):
         .. note::
             Before running the following examples, you need to configure the communication environment variables.
 
-            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
-            Please see the `Ascend tutorial
-            <https://www.mindspore.cn/tutorials/en/master/parallel/rank_table.html>`_
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
-
-            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/en/master/parallel/mpirun.html>`_ .
-
-            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with multiple devices.
 
@@ -610,6 +605,7 @@ class SyncBatchNorm(_BatchNorm):
                  process_groups=None,
                  dtype=mstype.float32):
         """Initialize SyncBatchNorm."""
+        # pylint: disable=super-with-arguments
         super(SyncBatchNorm, self).__init__(num_features,
                                             eps,
                                             momentum,
@@ -754,7 +750,7 @@ class LayerNorm(Cell):
                  dtype=mstype.float32
                  ):
         """Initialize LayerNorm."""
-        super(LayerNorm, self).__init__()
+        super(LayerNorm, self).__init__()  # pylint: disable=super-with-arguments
         if not isinstance(normalized_shape, (tuple, list)):
             raise TypeError(f"For '{self.cls_name}', the type of 'normalized_shape' must be tuple[int] or list[int], "
                             f"but got {normalized_shape} and the type is {type(normalized_shape)}.")
@@ -845,7 +841,7 @@ class LayerNormExt(Cell):
                  dtype=None
                  ):
         """Initialize LayerNormExt."""
-        super(LayerNormExt, self).__init__()
+        super(LayerNormExt, self).__init__()  # pylint: disable=super-with-arguments
         if isinstance(normalized_shape, numbers.Integral):
             # mypy error: incompatible types in assignment
             normalized_shape = (normalized_shape,)  # type: ignore[assignment]
@@ -893,7 +889,7 @@ class _InstanceNorm(Cell):
                  beta_init='zeros',
                  dtype=mstype.float32):
         """Initialize Normalization base class."""
-        super(_InstanceNorm, self).__init__()
+        super(_InstanceNorm, self).__init__()  # pylint: disable=super-with-arguments
         validator.check_value_type('num_features', num_features, [int], self.cls_name)
         validator.check_value_type('eps', eps, [float], self.cls_name)
         validator.check_value_type('momentum', momentum, [float], self.cls_name)
@@ -1252,7 +1248,7 @@ class GroupNorm(Cell):
     def __init__(self, num_groups, num_channels, eps=1e-05, affine=True, gamma_init='ones', beta_init='zeros',
                  dtype=mstype.float32):
         """Initialize GroupNorm."""
-        super(GroupNorm, self).__init__()
+        super(GroupNorm, self).__init__()  # pylint: disable=super-with-arguments
         self.num_groups = validator.check_positive_int(num_groups, "num_groups", self.cls_name)
         self.num_channels = validator.check_positive_int(num_channels, "num_channels", self.cls_name)
         if num_channels % num_groups != 0:

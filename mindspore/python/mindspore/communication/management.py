@@ -154,7 +154,7 @@ def init(backend_name=None):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -320,7 +320,7 @@ def release():
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -359,7 +359,7 @@ def get_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -404,7 +404,7 @@ def get_local_rank(group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -451,7 +451,7 @@ def get_group_size(group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -497,7 +497,7 @@ def get_local_rank_size(group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -546,7 +546,7 @@ def get_world_rank_from_group_rank(group, group_rank_id):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -601,7 +601,7 @@ def get_group_rank_from_world_rank(world_rank_id, group):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -671,7 +671,7 @@ def create_group(group, rank_ids, options=None):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -722,7 +722,7 @@ def destroy_group(group):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -774,7 +774,7 @@ def get_comm_name(group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -824,7 +824,7 @@ def get_process_group_ranks(group=GlobalComm.WORLD_COMM_GROUP):
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -864,7 +864,7 @@ def _comm_switch_nic(global_ranks, use_backup):
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
