@@ -67,7 +67,7 @@ class CommHandle(CommHandle_):
     """
 
     def __init__(self, handle=None, exec_sync=False):
-        super(CommHandle, self).__init__()
+        super(CommHandle, self).__init__() # pylint: disable=super-with-arguments
         self.handle = handle
         self.exec_sync = exec_sync
 
@@ -100,14 +100,14 @@ default_handle = CommHandle()
 
 def _check_split_sizes_sequence(tensor, sequence):
     if not sequence:
-        raise TypeError(f"sequence can not be empty list.")
+        raise TypeError("sequence can not be empty list.")
     element0 = sequence[0]
     for idx in range(1, len(sequence)):
         if sequence[idx] != element0:
-            raise TypeError(f"sequence containing different elements is not supported yet. "
-                            f"Elements must be the same.")
+            raise TypeError("sequence containing different elements is not supported yet. "
+                            "Elements must be the same.")
     if sum(sequence) != tensor.shape[0]:
-        raise TypeError(f" The sum of sequence should equal to tensor.shape[0].")
+        raise TypeError(" The sum of sequence should equal to tensor.shape[0].")
 
 
 def _check_compute_split_count(tensor, output_split_sizes, input_split_sizes, group):
@@ -133,7 +133,7 @@ def _check_compute_split_count(tensor, output_split_sizes, input_split_sizes, gr
         split_count = tensor.shape[0] // output_split_value
     elif input_split_value and output_split_value:
         if input_split_value != output_split_value:
-            raise TypeError(f"input_split_value should equal to output_split_value.")
+            raise TypeError("input_split_value should equal to output_split_value.")
         split_count = tensor.shape[0] // input_split_value
     else:
         split_count = group_size
@@ -232,7 +232,7 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -297,7 +297,7 @@ def all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP, async_op=F
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -321,7 +321,7 @@ def all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP, async_op=F
     if not isinstance(tensor, (Tensor, Tensor_)):
         raise TypeError("For all_gather_into_tensor, the input tensor must be tensor")
     group = _get_group(group)
-    global _GROPU_SIZE_CACHE
+    global _GROPU_SIZE_CACHE # pylint: disable=global-variable-not-assigned
     if group not in _GROPU_SIZE_CACHE:
         _GROPU_SIZE_CACHE[group] = get_group_size(group)
     group_size = _GROPU_SIZE_CACHE[group]
@@ -367,7 +367,7 @@ def reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_G
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -391,7 +391,7 @@ def reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_G
     if not isinstance(tensor, (Tensor, Tensor_)):
         raise TypeError("For reduce_scatter_tensor, the input tensor must be tensor")
     group = _get_group(group)
-    global _GROPU_SIZE_CACHE
+    global _GROPU_SIZE_CACHE # pylint: disable=global-variable-not-assigned
     if group not in _GROPU_SIZE_CACHE:
         _GROPU_SIZE_CACHE[group] = get_group_size(group)
     rank_size = _GROPU_SIZE_CACHE[group]
@@ -436,7 +436,7 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -574,7 +574,7 @@ def batch_isend_irecv(p2p_op_list):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -615,7 +615,7 @@ def batch_isend_irecv(p2p_op_list):
         raise TypeError(f"p2p_op_list must be type of list, but got type of {p2p_op_list}.")
 
     if not p2p_op_list:
-        raise TypeError(f"p2p_op_list can not be empty list.")
+        raise TypeError("p2p_op_list can not be empty list.")
     group = p2p_op_list[0].group
     if group is None:
         group = GlobalComm.WORLD_COMM_GROUP
@@ -692,7 +692,7 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -757,7 +757,7 @@ def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -818,7 +818,7 @@ def broadcast(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -872,7 +872,7 @@ def barrier(group=GlobalComm.WORLD_COMM_GROUP):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -943,7 +943,7 @@ def send(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1018,7 +1018,7 @@ def recv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1094,7 +1094,7 @@ def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1173,7 +1173,7 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1250,7 +1250,7 @@ def all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=Non
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1303,7 +1303,7 @@ def all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=Non
 
     send_flatten_tensor = cat(send_flatten_tensor)
     group = GlobalComm.WORLD_COMM_GROUP if group is None else _get_group(group)
-    global _GROPU_SIZE_CACHE
+    global _GROPU_SIZE_CACHE # pylint: disable=global-variable-not-assigned
     if group not in _GROPU_SIZE_CACHE:
         _GROPU_SIZE_CACHE[group] = get_group_size(group)
     rank_size = _GROPU_SIZE_CACHE[group]
@@ -1320,7 +1320,7 @@ def all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=Non
 
 def _get_all_to_all_single_numel_list(tensor_shape, output_shape, output_split_sizes, input_split_sizes, group):
     """get numel list for all_to_all_single."""
-    global _GROPU_SIZE_CACHE
+    global _GROPU_SIZE_CACHE # pylint: disable=global-variable-not-assigned
     if _is_split_sizes_empty(input_split_sizes):
         if group not in _GROPU_SIZE_CACHE:
             _GROPU_SIZE_CACHE[group] = get_group_size(group)
@@ -1404,7 +1404,7 @@ def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1437,7 +1437,7 @@ def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes
         output_split_sizes = tuple(output_split_sizes)
     if isinstance(input_split_sizes, list):
         input_split_sizes = tuple(input_split_sizes)
-    global _ALL_TO_ALL_CACHE
+    global _ALL_TO_ALL_CACHE # pylint: disable=global-variable-not-assigned
     tensor_shape = output_shape
     cache_key = (tensor_shape, output_shape, output_split_sizes, input_split_sizes, group)
     if cache_key not in _ALL_TO_ALL_CACHE:
@@ -1447,7 +1447,7 @@ def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes
     tensor = _contiguous(tensor)
     _input = tensor.reshape(-1)
     group = GlobalComm.WORLD_COMM_GROUP if group is None else _get_group(group)
-    global _GROPU_SIZE_CACHE
+    global _GROPU_SIZE_CACHE # pylint: disable=global-variable-not-assigned
     if group not in _GROPU_SIZE_CACHE:
         _GROPU_SIZE_CACHE[group] = get_group_size(group)
     rank_size = _GROPU_SIZE_CACHE[group]
@@ -1472,7 +1472,7 @@ def _get_all_to_all_v_c_numel_list(output, input, send_count_matrix_size):
 
 def get_cache_group_size(group=GlobalComm.WORLD_COMM_GROUP):
     """get cache group size."""
-    global _GROPU_SIZE_CACHE
+    global _GROPU_SIZE_CACHE # pylint: disable=global-variable-not-assigned
     if group not in _GROPU_SIZE_CACHE:
         _GROPU_SIZE_CACHE[group] = get_group_size(group)
     group_size = _GROPU_SIZE_CACHE[group]
@@ -1481,7 +1481,7 @@ def get_cache_group_size(group=GlobalComm.WORLD_COMM_GROUP):
 
 def get_cache_group_rank(group=GlobalComm.WORLD_COMM_GROUP):
     """get cache rank id."""
-    global _GROPU_RANK_CACHE
+    global _GROPU_RANK_CACHE # pylint: disable=global-variable-not-assigned
     if group not in _GROPU_RANK_CACHE:
         _GROPU_RANK_CACHE[group] = _get_rank_helper(group)
     group_rank = _GROPU_RANK_CACHE[group]
@@ -1523,7 +1523,7 @@ def all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False)
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
