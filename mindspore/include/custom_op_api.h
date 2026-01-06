@@ -30,9 +30,6 @@
 
 // ascend files
 #ifdef CUSTOM_ASCEND_OP
-#include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "kernel/ascend/aclnn/kernel_mod_impl/customize/custom_aclnn_utils.h"
 #include "include/pynative/backward/function.h"
 #include "mindspore/ops/kernel/ascend/aclnn/pyboost_impl/customize/custom_launch_aclnn.h"
 #endif  // CUSTOM_ASCEND_OP
@@ -41,12 +38,12 @@
 #include "include/pynative/utils/pyboost/custom/tensor.h"
 #include "include/pynative/utils/pyboost/custom/tensor_utils.h"
 #include "include/pynative/utils/pyboost/custom/pyboost_extension.h"
-#include "kernel/ascend/custom/kernel_mod_impl/custom_register.h"
-#include "kernel/ascend/custom/kernel_mod_impl/custom_kernel_factory.h"
+#include "include/kernel/ascend/custom/kernel_mod_impl/custom_register.h"
+#include "include/kernel/ascend/custom/kernel_mod_impl/custom_kernel_factory.h"
 
 // ascend files
 #ifdef CUSTOM_ASCEND_OP
-#include "kernel/ascend/custom/pyboost_impl/aclnn/aclnn_op_runner.h"
+#include "include/kernel/ascend/custom/pyboost_impl/aclnn_op_runner.h"
 // MindSpore core includes
 #include "mindspore/core/include/utils/ms_utils.h"
 #include "mindspore/core/include/ops/ops_func_impl/op_func_impl.h"
@@ -55,7 +52,6 @@
 #include "mindspore/core/include/utils/ms_context.h"
 
 // MindSpore ops includes
-#include "mindspore/ops/kernel/ascend/custom/kernel_mod_impl/custom_kernel_factory.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 
 // MindSpore runtime includes
@@ -69,10 +65,10 @@
 #include "mindspore/ops/kernel/ascend/internal/internal_ascend_adapter.h"
 
 #ifdef CUSTOM_ENABLE_ATB
-#include "kernel/ascend/custom/pyboost_impl/atb/atb_common.h"
+#include "include/kernel/ascend/custom/pyboost_impl/atb_common.h"
 #endif  // CUSTOM_ENABLE_ATB
 #ifdef CUSTOM_ENABLE_ASDSIP
-#include "kernel/ascend/custom/pyboost_impl/asdsip/asdsip_common.h"
+#include "include/kernel/ascend/custom/pyboost_impl/asdsip_common.h"
 #endif  // CUSTOM_ENABLE_ASDSIP
 #endif  // CUSTOM_ASCEND_OP
 

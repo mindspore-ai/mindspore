@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/ascend/custom/kernel_mod_impl/custom_kernel_factory.h"
+#include "include/kernel/ascend/custom/kernel_mod_impl/custom_kernel_factory.h"
 #include <algorithm>
 #include <numeric>
 
@@ -69,8 +69,8 @@ bool CustomKernelFactory::HasFormatMapping(const std::string &op_name) const {
   return hardware_it != hardware_format_mappings_.end() && !hardware_it->second.empty();
 }
 
-const std::unordered_map<std::string, std::vector<HardwareFormatMapping>>
-  &CustomKernelFactory::GetAllHardwareFormatMappings() const {
+const std::unordered_map<std::string, std::vector<HardwareFormatMapping>> &
+CustomKernelFactory::GetAllHardwareFormatMappings() const {
   return hardware_format_mappings_;
 }
 

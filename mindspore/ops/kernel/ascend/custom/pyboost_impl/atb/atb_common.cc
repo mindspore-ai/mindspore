@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/ascend/custom/pyboost_impl/atb/atb_common.h"
+#include "include/kernel/ascend/custom/pyboost_impl/atb_common.h"
 #include <map>
 #include "include/pynative/utils/pyboost/custom/tensor.h"
 #include "ir/tensor.h"
