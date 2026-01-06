@@ -249,6 +249,43 @@ class BaseRewriter : protected SimpleRewriter {
     return SizeToLong(n_attrs);
   }
 
+  // From:
+  //   MakeKeywordArg(key, value)
+  // To:
+  //   value
+  AnfNodePtr EraseMakeKeywordArgNode(const CNodePtr &node) const {
+    MS_EXCEPTION_IF_NULL(node);
+    // Inputs should be [make_keyword_arg, key, value]
+    constexpr size_t expect_input_size = 3;
+    constexpr size_t value_inputs_index = 2;
+    CheckInputsSize(node, expect_input_size);
+    return node->input(value_inputs_index);
+  }
+
+  // From:
+  //   ExtractKeywordArg(arg, key)
+  // To:
+  //   key
+  AnfNodePtr EraseExtractKeywordArg(const CNodePtr &node) const {
+    MS_EXCEPTION_IF_NULL(node);
+    // Inputs should be [extract_keyword_arg, arg, key]
+    const size_t expect_inputs_size = 3;
+    // Inputs should be [extract_keyword_arg, arg, key, monad]
+    const size_t expect_inputs_has_side_effect_size = 4;
+    if (node->size() != expect_inputs_size && node->size() != expect_inputs_has_side_effect_size) {
+      MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, node)
+        << "The extract_keyword_arg should have 3 or 4 inputs, but got " << node->size();
+    }
+    constexpr size_t key_index = 2;
+    auto key_node = node->input(key_index);
+    // Handle cnode as [extract_keyword_arg, arg, (KeywordArg(key, value))]
+    if (IsValueNode<KeywordArg>(key_node)) {
+      auto keyword_arg = GetValueNode<KeywordArgPtr>(key_node);
+      return NewValueNode(keyword_arg->get_value());
+    }
+    return key_node;
+  }
+
  private:
   bool need_renormalized_{false};
 };
@@ -582,43 +619,6 @@ class BeforeOptARewriter : public BaseRewriter {
       (void)new_inputs.emplace_back(tuple_node);
     }
     return fg->NewCNode(std::move(new_inputs));
-  }
-
-  // From:
-  //   MakeKeywordArg(key, value)
-  // To:
-  //   value
-  AnfNodePtr EraseMakeKeywordArgNode(const CNodePtr &node) const {
-    MS_EXCEPTION_IF_NULL(node);
-    // Inputs should be [make_keyword_arg, key, value]
-    constexpr size_t expect_input_size = 3;
-    constexpr size_t value_inputs_index = 2;
-    CheckInputsSize(node, expect_input_size);
-    return node->input(value_inputs_index);
-  }
-
-  // From:
-  //   ExtractKeywordArg(arg, key)
-  // To:
-  //   key
-  AnfNodePtr EraseExtractKeywordArg(const CNodePtr &node) const {
-    MS_EXCEPTION_IF_NULL(node);
-    // Inputs should be [extract_keyword_arg, arg, key]
-    const size_t expect_inputs_size = 3;
-    // Inputs should be [extract_keyword_arg, arg, key, monad]
-    const size_t expect_inputs_has_side_effect_size = 4;
-    if (node->size() != expect_inputs_size && node->size() != expect_inputs_has_side_effect_size) {
-      MS_LOG_WITH_NODE(INTERNAL_EXCEPTION, node)
-        << "The extract_keyword_arg should have 3 or 4 inputs, but got " << node->size();
-    }
-    constexpr size_t key_index = 2;
-    auto key_node = node->input(key_index);
-    // Handle cnode as [extract_keyword_arg, arg, (KeywordArg(key, value))]
-    if (IsValueNode<KeywordArg>(key_node)) {
-      auto keyword_arg = GetValueNode<KeywordArgPtr>(key_node);
-      return NewValueNode(keyword_arg->get_value());
-    }
-    return key_node;
   }
 
   using Converter = AnfNodePtr (ThisClass::*)(const CNodePtr &) const;
@@ -2238,7 +2238,9 @@ class AfterOptARewriter : public BaseRewriter {
     {prim::kPrimFormat, &ThisClass::ConvertFormat},
     {prim::kPrimMakeRange, &ThisClass::ConvertMakeRange},
     {prim::kPrimIs_, &ThisClass::ConvertIs_},
-    {prim::kPrimIsNot, &ThisClass::ConvertIsNot}};
+    {prim::kPrimIsNot, &ThisClass::ConvertIsNot},
+    {prim::kPrimMakeKeywordArg, &ThisClass::EraseMakeKeywordArgNode},
+    {prim::kPrimExtractKeywordArg, &ThisClass::EraseExtractKeywordArg}};
 
   static inline const PrimitiveSet seq_prim_set_{
     prim::kPrimInSequence,      prim::kPrimSequenceMul,       prim::kPrimSequenceCount,    prim::kPrimSequenceIndex,
