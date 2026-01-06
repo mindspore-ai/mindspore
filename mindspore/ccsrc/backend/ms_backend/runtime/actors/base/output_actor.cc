@@ -743,6 +743,10 @@ void OutputActor::HandleOutput() {
         if (kernel_tensor->user_data()) {
           tensor->CloneUserData(*(kernel_tensor->user_data()));
         }
+        MS_VLOG(VL_RUNTIME_FRAMEWORK_DEVICE_ADDRESS)
+          << "Free kernel tensor:" << kernel_tensor << " for diff type in actor:" << GetAID();
+        MemoryManagerActor::GetInstance()->FreeMemoryByRefCount(kernel_tensor.get(), real_device_context,
+                                                                GetAID().Name());
         continue;
       }
       MS_VLOG(VL_RUNTIME_FRAMEWORK_DEVICE_ADDRESS)

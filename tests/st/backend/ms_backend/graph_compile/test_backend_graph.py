@@ -362,3 +362,41 @@ def test_cse_with_ref():
     x = Tensor(np.ones(shape).astype(np.float32))
     out = root_graph(x)
     assert np.allclose(out.asnumpy(), np.ones(shape).astype(np.float32) * 3)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_dynamic_shape_for_cpu_diff_type():
+    """
+    Feature: Support type trans for graph output.
+    Description: the shape in the second step is larger than that in the first step..
+    Expectation: Run success.
+    """
+    a = BackendGraph()
+    shape = (-1, -1)
+    para_1 = a.add_parameter(ms.float16, shape)
+    para_2 = a.add_parameter(ms.float16, shape)
+    ms.set_context(device_target="CPU")
+    bool_false = a.add_valuenode(False)
+    add1 = a.add_cnode("MatMul", para_1, para_2, bool_false, bool_false)
+    add2 = a.add_cnode("MatMul", add1, para_1, bool_false, bool_false)
+    add3 = a.add_cnode("MatMul", para_2, add2, bool_false, bool_false)
+    make_tuple = a.add_cnode("MakeTuple", add2, add3)
+    a.add_return(make_tuple)
+    a.infer()
+    a.compile()
+    x1 = Tensor(np.ones((4, 2)).astype(np.float16))
+    y1 = Tensor(np.ones((2, 4)).astype(np.float16))
+    out1 = a(x1, y1)
+    res1 = np.matmul(x1, y1)
+    res2 = np.matmul(res1, x1)
+    res3 = np.matmul(y1, res2)
+    assert np.allclose(out1[0].asnumpy(), res2)
+    assert np.allclose(out1[1].asnumpy(), res3)
+    x2 = Tensor(np.ones((32, 32)).astype(np.float16))
+    y2 = Tensor(np.ones((32, 32)).astype(np.float16))
+    out2 = a(x2, y2)
+    res1 = np.matmul(x2, y2)
+    res2 = np.matmul(res1, x2)
+    res3 = np.matmul(y2, res2)
+    assert np.allclose(out2[0].asnumpy(), res2)
+    assert np.allclose(out2[1].asnumpy(), res3)
