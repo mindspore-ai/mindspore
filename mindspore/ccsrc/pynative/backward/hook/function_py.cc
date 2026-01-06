@@ -78,7 +78,7 @@ PyObject *PackForwardInput(PyObject *ctx, PyObject *inputs) {
 }
 
 void ProcessInputs(const std::shared_ptr<FunctionContext> &context, FunctionBase *ctx, PyObject *inputs) {
-  size_t inputs_size = PyTuple_GET_SIZE(inputs);
+  size_t inputs_size = static_cast<size_t>(PyTuple_GET_SIZE(inputs));
   std::vector<bool> is_tensor_input;
   is_tensor_input.reserve(inputs_size);
   PyObject *need_grad_input = PyTuple_New(inputs_size);
@@ -124,7 +124,7 @@ static TensorPtrSet parse_mark_dirty(FunctionBase *fptr) {
                       << Py_TYPE(dirty_tensors)->tp_name;
   }
 
-  size_t num_dirty = PyTuple_GET_SIZE(dirty_tensors);
+  size_t num_dirty = static_cast<size_t>(PyTuple_GET_SIZE(dirty_tensors));
   for (size_t i = 0; i < num_dirty; i++) {
     PyObject *elem = PyTuple_GetItem(dirty_tensors, i);
     if (!tensor::IsTensorPy(elem)) {
@@ -151,7 +151,7 @@ static TensorPtrSet parse_non_differentiable(FunctionBase *fptr) {
     MS_LOG(EXCEPTION) << "non_differentiable of functionbase should be a tuple, but get a "
                       << Py_TYPE(non_diff_obj)->tp_name;
   }
-  size_t num_non_diff = PyTuple_GET_SIZE(non_diff_obj);
+  size_t num_non_diff = static_cast<size_t>(PyTuple_GET_SIZE(non_diff_obj));
   for (size_t i = 0; i < num_non_diff; i++) {
     PyObject *elem = PyTuple_GetItem(non_diff_obj, i);
     if (!tensor::IsTensorPy(elem)) {
@@ -183,7 +183,7 @@ static TensorPtrList parse_to_save(const std::shared_ptr<FunctionContext> &conte
   }
 
   bool has_saved_tensors_hooks = DefaultSavedTensorHookUtil::GetTopHook() != nullptr;
-  size_t num_to_save = PyTuple_GET_SIZE(to_save_obj);
+  size_t num_to_save = static_cast<size_t>(PyTuple_GET_SIZE(to_save_obj));
   TensorPtrList to_save_tensors;
   to_save_tensors.reserve(num_to_save);
   PyObject *py_data = PyTuple_New(num_to_save);
@@ -477,7 +477,7 @@ int FunctionBase_set_materialize_grads(FunctionBase *self, PyObject *value, void
 
 template <PyObject *FunctionBase::*ptr>
 PyObject *get_property(PyObject *obj, void *unused) {
-  auto self = (FunctionBase *)obj;
+  auto self = reinterpret_cast<FunctionBase *>(obj);
   PyObject *val = self->*ptr;
   if (!val) {
     Py_RETURN_NONE;
@@ -488,7 +488,7 @@ PyObject *get_property(PyObject *obj, void *unused) {
 
 template <PyObject *FunctionBase::*ptr>
 int set_property(PyObject *obj, PyObject *value, void *unused) {
-  auto self = (FunctionBase *)obj;
+  auto self = reinterpret_cast<FunctionBase *>(obj);
   if (value == Py_None) {
     value = nullptr;
   }

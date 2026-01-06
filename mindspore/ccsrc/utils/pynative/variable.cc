@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-#include <string>
-#include <vector>
-#include <utility>
+#include "include/utils/pynative/variable.h"
+
 #include <memory>
-#include "include/utils/pynative//variable.h"
-#include "include/utils/pynative/common_utils.h"
-#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "mindspore/core/include/utils/ms_context.h"
+#include "include/utils/pynative/common_utils.h"
 
 namespace mindspore::pynative::autograd {
 namespace {
@@ -219,6 +221,7 @@ AutoDiffGuard::~AutoDiffGuard() {
 
 namespace impl {
 void SetTensorGradMetaData(const TensorPtr &tensor, const BackwardNodePtr &grad_node, size_t index) {
+  MS_EXCEPTION_IF_NULL(tensor);
   auto auto_grad_meta_data = tensor->auto_grad_meta_data();
   if (auto_grad_meta_data == nullptr) {
     MS_LOG(DEBUG) << "Tensor " << tensor->id() << " has no auto_grad_meta_data";
