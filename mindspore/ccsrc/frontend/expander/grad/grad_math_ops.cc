@@ -2582,26 +2582,31 @@ REG_BPROP_BUILDER("Erfc").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 });
 
 REG_BPROP_BUILDER("Pow").SetBody(BODYFUNC(ib) {
-  auto x = ib->GetInput(i0);
-  const auto &power = ib->GetInput(i1);
+  const auto &input = ib->GetInput(i0);
+  const auto &exponent = ib->GetInput(i1);
   const auto &out = ib->GetInput(i2);
   const auto &dout = ib->GetInput(i3);
-  auto x_dtype_id = ib->GetDtypeId(x);
-  if (x_dtype_id == kNumberTypeComplex64 || x_dtype_id == kNumberTypeComplex128) {
+  auto input_dtype_id = ib->GetDtypeId(input);
+  if (input_dtype_id == kNumberTypeComplex64 || input_dtype_id == kNumberTypeComplex128) {
     MS_EXCEPTION(TypeError) << "For 'Pow', gradient not support for complex type currently.";
   }
-  NodePtr dx = nullptr;
-  NodePtr grad_power = nullptr;
-  if (x->need_compute_grad_out()) {
-    dx = ib->Mul(
-      (ib->Mul(power, (ib->Pow(x, ib->SubScalar(power, ib->ValueByType(1.0, ib->GetDtype(x)), ib->Value(1)))))), dout);
+  NodePtr grad_input = nullptr;
+  NodePtr grad_exponent = nullptr;
+  if (input->need_compute_grad_out()) {
+    auto condition = ib->Equal(exponent, ib->Tensor(0, ib->GetDtype(exponent)));
+    auto exponent_minus_one = ib->SubScalar(exponent, ib->ValueByType(1.0, ib->GetDtype(exponent)), ib->Value(1));
+    grad_input =
+      ib->Select(condition, ib->Zeros(ib->Shape(dout), ib->Value(static_cast<int64_t>(dout->dtype()->type_id()))),
+                 ib->Mul(dout, ib->Mul(exponent, ib->Pow(input, exponent_minus_one))));
   }
-  if (power->need_compute_grad_out()) {
-    x = ib->Select(ib->Less(x, ib->Tensor(0, ib->GetDtype(x))), ib->Fill(1.0, ib->Shape(x), ib->GetDtype(x)->type_id()),
-                   x);
-    grad_power = ib->Mul((ib->Mul(out, (ib->Log(x)))), dout);
+  if (exponent->need_compute_grad_out()) {
+    auto condition = ib->LogicalAnd(ib->Equal(input, ib->Tensor(0, ib->GetDtype(input))),
+                                    ib->GreaterEqual(exponent, ib->Tensor(0, ib->GetDtype(exponent))));
+    grad_exponent =
+      ib->Select(condition, ib->Zeros(ib->Shape(dout), ib->Value(static_cast<int64_t>(dout->dtype()->type_id()))),
+                 ib->Mul(dout, (ib->Mul(out, (ib->Log(input))))));
   }
-  return {BinopGradCommon(ib, x, power, dx, grad_power)};
+  return {BinopGradCommon(ib, input, exponent, grad_input, grad_exponent)};
 });
 
 REG_BPROP_BUILDER("PowScalarTensor").SetBody(BODYFUNC(ib) {
