@@ -64,14 +64,14 @@ def _check_input_valid(arg):
     """Check if real argument is valid."""
     if isinstance(arg, Tensor):
         if not all(isinstance(item, int) and item > 0 for item in arg.shape):
-            raise ValueError(f"When using decorator enable_dynamic, the corresponding shape of inputs should be " \
-                             f"a tuple/list of positive integers")
+            raise ValueError("When using decorator enable_dynamic, the corresponding shape of inputs should be " \
+                             "a tuple/list of positive integers")
     elif isinstance(arg, (tuple, list)):
         for item in arg:
             _check_input_valid(item)
     else:
-        raise TypeError(f"When using decorator enable_dynamic, the corresponding inputs only supports Tensor " \
-                    f"or a tuple/list of Tensor.")
+        raise TypeError("When using decorator enable_dynamic, the corresponding inputs only supports Tensor " \
+                        "or a tuple/list of Tensor.")
 
 
 def _check_arg_type_shape(arg, dyn_arg, name):
@@ -111,16 +111,14 @@ def generate_dynamic_tensor_args(args_list, dynamic_shapes):
     new_compile_args = list(args_list)
     for index, arg in enumerate(args_list):
         if isinstance(arg, (tuple, list)) and not hasattr(arg, "__ms_mutable__"):
-            raise ValueError(f"When using decorator enable_dynamic, the corresponding attribute of input should be " \
-                             f"mutable(tuple/list)")
+            raise ValueError("When using decorator enable_dynamic, the corresponding attribute of input should be " \
+                             "mutable(tuple/list)")
         if index not in dynamic_shapes:
             continue
         _check_input_valid(arg)
         name, dyn_arg = dynamic_shapes[index]
         _check_arg_type_shape(arg, dyn_arg, name)
         new_compile_args[index] = generate_dynamic_sequence_args(arg, dyn_arg)
-    logger.debug(f"args_list: {args_list}, dynamic_shapes: {dynamic_shapes}, " \
-                 f"new_compile_args: {new_compile_args}")
     return new_compile_args
 
 
@@ -168,7 +166,7 @@ def enable_dynamic(**kwargs):
     """
     # Check inputs at first.
     if not kwargs:
-        raise ValueError(f"When using decorator enable_dynamic, the input cannot be empty!")
+        raise ValueError("When using decorator enable_dynamic, the input cannot be empty!")
     for name, arg in kwargs.items():
         _check_arg_type_valid(arg, name)
         if not _check_arg_shape_valid(arg, name):
@@ -185,7 +183,7 @@ def enable_dynamic(**kwargs):
             raise ValueError(f"When using decorator enable_dynamic, the number of arguments {len(kwargs)} " \
                              f"exceeds the number of function arguments {len(sigs_name)}.")
         # Generate dynamic args.
-        dynamic_args = dict()
+        dynamic_args = {}
         for key, value in kwargs.items():
             index = sigs_name.index(key)
             if index in dynamic_args:
