@@ -230,30 +230,46 @@ PyObject *ToRates(const std::string &op_name, const std::string &arg_name, PyObj
 
 PyObject *NormalizeIntSequence(const std::string &op_name, const std::string &arg_name, PyObject *arg) {
   py::handle arg_handle(arg);
-  if (!py::isinstance<py::list>(arg_handle) && !py::isinstance<py::tuple>(arg_handle)) {
+  const bool is_list = py::isinstance<py::list>(arg_handle);
+  const bool is_tuple = py::isinstance<py::tuple>(arg_handle);
+  if (!is_list && !is_tuple) {
     return arg;
   }
   auto items = py::cast<std::vector<py::object>>(arg_handle);
-  py::tuple int_tuple(items.size());
   auto convert_type = py_parse::CombineTypesForTypeCast(ops::DT_TENSOR, ops::DT_INT);
   auto convert_func = py_parse::GetConverterByType(convert_type);
   MS_EXCEPTION_IF_NULL(convert_func);
-  size_t i = 0;
-  for (const auto &item : items) {
+  const auto normalize_item = [&](const py::object &item) -> py::object {
     if (py_parse::IsGeneralizedInt(item.ptr())) {
-      int_tuple[i] = item;
-    } else {
-      ValuePtr value = convert_func(item);
-      if (!value) {
-        MS_EXCEPTION(ValueError) << "For '" << op_name << "', '" << arg_name << "' contain non-integer element: '"
-                                 << py::str(item).cast<std::string>() << "'.";
-      }
-      int_tuple[i] = py::cast(AnfUtils::GetIntValue(value));
+      return item;
     }
-    i++;
+    ValuePtr value = convert_func(item);
+    if (!value) {
+      MS_EXCEPTION(ValueError) << "For '" << op_name << "', '" << arg_name << "' contain non-integer element: '"
+                               << py::str(item).cast<std::string>() << "'.";
+    }
+    return py::cast(AnfUtils::GetIntValue(value));
+  };
+
+  const auto fill = [&](auto *out) {
+    size_t i = 0;
+    for (const auto &item : items) {
+      (*out)[i] = normalize_item(item);
+      i++;
+    }
+  };
+
+  if (is_tuple) {
+    py::tuple int_tuple(items.size());
+    fill(&int_tuple);
+    Py_INCREF(int_tuple.ptr());
+    return int_tuple.ptr();
   }
-  Py_INCREF(int_tuple.ptr());
-  return int_tuple.ptr();
+
+  py::list int_list(items.size());
+  fill(&int_list);
+  Py_INCREF(int_list.ptr());
+  return int_list.ptr();
 }
 
 PyObject *ScalarTensorToScalar(const std::string &op_name, const std::string &arg_name, PyObject *arg) {
