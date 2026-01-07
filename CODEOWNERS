@@ -187,6 +187,7 @@
 /tests/st/mint/ @liangchenghui
 /tests/st/mix_precision/ @changzherui
 /tests/st/networks/large_models/ @suhaibo
+/tests/st/networks/mindformers @suhaibo
 /tests/st/cluster/ @zhangyinxia
 /tests/st/collective_ops/ @zhangyinxia
 /tests/st/nn/ @changzherui
