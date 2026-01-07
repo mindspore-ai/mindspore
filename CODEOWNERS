@@ -79,6 +79,7 @@
 /mindspore/ops/kernel/ascend/custom/ @limingqi107
 /mindspore/ops/kernel/ascend/dvm/ @gaoxiong1
 /mindspore/ops/kernel/ascend/hccl/ @zhangyinxia
+/mindspore/ops/kernel/ascend/symmetric_memory/ @zhangyinxia
 /mindspore/ops/kernel/ascend/internal/ @liulili-huawei
 /mindspore/ops/kernel/ascend/kernel_packet/ @gaoxiong1
 /mindspore/ops/kernel/ascend/silent_detect/ @fary86
