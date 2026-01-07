@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""
+Tests for ops.pow operation.
+"""
 import numpy as np
 import pytest
 from tests.st.utils import test_utils
@@ -80,6 +82,46 @@ def test_pow_op_backward(context_mode, data_type):
     expect_out = np.array([[2., 32., 48.], [0., 11.0903549, 88.7228394]]).astype(np.float32)
     np.testing.assert_allclose(grads[0].asnumpy(), expect_out[0], rtol=1e-3)
     np.testing.assert_allclose(grads[1].asnumpy(), expect_out[1], rtol=1e-3)
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b',
+                      'platform_gpu',
+                      'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='unessential')
+@pytest.mark.parametrize("mode", ['pynative', 'kbk', 'ge'])
+@pytest.mark.parametrize("dtype", [np.float32])
+@test_utils.run_test_with_On
+def test_pow_op_backward_zero_guard(mode, dtype):
+    """
+    Feature: Auto grad.
+    Description: test auto grad of op pow with zero input/exponent to cover bprop guard branches.
+    Expectation: expect correct result and no NaN/Inf.
+    """
+    if mode == 'pynative':
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+    elif mode == 'kbk':
+        ms.context.set_context(mode=ms.GRAPH_MODE, jit_level='O0')
+    else:
+        ms.context.set_context(mode=ms.GRAPH_MODE, jit_level='O2')
+
+    x = ms.Tensor(np.array([0., 2., 3.]).astype(dtype))
+    y = ms.Tensor(np.array([2., 0., 2.]).astype(dtype))
+
+    grads = pow_backward_func(x, y)
+    dx = grads[0].asnumpy()
+    dy = grads[1].asnumpy()
+
+    # dx = dout * (y * x^(y-1)); when y == 0, dx should be 0.
+    expect_dx = np.array([0., 0., 6.]).astype(np.float32)
+    # dy = dout * (out * log(x)); when x == 0 and y >= 0, dy should be 0 to avoid log(0).
+    expect_dy = np.array([0., np.log(2.), 9. * np.log(3.)]).astype(np.float32)
+
+    np.testing.assert_allclose(dx, expect_dx, rtol=1e-3)
+    np.testing.assert_allclose(dy, expect_dy, rtol=1e-3)
+    assert np.all(np.isfinite(dx))
+    assert np.all(np.isfinite(dy))
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
