@@ -609,11 +609,11 @@ debugger::DataType GetDebuggerNumberDataType(const TypePtr &type) {
 void DumpIRProtoWithSrcInfo(const FuncGraphPtr &func_graph, const std::string &suffix, const std::string &target_dir,
                             LocDebugDumpMode dump_location) {
   DebuggerProtoExporter exporter;
-  std::string graph_proto = exporter.GetFuncGraphProtoString(func_graph, dump_location);
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Func graph is nullptr";
     return;
   }
+  std::string graph_proto = exporter.GetFuncGraphProtoString(func_graph, dump_location);
   std::string file_path = target_dir + "/" + "ms_output_" + suffix + ".pb";
   auto realpath = Common::CreatePrefixPath(file_path);
   if (!realpath.has_value()) {
