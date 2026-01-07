@@ -130,7 +130,7 @@ void GatherInfo(const std::optional<ScalarPtr> &scalar) {
   if (scalar.has_value()) {
     GatherInfo(scalar.value());
   } else {
-    MemcpyToBuf("None", 5);
+    MemcpyToBuf("None", kSizeFive);
   }
 }
 
@@ -177,12 +177,13 @@ constexpr int BIT_SHIFT_32 = 32;
 constexpr int BIT_SHIFT_40 = 40;
 constexpr int BIT_SHIFT_48 = 48;
 constexpr int BIT_SHIFT_56 = 56;
+constexpr int BIT_SHIFT_64 = 64;
 
 constexpr int g_rShift33Bits = 33;
 constexpr uint64_t MIX_STEP1 = 18397679294719823053LLU;
 constexpr uint64_t MIX_STEP2 = 14181476777654086739LLU;
 
-inline uint64_t rotating_left(uint64_t x, uint8_t n) { return (x << n) | (x >> (64 - n)); }
+inline uint64_t rotating_left(uint64_t x, uint8_t n) { return (x << n) | (x >> (BIT_SHIFT_64 - n)); }
 
 inline uint64_t mixture(uint64_t x) {
   // constants step1(18397679294719823053) and step2(14181476777654086739) are used to allow
@@ -353,7 +354,7 @@ void GatherHash(const std::pair<mindspore::kernel::KernelTensor *, bool> &tensor
   auto trans = tensor_and_trans.second;
   GatherHash(tensor);
   // trans
-  MemcpyToBuf(&trans, 1);
+  MemcpyToBuf(&trans, kSizeOne);
 }
 
 void GatherHash(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {

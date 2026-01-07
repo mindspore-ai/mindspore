@@ -65,6 +65,7 @@ mindspore/mindspore/ops/kernel/gpu/cuda/math/unary_op_gpu_kernel.h:mindspore::ke
 mindspore/mindspore/ccsrc/plugin/ascend/res_manager/op_adapter/transform_util.cc:mindspore::device::ascend::TransformUtil::ConvertGeDataType
 mindspore/mindspore/ops/kernel/ascend/acl_ir/op_api_cache.cc:mindspore::device::ascend::gen_hash
 mindspore/mindspore/ops/kernel/ascend/internal/internal_tiling_cache.cc:mindspore::kernel::gen_hash
+mindspore/mindspore/ops/kernel/ascend/symmetric_memory/symmetric_memory_tiling_cache.cc:mindspore::kernel::gen_hash
 mindspore/mindspore/ops/kernel/ascend/aicpu/aicpu_ops/drop_out_gen_mask_kernels.cc:aicpu::ARMDropOutGenMaskKernel
 mindspore/model_zoo/official/recommend/wide_and_deep/src/wide_and_deep.py:__init__
 mindspore/model_zoo/official/recommend/wide_and_deep_multitable/src/wide_and_deep.py:__init__

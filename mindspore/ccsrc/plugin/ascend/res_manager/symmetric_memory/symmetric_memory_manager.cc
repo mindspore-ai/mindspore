@@ -133,9 +133,7 @@ const char *SymmetricMemoryManager::GetShmemIpPort() {
       int new_port = sched_port + 13;
       std::string new_ip_port = "tcp://" + sched_host + ":" + std::to_string(new_port);
       MS_LOG(INFO) << "Using environment variables for shmem IP port: " << new_ip_port;
-      static std::string g_dynamic_ip_port;
-      g_dynamic_ip_port = new_ip_port;
-      ip_port = g_dynamic_ip_port.c_str();
+      ip_port = new_ip_port.c_str();
     } catch (const std::invalid_argument &e) {
       MS_LOG(WARNING) << "Invalid MS_SCHED_PORT value: " << sched_port_str << ", using default: " << kShmemIpPort;
     } catch (const std::out_of_range &e) {
