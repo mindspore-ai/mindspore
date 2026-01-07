@@ -101,7 +101,7 @@ size_t ScheduleToEvents(const SchedulingOutput &schedule) {
   return count;
 }
 
-size_t LiftEvents(const SchedulingOutput &schedule, const std::unordered_set<size_t> &stream_ids) {
+size_t LiftEvents(const SchedulingOutput &schedule, const std::unordered_set<uint32_t> &stream_ids) {
   size_t count = 0;
   std::set<Interval, SortByStartMin> tasks_start;
   std::unordered_map<GptoTaskPtr, GptoTaskPtr> next_in_stream;
@@ -121,9 +121,9 @@ size_t LiftEvents(const SchedulingOutput &schedule, const std::unordered_set<siz
   std::unordered_map<GptoTaskType, size_t> cantor_to_real;
   size_t num_new_streams = 0;
 
-  for (size_t s1 : stream_ids) {
+  for (uint32_t s1 : stream_ids) {
     last_in_stream[s1] = nullptr;
-    for (size_t s2 : stream_ids) {
+    for (uint32_t s2 : stream_ids) {
       if (s1 != s2) {
         const size_t cantor_pairing = (s1 + s2) * (s1 + s2 + 1) / 2 + s2;
         size_t cantor_stream = max_original_stream + cantor_pairing;
@@ -235,7 +235,7 @@ size_t MemorySafetyEvents(const SchedulingOutput &schedule) {
   return count;
 }
 
-std::map<GptoTaskType, size_t> GetPEs(const std::unordered_set<size_t> &stream_ids) {
+std::map<GptoTaskType, size_t> GetPEs(const std::unordered_set<uint32_t> &stream_ids) {
   std::map<GptoTaskType, size_t> new_pem;
   for (const auto &stream_id : stream_ids) {
     new_pem[stream_id] = 1;
@@ -814,7 +814,7 @@ void MemAwareSchedulerReleaseMem(std::unordered_map<size_t, std::unordered_map<s
   }
 }
 
-SchedulingOutput MemAwareScheduler(const SchedulingInput &input, const std::unordered_set<size_t> &stream_ids,
+SchedulingOutput MemAwareScheduler(const SchedulingInput &input, const std::unordered_set<uint32_t> &stream_ids,
                                    size_t *lower_makespan) {
   const std::vector<GptoTaskPtr> &tasks = input.tasks;
   const auto &type_to_num_cores_map = GetPEs(stream_ids);
@@ -2208,7 +2208,7 @@ void PrintParameterInfo(const std::vector<Interval> &intervals, std::ostringstre
 
 void LogSchedulingOutput(const SchedulingOutput &output, const KernelGraphPtr &kernel_graph,
                          const std::set<GptoTensorPtr, GptoTensorIdSort> &tensors, const Memory memory_lower_bound,
-                         std::unordered_set<size_t> *stream_ids, const size_t &lower_makespan,
+                         std::unordered_set<uint32_t> *stream_ids, const size_t &lower_makespan,
                          const std::string &suffix = "") {
   const size_t &graph_id = kernel_graph->graph_id();
   std::stringstream ss;
@@ -2386,7 +2386,7 @@ void InsertEdges(const KernelGraphPtr &kernel_graph, std::unordered_map<CNodePtr
   real_children.clear();
 }
 
-GptoTaskType GetType(const CNodePtr cnode, std::unordered_set<size_t> *stream_ids) {
+GptoTaskType GetType(const CNodePtr cnode, std::unordered_set<uint32_t> *stream_ids) {
   if (common::AnfAlgo::HasNodeAttr(kAttrStreamId, cnode)) {
     const auto prim = GetCNodePrimitive(cnode);
     MS_EXCEPTION_IF_NULL(prim);
@@ -2394,7 +2394,7 @@ GptoTaskType GetType(const CNodePtr cnode, std::unordered_set<size_t> *stream_id
     if (stream_id_attr == nullptr) {
       MS_LOG(EXCEPTION) << "stream_id is nullptr, node: " << cnode->fullname_with_scope();
     }
-    size_t stream_id = common::AnfAlgo::GetNodeAttr<size_t>(cnode, kAttrStreamId);
+    uint32_t stream_id = common::AnfAlgo::GetNodeAttr<uint32_t>(cnode, kAttrStreamId);
     stream_ids->insert(stream_id);
     return stream_id;
   } else {
@@ -3034,7 +3034,7 @@ std::unordered_map<std::string, Time> GetProfCost(const std::string &profile_as_
 
 SchedulingInput ExtractSchedulingInput(const KernelGraphPtr &kernel_graph,
                                        std::unordered_map<CNodePtr, GptoTaskPtr> *cnode_to_task_map_ptr,
-                                       std::unordered_set<size_t> *stream_ids) {
+                                       std::unordered_set<uint32_t> *stream_ids) {
   MS_EXCEPTION_IF_NULL(cnode_to_task_map_ptr);
   SchedulingInput scheduling_input;  // to fill in and return
   std::unordered_map<GptoTaskPtr, std::pair<size_t, size_t>> switch_attribute_ids;
@@ -3823,7 +3823,7 @@ void GPTO(const KernelGraphPtr &kernel_graph,
                << " and Execution order size " << kernel_graph->execution_order().size();
 
   std::unordered_map<CNodePtr, GptoTaskPtr> cnode_to_task;
-  std::unordered_set<size_t> stream_ids;
+  std::unordered_set<uint32_t> stream_ids;
   MS_LOG(INFO) << "Start ExtractSchedulingInput";
   PARAMETER_SIZE = 0;
   SchedulingInput scheduling_input = ExtractSchedulingInput(kernel_graph, &cnode_to_task, &stream_ids);
