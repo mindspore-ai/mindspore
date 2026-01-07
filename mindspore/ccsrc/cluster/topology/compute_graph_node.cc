@@ -273,7 +273,11 @@ bool ComputeGraphNode::Heartbeat() {
   try {
     MS_EXCEPTION_IF_NULL(hb_client_);
 
-    MS_LOG(INFO) << "The heartbeat thread is started.";
+    size_t hb_retry_timeout = common::GetEnv("MS_HEARTBEAT_RETRY_TIMEOUT").empty()
+                                ? kExecuteRetryTimeout
+                                : std::stoi(common::GetEnv("MS_HEARTBEAT_RETRY_TIMEOUT"));
+    MS_LOG(INFO) << "The heartbeat thread is started. Retry timeout after heartbeat failure is " << hb_retry_timeout
+                 << " seconds.";
     while (enable_hb_) {
       HeartbeatMessage hb_msg;
       hb_msg.set_node_id(node_id_);
@@ -287,7 +291,7 @@ bool ComputeGraphNode::Heartbeat() {
       if (response == nullptr) {
         MS_LOG(WARNING)
           << "Failed to send heartbeat message to meta server node and try to reconnect to the meta server.";
-        if (!ReconnectWithTimeout(kExecuteRetryTimeout)) {
+        if (!ReconnectWithTimeout(hb_retry_timeout)) {
           if (!enable_recovery_ && topo_state_ != TopoState::kInitializing) {
             topo_state_ = TopoState::kFailed;
             if (abnormal_callback_ != nullptr) {
@@ -307,7 +311,8 @@ bool ComputeGraphNode::Heartbeat() {
         topo_state_ = static_cast<TopoState>(resp_msg.topo_state());
         if (topo_state_ == TopoState::kInitialized && disable_heartbeat_) {
           MS_LOG(WARNING)
-            << "After cluster is initialized, disconnect heartbeat client if MS_DISABLE_HEARTBEAT is set to 1.";
+            << "After cluster is initialized, heartbeat client will be disconnected if MS_DISABLE_HEARTBEAT is set to "
+               "1. In this scenario, MS_HEARTBEAT_RETRY_TIMEOUT does not take effect.";
           (void)hb_client_->Disconnect(meta_server_addr_.GetUrl());
           break;
         }
