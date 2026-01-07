@@ -197,6 +197,7 @@ void Tensor::shallow_copy_from(const Tensor &other) {
   if (this != &other) {
     ExecuteLazyTask();
     MetaTensor::operator=(other);
+    contiguous_callback_ = other.contiguous_callback_;
     device_sync_ = other.device_address();
     device_info_ = CopyDeviceInfo(other.device_info_);
     need_pipeline_sync_ = other.need_pipeline_sync();
