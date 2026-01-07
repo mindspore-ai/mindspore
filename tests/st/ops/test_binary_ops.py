@@ -18,7 +18,7 @@ Tests for binary operation.
 import pytest
 from tests.mark_utils import arg_mark
 from tests.st.ops.share._internal.binary_ops import BinaryOpsFactory
-from tests.st.ops.share._op_info.op_database import get_op_info, binary_op_db, binary_op_kbk_db
+from tests.st.ops.share._op_info.op_database import get_op_info, binary_op_db, binary_op_kbk_db, binary_op_error_db
 
 ops_params_dict = {
     'test_binary_op_reference_forward' : (['pynative'], binary_op_db),
@@ -28,7 +28,7 @@ ops_params_dict = {
     'test_binary_op_reference_backward_kbk' : (['kbk'], binary_op_kbk_db),
     'test_binary_op_dynamic_forward': (['kbk'], binary_op_kbk_db),
     'test_binary_op_dynamic_backward': (['kbk'], binary_op_kbk_db),
-    'test_binary_op_error': (['pynative', 'kbk'], ['mint.add', 'mint.sub']),
+    'test_binary_op_error': (['pynative', 'kbk'], binary_op_error_db),
 }
 
 @arg_mark(plat_marks=['platform_ascend'],
