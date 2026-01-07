@@ -125,11 +125,11 @@ void CheckCallResult(PyObject *ret) {
 class NoFallbackGuard {
  public:
   NoFallbackGuard() {}
-  NoFallbackGuard &__enter__() {
+  NoFallbackGuard &Enter() {
     fallback_enable_ = false;
     return *this;
   }
-  bool __exit__(py::object /*exc_type*/, py::object /*exc*/, py::object /*tb*/) {
+  bool Exit(py::object /*exc_type*/, py::object /*exc*/, py::object /*tb*/) {
     fallback_enable_ = true;
     return false;  // rethrow exception.
   }
@@ -188,9 +188,9 @@ PyObject *HandleFallback(PyObject *self, PyObject *py_args, PyObject *py_kwargs,
 void RegFallback(py::module *m) {
   py::class_<NoFallbackGuard>(*m, "NoFallbackGuard")
     .def(py::init<>())
-    .def("__enter__", &NoFallbackGuard::__enter__,
+    .def("__enter__", &NoFallbackGuard::Enter,
          py::return_value_policy::reference_internal)  // <-- important
-    .def("__exit__", &NoFallbackGuard::__exit__);
+    .def("__exit__", &NoFallbackGuard::Exit);
 }
 }  // namespace pynative
 }  // namespace mindspore

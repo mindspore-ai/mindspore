@@ -69,12 +69,14 @@ device::DeviceType get_device_from_container(const T &container) {
 template <typename T>
 device::DeviceType get_device_single(const T &input) {
   if constexpr (is_tensor_ptr<T>::value) {
+    MS_EXCEPTION_IF_NULL(input);
     const auto device_type = input->device_type();
     MS_LOG(DEBUG) << "[Dispatch]Get tensor device " << device::GetDeviceNameByType(device_type);
     return device_type;
   }
 
   if constexpr (is_value_ptr<T>::value) {
+    MS_EXCEPTION_IF_NULL(input);
     MS_LOG(DEBUG) << "[Dispatch]Get device from Value.";
     if (input->template isa<mindspore::tensor::Tensor>()) {
       MS_LOG(DEBUG) << "[Dispatch]Cast to Tensor.";
@@ -88,6 +90,7 @@ device::DeviceType get_device_single(const T &input) {
   }
 
   if constexpr (is_value_tuple<T>::value) {
+    MS_EXCEPTION_IF_NULL(input);
     MS_LOG(DEBUG) << "[Dispatch]Get device from ValueTuple.";
     return get_device_from_container(input->value());
   }

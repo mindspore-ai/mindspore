@@ -16,8 +16,8 @@
 
 #include <string>
 #include "tools/profiler/profiler.h"
-#include "include/pynative/utils/runtime/task/device_task.h"
 #include "include/runtime/pipeline/pipeline.h"
+#include "include/pynative/utils/runtime/task/device_task.h"
 
 namespace mindspore {
 namespace runtime {

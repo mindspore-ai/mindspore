@@ -36,7 +36,7 @@ py::object PyboostCellBackwardHookBase(const PrimitivePtr &prim, const py::list 
   static pynative::Converter converter(&ops::gCellBackwardHook);
   converter.Parse(args.ptr());
   auto tensors = converter.ToTensorList<pynative::CPythonTuple>(args.ptr(), kIndex0);
-
+  MS_EXCEPTION_IF_NULL(tensors);
   const auto &values = tensors->value();
   if (fallback_enabled() && std::any_of(values.begin(), values.end(), [](const ValuePtr &value) {
         MS_EXCEPTION_IF_NULL(value);
