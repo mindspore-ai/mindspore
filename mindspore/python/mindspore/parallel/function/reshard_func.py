@@ -149,7 +149,7 @@ def _redistribute(tensor, dst_dtensor_info):
 
             For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -209,7 +209,7 @@ def _redistribute(tensor, dst_dtensor_info):
                 f"{src_layout_info['device_matrix']}, {src_layout_info['tensor_map']}, {src_layout_info['rank_list']}"
                 f" -> "
                 f"{dst_layout_info['device_matrix']}, {dst_layout_info['tensor_map']}, {dst_layout_info['rank_list']}")
-            global COMM_TENSOR_CELL_CACHE
+            global COMM_TENSOR_CELL_CACHE # pylint: disable=global-variable-not-assigned
             if comm_tensor_cache_key not in COMM_TENSOR_CELL_CACHE:
                 comm_tensor_data_func = CommTensorDataForPP(tensor._dtensor_info, dst_dtensor_info)
                 COMM_TENSOR_CELL_CACHE[comm_tensor_cache_key] = comm_tensor_data_func
@@ -218,6 +218,7 @@ def _redistribute(tensor, dst_dtensor_info):
                 comm_tensor_data_func = COMM_TENSOR_CELL_CACHE[comm_tensor_cache_key]
                 logger.debug(f"comm_tensor_cache_key is {comm_tensor_cache_key}, match cache")
             if not comm_tensor_data_func._current_rank_has_data:
+                # pylint: disable=consider-using-generator
                 new_tensor_shape = tuple([tensor_data.shape[i] // tensor._dtensor_info.sharding_strategy[i]
                                           for i in range(len(tensor.shape))])
                 tensor_data = ops.zeros(new_tensor_shape, tensor.dtype)
@@ -233,7 +234,7 @@ def _redistribute(tensor, dst_dtensor_info):
         dataset_strategy = "full_batch"
     context.set_auto_parallel_context(dataset_strategy=dataset_strategy,
                                       parallel_mode="semi_auto_parallel", device_num=get_group_size())
-    global REDIST_CELL_CACHE
+    global REDIST_CELL_CACHE # pylint: disable=global-variable-not-assigned
     redist_cache_key = (f"{src_layout_info['device_matrix']}, {src_layout_info['tensor_map']} -> "
                         f"{dst_layout_info['device_matrix']}, {dst_layout_info['tensor_map']}")
     if redist_cache_key in REDIST_CELL_CACHE:
