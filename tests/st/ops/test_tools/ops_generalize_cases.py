@@ -294,12 +294,6 @@ def check_args(inputs, disable_mode, disable_case, case_config, inplace_update, 
 
 
 def global_params_init(fn, disable_case, case_config, dump_ir, debug_info, debug_level):
-    if "Deterministic" not in disable_case:
-        global ENABLE_DETERMINISTIC
-        if not ENABLE_DETERMINISTIC:
-            ms.set_deterministic(True)
-            ENABLE_DETERMINISTIC = True
-        warning_log("mindspore deterministic-computing is set for all Generalize tests, global loss will be 0.")
     if dump_ir:
         global DUMP_IR
         DUMP_IR = dump_ir
