@@ -18,6 +18,7 @@ from tests.mark_utils import arg_mark
 import platform
 import numpy as np
 import pytest
+import gc
 
 from mindspore import context
 import mindspore.common.dtype as mstype
@@ -142,6 +143,8 @@ def test_RCWM_max_count_graph():
         rcwm = RCWM_max_count()
         rcwm(input_tensor)
         _pynative_executor.sync()
+    del input_tensor
+    gc.collect()
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
@@ -158,6 +161,8 @@ def test_RCWM_max_count_pynative():
         rcwm = RCWM_max_count()
         rcwm(input_tensor)
         _pynative_executor.sync()
+    del input_tensor
+    gc.collect()
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
