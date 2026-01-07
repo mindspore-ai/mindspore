@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/ascend/custom/pyboost_impl/asdsip/asdsip_common.h"
+#include "include/kernel/ascend/custom/pyboost_impl/asdsip_common.h"
 
 namespace ms::pynative {
 constexpr size_t kDefaultCacheSize = 50;

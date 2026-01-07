@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "kernel/ascend/custom/pyboost_impl/aclnn/aclnn_op_runner.h"
+#include "include/kernel/ascend/custom/pyboost_impl/aclnn_op_runner.h"
 
 namespace ms::pynative {
 void AclnnOpRunner::_DispatchLaunchTask() {
