@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+#include "kernel/ascend/hccl/pyboost/comm_common.h"
 #include <memory>
 #include <string>
 #include <vector>
-#include "kernel/ascend/hccl/pyboost/comm_common.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "primitive/framework_ops.h"
 #include "include/runtime/hardware_abstract/collective/collective_manager.h"

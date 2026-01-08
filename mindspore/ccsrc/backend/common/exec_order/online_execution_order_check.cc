@@ -184,7 +184,7 @@ void Process::ProcessKernels(int step) {
   }
 
   auto &group_to_hash = result->group_hashes;
-  group_to_hash.reserve(20);
+  group_to_hash.reserve(kIndex20);
 
   // Process each kernel
   for (const auto &item : kernels) {
