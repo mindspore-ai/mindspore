@@ -24,11 +24,9 @@
 
 - [STABLE] 支持Python 3.12版本。
 
-### API 变更
+### 兼容性
 
-#### 非兼容性接口变更
-
-- ops.ring_attention_update算子不支持8.1.RC1及之前版本的CANN包。
+CANN 8.5.0版本组合包完成开源开放架构升级，由Toolkit+ops两个组合包组成，解耦优化带来一系列命名/数量/使用关系及安装目录的变更，MindSpore 2.7.2版本需要与CANN 8.5.0配套使用，旧版本兼容将在MindSpore 2.8.0继续支持。
 
 ### 贡献者
 
