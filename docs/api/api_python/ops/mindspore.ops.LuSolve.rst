@@ -26,7 +26,7 @@ mindspore.ops.LuSolve
 
     异常：
         - **TypeError** - 若 `x` 和 `lu_data` 的数据类型不是float32或float16。
-        - **TypeError** - 若 `lu_data` 的数据类型不是int32。
+        - **TypeError** - 若 `lu_pivots` 的数据类型不是int32。
         - **TypeError** - 若 `x` 、 `lu_data` 或 `lu_pivots` 不是Tensor。
         - **TypeError** - 若 `x` 、 `lu_data` 的数据类型不同。
         - **ValueError** - 若 `lu_pivots` 的batch维度与 `lu_data` 的batch维度不匹配。
