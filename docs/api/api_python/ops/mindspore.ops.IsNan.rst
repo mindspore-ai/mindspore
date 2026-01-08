@@ -11,4 +11,4 @@ mindspore.ops.IsNan
         - **x** (Tensor) - 输入Tensor。
 
     输出：
-        Tensor，shape与相同的输入，数据的类型为bool。
+        Tensor，shape与输入相同，数据类型为bool。

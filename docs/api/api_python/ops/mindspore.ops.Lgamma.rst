@@ -3,7 +3,7 @@ mindspore.ops.Lgamma
 
 .. py:class:: mindspore.ops.Lgamma
 
-    计算输入的绝对值的gamma函数的自然对数。
+    计算输入的 gamma 函数值的绝对值的自然对数。
 
     更多参考详见 :func:`mindspore.ops.lgamma`。
 

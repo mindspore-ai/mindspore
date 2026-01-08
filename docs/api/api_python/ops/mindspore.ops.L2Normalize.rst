@@ -20,7 +20,7 @@ mindspore.ops.L2Normalize
         - **epsilon** (float，可选) - 为了数值稳定性而引入的很小的浮点数。默认值： ``1e-4`` 。
 
     输入：
-        - **x** (Tensor) - 计算归一化的输入。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意的附加维度数。数据类型必须为float16、float32和float64。
+        - **x** (Tensor) - 计算归一化的输入。shape为 :math:`(N, *)` ，其中 :math:`*` 表示任意的附加维度数。数据类型必须为float16、float32或float64。
 
     输出：
         Tensor，shape和数据类型与 `x` 的相同。

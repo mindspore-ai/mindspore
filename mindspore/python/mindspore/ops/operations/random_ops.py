@@ -327,9 +327,9 @@ class LogNormalReverse(Primitive):
     where \mu, \delta is mean and standard deviation of  lognormal distribution respectively.
 
     Args:
-        mean (float, optional): the mean of normal distribution. With float data type.
+        mean (float, optional): the mean of normal distribution.
             Default: ``1.0`` .
-        std (float, optional): the std of normal distribution. With float data type.
+        std (float, optional): the std of normal distribution.
             Default: ``2.0`` .
 
     Inputs:

@@ -31,7 +31,7 @@ mindspore.ops.Im2Col
         - **ksizes** (Union[int, tuple[int], list[int]]) - 内核的大小。若为两个整数，则分别代表高度和宽度；若只有一个整数，则同时代表高度和宽度。该参数必须被指定。
         - **strides** (Union[int, tuple[int], list[int]]，可选) - 窗口的滑动步幅。若为两个整数，则分别代表高度和宽度；若只有一个整数，则同时代表高度和宽度。默认值： ``1`` 。
         - **dilations** (Union[int, tuple[int], list[int]]，可选) - 窗口的扩张系数。若为两个整数，则分别代表高度和宽度；若只有一个整数，则同时代表高度和宽度。默认值： ``1`` 。
-        - **pads** (Union[int, tuple[int], list[int]]，可选) - 窗口的填充。必须是一个或两个整数来指定高宽和宽度方向的填充。默认值： ``0`` 。
+        - **pads** (Union[int, tuple[int], list[int]]，可选) - 窗口的填充。必须是一个或两个整数来指定高度和宽度方向的填充。默认值： ``0`` 。
 
           - 如果是1个整数，则 :math:`pad\_height = pad\_width` 。
           - 如果是2个整数，则 :math:`pad\_height = pads[0]`, :math:`pad\_width = pads[1]` 。
@@ -46,7 +46,7 @@ mindspore.ops.Im2Col
         - **TypeError** - 如果 `ksizes` 的类型不在Union[int, tuple[int], list[int]]内。
         - **TypeError** - 如果 `strides` 的类型不在Union[int, tuple[int], list[int]]内。
         - **TypeError** - 如果 `dilations` 的类型不在Union[int, tuple[int], list[int]]内。
-        - **TypeError** - 如果 `pads` 类型不在Union[int, tuple[int], list[int]]内。
+        - **TypeError** - 如果 `pads` 的类型不在Union[int, tuple[int], list[int]]内。
         - **ValueError** - 如果 `ksizes` 的值不大于0或其元素数量大于2。
         - **ValueError** - 如果 `strides` 的值不大于0或其元素数量大于2。
         - **ValueError** - 如果 `dilations` 的值不大于0或其元素数量大于2。

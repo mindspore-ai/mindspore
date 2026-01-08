@@ -18,7 +18,7 @@ mindspore.ops.ListDiff
 
     输出：
         - **out** (Tensor) - 被保留下来的值。是一个1D Tensor，与 `x` 类型一致。
-        - **idx** (Tensor) - 被保留值的原始索引。是一个1D Tensor， 类型由 `out_idx` 指定。
+        - **idx** (Tensor) - 被保留值的原始索引。是一个1D Tensor，类型由 `out_idx` 指定。
 
     异常：
         - **ValueError** - 如果 `x` 或 `y` 的shape不是1D。
