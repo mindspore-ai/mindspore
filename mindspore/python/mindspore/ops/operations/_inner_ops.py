@@ -29,7 +29,7 @@ from mindspore.ops.primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim
 from mindspore._c_expression import GeneratorImpl
 from mindspore._c_expression import TensorPy as Tensor_
 from mindspore._c_expression import typing, HookType
-from mindspore._c_expression import pyboost_generator, pyboost_cell_backward_hook
+from mindspore._c_expression import pyboost_cell_backward_hook
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
