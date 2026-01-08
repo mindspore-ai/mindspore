@@ -300,6 +300,10 @@ void ProtoExporter::SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *val
     const UInt64ImmPtr &value = dyn_cast<UInt64Imm>(val);
     value_proto->set_dtype(irpb::DT_UINT64);
     value_proto->set_uint_val(value->value());
+  } else if (val->isa<FP16Imm>()) {
+    const FP16ImmPtr &value = dyn_cast<FP16Imm>(val);
+    value_proto->set_dtype(irpb::DT_FLOAT16);
+    value_proto->set_float_val(static_cast<float>(value->value()));
   } else if (val->isa<FP32Imm>()) {
     const FP32ImmPtr &value = dyn_cast<FP32Imm>(val);
     value_proto->set_dtype(irpb::DT_FLOAT32);
@@ -308,6 +312,10 @@ void ProtoExporter::SetScalarToProto(const ScalarPtr &val, irpb::ValueProto *val
     const FP64ImmPtr &value = dyn_cast<FP64Imm>(val);
     value_proto->set_dtype(irpb::DT_FLOAT64);
     value_proto->set_double_val(value->value());
+  } else if (val->isa<BF16Imm>()) {
+    const BF16ImmPtr &value = dyn_cast<BF16Imm>(val);
+    value_proto->set_dtype(irpb::DT_BFLOAT16);
+    value_proto->set_float_val(static_cast<float>(value->value()));
   } else {
     MS_LOG(INTERNAL_EXCEPTION) << "Unknown scalar type " << val->ToString();
   }
