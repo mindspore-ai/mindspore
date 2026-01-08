@@ -210,7 +210,7 @@ def test_ms_fault_tensor_add_type_error_002():
         func(Tensor(np.array([2]).astype(np.float32)))
 
     assert "The valid calling should be:" in str(raise_info.value)
-    assert "Tensor.add(other=<number,Tensor>, *, alpha=<number,Tensor>)" in str(raise_info.value)
+    assert "Tensor.add(other=<number>, *, alpha=<number>)" in str(raise_info.value)
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
 def test_ms_fault_tensor_add_type_error_003():
@@ -383,7 +383,7 @@ def test_method_wrong_keyword_name():
     assert "match failed because incorrect keyword name: a" in str(raise_info.value)
     assert "Tensor.max()" in str(raise_info.value)
     assert "Tensor.max(dim=<int>, keepdim=<bool>)" in str(raise_info.value)
-    assert ("Tensor.max(axis=<int,Tensor,None>, keepdims=<bool>, *, initial=<number,Tensor,None>, where=<bool,Tensor>, "
+    assert ("Tensor.max(axis=<int,Tuple,None,List>, keepdims=<bool>, *, initial=<number,None>, where=<bool,Tensor>, "
             "return_indices=<bool>)") in str(raise_info.value)
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
@@ -404,7 +404,7 @@ def test_method_wrong_type():
     assert "                                              ~~~~~~~~~~~" in str(raise_info.value)
     assert "Tensor.max()" in str(raise_info.value)
     assert "Tensor.max(dim=<int>, keepdim=<bool>)" in str(raise_info.value)
-    assert ("Tensor.max(axis=<int,Tensor,None>, keepdims=<bool>, *, initial=<number,Tensor,None>, where=<bool,Tensor>, "
+    assert ("Tensor.max(axis=<int,Tuple,None,List>, keepdims=<bool>, *, initial=<number,None>, where=<bool,Tensor>, "
             "return_indices=<bool>)") in str(raise_info.value)
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
