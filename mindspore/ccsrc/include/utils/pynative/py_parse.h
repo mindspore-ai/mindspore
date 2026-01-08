@@ -52,11 +52,10 @@ inline int32_t CombineTypesForTypeCast(const mindspore::ops::OP_DTYPE &src, cons
 
 template <typename TS, typename TD, OpDefConvertFunc func>
 ValuePtr ConvertSequence(const py::object &obj) {
-  bool convert_list_to_tuple = py::isinstance<py::list>(obj) && std::is_same_v<TS, py::tuple>;
-  if (!convert_list_to_tuple && !py::isinstance<TS>(obj)) {
+  if (!py::isinstance<TS>(obj)) {
     return nullptr;
   }
-  auto seq = convert_list_to_tuple ? py::tuple(obj).cast<TS>() : obj.cast<TS>();
+  auto seq = obj.cast<TS>();
   std::vector<ValuePtr> value_list;
   for (size_t it = 0; it < seq.size(); ++it) {
     auto out = func(seq[it]);
