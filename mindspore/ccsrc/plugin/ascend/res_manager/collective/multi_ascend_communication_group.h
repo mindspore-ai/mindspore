@@ -50,7 +50,7 @@ class MultiAscendCommunicationGroup : public CommunicationGroup {
  protected:
   CommunicationGroupPtr hccl_group_;
   CommunicationGroupPtr lccl_group_;
-  CommunicationGroupPtr dvm_group_;
+  CommunicationGroupPtr dvm_group_{nullptr};
 };
 using MultiAscendCommunicationGroupPtr = std::shared_ptr<MultiAscendCommunicationGroup>;
 }  // namespace ascend

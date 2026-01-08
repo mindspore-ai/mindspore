@@ -15,6 +15,8 @@
  */
 
 #include "plugin/ascend/res_manager/collective/multi_ascend_communication_group.h"
+#include <string>
+#include <vector>
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
 #include "kernel/ascend/dvm/kernel_mod_impl/dvm_comm_info.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
@@ -50,7 +52,7 @@ bool MultiAscendCommunicationGroup::Initialize(void *root_info) {
     }
   }
 #endif
-  if (graphkernel::EnableDvmComm() && dvm_group_ != nullptr) {
+  if (dvm_group_ != nullptr) {
     if (!dvm_group_->Initialize(root_info)) {
       MS_LOG(ERROR) << "Failed to initialize DVM communication group";
       return false;
@@ -78,7 +80,7 @@ bool MultiAscendCommunicationGroup::Finalize() {
     MS_LOG(INFO) << "Successfully finalize LCCL group " << name_;
   }
 #endif
-  if (graphkernel::EnableDvmComm() && dvm_group_ != nullptr) {
+  if (dvm_group_ != nullptr) {
     if (!dvm_group_->Finalize()) {
       MS_LOG(ERROR) << "Failed to finalize DVM communication group";
       return false;
