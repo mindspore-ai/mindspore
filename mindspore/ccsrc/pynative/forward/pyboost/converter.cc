@@ -387,6 +387,7 @@ ValueTuplePtr Converter::ToTensorList(PyObject *python_args, size_t i) {
   if (val_seq != nullptr && val_seq->template isa<ValueTuple>()) {
     auto value_tuple = val_seq->template cast<ValueTuplePtr>();
     if (!has_fallback_ && fallback_enabled()) {
+      MS_EXCEPTION_IF_NULL(value_tuple);
       const auto &values = value_tuple->value();
       has_fallback_ = std::any_of(values.begin(), values.end(), [](const ValuePtr &value) {
         return value != nullptr && value->isa<Tensor>() && value->cast<TensorPtr>()->has_fallback();

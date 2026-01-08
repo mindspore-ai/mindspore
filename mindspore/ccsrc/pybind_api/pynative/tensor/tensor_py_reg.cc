@@ -890,6 +890,7 @@ PyObject *TensorPy_make_subclass(PyTypeObject *, PyObject *args, PyObject *kwarg
 
   auto v = reinterpret_cast<PyType<TensorPy> *>(obj);
   MS_EXCEPTION_IF_NULL(v);
+  MS_EXCEPTION_IF_NULL(local_tensor);
 
   if (local_tensor->auto_grad_meta_data() == nullptr) {
     local_tensor->set_auto_grad_meta_data(std::make_shared<pynative::autograd::AutoGradMetaData>());

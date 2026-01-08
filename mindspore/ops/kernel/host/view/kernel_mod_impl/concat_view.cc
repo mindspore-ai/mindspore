@@ -28,9 +28,9 @@ void ConcatView::UpdateOutputTensorInfo(const std::vector<KernelTensor *> &input
   auto input_type = inputs[0]->dtype_id();
   auto type_size = GetTypeByte(TypeIdToType(input_type));
   auto ori_shape = outputs[0]->GetShapeVector();
-  auto ori_size =
-    std::accumulate(ori_shape.begin(), ori_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()) *
-    type_size;
+  auto ori_size = LongToSize(std::accumulate(ori_shape.begin(), ori_shape.end(), static_cast<int64_t>(1),
+                                             std::multiplies<int64_t>())) *
+                  type_size;
   for (size_t i = 0; i < input_num - 1; ++i) {
     ops::OldTensorInfoPtr old_info = GetOldTensorInfo(inputs[i]);
     auto new_storage_info = std::make_shared<TensorStorageInfo>(
