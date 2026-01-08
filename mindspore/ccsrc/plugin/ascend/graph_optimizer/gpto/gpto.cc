@@ -1579,7 +1579,6 @@ bool VerifyMC(const std::vector<GptoTaskPtr> &tasks, const size_t &task_sort, co
 
 void MemAwareSchedulerPre(const std::vector<GptoTaskPtr> &tasks) {
   ComputeBottomLevelAndWeightedLength(tasks);
-  // ComputeDepthAndTopLevel(tasks); // only call if not already called earlier (e.g. for nested conditional blocks)
   if (gpto_mode == kCompComm || gpto_mode == kCompCubeComm || gpto_mode == kCompCommGroup) {
     ComputePredComm(tasks);
   }

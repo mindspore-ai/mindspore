@@ -121,7 +121,8 @@ void Process::CheckCommOrderIteration(size_t total_running_count) {
   size_t check_iteration = std::stoull(check_iteration_from_user);
   if (check_iteration == 0) {
     cache.need_add = (total_running_count == 1);
-    if (total_running_count == 2) {
+    constexpr size_t second_step = 2;
+    if (total_running_count == second_step) {
       static const size_t first_step = 1;
       cache.SwapBuffers(first_step);
       ProcessKernels(first_step);
