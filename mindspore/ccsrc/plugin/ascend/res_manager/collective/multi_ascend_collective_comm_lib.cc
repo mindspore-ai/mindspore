@@ -132,7 +132,7 @@ bool MultiAscendCollectiveCommLib::Finalize() {
   }
 #endif
 
-  if (graphkernel::EnableDvmComm()) {
+  if (dvm_collective_comm_lib_ != nullptr) {
     finalize_collective_comm_lib("DVMCCL", dvm_collective_comm_lib_);
   }
 
@@ -164,7 +164,8 @@ bool MultiAscendCollectiveCommLib::DestroyCommunicationGroup(const std::string &
     MS_LOG(INFO) << "Successfully destroy LCCL communication group " << group_name;
   }
 #endif
-  if (graphkernel::EnableDvmComm() && dvm_comm_enabled_groups.find(group_name) != dvm_comm_enabled_groups.end()) {
+  if (dvm_collective_comm_lib_ != nullptr &&
+      dvm_comm_enabled_groups.find(group_name) != dvm_comm_enabled_groups.end()) {
     RETURN_IF_FALSE_WITH_LOG(dvm_collective_comm_lib_->DestroyCommunicationGroup(group_name),
                              "Failed to destroy DVM communication group " + group_name);
     dvm_comm_enabled_groups.erase(group_name);
@@ -213,7 +214,7 @@ bool MultiAscendCollectiveCommLib::CreateCommunicationGroup(const std::string &g
     MS_LOG(INFO) << "Successfully create LCCL communication group " << group_name;
   }
 #endif
-  if (graphkernel::EnableDvmComm()) {
+  if (dvm_collective_comm_lib_ != nullptr) {
     RETURN_IF_FALSE_WITH_LOG(
       dvm_collective_comm_lib_->CreateCommunicationGroup(group_name, group_ranks, local_group_rank, local_group_size),
       "Failed to create DVM communication group" + group_name);

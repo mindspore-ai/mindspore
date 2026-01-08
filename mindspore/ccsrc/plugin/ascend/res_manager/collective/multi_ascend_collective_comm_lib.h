@@ -106,7 +106,7 @@ class EXPORT_WRAPPER MultiAscendCollectiveCommLib : public CollectiveCommunicati
  private:
   CollectiveCommunicationLib *ascend_collective_comm_lib_;
   CollectiveCommunicationLib *lowlatency_collective_comm_lib_;
-  CollectiveCommunicationLib *dvm_collective_comm_lib_;
+  CollectiveCommunicationLib *dvm_collective_comm_lib_{nullptr};
   std::unordered_set<std::string> lccl_enabled_groups;
   std::unordered_set<std::string> dvm_comm_enabled_groups;
   MultiAscendCollectiveCommLib();
