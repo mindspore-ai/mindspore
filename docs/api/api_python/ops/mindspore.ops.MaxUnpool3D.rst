@@ -34,7 +34,7 @@ mindspore.ops.MaxUnpool3D
 
         - **output_shape** (tuple[int]，可选) - 指定目标输出的尺寸。默认值： ``()`` 。
 
-          - 如果 :math:`output\_shape == ()` ，则输出的shape由 `kszie` 、 `strides` 和 `pads` 根据上面的公式计算得到。
+          - 如果 :math:`output\_shape == ()` ，则输出的shape由 `ksize` 、 `strides` 和 `pads` 根据上面的公式计算得到。
           - 如果 :math:`output\_shape != ()` ，则 `output_shape` 数据格式为 :math:`(N, C, D, H, W)` 或 :math:`(N, D, H, W, C)` ，
             同时 `output_shape` 必须属于 :math:`[(N, C, D_{out} - strides[0], H_{out} - strides[1], W_{out} - strides[2]),
             (N, C, D_{out} + strides[0], H_{out} + strides[1], W_{out} + strides[2])]` 的范围。
