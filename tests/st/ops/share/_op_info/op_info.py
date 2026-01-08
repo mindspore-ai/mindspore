@@ -65,6 +65,7 @@ class OpInfo:
         grad_position: The position of the input tensor to compute gradients. Default is None, which means 
             compute gradients for all input tensors.
         domain: The [low, high) domain of the operator.
+        exclude_value: values to exclude during generation, Default is None, which means no values to exclude.
         is_differentiable: Whether gradients are expected/computed for the op.
         skip_forward_comparison: Whether to skip forward comparison with the reference implementation.
             This is useful for inherently non-deterministic ops (e.g., random sampling). When enabled,
@@ -112,6 +113,7 @@ class OpInfo:
     # extra options for the op.
     grad_position: Optional[tuple] = None
     domain: Optional[tuple] = None
+    exclude_value: Optional[tuple] = None
     is_differentiable: Optional[bool] = True
     # skip forward comparison against reference
     skip_forward_comparison: Optional[bool] = False
@@ -182,8 +184,10 @@ def basic_reference_inputs_binary_op_common_func(
     )
 
     for input_shape, other_shape in shapes:
-        _input = make_func(input_shape, low=op_info.input_low, high=op_info.input_high)
-        _other = make_func(other_shape, low=op_info.other_low, high=op_info.other_high)
+        _input = make_func(input_shape, low=op_info.input_low,
+                           high=op_info.input_high, exclude_value=op_info.input_exclude_value)
+        _other = make_func(other_shape, low=op_info.other_low,
+                           high=op_info.other_high, exclude_value=op_info.other_exclude_value)
 
         yield OpSampleInput(
             op_input=_input,
@@ -225,7 +229,8 @@ def _generate_binary_op_tensors_sample_inputs_func(
                 dtype,
                 device=device,
                 low=op_info.input_low,
-                high=op_info.input_high
+                high=op_info.input_high,
+                exclude_value=op_info.input_exclude_value
             ),
             op_args=(
                 make_tensor(
@@ -233,7 +238,8 @@ def _generate_binary_op_tensors_sample_inputs_func(
                     dtype,
                     device=device,
                     low=op_info.other_low,
-                    high=op_info.other_high
+                    high=op_info.other_high,
+                    exclude_value=op_info.other_exclude_value
                 ),
             ),
             op_kwargs={},
@@ -297,10 +303,15 @@ def _generate_binary_op_small_value_tensor_inputs_func(
         raise ValueError(f"Unsupported dtype: {dtype}!")
 
     for l_value, r_value in values_group:
-        if ((op_info.input_low and op_info.input_low > l_value)
-            or (op_info.input_high and op_info.input_high < l_value)
-            or (op_info.other_low and op_info.other_low > r_value)
-            or (op_info.other_high and op_info.other_high < r_value)):
+        if dtype!=ms.bool_ and (
+                (op_info.input_exclude_value and l_value in op_info.input_exclude_value) or
+                (op_info.other_exclude_value and r_value in op_info.other_exclude_value) ):
+            continue
+        if (dtype.is_floating_point or dtype in dtypes_integral) and (
+            (op_info.input_low is not None and op_info.input_low > l_value)
+            or (op_info.input_high is not None and op_info.input_high < l_value)
+            or (op_info.other_low is not None and op_info.other_low > r_value)
+            or (op_info.other_high is not None and op_info.other_high < r_value)):
             continue
         _input_values.append(l_value)
         _other_values.append(r_value)
@@ -351,10 +362,15 @@ def _generate_binary_op_large_value_tensor_inputs_func(
         raise ValueError(f"Unsupported dtype: {dtype}!")
 
     for l_value, r_value in values_group:
-        if ((op_info.input_low and op_info.input_low > l_value)
-            or (op_info.input_high and op_info.input_high < l_value)
-            or (op_info.other_low and op_info.other_low > r_value)
-            or (op_info.other_high and op_info.other_high < r_value)):
+        if dtype!=ms.bool_ and (
+                (op_info.input_exclude_value and l_value in op_info.input_exclude_value) or
+                (op_info.other_exclude_value and r_value in op_info.other_exclude_value) ):
+            continue
+        if (dtype.is_floating_point or dtype in dtypes_integral) and (
+            (op_info.input_low is not None and op_info.input_low > l_value)
+            or (op_info.input_high is not None and op_info.input_high < l_value)
+            or (op_info.other_low is not None and op_info.other_low > r_value)
+            or (op_info.other_high is not None and op_info.other_high < r_value)):
             continue
         _input_values.append(l_value)
         _other_values.append(r_value)
@@ -409,6 +425,7 @@ def _generate_binary_op_broadcasting_and_discontiguous_tensor_inputs_func(
                 discontiguous=discontiguous,
                 low=op_info.input_low,
                 high=op_info.input_high,
+                exclude_value = op_info.input_exclude_value,
             ),
             op_args=(
                 make_tensor(
@@ -418,6 +435,7 @@ def _generate_binary_op_broadcasting_and_discontiguous_tensor_inputs_func(
                     discontiguous=discontiguous,
                     low=op_info.other_low,
                     high=op_info.other_high,
+                    exclude_value=op_info.other_exclude_value,
                 ),
             ),
             op_kwargs={},
@@ -445,12 +463,12 @@ def _generate_binary_op_scalar_inputs_func(
 
     make_func = functools.partial(make_tensor, dtype=dtype, device=device)
 
-    def _make_scalar(low, high):
+    def _make_scalar(low, high, exclude_value=None):
         """make scalar in [low, high] range
         """
         if dtype.is_complex:
             return 1.0
-        return make_func((),low=low, high=high).item()
+        return make_func((), low=low, high=high, exclude_value=exclude_value).item()
     shapes = (
         (),
         (2,),
@@ -460,8 +478,10 @@ def _generate_binary_op_scalar_inputs_func(
     if op_info.supports_right_python_scalar:
         for shape in shapes:
             yield OpSampleInput(
-                op_input=make_func(shape, low=op_info.input_low, high=op_info.input_high),
-                op_args=(_make_scalar(low=op_info.other_low, high = op_info.other_high),),
+                op_input=make_func(shape, low=op_info.input_low,
+                                   high=op_info.input_high,exclude_value = op_info.input_exclude_value,),
+                op_args=(_make_scalar(low=op_info.other_low, high = op_info.other_high,
+                                      exclude_value = op_info.other_exclude_value,),),
                 op_kwargs={},
                 sample_name=f"{op_info.name}_tensorxscalar_inputs",
             )
@@ -469,16 +489,20 @@ def _generate_binary_op_scalar_inputs_func(
     if op_info.supports_left_python_scalar:
         for shape in shapes:
             yield OpSampleInput(
-                op_input=_make_scalar(low=op_info.input_low, high = op_info.input_high),
-                op_args=(make_func(shape, low=op_info.other_low, high=op_info.other_high),),
+                op_input=_make_scalar(low=op_info.input_low,
+                                      high = op_info.input_high, exclude_value = op_info.input_exclude_value,),
+                op_args=(make_func(shape, low=op_info.other_low,
+                                   high=op_info.other_high, exclude_value = op_info.other_exclude_value,),),
                 op_kwargs={},
                 sample_name=f"{op_info.name}_scalarxtensor_inputs",
             )
 
     if op_info.supports_both_python_scalar:
         yield OpSampleInput(
-            op_input=_make_scalar(low=op_info.input_low, high = op_info.input_high),
-            op_args=(_make_scalar(low=op_info.other_low, high = op_info.other_high),),
+            op_input=_make_scalar(low=op_info.input_low,
+                                  high = op_info.input_high, exclude_value = op_info.input_exclude_value,),
+            op_args=(_make_scalar(low=op_info.other_low,
+                                  high = op_info.other_high, exclude_value = op_info.other_exclude_value,),),
             op_kwargs={},
             sample_name=f"{op_info.name}_scalarxscalar_inputs",
         )
@@ -508,25 +532,30 @@ def _generate_binary_op_extremal_value_tensor_inputs_func(
             return
 
     S = SMALL_DIM_SIZE
-    yield OpSampleInput(
-        op_input=make_tensor_with_np_array(np.full((S, S), np.inf), dtype=dtype, device=device),
-        op_args=(make_tensor_with_np_array(np.full((S, S), np.inf), dtype=dtype, device=device),),
-        op_kwargs={},
-        sample_name=op_info.name,
-    )
-    yield OpSampleInput(
-        op_input=make_tensor_with_np_array(np.full((S, S), -np.inf), dtype=dtype, device=device),
-        op_args=(make_tensor_with_np_array(np.full((S, S), -np.inf), dtype=dtype, device=device),),
-        op_kwargs={},
-        sample_name=op_info.name,
-    )
-    yield OpSampleInput(
-        op_input=make_tensor_with_np_array(np.full((S, S), np.nan), dtype=dtype, device=device),
-        op_args=(make_tensor_with_np_array(np.full((S, S), np.nan), dtype=dtype, device=device),),
-        op_kwargs={},
-        sample_name=op_info.name,
-    )
-
+    if (not op_info.input_exclude_value or np.inf not in op_info.input_exclude_value) and (
+        not op_info.other_exclude_value or np.inf not in op_info.other_exclude_value):
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(np.full((S, S), np.inf), dtype=dtype, device=device),
+            op_args=(make_tensor_with_np_array(np.full((S, S), np.inf), dtype=dtype, device=device),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+    if (not op_info.input_exclude_value or -np.inf not in op_info.input_exclude_value) and (
+            not op_info.other_exclude_value or -np.inf not in op_info.other_exclude_value):
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(np.full((S, S), -np.inf), dtype=dtype, device=device),
+            op_args=(make_tensor_with_np_array(np.full((S, S), -np.inf), dtype=dtype, device=device),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+    if (not op_info.input_exclude_value or np.nan not in op_info.input_exclude_value) and (
+            not op_info.other_exclude_value or np.nan not in op_info.other_exclude_value):
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(np.full((S, S), np.nan), dtype=dtype, device=device),
+            op_args=(make_tensor_with_np_array(np.full((S, S), np.nan), dtype=dtype, device=device),),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
 
 def extra_reference_inputs_binary_op_common_func(
     op_info: OpInfo,
@@ -597,14 +626,18 @@ def dynamic_inputs_binary_op_common_func(
             ),
             op_running_inputs=(
                 OpSampleInput(
-                    op_input=make_func(shape=(2, 3), low=op_info.input_low, high=op_info.input_high),
-                    op_args=(make_func(shape=(2, 3), low=op_info.other_low, high=op_info.other_high),),
+                    op_input=make_func(shape=(2, 3), low=op_info.input_low,
+                                       high=op_info.input_high,exclude_value = op_info.input_exclude_value),
+                    op_args=(make_func(shape=(2, 3), low=op_info.other_low,
+                                       high=op_info.other_high, exclude_value = op_info.other_exclude_value),),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_dynamic_shape_running_input",
                 ),
                 OpSampleInput(
-                    op_input=make_func(shape=(4, 5), low=op_info.input_low, high=op_info.input_high),
-                    op_args=(make_func(shape=(4, 5), low=op_info.other_low, high=op_info.other_high),),
+                    op_input=make_func(shape=(4, 5), low=op_info.input_low,
+                                       high=op_info.input_high, exclude_value = op_info.input_exclude_value),
+                    op_args=(make_func(shape=(4, 5), low=op_info.other_low,
+                                       high=op_info.other_high, exclude_value = op_info.other_exclude_value),),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_dynamic_shape_running_input",
                 ),
@@ -621,14 +654,18 @@ def dynamic_inputs_binary_op_common_func(
             ),
             op_running_inputs=(
                 OpSampleInput(
-                    op_input=make_func(shape=(2, 3), low=op_info.input_low, high=op_info.input_high),
-                    op_args=(make_func(shape=(2, 3), low=op_info.other_low, high=op_info.other_high),),
+                    op_input=make_func(shape=(2, 3), low=op_info.input_low,
+                                       high=op_info.input_high, exclude_value = op_info.input_exclude_value),
+                    op_args=(make_func(shape=(2, 3), low=op_info.other_low,
+                                       high=op_info.other_high, exclude_value = op_info.other_exclude_value),),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_dynamic_rank_running_input",
                 ),
                 OpSampleInput(
-                    op_input=make_func(shape=(2, 3, 4), low=op_info.input_low, high=op_info.input_high),
-                    op_args=(make_func(shape=(2, 3, 4), low=op_info.other_low, high=op_info.other_high),),
+                    op_input=make_func(shape=(2, 3, 4), low=op_info.input_low,
+                                       high=op_info.input_high, exclude_value = op_info.input_exclude_value),
+                    op_args=(make_func(shape=(2, 3, 4), low=op_info.other_low,
+                                       high=op_info.other_high, exclude_value = op_info.other_exclude_value),),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_dynamic_rank_running_input",
                 ),
@@ -751,6 +788,9 @@ class BinaryOpInfo(OpInfo):
         self.input_high = None if not self.domain else self.domain[0][1]
         self.other_low = None if not self.domain else self.domain[1][0]
         self.other_high = None if not self.domain else self.domain[1][1]
+        self.input_exclude_value = None if not self.exclude_value else self.exclude_value[0]
+        self.other_exclude_value = None if (not self.exclude_value) or len(self.exclude_value) <= 1\
+            else self.exclude_value[1]
 
 
 # basic op_basic_reference_inputs_func for unary ops
@@ -796,7 +836,8 @@ def basic_reference_inputs_unary_op_common_func(
     )
 
     for input_shape in shapes:
-        _input = make_func(input_shape, low=op_info.input_low, high=op_info.input_high)
+        _input = make_func(input_shape, low=op_info.input_low,
+                           high=op_info.input_high, exclude_value = op_info.input_exclude_value)
 
         yield OpSampleInput(
             _input,
@@ -840,6 +881,7 @@ def _generate_unary_op_tensors_sample_inputs_func(
                 device=device,
                 low=op_info.input_low,
                 high=op_info.input_high,
+                exclude_value=op_info.input_exclude_value
             ),
             op_args=(),
             op_kwargs={},
@@ -885,19 +927,22 @@ def _generate_unary_op_small_value_tensor_inputs_func(
         math.pi + 1e-5,
     )
 
-    def _filter_range_values(values, low, high):
+    def _filter_range_values(values, low, high, exclude_value = None):
         return list(filter(lambda x: (low is None or x > low)
-                             and (high is None or x < high),
-                             values))
+                             and (high is None or x < high) and (
+                not exclude_value or x not in exclude_value ),values))
     if dtype.is_floating_point:
-        values = _filter_range_values(_float_vals, op_info.input_low, op_info.input_high)
+        values = _filter_range_values(_float_vals, op_info.input_low,
+                                      op_info.input_high, op_info.input_exclude_value)
     elif dtype.is_complex:
         values = [complex(r, i) for r, i in itertools.product(_float_vals, _float_vals)]
     elif dtype in dtypes_integral and dtype != ms.bool_:
         if dtype in dtypes_extra_uint or dtype == ms.uint8:
-            values = _filter_range_values(_uint_values, op_info.input_low, op_info.input_high)
+            values = _filter_range_values(_uint_values, op_info.input_low,
+                                          op_info.input_high, op_info.input_exclude_value)
         else:
-            values = _filter_range_values(_int_values, op_info.input_low, op_info.input_high)
+            values = _filter_range_values(_int_values, op_info.input_low,
+                                          op_info.input_high,op_info.input_exclude_value )
     else:
         raise ValueError(f"Unsupported dtype: {dtype}!")
 
@@ -930,19 +975,22 @@ def _generate_unary_op_large_value_tensor_inputs_func(
     _fp16_values = (-521, 521, -996.9, 996.9, -13141.5, 13141.5)
     _fp32_values = _fp16_values + (-5062757.7, 5062757.7, -1e20, 1e20)
 
-    def _filter_range_values(values, low, high):
+    def _filter_range_values(values, low, high, exclude_value=None):
         return list(filter(lambda x: (low is None or x > low)
-                             and (high is None or x < high),
-                             values))
+                            and (high is None or x < high) and (
+                            not exclude_value or x not in exclude_value), values))
 
     if dtype == ms.float16:
-        values = _filter_range_values(_fp16_values, op_info.input_low, op_info.input_high)
+        values = _filter_range_values(_fp16_values, op_info.input_low,
+                                      op_info.input_high, op_info.input_exclude_value)
     elif dtype.is_floating_point:
-        values = _filter_range_values(_fp32_values, op_info.input_low, op_info.input_high)
+        values = _filter_range_values(_fp32_values, op_info.input_low,
+                                      op_info.input_high, op_info.input_exclude_value)
     elif dtype.is_complex:
         values = [complex(r, i) for r, i in itertools.product(_fp32_values, _fp32_values)]
     elif dtype in (ms.int16, ms.int32, ms.int64):
-        values = _filter_range_values(_int_values, op_info.input_low, op_info.input_high)
+        values = _filter_range_values(_int_values, op_info.input_low,
+                                      op_info.input_high, op_info.input_exclude_value)
     else:
         raise ValueError(f"Unsupported dtype: {dtype}!")
 
@@ -986,7 +1034,8 @@ def _generate_unary_op_discontiguous_tensor_inputs_func(
                 device=device,
                 discontiguous=discontiguous,
                 low=op_info.input_low,
-                high=op_info.input_high
+                high=op_info.input_high,
+                exclude_value = op_info.input_exclude_value
             ),
             op_args=(),
             op_kwargs={},
@@ -1019,24 +1068,27 @@ def _generate_unary_op_extremal_value_tensor_inputs_func(
             return
 
     S = SMALL_DIM_SIZE
-    yield OpSampleInput(
-        op_input=make_tensor_with_np_array(np.full((S, S), np.inf), dtype=dtype, device=device),
-        op_args=(),
-        op_kwargs={},
-        sample_name=op_info.name,
-    )
-    yield OpSampleInput(
-        op_input=make_tensor_with_np_array(np.full((S, S), -np.inf), dtype=dtype, device=device),
-        op_args=(),
-        op_kwargs={},
-        sample_name=op_info.name,
-    )
-    yield OpSampleInput(
-        op_input=make_tensor_with_np_array(np.full((S, S), np.nan), dtype=dtype, device=device),
-        op_args=(),
-        op_kwargs={},
-        sample_name=op_info.name,
-    )
+    if not op_info.input_exclude_value or np.inf not in op_info.input_exclude_value:
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(np.full((S, S), np.inf), dtype=dtype, device=device),
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+    if not op_info.input_exclude_value or -np.inf not in op_info.input_exclude_value:
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(np.full((S, S), -np.inf), dtype=dtype, device=device),
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
+    if not op_info.input_exclude_value or np.nan not in op_info.input_exclude_value:
+        yield OpSampleInput(
+            op_input=make_tensor_with_np_array(np.full((S, S), np.nan), dtype=dtype, device=device),
+            op_args=(),
+            op_kwargs={},
+            sample_name=op_info.name,
+        )
 
 
 def extra_reference_inputs_unary_op_common_func(
@@ -1104,13 +1156,15 @@ def dynamic_inputs_unary_op_common_func(
             ),
             op_running_inputs=(
                 OpSampleInput(
-                    op_input=make_func(shape=(2, 3), low=op_info.input_low, high=op_info.input_high),
+                    op_input=make_func(shape=(2, 3), low=op_info.input_low,
+                                       high=op_info.input_high, exclude_value=op_info.input_exclude_value),
                     op_args=(),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_dynamic_shape_running_input",
                 ),
                 OpSampleInput(
-                    op_input=make_func(shape=(4, 5), low=op_info.input_low, high=op_info.input_high),
+                    op_input=make_func(shape=(4, 5), low=op_info.input_low,
+                                       high=op_info.input_high, exclude_value=op_info.input_exclude_value),
                     op_args=(),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_dynamic_shape_running_input",
@@ -1128,13 +1182,15 @@ def dynamic_inputs_unary_op_common_func(
             ),
             op_running_inputs=(
                 OpSampleInput(
-                    op_input=make_func(shape=(2, 3), low=op_info.input_low, high=op_info.input_high),
+                    op_input=make_func(shape=(2, 3), low=op_info.input_low,
+                                       high=op_info.input_high, exclude_value=op_info.input_exclude_value),
                     op_args=(),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_dynamic_rank_running_input",
                 ),
                 OpSampleInput(
-                    op_input=make_func(shape=(2, 3, 4), low=op_info.input_low, high=op_info.input_high),
+                    op_input=make_func(shape=(2, 3, 4), low=op_info.input_low,
+                                       high=op_info.input_high, exclude_value=op_info.input_exclude_value),
                     op_args=(),
                     op_kwargs={},
                     sample_name=f"{op_info.name}_dynamic_rank_running_input",
@@ -1184,6 +1240,7 @@ class UnaryOpInfo(OpInfo):
         self.disable_extremal_value_tensor_inputs = disable_extremal_value_tensor_inputs
         self.input_low = None if not self.domain else self.domain[0]
         self.input_high = None if not self.domain else self.domain[1]
+        self.input_exclude_value = self.exclude_value
 
 
 def basic_reference_inputs_reduction_op_common_func(
