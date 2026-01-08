@@ -24,7 +24,7 @@
 
 - [STABLE] Supports Python 3.12.
 
-### Incompatible Change
+### Compatibility
 
 The CANN 8.5.0 package has completed the upgrade to an open-source architecture and consists of two packages: Toolkit and ops. The decoupling optimization has led to a series of changes in naming conventions, quantities, usage relationships, and installation directories. MindSpore 2.7.2 needs to be used in conjunction with CANN 8.5.0. Compatibility with older versions will continue to be supported in MindSpore 2.8.0.
 
