@@ -11,8 +11,8 @@ mindspore.ops.MaxUnpool2D
 
     .. math::
         \begin{array}{ll} \\
-        H_{out} = (H{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
-        W_{out} = (W{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
+        H_{out} = (H_{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
+        W_{out} = (W_{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
         \end{array}
 
     .. warning::
@@ -34,7 +34,7 @@ mindspore.ops.MaxUnpool2D
 
         - **output_shape** (tuple[int]，可选) - 一个可选的输入，指定目标输出的尺寸。默认值： ``()`` 。
 
-          - 如果 :math:`output\_shape == ()` ，则输出的shape由 `kszie` 、 `strides` 和 `pads` 计算得到。
+          - 如果 :math:`output\_shape == ()` ，则输出的shape由 `ksize` 、 `strides` 和 `pads` 计算得到。
           - 如果 :math:`output\_shape != ()` ，则 `output_shape` 必须为 :math:`(N, C, H, W)` 或 :math:`(N, H, W, C)` ，
             同时 `output_shape` 必须属于 :math:`[(N, C, H_{out} - strides[0], W_{out} - strides[1]),
             (N, C, H_{out} + strides[0], W_{out} + strides[1])]` 。
@@ -55,7 +55,7 @@ mindspore.ops.MaxUnpool2D
         - **TypeError** - 如果 `ksize` 、 `strides` 或 `pads` 既不是int又不是tuple。
         - **ValueError** - 如果 `strides` (也支持0和(0, 0)) 或 `ksize` 的值不是正数。
         - **ValueError** - 如果 `pads` 的值是负数。
-        - **ValueError** - 如果  `ksize` 、 `strides` 或 `pads` 不是长度为2的tuple。
+        - **ValueError** - 如果 `ksize` 、 `strides` 或 `pads` 不是长度为2的tuple。
         - **ValueError** - 如果 `data_format` 不是str，同时也不是 ``"NCHW"`` 或 ``"NHWC"`` 。
         - **ValueError** - 如果 `output_shape` 的长度不是0或4。
         - **ValueError** - 如果 `output_shape` 不在由 `ksize` 、 `strides` 和 `pads` 计算出的输出尺寸范围内。

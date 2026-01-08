@@ -1482,8 +1482,8 @@ class MaxUnpool2D(Primitive):
 
     .. math::
         \begin{array}{ll} \\
-        H_{out} = (H{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
-        W_{out} = (W{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
+        H_{out} = (H_{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
+        W_{out} = (W_{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
         \end{array}
 
     .. warning::
@@ -1507,7 +1507,7 @@ class MaxUnpool2D(Primitive):
 
         output_shape (tuple[int], optional): The target output size is an optional input. Default: ``()`` .
 
-            - If :math:`output\_shape == ()` , then the shape of output computed by `kszie`, `strides` and `pads` .
+            - If :math:`output\_shape == ()` , then the shape of output computed by `ksize`, `strides` and `pads` .
             - If :math:`output\_shape != ()` , then `output_shape` must be :math:`(N, C, H, W)` or :math:`(N, H, W, C)`
               and `output_shape` must belong to :math:`[(N, C, H_{out} - strides[0], W_{out} - strides[1]),
               (N, C, H_{out} + strides[0], W_{out} + strides[1])]`.
@@ -1587,9 +1587,9 @@ class MaxUnpool3D(Primitive):
 
     .. math::
         \begin{array}{ll} \\
-        D_{out} = (D{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
-        H_{out} = (H{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
-        W_{out} = (W{in} - 1) \times strides[2] - 2 \times pads[2] + ksize[2] \\
+        D_{out} = (D_{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
+        H_{out} = (H_{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
+        W_{out} = (W_{in} - 1) \times strides[2] - 2 \times pads[2] + ksize[2] \\
         \end{array}
 
     .. warning::
@@ -1612,7 +1612,7 @@ class MaxUnpool3D(Primitive):
               pads[1] and pads[2] correspondingly.
 
         output_shape (tuple[int], optional) : The target output size. Default: ``()`` .
-            If :math:`output\_shape == ()`, then the shape of output computed by kszie, strides and pads shown above.
+            If :math:`output\_shape == ()`, then the shape of output computed by ksize, strides and pads shown above.
             If :math:`output\_shape != ()`, then output_shape format must be :math:`(N, C, D, H, W)` or
             :math:`(N, D, H, W, C)` and output_shape must be in range
             :math:`[(N, C, D_{out} - strides[0], H_{out} - strides[1], W_{out} - strides[2]),

@@ -4031,7 +4031,7 @@ class Median(Primitive):
     If `global_median` is True, computes the  median of all elements of tensor.
 
     .. warning::
-        - `indices` does not necessarily contain the first occurrence of each median value found in the `input`,
+        - `indices` does not necessarily contain the first occurrence of each median value found in the `x`,
           unless it is unique. The specific implementation of this API is device-specific.
           The results may be different on CPU and GPU.
         - When attr `global_median` is ``True`` , the value of the second output tensor `indices` is meaningless.

@@ -11,9 +11,9 @@ mindspore.ops.MaxUnpool3D
 
     .. math::
         \begin{array}{ll} \\
-        D_{out} = (D{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
-        H_{out} = (H{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
-        W_{out} = (W{in} - 1) \times strides[2] - 2 \times pads[2] + ksize[2] \\
+        D_{out} = (D_{in} - 1) \times strides[0] - 2 \times pads[0] + ksize[0] \\
+        H_{out} = (H_{in} - 1) \times strides[1] - 2 \times pads[1] + ksize[1] \\
+        W_{out} = (W_{in} - 1) \times strides[2] - 2 \times pads[2] + ksize[2] \\
         \end{array}
 
     .. warning::
@@ -34,7 +34,7 @@ mindspore.ops.MaxUnpool3D
 
         - **output_shape** (tuple[int]，可选) - 指定目标输出的尺寸。默认值： ``()`` 。
 
-          - 如果 :math:`output\_shape == ()` ，则输出的shape由 `kszie` 、 `strides` 和 `pads` 根据上面的公式计算得到。
+          - 如果 :math:`output\_shape == ()` ，则输出的shape由 `ksize` 、 `strides` 和 `pads` 根据上面的公式计算得到。
           - 如果 :math:`output\_shape != ()` ，则 `output_shape` 数据格式为 :math:`(N, C, D, H, W)` 或 :math:`(N, D, H, W, C)` ，
             同时 `output_shape` 必须属于 :math:`[(N, C, D_{out} - strides[0], H_{out} - strides[1], W_{out} - strides[2]),
             (N, C, D_{out} + strides[0], H_{out} + strides[1], W_{out} + strides[2])]` 的范围。
@@ -55,7 +55,7 @@ mindspore.ops.MaxUnpool3D
         - **TypeError** - 如果 `ksize` 、 `strides` 或 `pads` 既不是int又不是tuple。
         - **ValueError** - 如果 `strides` 或 `ksize` 的值是负数。
         - **ValueError** - 如果 `pads` 的值是负数。
-        - **ValueError** - 如果  `ksize` 、 `strides` 或 `pads` 是tuple，但长度不是3。
+        - **ValueError** - 如果 `ksize` 、 `strides` 或 `pads` 是tuple，但长度不是3。
         - **ValueError** - 如果 `data_format` 不是值为 ``'NCDHW'`` 或 ``'NDHWC'`` 的str。
         - **ValueError** - 如果 `output_shape` 的长度不是0或5。
         - **ValueError** - 如果 `output_shape` 不在由 `ksize` 、 `strides` 和 `pads` 计算出的输出尺寸范围内。
