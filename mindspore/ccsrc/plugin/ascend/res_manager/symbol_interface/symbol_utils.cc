@@ -56,7 +56,15 @@ std::string GetAscendPath() {
   const std::string kLatest = "latest";
   auto posCann = path_tmp.rfind(kCann);
   auto posLatest = path_tmp.rfind(kLatest);
-  if (posCann != std::string::npos) {
+  // Different version of CANN uses different directory names, check both for compatibility
+  if (posCann != std::string::npos && posLatest != std::string::npos) {
+    // Both found, choose the rightmost one
+    if (posCann > posLatest) {
+      return path_tmp.substr(0, posCann) + kCann + "/";
+    } else {
+      return path_tmp.substr(0, posLatest) + kLatest + "/";
+    }
+  } else if (posCann != std::string::npos) {
     return path_tmp.substr(0, posCann) + kCann + "/";
   } else if (posLatest != std::string::npos) {
     return path_tmp.substr(0, posLatest) + kLatest + "/";
