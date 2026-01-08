@@ -19,7 +19,7 @@ Note that the APIs in the following list need to preset communication environmen
 
 For Ascend devices, it is recommended to use the msrun startup method
 without any third-party or configuration file dependencies.
-Please see the `msrun start up
+Please see the `msrun startup
 <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
 for more details.
 """

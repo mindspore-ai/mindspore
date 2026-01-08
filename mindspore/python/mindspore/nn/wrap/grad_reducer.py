@@ -256,16 +256,11 @@ class DistributedGradReducer(Cell):
         .. note::
             Before running the following examples, you need to configure the communication environment variables.
 
-            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
-            Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/en/master/parallel/rank_table.html>`_
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
-
-            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/en/master/parallel/mpirun.html>`_ .
-
-            For the CPU device, users need to write a dynamic cluster startup script, please see the `Dynamic Cluster
-            Startup <https://www.mindspore.cn/tutorials/en/master/parallel/dynamic_cluster.html>`_ .
 
             This example should be run with multiple devices.
 
@@ -334,7 +329,7 @@ class DistributedGradReducer(Cell):
     """
 
     def __init__(self, parameters, mean=None, degree=None, fusion_type=1, group=GlobalComm.WORLD_COMM_GROUP):
-        super(DistributedGradReducer, self).__init__(auto_prefix=False)
+        super(DistributedGradReducer, self).__init__(auto_prefix=False) # pylint: disable=super-with-arguments
         self.map_ = ops.Map()
         self.mean = mean
         if mean is None:
@@ -438,13 +433,11 @@ class PipelineGradReducer(Cell):
         .. note::
             Before running the following examples, you need to configure the communication environment variables.
 
-            For the Ascend devices, users need to prepare the rank table, set rank_id and device_id.
-            Please see the `rank table Startup
-            <https://www.mindspore.cn/tutorials/en/master/parallel/rank_table.html>`_
+            For Ascend/GPU/CPU devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
-
-            For the GPU devices, users need to prepare the host file and mpi, please see the `mpirun Startup
-            <https://www.mindspore.cn/tutorials/en/master/parallel/mpirun.html>`_ .
 
             This example should be run with multiple devices.
 
@@ -508,7 +501,7 @@ class PipelineGradReducer(Cell):
         46.36721
     """
     def __init__(self, parameters, scale_sense=1.0, opt_shard=None):
-        super(PipelineGradReducer, self).__init__(auto_prefix=False)
+        super(PipelineGradReducer, self).__init__(auto_prefix=False) # pylint: disable=super-with-arguments
         self.accu_grads = parameters.clone(prefix="accu_grads", init="zeros")
         self.grad_reducer = Identity()
         self.degree = Tensor(1, mstype.float32)

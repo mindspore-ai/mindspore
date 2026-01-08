@@ -256,7 +256,7 @@ def set_comm_ops_inplace(is_enable, func_list=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -644,7 +644,7 @@ def is_available():
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -673,7 +673,7 @@ def is_initialized():
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -741,7 +741,7 @@ def init_process_group(backend="hccl",
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -814,7 +814,7 @@ def destroy_process_group(group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -867,7 +867,7 @@ def get_rank(group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -924,7 +924,7 @@ def get_world_size(group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1011,7 +1011,7 @@ def new_group(ranks=None,
             Before running the following examples, you need to configure the communication environment variables.
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1072,7 +1072,7 @@ def get_backend(group=None):
             Before running the following examples, you need to configure the communication environment variables.
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1130,7 +1130,7 @@ def get_global_rank(group, group_rank):
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1195,7 +1195,7 @@ def get_group_rank(group, global_rank):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1256,7 +1256,7 @@ def get_process_group_ranks(group=None):
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1367,7 +1367,7 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1455,7 +1455,7 @@ def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=Fal
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1543,7 +1543,7 @@ def all_gather_into_tensor_uneven(output, input, output_split_sizes=None, group=
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1637,7 +1637,7 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1731,7 +1731,7 @@ def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=Reduc
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1827,7 +1827,7 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=None, async_op=False):
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1986,7 +1986,7 @@ def batch_isend_irecv(p2p_op_list):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2101,7 +2101,7 @@ def scatter_tensor(output_tensor, input_tensor, src=0, group=None, async_op=Fals
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2192,7 +2192,7 @@ def gather_into_tensor(output_tensor, input_tensor, dst=0, group=None, async_op=
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2284,7 +2284,7 @@ def broadcast(tensor, src, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2355,7 +2355,7 @@ def barrier(group=None, async_op=False, device_ids=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2413,7 +2413,7 @@ def send(tensor, dst=0, group=None, tag=0):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2495,7 +2495,7 @@ def recv(tensor, src=0, group=None, tag=0):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2575,7 +2575,7 @@ def isend(tensor, dst=0, group=None, tag=0):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2661,7 +2661,7 @@ def irecv(tensor, src=0, group=None, tag=0):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2749,7 +2749,7 @@ def all_to_all(output_tensor_list, input_tensor_list, group=None, async_op=False
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2927,7 +2927,7 @@ def all_to_all_single(output,
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3062,7 +3062,7 @@ def all_gather(tensor_list, tensor, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3149,7 +3149,7 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3244,7 +3244,7 @@ def scatter(tensor, scatter_list, src=0, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3336,7 +3336,7 @@ def gather(tensor, gather_list, dst=0, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3430,7 +3430,7 @@ def scatter_object_list(scatter_object_output_list, scatter_object_input_list, s
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3524,7 +3524,7 @@ def gather_object(obj, object_gather_list=None, dst=0, group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3605,7 +3605,7 @@ def broadcast_object_list(object_list, src=0, group=None, device=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3689,7 +3689,7 @@ def all_gather_object(object_list, obj, group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3773,7 +3773,7 @@ def all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False)
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
