@@ -73,52 +73,27 @@ MindSpore提供跨多个后端的构建选项：
 
 | 硬件平台      | 操作系统        | 状态  |
 | :------------ | :-------------- | :--- |
-| Ascend    | Ubuntu-x86      | ✔️   |
-|               | Ubuntu-aarch64  | ✔️   |
-|               | EulerOS-aarch64 | ✔️   |
-|               | CentOS-x86      | ✔️   |
-|               | CentOS-aarch64  | ✔️   |
-| GPU CUDA 10.1 | Ubuntu-x86      | ✔️   |
-| CPU           | Ubuntu-x86      | ✔️   |
-|               | Ubuntu-aarch64  | ✔️   |
+| Ascend    | Linux-x86      | ✔️   |
+|               | Linux-aarch64  | ✔️   |
+| GPU CUDA 11.6 | Linux-x86      | ✔️   |
+| CPU           | Linux-x86      | ✔️   |
+|               | Linux-aarch64  | ✔️   |
 |               | Windows-x86     | ✔️   |
+|               | MacOS-x86     | ✔️   |
+|               | MacOS-aarch64     | ✔️   |
 
-使用`pip`命令安装，以`CPU`和`Ubuntu-x86`build版本为例：
+使用`pip`命令安装，以`CPU`和`Linux-x86`构建版本为例：
 
 1. 请从[MindSpore下载页面](https://www.mindspore.cn/versions)下载并安装whl包。
 
     ```bash
-    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.2.0-rc1/MindSpore/cpu/ubuntu_x86/mindspore-1.2.0rc1-cp37-cp37m-linux_x86_64.whl
+    pip install mindspore==2.7.1 -i https://repo.mindspore.cn/pypi/simple --trusted-host repo.mindspore.cn --extra-index-url https://repo.huaweicloud.com/repository/pypi/simple
     ```
 
 2. 执行以下命令，验证安装结果。
 
     ```python
-    import numpy as np
-    import mindspore.context as context
-    import mindspore.nn as nn
-    from mindspore import Tensor
-    from mindspore.ops import operations as P
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
-    class Mul(nn.Cell):
-        def __init__(self):
-            super(Mul, self).__init__()
-            self.mul = P.Mul()
-
-        def construct(self, x, y):
-            return self.mul(x, y)
-
-    x = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
-    y = Tensor(np.array([4.0, 5.0, 6.0]).astype(np.float32))
-
-    mul = Mul()
-    print(mul(x, y))
-    ```
-
-    ```text
-    [ 4. 10. 18.]
+    python -c "import mindspore;mindspore.set_device(device_target='CPU');mindspore.run_check()"
     ```
 
 使用pip方式，在不同的环境安装MindSpore，可参考以下文档。
@@ -137,100 +112,10 @@ MindSpore提供跨多个后端的构建选项：
 
 ### Docker镜像
 
-MindSpore的Docker镜像托管在[Docker Hub](https://hub.docker.com/r/mindspore)上。
-目前容器化构建选项支持情况如下：
+MindSpore的Docker镜像托管在[Huawei SWR](https://support.huaweicloud.com/swr/index.html)上。
+使用Docker方式，在不同的环境安装MindSpore，可参考以下文档。
 
-| 硬件平台   | Docker镜像仓库                | 标签                       | 说明                                       |
-| :----- | :------------------------ | :----------------------- | :--------------------------------------- |
-| CPU    | `mindspore/mindspore-cpu` | `x.y.z`                  | 已经预安装MindSpore `x.y.z` CPU版本的生产环境。       |
-|        |                           | `devel`                  | 提供开发环境从源头构建MindSpore（`CPU`后端）。安装详情请参考<https://www.mindspore.cn/install> 。 |
-|        |                           | `runtime`                | 提供运行时环境安装MindSpore二进制包（`CPU`后端）。         |
-| GPU    | `mindspore/mindspore-gpu` | `x.y.z`                  | 已经预安装MindSpore `x.y.z` GPU版本的生产环境。       |
-|        |                           | `devel`                  | 提供开发环境从源头构建MindSpore（`GPU CUDA10.1`后端）。安装详情请参考<https://www.mindspore.cn/install> 。 |
-|        |                           | `runtime`                | 提供运行时环境安装MindSpore二进制包（`GPU CUDA10.1`后端）。 |
-
-> **注意：** 不建议从源头构建GPU `devel` Docker镜像后直接安装whl包。我们强烈建议您在GPU `runtime` Docker镜像中传输并安装whl包。
-
-- CPU
-
-    对于`CPU`后端，可以直接使用以下命令获取并运行最新的稳定镜像：
-
-    ```bash
-    docker pull mindspore/mindspore-cpu:1.1.0
-    docker run -it mindspore/mindspore-cpu:1.1.0 /bin/bash
-    ```
-
-- GPU
-
-    对于`GPU`后端，请确保`nvidia-container-toolkit`已经提前安装，以下是`Ubuntu`用户安装指南：
-
-    ```bash
-    DISTRIBUTION=$(. /etc/os-release; echo $ID$VERSION_ID)
-    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add -
-    curl -s -L https://nvidia.github.io/nvidia-docker/$DISTRIBUTION/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list
-
-    sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit nvidia-docker2
-    sudo systemctl restart docker
-    ```
-
-    编辑文件 daemon.json:
-
-    ```bash
-    $ vim /etc/docker/daemon.json
-    {
-        "runtimes": {
-            "nvidia": {
-                "path": "nvidia-container-runtime",
-                "runtimeArgs": []
-            }
-        }
-    }
-    ```
-
-    再次重启docker:
-
-    ```bash
-    sudo systemctl daemon-reload
-    sudo systemctl restart docker
-    ```
-
-    使用以下命令获取并运行最新的稳定镜像：
-
-    ```bash
-    docker pull mindspore/mindspore-gpu:1.1.0
-    docker run -it -v /dev/shm:/dev/shm --runtime=nvidia --privileged=true mindspore/mindspore-gpu:1.1.0 /bin/bash
-    ```
-
-    要测试Docker是否正常工作，请运行下面的Python代码并检查输出：
-
-    ```python
-    import numpy as np
-    import mindspore.context as context
-    from mindspore import Tensor
-    from mindspore.ops import functional as F
-
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-
-    x = Tensor(np.ones([1,3,3,4]).astype(np.float32))
-    y = Tensor(np.ones([1,3,3,4]).astype(np.float32))
-    print(F.tensor_add(x, y))
-    ```
-
-    ```text
-    [[[ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.]],
-
-    [[ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.]],
-
-    [[ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.]]]
-    ```
-
-如果您想了解更多关于MindSpore Docker镜像的构建过程，请查看[docker](https://gitee.com/mindspore/mindspore/blob/master/scripts/docker/README.md) repo了解详细信息。
+- [通过Docker方式安装MindSpore Ascend版本](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_docker.md)
 
 ## 快速入门
 
