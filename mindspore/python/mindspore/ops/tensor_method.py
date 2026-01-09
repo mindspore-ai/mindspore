@@ -293,10 +293,6 @@ from mindspore.ops.function.array_func import tril
 from mindspore.ops.auto_generate import UniqueDim, Unique2
 # 119 unsqeeze
 
-# 120 view
-def tensor_view_dtype(input, dtype):
-    raise NotImplementedError("Currently not supported.")
-
 # 121 contiguous
 
 # 122 where
@@ -885,7 +881,22 @@ def tensor_mul(input, other):
         return muls(input, other)
     return mul(input, other)
 
+
 def deprecated_tensor_mul(input, other):
+    r"""
+    Deprecated Tensor multiplication implementation.
+
+    This function keeps legacy behavior for special input types:
+    - If `other` is a sparse tensor (COOTensor/CSRTensor), dispatches to sparse * dense.
+    - If `other` is a Python sequence (tuple/list), converts it to a tensor with `input` dtype.
+
+    Args:
+        input (Tensor): The left operand.
+        other (Union[Tensor, COOTensor, CSRTensor, tuple, list]): The right operand.
+
+    Returns:
+        Tensor: The multiplication result.
+    """
     if isinstance(other, (COOTensor, CSRTensor)):
         return other * input
     if isinstance(other, (tuple, list)):
@@ -1281,6 +1292,20 @@ def deprecated_tensor_unique(input, sorted=True, return_inverse=False, return_co
 # 119 unsqeeze
 
 # 120 view
+def tensor_view_dtype(self, dtype):
+    r"""
+    Placeholder Tensor method for viewing a tensor with a different dtype.
+
+    This API is currently not supported and will raise `NotImplementedError` when called.
+
+    Args:
+        self (Tensor): The input tensor.
+        dtype (mindspore.dtype): Target dtype to view.
+
+    Raises:
+        NotImplementedError: Currently not supported.
+    """
+    raise NotImplementedError("Currently not supported.")
 
 # 121 contiguous
 
@@ -1993,6 +2018,30 @@ def tensor_inplace_masked_scatter(input, mask, source):
 
 def tensor_nsa_select_attention(query, key, value, topk_indices, scale_value, head_num, select_block_size,
                                 select_block_count, *, atten_mask=None, actual_seq_qlen=None, actual_seq_kvlen=None):
+    r"""
+    Placeholder Tensor method for NSA Select Attention.
+
+    This API is used to compute NSA Select Attention. The implementation in this file is a placeholder
+    for **non-Ascend devices** and will raise `NotImplementedError` at runtime.
+
+    Args:
+        query (Tensor): The Query tensor.
+        key (Tensor): The Key tensor.
+        value (Tensor): The Value tensor.
+        topk_indices (Tensor): TopK indices for selected blocks/tokens.
+        scale_value (Union[float, int, Tensor]): Scaling factor for attention.
+        head_num (int): Number of attention heads.
+        select_block_size (int): Size of a selected block.
+        select_block_count (int): Number of selected blocks.
+
+    Keyword Args:
+        atten_mask (Tensor, optional): Attention mask. Default: ``None``.
+        actual_seq_qlen (Tensor, optional): Actual sequence length info for Query. Default: ``None``.
+        actual_seq_kvlen (Tensor, optional): Actual sequence length info for Key/Value. Default: ``None``.
+
+    Raises:
+        NotImplementedError: Currently only supported on Ascend devices.
+    """
     raise NotImplementedError("nsa_select_attention only supports Ascend.")
 
 
