@@ -273,9 +273,9 @@ bool ComputeGraphNode::Heartbeat() {
   try {
     MS_EXCEPTION_IF_NULL(hb_client_);
 
-    size_t hb_retry_timeout = common::GetEnv("MS_HEARTBEAT_RETRY_TIMEOUT").empty()
-                                ? kExecuteRetryTimeout
-                                : std::stoi(common::GetEnv("MS_HEARTBEAT_RETRY_TIMEOUT"));
+    std::string env_hb_retry_timeout = common::GetEnv("MS_HEARTBEAT_RETRY_TIMEOUT");
+    int int_hb_retry_timeout = env_hb_retry_timeout.empty() ? kExecuteRetryTimeout : std::stoi(env_hb_retry_timeout);
+    size_t hb_retry_timeout = (int_hb_retry_timeout < 0) ? UINT64_MAX : int_hb_retry_timeout;
     MS_LOG(INFO) << "The heartbeat thread is started. Retry timeout after heartbeat failure is " << hb_retry_timeout
                  << " seconds.";
     while (enable_hb_) {
