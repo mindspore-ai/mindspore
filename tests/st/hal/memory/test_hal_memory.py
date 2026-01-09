@@ -27,14 +27,14 @@ from tests.device_utils import set_device
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net).__init__()
+        super().__init__()
         self.ops = P.Abs()
 
     def construct(self, x):
         return self.ops(x)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 def test_runtime_memory_stats():
     """
