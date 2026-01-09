@@ -1332,6 +1332,7 @@ def get_batch_kwargs_from_dict(param_dict):
         return per_batch_map, input_columns, output_columns, python_multiprocessing, max_rowsize
     return None, None, None, None, None
 
+
 def check_batch(method):
     """check the input arguments of batch."""
 
