@@ -75,53 +75,28 @@ At present, MindSpore uses a fine-grained parallel strategy of splitting operato
 MindSpore offers build options across multiple backends:
 
 | Hardware Platform | Operating System | Status |
-| :---------------- | :--------------- | :----- |
-| Ascend | Ubuntu-x86 | ✔️ |
-|  | Ubuntu-aarch64 | ✔️ |
-|  | EulerOS-aarch64 | ✔️ |
-|  | CentOS-x86 | ✔️ |
-|  | CentOS-aarch64 | ✔️ |
-| GPU CUDA 10.1 | Ubuntu-x86 | ✔️ |
-| CPU | Ubuntu-x86 | ✔️ |
-|  | Ubuntu-aarch64 | ✔️ |
-|  | Windows-x86 | ✔️ |
+| :------------ | :------------- | :--- |
+| Ascend        | Linux-x86      | ✔️   |
+|               | Linux-aarch64  | ✔️   |
+| GPU CUDA 11.6 | Linux-x86      | ✔️   |
+| CPU           | Linux-x86      | ✔️   |
+|               | Linux-aarch64  | ✔️   |
+|               | Windows-x86    | ✔️   |
+|               | MacOS-x86      | ✔️   |
+|               | MacOS-aarch64  | ✔️   |
 
-For installation using `pip`, take `CPU` and `Ubuntu-x86` build version as an example:
+For installation using `pip`, take `CPU` and `Linux-x86` build version as an example:
 
 1. Download whl from [MindSpore download page](https://www.mindspore.cn/versions/en), and install the package.
 
     ```bash
-    pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.2.0-rc1/MindSpore/cpu/ubuntu_x86/mindspore-1.2.0rc1-cp37-cp37m-linux_x86_64.whl
+    pip install mindspore==2.7.1 -i https://repo.mindspore.cn/pypi/simple --trusted-host repo.mindspore.cn --extra-index-url https://repo.huaweicloud.com/repository/pypi/simple
     ```
 
 2. Run the following command to verify the install.
 
     ```python
-    import numpy as np
-    import mindspore.context as context
-    import mindspore.nn as nn
-    from mindspore import Tensor
-    from mindspore.ops import operations as P
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-
-    class Mul(nn.Cell):
-        def __init__(self):
-            super(Mul, self).__init__()
-            self.mul = P.Mul()
-
-        def construct(self, x, y):
-            return self.mul(x, y)
-
-    x = Tensor(np.array([1.0, 2.0, 3.0]).astype(np.float32))
-    y = Tensor(np.array([4.0, 5.0, 6.0]).astype(np.float32))
-
-    mul = Mul()
-    print(mul(x, y))
-    ```
-
-    ```text
-    [ 4. 10. 18.]
+    python -c "import mindspore;mindspore.set_device(device_target='CPU');mindspore.run_check()"
     ```
 
 Use pip mode method to install MindSpore in different environments. Refer to the following documents.
@@ -140,101 +115,10 @@ Use the source code compilation method to install MindSpore in different environ
 
 ### Docker Image
 
-MindSpore docker image is hosted on [Docker Hub](https://hub.docker.com/r/mindspore),
-currently the containerized build options are supported as follows:
+MindSpore docker image is hosted on [Huawei SWR](https://support.huaweicloud.com/swr/index.html).
+Use Docker to install MindSpore in different environments, refer to the following documents.
 
-| Hardware Platform | Docker Image Repository | Tag | Description |
-| :---------------- | :---------------------- | :-- | :---------- |
-| CPU | `mindspore/mindspore-cpu` | `x.y.z` | Production environment with pre-installed MindSpore `x.y.z` CPU release. |
-|  |  | `devel` | Development environment provided to build MindSpore (with `CPU` backend) from the source, refer to <https://www.mindspore.cn/install/en> for installation details. |
-|  |  | `runtime` | Runtime environment provided to install MindSpore binary package with `CPU` backend. |
-| GPU | `mindspore/mindspore-gpu` | `x.y.z` | Production environment with pre-installed MindSpore `x.y.z` GPU release. |
-|  |  | `devel` | Development environment provided to build MindSpore (with `GPU CUDA10.1` backend) from the source, refer to <https://www.mindspore.cn/install/en> for installation details. |
-|  |  | `runtime` | Runtime environment provided to install MindSpore binary package with `GPU CUDA10.1` backend. |
-
-> **NOTICE:** For GPU `devel` docker image, it's NOT suggested to directly install the whl package after building from the source, instead we strongly RECOMMEND you transfer and install the whl package inside GPU `runtime` docker image.
-
-- CPU
-
-    For `CPU` backend, you can directly pull and run the latest stable image using the below command:
-
-    ```bash
-    docker pull mindspore/mindspore-cpu:1.1.0
-    docker run -it mindspore/mindspore-cpu:1.1.0 /bin/bash
-    ```
-
-- GPU
-
-    For `GPU` backend, please make sure the `nvidia-container-toolkit` has been installed in advance, here are some install guidelines for `Ubuntu` users:
-
-    ```bash
-    DISTRIBUTION=$(. /etc/os-release; echo $ID$VERSION_ID)
-    curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | apt-key add -
-    curl -s -L https://nvidia.github.io/nvidia-docker/$DISTRIBUTION/nvidia-docker.list | tee /etc/apt/sources.list.d/nvidia-docker.list
-
-    sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit nvidia-docker2
-    sudo systemctl restart docker
-    ```
-
-    Then edit the file daemon.json:
-
-    ```bash
-    $ vim /etc/docker/daemon.json
-    {
-        "runtimes": {
-            "nvidia": {
-                "path": "nvidia-container-runtime",
-                "runtimeArgs": []
-            }
-        }
-    }
-    ```
-
-    Restart docker again:
-
-    ```bash
-    sudo systemctl daemon-reload
-    sudo systemctl restart docker
-    ```
-
-    Then you can pull and run the latest stable image using the below command:
-
-    ```bash
-    docker pull mindspore/mindspore-gpu:1.1.0
-    docker run -it -v /dev/shm:/dev/shm --runtime=nvidia --privileged=true mindspore/mindspore-gpu:1.1.0 /bin/bash
-    ```
-
-    To test if the docker image works, please execute the python code below and check the output:
-
-    ```python
-    import numpy as np
-    import mindspore.context as context
-    from mindspore import Tensor
-    from mindspore.ops import functional as F
-
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-
-    x = Tensor(np.ones([1,3,3,4]).astype(np.float32))
-    y = Tensor(np.ones([1,3,3,4]).astype(np.float32))
-    print(F.tensor_add(x, y))
-    ```
-
-    ```text
-    [[[ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.]],
-
-    [[ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.]],
-
-    [[ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.],
-    [ 2.  2.  2.  2.]]]
-    ```
-
-If you want to learn more about the building process of MindSpore docker images,
-please check out [docker](https://gitee.com/mindspore/mindspore/blob/master/scripts/docker/README.md) repo for the details.
+- [Installing MindSpore in Ascend by Docker](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_docker_en.md)
 
 ## Quickstart
 
