@@ -2748,9 +2748,9 @@ def ms_sum(*data):
     return result
 
 
-def ms_len(data):
+def ms_len(input_data):
     """Implementation of `len`."""
-    return data.__len__()
+    return input_data.__len__()
 
 
 def floor(x):
