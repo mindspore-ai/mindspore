@@ -328,6 +328,7 @@ class Dataset:
         self._class_indexing = None
         self._sync = False
         self._global_step = None
+        self._dataset_iter = None  # used to send & recv
 
     @staticmethod
     def _get_operator_id(dataset):
@@ -2141,7 +2142,8 @@ class Dataset:
         # so we initialize from the beginning
         return 0
 
-    def _send(self, tensor_list, dst_list, group):
+    @staticmethod
+    def _send(tensor_list, dst_list, group):
         """Sending data in two steps"""
         # get meta by calculate list[Tensor]
         meta_info = []
@@ -2242,7 +2244,7 @@ class Dataset:
             data_to_send = tensor_list
         else:
             # get data from dataset_iter
-            if not hasattr(self, "_dataset_iter"):
+            if self._dataset_iter is None:
                 self._dataset_iter = self.create_tuple_iterator()
 
             while True:
@@ -2262,9 +2264,10 @@ class Dataset:
             if t.dtype not in mstype_to_int:
                 raise RuntimeError(f"Tensor of dtype: {t.dtype} is not supported to send.")
 
-        return self._send(data_to_send, dst_list, group)
+        return Dataset._send(data_to_send, dst_list, group)
 
-    def _recv(self, src_rank, group):
+    @staticmethod
+    def _recv(src_rank, group):
         """Receiving data in two steps"""
         ## first: get meta
         meta = Tensor(np.zeros([MAX_METADATA_LENGTH,]).astype(np.int64))
@@ -2364,7 +2367,7 @@ class Dataset:
         for src_rank in src_list:
             # get data from current dataset
             if src_rank == current_rank:
-                if not hasattr(self, "_dataset_iter"):
+                if self._dataset_iter is None:
                     self._dataset_iter = self.create_tuple_iterator()
 
                 while True:
@@ -2378,7 +2381,7 @@ class Dataset:
                 all_tensor_list.append(data_to_return)
             else:
                 # get data from remote dataset
-                all_tensor_list.append(self._recv(src_rank, group))
+                all_tensor_list.append(Dataset._recv(src_rank, group))
 
         flatten_all_tensor_list = flatten_single_lists(all_tensor_list)
         if len(flatten_all_tensor_list) == 1:
@@ -4664,7 +4667,7 @@ class TransferDataset(Dataset):
         raise RuntimeError("TransferDataset does not support obtaining output_types.")
 
     @check_to_device_send
-    def send(self, num_epochs=-1):
+    def send(self, num_epochs=-1):  # pylint: disable=huawei-arguments-differ
         """
         Send to device
         """
