@@ -28,8 +28,7 @@ namespace pyboost {
 using TensorPtr = std::shared_ptr<tensor::Tensor>;
 class OpRunner;
 using OpPtr = std::shared_ptr<OpRunner>;
-using CloneFunc = TensorPtr (*)(const PrimitivePtr &prim, device::DeviceType device_target,
-                           ValuePtrList &&inputs);
+using CloneFunc = TensorPtr (*)(const PrimitivePtr &prim, ValuePtrList &&inputs);
 
 PYBOOST_API void RegisterCloneFunc(const CloneFunc &clone_func);
 const CloneFunc& GetCloneFunc();

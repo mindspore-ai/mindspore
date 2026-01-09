@@ -205,7 +205,7 @@ class OpTemplateParser:
         Returns:
             str: The generated PyBoost function name.
         """
-        return "Pyboost_" + self.op_proto.op_class.name
+        return "Pyboost" + self.op_proto.op_class.name
 
     def get_pyboost_name(self):
         """

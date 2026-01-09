@@ -46,6 +46,7 @@
 #include "mindspore/ccsrc/pynative/backward/backward_node_py.h"
 #include "include/pynative/forward/pyboost/converter.h"
 #include "include/pynative/forward/pyboost/fallback.h"
+#include "include/utils/pynative/dispatch/ms_dispatch.h"
 #include "mindspore/ops/include/view/view_strides_calculator.h"
 #include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "include/pynative/utils/runtime/op_runner.h"
@@ -904,6 +905,13 @@ PyObject *TensorPy_make_subclass(PyTypeObject *, PyObject *args, PyObject *kwarg
   if (attr.ptr() != nullptr) {
     MS_LOG(DEBUG) << "Set fallback flag to " << new_tensor->ToString();
     new_tensor->set_has_fallback(true);
+  }
+
+  auto ms_dispatch_attr = FastGetPyObjectAttr(cls_obj, pynative::GetMsDispatchStr().c_str());
+  if (ms_dispatch_attr.ptr() != nullptr) {
+    MS_LOG(DEBUG) << "Set ms_dispatch flag to " << new_tensor->ToString();
+    new_tensor->set_has_ms_dispatch(true);
+    TensorPybind::SetUserData(new_tensor, py::str(pynative::GetMsDispatchStr()), ms_dispatch_attr);
   }
   return obj;
 }

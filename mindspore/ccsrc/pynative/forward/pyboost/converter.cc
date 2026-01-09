@@ -25,6 +25,7 @@
 #include <algorithm>
 #include "include/utils/convert_utils_py.h"
 #include "include/pynative/forward/pyboost/fallback.h"
+#include "include/utils/pynative/dispatch/ms_dispatch.h"
 #include "include/pynative/utils/pynative_utils.h"
 #include "include/utils/tensor_py.h"
 #include "include/utils/tensor_utils.h"
@@ -275,6 +276,49 @@ bool PyObjectHasFallbackAttr(PyObject *obj) {
   auto attr = FastGetPyObjectAttr(obj, GetFallbackStr().c_str());
   return attr.ptr() != nullptr;
 }
+
+bool PyObjectHasMsDispatchAttr(PyObject *obj) {
+  // Only Tensor subclass need to check fallback attr.
+  if (tensor::IsPyObjectPythonTensorStrict(obj)) {
+    return false;
+  }
+
+  if (!tensor::IsPyObjectTensorPy(obj)) {
+    return false;
+  }
+  auto attr = FastGetPyObjectAttr(obj, GetMsDispatchStr().c_str());
+  return attr.ptr() != nullptr;
+}
+
+/// \brief Convert PyObject to C++ Tensor with ms_dispatch support.
+///
+/// If obj is a Tensor subclass with __ms_dispatch__ attribute:
+/// 1. Convert to C++ Tensor
+/// 2. Create shallow copy
+/// 3. Store original PyObject in user_data (key: "source_py_obj")
+/// 4. Copy __ms_dispatch__ to the new tensor's user_data
+///
+/// \param obj The PyObject to convert
+/// \return ValuePtr (TensorPtr or nullptr)
+ValuePtr ConvertTensorWithMsDispatch(PyObject *obj) {
+  // Check: is this a strict Tensor (not subclass)?
+  if (tensor::IsPyObjectPythonTensorStrict(obj)) {
+    return tensor::ConvertPyObjectToValue(obj);
+  }
+
+  // Check: is this a Tensor subclass?
+  if (!tensor::IsPyObjectTensorPy(obj)) {
+    return nullptr;  // Not a tensor
+  }
+
+  // Check for __ms_dispatch__ attribute
+  if (FastGetPyObjectAttr(obj, GetMsDispatchStr().c_str()).ptr() == nullptr) {
+    return tensor::ConvertPyObjectToValue(obj);
+  }
+
+  // Has __ms_dispatch__ - wrap with source_py_obj
+  return WrapTensorWithSourcePyObj(tensor::ConvertPyObjectToTensor(obj), py::reinterpret_borrow<py::object>(obj));
+}
 }  // namespace
 namespace py = pybind11;
 
@@ -327,6 +371,7 @@ void Converter::Parse(PyObject *python_args) {
   // Converter is a static object
   // reset the flag every time.
   has_fallback_ = false;
+  has_ms_dispatch_ = false;
   Py_ssize_t args_size = (python_args && python_args != Py_None) ? GetListOrTupleSize(python_args) : 0;
   if (op_def_->args_.size() != static_cast<size_t>(args_size)) {
     MS_LOG(EXCEPTION) << "For operator " << op_def_->name_ << ", it requires " << op_def_->args_.size()
@@ -349,7 +394,12 @@ ValuePtr Converter::ToTensor(PyObject *python_args, size_t i) {
   auto tensor = py_parse::ConvertPyObjectTensor(obj);
   if (tensor != nullptr) {
     if (tensor->isa<tensor::Tensor>()) {
-      tensor->cast<tensor::TensorPtr>()->set_need_pipeline_sync(true);
+      auto t = tensor->cast<tensor::TensorPtr>();
+      t->set_need_pipeline_sync(true);
+      // Check for ms_dispatch
+      if (!has_ms_dispatch_ && ms_dispatch_enabled() && (HasActiveDispatchGuard() || t->has_ms_dispatch())) {
+        has_ms_dispatch_ = true;
+      }
     }
     return tensor;
   }
@@ -392,6 +442,15 @@ ValueTuplePtr Converter::ToTensorList(PyObject *python_args, size_t i) {
       has_fallback_ = std::any_of(values.begin(), values.end(), [](const ValuePtr &value) {
         return value != nullptr && value->isa<Tensor>() && value->cast<TensorPtr>()->has_fallback();
       });
+    }
+    // Check for ms_dispatch
+    if (!has_ms_dispatch_ && ms_dispatch_enabled()) {
+      const auto &values = value_tuple->value();
+      has_ms_dispatch_ =
+        HasActiveDispatchGuard() || std::any_of(values.begin(), values.end(), [](const ValuePtr &value) {
+          return value != nullptr && value->isa<tensor::Tensor>() &&
+                 value->cast<tensor::TensorPtr>()->has_ms_dispatch();
+        });
     }
     EnablePipelineForTupleTensor(value_tuple);
     return value_tuple;
@@ -1414,7 +1473,8 @@ ValuePtr ConvertMutableBool(PyObject *obj) {
 }
 
 ValuePtr ConvertSimpleTensor(PyObject *obj) {
-  auto tensor = tensor::ConvertPyObjectToValue(obj);
+  // Use ConvertTensorWithMsDispatch to handle ms_dispatch-enabled tensors
+  auto tensor = ConvertTensorWithMsDispatch(obj);
   if (tensor != nullptr) {
     if (tensor->isa<tensor::Tensor>()) {
       tensor->cast<tensor::TensorPtr>()->set_need_pipeline_sync(true);
@@ -1607,7 +1667,18 @@ void ParserArgs::CheckHasFallback() {
     MS_LOG(DEBUG) << "Has fallback " << PyObjectHasFallbackAttr(arg) << " for " << PyUnicode_AsUTF8(PyObject_Str(arg));
     if (PyObjectHasFallbackAttr(arg)) {
       has_fallback_ = true;
-      return;
+      break;
+    }
+  }
+
+  if (ms_dispatch_enabled()) {
+    for (const auto &arg : arg_list_) {
+      MS_LOG(DEBUG) << "Has fallback " << PyObjectHasFallbackAttr(arg) << " for "
+                    << PyUnicode_AsUTF8(PyObject_Str(arg));
+      if (HasActiveDispatchGuard() || PyObjectHasMsDispatchAttr(arg)) {
+        has_ms_dispatch_ = true;
+        break;
+      }
     }
   }
 }
@@ -1619,7 +1690,9 @@ void ParserArgs::CheckHasFallback(PyObject *obj) {
   MS_LOG(DEBUG) << "Has fallback " << PyObjectHasFallbackAttr(obj) << " for " << PyUnicode_AsUTF8(PyObject_Str(obj));
   if (PyObjectHasFallbackAttr(obj)) {
     has_fallback_ = true;
-    return;
+  }
+  if (ms_dispatch_enabled() && (HasActiveDispatchGuard() || PyObjectHasMsDispatchAttr(obj))) {
+    has_ms_dispatch_ = true;
   }
 }
 

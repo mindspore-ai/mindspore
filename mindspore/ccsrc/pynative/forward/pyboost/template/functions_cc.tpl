@@ -23,6 +23,8 @@
 #include "include/pynative/utils/pyboost/functions/base.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_reg.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "include/utils/pynative/dispatch/ms_dispatch.h"
+#include "include/utils/pynative/dispatch/dispatch_stack.h"
 #include "primitive/auto_generate/gen_ops_def.h"
 #include "mindspore/ccsrc/pynative/utils/base.h"
 #include "mindspore/ccsrc/pynative/backward/grad_utils.h"
@@ -40,6 +42,11 @@ namespace {
 inline device::DeviceType GetDeviceTarget() { return OpRunStatus::Get().device_target(); }
 
 using TensorPtr = std::shared_ptr<tensor::Tensor>;
+using pynative::HasMsDispatch;
+using pynative::ShouldDispatch;
+using pynative::HandleMsDispatch;
+using pynative::PackArgs;
+using pynative::UnpackArg;
 
 CloneFunc inplace_clone_func{nullptr};
 }

@@ -703,8 +703,7 @@ void AutoGradUtil::CacheOutputAbstract(const ValuePtr &v, const abstract::Abstra
   }
 }
 
-TensorPtr AutoGradUtil::CheckAndCloneInplaceInput(const PrimitivePtr &prim, device::DeviceType device_target,
-                                                  ValuePtrList &&inputs) {
+TensorPtr AutoGradUtil::CheckAndCloneInplaceInput(const PrimitivePtr &prim, ValuePtrList &&inputs) {
   auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   ValuePtr val = nullptr;
@@ -713,7 +712,6 @@ TensorPtr AutoGradUtil::CheckAndCloneInplaceInput(const PrimitivePtr &prim, devi
     return nullptr;
   }
   MS_LOG(DEBUG) << "Begin clone src value for op " << prim->name();
-  kernel::pyboost::OpRunStatus::Get().set_run_info(kernel::pyboost::OpStatus(true, device_target));
   auto output = kernel::pyboost::clone(input_tensor);
   return output;
 }

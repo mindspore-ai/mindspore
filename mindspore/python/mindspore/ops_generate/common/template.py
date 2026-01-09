@@ -427,9 +427,6 @@ FUNCTIONS_CC_TEMPLATE = Template.load_from_file(
 FUNCTION_BODY_TEMPLATE = Template.load_from_file(
     os.path.join(K.WORK_DIR, './mindspore/ccsrc/pynative/forward/pyboost/template/function_body.tpl'))
 
-FUNCTION_BODY_WRAPPER_TEMPLATE = Template.load_from_file(
-    os.path.join(K.WORK_DIR, './mindspore/ccsrc/pynative/forward/pyboost/template/function_body_wrapper.tpl'))
-
 FUNCTION_VIEW_BODY_TEMPLATE = Template.load_from_file(
     os.path.join(K.WORK_DIR, './mindspore/ccsrc/pynative/forward/pyboost/template/function_view_body.tpl'))
 

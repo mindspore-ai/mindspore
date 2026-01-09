@@ -110,8 +110,7 @@ struct AutoGradUtil {
   static void ClearAutoGradStaticCache();
   static void CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info);
   static void CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs);
-  static TensorPtr CheckAndCloneInplaceInput(const PrimitivePtr &prim, device::DeviceType device_target,
-                                             ValuePtrList &&inputs);
+  static TensorPtr CheckAndCloneInplaceInput(const PrimitivePtr &prim, ValuePtrList &&inputs);
   static ValuePtr ShallowCopyAndDetach(const ValuePtr &value);
   static TensorPtr ViewAsSelfWithNoGrad(const TensorPtr &self);
   static TensorPtr Add(const TensorPtr &input, const TensorPtr &other);

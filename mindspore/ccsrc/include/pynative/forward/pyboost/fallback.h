@@ -24,6 +24,7 @@
 namespace py = pybind11;
 namespace mindspore {
 namespace pynative {
+
 /// \brief Check whether PyNative fallback mechanism is enabled.
 /// When enabled, certain PyNative execution paths will call back into
 /// Python via the registered __fallback__ handlers instead of running
@@ -97,6 +98,7 @@ PYNATIVE_EXPORT py::object HandleFallback(const py::args &args, const py::kwargs
 /// `NoFallbackGuard` instance managed by pybind11.
 /// \param m  The pybind11 module to which fallback helpers will be registered.
 PYNATIVE_EXPORT void RegFallback(py::module *m);
+
 }  // namespace pynative
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_INCLUDE_PYNATIVE_FORWARD_PYBOOST_FALLBACK_H_

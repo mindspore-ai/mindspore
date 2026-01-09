@@ -74,7 +74,8 @@ Tensor::Tensor(const Tensor &tensor)
       need_pipeline_sync_(tensor.need_pipeline_sync_),
       init_flag_(tensor.init_flag_),
       cache_enable_(tensor.cache_enable_),
-      copy_done_flag_(tensor.copy_done_flag_) {
+      copy_done_flag_(tensor.copy_done_flag_),
+      has_ms_dispatch_(tensor.has_ms_dispatch_) {
   user_data_ = tensor.user_data_;
 }
 
@@ -131,6 +132,7 @@ Tensor &Tensor::operator=(const Tensor &tensor) {
   updated_by_device_ = tensor.updated_by_device_;
   device_info_ = CopyDeviceInfo(tensor.device_info_);
   copy_done_flag_ = tensor.copy_done_flag_;
+  has_ms_dispatch_ = tensor.has_ms_dispatch_;
   return *this;
 }
 
@@ -482,8 +484,7 @@ TensorPtr Tensor::cpu() const {
 
   auto dst = MakeDeviceAddress(data_type_, shape_, true);
   MS_EXCEPTION_IF_NULL(dst);
-  DeviceAddressExtPtr src_ext =
-    std::make_shared<DeviceAddressExt>(this->format(), data_type_, shape_, storage_info);
+  DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(this->format(), data_type_, shape_, storage_info);
   DeviceAddressExtPtr dst_ext = std::make_shared<DeviceAddressExt>(Format::DEFAULT_FORMAT, data_type_, shape_);
   if (!SyncCopy(dst, device_address, CurrentStream::id(), src_ext, dst_ext)) {
     MS_LOG(EXCEPTION) << "SyncCopy failed for " << ToString();

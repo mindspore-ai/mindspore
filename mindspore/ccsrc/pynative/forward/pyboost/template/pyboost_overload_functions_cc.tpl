@@ -22,6 +22,7 @@
 #include "include/pynative/forward/pyboost/auto_generate/pyboost_core.h"
 #include "pybind_api/pynative/pynative_api.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
+#include "include/utils/pynative/dispatch/dispatch_stack.h"
 ${ops_inc}
 
 

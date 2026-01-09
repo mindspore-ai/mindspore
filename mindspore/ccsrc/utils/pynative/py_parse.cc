@@ -32,6 +32,8 @@
 #include "include/utils/stub_tensor.h"
 #include "include/utils/tensor_utils.h"
 #include "include/utils/operator/primitive_utils.h"
+#include "include/utils/python_attr.h"
+#include "include/utils/pynative/dispatch/ms_dispatch.h"
 
 #if NPY_API_VERSION < 0x0000000d
 #error Current Numpy version is too low, the required version is not less than 1.19.3.
@@ -56,27 +58,63 @@ TensorPtr ConvertPyObjectTensorValue(PyObject *obj) {
 }
 
 ValuePtr ConvertPyObjectTensor(PyObject *obj) {
-  if (tensor::IsPyObjectTensorPy(obj)) {
+  // Check: is this a strict Tensor (not subclass)?
+  if (tensor::IsPyObjectPythonTensorStrict(obj)) {
     return tensor::ConvertPyObjectToValue(obj);
   }
 
-  return nullptr;
+  // Not tensor subclass
+  if (!tensor::IsPyObjectTensorPy(obj)) {
+    return nullptr;
+  }
+
+  // Check for __ms_dispatch__ attribute on Tensor subclass
+  if (FastGetPyObjectAttr(obj, pynative::GetMsDispatchStr().c_str()).ptr() == nullptr) {
+    return tensor::ConvertPyObjectToValue(obj);
+  }
+
+  // Has __ms_dispatch__ - wrap with source_py_obj
+  return pynative::WrapTensorWithSourcePyObj(tensor::ConvertPyObjectToTensor(obj),
+                                             py::reinterpret_borrow<py::object>(obj));
 }
 
 ValuePtr ConvertTensor(const py::object &obj) {
-  if (tensor::IsTensorPy(obj)) {
+  // Check: is this a strict Tensor (not subclass)?
+  if (tensor::IsPyObjectPythonTensorStrict(obj.ptr())) {
     return tensor::ConvertToValue(obj);
   }
 
-  return nullptr;
+  // Not tensor subclass
+  if (!tensor::IsPyObjectTensorPy(obj.ptr())) {
+    return nullptr;
+  }
+
+  // Check for __ms_dispatch__ attribute on Tensor subclass
+  if (FastGetPyObjectAttr(obj.ptr(), pynative::GetMsDispatchStr().c_str()).ptr() == nullptr) {
+    return tensor::ConvertToValue(obj);
+  }
+
+  // Has __ms_dispatch__ - wrap with source_py_obj
+  return pynative::WrapTensorWithSourcePyObj(tensor::ConvertToTensor(obj), obj);
 }
 
 TensorPtr ConvertTensorValue(const py::object &obj) {
-  if (tensor::IsTensorPy(obj)) {
+  if (!tensor::IsTensorPy(obj)) {
+    return nullptr;
+  }
+
+  // Check: is this a strict Tensor (not subclass)?
+  if (tensor::IsPyObjectPythonTensorStrict(obj.ptr())) {
     return tensor::ConvertToTensor(obj);
   }
 
-  return nullptr;
+  // Check for __ms_dispatch__ attribute on Tensor subclass
+  if (FastGetPyObjectAttr(obj.ptr(), pynative::GetMsDispatchStr().c_str()).ptr() == nullptr) {
+    return tensor::ConvertToTensor(obj);
+  }
+
+  // Has __ms_dispatch__ - wrap with source_py_obj
+  return pynative::WrapTensorWithSourcePyObj(tensor::ConvertToTensor(obj), obj);
 }
 namespace {
 bool IsNumpyAvailable() {

@@ -17,10 +17,12 @@
 #ifndef MINDSPORE_MINDSPORE_CCSRC_INCLUDE_PYNATIVE_FORWARD_PYBOOST_FORWARD_TASK_H_
 #define MINDSPORE_MINDSPORE_CCSRC_INCLUDE_PYNATIVE_FORWARD_PYBOOST_FORWARD_TASK_H_
 
+#include <cstdlib>
 #include <functional>
 #include <utility>
 #include <vector>
 #include <memory>
+#include <string>
 #include "runtime/pipeline/task/task.h"
 #include "pynative/utils/base.h"
 #include "include/backend/common/kernel_graph/session_basic.h"
