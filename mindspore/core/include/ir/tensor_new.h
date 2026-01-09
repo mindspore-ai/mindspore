@@ -59,8 +59,12 @@ TypeId GetTypeId() {
     return kNumberTypeUInt8;
   } else if constexpr (std::is_same_v<T, bool>) {
     return kNumberTypeBool;
+  } else if constexpr (std::is_same_v<T, std::complex<float>>) {
+    return kNumberTypeComplex64;
+  } else if constexpr (std::is_same_v<T, std::complex<double>>) {
+    return kNumberTypeComplex128;
   } else {
-    MS_LOG(EXCEPTION) << "Not support type " << typeid(T);
+    MS_LOG(EXCEPTION) << "Not support type " << typeid(T).name();
   }
 }
 

@@ -891,7 +891,7 @@ def deprecated_tensor_mul(input, other):
         return other * input
     if isinstance(other, (tuple, list)):
         other = sequence_to_tensor(other, F.dtype(input))
-    return ops.mul(input, other)
+    return tensor_mul(input, other)
 
 
 # 71 nan_to_num

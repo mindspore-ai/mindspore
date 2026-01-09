@@ -304,6 +304,10 @@ tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar, const std::optional<Ty
       return tensor::from_scalar(GetValue<float16>(scalar), tensor_dtype);
     case kNumberTypeBFloat16:
       return tensor::from_scalar(GetValue<bfloat16>(scalar), tensor_dtype);
+    case kNumberTypeComplex64:
+      return tensor::from_scalar(GetValue<std::complex<float>>(scalar), tensor_dtype);
+    case kNumberTypeComplex128:
+      return tensor::from_scalar(GetValue<std::complex<double>>(scalar), tensor_dtype);
     default:
       MS_LOG(EXCEPTION) << "When convert scalar to tensor, the scalar type: " << data_type << " is invalid.";
   }
@@ -384,6 +388,10 @@ KernelTensorValuePtr ConvertScalarToKernelTensorValue(const ValuePtr &scalar) {
       return std::make_shared<KernelTensorValue>(GetValue<float16>(scalar), data_type);
     case kNumberTypeBFloat16:
       return std::make_shared<KernelTensorValue>(GetValue<bfloat16>(scalar), data_type);
+    case kNumberTypeComplex64:
+      return std::make_shared<KernelTensorValue>(GetValue<std::complex<float>>(scalar), data_type);
+    case kNumberTypeComplex128:
+      return std::make_shared<KernelTensorValue>(GetValue<std::complex<double>>(scalar), data_type);
     default:
       MS_LOG(EXCEPTION) << "When convert scalar to KernelTensorValue, the scalar type: " << data_type->ToString()
                         << " is invalid.";

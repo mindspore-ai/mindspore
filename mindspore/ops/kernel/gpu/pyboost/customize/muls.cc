@@ -31,13 +31,8 @@ void MulsGPUCustomize(const std::shared_ptr<OpRunner> &op, const TensorPtr &inpu
 
   // handle type promotion manually since the GPU kernelmod Mul does not support it
   const auto out_dtype = op->output(0)->Dtype();
-  auto input_tensor_cast = input_tensor;
-  if (input_tensor->Dtype()->type_id() != out_dtype->type_id()) {
-    input_tensor_cast = PyBoostUtils::CastTensor(input_tensor, out_dtype->type_id(), device_name);
-  }
   const auto other_tensor = PyBoostUtils::ScalarToTensor(other, out_dtype);
-
-  const auto mul_out = mul_op->Call(input_tensor_cast, other_tensor);
+  const auto mul_out = mul_op->Call(input_tensor, other_tensor);
   op->set_outputs({mul_out});
 
   MS_LOG(DEBUG) << "Muls Call end";

@@ -235,6 +235,9 @@ REG_FALLBACK_BUILDER("Muls").SetBody(BODYFUNC(ib) {
   auto y = ib->GetInput(kIndex1);
   auto x_type = ib->GetDtype(x)->type_id();
   auto y_type = ib->GetDtype(y)->type_id();
+  if (x_type == kNumberTypeUInt16 || x_type == kNumberTypeUInt32 || x_type == kNumberTypeUInt64) {
+    MS_EXCEPTION(TypeError) << "Muls does not support input x with type " << TypeIdToString(x_type) << ".";
+  }
   TypeId promote_type_id = ops::PromoteTensorScalarType(x_type, y_type);
   auto promote_type = TypeIdToType(promote_type_id);
   MS_EXCEPTION_IF_NULL(promote_type);

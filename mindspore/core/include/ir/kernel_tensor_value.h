@@ -65,7 +65,19 @@ class MS_CORE_API KernelTensorValue : public Value {
     auto scalar_data = std::vector<uint8_t>(sizeof(bfloat16));
     auto err = memcpy_s(scalar_data.data(), scalar_data.size(), &scalar, sizeof(bfloat16));
     if (err != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy_s failed for type float16, error code: " << err;
+      MS_LOG(EXCEPTION) << "memcpy_s failed for type bfloat16, error code: " << err;
+    }
+    const_data_ = std::move(scalar_data);
+    obj_type_id_ = kObjectTypeNumber;
+  }
+
+  template <typename T, typename std::enable_if<std::is_same<T, std::complex<float>>::value ||
+                                                std::is_same<T, std::complex<double>>::value>::type * = nullptr>
+  KernelTensorValue(T scalar, const TypePtr &t) : Value(t) {
+    auto scalar_data = std::vector<uint8_t>(sizeof(T));
+    auto err = memcpy_s(scalar_data.data(), scalar_data.size(), &scalar, sizeof(T));
+    if (err != EOK) {
+      MS_LOG(EXCEPTION) << "memcpy_s failed for type complex, error code: " << err;
     }
     const_data_ = std::move(scalar_data);
     obj_type_id_ = kObjectTypeNumber;
