@@ -175,6 +175,8 @@ def test_tanh_grad_backward_dynamic_shape(mode):
     Expectation: expect correct result.
     """
     context.set_context(mode=mode)
+    if mode == ms.GRAPH_MODE:
+        context.set_context(jit_level='O0')
 
     y_dyn = Tensor(shape=[None, None, None, None], dtype=ms.float32)
     dy_dyn = Tensor(shape=[None, None, None, None], dtype=ms.float32)
