@@ -168,7 +168,7 @@ ValuePtr ScalarTensorToScalar(const ValuePtr &value) {
 }
 
 ValuePtr NormalizeIntSequence(const ValuePtr &value) {
-  static auto _ConvertTensorToInt = [](const tensor::TensorPtr &tensor) -> ValuePtr {
+  static auto ConvertTensorToInt = [](const tensor::TensorPtr &tensor) -> ValuePtr {
     if (tensor->data_type() == kNumberTypeInt64) {
       return std::make_shared<Int64Imm>(GetTensorData<int64_t>(tensor));
     } else if (tensor->data_type() == kNumberTypeInt32) {
@@ -199,7 +199,7 @@ ValuePtr NormalizeIntSequence(const ValuePtr &value) {
     if (item->isa<Int64Imm>() || item->isa<Int32Imm>()) {
       int_tuple[i] = item;
     } else {
-      ValuePtr converted = _ConvertTensorToInt(item->cast<tensor::TensorPtr>());
+      ValuePtr converted = ConvertTensorToInt(item->cast<tensor::TensorPtr>());
       if (!converted) {
         MS_EXCEPTION(ValueError) << "Failed to normalize int sequence, contain non-integer element: "
                                  << item->ToString();

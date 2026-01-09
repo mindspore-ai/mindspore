@@ -70,7 +70,7 @@ class Generator(Primitive):
     """
 
     def __init__(self, seed, offset):
-        Primitive.__init__(self, "Generator")
+        super().__init__("Generator")
         self.add_prim_attr("side_effect_mem", True)
         self._generator_impl = GeneratorImpl(seed, offset)
 

@@ -294,15 +294,12 @@ class TensorFuncRegCppGenerator(BaseGenerator):
             self_index = self._get_input_tensor_index(func_proto)
             ut_body = self.TENSOR_FUNC_UT_BODY.replace(
                 py_method=func_proto.py_method)
-            tensor_func_single_call_body = self.TENSOR_FUNC_CALL_BODY.replace(cpp_func_name=cpp_func_name,
-                                                                              func_name=func_name,
-                                                                              dispatch_lambda_def=dispatch_lambda_def_str,
-                                                                              device_dispatcher=device_dispatcher_str,
-                                                                              signatures=signature_str,
-                                                                              max_args=max_size,
-                                                                              self_index=self_index,
-                                                                              ut_body=ut_body,
-                                                                              op_name=func_proto.op_proto.op_name)
+            tensor_func_single_call_body = self.TENSOR_FUNC_CALL_BODY.replace(
+                cpp_func_name=cpp_func_name, func_name=func_name,
+                dispatch_lambda_def=dispatch_lambda_def_str,
+                device_dispatcher=device_dispatcher_str, signatures=signature_str,
+                max_args=max_size, self_index=self_index, ut_body=ut_body,
+                op_name=func_proto.op_proto.op_name)
             func_call_body_list.append(tensor_func_single_call_body)
 
     def _create_overload_op_source_files(self, overload_op_func_data, func_call_body_list):
@@ -528,12 +525,12 @@ class TensorFuncRegCppGenerator(BaseGenerator):
                 has_pyboost_call = True
                 break
         if has_pyboost_call:
-            dispatch_lambda_str += self.pyboost_call_lambda_template.replace(arg_handler_processor=arg_handler_processor_str,
-                                                        class_name=func_proto.op_proto.op_class.name,
-                                                        op_name=func_proto.op_proto.op_name,
-                                                        pyboost_function=op_pyboost_func_name,
-                                                        self_index=self_index,
-                                                        convert_args=convert_args_str)
+            dispatch_lambda_str += self.pyboost_call_lambda_template.replace(
+                arg_handler_processor=arg_handler_processor_str,
+                class_name=func_proto.op_proto.op_class.name,
+                op_name=func_proto.op_proto.op_name,
+                pyboost_function=op_pyboost_func_name,
+                self_index=self_index, convert_args=convert_args_str)
         else:
             dispatch_lambda_str += 'const auto pyboost_call = []{ Py_RETURN_NONE; };\n'
 

@@ -387,12 +387,12 @@ class PyboostOverloadFunctionsGenerator(BaseGenerator):
                 has_pyboost_call = True
                 break
         if has_pyboost_call:
-            dispatch_lambda_str += self.pyboost_call_lambda_template.replace(arg_handler_processor=arg_handler_processor_str,
-                                                        class_name=func_proto.op_proto.op_class.name,
-                                                        prim_name=prim_name,
-                                                        op_name=func_proto.op_proto.op_name,
-                                                        pyboost_base_func_name=op_pyboost_func_name,
-                                                        convert_args=convert_args_str)
+            dispatch_lambda_str += self.pyboost_call_lambda_template.replace(
+                arg_handler_processor=arg_handler_processor_str,
+                class_name=func_proto.op_proto.op_class.name, prim_name=prim_name,
+                op_name=func_proto.op_proto.op_name,
+                pyboost_base_func_name=op_pyboost_func_name,
+                convert_args=convert_args_str)
         else:
             dispatch_lambda_str += 'const auto pyboost_call = []{ Py_RETURN_NONE; };\n'
 

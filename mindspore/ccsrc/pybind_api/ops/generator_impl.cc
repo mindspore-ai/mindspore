@@ -22,6 +22,7 @@
 #include "ir/tensor.h"
 #include "include/utils/tensor_py.h"
 #include "ops/op_def_utils.h"
+#include "ops_utils/op_constants.h"
 #include "include/runtime/pipeline/pipeline.h"
 #include "infer/ops_func_impl/generator.h"
 #include "pybind_api/gil_scoped_long_running.h"
@@ -58,7 +59,7 @@ GeneratorImpl::GeneratorImpl(const py::handle &seed_param, const py::handle &off
 
 py::object GeneratorImpl::set_state(const py::handle &state) {
   auto new_state_tensor = tensor::ConvertToTensor(state);
-  TensorCheck(new_state_tensor, StateTypeId, sizeof(param_type) * 2, "State");
+  TensorCheck(new_state_tensor, StateTypeId, sizeof(param_type) * kInputNum2, "State");
   new_state_tensor = new_state_tensor->cpu();
   auto new_state_data = static_cast<state_type *>(new_state_tensor->data_c());
   {
@@ -138,27 +139,27 @@ py::object GeneratorImpl::operator()(const py::handle &cmd, const py::tuple &inp
 
   switch (cmd_val) {
     case STEP: {
-      MS_ASSERT_TRUE(inputs.size() == 3) << "STEP expects 3 inputs: seed, offset, step.";
-      return step(inputs[2]);
+      MS_ASSERT_TRUE(inputs.size() == kInputNum3) << "STEP expects 3 inputs: seed, offset, step.";
+      return step(inputs[kIndex2]);
     }
     case SEED: {
-      MS_ASSERT_TRUE(inputs.size() == 2) << "SEED expects 2 inputs: seed, offset.";
+      MS_ASSERT_TRUE(inputs.size() == kInputNum2) << "SEED expects 2 inputs: seed, offset.";
       return seed();
     }
     case GET_STATE: {
-      MS_ASSERT_TRUE(inputs.size() == 2) << "GET_STATE expects 2 inputs: seed, offset.";
+      MS_ASSERT_TRUE(inputs.size() == kInputNum2) << "GET_STATE expects 2 inputs: seed, offset.";
       return get_state();
     }
     case SET_STATE: {
-      MS_ASSERT_TRUE(inputs.size() == 3) << "SET_STATE expects 3 inputs: seed, offset, state.";
-      return set_state(inputs[2]);
+      MS_ASSERT_TRUE(inputs.size() == kInputNum3) << "SET_STATE expects 3 inputs: seed, offset, state.";
+      return set_state(inputs[kIndex2]);
     }
     case MANUAL_SEED: {
-      MS_ASSERT_TRUE(inputs.size() == 3) << "MANUAL_SEED expects 3 inputs: seed, offset, new_seed.";
-      return manual_seed(inputs[2]);
+      MS_ASSERT_TRUE(inputs.size() == kInputNum3) << "MANUAL_SEED expects 3 inputs: seed, offset, new_seed.";
+      return manual_seed(inputs[kIndex2]);
     }
     case INITIAL_SEED: {
-      MS_ASSERT_TRUE(inputs.size() == 2) << "INITIAL_SEED expects 2 inputs: seed, offset.";
+      MS_ASSERT_TRUE(inputs.size() == kInputNum2) << "INITIAL_SEED expects 2 inputs: seed, offset.";
       return initial_seed();
     }
     default:
