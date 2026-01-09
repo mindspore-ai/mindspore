@@ -39,7 +39,7 @@
 /mindspore/ccsrc/pybind_api/ @chujinjin
 /mindspore/ccsrc/pybind_api/ir/ @ginfung
 /mindspore/ccsrc/pybind_api/pynative/tensor/ @chujinjin
-/mindspore/ccsrc/pybind_api/graph/ @limingqi107
+/mindspore/ccsrc/pybind_api/backend/ @limingqi107
 /mindspore/ccsrc/pybind_api/runtime/ @limingqi107
 /mindspore/ccsrc/pybind_api/ops/custom/ @limingqi107
 /mindspore/ccsrc/pybind_api/tools/ @fary86

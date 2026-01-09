@@ -109,7 +109,9 @@ class BackendFuncGraphMock {
     ValuePtr value = parse::data_converter::PyDataToValue(obj);
     MS_EXCEPTION_IF_NULL(value);
     if (value->isa<PrimitivePy>()) {
-      value = std::make_shared<Primitive>(*(value->cast<PrimitivePtr>()));
+      auto prim_value = value->cast<PrimitivePtr>();
+      MS_EXCEPTION_IF_NULL(prim_value);
+      value = std::make_shared<Primitive>(*prim_value);
       MS_EXCEPTION_IF_NULL(value);
     }
     const auto &abstract = value->ToAbstract();
