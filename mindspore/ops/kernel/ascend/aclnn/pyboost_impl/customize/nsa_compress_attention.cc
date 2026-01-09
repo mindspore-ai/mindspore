@@ -82,7 +82,8 @@ std::vector<tensor::TensorPtr> NsaCompressAttentionAscendCustomize(
       LAUNCH_ACLNN(aclnnNsaCompressAttention, device_context, op->stream_id(), query, key, value, atten_mask, topk_mask,
                    actual_seq_qlen_pair, actual_cmp_seq_kvlen_pair, actual_sel_seq_kvlen_pair, scale_value_val,
                    head_num_val, input_layout, sparse_mode, compress_block_size_val, compress_stride_val,
-                   select_block_size_val, select_block_count_val, outputs[2], outputs[3], outputs[0], outputs[1]);
+                   select_block_size_val, select_block_count_val, outputs[kIndex2], outputs[kIndex3], outputs[kIndex0],
+                   outputs[kIndex1]);
     }));
   return op->outputs();
 }

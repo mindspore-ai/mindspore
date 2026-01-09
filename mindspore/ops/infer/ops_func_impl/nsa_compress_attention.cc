@@ -48,7 +48,6 @@ ShapeArray NsaCompressAttentionFuncImpl::InferShape(const PrimitivePtr &primitiv
   auto select_block_count_opt = select_block_count_info->GetScalarValue<int64_t>();
 
   bool can_calc_shapes = head_num_opt.has_value() && select_block_count_opt.has_value();
-
   if (!can_calc_shapes) {
     const int64_t kShapeDimAny = abstract::Shape::kShapeDimAny;
 
