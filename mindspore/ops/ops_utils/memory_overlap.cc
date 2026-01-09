@@ -56,7 +56,7 @@ namespace {
 const char *GetTensorData(const TensorPtr &tensor) {
   const auto tensor_begin = static_cast<const char *>(tensor->unsafe_data());
   MS_EXCEPTION_IF_NULL(tensor_begin);
-  return tensor_begin + tensor->storage_offset() * tensor->DataItemSize();
+  return tensor_begin + tensor->storage_offset() * static_cast<size_t>(tensor->DataItemSize());
 }
 }  // namespace
 MemOverlapStatus GetOverlapStatus(const TensorPtr &a, const TensorPtr &b) {
@@ -73,9 +73,9 @@ MemOverlapStatus GetOverlapStatus(const TensorPtr &a, const TensorPtr &b) {
   }
   if (a->unsafe_data() == b->unsafe_data()) {
     const auto a_begin = GetTensorData(a);
-    const auto a_end = a_begin + a->DataSize() * a->DataItemSize();
+    const auto a_end = a_begin + a->DataSize() * static_cast<size_t>(a->DataItemSize());
     const auto b_begin = GetTensorData(b);
-    const auto b_end = b_begin + b->DataSize() * b->DataItemSize();
+    const auto b_end = b_begin + b->DataSize() * static_cast<size_t>(b->DataItemSize());
     if (a_begin == b_begin && a_end == b_end) {
       return MemOverlapStatus::FULL;
     }

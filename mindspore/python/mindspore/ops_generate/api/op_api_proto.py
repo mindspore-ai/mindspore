@@ -92,7 +92,7 @@ class OpApiProtoLoader(ResourceLoader):
         disable_scalar_tensor = func_data.get('disable_scalar_tensor', None)
         if disable_scalar_tensor:
             disable_scalar_tensor = [item.strip() for item in disable_scalar_tensor.split(',')]
-            check_disable_scalar_tensor(disable_scalar_tensor, op_name)
+            check_disable_scalar_tensor_list(disable_scalar_tensor, op_name)
         return disable_scalar_tensor
 
     def _deal_with_backend(self, func_data):
@@ -217,10 +217,13 @@ def check_varargs(varargs, op_name):
             f'There must be only one variable argument. But got {len(varargs)} in {op_name}')
 
 
-def check_disable_scalar_tensor(disable_scalar_tensor, op_name):
-    if len(disable_scalar_tensor) < 1:
+def check_disable_scalar_tensor_list(disable_scalar_tensor_list, op_name):
+    """
+    Check if the disable_scalar_tensor_list is valid.
+    """
+    if len(disable_scalar_tensor_list) < 1:
         raise ValueError(
-            f'There must be at least one argument. But got {len(disable_scalar_tensor)} in {op_name}')
+            f'There must be at least one argument. But got {len(disable_scalar_tensor_list)} in {op_name}')
 
 
 def _get_op_name_from_op_yaml(func_name: str, func_data: dict) -> str:

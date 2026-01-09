@@ -82,7 +82,7 @@ inline static ValuePtrList SplitWithSizeBackward(const ValuePtrList &grads, cons
                                                  const int64_t dim, const std::vector<int64_t> &self_shape,
                                                  const TypeId self_dtype) {
   auto grad_dtype = std::make_shared<Int64Imm>(static_cast<int64_t>(self_dtype));
-  const int64_t ndim = self_shape.size();
+  const int64_t ndim = static_cast<int64_t>(self_shape.size());
   const auto real_dim = ops::DynamicDimWrap(dim, ndim);
 
   std::vector<ValuePtr> real_grads(grads.size());
@@ -107,9 +107,9 @@ inline static ValuePtrList SplitWithSizeBackward(const ValuePtrList &grads, cons
 
 ValuePtrList SplitTensorBackwardNode::CallBackward(const ValuePtrList &grads) {
   SetDeviceTarget();
-  const int64_t ndim = self_shape_.size();
+  const int64_t ndim = static_cast<int64_t>(self_shape_.size());
   const auto real_dim = ops::DynamicDimWrap(dim_, ndim);
-  int64_t num_splits = grads.size();
+  int64_t num_splits = static_cast<int64_t>(grads.size());
   std::vector<int64_t> split_sizes(num_splits, split_size_);
   split_sizes[split_sizes.size() - 1] = split_size_ - (num_splits * split_size_ - self_shape_[real_dim]);
   return SplitWithSizeBackward(grads, split_sizes, real_dim, self_shape_, self_dtype_);

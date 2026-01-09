@@ -8719,7 +8719,7 @@ def baddbmm_ext(input, batch1, batch2, *, beta=1, alpha=1):
     return ops.auto_generate.baddbmm(input, batch1, batch2, beta, alpha)
 
 
-def log2(input):
+def log2(input): # pylint: disable=redefined-builtin
     r"""
     Compute the logarithm to the base 2 of the input tensor element-wise.
 
