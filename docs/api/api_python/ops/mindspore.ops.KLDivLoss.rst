@@ -32,7 +32,7 @@ mindspore.ops.KLDivLoss
         - 在CPU平台上， `reduction` 的可选值为 ``'mean'`` 、 ``'batchmean'`` 、 ``'none'`` 或 ``'sum'`` 。
 
     参数：
-        - **reduction** (str，可选) - 指定输出结果的计算方式。默认值:  ``'mean'`` 。
+        - **reduction** (str，可选) - 指定输出结果的计算方式。默认值: ``'mean'`` 。
 
           - ``'none'``：不应用规约方法。
           - ``'mean'``：计算输出元素的平均值。

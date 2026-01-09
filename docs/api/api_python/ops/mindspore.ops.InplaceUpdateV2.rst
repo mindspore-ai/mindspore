@@ -12,7 +12,7 @@ mindspore.ops.InplaceUpdateV2
 
     输入：
         - **x** (Tensor) - 待更新的Tensor。数据类型支持float16、float32或int32。
-        - **indices** (Union[int, tuple, Tensor]) - 指定将 `x` 的哪些行更新为  `v` 。可以为int或Tuple或Tensor，取值范围[0, len(`x`))。
+        - **indices** (Union[int, tuple, Tensor]) - 指定将 `x` 的哪些行更新为 `v` 。可以为int或Tuple或Tensor，取值范围[0, len(`x`))。
         - **v** (Tensor) - 除第一个维度之外，shape必须与 `x` 的shape相同，第一个维度必须与 `indices` 的长度相同。数据类型与 `x` 相同。
 
     输出：
