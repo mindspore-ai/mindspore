@@ -124,7 +124,7 @@
 /mindspore/python/mindspore/mint/ @liangchenghui
 /mindspore/python/mindspore/mint/optim/ @limingqi107
 /mindspore/python/mindspore/mint/distributed/ @zhangyinxia
-/mindspore/python/mindspore/multiprocessing/ @zhangyinxia
+/mindspore/python/mindspore/multiprocessing/ @hz893
 /mindspore/python/mindspore/nn/ @changzherui
 /mindspore/python/mindspore/nn/grad/ @ginfung
 /mindspore/python/mindspore/nn/layer/ @liangchenghui
@@ -263,7 +263,7 @@
 /tests/ut/python/hal/ @limingqi107
 /tests/ut/python/mindrecord/ @jonyguo
 /tests/ut/python/mint/ @liangchenghui
-/tests/ut/python/multiprocessing/ @zhangyinxia
+/tests/ut/python/multiprocessing/ @hz893
 /tests/ut/python/nn/ @changzherui
 /tests/ut/python/nn/grad/ @ginfung
 /tests/ut/python/nn/layer/ @liangchenghui

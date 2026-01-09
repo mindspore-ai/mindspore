@@ -70,7 +70,7 @@ class Symbol:
         (8, 25, 9, 30, 30)
     """
 
-    def __init__(self, max=0, min=1, divisor=1, remainder=0, unique=False, **kwargs):
+    def __init__(self, max=0, min=1, divisor=1, remainder=0, unique=False, **kwargs): # pylint: disable=redefined-builtin
         Symbol._check_args_type(max, min, divisor, remainder, unique)
         if min <= 0:
             raise ValueError("For 'Symbol', the 'min' value should be positive, but got {}".format(min))
