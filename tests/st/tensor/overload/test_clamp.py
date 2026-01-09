@@ -91,28 +91,3 @@ def test_clamp_with_input_value_error(mode):
         net(x, 5, True)
         _pynative_executor.sync()
     assert "For Clamp, the dtype of 'input', 'min' and 'max' must not be bool." in str(error_info.value)
-
-
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
-@pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
-def test_clamp_overload_error_report(mode):
-    """
-    Feature: test Tensor.clamp
-    Description: Verify the input validation of Tensor.clamp
-    Expectation: expect correct error report
-    """
-    ms.set_context(mode=mode, jit_config={"jit_level": "O0"})
-    net = ClampNet()
-    x = ms.Tensor(np.random.rand(2, 2))
-    with pytest.raises(TypeError) as error_info:
-        net(x, [1], 1)
-    _pynative_executor.sync()
-    if mode == ms.GRAPH_MODE:
-        assert "Tensor.clamp(min=<number,None>, max=<number,None>)" in str(error_info.value)
-        assert "Tensor.clamp(min=<Tensor,None>, max=<Tensor,None>)" in str(error_info.value)
-    else:
-        assert "Tensor.clamp(min=<Tensor, None>, max=<Tensor, None>)" in str(error_info.value)
-        assert "Tensor.clamp(min=<Number, None>, max=<Number, None>)" in str(error_info.value)

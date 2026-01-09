@@ -16,6 +16,7 @@
 import pytest
 from tests.mark_utils import arg_mark
 import mindspore as ms
+import numpy as np
 ms.set_context(mode=ms.PYNATIVE_MODE)
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
@@ -113,3 +114,9 @@ def test_multiple_sig_exception():
     assert "max(dim=<int>, keepdim=<bool>)" in str(raise_info.value)
     assert "(int, List<int>)" in str(raise_info.value)
     assert "~~~~~~~~~~~" in str(raise_info.value)
+
+    x = ms.Tensor(np.random.rand(2, 2))
+    with pytest.raises(TypeError) as raise_info:
+        x.clamp([1], 1)
+    assert "Tensor.clamp(min=<None, Tensor>, max=<None, Tensor>)" in str(raise_info.value)
+    assert "Tensor.clamp(min=<None, Number>, max=<None, Number>)" in str(raise_info.value)
