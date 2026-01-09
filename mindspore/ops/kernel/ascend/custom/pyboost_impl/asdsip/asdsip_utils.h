@@ -74,6 +74,11 @@ using AsdFftExecFunc = int (*)(asdFftHandle handle, aclTensor *input, aclTensor 
 
 inline std::string GetAsdSipLibPath() {
   auto ascend_path = mindspore::device::ascend::GetAscendPath();
+  const std::string kLatest = "latest";
+  auto posLatest = ascend_path.rfind(kLatest);
+  if (posLatest != std::string::npos) {
+    return ascend_path + "/../../nnal/asdsip/latest/lib/libasdsip.so";
+  }
   return ascend_path + "/../nnal/asdsip/latest/lib/libasdsip.so";
 }
 
