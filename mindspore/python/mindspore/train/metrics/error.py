@@ -51,7 +51,7 @@ class MAE(Metric):
         0.037499990314245224
     """
     def __init__(self):
-        super(MAE, self).__init__()
+        super().__init__()
         self.clear()
 
     def clear(self):
@@ -62,7 +62,7 @@ class MAE(Metric):
     @rearrange_inputs
     def update(self, *inputs):
         """
-        Updates the internal evaluation result :math:`y\_pred` and :math:`y`.
+        Updates the internal evaluation result `y_pred` and `y`.
 
         Args:
             inputs: Input `y_pred` and `y` for calculating MAE where the shape of
@@ -128,7 +128,7 @@ class MSE(Metric):
         0.0031250009778887033
     """
     def __init__(self):
-        super(MSE, self).__init__()
+        super().__init__()
         self.clear()
 
     def clear(self):
