@@ -578,8 +578,8 @@ class Conv3d(_Conv):
             and width of the convolution kernel respectively.
         stride (Union[int, tuple[int], list[int]], optional): The movement stride of the 3D convolution kernel.
             The data type is an integer or a tuple/list of three integers. An integer represents the movement step size
-            in depth, height and width directions. A tuple/list of three integers represents the movement step size in the
-            depth, height and width directions respectively. Default: ``1`` .
+            in depth, height and width directions. A tuple/list of three integers represents the movement step size
+            in the depth, height and width directions respectively. Default: ``1`` .
         padding (Union[int, tuple[int], list[int], str], optional): The number of padding
             on the depth, height and width directions of the input.
             The data type is an integer or string {``"valid"``, ``"same"``} or a tuple/list of three integers.
@@ -859,7 +859,8 @@ class ConvTranspose2d(_ConvTranspose):
           :math:`k = \frac{groups}{C_\text{out} * \prod_{i=0}^{1}\text{kernel_size}[i]}`.
 
     Inputs:
-        - **input** (Tensor) - The input tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})` .
+        - **input** (Tensor) - The input tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`
+          or :math:`(C_{in}, H_{in}, W_{in})` .
 
     Outputs:
         - **output** (Tensor) - The output tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})` or :math:`(C_{out}, H_{out}, W_{out})`, where
