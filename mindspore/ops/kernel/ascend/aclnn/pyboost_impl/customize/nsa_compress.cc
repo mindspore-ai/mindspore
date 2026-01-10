@@ -38,12 +38,13 @@ tensor::TensorPtr NsaCompressAscendCustomize(const std::shared_ptr<OpRunner> &op
   }
   const std::string layout_string = "TND";
   const int64_t actual_seq_len_type_value = 0;
+  constexpr size_t kTndInputRank = 3;
 
   // Runtime checks for common illegal values to provide early diagnostics
   // 1) D must be multiple of 16
   {
     const auto &in_shape = input->shape();
-    if (in_shape.size() == 3) {
+    if (in_shape.size() == kTndInputRank) {
       const int64_t D = static_cast<int64_t>(in_shape[2]);
       if (D % 16 != 0) {
         MS_LOG(EXCEPTION) << "For '" << op->primitive()->name()

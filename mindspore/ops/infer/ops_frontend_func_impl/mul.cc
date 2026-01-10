@@ -78,6 +78,45 @@ void MulInnerDispatch(const tensor::TensorPtr &x1_tensor, const tensor::TensorPt
 
 #undef MUL_CASE
 
+template <typename InType>
+void MulDispatchByOutType(const TypeId out_type_id, const tensor::TensorPtr &x1_tensor,
+                          const tensor::TensorPtr &x2_tensor, const tensor::TensorPtr &result_tensor) {
+  switch (out_type_id) {
+    case kNumberTypeFloat16:
+      MulInnerDispatch<InType, float16>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeFloat32:
+      MulInnerDispatch<InType, float>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeFloat64:
+      MulInnerDispatch<InType, double>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt8:
+      MulInnerDispatch<InType, int8_t>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt16:
+      MulInnerDispatch<InType, int16_t>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt32:
+      MulInnerDispatch<InType, int32_t>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt64:
+      MulInnerDispatch<InType, int64_t>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeUInt8:
+      MulInnerDispatch<InType, uint8_t>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeBFloat16:
+      MulInnerDispatch<InType, bfloat16>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeBool:
+      MulInnerDispatch<InType, bool>(x1_tensor, x2_tensor, result_tensor);
+      break;
+    default:
+      MS_LOG(EXCEPTION) << "For Mul, the output data type is not supported.";
+  }
+}
+
 ValuePtr MulInferValue(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto x1_value = input_args[kIndex0]->GetValue();
   auto x2_value = input_args[kIndex1]->GetValue();
@@ -102,62 +141,42 @@ ValuePtr MulInferValue(const PrimitivePtr &primitive, const std::vector<Abstract
   auto out_shape = x1_shape.size() > x2_shape.size() ? x1_shape : x2_shape;
   auto result_tensor = std::make_shared<tensor::Tensor>(out_type_id, out_shape);
 
-#define MUL_DISPATCH(IN_TYPE, IN_TYPE_C)                                            \
-  case kNumberType##IN_TYPE: {                                                      \
-    switch (PromoteType(type_id1, type_id2, "")) {                                  \
-      case kNumberTypeFloat16:                                                      \
-        MulInnerDispatch<IN_TYPE_C, float16>(x1_tensor, x2_tensor, result_tensor);  \
-        break;                                                                      \
-      case kNumberTypeFloat32:                                                      \
-        MulInnerDispatch<IN_TYPE_C, float>(x1_tensor, x2_tensor, result_tensor);    \
-        break;                                                                      \
-      case kNumberTypeFloat64:                                                      \
-        MulInnerDispatch<IN_TYPE_C, double>(x1_tensor, x2_tensor, result_tensor);   \
-        break;                                                                      \
-      case kNumberTypeInt8:                                                         \
-        MulInnerDispatch<IN_TYPE_C, int8_t>(x1_tensor, x2_tensor, result_tensor);   \
-        break;                                                                      \
-      case kNumberTypeInt16:                                                        \
-        MulInnerDispatch<IN_TYPE_C, int16_t>(x1_tensor, x2_tensor, result_tensor);  \
-        break;                                                                      \
-      case kNumberTypeInt32:                                                        \
-        MulInnerDispatch<IN_TYPE_C, int32_t>(x1_tensor, x2_tensor, result_tensor);  \
-        break;                                                                      \
-      case kNumberTypeInt64:                                                        \
-        MulInnerDispatch<IN_TYPE_C, int64_t>(x1_tensor, x2_tensor, result_tensor);  \
-        break;                                                                      \
-      case kNumberTypeUInt8:                                                        \
-        MulInnerDispatch<IN_TYPE_C, uint8_t>(x1_tensor, x2_tensor, result_tensor);  \
-        break;                                                                      \
-      case kNumberTypeBFloat16:                                                     \
-        MulInnerDispatch<IN_TYPE_C, bfloat16>(x1_tensor, x2_tensor, result_tensor); \
-        break;                                                                      \
-      case kNumberTypeBool:                                                         \
-        MulInnerDispatch<IN_TYPE_C, bool>(x1_tensor, x2_tensor, result_tensor);     \
-        break;                                                                      \
-      default:                                                                      \
-        MS_LOG(EXCEPTION) << "For Mul, the output data type is not supported.";     \
-    }                                                                               \
-    break;                                                                          \
-  }
-
   switch (type_id1) {
-    MUL_DISPATCH(Float16, float16)
-    MUL_DISPATCH(Float32, float)
-    MUL_DISPATCH(Float64, double)
-    MUL_DISPATCH(Int8, int8_t)
-    MUL_DISPATCH(Int16, int16_t)
-    MUL_DISPATCH(Int32, int32_t)
-    MUL_DISPATCH(Int64, int64_t)
-    MUL_DISPATCH(UInt8, uint8_t)
-    MUL_DISPATCH(BFloat16, bfloat16)
-    MUL_DISPATCH(Bool, bool)
+    case kNumberTypeFloat16:
+      MulDispatchByOutType<float16>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeFloat32:
+      MulDispatchByOutType<float>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeFloat64:
+      MulDispatchByOutType<double>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt8:
+      MulDispatchByOutType<int8_t>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt16:
+      MulDispatchByOutType<int16_t>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt32:
+      MulDispatchByOutType<int32_t>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeInt64:
+      MulDispatchByOutType<int64_t>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeUInt8:
+      MulDispatchByOutType<uint8_t>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeBFloat16:
+      MulDispatchByOutType<bfloat16>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
+    case kNumberTypeBool:
+      MulDispatchByOutType<bool>(out_type_id, x1_tensor, x2_tensor, result_tensor);
+      break;
     default:
       MS_LOG(DEBUG) << "For '" << primitive->name()
                     << "', the inputs data type is not supported now. Take it as constant folding fallback.";
       return nullptr;
   }
-#undef MUL_DISPATCH
   return result_tensor;
 }
 }  // namespace

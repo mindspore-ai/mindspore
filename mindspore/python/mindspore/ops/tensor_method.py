@@ -21,6 +21,7 @@ from mindspore import ops
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.composite.multitype_ops import _compile_utils as utils
+from mindspore._checkparam import check_axis_in_range
 from mindspore.ops.composite.multitype_ops._compile_utils import (
     sequence_to_tensor, _tensor_sub, _tensor_pow, _tensor_div, _tensor_floordiv, _tensor_mod
 )
@@ -448,8 +449,6 @@ from mindspore.ops.auto_generate.gen_ops_prim import inplace_log_op
 
 # 1031 masked_scatter
 from mindspore.ops.auto_generate import masked_scatter
-
-from mindspore._checkparam import check_axis_in_range
 
 
 ########################################functions########################################

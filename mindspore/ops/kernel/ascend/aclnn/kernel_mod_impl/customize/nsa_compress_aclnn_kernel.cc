@@ -20,6 +20,7 @@ void NsaCompressAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inpu
 
   layout_ = "TND";
   seq_len_type_ = 0;
+  constexpr size_t kTndInputRank = 3;
 
   // Runtime checks for common illegal values to provide early diagnostics in KernelMod
   // 1) D must be multiple of 16
@@ -27,7 +28,7 @@ void NsaCompressAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inpu
     auto *in_tensor = inputs[kIndex0];
     MS_EXCEPTION_IF_NULL(in_tensor);
     const auto in_shape = in_tensor->GetShapeVector();
-    if (in_shape.size() == 3) {
+    if (in_shape.size() == kTndInputRank) {
       const int64_t D = static_cast<int64_t>(in_shape[2]);
       if (D % 16 != 0) {
         MS_LOG(EXCEPTION) << "For 'NsaCompress', the last dimension D must be a multiple of 16, but got D=" << D << ".";

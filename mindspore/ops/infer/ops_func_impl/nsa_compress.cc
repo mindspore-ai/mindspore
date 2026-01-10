@@ -59,7 +59,6 @@ ShapeArray NsaCompressFuncImpl::InferShape(const PrimitivePtr &primitive, const 
 
   // Decide whether we can compute compressed first dim
   bool can_calc_first_dim = has_known_seq && compress_block_size_opt.has_value() && compress_stride_opt.has_value();
-
   // If we cannot compute first dim precisely, still return [?, N, D]
   if (!can_calc_first_dim) {
     ShapeVector output_shape = {abstract::Shape::kShapeDimAny, input_shape[kIndex1], input_shape[kIndex2]};
@@ -68,7 +67,6 @@ ShapeArray NsaCompressFuncImpl::InferShape(const PrimitivePtr &primitive, const 
 
   const int64_t compress_block_size = compress_block_size_opt.value();
   const int64_t compress_stride = compress_stride_opt.value();
-
   // Calculate compressed KV number following torch logic when both scalars and seq are known
   if (compress_stride <= 0) {
     MS_EXCEPTION(ValueError) << "For '" << op_name << "', compress_stride must be greater than 0.";

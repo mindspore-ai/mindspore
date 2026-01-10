@@ -37,6 +37,70 @@ class _Conv(Cell):
     """
     Applies a N-D convolution over an input signal composed of several input planes.
     """
+    @staticmethod
+    def _check_channels(in_channels, out_channels, groups):
+        in_channels = Validator.check_non_negative_int(in_channels)
+        out_channels = Validator.check_non_negative_int(out_channels)
+        groups = Validator.check_positive_int(groups)
+        if in_channels % groups != 0:
+            raise ValueError('in_channels must be divisible by groups.')
+        if out_channels % groups != 0:
+            raise ValueError('out_channels must be divisible by groups.')
+        return in_channels, out_channels, groups
+
+    @staticmethod
+    def _check_padding(padding, stride):
+        valid_padding_strings = {'same', 'valid'}
+        if isinstance(padding, str):
+            if padding not in valid_padding_strings:
+                raise ValueError(f"The value of 'padding' must be one of '{valid_padding_strings}', "
+                                 f"but got {padding}.")
+            if padding == 'same' and any(s != 1 for s in stride):
+                raise ValueError("padding='same' is not supported for strided convolutions")
+
+    @staticmethod
+    def _check_padding_mode(padding_mode):
+        valid_padding_modes = {'zeros', 'reflect', 'replicate', 'circular'}
+        if padding_mode not in valid_padding_modes:
+            raise ValueError(f"The value of 'padding_mode' must be one of '{valid_padding_modes}', "
+                             f"but got {padding_mode}.")
+
+    @staticmethod
+    def _check_positive_sequence(name, seq, cls_name):
+        for elem in seq:
+            Validator.check_positive_int(elem, f'{name} item', cls_name)
+
+    @staticmethod
+    def _calc_reversed_padding(padding, dilation, kernel_size):
+        if isinstance(padding, str):
+            reversed_padding = [0, 0] * len(kernel_size)
+            if padding == 'same':
+                for d, k, i in zip(dilation, kernel_size, range(len(kernel_size) - 1, -1, -1)):
+                    total_padding = d * (k - 1)
+                    left_pad = total_padding // 2
+                    reversed_padding[2 * i] = left_pad
+                    reversed_padding[2 * i + 1] = (total_padding - left_pad)
+            return reversed_padding
+        return tuple(x for x in reversed(padding) for _ in range(2))
+
+    @staticmethod
+    def _get_weight_shape(in_channels, out_channels, groups, kernel_size, transposed):
+        if transposed:
+            return [in_channels, out_channels // groups, *kernel_size]
+        return [out_channels, in_channels // groups, *kernel_size]
+
+    @staticmethod
+    def _create_bias(bias, shape, out_channels, dtype, cls_name):
+        if not Validator.check_bool(bias, "bias", cls_name):
+            return None
+        fan_in, _ = _calculate_fan_in_and_fan_out(shape)
+        if fan_in != 0:
+            bound = 1 / math.sqrt(fan_in)
+            bias_init = Uniform(bound)
+        else:
+            bias_init = 'zeros'
+        return Parameter(initializer(bias_init, [out_channels], dtype=dtype), name='bias')
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -52,67 +116,27 @@ class _Conv(Cell):
                  dtype=mstype.float32):
         """Initialize _Conv."""
         super(_Conv, self).__init__()
-        self.groups = Validator.check_positive_int(groups)
-        self.in_channels = Validator.check_non_negative_int(in_channels)
-        self.out_channels = Validator.check_non_negative_int(out_channels)
-        if self.in_channels % groups != 0:
-            raise ValueError('in_channels must be divisible by groups.')
-        if self.out_channels % groups != 0:
-            raise ValueError('out_channels must be divisible by groups.')
-        valid_padding_strings = {'same', 'valid'}
         self.padding = padding
         self.stride = stride
-        if isinstance(self.padding, str):
-            if self.padding not in valid_padding_strings:
-                raise ValueError(f"The value of 'padding' must be one of '{valid_padding_strings}', "
-                                 f"but got {self.padding}.")
-            if self.padding == 'same' and any(s != 1 for s in self.stride):
-                raise ValueError("padding='same' is not supported for strided convolutions")
-
-        valid_padding_modes = {'zeros', 'reflect', 'replicate', 'circular'}
-        if padding_mode not in valid_padding_modes:
-            raise ValueError(f"The value of 'padding_mode' must be one of '{valid_padding_modes}', "
-                             f"but got {padding_mode}.")
         self.transposed = transposed
         self.output_padding = output_padding
         self.padding_mode = padding_mode
         self.kernel_size = kernel_size
-        for kernel_size_elem in kernel_size:
-            Validator.check_positive_int(kernel_size_elem, 'kernel_size item', self.cls_name)
-        for stride_elem in stride:
-            Validator.check_positive_int(stride_elem, 'stride item', self.cls_name)
         self.dilation = dilation
-        for dilation_elem in dilation:
-            Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
-        if isinstance(self.padding, str):
-            self._reversed_padding = [0, 0] * len(kernel_size)
-            if padding == 'same':
-                for d, k, i in zip(dilation, kernel_size,
-                                   range(len(kernel_size) - 1, -1, -1)):
-                    total_padding = d * (k - 1)
-                    left_pad = total_padding // 2
-                    self._reversed_padding[2 * i] = left_pad
-                    self._reversed_padding[2 * i + 1] = (
-                        total_padding - left_pad)
-        else:
-            self._reversed_padding = tuple(x for x in reversed(self.padding) for _ in range(2))
-        if transposed:
-            shape = [in_channels, out_channels // groups, *kernel_size]
-        else:
-            shape = [out_channels, in_channels // groups, *kernel_size]
+
+        self.in_channels, self.out_channels, self.groups = self._check_channels(in_channels, out_channels, groups)
+        self._check_padding(self.padding, self.stride)
+        self._check_padding_mode(self.padding_mode)
+        self._check_positive_sequence('kernel_size', self.kernel_size, self.cls_name)
+        self._check_positive_sequence('stride', self.stride, self.cls_name)
+        self._check_positive_sequence('dilation', self.dilation, self.cls_name)
+
+        self._reversed_padding = self._calc_reversed_padding(self.padding, self.dilation, self.kernel_size)
+        shape = self._get_weight_shape(self.in_channels, self.out_channels, self.groups, self.kernel_size,
+                                       self.transposed)
         weight_init = HeUniform(math.sqrt(5))
         self.weight = Parameter(initializer(weight_init, shape, dtype=dtype), name='weight')
-
-        if Validator.check_bool(bias, "bias", self.cls_name):
-            fan_in, _ = _calculate_fan_in_and_fan_out(shape)
-            if fan_in != 0:
-                bound = 1 / math.sqrt(fan_in)
-                bias_init = Uniform(bound)
-            else:
-                bias_init = 'zeros'
-            self.bias = Parameter(initializer(bias_init, [out_channels], dtype=dtype), name='bias')
-        else:
-            self.bias = None
+        self.bias = self._create_bias(bias, shape, self.out_channels, dtype, self.cls_name)
 
     def construct(self, *inputs):
         """Must be overridden by all subclasses."""
@@ -324,7 +348,8 @@ class Conv2d(_Conv):
     r"""
     2D convolution layer.
 
-    Applies a 2D convolution over an input signal composed of several input planes which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
+    Applies a 2D convolution over an input signal composed of several input planes which is typically of shape
+    :math:`(N, C_{in}, H_{in}, W_{in})`,
     where :math:`N` is batch size, :math:`C` is channel number, :math:`H` is feature height, :math:`W` is feature width.
 
     Calculate according to the following formula:
