@@ -164,7 +164,7 @@ class Rprop(Optimizer):
     @opt_init_args_register
     def __init__(self, params, learning_rate=0.1, etas=(0.5, 1.2), step_sizes=(1e-6, 50.), weight_decay=0.):
 
-        super(Rprop, self).__init__(learning_rate, params, weight_decay)
+        super().__init__(learning_rate, params, weight_decay)
         if not isinstance(etas, tuple):
             raise TypeError("For Rprop, etas must be a tuple, but got {}.".format(type(etas)))
         if len(etas) != 2:
@@ -203,6 +203,15 @@ class Rprop(Optimizer):
 
     @jit(backend="ms_backend")
     def construct(self, gradients):
+        r"""
+        Construct method for Rprop optimizer.
+
+        Args:
+            gradients (tuple[Tensor]): The gradients of parameters.
+
+        Returns:
+            Tensor[bool], the value is True.
+        """
         gradients = self.decay_weight(gradients)
         gradients = self.gradients_centralization(gradients)
         gradients = self.scale_grad(gradients)
@@ -214,39 +223,41 @@ class Rprop(Optimizer):
                                                                    self.prev, self.step_size)):
             lr = lrs[index] if self.is_group_lr else lrs
 
+            # Use param dtype for low-precision (f16/bf16) to avoid parameter auto-cast failures.
+            compute_dtype = param.dtype if param.dtype in (mstype.float16, mstype.bfloat16) else mstype.float32
+
             if self.global_step == 1:
-                step_size_fp32 = self.ones_like(step_size) * lr
+                step_size_cast = self.cast(self.ones_like(step_size), compute_dtype) * lr
             else:
-                step_size_fp32 = self.cast(step_size, mstype.float32)
+                step_size_cast = self.cast(step_size, compute_dtype)
 
-            gradient_fp32 = self.cast(grad, mstype.float32)
-            param_fp32 = self.cast(param, mstype.float32)
+            gradient_cast = self.cast(grad, compute_dtype)
+            param_cast = self.cast(param, compute_dtype)
+            prev_cast = self.cast(prev, compute_dtype)
 
-            sign = self.sign(gradient_fp32 * prev)
+            sign = self.sign(gradient_cast * prev_cast)
             sign = self.select(
                 sign > 0,
-                self.fill(sign.shape, self.cast(self.etaplus, mstype.float32)),
+                self.fill(sign.shape, self.cast(self.etaplus, compute_dtype)),
                 sign)
             sign = self.select(
                 sign < 0,
-                self.fill(sign.shape, self.cast(self.etaminus,
-                                                mstype.float32)), sign)
+                self.fill(sign.shape, self.cast(self.etaminus, compute_dtype)), sign)
             sign = self.select(
-                sign == 0, self.fill(sign.shape,
-                                     self.cast(1., mstype.float32)), sign)
+                sign == 0, self.fill(sign.shape, self.cast(1., compute_dtype)), sign)
 
-            step_size_fp32 = ops.clip_by_value(step_size_fp32 * sign,
+            step_size_cast = ops.clip_by_value(step_size_cast * sign,
                                                self.step_size_min,
                                                self.step_size_max)
 
             gradient_update = self.select(
                 sign == self.etaminus,
-                self.fill(sign.shape, self.cast(0., mstype.float32)),
-                gradient_fp32)
-            next_param = param_fp32 - self.sign(gradient_update) * step_size_fp32
+                self.fill(sign.shape, self.cast(0., compute_dtype)),
+                gradient_cast)
+            next_param = param_cast - self.sign(gradient_update) * step_size_cast
 
             self.assign(param, self.cast(next_param, param.dtype))
             self.assign(prev, self.cast(gradient_update, prev.dtype))
-            self.assign(step_size, self.cast(step_size_fp32, step_size.dtype))
+            self.assign(step_size, self.cast(step_size_cast, step_size.dtype))
 
         return success

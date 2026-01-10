@@ -24,7 +24,7 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations import _csr_ops
 import mindspore as ms
 
-from .sparse_utils import get_platform, compare_res, compare_csr
+from tests.st.sparse.sparse_utils import get_platform, compare_res, compare_csr
 from tests.mark_utils import arg_mark
 
 
@@ -242,8 +242,8 @@ def test_csr_tensor_in_while_cpu():
     assert shape == out.shape
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_batch_csr_ops():
     """
     Feature: Test Batch CSR-related Ops.
@@ -306,8 +306,8 @@ def test_batch_csr_ops():
     assert np.allclose(graph_res_gather.asnumpy(), expect5)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential')
 def test_csr_ops():
     """
     Feature: Test CSR-related Ops.
