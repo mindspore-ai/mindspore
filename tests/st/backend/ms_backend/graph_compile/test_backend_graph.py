@@ -400,3 +400,35 @@ def test_dynamic_shape_for_cpu_diff_type():
     res3 = np.matmul(y2, res2)
     assert np.allclose(out2[0].asnumpy(), res2)
     assert np.allclose(out2[1].asnumpy(), res3)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_any_type_ref_node():
+    """
+    Feature: Support ref node for any type graph.
+    Description: ref input and output for any type graph.
+    Expectation: Run success.
+    """
+    a = BackendGraph()
+    shape = (4, 2)
+    ms.context.set_context(device_target="CPU")
+    ms.runtime.dispatch_threads_num(1)
+    para_1 = a.add_parameter(ms.float32, shape)
+    para_2 = a.add_parameter(ms.float32, shape)
+    p = Parameter(Tensor(np.ones(shape).astype(np.float32)), name="weight")
+    para_3 = a.add_parameter(p)
+    maketuple = a.add_cnode("MakeTuple", para_1, para_2)
+    script_valuenode = a.add_valuenode("x + y")
+    key_valuenode = a.add_valuenode(("x", "y"))
+    pyexecute = a.add_cnode("PyExecute", script_valuenode, key_valuenode, maketuple)
+    depend1 = a.add_cnode("Depend", para_1, pyexecute)
+    U = a.add_valuenode(UMonad())
+    assign = a.add_cnode("Assign", para_3, depend1, U)
+    depend = a.add_cnode("Depend", pyexecute, assign)
+    a.add_return(depend)
+    a.infer()
+    a.compile()
+    x = Tensor(np.ones(shape).astype(np.float32))
+    y = Tensor(np.ones(shape).astype(np.float32))
+    out = a(x, y, p)
+    assert np.allclose(out.asnumpy(), np.ones(shape).astype(np.float32) * 2)
