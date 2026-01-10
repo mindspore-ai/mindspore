@@ -1471,6 +1471,7 @@ ValuePtr ParserArgs::ConvertByParseDtype(size_t index) {
     auto value = data_convert_func(py_item);
     if (value && (dst == mindspore::ops::DT_TENSOR)) {
       auto t = value->cast<tensor::TensorPtr>();
+      MS_EXCEPTION_IF_NULL(t);
       t->set_source_type(src);
     }
     return (value != nullptr) ? value : nullptr;

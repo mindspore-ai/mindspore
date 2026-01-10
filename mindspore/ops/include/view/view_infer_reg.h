@@ -20,10 +20,11 @@
 #include "mindapi/base/macros.h"
 
 namespace mindspore::ops {
+constexpr size_t kCompileHashPrime = 31;
 constexpr size_t CompileHashString(std::string_view str) noexcept {
   size_t h = 0;
   for (char c : str) {
-    h = (h * 31) + static_cast<unsigned char>(c);
+    h = (h * kCompileHashPrime) + static_cast<unsigned char>(c);
   }
   return h;
 }

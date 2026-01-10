@@ -15,18 +15,18 @@
  */
 
 #include "backend/common/expander/fallback/fallback_irbuilder.h"
-#include "utils/shape_utils.h"
-#include "utils/check_convert_utils.h"
-#include "mindapi/base/types.h"
-#include "ops_utils/op_utils.h"
-#include "primitive/nn_ops.h"
 #include "infer/renorm.h"
 #include "infer/scatter_update.h"
+#include "mindapi/base/types.h"
+#include "ops_utils/op_utils.h"
 #include "primitive/auto_generate/gen_ops_primitive_b.h"
 #include "primitive/auto_generate/gen_ops_primitive_g.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_r.h"
 #include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/nn_ops.h"
+#include "utils/check_convert_utils.h"
+#include "utils/shape_utils.h"
 
 namespace mindspore {
 namespace expander {
