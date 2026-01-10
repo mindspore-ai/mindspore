@@ -125,7 +125,8 @@ nsa_compress_attention:
         >>> head_num = N
         >>> attention_out, topk_indices_out, softmax_max_out, softmax_sum_out = ops.nsa_compress_attention(
         ...     query, key, value, scale_value, head_num, compress_block_size, compress_stride, 
-        ...     select_block_size, select_block_count, topk_mask, atten_mask, 
-        ...     actual_seq_qlen, actual_cmp_seq_kvlen, actual_sel_seq_kvlen)
+        ...     select_block_size, select_block_count, topk_mask=topk_mask, atten_mask=atten_mask, 
+        ...     actual_seq_qlen=actual_seq_qlen, actual_cmp_seq_kvlen=actual_cmp_seq_kvlen,
+        ...     actual_sel_seq_kvlen=actual_sel_seq_kvlen)
         >>> print(attention_out.shape)
         (256, 8, 128)
