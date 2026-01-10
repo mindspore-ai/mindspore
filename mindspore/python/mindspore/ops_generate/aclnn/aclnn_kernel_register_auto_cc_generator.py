@@ -133,6 +133,7 @@ def check_op_registed(op_name, manual=False):
         return class_name in manual_registed_ops or class_name in host_registed_ops
     return class_name in registed_ops
 
+
 def generate_aclnn_reg_file(resource_mgr):
     """
     Generate nnacl kernelmod register

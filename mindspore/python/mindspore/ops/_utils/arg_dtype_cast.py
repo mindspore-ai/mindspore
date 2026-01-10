@@ -29,6 +29,7 @@ from mindspore.ops.primitive import Primitive, prim_attr_register, prim_arg_regi
 tensor_to_tuple_ = TensorToTuple()
 tensor_to_scalar_ = TensorToScalar()
 
+
 class IsDimUnKnown(Primitive):
     @prim_attr_register
     def __init__(self):
@@ -260,15 +261,21 @@ def is_list(type_id):
                        DT_LIST_STR_VAL, DT_LIST_ANY_VAL)
 
 
-def is_integral_mstype(type):
+def is_integral_mstype(dtype):
+    """
+    Check dtype is integral.
+    """
     integral_mstype = (mstype.int8, mstype.int16, mstype.int32, mstype.int64,
                        mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64)
-    return type in integral_mstype
+    return dtype in integral_mstype
 
 
-def is_floating_point_mstype(type):
+def is_floating_point_mstype(dtype):
+    """
+    Check dtype is floating point.
+    """
     fp_mstype = (mstype.float16, mstype.float32, mstype.float64)
-    return type in fp_mstype
+    return dtype in fp_mstype
 
 
 def is_number(type_id):
@@ -342,12 +349,15 @@ def tensor_to_number(data, dst_type, op_name):
 
 
 _tensor_to_scalar = TensorToScalar()
+
+
 def normalize_int_tensor(op_name, arg_name, data):
     """Normalize int tensor."""
     if not is_integral_mstype(data.dtype):
         raise ValueError(f"For '{op_name}', the input '{arg_name}' should be integral tensor, but got {data.dtype}.")
     data = ops.cast(data, ms.int64)
     return _tensor_to_scalar(data)
+
 
 def normalize_int_sequence(op_name, arg_name, data, to_tuple=True):
     """Normalize mixed int sequence."""
@@ -362,6 +372,7 @@ def normalize_int_sequence(op_name, arg_name, data, to_tuple=True):
         else:
             return data # invalid input, pass it through
     return tuple(res) if to_tuple else res
+
 
 def do_type_cast(data, dst_type, op_name):
     """Type conversion."""
