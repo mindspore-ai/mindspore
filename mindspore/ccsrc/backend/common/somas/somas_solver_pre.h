@@ -120,7 +120,7 @@ class DynamicBitSet {
       }
       for (int bit_pos = bit_width_ - 1; bit_pos >= 0; --bit_pos) {
         if (bit_[i] & ((static_cast<uint64_t>(0x1)) << bit_pos)) {
-          size_t global_bit_index = i * bit_width_ + (bit_width_ - 1 - bit_pos);
+          size_t global_bit_index = i * bit_width_ + (bit_width_ - 1 - static_cast<size_t>(bit_pos));
           set_indices.push_back(global_bit_index);
         }
       }
