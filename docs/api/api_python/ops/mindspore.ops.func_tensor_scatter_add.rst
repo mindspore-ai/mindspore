@@ -6,7 +6,7 @@
     返回一个新tensor，根据指定索引和更新值对 `input_x` 进行加法更新。
 
     .. math::
-        output\left [indices  \right ] = input\_x + update
+        output\left [indices  \right ] = input\_x + updates
 
     下图是tensor_scatter_add计算过程的例子：
 

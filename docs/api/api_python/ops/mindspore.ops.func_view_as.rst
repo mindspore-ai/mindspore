@@ -10,10 +10,10 @@ mindspore.ops.view_as
 
     参数：
         - **input** (Tensor) - 输入Tensor。
-        - **other** (Tensor) - 返回Tensor的shape与other的shape一致。
+        - **other** (Tensor) - 返回Tensor的shape与 `other` 的shape一致。
 
     返回：
-        Tensor，和other具有相同的shape。
+        Tensor，和 `other` 具有相同的shape。
 
     异常：
         - **TypeError** - 输入非Tensor。

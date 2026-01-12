@@ -15,7 +15,7 @@ mindspore.ops.round
         - **input** (Tensor) - 输入tensor。
 
     关键字参数：
-        - **decimals** (int, 可选) - 要舍入到的小数位数。如果为负数，则指定小数点左侧的位数。默认  ``0`` 。
+        - **decimals** (int, 可选) - 要舍入到的小数位数。如果为负数，则指定小数点左侧的位数。默认 ``0`` 。
 
     返回：
         Tensor

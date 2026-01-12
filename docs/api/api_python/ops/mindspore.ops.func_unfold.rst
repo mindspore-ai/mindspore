@@ -6,7 +6,7 @@ mindspore.ops.unfold
     从一个batch的输入Tensor中提取滑动局部块。
 
     考虑一个batch的输入Tensor，其shape为 :math:`(N, C, *)` ，其中 :math:`N` 是batch维度，
-    :math:`C` 是channel维度， :math:`*` 表示任意的空间维度。此操作将展平输入 `x` 空间维度内每个滑动的
+    :math:`C` 是channel维度， :math:`*` 表示任意的空间维度。此操作将展平输入 `input` 空间维度内每个滑动的
     `kernel_size` 大小的滑块为输出的3-D Tensor中的一列(如，最后一维)。
 
     输出Tensor的shape为 :math:`(N, C \times \prod(\text{kernel_size}), L)` ，
@@ -17,7 +17,7 @@ mindspore.ops.unfold
         L = \prod_d \left\lfloor\frac{\text{spatial_size}[d] + 2 \times \text{pads}[d] %
             - \text{dilations}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{strides}[d]} + 1\right\rfloor,
 
-    其中， :math:`\text{spatial_size}` 由输入 `x` 的空间维度(上面的 :math:`*` )决定， :math:`d` 表示遍历所有的空间维度。
+    其中， :math:`\text{spatial_size}` 由输入 `input` 的空间维度(上面的 :math:`*` )决定， :math:`d` 表示遍历所有的空间维度。
 
     因此，在最后一个维度(列维度)上 `output` 包含特定块内的所有值。
 
@@ -30,12 +30,12 @@ mindspore.ops.unfold
     参数：
         - **input** (Tensor) - 四维Tensor，支持的数据类型：float16、float32、float64、complex64和complex128。
         - **kernel_size** (Union[int, tuple[int], list[int]]) - 滑窗大小。如果是两个int，则分别为滑窗的高度和宽度；如果是一个int，则高度和宽度均为这个int值。
-        - **dilation** (Union[int, tuple[int], list[int]]，可选) - 窗口的空洞卷积的扩充率，如果是两个int，则分别作用于滑窗的高度和宽度；如果是一个int，则这个值作用于化窗的高度和宽度。默认 ``1`` 。
-        - **padding** (Union[int, tuple[int], list[int]]，可选) - 滑窗的隐式零填充量。为单个int或者包含一/二个整数的tuple/list。默认值:  ``0`` 。
+        - **dilation** (Union[int, tuple[int], list[int]]，可选) - 窗口的空洞卷积的扩充率，如果是两个int，则分别作用于滑窗的高度和宽度；如果是一个int，则这个值作用于滑窗的高度和宽度。默认 ``1`` 。
+        - **padding** (Union[int, tuple[int], list[int]]，可选) - 滑窗的隐式零填充量。为单个int或者包含一/二个整数的tuple/list。默认 ``0`` 。
 
           - 如果是一个int，则pad_height = pad_width。
           - 如果是两个int，则pad_height = padding[0], pad_width = padding[1]。
-        - **stride** (Union[int, tuple[int], list[int]]，可选) - 空间维度上滑动的步长，如果是两个int，则分别为滑窗的高和宽方向上的步长；如果是一个int，则高和宽方向上的步长均为这个int值。默认值:  ``1`` 。
+        - **stride** (Union[int, tuple[int], list[int]]，可选) - 空间维度上滑动的步长，如果是两个int，则分别为滑窗的高和宽方向上的步长；如果是一个int，则高和宽方向上的步长均为这个int值。默认 ``1`` 。
 
     返回：
         Tensor，数据类型与 `input` 相同，其shape如上所述。

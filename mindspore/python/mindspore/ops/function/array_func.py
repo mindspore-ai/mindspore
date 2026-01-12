@@ -2894,7 +2894,7 @@ def tensor_scatter_sub(input_x, indices, updates):
     values.
 
     .. math::
-        output[indices] = input\_x - update
+        output[indices] = input\_x - updates
 
     Note:
         On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
@@ -2933,7 +2933,7 @@ def tensor_scatter_max(input_x, indices, updates):
     values.
 
     .. math::
-        output\left [indices  \right ] = \max(input\_x, update)
+        output\left [indices  \right ] = \max(input\_x, updates)
 
     Note:
         - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
@@ -2972,7 +2972,7 @@ def tensor_scatter_min(input_x, indices, updates):
     values.
 
     .. math::
-        output\left [indices  \right ] = \min(input\_x, update)
+        output\left [indices  \right ] = \min(input\_x, updates)
 
     Note:
         - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
@@ -4142,7 +4142,7 @@ def tensor_scatter_mul(input_x, indices, updates):
     update values.
 
     .. math::
-        output\left [indices  \right ] = input\_x\times  update
+        output\left [indices  \right ] = input\_x\times  updates
 
     Note:
         - If some values of the `indices` are out of bound, instead of raising an index error,
@@ -4177,7 +4177,7 @@ def tensor_scatter_div(input_x, indices, updates):
     Return a new tensor which `input_x` is divided by the values from `updates` indicated by `indices` .
 
     .. math::
-        output\left [indices  \right ] = input\_x \div update
+        output\left [indices  \right ] = input\_x \div updates
 
     Note:
         - On GPU, if some values of the `indices` are out of bound, instead of raising an index error,
@@ -5612,7 +5612,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
     where :math:`N` is the batch dimension, :math:`C` is the channel dimension,
     and :math:`*` represent arbitrary spatial dimensions. This operation flattens
     each sliding `Kernel_size`- sized block within the spatial dimensions
-    of input `x` into a column (i.e., last dimension) of a 3-D output
+    of input `input` into a column (i.e., last dimension) of a 3-D output
     tensor of shape :math:`(N, C \times \prod(\text{kernel_size}), L)`, where
     :math:`C \times \prod(\text{kernel_size})` is the total number of values
     within each block (a block has :math:`\prod(\text{kernel_size})` spatial
@@ -5624,7 +5624,7 @@ def unfold(input, kernel_size, dilation=1, padding=0, stride=1):
             - \text{dilations}[d] \times (\text{kernel_size}[d] - 1) - 1}{\text{strides}[d]} + 1\right\rfloor,
 
     where :math:`\text{spatial_size}` is formed by the spatial dimensions
-    of input `x` (:math:`*` above), and :math:`d` is over all spatial
+    of input `input` (:math:`*` above), and :math:`d` is over all spatial
     dimensions.
 
     Therefore, indexing `output` at the last dimension (column dimension)

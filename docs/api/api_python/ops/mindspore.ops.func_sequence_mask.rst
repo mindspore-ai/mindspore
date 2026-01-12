@@ -10,7 +10,7 @@
 
     参数：
         - **lengths** (Tensor) - 输入tensor。此tensor中的所有值都应小于或等于 `maxlen` ，大于 `maxlen` 的值将被视为 `maxlen` 。
-        - **maxlen** (int) - 指定返回tensor的长度。
+        - **maxlen** (int) - 指定返回tensor的长度。默认 ``None`` 。
 
     返回：
         Tensor，shape为 `lengths.shape + (maxlen,)` 。
