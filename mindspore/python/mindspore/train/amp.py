@@ -855,8 +855,11 @@ def get_black_list():
 
 def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=mstype.float16):
     """
-    When the `white_list` is provided, primitives and cells in `white_list` will perform the precision conversion.
-    When the `black_list` is provided, cells that are not in `black_list` will perform the pereision conversion.
+    Customize mixed precision processing for Cells by configuring a whitelist or a blacklist.
+    
+    - When the `white_list` is provided, primitives and cells in `white_list` will perform the precision conversion.
+    - When the `black_list` is provided, cells that are not in `black_list` will perform the precision conversion.
+    
     Only one of `white_list` and `black_list` should be provided.
 
     Note:
@@ -865,18 +868,18 @@ def custom_mixed_precision(network, *, white_list=None, black_list=None, dtype=m
         - If interfaces like `Model` and `build_train_network` is used to train the network which is converted by
           mixed-precision interfaces such as `custom_mixed_precision` and `auto_mixed_precision`, `amp_level` or `level`
           need to be configured to ``O0`` to avoid the duplicated accuracy conversion.
-        - Primitives for blacklist is not support yet.
+        - Primitives for blacklist is not supported yet.
 
     Args:
         network (Cell): Definition of the network.
 
     Keyword Args:
-        white_list (list[Primitive, Cell], optional): White list of custom mixed precision. Defaults: ``None`` , means
-            white list is not used.
-        black_list (list[Cell], optional): Black list of custom mixed precision. Defaults: ``None`` , means
-            black list is not used.
+        white_list (list[Primitive, Cell], optional): Whitelist of custom mixed precision. Default: ``None`` , means
+            whitelist is not used.
+        black_list (list[Cell], optional): Blacklist of custom mixed precision. Default: ``None`` , means
+            blacklist is not used.
         dtype (Type, optional): The type used in lower precision calculations, can be ``mstype.float16`` or
-            ``mstype.bfloat16`` , default: ``mstype.float16`` .
+            ``mstype.bfloat16`` . Default: ``mstype.float16`` .
 
     Returns:
         network (Cell), A network supporting mixed precision.

@@ -158,7 +158,7 @@ def all_finite(inputs):
         device targets.
 
     Args:
-        inputs (Union(tuple(Tensor), list(Tensor))): a iterable Tensor.
+        inputs (Union(tuple(Tensor), list(Tensor))): An iterable Tensor.
 
     Returns:
         Tensor, a scalar Tensor and the dtype is bool.
@@ -183,7 +183,7 @@ class LossScaler(ABC):
     r"""
     Loss scaler abstract class when using mixed precision.
 
-    Derived class needs to implement all of its methods. During training, `scale` and `unscale` is used
+    Derived class needs to implement all of its methods. During training, `scale` and `unscale` are used
     to scale and unscale the loss value and gradients to avoid overflow, `adjust` is used to update the
     loss scale value.
 
@@ -222,7 +222,7 @@ class LossScaler(ABC):
         Scaling inputs by `scale_value`.
 
         Args:
-            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): The input loss value or gradients.
         """
         raise NotImplementedError
 
@@ -232,7 +232,7 @@ class LossScaler(ABC):
         Unscaling inputs by `scale_value`.
 
         Args:
-            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): The input loss value or gradients.
         """
         raise NotImplementedError
 
@@ -242,7 +242,7 @@ class LossScaler(ABC):
         Adjust the `scale_value` dependent on whether grads are finite.
 
         Args:
-            grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.
+            grads_finite (Tensor): A scalar bool Tensor indicating whether the grads are finite.
         """
         raise NotImplementedError
 
@@ -290,7 +290,7 @@ class StaticLossScaler(LossScaler):
         Scaling inputs by `scale_value`.
 
         Args:
-            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): The input loss value or gradients.
 
         Returns:
             Union(Tensor, tuple(Tensor)), the scaled value.
@@ -303,7 +303,7 @@ class StaticLossScaler(LossScaler):
         Unscaling inputs by `scale_value`.
 
         Args:
-            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): The input loss value or gradients.
 
         Returns:
             Union(Tensor, tuple(Tensor)), the unscaled value.
@@ -314,10 +314,10 @@ class StaticLossScaler(LossScaler):
     def adjust(self, grads_finite):
         """
         Adjust `scale_value` in `LossScaler`. `scale_value` is fixed in `StaticLossScaler`, so this method
-        return False directly.
+        returns False directly.
 
         Args:
-            grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.
+            grads_finite (Tensor): A scalar bool Tensor indicating whether the grads are finite.
         """
         return False
 
@@ -372,7 +372,7 @@ class DynamicLossScaler(LossScaler):
         Scaling inputs by `scale_value`.
 
         Args:
-            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): The input loss value or gradients.
 
         Returns:
             Union(Tensor, tuple(Tensor)), the scaled value.
@@ -385,7 +385,7 @@ class DynamicLossScaler(LossScaler):
         Unscaling inputs by `scale_value`.
 
         Args:
-            inputs (Union(Tensor, tuple(Tensor))): the input loss value or gradients.
+            inputs (Union(Tensor, tuple(Tensor))): The input loss value or gradients.
 
         Returns:
             Union(Tensor, tuple(Tensor)), the unscaled value.
@@ -398,7 +398,7 @@ class DynamicLossScaler(LossScaler):
         Adjust the `scale_value` dependent on whether grads are finite.
 
         Args:
-            grads_finite (Tensor): a scalar bool Tensor indicating whether the grads are finite.
+            grads_finite (Tensor): A scalar bool Tensor indicating whether the grads are finite.
         """
         one = ops.ones((), self.scale_value.dtype)
         scale_mul_factor = self.scale_value * self.scale_factor
