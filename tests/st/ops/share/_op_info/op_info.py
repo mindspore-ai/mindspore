@@ -26,6 +26,7 @@ import warnings
 import math
 import numpy as np
 import mindspore as ms
+from mindspore import mutable
 from typing import Callable, Optional
 from dataclasses import dataclass, field
 from mindspore._c_expression import MSContext
@@ -1608,18 +1609,18 @@ def dynamic_inputs_reduction_op_common_func(
             yield OpDynamicInput(
                 op_compile_input=OpSampleInput(
                     op_input=ms.Tensor(shape=(None, None, None, None), dtype=dtype),
-                    op_kwargs={'dim': (0, 2), 'keepdim': False},
+                    op_kwargs={'dim': mutable((0, 2)), 'keepdim': False},
                     sample_name=f'{op_info.name}_dynamic_shape_compile_tuple_dim'
                 ),
                 op_running_inputs=(
                     OpSampleInput(
                         op_input=make_func(shape=(4, 5, 6, 7)),
-                        op_kwargs={'dim': (0, 2), 'keepdim': False},
+                        op_kwargs={'dim': mutable((0, 2)), 'keepdim': False},
                         sample_name=f'{op_info.name}_dynamic_shape_running_tuple_1'
                     ),
                     OpSampleInput(
                         op_input=make_func(shape=(2, 3, 4, 5)),
-                        op_kwargs={'dim': (0, 2), 'keepdim': False},
+                        op_kwargs={'dim': mutable((0, 2)), 'keepdim': False},
                         sample_name=f'{op_info.name}_dynamic_shape_running_tuple_2'
                     ),
                 )
