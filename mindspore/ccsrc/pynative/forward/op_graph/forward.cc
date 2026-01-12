@@ -353,6 +353,36 @@ void UpdateDeviceByInputs(const FrontendOpRunInfoPtr &op_run_info) {
     op_run_info->base_op_run_info.device_target = device;
   }
 }
+
+void CheckViewInplaceInput(const FrontendOpRunInfoPtr &op_run_info) {
+  auto op_def = mindspore::ops::GetOpDef(op_run_info->base_op_run_info.op_name);
+  if (op_def == nullptr) {
+    return;
+  }
+
+  const auto &outputs = op_def->returns_;
+  for (const auto &output : outputs) {
+    if (output.inplace_input_index_ < 0) {
+      continue;
+    }
+
+    if (static_cast<size_t>(output.inplace_input_index_) >= op_run_info->op_grad_info->input_value.size()) {
+      MS_LOG(EXCEPTION) << "Index " << output.inplace_input_index_ << " out of bound "
+                        << op_run_info->op_grad_info->input_value.size();
+    }
+    const auto &input = op_run_info->op_grad_info->input_value[output.inplace_input_index_];
+    MS_EXCEPTION_IF_NULL(input);
+    if (input->isa<Tensor>()) {
+      auto tensor = input->cast<TensorPtr>();
+      if (tensor->storage_info() != nullptr) {
+        MS_LOG(EXCEPTION) << "Check view and inplace failed! Not support view input for inplace op " << op_def->name_
+                          << ". Got input with storage_info:" << tensor->storage_info()->ToString();
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "The op " << op_def->name_ << " inplace input is not a Tensor!";
+    }
+  }
+}
 }  // namespace
 
 void ForwardExecutor::WaitForwardTask() {
@@ -626,6 +656,9 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   op_run_info->op_grad_info->operator_type =
     strides_calc_info.first.has_value() ? OperatorType::kViewOp : OperatorType::kDefault;
 #endif
+
+  CheckViewInplaceInput(op_run_info);
+
   // 1.Set cast for inputs
   SetCastForInputs(op_run_info);
 
