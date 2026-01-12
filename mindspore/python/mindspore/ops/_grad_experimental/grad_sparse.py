@@ -271,8 +271,7 @@ def get_bprop_csr_div(self):
     def bprop(indptr, indices, values, shape, dense, out, dout):
         batch_dim_csr_start = 2
         batch_dim_dense_start = len(dense.shape) - (len(shape) - batch_dim_csr_start)
-        if batch_dim_dense_start < 0:
-            batch_dim_dense_start = 0
+        batch_dim_dense_start = max(batch_dim_dense_start, 0)
         feature_dim = infer_out_shape(shape[:batch_dim_csr_start], dense.shape[:batch_dim_dense_start])
 
         shape_x = feature_dim + shape[batch_dim_csr_start:]
@@ -318,20 +317,44 @@ def get_bprop_coo2csr(self):
     return bprop
 
 
-csr_to_coo = CSRSparseMatrixToSparseTensor()
+_csr_to_coo_prim = None
 
 
-dense_to_csr = DenseToCSRSparseMatrix()
+_dense_to_csr_prim = None
+
+
+def _get_csr_to_coo_prim():
+    """Lazy init to avoid import-time deprecated warnings."""
+    global _csr_to_coo_prim
+    if _csr_to_coo_prim is None:
+        _csr_to_coo_prim = CSRSparseMatrixToSparseTensor()
+    return _csr_to_coo_prim
+
+
+def _get_dense_to_csr_prim():
+    """Lazy init to avoid import-time deprecated warnings."""
+    global _dense_to_csr_prim
+    if _dense_to_csr_prim is None:
+        _dense_to_csr_prim = DenseToCSRSparseMatrix()
+    return _dense_to_csr_prim
 
 
 @bprops.register(CSRSparseMatrixToDense)
 def bprop_csr_sparse_matrix_to_dense(shape, batch, indptr, indices, values, out, dout):
     """Backpropagator for primitive `CSRSparseMatrixToDense`."""
-    index, _, _ = csr_to_coo(shape, batch, indptr, indices, values)
-    return dense_to_csr(dout, index)
+    index, _, _ = _get_csr_to_coo_prim()(shape, batch, indptr, indices, values)
+    return _get_dense_to_csr_prim()(dout, index)
 
 
-csr_to_dense = CSRSparseMatrixToDense()
+_csr_to_dense_prim = None
+
+
+def _get_csr_to_dense_prim():
+    """Lazy init to avoid import-time deprecated warnings."""
+    global _csr_to_dense_prim
+    if _csr_to_dense_prim is None:
+        _csr_to_dense_prim = CSRSparseMatrixToDense()
+    return _csr_to_dense_prim
 
 
 @bprops.register(DenseToCSRSparseMatrix)
@@ -339,4 +362,4 @@ def bprop_dense_to_csr_sparse_matrix(dense_input, indices, out, dout):
     """Backpropagator for primitive `DenseToCSRSparseMatrix`."""
     shape, batch_ptr, row_ptr, col_ind = out[:4]
     dvalue = dout[4]
-    return csr_to_dense(shape, batch_ptr, row_ptr, col_ind, dvalue), zeros_like(indices)
+    return _get_csr_to_dense_prim()(shape, batch_ptr, row_ptr, col_ind, dvalue), zeros_like(indices)

@@ -3,6 +3,8 @@ mindspore.ops.SegmentSum
 
 .. py:class:: mindspore.ops.SegmentSum
 
+    `ops.SegmentSum` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     计算Tensor中每个分段所有元素的累加和。
 
     具体来说，生成一个新的Tensor `output` ，满足 :math:`output_i = \sum_j input\_x_j` ，其中累加和是满足 :math:`segment\_ids[j] == i` 这个条件的所有的 :math:`j` 对应的元素相加的结果。

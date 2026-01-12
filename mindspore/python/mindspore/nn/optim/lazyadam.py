@@ -127,6 +127,9 @@ def _check_param_value(beta1, beta2, eps, weight_decay, prim_name):
 
 class LazyAdam(Optimizer):
     r"""
+    `nn.LazyAdam` is deprecated from version 2.0 and will be removed in a future version,
+    please use :class:`mindspore.nn.Adam` instead.
+
     Implements the Adaptive Moment Estimation (Adam) algorithm. The Adam algorithm is proposed
     in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 
@@ -253,7 +256,7 @@ class LazyAdam(Optimizer):
         ValueError: If `weight_decay` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore as ms
@@ -282,11 +285,11 @@ class LazyAdam(Optimizer):
         >>> model = ms.train.Model(net, loss_fn=loss, optimizer=optim)
     """
 
-    @deprecated("2.0", "Adam", False)
+    @deprecated("2.0", "nn.Adam", False)
     @opt_init_args_register
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
                  use_nesterov=False, weight_decay=0.0, loss_scale=1.0):
-        super(LazyAdam, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param_value(beta1, beta2, eps, weight_decay, self.cls_name)
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)

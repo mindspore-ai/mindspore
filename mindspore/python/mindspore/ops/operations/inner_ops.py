@@ -17,6 +17,7 @@
 
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithInfer, Primitive
 from mindspore.ops import signature as sig
 
@@ -78,6 +79,8 @@ class Randperm(Primitive):
 
 class NoRepeatNGram(Primitive):
     r"""
+    `ops.NoRepeatNGram` is deprecated from version 2.8.0 and will be removed in a future version.
+
     Updates the probability of occurrence of words with its corresponding n-grams.
 
     During beam search, if consecutive `ngram_size` words exist in the generated word sequence,
@@ -110,7 +113,7 @@ class NoRepeatNGram(Primitive):
         ValueError: If the beam_width of `state_seq` and `log_probs` are not equal.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -140,6 +143,7 @@ class NoRepeatNGram(Primitive):
            -3.4028235e+38  6.9999999e-01]]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, ngram_size=1):
         """NoRepeatNGram Randperm"""
@@ -460,6 +464,9 @@ class FusedCastAdamWeightDecay(PrimitiveWithInfer):
 
 class FusedAdaFactor(PrimitiveWithInfer):
     r"""
+    `ops.FusedAdaFactor` is deprecated from version 2.8.0 and will be removed
+    in a future version, please use :class:`mindspore.ops.AdaFactor` instead.
+
     Updates gradients by the Adaptive Learning Rates with Sublinear Memory Cost (Adafactor) algorithm.
 
     The Adafactor algorithm is proposed in `Adafactor: Adafactor: Adaptive Learning Rates with Sublinear Memory
@@ -537,7 +544,7 @@ class FusedAdaFactor(PrimitiveWithInfer):
         - **dummy_param** (Tensor) - The same shape and data type as `param`.
 
     Supported Platforms:
-        ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -568,6 +575,7 @@ class FusedAdaFactor(PrimitiveWithInfer):
         >>> output = net((1e-30, 1e-3), 1.0, 0.9, 0.8, 1e-2, 0.03, gradient)
     """
 
+    @deprecated("2.8.0", "ops.AdaFactor", False)
     @prim_attr_register
     def __init__(self, enable_scale_parameter=False, enable_first_moment=False, enable_weight_decay=False):
         self.add_prim_attr('side_effect_mem', True)
@@ -594,8 +602,7 @@ class FusedAdaFactorWithGlobalNorm(FusedAdaFactor):
 
     @prim_attr_register
     def __init__(self, enable_scale_parameter=False, enable_first_moment=False, enable_weight_decay=False):
-        super(FusedAdaFactorWithGlobalNorm, self).__init__(enable_scale_parameter, enable_first_moment,
-                                                           enable_weight_decay)
+        super().__init__(enable_scale_parameter, enable_first_moment, enable_weight_decay)
 
     def infer_shape(self, epsilon_shape, clip_threshold_shape, beta1_shape, beta2t_shape, weight_decay_shape,
                     learning_rate_shape, grad_shape, param_shape, exp_avg_shape, exp_avg_sq_row_shape,

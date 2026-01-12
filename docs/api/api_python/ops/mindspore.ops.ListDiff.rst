@@ -3,6 +3,8 @@ mindspore.ops.ListDiff
 
 .. py:class:: mindspore.ops.ListDiff(out_idx=mstype.int32)
 
+    `ops.ListDiff` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     比较两个数字列表之间的不同。
 
     给定一个列表 `x` 和一个列表 `y`，此操作返回一个列表 `out`，表示在 `x` 中但不在 `y` 中的所有值。

@@ -26,6 +26,7 @@ from mindspore.common.seed import get_seed
 from mindspore import context
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
 from mindspore.common.hook_handle import _TensorHookHandle
 
 from mindspore.common._register_for_tensor import tensor_operator_registry
@@ -1298,10 +1299,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get("renorm")(self, p, axis, maxnorm)
 
+    @deprecated("2.8.0", "Tensor.allclose", False)
     def approximate_equal(self, other, tolerance=1e-5):
         r"""
-        For details, please refer to :func:`mindspore.ops.approximate_equal`,
-        The parameter `other` of current interface is the same as the parameter `y` of the reference interface.
+        `Tensor.approximate_equal` is deprecated from version 2.8.0 and will be removed in a future version,
+        please use :func:`mindspore.Tensor.allclose` instead.
         """
         validator.check_isinstance("x", self, Tensor)
         validator.check_isinstance("y", other, Tensor)
@@ -1903,8 +1905,12 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get('fill_diagonal')(fill_value, wrap)(self)
 
+    @deprecated("2.8.0", "Tensor.max() - Tensor.min()", False)
     def ptp(self, axis=None, keepdims=False):
         """
+        `Tensor.ptp` is deprecated from version 2.8.0 and will be removed in a future version,
+        please use `Tensor.max() - Tensor.min()` instead.
+
         The name of the function comes from the acronym for "peak to peak". Calculate the difference between the
         maximum value and the minimum value along the axis.
 
@@ -1926,7 +1932,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             TypeError: If `self` is not a tensor, or `axis` and `keepdims` have types not specified above.
 
         Supported Platforms:
-            ``Ascend`` ``GPU`` ``CPU``
+            Deprecated
 
         Examples:
             >>> from mindspore import Tensor
@@ -2787,9 +2793,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             return output, counts
         return output
 
+    @deprecated("2.8.0", "ops.unique", False)
     def unique_with_pad(self, pad_num):
         """
-        For details, please refer to :func:`mindspore.ops.unique_with_pad`.
+        `Tensor.unique_with_pad` is deprecated from version 2.8.0 and will be removed in a future version,
+        please use :func:`mindspore.Tensor.unique` combined with :func:`mindspore.Tensor.pad` instead.
         """
         return tensor_operator_registry.get("unique_with_pad")(self, pad_num)
 

@@ -3,6 +3,8 @@ mindspore.ops.SparseSlice
 
 .. py:class:: mindspore.ops.SparseSlice
 
+    `ops.SparseSlice` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     基于 `start` 和 `size` 对稀疏Tensor进行切片。
 
     输入：

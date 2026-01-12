@@ -3,6 +3,8 @@ mindspore.ops.SparseTensorDenseAdd
 
 .. py:class:: mindspore.ops.SparseTensorDenseAdd
 
+    `ops.SparseTensorDenseAdd` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     一个稀疏Tensor加上稠密Tensor得到一个稠密Tensor。
 
     输入：

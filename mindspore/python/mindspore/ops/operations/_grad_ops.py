@@ -28,7 +28,8 @@ from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.communication.management import GlobalComm
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
-from ..auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad, AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad,
+from mindspore.common._decorator import deprecated
+from mindspore.ops.auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad, AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad,
                              SqrtGrad, BatchNormGrad, BatchNormGradGrad, BiasAddGrad, GeLUGrad, FastGeLUGrad,
                              AvgPoolGrad, MinimumGrad, LogSoftmaxGrad, GluGrad, PReLUGrad, ReluGrad, ReLU6Grad, EluGrad,
                              GatherDGradV2, ResizeBilinearGrad, ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
@@ -110,8 +111,17 @@ class LuUnpackGrad(Primitive):
 
 
 class ConcatOffset(PrimitiveWithInfer):
-    """primitive for computing Concat's gradient."""
+    """
+    `ops.ConcatOffset` is deprecated from version 2.8.0 and will be removed in
+    a future version, please use :func:`mindspore.ops.concat` instead.
 
+    Primitive for computing Concat's gradient.
+
+    Supported Platforms:
+        Deprecated
+    """
+
+    @deprecated("2.8.0", "ops.concat", False)
     @prim_attr_register
     def __init__(self, N=2, axis=0):
         """Initialize ConcatOffset"""

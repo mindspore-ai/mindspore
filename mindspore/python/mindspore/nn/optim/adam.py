@@ -680,7 +680,7 @@ class Adam(Optimizer):
     @opt_init_args_register
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
                  use_nesterov=False, weight_decay=0.0, loss_scale=1.0, use_amsgrad=False, **kwargs):
-        super(Adam, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         valid_keys = {'use_lazy', 'use_offload'}
         if set(kwargs.keys()) - valid_keys:
             raise KeyError(f"For 'Adam', invalid keys are passed as kwargs, supported keys are 'use_lazy' and"
@@ -966,7 +966,7 @@ class AdamWeightDecay(Optimizer):
     _support_parallel_optimizer = True
 
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-6, weight_decay=0.0):
-        super(AdamWeightDecay, self).__init__(learning_rate, params, weight_decay)
+        super().__init__(learning_rate, params, weight_decay)
         _check_param_value(beta1, beta2, eps, self.cls_name)
         self.beta1 = Tensor(np.array([beta1]).astype(np.float32))
         self.beta2 = Tensor(np.array([beta2]).astype(np.float32))
@@ -1021,6 +1021,9 @@ class AdamWeightDecay(Optimizer):
 
 class AdamOffload(Optimizer):
     r"""
+    `nn.AdamOffload` is deprecated from version 2.0 and will be removed in a future version,
+    please use :class:`mindspore.nn.Adam` instead.
+
     This optimizer will offload Adam optimizer to host CPU and keep parameters being updated on the device,
     to minimize the memory cost. Although that would bring about an increase of performance overhead,
     the optimizer could be used to run a larger model.
@@ -1135,7 +1138,7 @@ class AdamOffload(Optimizer):
         ValueError: If `weight_decay` is less than 0.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore as ms
@@ -1162,10 +1165,10 @@ class AdamOffload(Optimizer):
         >>> model = ms.Model(net, loss_fn=loss, optimizer=optim)
     """
 
-    @deprecated("2.0", "Adam", False)
+    @deprecated("2.0", "nn.Adam", False)
     def __init__(self, params, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
                  use_nesterov=False, weight_decay=0.0, loss_scale=1.0):
-        super(AdamOffload, self).__init__(learning_rate, params, weight_decay, loss_scale)
+        super().__init__(learning_rate, params, weight_decay, loss_scale)
         _check_param_value(beta1, beta2, eps, self.cls_name)
         validator.check_value_type("use_locking", use_locking, [bool], self.cls_name)
         validator.check_value_type("use_nesterov", use_nesterov, [bool], self.cls_name)

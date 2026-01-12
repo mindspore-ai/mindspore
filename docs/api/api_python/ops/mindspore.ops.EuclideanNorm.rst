@@ -3,6 +3,9 @@
 
 .. py:class:: mindspore.ops.EuclideanNorm(keep_dims=False)
 
+    `ops.EuclideanNorm` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.norm` 且 `ord` 参数为 ``2`` 替代。
+
     计算Tensor沿指定轴的欧几里得范数（又称L2范数）。默认情况下会移除axis中指定的维度。
 
     参数：

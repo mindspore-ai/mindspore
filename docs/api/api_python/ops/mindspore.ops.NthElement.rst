@@ -3,6 +3,9 @@ mindspore.ops.NthElement
 
 .. py:class:: mindspore.ops.NthElement(reverse=False)
 
+    `ops.NthElement` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.sort` 替代。
+
     寻找并返回输入Tensor最后一维第 `n` 小的值。
 
     - 如果输入是1-D Tensor(即Vector)，则找到Vector中第n小的值并将其输出为标量Tensor。

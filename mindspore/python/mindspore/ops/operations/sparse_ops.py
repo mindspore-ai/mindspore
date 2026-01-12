@@ -22,10 +22,14 @@ from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.ops import signature as sig
 from mindspore.ops.primitive import prim_attr_register, Primitive
+from mindspore.common._decorator import deprecated
 
 
 class SparseDenseCwiseAdd(Primitive):
     """
+    `ops.SparseDenseCwiseAdd` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     The dense tensor is broadcast into the shape of SparseTensor, and then the corresponding
     positions of the two matrices are added element by element according to the `x1_indices`, then output.
     Note: only dense tensor can be broadcast to SparseTensor.
@@ -57,7 +61,7 @@ class SparseDenseCwiseAdd(Primitive):
 
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore import Tensor
@@ -73,6 +77,7 @@ class SparseDenseCwiseAdd(Primitive):
         [2 5]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseDenseCwiseAdd."""
@@ -82,6 +87,9 @@ class SparseDenseCwiseAdd(Primitive):
 
 class SparseDenseCwiseMul(Primitive):
     """
+    `ops.SparseDenseCwiseMul` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     The dense tensor is broadcast into the shape of SparseTensor, and then the corresponding
     positions of the two matrices are multiplied element by element according to the `x1_indices`, then output.
     Note: only dense tensor can be broadcast to SparseTensor.
@@ -112,7 +120,7 @@ class SparseDenseCwiseMul(Primitive):
         ValueError: If `x1_indices` proceed to cross the border the interview.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore import Tensor
@@ -128,6 +136,7 @@ class SparseDenseCwiseMul(Primitive):
         [1 6]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseDenseCwiseMul."""
@@ -137,6 +146,9 @@ class SparseDenseCwiseMul(Primitive):
 
 class SparseDenseCwiseDiv(Primitive):
     """
+    `ops.SparseDenseCwiseDiv` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     The dense tensor is broadcast into the shape of SparseTensor, and then the corresponding positions elements of
     the dense tensor which non-zeros are divided by SparseTensor element by element according to the `x1_indices`,
     then output.Note: only dense tensor can be broadcast to SparseTensor.
@@ -167,7 +179,7 @@ class SparseDenseCwiseDiv(Primitive):
         ValueError: If `x1_indices` proceed to cross the border the interview.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        Deprecated
 
     Examples:
       >>> from mindspore import Tensor
@@ -183,6 +195,7 @@ class SparseDenseCwiseDiv(Primitive):
       [4 1]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseDenseCwiseDiv."""
@@ -192,6 +205,9 @@ class SparseDenseCwiseDiv(Primitive):
 
 class SparseSlice(Primitive):
     r"""
+    `ops.SparseSlice` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     Slices a SparseTensor based on the `start` and `size`.
 
     Inputs:
@@ -224,6 +240,7 @@ class SparseSlice(Primitive):
         ValueError: If the shape of `shape` is not corresponding to `size`.
 
     Supported Platforms:
+        Deprecated
 
 
     Examples:
@@ -244,6 +261,7 @@ class SparseSlice(Primitive):
         [2 3]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSlice."""
@@ -253,6 +271,9 @@ class SparseSlice(Primitive):
 
 class SparseSparseMaximum(Primitive):
     """
+    `ops.SparseSparseMaximum` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     return a sparse tensor representation max element of two input sparse tensor.
 
     Inputs:
@@ -287,7 +308,7 @@ class SparseSparseMaximum(Primitive):
         ValueError: If the `x1_shape` and `x2_shape` mismatch with each other.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x1_indices = Tensor([[0, 1], [1, 2]])
@@ -306,6 +327,7 @@ class SparseSparseMaximum(Primitive):
         [3. 4. 2.]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSparseMaximum."""
@@ -315,6 +337,9 @@ class SparseSparseMaximum(Primitive):
 
 class SetSize(Primitive):
     """
+    `ops.SetSize` is deprecated from version 2.8.0 and will be removed in a
+    future version.
+
      Number of unique elements along last dimension of input set.
 
     Args:
@@ -342,7 +367,7 @@ class SetSize(Primitive):
             parameter description.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> set_indices = Tensor(np.array([[0, 1], [1, 2]]).astype(np.int64))
@@ -354,6 +379,7 @@ class SetSize(Primitive):
         [1 1 0]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, validate_indices=True):
         """Initialize SetSize."""
@@ -367,6 +393,9 @@ class SetSize(Primitive):
 
 class SparseReorder(Primitive):
     """
+    `ops.SparseReorder` is deprecated from version 2.8.0 and will be removed
+    in a future version.
+
     Reorders a SparseTensor into the canonical, row-major ordering
 
     Inputs:
@@ -390,7 +419,7 @@ class SparseReorder(Primitive):
         ValueError: If `shape` the first dimension length is not equal the second dimension length of 'indices'.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore.common.dtype as ms
@@ -408,6 +437,7 @@ class SparseReorder(Primitive):
         [2 1]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseReorder."""
@@ -515,6 +545,9 @@ class SparseToDenseV2(Primitive):
 
 class SparseSoftmax(Primitive):
     """
+    `ops.SparseSoftmax` is deprecated from version 2.8.0 and will be removed
+    in a future version.
+
     Similar to softmax but with the catch that the implicitly zero elements do not participate.
 
     Inputs:
@@ -539,7 +572,7 @@ class SparseSoftmax(Primitive):
         ValueError: If the size of shape < 2.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> indices = Tensor([[0,0], [0,3], [1,2], [1,5], [2,0], [2,5]])
@@ -551,6 +584,7 @@ class SparseSoftmax(Primitive):
         [0.26894142 0.73105858 0.26894142 0.73105858 0.26894142 0.73105858]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSoftmax."""
@@ -559,6 +593,9 @@ class SparseSoftmax(Primitive):
 
 class SparseTensorDenseAdd(Primitive):
     """
+    `ops.SparseTensorDenseAdd` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Add a sparse tensor and a dense tensor to get a dense tensor.
 
     Inputs:
@@ -580,7 +617,7 @@ class SparseTensorDenseAdd(Primitive):
                     of 'x2' don't meet the parameter description.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore import Tensor
@@ -598,6 +635,7 @@ class SparseTensorDenseAdd(Primitive):
          [1. 1. 1.]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseTensorDenseAdd."""
@@ -607,6 +645,9 @@ class SparseTensorDenseAdd(Primitive):
 
 class SparseTensorDenseMatmul(Primitive):
     """
+    `ops.SparseTensorDenseMatmul` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Multiplies sparse matrix `A` by dense matrix `B`.
     The rank of sparse matrix and dense matrix must be equal to `2`.
 
@@ -640,7 +681,7 @@ class SparseTensorDenseMatmul(Primitive):
             and `dense` don't meet the constraints in the parameter description.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -659,6 +700,7 @@ class SparseTensorDenseMatmul(Primitive):
          [0. 0.]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, adjoint_st=False, adjoint_dt=False):
         """Initialize SparseTensorDenseMatmul"""
@@ -674,6 +716,9 @@ class SparseTensorDenseMatmul(Primitive):
 
 class CSRSparseMatrixToSparseTensor(Primitive):
     """
+    `ops.CSRSparseMatrixToSparseTensor` is deprecated from version 2.8.0 and
+    will be removed in a future version.
+
     Converts a CSR sparse matrix(maybe batched) to its sparse tensor form.
 
     Inputs:
@@ -709,7 +754,7 @@ class CSRSparseMatrixToSparseTensor(Primitive):
         ValueError: If shape of `x_col_indices` is not corresponding to shape of `x_values`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore.ops.operations.sparse_ops import CSRSparseMatrixToSparseTensor
@@ -734,6 +779,7 @@ class CSRSparseMatrixToSparseTensor(Primitive):
         [2 2 4]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize CSRSparseMatrixToSparseTensor."""
@@ -744,6 +790,9 @@ class CSRSparseMatrixToSparseTensor(Primitive):
 
 class DenseToCSRSparseMatrix(Primitive):
     """
+    `ops.DenseToCSRSparseMatrix` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Converts a dense matrix(maybe batched) to its CSR sparse form.
 
     .. warning::
@@ -777,6 +826,7 @@ class DenseToCSRSparseMatrix(Primitive):
         ValueError: If shape[1] of `indices` and rank of `dense_input` is not the same.
 
     Supported Platforms:
+        Deprecated
 
 
     Examples:
@@ -796,6 +846,7 @@ class DenseToCSRSparseMatrix(Primitive):
         [1. 2.]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize DenseToCSRSparseMatrix"""
@@ -806,6 +857,9 @@ class DenseToCSRSparseMatrix(Primitive):
 
 class DenseToDenseSetOperation(Primitive):
     """
+    `ops.DenseToDenseSetOperation` is deprecated from version 2.8.0 and will
+    be removed in a future version.
+
     Applies set operation along last dimension of 2 `Tensor` inputs.
     Iterate over groups in set x1 and set x2, applying `ApplySetOperation` to each,
     and outputting the result `SparseTensor`. A "group" is a collection of values
@@ -842,7 +896,7 @@ class DenseToDenseSetOperation(Primitive):
         ValueError: If the value of attr set_operation is not a valid value.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x1 = Tensor([[2, 2, 0], [2, 2, 1], [0, 2, 2]], dtype=mstype.int32)
@@ -859,6 +913,7 @@ class DenseToDenseSetOperation(Primitive):
         [3 1]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, set_operation="a-b", validate_indices=True):
         """Initialize DenseToDenseSetOperation."""
@@ -872,8 +927,11 @@ class DenseToDenseSetOperation(Primitive):
 
 class Sspaddmm(Primitive):
     r"""
+    `ops.Sspaddmm` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     Matrix multiplies a sparse tensor `x2` with a dense tensor `x3`, then adds the sparse tensor `x1`.
-    If `x1_shape` is :math:`(s0, s1)`, `x2_shpae` should be :math:`(s0, s2)`, the `x3_shape` should be :math:`(s2, s1)`.
+    If `x1_shape` is :math:`(s0, s1)`, `x2_shape` should be :math:`(s0, s2)`, the `x3_shape` should be :math:`(s2, s1)`.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
@@ -939,7 +997,7 @@ class Sspaddmm(Primitive):
         ValueError: If the shape of `alpha`, `beta` is not () or (1,).
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x1_indices = Tensor(np.array([[0, 1], [0, 1]]), mstype.int64)
@@ -974,6 +1032,8 @@ class Sspaddmm(Primitive):
         sig.make_sig('beta', dtype=sig.sig_dtype.T)
     )
 
+
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize Sspaddmm."""
@@ -983,6 +1043,9 @@ class Sspaddmm(Primitive):
 
 class SparseAddmm(Primitive):
     """
+    `ops.SparseAddmm` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     Multiplies sparse matrix `x1` by dense matrix `x2` * `alpha` and add dense matrix `x3` * `beta`.
     The rank of sparse matrix and dense matrix must equal to `2`. The sparse matrix `x1` is formulated by `x1_indices`,
     `x1_values` and `x1_shape`.
@@ -1011,7 +1074,7 @@ class SparseAddmm(Primitive):
         RuntimeError: If `x1_shape`, shape of `x2`, shape of `x3` don't meet the parameter description.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> indices = Tensor([[0, 1], [1, 2]], dtype=ms.int32)
@@ -1029,6 +1092,8 @@ class SparseAddmm(Primitive):
          [0 0]]
     """
 
+
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseAddmm"""
@@ -1038,6 +1103,9 @@ class SparseAddmm(Primitive):
 
 class SparseConcat(Primitive):
     """
+    `ops.SparseConcat` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     concatenates the input SparseTensor(COO format) along the specified dimension.
 
     Args:
@@ -1066,7 +1134,7 @@ class SparseConcat(Primitive):
         Error: If input axis value is not in range [-rank, rank).
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> indices0 = Tensor([[0, 1], [1, 2]], dtype=mstype.int64)
@@ -1085,6 +1153,7 @@ class SparseConcat(Primitive):
          [4, 1]]), Tensor(shape=[4], dtype=Int32, value= [1, 2, 3, 4]), Tensor(shape=[2], dtype=Int64, value= [6, 4]))
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, concat_dim=0):
         """Initialize SparseConcat."""
@@ -1095,6 +1164,9 @@ class SparseConcat(Primitive):
 
 class SparseSegmentSum(Primitive):
     """
+    `ops.SparseSegmentSum` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Computes the sum along sparse segments of a tensor.
 
     Inputs:
@@ -1119,7 +1191,7 @@ class SparseSegmentSum(Primitive):
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor([[0, 1, 2], [1, 2, 3], [3, 6, 7]], dtype=ms.float32)
@@ -1137,6 +1209,7 @@ class SparseSegmentSum(Primitive):
         sig.make_sig('segment_ids', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSegmentSum"""
@@ -1145,6 +1218,9 @@ class SparseSegmentSum(Primitive):
 
 class SparseSegmentSumWithNumSegments(Primitive):
     """
+    `ops.SparseSegmentSumWithNumSegments` is deprecated from version 2.8.0 and
+    will be removed in a future version.
+
     Computes the sum along sparse segments of a tensor, but it is allowed to miss id in segment_ids.
 
     Inputs:
@@ -1173,7 +1249,7 @@ class SparseSegmentSumWithNumSegments(Primitive):
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor([[0, 1, 0, 0], [0, 1, 1, 0], [1, 0, 1, 0]], dtype=ms.float16)
@@ -1195,6 +1271,7 @@ class SparseSegmentSumWithNumSegments(Primitive):
         sig.make_sig('num_segments', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSegmentSumWithNumSegments"""
@@ -1203,6 +1280,9 @@ class SparseSegmentSumWithNumSegments(Primitive):
 
 class SparseSegmentSqrtN(Primitive):
     """
+    `ops.SparseSegmentSqrtN` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Computes the sum along sparse segments of a tensor divided by the sqrt of N.
     N is the size of the segment being reduced.
 
@@ -1230,7 +1310,7 @@ class SparseSegmentSqrtN(Primitive):
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor(np.array([[1,2,3,4],[5,6,7,8],[9,10,11,12]]).astype(np.float32))
@@ -1249,6 +1329,7 @@ class SparseSegmentSqrtN(Primitive):
         sig.make_sig('segment_ids', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSegmentSqrtN"""
@@ -1258,6 +1339,9 @@ class SparseSegmentSqrtN(Primitive):
 
 class SparseSegmentSqrtNWithNumSegments(Primitive):
     """
+    `ops.SparseSegmentSqrtNWithNumSegments` is deprecated from version 2.8.0
+    and will be removed in a future version.
+
     Computes the sum along sparse segments of a tensor divided by the sqrt of N.
     N is the size of the segment being reduced.
     Like SparseSegmentSqrtN, but allows missing ids in segment_ids.
@@ -1292,7 +1376,7 @@ class SparseSegmentSqrtNWithNumSegments(Primitive):
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor([[0, 1, 0, 0], [0, 1, 1, 0], [1, 0, 1, 0]], dtype=ms.float16)
@@ -1308,6 +1392,7 @@ class SparseSegmentSqrtNWithNumSegments(Primitive):
          [0. 0. 0. 0.]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSegmentSqrtNWithNumSegments"""
@@ -1317,6 +1402,9 @@ class SparseSegmentSqrtNWithNumSegments(Primitive):
 
 class SparseMatrixNNZ(Primitive):
     r"""
+    `ops.SparseMatrixNNZ` is deprecated from version 2.8.0 and will be removed
+    in a future version.
+
     Count number of the non-zero elements in sparse matrix or sparse matrixs.
     If the sparse matrix input contains batch dimension, then output dimension will be same with the batch dimension.
 
@@ -1352,7 +1440,7 @@ class SparseMatrixNNZ(Primitive):
         ValueError: If shape[0] of `x_dense_shape` is not 2 or 3.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> dense_shape = Tensor([2,3], dtype=mstype.int32)
@@ -1366,6 +1454,7 @@ class SparseMatrixNNZ(Primitive):
         [1]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseMatrixNNZ"""
@@ -1375,6 +1464,9 @@ class SparseMatrixNNZ(Primitive):
 
 class SparseFillEmptyRows(Primitive):
     r"""
+    `ops.SparseFillEmptyRows` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Fill the blank lines in the input 2D SparseTensor with default values.
 
     Inputs:
@@ -1405,7 +1497,7 @@ class SparseFillEmptyRows(Primitive):
         ValueError: If `sparse_shape`, shape of `indices` and shape of `values` don't meet the parameter description.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> indices = Tensor([[1, 0]], dtype=mstype.int64)
@@ -1425,6 +1517,8 @@ class SparseFillEmptyRows(Primitive):
         >>> print(out[3])
         Tensor(shape=[1], dtype=Int64, value= [1])
     """
+
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseFillEmptyRows."""
@@ -1434,6 +1528,9 @@ class SparseFillEmptyRows(Primitive):
 
 class SparseSegmentMeanWithNumSegments(Primitive):
     """
+    `ops.SparseSegmentMeanWithNumSegments` is deprecated from version 2.8.0
+    and will be removed in a future version.
+
     Compute the mean along sparse segments of a tensor. It is allowed to have missing id in segment_ids.
 
     Inputs:
@@ -1466,7 +1563,7 @@ class SparseSegmentMeanWithNumSegments(Primitive):
         ValueError: If `indices` is out of range of x's first dimension.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore import Tensor
@@ -1485,6 +1582,7 @@ class SparseSegmentMeanWithNumSegments(Primitive):
          [0. 0. 0. 0.]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSegmentMeanWithNumSegments"""
@@ -1493,6 +1591,9 @@ class SparseSegmentMeanWithNumSegments(Primitive):
 
 class SparseAdd(Primitive):
     """
+    `ops.SparseAdd` is deprecated from version 2.8.0 and will be removed in a
+    future version.
+
     Computes the sum of a COOTensor and another COOTensor.
 
     Inputs:
@@ -1530,7 +1631,7 @@ class SparseAdd(Primitive):
         TypeError: If (x1_values/x2_values)'s type is not matched with thresh's type.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore import Tensor
@@ -1551,6 +1652,7 @@ class SparseAdd(Primitive):
         Tensor(shape=[2], dtype=Int64, value=[3, 4]))
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(
@@ -1561,6 +1663,9 @@ class SparseAdd(Primitive):
 
 class SparseMatrixSoftmax(Primitive):
     """
+    `ops.SparseMatrixSoftmax` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Calculates the softmax of a CSRTensorMatrix.
 
     .. warning::
@@ -1584,7 +1689,7 @@ class SparseMatrixSoftmax(Primitive):
         - **y_values** (Tensor) - The value of the input nonzero element.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore as ms
@@ -1609,6 +1714,7 @@ class SparseMatrixSoftmax(Primitive):
          2.36882806e-01,  6.43914223e-01,  2.68941432e-01,  7.31058598e-01]))
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, dtype):
         '''Initialize for SparseMatrixSoftmax'''
@@ -1625,6 +1731,9 @@ class SparseMatrixSoftmax(Primitive):
 
 class CSRSparseMatrixToDense(Primitive):
     """
+    `ops.CSRSparseMatrixToDense` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Converts a CSR sparse matrix(maybe batched) to its dense form.
 
     Note:
@@ -1658,7 +1767,7 @@ class CSRSparseMatrixToDense(Primitive):
         ValueError: If shape[0] of `x_dense_shape` is not 2 or 3.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> dense_shape = Tensor([2, 2], dtype=mindspore.int32)
@@ -1673,6 +1782,7 @@ class CSRSparseMatrixToDense(Primitive):
          [0. 0.]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize CSRSparseMatrixToDense"""
@@ -1684,6 +1794,9 @@ class CSRSparseMatrixToDense(Primitive):
 
 class SparseMatrixTranspose(Primitive):
     r"""
+    `ops.SparseMatrixTranspose` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Return the transpose of sparse matrix or sparse matrixs.
     If the sparse matrix input contains batch dimension, then output dimension will be same with the batch dimension.
     The rank of sparse matrix input must be equal to `2` or `3`.
@@ -1737,7 +1850,7 @@ class SparseMatrixTranspose(Primitive):
         TypeError: The input data should have the correct CSR form.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore.ops import operations as ops
@@ -1760,6 +1873,7 @@ class SparseMatrixTranspose(Primitive):
         [99.]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, conjugate=False):
         """Initialize SparseMatrixTranspose"""
@@ -1773,6 +1887,9 @@ class SparseMatrixTranspose(Primitive):
 
 class SparseSparseMinimum(Primitive):
     r"""
+    `ops.SparseSparseMinimum` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Returns the element-wise min of two SparseTensors.
 
     Inputs:
@@ -1811,7 +1928,7 @@ class SparseSparseMinimum(Primitive):
         ValueError: If shape[0] of `x1_shape` is not corresponding to shape[0] of `x2_shape`.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore.ops.operations.sparse_ops import SparseSparseMinimum
@@ -1832,6 +1949,7 @@ class SparseSparseMinimum(Primitive):
         [1. 2. 0. 0.]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseSparseMinimum."""
@@ -1841,6 +1959,9 @@ class SparseSparseMinimum(Primitive):
 
 class SparseTensorToCSRSparseMatrix(Primitive):
     """
+    `ops.SparseTensorToCSRSparseMatrix` is deprecated from version 2.8.0 and
+    will be removed in a future version.
+
     Converts a sparse tensor to its CSR sparse matrix(maybe batched) form.
 
     Inputs:
@@ -1875,7 +1996,7 @@ class SparseTensorToCSRSparseMatrix(Primitive):
         ValueError: If shape[1] of `x_indices` is not corresponding to shape[1] of `x_dense_shape`.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore.ops.operations.sparse_ops import SparseTensorToCSRSparseMatrix
@@ -1897,6 +2018,7 @@ class SparseTensorToCSRSparseMatrix(Primitive):
         [1. 4. 3. 1. 4. 3.]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseTensorToCSRSparseMatrix."""
@@ -1907,6 +2029,9 @@ class SparseTensorToCSRSparseMatrix(Primitive):
 
 class SparseMatrixSparseMatMul(Primitive):
     r"""
+    `ops.SparseMatrixSparseMatMul` is deprecated from version 2.8.0 and will
+    be removed in a future version.
+
     Performs a matrix multiplication of a sparse matrix x1 with sparse matrix x2; return a sparse matrix x1*x2.
     Each matrix may be transposed or adjointed (conjugated and transposed),
     according to the Boolean parameters transpose_a,adjoint_a,transpose_b and adjoint_b.
@@ -1985,6 +2110,7 @@ class SparseMatrixSparseMatMul(Primitive):
         ValueError: If rank of `x1_dense_shape` or `x2_dense_shape' is not 2 or 3.
 
     Supported Platforms:
+        Deprecated
 
 
     Examples:
@@ -2015,6 +2141,7 @@ class SparseMatrixSparseMatMul(Primitive):
         [ 2. -4.]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, transpose_a=False, transpose_b=False, adjoint_a=False, adjoint_b=False):
         """Initialize SparseMatrixSparseMatMul"""
@@ -2032,6 +2159,9 @@ class SparseMatrixSparseMatMul(Primitive):
 
 class SparseMatrixMatMul(Primitive):
     r"""
+    `ops.SparseMatrixMatMul` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Performs a matrix multiplication of a sparse matrix x1 with dense matrix x2; return a dense matrix x1*x2.
     Each matrix may be transposed or adjointed (conjugated and transposed)
     according to the Boolean parameters transpose_x1, adjoint_x1, transpose_x2 and adjoint_x2.
@@ -2078,7 +2208,7 @@ class SparseMatrixMatMul(Primitive):
         ValueError: If shape[0]-1 of `x1_batch_pointers` and shape[0] of `x2_dense` are not the same.
 
     Supported Platforms:
-        ``CPU``
+        Deprecated
 
     Examples:
         >>> x1_dense_shape = Tensor([4, 5], dtype=ms.int32)
@@ -2098,6 +2228,7 @@ class SparseMatrixMatMul(Primitive):
          [-4.        -1.6       -2.       ]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, transpose_x1=False, transpose_x2=False, adjoint_x1=False, adjoint_x2=False,
                  transpose_output=False, conjugate_output=False):
@@ -2118,6 +2249,9 @@ class SparseMatrixMatMul(Primitive):
 
 class SparseMatrixAdd(Primitive):
     """
+    `ops.SparseMatrixAdd` is deprecated from version 2.8.0 and will be removed
+    in a future version.
+
     Addition of two CSR Tensors : C = alpha * A + beta * B
 
     Inputs:
@@ -2148,7 +2282,7 @@ class SparseMatrixAdd(Primitive):
         - **y1_values** (Tensor) - A Tensor.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore.nn as nn
@@ -2185,6 +2319,7 @@ class SparseMatrixAdd(Primitive):
          Tensor(shape=[2], dtype=Float32, values = [2.0, 4.0]))
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         '''Initialize for SparseMatrixAdd'''
@@ -2197,6 +2332,9 @@ class SparseMatrixAdd(Primitive):
 
 class SparseSplit(Primitive):
     """
+    `ops.SparseSplit` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     Split a `SparseTensor` into `num_split` tensors along one dimension.
     If the `shape[split_dim]` is not an integer multiple of `num_split`. Slices
     `[0 : shape[split_dim] % num_split]` gets one extra dimension.
@@ -2228,9 +2366,11 @@ class SparseSplit(Primitive):
             If the rank of `indices` is not 1.
 
     Supported Platforms:
+        Deprecated
 
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, num_split=1):
         """Initialize SparseSplit."""
@@ -2241,6 +2381,9 @@ class SparseSplit(Primitive):
 
 class SparseMatrixOrderingAMD(Primitive):
     r"""
+    `ops.SparseMatrixOrderingAMD` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Computes the Approximate Minimum Degree (AMD) ordering of `input`.
     Computes the Approximate Minimum Degree (AMD) ordering for a sparse matrix.
 
@@ -2291,7 +2434,7 @@ class SparseMatrixOrderingAMD(Primitive):
         ValueError: If shape[0] of `x_dense_shape` is not 2 or 3.
 
     Supported Platforms:
-        ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore.ops.operations.sparse_ops import SparseMatrixOrderingAMD
@@ -2306,6 +2449,7 @@ class SparseMatrixOrderingAMD(Primitive):
         [0 1]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseMatrixOrderingAMD."""
@@ -2315,6 +2459,9 @@ class SparseMatrixOrderingAMD(Primitive):
 
 class SparseReshape(Primitive):
     """
+    `ops.SparseReshape` is deprecated from version 2.8.0 and will be removed
+    in a future version.
+
     Reshapes a SparseTensor to represent values in a new dense shape.
     This operation has the same semantics as reshape on the represented dense tensor.
     The `input_indices` are recomputed based on the requested `new_shape`.
@@ -2344,7 +2491,7 @@ class SparseReshape(Primitive):
         RuntimeError: If inferred-dim(-1) in `new_shape` cannot be correctly inferred.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> indices = Tensor([[0, 0, 0],
@@ -2367,6 +2514,7 @@ class SparseReshape(Primitive):
         [9 4]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize SparseReshape."""
@@ -2376,6 +2524,9 @@ class SparseReshape(Primitive):
 
 class SparseCountSparseOutput(Primitive):
     """
+    `ops.SparseCountSparseOutput` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Performs sparse-output bin counting for a sparse tensor input.
     Counts the number of times each value occurs in the input.
 
@@ -2428,10 +2579,11 @@ class SparseCountSparseOutput(Primitive):
          [2, 8]]), Tensor(shape=[4], dtype=Int64, value= [0, 1, 2, 1]), Tensor(shape=[2], dtype=Int64, value= [4, 9]))
 
     Supported Platforms:
-        ``CPU``
+        Deprecated
 
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, binary_output=False, minlength=-1, maxlength=-1):
         self.init_prim_io_names(
@@ -2444,6 +2596,9 @@ class SparseCountSparseOutput(Primitive):
 
 class DenseToSparseSetOperation(Primitive):
     """
+    `ops.DenseToSparseSetOperation` is deprecated from version 2.8.0 and will
+    be removed in a future version.
+
     Applies set operation along last dimension of `x1` and `x2`.
     Input `x2` is a SparseTensor represented by `x2_indices`, `x2_values`, and `x2_shape`.
     For `x2` ranked `n`, 1st `n-1` dimensions must be the same as `x1`. Dimension `n` contains values in a set,
@@ -2482,7 +2637,7 @@ class DenseToSparseSetOperation(Primitive):
         ValueError: If the rank of `x2_indices` is not equal 2.
 
     Supported Platforms:
-        ``Ascend`` ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore.ops.operations.sparse_ops import DenseToSparseSetOperation
@@ -2497,6 +2652,7 @@ class DenseToSparseSetOperation(Primitive):
         [[0, 0]]), Tensor(shape=[1], dtype=Int64, value= [1]), Tensor(shape=[2], dtype=Int64, value= [3, 1]))
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, set_operation="", validate_indices=True):
         """Initialize DenseToSparseSetOperation."""
@@ -2513,6 +2669,9 @@ class DenseToSparseSetOperation(Primitive):
 
 class RaggedTensorToTensor(Primitive):
     r"""
+    `ops.RaggedTensorToTensor` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Create a dense tensor from a ragged tensor, possibly altering its shape.
 
     Args:
@@ -2547,7 +2706,7 @@ class RaggedTensorToTensor(Primitive):
         ValueError: If row partition size plus `values` rank is not equal to `shape` rank.
 
     Supported Platforms:
-        ``CPU``
+        Deprecated
 
     Examples:
         >>> from mindspore.ops.operations.sparse_ops import RaggedTensorToTensor
@@ -2567,6 +2726,7 @@ class RaggedTensorToTensor(Primitive):
          [8 9 0 0]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, row_partition_types):
         """Initialize RaggedTensorToTensor"""
@@ -2608,6 +2768,9 @@ class RaggedTensorToTensor(Primitive):
 
 class RaggedTensorToSparse(Primitive):
     r"""
+    `ops.RaggedTensorToSparse` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Converts a RaggedTensor into a SparseTensor with the same values.
 
     Args:
@@ -2638,6 +2801,7 @@ class RaggedTensorToSparse(Primitive):
         ValueError: If the rank of `rt_dense_values` is not more than 0.
 
     Supported Platforms:
+        Deprecated
 
 
     Examples:
@@ -2660,6 +2824,8 @@ class RaggedTensorToSparse(Primitive):
          Tensor(shape=[6], dtype=Int32, value= [1, 2, 3, 4, 5, 6]),
          Tensor(shape=[2], dtype=Int64, value= [4, 3]))
     """
+
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, Tsplits):
         """Initialize RaggedTensorToSparse."""

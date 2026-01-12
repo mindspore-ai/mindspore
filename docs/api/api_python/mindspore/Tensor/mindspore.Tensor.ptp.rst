@@ -3,6 +3,9 @@ mindspore.Tensor.ptp
 
 .. py:method:: mindspore.Tensor.ptp(axis=None, keepdims=False)
 
+    `Tensor.ptp` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.Tensor.max` 和 :func:`mindspore.Tensor.min` 替代。
+
     该函数名称是"peak to peak"的缩写。计算沿着 `axis` 的最大值与最小值的差值。
 
     .. note::

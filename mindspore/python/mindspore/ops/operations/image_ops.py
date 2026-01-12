@@ -20,7 +20,8 @@ from mindspore import context
 from mindspore import _checkparam as validator
 from mindspore.ops.primitive import prim_attr_register, Primitive
 from mindspore.common import dtype as mstype
-from ..auto_generate import ResizeLinear1D, ResizeBilinearV2, ResizeBicubic
+from mindspore.common._decorator import deprecated
+from mindspore.ops.auto_generate import ResizeLinear1D, ResizeBilinearV2, ResizeBicubic
 
 
 class AdjustSaturation(Primitive):
@@ -182,6 +183,9 @@ class AdjustHue(Primitive):
 
 class ExtractGlimpse(Primitive):
     r"""
+    `ops.ExtractGlimpse` is deprecated from version 2.8.0 and will be removed
+    in a future version.
+
     Extracts glimpses(usually subarea of rectangle) from the input image Tensor and return as windows.
 
     Note:
@@ -232,7 +236,7 @@ class ExtractGlimpse(Primitive):
         ValueError: If the input is not Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> x = Tensor([[[[0.0], [1.0], [2.0]], [[3.0], [4.0], [5.0]], [[6.0], [7.0], [8.0]]]], dtype=mindspore.float32)
@@ -247,6 +251,7 @@ class ExtractGlimpse(Primitive):
           [[3.]
            [4.]]]]
     """
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, centered=True, normalized=True, uniform_noise=True, noise="uniform"):
         self.init_prim_io_names(inputs=['x', 'size', 'offsets'], outputs=['output'])
@@ -516,6 +521,8 @@ class NonMaxSuppressionWithOverlaps(Primitive):
 
 class HSVToRGB(Primitive):
     r"""
+    `ops.HSVToRGB` is deprecated from version 2.8.0 and will be removed in a future version.
+
     Transform one single or a batch of images from HSV to RGB color space.
     Each pixel's HSV value is converted to its corresponding RGB value.
     Note that the function is only well-defined for input pixel values in the range [0, 1].
@@ -537,7 +544,7 @@ class HSVToRGB(Primitive):
         ValueError: If the last dimension of `x` is not equal to 3.
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> image = np.array([0.5, 0.5, 0.5]).astype(np.float32).reshape([1, 1, 1, 3])
@@ -546,6 +553,8 @@ class HSVToRGB(Primitive):
         >>> print(output)
         [[[[0.25 0.5  0.5 ]]]]
     """
+
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         pass
@@ -625,6 +634,8 @@ class CropAndResizeGradBoxes(Primitive):
 
 class RGBToHSV(Primitive):
     """
+    `ops.RGBToHSV` is deprecated from version 2.8.0 and will be removed in a future version.
+
     Transform one single or a batch of images from RGB to HSV color space.
     Each pixel's RGB value is converted to its corresponding HSV value.
     Note that the function is only well-defined for input pixel values in the range [0, 1].
@@ -645,7 +656,7 @@ class RGBToHSV(Primitive):
         ValueError: If the last value of shape of `images` is not 3.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> images =  np.array([0.25, 0.5, 0.5]).astype(np.float32).reshape([1, 1, 1, 3])
@@ -655,6 +666,7 @@ class RGBToHSV(Primitive):
         [[[[0.5, 0.5, 0.5]]]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """Initialize RGBToHSV"""
@@ -663,6 +675,9 @@ class RGBToHSV(Primitive):
 
 class ResizeArea(Primitive):
     r"""
+    `ops.ResizeArea` is deprecated from version 2.8.0 and will be removed in a
+    future version, please use :func:`mindspore.ops.interpolate` with ``mode="area"`` instead.
+
     Resize images to a certain size using area interpolation.
 
     The resizing process only changes the two dimensions of images, which represent the width and height of images.
@@ -698,7 +713,7 @@ class ResizeArea(Primitive):
         ValueError: If any value of `size` is not positive.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> images = Tensor([[[[2], [4], [6], [8]], [[10], [12], [14], [16]]]], mindspore.float16)
@@ -710,6 +725,7 @@ class ResizeArea(Primitive):
                [11.]]]]
     """
 
+    @deprecated("2.8.0", "ops.interpolate", False)
     @prim_attr_register
     def __init__(self, align_corners=False):
         """Initialize ResizeArea"""
@@ -820,6 +836,9 @@ class CropAndResizeGradImage(Primitive):
 
 class ScaleAndTranslate(Primitive):
     r"""
+    `ops.ScaleAndTranslate` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Scale And Translate the input image tensor.
 
     Note:
@@ -859,7 +878,7 @@ class ScaleAndTranslate(Primitive):
         ValueError: If the shape of `translation`  is not :math:`(2,)`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> op = ops.ScaleAndTranslate()
@@ -876,6 +895,7 @@ class ScaleAndTranslate(Primitive):
            [9.]]]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, kernel_type="lanczos3", antialias=True):
         """Initialize ScaleAndTranslate"""

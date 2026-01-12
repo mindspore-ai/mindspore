@@ -19,12 +19,13 @@ from mindspore import log as logger
 from mindspore.ops import signature as sig
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
 from mindspore.ops.primitive import Primitive, PrimitiveWithCheck, PrimitiveWithInfer
 from mindspore.ops.primitive import prim_attr_register, prim_arg_register
 from mindspore.ops.operations._pyfunc_registry import add_pyfunc
 from mindspore._c_expression import typing
 from mindspore.ops._primitive_cache import _get_cache_prim
-from ..auto_generate import Assign, Identity
+from mindspore.ops.auto_generate import Assign, Identity
 
 
 class Load(PrimitiveWithCheck):
@@ -216,7 +217,7 @@ class SampleDistortedBoundingBoxV2(Primitive):
 
     Args:
         seed (int, optional): Random number seed. If either `seed` or `seed2` is set to a non-zero value,
-            the seed is to the given value. Otherwise, a random seed is uesed. Default: ``0`` .
+            the seed is to the given value. Otherwise, a random seed is used. Default: ``0`` .
         seed2 (int, optional): The second seed to avoid seed collision. Default: ``0`` .
         aspect_ratio_range (Union[list(float), tuple(float)], optional): Specifying the valild range of aspect
             ratio of cropped area. Aspect ratio of area = area_width / area_height. The value of this
@@ -642,6 +643,8 @@ stop_gradient_op = StopGradient()
 
 class ConfusionMatrix(PrimitiveWithInfer):
     r"""
+    `ops.ConfusionMatrix` is deprecated from version 2.8.0 and will be removed in a future version.
+
     Calculates the confusion matrix from labels and predictions.
 
     Args:
@@ -662,6 +665,9 @@ class ConfusionMatrix(PrimitiveWithInfer):
         TypeError: If `dtype` is not a str.
         TypeError: If `labels`, `predictions` or weight` is not a Tensor.
 
+    Supported Platforms:
+        Deprecated
+
     Examples:
         >>> confusion_matrix = ops.ConfusionMatrix(4)
         >>> labels = Tensor([0, 1, 1, 3], mindspore.int32)
@@ -674,6 +680,7 @@ class ConfusionMatrix(PrimitiveWithInfer):
          [0 0 0 1]]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, num_classes, dtype="int32"):
         """Initialize ConfusionMatrix."""
@@ -761,7 +768,7 @@ class PyInterpret(Primitive):
 
     @prim_attr_register
     def __init__(self):
-        super(PyInterpret, self).__init__(self.__class__.__name__)
+        super().__init__(self.__class__.__name__)
         self.add_prim_attr('side_effect_io', True)
 
 
@@ -772,7 +779,7 @@ class PyExecute(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self):
-        super(PyExecute, self).__init__(self.__class__.__name__)
+        super().__init__(self.__class__.__name__)
         self.add_prim_attr('side_effect_io', True)
         self.add_prim_attr("primitive_target", "CPU")
 
@@ -837,7 +844,7 @@ class PyFunc(PrimitiveWithInfer):
     """
 
     def __init__(self, fn, in_types, in_shapes, out_types, out_shapes, stateful=True):
-        super(PyFunc, self).__init__(self.__class__.__name__)
+        super().__init__(self.__class__.__name__)
         add_pyfunc(id(fn), fn)
         self.add_prim_attr('fn_id', id(fn))
         self.add_prim_attr('in_types', in_types)
@@ -872,8 +879,7 @@ class PyFunc(PrimitiveWithInfer):
 
     def infer_dtype(self, *args):
         if self.out_shapes:
-            dtype_list = tuple([typing.TensorType(dtype) for dtype in self.out_types])
-            return dtype_list
+            return tuple(typing.TensorType(dtype) for dtype in self.out_types)
 
         logger.warning("The function output are empty tuple. Add a placeholder instead. "
                        "Do not use it as it could be any uninitialized data.")

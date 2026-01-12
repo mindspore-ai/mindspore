@@ -3,6 +3,9 @@ mindspore.ops.ResizeArea
 
 .. py:class:: mindspore.ops.ResizeArea(align_corners=False)
 
+    `ops.ResizeArea` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.interpolate` 且 `mode` 参数为 ``"area"`` 替代。
+
     使用面积插值调整图像大小到指定的大小。
 
     调整过程只改变输入图像的高和宽维度数据。

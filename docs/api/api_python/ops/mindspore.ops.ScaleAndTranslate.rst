@@ -3,6 +3,8 @@ mindspore.ops.ScaleAndTranslate
 
 .. py:class:: mindspore.ops.ScaleAndTranslate(kernel_type='lanczos3', antialias=True)
 
+    `ops.ScaleAndTranslate` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     根缩放并平移输入图像Tensor。
 
     .. note::

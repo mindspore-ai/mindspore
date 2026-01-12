@@ -3,6 +3,8 @@
 
 .. py:class:: mindspore.ops.CompareAndBitpack
 
+    `ops.CompareAndBitpack` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     将 `x` 的值与 `threshold` 进行比较，并将比较结果作为二进制数转换为uint8格式。
     每次比较返回一个布尔值，如果 `x` > `threshold` ，则为 ``True`` ，否则为 ``False`` 。
 

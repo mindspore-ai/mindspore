@@ -111,6 +111,7 @@ from mindspore.ops.auto_generate.gen_ops_prim import scatter_add_ext_op, gather_
     split_tensor_op, split_with_size_op, chunk_op
 from mindspore.ops.operations.manually_defined import tile, rank, scalar_cast
 from mindspore.ops.auto_generate.pyboost_inner_prim import _PyboostOneHotExtPrim
+from mindspore.common._decorator import deprecated
 
 arg_max_with_value_ = ArgMaxWithValue()
 arg_min_with_value_ = ArgMinWithValue()
@@ -576,8 +577,12 @@ def matrix_band_part(x, lower, upper):
     return matrix_band_part_(x, lower, upper)
 
 
+@deprecated("2.8.0", "ops.pad", False, "ops.")
 def padding(x, pad_dim_size=8):
     r"""
+    `ops.padding` is deprecated from version 2.8.0 and will be removed in a
+    future version, please use :func:`mindspore.ops.pad` instead.
+
     Extends the last dimension of the input tensor from 1 to pad_dim_size, by filling with 0.
 
     Args:
@@ -595,7 +600,7 @@ def padding(x, pad_dim_size=8):
         ValueError: If last dim of `x` is not equal to 1.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -1370,8 +1375,13 @@ def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, di
     return y
 
 
+@deprecated("2.4.0", "ops.unique combined with ops.pad", False, "ops.")
 def unique_with_pad(x, pad_num):
     """
+    `ops.unique_with_pad` is deprecated from version 2.4.0 and will be removed
+    in a future version, please use :func:`mindspore.ops.unique` combined with :func:`mindspore.ops.pad` to realize
+    the same function.
+
     Returns unique elements and relative indexes in 1-D tensor, filled with padding num.
 
     The basic function is the same as the Unique operator, but the UniqueWithPad operator adds a Pad function.
@@ -1379,11 +1389,6 @@ def unique_with_pad(x, pad_num):
     in which the shapes of `y` and `idx` are mostly not equal. Therefore, in order to solve the above situation,
     the UniqueWithPad operator will fill the `y` Tensor with the `pad_num` specified by the user
     to make it have the same shape as the Tensor `idx`.
-
-    .. warning::
-        :func:`mindspore.ops.unique_with_pad` is deprecated from version 2.4 and will be removed in a future version.
-        Please use the :func:`mindspore.ops.unique` combined with :func:`mindspore.ops.pad` to realize
-        the same function.
 
     Args:
         x (Tensor): The tensor need to be unique. Must be 1-D vector with types: int32, int64.

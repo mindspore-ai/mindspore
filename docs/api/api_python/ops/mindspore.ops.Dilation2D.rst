@@ -3,6 +3,8 @@
 
 .. py:class:: mindspore.ops.Dilation2D(stride, dilation, pad_mode="SAME", data_format="NCHW")
 
+    `ops.Dilation2D` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     计算4-D和3-D输入Tensor的灰度膨胀。
 
     对输入的shape为 :math:`(N, C_{in}, H_{in}, W_{in})` ，应用2-D膨胀，其中，

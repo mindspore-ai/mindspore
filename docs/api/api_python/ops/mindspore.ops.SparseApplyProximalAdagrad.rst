@@ -3,6 +3,8 @@ mindspore.ops.SparseApplyProximalAdagrad
 
 .. py:class:: mindspore.ops.SparseApplyProximalAdagrad(use_locking=False)
 
+    `ops.SparseApplyProximalAdagrad` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据Proximal Adagrad算法更新网络参数或者Tensor。与 :class:`mindspore.ops.ApplyProximalAdagrad` 相比，增加了一个索引Tensor。
 
     .. math::

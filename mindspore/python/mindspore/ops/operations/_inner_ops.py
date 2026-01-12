@@ -32,10 +32,11 @@ from mindspore._c_expression import typing, HookType
 from mindspore._c_expression import pyboost_cell_backward_hook
 from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import GlobalComm, get_rank, _get_group, get_group_size
 from mindspore.common.api import _pynative_executor
-from ..auto_generate import TensorCopySlices, SiLU, Cummin, TopKRouter, TopPRouter, ExtractImagePatches, \
+from mindspore.ops.auto_generate import TensorCopySlices, SiLU, Cummin, TopKRouter, TopPRouter, ExtractImagePatches, \
     ApplyCamePart1, ApplyCamePart2, ApplyCamePart3, ApplyCamePart4
 
 # Bit operation
@@ -554,6 +555,9 @@ class ConvertToDynamic(PrimitiveWithCheck):
 
 class GpuConvertToDynamicShape(PrimitiveWithCheck):
     """
+    `ops.GpuConvertToDynamicShape` is deprecated from version 2.8.0 and will
+    be removed in a future version.
+
     This op is used for dynamic shape testing. Its inferred shape will be unknown
     during compile time, so that its output will appear to be dynamically shaped.
     The input will not be altered in any way. Put this operator before the operator
@@ -564,6 +568,9 @@ class GpuConvertToDynamicShape(PrimitiveWithCheck):
 
     Outputs:
         - **output** (Tensor) - Same shape, type and value as `input`.
+
+    Supported Platforms:
+        Deprecated
 
     Examples:
           >>> # make a model, since dynamic shape operators must be in GRAPH_MODE
@@ -592,6 +599,7 @@ class GpuConvertToDynamicShape(PrimitiveWithCheck):
           [[0, 1], [2, 3]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=["input"], outputs=["output"])
@@ -1814,6 +1822,9 @@ class KMeansCentroids(PrimitiveWithInfer):
 
 class ClipByNorm(PrimitiveWithInfer):
     r"""
+    `ops.ClipByNorm` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.clip_by_norm` instead.
+
     Clips tensor values to a maximum :math:`L_2`-norm.
 
     Note:
@@ -1843,7 +1854,7 @@ class ClipByNorm(PrimitiveWithInfer):
         TypeError: If dtype of `clip_norm` is neither float16 nor float32.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -1858,6 +1869,7 @@ class ClipByNorm(PrimitiveWithInfer):
         (4, 16)
     """
 
+    @deprecated("2.8.0", "ops.clip_by_norm", False)
     @prim_attr_register
     def __init__(self, axis=None):
         """Initialize ClipByNorm"""

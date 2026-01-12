@@ -20,11 +20,14 @@ from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import PrimitiveWithInfer, prim_attr_register, Primitive
 from mindspore.ops._utils import get_broadcast_shape
-from ..auto_generate import RandpermV2, UniformExt
+from mindspore.ops.auto_generate import RandpermV2, UniformExt
 
 
 class NonDeterministicInts(Primitive):
     r"""
+    `ops.NonDeterministicInts` is deprecated from version 2.8.0 and will be removed in
+    a future version, please use :func:`mindspore.ops.randint_like` instead.
+
     Generates some integers that match the given type.
 
     Returns the tensor with the given shape, the random numbers in it drawn from the data range
@@ -54,7 +57,7 @@ class NonDeterministicInts(Primitive):
         ValueError: If the number of elements of output is more than 1000000.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> shape = Tensor((3,4), mstype.int32)
@@ -64,6 +67,7 @@ class NonDeterministicInts(Primitive):
         (3, 4)
     """
 
+    @deprecated("2.8.0", "ops.randint_like", False)
     @prim_attr_register
     def __init__(self, dtype=mstype.int64):
         """Initialize NonDeterministicInts"""
@@ -460,6 +464,9 @@ class Gamma(PrimitiveWithInfer):
 
 class ParameterizedTruncatedNormal(Primitive):
     r"""
+    `ops.ParameterizedTruncatedNormal` is deprecated from version 2.8.0 and
+    will be removed in a future version, please use :class:`mindspore.common.initializer.TruncatedNormal` instead.
+
     Returns a tensor of the specified shape filled with truncated normal values.
     When `shape` is :math:`(batch\_size, *)`, the shape of `mean`, `stdevs`,
     `min` and `max` should be :math:`()` or :math:`(batch\_size, )`.
@@ -513,7 +520,7 @@ class ParameterizedTruncatedNormal(Primitive):
         ValueError: If `shape` is not a 1-D tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> shape = Tensor(np.array([2, 3]), mstype.int32)
@@ -530,6 +537,7 @@ class ParameterizedTruncatedNormal(Primitive):
          [ 0.25759354 -1.9593946  -1.5078077 ]]
     """
 
+    @deprecated("2.8.0", "mindspore.common.initializer.TruncatedNormal", False)
     @prim_attr_register
     def __init__(self, seed=0, seed2=0):
         """Initialize ParameterizedTruncatedNormal"""

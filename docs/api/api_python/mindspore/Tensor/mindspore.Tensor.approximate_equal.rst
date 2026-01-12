@@ -3,4 +3,6 @@ mindspore.Tensor.approximate_equal
 
 .. py:method:: mindspore.Tensor.approximate_equal(other, tolerance=1e-5)
 
-    详情请参考 :func:`mindspore.ops.approximate_equal`， 当前接口参数 `other` 和参考接口中的参数 `y` 实际为同一参数。
+    `Tensor.approximate_equal` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.Tensor.allclose` 替代。
+

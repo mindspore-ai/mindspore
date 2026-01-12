@@ -22,26 +22,53 @@ from mindspore import log
 DEPRECATE_SET = set()
 
 
-def deprecated(version, substitute, use_substitute_name=False, module_prefix=""):
+def deprecated(version, substitute, use_substitute_name=False,
+               module_prefix=""):
     """deprecated warning
 
     Args:
         version (str): version that the operator or function is deprecated.
         substitute (str): the substitute name for deprecated operator or function.
-        use_substitute_name (bool): flag for whether to use substitute name for deprecated operator or function
-        module_prefix (str): the module prefix of the deprecated api, such as 'mindspore.'.
+            If ``None`` or empty string, the warning message will not include
+            the "use XXX instead" suggestion.
+        use_substitute_name (bool): flag for whether to use substitute name for
+            deprecated operator or function.
+        module_prefix (str): the module prefix of the deprecated api, such as
+            'mindspore.'.
     """
 
     def decorate(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
             cls = getattr(args[0], "__class__", None) if args else None
-            name = cls.__name__ if cls else func.__name__
+            # NOTE:
+            # - Many functional APIs take Tensor as the first arg, but they are
+            #   NOT Tensor instance methods. We must not infer "Tensor.<method>"
+            #   purely from args[0].
+            # - For true Tensor/COOTensor/CSRTensor instance methods,
+            #   func.__qualname__ is like "Tensor.ptp".
+            qualname = getattr(func, "__qualname__", "") or ""
+            if qualname.startswith(("Tensor.", "COOTensor.", "CSRTensor.")):
+                name = qualname
+            elif "." in qualname:
+                # For instance methods, use class name by default (keeps
+                # backward behavior for operators like Primitive.__init__).
+                name = cls.__name__ if cls else func.__name__
+            else:
+                # For plain functions, use function name.
+                name = func.__name__
             if name + version not in DEPRECATE_SET:
-                log.warning(f"'{module_prefix}{name}' is deprecated from version {version} and "
-                            f"will be removed in a future version, use '{substitute}' instead.")
+                base_msg = (
+                    f"'{module_prefix}{name}' is deprecated from version {version}"
+                    f" and "
+                    f"will be removed in a future version"
+                )
+                if substitute:
+                    log.warning(f"{base_msg}, use '{substitute}' instead.")
+                else:
+                    log.warning(f"{base_msg}.")
                 DEPRECATE_SET.add(name + version)
-            if cls and use_substitute_name:
+            if cls and use_substitute_name and substitute:
                 cls.substitute_name = substitute
             ret = func(*args, **kwargs)
             return ret
