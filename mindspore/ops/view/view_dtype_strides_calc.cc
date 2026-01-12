@@ -20,6 +20,7 @@
 #include <memory>
 #include "ir/dtype/type_id.h"
 #include "view/view_strides_calculator.h"
+#include "utils/check_convert_utils.h"
 
 namespace mindspore::ops {
 inline void CheckStridesValidation(const std::vector<int64_t> &strides, int64_t size_ratio, TypeId old_dtype,
@@ -70,8 +71,8 @@ BasicCalcResult ViewDtypeBasicTypeCalc(const tensor::TensorPtr &input_tensor, co
             old_dtype};
   }
 
-  int64_t old_element_size = abstract::TypeIdSize(old_dtype);
-  int64_t new_element_size = abstract::TypeIdSize(new_dtype);
+  int64_t old_element_size = SizeToLong(abstract::TypeIdSize(old_dtype));
+  int64_t new_element_size = SizeToLong(abstract::TypeIdSize(new_dtype));
   if (old_element_size == new_element_size) {
     return {std::make_shared<TensorStorageInfo>(std::move(view_shape), std::move(view_strides), storage_offset,
                                                 std::move(storage_shape), std::move(storage_strides),
@@ -88,7 +89,7 @@ BasicCalcResult ViewDtypeBasicTypeCalc(const tensor::TensorPtr &input_tensor, co
     CheckStridesValidation(view_strides, size_ratio, old_dtype, new_dtype);
     ComputeStridesForDownsizingElementSize(&view_strides, size_ratio, old_dtype, new_dtype);
     ComputeStridesForDownsizingElementSize(&storage_strides, size_ratio, old_dtype, new_dtype);
-    storage_offset = size_ratio * storage_offset;
+    storage_offset = storage_offset * LongToSize(size_ratio);
   } else {
     int64_t size_ratio = new_element_size / old_element_size;
     if (view_shape.back() % size_ratio != 0) {
@@ -97,7 +98,7 @@ BasicCalcResult ViewDtypeBasicTypeCalc(const tensor::TensorPtr &input_tensor, co
                                << " (different element sizes), but got " << view_shape.back();
     }
 
-    if (storage_offset % size_ratio != 0) {
+    if (storage_offset % LongToSize(size_ratio) != 0) {
       MS_EXCEPTION(ValueError) << "For ViewDtype, storage offset must be divisible by " << size_ratio << " to view "
                                << TypeIdToString(old_dtype) << " as " << TypeIdToString(new_dtype)
                                << " (different element sizes), but got " << storage_offset;
@@ -108,7 +109,7 @@ BasicCalcResult ViewDtypeBasicTypeCalc(const tensor::TensorPtr &input_tensor, co
     CheckStridesValidation(view_strides, size_ratio, old_dtype, new_dtype, true);
     ComputeStridesForUpsizingElementSize(&view_strides, size_ratio, old_dtype, new_dtype);
     ComputeStridesForUpsizingElementSize(&storage_strides, size_ratio, old_dtype, new_dtype);
-    storage_offset = storage_offset / size_ratio;
+    storage_offset = storage_offset / LongToSize(size_ratio);
   }
   return {std::make_shared<TensorStorageInfo>(std::move(view_shape), std::move(view_strides), storage_offset,
                                               std::move(storage_shape), std::move(storage_strides),

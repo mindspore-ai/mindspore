@@ -607,7 +607,8 @@ class GELU(Cell):
     Activation function GELU (Gaussian Error Linear Unit).
 
     For more details, refer to the paper `Gaussian Error Linear Units (GELUs) <https://arxiv.org/abs/1606.08415>`_,
-    or the paper `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding <https://arxiv.org/abs/1810.04805>`_.
+    or the paper `BERT: Pre-training of Deep Bidirectional Transformers for
+    Language Understanding <https://arxiv.org/abs/1810.04805>`_.
 
     Refer to :func:`mindspore.mint.nn.functional.gelu` for more details.
 

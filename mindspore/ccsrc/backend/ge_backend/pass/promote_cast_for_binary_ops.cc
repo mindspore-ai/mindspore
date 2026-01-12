@@ -65,7 +65,6 @@ const AnfNodePtr PromoteCastForBinaryOp::Process(const FuncGraphPtr &graph, cons
   auto in1 = cnode->input(2);
   auto type0 = common::AnfAlgo::GetOutputInferDataType(in0, 0);
   auto type1 = common::AnfAlgo::GetOutputInferDataType(in1, 0);
-
   if (type0 == type1) {
     return nullptr;
   }

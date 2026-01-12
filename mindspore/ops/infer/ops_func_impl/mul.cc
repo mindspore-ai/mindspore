@@ -73,7 +73,6 @@ std::vector<TypeId> MulFuncImpl::InferType(const PrimitivePtr &primitive, const 
   bool is_x_scalar = x_shape.empty();
   auto y_shape = input_infos[kInputIndex1]->GetShape();
   bool is_y_scalar = y_shape.empty();
-
   if (is_x_scalar && !is_y_scalar) {
     auto promote_type_id = (mul_internal::TypeToLevel(x_type) > mul_internal::TypeToLevel(y_type)) ? x_type : y_type;
     return {promote_type_id};

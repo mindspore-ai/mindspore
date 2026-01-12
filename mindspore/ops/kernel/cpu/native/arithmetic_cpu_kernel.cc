@@ -306,7 +306,7 @@ class ArithmeticMixedCpuTypeFunc : public CpuKernelFunc {
     if (!is_init_broadcast_) {
       InitBroadCast();
     }
-    auto task = [&](size_t start, size_t end) {
+    auto task = [this, input1, input2, out](size_t start, size_t end) {
       for (size_t i = start; i < end; i++) {
         auto val1 = static_cast<OUT_T>(input1[input_index1_[i]]);
         auto val2 = static_cast<OUT_T>(input2[input_index2_[i]]);
