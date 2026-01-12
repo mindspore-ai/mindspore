@@ -546,6 +546,24 @@ def get_select_vmap_rule(prim, axis_size):
         x = _bdim_at_front(x, x_dim, axis_size)
         y = _bdim_at_front(y, y_dim, axis_size)
 
+        # NOTE:
+        # After moving/broadcasting vmap batch axis to the front, we should align the ranks for
+        # normal broadcasting on non-batch dimensions. For example:
+        #   condition: (B, N), x/y: (B, M, N)
+        # We need to reshape condition to (B, 1, N) (insert 1 after batch axis), rather than
+        # relying on default broadcasting which prepends 1s on the left.
+        cond_shape = condition.shape
+        x_shape = x.shape
+        y_shape = y.shape
+        broadcast_shape = cond_shape
+        if len(x_shape) > len(broadcast_shape):
+            broadcast_shape = x_shape
+        if len(y_shape) > len(broadcast_shape):
+            broadcast_shape = y_shape
+        condition = _handle_broadcasting(condition, cond_shape, broadcast_shape)
+        x = _handle_broadcasting(x, x_shape, broadcast_shape)
+        y = _handle_broadcasting(y, y_shape, broadcast_shape)
+
         out = prim(condition, x, y)
 
         return out, 0

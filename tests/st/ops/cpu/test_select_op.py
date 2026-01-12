@@ -12,23 +12,22 @@
 #See the License for the specific language governing permissions and
 #limitations under the License.
 #== == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == == ==
-from tests.mark_utils import arg_mark
-
+"""
+test select operation on CPU.
+"""
 import numpy as np
-
-import mindspore.context as context
-import mindspore.nn as nn
-from mindspore import Tensor
-import mindspore.ops as ops
-from mindspore.ops import operations as P
+import pytest
+from mindspore import Tensor, context, nn, ops
 from mindspore.common.api import jit
+from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore import dtype as mstype
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.select = P.Select()
 
     def construct(self, cond_op, input_x, input_y):
@@ -124,3 +123,36 @@ def test_functional_select_broadcast():
 
     ret = foo(cond, x, y)
     assert ret.shape == (5, 5, 65, 54, 12, 5, 2)
+
+
+def _select_forward(condition, x, y):
+    return ops.select(condition, x, y)
+
+
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential')
+@pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_select_vmap_broadcast_rank(mode):
+    """
+    Feature: ops.select vmap
+    Description: Verify broadcasting works in vmap when non-batched inputs have lower rank.
+                 e.g. condition: (N,), x/y: (B, M, N) with in_axes=(None, 0, 0)
+    Expectation: success
+    """
+    context.set_context(mode=mode, device_target="CPU")
+
+    axis_size = 2
+    m = 4
+    n = 3
+
+    condition = Tensor(np.array([True, False, True]), mstype.bool_)
+    x = Tensor(np.arange(axis_size * m * n).reshape(axis_size, m, n).astype(np.int32))
+    y = Tensor(np.zeros((axis_size, m, n), dtype=np.int32))
+
+    out = ops.vmap(_select_forward, in_axes=(None, 0, 0), out_axes=0)(condition, x, y)
+
+    cond_np = condition.asnumpy().reshape(1, n)
+    x_np = x.asnumpy()
+    y_np = y.asnumpy()
+    expect = np.stack([np.where(cond_np, x_np[i], y_np[i]) for i in range(axis_size)], axis=0)
+    assert np.all(out.asnumpy() == expect)

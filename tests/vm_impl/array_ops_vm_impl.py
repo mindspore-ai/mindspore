@@ -492,3 +492,13 @@ def vm_impl_split_with_size(self):
         return output
 
     return vm_impl
+
+
+@vm_impl_getters.register(P.BroadcastTo)
+def vm_impl_broadcast_to(self):
+    """Generate vm_impl function for BroadcastTo"""
+
+    def vm_impl(x, shp):
+        return Tensor(np.broadcast_to(x.asnumpy(), shp))
+
+    return vm_impl
