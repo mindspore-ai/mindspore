@@ -37,6 +37,10 @@ class OPS_HOST_API CustomOpPluginCpuKernelMod : public NativeCpuKernelMod {
               const std::vector<KernelTensor *> &outputs) override;
   int Resize(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
 
+  bool IsNeedUpdateOutputShapeAndSize() override { return is_compute_depend_op_; }
+  void UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                const std::vector<KernelTensor *> &outputs) override;
+
  protected:
   std::vector<std::vector<int64_t>> shape_list_;
   std::vector<int> ndims_;
@@ -49,6 +53,8 @@ class OPS_HOST_API CustomOpPluginCpuKernelMod : public NativeCpuKernelMod {
   std::string func_name_;
 
   KernelInputInfoImpl kernel_info_;
+
+  bool is_compute_depend_op_{false};
 
  private:
   void SetKernelPath();
