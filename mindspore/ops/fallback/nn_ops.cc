@@ -24,9 +24,9 @@
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_r.h"
 #include "primitive/auto_generate/gen_ops_primitive_s.h"
-#include "primitive/nn_ops.h"
 #include "utils/check_convert_utils.h"
 #include "utils/shape_utils.h"
+#include "primitive/nn_ops.h"
 
 namespace mindspore {
 namespace expander {
