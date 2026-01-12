@@ -181,9 +181,13 @@ class InplaceUpdate(Primitive):
 
 class DynamicShape(Primitive):
     """
-    Please use TensorShape instead.
+    `ops.DynamicShape` is deprecated from version 1.7 and will be removed in
+    a future version, please use :func:`mindspore.ops.shape` instead.
+
+    Supported Platforms:
+        Deprecated
     """
-    @deprecated("1.7", "TensorShape", True)
+    @deprecated("1.7", "ops.shape", False)
     @prim_attr_register
     def __init__(self, dtype=9):
         """init Shape"""
@@ -243,7 +247,8 @@ class Unpack(Primitive):
 
 class ScatterNonAliasingAdd(Primitive):
     """
-    Please use TensorScatterAdd instead.
+    `ops.ScatterNonAliasingAdd` is deprecated from version 2.1 and will be
+    removed in a future version, please use :class:`mindspore.ops.TensorScatterAdd` instead.
 
     Supported Platforms:
         Deprecated
@@ -253,7 +258,7 @@ class ScatterNonAliasingAdd(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1),
         sig.make_sig('updates', dtype=sig.sig_dtype.T)
     )
-    @deprecated("2.1", "ops.ScatterNonAliasingAdd", False)
+    @deprecated("2.1", "ops.TensorScatterAdd", False)
     @prim_attr_register
     def __init__(self):
         """Initialize ScatterNonAliasingAdd"""

@@ -19,6 +19,7 @@ from mindspore import ops
 from mindspore.ops.primitive import constexpr, Primitive, _primexpr
 from mindspore.common import Tensor
 from mindspore import _checkparam as Validator
+from mindspore.common._decorator import deprecated
 from mindspore.nn.cell import Cell
 
 __all__ = ['TimeDistributed']
@@ -66,6 +67,8 @@ def _check_inputs_dim(shape, prim_name=None):
 
 class TimeDistributed(Cell):
     r"""
+    `nn.TimeDistributed` is deprecated from version 2.8.0 and will be removed in a future version.
+
     The time distributed layer.
 
     Time distributed is a wrapper which allows to apply a layer to every temporal slice of an input.
@@ -91,7 +94,7 @@ class TimeDistributed(Cell):
         TypeError: If layer is not a Cell or Primitive.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore as ms
@@ -104,12 +107,13 @@ class TimeDistributed(Cell):
         (32, 10, 6)
     """
 
+    @deprecated("2.8.0", None, False)
     def __init__(self, layer, time_axis, reshape_with_axis=None):
         """Initialize TimeDistributed."""
         if not isinstance(layer, (Cell, Primitive)):
             raise TypeError(f"For '{self.cls_name}', the 'layer' must be Cell or Primitive instance, "
                             f"but got type: {type(layer).__name__}.")
-        super(TimeDistributed, self).__init__()
+        super().__init__()
         Validator.check_is_int(time_axis, "time_axis", self.cls_name)
         if reshape_with_axis is not None:
             Validator.check_is_int(reshape_with_axis, "reshape_with_axis", self.cls_name)

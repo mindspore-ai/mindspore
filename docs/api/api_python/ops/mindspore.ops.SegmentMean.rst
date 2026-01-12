@@ -3,6 +3,8 @@ mindspore.ops.SegmentMean
 
 .. py:class:: mindspore.ops.SegmentMean
 
+    `ops.SegmentMean` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     计算Tensor中每个分段的均值。
 
     具体来说，生成一个新的Tensor `output` ，满足 :math:`output_i=mean_j(input\_x_j)` ，其\

@@ -26,6 +26,7 @@ import mindspore as ms
 from mindspore import log as logger
 from mindspore import ops
 from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
 from mindspore.common.generator import default_generator
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
@@ -192,7 +193,17 @@ tuple_to_tensor_ = TupleToTensor()
 #####################################
 # Private Operation Functions.
 #####################################
-accumulate_ = P.AccumulateNV2()
+_accumulate_prim = None
+
+
+def _get_accumulate_prim():
+    """Lazy init to avoid import-time deprecated warnings."""
+    global _accumulate_prim
+    if _accumulate_prim is None:
+        _accumulate_prim = P.AccumulateNV2()
+    return _accumulate_prim
+
+
 acos_ = P.ACos()
 acosh_ = P.Acosh()
 addcdiv_ = P.Addcdiv()
@@ -272,7 +283,17 @@ slice_ = P.Slice()
 size_ = P.Size()
 scalar_to_tensor_ = P.ScalarToTensor()
 shape_ = P.Shape()
-sparse_segment_mean_ = SparseSegmentMean()
+_sparse_segment_mean_prim = None
+
+
+def _get_sparse_segment_mean_prim():
+    """Lazy init to avoid import-time deprecated warnings."""
+    global _sparse_segment_mean_prim
+    if _sparse_segment_mean_prim is None:
+        _sparse_segment_mean_prim = SparseSegmentMean()
+    return _sparse_segment_mean_prim
+
+
 tensor_round_ = P.Round()
 tile_ = P.Tile()
 tile_size_ = TileSize()
@@ -3183,9 +3204,12 @@ def ne(input, other):
     """
     return not_equal(input, other)
 
-
+@deprecated("2.8.0", "ops.allclose", False, "ops.")
 def approximate_equal(x, y, tolerance=1e-5):
     r"""
+    `ops.approximate_equal` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.allclose` instead.
+
     Return a boolean tensor where two tensors are element-wise equal within a tolerance.
 
     Support implicit type conversion and type promotion.
@@ -3210,7 +3234,7 @@ def approximate_equal(x, y, tolerance=1e-5):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -5453,8 +5477,12 @@ def cumsum(x, axis, dtype=None):
     return cumsum_(x, axis)
 
 
+@deprecated("2.8.0", None, False, "ops.")
 def sparse_segment_mean(x, indices, segment_ids):
     r"""
+    `ops.sparse_segment_mean` is deprecated from version 2.8.0 and will be
+    removed in a future version.
+
     Computes the mean of sparse segments in the input tensor.
 
     .. math::
@@ -5477,7 +5505,7 @@ def sparse_segment_mean(x, indices, segment_ids):
         Tensor
 
     Supported Platforms:
-        ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -5490,7 +5518,7 @@ def sparse_segment_mean(x, indices, segment_ids):
          [0. 1. 2.]
          [2. 4. 5.]]
     """
-    return sparse_segment_mean_(x, indices, segment_ids)
+    return _get_sparse_segment_mean_prim()(x, indices, segment_ids)
 
 
 def block_diag(*inputs):
@@ -7123,6 +7151,107 @@ def _complex_square(A):
     return ops.square(A)
 
 
+def _reshape_keepdim_matrix_norm(ret, in_shape, dim):
+    """Reshape matrix norm result to keep reduced dims."""
+    ret_shape = list(in_shape)
+    ret_shape[dim[0]] = 1
+    ret_shape[dim[1]] = 1
+    return ret.reshape(ret_shape)
+
+
+def _norm_immediate(A, dim, keepdim, ndim):
+    ret = ops.sqrt(ops.reduce_sum(_complex_square(A), dim))
+    if keepdim:
+        ret = ret.reshape(ndim * [1])
+    return ret
+
+
+def _norm_matrix_int_ord(A, ord, dim, keepdim, ndim):
+    """Compute matrix norm for integer `ord` (e.g. 1, -1, 2, -2) along two axes."""
+    row_axis, col_axis = dim
+    row_axis = _normalize_axis_index(row_axis, ndim)
+    col_axis = _normalize_axis_index(col_axis, ndim)
+
+    if ord in (1, -1):
+        # After summing along row_axis, the rank is reduced by 1, so col_axis may shift.
+        if col_axis > row_axis:
+            col_axis -= 1
+        sum_abs = A.abs().sum(row_axis)
+        ret = (ops.max(sum_abs, axis=col_axis)[0] if ord == 1 else ops.min(sum_abs, axis=col_axis)[0])
+    elif ord == 2:
+        ret = _multi_svd_norm(A, row_axis, col_axis, 'amax')
+    elif ord == -2:
+        ret = _multi_svd_norm(A, row_axis, col_axis, 'amin')
+    else:
+        raise ValueError(f"For norm, the ord {ord} are not support for matrices.")
+
+    if keepdim:
+        ret = _reshape_keepdim_matrix_norm(ret, A.shape, dim)
+    return ret
+
+
+def _norm_vector_int_ord(A, ord, dim, keepdim):
+    if ord == 0:
+        return (A != 0).astype(A.dtype).sum(axis=dim, keepdims=keepdim)
+    if ord > 0:
+        _lp_norm = _get_cache_prim(ops.LpNorm)(dim, ord, keepdim)
+        return _lp_norm(A)
+    return ops.sum(ops.abs(A).pow(ord), dim=dim, keepdim=keepdim).pow(1.0 / ord)
+
+
+def _norm_vector_other_ord(A, ord, dim, keepdim):
+    """Compute vector norm for special/other `ord` values (inf, -inf, 0, None, tensor ord)."""
+    if ord == float('inf'):
+        return ops.max(ops.abs(A), axis=dim[0], keepdims=keepdim)[0]
+    if ord == -float('inf'):
+        return ops.min(ops.abs(A), axis=dim[0], keepdims=keepdim)[0]
+    if ord == 0:
+        # Zero norm
+        return (A != 0).astype(A.dtype).sum(axis=dim, keepdims=keepdim)
+    if ord is None:
+        # special case for speedup
+        s = _complex_square(A)
+        reduce_sum = _get_cache_prim(ops.ReduceSum)(keepdim)
+        return ops.sqrt(reduce_sum(s, dim))
+
+    # None of the str-type keywords for ord ('fro', 'nuc') are valid for vectors.
+    absx = ops.abs(A)
+    absx **= ord
+    reduce_sum = _get_cache_prim(ops.ReduceSum)(keepdim)
+    ret = reduce_sum(absx, dim)
+    if isinstance(ord, Tensor):
+        ret **= ops.reciprocal(ord)
+    else:
+        ret **= 1 / ord
+    return ret
+
+
+def _norm_matrix_other_ord(A, ord, dim, keepdim, ndim):
+    """Compute matrix norm for other `ord` values (inf, -inf, 'nuc', None/'fro')."""
+    row_axis, col_axis = dim
+    row_axis = _normalize_axis_index(row_axis, ndim)
+    col_axis = _normalize_axis_index(col_axis, ndim)
+
+    if row_axis == col_axis:
+        raise ValueError('For norm, the elements of dim can not be duplicate.')
+
+    if ord in (float('inf'), -float('inf')):
+        # After summing along col_axis, the rank is reduced by 1, so row_axis may shift.
+        if row_axis > col_axis:
+            row_axis -= 1
+        sum_abs = ops.reduce_sum(ops.abs(A), col_axis)
+        ret = (ops.max(sum_abs, axis=row_axis)[0] if ord == float('inf') else ops.min(sum_abs, axis=row_axis)[0])
+    elif ord == 'nuc':
+        ret = _multi_svd_norm(A, row_axis, col_axis, 'sum')
+    else:
+        # ord is None or 'fro'
+        ret = ops.sqrt(ops.reduce_sum(_complex_square(A), dim))
+
+    if keepdim:
+        ret = _reshape_keepdim_matrix_norm(ret, A.shape, dim)
+    return ret
+
+
 def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     r"""
     Compute the matrix norm or vector norm of the tensor along a specified dimension.
@@ -7205,96 +7334,19 @@ def norm(A, ord=None, dim=None, keepdim=False, *, dtype=None):
     _check_ord(ord, dim)
     if dtype is not None:
         A = ops.cast(A, dtype)
-    # Immediately handle some default, simple, fast, and common cases.
     if immediate:
-        ret = ops.sqrt(ops.reduce_sum(_complex_square(A), dim))
-        if keepdim:
-            ret = ret.reshape(ndim * [1])
-        return ret
+        # Immediately handle some default, simple, fast, and common cases.
+        return _norm_immediate(A, dim, keepdim, ndim)
 
-    if isinstance(ord, int):
-        if len(dim) == 2:
-            row_axis, col_axis = dim
-            row_axis = _normalize_axis_index(row_axis, ndim)
-            col_axis = _normalize_axis_index(col_axis, ndim)
-            if ord == 1:
-                if col_axis > row_axis:
-                    col_axis -= 1
-                ret = ops.max(A.abs().sum(row_axis), axis=col_axis)[0]
-            elif ord == -1:
-                if col_axis > row_axis:
-                    col_axis -= 1
-                ret = ops.min(A.abs().sum(row_axis), axis=col_axis)[0]
-            elif ord == 2:
-                ret = _multi_svd_norm(A, row_axis, col_axis, 'amax')
-            elif ord == -2:
-                ret = _multi_svd_norm(A, row_axis, col_axis, 'amin')
-            else:
-                raise ValueError(f"For norm, the ord {ord} are not support for matrices.")
-            if keepdim:
-                ret_shape = list(A.shape)
-                ret_shape[dim[0]] = 1
-                ret_shape[dim[1]] = 1
-                ret = ret.reshape(ret_shape)
-            return ret
-        if len(dim) == 1:
-            if ord == 0:
-                return (A != 0).astype(A.dtype).sum(axis=dim, keepdims=keepdim)
-            if ord > 0:
-                _lp_norm = _get_cache_prim(ops.LpNorm)(dim, ord, keepdim)
-                return _lp_norm(A)
-            return ops.sum(ops.abs(A).pow(ord), dim=dim, keepdim=keepdim).pow(1.0 / ord)
-    if len(dim) == 1:
-        if ord == float('inf'):
-            return ops.max(ops.abs(A), axis=dim[0], keepdims=keepdim)[0]
-        if ord == -float('inf'):
-            return ops.min(ops.abs(A), axis=dim[0], keepdims=keepdim)[0]
-        if ord == 0:
-            # Zero norm
-            return (A != 0).astype(A.dtype).sum(axis=dim, keepdims=keepdim)
-        if ord is None:
-            # special case for speedup
-            s = _complex_square(A)
-            reduce_sum = _get_cache_prim(ops.ReduceSum)(keepdim)
-            return ops.sqrt(reduce_sum(s, dim))
-        # None of the str-type keywords for ord ('fro', 'nuc')
-        # are valid for vectors
-        absx = ops.abs(A)
-        absx **= ord
-        reduce_sum = _get_cache_prim(ops.ReduceSum)(keepdim)
-        ret = reduce_sum(absx, dim)
-        if isinstance(ord, Tensor):
-            ret **= ops.reciprocal(ord)
-        else:
-            ret **= 1 / ord
-        return ret
     if len(dim) == 2:
-        row_axis, col_axis = dim
-        row_axis = _normalize_axis_index(row_axis, ndim)
-        col_axis = _normalize_axis_index(col_axis, ndim)
-        if row_axis == col_axis:
-            raise ValueError('For norm, the elements of dim can not be duplicate.')
+        if isinstance(ord, int):
+            return _norm_matrix_int_ord(A, ord, dim, keepdim, ndim)
+        return _norm_matrix_other_ord(A, ord, dim, keepdim, ndim)
 
-        if ord == float('inf'):
-            if row_axis > col_axis:
-                row_axis -= 1
-            ret = ops.max(ops.reduce_sum(abs(A), col_axis), axis=row_axis)[0]
-        elif ord == -float('inf'):
-            if row_axis > col_axis:
-                row_axis -= 1
-            ret = ops.min(ops.reduce_sum(abs(A), col_axis), axis=row_axis)[0]
-        elif ord == 'fro':
-            ret = ops.sqrt(ops.reduce_sum(_complex_square(A), dim))
-        elif ord == 'nuc':
-            ret = _multi_svd_norm(A, row_axis, col_axis, 'sum')
-        else:
-            ret = ops.sqrt(ops.reduce_sum(_complex_square(A), dim))
-        if keepdim:
-            ret_shape = list(A.shape)
-            ret_shape[dim[0]] = 1
-            ret_shape[dim[1]] = 1
-            ret = ret.reshape(ret_shape)
-        return ret
+    if len(dim) == 1:
+        if isinstance(ord, int):
+            return _norm_vector_int_ord(A, ord, dim, keepdim)
+        return _norm_vector_other_ord(A, ord, dim, keepdim)
     return None
 
 
@@ -9140,8 +9192,12 @@ def remainder_ext(input, other):
     raise TypeError("For 'remainder', inputs should either be two tensors, or a tensor and a scalar.")
 
 
+@deprecated("2.8.0", "ops.addn", False, "ops.")
 def accumulate_n(x):
     r"""
+    `ops.accumulate_n` is deprecated from version 2.8.0 and will be removed in a future version,
+    please use :func:`mindspore.ops.addn` instead.
+
     Return the element-wise sum of all input tensors.
 
     :func:`mindspore.ops.accumulate_n` is similar to :func:`mindspore.ops.addn`,
@@ -9155,7 +9211,7 @@ def accumulate_n(x):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        Deprecated
 
     Examples:
         >>> import mindspore
@@ -9165,7 +9221,7 @@ def accumulate_n(x):
         >>> print(output)
         [10. 14. 18.]
     """
-    return accumulate_(x)
+    return _get_accumulate_prim()(x)
 
 
 def iou(anchor_boxes, gt_boxes, mode='iou'):
@@ -11693,8 +11749,12 @@ def _get_output_shape(batch_size, x1_ret, x2_ret):
     return output_shape
 
 
+@deprecated("2.8.0", None, False, "ops.")
 def batch_dot(x1, x2, axes=None):
     """
+    `ops.batch_dot` is deprecated from version 2.8.0 and will be removed in a
+    future version.
+
     Computation of batch dot product between samples in two tensors containing batch dims.
 
     .. note::
@@ -11713,7 +11773,7 @@ def batch_dot(x1, x2, axes=None):
         Tensor
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        Deprecated
 
     Examples:
         >>> import mindspore

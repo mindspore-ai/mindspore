@@ -3,6 +3,8 @@ mindspore.ops.SparseApplyFtrl
 
 .. py:class:: mindspore.ops.SparseApplyFtrl(lr, l1, l2, lr_power, use_locking=False)
 
+    `ops.SparseApplyFtrl` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据FTRL-proximal算法更新相关参数或者Tensor。
 
     更多详细信息请参见 :class:`mindspore.nn.FTRL` 。

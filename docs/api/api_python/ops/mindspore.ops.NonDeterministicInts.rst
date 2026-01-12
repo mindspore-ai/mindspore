@@ -3,6 +3,9 @@ mindspore.ops.NonDeterministicInts
 
 .. py:class:: mindspore.ops.NonDeterministicInts(dtype=mstype.int64)
 
+    `ops.NonDeterministicInts` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.randint_like` 替代。
+
     生成指定数据类型范围内的随机整数。
 
     返回Tensor的shape由输入 `shape` 指定，其中的随机数从指定数据类型的可表示范围内抽取。

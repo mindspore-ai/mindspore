@@ -3,6 +3,9 @@ mindspore.ops.UpperBound
 
 .. py:class:: mindspore.ops.UpperBound(out_type=mstype.int32)
 
+    `ops.UpperBound` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.searchsorted` 替代。
+
     返回一个Tensor，该Tensor包含用于查找 `values` 的值的在升序排列的 `sorted_x` 中的上界索引。
 
     参数：

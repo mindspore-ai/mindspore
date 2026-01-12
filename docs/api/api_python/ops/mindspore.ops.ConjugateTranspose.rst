@@ -3,6 +3,9 @@
 
 .. py:class:: mindspore.ops.ConjugateTranspose
 
+    `ops.ConjugateTranspose` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.transpose` 和 :func:`mindspore.ops.conj` 替代。
+
     计算 `x` 按 `perm` 进行行列变换后的共轭矩阵。
 
     .. math::

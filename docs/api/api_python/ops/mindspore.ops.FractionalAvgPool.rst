@@ -3,6 +3,9 @@ mindspore.ops.FractionalAvgPool
 
 .. py:class:: mindspore.ops.FractionalAvgPool(pooling_ratio, pseudo_random=False, overlapping=False, deterministic=False, seed=0, seed2=0)
 
+    `ops.FractionalAvgPool` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.adaptive_avg_pool2d` 替代。
+
     在输入上执行分数平均池化。
 
     分数平均池化类似于常规平均池化。在常规平均池化中，通过取集合较小的 `N x N` 子部分的平均值（通常为2x2）来缩小输入集的大小，目标是将集合缩小 `N` 倍，其中 `N` 为整数。

@@ -30,8 +30,8 @@ class SparseToDense(Cell):
     before :class:`mindspore.ops.SparseToDense` is called.
 
     Note:
-        'nn.SparseToDense' is deprecated from version 2.0, and will be removed in a future version, please use
-        COOTensor.to_dense() instead.
+        `nn.SparseToDense` is deprecated from version 2.0, and will be removed in a future version, please use
+        :func:`mindspore.COOTensor.to_dense` instead.
 
     Inputs:
         - **coo_tensor** (:class:`mindspore.COOTensor`) - the sparse COOTensor to convert.
@@ -75,7 +75,7 @@ class SparseToDense(Cell):
         """Initialize SparseToDense."""
         logger.warning("'nn.SparseToDense' is deprecated from version 2.0 and will be removed in a future version. " +
                        "Please use 'COOTensor.to_dense()' instead.")
-        super(SparseToDense, self).__init__()
+        super().__init__()
         self.sparse_to_dense = ops.SparseToDense()
 
     def construct(self, sparse_tensor):
@@ -138,7 +138,7 @@ class SparseTensorDenseMatmul(Cell):
 
     def __init__(self, adjoint_st=False, adjoint_dt=False):
         """Initialize SparseTensorDenseMatmul"""
-        super(SparseTensorDenseMatmul, self).__init__()
+        super().__init__()
         self.adj_st = adjoint_st
         self.adj_dt = adjoint_dt
         self.sparse_dense_matmul = ops.SparseTensorDenseMatmul(adjoint_st=self.adj_st, adjoint_dt=self.adj_dt)

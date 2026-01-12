@@ -3,6 +3,8 @@ mindspore.ops.NoRepeatNGram
 
 .. py:class:: mindspore.ops.NoRepeatNGram(ngram_size=1)
 
+    `ops.NoRepeatNGram` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     如果n-grams出现重复，则更新对应n-gram词序列出现的概率。
 
     在beam search过程中，如果已生成的词序列中已经存在连续的 `ngram_size` 个词，那么在后续预测时，将避免再次出现该连续的 `ngram_size` 个词。例如：当 `ngram_size` 为3时，已生成的词序列为[1,2,3,2,3]，则下一个预测的词不会为2，并且 `log_probs` 的值将被替换成 ``-FLOAT_MAX`` 。因为连续的3个词2、3、2不会在词序列中出现两次。

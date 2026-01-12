@@ -3,6 +3,9 @@ mindspore.nn.Unfold
 
 .. py:class:: mindspore.nn.Unfold(ksizes, strides, rates, padding='valid')
 
+    `nn.Unfold` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.unfold` 替代。
+
     从图像中提取滑窗的区域块。
 
     输入为一个四维的Tensor，数据格式为(N, C, H, W)。

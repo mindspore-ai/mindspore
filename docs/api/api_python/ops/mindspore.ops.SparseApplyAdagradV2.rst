@@ -3,6 +3,8 @@ mindspore.ops.SparseApplyAdagradV2
 
 .. py:class:: mindspore.ops.SparseApplyAdagradV2(lr, epsilon, update_slots=True, use_locking=False)
 
+    `ops.SparseApplyAdagradV2` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     根据Adagrad算法更新相关参数或者Tensor。
 
     .. math::

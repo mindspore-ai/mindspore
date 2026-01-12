@@ -3,6 +3,8 @@ mindspore.ops.SegmentProd
 
 .. py:class:: mindspore.ops.SegmentProd
 
+    `ops.SegmentProd` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     计算Tensor中每个分段所有元素的乘积。
 
     具体来说，生成一个新的Tensor `output` ，满足 :math:`output_i = \prod_j input\_x_j` ，其\

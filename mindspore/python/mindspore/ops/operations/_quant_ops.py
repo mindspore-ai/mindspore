@@ -17,10 +17,11 @@
 from __future__ import absolute_import
 from functools import partial
 
-import mindspore.context as context
+from mindspore import context
 from mindspore import _checkparam as validator
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, prim_attr_register
 from mindspore.common import dtype as mstype
+from mindspore.common._decorator import deprecated
 from mindspore.common.dtype import QuantDtype
 
 
@@ -1795,6 +1796,9 @@ class WtsARQ(PrimitiveWithInfer):
 
 class IFMR(Primitive):
     """
+    `ops.IFMR` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     The TFMR(Input Feature Map Reconstruction).
 
     Args:
@@ -1816,19 +1820,11 @@ class IFMR(Primitive):
         - **scale** (Tensor) - A tensor of optimal scale, the shape is :math:`(1)`. Data dtype is float32.
         - **offset** (Tensor) - A tensor of optimal offset, the shape is :math:`(1)`. Data dtype is float32.
 
-    Examples:
-        >>> data = Tensor(np.random.rand(1, 3, 6, 4).astype(np.float32))
-        >>> data_min = Tensor([0.1], mindspore.float32)
-        >>> data_max = Tensor([0.5], mindspore.float32)
-        >>> cumsum = Tensor(np.random.rand(4).astype(np.int32))
-        >>> ifmr = Q.IFMR(min_percentile=0.2, max_percentile=0.9, search_range=(1.0, 2.0),
-        ...               search_step=1.0, with_offset=False)
-        >>> output = ifmr(data, data_min, data_max, cumsum)
-        >>> print(output)
-        (Tensor(shape=[1], dtype=Float32, value= [7.87401572e-03]),
-         Tensor(shape=[1], dtype=Float32, value= [0.00000000e+00]))
+    Supported Platforms:
+        Deprecated
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self, min_percentile=0.999999, max_percentile=0.999999, search_range=(0.7, 1.3), search_step=0.01,
                  with_offset=True):

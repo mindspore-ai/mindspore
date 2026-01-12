@@ -3,6 +3,8 @@
 
 .. py:class:: mindspore.ops.ExtractGlimpse(centered=True, normalized=True, uniform_noise=True, noise="uniform")
 
+    `ops.ExtractGlimpse` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     从输入图像Tensor中提取glimpses（通常为矩形子区域），并作为窗口返回。
 
     .. note::

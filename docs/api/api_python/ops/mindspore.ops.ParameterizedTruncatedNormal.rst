@@ -3,6 +3,9 @@ mindspore.ops.ParameterizedTruncatedNormal
 
 .. py:class:: mindspore.ops.ParameterizedTruncatedNormal(seed=0, seed2=0)
 
+    `ops.ParameterizedTruncatedNormal` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :class:`mindspore.common.initializer.TruncatedNormal` 替代。
+
     返回一个具有指定shape的Tensor，其数值取自截断正态分布。
     当其shape为 :math:`(batch\_size, *)` 的时候， `mean` 、 `stdevs` 、 `min` 和 `max` 的shape应该为 :math:`()` 或者 :math:`(batch\_size, )` 。
 
