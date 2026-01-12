@@ -94,17 +94,6 @@ def _check_parallel_envs():
                            "please export MINDSPORE_HCCL_CONFIG_PATH or RANK_TABLE_FILE.")
 
 
-def _set_envs():
-    """
-    Some environmental variables must be set after `init` is completed.
-    This takes compatibility into account because user scripts may get 'DEVICE_ID' or 'RANK_ID' envs.
-    """
-    os.environ["RANK_ID"] = str(get_rank())
-    os.environ["DEVICE_ID"] = str(context.get_context("device_id"))
-    if os.getenv("RANK_SIZE") is None:
-        os.environ["RANK_SIZE"] = str(get_group_size())
-
-
 def _check_hccl():
     """Check hcll is installed needed."""
     if not GlobalComm.CHECK_ENVS:
@@ -212,7 +201,6 @@ def init(backend_name=None):
                            "but got 'backend_name' : {}".format(backend_name))
 
     GlobalComm.INITED = True
-    _set_envs()
 
 
 def _init_without_sched(backend_name=None, init_method=None, timeout=None, world_size=-1, rank=-1, store=None):
@@ -289,7 +277,6 @@ def _init_without_sched(backend_name=None, init_method=None, timeout=None, world
                            "but got 'backend_name' : {}".format(backend_name))
 
     GlobalComm.INITED = True
-    _set_envs()
 
 
 def release():
