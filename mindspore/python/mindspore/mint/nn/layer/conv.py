@@ -79,7 +79,7 @@ class _Conv(Cell):
                     total_padding = d * (k - 1)
                     left_pad = total_padding // 2
                     reversed_padding[2 * i] = left_pad
-                    reversed_padding[2 * i + 1] = (total_padding - left_pad)
+                    reversed_padding[2 * i + 1] = total_padding - left_pad
             return reversed_padding
         return tuple(x for x in reversed(padding) for _ in range(2))
 
@@ -888,7 +888,8 @@ class ConvTranspose2d(_ConvTranspose):
           or :math:`(C_{in}, H_{in}, W_{in})` .
 
     Outputs:
-        - **output** (Tensor) - The output tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})` or :math:`(C_{out}, H_{out}, W_{out})`, where
+        - **output** (Tensor) - The output tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`
+          or :math:`(C_{out}, H_{out}, W_{out})`, where
 
           .. math::
                 H_{out} = (H_{in} - 1) \times \text{stride}[0] - 2 \times \text{padding}[0] + \text{dilation}[0]
