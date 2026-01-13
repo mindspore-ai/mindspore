@@ -492,8 +492,12 @@ bool CollectiveManager::Finalize() {
   }
 
   std::function<bool()> finalize_comm_lib_func = [&, this]() {
-    // Ensure all comms are initialized to avoid exiting error.
-    (void)WaitAllCommInitDone();
+    // Ensure all comms are initialized to avoid exiting error, ignore exception when calling WaitAllCommInitDone.
+    try {
+      (void)WaitAllCommInitDone();
+    } catch (const std::exception &e) {
+      MS_LOG(INFO) << "Ignore exception for waiting communication group init done when finalizing.";
+    }
     stop_init_comm_ = true;
     task_queue_blocker_.notify_one();
     group_name_to_result_.clear();
