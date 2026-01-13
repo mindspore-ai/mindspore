@@ -5341,14 +5341,11 @@ op_db: Dict[str, OpInfo] = {
         name='mint.atan',
         op=mint.atan,
         ref=torch.atan,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16 and d != ms.uint16
-                                                           and d != ms.uint32 and d != ms.uint64)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.uint16 and d != ms.uint32
-                                                               and d != ms.uint64)),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        disable_large_value_tensor_inputs=True,
-        disable_small_value_tensor_inputs=True,
+        convert_half_to_float=True,
     ),
     'mint.sinh': UnaryOpInfo(
         name='mint.sinh',
@@ -5382,14 +5379,12 @@ op_db: Dict[str, OpInfo] = {
         name='mint.asinh',
         op=mint.asinh,
         ref=torch.asinh,
-        domain=(-1, 1),
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint16
-                                                           and d != ms.uint32 and d != ms.uint64)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d != ms.uint16 and d != ms.uint32 and d != ms.uint64)),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        disable_large_value_tensor_inputs=True,
-        disable_small_value_tensor_inputs=True,
+        #910a float32 loss threshold:[0.5238495, 0.5238495]
+        ascend_forward_loss_override={ms.float32: 0.6},
     ),
     'mint.asin': UnaryOpInfo(
         name='mint.asin',
@@ -5400,20 +5395,17 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d == ms.float32),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        disable_large_value_tensor_inputs=True,
-        disable_small_value_tensor_inputs=True,
     ),
     'mint.cosh': UnaryOpInfo(
         name='mint.cosh',
         op=mint.cosh,
         ref=torch.cosh,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint16
-                                                           and d != ms.uint32 and d != ms.uint64)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d != ms.uint16 and d != ms.uint32 and d != ms.uint64)),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        ascend_forward_loss_override={ms.float32: np.inf, ms.float16: np.inf},
         dtypes_cpu=(),
         dtypes_gpu=(),
-        disable_large_value_tensor_inputs=True,
-        disable_small_value_tensor_inputs=True,
+        convert_half_to_float=True,
     ),
     'mint.cos': UnaryOpInfo(
         name='mint.cos',
@@ -5542,7 +5534,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        is_differentiable=False,
     ),
     'Tensor.bool': UnaryOpInfo(
         name='Tensor.bool',
@@ -5572,7 +5563,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and  d != ms.float),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        is_differentiable=False,
     ),
     'Tensor.half': UnaryOpInfo(
         name='Tensor.half',
@@ -5582,7 +5572,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        is_differentiable=False,
     ),
     'Tensor.int': UnaryOpInfo(
         name='Tensor.int',
@@ -5593,7 +5582,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
-        disable_large_value_tensor_inputs=True,
         disable_extremal_value_tensor_inputs=True,
     ),
     'Tensor.long': UnaryOpInfo(
@@ -5749,7 +5737,7 @@ op_db: Dict[str, OpInfo] = {
         op_extra_reference_inputs_func=wrap_sample_inputs(
             extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
         ),
-        op_dynamic_inputs_func=None,
+        convert_half_to_float=True,
     ),
     'mint.argmax': ReductionOpInfo(
         name='mint.argmax',
@@ -5915,8 +5903,8 @@ op_db: Dict[str, OpInfo] = {
             extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
         ),
         op_dynamic_inputs_func=None,
-        dtypes_ascend=(ms.float32,),
-        dtypes_ascend910b=(ms.float32,),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
         dtypes_gpu=(),
         convert_half_to_float=True,
@@ -6147,10 +6135,12 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(
             d for d in dtypes_as_torch if not d.is_complex and d not in [ms.bool_, ms.bfloat16]
         ),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bool_),
-        disable_large_value_tensor_inputs=True,
+        #910a float32 loss threshold:[1.e+20, 1.e+20]
+        ascend_forward_loss_override={ms.float32: 1.e+20},
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
         dtypes_gpu=(),
+        convert_half_to_float=True,
     ),
     'mint.ceil': UnaryOpInfo(
         name='mint.ceil',
@@ -6158,9 +6148,51 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.ceil,
         dtypes_ascend=(ms.float16, ms.float32, ms.float64),
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32, ms.float64),
-        disable_large_value_tensor_inputs=True,
+        #910a float32 loss threshold:[1.e+20, 1.e+20]
+        ascend_forward_loss_override={ms.float32: 1.e+20},
         dtypes_cpu=(),
         dtypes_gpu=(),
+    ),
+    'mint.erf': UnaryOpInfo(
+        name='mint.erf',
+        op=mint.erf,
+        ref=torch.erf,
+        dtypes_ascend=(ms.double, ms.float16, ms.int64, ms.bool_),
+        dtypes_ascend910b=(ms.double, ms.bfloat16, ms.float16, ms.int64, ms.bool_),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'mint.erfc': UnaryOpInfo(
+        name='mint.erfc',
+        op=mint.erfc,
+        ref=torch.erfc,
+        dtypes_ascend=(ms.double, ms.float16, ms.int64, ms.bool_),
+        dtypes_ascend910b=(ms.double, ms.bfloat16, ms.float16, ms.int64, ms.bool_),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'mint.erfinv': UnaryOpInfo(
+        name='mint.erfinv',
+        op=mint.erfinv,
+        ref=torch.erfinv,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d not in [ms.bfloat16, ms.double]),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.double),
+        domain=(-1, 1),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        #910a bfloat16 loss threshold
+        ascend_backward_loss_override={ms.float16: 0.096, ms.float32:0.08},
+    ),
+    'mint.exp2': UnaryOpInfo(
+        name='mint.exp2',
+        op=mint.exp2,
+        ref=torch.exp2,
+        dtypes_ascend=(ms.float16, ms.float32, ms.float64, ms.int64, ms.int32, ms.int8, ms.int16, ms.bool_),
+        dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32, ms.float64, ms.int64, ms.int32, ms.int8,
+                           ms.int16, ms.bool_),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        ascend_forward_loss_override={ms.float32: np.inf, ms.float16: np.inf},
     ),
     'mint.exp': UnaryOpInfo(
         name='mint.exp',
@@ -6235,7 +6267,8 @@ op_db: Dict[str, OpInfo] = {
         ref=tensor_floor_torch,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d not in [ms.bool_, ms.bfloat16]),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bool_),
-        disable_large_value_tensor_inputs=True,
+        #910a float32 loss threshold:[1.e+20, 1.e+20]
+        ascend_forward_loss_override={ms.float32: 1.e+20},
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6269,8 +6302,6 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         domain=(1e-5, None),
-        disable_small_value_tensor_inputs=True,
-        disable_large_value_tensor_inputs=True,
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -6278,8 +6309,8 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.neg',
         op=tensor_neg_ms,
         ref=tensor_neg_torch,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d not in [ms.int16, ms.uint8, ms.bool_, ms.bfloat16])),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d not in [ms.int16, ms.uint8, ms.bool_])),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d not in [ms.bfloat16, ms.bool_, ms.int16, ms.uint8]),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in [ms.bool_, ms.int16, ms.uint8]),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -7143,6 +7174,10 @@ unary_op_db = [
     'mint.nn.Tanh',
     'mint.floor',
     'mint.ceil',
+    'mint.erf',
+    'mint.erfc',
+    'mint.erfinv',
+    'mint.exp2',
     'mint.exp',
     'mint.log',
     'mint.neg',
