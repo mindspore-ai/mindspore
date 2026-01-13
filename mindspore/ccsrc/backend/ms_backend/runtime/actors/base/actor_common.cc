@@ -45,6 +45,7 @@
 #include "backend/ms_backend/runtime/graph_executor/pipeline/runtime_pipeline.h"
 #include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "utils/ms_exception.h"
+#include "include/runtime/pipeline/pipeline.h"
 
 namespace mindspore {
 namespace runtime {
@@ -1208,12 +1209,8 @@ device::DeviceAddressPtr PrepareOffloadedParameter(Tensor *tensor, const KernelT
   MS_EXCEPTION_IF_NULL(tensor_address);
   MS_EXCEPTION_IF_NULL(kernel_tensor);
   MS_EXCEPTION_IF_NULL(device_address);
-  const auto tensor_address_type = tensor_address->GetDeviceType();
-  const auto device_address_type = device_address->GetDeviceType();
-  if (tensor_address_type != device_address_type) {
-    MS_LOG(EXCEPTION) << "Device type of tensor's DeviceAddress[" << tensor->device_address()->GetDeviceType()
-                      << "] is different from device type of KernelTensor's DeviceAddress["
-                      << kernel_tensor->device_address()->GetDeviceType() << "].";
+  if (tensor->device_address()->GetDeviceType() != device::DeviceType::kCPU) {
+    Pipeline::Get().WaitForward();
   }
   auto allocator = device_address->allocator();
   const auto size = device_address->GetSize();
@@ -1225,16 +1222,16 @@ device::DeviceAddressPtr PrepareOffloadedParameter(Tensor *tensor, const KernelT
     MakeDeviceAddress(tensor->data_type(), tensor->shape(), false, device::DeviceType::kCPU));
   pinned_tensor_address->set_allocator(allocator);
   auto pin_mem_ptr = allocator->Alloc(size, kDefaultStreamIndex);
+  pinned_tensor_address->set_ptr(pin_mem_ptr);
   if (pin_mem_ptr != nullptr && tensor_address->GetPtr() != nullptr) {
     if (!UseSimulationApi()) {
-      errno_t ret = memcpy_s(pin_mem_ptr, size, tensor_address->GetPtr(), size);
-      if (ret != EOK) {
+      bool ret = SyncCopy(pinned_tensor_address, tensor_address, kDefaultStreamIndex);
+      if (!ret) {
         MS_LOG(EXCEPTION) << "Copy from origin host ptr[" << tensor_address->GetPtr() << "] to pin memory["
                           << pin_mem_ptr << "failed, size: " << size;
       }
     }
   }
-  pinned_tensor_address->set_ptr(pin_mem_ptr);
   tensor->set_device_address(pinned_tensor_address);
   kernel_tensor->set_device_address(tensor_address);
   MS_LOG(INFO) << "User pin memory for offloaded parameter.";
