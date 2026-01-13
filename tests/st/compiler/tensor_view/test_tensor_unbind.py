@@ -13,50 +13,136 @@
 # limitations under the License.
 # ==============================================================================
 """Test tensor view."""
+import os
+import shutil
+import pytest
+import numpy as np
 import mindspore as ms
 from mindspore import Tensor, jit
+from mindspore.common import dtype as mstype
 from tests.mark_utils import arg_mark
-
+from view_test_utils import TensorViewTestModule, check_ir_view_op
 
 @jit(backend="ms_backend")
-def unbind_func_1(x):
-    output = x.unbind(0)
-    return output
+def unbind_forward_method(x, dim):
+    return x.unbind(dim)
 
+@jit(backend="ms_backend")
+def unbind_forward_class(x, dim):
+    return Tensor.unbind(x, dim)
+
+@jit(backend="ms_backend")
+def unbind_backward_method(x, dim, sens):
+    return ms.grad(unbind_forward_method, grad_position=0, sens_param=True)(x, dim, sens)
+
+@jit(backend="ms_backend")
+def unbind_backward_class(x, dim, sens):
+    return ms.grad(unbind_forward_class, grad_position=0, sens_param=True)(x, dim, sens)
 
 # unsupported op [UnstackExtView] on GPU
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential', mem_peak=2048)
-def test_tensor_unbind_1():
+@arg_mark(plat_marks=['cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=2048)
+@pytest.mark.parametrize('method_type', ['method', 'class'])
+@pytest.mark.parametrize('data_type', [mstype.float16, mstype.float32, mstype.float64,
+                                       mstype.int16, mstype.int32, mstype.int64])
+def test_tensor_unbind_different_type(method_type, data_type):
     """
     Feature: Support tensor view api.
     Description: Support tensor unbind api with view operator.
     Expectation: Run success and expected to use the UnstackExtView operator.
     """
-    a = ms.tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    output = unbind_func_1(a)
-    assert (output[0].asnumpy() == [1, 2, 3]).all()
-    assert (output[1].asnumpy() == [4, 5, 6]).all()
-    assert (output[2].asnumpy() == [7, 8, 9]).all()
+    x = Tensor(np.arange(9), dtype=data_type)
+    dim = 0
 
+    tester = TensorViewTestModule("unbind", [x, dim])
 
-@jit(backend="ms_backend")
-def unbind_func_2(x):
-    output = Tensor.unbind(x, 0)
-    return output
+    if method_type == 'method':
+        tester.forward_cmp(unbind_forward_method)
+        if ms.context.get_context("device_target") != "CPU":
+            tester.backward_cmp(unbind_backward_method)
+    else:
+        tester.forward_cmp(unbind_forward_class)
+        if ms.context.get_context("device_target") != "CPU":
+            tester.backward_cmp(unbind_backward_class)
 
-
-# unsupported op [UnstackExtView] on GPU
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential', mem_peak=2048)
-def test_tensor_unbind_2():
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048)
+@pytest.mark.parametrize('shape', [
+    (3,),
+    (2, 3),
+    (3, 4, 5),
+    (2, 3, 4, 5),
+    (2, 2, 3, 4, 5),
+    (2, 2, 2, 2, 2, 2),
+    (2, 2, 2, 2, 2, 2, 2),
+    (2, 2, 2, 2, 2, 2, 2, 2),
+])
+@pytest.mark.parametrize('method_type', ['method', 'class'])
+def test_tensor_unbind_different_dimensions(shape, method_type):
     """
     Feature: Support tensor view api.
     Description: Support tensor unbind api with view operator.
     Expectation: Run success and expected to use the UnstackExtView operator.
     """
-    a = ms.tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-    output = unbind_func_2(a)
-    assert (output[0].asnumpy() == [1, 2, 3]).all()
-    assert (output[1].asnumpy() == [4, 5, 6]).all()
-    assert (output[2].asnumpy() == [7, 8, 9]).all()
+    x = Tensor(np.random.randn(*shape), dtype=ms.float32)
+    dim = 0
+
+    tester = TensorViewTestModule("unbind", [x, dim])
+    if method_type == 'method':
+        tester.forward_cmp(unbind_forward_method)
+        if ms.context.get_context("device_target") != "CPU":
+            tester.backward_cmp(unbind_backward_method)
+    else:
+        tester.forward_cmp(unbind_forward_class)
+        if ms.context.get_context("device_target") != "CPU":
+            tester.backward_cmp(unbind_backward_class)
+
+@arg_mark(plat_marks=['cpu_linux', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential', mem_peak=2048)
+@pytest.mark.parametrize('val', [np.nan, np.inf])
+@pytest.mark.parametrize('method_type', ['method', 'class'])
+def test_tensor_unbind_inf_nan(val, method_type):
+    """
+    Feature: Support tensor view api.
+    Description: Support tensor unbind api with view operator with inf/nan.
+    Expectation: Run success and expected to use the UnstackExtView operator.
+    """
+    x = Tensor(np.full((3, 3), val), dtype=ms.float32)
+    dim = 0
+
+    tester = TensorViewTestModule("unbind", [x, dim])
+    if method_type == 'method':
+        tester.forward_cmp(unbind_forward_method)
+        if ms.context.get_context("device_target") != "CPU":
+            tester.backward_cmp(unbind_backward_method)
+    else:
+        tester.forward_cmp(unbind_forward_class)
+        if ms.context.get_context("device_target") != "CPU":
+            tester.backward_cmp(unbind_backward_class)
+
+@arg_mark(plat_marks=['cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=2048)
+def test_tensor_unbind_ir_view():
+    """
+    Feature: Support tensor view api.
+    Description: Support tensor unbind api with view operator.
+    Expectation: Run success and expected to use the UnstackExtView operator.
+    """
+    dir_path = 'ir_unbind'
+    target_op_name = 'UnstackExtView'
+    ms.context.set_context(save_graphs=True, save_graphs_path=dir_path)
+    os.environ['MS_DEV_DUMP_IR_PASSES'] = 'validate'
+
+    if os.path.isdir(dir_path):
+        shutil.rmtree(dir_path)
+
+    x1 = Tensor(np.random.randn(1, 4, 5), dtype=mstype.float32)
+    x2 = Tensor(np.random.randn(2, 7, 8), dtype=mstype.float32)
+    dim = 0
+
+    unbind_forward_method(x1, dim)
+    check_ir_view_op(dir_path, target_op_name)
+
+    unbind_forward_class(x2, dim)
+    check_ir_view_op(dir_path, target_op_name)
+    os.unsetenv('MS_DEV_DUMP_IR_PASSES')
