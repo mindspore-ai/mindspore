@@ -1303,40 +1303,28 @@ def unique(input):
 
 def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, dim=None):
     """
-    Returns the unique elements of input tensor.
-
-    when `return_inverse=True`, also return a tensor containing the index of each value of input
-    tensor corresponding to the output unique tensor.
-    when `return_counts=True`, also return a tensor containing the number of occurrences for each
-    unique value or tensor.
+    Return the unique elements of input tensor.
 
     Args:
         input (Tensor): The input tensor.
         sorted (bool, optional): Whether to sort the unique elements in ascending order before returning as output.
-            Default: ``True`` .
-        return_inverse (bool, optional): Whether to also return the indices for where elements
-            in the original input ended up in
-            the returned unique list. Default: ``False`` .
-        return_counts (bool, optional): Whether to also return the counts for each unique element. Default: ``False`` .
-        dim (int, optional): the dimension to operate upon. If ``None``, the unique of the flattened input is returned.
-            Otherwise, each of the tensors indexed by the given dimension is treated as one of the elements to apply the
-            unique operation upon. Default: ``None`` .
+            Default ``True`` .
+        return_inverse (bool, optional): Whether to additionally return a tensor indicating the indices of `input` corresponding to `output`. 
+            Default ``False`` .
+        return_counts (bool, optional): Whether to additionally return a tensor indicating the count of each element in `output` within the `input`. Default ``False`` .
+        dim (int, optional): Specify the dimension for computation. 
 
 
     Returns:
-        A tensor or a tuple of tensors containing some of tensor objects (`output`, `inverse_indices`, `counts`).
+        A tensor or a tuple of tensors:
 
-        - output(Tensor) - The output tensor including the unique elements of input tensor, it has same dtype as input.
+        - output(Tensor) - The unique elements of input tensor.
         - inverse_indices(Tensor) - Return when ``return_inverse`` is True. It represents the indices for where
-          elements in the original input map to in the output. When ``dim`` is ``None``, it has same shape as input,
+          elements in `input` map to in `output`. When ``dim`` is ``None``, it has same shape as `input`,
           otherwise, the shape is input.shape[dim].
         - counts(Tensor) - Return when ``return_counts`` is True. It represents the number of occurrences for each
-          unique value or tensor.  When ``dim`` is ``None``, it has same shape as output, otherwise, the shape is
-          output.shape(dim).
+          unique element from `input` within `output`.  When ``dim`` is ``None``, it has same shape as `output`, otherwise, the shape is output.shape[dim].
 
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
 
     Supported Platforms:
         ``Ascend``
@@ -1344,18 +1332,19 @@ def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, di
     Examples:
         >>> import mindspore
         >>> import numpy as np
-        >>> from mindspore import Tensor, nn
-        >>> from mindspore import ops
-        >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
-        >>> output = ops.unique_ext(x, return_inverse=True)
+        >>> x = mindspore.tensor(np.array([1, 2, 5, 2]), mindspore.int32)
+        >>> output = mindspore.ops.unique_ext(x, return_inverse=True, return_counts=True)
         >>> print(output)
-        (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int64, value= [0, 1, 2, 1]))
+        (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int64, value= [0, 1, 2, 1]), Tensor(shape=[3], dtype=Int64, value= [1, 2, 1]))
         >>> y = output[0]
         >>> print(y)
         [1 2 5]
-        >>> idx = output[1]
-        >>> print(idx)
+        >>> inverse_indices = output[1]
+        >>> print(inverse_indices)
         [0 1 2 1]
+        >>> counts = output[2]
+        >>> print(counts)
+        [1 2 1]
     """
     if not F.isconstant(return_inverse) or not F.isconstant(return_counts):
         raise ValueError("For 'unique_ext', 'return_inverse' and 'return_counts' cannot be mutable")
