@@ -222,6 +222,8 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
 
   switch_partial_eliminater_ =
     MakeSubstitution(std::make_shared<SwitchPartialEliminater>(), "eliminate_switch_partial_", IsCNodeDup);
+  switch_conditional_partial_eliminater_ = MakeSubstitution(std::make_shared<SwitchConditionalPartialEliminator>(),
+                                                            "eliminate_switch_conditional_partial_", IsCNodeDup);
   switch_layer_partial_eliminater_ =
     MakeSubstitution(std::make_shared<SwitchLayerPartialEliminater>(), "eliminate_switch_layer_partial_", IsCNodeDup);
 

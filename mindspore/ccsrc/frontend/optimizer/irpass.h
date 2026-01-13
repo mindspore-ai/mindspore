@@ -92,6 +92,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr exchange_switch_depend_value_;
 
   SubstitutionPtr switch_partial_eliminater_;
+  SubstitutionPtr switch_conditional_partial_eliminater_;
   SubstitutionPtr switch_layer_partial_eliminater_;
   SubstitutionPtr loop_unroll_before_grad_;
   SubstitutionPtr loop_unroll_after_grad_;
