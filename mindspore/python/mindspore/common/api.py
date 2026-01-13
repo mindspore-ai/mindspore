@@ -1075,6 +1075,16 @@ def _check_infer_boost_value(option, value):
         raise ValueError(f"For '{option}', the value of '{option}' must be one of ['on', 'off'], but got '{value}'.")
 
 
+def _check_auto_offload_value(option, value):
+    """check auto_offload option value"""
+    if not isinstance(value, str):
+        raise TypeError(f"For 'jit(options)', the type of '{option}' must be str, but got {type(value)}.")
+
+    if value not in ['weight', 'activation', 'all']:
+        raise ValueError(f"For '{option}', the value of '{option}' must be one of ['weight', 'activaction', 'all'], "
+                         f"but got '{value}'.")
+
+
 def _check_option_value(option, value):
     """check jit options wiwh value"""
     option_valuecheck_funcs = {
@@ -1082,6 +1092,7 @@ def _check_option_value(option, value):
         'exec_order': _check_exec_order_value,
         'ge_options': _check_ge_options_value,
         'infer_boost': _check_infer_boost_value,
+        'auto_offload': _check_auto_offload_value,
     }
     if option in option_valuecheck_funcs:
         option_valuecheck_funcs[option](option, value)
