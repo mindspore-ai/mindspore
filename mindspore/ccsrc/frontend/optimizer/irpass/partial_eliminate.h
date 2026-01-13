@@ -168,6 +168,9 @@ class ChoicePartialEliminater : public AnfVisitor {
     // check funcgraph should be used once only.
     for (size_t i = 0; i < fg_list_.size(); i++) {
       auto fg_node = fg_list_[i];
+      if (IsDeadNode(fg_node)) {
+        continue;
+      }
       auto fg = GetValueNode<FuncGraphPtr>(fg_node);
       MS_EXCEPTION_IF_NULL(fg);
       if (fg->func_graph_cnodes_index().size() != 1) {
@@ -219,6 +222,28 @@ class ChoicePartialEliminater : public AnfVisitor {
     }
     txn.Commit();
     return new_args;
+  }
+
+  AnfNodePtr BuildNewSwitchNode(const CNodePtr &switch_call, const std::vector<AnfNodePtr> &new_args) {
+    auto fg = switch_call->func_graph();
+    MS_EXCEPTION_IF_NULL(fg);
+    const auto input0 = switch_call->input(0);
+    MS_EXCEPTION_IF_NULL(input0);
+    const auto switch_node = input0->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(switch_node);
+    TraceGuard guard1(MakeTraceInfo<TraceCopy>(switch_node->debug_info()));
+    // {Switch, cond, G1, G2}
+    std::vector<AnfNodePtr> switch_inputs = {switch_node->input(0), switch_node->input(1)};
+    (void)switch_inputs.insert(switch_inputs.end(), fg_list_.begin(), fg_list_.end());
+    const auto new_switch_cnode = fg->NewCNode(std::move(switch_inputs));
+    new_switch_cnode->set_abstract(switch_node->abstract());
+    // Create switch call.
+    TraceGuard guard2(MakeTraceInfo<TraceCopy>(switch_call->debug_info()));
+    AnfNodePtrList switch_call_inputs{new_switch_cnode};
+    (void)switch_call_inputs.insert(switch_call_inputs.end(), new_args.begin(), new_args.end());
+    const auto new_call_node = fg->NewCNode(std::move(switch_call_inputs));
+    new_call_node->set_abstract(switch_call->abstract());
+    return new_call_node;
   }
 
  private:
@@ -350,28 +375,48 @@ class SwitchPartialEliminater : public ChoicePartialEliminater {
       return BuildNewSwitchNode(switch_call, new_args);
     }
   }
+};
 
- private:
-  AnfNodePtr BuildNewSwitchNode(const CNodePtr &switch_call, const std::vector<AnfNodePtr> &new_args) {
-    auto fg = switch_call->func_graph();
-    MS_EXCEPTION_IF_NULL(fg);
-    const auto input0 = switch_call->input(0);
-    MS_EXCEPTION_IF_NULL(input0);
-    const auto switch_node = input0->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(switch_node);
-    TraceGuard guard1(MakeTraceInfo<TraceCopy>(switch_node->debug_info()));
-    // {Switch, cond, G1, G2}
-    std::vector<AnfNodePtr> switch_inputs = {switch_node->input(0), switch_node->input(1)};
-    (void)switch_inputs.insert(switch_inputs.end(), fg_list_.begin(), fg_list_.end());
-    const auto new_switch_cnode = fg->NewCNode(std::move(switch_inputs));
-    new_switch_cnode->set_abstract(switch_node->abstract());
-    // Create switch call.
-    TraceGuard guard2(MakeTraceInfo<TraceCopy>(switch_call->debug_info()));
-    AnfNodePtrList switch_call_inputs{new_switch_cnode};
-    (void)switch_call_inputs.insert(switch_call_inputs.end(), new_args.begin(), new_args.end());
-    const auto new_call_node = fg->NewCNode(std::move(switch_call_inputs));
-    new_call_node->set_abstract(switch_call->abstract());
-    return new_call_node;
+// {{prim::kPrimSwitch, bool, {prim::kPrimPartial, G1, Xs}, DeadNode} ->
+// {{prim::kPrimSwitch, bool, G1, DeadNode}, Xs}
+class SwitchConditionalPartialEliminator : public ChoicePartialEliminater {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!node->isa<CNode>() || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+    auto switch_call = node->cast<CNodePtr>();
+    if (!IsPrimitiveCNode(switch_call->input(0), prim::kPrimSwitch)) {
+      return nullptr;
+    }
+    auto switch_node = switch_call->input(0)->cast<CNodePtr>();
+    if (switch_node->size() != kSwitchInputSize) {
+      return nullptr;
+    }
+    const auto cond_node = switch_node->input(kSwitchCondIndex);
+    if (cond_node->abstract() != nullptr && cond_node->abstract()->BuildValue() == kValueAny) {
+      return nullptr;
+    }
+    fg_list_.clear();
+    args_list_.clear();
+    const auto true_node = switch_node->input(kSwitchTrueBranchIndex);
+    const auto false_node = switch_node->input(kSwitchFalseBranchIndex);
+    if (IsPrimitiveCNode(true_node, prim::kPrimPartial) && IsDeadNode(false_node)) {
+      Visit(true_node);
+      fg_list_.push_back(false_node);
+    }
+    if (IsDeadNode(true_node) && IsPrimitiveCNode(false_node, prim::kPrimPartial)) {
+      fg_list_.push_back(true_node);
+      Visit(false_node);
+    }
+    if (fg_list_.size() != kSwitchBranchesNum || args_list_.size() != 1) {
+      return nullptr;
+    }
+    if (!CheckFuncGraphAndArgs()) {
+      return nullptr;
+    }
+    MergeArgs(switch_call);
+    return BuildNewSwitchNode(switch_call, args_list_[0]);
   }
 };
 
