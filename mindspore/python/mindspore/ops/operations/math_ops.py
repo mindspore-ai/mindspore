@@ -628,14 +628,6 @@ class AccumulateNV2(Primitive):
 
     Refer to :func:`mindspore.ops.addn` for more details.
 
-    Inputs:
-        - **x** (Union(tuple[Tensor], list[Tensor])) - The input tuple or list
-          is made up of multiple tensors whose dtype is number to be added together.
-          Each element of tuple or list should have the same shape.
-
-    Outputs:
-        Tensor, has the same shape and dtype as each entry of the `x`.
-
     Supported Platforms:
         Deprecated
 
@@ -1730,7 +1722,7 @@ class Quantile(Primitive):
 class ApproximateEqual(_LogicBinaryOp):
     r"""
     `ops.ApproximateEqual` is deprecated from version 2.8.0 and will be removed in a future version,
-    please use :func:`mindspore.ops.allclose` instead.
+    please use :func:`mindspore.Tensor.isclose` instead.
 
     Returns ``True`` if abs(x-y) is smaller than tolerance element-wise, otherwise False.
 
@@ -1779,7 +1771,7 @@ class ApproximateEqual(_LogicBinaryOp):
         [ True  True  False]
     """
 
-    @deprecated("2.8.0", "ops.allclose", False)
+    @deprecated("2.8.0", "Tensor.isclose", False)
     @prim_attr_register
     def __init__(self, tolerance=1e-05):
         """Initialize ApproximateEqual"""

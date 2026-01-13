@@ -1299,11 +1299,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """
         return tensor_operator_registry.get("renorm")(self, p, axis, maxnorm)
 
-    @deprecated("2.8.0", "Tensor.allclose", False)
+    @deprecated("2.8.0", "Tensor.isclose", False)
     def approximate_equal(self, other, tolerance=1e-5):
         r"""
         `Tensor.approximate_equal` is deprecated from version 2.8.0 and will be removed in a future version,
-        please use :func:`mindspore.Tensor.allclose` instead.
+        please use :func:`mindspore.Tensor.isclose` instead.
         """
         validator.check_isinstance("x", self, Tensor)
         validator.check_isinstance("y", other, Tensor)

@@ -4621,7 +4621,7 @@ class ExtractVolumePatches(Primitive):
 class ScatterAddWithAxis(Primitive):
     """
     `ops.ScatterAddWithAxis` is deprecated from version 2.0 and will be removed in a future version,
-    use 'ops.TensorScatterElements' instead.
+    use :class:`mindspore.ops.TensorScatterElements` instead.
 
     Supported Platforms:
         Deprecated

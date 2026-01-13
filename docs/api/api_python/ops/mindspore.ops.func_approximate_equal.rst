@@ -3,8 +3,8 @@ mindspore.ops.approximate_equal
 
 .. py:function:: mindspore.ops.approximate_equal(x, y, tolerance=1e-5)
 
-    `ops.approximate_equal` is deprecated from version 2.8.0 and will be removed in a future version,
-    please use :func:`mindspore.ops.allclose` instead.
+    `ops.approximate_equal` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.Tensor.isclose` 替代。
 
     返回一个布尔型tensor，表示两个tensor在容忍度内是否逐元素相等。
 
