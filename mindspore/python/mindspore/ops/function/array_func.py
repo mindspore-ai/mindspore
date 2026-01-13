@@ -1309,9 +1309,11 @@ def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, di
         input (Tensor): The input tensor.
         sorted (bool, optional): Whether to sort the unique elements in ascending order before returning as output.
             Default ``True`` .
-        return_inverse (bool, optional): Whether to additionally return a tensor indicating the indices of `input` corresponding to `output`. 
+        return_inverse (bool, optional): Whether to additionally return a tensor
+            indicating the indices of `input` corresponding to `output`.
             Default ``False`` .
-        return_counts (bool, optional): Whether to additionally return a tensor indicating the count of each element in `output` within the `input`. Default ``False`` .
+        return_counts (bool, optional): Whether to additionally return a tensor
+            indicating the count of each element in `output` within the `input`. Default ``False`` .
         dim (int, optional): Specify the dimension for computation. 
 
 
@@ -1323,7 +1325,8 @@ def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, di
           elements in `input` map to in `output`. When ``dim`` is ``None``, it has same shape as `input`,
           otherwise, the shape is input.shape[dim].
         - counts(Tensor) - Return when ``return_counts`` is True. It represents the number of occurrences for each
-          unique element from `input` within `output`.  When ``dim`` is ``None``, it has same shape as `output`, otherwise, the shape is output.shape[dim].
+          unique element from `input` within `output`.  When ``dim`` is ``None``,
+          it has same shape as `output`, otherwise, the shape is output.shape[dim].
 
 
     Supported Platforms:
@@ -1335,7 +1338,8 @@ def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, di
         >>> x = mindspore.tensor(np.array([1, 2, 5, 2]), mindspore.int32)
         >>> output = mindspore.ops.unique_ext(x, return_inverse=True, return_counts=True)
         >>> print(output)
-        (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int64, value= [0, 1, 2, 1]), Tensor(shape=[3], dtype=Int64, value= [1, 2, 1]))
+        (Tensor(shape=[3], dtype=Int32, value= [1, 2, 5]), Tensor(shape=[4], dtype=Int64,
+        value= [0, 1, 2, 1]), Tensor(shape=[3], dtype=Int64, value= [1, 2, 1]))
         >>> y = output[0]
         >>> print(y)
         [1 2 5]
