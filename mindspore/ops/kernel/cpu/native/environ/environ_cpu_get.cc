@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
+#include <vector>
 #include "kernel/cpu/native/environ/environ_cpu_get.h"
 #include "include/runtime/hardware_abstract/kernel_base/environ_manager.h"
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
+#include "runtime/hardware_abstract/kernel_base/environ.h"
 
 namespace mindspore {
 namespace kernel {

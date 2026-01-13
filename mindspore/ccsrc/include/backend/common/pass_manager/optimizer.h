@@ -29,17 +29,14 @@
 #include "include/backend/common/kernel_graph/kernel_graph.h"
 
 namespace mindspore {
+class Visitor;
+
 namespace opt {
 using PatternListType = std::initializer_list<BaseRef>;
 
 class BACKEND_COMMON_EXPORT PatternPass : public NodePass {
  public:
-  explicit PatternPass(const std::string &name = "", bool multigraph = true)
-      : NodePass(name),
-        multigraph_(multigraph),
-        pattern_engine_(PatternEngine(std::make_shared<Visitor>())),
-        primitive_vars_(std::make_shared<PrimitiveVarMap>()),
-        equiv_(std::make_shared<Equiv>()) {}
+  explicit PatternPass(const std::string &name = "", bool multigraph = true);
   ~PatternPass() override = default;
   CNodePtr NewCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &fg) const;
   CNodePtr NewCNode(const CNodePtr &cnode, const KernelGraphPtr &fg) const;

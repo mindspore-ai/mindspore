@@ -34,7 +34,6 @@
 #include "utils/log_adapter.h"
 #include "base/base_ref.h"
 #include "include/backend/visible.h"
-#include "backend/common/pass_manager/visitor.h"
 
 namespace mindspore {
 class CondVar;
@@ -150,6 +149,7 @@ inline bool operator!=(const VarPtr &lhs, const VarPtr &rhs) { return !(lhs == r
 
 std::ostream &operator<<(std::ostream &os, const VarPtr &var);
 
+class Visitor;
 using Equiv = std::map<VarPtr, BaseRef>;
 using EquivPtr = std::shared_ptr<Equiv>;
 using PrimitiveVarMap = std::unordered_map<PrimitivePtr, VarPtr>;

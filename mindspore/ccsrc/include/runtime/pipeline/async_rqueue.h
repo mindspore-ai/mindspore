@@ -30,13 +30,14 @@
 #include <utility>
 
 #include "runtime/pipeline/visible.h"
-#include "runtime/pipeline/task/task.h"
 
 #include "runtime/pipeline/ring_queue.h"
 
 namespace mindspore {
 namespace runtime {
+class AsyncTask;
 using AsyncTaskPtr = std::shared_ptr<AsyncTask>;
+
 constexpr auto kQueueCapacity = 1024;
 enum kThreadWaitLevel : int {
   kLevelUnknown = 0,

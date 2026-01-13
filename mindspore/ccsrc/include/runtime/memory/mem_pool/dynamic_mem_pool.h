@@ -33,9 +33,11 @@
 #include "include/backend/visible.h"
 #include "include/runtime/memory/mem_pool/mem_pool_util.h"
 #include "include/utils/stream_util.h"
-#include "runtime/hardware_abstract/event/device_event.h"
 
 namespace mindspore {
+class DeviceEvent;
+using DeviceEventPtr = std::shared_ptr<DeviceEvent>;
+
 namespace device {
 constexpr int kShiftOffset = 2;
 // Alloc memory aligned according to 512 bytes.

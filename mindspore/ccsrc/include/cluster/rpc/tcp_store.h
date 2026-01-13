@@ -24,8 +24,6 @@
 #include "include/cluster/topology/cluster_context.h"
 #include "include/cluster/topology/compute_graph_node.h"
 #include "include/cluster/rpc/tcp_node.h"
-#include "cluster/rpc/core/comm_util.h"
-#include "cluster/topology/meta_server_node.h"
 #else
 #include "include/cluster/topology/dummy_cluster_context.h"
 #endif

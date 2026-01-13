@@ -17,16 +17,22 @@
 #define MINDSPORE_CCSRC_INCLUDE_RUNTIMR_HARDWARE_ABSTRACT_KERNEL_BASE_GRAPH_FUSION_GRAPH_KERNEL_SET_INFER_FUNCTOR_H_
 #include <string>
 #include <vector>
+#include <memory>
 
 #include "ir/func_graph.h"
 #include "runtime/hardware_abstract/visible.h"
 #include "include/backend/common/pass_manager/pass.h"
-#include "runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel/symbol_engine/jit/cpp_visitor.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel/infershape_functor.h"
 
 namespace mindspore::graphkernel {
+namespace symshape {
+class CppVisitor;
+using CppVisitorPtr = std::shared_ptr<CppVisitor>;
+}  // namespace symshape
+
 using opt::dynamic_shape::InferShapeFunctor;
 using opt::dynamic_shape::kAttrInferShapeFunctor;
+using DynFuncType = void (*)(const int64_t **, int64_t **);
 
 class RUNTIME_HARDWARE_EXPORT SymbolEngineInfer : public InferShapeFunctor {
  public:
@@ -58,7 +64,7 @@ class SymbolEngineJitInfer : public InferShapeFunctor {
   std::string func_name_;
   symshape::CppVisitorPtr cpp_visitor_;
   ListSymbolPtr output_symbol_;
-  symshape::CppVisitor::DynFuncType infer_func_ = nullptr;
+  DynFuncType infer_func_ = nullptr;
   std::vector<int64_t *> output_parm_;
   ShapeArray out_shapes_;
 };

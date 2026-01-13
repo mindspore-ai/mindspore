@@ -21,11 +21,17 @@
 #include <memory>
 #include <vector>
 #include <shared_mutex>
-#include "runtime/hardware_abstract/kernel_base/environ.h"
 #include "include/utils/anfalgo.h"
+#include "runtime/hardware_abstract/visible.h"
+#include "include/runtime/hardware_abstract/kernel_base/kernel_tensor.h"
 
 namespace mindspore {
 namespace kernel {
+constexpr auto kEnvValueTypeAttr = "value_type";
+
+class Environ;
+using EnvironPtr = std::shared_ptr<Environ>;
+
 class RUNTIME_HARDWARE_EXPORT EnvironMgr {
  public:
   static EnvironMgr &GetInstance() noexcept {

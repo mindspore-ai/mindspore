@@ -17,8 +17,13 @@
 
 #include <algorithm>
 #include <atomic>
+#include <memory>
+#include <vector>
+#include <utility>
+#include <list>
 
 #include "utils/log_adapter.h"
+#include "runtime/hardware_abstract/event/device_event.h"
 
 namespace mindspore {
 namespace device {

@@ -18,7 +18,11 @@
 
 #include <numeric>
 #include <ostream>
+#include <map>
+#include <memory>
+#include <string>
 #include "utils/log_adapter.h"
+#include "runtime/hardware_abstract/event/device_event.h"
 
 namespace mindspore {
 namespace device {

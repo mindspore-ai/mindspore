@@ -30,6 +30,8 @@
 #include <utility>
 #include "utils/convert_utils_base.h"
 #include "include/cluster/rpc/libevent_tcp_server.h"
+#include "cluster/rpc/core/communicator/ssl_wrapper.h"
+#include "cluster/rpc/core/communicator/message.h"
 
 namespace mindspore {
 namespace ps {
