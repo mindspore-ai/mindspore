@@ -4,7 +4,7 @@ mindspore.ops.NuclearNorm
 .. py:class:: mindspore.ops.NuclearNorm(dim=None, keepdim=False)
 
     `ops.NuclearNorm` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
-    建议使用 :func:`mindspore.ops.norm` 替代。
+    建议使用 :func:`mindspore.ops.norm` 且 `ord` 参数为 ``'nuc'`` 替代。
 
     返回给定Tensor的矩阵核范数。
 

@@ -3204,11 +3204,11 @@ def ne(input, other):
     """
     return not_equal(input, other)
 
-@deprecated("2.8.0", "ops.allclose", False, "ops.")
+@deprecated("2.8.0", "Tensor.isclose", False, "ops.")
 def approximate_equal(x, y, tolerance=1e-5):
     r"""
     `ops.approximate_equal` is deprecated from version 2.8.0 and will be removed in a future version,
-    please use :func:`mindspore.ops.allclose` instead.
+    please use :func:`mindspore.Tensor.isclose` instead.
 
     Return a boolean tensor where two tensors are element-wise equal within a tolerance.
 
