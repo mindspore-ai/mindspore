@@ -2593,20 +2593,17 @@ REG_BPROP_BUILDER("Pow").SetBody(BODYFUNC(ib) {
   NodePtr grad_input = nullptr;
   NodePtr grad_exponent = nullptr;
   if (input->need_compute_grad_out()) {
-    auto condition = ib->Equal(exponent, ib->Tensor(0, ib->GetDtype(exponent)));
-    // We cannot use a scalar-shaped zero (shape = ()) here, and we must broadcast `condition` to `dout` first.
-    // This is because the geop of `Select` on A1 requires `condition`, `x1`, and `x2` to have the same shape.
-    // As a result, the extra broadcast may consume more device memory than the benchmark implementation.
-    condition = ib->BroadcastTo(condition, dout);
-    auto exponent_minus_one = ib->SubScalar(exponent, ib->ValueByType(1.0, ib->GetDtype(exponent)), ib->Value(1));
-    grad_input =
-      ib->Select(condition, ib->Zeros(ib->Shape(dout), ib->Value(static_cast<int64_t>(dout->dtype()->type_id()))),
-                 ib->Mul(dout, ib->Mul(exponent, ib->Pow(input, exponent_minus_one))));
+    grad_input = ib->Mul(
+      ib->Mul(exponent,
+              ib->Pow(input, ib->SubScalar(exponent, ib->ValueByType(1.0, ib->GetDtype(exponent)), ib->Value(1)))),
+      dout);
   }
   if (exponent->need_compute_grad_out()) {
     auto condition = ib->LogicalAnd(ib->Equal(input, ib->Tensor(0, ib->GetDtype(input))),
                                     ib->GreaterEqual(exponent, ib->Tensor(0, ib->GetDtype(exponent))));
-    // Same as `grad_input`: use a tensor-shaped zero (not shape = ()) to satisfy `Select`'s shape constraints.
+    // We cannot use a scalar-shaped zero (shape = ()) here, and we must broadcast `condition` to `dout` first.
+    // This is because the geop of `Select` on A1 requires `condition`, `x1`, and `x2` to have the same shape.
+    // As a result, the extra broadcast may consume more device memory than the benchmark implementation.
     grad_exponent =
       ib->Select(condition, ib->Zeros(ib->Shape(dout), ib->Value(static_cast<int64_t>(dout->dtype()->type_id()))),
                  ib->Mul(out, (ib->Log(input))));
