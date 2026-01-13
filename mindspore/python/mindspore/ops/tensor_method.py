@@ -899,8 +899,6 @@ def deprecated_tensor_mul(input, other):
     """
     if isinstance(other, (COOTensor, CSRTensor)):
         return other * input
-    if isinstance(other, (tuple, list)):
-        other = sequence_to_tensor(other, F.dtype(input))
     return tensor_mul(input, other)
 
 
