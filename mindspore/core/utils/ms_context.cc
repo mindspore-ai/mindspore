@@ -765,7 +765,7 @@ bool MsContext::IsEnableInferBoost() {
     // for dp ep model infer, it will set_device after
     // set_context, so we need set kernel list at first
     // time to read the inferboost in framework
-    if (enable_infer_boost_) {
+    if (enable_infer_boost_.value()) {
       MS_LOG(INFO) << "MSContext enable ms internal kernels";
       SetMsInternalEnableCustomKernelList();
     }
