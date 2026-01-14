@@ -30,19 +30,20 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops._utils import get_broadcast_shape
 from mindspore.ops.primitive import Primitive, PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 from mindspore._c_expression import TensorPy as Tensor_
-from mindspore.ops.auto_generate import (Add, Addcdiv, AddcdivExt, Addcmul, AddcmulExt, ReduceMean, ReduceSum, ReduceAll, ReduceAny,
-                             ReduceMax, ReduceMin, ReduceProd, Betainc, Neg, MatMul, BatchMatMul,
-                             Mul, Square, Rsqrt, Sqrt, Reciprocal, Pow, Exp, Cdist,
-                             Logit, ReduceStd, Expm1, Log, Log1p, Erf, Erfc,
-                             Minimum, RealDiv, FloorDiv, Floor, FloorMod, Ceil,
-                             Acosh, Cosh, Asinh, Sinc, Sinh, Equal, NotEqual,
-                             Greater, GreaterEqual, Gcd, LogicalNot, LogicalAnd, LogicalOr,
-                             LogicalXor, Cos, ACos, Sin, Asin, Abs, Round, Atan, Atanh, Atan2, AssignSub,
-                             LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
-                             Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky, Cross,
-                             FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, DivMod, CumProd,
-                             CumSum, Less, LessEqual, AssignAdd, IsFinite, IsClose, TanhGrad, Xlogy, Trunc, Sign, Polar,
-                             IsInf, Lerp, LerpScalar)
+from mindspore.ops.auto_generate import (
+    Add, Addcdiv, AddcdivExt, Addcmul, AddcmulExt, ReduceMean, ReduceSum, ReduceAll, ReduceAny,
+    ReduceMax, ReduceMin, ReduceProd, Betainc, Neg, MatMul, BatchMatMul,
+    Mul, Square, Rsqrt, Sqrt, Reciprocal, Pow, Exp, Cdist,
+    Logit, ReduceStd, Expm1, Log, Log1p, Erf, Erfc,
+    Minimum, RealDiv, FloorDiv, Floor, FloorMod, Ceil,
+    Acosh, Cosh, Asinh, Sinc, Sinh, Equal, NotEqual,
+    Greater, GreaterEqual, Gcd, LogicalNot, LogicalAnd, LogicalOr,
+    LogicalXor, Cos, ACos, Sin, Asin, Abs, Round, Atan, Atanh, Atan2, AssignSub,
+    LinSpace, MatrixDeterminant, LogMatrixDeterminant, Erfinv, Conj,
+    Real, Complex, Angle, MatrixExp, CholeskyInverse, Trace, Cholesky, Cross,
+    FFTWithSize, NextAfter, NanToNum, Eig, Qr, Roll, Maximum, Div, DivMod, CumProd,
+    CumSum, Less, LessEqual, AssignAdd, IsFinite, IsClose, TanhGrad, Xlogy, Trunc, Sign, Polar,
+    IsInf, Lerp, LerpScalar)
 
 
 def _infer_shape_reduce(x, axis, keep_dims, prim_name):

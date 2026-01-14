@@ -258,6 +258,7 @@ class ScatterNonAliasingAdd(Primitive):
         sig.make_sig('indices', dtype=sig.sig_dtype.T1),
         sig.make_sig('updates', dtype=sig.sig_dtype.T)
     )
+
     @deprecated("2.1", "ops.TensorScatterAdd", False)
     @prim_attr_register
     def __init__(self):

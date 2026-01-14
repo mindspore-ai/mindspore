@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Inner operators."""
+# pylint: disable=unused-import
 from collections.abc import Iterable
 import weakref
 import numpy as np

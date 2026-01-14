@@ -15,6 +15,7 @@
 
 """image_ops"""
 
+# pylint: disable=unused-import
 from __future__ import absolute_import
 from mindspore import context
 from mindspore import _checkparam as validator

@@ -1305,6 +1305,7 @@ def tensor_view_dtype(self, dtype):
     """
     raise NotImplementedError("Currently not supported.")
 
+
 # 121 contiguous
 
 # 122 where
@@ -1410,8 +1411,8 @@ def tensor_gcd(input, other):
 
 
 # 147 isinf
-def tensor_isinf():
-    return isinf()
+def tensor_isinf(input):
+    return isinf(input)
 
 
 # 148 not_equal
