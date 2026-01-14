@@ -250,7 +250,7 @@ class GLU(Cell):
     where :math:`a` is the first half of the `input` Tensor after `input` is split and :math:`b` is the second half.
 
     Here :math:`\sigma` is the sigmoid function, and :math:`\otimes` is the Hadamard product.
-    See `Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>`_ .
+    See `Language Modeling with Gated Convolutional Networks <https://arxiv.org/abs/1612.08083>`_ .
 
     Args:
         dim (int, optional): The dimension to split the input `input`. The value range is `[-r, r)` where `r`
