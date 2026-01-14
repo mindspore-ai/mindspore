@@ -34,6 +34,7 @@
 #include "utils/log_adapter.h"
 #include "base/base_ref.h"
 #include "include/backend/visible.h"
+#include "backend/common/pass_manager/visitor.h"
 
 namespace mindspore {
 class CondVar;
