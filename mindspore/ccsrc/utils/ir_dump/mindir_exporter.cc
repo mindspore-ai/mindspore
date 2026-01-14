@@ -1571,6 +1571,12 @@ bool IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value,
   } else if (value->isa<FP64Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_DOUBLE);
     attr_proto->set_d(GetValue<double>(value));
+  } else if (value->isa<FP16Imm>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_FLOAT16);
+    attr_proto->set_f(static_cast<float>(value->cast<FP16ImmPtr>()->value()));
+  } else if (value->isa<BF16Imm>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_BFLOAT16);
+    attr_proto->set_f(static_cast<float>(value->cast<BF16ImmPtr>()->value()));
   } else {
     MS_LOG(ERROR) << "Unsupported scalar type: " << value->type_name();
     return false;

@@ -303,6 +303,16 @@ ValuePtr ParseAttrInSingleScalar_double_double(const mind_ir::AttributeProto &at
   return MakeValue<double>(value);
 }
 
+ValuePtr ParseAttrInSingleScalar_float_float16(const mind_ir::AttributeProto &attr_proto) {
+  auto value = static_cast<float>(attr_proto.f());
+  return std::make_shared<FP16Imm>(float16(value));
+}
+
+ValuePtr ParseAttrInSingleScalar_float_bfloat16(const mind_ir::AttributeProto &attr_proto) {
+  auto value = static_cast<float>(attr_proto.f());
+  return std::make_shared<BF16Imm>(bfloat16(value));
+}
+
 ParseForm GetParseFormType(const std::string &ref_attr_name) {
   for (const auto &iter : kParseTypeSwitchMap) {
     if (ref_attr_name.find(iter.first) == 0) {
@@ -1350,6 +1360,12 @@ ValuePtr MSANFModelParser::ObtainCNodeAttrInSingleScalarForm(const mind_ir::Attr
     }
     case mind_ir::AttributeProto_AttributeType_FLOAT: {
       return ParseAttrInSingleScalar_float_float(attr_proto);
+    }
+    case mind_ir::AttributeProto_AttributeType_FLOAT16: {
+      return ParseAttrInSingleScalar_float_float16(attr_proto);
+    }
+    case mind_ir::AttributeProto_AttributeType_BFLOAT16: {
+      return ParseAttrInSingleScalar_float_bfloat16(attr_proto);
     }
     case mind_ir::AttributeProto_AttributeType_DOUBLE: {
       return ParseAttrInSingleScalar_double_double(attr_proto);
