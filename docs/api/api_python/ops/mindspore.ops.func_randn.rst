@@ -3,7 +3,7 @@ mindspore.ops.randn
 
 .. py:function:: mindspore.ops.randn(*size, dtype=None, seed=None)
 
-    基于输入的 `size` 和 `dtype` , 返回一个tensor，其元素为服从标准正态分布的随机数字。
+    基于输入的 `size` 和 `dtype` ，返回一个tensor，其元素为服从标准正态分布的随机数字。
 
     .. warning::
         Ascend后端不支持随机数重现功能， `seed` 参数不起作用。

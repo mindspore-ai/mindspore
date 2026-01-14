@@ -29,7 +29,7 @@ mindspore.ops.ring_attention_update
         - **cur_attn_out** (Tensor) - 第二次FlashAttention的输出，数据类型与shape和 `prev_attn_out` 保持一致。
         - **cur_softmax_max** (Tensor) - 第二次FlashAttention的softmax的max结果，数据类型与shape和 `prev_softmax_max` 保持一致。
         - **cur_softmax_sum** (Tensor) - 第二次FlashAttention的softmax的sum结果，数据类型与shape和 `prev_softmax_max` 保持一致。
-        - **actual_seq_qlen** (Tensor，可选) - 从0开始的sequence length的累加，数据类型支持int64。当数据排布 `layout` 为 ``"TND"`` 时，需要传入该参数；当 `layout` 为 ``"SBH"`` 时，该参数不生效。需要是一个从0开始非递减至T的整数1D Tensor。 默认值： ``None``。
+        - **actual_seq_qlen** (Tensor，可选) - 从0开始的sequence length的累加，数据类型支持int64。当数据排布 `layout` 为 ``"TND"`` 时，需要传入该参数；当 `layout` 为 ``"SBH"`` 时，该参数不生效。需要是一个从0开始非递减至T的整数1D Tensor。默认值： ``None``。
         - **layout** (str，可选) - attn_out相关输入的数据排布。当前支持 ``"TND"`` 和 ``"SBH"`` 。默认值： ``"SBH"`` 。
 
     返回：

@@ -3097,7 +3097,7 @@ def softsign(x):
     .. math::
         \text{SoftSign}(x) = \frac{x}{1 + |x|}
 
-    Softsign Activation Function Graph:
+    SoftSign Activation Function Graph:
 
     .. image:: ../images/Softsign.png
         :align: center
@@ -7366,7 +7366,7 @@ def glu(x, axis=-1):
     where :math:`a` is the first half of the input matrices and :math:`b` is the second half.
 
     Here :math:`\sigma` is the sigmoid function, and :math:`\otimes` is the Hadamard product.
-    See `Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>`_.
+    See `Language Modeling with Gated Convolutional Networks <https://arxiv.org/abs/1612.08083>`_.
 
     Args:
         x (Tensor): Tensor to be split. Its dtype is Number, and shape is :math:`(\ast_1, N, \ast_2)`
@@ -7407,7 +7407,7 @@ def glu_ext(input, dim=-1):
     where :math:`a` is the first half of the `input` Tensor after `input` is split and :math:`b` is the second half.
 
     Here :math:`\sigma` is the sigmoid function, and :math:`\otimes` is the Hadamard product.
-    See `Language Modeling with Gated Convluational Networks <https://arxiv.org/abs/1612.08083>`_.
+    See `Language Modeling with Gated Convolutional Networks <https://arxiv.org/abs/1612.08083>`_.
 
     Args:
         input (Tensor): Tensor to be calculated. Dtype is floating point and the shape

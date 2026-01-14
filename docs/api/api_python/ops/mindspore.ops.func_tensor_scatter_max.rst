@@ -6,7 +6,7 @@
     返回一个新tensor，根据指定索引和更新值对 `input_x` 进行最大值更新。
 
     .. math::
-        output\left [indices  \right ] = \max(input\_x, update)
+        output\left [indices  \right ] = \max(input\_x, updates)
 
     .. note::
         如果 `indices` 中的值超出输入 `input_x` 索引范围：

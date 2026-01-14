@@ -8294,7 +8294,7 @@ def stft(x, n_fft, hop_length=None, win_length=None, window=None, center=True,
         TypeError: If any one of `center` , `normalized` , `onesided`
             and `return_complex` is assigned a nonboolean value.
         TypeError: If `pad_mode` is is assigned a value that is not string.
-        TypeError: If `n_fft` , `hop_length` or `hop_length` is not an int.
+        TypeError: If `n_fft` , `hop_length` or `win_length` is not an int.
 
     Supported Platforms:
         ``Ascend`` ``CPU``
