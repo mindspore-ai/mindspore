@@ -49,4 +49,4 @@ mindspore.ops.stft
         - **TypeError** -  `window` 不是1-DTensor。
         - **TypeError** -  `center` 、 `normalized` 、 `onesided` 和 `return_complex` 中任意一个被指定了非布尔类型的值。
         - **TypeError** -  `pad_mode` 被指定了非str类型的值。
-        - **TypeError** -  `n_fft` 、 `hop_length` 和 `hop_length` 中任意一个不是int类型。
+        - **TypeError** -  `n_fft` 、 `hop_length` 和 `win_length` 中任意一个不是int类型。

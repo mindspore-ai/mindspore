@@ -18,7 +18,7 @@ mindspore.ops.vector_norm
     =================   ==============================================
 
     参数：
-        - **A** (Tensor) - shape为 :math:`(*, n)` 的Tensor，其中*是零个或多个batch维度。
+        - **x** (Tensor) - shape为 :math:`(*, n)` 的Tensor，其中*是零个或多个batch维度。
         - **ord** (Union[int, float, inf, -inf], 可选) - norm的模式。行为参考上表。默认 ``2`` 。
         - **axis** (Union[int, Tuple(int)], 可选) - 计算向量范数的维度。默认 ``None`` 。
 
@@ -30,7 +30,7 @@ mindspore.ops.vector_norm
 
     关键字参数：
         - **dtype** (:class:`mindspore.dtype`, 可选) - 如果设置此参数，则会在执行之前将 `x` 转换为指定的类型，返回的Tensor类型也将为指定类型 `dtype`。
-          如果 `dtype` 为 ``None`` ，保持 `A` 的类型不变。默认 ``None`` 。
+          如果 `dtype` 为 ``None`` ，保持 `x` 的类型不变。默认 ``None`` 。
 
     返回：
         Tensor，在指定维度 `axis` 上进行范数计算的结果，与输入 `x` 的数据类型相同。

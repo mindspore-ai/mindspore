@@ -1,7 +1,7 @@
 mindspore.ops.randint_like
 ===========================
 
-.. py:function:: mindspore.ops.randint_like(input, low, high, *, dtype=None, seed=None)
+.. py:function:: mindspore.ops.randint_like(input, low, high, seed=None, *, dtype=None)
 
     返回一个与输入shape相同的tensor，其元素为 [ `low` , `high` ) 区间的随机整数。
 

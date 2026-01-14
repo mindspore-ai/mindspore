@@ -1,7 +1,7 @@
 mindspore.ops.softplus
 ======================
 
-. py:function:: mindspore.ops.softplus(input, beta=1, threshold=20)
+.. py:function:: mindspore.ops.softplus(input, beta=1, threshold=20)
 
     将softplus函数作用于 `input` 的每个元素上。
 

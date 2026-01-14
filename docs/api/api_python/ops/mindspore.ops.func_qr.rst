@@ -3,7 +3,7 @@ mindspore.ops.qr
 
 .. py:function:: mindspore.ops.qr(input, mode='reduced')
 
-    返回一个或多个矩阵的QR（正交三角）分解。如果 `mode` 被设为'reduced'(默认值)，则计算q的P列，其中P是 `input` 的2个最内层维度中的最小值。如果 `some` 被设为'complete'，则计算全尺寸q和r。
+    返回一个或多个矩阵的QR（正交三角）分解。如果 `mode` 被设为'reduced'(默认值)，则计算q的P列，其中P是 `input` 的2个最内层维度中的最小值。如果 `mode` 被设为'complete'，则计算全尺寸q和r。
 
     参数：
         - **input** (Tensor) - 要进行分解的矩阵。矩阵必须至少为二维。数据类型：float16、float32、float64、complex64、complex128。
