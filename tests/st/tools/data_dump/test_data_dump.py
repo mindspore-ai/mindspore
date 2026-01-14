@@ -104,7 +104,7 @@ def test_gpu_e2e_dump():
     run_e2e_dump()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 @security_off_wrap
 def test_kbk_e2e_set_dump():
     """
@@ -117,7 +117,7 @@ def test_kbk_e2e_set_dump():
     run_e2e_dump(test_key="test_kbk_e2e_set_dump")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 @security_off_wrap
 def test_kbk_e2e_dump_reg():
     """

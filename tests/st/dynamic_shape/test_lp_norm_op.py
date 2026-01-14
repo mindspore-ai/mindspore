@@ -42,7 +42,8 @@ def lp_norm_np_bencmark(data_type):
     return result
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("data_type", [np.float32, np.float16])
 def test_lp_norm_dy_shape(data_type):
     """

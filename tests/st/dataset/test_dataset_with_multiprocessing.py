@@ -174,7 +174,8 @@ def set_parameter(config):
 
 
 @pytest.mark.skip(reason="to be adjust case")
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1.00)
 def test_network_dataset_with_multiprocessing_without_fd_leak():
     """
     Feature: Network with dataset which use multiprocessing to process data
@@ -209,7 +210,8 @@ def test_network_dataset_with_multiprocessing_without_fd_leak():
 
 
 @pytest.mark.skip(reason="to be adjust case")
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_only_dataset_with_multiprocessing_without_fd_leak():
     """
     Feature: Only create dataset with iterator

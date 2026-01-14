@@ -37,7 +37,8 @@ def log_softmax_backward_func(x, dim):
     return input_grad
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_log_softmax_forward_backward(mode):
     """
@@ -61,7 +62,8 @@ def test_log_softmax_forward_backward(mode):
     assert np.allclose(output_grad.asnumpy(), expect_grad)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_log_softmax_bfloat16(mode):
     """
@@ -77,7 +79,8 @@ def test_log_softmax_bfloat16(mode):
     assert np.allclose(output.float().asnumpy(), expect, 0.004, 0.004)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 def test_log_softmax_dynamic_shape():
     """
     Feature: Test log_softmax with dynamic shape in graph mode.

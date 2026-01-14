@@ -287,7 +287,7 @@ def process_deq_scale(deq_scale) -> np.ndarray:
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend310p'],
-          level_mark='level0', card_mark='onecard', essential_mark='unessential')
+          level_mark='level0', card_mark='onecard', essential_mark='unessential', mem_peak=112.00)
 def test_matmul_biasadd_1024_1024_1024_False_False_float16():
     """
     Feature: test matmul_biasadd operator in graph mode
@@ -298,7 +298,8 @@ def test_matmul_biasadd_1024_1024_1024_False_False_float16():
                    trans_b=False, mstype=ms.float16)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=130.00)
 @pytest.mark.parametrize('m', [256, 1024])
 @pytest.mark.parametrize('n', [64, 256, 512, 1000])
 @pytest.mark.parametrize('mstype', [ms.float16, ms.bfloat16])

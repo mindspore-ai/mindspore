@@ -36,7 +36,7 @@ def resize_nearest_neighbor_dyn_shape_func(x, size, align_corners):
     return ops.ResizeNearestNeighbor(size, align_corners)(x)
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.05)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_resize_nearest_neighbor_op_forward(context_mode, data_type):
@@ -55,7 +55,7 @@ def test_resize_nearest_neighbor_op_forward(context_mode, data_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.05)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_resize_nearest_neighbor_op_backward(context_mode, data_type):

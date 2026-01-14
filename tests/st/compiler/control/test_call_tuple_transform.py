@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_call_tuple_transform.py """
 import mindspore as ms
 from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.graph.api import jit
 from mindspore.common.tensor import Tensor
-import mindspore.nn as nn
+from mindspore import nn
 
 import numpy as np
 from tests.mark_utils import arg_mark
@@ -78,7 +79,8 @@ class TestClass(nn.Cell):
         return num_agent
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_net():
     """
     Feature: Tuple arg transform.

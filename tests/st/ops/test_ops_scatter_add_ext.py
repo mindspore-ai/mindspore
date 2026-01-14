@@ -39,7 +39,7 @@ def scatter_add_ext_vmap_func(x, dim, index, src):
     return ops.vmap(scatter_add_ext_forward_func, in_axes=(0, None, None, None), out_axes=(0,))(x, dim, index, src)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatter_add_ext_normal(mode):
     """
@@ -93,7 +93,8 @@ def test_scatter_add_ext_normal(mode):
     assert np.allclose(out1[1].asnumpy(), expect_dsrc)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatter_add_ext_vmap(mode):
     """
@@ -114,7 +115,8 @@ def test_scatter_add_ext_vmap(mode):
     assert np.allclose(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatter_add_ext_bfloat16(mode):
     """
@@ -168,7 +170,8 @@ def test_scatter_add_ext_bfloat16(mode):
     assert np.allclose(out1[1].float().asnumpy(), expect_dsrc, rtol=4e-3, atol=4e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_scatter_add_ext_dynamic():
     """
     Feature: test dynamic by TEST_OP.

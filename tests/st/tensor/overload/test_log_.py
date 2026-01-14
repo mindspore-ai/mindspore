@@ -30,7 +30,7 @@ class Net(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_log(mode):
     """

@@ -59,7 +59,7 @@ class NpuFloatNet(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_float_not_overflow():
     """
     Feature: Auto monad feature.
@@ -75,7 +75,8 @@ def test_float_not_overflow():
     np.testing.assert_array_equal(out.asnumpy(), expect.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.75)
 def test_float_overflow():
     """
     Feature: Auto monad feature.

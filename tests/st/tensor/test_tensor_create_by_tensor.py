@@ -23,7 +23,7 @@ from mindspore import Tensor
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_tensor_dtype_fp32_to_bool():
     """
     Feature: Create a Tensor by another Tensor fp32 -> bool.
@@ -41,7 +41,7 @@ def test_tensor_dtype_fp32_to_bool():
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.0)
 def test_tensor_dtype_int8_to_bool():
     """
     Feature: Create a Tensor by another Tensor int8 -> bool.

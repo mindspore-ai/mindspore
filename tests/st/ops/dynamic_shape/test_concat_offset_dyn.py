@@ -44,7 +44,7 @@ def run_case(run_mode):
     assert np.allclose(expect, output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.99)
 def test_concat_offset():
     """
     Feature: aicpu ConcatOffset

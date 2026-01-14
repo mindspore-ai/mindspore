@@ -44,7 +44,8 @@ class NetGradGrad(nn.Cell):
         return backward_net(y, grad, dout)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=1024.00)
 def test_rsqrt_grad_grad_float16():
     """
     Feature: Rsqrt Grad Grad operation
@@ -65,7 +66,8 @@ def test_rsqrt_grad_grad_float16():
     assert np.allclose(dgrad_ms.asnumpy(), expected, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 def test_rsqrt_grad_grad_float32():
     """
     Feature: Rsqrt Grad Grad operation

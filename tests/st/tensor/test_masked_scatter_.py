@@ -45,7 +45,7 @@ def masked_scatter__backward_func(x, y, z):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_tensor_masked_scatter_(mode):
     """
@@ -75,7 +75,7 @@ def test_tensor_masked_scatter_(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_tensor_masked_scatter__dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.

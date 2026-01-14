@@ -31,7 +31,8 @@ from research.qwen2.qwen2_tokenizer import Qwen2Tokenizer
 from similarity import compare_distance
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 def test_qwen2_0_5b_predict_standalone():
     """
     Feature: Infer standalone st
@@ -127,7 +128,8 @@ def test_qwen2_0_5b_predict_standalone():
             compare_distance(output_text, answer, bench_sim=0.95)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=3072.01)
 def test_qwen2_0_5b_predict_standalone_for_aclgraph():
     """
     Feature: Infer standalone st with aclgraph

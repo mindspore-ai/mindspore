@@ -45,7 +45,7 @@ def _set_mode(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_bn_ext_bprop_dtype_align(mode):
     """
@@ -69,7 +69,7 @@ def test_bn_ext_bprop_dtype_align(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_bn_ext_bprop_skip_cast(mode):
     """

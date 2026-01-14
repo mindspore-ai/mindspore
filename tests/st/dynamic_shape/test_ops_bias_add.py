@@ -50,7 +50,7 @@ def test_bias_add_4d(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_2d(mode):
     """
@@ -76,7 +76,7 @@ def test_bias_add_2d(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_3d(mode):
     """
@@ -102,7 +102,7 @@ def test_bias_add_3d(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_5d(mode):
     """
@@ -128,7 +128,7 @@ def test_bias_add_5d(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 def test_bias_add_backward(mode):
     """
@@ -153,7 +153,7 @@ def test_bias_add_backward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_windows'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.25)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE])
 @test_utils.run_test_with_On
 def test_bias_add_vmap(mode):
@@ -211,7 +211,7 @@ def test_bias_add_ncdhw(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_bias_add_different_input_types(mode):
     """

@@ -22,7 +22,7 @@ from tests.device_utils import set_device
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @test_utils.run_test_with_On
 def test_hal_event_args():
     """
@@ -39,7 +39,7 @@ def test_hal_event_args():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_hal_event_elapsed_time():
     """
     Feature: runtime event api.
@@ -63,7 +63,7 @@ def test_hal_event_elapsed_time():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=6.00)
 def test_hal_event_wait():
     """
     Feature: runtime event api.
@@ -97,7 +97,7 @@ def test_hal_event_wait():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.0)
 def test_hal_event_sync():
     """
     Feature: runtime event sync.

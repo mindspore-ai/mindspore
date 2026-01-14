@@ -101,7 +101,8 @@ def _test_add_rms_norm_dynamic_quant_fusion(shape, dtype, has_smooth_scale, inte
         output[2].astype(ms.float32).asnumpy()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=116.00)
 @pytest.mark.parametrize("shape", [(1, 93, 6144), (2, 1, 3, 4, 5, 6, 2, 2)])
 @pytest.mark.parametrize('dtype', ["bfloat16", "float16"])
 @pytest.mark.parametrize('has_smooth_scale', [True, False])

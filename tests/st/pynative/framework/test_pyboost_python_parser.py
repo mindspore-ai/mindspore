@@ -307,7 +307,7 @@ def test_disable_scalar_tensor_with_mint_min():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_numpy_support_in_pyboost():
     """
     Feature: Function.

@@ -34,7 +34,7 @@ class kwargs_Net(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_remainder_scalar_tensor_args_pynative():
     """
     Feature: mint.remainder()
@@ -53,7 +53,7 @@ def test_remainder_scalar_tensor_args_pynative():
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_remainder_scalar_tensor_kwargs_pynative():
     """
     Feature: mint.remainder()
@@ -72,7 +72,7 @@ def test_remainder_scalar_tensor_kwargs_pynative():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_remainder_scalar_tensor_args_graph():
     """
     Feature: mint.remainder()
@@ -91,7 +91,7 @@ def test_remainder_scalar_tensor_args_graph():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_remainder_scalar_tensor_kwargs_graph():
     """
     Feature: mint.remainder()

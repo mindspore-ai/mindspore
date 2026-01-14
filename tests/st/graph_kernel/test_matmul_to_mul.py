@@ -47,7 +47,7 @@ def get_output(i0, i1, net_cls, enable_graph_kernel=False):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_matmul():
     """
     Feature: todo
@@ -64,7 +64,7 @@ def test_matmul():
     assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.03)
 def test_batchmatmul():
     """
     Feature: todo

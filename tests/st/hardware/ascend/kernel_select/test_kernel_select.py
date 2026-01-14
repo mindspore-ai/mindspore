@@ -61,7 +61,8 @@ def test_kernel_select_num():
     net(x, weight, c)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_kernel_select():
     """
     Feature: Ascend
@@ -77,7 +78,8 @@ def test_kernel_select():
     os.system("rm -rf log_kernel_select.txt")
     del os.environ["VLOG_v"]
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_kernel_select_failed():
     """
     Feature: kernel select

@@ -39,7 +39,8 @@ def fuse(shape1, shape2, dtype):
     print(output)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_dvm_profiling():
     """
     Feature: easy test case for graph_kernel in Ascend.

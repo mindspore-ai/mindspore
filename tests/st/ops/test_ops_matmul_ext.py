@@ -46,7 +46,7 @@ class MatMulGradCell(Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize("shape1, shape2, output_shape1, output_shape2", [
     [[9], [9], (), (9,)],
@@ -78,7 +78,7 @@ def test_ops(context_mode, shape1, shape2, output_shape1, output_shape2):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.35)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize("shape1, shape2", [
     [[231, 768], [768, 2304]],
@@ -101,7 +101,8 @@ def test_ops_f16(context_mode, shape1, shape2):
     allclose_nparray(output.asnumpy(), np.matmul(x, y), 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=192.0)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @pytest.mark.parametrize("shape1, shape2", [
     [[12288, 320], [320, 2560]],
@@ -124,7 +125,7 @@ def test_ops_bf16(context_mode, shape1, shape2):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.01)
 def test_ops_dynamic():
     """
     Feature: ops.matmul
@@ -141,7 +142,7 @@ def test_ops_dynamic():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_mix_dynamic_shape():
     """
     Feature: ops.matmul

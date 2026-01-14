@@ -41,7 +41,8 @@ def compare_with_numpy(x, y, rtol=1e-05, atol=1e-08, equal_nan=False):
     return ms_result == np_result
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_allclose_dtype(context_mode):
     """
@@ -76,7 +77,8 @@ def test_allclose_dtype(context_mode):
     assert compare_with_numpy(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_allclose_attr(context_mode):
     """
@@ -103,7 +105,8 @@ def test_allclose_attr(context_mode):
     assert compare_with_numpy(x, y, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_allclose_dynamic_shape_testop():
     """
     Feature: Test allclose with dynamic shape in graph mode using TEST_OP.

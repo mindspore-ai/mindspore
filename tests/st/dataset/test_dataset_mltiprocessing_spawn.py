@@ -28,8 +28,9 @@ from tests.mark_utils import arg_mark
 input_apple_jpg = "/home/workspace/mindspore_dataset/910B_dvpp/apple.jpg"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
-@pytest.mark.parametrize("python_multiprocessing", [True, False])
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
+@pytest.mark.parametrize("python_multiprocessing", [False, True])
 def test_generator_dataset_with_dvpp_with_spawn_independent_mode(python_multiprocessing):
     """
     Feature: GeneratorDataset op
@@ -77,7 +78,8 @@ def test_generator_dataset_with_dvpp_with_spawn_independent_mode(python_multipro
     ds.config.set_multiprocessing_start_method("fork")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize("ms_independent_dataset", ["True", "False"])
 def test_generator_dataset_and_map_with_dvpp_nn_ops_with_spawn(ms_independent_dataset):
     """
@@ -130,7 +132,8 @@ def test_generator_dataset_and_map_with_dvpp_nn_ops_with_spawn(ms_independent_da
     ds.config.set_multiprocessing_start_method("fork")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 @pytest.mark.parametrize("python_multiprocessing", [True, False])
 def test_generator_dataset_with_dvpp_with_spawn(python_multiprocessing):
     """

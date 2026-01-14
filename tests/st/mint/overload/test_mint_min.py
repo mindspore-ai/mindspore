@@ -40,7 +40,7 @@ class MinimumNet(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_min(mode):
     """
@@ -65,7 +65,7 @@ def test_min(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_min_dim(mode):
     """
@@ -104,7 +104,7 @@ def test_min_dim(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_minimum(mode):
     """

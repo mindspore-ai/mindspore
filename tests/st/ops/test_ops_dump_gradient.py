@@ -61,7 +61,8 @@ class MultipleInputsSingleOutputWithDumpGradientNet(nn.Cell):
         return x * y * z
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_single_input_single_output(mode):
     """
@@ -80,7 +81,8 @@ def test_single_input_single_output(mode):
     assert np.allclose(real_x_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_single_input_multiple_outputs(mode):
     """
@@ -101,7 +103,8 @@ def test_single_input_multiple_outputs(mode):
     assert np.allclose(real_x_grad.asnumpy(), expect_grad.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_multiple_input_single_output(mode):
     """

@@ -266,7 +266,8 @@ def fused_add_topk_div_internal(a, b, group_num, group_topk, n, k, mstype, is_dy
                                rtol=1e-2, atol=1e-2, err_msg='index error', verbose=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=116.00)
 @pytest.mark.parametrize('ms_dtype', [ms.float16, ms.bfloat16, ms.float32])
 def test_asd_fused_add_topk_div_dynamic_shape(enable_asd_env_fixture, ms_dtype):
     """
@@ -281,7 +282,8 @@ def test_asd_fused_add_topk_div_dynamic_shape(enable_asd_env_fixture, ms_dtype):
                        group_topk=group_topk, n=n, k=k, mstype=ms_dtype, is_dyn=True)
 
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=144.00)
 @pytest.mark.parametrize('input_and_params', [[1, 256, 8, 4, 2, 8], [11, 256, 8, 4, 2, 8], [8192, 256, 8, 4, 2, 8]])
 @pytest.mark.parametrize('function_api', [False, True])
 @pytest.mark.parametrize('is_dyn', [False, True])

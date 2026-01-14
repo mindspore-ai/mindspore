@@ -43,7 +43,7 @@ def t_backward_func(x):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_t_normal0(mode):
     """
@@ -65,7 +65,7 @@ def test_t_normal0(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_t_normal1(mode):
     """
@@ -87,7 +87,7 @@ def test_t_normal1(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_t_dynamic_shape0():
     """
     Feature: pyboost function.
@@ -101,7 +101,7 @@ def test_t_dynamic_shape0():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_t_dynamic_shape1():
     """
     Feature: pyboost function.

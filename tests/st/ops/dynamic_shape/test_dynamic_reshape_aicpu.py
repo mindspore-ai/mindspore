@@ -31,7 +31,8 @@ class ReshapeNet(nn.Cell):
         return self.reshape(input_x, output_shape)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=2048.00)
 def test_reshape_aicpu_dynamic_graph():
     """
     Feature: Test Reshape operation for dynamic shape in graph mode.
@@ -52,7 +53,8 @@ def test_reshape_aicpu_dynamic_graph():
     assert np.all(output.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_reshape_aicpu_dynamic_pynative():
     """
     Feature: Test Reshape operation for dynamic shape in pynative mode.

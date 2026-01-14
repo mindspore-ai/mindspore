@@ -124,7 +124,7 @@ def test_high_grad_train():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_high_grad_environ_eliminate():
     """
     Feature: eliminate the environ node.
@@ -223,7 +223,7 @@ def test_highgrad_switch_layer_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.03)
 def test_highgrad_grad_in_switch_layer():
     """
     Feature: High grad with switch layer.
@@ -242,7 +242,7 @@ def test_highgrad_grad_in_switch_layer():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 def test_highgrad_grad_in_net():
     """
     Feature: High grad with grad in net.
@@ -278,7 +278,7 @@ def test_highgrad_grad_in_net():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 def test_highgrad_two_input_sec_grad():
     """
     Feature: High grad with bprop two input.

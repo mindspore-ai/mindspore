@@ -137,7 +137,7 @@ def imod_binary_case2(input_binary_data=None, output_binary_data=None):
     plat_marks=['platform_ascend', 'platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential')
+    essential_mark='essential', mem_peak=166.01)
 @pytest.mark.parametrize('mode', ['pynative']) # KBK mode is not support.
 def test_tensor_remainder__normal(mode):
     """
@@ -156,7 +156,7 @@ def test_tensor_remainder__normal(mode):
     plat_marks=['platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential')
+    essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_tensor_imod_normal(mode):
     """
@@ -177,7 +177,7 @@ def test_tensor_imod_normal(mode):
     plat_marks=['platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential')
+    essential_mark='unessential', mem_peak=2.0)
 def test_tensor_remainder__dynamic():
     """
     Feature: tensor.remainder_
@@ -212,7 +212,7 @@ def test_tensor_remainder__dynamic():
     plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential')
+    essential_mark='unessential', mem_peak=4.0)
 def test_tensor_imod_dynamic():
     """
     Feature: tensor.__imod__

@@ -70,7 +70,7 @@ def validate_files(root_dir, rank_dir, expected_steps, expected_values):
             )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
 @pytest.mark.parametrize(
     "dtype",
     [
@@ -119,7 +119,7 @@ def test_net(dtype, mode):
     assert np.allclose(out, np.load(name2file["x"]))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_net_bool(mode):
     """
@@ -158,7 +158,7 @@ def test_net_bool(mode):
     assert np.allclose(out, np.load(name2file["out"]))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.25)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensordump_when_jit(mode):
     """
@@ -193,7 +193,7 @@ def test_tensordump_when_jit(mode):
     assert np.allclose(x3.asnumpy(), np.load(name2file["mul"]))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.95)
 def test_bfloat16():
     """
     Feature: Check TensorDump ops
@@ -225,7 +225,7 @@ def test_bfloat16():
     assert np.allclose(input_x, x_np)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_tensordump_when_graph_pynative_hybrid_rank_step():
     """
     Feature: Check TensorDump ops

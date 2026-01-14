@@ -15,14 +15,14 @@
 """ test_ascend_control_sink """
 from tests.mark_utils import arg_mark
 import numpy as np
-import mindspore.nn as nn
+from mindspore import nn
 import mindspore as ms
 from mindspore.ops import functional as F
 from mindspore.ops import operations as op
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
-from mindspore.common.initializer import initializer
+from mindspore.common import initializer
 
 ms.set_context(jit_config={"jit_level": "O0"})
 
@@ -230,7 +230,8 @@ def cell_list_in_while_by_while():
     return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 def test_simple_if():
     """
     Feature: Control flow
@@ -249,7 +250,8 @@ def test_simple_if():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
 def test_simple_if_with_assign():
     """
     Feature: Control flow
@@ -266,7 +268,8 @@ def test_simple_if_with_assign():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 def test_if_in_if():
     """
     Feature: Control flow
@@ -281,7 +284,8 @@ def test_if_in_if():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_if_by_if_by_if():
     """
     Feature: Control flow
@@ -300,7 +304,8 @@ def test_if_by_if_by_if():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 def test_simple_while():
     """
     Feature: Control flow
@@ -317,7 +322,8 @@ def test_simple_while():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_mixed_while_if():
     """
     Feature: Control flow
@@ -335,7 +341,8 @@ def test_mixed_while_if():
     assert np.allclose(expect, output.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_and_or_operation():
     """
     Feature: Control flow
@@ -360,7 +367,8 @@ def test_and_or_operation():
     assert output == expect
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_control_flow_ref():
     """
     Feature: Control flow graph sinking scenarios.

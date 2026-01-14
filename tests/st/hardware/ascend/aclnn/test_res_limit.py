@@ -76,7 +76,8 @@ def test_hash_with_device_res_limit():
     net = Net()
     net(x)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_aclnn_hash_with_device_res_limit():
     """
     Feature: test aclnn cache with different device resource limit
@@ -118,7 +119,8 @@ def test_hash_without_res_limit():
     net = Net()
     net(x)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_aclnn_hash_without_res_limit():
     """
     Feature: test aclnn cache without different device resource limit
@@ -215,7 +217,8 @@ def test_hash_with_stream_res_limit3():
     with mindspore.runtime.StreamCtx(s4):
         mint.sin(x)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=8.00)
 def test_aclnn_hash_with_stream_res_limit():
     """
     Feature: test aclnn cache with different stream resource limit
@@ -272,7 +275,8 @@ def test_hash_without_stream_res_limit():
     with mindspore.runtime.StreamCtx(s2):
         mint.sin(x)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_aclnn_hash_without_stream_res_limit():
     """
     Feature: test aclnn cache with different stream resource limit

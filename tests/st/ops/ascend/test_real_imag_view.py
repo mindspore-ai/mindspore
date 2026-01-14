@@ -59,7 +59,8 @@ def _count_unequal_element(data_expected, data_me, rtol, atol):
             format(data_expected[greater], data_me[greater], error[greater])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize("accessor", ["func", "attr"])  # func: mint.real/mint.imag, attr: x.real/x.imag
 def test_real_imag_compare_numpy(accessor):
     """
@@ -139,7 +140,8 @@ def test_real_imag_compare_numpy(accessor):
     run_unified_test(real_data, imag_data, mstype.float32, np.float32, 1e-5, 1e-5, "mixed special values")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_real_imag_view_exceptions():
     """
     Feature: RealImagView ascend kernel exception handling
@@ -166,7 +168,8 @@ def test_real_imag_view_exceptions():
     # Test float64 type
     test_exception(TypeError, [1.0, 2.0, 3.0], mstype.float64, "imag_view", "type_error")
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_real_imag_view_backward():
     """
     Feature: RealImagView ascend kernel backward propagation
@@ -219,7 +222,8 @@ def test_real_imag_view_backward():
     assert ms_grad.dtype == complex_input_ms.dtype
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_real_view_non_complex_input_no_error():
     """
     Feature: RealView ascend kernel with non-complex input
@@ -246,7 +250,8 @@ def real_func(x):
 def imag_func(x):
     return mint.imag(x)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 def test_real_imag_view_dyn():
     """
     Feature: RealView and ImagView ascend kernel with dynamic shape

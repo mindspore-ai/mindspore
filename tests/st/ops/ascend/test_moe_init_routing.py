@@ -55,7 +55,8 @@ def moe_init_routing_exec(x, row_idx, expert_idx, active_num):
 def moe_init_routing_forward_func(x, row_idx, expert_idx, active_num):
     return moe_init_routing_op(x, row_idx, expert_idx, active_num)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_moe_init_routing_case0(mode):
     """
@@ -97,7 +98,8 @@ def test_moe_init_routing_case0(mode):
     np.testing.assert_allclose(expanded_row_idx_ms.asnumpy(), expanded_row_idx, rtol=1e-3)
     np.testing.assert_allclose(expanded_expert_idx_ms.asnumpy(), expanded_expert_idx, rtol=1e-3)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 def test_ops_dynamic():
     """
     Feature: test moe_init_routing

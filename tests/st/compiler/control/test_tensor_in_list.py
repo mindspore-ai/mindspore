@@ -32,7 +32,8 @@ class Net(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_tensor_in_list():
     """
     Feature: Control flow

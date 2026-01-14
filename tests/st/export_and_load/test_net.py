@@ -35,7 +35,8 @@ class SliceNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_export_slice_net():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     input_x = Tensor(np.random.rand(4, 4, 4), ms.float32)

@@ -90,7 +90,7 @@ def mint_triangular_solve_binary_case1(input_binary_data=None,
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_triangular_solve(mode):
     """
@@ -110,7 +110,7 @@ def test_triangular_solve(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_triangular_solve_dyn():
     """
     Feature: Dynamic shape of triangular_solve

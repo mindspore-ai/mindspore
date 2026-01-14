@@ -191,8 +191,8 @@ def _set_mode(mode):
         context.set_context(mode=ms.PYNATIVE_MODE, device_target='Ascend')
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('data_type', [
     mstype.bool_, mstype.uint8, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
     mstype.float16, mstype.float32, mstype.float64
@@ -226,7 +226,8 @@ def test_functional_cel_forward_backward_2d(data_type, reduction, margin, contex
         mod.grad_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('data_type', [mstype.bfloat16])
 @pytest.mark.parametrize('reduction', ["none", "mean", "sum"])
 @pytest.mark.parametrize('margin', [-0.5, 0.0, 0.5])
@@ -257,7 +258,8 @@ def test_functional_cel_forward_backward_2d_bf16(data_type, reduction, margin, c
     assert double_golden_compare(g_th[1], g_th_bf16[1], g_ms[1], OpTypes.CV_FUSION)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('data_type', [mstype.float16, mstype.float32, mstype.float64])
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_forward_backward_1d_scalar_target(data_type, context_mode):
@@ -276,7 +278,8 @@ def test_functional_cel_forward_backward_1d_scalar_target(data_type, context_mod
     mod.grad_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('data_type', [mstype.bool_, mstype.uint8, mstype.int8, mstype.int16, mstype.int32,
                                        mstype.int64, mstype.float16, mstype.float32, mstype.float64,
                                        mstype.bfloat16])
@@ -298,7 +301,8 @@ def test_functional_cel_forward_backward_special_target(data_type, context_mode)
     mod.grad_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_inf_nan(context_mode):
     """
@@ -324,7 +328,8 @@ def test_functional_cel_inf_nan(context_mode):
     mod.grad_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_empty_tensor(context_mode):
     """
@@ -341,7 +346,8 @@ def test_functional_cel_empty_tensor(context_mode):
     mod.grad_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_1d_input_1d_tgt_raises(context_mode):
     """
@@ -358,7 +364,8 @@ def test_functional_cel_1d_input_1d_tgt_raises(context_mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_2d_input_scalar_target_raises(context_mode):
     """
@@ -375,7 +382,8 @@ def test_functional_cel_2d_input_scalar_target_raises(context_mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_shape_mismatch_raises(context_mode):
     """
@@ -392,7 +400,8 @@ def test_functional_cel_shape_mismatch_raises(context_mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_target_rank_invalid_raises(context_mode):
     """
@@ -409,7 +418,8 @@ def test_functional_cel_target_rank_invalid_raises(context_mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_invalid_reduction_raises(context_mode):
     """
@@ -426,7 +436,8 @@ def test_functional_cel_invalid_reduction_raises(context_mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_input_rank_invalid_raises(context_mode):
     """
@@ -443,7 +454,8 @@ def test_functional_cel_input_rank_invalid_raises(context_mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_input_rank_mismatch_raises(context_mode):
     """
@@ -460,7 +472,8 @@ def test_functional_cel_input_rank_mismatch_raises(context_mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('data_type', [mstype.uint16, mstype.uint32, mstype.uint64, mstype.complex64,
                                        mstype.complex128])
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -488,7 +501,8 @@ def test_functional_cel_unsupported_dtype_raises(context_mode, data_type):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('data_type', [mstype.bfloat16])
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_unsupported_dtype_raises_bf16(context_mode, data_type):
@@ -507,7 +521,8 @@ def test_functional_cel_unsupported_dtype_raises_bf16(context_mode, data_type):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_large_values(context_mode):
     """
@@ -525,7 +540,8 @@ def test_functional_cel_large_values(context_mode):
     mod.grad_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_input_different_dtype(context_mode):
     """
@@ -543,7 +559,8 @@ def test_functional_cel_input_different_dtype(context_mode):
     mod.grad_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_input_broadcast(context_mode):
     """
@@ -560,7 +577,8 @@ def test_functional_cel_input_broadcast(context_mode):
     mod.grad_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_functional_cel_dynamic_shape_TEST_OP(context_mode):
     """

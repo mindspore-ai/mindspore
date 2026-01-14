@@ -50,7 +50,7 @@ def new_zeros_backward_func(x, size, dtype=None):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.25)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('size', [0, 1, (2, 3)])
 @pytest.mark.parametrize('dtype', [None, mstype.int32])
@@ -73,7 +73,7 @@ def test_ops_new_zeros_normal(context_mode, size, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
 def test_new_zeros_dyn_shape():
     """
     Feature: Test dynamic shape.

@@ -38,7 +38,8 @@ def test_binary_cross_entropy_forward_functional(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_binary_cross_entropy_forward_float32_functional():
     """
     Feature: test binary_cross_entropy forward.

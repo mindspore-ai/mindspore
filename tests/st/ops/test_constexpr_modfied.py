@@ -679,7 +679,8 @@ def test_resizebilinear():
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1032.25)
 def test_matrixdiag():
     """
     Feature: MatrixDiag func
@@ -693,7 +694,7 @@ def test_matrixdiag():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_embeddinglookup():
     """
     Feature: EmbeddingLookup func

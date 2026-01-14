@@ -80,7 +80,8 @@ def unique_consecutive_forward_func_dynamic(inputx, dim=1):
     return unique_consecutive(inputx, True, True, dim)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize("mode", ["pynative", "KBK", "O2"])
 def test_ops_unique_consecutive_forward(mode):
     """
@@ -143,7 +144,8 @@ def test_ops_unique_consecutive_forward(mode):
     np.testing.assert_allclose(counts6.asnumpy(), expect_counts6, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_ops_unique_consecutive_dynamic_shape():
     """
     Feature: pyboost function.

@@ -73,7 +73,7 @@ def test_assign_int8():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_assign_uint8():
     """
     Feature: simple expression
@@ -109,7 +109,7 @@ def test_assign_int16():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.75)
 def test_assign_uint16():
     """
     Feature: simple expression
@@ -127,7 +127,7 @@ def test_assign_uint16():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_assign_int32():
     """
     Feature: simple expression
@@ -163,7 +163,7 @@ def test_assign_uint32():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.75)
 def test_assign_int64():
     """
     Feature: simple expression
@@ -223,7 +223,7 @@ def test_assign_float16():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_assign_float32():
     """
     Feature: simple expression
@@ -387,7 +387,7 @@ def test_number_assigndiv_number():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_tensor_assigndiv_tensor():
     """
     Feature: simple expression
@@ -402,7 +402,7 @@ def test_tensor_assigndiv_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_tensor_assigndiv_number():
     """
     Feature: simple expression
@@ -432,7 +432,7 @@ def test_number_assigndiv_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_number_assignmod_number():
     """
     Feature: simple expression
@@ -447,7 +447,7 @@ def test_number_assignmod_number():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_tensor_assignmod_tensor():
     """
     Feature: simple expression
@@ -537,7 +537,7 @@ def test_tensor_assignmulmul_number():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_number_assignmulmul_tensor():
     """
     Feature: simple expression
@@ -582,7 +582,7 @@ def test_tensor_assigndivdiv_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_tensor_assigndivdiv_number():
     """
     Feature: simple expression

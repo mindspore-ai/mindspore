@@ -58,7 +58,8 @@ def compare_output(output, p_value):
     assert (out_numel * (p_value - 0.02)) < out_sum < (out_numel * (p_value + 0.02))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", ["pynative", "kbk"])
 @pytest.mark.parametrize("shape", [(100, 100)])
 @pytest.mark.parametrize("p_mode", ["tensor", "float"])
@@ -88,7 +89,8 @@ def test_bernoulli_normal(mode, shape, p_mode, p_value):
         assert np.allclose(grads_x[1].asnumpy(), expect_grad, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ["pynative", "kbk"])
 @pytest.mark.parametrize("p_mode", ["tensor", "float"])
 def test_bernoulli_rng_status(mode, p_mode):
@@ -119,7 +121,8 @@ def test_bernoulli_rng_status(mode, p_mode):
     assert (x.asnumpy() == z.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 def test_bernoulli_dynamic():
     """
     Feature: pyboost function.

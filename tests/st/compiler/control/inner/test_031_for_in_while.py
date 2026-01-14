@@ -28,7 +28,7 @@ grad_all = C.GradOperation(get_all=True)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_for_in_while_01():
     """
     Feature: Control flow
@@ -84,7 +84,7 @@ def test_for_in_while_01():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_for_in_while_02():
     """
     Feature: Control flow
@@ -179,7 +179,8 @@ def test_for_by_if_in_while():
     assert jit(func)(x) == 219
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_control_flow_for_in_while_break_continue():
     """
     Feature: Control Flow

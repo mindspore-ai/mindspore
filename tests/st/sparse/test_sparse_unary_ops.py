@@ -83,7 +83,7 @@ def test_csr_tan():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_coo_tan():
     '''
     Feature: Test sparse unary function api coo_tan.
@@ -718,7 +718,7 @@ def test_coo_sinh():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 def test_csr_ceil():
     '''
     Feature: Test sparse unary function api csr_ceil.
@@ -1190,7 +1190,7 @@ def test_csr_sigmoid():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_coo_sigmoid():
     '''
     Feature: Test sparse unary function api coo_sigmoid.

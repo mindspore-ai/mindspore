@@ -36,7 +36,7 @@ _NP_TYPES = [np.float16, np.float32, np.float64, np.int8, np.int16, np.int32, np
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.03)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_abs(mode):
     """
@@ -60,7 +60,7 @@ def test_tensor_abs(mode):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.03)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_absolute(mode):
     """

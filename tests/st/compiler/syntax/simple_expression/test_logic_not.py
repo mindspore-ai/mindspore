@@ -46,7 +46,7 @@ class LogicNotSpec(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_ms_syntax_operator_logic_not_int():
     """
     Feature: simple expression
@@ -59,7 +59,7 @@ def test_ms_syntax_operator_logic_not_int():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_ms_syntax_operator_logic_not_float():
     """
     Feature: simple expression
@@ -72,7 +72,7 @@ def test_ms_syntax_operator_logic_not_float():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_ms_syntax_operator_logic_tensor_1_int():
     """
     Feature: simple expression
@@ -100,7 +100,7 @@ def test_ms_syntax_operator_logic_not_tensor_1_float():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_ms_syntax_operator_logic_not_tensor_2x2_int():
     """
     Feature: simple expression
@@ -156,7 +156,7 @@ def test_ms_syntax_operator_logic_not_list_int():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_ms_syntax_operator_logic_not_list_float():
     """
     Feature: simple expression

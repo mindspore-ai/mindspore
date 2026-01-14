@@ -174,43 +174,43 @@ def onp_minimum(a, b):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 def test_add():
     run_binop_test(mnp_add, onp_add, test_case)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 def test_subtract():
     run_binop_test(mnp_subtract, onp_subtract, test_case)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
 def test_multiply():
     run_binop_test(mnp_mutiply, onp_multiply, test_case)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
 def test_divide():
     run_binop_test(mnp_divide, onp_divide, test_case)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
 def test_true_divide():
     run_binop_test(mnp_true_divide, onp_true_divide, test_case)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
 def test_power():
     run_binop_test(mnp_power, onp_power, test_case, error=1e-5)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_float_power():
     run_binop_test(mnp_float_power, onp_float_power, test_case, error=1e-5)
 
@@ -832,7 +832,7 @@ def onp_clip(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_clip():
     run_unary_test(mnp_clip, onp_clip, test_case)
 
@@ -912,7 +912,7 @@ def onp_hypot(x1, x2):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_hypot():
     run_binop_test(mnp_hypot, onp_hypot, test_case)
 
@@ -1024,7 +1024,7 @@ def onp_fix(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_fix():
     x = rand_int(2, 3)
     y = rand_int(2, 3)
@@ -1173,7 +1173,7 @@ def test_negative():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.00)
 def test_cumsum():
     x = mnp.ones((16, 16), dtype="bool")
     match_array(mnp.cumsum(x).asnumpy(), onp.cumsum(x.asnumpy()))
@@ -1323,7 +1323,7 @@ def onp_arctan(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 def test_arctan():
     arr = onp.random.uniform(-1, 1, 12).astype('float32')
     onp_atan = onp_arctan(arr)
@@ -1340,7 +1340,7 @@ def onp_sinh(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
 def test_sinh():
     arr = onp.random.rand(2, 3, 4).astype('float32')
     expect = onp_sinh(arr)
@@ -1357,7 +1357,7 @@ def onp_cosh(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_cosh():
     arr = onp.random.rand(2, 3, 4).astype('float32')
     expect = onp_cosh(arr)
@@ -1442,7 +1442,7 @@ def onp_arctan2(x, y):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_arctan2():
     run_binop_test(mnp_arctan2, onp_arctan2, test_case, error=5)
 
@@ -1712,7 +1712,7 @@ def test_corrcoef():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_multi_dot():
     arrays = [rand_int(3), rand_int(3, 5), rand_int(5, 2), rand_int(2, 7), rand_int(7)]
     mnp_arrays = [to_tensor(arr) for arr in arrays]
@@ -1785,7 +1785,7 @@ def test_interp():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_bincount():
     x = onp.random.randint(0, 10, 20)
     weights = onp.random.randn(20)
@@ -1798,7 +1798,7 @@ def test_bincount():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_histogram():
     x = onp.random.randint(-10, 10, 10)
     for bins in [(1, 2, 3), [2], 1, 5]:
@@ -1808,7 +1808,7 @@ def test_histogram():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_histogramdd():
     x = onp.random.randint(-10, 10, (5, 3))
     for bins in [(15, 4, 9)]:
@@ -1827,7 +1827,7 @@ def test_histogramdd():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_histogram2d():
     x = onp.random.randint(-10, 10, 10)
     y = onp.random.randint(-10, 10, 10)
@@ -1939,7 +1939,7 @@ def onp_matrix_power(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_matrix_power():
     arrs = [
         onp.random.rand(2, 2).astype('float32'),
@@ -2089,7 +2089,8 @@ def onp_cumprod(x):
     return a, b, c
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_cumprod():
     mnp_x = mnp.arange(1, 7).reshape(2, 3)
     tensors = [mnp_x.astype('bool'),
@@ -2130,7 +2131,7 @@ def test_ravel_multi_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_norm():
     arrs = [rand_int(5, 2, 3, 7)]
     for x in arrs:
@@ -2147,7 +2148,8 @@ def test_norm():
                 match_res(mnp.norm, onp.linalg.norm, x, ord=ord, axis=axis, keepdims=keepdims, error=3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_bitwise_and():
     arrs = [onp.random.randint(-100, 100, ()), onp.random.randint(-100, 100, (1,)),
             onp.random.randint(-100, 100, (5,)), onp.random.randint(-100, 100, (3, 1)),
@@ -2157,7 +2159,8 @@ def test_bitwise_and():
             match_res(mnp.bitwise_and, onp.bitwise_and, x, y, dtype=mnp.int32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_bitwise_or():
     arrs = [onp.random.randint(-100, 100, ()), onp.random.randint(-100, 100, (1,)),
             onp.random.randint(-100, 100, (5,)), onp.random.randint(-100, 100, (3, 1)),
@@ -2167,7 +2170,8 @@ def test_bitwise_or():
             match_res(mnp.bitwise_or, onp.bitwise_or, x, y, dtype=mnp.int32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_bitwise_xor():
     arrs = [onp.random.randint(-100, 100, ()), onp.random.randint(-100, 100, (1,)),
             onp.random.randint(-100, 100, (5,)), onp.random.randint(-100, 100, (3, 1)),
@@ -2177,7 +2181,8 @@ def test_bitwise_xor():
             match_res(mnp.bitwise_xor, onp.bitwise_xor, x, y, dtype=mnp.int32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_invert():
     x = onp.random.randint(-100, 100, (2, 3))
     match_res(mnp.invert, onp.invert, x, dtype=mnp.int16)

@@ -145,7 +145,8 @@ def tdt_consume_beyond_produce():
         assert True
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_tdt_produce_beyond_consume():
     """
     Feature: Test dataset sink mode.
@@ -165,7 +166,8 @@ def test_tdt_produce_beyond_consume():
     assert iter_num == 10
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.75)
 def test_tdt_consume_beyond_produce():
     """
     Feature: Test dataset sink mode.

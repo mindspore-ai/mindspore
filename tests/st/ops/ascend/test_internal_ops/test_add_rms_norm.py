@@ -86,7 +86,8 @@ def _test_add_rmsnorm_fusion(shape, dtype, internal_kernel, with_cast=False, wit
     return output[0].astype(ms.float32).asnumpy(), output[1].astype(ms.float32).asnumpy()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=292.0)
 @pytest.mark.parametrize('dtype', ["float16", "float32", "bfloat16"])
 @pytest.mark.parametrize('is_dynamic', [False])
 def test_add_rms_norm_normal(dtype, is_dynamic):
@@ -106,7 +107,8 @@ def test_add_rms_norm_normal(dtype, is_dynamic):
     assert np.amax(np.abs(result_internal[1] - result_aclnn[1])) < 5e-3
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=276.0)
 def test_add_rms_norm_f16_with_cast():
     """
     Feature: test add_rmsnorm fusion with cast in graph mode
@@ -121,7 +123,8 @@ def test_add_rms_norm_f16_with_cast():
     assert np.amax(np.abs(result_internal[1] - result_aclnn[1])) < 5e-3
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=242.0)
 def test_add_rms_norm_f16_quant():
     """
     Feature: test add_rms_norm fusion with quant in graph mode

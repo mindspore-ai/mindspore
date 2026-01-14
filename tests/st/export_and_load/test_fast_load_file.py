@@ -22,7 +22,8 @@ from tests.mark_utils import arg_mark
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1.00
+          )
 def test_safetensors_loading():
     """
     Feature: safetensors fast load.

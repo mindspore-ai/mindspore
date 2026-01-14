@@ -35,7 +35,8 @@ class NetLog(nn.Cell):
         return self.log(x)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 @pytest.mark.parametrize("data_type", [np.float32])
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_log(data_type, mode):
@@ -60,7 +61,8 @@ def test_log(data_type, mode):
     np.allclose(output1.asnumpy(), expect1, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 @pytest.mark.parametrize("data_type", [mindspore.bfloat16])
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_log_bf16(data_type, mode):

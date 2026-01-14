@@ -45,7 +45,8 @@ def generate_testcases(nptype, ms_type=None):
     assert id(input_tensor) != id(output)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE, context.GRAPH_MODE])
 def test_stack_bfloat16(mode):
     """

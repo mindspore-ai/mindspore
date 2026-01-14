@@ -52,7 +52,7 @@ def dyn_case():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_seq_to_tensor():
     """
     Feature: test xxToTensor.

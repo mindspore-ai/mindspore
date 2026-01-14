@@ -22,7 +22,8 @@ import mindspore.context as context
 from mindspore.common import dtype as mstype
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_logical_and_tensor_api_modes(mode):
     """
@@ -38,7 +39,8 @@ def test_logical_and_tensor_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_logical_not_tensor_api_modes(mode):
     """
@@ -53,7 +55,8 @@ def test_logical_not_tensor_api_modes(mode):
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_logical_or_tensor_api_modes(mode):
     """

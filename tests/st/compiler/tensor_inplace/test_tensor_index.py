@@ -12,9 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+""" test_tensor_index.py """
 import os
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import context, mint, ops, jit, Tensor
 from tests.mark_utils import arg_mark
 from tests.st.compiler.utils import match_array
@@ -22,7 +23,8 @@ from tests.st.compiler.utils import match_array
 context.set_context(jit_config={"jit_level": "O0"})
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_select_ext_write():
     """
     Feature: Support tensor inplace.
@@ -48,7 +50,8 @@ def test_tensor_select_ext_write():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="unessential", mem_peak=1.00)
 def test_tensor_select_ext_read():
     """
     Feature: Support tensor inplace.
@@ -73,7 +76,8 @@ def test_tensor_select_ext_read():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_slice_ext_write():
     """
     Feature: Support tensor inplace.
@@ -99,7 +103,8 @@ def test_tensor_slice_ext_write():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_slice_ext_read():
     """
     Feature: Support tensor inplace.
@@ -124,7 +129,8 @@ def test_tensor_slice_ext_read():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_None_index_write():
     """
     Feature: Support tensor inplace.
@@ -150,7 +156,8 @@ def test_tensor_None_index_write():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.0)
 def test_tensor_None_index_read():
     """
     Feature: Support tensor inplace.
@@ -175,7 +182,8 @@ def test_tensor_None_index_read():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_self_write():
     """
     Feature: Support tensor inplace.
@@ -201,7 +209,8 @@ def test_tensor_self_write():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="unessential", mem_peak=1024.00)
 def test_tensor_self_read():
     """
     Feature: Support tensor inplace.
@@ -226,7 +235,8 @@ def test_tensor_self_read():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.0)
 def test_tensor_bool_index_write():
     """
     Feature: Support tensor inplace.
@@ -257,7 +267,8 @@ def test_tensor_bool_index_write():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_bool_index_read_true():
     """
     Feature: Support tensor inplace.
@@ -283,7 +294,8 @@ def test_tensor_bool_index_read_true():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_bool_index_read_false():
     """
     Feature: Support tensor inplace.
@@ -309,7 +321,8 @@ def test_tensor_bool_index_read_false():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_bool_tensor_write():
     """
     Feature: Support tensor inplace.
@@ -336,7 +349,8 @@ def test_tensor_bool_tensor_write():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_bool_tensor_read():
     """
     Feature: Support tensor inplace.
@@ -362,7 +376,8 @@ def test_tensor_bool_tensor_read():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.0)
 def test_tensor_select_slice_write():
     """
     Feature: Support tensor inplace.
@@ -388,7 +403,8 @@ def test_tensor_select_slice_write():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_select_slice_write_2():
     """
     Feature: Support tensor inplace.
@@ -412,7 +428,8 @@ def test_tensor_select_slice_write_2():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_select_slice_write_3():
     """
     Feature: Support tensor inplace.
@@ -442,7 +459,8 @@ def test_tensor_select_slice_write_3():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.0)
 def test_tensor_select_slice_read():
     """
     Feature: Support tensor inplace.
@@ -467,7 +485,8 @@ def test_tensor_select_slice_read():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.0)
 def test_tensor_index_list_write():
     """
     Feature: Support tensor inplace.
@@ -493,7 +512,8 @@ def test_tensor_index_list_write():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_index_list_read():
     """
     Feature: Support tensor inplace.
@@ -518,7 +538,8 @@ def test_tensor_index_list_read():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.0)
 def test_tensor_index_tensor_write():
     """
     Feature: Support tensor inplace.
@@ -545,7 +566,8 @@ def test_tensor_index_tensor_write():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="unessential", mem_peak=2048.01)
 def test_tensor_index_tensor_read():
     """
     Feature: Support tensor inplace.
@@ -571,7 +593,8 @@ def test_tensor_index_tensor_read():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="unessential", mem_peak=2048.00)
 def test_tensor_select_slice_index_write():
     """
     Feature: Support tensor inplace.
@@ -597,7 +620,8 @@ def test_tensor_select_slice_index_write():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.0)
 def test_tensor_select_slice_index_read():
     """
     Feature: Support tensor inplace.
@@ -683,7 +707,8 @@ def test_tensor_getitem_setitem_by_slice_v2():
     match_array(o1, o2)
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
+        essential_mark="essential", mem_peak=4.00)
 def test_Depend_infer_of_tuple_ref_tensors():
     """
     Feature: Test infer of Tensor setitem.

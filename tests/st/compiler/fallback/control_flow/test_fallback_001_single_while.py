@@ -24,7 +24,7 @@ context.set_context(mode=context.GRAPH_MODE, jit_config={"jit_level": "O0"})
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_single_while_1():
     """
     Feature: JIT Fallback
@@ -42,7 +42,7 @@ def test_single_while_1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_single_while_2():
     """
     Feature: JIT Fallback
@@ -61,7 +61,7 @@ def test_single_while_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_single_while_3():
     """
     Feature: JIT Fallback
@@ -81,7 +81,7 @@ def test_single_while_3():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_single_while_two_cond_1():
     """
     Feature: JIT Fallback
@@ -102,7 +102,7 @@ def test_single_while_two_cond_1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_single_while_two_cond_2():
     """
     Feature: JIT Fallback
@@ -122,7 +122,7 @@ def test_single_while_two_cond_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_single_while_param():
     """
     Feature: JIT Fallback
@@ -166,7 +166,8 @@ def test_single_while_numpy():
     assert (res.asnumpy() == [1, 1, 3, 4, 5]).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 def test_single_while_two_cond_3():
     """
     Feature: JIT Fallback

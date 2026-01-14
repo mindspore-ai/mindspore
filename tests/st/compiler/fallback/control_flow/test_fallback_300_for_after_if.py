@@ -21,7 +21,7 @@ context.set_context(mode=context.GRAPH_MODE, jit_config={"jit_level": "O0"})
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_for_after_if_2():
     """
     Feature: JIT Fallback
@@ -50,7 +50,7 @@ def test_for_after_if_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_for_after_if_3():
     """
     Feature: JIT Fallback
@@ -77,7 +77,8 @@ def test_for_after_if_3():
     assert res == 12
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_for_after_if_4():
     """
     Feature: JIT Fallback

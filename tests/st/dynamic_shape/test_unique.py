@@ -43,7 +43,8 @@ class NetFunc(nn.Cell):
         return self.unique(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_unqiue():
     """
     Feature: Dynamic shape.
@@ -59,7 +60,8 @@ def test_unqiue():
     assert (output[1].asnumpy() == expect2).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_unqiue_func_1d():
     """
     Feature: Test unique function
@@ -75,7 +77,8 @@ def test_unqiue_func_1d():
     assert (output[1].asnumpy() == expect2).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_unqiue_func_2d():
     """
     Feature: Test unique function

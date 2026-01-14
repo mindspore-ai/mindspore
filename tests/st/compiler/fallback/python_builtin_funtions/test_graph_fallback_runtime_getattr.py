@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+""" test_graph_fallback_runtime_getattr.py """
 import pytest
 import numpy as np
 import mindspore as ms
@@ -26,7 +26,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_getattr_asnumpy():
     """
     Feature: JIT Fallback
@@ -46,7 +46,7 @@ def test_fallback_getattr_asnumpy():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_getattr_asnumpy_custom_class():
     """
     Feature: getattr for custom class.
@@ -93,7 +93,7 @@ def test_getattr_numpy_array_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_get_attr_form_param():
     """
     Feature: Graph mode do not support getattr on Parameter.
@@ -161,7 +161,8 @@ def test_get_attr_form_param_2():
     assert output == 4
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_attr_in_control_flow_no_check():
     """
     Feature: test  the validity of the attribute in graph mode.

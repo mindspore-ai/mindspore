@@ -32,7 +32,8 @@ class Net(nn.Cell):
         return self.squeeze(tensor)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("data_type",
                          [np.bool_, np.int8, np.uint8, np.int16, np.uint16, np.int32, np.uint32, np.int64,
                           np.uint64, np.float16, np.float32, np.float64])

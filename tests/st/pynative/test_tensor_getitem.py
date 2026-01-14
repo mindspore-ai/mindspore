@@ -778,7 +778,7 @@ class TensorAssignWithSlice(Cell):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_tensor_assign_slice_value_1():
     net = TensorAssignWithSlice()
     a = np.arange(60).reshape(3, 4, 5)

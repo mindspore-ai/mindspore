@@ -49,7 +49,8 @@ def softplus_vmap_func(x, beta=1, threshold=20):
     return ops.vmap(softplus_forward_func, in_axes=(0, None, None), out_axes=0)(x, beta, threshold)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_softplus_forward(context_mode):
     """
@@ -69,7 +70,8 @@ def test_ops_softplus_forward(context_mode):
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_softplus_bf16(context_mode):
     """
@@ -89,7 +91,8 @@ def test_ops_softplus_bf16(context_mode):
     np.testing.assert_allclose(output2.float().asnumpy(), expect2, rtol=5e-3, atol=5e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_softplus_backward(context_mode):
     """
@@ -109,7 +112,8 @@ def test_ops_softplus_backward(context_mode):
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_softplus_vmap(context_mode):
     """
@@ -129,7 +133,8 @@ def test_ops_softplus_vmap(context_mode):
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_softplus_dynamic_shape():
     """
     Feature: Test dynamic shape.

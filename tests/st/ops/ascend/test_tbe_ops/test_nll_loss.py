@@ -92,7 +92,7 @@ def nll_loss_grad_template(nptype_input, nptype_weight, reduction, dynamic=False
     np.testing.assert_allclose(dx_np, dx_expected, ertol_loss)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_nll_loss_grad_vmap():
     """
     Feature: test NLLLossGrad vmap interface.
@@ -119,7 +119,8 @@ def test_nll_loss_grad_vmap():
     np.testing.assert_allclose(outputs.asnumpy(), expect, ertol_loss)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.25)
 def test_nll_loss_grad_no_reduction():
     """
     Feature: test NLLLossGrad kernel.
@@ -130,7 +131,7 @@ def test_nll_loss_grad_no_reduction():
     nll_loss_grad_template(np.float32, np.float32, "mean")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_nll_loss_grad_no_reduction_dynamic():
     """
     Feature: test NLLLossGrad kernel with dynamic case.

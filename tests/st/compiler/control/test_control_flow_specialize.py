@@ -25,7 +25,8 @@ from mindspore.graph._parse import compile_config
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_renormalization_after_cconv_poly_node():
     """
     Feature: control flow
@@ -67,7 +68,8 @@ def test_renormalization_after_cconv_poly_node():
     assert np.allclose(expected, output[1].asnumpy(), 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_poly_delay_specialize():
     """
     Feature: Specialize.
@@ -137,7 +139,8 @@ def test_renormalization_cannot_find_specialized_abstract():
     assert output[1].asnumpy() == np.array([7], np.int32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_renormalization_cannot_find_specialized_abstract_2():
     """
     Feature: control flow
@@ -167,7 +170,8 @@ def test_renormalization_cannot_find_specialized_abstract_2():
     assert output[1].asnumpy() == np.array([7], np.int32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_renormalization_cannot_find_specialized_abstract_2nd_grad():
     """
     Feature: control flow
@@ -195,7 +199,8 @@ def test_renormalization_cannot_find_specialized_abstract_2nd_grad():
     assert output[0].asnumpy() == np.array([2], np.int32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_renormalization_a_dead_node_in_second_grad():
     """
     Feature: control flow
@@ -236,7 +241,8 @@ def renorm_join_fail(x, y):
     return x + y
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_renormalization_join_fail_in_second_grad_non_recur_eval():
     """
     Feature: control flow
@@ -251,7 +257,8 @@ def test_renormalization_join_fail_in_second_grad_non_recur_eval():
     assert output[0].asnumpy() == np.array([0], np.int32)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_renormalization_join_fail_in_second_grad_recur_eval():
     """
     Feature: control flow

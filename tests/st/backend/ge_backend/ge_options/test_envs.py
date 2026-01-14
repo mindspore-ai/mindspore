@@ -16,7 +16,8 @@ import tests.st.backend.ge_backend.ge_test_utils as utils
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_ms_format_mode():
     """
     Feature: for MS_FORMAT_MODE
@@ -29,7 +30,8 @@ def test_ms_format_mode():
                                      "GE option: ge.exec.formatMode, value: 1")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_ms_ascend_check_overflow_mode():
     """
     Feature: for MS_ASCEND_CHECK_OVERFLOW_MODE
@@ -44,7 +46,8 @@ def test_ms_ascend_check_overflow_mode():
                                      "The current overflow detection mode is INFNAN")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_ms_enable_io_reuse():
     """
     Feature: for MS_ENABLE_IO_REUSE

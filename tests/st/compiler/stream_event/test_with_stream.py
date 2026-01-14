@@ -69,7 +69,8 @@ def read_file(save_path):
     return content
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=6.00)
 def test_my_ms_jit_stream_ctx():
     """
     Feature: Support with stream.
@@ -109,7 +110,8 @@ def test_my_ms_jit_stream_ctx():
     assert (pynative_grad_out.asnumpy() == graph_grad_out.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=8.00)
 def test_my_ms_jit_stream_ctx_runtime():
     """
     Feature: Support with stream.
@@ -148,7 +150,8 @@ def test_my_ms_jit_stream_ctx_runtime():
     assert (pynative_grad_out.asnumpy() == graph_grad_out.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=8.00)
 def test_my_ms_jit_stream_ctx_multi():
     """
     Feature: Support with stream.
@@ -190,7 +193,8 @@ def test_my_ms_jit_stream_ctx_multi():
     assert (pynative_grad_out.asnumpy() == graph_grad_out.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_my_ms_jit_stream_ctx_nest():
     """
     Feature: Support with stream.
@@ -216,7 +220,8 @@ def test_my_ms_jit_stream_ctx_nest():
     assert "Nested with StreamCtx statements are not supported in graph mode." in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=8.00)
 def test_basic_stream_block_annotation_1():
     """
     Feature: Support with stream.
@@ -260,7 +265,8 @@ def test_basic_stream_block_annotation_1():
     assert (pynative_grad_out.asnumpy() == graph_grad_out.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=12.00)
 def test_basic_stream_block_annotation_2():
     """
     Feature: Support with stream.
@@ -305,7 +311,8 @@ def test_basic_stream_block_annotation_2():
     assert (pynative_grad_out.asnumpy() == graph_grad_out.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_nested_stream_blocks():
     """
     Feature: Support with stream.
@@ -332,7 +339,8 @@ def test_nested_stream_blocks():
     assert "Nested with StreamCtx statements are not supported in graph mode." in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_complex_nested_streams():
     """
     Feature: Support with stream.
@@ -362,7 +370,8 @@ def test_complex_nested_streams():
     assert "Nested with StreamCtx statements are not supported in graph mode." in str(info.value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=12.00)
 def test_multiple_independent_streams():
     """
     Feature: Support with stream.
@@ -414,7 +423,8 @@ def test_multiple_independent_streams():
     assert (pynative_grad_out.asnumpy() == graph_grad_out.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=8.00)
 def test_stream_with_control_flow():
     """
     Feature: Support with stream.
@@ -446,7 +456,8 @@ def test_stream_with_control_flow():
 
 
 @pytest.mark.skip(reason='Not support yet, UnboundLocalError')
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_switch_like_control_flow_with_streams():
     """
     Feature: Support with stream.
@@ -493,7 +504,8 @@ def test_switch_like_control_flow_with_streams():
     assert np.allclose(result3, Tensor(np.ones([2, 2], dtype=np.float32)) * 8)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=8.00)
 def test_stream_with_break_statement():
     """
     Feature: Support with stream.
@@ -528,7 +540,8 @@ def test_stream_with_break_statement():
     assert (pynative_grad_out.asnumpy() == graph_grad_out.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=8.00)
 def test_stream_with_continue_statement():
     """
     Feature: Support with stream.
@@ -563,7 +576,8 @@ def test_stream_with_continue_statement():
     assert (pynative_grad_out.asnumpy() == graph_grad_out.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=10.00)
 def test_stream_with_return_statement():
     """
     Feature: Support with stream.
@@ -602,7 +616,8 @@ def test_stream_with_return_statement():
     assert (pynative_grad_out.asnumpy() == graph_grad_out.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=12.00)
 def test_multiple_returns_in_different_streams():
     """
     Feature: Support with stream.
@@ -645,7 +660,8 @@ def test_multiple_returns_in_different_streams():
     assert (pynative_grad_out.asnumpy() == graph_grad_out.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=6.00)
 def test_with_stream_with_morph():
     """
     Feature: Support with stream.
@@ -703,7 +719,8 @@ def test_with_stream_with_morph():
     assert len(stream_id_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=6.00)
 def test_with_stream_with_morph_2():
     """
     Feature: Support with stream with morph.
@@ -759,7 +776,8 @@ def test_with_stream_with_morph_2():
         pass
     assert len(stream_id_num) == 6
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=6.00)
 def test_my_ms_jit_stream_ctx_self():
     """
     Feature: Support with stream.
@@ -794,7 +812,8 @@ def test_my_ms_jit_stream_ctx_self():
         pass
     assert len(stream_id_num) == 1
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=6.00)
 def test_my_ms_jit_stream_ctx_list():
     """
     Feature: Support with stream.
@@ -828,7 +847,8 @@ def test_my_ms_jit_stream_ctx_list():
     assert len(stream_id_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2352.00)
 def test_with_stream_event_with_morph_cse():
     """
     Feature: Support with stream event in morph.
@@ -911,7 +931,9 @@ def test_with_stream_event_with_morph_cse():
 
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=814.00)
 def test_with_stream_with_morph_for_loop():
     """
     Feature: Support with stream in for loop.
@@ -962,7 +984,8 @@ def test_with_stream_with_morph_for_loop():
     assert len(stream_id_num) == 2
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=814.00)
 def test_with_stream_while_loop():
     """
     Feature: Support with stream in while loop.

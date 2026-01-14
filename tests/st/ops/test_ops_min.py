@@ -102,7 +102,7 @@ def np_min(input_x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.11)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_dtype', [np.float32])
 def test_min(mode, data_dtype):
@@ -115,7 +115,8 @@ def test_min(mode, data_dtype):
     min_max_case(min_, np_min, data_dtype=data_dtype)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_min_nan(mode):
     """
@@ -127,8 +128,8 @@ def test_min_nan(mode):
     min_max_case(min_, np_min, has_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_min_vmap(mode):
     """
@@ -140,7 +141,8 @@ def test_min_vmap(mode):
     min_max_case_vmap(min_)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('data_dtype', [np.float32])
 def test_min_all_dynamic(data_dtype):
     """
@@ -151,8 +153,8 @@ def test_min_all_dynamic(data_dtype):
     min_max_case_all_dyn(min_, data_dtype=data_dtype)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_dtype', [np.float32])
 def test_min_tensor(mode, data_dtype):
@@ -169,7 +171,8 @@ def test_min_tensor(mode, data_dtype):
     compare(output, expect)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_dtype', ["bfloat16"])
 def test_min_control_flow(mode, data_dtype):
@@ -182,7 +185,8 @@ def test_min_control_flow(mode, data_dtype):
     min_max_case(min_, np_min, data_dtype=data_dtype)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential')
 def test_min_grad_dynamic_rank():
     """
     Feature: Test min op.

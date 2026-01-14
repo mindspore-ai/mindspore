@@ -174,7 +174,7 @@ def test_setattr_self_non_param_not_used():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 def test_setattr_self_non_param_used_in_operator():
     """
     Feature: Enable setattr for class non-param attribute.
@@ -198,7 +198,7 @@ def test_setattr_self_non_param_used_in_operator():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_setattr_self_non_param_used_in_operator_2():
     """
     Feature: Enable setattr for class non-param attribute.
@@ -251,7 +251,7 @@ data_obj2.x = 100
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_setattr_global_obj_attr2():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -272,7 +272,7 @@ data_obj3 = np.array([1, 2, 3, 4])
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_setattr_global_obj_attr3():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -301,7 +301,7 @@ class OuterAssignTarget:
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_setattr_global_obj_nested_attr1():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -326,7 +326,7 @@ nested_data_obj2.a.b.x = 100
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_setattr_global_obj_nested_attr2():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -345,7 +345,7 @@ def test_setattr_global_obj_nested_attr2():
 
 @pytest.mark.skip(reason="Return value of x.shape is not changed because of the way InterpretNode generate.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_setattr_local_object_attr():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -365,7 +365,7 @@ def test_setattr_local_object_attr():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_setattr_run_multiple_times():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -391,7 +391,7 @@ def test_setattr_run_multiple_times():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_setattr_run_multiple_times_2():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -443,7 +443,7 @@ def test_setattr_run_multiple_times_3():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_setattr_with_augassign():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -474,7 +474,7 @@ def test_setattr_with_augassign():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_setattr_in_control_flow():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -546,7 +546,7 @@ def test_setattr_for_parameter():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_global_getattr_after_setattr_1():
     """
     Feature: Feature setattr. Make sure setattr getting correct attr.
@@ -571,7 +571,7 @@ def test_global_getattr_after_setattr_1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.skip(reason="offline this testcase for tensor redistribution temporarily, "
                          "online after can tracing ir.")
 def test_global_getattr_after_setattr_2():
@@ -606,7 +606,7 @@ def test_global_getattr_after_setattr_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_global_getattr_after_setattr_3():
     """
     Feature: Feature setattr. Make sure setattr getting correct attr.
@@ -635,7 +635,7 @@ def test_global_getattr_after_setattr_3():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_global_getattr_before_setattr():
     """
     Feature: Feature setattr. Make sure setattr getting correct attr.
@@ -664,7 +664,7 @@ def test_global_getattr_before_setattr():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_global_setattr_in_control_flow():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -688,7 +688,7 @@ def test_global_setattr_in_control_flow():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_global_setattr_in_control_flow_2():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -714,7 +714,7 @@ def test_global_setattr_in_control_flow_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_setattr_for_attribute_no_exist():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -733,7 +733,7 @@ def test_setattr_for_attribute_no_exist():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_setattr_for_attribute_no_exist_2():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -756,7 +756,7 @@ def test_setattr_for_attribute_no_exist_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_setattr_for_attribute_no_exist_3():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -843,7 +843,7 @@ def test_getattr_assign(class_type_choice):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_setattr_in_loop():
     """
     Feature: Feature setattr. For global variable, the same as setattr(module, var_name, value).
@@ -867,7 +867,7 @@ def test_setattr_in_loop():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=20.00)
 def test_type_of_getattr_after_setattr():
     """
     Feature: Feature setattr. Make sure setattr getting correct attr.
@@ -905,7 +905,8 @@ class GradNet(nn.Cell):
     def construct(self, *x):
         return self.grad_net(*x)
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_fallback_modify_args_of_cell_in_graph():
     """
     Feature: Feature setattr. Make sure setattr getting correct attr.
@@ -940,7 +941,8 @@ def test_parser_fallback_modify_args_of_cell_in_graph():
     assert np.allclose(ret1.asnumpy(), ret2.asnumpy(), 0, 0)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_fallback_modify_args_of_jitclass_in_graph():
     """
     Feature: Feature setattr. Make sure setattr getting correct attr.
@@ -977,7 +979,8 @@ def test_parser_fallback_modify_args_of_jitclass_in_graph():
     assert obj.x == 0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_parser_fallback_modify_args_of_jitclass_outside():
     """
     Feature: Feature setattr. Make sure setattr getting correct attr.
@@ -1013,7 +1016,8 @@ def test_parser_fallback_modify_args_of_jitclass_outside():
 
 
 @pytest.mark.skip(reason="Unsupported setattr test cases")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_parser_fallback_modify_args_of_jitclass_not_construct():
     """
     Feature: Feature setattr. Make sure setattr getting correct attr.

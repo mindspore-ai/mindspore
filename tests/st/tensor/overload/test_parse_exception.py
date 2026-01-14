@@ -20,7 +20,7 @@ import numpy as np
 ms.set_context(mode=ms.PYNATIVE_MODE)
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_extra_args_exception():
     """
     Feature: parse error info
@@ -35,7 +35,7 @@ def test_extra_args_exception():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_missing_args_exception():
     """
     Feature: parse error info
@@ -50,7 +50,7 @@ def test_missing_args_exception():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_type_error_exception():
     """
     Feature: parse type error
@@ -76,7 +76,7 @@ but found type of float at pos 0" in str(raise_info.value)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_kw_args_exception():
     """
     Feature: parse error info of wrong kw_args.
@@ -91,7 +91,7 @@ def test_kw_args_exception():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_multiple_sig_exception():
     """
     Feature: parse error info.

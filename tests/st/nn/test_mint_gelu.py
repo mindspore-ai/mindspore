@@ -50,7 +50,7 @@ def np_gelu_grad(x):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_gelu_net(mode):
     """
@@ -84,7 +84,7 @@ def test_gelu_net(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_mint_gelu_dyn():
     """
     Feature: Dynamic shape of GELU.

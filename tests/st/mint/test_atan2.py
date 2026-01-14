@@ -44,7 +44,8 @@ def atan2_backward_func(x, y):
     return input_grad
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_atan2_std(mode):
     """
@@ -73,7 +74,8 @@ def test_atan2_std(mode):
     np.testing.assert_allclose(output_grad[1].asnumpy(), expect_grad[1], 1e-5, 1e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 def test_atan2_dynamic_shape():
     """
     Feature: Test atan2 with dynamic shape in graph mode.
@@ -90,7 +92,8 @@ def test_atan2_dynamic_shape():
             case_config={'all_dim_zero': True})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_atan2_bfloat16(mode):
     """
@@ -128,7 +131,8 @@ def mint_atan2_binary_case1(input_binary_data=None, output_binary_data=None, mod
     mint_atan2_binary_compare(input_binary_data, output_binary_data, mode)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize("mode", ['pynative', 'KBK'])
 def test_atan2_binary_cases(mode):
     """

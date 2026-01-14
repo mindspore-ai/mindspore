@@ -1316,7 +1316,7 @@ def test_tensor_slice_none_in_pynative():
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 def test_tensor_index_augassign_01():
     """
     Feature: Test tensor index augassign
@@ -1359,7 +1359,7 @@ class GradOfAllInputs(Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_tensor_index_augassign_02(mode):
     """
@@ -1414,7 +1414,7 @@ def test_tensor_index_augassign_02(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("value", [[2, 3, 4, 5, 6, 7, 8], [2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8],
                                    [2, 3.3, 4.4, 5.5, 6.6, True, False]])
 def test_tensor_index_augassign_03(value):
@@ -1468,7 +1468,7 @@ def test_tensor_index_augassign_03(value):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_tensor_index_augassign_04(mode):
     """
@@ -1519,7 +1519,7 @@ def test_tensor_index_augassign_04(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_tensor_index_augassign_05(mode):
     """

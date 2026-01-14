@@ -60,7 +60,7 @@ def unsqueeze_backward(mode, x, dim):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_mint_unsqueeze_normal(mode):
     """
@@ -139,7 +139,7 @@ def generate_expect_backward_output(x, dim, grad):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_std(mode):
     """
@@ -169,7 +169,7 @@ def test_unsqueeze_std(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [
     np.float16, np.float32, np.float64,
@@ -214,7 +214,7 @@ def test_unsqueeze_dtype_coverage(mode, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('input_shape,dim', [
     ((24,), 0),  # 1D, insert at beginning
@@ -257,7 +257,7 @@ def test_unsqueeze_dimensions(mode, input_shape, dim):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('special_type',
                          ['inf', 'nan', 'zero', 'large', 'small'])
@@ -288,7 +288,7 @@ def test_unsqueeze_special_values(mode, special_type):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_empty_tensor(mode):
     """
@@ -327,7 +327,7 @@ def test_unsqueeze_empty_tensor(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('has_dynamic_rank', [False, True])
 def test_unsqueeze_dynamic_shape_advanced(mode, has_dynamic_rank):
@@ -376,7 +376,7 @@ def test_unsqueeze_dynamic_shape_advanced(mode, has_dynamic_rank):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_zero_bias(mode):
     """
@@ -408,7 +408,7 @@ def test_unsqueeze_zero_bias(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_non_contiguous(mode):
     """
@@ -442,7 +442,7 @@ def test_unsqueeze_non_contiguous(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_functional_interface(mode):
     """
@@ -468,7 +468,7 @@ def test_unsqueeze_functional_interface(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_jit_mode(mode):
     """
@@ -503,7 +503,7 @@ def test_unsqueeze_jit_mode(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_large_tensors(mode):
     """
@@ -536,7 +536,7 @@ def test_unsqueeze_large_tensors(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_high_dimension(mode):
     """
@@ -569,7 +569,7 @@ def test_unsqueeze_high_dimension(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_very_large_tensors(mode):
     """
@@ -601,7 +601,7 @@ def test_unsqueeze_very_large_tensors(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
 def test_unsqueeze_complex_dtypes(mode, dtype):
@@ -626,7 +626,7 @@ def test_unsqueeze_complex_dtypes(mode, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_0d_tensor(mode):
     """
@@ -660,7 +660,7 @@ def test_unsqueeze_0d_tensor(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_inplace_view(mode):
     """
@@ -698,7 +698,7 @@ def test_unsqueeze_inplace_view(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_view_backward(mode):
     """
@@ -745,7 +745,7 @@ def test_unsqueeze_view_backward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('input_shape,dim', [
     ((24,), 0),
@@ -787,7 +787,7 @@ def test_unsqueeze_view_multiple_shapes(mode, input_shape, dim):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_unsqueeze_view_chain(mode):
     """
@@ -827,7 +827,7 @@ def test_unsqueeze_view_chain(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.int32, np.int64])
 def test_unsqueeze_view_dtypes(mode, dtype):

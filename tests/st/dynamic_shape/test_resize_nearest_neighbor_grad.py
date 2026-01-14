@@ -32,7 +32,7 @@ def resize_nearest_neighbor_grad_dyn_shape_func(x, size, align_corners):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_resize_nearest_neighbor_grad_op_forward(context_mode, data_type):

@@ -69,7 +69,7 @@ def correlate_backward_func(a, v, dout):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_correlate_normal(mode):
     """
@@ -98,7 +98,7 @@ def test_ops_correlate_normal(mode):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_correlate_forward_dynamic_shape(mode):
     """
@@ -127,7 +127,7 @@ def test_ops_correlate_forward_dynamic_shape(mode):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_correlate_forward_dynamic_rank(mode):
     """
@@ -156,7 +156,7 @@ def test_ops_correlate_forward_dynamic_rank(mode):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_ops_correlate_backward_dynamic_shape(mode):
     """
@@ -194,7 +194,7 @@ def test_ops_correlate_backward_dynamic_shape(mode):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_correlate_backward_dynamic_rank(mode):
     """

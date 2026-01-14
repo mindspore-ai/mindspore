@@ -35,7 +35,8 @@ def test_atanh_forward_tensor_api(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 def test_atanh_forward_float32_tensor_api():
     """
     Feature: test atanh forward tensor api.

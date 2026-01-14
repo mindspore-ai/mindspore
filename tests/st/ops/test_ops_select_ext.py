@@ -40,7 +40,7 @@ def GenInputData(np_data_type, shape=(3, 4, 5)):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative'])
 def test_ops_select_ext(mode):
     """
@@ -83,7 +83,7 @@ def test_ops_select_ext(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_select_ext_dynamic_shape():
     """
     Feature: Test select with dynamic shape in pynative mode.

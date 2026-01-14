@@ -141,7 +141,7 @@ def mint_nn_kldivloss_binary_case6(input_binary_data=None, output_binary_data=No
     mint_nn_kldivloss_binary_compare(input_binary_data, output_binary_data, 'none', True)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_mint_nn_kldivloss_normal(mode):
     """
@@ -160,7 +160,7 @@ def test_mint_nn_kldivloss_normal(mode):
     mint_nn_kldivloss_binary_case4()
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_mint_nn_kldivloss_broadcast(mode):
     """
@@ -177,7 +177,7 @@ def test_mint_nn_kldivloss_broadcast(mode):
     mint_nn_kldivloss_binary_case6()
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('reduction', ['mean', 'sum', 'none', 'batchmean'])
 def test_mint_nn_kldivloss_dynamic(reduction):
     """

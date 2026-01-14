@@ -92,7 +92,8 @@ def grouped_matmul_forward_func(x, weight):
     return net(x, weight)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_emptytensor_case0(mode):
     """
@@ -147,7 +148,8 @@ def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_emptytensor_case0(mode)
     np.testing.assert_allclose(except1, res[1].asnumpy(), rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_case1(mode):
     """
@@ -196,7 +198,8 @@ def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_case1(mode):
     np.testing.assert_allclose(except1, res[1].asnumpy(), rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=44.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_grouped_matmul_x6d_w2d_splititem0_grouptypeneg1_none_case2(mode):
     """
@@ -245,7 +248,8 @@ def test_grouped_matmul_x6d_w2d_splititem0_grouptypeneg1_none_case2(mode):
     np.testing.assert_allclose(except1, res[1].asnumpy(), rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_grouped_matmul_x2d_w2d_b1d_splititem0_grouptypeneg1_none_case3(mode):
     """
@@ -297,7 +301,8 @@ def test_grouped_matmul_x2d_w2d_b1d_splititem0_grouptypeneg1_none_case3(mode):
     np.testing.assert_allclose(except1, res[1].asnumpy(), rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_grouped_matmul_x2d_w3d_splititem3_grouptype0_none_case4(mode):
     """
@@ -342,7 +347,8 @@ def test_grouped_matmul_x2d_w3d_splititem3_grouptype0_none_case4(mode):
     np.testing.assert_allclose(except_np, res[0].asnumpy(), rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_grouped_matmul_x2d_w3d_b2d_splititem3_grouptype0_none_case5(mode):
     """
@@ -391,7 +397,8 @@ def test_grouped_matmul_x2d_w3d_b2d_splititem3_grouptype0_none_case5(mode):
     np.testing.assert_allclose(except_np, res[0].asnumpy(), rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_a16w8_case6(mode):
     """
@@ -451,7 +458,8 @@ def test_grouped_matmul_x2d_w2d_splititem0_grouptypeneg1_none_a16w8_case6(mode):
     np.testing.assert_allclose(except1, res[1].asnumpy(), atol=5e-3, rtol=5e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 def test_ops_grouped_mamtul_dyn():
     """
     Feature: pyboost function.
@@ -490,6 +498,7 @@ def grouped_matmul_single_output_forward_func(x, weight, group_list):
     level_mark="level1",
     card_mark="onecard",
     essential_mark="unessential",
+    mem_peak=20.01
 )
 def test_grouped_matmul_single_output_dyn_shape():
     """

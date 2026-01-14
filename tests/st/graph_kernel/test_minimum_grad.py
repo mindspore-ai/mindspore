@@ -49,7 +49,7 @@ def get_minimum_grad_output(input_x, input_y, input_dout, enable_graph_kernel=Fa
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.04)
 def test_minimum_grad():
     """
     Feature: todo

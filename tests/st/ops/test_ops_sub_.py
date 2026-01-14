@@ -89,7 +89,7 @@ def ops_sub_binary_case4(input_binary_data=None, output_binary_data=None):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_inplace_sub_backward(mode):
     """
@@ -107,7 +107,7 @@ def test_inplace_sub_backward(mode):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.0)
 def test_ops_inplace_div_dynamic_shape():
     """
     Feature: pyboost function.
@@ -169,7 +169,7 @@ def test_ops_inplace_div_dynamic_shape():
 @arg_mark(plat_marks=['platform_ascend910b', 'cpu_linux', 'platform_gpu'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_inplace_sub_char(mode):
     """
@@ -188,7 +188,7 @@ def test_inplace_sub_char(mode):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.0)
 def test_inplace_sub_char_GE():
     """
     Feature: tensor.divide()

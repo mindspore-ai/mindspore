@@ -281,7 +281,8 @@ class HighGradNetWithInplace(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential',
+          mem_peak=4.00)
 def test_nested_highgrad_with_inplace():
     """
     Feature: Test nest high grad feature

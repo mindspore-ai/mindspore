@@ -88,7 +88,8 @@ def test_add(dtype=np.float16):
     add_net(net, x, y, indices, is_dynamic=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.75)
 def test_add_float16():
     """
     Feature: test add operator.
@@ -98,7 +99,8 @@ def test_add_float16():
     test_add(np.float16)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.75)
 def test_add_float32():
     """
     Feature: test add operator.

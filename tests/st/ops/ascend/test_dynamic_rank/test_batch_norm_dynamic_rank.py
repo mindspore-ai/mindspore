@@ -79,7 +79,8 @@ class NetFactory:
         return ms_out.asnumpy()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_batch_norm_dynamic_rank():
     """
     Feature: test batch norm dynamic rank

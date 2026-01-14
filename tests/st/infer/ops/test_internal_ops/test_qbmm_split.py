@@ -164,7 +164,8 @@ def qbmm_split(m, k, n0=0, n1=0, n2=0, is_dyn=False, profiling=False):
     assert result, "qbmm split compare fail."
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=118.00)
 @pytest.mark.parametrize('m', [32])
 @pytest.mark.parametrize('k', [1024, 11264, 128])
 @pytest.mark.parametrize('is_dyn', [False, True])
@@ -177,7 +178,8 @@ def test_qbmm_qkv_1408_128_128(m, k, is_dyn):
     qbmm_split(m, k, 1408, 128, 128, is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=214.00)
 @pytest.mark.parametrize('m', [16, 1024])
 @pytest.mark.parametrize('k', [4096])
 @pytest.mark.parametrize('is_dyn', [True])
@@ -190,7 +192,8 @@ def test_qbmm_qkv_11008_4096_4096_0(m, k, is_dyn):
     qbmm_split(m, k, 11008, 4096, 4096, is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=214.00)
 @pytest.mark.parametrize('m', [16, 1024])
 @pytest.mark.parametrize('k', [4096])
 @pytest.mark.parametrize('is_dyn', [False])
@@ -203,7 +206,8 @@ def test_qbmm_qkv_11008_4096_4096_1(m, k, is_dyn):
     qbmm_split(m, k, 11008, 4096, 4096, is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=160.00)
 @pytest.mark.parametrize('m', [32, 256])
 @pytest.mark.parametrize('k', [8192])
 @pytest.mark.parametrize('is_dyn', [False, True])
@@ -216,7 +220,8 @@ def test_qbmm_ffn_3584_3584(m, k, is_dyn):
     qbmm_split(m=m, k=k, n0=3584, n1=3584, is_dyn=is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=120.00)
 @pytest.mark.parametrize('m', [1, 16])
 @pytest.mark.parametrize('k_n_shape', [(8192, 1024, 128, 128), (8192, 2048, 256, 256)])
 @pytest.mark.parametrize('is_dyn', [False])
@@ -230,7 +235,8 @@ def test_qbmm_qkv_0(m, k_n_shape, is_dyn):
     qbmm_split(m, k, n0, n1, n2, is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=176.00)
 @pytest.mark.parametrize('m', [256, 1024])
 @pytest.mark.parametrize('k_n_shape', [(4096, 4096, 4096, 4096), (12288, 1536, 1536, 1536)])
 @pytest.mark.parametrize('is_dyn', [True])
@@ -244,7 +250,8 @@ def test_qbmm_qkv_1(m, k_n_shape, is_dyn):
     qbmm_split(m, k, n0, n1, n2, is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=232.00)
 @pytest.mark.parametrize('m', [256, 1024])
 @pytest.mark.parametrize('k_n_shape', [(4096, 11008, 11008)])
 @pytest.mark.parametrize('is_dyn', [True])
@@ -258,7 +265,8 @@ def test_qbmm_ffn_0(m, k_n_shape, is_dyn):
     qbmm_split(m, k, n0, n1, is_dyn=is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=226.00)
 @pytest.mark.parametrize('m', [1, 16])
 @pytest.mark.parametrize('k_n_shape', [(12288, 5376, 5376)])
 @pytest.mark.parametrize('is_dyn', [False])
@@ -272,7 +280,8 @@ def test_qbmm_ffn_1(m, k_n_shape, is_dyn):
     qbmm_split(m, k, n0, n1, is_dyn=is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=160.0)
 @pytest.mark.parametrize('m', [256, 1024])
 @pytest.mark.parametrize('k_n_shape', [(8192, 2752, 2752)])
 @pytest.mark.parametrize('is_dyn', [True])
@@ -286,7 +295,8 @@ def test_qbmm_ffn_2(m, k_n_shape, is_dyn):
     qbmm_split(m, k, n0, n1, is_dyn=is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=154.01)
 @pytest.mark.parametrize('input_shape', [(1, 8192, 1024, 128, 128),
                                          (32, 4096, 4096, 4096, 4096),
                                          (16, 12288, 1536, 1536, 1536)])

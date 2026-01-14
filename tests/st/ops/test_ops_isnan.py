@@ -34,7 +34,7 @@ def isnan_forward_func(x):
     return mint.isnan(x)
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_isnan_ascend(context_mode):
     """
@@ -54,7 +54,7 @@ def test_isnan_ascend(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_isnan_dynamic_shape_ascend(context_mode):
     """

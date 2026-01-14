@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_sigmoid_.py """
 import numpy as np
 import pytest
 import torch
@@ -126,7 +127,7 @@ class TestModule():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('data_type', [mstype.float16, mstype.float32, mstype.float64,
                                        mstype.complex64, mstype.complex128])
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -152,7 +153,8 @@ def test_sigmoid__different_type(data_type, context_mode):
     module.grad_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid__bf16(context_mode):
     """
@@ -168,7 +170,7 @@ def test_sigmoid__bf16(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('shape', [
     (3,),
     (2, 3),
@@ -194,7 +196,7 @@ def test_sigmoid__different_dimensions(shape, context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid__empty_tensor(context_mode):
     """
@@ -210,7 +212,7 @@ def test_sigmoid__empty_tensor(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid__inf_nan(context_mode):
     """
@@ -226,7 +228,7 @@ def test_sigmoid__inf_nan(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid__large_values(context_mode):
     """
@@ -242,7 +244,7 @@ def test_sigmoid__large_values(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid__single_element(context_mode):
     """
@@ -258,7 +260,7 @@ def test_sigmoid__single_element(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid__scalar_tensor(context_mode):
     """
@@ -274,7 +276,7 @@ def test_sigmoid__scalar_tensor(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid__zero_values(context_mode):
     """
@@ -290,7 +292,7 @@ def test_sigmoid__zero_values(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid__mathematical_properties(context_mode):
     """
@@ -306,7 +308,7 @@ def test_sigmoid__mathematical_properties(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid__input_value_range_float(context_mode):
     """
@@ -322,7 +324,8 @@ def test_sigmoid__input_value_range_float(context_mode):
     module.grad_cmp()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid__special_values(context_mode):
     """
@@ -338,7 +341,7 @@ def test_sigmoid__special_values(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sigmoid__input_not_tensor_raises(context_mode):
     """
@@ -365,7 +368,7 @@ def sigmoid_forward_func(x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_sigmoid__dynamic_shape():
     """
     Feature: Tensor.sigmoid_ operators.

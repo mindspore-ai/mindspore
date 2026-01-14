@@ -40,7 +40,8 @@ def set_context_mode(mode):
         ms.context.set_context(mode=ms.PYNATIVE_MODE)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize("mode", ["pynative", "kbk", "ge"])
 def test_ops_format_cast(mode):
     """

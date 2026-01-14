@@ -40,7 +40,7 @@ class Net(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_conv3d_para_customed_dtype(mode):
     """
@@ -59,7 +59,7 @@ def test_conv3d_para_customed_dtype(mode):
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 @test_utils.run_test_with_On
 def test_conv3d_input_5d():
     """

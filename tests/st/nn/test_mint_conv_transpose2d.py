@@ -22,7 +22,7 @@ from tests.st.ops.test_tools.test_op import TEST_OP
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=398.0)
 def test_conv2d_transpose_dyn():
     """
     Feature: Dynamic shape of BatchNorm1d

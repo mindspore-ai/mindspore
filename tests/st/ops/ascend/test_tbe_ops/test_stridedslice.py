@@ -70,7 +70,8 @@ def test_stridedslice_input_3d():
     me_stridedslice(input_, begin, end, stride)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_stridedslice_input_3d_bf16():
     """
     Feature: test fast_gelu functional API.

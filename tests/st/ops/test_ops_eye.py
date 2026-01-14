@@ -31,7 +31,7 @@ def eye_forward_func(n, m, dtype=ms.float32):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.02)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_eye_forward(context_mode):
     """
@@ -52,7 +52,7 @@ def test_ops_eye_forward(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.01)
 def test_eye_dynamic():
     """
     Feature: Test operator Eye by TEST_OP

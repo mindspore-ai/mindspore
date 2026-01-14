@@ -91,7 +91,7 @@ def binary_cross_entropy_backward_func(inputx, target, weight=None, reduction="m
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=3072.0)
 @pytest.mark.parametrize("mode", ["pynative", "KBK", "graph"])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_binary_cross_entropy_normal(mode, reduction):
@@ -124,7 +124,7 @@ def test_ops_binary_cross_entropy_normal(mode, reduction):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", ["pynative", "KBK", "graph"])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_binary_cross_entropy_weight_none(mode, reduction):
@@ -158,7 +158,7 @@ def test_ops_binary_cross_entropy_weight_none(mode, reduction):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.01)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_binary_cross_entropy_dynamic_shape(context_mode, reduction):
@@ -217,7 +217,7 @@ def ops_binary_cross_entropy_binary_case1(input_binary_data=None, output_binary_
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize("mode", ["pynative", "KBK", "graph"])
 def test_binary_cross_entropy_binary_cases(mode):
     """

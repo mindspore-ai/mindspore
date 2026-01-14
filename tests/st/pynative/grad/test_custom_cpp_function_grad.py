@@ -22,7 +22,8 @@ from mindspore.ops import CustomOpBuilder
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_custom_cpp_function_scalar():
     """
     Feature: Custom cpp autograd function.
@@ -51,7 +52,8 @@ def test_custom_cpp_function_scalar():
     assert np.allclose(grads[1][0].asnumpy(), np.array([1.0], dtype=np.float32), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_custom_cpp_function_tuple_tensor_input():
     """
     Feature: Custom cpp autograd function.
@@ -74,7 +76,8 @@ def test_custom_cpp_function_tuple_tensor_input():
     assert np.allclose(out.asnumpy(), np.array([5.0], dtype=np.float32), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_custom_cpp_function_tuple_int_input():
     """
     Feature: Custom cpp autograd function.
@@ -96,7 +99,8 @@ def test_custom_cpp_function_tuple_int_input():
     assert np.allclose(out.asnumpy(), np.array([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0]], dtype=np.float32), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_custom_cpp_function_multi_input():
     """
     Feature: Custom cpp autograd function.
@@ -125,7 +129,8 @@ def test_custom_cpp_function_multi_input():
     assert np.allclose(grads[1][0].asnumpy(), np.array([6.0], dtype=np.float32), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_custom_cpp_function_mark_no_diff():
     """
     Feature: Custom cpp autograd function.
@@ -150,7 +155,8 @@ def test_custom_cpp_function_mark_no_diff():
     assert np.allclose(grad[1].asnumpy(), np.array([0.0, 0.0], dtype=np.float32), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_custom_cpp_function_mark_input_no_diff():
     """
     Feature: Custom cpp autograd function.
@@ -173,7 +179,8 @@ def test_custom_cpp_function_mark_input_no_diff():
     assert np.allclose(grad[0].asnumpy(), np.array([2.0, 2.0], dtype=np.float32), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_custom_cpp_function_dirty_tensor_is_need_grad_leaf():
     """
     Feature: Custom cpp autograd function.
@@ -198,7 +205,8 @@ def test_custom_cpp_function_dirty_tensor_is_need_grad_leaf():
         assert "A leaf tensor that need grad is being used in an inplace operator" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_custom_cpp_function_tensor_hook():
     """
     Feature: Custom cpp autograd function.
@@ -228,7 +236,8 @@ def test_custom_cpp_function_tensor_hook():
     assert np.allclose(grad[1].asnumpy(), np.array([4.0, 4.0], dtype=np.float32), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_custom_launch_aclnn_macro():
     """
     Feature: Custom cpp autograd function.
@@ -257,7 +266,8 @@ def test_custom_launch_aclnn_macro():
     assert np.allclose(grads[1][0].asnumpy(), np.array([6.0], dtype=np.float32), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_custom_cpp_function_return_incorrect_grad_num():
     """
     Feature: Custom cpp autograd function.
@@ -280,7 +290,8 @@ def test_custom_cpp_function_return_incorrect_grad_num():
         ms.value_and_grad(net, grad_position=(0, 1))(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_custom_cpp_function_return_grad_error():
     """
     Feature: Custom cpp autograd function.
@@ -303,7 +314,8 @@ def test_custom_cpp_function_return_grad_error():
         ms.value_and_grad(net, grad_position=0)(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_custom_cpp_function_materialize_grads():
     """
     Feature: Custom cpp autograd function.

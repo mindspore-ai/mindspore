@@ -31,7 +31,7 @@ import torch.nn as nn_pt
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_parser_tensor_fancy_index_tuple_list_mix(mode):
     """
@@ -94,7 +94,7 @@ class NetIndex3(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_getitem_index_negative(mode):
     """
@@ -124,7 +124,7 @@ class NetIndex2Slice(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_getitem_index_negative_with_slice(mode):
     """
@@ -463,7 +463,8 @@ def getitem_check_indexing(x, index, np_expected, capture_mode=None):
                                                           f"ms_output:{ms_output} {ms_output.shape}"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', [None, 'ast'])
 def test_getitem(capture_mode):
     """
@@ -567,7 +568,8 @@ def getitem_check_indexing_without_jit(x, index, np_expected, capture_mode=None)
                                                           f"ms_output:{ms_output} {ms_output.shape}"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('capture_mode', [None])
 def test_slice_tensor_index_getitem_without_jit(capture_mode):
     """
@@ -593,7 +595,8 @@ def test_slice_tensor_index_getitem_without_jit(capture_mode):
             ms_x, slice_index, np_expected, capture_mode)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', [None, 'ast'])
 def test_getitem2(capture_mode):
     """
@@ -618,7 +621,8 @@ def test_getitem2(capture_mode):
         getitem_check_indexing(ms_x, index, np_expected, capture_mode)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', [None, 'ast', 'bytecode'])
 def test_getitem_with_ellipsis(capture_mode):
     """
@@ -686,7 +690,8 @@ def getitem_check_grad(x, index, np_expected, capture_mode=None):
                                                         f"ms_grad:{ms_grad} {ms_grad.shape}"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', [None, 'ast', 'bytecode'])
 def test_getitem_grad_index_negative(capture_mode):
     """
@@ -705,7 +710,8 @@ def test_getitem_grad_index_negative(capture_mode):
     getitem_check_grad(ms_x, index, np_expected, capture_mode)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', [None, 'ast', 'bytecode'])
 def test_getitem_grad(capture_mode):
     """
@@ -810,7 +816,8 @@ def test_getitem_grad(capture_mode):
         getitem_check_grad(ms_x, index, np_expected, capture_mode)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode, capture_mode', [(ms.GRAPH_MODE, 'ast'), (ms.GRAPH_MODE, 'bytecode'),
                                                 (ms.PYNATIVE_MODE, 'ast')])
 def test_getitem_exception(mode, capture_mode):
@@ -882,7 +889,8 @@ def test_getitem_exception(mode, capture_mode):
         exc.value)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode, capture_mode', [(ms.GRAPH_MODE, 'bytecode'),
                                                 (ms.PYNATIVE_MODE, 'ast')])
 def test_getitem_exception_without_jit_ast(mode, capture_mode):
@@ -932,7 +940,8 @@ class NetMutableSequenceIndex(nn.Cell):
         return y
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_getitem_mutable_sequence_index():
     """
     Feature: tensor getitem
@@ -964,7 +973,8 @@ class NetTensorInListIndex(nn.Cell):
         return y
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_getitem_tensor_in_list_index():
     """
     Feature: tensor getitem
@@ -1002,7 +1012,8 @@ class NetParamIndexWithAssign(nn.Cell):
         return y
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_param_getitem_with_assign_value():
     """
     Feature: tensor getitem
@@ -1019,7 +1030,8 @@ def test_param_getitem_with_assign_value():
                                                              f"pynative_res: {pynative_res} {pynative_res.shape}"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_tensor_data_ptr_with_offset():
     """
     Feature: Tensor data_ptr
@@ -1039,7 +1051,8 @@ def no_jit(x, *args, **kwargs):
     return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_tensor_negative_index_for_tuple_input(mode):
     """
@@ -1058,7 +1071,8 @@ def test_tensor_negative_index_for_tuple_input(mode):
     assert res == result
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_tensor_negative_index_for_list_input(mode):
     """
@@ -1076,7 +1090,8 @@ def test_tensor_negative_index_for_list_input(mode):
     assert res == result
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_tensor_negative_index_for_tensor_input_001(mode):
     """
@@ -1109,7 +1124,8 @@ def test_tensor_negative_index_for_tensor_input_001(mode):
         assert np.allclose(out_tf, out_me.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_tensor_negative_index_for_tensor_input_002(mode):
     """
@@ -1136,7 +1152,8 @@ def test_tensor_negative_index_for_tensor_input_002(mode):
     assert np.allclose(out_tf, out_me.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_tensor_negative_index_for_str_input(mode):
     """
@@ -1154,7 +1171,8 @@ def test_tensor_negative_index_for_str_input(mode):
     assert exp == result
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_tensor_negative_slice_for_str_input(mode):
     """
@@ -1172,7 +1190,8 @@ def test_tensor_negative_slice_for_str_input(mode):
     assert exp == result
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.25)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_tensor_fancy_index_bool_list(mode):
     """
@@ -1210,7 +1229,8 @@ def test_tensor_fancy_index_bool_list(mode):
     assert np.allclose(ms_grad.asnumpy(), pt_grad[0].detach().numpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_parser_tensor_index_exception_out_of_range(mode):
     """
@@ -1230,7 +1250,8 @@ def test_parser_tensor_index_exception_out_of_range(mode):
     mode(net)(input_me, index_me_x)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 @pytest.mark.parametrize("np_idx_dtype", [np.int8, np.int16, np.float32])
 def test_tensor_index_unsupported_dtype(mode, np_idx_dtype):
@@ -1252,7 +1273,8 @@ def test_tensor_index_unsupported_dtype(mode, np_idx_dtype):
         mode(net)(input_me, index_me_x)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_parser_tensor_index_exception_shape_cannot_broadcast(mode):
     """
@@ -1275,7 +1297,8 @@ def test_parser_tensor_index_exception_shape_cannot_broadcast(mode):
         mode(net)(input_me, index_me_x, index_me_y)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_parser_tensor_index_exception_multi_tensor_dtype_int64(mode):
     """
@@ -1304,7 +1327,8 @@ def test_parser_tensor_index_exception_multi_tensor_dtype_int64(mode):
     np.allclose(out_me.asnumpy(), out_np)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_tensor_index_abnormal(mode):
     """
@@ -1331,7 +1355,8 @@ def test_tensor_index_abnormal(mode):
             mode(net)(input_me_x, tensor).asnumpy()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_tensor_index_int64_normal(mode):
     """
@@ -1352,7 +1377,8 @@ def test_tensor_index_int64_normal(mode):
     assert np.allclose(out_me, out_numpy, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_tensor_fancy_index_tuple_empty(mode):
     """
@@ -1372,7 +1398,8 @@ def test_tensor_fancy_index_tuple_empty(mode):
             mode(net_ms)(Tensor(input_np))
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=48.0)
 @pytest.mark.parametrize("mode, jit_level", [(no_jit, None),  (ms.jit, "O0"),  (ms.jit, "O1"), (ms.jit, "O2")])
 def test_parser_tensor_fancy_index_mul_list_multilevel(mode, jit_level):
     """

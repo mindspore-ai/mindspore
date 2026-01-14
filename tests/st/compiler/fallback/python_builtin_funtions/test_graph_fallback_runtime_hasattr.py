@@ -66,7 +66,7 @@ def test_fallback_hasattr_asnumpy():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_hasattr_dtype():
     """
     Feature: JIT Fallback

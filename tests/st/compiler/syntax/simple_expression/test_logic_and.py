@@ -117,7 +117,7 @@ def test_ms_syntax_operator_logic_tensor_1_float_and_tensor_1_int():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_ms_syntax_operator_logic_tensor_1_int_and_int():
     """
     Feature: simple expression
@@ -176,7 +176,7 @@ def test_ms_syntax_operator_logic_int_and_str_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_ms_syntax_operator_logic_str_and_str():
     """
     Feature: simple expression
@@ -189,7 +189,7 @@ def test_ms_syntax_operator_logic_str_and_str():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_ms_syntax_operator_logic_list_int_and_list_int():
     """
     Feature: simple expression

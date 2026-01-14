@@ -34,7 +34,7 @@ class Net(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_compare_bool_vs_bool():
     """
     Feature: simple expression
@@ -60,7 +60,7 @@ def test_compare_bool_vs_int():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 def test_compare_tensor_int_vs_tensor_float():
     """
     Feature: simple expression
@@ -75,7 +75,7 @@ def test_compare_tensor_int_vs_tensor_float():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_multiple_compare():
     """
     Feature: Test compare including multiple comparators.
@@ -95,7 +95,7 @@ def test_multiple_compare():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_multiple_compare_2():
     """
     Feature: Test compare including multiple comparators.
@@ -115,7 +115,7 @@ def test_multiple_compare_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_multiple_compare_3():
     """
     Feature: Test compare including multiple comparators.
@@ -135,7 +135,7 @@ def test_multiple_compare_3():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_multiple_compare_4():
     """
     Feature: Test compare including multiple comparators.

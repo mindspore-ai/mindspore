@@ -165,7 +165,8 @@ def swft_trans_bmm_trans_net(b, m, k, n, transpose_b=False):
     assert res, "TransposeBatchMatmulTranspose compare fail."
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=114.0)
 @pytest.mark.parametrize('b0', [1, 2])
 @pytest.mark.parametrize('b1', [1, 4])
 @pytest.mark.parametrize('mstype', [ms.float16, ms.bfloat16])
@@ -179,7 +180,8 @@ def test_transpose_batch_matmul_transpose_with_b0_b1(b0, b1, mstype):
     trans_bmm_trans_net(b0, b1, 510, 510, 510, mstype)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=100.0)
 @pytest.mark.parametrize('b1', [2, 3])
 @pytest.mark.parametrize('mstype', [ms.float16, ms.bfloat16])
 def test_transpose_batch_matmul_transpose_with_b1(b1, mstype):
@@ -232,7 +234,8 @@ def mint_trans_bmm_trans_net(b0, b1, m, k, n, transpose_b=False):
     assert res, "TransposeBatchMatmulTranspose (mint) compare fail."
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=108.00)
 def test_transpose_batch_matmul_transpose_mint():
     """
     Feature: test mint transpose + matmul fusion into TransposeBatchMatmulTranspose
@@ -244,7 +247,8 @@ def test_transpose_batch_matmul_transpose_mint():
     mint_trans_bmm_trans_net(2, 32, 32, 512, 128, True)
 
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=106.00)
 def test_transpose_batch_matmul_transpose_swft():
     """
     Feature: test transpose operator in with swft kernels

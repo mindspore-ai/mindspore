@@ -63,7 +63,7 @@ class BackwardNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_forward():
     """
     Feature: Control flow
@@ -81,7 +81,7 @@ def test_forward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_backward():
     """
     Feature: Control flow
@@ -133,7 +133,7 @@ class BackwardNetNoAssign(nn.Cell):
 
 # This test case has a problem of evaluator endless loop.
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_backward_no_assign():
     """
     Feature: Control flow

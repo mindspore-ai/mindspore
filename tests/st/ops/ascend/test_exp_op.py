@@ -32,7 +32,8 @@ def test_exp_tensor_api(ms_type):
     assert np.allclose(output, expected, rtol=0.004, atol=0.004)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_exp_tensor_bf16_api():
     """
     Feature: Test exp forward tensor api.

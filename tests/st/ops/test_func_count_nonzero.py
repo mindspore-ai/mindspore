@@ -48,7 +48,7 @@ def set_mode(mode):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=2048.01
 )
 @pytest.mark.parametrize("context_mode", ["PYNATIVE_MODE", "GRAPH_MODE"])
 def test_mint_count_nonzero_normal(context_mode):
@@ -71,7 +71,7 @@ def test_mint_count_nonzero_normal(context_mode):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=1.00
 )
 def test_mint_count_nonzero_forward_dynamic_shape():
     """

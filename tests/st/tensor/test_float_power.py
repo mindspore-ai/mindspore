@@ -33,7 +33,7 @@ def float_power_func(x, exp):
                       'platform_ascend', 'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_float_power_tensor(context_mode):
@@ -56,7 +56,7 @@ def test_float_power_tensor(context_mode):
                       'platform_ascend', 'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_float_power_scalar(context_mode):

@@ -25,7 +25,8 @@ import numpy as np
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_high_control_while():
     """
     Feature: High-order differential function.
@@ -36,7 +37,7 @@ def test_high_control_while():
     class Net(Cell):
         def construct(self, x):
             while x < 10:
-                x = (x * 2)
+                x = x * 2
             return x
 
     net = Net()
@@ -47,7 +48,8 @@ def test_high_control_while():
     assert order_grad == 0.0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_high_control_for_while():
     """
     Feature: High-order differential function.
@@ -60,18 +62,18 @@ def test_high_control_for_while():
             for _ in [2]:
                 for _ in [2]:
                     while x > 1:
-                        x = (x / 3)
-                        x = (x / 2)
+                        x = x / 3
+                        x = x / 2
                 for _ in [2]:
-                    x = (x / 1)
-                    x = (x + 1)
+                    x = x / 1
+                    x = x + 1
             for _ in [3]:
                 for _ in [4]:
-                    x = (x / 1)
-                    x = (x + 3)
+                    x = x / 1
+                    x = x + 3
                 for _ in [5]:
-                    x = (x / 3)
-                    x = (x / 2)
+                    x = x / 3
+                    x = x / 2
             return x
 
     net = Net()
@@ -148,7 +150,8 @@ def test_high_control_for_complex():
     assert sgrad == 0.0
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_partial_graph_not_use():
     """
     Feature: High-order grad.

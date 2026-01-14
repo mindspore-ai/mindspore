@@ -21,7 +21,8 @@ import numpy as np
 from tests.st.backend.ms_backend.common.backend_graph import BackendGraph
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_switch_inline_in_subgraph():
     """
     Feature: Test switch inline with other call node.

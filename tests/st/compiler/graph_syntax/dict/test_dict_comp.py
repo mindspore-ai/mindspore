@@ -22,7 +22,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_dict_generated_from_list():
     """
     Feature: dict comp.
@@ -58,7 +58,7 @@ def test_dict_generated_from_dict():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_dictcomp_with_multiple_generator():
     """
     Feature: dict comp.

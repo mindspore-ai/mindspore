@@ -34,7 +34,7 @@ def minimum_grad_vmap_func(x1, x2, grads):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 @test_utils.run_test_with_On
@@ -55,7 +55,7 @@ def test_minimum_grad_op_forward(context_mode, data_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 @test_utils.run_test_with_On
@@ -76,7 +76,7 @@ def test_minimum_grad_op_vmap(context_mode, data_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_minimum_grad_op_dynamic_shape(context_mode):

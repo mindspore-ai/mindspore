@@ -29,7 +29,7 @@ jit_config_lax = ms.JitConfig(jit_syntax_level="LAX")
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_dict_in_cell():
     """
     Feature: JIT Fallback
@@ -54,7 +54,7 @@ def test_dict_in_cell():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_dict_in_function():
     """
     Feature: JIT Fallback

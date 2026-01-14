@@ -35,7 +35,8 @@ class PromptFlashAttention(nn.Cell):
                         input_layout=input_layout, num_key_value_heads=num_key_value_heads, sparse_mode=sparse_mode)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=30.0)
 def test_prompt_flash_attention_bsh_fwd():
     """
     Feature: test PromptFlashAttention forward in Graph modes.
@@ -59,7 +60,8 @@ def test_prompt_flash_attention_bsh_fwd():
     assert attention_out.shape == (B, S, Q_H)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=46.0)
 def test_prompt_flash_attention_bnsd_fwd():
     """
     Feature: test PromptFlashAttention forward in Graph modes.
@@ -82,7 +84,8 @@ def test_prompt_flash_attention_bnsd_fwd():
     assert attention_out.shape == (B, Q_N, S, D)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 def test_prompt_flash_attention_bnsd_mod2_fwd():
     """
     Feature: test PromptFlashAttention forward in Graph modes.

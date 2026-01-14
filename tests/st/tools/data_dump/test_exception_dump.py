@@ -68,7 +68,7 @@ def run_exception_heterogeneous_net():
     return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_exception_dump():
     """
     Feature: Test exception dump.
@@ -95,7 +95,7 @@ def test_exception_dump():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_exception_heterogeneous_dump():
     """
     Feature: Test exception dump in heterogeneous scenarios.
@@ -134,7 +134,7 @@ def test_exception_heterogeneous_dump():
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_lite_exception_dump():
     """
     Feature: Test lite exception dump.

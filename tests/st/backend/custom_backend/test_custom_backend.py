@@ -31,7 +31,8 @@ def get_ge_backend_path(file_name):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01
+          )
 def test_custom_backend_build_and_registration():
     """
     Feature: test custom backend file existence and registration
@@ -57,7 +58,7 @@ def test_custom_backend_build_and_registration():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_custom_backend_run():
     """
     Feature: test custom backend build and run
@@ -109,7 +110,7 @@ def test_different_backend_run():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_different_custom_backend_run():
     """
     Feature: test custom backend build and run

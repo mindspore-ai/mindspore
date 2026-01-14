@@ -152,7 +152,8 @@ def np_quant_int4_pergroup_data_gen(channel_in, channel_out, group_num):
     return np_quant_fp16_data, np_quant_int4_data, antiquant_scale, antiquant_offset
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=52.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_weight_quant_1p(mode):
     """
@@ -188,7 +189,8 @@ def test_ms_int4_weight_quant_1p(mode):
     np.testing.assert_allclose(fact, expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=52.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_weight_quant_perchannel_1p(mode):
     """
@@ -223,7 +225,8 @@ def test_ms_int4_weight_quant_perchannel_1p(mode):
     np.testing.assert_allclose(fact, expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=52.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_ms_int4_ckpt_save_and_load(mode):
     """
@@ -268,7 +271,8 @@ def test_ms_int4_ckpt_save_and_load(mode):
     np.testing.assert_equal(expect, fact)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=68.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK'])
 def test_ms_int4_mindir_save_and_load(mode):
     """

@@ -99,6 +99,7 @@ def mint_nn_linear_binary_case1(input_binary_data=None, output_binary_data=None,
     level_mark="level1",
     card_mark="onecard",
     essential_mark="essential",
+    mem_peak=0.01
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_mint_nn_linear_binary_cases_910a(mode):
@@ -136,6 +137,7 @@ def linear_nn_functional_backward_func(input_x, weight, bias):
     level_mark="level1",
     card_mark="onecard",
     essential_mark="essential",
+    mem_peak=0.01
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize("shape", [[(2, 0), (0, 0)], [(2, 0), (2, 0)], [(0, 2), (0, 2)]])

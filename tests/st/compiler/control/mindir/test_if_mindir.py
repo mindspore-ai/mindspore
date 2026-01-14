@@ -117,7 +117,7 @@ class SingleIfNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_export_lenet_grad_mindir():
     """
     Feature: Control flow
@@ -136,7 +136,7 @@ def test_export_lenet_grad_mindir():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_load_mindir_and_run():
     """
     Feature: Control flow
@@ -162,7 +162,7 @@ def test_load_mindir_and_run():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_single_if():
     """
     Feature: Control flow

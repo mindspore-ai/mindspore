@@ -35,7 +35,7 @@ class SingleWhileNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_single_while():
     """
     Feature: Control flow
@@ -64,7 +64,7 @@ def test_single_while():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_jit_function_while():
     """
     Features: Control flow.
@@ -109,7 +109,7 @@ class SingleWhileInlineNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_single_while_inline_export():
     """
     Feature: Control flow
@@ -129,7 +129,7 @@ def test_single_while_inline_export():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_single_while_inline_load():
     """
     Feature: Control flow
@@ -150,7 +150,7 @@ def test_single_while_inline_load():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_single_while_inline():
     """
     Feature: Control flow

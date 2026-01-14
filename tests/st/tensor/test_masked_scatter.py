@@ -56,7 +56,7 @@ def test_tensor_masked_scatter(mode):
     assert np.allclose(output.asnumpy(), expect_output.asnumpy())
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_tensor_masked_scatter_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.

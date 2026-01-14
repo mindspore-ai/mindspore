@@ -63,7 +63,7 @@ class Net6(nn.Cell):
                       'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_chunk_pyboost(mode):
     """
@@ -148,7 +148,7 @@ class Net9(nn.Cell):
                       'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_chunk_python(mode):
     """

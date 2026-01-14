@@ -45,7 +45,7 @@ class NetSoftplusGradGrad(nn.Cell):
         return backward_net(grad, x, dout)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize("data_type", [np.float32])
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_softplus_grad_grad(data_type, mode):

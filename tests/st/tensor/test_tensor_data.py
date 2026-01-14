@@ -136,7 +136,7 @@ def test_tensor_data_setter_with_assign():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_tensor_data():
     """
     Feature: Tensor.data

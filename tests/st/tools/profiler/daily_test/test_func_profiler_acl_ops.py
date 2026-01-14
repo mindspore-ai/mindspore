@@ -20,7 +20,7 @@ from tests.mark_utils import arg_mark
 from tests.st.tools.profiler.daily_test.profiler_check import MSProfilerChecker
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_func_profiler_env_acl_unique_ops_01():
     """
     Feature: Profiler ACL Operations

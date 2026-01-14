@@ -38,7 +38,7 @@ def test_fallback_int():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_float():
     """
     Feature: JIT Fallback
@@ -55,7 +55,7 @@ def test_fallback_float():
 
 @pytest.mark.skip(reason="ScalarToRawMemory memcpy failed.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_int_asnumpy():
     """
     Feature: JIT Fallback

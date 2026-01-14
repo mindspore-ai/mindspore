@@ -436,7 +436,8 @@ def get_local_platform():
     return device_name
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 @pytest.mark.no_taskset
 def test_ops_group_case_ascend910b_level0():
     """
@@ -447,7 +448,8 @@ def test_ops_group_case_ascend910b_level0():
     ops_group_cases_process("ascend910b", "level0", "ops", max_task_num_per_process=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 @pytest.mark.no_taskset
 def test_ops_group_case_ascend910b_level1():
     """
@@ -463,7 +465,7 @@ def test_ops_group_case_ascend910b_level1():
                       'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.no_taskset
 def test_binary_op_group_case_level0():
     """
@@ -480,7 +482,7 @@ def test_binary_op_group_case_level0():
                       'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.no_taskset
 def test_binary_op_group_case_level1():
     """
@@ -497,7 +499,7 @@ def test_binary_op_group_case_level1():
                       'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.no_taskset
 def test_unary_op_group_case_level0():
     """
@@ -514,7 +516,7 @@ def test_unary_op_group_case_level0():
                       'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.no_taskset
 def test_reduction_op_group_case_level0():
     """
@@ -531,7 +533,7 @@ def test_reduction_op_group_case_level0():
                       'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.no_taskset
 def test_reduction_op_group_case_level1():
     """
@@ -548,7 +550,7 @@ def test_reduction_op_group_case_level1():
                       'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.no_taskset
 def test_other_op_group_case_level0():
     """
@@ -565,7 +567,7 @@ def test_other_op_group_case_level0():
                       'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.no_taskset
 def test_other_op_group_case_level1():
     """

@@ -382,7 +382,7 @@ def test_if_after_for_in_if_numpy():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_fallback_save_load():
     """
     Feature: JIT Fallback
@@ -420,7 +420,7 @@ def test_fallback_save_load():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_fallback_save_load_with_annotation():
     """
     Feature: JIT Fallback
@@ -472,7 +472,7 @@ class TransformerNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_tensor_save_with_side_effect():
     """
     Feature: JIT Fallback

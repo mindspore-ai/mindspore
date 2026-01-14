@@ -56,7 +56,7 @@ def upsample_bilinear2d_backward_func(x, size=None, scale_factor=None):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", ["GRAPH_MODE", "PYNATIVE_MODE"])
 def test_upsample_bilinear_2d(mode):
     """
@@ -100,7 +100,7 @@ def test_upsample_bilinear_2d(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_upsample_bilinear_2d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.

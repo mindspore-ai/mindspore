@@ -38,7 +38,7 @@ class MulRelu(Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_heterogeneous_default_ascend_prim_cpu():
     """
     Feature: PyNative heterogeneous.
@@ -58,7 +58,7 @@ def test_heterogeneous_default_ascend_prim_cpu():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_heterogeneous_default_cpu_prim_ascend():
     """
     Feature: PyNative heterogeneous.

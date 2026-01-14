@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
+""" test_graph_fallback_backend.py """
 from mindspore import Tensor, context, jit, ops, Parameter
 from mindspore.ops.operations._sequence_ops import SequenceAddN
 from tests.mark_utils import arg_mark
@@ -107,7 +107,8 @@ def test_fallback_return_tuple():
     assert ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_fallback_if():
     """
     Feature: Backend support any type.
@@ -165,7 +166,8 @@ def test_fallback_while():
     assert ret2
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_fallback_input_value_node():
     """
     Feature: Backend support any type.

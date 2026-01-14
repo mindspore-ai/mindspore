@@ -29,7 +29,8 @@ class BatchNormElemtGradNet(Cell):
         return self.batch_norm_reduce_grad(dout, input_x, mean_param, invstd_param, weight, inputG, weightG, biasG)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_batch_norm_elemt_fwd(mode):
     """

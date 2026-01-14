@@ -320,7 +320,8 @@ class MaxPool(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_custom_dense():
     """
     Feature: Test Dynamic Dense and its backward. The input shape is dynamic.
@@ -335,7 +336,8 @@ def test_dynamic_custom_dense():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_batchnorm1d():
     """
     Feature: Test Dynamic batchnorm1d and its backward. The input shape is dynamic.
@@ -349,7 +351,8 @@ def test_dynamic_batchnorm1d():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_dynamic_batchnorm1d_single_op():
     """
     Feature: Test Dynamic batchnorm1d and its backward. The input shape is dynamic.
@@ -363,7 +366,8 @@ def test_dynamic_batchnorm1d_single_op():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_batchnorm1d_single_op_2_unknown_shape():
     """
     Feature: Test Dynamic batchnorm1d and its backward. The input shape is dynamic.
@@ -377,7 +381,8 @@ def test_dynamic_batchnorm1d_single_op_2_unknown_shape():
     comm_func(dynamic_range, input_shape, data_type, net, 64)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_dynamic_positional():
     """
     Feature: Test Dynamic Positional and its backward. The input shape is dynamic.
@@ -417,7 +422,8 @@ def test_dynamic_sort2():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_nms_with_mask():
     """
     Feature: Test Dynamic NMSWithMask and its backward. The input shape is dynamic.
@@ -431,7 +437,8 @@ def test_dynamic_nms_with_mask():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_concat():
     """
     Feature: Test Dynamic Concat and its backward. The input shape is dynamic.
@@ -445,7 +452,8 @@ def test_dynamic_concat():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_stack():
     """
     Feature: Test Dynamic Stack and its backward. The input shape is dynamic.
@@ -459,7 +467,8 @@ def test_dynamic_stack():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_maxpool1():
     """
     Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
@@ -473,7 +482,8 @@ def test_dynamic_maxpool1():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_dynamic_maxpool2():
     """
     Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
@@ -487,7 +497,8 @@ def test_dynamic_maxpool2():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_maxpool3():
     """
     Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.
@@ -501,7 +512,8 @@ def test_dynamic_maxpool3():
     comm_func(dynamic_range, input_shape, data_type, net)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_maxpool4():
     """
     Feature: Test Dynamic maxpool and its backward. The input shape is dynamic.

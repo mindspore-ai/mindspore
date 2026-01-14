@@ -39,7 +39,7 @@ def onehot_vmap_func(indices, depth, on_value, off_value, axis):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.75)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.int32])
 @test_utils.run_test_with_On
@@ -60,7 +60,7 @@ def test_onehot_op_forward(context_mode, data_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_onehot_op_forward_depth_tensor(context_mode):
@@ -81,7 +81,7 @@ def test_onehot_op_forward_depth_tensor(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.int32])
 @test_utils.run_test_with_On
@@ -102,7 +102,7 @@ def test_onehot_op_backward(context_mode, data_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.int32])
 @test_utils.run_test_with_On

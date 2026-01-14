@@ -69,7 +69,8 @@ def load_model(model, epoch, dataset, dataset_sink_mode=True, asymc_save=False, 
     model.train(epoch=epoch, train_dataset=dataset, dataset_sink_mode=dataset_sink_mode, sink_size=sink_size)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 def test_compiler_while_op_o2():
     """
     Feature: Runtime tuple output to make tuple.

@@ -470,7 +470,7 @@ class Block(Cell):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=76.01)
 @pytest.mark.parametrize("use_reentrant, output_recompute", [
     (True, True),
     (True, False),
@@ -529,7 +529,7 @@ class OuterBlock(Cell):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=74.01)
 @pytest.mark.parametrize("use_reentrant", [
     True,
     False
@@ -915,7 +915,7 @@ def test_recompute_with_jit_inner_cell(use_reentrant):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=14.01)
 def test_custom_function_tensor_ref_count():
     """
     Feature: Recompute function
@@ -1000,7 +1000,7 @@ def test_net_normal_recompute_function_with_side_effect():
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=74.01)
 def test_net_multi_recompute_function():
     """
     Feature: Recompute function with side effect forward function
@@ -1137,7 +1137,7 @@ def test_net_output_recompute_function_ops():
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=258.01)
 def test_net_output_recompute():
     """
     Feature: Recompute function

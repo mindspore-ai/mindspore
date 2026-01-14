@@ -54,7 +54,7 @@ def exp2_backward_func(x):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=1024.01
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
@@ -84,7 +84,7 @@ def test_ops_exp2_normal(context_mode):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=1024.01
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
@@ -114,7 +114,7 @@ def test_ops_exp2_dtype(context_mode):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=2048.01
 )
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE])
 def test_exp2_dynamic_shape(mode):

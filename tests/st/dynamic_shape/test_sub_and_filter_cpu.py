@@ -35,7 +35,8 @@ class Net(nn.Cell):
         return self.sub_and_filter(x, self.max_num, self.offset)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_sub_and_filter():
     """
     Feature: Dynamic shape.

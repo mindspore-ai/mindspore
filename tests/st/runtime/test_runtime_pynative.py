@@ -91,7 +91,8 @@ def test_single_op_graph():
 
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=820.00)
 def test_format_trans():
     """
     Feature: test different format between pynative and graph.

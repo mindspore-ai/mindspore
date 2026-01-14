@@ -17,12 +17,12 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore.nn import Cell
 from mindspore import Tensor, Parameter, ParameterTuple, jit
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore import context
 from tests.mark_utils import arg_mark
 
@@ -194,7 +194,7 @@ def test_grad_parameter_input(mode):
 # PyNative run error.
 # Support context.PYNATIVE_MODE later.
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_grad_parameter_as_input_and_fv(mode):
     """
@@ -299,7 +299,8 @@ def test_grad_parameter_as_input_and_fv2(mode):
     assert np.array_equal(a[1][1].asnumpy(), b[1][1].asnumpy())
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_cell_mixed_arguments():
     """
     Feature: Support kwargs for top graph.
@@ -409,7 +410,8 @@ def test_cell_mixed_arguments_with_grad2():
     assert all(out1 == Tensor([1, 1]))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_grad_for_kwargs_with_scalar():
     """
     Feature: Support kwargs for top graph.
@@ -450,7 +452,8 @@ def test_grad_for_kwargs_with_scalar():
     assert outputs[1] == 1
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_jit_mixed_arguments():
     """
     Feature: Support kwargs for top graph.
@@ -468,7 +471,8 @@ def test_jit_mixed_arguments():
     assert func(1, 2, 3, d=Tensor([6])).asnumpy() == [12]
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_cell_as_input():
     """
     Feature: Support all types of input for the top cell.
@@ -645,7 +649,8 @@ def test_empty_tuple_input():
     assert out.shape == (1,)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_cell_as_input_and_used_in_function():
     """
     Feature: Support all types of input for the top cell.

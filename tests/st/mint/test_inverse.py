@@ -45,7 +45,8 @@ def inverse_backward_func(x):
     return input_grad
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_inverse_std(mode):
     """
@@ -70,7 +71,8 @@ def test_inverse_std(mode):
     assert np.allclose(output_grad.asnumpy(), expect_grad, 5e-1, 5e-1)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_inverse_dynamic_shape(mode):
     """

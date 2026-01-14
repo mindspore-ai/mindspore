@@ -164,7 +164,7 @@ def do_test_generate_eod_mask_v2(mode):
                                      bit_pos=0, changed_poses=[0, 1])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.28)
 def test_generate_eod_mask_v2_ge():
     """
     Feature: test op GenerateEodMoaskV2 ge
@@ -174,7 +174,7 @@ def test_generate_eod_mask_v2_ge():
     do_test_generate_eod_mask_v2("GE")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ["KBK", "PYBOOST"])
 def test_generate_eod_mask_v2(mode):
     """

@@ -55,7 +55,8 @@ def test_tensor_sync():
 
 
 @pytest.mark.skip(reason="has not supported")
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_view_inplace_pynative():
     """
     Feature: View Inplace in PyNative mode.

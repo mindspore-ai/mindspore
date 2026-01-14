@@ -324,7 +324,7 @@ def _test_qgated_ffn(m=0, k=0, outn=0, split_into_two=True, silu_index=0, is_dyn
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend310p'],
           level_mark='level0', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=142.01)
 @pytest.mark.parametrize('m', [1])
 @pytest.mark.parametrize('k', [4096])
 def test_gated_ffn_quant2_0(m, k):
@@ -338,7 +338,7 @@ def test_gated_ffn_quant2_0(m, k):
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend310p'],
           level_mark='level0', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=286.01)
 @pytest.mark.parametrize('m', [4096])
 @pytest.mark.parametrize('k', [4096])
 def test_gated_ffn_quant2_1(m, k):
@@ -352,7 +352,7 @@ def test_gated_ffn_quant2_1(m, k):
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend310p'],
           level_mark='level0', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=300.01)
 @pytest.mark.parametrize('m', [1, 4096])
 @pytest.mark.parametrize('k', [4096])
 def test_gated_ffn_split2_float16_310P_0(m, k):

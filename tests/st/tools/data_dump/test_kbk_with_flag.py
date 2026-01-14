@@ -126,7 +126,7 @@ def run_trans_flag(test_name):
         del os.environ['MS_KERNEL_LAUNCH_SKIP']
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 @security_off_wrap
 def test_ascend_kbk_with_flag():
     """

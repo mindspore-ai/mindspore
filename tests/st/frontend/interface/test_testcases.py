@@ -25,7 +25,7 @@ from .data_format.test_sgd_3d_format import test_sgd_3d_forward_input_3x8x4x12x3
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
 @pytest.mark.parametrize('mode', ["pynative", "KBK", "GE"])
 def test_interface_testcases(mode):
     """

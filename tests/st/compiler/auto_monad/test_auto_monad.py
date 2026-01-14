@@ -544,7 +544,7 @@ def test_if():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_while():
     """
     Feature: Auto monad feature.
@@ -800,7 +800,7 @@ def test_if_lambda():
         def construct(self, x, y):
             out = x
             if x < y:
-                x2 = (lambda a: a + a)
+                x2 = lambda a: a + a
                 out = x2(self.para)
                 out = out + y
             return out
@@ -814,7 +814,7 @@ def test_if_lambda():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_multi_assign():
     """
     Feature: Auto monad feature.
@@ -845,7 +845,7 @@ def test_multi_assign():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_multi_assign_addn():
     """
     Feature: Auto monad feature.
@@ -1064,7 +1064,7 @@ def test_unpack_call():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_tuple_of_tuple():
     """
     Feature: Auto monad feature.
@@ -1138,7 +1138,7 @@ def test_write_read_write():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_variable_from_outer_graph():
     """
     Feature: Auto monad feature.
@@ -1374,7 +1374,7 @@ class AssignNet(Cell):
 
 @security_off_wrap
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_auto_mixed_precision_train_1(pynative_save_graphs):
     """
     Feature: Auto monad feature.
@@ -1474,7 +1474,7 @@ def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
 
 @security_off_wrap
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
     """
     Feature: Auto monad feature.
@@ -1485,6 +1485,7 @@ def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
     input_x = Tensor(
         np.random.randint(2, size=(1, 3, 2, 2)).astype((np.float32)))
     label = Tensor(np.zeros([1, 3]).astype(np.float32))
+    cast_num = 77
     if ms.context.get_context("device_target") == "Ascend":
         cast_num = 77
     if ms.context.get_context("device_target") == "GPU":
@@ -1494,7 +1495,7 @@ def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_if_cast():
     """
     Feature: Auto monad feature.
@@ -1527,7 +1528,7 @@ def test_if_cast():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 @test_utils.run_test_with_On
 def test_while_forward():
     """
@@ -1559,7 +1560,7 @@ def test_while_forward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_multi_add_assign():
     """
     Feature: Auto monad feature.
@@ -1648,7 +1649,8 @@ def test_multi_abs_add_assign():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_print_assign_print():
     """
     Feature: Auto Monad
@@ -1695,7 +1697,8 @@ def test_print_assign_print():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_print_assign_print_for_tensor():
     """
     Feature: Auto Monad
@@ -1795,7 +1798,8 @@ def test_return_none_with_side_effect():
     assert res == 4
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_return_none_with_side_effect_mutil_func():
     """
     Feature: Support None.
@@ -1830,7 +1834,7 @@ def test_return_none_with_side_effect_mutil_func():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_bprop_print_func():
     """
     Feature: Support side effect node in bprop.
@@ -1877,7 +1881,8 @@ def test_bprop_print_func():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_bprop_assign_func():
     """
     Feature: Support side effect node in bprop.
@@ -1940,7 +1945,8 @@ def test_assign_func():
     out = Net()(x, y)
     assert out == 6
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_side_effect_warning():
     """
     Feature: Support side effect.
@@ -1953,8 +1959,7 @@ def test_side_effect_warning():
         if os.path.exists(log_file_name):
             os.remove(log_file_name)
         assert not os.path.exists(log_file_name)
-
-        cmd_first = ("export GLOG_v=2; pytest -sv test_auto_monad.py::test_assign_func > " + log_file_name + " 2>&1")
+        cmd_first = "export GLOG_v=2; pytest -sv test_auto_monad.py::test_assign_func > " + log_file_name + " 2>&1"
         subprocess.check_output(cmd_first, shell=True)
         assert os.path.exists(log_file_name)
         with open(log_file_name, "r", encoding='utf-8') as f_first:

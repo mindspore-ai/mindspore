@@ -97,7 +97,7 @@ def matmul(m, k, n, trans_a=False, trans_b=False, with_bias=False,
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend310p'],
-          level_mark='level0', card_mark='onecard', essential_mark='unessential')
+          level_mark='level0', card_mark='onecard', essential_mark='unessential', mem_peak=110.00)
 @pytest.mark.parametrize('trans_b', [False, True])
 @pytest.mark.parametrize('mstype', [ms.float16])
 def test_matmul_1024_1024_1024_nz_input_fp16(trans_b, mstype):
@@ -111,7 +111,7 @@ def test_matmul_1024_1024_1024_nz_input_fp16(trans_b, mstype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend310p'],
-          level_mark='level0', card_mark='onecard', essential_mark='unessential')
+          level_mark='level0', card_mark='onecard', essential_mark='unessential', mem_peak=110.00)
 @pytest.mark.parametrize('trans_b', [False, True])
 @pytest.mark.parametrize('mstype', [ms.float16])
 def test_matmul_1024_1234_1234_nz_input_unaligned_k_n_fp16(trans_b, mstype):
@@ -216,7 +216,7 @@ def matmul_asd(m, k, n, trans_a=False, trans_b=False, with_bias=False, mstype=ms
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=110.00)
 @pytest.mark.parametrize('trans_b', [False, True])
 @pytest.mark.parametrize('mstype', [ms.float16, ms.bfloat16])
 def test_matmul_1024_1024_1024(enable_asd_env_fixture, trans_b, mstype):
@@ -229,7 +229,7 @@ def test_matmul_1024_1024_1024(enable_asd_env_fixture, trans_b, mstype):
 
 
 @arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=110.00)
 @pytest.mark.parametrize('trans_b', [False, True])
 @pytest.mark.parametrize('mstype', [ms.float16])
 def test_matmul_1024_1024_1024_310p(enable_asd_env_fixture, trans_b, mstype):

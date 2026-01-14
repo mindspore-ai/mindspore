@@ -224,7 +224,7 @@ def argmaxwithvalue_input():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1025.77)
 def test_layernorm_input_ascend():
     context.set_context(device_target="Ascend")
     layernorm_input()
@@ -233,7 +233,7 @@ def test_layernorm_input_ascend():
 @arg_mark(plat_marks=['platform_gpu'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_layernorm_input_gpu():
     context.set_context(device_target="GPU")
     layernorm_input()
@@ -242,7 +242,7 @@ def test_layernorm_input_gpu():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2052.01)
 def test_argmaxwithvalue_input_ascend():
     context.set_context(device_target="Ascend")
     argmaxwithvalue_input()
@@ -251,7 +251,7 @@ def test_argmaxwithvalue_input_ascend():
 @arg_mark(plat_marks=['platform_gpu'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_argmaxwithvalue_input_gpu():
     context.set_context(device_target="GPU")
     argmaxwithvalue_input()

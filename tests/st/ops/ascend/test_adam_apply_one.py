@@ -83,7 +83,8 @@ def compute_func(ms_net, np_net, is_dyn=False):
     assert np.all(out2.asnumpy() == np2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.02)
 def test_adam_apply_one_dyn():
     """
     Feature: Test Dynamic AdamApplyOne.
@@ -95,7 +96,8 @@ def test_adam_apply_one_dyn():
     compute_func(ms_net, np_net, True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.05)
 def test_adam_apply_one():
     """
     Feature: Test AdamApplyOne.

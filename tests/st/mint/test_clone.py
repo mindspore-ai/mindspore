@@ -42,7 +42,8 @@ def clone_backward_func(x):
     return ops.grad(clone_forward_func, (0,))(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_clone_std(mode):
     """
@@ -65,7 +66,8 @@ def test_clone_std(mode):
     np.allclose(output_grad.asnumpy(), expect_grad, rtol=1e-5, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_clone_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.

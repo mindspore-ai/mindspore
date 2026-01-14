@@ -23,7 +23,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_tuple_getitem_with_constant_bool_index():
     """
     Feature: sequence getitem with bool index
@@ -41,7 +41,7 @@ def test_tuple_getitem_with_constant_bool_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 def test_tuple_getitem_with_constant_bool_index_2():
     """
     Feature: sequence getitem with bool index
@@ -59,7 +59,7 @@ def test_tuple_getitem_with_constant_bool_index_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_tuple_getitem_with_variable_bool_index():
     """
     Feature: sequence getitem with bool index
@@ -81,7 +81,7 @@ def test_tuple_getitem_with_variable_bool_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_tuple_getitem_with_variable_bool_index_2():
     """
     Feature: sequence getitem with bool index
@@ -99,7 +99,7 @@ def test_tuple_getitem_with_variable_bool_index_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_tuple_getitem_with_variable_bool_index_3():
     """
     Feature: sequence getitem with bool index
@@ -117,7 +117,7 @@ def test_tuple_getitem_with_variable_bool_index_3():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_list_getitem_with_constant_bool_index():
     """
     Feature: sequence getitem with bool index
@@ -135,7 +135,7 @@ def test_list_getitem_with_constant_bool_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_list_getitem_with_constant_bool_index_2():
     """
     Feature: sequence getitem with bool index
@@ -153,7 +153,7 @@ def test_list_getitem_with_constant_bool_index_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_list_getitem_with_variable_bool_index():
     """
     Feature: sequence getitem with bool index
@@ -175,7 +175,7 @@ def test_list_getitem_with_variable_bool_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_list_getitem_with_variable_bool_index_2():
     """
     Feature: sequence getitem with bool index

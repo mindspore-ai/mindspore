@@ -26,7 +26,8 @@ from mindspore.ops import operations as P
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_assignment_fallback_1():
     """
     Feature: Support augassign inplace.
@@ -59,7 +60,8 @@ def test_assignment_fallback_1():
         assert np.allclose(pynative_out[i].asnumpy(), jit_out[i].asnumpy(), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_assignment_fallback_2():
     """
     Feature: Support augassign inplace.
@@ -118,7 +120,8 @@ def test_assignment_fallback_2():
     assert "Unsupported output: tuple output with dynamic len is not supported in JIT fallback" in str(raise_info.value)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_assignment_fallback_3():
     """
     Feature: Support augassign inplace.

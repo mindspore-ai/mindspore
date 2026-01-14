@@ -33,7 +33,7 @@ def inplace_sub_forward_func(x, y, alpha=1):
     return Net()(x, y, alpha)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.0)
 def test_inplace_sub_std():
     """
     Feature: standard forward, backward features.
@@ -57,7 +57,7 @@ def test_inplace_sub_std():
     np.allclose(output_z.asnumpy(), expect_z, rtol=1e-5, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
 def test_sub__dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.
@@ -79,7 +79,7 @@ def test_sub__dynamic_shape():
             case_config={'all_dim_zero': True})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2.0)
 def test_sub__bfloat16():
     """
     Feature: test sub_ functional API.
@@ -97,7 +97,7 @@ def test_sub__bfloat16():
     np.allclose(output.float().asnumpy(), expect_y, 0.004, 0.004, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2.0)
 def test_sub__bool():
     """
     Feature: test sub_ functional API.
@@ -120,7 +120,7 @@ def generate_expect_backward_output(x, y, alpha):
     return x_grad, y_grad
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='essential')
+          level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 # @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_inplace_sub_backward():
     """
@@ -144,7 +144,7 @@ def test_inplace_sub_backward():
     np.testing.assert_allclose(output_other_grad.asnumpy(), expect_y_grad.asnumpy(), rtol=1e-5)
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='essential')
+          level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2.0)
 # @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_inplace_sub_backward_other_scalar():
     """

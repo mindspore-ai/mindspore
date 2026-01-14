@@ -22,7 +22,8 @@ import os
 
 os.environ['DEVICE_ID'] = '0'
 context.set_context(mode=context.GRAPH_MODE, device_target='Ascend', device_id=0)
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_remote_ops_copy_to_device():
     """
     Feature: Device memory base operator
@@ -39,7 +40,8 @@ def test_remote_ops_copy_to_device():
     assert np.all(ret.asnumpy() == np.array((1, 2, 3, 4)))
     assert ret.device == "Ascend:0"
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_remote_ops_copy_to_device_and_element_wise():
     """
     Feature: Device memory base operator
@@ -59,7 +61,8 @@ def test_remote_ops_copy_to_device_and_element_wise():
     ret = foo(input_x,input_y)
     assert np.all(ret.asnumpy() == np.array((4, 10, 18)))
     assert ret.device == "Ascend:0"
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_remote_ops_copy_to_device_and_squeeze():
     """
     Feature: Device memory base operator
@@ -78,7 +81,8 @@ def test_remote_ops_copy_to_device_and_squeeze():
     assert np.all(ret.asnumpy() == np.array([[1, 1],[1, 1],[1, 1]]))
     assert ret.device == "Ascend:0"
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_remote_ops_copy_to_device_and_broadcast_to():
     """
     Feature: Device memory base operator
@@ -98,7 +102,8 @@ def test_remote_ops_copy_to_device_and_broadcast_to():
     assert np.all(ret.asnumpy() == np.array([[1, 2, 3],[1, 2, 3]]))
     assert ret.device == "Ascend:0"
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_remote_ops_copy_to_device_and_smooth_l1_loss():
     """
     Feature: Device memory base operator
@@ -118,7 +123,8 @@ def test_remote_ops_copy_to_device_and_smooth_l1_loss():
     assert np.all(ret.asnumpy() == np.array([0, 0, 0.5]))
     assert ret.device == "Ascend:0"
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_remote_ops_copy_to_device_and_add():
     """
     Feature: Device memory base operator

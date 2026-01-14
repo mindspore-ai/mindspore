@@ -41,7 +41,8 @@ def fmod_backward_func(x, y):
     return grad_fn(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", ['pynative', 'KBK'])
 def test_fmod_forward_backward(mode):
     """
@@ -81,7 +82,8 @@ def test_fmod_forward_backward(mode):
     np.testing.assert_allclose(grad_i[0].asnumpy(), expect_backward_i, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_fmod_dynamic_shape_scalar():
     """
     Feature: Test fmod op.
@@ -97,7 +99,8 @@ def test_fmod_dynamic_shape_scalar():
     TEST_OP(fmod_forward_func, [[x, y], [x2, y2]], disable_mode=['GRAPH_MODE_GE'])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_fmod_dynamic_shape_tensor():
     """
     Feature: Test fmod op.

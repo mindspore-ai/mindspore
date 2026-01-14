@@ -22,7 +22,8 @@ from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_data_formata_dim_map():
     """
     Feature: Test the dynamic shape case of operator DataFormatDimMap.

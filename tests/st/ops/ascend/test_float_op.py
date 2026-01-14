@@ -36,7 +36,8 @@ def test_float_tensor_api():
     assert dtype_op(output) == ms.float32
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_float_tensor_api_modes():
     """
     Feature: test float tensor API for different modes.

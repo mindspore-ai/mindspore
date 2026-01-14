@@ -28,7 +28,7 @@ from model_zoo import CustomAICpuNet
 from file_check import FileChecker
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_collect_custom_aicpu():
     """
     Feature: Profiling can collect custom aicpu operators

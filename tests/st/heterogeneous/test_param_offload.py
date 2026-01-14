@@ -58,7 +58,8 @@ class TestNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
+        essential_mark="essential", mem_peak=4.00)
 def test_param_offload():
     '''
     Feature: Mem offload
@@ -93,7 +94,8 @@ def test_param_offload():
     del os.environ['MS_ALLOC_CONF']
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="essential", mem_peak=3072.01)
 def test_param_offload_between_nets():
     '''
     Feature: Parameter offload

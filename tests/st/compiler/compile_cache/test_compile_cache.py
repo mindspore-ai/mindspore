@@ -273,7 +273,8 @@ def run_network_once_with_force_use_compile_cache(file_name, cache_path, log_fil
     shutil.rmtree(cache_path)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_compile_cache_load_weights():
     """
     Feature: Compile cache.
@@ -284,7 +285,8 @@ def test_compile_cache_load_weights():
         "run_network_with_weights.py", "./weight", "weight_first.txt", "weight_second.txt")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_compile_cache_lenet():
     """
     Feature: Compile cache.
@@ -319,7 +321,8 @@ def test_compile_cache_net_with_control_flow():
                                 "control_net_second.txt")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_auto_detect():
     """
     Feature: Compile cache.
@@ -331,7 +334,8 @@ def test_compile_cache_auto_detect():
 
 
 @pytest.mark.skip
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_compile_cache_lenet_change_dir():
     """
     Feature: Compile cache.
@@ -350,7 +354,8 @@ def test_compile_cache_lenet_change_dir():
     shutil.rmtree(new_path, ignore_errors=True)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_compile_cache_ms_function():
     """
     Feature: Compile cache.
@@ -361,7 +366,8 @@ def test_compile_cache_ms_function():
                                 "lenet_ms_function_second.txt")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_compile_cache_run_two_cells_once():
     """
     Feature: Compile cache.
@@ -372,7 +378,8 @@ def test_compile_cache_run_two_cells_once():
         "run_lenet_two_cells.py", "./lenet_two_cells", "lenet_two_cells.txt")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_resnet_infer_compile_cache():
     """
     Feature: Support compile cache in inference scenarios.
@@ -383,7 +390,8 @@ def test_resnet_infer_compile_cache():
                                 "resnet_infer_second.txt")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_control_flow_partial_without_inputs():
     """
     Feature: Compile cache.
@@ -396,7 +404,8 @@ def test_compile_cache_control_flow_partial_without_inputs():
                                 "control_flow_partial_without_inputs_second.txt")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_compile_cache_with_inplace_tensor():
     """
     Feature: Compile cache.
@@ -460,7 +469,8 @@ def test_compile_cache_grad_jit_with_custom_bprop():
                                 "compile_cache_custom_bprop_first.txt", "compile_cache_custom_bprop.txt")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_compile_cache_lenet_with_jit():
     """
     Feature: Compile cache.
@@ -471,7 +481,8 @@ def test_compile_cache_lenet_with_jit():
         "run_lenet_with_jit.py", "./lenet_with_jit", "lenet_with_jit_first.txt", "lenet_with_jit_second.txt", False, 2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_high_grad_jit():
     """
     Feature: Compile cache.
@@ -482,7 +493,8 @@ def test_compile_cache_high_grad_jit():
                                 "compile_cache_high_grad_jit_first.txt", "compile_cache_high_grad_jit_second.txt")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_jit_with_weight():
     """
     Feature: Compile cache.
@@ -494,7 +506,8 @@ def test_compile_cache_jit_with_weight():
                                 "compile_cache_jit_net_with_weight_second.txt")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_jit_with_control_flow():
     """
     Feature: Compile cache.

@@ -78,7 +78,8 @@ def get_data(ms_type):
     return res
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.02)
 @pytest.mark.parametrize('ms_type', [mindspore.int32, mindspore.uint32, mindspore.float32])
 def test_net(ms_type):
     """
@@ -94,7 +95,8 @@ def test_net(ms_type):
     assert np.array_equal(out.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.05)
 @pytest.mark.parametrize('ms_type', [mindspore.int32, mindspore.uint32, mindspore.float32])
 def test_gatherd_dynamic(ms_type):
     """
@@ -112,7 +114,8 @@ def test_gatherd_dynamic(ms_type):
     assert np.array_equal(out.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_functional():
     """
     Feature: test GatherD function interface.
@@ -128,7 +131,8 @@ def test_functional():
     assert np.array_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_pynative_tensor():
     """
     Feature: test GatherD tensor interface in pynative case.
@@ -144,7 +148,8 @@ def test_pynative_tensor():
     assert np.array_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_graph_tensor():
     """
     Feature: test GatherD tensor interface in graph case.
@@ -161,7 +166,8 @@ def test_graph_tensor():
     assert np.array_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.75)
 @pytest.mark.parametrize('dtype', [np.int32, np.uint32, np.float32])
 def test_gatherd_vmap(dtype):
     """

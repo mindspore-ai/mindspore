@@ -29,7 +29,7 @@ def randperm_ext_forward_func(n, generator=None, dtype=mstype.int64):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_randperm_ext_forward(mode):

@@ -44,7 +44,7 @@ def view_as_backward_func(x, y):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_view_as_normal0(mode):
     """
@@ -68,7 +68,7 @@ def test_ops_view_as_normal0(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_ops_view_as_dynamic_shape0():
     """
     Feature: test ops.

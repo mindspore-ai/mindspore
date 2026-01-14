@@ -50,7 +50,8 @@ def save_ir(ir_path):
     os.environ['MS_DEV_SAVE_GRAPHS_PATH'] = ir_path
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_gradjit_prune_001():
     """
     Feature: gradjit

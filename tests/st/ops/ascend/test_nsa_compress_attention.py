@@ -438,7 +438,8 @@ def check_topk_in_range(golden_topk_with_n, actual_topk):
     return True
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=158.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
 @pytest.mark.parametrize('use_masks', [True, False])
@@ -542,7 +543,7 @@ def test_nsa_compress_attention_functional_general(context_mode, dtype, use_mask
     plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=158.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_attention_pta_constraints_validation(context_mode):
@@ -641,7 +642,7 @@ def test_nsa_compress_attention_pta_constraints_validation(context_mode):
     plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=158.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_attention_pta_exact_match(context_mode):
@@ -741,7 +742,7 @@ def test_nsa_compress_attention_pta_exact_match(context_mode):
     plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=0.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_attention_inf_inputs_forward_backward(context_mode):
@@ -836,7 +837,7 @@ def test_nsa_compress_attention_inf_inputs_forward_backward(context_mode):
 
 
 @arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1",
-          card_mark="onecard", essential_mark="unessential")
+          card_mark="onecard", essential_mark="unessential", mem_peak=208.0)
 def test_nsa_compress_attention_dynamic_shape_TEST_OP():
     """
     Feature: Dynamic-shape verification via TEST_OP
@@ -892,7 +893,8 @@ def test_nsa_compress_attention_dynamic_shape_TEST_OP():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=52.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
 def test_nsa_compress_attention_no_mask(context_mode, dtype):
@@ -990,6 +992,7 @@ def test_nsa_compress_attention_no_mask(context_mode, dtype):
     level_mark="level1",
     card_mark="onecard",
     essential_mark="unessential",
+    mem_peak=0.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_attention_empty_input_tensor_forward_backward(context_mode):
@@ -1088,6 +1091,7 @@ def test_nsa_compress_attention_empty_input_tensor_forward_backward(context_mode
     level_mark="level1",
     card_mark="onecard",
     essential_mark="unessential",
+    mem_peak=0.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("invalid_param", [
@@ -1157,6 +1161,7 @@ def test_nsa_compress_attention_exception_invalid_parameters(context_mode, inval
     level_mark="level1",
     card_mark="onecard",
     essential_mark="unessential",
+    mem_peak=0.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_attention_exception_dtype_mismatch(context_mode):
@@ -1205,6 +1210,7 @@ def test_nsa_compress_attention_exception_dtype_mismatch(context_mode):
     level_mark="level1",
     card_mark="onecard",
     essential_mark="unessential",
+    mem_peak=0.01
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("invalid_seq_len", [
@@ -1255,7 +1261,7 @@ def test_nsa_compress_attention_exception_invalid_seq_len(context_mode, invalid_
     plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=1.00
 )
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_nsa_compress_attention_exception_shape_mismatch(context_mode):

@@ -118,7 +118,7 @@ def decrypt_func(cipher_file, key):
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_export_lenet_grad_mindir():
     """
     Feature: export LeNet to MindIR file
@@ -139,7 +139,7 @@ def test_export_lenet_grad_mindir():
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_load_mindir_and_run():
     """
     Feature: Load LeNet to MindIR

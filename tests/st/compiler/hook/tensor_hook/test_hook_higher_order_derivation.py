@@ -82,7 +82,8 @@ class Mod(torch.nn.Module):
         return xxpp
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_hook_higher_order_derivation_001(mode):
     """
@@ -120,7 +121,8 @@ def test_hook_higher_order_derivation_001(mode):
                        grad_ms1.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.75)
 def test_first_derivative_wrt_weight_second_wrt_input():
     """
     Feature: Tensor Hook.
@@ -153,7 +155,8 @@ def test_first_derivative_wrt_weight_second_wrt_input():
     np.allclose(first_grad.detach().numpy(), grad_ms1.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.02)
 def test_first_derivative_wrt_input_second_wrt_weight():
     """
     Feature: Tensor Hook.
@@ -213,7 +216,8 @@ class Mod2(torch.nn.Module):
         return xxyy
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.75)
 def test_3rd_order_derivation():
     """
     Feature: Tensor Hook.

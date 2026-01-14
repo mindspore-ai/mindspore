@@ -49,7 +49,7 @@ def test_getattr_tensor_with_wrong_attr():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_getattr_list_with_wrong_attr():
     """
     Feature: Syntax getattr.
@@ -106,7 +106,7 @@ def test_getattr_dict_with_wrong_attr():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_pyexecute_with_scalar_input():
     """
     Feature: Fallback runtime.
@@ -253,7 +253,7 @@ def test_pyexecute_with_func_graph_input():
 
 @pytest.mark.skip('backend not support different type in value tuple')
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_anytype():
     """
     Feature: Fallback runtime.
@@ -289,7 +289,7 @@ class CreateDynTensor(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_dynamic_shape_tensor():
     """
     Feature: Fallback runtime.
@@ -316,7 +316,7 @@ class CreateNotDynTensor(nn.Cell):
 
 @pytest.mark.skip('ops.shape(x) is constant, not mutable.')
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_not_dynamic_shape_tensor():
     """
     Feature: Fallback runtime.
@@ -341,7 +341,7 @@ class CreateDynTensorWithInputDtype(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 def test_dynamic_shape_dtype_tensor():
     """
     Feature: Fallback runtime.
@@ -390,7 +390,7 @@ class MakeTensorWithShapeDtype(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 def test_make_tensor_with_dynamic_shape_dtype():
     """
     Feature: Fallback runtime.
@@ -405,7 +405,7 @@ def test_make_tensor_with_dynamic_shape_dtype():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_gelu():
     """
     Feature: Fallback runtime.
@@ -446,7 +446,7 @@ def test_gelu():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_np_save():
     """
     Feature: Fallback runtime.
@@ -466,7 +466,7 @@ def test_np_save():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_np_save_with_args():
     """
     Feature: Fallback runtime.
@@ -543,7 +543,7 @@ def test_np_save_with_call_kw2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 def test_pyexecute_raise_error_with_dynamic_length_sequence():
     """
     Feature: Fallback runtime.
@@ -572,7 +572,7 @@ def test_pyexecute_raise_error_with_dynamic_length_sequence():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_pyexecute_raise_error_with_dynamic_length_sequence_2():
     """
     Feature: Fallback runtime.
@@ -660,7 +660,8 @@ def test_tensor_func():
     assert result_ms_np.dtype == exp_np.dtype
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_fallback_self_variable_as_func_args():
     """
     Feature: JIT Fallback
@@ -685,7 +686,8 @@ def test_fallback_self_variable_as_func_args():
 
 
 @pytest.mark.skip(reason="ParseCall convert whole script to pyexecute")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_fallback_tensor_with_variable_input():
     """
     Feature: JIT Fallback
@@ -703,7 +705,8 @@ def test_fallback_tensor_with_variable_input():
     os.environ['MS_DEV_JIT_SYNTAX_LEVEL'] = '2'
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_fallback_map_with_variable_input():
     """
     Feature: JIT Fallback

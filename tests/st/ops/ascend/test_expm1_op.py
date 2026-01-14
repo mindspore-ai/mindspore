@@ -32,7 +32,8 @@ def test_expm1_tensor_api():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_expm1_tensor_modes():
     """
     Feature: test expm1 tensor API in PyNative and Graph modes.

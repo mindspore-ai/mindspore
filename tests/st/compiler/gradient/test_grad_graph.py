@@ -688,7 +688,7 @@ def test_value_and_grad_nest_with_weights_graph():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_value_and_grad_nest_with_weights_has_aux_graph():
     """
     Features: Function value_and_grad.

@@ -274,7 +274,8 @@ def test_eye():
                     match_array(actual, expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_eye_ascend():
     """
     Feature: Test ms.numpy.eye on Ascend
@@ -335,8 +336,8 @@ def test_arange():
     match_array(actual, expected, error=6)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_linspace():
     actual = onp.linspace(2.0, 3.0, dtype=onp.float32)
     expected = mnp.linspace(2.0, 3.0).asnumpy()
@@ -390,8 +391,8 @@ def test_linspace():
         match_array(actual, expected.asnumpy(), error=6)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 def test_logspace():
     actual = onp.logspace(2.0, 3.0, dtype=onp.float32)
     expected = mnp.logspace(2.0, 3.0).asnumpy()
@@ -543,8 +544,8 @@ def onp_diagonal(arr):
     return onp.diagonal(arr, offset=2, axis1=-1, axis2=0)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
 def test_diagonal():
     arr = rand_int(3, 5)
     for i in [-1, 0, 2]:
@@ -605,8 +606,8 @@ def test_meshgrid():
             match_all_arrays(mnp_res, onp_res)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_diagflat():
     arrs = [rand_int(2, 3)]
     for arr in arrs:
@@ -614,8 +615,8 @@ def test_diagflat():
             match_res(mnp.diagflat, onp.diagflat, arr, k=i)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_diag():
     arrs = [rand_int(7), rand_int(5, 5), rand_int(3, 8), rand_int(9, 6)]
     for arr in arrs:
@@ -664,8 +665,8 @@ def test_indices():
     run_multi_test(mnp_indices, onp_indices, ())
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_geomspace():
     start = onp.arange(1, 7).reshape(2, 3)
     end = [1000, 2000, 3000]
@@ -689,8 +690,8 @@ def test_geomspace():
                     onp.geomspace(start, end, num=4, axis=i), error=1)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_vander():
     arrs = [rand_int(i + 3) for i in range(3)]
     for i in range(3):
@@ -702,36 +703,36 @@ def test_vander():
         match_all_arrays(mnp_vander, onp_vander, error=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_bartlett():
     for i in [-3, -1, 0, 1, 5, 6, 10, 15]:
         match_all_arrays(mnp.bartlett(i), onp.bartlett(i), error=3)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_blackman():
     for i in [-3, -1, 0, 1, 5, 6, 10, 15]:
         match_all_arrays(mnp.blackman(i), onp.blackman(i), error=3)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level2', card_mark='onecard', essential_mark='unessential')
 def test_hamming():
     for i in [-3, -1, 0, 1, 5, 6, 10, 15]:
         match_all_arrays(mnp.hamming(i), onp.hamming(i), error=3)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level2',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level2', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_hanning():
     for i in [-3, -1, 0, 1, 5, 6, 10, 15]:
         match_all_arrays(mnp.hanning(i), onp.hanning(i), error=3)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_triu_indices():
     m = rand_int().tolist()
     n = rand_int().tolist()
@@ -753,7 +754,7 @@ def test_tril_indices():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_triu_indices_from():
     m = int(rand_int().tolist())
     n = int(rand_int().tolist())
@@ -765,7 +766,7 @@ def test_triu_indices_from():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_tril_indices_from():
     m = int(rand_int().tolist())
     n = int(rand_int().tolist())
@@ -933,7 +934,7 @@ def test_empty_like_exception():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_pad():
     x_np = onp.random.random([2, 3, 4]).astype("float32")
     x_ms = mnp.asarray(x_np.tolist())

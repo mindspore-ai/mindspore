@@ -36,7 +36,8 @@ image_png = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "png.PNG")
 image_gif = os.path.join(TEST_DATA_DATASET_FUNC, "test_cv_image", "gif.gif")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=64.0)
 def test_dvpp_vertical_flip_operation_01():
     """
     Feature: VerticalFlip operation on device
@@ -101,7 +102,8 @@ def test_dvpp_vertical_flip_operation_01():
     assert (out == out2).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_dvpp_vertical_flip_operation_02():
     """
     Feature: VerticalFlip operation on device
@@ -151,7 +153,8 @@ def test_dvpp_vertical_flip_operation_02():
     assert (out == out_4_cv).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_dvpp_vertical_flip_exception_01():
     """
     Feature: VerticalFlip operation on device

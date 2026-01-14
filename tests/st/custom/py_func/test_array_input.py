@@ -103,7 +103,8 @@ class CustomNetListFloat(ms.nn.Cell):
         return py_func_list_float((x, y), z)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_py_func_array():
     """
     Feature: custom operator callback to Python function

@@ -65,7 +65,8 @@ class Net2(nn.Cell):
         return c, a
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=2048.0)
 def test_net():
     """
     Feature: Heter scene support control flow.

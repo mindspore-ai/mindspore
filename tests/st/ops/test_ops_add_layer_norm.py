@@ -91,7 +91,8 @@ def test_add_layer_norm(tensor_type, context_mode, addtion_out):
         np.testing.assert_allclose(output[3].float().asnumpy(), expect[3], rtol=5e-3, atol=5e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=40.0)
 @pytest.mark.parametrize('addtion_out', [True, False])
 def test_add_layer_norm_dynamic_shape(addtion_out):
     """

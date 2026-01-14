@@ -54,7 +54,8 @@ KBK_CHUNK_FORWARD = jit(chunk_forward_func, backend="ms_backend", jit_level="O0"
 KBK_CHUNK_BACKWARD = jit(chunk_backward_func, backend="ms_backend", jit_level="O0")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_chunk_forward_dynamic_shape(context_mode):
     """
@@ -92,7 +93,8 @@ def test_chunk_forward_dynamic_shape(context_mode):
             _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_chunk_forward_dynamic_rank(context_mode):
     """
@@ -112,7 +114,8 @@ def test_chunk_forward_dynamic_rank(context_mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_chunk_backward_dynamic_shape(context_mode):
     """
@@ -138,7 +141,8 @@ def test_chunk_backward_dynamic_shape(context_mode):
     assert np.allclose(out.asnumpy(), expect_output)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 def test_chunk_backward_dynamic_rank(context_mode):
     """
@@ -239,7 +243,7 @@ def chunk_backward(mode, x, chunks, dim, chunk_idx=0):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_chunk_std(mode):
     """
@@ -277,7 +281,7 @@ def test_chunk_std(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [
     np.float16, np.float32, np.float64,
@@ -328,7 +332,7 @@ def test_chunk_dtype_coverage(mode, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('input_shape,chunks,dim', [
     ((12,), 3, 0),  # 1D tensor
@@ -375,7 +379,7 @@ def test_chunk_dimensions(mode, input_shape, chunks, dim):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('special_type',
                          ['inf', 'nan', 'zero', 'large', 'small'])
@@ -414,7 +418,7 @@ def test_chunk_special_values(mode, special_type):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_chunk_empty_tensor(mode):
     """
@@ -450,7 +454,7 @@ def test_chunk_empty_tensor(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_chunk_negative_dim(mode):
     """
@@ -484,7 +488,7 @@ def test_chunk_negative_dim(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_chunk_zero_bias(mode):
     """
@@ -522,7 +526,7 @@ def test_chunk_zero_bias(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_chunk_non_contiguous(mode):
     """
@@ -557,7 +561,7 @@ def test_chunk_non_contiguous(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_chunk_functional_interface(mode):
     """
@@ -589,7 +593,7 @@ def test_chunk_functional_interface(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_chunk_large_tensors(mode):
     """
@@ -628,7 +632,7 @@ def test_chunk_large_tensors(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_chunk_high_dimension(mode):
     """
@@ -667,7 +671,7 @@ def test_chunk_high_dimension(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
 def test_chunk_complex_dtypes(mode, dtype):
@@ -700,7 +704,7 @@ def test_chunk_complex_dtypes(mode, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_chunk_single_chunk(mode):
     """
@@ -737,7 +741,7 @@ def test_chunk_single_chunk(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_chunk_more_chunks_than_size(mode):
     """
@@ -768,7 +772,7 @@ def test_chunk_more_chunks_than_size(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_chunk_inplace_view(mode):
     """
@@ -807,7 +811,7 @@ def test_chunk_inplace_view(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('input_shape,chunks,dim', [
     ((12,), 3, 0),
@@ -854,7 +858,7 @@ def test_chunk_view_multiple_shapes(mode, input_shape, chunks, dim):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_chunk_view_chain(mode):
     """
@@ -892,7 +896,7 @@ def test_chunk_view_chain(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64, np.int32, np.int64])
 def test_chunk_view_dtypes(mode, dtype):

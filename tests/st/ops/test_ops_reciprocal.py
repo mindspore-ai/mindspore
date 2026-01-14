@@ -67,7 +67,8 @@ def reciprocal_vmap_func(x):
     plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential'
+    essential_mark='essential',
+    mem_peak=1024.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_reciprocal_forward(context_mode):
@@ -93,7 +94,8 @@ def test_ops_reciprocal_forward(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential'
+    essential_mark='unessential',
+    mem_peak=1024.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_reciprocal_backward(context_mode):
@@ -119,7 +121,8 @@ def test_ops_reciprocal_backward(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential'
+    essential_mark='essential',
+    mem_peak=1024.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_reciprocal_complex(context_mode):
@@ -149,7 +152,8 @@ def test_ops_reciprocal_complex(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential'
+    essential_mark='unessential',
+    mem_peak=1024.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_reciprocal_vmap(context_mode):
@@ -175,7 +179,8 @@ def test_ops_reciprocal_vmap(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential'
+    essential_mark='unessential',
+    mem_peak=10.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_reciprocal_forward_dynamic_shape(context_mode):
@@ -208,7 +213,8 @@ def test_ops_reciprocal_forward_dynamic_shape(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential'
+    essential_mark='unessential',
+    mem_peak=1.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_reciprocal_forward_dynamic_rank(context_mode):
@@ -241,7 +247,8 @@ def test_ops_reciprocal_forward_dynamic_rank(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential'
+    essential_mark='unessential',
+    mem_peak=1.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_reciprocal_backward_dynamic_shape(context_mode):
@@ -274,7 +281,8 @@ def test_ops_reciprocal_backward_dynamic_shape(context_mode):
     ],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential'
+    essential_mark='unessential',
+    mem_peak=1.00
 )
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_reciprocal_backward_dynamic_rank(context_mode):

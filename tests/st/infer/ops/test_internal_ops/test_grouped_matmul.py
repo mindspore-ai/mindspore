@@ -217,7 +217,8 @@ def generate_random_numbers(m, e):
     return random_numbers
 
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
 @pytest.mark.parametrize('m', [32])
 @pytest.mark.parametrize('k', [32])
 @pytest.mark.parametrize('n', [64])
@@ -235,7 +236,8 @@ def test_gmm_increment(m, k, n, e):
                          trans_b=True, net_phase="increment")
 
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
 @pytest.mark.parametrize('m', [1000])
 @pytest.mark.parametrize('k', [256])
 @pytest.mark.parametrize('n', [528])
@@ -253,7 +255,8 @@ def test_gmm_prefill(m, k, n, e):
                          trans_b=True, net_phase="prefill")
 
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
 @pytest.mark.parametrize('m', [32])
 @pytest.mark.parametrize('k', [64])
 @pytest.mark.parametrize('n', [128])

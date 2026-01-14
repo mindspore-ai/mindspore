@@ -58,7 +58,8 @@ def train(add):
     y = np.random.randn(1, 3, 3, 4).astype(np.float32)
     add(Tensor(x), Tensor(y))
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 def test_dynamic_step_multi_active_kbk_profiler():
     """
     Feature: Dynamic Step Profiler
@@ -126,7 +127,8 @@ def test_dynamic_step_multi_active_kbk_profiler():
         for profiler_log_path in profiler_log_paths:
             FileChecker.check_file_for_keyword(profiler_log_path, "error")
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_step_single_active_kbk_profiler():
     """
     Feature: Dynamic Step Profiler
@@ -192,7 +194,8 @@ def test_dynamic_step_single_active_kbk_profiler():
         for profiler_log_path in profiler_log_paths:
             FileChecker.check_file_for_keyword(profiler_log_path, "error")
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_step_single_active_py_native_profiler():
     """
     Feature: Dynamic Step Profiler
@@ -280,7 +283,8 @@ def test_dynamic_step_single_active_py_native_profiler():
         for profiler_log_path in profiler_log_paths:
             FileChecker.check_file_for_keyword(profiler_log_path, "error")
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_step_single_active_profiler_db():
     """
     Feature: Dynamic Step Profiler

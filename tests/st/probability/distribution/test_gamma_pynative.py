@@ -38,7 +38,8 @@ class GammaMean(nn.Cell):
         return out1, out2, out3, out4, out5
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=3072.0)
 def test_probability_gamma_mean_cdoncentration_rate_rand_2_ndarray():
     concentration = np.random.uniform(0.0001, 100, size=(1024, 512, 7, 7)).astype(np.float32)
     rate = np.random.uniform(0.0001, 100, size=(1024, 512, 7, 7)).astype(np.float32)

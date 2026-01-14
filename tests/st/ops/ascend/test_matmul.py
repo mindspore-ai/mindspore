@@ -51,7 +51,8 @@ def test_net():
     print(output.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_net_bf16(mode):
@@ -69,7 +70,8 @@ def test_net_bf16(mode):
     assert np.allclose(output.float().asnumpy(), except_out, 0.004, 0.004)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.90)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_matmul_tensor_api_modes(mode):
     """
@@ -128,7 +130,8 @@ def do_test_matmul_dtypes(valid_dtypes, is_ge_only=False):
                 _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 def test_matmul_dtypes():
     """
     Feature: Test matmul dtypes.
@@ -138,7 +141,8 @@ def test_matmul_dtypes():
     do_test_matmul_dtypes([mstype.float16, mstype.float32])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.09)
 def test_matmul_dtypes_ge():
     """
     Feature: Test matmul dtypes.
@@ -148,7 +152,8 @@ def test_matmul_dtypes_ge():
     do_test_matmul_dtypes([mstype.int8, mstype.int32, mstype.float16, mstype.float32], True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_trans_double_matmul():
     """
     Feature: Test transpose and double matmul.

@@ -38,6 +38,7 @@ from tests.st.optimizer.optimizer_utils import (
     level_mark='level0',
     card_mark='onecard',
     essential_mark='essential',
+    mem_peak=1.00
 )
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_default_rprop(mode):
@@ -58,6 +59,7 @@ def test_default_rprop(mode):
     level_mark='level1',
     card_mark='onecard',
     essential_mark='unessential',
+    mem_peak=2048.04
 )
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_no_default_rprop(mode):
@@ -78,6 +80,7 @@ def test_no_default_rprop(mode):
     level_mark='level1',
     card_mark='onecard',
     essential_mark='unessential',
+    mem_peak=1.00
 )
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_default_rprop_group(mode):
@@ -98,6 +101,7 @@ def test_default_rprop_group(mode):
     level_mark='level1',
     card_mark='onecard',
     essential_mark='unessential',
+    mem_peak=1.00
 )
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [mstype.float16, mstype.bfloat16])

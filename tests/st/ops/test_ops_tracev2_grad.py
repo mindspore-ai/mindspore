@@ -61,7 +61,7 @@ def tracev2_grad_forward_func(dout, shape, offset=0, axis1=0, axis2=1):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_tracev2_grad_like_forward(mode):
     """
@@ -85,7 +85,7 @@ def test_tracev2_grad_like_forward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_tracev2_grad_dynamic_shape():
     """
     Feature: Test Ops.TraceV2Grad with dynamic shape in graph mode.

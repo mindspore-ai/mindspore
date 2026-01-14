@@ -25,7 +25,8 @@ from mindspore.ops.functional import grad
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_augassign_backend():
     """
     Feature: Support augassign inplace in kbk mode.
@@ -61,7 +62,8 @@ def test_augassign_backend():
     assert graph_output == pynative_output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_initial_scalar_body_tensor1():
     """
     Feature: While specialize.
@@ -96,7 +98,7 @@ def test_initial_scalar_body_tensor1():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_fallback_assign_validation():
     """
     Feature: Support augassign inplace fallback with different input types
@@ -185,7 +187,8 @@ def test_fallback_assign_validation():
     test_assign_validation(inplace_remainder_tensor_scalar)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_grad_validation():
     """
     Feature: Support augassign inplace grad with different input types
@@ -204,7 +207,8 @@ def test_grad_validation():
     grad(foo)(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_if_in_while():
     """
     Feature: Support augassign inplace fallback

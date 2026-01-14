@@ -44,7 +44,8 @@ def elu_vmap_func(x, alpha):
     return ms.ops.vmap(elu_forward_func, in_axes=(0, None), out_axes=0)(x, alpha)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_elu_normal(mode):
     """
@@ -66,7 +67,8 @@ def test_elu_normal(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_elu_backward_alpha_neg(mode):
     """
@@ -84,7 +86,8 @@ def test_elu_backward_alpha_neg(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_elu_vmap(mode):
     """
@@ -102,7 +105,8 @@ def test_elu_vmap(mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_elu_dynamic_shape_testop():
     """
     Feature: Test elu with dynamic shape in graph mode using TEST_OP.

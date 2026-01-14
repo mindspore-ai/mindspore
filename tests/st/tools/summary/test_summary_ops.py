@@ -72,7 +72,7 @@ class LeNet5(nn.Cell):
 
 
 @arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="onecard",
-          essential_mark="essential")
+          essential_mark="essential", mem_peak=1024.57)
 def test_graph_summary_ops():
     """
     Feature: Test graph summary ops
@@ -104,7 +104,7 @@ def test_graph_summary_ops():
 
 
 @arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="onecard",
-          essential_mark="essential")
+          essential_mark="essential", mem_peak=2048.00)
 def test_pynative_summary_ops():
     """
     Feature: Test pynative summary ops
@@ -135,7 +135,7 @@ def test_pynative_summary_ops():
 
 
 @arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level0", card_mark="onecard",
-          essential_mark="essential")
+          essential_mark="essential", mem_peak=1.00)
 def test_kernel_by_kernel_summary_ops():
     """
     Feature: Test kernel by kernel summary ops
@@ -169,7 +169,7 @@ def test_kernel_by_kernel_summary_ops():
 
 
 @arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="onecard",
-          essential_mark="essential")
+          essential_mark="essential", mem_peak=0.56)
 def test_dynamic_shape_summary_ops():
     """
     Feature: Test dynamic shape summary ops
@@ -200,7 +200,7 @@ def test_dynamic_shape_summary_ops():
 
 
 @arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="onecard",
-          essential_mark="essential")
+          essential_mark="essential", mem_peak=1024.01)
 def test_summary_op_in_duplicate_name():
     """
     Feature: Test summary ops

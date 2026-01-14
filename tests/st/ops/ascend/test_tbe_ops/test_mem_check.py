@@ -54,7 +54,8 @@ class NetSort(nn.Cell):
         return y
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_gather_mem_check():
     """
     Feature: mem check.
@@ -74,7 +75,8 @@ def test_gather_mem_check():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.25)
 def test_add_mem_check():
     """
     Feature: mem check.
@@ -93,7 +95,8 @@ def test_add_mem_check():
     assert np.allclose(output.asnumpy(), expect_np, rtol, atol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.08)
 def test_sort_mem_check_graph():
     """
     Feature: mem check in graph mode.

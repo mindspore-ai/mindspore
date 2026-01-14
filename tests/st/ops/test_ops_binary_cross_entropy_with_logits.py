@@ -39,7 +39,7 @@ def binary_cross_entropy_with_logits_backward_func(inputx, target, weight=None, 
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ["pynative", "KBK", "graph"])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_binary_cross_entropy_with_logits_forward(mode, reduction):
@@ -83,7 +83,7 @@ def test_ops_binary_cross_entropy_with_logits_forward(mode, reduction):
     np.testing.assert_allclose(out_bw[0].asnumpy(), expect_bw, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_ops_binary_cross_entropy_with_logits_dynamic_shape():
     """
     Feature: pyboost function.
@@ -107,7 +107,7 @@ def test_ops_binary_cross_entropy_with_logits_dynamic_shape():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.25)
 @pytest.mark.parametrize("mode", ["pynative", "KBK", "graph"])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_bce_with_logits_loss_forward(mode, reduction):
@@ -164,7 +164,7 @@ def test_ops_bce_with_logits_loss_forward(mode, reduction):
     np.testing.assert_allclose(out_bw[0].asnumpy(), expect_bw, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_ops_bce_with_logits_loss_dynamic_shape():
     """
     Feature: pyboost function.
@@ -230,7 +230,7 @@ def ops_binary_cross_entropy_with_logits_binary_case2(input_binary_data=None, ou
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=3072.01)
 @pytest.mark.parametrize("mode", ["pynative", "KBK", "graph"])
 def test_binary_cross_entropy_with_logits_binary_cases(mode):
     """

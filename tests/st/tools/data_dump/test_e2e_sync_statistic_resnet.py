@@ -58,7 +58,7 @@ def run_statistic_dump_resnet():
             assert np.isclose(float(stat['Max Value']), np_max, rtol=1e-3, atol=1e-5)
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=106.0)
 @security_off_wrap
 def test_e2e_sync_kbyk_dump_resnet():
     """
@@ -70,7 +70,8 @@ def test_e2e_sync_kbyk_dump_resnet():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     run_statistic_dump_resnet()
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=106.0)
 @security_off_wrap
 def test_e2e_sync_dvm_dump_resnet():
     """

@@ -26,7 +26,7 @@ grad_all = C.GradOperation(get_all=True)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_for_in_for_01():
     """
     Feature: Control flow
@@ -81,7 +81,7 @@ def test_for_in_for_01():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_for_in_for_02():
     """
     Feature: Control flow

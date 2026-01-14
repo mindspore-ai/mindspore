@@ -26,7 +26,8 @@ def hypermap_in_dynamic(para_a, para_b, para_c, para_d):
     """Multiply tuple by mutable and add again."""
     return ops.HyperMap()(hypermap_add_in_dynamic, para_a * para_d, para_b * para_d, para_c * para_d)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 def test_hypermap_in_dynamic_normal_tuple():
     """
     Feature: hypermap of dynamic tuple
@@ -40,7 +41,8 @@ def test_hypermap_in_dynamic_normal_tuple():
     output = hypermap_in_dynamic(tuple_a, tuple_b, tuple_c, mutable_d)
     assert output == (3, 6, 3, 6, 3, 6)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_hypermap_in_dynamic_normal_list():
     """
     Feature: hypermap of dynamic list
@@ -54,7 +56,8 @@ def test_hypermap_in_dynamic_normal_list():
     output = hypermap_in_dynamic(list_a, list_b, list_c, mutable_d)
     assert output == [3, 6, 3, 6, 3, 6]
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 def test_hypermap_in_dynamic_tensor_tuple():
     """
     Feature: hypermap of dynamic tensor tuple
@@ -70,7 +73,8 @@ def test_hypermap_in_dynamic_tensor_tuple():
                       Tensor(3, mstype.float32), Tensor(6, mstype.float32),
                       Tensor(3, mstype.float32), Tensor(6, mstype.float32))
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_hypermap_in_dynamic_tensor_list():
     """
     Feature: hypermap of dynamic tensor list
@@ -86,7 +90,8 @@ def test_hypermap_in_dynamic_tensor_list():
                       Tensor(3, mstype.float32), Tensor(6, mstype.float32),
                       Tensor(3, mstype.float32), Tensor(6, mstype.float32)]
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1.00
+        )
 def test_hypermap_in_dynamic_tuple_tuple():
     """
     Feature: hypermap of dynamic tuple tuple
@@ -101,7 +106,8 @@ def test_hypermap_in_dynamic_tuple_tuple():
         hypermap_in_dynamic(tuple_a, tuple_b, tuple_c, mutable_d)
     assert "The HyperMap does not support scenarios involving nested dynamic" in str(raise_info.value)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_hypermap_in_dynamic_list_list():
     """
     Feature: hypermap of dynamic list list

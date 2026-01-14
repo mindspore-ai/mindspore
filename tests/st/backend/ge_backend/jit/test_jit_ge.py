@@ -39,7 +39,8 @@ def generate_fake_dataset(batch_size, num_samples):
     return ds.NumpySlicesDataset((data, labels), shuffle=False).batch(batch_size)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_jit_ge_with_same_param():
     """
     Feature: jit with ge backend

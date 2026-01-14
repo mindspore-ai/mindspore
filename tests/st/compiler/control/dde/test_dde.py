@@ -27,7 +27,7 @@ context.set_context(jit_config={"jit_level": "O0"})
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_dde_make_tuple_joined_with_tuple_output_primitive():
     """
     Feature: Eliminate unused element for tuple.

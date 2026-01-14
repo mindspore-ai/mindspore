@@ -39,7 +39,7 @@ def var_backward_func(input_x, dim=None, correction=1, keepdim=False):
     return input_grad
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_ops_var_normal(mode):
     """
@@ -123,7 +123,7 @@ def ops_var_binary_case8(input_binary_data=None, output_binary_data=None):
     ops_var_binary_compare(input_binary_data, output_binary_data, (0, 4), 3, False)
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_ops_var_binary_cases(mode):
     """
@@ -146,7 +146,7 @@ def test_ops_var_binary_cases(mode):
     ops_var_binary_case8()
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_ops_var_dynamic():
     """
     Feature: mint.var

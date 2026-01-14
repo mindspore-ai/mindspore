@@ -18,7 +18,8 @@ import pytest
 import numpy as np
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_get_storage():
     """
     Feature: get_storage
@@ -33,7 +34,8 @@ def test_get_storage():
     assert storage.nbytes() == 4
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_storage_resize():
     """
     Feature: storage resize
@@ -64,7 +66,8 @@ def test_storage_resize():
     assert storage.data_ptr() != 0
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_storage_copy():
     """
     Feature: storage copy
@@ -84,7 +87,8 @@ def test_storage_copy():
     assert b.item() == 6.0
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_storage_init_tensor():
     """
     Feature: init
@@ -95,7 +99,8 @@ def test_storage_init_tensor():
     assert a.untyped_storage().size() == 4
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_storage_cpu_and_npu_copy():
     """
     Feature: copy between cpu and npu
@@ -124,7 +129,8 @@ def test_storage_cpu_and_npu_copy():
     assert b.sum().item() == 1000
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_storage_view():
     """
     Feature: view of storage
@@ -139,7 +145,8 @@ def test_storage_view():
     assert b.item() == 3.0
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_storage_copy_exception():
     """
     Feature: Exception when two storage size not equal
@@ -239,7 +246,8 @@ def test_storage_copy_cpu_big_size():
     assert c.sum().item() == 0
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_storage_copy_after_rng():
     """
     Feature: storage copy

@@ -102,7 +102,8 @@ def grouped_matmul_v4_forward_func(x, weight, group_list):
     return out[0]
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=26.0)
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_grouped_matmul_v4_x2d_w2d_splititem0_grouptypeneg1_none(mode):
     """
@@ -153,7 +154,8 @@ def test_grouped_matmul_v4_x2d_w2d_splititem0_grouptypeneg1_none(mode):
     np.testing.assert_allclose(except1, res[1].float().asnumpy(), rtol=4e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_grouped_matmul_v4_x2d_w3d_splititem3_grouptype0_a16w8(mode):
     """
@@ -211,7 +213,8 @@ def test_grouped_matmul_v4_x2d_w3d_splititem3_grouptype0_a16w8(mode):
     np.testing.assert_allclose(except_np, res[0][:30].asnumpy(), rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_grouped_matmul_v4_x2d_w3d_splititem3_grouptype0_a16w4(mode):
     """
@@ -281,7 +284,8 @@ def test_grouped_matmul_v4_x2d_w3d_splititem3_grouptype0_a16w4(mode):
     np.testing.assert_allclose(expect_np, res[0][:30].asnumpy(), rtol=1e-3, atol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=22.0)
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_grouped_matmul_v4_x2d_w3d_splititem3_grouptype0_none_pertoken(mode):
     """
@@ -338,7 +342,8 @@ def test_grouped_matmul_v4_x2d_w3d_splititem3_grouptype0_none_pertoken(mode):
     np.testing.assert_allclose(except_np, res[0].float().asnumpy(), rtol=4e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=22.0)
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_grouped_matmul_v4_x2d_w3d_splititem3_grouptype0_none_perchannel(mode):
     """
@@ -399,7 +404,7 @@ def test_grouped_matmul_v4_x2d_w3d_splititem3_grouptype0_none_perchannel(mode):
     plat_marks=["platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=20.01
 )
 def test_grouped_matmul_v4_dyn_shape():
     """
@@ -439,7 +444,8 @@ def test_grouped_matmul_v4_dyn_shape():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_ops_grouped_mamtul_v4_multi_dyn(mode):
     """
@@ -485,7 +491,8 @@ def test_ops_grouped_mamtul_v4_multi_dyn(mode):
     np.testing.assert_allclose(expect0, res2[0].asnumpy(), rtol=1e-1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=100.0)
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 @pytest.mark.parametrize('output_dtype', [ms.float16, ms.bfloat16])
 def test_ops_grouped_mamtul_v4_a8w4(mode, output_dtype):

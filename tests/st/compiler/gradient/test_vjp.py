@@ -82,7 +82,8 @@ def test_vjp_multiple_inputs_default_v_graph(mode):
     assert np.allclose(grad[1].asnumpy(), expect_grad_1.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_vjp_in2_out2_param():
     """
     Feature: vjp

@@ -31,7 +31,8 @@ class Net(nn.Cell):
         return self.x.clip(-5, 5)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_clip():
     r"""
     Feature: Functionality of tensor.clip()

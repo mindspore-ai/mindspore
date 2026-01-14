@@ -61,7 +61,7 @@ def isclose_forward_func2(x, x2, rtol=1e-05, atol=1e-08, equal_nan=False):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_method_isclose(mode):
     """
@@ -114,7 +114,8 @@ def test_method_isclose(mode):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential',
+          mem_peak=2.00)
 def test_tensor_isclose_dynamic():
     """
     Feature: Test isclose op.

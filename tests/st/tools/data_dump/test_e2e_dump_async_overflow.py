@@ -121,7 +121,8 @@ def run_trans_flag_dvm(test_name):
         sys.path.remove(os.path.dirname(src_dir))
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @security_off_wrap
 def test_ascend_async_overflow_kbk():
     """
@@ -134,7 +135,7 @@ def test_ascend_async_overflow_kbk():
     run_trans_flag_kbk("test_async_overflow_dump_kbk")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=104.0)
 @security_off_wrap
 def test_ascend_async_overflow_dvm():
     """

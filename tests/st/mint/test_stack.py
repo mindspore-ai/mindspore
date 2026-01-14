@@ -51,7 +51,8 @@ def stack_fwd_data_prepare(shape, axis=2):
     return tensor_inputs, expect
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_stack_forward_backward(mode):
     """
@@ -77,7 +78,8 @@ def test_stack_forward_backward(mode):
         assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_stack_bfloat16(mode):
     """

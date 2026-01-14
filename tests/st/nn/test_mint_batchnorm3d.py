@@ -65,7 +65,7 @@ def grad_batch_norm_3d_net(input_x, num_features, eps=1e-5, momentum=0.1, affine
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_batchnorm3d(mode):
     """
@@ -201,7 +201,7 @@ def test_batchnorm3d(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_batchnorm3d_dyn():
     """
     Feature: Dynamic shape of BatchNorm1d

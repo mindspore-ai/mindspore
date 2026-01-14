@@ -28,7 +28,7 @@ def uniform__forward_backward_func(input_x, from_, to):
 def uniform__backward_func(input_x, from_, to):
     return ops.grad(uniform__forward_backward_func, (0))(input_x, from_, to)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['KBK', 'PYNATIVE'])
 def test_uniform__normal(mode):
     """
@@ -62,7 +62,7 @@ def test_uniform__normal(mode):
     assert input_grad.asnumpy().dtype == np.float64
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['KBK', 'PYNATIVE'])
 def test_uniform__randomness(mode):
     """

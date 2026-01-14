@@ -22,7 +22,7 @@ context.set_context(mode=context.GRAPH_MODE, jit_config={"jit_level": "O0"})
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_while_in_if_1():
     """
     Feature: JIT Fallback
@@ -44,7 +44,7 @@ def test_while_in_if_1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_while_in_if_2():
     """
     Feature: JIT Fallback
@@ -67,7 +67,7 @@ def test_while_in_if_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_while_in_if_3():
     """
     Feature: JIT Fallback
@@ -91,7 +91,7 @@ def test_while_in_if_3():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_while_two_cond_in_if_1():
     """
     Feature: JIT Fallback
@@ -115,7 +115,7 @@ def test_while_two_cond_in_if_1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_while_two_cond_in_if_2():
     """
     Feature: JIT Fallback
@@ -138,7 +138,7 @@ def test_while_two_cond_in_if_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_while_param_in_if():
     """
     Feature: JIT Fallback

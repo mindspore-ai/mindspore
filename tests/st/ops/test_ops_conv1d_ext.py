@@ -34,7 +34,7 @@ class Net1d(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_ops_conv1d_default(mode):
     """
@@ -80,7 +80,7 @@ def test_ops_conv1d_default(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_ops_conv1d_pad_mode_same(mode):
     """
@@ -126,7 +126,7 @@ def test_ops_conv1d_pad_mode_same(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_ops_conv1d_bfloat16(mode):
     """
@@ -172,7 +172,7 @@ def test_ops_conv1d_bfloat16(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_ops_conv1d_batchfy(mode):
     """
@@ -218,7 +218,7 @@ def test_ops_conv1d_batchfy(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 def test_conv1d_dynamic():
     """
     Feature: mint.nn.functional.conv2d

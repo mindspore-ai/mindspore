@@ -189,7 +189,7 @@ def test_set_init_step_cpu_with_distribute_sampler(mode, sink_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 @pytest.mark.parametrize("sink_mode_and_size", ((False, -1), (True, -1), (True, 10)))
 def test_set_init_step_device(mode, sink_mode_and_size: tuple):
@@ -222,7 +222,7 @@ def test_set_init_step_at_intermediate_step_cpu(mode, sink_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize("mode", (context.GRAPH_MODE, context.PYNATIVE_MODE))
 @pytest.mark.parametrize("sink_mode_and_size", ((False, -1), (True, -1), (True, 10)))
 def test_set_init_step_at_intermediate_step_device(mode, sink_mode_and_size: tuple):

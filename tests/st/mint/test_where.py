@@ -53,7 +53,7 @@ def where_overload_forward_func(condition):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_ops_where_overload(mode):
     """
@@ -71,7 +71,7 @@ def test_ops_where_overload(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_where_normal(mode):
     """

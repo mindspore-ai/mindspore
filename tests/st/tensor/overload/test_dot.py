@@ -33,7 +33,7 @@ def generate_expect_forward_output(x, y):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_dot(mode):
     """

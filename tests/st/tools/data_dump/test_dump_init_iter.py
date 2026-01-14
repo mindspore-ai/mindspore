@@ -135,7 +135,7 @@ def compare_multi_data(net, dtype, dump_path, init_iter=0):
                                 "rank_0" / "Net" / "0" / str(continue_iter))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_dump_init_iter():
     """
     Feature: dump config initial_iteration
@@ -165,7 +165,7 @@ def test_dump_init_iter():
             del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 def test_dump_user_step():
     """
     Feature: Update steps through Calling functions

@@ -150,7 +150,8 @@ def test_ffn_forward_mode(mode):
     assert np.allclose(output.asnumpy(), expect, rtol=1e-1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=18.0)
 def test_ffn_forward_value():
     """
     Feature: Test moeffn in kbk and pynative mode.
@@ -162,7 +163,8 @@ def test_ffn_forward_value():
     assert np.allclose(output.asnumpy(), expect, rtol=1e-1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=18.0)
 def test_ffn_forward_shape():
     """
     Feature: Test moeffn in kbk and pynative mode.

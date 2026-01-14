@@ -89,7 +89,7 @@ def test_roi_align_grad_float16():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.95)
 def test_roi_align_grad_float32():
     """
     Feature: Test the operator ROIAlignGrad

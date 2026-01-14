@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_ops_nsa_select_attention.py """
 # pylint: disable=unused-import
 # pylint: disable=E1121
 """
@@ -492,7 +493,8 @@ def compare_results(torch_out, ms_out, grad=False):
     compare_with_torch(ms_out, torch_out)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=582.00)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
 def test_ops_nsa_select_attention_normal(mode, dtype):
@@ -534,7 +536,8 @@ def test_ops_nsa_select_attention_normal(mode, dtype):
     compare_results(torch_out[3:], ms_out_grad, grad=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=208.00)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16'])
 def test_ops_nsa_select_attention_empty_tensor(mode, dtype):
@@ -844,7 +847,8 @@ def test_ops_nsa_select_attention_empty_tensor(mode, dtype):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_ops_nsa_select_attention_invalid_constant_scalar_tensors(mode):
     """
@@ -870,7 +874,8 @@ def test_ops_nsa_select_attention_invalid_constant_scalar_tensors(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=584.00)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['bf16'])
 def test_ops_nsa_select_attention_non_contiguous(mode, dtype):
@@ -949,7 +954,8 @@ def test_ops_nsa_select_attention_non_contiguous(mode, dtype):
     compare_results(torch_out[3:], ms_out_grad, grad=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', [ms.float32, ms.float64, ms.int32, ms.int64, ms.uint8, ms.bool_])
 def test_ops_nsa_select_attention_invalid_dtype(mode, dtype):
@@ -987,7 +993,8 @@ def test_ops_nsa_select_attention_invalid_dtype(mode, dtype):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_ops_nsa_select_attention_invalid_select_block_size(mode):
     """
@@ -1023,7 +1030,8 @@ def test_ops_nsa_select_attention_invalid_select_block_size(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'],
+        level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2.0)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_ops_nsa_select_attention_invalid_head_num(mode):
     """
@@ -1057,7 +1065,8 @@ def test_ops_nsa_select_attention_invalid_head_num(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'],
+        level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=340.0)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16'])
 @pytest.mark.parametrize('scale_value', [-0.0077, 0.0, 100.0])
@@ -1103,7 +1112,8 @@ def test_ops_nsa_select_attention_scale_value_variants(mode, dtype, scale_value)
     compare_results(torch_out[3:], ms_out_grad, grad=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_ops_nsa_select_attention_shape_mismatch(mode):
     """
@@ -1133,7 +1143,8 @@ def test_ops_nsa_select_attention_shape_mismatch(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'],
+        level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('value', [np.inf, -np.inf, np.nan])
 def test_ops_nsa_select_attention_qkv_inf_nan_values(mode, value):
@@ -1192,7 +1203,7 @@ def test_ops_nsa_select_attention_qkv_inf_nan_values(mode, value):
     compare_results(torch_out[3:], ms_out_grad, grad=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.skip(reason="invalid topk_indices will cause stream error, remove this mark while testing locally.")
 def test_ops_nsa_select_attention_topk_indices_boundary(mode):
@@ -1228,7 +1239,8 @@ def test_ops_nsa_select_attention_topk_indices_boundary(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'],
+        level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_ops_nsa_select_attention_mixed_dtype(mode):
     """
@@ -1260,7 +1272,8 @@ def test_ops_nsa_select_attention_mixed_dtype(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['kbk', 'pynative'])
 def test_ops_nsa_select_attention_default_params(mode):
     """
@@ -1302,7 +1315,8 @@ def test_ops_nsa_select_attention_default_params(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
 def test_ops_nsa_select_attention_large_scale_precision(mode, dtype):
@@ -1374,7 +1388,8 @@ def test_ops_nsa_select_attention_large_scale_precision(mode, dtype):
     compare_results(torch_out_large[3:], ms_out_grad_large, grad=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=962.00)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16'])
 def test_ops_nsa_select_attention_batch_processing(mode, dtype):
@@ -1437,7 +1452,8 @@ def test_ops_nsa_select_attention_batch_processing(mode, dtype):
     compare_results(torch_out[3:], ms_out_grad, grad=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'],
+        level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_ops_nsa_select_attention_invalid_parameter_types(mode):
     """
@@ -1498,7 +1514,8 @@ def test_ops_nsa_select_attention_invalid_parameter_types(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=90.0)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 @pytest.mark.parametrize('dtype', ['fp16', 'bf16'])
 def test_ops_nsa_select_attention_large_seq_len_precision(mode, dtype):
@@ -1558,7 +1575,8 @@ def test_ops_nsa_select_attention_large_seq_len_precision(mode, dtype):
     compare_results(torch_out[3:], ms_out_grad, grad=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=508.00)
 def test_ops_nsa_select_attention_test_op():
     """
     Feature: pyboost function.
@@ -1733,7 +1751,7 @@ def nsa_select_attention_memory_case(TND_params, actual_seq_qkvlen, dtype, grad_
     assert ms_backward_memory_diff <= pt_backward_memory_diff
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_ops_nsa_select_attention_device_memory_large_size():
     """
     Feature: device memory comparison.
@@ -1749,7 +1767,8 @@ def test_ops_nsa_select_attention_device_memory_large_size():
     nsa_select_attention_memory_case(TND_params, actual_seq_qkvlen, 'bf16', 'qkv')
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_ops_nsa_select_attention_device_memory_small_size():
     """
     Feature: device memory comparison.

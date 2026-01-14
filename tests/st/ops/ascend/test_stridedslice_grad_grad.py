@@ -45,7 +45,8 @@ class NetGradGrad(nn.Cell):
         return backward_net(dy, shapex, begin, end, strides, dout)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_stridedslice_high_grad_float32():
     """
     Feature: StridedSlice Grad Grad operation

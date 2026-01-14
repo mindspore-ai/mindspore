@@ -69,7 +69,7 @@ class ScatterGrad(nn.Cell):
         return self.grad_op(self.net)(x, dim, index, src_or_val, reduce, self.grad_wrt_output)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_inplace_scatter_src(mode):
     """
@@ -139,7 +139,7 @@ def _test_inplace_scatter_src_backward2(input_type):
     assert np.allclose(grads[0].asnumpy().astype(np.float32), grad_np)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_inplace_scatter_value(mode):
     """
@@ -187,7 +187,8 @@ def _test_inplace_scatter_value_backward(input_type):
     assert np.allclose(grads[0].asnumpy().astype(np.float32), grad_np)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatter_bfloat16(mode):
     """
@@ -206,7 +207,7 @@ def test_scatter_bfloat16(mode):
     _test_inplace_scatter_value_backward(ms.bfloat16)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_inplace_scatter_dynamic():
     """
     Feature: test dynamic by TEST_OP.

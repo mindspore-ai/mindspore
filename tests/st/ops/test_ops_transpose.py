@@ -42,7 +42,8 @@ def transpose_vmap_func(x, dim0, dim1):
     return ops.vmap(transpose_forward_func, in_axes=(0, None, None), out_axes=0)(x, dim0, dim1)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_transpose_normal(context_mode):
@@ -66,7 +67,7 @@ def test_ops_transpose_normal(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_transpose_vmap(context_mode):
@@ -84,7 +85,7 @@ def test_ops_transpose_vmap(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 def test_ops_transpose_dynamic_shape():
     """
     Feature: pyboost function.

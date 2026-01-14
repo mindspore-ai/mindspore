@@ -31,7 +31,7 @@ import torch.nn as nn_pt
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_tensor_fancy_index_set_item_032(mode):
     """
@@ -473,7 +473,8 @@ def setitem_check_indexing(x, index, value, np_expected, capture_mode=None):
                                                           f"ms_output:{ms_output} {ms_output.shape}"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', [None, 'ast'])
 def test_setitem(capture_mode):
     """
@@ -627,7 +628,8 @@ def setitem_check_indexing_without_jit(x, index, value, np_expected, capture_mod
                                                           f"ms_output:{ms_output} {ms_output.shape}"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('capture_mode', [None])
 def test_slice_tensor_index_setitem_without_jit(capture_mode):
     """
@@ -674,7 +676,8 @@ def setitem_check_iadd_indexing(x, index, value, np_expected, capture_mode=None)
                                                           f"ms_output:{ms_output} {ms_output.shape}"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', [None, 'ast'])
 def test_setitem_with_iadd(capture_mode):
     """
@@ -791,7 +794,8 @@ def setitem_check_grad(x, index, value, np_expected, capture_mode=None):
                                                         f"ms_grad:{ms_grad} {ms_grad.shape}"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', [None, 'ast', 'bytecode'])
 def test_setitem_grad(capture_mode):
     """
@@ -963,7 +967,8 @@ def setitem_check_iadd_grad(x, index, value, np_expected, capture_mode=None):
                                                         f"ms_grad:{ms_grad} {ms_grad.shape}"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', [None, 'ast',
                                           pytest.param('bytecode', marks=pytest.mark.skip(reason="Unsupported now"))])
 @pytest.mark.parametrize(
@@ -1055,7 +1060,8 @@ def setitem_check_imul_grad(x, index, value, np_expected, capture_mode=None):
                                                         f"ms_grad:{ms_grad} {ms_grad.shape}"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', [None, 'ast',
                                           pytest.param('bytecode', marks=pytest.mark.skip(reason="Unsupported now"))])
 def test_setitem_grad_with_imul(capture_mode):
@@ -1077,7 +1083,8 @@ def test_setitem_grad_with_imul(capture_mode):
         setitem_check_imul_grad(ms_x, index, value, np_expected, capture_mode)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode, capture_mode', [(ms.GRAPH_MODE, 'ast'), (ms.GRAPH_MODE, 'bytecode'),
                                                 (ms.PYNATIVE_MODE, 'ast')])
 def test_setitem_exception(mode, capture_mode):
@@ -1196,7 +1203,8 @@ def test_setitem_exception(mode, capture_mode):
         exc.value)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode, capture_mode', [(ms.GRAPH_MODE, 'bytecode'),
                                                 (ms.PYNATIVE_MODE, 'ast')])
 def test_setitem_exception_without_jit_ast(mode, capture_mode):
@@ -1255,7 +1263,8 @@ class IndexDynamicShapeNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', ['ast', 'bytecode'])
 @pytest.mark.parametrize('x_shape', [(3, 3, None), (3, 3, 3)])
 @pytest.mark.parametrize('index_shape', [(2, None), (2, 2)])
@@ -1315,7 +1324,8 @@ class IndexDynamicRankNet(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', ['ast', 'bytecode'])
 def test_setitem_index_dynamic_rank_test(capture_mode):
     """
@@ -1365,7 +1375,8 @@ class IndexDynamicRank2Net(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('capture_mode', ['ast'])
 def test_setitem_index_dynamic_rank_test2(capture_mode):
     """
@@ -1412,7 +1423,8 @@ class NetWithIndexAndMul(nn.Cell):
         return b
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_setitem_with_mul(mode):
     """
@@ -1431,7 +1443,8 @@ def test_setitem_with_mul(mode):
                        ), f"np_expect:{np_expect}, ms_y:{ms_y}"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_setitem_graph_mode(mode):
     """
@@ -1500,7 +1513,8 @@ def test_setitem_index_none(mode):
     assert np.allclose(x_np, x.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_setitem_repeatly():
     """
     Feature: tensor setitem
@@ -1523,7 +1537,8 @@ def no_jit(x, *args, **kwargs):
     return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_setitem_nested_list_as_value_false(mode):
     """
@@ -1551,7 +1566,8 @@ def test_setitem_nested_list_as_value_false(mode):
             mode(net)()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [no_jit, ms.jit])
 def test_setitem_nested_tuple_as_value_false(mode):
     """
@@ -1580,7 +1596,8 @@ def test_setitem_nested_tuple_as_value_false(mode):
             mode(net)(input_me)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_setitem_nested_list_as_value_ok():
     """
     Feature: tensor setitem.
@@ -1631,7 +1648,8 @@ def test_setitem_nested_list_as_value_ok():
     assert np.allclose(ms_grad.asnumpy(), pt_grad[0].detach().numpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.03)
 def test_setitem_nested_tuple_as_value_in_jit_ok():
     """
     Feature: tensor setitem.
@@ -1677,7 +1695,8 @@ def test_setitem_nested_tuple_as_value_in_jit_ok():
         grad_ms[None, True, b, (False, True, True), [2], 4].asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_setitem_nested_tuple_as_value_in_jit_false():
     """
     Feature: tensor setitem.
@@ -1701,7 +1720,8 @@ def test_setitem_nested_tuple_as_value_in_jit_false():
         ms.jit(net)(input_me)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize(
     "value1,value2",
     [(Tensor([[2, 3]], mstype.int8), torch.tensor([[2, 3]], dtype=torch.float32)),
@@ -1746,7 +1766,8 @@ def test_setitem_of_different_value_types_001(value1, value2):
     np.allclose(out_torch.numpy(), out_me.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.04)
 @pytest.mark.parametrize(
     "value1,value2",
     [(Tensor([[2, 3]], mstype.float16), torch.tensor([[2, 3]], dtype=torch.float32)),

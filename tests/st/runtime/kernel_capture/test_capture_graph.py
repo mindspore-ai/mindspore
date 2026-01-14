@@ -43,7 +43,7 @@ input_len = 10
     plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential'
+    essential_mark='essential', mem_peak=6.01
 )
 def test_dynamic_shape_for_capture_graph():
     """
@@ -76,7 +76,7 @@ def test_dynamic_shape_for_capture_graph():
     plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential'
+    essential_mark='essential', mem_peak=6.01
 )
 def test_dynamic_shape_with_view_ops_for_capture_graph():
     """
@@ -117,7 +117,7 @@ def test_dynamic_shape_with_view_ops_for_capture_graph():
     plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential'
+    essential_mark='essential', mem_peak=6.01
 )
 def test_kv_cache_for_capture_graph():
     """
@@ -174,7 +174,8 @@ def test_kv_cache_for_capture_graph():
     plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential'
+    essential_mark='essential',
+    mem_peak=0.01
 )
 def test_multi_graph_cache_for_capture_graph():
     """
@@ -217,7 +218,8 @@ def test_multi_graph_cache_for_capture_graph():
     plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential'
+    essential_mark='essential',
+    mem_peak=0.01
 )
 def test_multi_graph_cache_with_num_limit_for_capture_graph():
     """
@@ -262,7 +264,8 @@ def test_multi_graph_cache_with_num_limit_for_capture_graph():
     plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential'
+    essential_mark='essential',
+    mem_peak=0.01
 )
 def test_weight_change():
     """
@@ -295,7 +298,7 @@ def test_weight_change():
     plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential'
+    essential_mark='essential', mem_peak=4.01
 )
 def test_aclgraph_dyn_input_off():
     """
@@ -328,7 +331,8 @@ def test_aclgraph_dyn_input_off():
     plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential'
+    essential_mark='essential',
+    mem_peak=0.01
 )
 def test_aclgraph_api():
     """
@@ -344,7 +348,8 @@ def test_aclgraph_api():
     plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential'
+    essential_mark='essential',
+    mem_peak=0.01
 )
 def test_aclgraph_group():
     """
@@ -361,7 +366,7 @@ def test_aclgraph_group():
     plat_marks=['platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential'
+    essential_mark='essential', mem_peak=4.01
 )
 def test_set_enable_capture_graph_in_wrong_time():
     """

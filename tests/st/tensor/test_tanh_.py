@@ -49,7 +49,7 @@ def np_tanh_grad(x):
     return 1 - np.power(np.tanh(x), 2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_inplace_tanh_normal(mode):
     """
@@ -69,7 +69,7 @@ def test_inplace_tanh_normal(mode):
     np.allclose(grad[0].asnumpy(), expect_grad, rtol=1e-5, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_inplace_tanh_dynamic():
     """
     Feature: dynamic shape forward, backward features.

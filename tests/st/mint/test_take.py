@@ -59,7 +59,8 @@ def mint_take_backward_func_tensor(input_x, index):
     return grad(net)(input_x, index)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_take_std(mode):
     """
@@ -81,7 +82,8 @@ def test_take_std(mode):
                 rtol=1e-5, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_take_tensor(mode):
     """
@@ -103,7 +105,8 @@ def test_take_tensor(mode):
                 rtol=1e-5, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_take_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.

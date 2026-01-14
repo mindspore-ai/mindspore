@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+""" test_auto_monad_mindtester.py """
 import os
 import numpy as np
 import mindspore as ms
@@ -19,7 +20,7 @@ import mindspore.ops.operations as P
 from mindspore.nn import Cell
 from mindspore import context, Tensor
 from mindspore.common.parameter import Parameter
-from mindspore.common.initializer import initializer
+from mindspore.common import initializer
 from mindspore.train import Model
 from mindspore.ops.composite import GradOperation
 from mindspore.common import ParameterTuple
@@ -115,16 +116,14 @@ class ControlGraphSupportNotEqual(Cell):
         else:
             out2 = input_data / input_data
         if x == z:
-            out3_f = (lambda a: a + a)
-            out3 = out3_f(input_data)
+            out3 = (lambda a: a + a)(input_data)
         else:
-            out3_f = (lambda a: a + a + a)
-            out3 = out3_f(input_data)
+            out3 = (lambda a: a + a + a)(input_data)
         return out, out2, out3
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 def test_ctrl_if_while_graph_support_not_equal_true():
     """
     Feature: Auto monad feature.
@@ -147,7 +146,7 @@ def test_ctrl_if_while_graph_support_not_equal_true():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_ctrl_if_while_graph_support_not_equal_false():
     """
     Feature: Auto monad feature.
@@ -181,11 +180,9 @@ class ControlBprop(Cell):
         else:
             out2 = input_data / input_data
         if x == z:
-            out3_f = (lambda a: a + a)
-            out3 = out3_f(input_data)
+            out3 = (lambda a: a + a)(input_data)
         else:
-            out3_f = (lambda a: a + a + a)
-            out3 = out3_f(input_data)
+            out3 = (lambda a: a + a + a)(input_data)
         return out, out2, out3
 
     def bprop(self, x, y, z, input_data, out, dout):
@@ -284,7 +281,7 @@ class ControlOneIfOneParaOneAddn(Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_ctrl_if_para_addn_true():
     """
     Feature: Auto monad feature.
@@ -374,7 +371,7 @@ class SideEffectIOCellAddnNet(Cell):
 
 @security_off_wrap
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_grad_io_addn():
     """
     Feature: Auto monad feature.
@@ -515,7 +512,7 @@ class SideEffectControlFlowAssignDependTwoIfNet(Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_side_effect_grad_control_flow_assign_depend_of_two_if():
     """
     Feature: Auto monad feature.
@@ -664,7 +661,7 @@ def test_highgrad_one_input_sec_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_highgrad_one_input_third_grad():
     """
     Feature: Auto monad feature.

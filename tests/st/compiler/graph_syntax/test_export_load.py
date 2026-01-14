@@ -138,7 +138,8 @@ def cmp_mindir(out, output):
         assert np.allclose(out.asnumpy(), output.asnumpy(), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=230.00)
 def test_export_model_train_load_model():
     """
     Feature: MindIR load and export

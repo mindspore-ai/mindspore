@@ -45,7 +45,8 @@ class NetWithSparseGatherV2(nn.Cell):
         return self.gather(self.weight1, indices, self.axis) + self.weight2
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_lazy_adam_converge():
     """
     Feature: LazyAdam optimizer
@@ -73,7 +74,8 @@ def test_lazy_adam_converge():
     assert losses1[1] > losses1[2]
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_lazy_adam_acc():
     """
     Feature: LazyAdam optimizer
@@ -96,7 +98,8 @@ def test_lazy_adam_acc():
     assert np.allclose(output.asnumpy(), expected_output)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_adam_offload_acc():
     """
     Feature: AdamOffload optimizer

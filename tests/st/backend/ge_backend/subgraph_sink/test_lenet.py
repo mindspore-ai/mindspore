@@ -163,7 +163,8 @@ def train_ascend_lenet():
     return loss
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.62)
 def test_ascend_lenet_cell():
     """
     Feature: test ge ascend lenet with cell reuse.
@@ -179,7 +180,8 @@ def test_ascend_lenet_cell():
     assert loss_output.asnumpy() > 0.003
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.75)
 def test_ascend_lenet_no_cell():
     """
     Feature: test ge ascend lenet with no cell reuse.

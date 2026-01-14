@@ -77,7 +77,8 @@ def test_index_add_dyn_gpu():
     dyn_case()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_index_add_dyn_ascend():
     """
     Feature: test IndexAdd dynamic shape on Ascend.

@@ -47,7 +47,7 @@ def net_run():
     assert math.isclose(output.asnumpy().tolist(), expected, rel_tol=1e-4, abs_tol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1.00)
 def test_bce_mean_dyn_ascend():
     """
     Feature: Test dynamic shape of BCEWithLogitsLoss op that the reduction is mean on ascend.
@@ -58,7 +58,8 @@ def test_bce_mean_dyn_ascend():
     net_run()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 def test_bce_mean_dyn_ascend_pynative():
     """
     Feature: Test dynamic shape of BCEWithLogitsLoss op that the reduction is mean on ascend.

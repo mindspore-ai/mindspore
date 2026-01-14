@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_lazy_inline.py """
 import os
 import subprocess
 from tests.mark_utils import arg_mark
@@ -23,18 +24,19 @@ def run_testcase(testcase_name, expect_sub_str):
     if os.path.exists(log_filename):
         os.remove(log_filename)
     assert not os.path.exists(log_filename)
-    cmd = (f"export GLOG_v=1; pytest -s test_lazy_inline_return_tuple.py::") + \
+    cmd = ("export GLOG_v=1; pytest -s test_lazy_inline_return_tuple.py::") + \
           testcase_name + " > " + log_filename + " 2>&1"
     subprocess.check_output(cmd, shell=True)
     assert os.path.exists(log_filename)
-    with open(log_filename, "r") as f:
+    with open(log_filename, "r", encoding='utf-8') as f:
         data = f.read()
     assert expect_sub_str in data
     # Clear log file
     os.remove(log_filename)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=108.00)
 def test_return_tuple():
     """
     Feature: lazy inline return tuple
@@ -44,7 +46,8 @@ def test_return_tuple():
     run_testcase("test_return_tuple", "can be lazyinlined")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=138.00)
 def test_return_tuple_nest():
     """
     Feature: lazy inline return tuple

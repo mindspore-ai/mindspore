@@ -201,7 +201,7 @@ class TestViewInplace:
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_view_inplace():
     """
     Feature: test pyboost view and inplace

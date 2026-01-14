@@ -94,7 +94,7 @@ def backward_func(a, mode='reduced'):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=1024.01
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @test_utils.run_test_with_On
@@ -120,7 +120,7 @@ def test_ops_qr_forward(context_mode):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=1.00
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @test_utils.run_test_with_On
@@ -151,7 +151,7 @@ def test_ops_qr_backward(context_mode):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=2048.01
 )
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 @test_utils.run_test_with_On
@@ -180,7 +180,7 @@ def test_ops_qr_dtype(context_mode):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=2048.01
 )
 def test_linalg_qr_dynamic_shape():
     """

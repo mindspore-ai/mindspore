@@ -92,7 +92,7 @@ class Net(nn.Cell):
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1324.65)
 def test_sit_auto_mix_precision_train_o3():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float64)
     label_data = np.random.randn(32, 10).astype(np.float32)
@@ -120,7 +120,8 @@ def test_sit_auto_mix_precision_train_o3():
     assert np.allclose(out.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1042.47)
 @security_off_wrap
 def test_sit_auto_mix_precision_model_o0():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float32)
@@ -153,7 +154,7 @@ def test_sit_auto_mix_precision_model_o0():
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1437.49)
 @security_off_wrap
 def test_sit_auto_mix_precision_model_o2():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float32)
@@ -192,7 +193,7 @@ def test_sit_auto_mix_precision_model_o2():
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1437.49)
 @security_off_wrap
 def test_sit_auto_mix_precision_model_o1():
     """
@@ -236,7 +237,7 @@ def test_sit_auto_mix_precision_model_o1():
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1437.48)
 @security_off_wrap
 def test_custom_mix_precision():
     """
@@ -376,7 +377,8 @@ class TestAmpNet(ms.nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('amp_level', ["O1", "O2", "O3"])
 def test_amp_bfloat16(amp_level):
     """
@@ -403,7 +405,8 @@ def test_amp_bfloat16(amp_level):
     allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_custom_mixed_precision_bfloat16():
     """
     Feature: to_float

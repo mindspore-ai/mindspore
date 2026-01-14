@@ -81,7 +81,8 @@ def run_gelu_grad():
     assert res
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_gelu_ascend():
     """
     Feature: test graph kernel FastGeLU
@@ -93,7 +94,8 @@ def test_gelu_ascend():
     run_gelu()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_gelu_grad_ascend():
     """
     Feature: test graph kernel FastGeLUGrad

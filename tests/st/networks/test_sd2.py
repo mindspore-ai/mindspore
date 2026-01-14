@@ -450,7 +450,8 @@ def main(args):
     os.environ.pop("MS_ENABLE_ACLNN")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=7422.0)
 def test_sd2_1p():
     """
     Feature: Stable diffusion 2.0 1p test

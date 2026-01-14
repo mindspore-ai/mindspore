@@ -265,7 +265,8 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
     shutil.rmtree(cache_path)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_simple_net():
     """
     Feature: Compile cache.
@@ -277,7 +278,8 @@ def test_compile_cache_simple_net():
     run_twice_with_same_network(pypath, "./simple_net", "simple_net_first.txt", "simple_net_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_lenet():
     """
     Feature: Compile cache.
@@ -289,7 +291,8 @@ def test_compile_cache_lenet():
     run_twice_with_same_network(pypath, "./lenet", "lenet_first.txt", "lenet_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_simple_jit_func():
     """
     Feature: Compile cache.
@@ -302,7 +305,8 @@ def test_compile_cache_simple_jit_func():
                                 "simple_jit_func_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_resnet_infer():
     """
     Feature: Compile cache in inference scenarios.
@@ -315,7 +319,8 @@ def test_compile_cache_resnet_infer():
                                 "resnet_infer_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_with_range_kernel_packet():
     """
     Feature: Compile cache with range  cache in inference scenarios.
@@ -328,7 +333,8 @@ def test_compile_cache_with_range_kernel_packet():
                                 "kernel_packet_range_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_simple_net_change_dir():
     """
     Feature: Compile cache.
@@ -345,7 +351,8 @@ def test_compile_cache_simple_net_change_dir():
     shutil.rmtree(new_path, ignore_errors=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_partial_without_inputs():
     """
     Feature: Compile cache.
@@ -359,7 +366,8 @@ def test_compile_cache_partial_without_inputs():
                                 "partial_without_input_second.txt", "twice")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_if_any():
     """
     Feature: Compile cache.
@@ -375,7 +383,8 @@ def test_compile_cache_if_any():
     run_twice_with_same_network(pypath, "./if_any", "if_any_first.txt", "if_any_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_for_n_while():
     """
     Feature: Compile cache.
@@ -387,7 +396,8 @@ def test_compile_cache_for_n_while():
     run_twice_with_same_network(pypath, "./for_n_while", "for_n_while_first.txt", "for_n_while_second.txt", "twice")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_for_for_while():
     """
     Feature: Compile cache.
@@ -400,7 +410,8 @@ def test_compile_cache_for_for_while():
                                 "for_for_while_second.txt", "twice")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_for_after_for_in_if():
     """
     Feature: Compile cache.
@@ -413,7 +424,8 @@ def test_compile_cache_for_after_for_in_if():
                                 "for_after_for_in_if_second.txt", "four_times")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_with_lazy_inline():
     """
     Feature: Compile cache with lazy inline.
@@ -426,7 +438,8 @@ def test_compile_cache_with_lazy_inline():
                                 "net_lazy_inline_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_without_lazy_inline():
     """
     Feature: Compile cache without lazy inline.
@@ -457,7 +470,8 @@ def test_compile_cache_without_lazy_inline():
     assert not os.path.exists(new_pypath)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_with_reducesum_kernel_packet():
     """
     Feature: Compile cache with kernel packet.
@@ -470,7 +484,8 @@ def test_compile_cache_with_reducesum_kernel_packet():
                                 "kernel_packet_reducesum_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_without_kernel_packet():
     """
     Feature: Compile cache without kernel packet.
@@ -503,7 +518,8 @@ def test_compile_cache_without_kernel_packet():
     assert not os.path.exists(new_pypath)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_for_in_if():
     """
     Feature: Compile cache.
@@ -515,7 +531,8 @@ def test_compile_cache_for_in_if():
     run_twice_with_same_network(pypath, "./for_in_if", "for_in_if_first.txt", "for_in_if_second.txt", "twice")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_simple_jit_net():
     """
     Feature: Compile cache.
@@ -527,7 +544,8 @@ def test_compile_cache_simple_jit_net():
     run_twice_with_same_network(pypath, "./simple_jit", "simple_jit_first.txt", "simple_jit_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_bprop_grad_jit():
     """
     Feature: Compile cache.
@@ -540,7 +558,8 @@ def test_compile_cache_bprop_grad_jit():
                                 "bprop_grad_jit_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_with_somas():
     """
     Feature: Compile cache without lazy inline.
@@ -553,7 +572,8 @@ def test_compile_cache_with_somas():
                                 "net_with_somas_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_while_loop3():
     """
     Feature: Compile cache with control flow
@@ -566,7 +586,8 @@ def test_while_loop3():
                                 "net_while_loop_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_branch_same_shape():
     """
     Feature: Compile cache with control flow function.
@@ -579,7 +600,8 @@ def test_branch_same_shape():
                                 "net_if_by_if_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_grad_net_single_cache():
     """
     Feature: Compile cache with jit enable dynamic.
@@ -592,7 +614,8 @@ def test_grad_net_single_cache():
                                 "special")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_input_tuple_paramter_dynamic_jit():
     """
     Feature: Compile cache with jit enable dynamic.
@@ -606,7 +629,8 @@ def test_input_tuple_paramter_dynamic_jit():
                                 "net_enable_dynamic_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_dynamic_shape():
     """
     Feature: Compile cache with dynamic shape net.
@@ -620,7 +644,8 @@ def test_dynamic_shape():
                                 "net_input_signature_shape_second.txt", "once")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_addn_pass_net():
     """
     Feature: Compile cache with addn pass.

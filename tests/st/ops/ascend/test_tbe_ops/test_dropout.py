@@ -56,7 +56,8 @@ def dropout_net(*args, is_dynamic=False):
     print("output shape: ", out[0].shape)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_dropout_bf16():
     """
     Feature: test dropout operator in graph and pynative mode.
@@ -96,7 +97,8 @@ def test_dropout(dtype=np.float16):
     dropout_net(net, x, indices, is_dynamic=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.02)
 def test_float16():
     """
     Feature: test dropout operator.
@@ -106,7 +108,8 @@ def test_float16():
     test_dropout(np.float16)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=1024.05)
 def test_float32():
     """
     Feature: test dropout operator.

@@ -40,7 +40,7 @@ class ReduceMatmulNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=130.00)
 @pytest.mark.parametrize('mode', ['pynative', 'jit'])
 def test_deterministic_reduce_matmul(mode):
     """
@@ -72,7 +72,7 @@ class USSNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'jit'])
 def test_deterministic_uss(mode):
     """

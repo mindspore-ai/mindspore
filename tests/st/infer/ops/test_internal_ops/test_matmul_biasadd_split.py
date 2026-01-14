@@ -158,7 +158,8 @@ def _test_matmul_qkv(m=0, k=0, n0=0, n1=0, n2=0, mstype=ms.float16, is_dyn=False
     assert result, "compare correct."
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=106.00)
 @pytest.mark.parametrize('m', [32])
 @pytest.mark.parametrize('k', [1024, 2048, 128])
 @pytest.mark.parametrize('mstype', [ms.float16])
@@ -172,7 +173,8 @@ def test_matmul_qkv_1408_128_128(m, k, mstype, is_dyn):
     _test_matmul_qkv(m, k, 1408, 128, 128, mstype, is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=408.00)
 @pytest.mark.parametrize('m', [16, 256, 1024])
 @pytest.mark.parametrize('k_n_shape', [(4096, 11008, 11008), (8192, 2752, 2752)])
 @pytest.mark.parametrize('mstype', [ms.float16])
@@ -187,7 +189,8 @@ def test_matmul_ffn_0(m, k_n_shape, mstype, is_dyn):
     _test_matmul_qkv(m, k, n0, n1, mstype=mstype, is_dyn=is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=438.00)
 @pytest.mark.parametrize('m', [16, 256, 1024])
 @pytest.mark.parametrize('k_n_shape', [(12288, 5376, 5376)])
 @pytest.mark.parametrize('mstype', [ms.float16])

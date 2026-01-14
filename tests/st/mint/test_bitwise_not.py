@@ -35,7 +35,7 @@ def bitwise_not_forward_func(x):
 
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_mint_bitwise_not_normal(mode):
     """
@@ -52,7 +52,7 @@ def test_mint_bitwise_not_normal(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_mint_bitwise_not_dynamic_shape():
     """
     Feature: Test operator bitwise_not by TEST_OP.

@@ -78,7 +78,7 @@ def solve_triangular_backward_func(a, b, dout):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_solve_triangular_forward(mode):
     """
@@ -95,7 +95,7 @@ def test_ops_solve_triangular_forward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_solve_triangular_backward(mode):
     """
@@ -118,7 +118,7 @@ def test_ops_solve_triangular_backward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_solve_triangular_forward_dynamic_shape(mode):
     """
@@ -147,7 +147,7 @@ def test_ops_solve_triangular_forward_dynamic_shape(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_solve_triangular_forward_dynamic_rank(mode):
     """
@@ -176,7 +176,7 @@ def test_ops_solve_triangular_forward_dynamic_rank(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_ops_solve_triangular_backward_dynamic_shape(mode):
     """
@@ -214,7 +214,7 @@ def test_ops_solve_triangular_backward_dynamic_shape(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_macos'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_solve_triangular_backward_dynamic_rank(mode):
     """

@@ -18,7 +18,7 @@ from mindspore.common import dtype as mstype
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2.00)
 def test_dtype_float32_another_float():
     """
     Feature: test mstype.float

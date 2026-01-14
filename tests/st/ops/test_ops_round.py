@@ -74,7 +74,7 @@ def test_ops_round_normal_cpu_gpu(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_round_normal_ascend_pynative_kbk(context_mode):
     """
@@ -117,7 +117,7 @@ def test_ops_round_normal_ascend_pynative_kbk(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', ['GE'])
 def test_ops_round_normal_ascend_GE(context_mode):
     """
@@ -136,7 +136,7 @@ def test_ops_round_normal_ascend_GE(context_mode):
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_round_vmap(context_mode):
     """
@@ -165,7 +165,7 @@ def test_ops_round_dynamic_shape_cpu_gpu(context_mode):
     TEST_OP(round_forward_func, [[ms.Tensor(x1)], [ms.Tensor(x2)]])
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=3072.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_round_dynamic_shape_ascend(context_mode):
     """

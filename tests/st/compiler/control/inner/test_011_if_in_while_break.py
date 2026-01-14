@@ -81,7 +81,7 @@ class BackwardNetReplaceBreak(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_forward():
     """
     Feature: Control flow
@@ -98,7 +98,8 @@ def test_forward():
 
 
 # Problem: Exceed function call depth limit 1000.
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_backward():
     """
     Feature: Control flow
@@ -116,7 +117,7 @@ def test_backward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_forward_replace_break():
     """
     Feature: Control flow
@@ -134,7 +135,7 @@ def test_forward_replace_break():
 
 # Problem: Exceed function call depth limit 1000.
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_backward_replace_break():
     """
     Feature: Control flow
@@ -152,7 +153,7 @@ def test_backward_replace_break():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_forward_if_elif_elif_else_break():
     """
     Feature: Parallel if transformation with break
@@ -194,7 +195,7 @@ def test_forward_if_elif_elif_else_break():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_forward_if_elif_elif_break_else():
     """
     Feature: Parallel if transformation with break
@@ -236,7 +237,7 @@ def test_forward_if_elif_elif_break_else():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_forward_if_elif_elif_else_continue():
     """
     Feature: Parallel if transformation with continue
@@ -278,7 +279,7 @@ def test_forward_if_elif_elif_else_continue():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 def test_forward_if_elif_elif_continue_else():
     """
     Feature: Parallel if transformation with continue

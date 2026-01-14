@@ -49,7 +49,8 @@ def test_fastgelugrad_op_forward(context_mode, data_type):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.25)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_fastgelugrad_op_forward_ascend(context_mode, data_type):
@@ -84,7 +85,8 @@ def test_fastgelugrad_op_vmap(context_mode, data_type):
     np.testing.assert_allclose(out.asnumpy(), expect_out, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.25)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 def test_fastgelugrad_op_vmap_ascend(context_mode, data_type):

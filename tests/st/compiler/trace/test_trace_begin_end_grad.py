@@ -40,7 +40,8 @@ from tests.st.networks.models.resnetv1_5 import resnet50 as resnet_pynative
 grad_all = C.GradOperation(get_all=True)
 grad_by_list = C.GradOperation(get_by_list=True)
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_trace_begin_end_1():
     """
     Feature: JIT trace function
@@ -245,7 +246,8 @@ class Net2(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.skip(reason="skip case since weight with same name will throw error for now.")
 def test_trace_begin_end_train_1():
     """
@@ -264,7 +266,8 @@ def test_trace_begin_end_train_1():
     assert [x for x in net.get_parameters()][0].value()[0][0] != 1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.skip(reason="skip case since weight with same name will throw error for now.")
 def test_trace_begin_end_train_2():
     """
@@ -346,7 +349,8 @@ def train(net, data, label):
     return res
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.skip(reason="skip case since weight with same name will throw error for now.")
 def test_resnet50_with_trace():
     """
@@ -363,7 +367,8 @@ def test_resnet50_with_trace():
     assert np.allclose(res_trace.asnumpy(), res_pynative.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_control_with_trace():
     """
     Feature: Switch simplify pass.
@@ -428,7 +433,8 @@ def test_control_with_trace():
     assert np.allclose(fgrad[1].asnumpy(), np.array([0.], np.float32))
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.skip(reason="skip case since weight with same name will throw error for now.")
 def test_trace_while_grad():
     """
@@ -475,7 +481,8 @@ def test_trace_while_grad():
     assert np.allclose(graph_output[2].asnumpy(), expect_two, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 @pytest.mark.skip(reason="skip case since weight with same name will throw error for now.")
 def test_while_with_param_grad():
     """

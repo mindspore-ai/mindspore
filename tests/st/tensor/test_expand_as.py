@@ -43,7 +43,7 @@ def expect_forward_func(x_np, other_np):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=1024.01
 )
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_expand_as_forward(mode):
@@ -79,7 +79,7 @@ def test_expand_as_forward(mode):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=1.00
 )
 @pytest.mark.parametrize("mode", [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_expand_as_dtype(mode):
@@ -105,7 +105,7 @@ def test_expand_as_dtype(mode):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=2048.01
 )
 def test_expand_as_dynamic_shape():
     """

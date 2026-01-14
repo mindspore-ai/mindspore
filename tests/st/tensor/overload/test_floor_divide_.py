@@ -47,7 +47,7 @@ def ifloordiv_forward_func(input_x, other):
     plat_marks=['platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential',
+    essential_mark='essential', mem_peak=4.01
 )
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_tensor_floor_divide__normal(mode):
@@ -78,7 +78,7 @@ def test_tensor_floor_divide__normal(mode):
     plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=4.01
 )
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_tensor_ifloordiv_normal(mode):
@@ -110,6 +110,7 @@ def test_tensor_ifloordiv_normal(mode):
     level_mark='level1',
     card_mark='onecard',
     essential_mark='unessential',
+    mem_peak=4.01
 )
 def test_tensor_floor_divide__dynamic():
     """
@@ -146,7 +147,7 @@ def test_tensor_floor_divide__dynamic():
     plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=2048.01
 )
 def test_tensor_ifloordiv_dynamic():
     """

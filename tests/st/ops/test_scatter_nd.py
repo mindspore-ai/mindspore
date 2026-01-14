@@ -40,7 +40,7 @@ def scatter_nd_vmap_func(indices, updates, shape):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.02)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int64, np.int32, np.int16, np.int8])
 @pytest.mark.parametrize("indices_type", [np.int64, np.int32])
@@ -67,7 +67,7 @@ def test_scatter_nd_op_normal_1(context_mode, data_type, indices_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.02)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.float16, np.int64, np.int32, np.int16, np.int8])
 @pytest.mark.parametrize("indices_type", [np.int64, np.int32])
@@ -94,7 +94,7 @@ def test_scatter_nd_op_normal_2(context_mode, data_type, indices_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1032.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32, np.int32])
 @pytest.mark.parametrize("indices_type", [np.int32])
@@ -118,7 +118,7 @@ def test_scatter_nd_op_vmap(context_mode, data_type, indices_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.85)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [ms.float32, ms.int64])
 @pytest.mark.parametrize("indices_type", [ms.int64, ms.int32])
@@ -151,7 +151,7 @@ def test_scatter_nd_op_dynamic_shape(context_mode, data_type, indices_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.85)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [ms.float32, ms.int64])
 @pytest.mark.parametrize("indices_type", [ms.int64, ms.int32])
@@ -184,7 +184,7 @@ def test_scatter_nd_op_dynamic_rank(context_mode, data_type, indices_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_scatter_nd_op_1d_shape(context_mode):
@@ -203,7 +203,7 @@ def test_scatter_nd_op_1d_shape(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_scatter_nd_exception(context_mode):

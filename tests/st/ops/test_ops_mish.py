@@ -56,7 +56,7 @@ def mish_vmap_func(x):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1', card_mark='onecard', essential_mark='essential')
+          level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_mish_normal(context_mode):
@@ -83,7 +83,7 @@ def test_ops_mish_normal(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_ops_mish_vmap(context_mode):
@@ -101,7 +101,7 @@ def test_ops_mish_vmap(context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 def test_mish_dynamic_shape():
     """
     Feature: Test dynamic shape.

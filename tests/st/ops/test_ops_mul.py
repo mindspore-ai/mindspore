@@ -63,7 +63,7 @@ def set_mode(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2082.01)
 @pytest.mark.parametrize("mode", ["ge", "kbk", "pyboost"])
 def test_ops_mul_normal(mode):
     """
@@ -87,7 +87,7 @@ def test_ops_mul_normal(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", ["kbk", "pyboost"])
 def test_ops_mul_forward_case01(mode):
     """
@@ -103,7 +103,8 @@ def test_ops_mul_forward_case01(mode):
     np.testing.assert_allclose(output.asnumpy(), expect_out, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=132.0)
 @pytest.mark.parametrize("mode", ["ge", "kbk", "pyboost"])
 def test_ops_mul_forward_case02(mode):
     """
@@ -120,7 +121,7 @@ def test_ops_mul_forward_case02(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ["ge", "kbk", "pyboost"])
 def test_ops_mul_vmap(mode):
     """
@@ -137,7 +138,7 @@ def test_ops_mul_vmap(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_ops_mul_dynamic_shape():
     """
     Feature: pyboost function.
@@ -188,7 +189,8 @@ class MulNetScalarScalar(nn.Cell):
         return mul(2, 4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ["kbk"])
 def test_mul_infer_value(mode):
     """

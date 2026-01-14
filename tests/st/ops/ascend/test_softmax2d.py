@@ -28,7 +28,8 @@ class Net(nn.Cell):
         return self.softmax2d(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_softmax2d_normal():
     """
     Feature: Softmax2d

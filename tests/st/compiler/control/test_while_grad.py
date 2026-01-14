@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_while_grad.py """
 from tests.mark_utils import arg_mark
 import numpy as np
 from mindspore.ops import composite as C
@@ -19,7 +20,7 @@ from mindspore.ops import functional as F
 from mindspore import Parameter
 from mindspore import Tensor, context
 import mindspore.common.dtype as mstype
-import mindspore.nn as nn
+from mindspore import nn
 
 context.set_context(jit_config={"jit_level": "O0"})
 
@@ -41,7 +42,8 @@ class GradNet(nn.Cell):
         return gradient_function(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_while_grad():
     """
     Feature: Control flow
@@ -66,7 +68,8 @@ class WhileSpecTwiceNet(nn.Cell):
         return y
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_while_header_spec_twice():
     """
     Feature: FuncGraph Cloner.

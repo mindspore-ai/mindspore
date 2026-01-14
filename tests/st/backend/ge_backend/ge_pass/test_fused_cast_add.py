@@ -52,7 +52,7 @@ def delete_previous_graph(dir_path):
         os.system(f"rm -r {dir_path}")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('compute_dtype', [mstype.float16, mstype.bfloat16])
 @pytest.mark.parametrize('enable_fused_cast_add_opt', [True, False])
 def test_fused_cast_add(compute_dtype, enable_fused_cast_add_opt):

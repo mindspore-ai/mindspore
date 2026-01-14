@@ -68,7 +68,8 @@ def test_gpu_fp32():
     basic_test(np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_ascend_pynative_mode_fp32():
     """
     Feature: equalcount op expand fallback on ascend

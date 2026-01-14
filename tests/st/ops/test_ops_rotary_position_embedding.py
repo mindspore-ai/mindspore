@@ -82,7 +82,8 @@ def test_ops_rotary_position_embedding(context_mode, ms_type, mode_value):
     np.testing.assert_allclose(output_grad[0].asnumpy(), expect_grad_out[0], rtol=rotl_value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'],
+        level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=20.0)
 def test_ops_rotary_position_embedding_dynamic():
     """
     Feature: pyboost function.

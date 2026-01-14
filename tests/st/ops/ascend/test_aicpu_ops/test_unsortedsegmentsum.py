@@ -27,7 +27,8 @@ def forward_func(input_x, segment_ids, num_segments):
     return ops.unsorted_segment_sum(input_x, segment_ids, num_segments)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.5)
 @pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_unsortedsegmentsum(context_mode):
     """

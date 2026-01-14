@@ -82,7 +82,7 @@ def inplace_mul_backward_func_tensor(input_x, value):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=1024.01
 )
 @pytest.mark.parametrize("mode", ["pynative"])
 def test_tensor_mul__normal(mode):
@@ -123,7 +123,7 @@ def test_tensor_mul__normal(mode):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=1024.01
 )
 def test_tensor_mul__dynamic():
     """

@@ -86,7 +86,7 @@ def scatter_mul_dynamic_indices():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scatter_mul_forward_float16():
     """
     Feature: test scatter_mul forward.
@@ -99,7 +99,8 @@ def test_scatter_mul_forward_float16():
     scatter_mul_forward(np.float16)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_scatter_mul_forward_float32():
     """
     Feature: test scatter_mul forward.
@@ -112,7 +113,8 @@ def test_scatter_mul_forward_float32():
     scatter_mul_forward(np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_scatter_mul_forward_int32():
     """
     Feature: test scatter_mul forward.
@@ -125,7 +127,8 @@ def test_scatter_mul_forward_int32():
     scatter_mul_forward(np.int32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.02)
 def test_scatter_mul_dynamic_indices():
     """
     Feature: test scatter_mul dynamic shape.
@@ -138,7 +141,7 @@ def test_scatter_mul_dynamic_indices():
     scatter_mul_dynamic_indices()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scatter_mul_dynamic_updates():
     """
     Feature: test scatter_mul dynamic shape.
@@ -151,7 +154,8 @@ def test_scatter_mul_dynamic_updates():
     scatter_mul_dynamic_updates()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_scatter_mul_forward_int32_functional():
     """
     Feature: test scatter_mul forward.

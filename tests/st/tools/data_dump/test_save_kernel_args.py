@@ -38,7 +38,8 @@ def check_kernel_args_dump(dump_file_path):
     assert net_args.get("transpose_b") == "False"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_e2e_dump_save_kernel_args_true():
     """
     Feature: kbyk dump support kernel args.

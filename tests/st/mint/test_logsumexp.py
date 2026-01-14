@@ -30,7 +30,8 @@ def logsumexp_backward_func(input_x, dim, keepdim=False):
     return ops.grad(logsumexp_forward_func, (0))(input_x, dim, keepdim=keepdim)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_logsumexp_forward_backward(mode):
     """
@@ -73,7 +74,8 @@ def test_logsumexp_forward_backward(mode):
     assert np.allclose(input_grad.asnumpy(), expect_input_grad)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_f_logsumexp_dynamic():
     """
     Feature: test dynamiclogsumexp.

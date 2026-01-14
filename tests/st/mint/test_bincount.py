@@ -34,7 +34,7 @@ def bincount_forward_func(x, weights=None, minlength=0):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential')
+          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_mint_bincount_ext_normal(mode):
@@ -53,7 +53,7 @@ def test_mint_bincount_ext_normal(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_mint_bincount_ext_dynamic():
     """
     Feature: Test bincount with dynamic shape in graph mode using TEST_OP.

@@ -31,7 +31,8 @@ class TestNet(nn.Cell):
         t2 = self.add(t0, t1)
         return (t1, t2)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_dvm_input_shape_contains_zero():
     """
     Feature: Fused kernel corner case test
@@ -57,7 +58,8 @@ def test_dvm_input_shape_contains_zero():
     assert np.allclose(res2.asnumpy(), np_res2, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_dvm_dynamic_shape_contains_zero():
     """
     Feature: Fused kernel corner case test

@@ -47,7 +47,8 @@ def dir_data():
     return data_list
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=194.0)
 def test_dvpp_erase_operation_01():
     """
     Feature: Erase operation on device
@@ -144,7 +145,8 @@ def test_dvpp_erase_operation_01():
     vision.Erase(1, 4, 20, 30, v).device(device_target="Ascend")(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_dvpp_erase_exception_01():
     """
     Feature: Erase operation on device
@@ -251,7 +253,8 @@ def test_dvpp_erase_exception_01():
         vision.Erase(10, 10, 10, 10, (30, 5, 256), False).device(device_target="Ascend")(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=194.0)
 def test_dvpp_erase_exception_02():
     """
     Feature: Erase operation on device

@@ -61,7 +61,8 @@ def test_multinomial_std(mode):
     assert output2.asnumpy().shape == (2, 6)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_multinomial_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.
@@ -86,7 +87,8 @@ def test_multinomial_dynamic_shape():
                          'deterministic_use_origin_inputs': True})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_multinomial_bfloat16(mode):
     """

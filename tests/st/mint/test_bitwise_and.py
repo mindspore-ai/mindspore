@@ -39,7 +39,8 @@ def bitwise_and_backward_func(x, y):
     return ops.grad(bitwise_and_forward_func, 0)(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize("mode", ['pynative', 'KBK'])
 def test_bitwise_and_forward_backward(mode):
     """
@@ -88,7 +89,8 @@ def test_bitwise_and_forward_backward(mode):
     assert np.allclose(grad2.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_bitwise_and_dynamic_shape_scalar():
     """
     Feature: Test bitwise_and op.
@@ -104,7 +106,8 @@ def test_bitwise_and_dynamic_shape_scalar():
     TEST_OP(bitwise_and_forward_func, [[x, y], [x2, y2]], disable_mode=['GRAPH_MODE_GE'])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_bitwise_and_dynamic_shape_tensor():
     """
     Feature: Test bitwise_and op.
@@ -133,7 +136,8 @@ def mint_bitwise_and_binary_case1(input_binary_data=None, output_binary_data=Non
     mint_bitwise_and_binary_compare(input_binary_data, output_binary_data)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ['pynative', 'KBK'])
 def test_bitwise_and_binary_cases(mode):
     """

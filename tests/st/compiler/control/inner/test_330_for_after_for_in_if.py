@@ -25,7 +25,8 @@ from mindspore.common.parameter import Parameter
 grad_all = C.GradOperation(get_all=True)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_for_after_for_in_if():
     """
     Feature: Control flow

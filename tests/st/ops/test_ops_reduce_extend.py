@@ -91,7 +91,7 @@ def sum_backward_func(x, axis=None, keep_dims=False, dtype=None):
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
                       'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='essential')
+          level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1032.02)
 @pytest.mark.parametrize('keep_dims', [False, True])
 @pytest.mark.parametrize('in_dtype', [mstype.float16])
 @pytest.mark.parametrize('out_dtype', [mstype.float32])
@@ -121,7 +121,7 @@ def test_mean_normal(keep_dims, in_dtype, out_dtype, context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_mean_default(context_mode):
     """
@@ -145,7 +145,7 @@ def test_mean_default(context_mode):
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
                       'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
 def test_mean_dynamic():
     """
     Feature: pyboost function.
@@ -167,7 +167,7 @@ def test_mean_dynamic():
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
                       'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='essential')
+          level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('keep_dims', [False, True])
 @pytest.mark.parametrize('in_dtype', [mstype.float16])
 @pytest.mark.parametrize('out_dtype', [mstype.float32])
@@ -197,7 +197,7 @@ def test_sum_normal(keep_dims, in_dtype, out_dtype, context_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_sum_default(context_mode):
     """
@@ -221,7 +221,7 @@ def test_sum_default(context_mode):
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
                       'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
 def test_sum_dynamic():
     """
     Feature: pyboost function.
@@ -243,7 +243,7 @@ def test_sum_dynamic():
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
                       'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.03)
 @pytest.mark.parametrize('axis', [(-1), ()])
 @pytest.mark.parametrize('in_dtype', [mstype.float16])
 @pytest.mark.parametrize('out_dtype', [mstype.float32, mstype.int8, mstype.uint8, mstype.complex128])
@@ -266,7 +266,7 @@ def test_sum_vaild_dtype(axis, in_dtype, out_dtype, context_mode):
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
                       'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.10)
 @pytest.mark.parametrize('axis', [(-1), ()])
 @pytest.mark.parametrize('in_dtype', [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.uint8])
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -288,7 +288,7 @@ def test_sum_default_dtype(axis, in_dtype, context_mode):
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
                       'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='essential')
+          level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.02)
 @pytest.mark.parametrize('keep_dims', [False, True])
 @pytest.mark.parametrize('in_dtype', [mstype.float32])
 @pytest.mark.parametrize('out_dtype', [mstype.float32])
@@ -328,7 +328,7 @@ def test_prod_normal(keep_dims, in_dtype, out_dtype, context_mode):
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
                       'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('axis', [0, -1])
 @pytest.mark.parametrize('keep_dims', [False, True])
 @pytest.mark.parametrize('in_dtype', [mstype.float16])
@@ -351,7 +351,7 @@ def test_prod_normal_1d(axis, keep_dims, in_dtype, out_dtype, context_mode):
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
                       'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_prod_default(context_mode):
     """
@@ -387,7 +387,7 @@ def test_prod_default(context_mode):
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
                       'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 def test_prod_dynamic():
     """
     Feature: pyboost function.
@@ -415,7 +415,7 @@ def test_prod_dynamic():
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
                       'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.10)
 @pytest.mark.parametrize('axis', [-1, None])
 @pytest.mark.parametrize('in_dtype', [mstype.float16])
 @pytest.mark.parametrize('out_dtype', [mstype.float32, mstype.int8, mstype.uint8])
@@ -438,7 +438,7 @@ def test_prod_vaild_dtype(axis, in_dtype, out_dtype, context_mode):
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows',
                       'cpu_macos'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('axis', [-1, None])
 @pytest.mark.parametrize('in_dtype', [mstype.int8, mstype.int32, mstype.uint8])
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -458,7 +458,8 @@ def test_prod_default_dtype(axis, in_dtype, context_mode):
     np.testing.assert_equal(grads.dtype, in_dtype)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("mode", ["pynative", "kbk"])
 def test_mean_scalar_view_tensor(mode):
     """

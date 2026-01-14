@@ -80,7 +80,7 @@ class MulRelu(Cell):
 
 
 @arg_mark(plat_marks=["platform_ascend", "platform_gpu"], level_mark="level1", card_mark="onecard",
-          essential_mark="essential")
+          essential_mark="essential", mem_peak=2048.0)
 def test_heterogeneous_excutor():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float64)
     label_data = np.random.randn(32, 10).astype(np.float32)
@@ -112,7 +112,7 @@ def test_heterogeneous_excutor():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_heterogeneous_default_cpu_prim_ascend_in_graph_mode():
     """
     Feature: KBK heterogeneous.

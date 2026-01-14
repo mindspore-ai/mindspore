@@ -139,7 +139,7 @@ def multilabel_margin_loss_grad_template(nptype_input, reduction):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.02)
 def test_multilabel_margin_loss_graph_float32():
     """
     Feature: multilabelmarginloss float32

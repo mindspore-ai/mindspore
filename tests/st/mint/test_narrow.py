@@ -46,7 +46,7 @@ def narrow_backward(mode, x, dim, start, length):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_mint_narrow_normal(mode):
     """
@@ -149,7 +149,8 @@ KBK_NARROW_FORWARD = jit(narrow_forward_func, backend="ms_backend", jit_level="O
 KBK_NARROW_BACKWARD = jit(narrow_backward_func, backend="ms_backend", jit_level="O0")
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
+        card_mark="onecard", essential_mark="essential", mem_peak=1024.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_narrow_std(mode):
     """
@@ -183,7 +184,8 @@ def test_narrow_std(mode):
     allclose_nparray(expect_grad.detach().numpy(), output_grad.asnumpy(), equal_nan=True)
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
+        card_mark="onecard", essential_mark="essential", mem_peak=1024.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize(
     "dtype",
@@ -233,7 +235,8 @@ def test_narrow_dtype_coverage(mode, dtype):
         allclose_nparray(expect_grad.detach().numpy(), output_grad.asnumpy(), equal_nan=True)
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
+        card_mark="onecard", essential_mark="essential", mem_peak=1024.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize(
     "shape",
@@ -285,7 +288,8 @@ def test_narrow_dimensions(mode, shape):
         assert tuple(output.shape) == tuple(expect.shape)
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
+        card_mark="onecard", essential_mark="essential", mem_peak=1024.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize("special_type", ["inf", "nan", "zero", "large", "small"])
 def test_narrow_special_values(mode, special_type):
@@ -318,7 +322,8 @@ def test_narrow_special_values(mode, special_type):
     allclose_nparray(expect_grad.detach().numpy(), output_grad.asnumpy(), equal_nan=True)
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
+        card_mark="onecard", essential_mark="essential", mem_peak=1024.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_narrow_empty_tensor(mode):
     """
@@ -360,7 +365,8 @@ def test_narrow_empty_tensor(mode):
         allclose_nparray(expect_grad.detach().numpy(), output_grad.asnumpy(), equal_nan=True)
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0",
+        card_mark="onecard", essential_mark="essential", mem_peak=1024.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_narrow_non_contiguous(mode):
     """

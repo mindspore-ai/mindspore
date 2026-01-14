@@ -20,7 +20,8 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_simple_net_with_cse():
     """
     Feature: Support init internal parameter of valuenode for CSE scenarios.

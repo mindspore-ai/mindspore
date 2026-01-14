@@ -204,7 +204,8 @@ def run_trans_flag(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @security_off_wrap
 def test_ascend_kernel_by_kernel_trans_true_op_debug_mode():
     """
@@ -216,7 +217,8 @@ def test_ascend_kernel_by_kernel_trans_true_op_debug_mode():
     run_trans_flag("test_e2e_dump_trans_true_op_debug_mode")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=104.0)
 @security_off_wrap
 def test_ascend_sync_overflow_dvm():
     """
@@ -229,7 +231,8 @@ def test_ascend_sync_overflow_dvm():
     run_trans_flag_dvm("test_e2e_dump_trans_true_op_debug_mode")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @security_off_wrap
 def test_e2e_dump_set_overflow_number():
     """
@@ -241,7 +244,7 @@ def test_e2e_dump_set_overflow_number():
     run_trans_flag("test_e2e_dump_set_overflow_number")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=4.01)
 @security_off_wrap
 def test_dump_dynamic_net_sync_overflow_dump():
     """

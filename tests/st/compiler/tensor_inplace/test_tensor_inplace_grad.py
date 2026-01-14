@@ -176,7 +176,7 @@ def test_tensor_inplace_add_grad():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_tensor_inplace_after_forward_add_grad():
     """
     Feature: Support tensor inplace in grad.
@@ -198,7 +198,7 @@ def test_tensor_inplace_after_forward_add_grad():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_tensor_inplace_after_forward_add_param_grad():
     """
     Feature: Support tensor inplace in grad.
@@ -221,7 +221,7 @@ def test_tensor_inplace_after_forward_add_param_grad():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_tensor_inplace_add_grad_first_input():
     """
     Feature: Support tensor inplace in grad.
@@ -241,7 +241,7 @@ def test_tensor_inplace_add_grad_first_input():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_tensor_inplace_add_grad_all_inputs_and_param():
     """
     Feature: Support tensor inplace in grad.
@@ -268,7 +268,7 @@ def test_tensor_inplace_add_grad_all_inputs_and_param():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_tensor_inplace_scatter_grad():
     """
     Feature: Support tensor scatter_ method in grad.
@@ -302,7 +302,7 @@ def test_tensor_inplace_scatter_grad():
     assert np.allclose(grads[0].asnumpy().astype(np.float32), grad_np)
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.00)
 def test_inplace_backward_clone_input():
     """
     Feature: Support inplace backward need clone input in graph mode.
@@ -335,7 +335,7 @@ def test_inplace_backward_clone_input():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_backward_with_control_flow():
     """
     Feature: Support inplace backward with control flow in graph mode.
@@ -364,7 +364,7 @@ def test_inplace_backward_with_control_flow():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_backward_param_replace():
     """
     Feature: Support inplace param replace in graph mode.
@@ -389,7 +389,7 @@ def test_inplace_backward_param_replace():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_backward_param_replace2():
     """
     Feature: Support inplace param replace in graph mode.
@@ -417,7 +417,7 @@ def test_inplace_backward_param_replace2():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_backward():
     """
     Feature: Support inplace grad in grad_jit
@@ -441,7 +441,7 @@ def test_inplace_backward():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_backward_param_assign():
     """
     Feature: Support inplace param assign in graph mode.
@@ -481,7 +481,7 @@ def test_inplace_backward_param_assign():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_gradjit_inplace_node_reuse():
     """
     Feature: Support inplace param assign in graph mode.
@@ -504,7 +504,7 @@ def test_inplace_gradjit_inplace_node_reuse():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_inplace_gradjit_load_node_reuse():
     """
     Feature: Support inplace param assign in graph mode.
@@ -526,7 +526,8 @@ def test_inplace_gradjit_load_node_reuse():
     assert graph_backward_res == 2
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_inplace_grad_tensor_move():
     """
     Feature: Support inplace grad in grad_jit

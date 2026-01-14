@@ -24,7 +24,7 @@ from tests.mark_utils import arg_mark
 
 context.set_context(mode=ms.GRAPH_MODE, jit_config={"jit_level": "O0"})
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_split():
     """
     Feature: split interface.
@@ -66,7 +66,8 @@ def test_split():
     assert res2[0] == 21
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 def test_split_multi_op():
     """
     Feature: split interface.

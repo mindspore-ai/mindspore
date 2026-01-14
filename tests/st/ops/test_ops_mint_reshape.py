@@ -40,7 +40,7 @@ def reshape_backward_func(x, shape):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_ops_mint_reshape(mode):
     """
@@ -72,7 +72,7 @@ def test_ops_mint_reshape(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_mint_reshape_dynamic_shape():
     """
     Feature: Test mint.reshape with dynamic shape in pynative mode and KBK mode.

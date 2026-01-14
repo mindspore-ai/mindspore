@@ -32,7 +32,8 @@ def ones_like_backward_func(input_tensor, dtype=None):
     return input_grad
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1032.05)
 @pytest.mark.parametrize('mode', ['GE', 'pynative', 'KBK'])
 def test_ones_like_normal(mode):
     """
@@ -60,7 +61,8 @@ def test_ones_like_normal(mode):
     np.testing.assert_allclose(input_grad.asnumpy(), expect_grad, rtol=1e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
 def test_ones_like_dynamic_shape():
     """
     Feature: Test ones_like with dynamic shape in graph mode.

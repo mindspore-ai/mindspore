@@ -23,7 +23,7 @@ from tests.mark_utils import arg_mark
 
 @pytest.mark.parametrize("cleanup_temporary_files", ["./dataset_bind_out_1.log"], indirect=True)
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_dataset_bind_core(cleanup_temporary_files):
     """
     Feature: Dataset bind core
@@ -51,7 +51,7 @@ def test_dataset_bind_core(cleanup_temporary_files):
 
 @pytest.mark.parametrize("cleanup_temporary_files", ["./dataset_bind_out_2.log"], indirect=True)
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_dataset_bind_core_configuration(cleanup_temporary_files):
     """
     Feature: Dataset bind core
@@ -79,7 +79,7 @@ def test_dataset_bind_core_configuration(cleanup_temporary_files):
 
 @pytest.mark.parametrize("cleanup_temporary_files", ["./dataset_bind_out_3.log"], indirect=True)
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_dataset_bind_core_py_process(cleanup_temporary_files):
     """
     Feature: Dataset bind core
@@ -111,7 +111,7 @@ def test_dataset_bind_core_py_process(cleanup_temporary_files):
 
 @pytest.mark.parametrize("cleanup_temporary_files", ["./dataset_bind_out_4.log"], indirect=True)
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_dataset_bind_core_independent_dataset_process(cleanup_temporary_files):
     """
     Feature: Dataset bind core

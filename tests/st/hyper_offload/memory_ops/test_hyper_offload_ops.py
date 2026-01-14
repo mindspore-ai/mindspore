@@ -28,7 +28,8 @@ from tests.mark_utils import arg_mark
 os.environ['DEVICE_ID'] = '0'
 context.set_context(mode=context.GRAPH_MODE, device_target='Ascend', device_id=0)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_hiar_addr_to_remote():
     """
     Feature: Hyper offload base operator
@@ -62,7 +63,8 @@ def test_hiar_addr_to_remote():
     assert ret.device == "Ascend:0"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_hiar_addr_update_to_device():
     """
     Feature: Hyper offload base operator
@@ -98,7 +100,8 @@ def test_hiar_addr_update_to_device():
     os.environ['MS_DEV_HYPER_OFFLOAD'] = '0'
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_hiar_addr_detach():
     """
     Feature: Hyper offload base operator
@@ -134,7 +137,8 @@ def test_hiar_addr_detach():
     os.environ['MS_DEV_HYPER_OFFLOAD'] = '0'
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_hiar_addr_to_remote_and_detach():
     """
     Feature: Hyper offload base operator
@@ -155,7 +159,8 @@ def test_hiar_addr_to_remote_and_detach():
     os.environ['MS_DEV_HYPER_OFFLOAD'] = '0'
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_hiar_addr_in_for_variable_loop():
     """
     Feature: Hyper offload base operator

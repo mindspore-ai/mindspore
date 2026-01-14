@@ -46,7 +46,7 @@ class BackwardNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_forward():
     """
     Feature: Control flow
@@ -62,7 +62,7 @@ def test_forward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_backward():
     """
     Feature: Control flow
@@ -79,7 +79,7 @@ def test_backward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_single_while():
     """
     Feature: The else branches of while loops aren't supported.
@@ -103,7 +103,7 @@ def test_single_while():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 def test_single_while_tensor():
     """
     Feature: The else branches of while loops aren't supported.

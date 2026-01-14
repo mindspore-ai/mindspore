@@ -41,7 +41,7 @@ class Net(nn.Cell):
     plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential')
+    essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_functional_amp_overflow(mode):
@@ -88,7 +88,7 @@ def test_functional_amp_overflow(mode):
     plat_marks=['platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='essential')
+    essential_mark='essential', mem_peak=100.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_functional_amp_overflow_ge(mode):

@@ -47,7 +47,7 @@ def train_net(net):
     model = mindspore.train.Model(net, loss, optimizer)
     model.train(1, data)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_step_npu_py_native_profiler():
     """
     Feature: Dynamic Step Profiler
@@ -75,7 +75,7 @@ def test_dynamic_step_npu_py_native_profiler():
         _check_npu_profiler_data(tmpdir)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_step_cpu_py_native_profiler():
     """
     Feature: Dynamic Step Profiler
@@ -103,7 +103,7 @@ def test_dynamic_step_cpu_py_native_profiler():
         _check_cpu_profiler_data(tmpdir)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_step_npu_graph_profiler():
     """
     Feature: Dynamic Step Profiler
@@ -132,7 +132,7 @@ def test_dynamic_step_npu_graph_profiler():
         _check_npu_profiler_data(tmpdir)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_step_cpu_graph_profiler():
     """
     Feature: Dynamic Step Profiler

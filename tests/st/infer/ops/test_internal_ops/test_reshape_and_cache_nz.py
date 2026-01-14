@@ -105,7 +105,8 @@ def create_np_inputs(slot_size, dtype=np.float16, kv_dim=3):
     return key_update, value_update, key_cache, value_cache, slot_map
 
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=172.00)
 @pytest.mark.parametrize('slot_size', [16, 128])
 @pytest.mark.parametrize('kv_dim', [2, 3])
 def test_reshape_and_cache_nz_swft(slot_size, kv_dim):

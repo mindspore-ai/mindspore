@@ -100,7 +100,8 @@ def test_avg_pool2d_and_double_backward(mode):
         compare_result(double_grad, expected)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 def test_avg_pool2d_dynamic():
     """
     Feature: test dynamic by TEST_OP.

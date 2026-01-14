@@ -51,7 +51,8 @@ def adaptive_avg_pool3d_backward_func(x, output_size):
     return ops.grad(adaptive_avg_pool3d_forward_func, (0,))(x, output_size)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_adaptive_avg_pool3d_std(mode):
     """
@@ -75,7 +76,8 @@ def test_adaptive_avg_pool3d_std(mode):
         np.allclose(output_grad.asnumpy(), expect_grad, rtol=1e-5, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 def test_adaptive_avg_pool3d_dynamic():
     """
     Feature: dynamic shape forward, backward features.
@@ -104,7 +106,8 @@ def test_adaptive_avg_pool3d_dynamic():
             case_config={'disable_input_check': True})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_adaptive_avg_pool3d_bfloat16(mode):
     """

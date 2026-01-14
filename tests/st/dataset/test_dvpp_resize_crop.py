@@ -31,7 +31,8 @@ PWD = os.path.dirname(__file__)
 TEST_DATA_DATASET_FUNC = PWD + "/data"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=30.0)
 def test_dvpp_resizedcrop_operation_01():
     """
     Feature: ResizedCrop operation on device
@@ -136,7 +137,8 @@ def test_dvpp_resizedcrop_operation_01():
     assert (out == resizecrop_op_cpu).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_dvpp_resizedcrop_operation_02():
     """
     Feature: ResizedCrop operation on device
@@ -194,7 +196,8 @@ def test_dvpp_resizedcrop_operation_02():
     assert resizecrop_op(image).shape == (10, 10, 3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=10.0)
 def test_dvpp_resizedcrop_exception_01():
     """
     Feature: ResizedCrop operation on device
@@ -303,7 +306,8 @@ def test_dvpp_resizedcrop_exception_01():
         assert "The input data is not uint8 or float32" in str(e_log.value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_dvpp_resizedcrop_exception_02():
     """
     Feature: ResizedCrop operation on device

@@ -12,7 +12,8 @@ def check_strings_in_file(file_path, strings_list):
         return True
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_not_use_dryrunmock_not_in_simulation():
     """
     Feature: dryrun
@@ -39,7 +40,7 @@ def test_not_use_dryrunmock_in_simulation():
                     "b.is_contiguous()", "int(c) > 50", "float(c) > 50", "a.tolist()", "a.flush_from_cache()"]
     assert check_strings_in_file("dryrun1.log", warning_logs)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_use_dryrunmock_in_simulation():
     """
     Feature: dryrun
@@ -52,7 +53,8 @@ def test_use_dryrunmock_in_simulation():
     warning_logs = ["dryrun"]
     assert not check_strings_in_file("dryrun3.log", warning_logs)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_use_dryrunmock_not_in_simulation():
     """
     Feature: dryrun

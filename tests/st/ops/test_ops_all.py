@@ -61,7 +61,8 @@ def all_vmap_func(x, axis, keep_dims):
     return ops.vmap(all_forward_func, in_axes=(0, None, None), out_axes=0)(x, axis, keep_dims)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_all_forward(context_mode):
     """
@@ -78,7 +79,8 @@ def test_ops_all_forward(context_mode):
     np.testing.assert_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1576.75)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_all_forward_llama(context_mode):
     """
@@ -95,7 +97,7 @@ def test_ops_all_forward_llama(context_mode):
     np.testing.assert_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_all_forward_SDv1(context_mode):
     """
@@ -112,7 +114,7 @@ def test_ops_all_forward_SDv1(context_mode):
     np.testing.assert_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_all_backward(context_mode):
     """
@@ -129,7 +131,7 @@ def test_ops_all_backward(context_mode):
     np.testing.assert_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_all_vmap(context_mode):
     """
@@ -146,7 +148,8 @@ def test_ops_all_vmap(context_mode):
     np.testing.assert_equal(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=3072.00)
 def test_all_dynamic_shape_testop():
     """
     Feature: Test all with dynamic shape in graph mode using TEST_OP.

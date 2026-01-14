@@ -35,7 +35,8 @@ class Net(nn.Cell):
         return self.multinomial(x, self.sample)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.5)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_multinomial_1d(mode):
     """
@@ -51,7 +52,8 @@ def test_multinomial_1d(mode):
     np.array_equal(expect_result, out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.06)
 def test_multinomial_2d():
     """
     Feature: test Multinomial op.
@@ -70,7 +72,8 @@ def test_multinomial_2d():
     np.array_equal(expect_result1, out1.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_multinomial_0d():
     """
     Feature: test Multinomial op.
@@ -84,7 +87,8 @@ def test_multinomial_0d():
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_multinomial_3d():
     """
     Feature: test Multinomial op.

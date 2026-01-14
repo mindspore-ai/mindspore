@@ -23,7 +23,7 @@ from model_zoo import LeNet5
 from fake_dataset import FakeDataset
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_cpu_profiler():
     """
     Feature: CPU Profiler

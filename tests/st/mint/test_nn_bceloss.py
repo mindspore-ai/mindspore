@@ -148,7 +148,7 @@ def mint_nn_bceloss_binary_case6(input_binary_data=None, output_binary_data=None
     mint_nn_bceloss_binary_compare(input_binary_data, output_binary_data, None, 'none')
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_mint_nn_bceloss_binary_cases(mode):
     """
@@ -169,7 +169,7 @@ def test_mint_nn_bceloss_binary_cases(mode):
     mint_nn_bceloss_binary_case6()
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('reduction', ['mean', 'sum', 'none'])
 def test_mint_nn_bceloss_dynamic(reduction):
     """

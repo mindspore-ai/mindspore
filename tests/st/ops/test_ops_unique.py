@@ -39,7 +39,8 @@ def unique_forward_func_dynamic(inputx, is_sorted=True, dim=1):
     return unique(inputx, is_sorted, True, True, dim)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_ops_unique_forward_dim_None(mode):
     """
@@ -87,7 +88,7 @@ def test_ops_unique_forward_dim_None(mode):
     np.testing.assert_allclose(counts4.asnumpy(), expect_counts4, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_ops_unique_forward_with_dim(mode):
     """
@@ -127,7 +128,8 @@ def test_ops_unique_forward_with_dim(mode):
     np.testing.assert_allclose(counts2.asnumpy(), expect_counts2, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_ops_unique_dynamic_shape():
     """
     Feature: pyboost function.

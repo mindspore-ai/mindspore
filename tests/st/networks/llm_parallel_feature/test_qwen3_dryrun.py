@@ -87,7 +87,8 @@ def test_qwen3_dp4mp4pp1op_recompute():
         check_compile_time(log_path, 15)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='dryrun_only',
+        essential_mark='essential', mem_peak=4.00)
 def test_qwen3_cell_dp2mp4pp1op_grad_accu():
     """
     Feature: test qwen3 cell_dp2mp4pp1op_grad_accu

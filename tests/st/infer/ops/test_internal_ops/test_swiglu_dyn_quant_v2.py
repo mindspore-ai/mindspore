@@ -130,7 +130,8 @@ def _test_swiglu_v2_dyn_quant(shape, dim, np_dtype, has_smooth_scale=False, is_d
     np.testing.assert_allclose(res_np, res_expect, atol=1e-2, rtol=1e-2)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=120.00)
 @pytest.mark.parametrize('shape', [(16, 6144), (256, 5502), (4, 32768), (4, 32766)])
 @pytest.mark.parametrize('dim', [-1])
 @pytest.mark.parametrize('dtype', [bfloat16])

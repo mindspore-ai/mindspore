@@ -52,7 +52,8 @@ def assign_add_forward_test(ms_type, np_type):
         np.testing.assert_array_almost_equal(output_np, expected, decimal=6)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_assign_add_forward_fp32(mode):
     """
@@ -64,7 +65,8 @@ def test_assign_add_forward_fp32(mode):
     assign_add_forward_test(mindspore.float32, np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_assign_add_forward_bf16(mode):
     """

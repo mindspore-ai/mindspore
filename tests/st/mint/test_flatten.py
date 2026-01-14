@@ -43,7 +43,8 @@ def flatten_backward_func(x, start_dim=0, end_dim=-1):
     return flatten_bwd_func(x, start_dim, end_dim)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_flatten_normal(mode):
     """
@@ -72,7 +73,8 @@ def test_flatten_normal(mode):
     np.testing.assert_allclose(output2.asnumpy(), expect2, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_flatten_bfloat16(mode):
     """
@@ -94,7 +96,7 @@ def test_flatten_bfloat16(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 def test_flatten_dynamic_shape():
     """
     Feature: Test dynamic shape.

@@ -45,7 +45,8 @@ def test_conj_tensor_api():
     np.testing.assert_array_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_conj_functional_tensor_modes():
     """
     Feature: test conj functional and tensor APIs in PyNative and Graph modes.

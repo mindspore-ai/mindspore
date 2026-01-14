@@ -31,7 +31,7 @@ def indexput_backward_func(x1, x2, indices, accumulate=0):
     return ms.grad(indexput_forward_func, (0, 1))(x1, x2, indices, accumulate)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_indexput_op_normal(context_mode):
@@ -57,7 +57,8 @@ def test_indexput_op_normal(context_mode):
     np.testing.assert_allclose(x2_grad, expected_x2_grad, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=2048.01)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_indexput_op_forward_accumulate(context_mode):
@@ -76,7 +77,8 @@ def test_indexput_op_forward_accumulate(context_mode):
     np.testing.assert_allclose(out.asnumpy(), expected_out, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=1024.00)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @test_utils.run_test_with_On
 def test_indexput_op_backward_accumulate(context_mode):

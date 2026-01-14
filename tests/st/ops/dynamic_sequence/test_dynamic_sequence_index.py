@@ -52,7 +52,7 @@ def test_seq_index_tuple_dy():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_seq_index_scalar_dy():
     """
     Feature: test sequence_index op
@@ -68,7 +68,7 @@ def test_seq_index_scalar_dy():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.0)
 def test_seq_index_all_dy():
     """
     Feature: test sequence_index op

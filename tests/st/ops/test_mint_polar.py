@@ -50,7 +50,8 @@ def polar_backward_func(input_abs, input_angle):
     return input_grad
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_polar_normal(mode):
     """
@@ -77,7 +78,8 @@ def test_polar_normal(mode):
     np.testing.assert_allclose(output_grad_angle.asnumpy(), expect_grad_angle, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative'])
 def test_polar_backward_pynative(mode):
     """
@@ -98,7 +100,8 @@ def test_polar_backward_pynative(mode):
     np.testing.assert_allclose(output_grad_angle.asnumpy(), expect_grad_angle, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_polar_3d(mode):
     """
@@ -126,7 +129,7 @@ def test_polar_3d(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b', 'platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_polar_dynamic_shape():
     """
     Feature: Test polar with dynamic shape in graph mode.

@@ -95,7 +95,7 @@ class SeqNet(BaseSeqNet):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential')
+          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_graph_pipeline_grad():
     """
     Feature: graph mode support pipeline

@@ -35,7 +35,8 @@ def test_bounding_box_decode_functional():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected, decimal=2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.skip(reason="HISI bug")
 def test_bounding_box_decode_functional_modes():
     """

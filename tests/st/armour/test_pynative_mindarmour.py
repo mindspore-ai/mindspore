@@ -109,7 +109,8 @@ class GradWrapWithLoss(Cell):
         return gout[0]
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_grad_values_and_infer_shape():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     inputs_np = np.random.rand(32, 1, 32, 32).astype(np.float32)
@@ -125,7 +126,7 @@ def test_grad_values_and_infer_shape():
     assert out_shape == (64, 10), 'output shape should be (64, 10)'
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_multi_grads():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     sparse = False

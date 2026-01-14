@@ -32,7 +32,8 @@ class TestCeluNet(nn.Cell):
         return self.celu(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.07)
 def test_celu_forward_float32():
     """
     Feature: test celu forward.
@@ -49,7 +50,8 @@ def test_celu_forward_float32():
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_celu_dynamic_updates():
     """
     Feature: test celu dynamic shape.

@@ -41,7 +41,7 @@ def zero_backward_func(x):
     return grad(Net())(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_zero_std(mode):
     """
@@ -58,7 +58,7 @@ def test_zero_std(mode):
     np.allclose(output_x.asnumpy(), x, rtol=1e-5, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_zero_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.

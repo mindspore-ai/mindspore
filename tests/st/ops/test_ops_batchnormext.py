@@ -38,7 +38,8 @@ def batch_norm_backward_func(x, scale, bias, mean, var, is_train=False, momentum
     return ms.grad(batch_norm_forward_func, 0)(x, scale, bias, mean, var, is_train, momentum, eps)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.25)
 @pytest.mark.parametrize("is_training", [True, False])
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_batchnormext_normal(is_training, mode):
@@ -77,7 +78,8 @@ def test_batchnormext_normal(is_training, mode):
     assert np.allclose(grad.asnumpy(), grad_expect, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.02)
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_bn_vmap(mode):
     """
@@ -106,7 +108,8 @@ def test_bn_vmap(mode):
     assert np.allclose(out.asnumpy(), expect, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=2048.00)
 def test_bn_dyn():
     """
     Feature: Ops.
@@ -162,7 +165,7 @@ def ops_batchnormext_binary_case1(input_binary_data=None, output_binary_data=Non
     ops_batchnormext_binary_compare(input_binary_data, output_binary_data)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2014.02)
 @pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_batchnormext_binary_cases(mode):
     """

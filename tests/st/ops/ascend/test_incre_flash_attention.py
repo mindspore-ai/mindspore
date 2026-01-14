@@ -561,7 +561,8 @@ def net_forward_test(params):
         assert ifa_result.shape == (B, N, 1, D)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=22.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_incre_flash_attention_bsh_fwd(mode):
     """
@@ -605,7 +606,8 @@ def test_incre_flash_attention_bsh_fwd_kernel_by_kernel(mode):
     net_forward_test(params)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=22.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_incre_flash_attention_bnsd_fwd(mode):
     """
@@ -645,7 +647,8 @@ def test_incre_flash_attention_bnsd_fwd_kernel_by_kernel(mode):
     net_forward_test(params)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=22.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_incre_flash_attention_bsh_fwd_paged_attention(mode):
     """
@@ -664,7 +667,8 @@ def test_incre_flash_attention_bsh_fwd_paged_attention(mode):
     net_forward_test(params)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=22.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_incre_flash_attention_bnsd_fwd_paged_attention(mode):
     """

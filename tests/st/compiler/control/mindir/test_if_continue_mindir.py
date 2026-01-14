@@ -30,13 +30,12 @@ class Conv_for_if_continue_net(nn.Cell):
         for _ in range(2):
             if y < 2:
                 continue
-            else:
-                x = self.conv1(x)
-            #x = self.conv1(x)
+            x = self.conv1(x)
         return x
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_if_continue_mindir():
     """
     Feature: export complex if-continue mindir and run.

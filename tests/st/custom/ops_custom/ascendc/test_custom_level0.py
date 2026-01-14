@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+""" test_custom_level0.py """
 import pytest
 import os
 import shutil
@@ -23,7 +23,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import context, Tensor
 from mindspore.nn import Cell
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore.ops import DataType, CustomRegOp
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
@@ -123,10 +123,11 @@ def compiler_cache():
     yield
     shutil.rmtree(temp_dir, ignore_errors=True)
     os.environ.pop("MS_COMPILER_CACHE_PATH", None)
-    print(f"[TEARDOWN] Removed temp dir and unset MS_COMPILER_CACHE_PATH")
+    print("[TEARDOWN] Removed temp dir and unset MS_COMPILER_CACHE_PATH")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_mul_aclnn(context_mode):
     """
@@ -145,7 +146,8 @@ def test_custom_mul_aclnn(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_mul_aclnn_dynamic(context_mode):
     """
@@ -166,7 +168,8 @@ def test_custom_mul_aclnn_dynamic(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_mul_aclnn_add_prefix(context_mode):
     """
@@ -185,7 +188,8 @@ def test_custom_mul_aclnn_add_prefix(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_mul_aclnn_infer_cpp(context_mode):
     """
@@ -204,7 +208,8 @@ def test_custom_mul_aclnn_infer_cpp(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_mul_aclnn_infer_type_cpp(context_mode):
     """
@@ -223,7 +228,8 @@ def test_custom_mul_aclnn_infer_type_cpp(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_custom_mul_aclnn_bprop(context_mode):
     """
@@ -247,7 +253,8 @@ def test_custom_mul_aclnn_bprop(context_mode):
     assert np.allclose(dx.asnumpy(), expect_dx.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 def test_custom_mul_aclop(context_mode):
     """
@@ -266,7 +273,8 @@ def test_custom_mul_aclop(context_mode):
     assert np.allclose(out.asnumpy(), expect_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 def test_custom_mul_dump(context_mode):
     """
@@ -315,7 +323,7 @@ def test_custom_mul_dump(context_mode):
             }
         }
 
-        with open(dump_config_path, 'w') as f:
+        with open(dump_config_path, 'w', encoding="utf-8") as f:
             json.dump(dump_config, f, indent=2)
 
         os.environ['MINDSPORE_DUMP_CONFIG'] = dump_config_path
@@ -331,7 +339,8 @@ def test_custom_mul_dump(context_mode):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 def test_custom_mul_profiler(context_mode):
     """

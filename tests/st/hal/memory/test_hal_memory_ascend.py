@@ -76,7 +76,8 @@ class Network(nn.Cell):
         return z
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_empty_cache_vmm():
     """
     Feature: runtime memory api.
@@ -95,7 +96,8 @@ def test_empty_cache_vmm():
     assert reserved_size == 0
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_empty_cache_without_vmm():
     """
     Feature: runtime memory api.
@@ -114,7 +116,8 @@ def test_empty_cache_without_vmm():
         assert reserved_size == 0
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_empty_cache_dryrun():
     """
     Feature: runtime memory api.
@@ -135,7 +138,8 @@ def test_empty_cache_dryrun():
     assert reserved_size == 0
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_memory_replay():
     """
     Feature: runtime memory api.
@@ -182,7 +186,8 @@ def extract_memory_usage(filename):
                 return memory_usage
         return None
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2064.00)
 def test_huge_page_reserve_vmm():
     """
     Feature: reserve huge page for vmm.
@@ -203,7 +208,8 @@ def test_huge_page_reserve_vmm():
     assert mem_free_after_gb >= reserve_mem
     assert ret == 0 and ret_after == 0
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2064.00)
 def test_huge_page_reserve_with_size_0():
     """
     Feature: reserve huge page for vmm.
@@ -221,7 +227,8 @@ def test_huge_page_reserve_with_size_0():
     assert mem_free_after >= 0
     assert ret == 0 and ret_after == 0
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_small_allocator():
     """
     Feature: small allocator.
@@ -244,7 +251,8 @@ def test_small_allocator():
 
     assert fragment_with_small_pool < fragment_without_small_pool
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_runtime_memory_stats_idle():
     """
     Feature: runtime memory api.
@@ -337,7 +345,8 @@ def train_model():
         net(input_tensor)
     return True
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_runtime_vmm_close_multi_model_train():
     """
     Feature: basic test for multi model train.
@@ -359,7 +368,8 @@ def test_runtime_vmm_close_multi_model_train():
             assert i.get()
     del os.environ['MS_ALLOC_CONF']
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_enable_mem_huge_1g():
     """
     Feature: Use 1G huge page size when environment variable enable_mem_huge_1g is enabled.
@@ -377,7 +387,8 @@ def test_enable_mem_huge_1g():
     assert ms.runtime.memory_stats()["total_reserved_memory"] == 1024 * 1024 * 1024
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=18.00)
 def test_memory_stats_with_stream():
     """
     Feature: test memory stats with stream.

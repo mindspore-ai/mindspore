@@ -49,7 +49,7 @@ class NetAddOffset(nn.Cell):
         return self.seq_add_offset(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_seq_add_aicpu():
     """
     Feature: test aicpu sequence_add op
@@ -64,7 +64,8 @@ def test_seq_add_aicpu():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=1024.00)
 def test_seq_add_offset_aicpu():
     """
     Feature: test aicpu sequence_add_offset op
@@ -79,7 +80,8 @@ def test_seq_add_offset_aicpu():
     assert res == expect
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 def test_seq_add_grad_aicpu():
     """
     Feature: test aicpu sequence add grad op
@@ -99,7 +101,7 @@ def test_seq_add_grad_aicpu():
     print("grad out = ", grad_func(input_x, input_y, dout))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_seq_add_grad_other_aicpu():
     """
     Feature: test aicpu sequence add grad op

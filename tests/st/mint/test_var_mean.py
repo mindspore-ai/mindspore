@@ -36,7 +36,7 @@ def var_mean_forward_func(x, dim=None, correction=1, keepdim=False):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential')
+          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_mint_var_mean_normal(mode):
     """
@@ -57,7 +57,7 @@ def test_mint_var_mean_normal(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_mint_var_mean_dynamic():
     """
     Feature: Test var_mean with dynamic shape in graph mode using TEST_OP.

@@ -16,7 +16,7 @@ import os
 import glob
 import csv
 import numpy as np
-import mindspore.context as context
+from mindspore import context
 import tempfile
 import time
 import json
@@ -228,7 +228,7 @@ def compare_massive_data(net, dump_path):
     compare_parallel_hash(case_data[0].asnumpy(), case_data[1].asnumpy(), data_len, net,
                           Path(dump_path) / "rank_0" / "Net" / "0" / "0")
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 def test_e2e_statistic_async_device_high_precision():
     """
     Feature: kbyk statistic dump support device async high precision
@@ -255,7 +255,7 @@ def test_e2e_statistic_async_device_high_precision():
             del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 def test_e2e_statistic_async_device_low_precision():
     """
     Feature: kbyk statistic dump support device async low precision
@@ -283,7 +283,8 @@ def test_e2e_statistic_async_device_low_precision():
             del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_e2e_statistic_sync_device():
     """
     Feature: kbyk statistic dump support device sync with assign MS_DIAGNOSTIC_DATA_PATH
@@ -312,7 +313,7 @@ def test_e2e_statistic_sync_device():
             del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 def test_e2e_statistic_sync_host():
     """
     Feature: kbyk statistic dump support host sync, host also supports md5
@@ -344,7 +345,8 @@ def test_e2e_statistic_sync_host():
         finally:
             del os.environ['MINDSPORE_DUMP_CONFIG']
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_e2e_statistic_massive_data():
     """
     Feature: kbyk statistic dump with massive data
@@ -371,7 +373,8 @@ def test_e2e_statistic_massive_data():
         finally:
             del os.environ['MINDSPORE_DUMP_CONFIG']
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_e2e_statistic_moveto():
     """
     Feature: test kernel mindspore.ops.move_to

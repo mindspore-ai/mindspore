@@ -61,7 +61,7 @@ def ops_greater_equal_scalar_binary_case2(input_binary_data=None, output_binary_
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_greater_equal_scalar_binary_cases(context_mode):
     """
@@ -78,7 +78,7 @@ def test_ops_greater_equal_scalar_binary_cases(context_mode):
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.0)
 def test_ops_greater_equal_scalar_dynamic_shape():
     """
     Feature: Ops

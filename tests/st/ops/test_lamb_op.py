@@ -166,7 +166,8 @@ def test_gpu_net(mode):
     assert np.allclose(my_lamb.param.asnumpy(), lamb_gpu_origin.param.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_ascend_net(mode):
     """

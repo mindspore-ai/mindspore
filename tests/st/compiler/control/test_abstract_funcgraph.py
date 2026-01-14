@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+""" test_abstract_funcgraph.py """
 from mindspore.nn import Cell
 from mindspore.common import Tensor, dtype
 import mindspore.ops.operations as P
@@ -21,7 +21,8 @@ import numpy as np
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_watch_get_func_graphs_from_abstract():
     """
     Feature: Get func_graph from abstract.

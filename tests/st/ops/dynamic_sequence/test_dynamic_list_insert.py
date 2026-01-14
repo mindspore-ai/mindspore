@@ -50,7 +50,7 @@ def test_list_insert1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_list_insert2():
     """
     Feature: test sequence getitem op
@@ -73,7 +73,7 @@ def test_list_insert2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_list_insert3():
     """
     Feature: test sequence getitem op
@@ -96,7 +96,7 @@ def test_list_insert3():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_list_insert_grad():
     """
     Feature: test sequence getitem grad op

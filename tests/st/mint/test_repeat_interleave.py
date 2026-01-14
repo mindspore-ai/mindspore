@@ -93,7 +93,7 @@ def repeat_interleave_case(x_np, repeats, dim, cast_tensor=False):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dim', [0, -1, None])
 def test_repeat_interleave_forward_backward_int(mode, dim):
@@ -115,7 +115,7 @@ def test_repeat_interleave_forward_backward_int(mode, dim):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=20.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dim', [0, None])
 @pytest.mark.parametrize('cast_tensor', [True, False])
@@ -139,7 +139,8 @@ def test_repeat_interleave_forward_backward_tensor(mode, dim, cast_tensor):
     repeat_interleave_case(x, repeats, dim, cast_tensor)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dim', [None, 1])
 def test_repeat_interleave_bfloat16(mode, dim):
@@ -163,7 +164,8 @@ def test_repeat_interleave_bfloat16(mode, dim):
     assert np.allclose(output.float().asnumpy(), expect, 0.004, 0.004)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.0)
 def test_repeat_interleave_dynamic_shape_int():
     """
     Feature: Test dynamic shape.
@@ -182,7 +184,8 @@ def test_repeat_interleave_dynamic_shape_int():
                           'ScalarTensor'])
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=20.0)
 def test_repeat_interleave_dynamic_shape_tensor():
     """
     Feature: Test dynamic shape.

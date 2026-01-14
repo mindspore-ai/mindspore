@@ -25,7 +25,8 @@ class Net(nn.Cell):
     def construct(self, x, other):
         return ops.add(x, other)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_special_format_for_input_parameter():
     """
     Feature: special format test case

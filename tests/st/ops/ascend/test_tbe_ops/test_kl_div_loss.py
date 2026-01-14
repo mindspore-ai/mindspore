@@ -59,7 +59,7 @@ def compare_with_numpy(x, target, reduction):
     np.testing.assert_array_almost_equal(out.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("reduction", ["none", "sum"])
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_kl_div_loss_scalar(reduction, data_type):
@@ -73,7 +73,8 @@ def test_kl_div_loss_scalar(reduction, data_type):
     compare_with_numpy(x, target, reduction)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.25)
 @pytest.mark.parametrize("reduction", ["none", "sum", "batchmean"])
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 def test_kl_div_loss_multi_dim(reduction, data_type):
@@ -87,7 +88,8 @@ def test_kl_div_loss_multi_dim(reduction, data_type):
     compare_with_numpy(x, target, reduction)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.02)
 @pytest.mark.parametrize("reduction", ["none", "sum", "batchmean"])
 def test_kl_div_loss_vmap(reduction):
     """

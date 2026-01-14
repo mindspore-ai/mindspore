@@ -33,7 +33,8 @@ class Net(Cell):
         return y3, y1, y0
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=318.0)
 def test_dvm_dynamic_shape_codegen():
     """
     Feature: Test the functionality of O1 CodeGen

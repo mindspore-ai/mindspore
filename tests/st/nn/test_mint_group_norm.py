@@ -42,7 +42,8 @@ def grad_group_norm_net(input_x, num_group, num_channels, eps=1e-05, affine=True
     return ms.grad(net)(input_x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=3072.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_groupnorm_para_customed_dtype(mode):
     """
@@ -91,7 +92,7 @@ def test_groupnorm_para_customed_dtype(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
 def test_mint_group_norm_dyn():
     """
     Feature: Dynamic shape of GroupNorm.

@@ -32,7 +32,7 @@ def nllloss_grad_vmap_func(logits, loss_grad, labels, weight, total_weight):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_type', [np.float32])
 @test_utils.run_test_with_On
@@ -86,7 +86,7 @@ def get_grad_inputs_and_output(nptype_input, nptype_weight, reduction, input_typ
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.02)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('data_type', [np.float32])
 @test_utils.run_test_with_On

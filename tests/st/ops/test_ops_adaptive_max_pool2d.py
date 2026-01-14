@@ -59,7 +59,7 @@ def ops_adaptive_max_pool2d_case2(input_binary_data=None, output_binary_data=Non
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=20.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_ops_adaptive_max_pool2d_binary_cases(context_mode):
     """
@@ -73,7 +73,7 @@ def test_ops_adaptive_max_pool2d_binary_cases(context_mode):
     ops_adaptive_max_pool2d_case2()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=20.0)
 def test_ops_adaptive_max_pool2d_dynamic_shape():
     """
     Feature: Ops
@@ -88,7 +88,7 @@ def test_ops_adaptive_max_pool2d_dynamic_shape():
             case_config={'disable_input_check': True})
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 def test_ops_adaptive_max_pool2d_binary_cases_GE():
     """
     Feature: Ops

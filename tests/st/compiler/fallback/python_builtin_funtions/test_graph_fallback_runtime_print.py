@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_graph_fallback_runtime_print.py """
 import os
 import sys
 import time
@@ -20,7 +21,7 @@ from contextlib import contextmanager
 import pytest
 import numpy as np
 from mindspore import Tensor, jit, context, nn, mutable
-import mindspore.ops as ops
+from mindspore import ops
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)
@@ -63,7 +64,7 @@ def check_output(output, patterns):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_print_asnumpy():
     """
     Feature: JIT Fallback
@@ -88,7 +89,7 @@ def test_fallback_print_asnumpy():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_fallback_print_asnumpy_custom_class_ascend():
     """
     Feature: JIT Fallback
@@ -124,7 +125,7 @@ def test_fallback_print_asnumpy_custom_class_ascend():
 
 @pytest.mark.skip(reason="print mutalble is not supported")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_print_mutable():
     """
     Feature: JIT Fallback
@@ -149,7 +150,8 @@ def test_fallback_print_mutable():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_fallback_print_pyinterpret():
     """
     Feature: JIT Fallback
@@ -180,7 +182,7 @@ def test_fallback_print_pyinterpret():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_np_init():
     """
     Feature: JIT Fallback
@@ -210,7 +212,7 @@ def test_np_init():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=4.00)
 def test_print_str_format():
     """
     Feature: JIT Fallback

@@ -52,7 +52,7 @@ def put_forward_func_with_x_mul_1(x, index, source, accumulate):
     return Net()(x * 1, index, source, accumulate)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_put_std():
     """
     Feature: standard forward, backward features.
@@ -73,7 +73,7 @@ def test_put_std():
     assert np.allclose(output2.asnumpy(), expect_out2.asnumpy(), rtol=1e-5, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_put_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.

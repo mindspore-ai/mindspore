@@ -57,7 +57,8 @@ def softmax_grad_ext_test(shape1, dtype):
     assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_ascend():
     """
     Feature: Graph Kernel expander

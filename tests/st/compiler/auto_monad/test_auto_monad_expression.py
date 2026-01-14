@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+""" test_auto_monad_expression.py """
 import os
 import re
 import shutil
@@ -19,7 +20,7 @@ import numpy as np
 from mindspore.nn import Cell
 from mindspore import context, Tensor, Parameter
 import mindspore.ops.operations as P
-import mindspore.ops as ops
+from mindspore import ops
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
 import mindspore as ms
@@ -126,7 +127,7 @@ class AutoMonadTwoAssignTwoAddnDependencyBenchmarkNet(Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 def test_auto_monad_read_dependency_two_assign_two_addn():
     """
     Feature: Auto monad feature.
@@ -183,7 +184,7 @@ def find_newest_validateir_file(folder_path):
 
 def read_file(save_path):
     filename = find_newest_validateir_file(save_path)
-    with open((os.path.join(filename)), 'r') as f:
+    with open((os.path.join(filename)), 'r', encoding="utf-8") as f:
         content = f.read()
     clean_all_ir_files(save_path)
     return content
@@ -254,7 +255,7 @@ def test_load_convert_tensormove_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 def test_load_eliminate():
     """
     Feature: Auto monad feature: test load eliminate.
@@ -393,7 +394,7 @@ def test_parameter_tuple_assign_addn_inner_net():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_parameter_tuple_assign_addn_inner_net_control_flow():
     """
     Feature: Auto monad feature.
@@ -480,7 +481,7 @@ def test_parameter_value_control_flow_ascend():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_control_while_for_if_break_parameter():
     """
     Feature: UpdateState grad in pynative mode.
@@ -519,7 +520,7 @@ def test_control_while_for_if_break_parameter():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.75)
 def test_parameter_shape_in_auto_monad():
     """
     Feature: Auto monad feature.
@@ -619,7 +620,8 @@ class ControlMixedWhileIf(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_mixed_while_if():
     """
     Feature: Auto monad feature: record the value of load.
@@ -667,7 +669,8 @@ class SideEffectSoftmaxGradExt1(Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_side_effect_softmaxgradext1():
     """
     Feature: Auto monad feature: record the value of load.

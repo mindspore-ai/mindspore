@@ -36,7 +36,8 @@ def hardtanh_forward_func(x, min_val, max_val):
     return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_hardtanh_std(mode):
     """
@@ -62,7 +63,8 @@ def test_hardtanh_std(mode):
     np.testing.assert_allclose(inplace_x.asnumpy(), expect, rtol=1e-5, atol=1e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_hardtanh_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.
@@ -82,7 +84,8 @@ def test_hardtanh_dynamic_shape():
                          'all_dim_zero': True})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_hardtanh_bfloat16(mode):
     """

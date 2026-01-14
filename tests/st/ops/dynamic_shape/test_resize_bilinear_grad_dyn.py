@@ -53,7 +53,7 @@ def dyn_case():
     assert np.all(output.asnumpy() == expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
 def test_resize_bilinear_grad_dyn_ascend():
     """
     Feature: Test ResizeBilinearGrad on Ascend.

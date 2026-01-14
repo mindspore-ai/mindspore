@@ -35,7 +35,8 @@ def frac_backward_func(x):
     return ms.grad(frac_forward_func, (0))(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_mint_frac_normal(mode):
     """
@@ -57,7 +58,7 @@ def test_mint_frac_normal(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_mint_std_dynamic_shape():
     """
     Feature: Test operator Frac by TEST_OP.

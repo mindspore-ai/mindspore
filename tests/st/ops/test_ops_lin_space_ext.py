@@ -38,7 +38,8 @@ def lin_space_ext_backward_func(start, end, steps, dtype=None):
     return ops.grad(lin_space_ext_forward_func, (0, 1))(start, end, steps, dtype)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [ms.float32])
 def test_lin_space_ext_normal(mode, dtype):
@@ -68,7 +69,8 @@ def test_lin_space_ext_normal(mode, dtype):
     assert np.allclose(output5.asnumpy(), expect5)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [ms.bfloat16])
 def test_lin_space_ext_bfloat16(mode, dtype):
@@ -98,7 +100,8 @@ def test_lin_space_ext_bfloat16(mode, dtype):
     assert np.allclose(output5.float().asnumpy(), expect5, rtol=4e-3, atol=4e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_lin_space_ext_dynamic():
     """
     Feature: test dynamic by TEST_OP.

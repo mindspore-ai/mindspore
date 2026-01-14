@@ -153,7 +153,7 @@ def run_trans_flag(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @security_off_wrap
 def test_ascend_kernel_by_kernel_lenet():
     """

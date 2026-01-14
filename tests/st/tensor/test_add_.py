@@ -39,7 +39,8 @@ def inplace_add_backward_func(x, y):
     return grad(Net())(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.00)
 def test_inplace_add_std():
     """
     Feature: standard forward, backward features.
@@ -72,7 +73,8 @@ def test_inplace_add_std():
     np.allclose(output_z_grad[1].asnumpy(), expect_z_grad, rtol=1e-5, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 def test_copy_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.
@@ -92,7 +94,8 @@ def test_copy_dynamic_shape():
             inplace_update=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 def test_copy_bfloat16():
     """
     Feature: test copy functional API.

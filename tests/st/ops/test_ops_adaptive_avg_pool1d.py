@@ -39,7 +39,7 @@ def grad_adaptive_avg_pool1d_net(input_x, output_size):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_batchnorm1d_dyn():
     """
     Feature: Dynamic shape of adaptive_avg_pool1d
@@ -53,7 +53,8 @@ def test_batchnorm1d_dyn():
             disable_case=['ViewTensor', 'EmptyTensor', 'ScalarTensor'])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=36.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_adaptive_avg_pool1d(mode):
     """

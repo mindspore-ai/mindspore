@@ -47,7 +47,7 @@ def smoothl1loss_grad(beta):
     return grad(Tensor(prediction), Tensor(target), Tensor(sens))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_smoothl1loss_grad_no_reduce():
     """
     Feature: SmoothL1LossGrad cpu kernel.
@@ -90,7 +90,7 @@ def smoothl1loss_grad_2(beta, reduction):
     return grad(Tensor(prediction), Tensor(target), Tensor(sens))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize("reduction", ['mean', 'sum'])
 def test_smoothl1loss_grad_sum(reduction):
     """

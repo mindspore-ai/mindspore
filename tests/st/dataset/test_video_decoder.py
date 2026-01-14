@@ -30,7 +30,8 @@ filename_h264 = PWD + "/data/campus.h264"
 filename_h265 = PWD + "/data/campus_h265.mp4"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=8.0)
 @pytest.mark.parametrize("filename", [filename_h264, filename_h265])
 def test_video_decoder(filename):
     """
@@ -76,7 +77,8 @@ def test_video_decoder(filename):
     ds.config.set_video_backend(original_video_backend)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_video_decoder_exception_case():
     """
     Feature: VideoDecoder

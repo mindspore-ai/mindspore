@@ -45,7 +45,7 @@ def atanh_backward_func(x):
 
 @arg_mark(
     plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
-    level_mark='level1', card_mark='onecard', essential_mark='essential')
+    level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.05)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 def test_atanh_std(mode):
     """
@@ -72,7 +72,7 @@ def test_atanh_std(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=4.0)
 def test_atanh_dynamic_shape():
     """
     Feature: dynamic shape forward, backward features.
@@ -85,7 +85,8 @@ def test_atanh_dynamic_shape():
     TEST_OP(atanh_forward_func, [[tensor_1], [tensor_2]])
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_atanh_bfloat16(mode):
     """

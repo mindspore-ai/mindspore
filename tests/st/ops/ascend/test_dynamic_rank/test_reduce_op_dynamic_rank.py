@@ -77,7 +77,8 @@ class ReduceOpFactory:
         return out.detach().numpy()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_reduce_sum_dyn_rank():
     """
     Feature: test reduce sum dynamic rank

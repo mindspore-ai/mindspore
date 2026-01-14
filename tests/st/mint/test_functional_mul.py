@@ -243,7 +243,7 @@ def is_float_type(dtype):
     return dtype in (mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16)
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential')
+          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=68.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('dtype_x', DTYPE_MAP.keys())
 @pytest.mark.parametrize('dtype_y', DTYPE_MAP.keys())
@@ -268,7 +268,7 @@ def test_mint_mul_mixed_precision_combinations(context_mode, dtype_x, dtype_y):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_gpu', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('shapes', [
     ((3, 1, 5), (1, 4, 5)), # Basic broadcast
@@ -292,7 +292,7 @@ def test_mint_mul_broadcast(context_mode, shapes):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_gpu', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('params', [
     # 7D: (2, 1, 2, 1, 4, 8, 8) * (2, 3, 2, 5, 4, 1, 1) -> (2, 3, 2, 5, 4, 8, 8), FP32
@@ -323,7 +323,7 @@ def test_mint_mul_large_shape_high_dims(context_mode, params):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential')
+          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=14.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize('dtype_x', DTYPE_MAP.keys())
 @pytest.mark.parametrize('scalar_y', [2.0, 2, True])
@@ -345,7 +345,7 @@ def test_mint_mul_scalar_tensor_promotion(context_mode, dtype_x, scalar_y):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_gpu', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 def test_mint_mul_special_values(context_mode):
     """
@@ -363,7 +363,7 @@ def test_mint_mul_special_values(context_mode):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_gpu', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 def test_mint_mul_empty_tensor(context_mode):
     """
@@ -382,7 +382,7 @@ def test_mint_mul_empty_tensor(context_mode):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_gpu', 'platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk', 'ge'])
 def test_mint_mul_exception_shape_mismatch(context_mode):
     """
@@ -400,7 +400,7 @@ def test_mint_mul_exception_shape_mismatch(context_mode):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_gpu', 'platform_ascend910b'],
-          level_mark='level0', card_mark='onecard', essential_mark='unessential')
+          level_mark='level0', card_mark='onecard', essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'kbk'])
 def test_mint_mul_dynamic_shape_test_op(context_mode):
     """

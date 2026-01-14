@@ -87,7 +87,8 @@ def _test_glu_backward_main(ms_type, f, tol):
     assert np.allclose(grad_x.asnumpy().astype(np.float32), expected, **tol)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+        mem_peak=0.01)
 @pytest.mark.parametrize(
     'mode, level',
     [
@@ -113,7 +114,8 @@ def test_glu(mode, level, device):
     _test_glu_backward_main(ms.float32, glu_nn, _FP32_TOL)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_glu_bfloat16(mode):
     """
@@ -129,7 +131,8 @@ def test_glu_bfloat16(mode):
     _test_glu_backward_main(ms.bfloat16, glu_func, _BF16_TOL)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=3072.0)
 def test_glu_dynamic():
     """
     Feature: test dynamic by TEST_OP.

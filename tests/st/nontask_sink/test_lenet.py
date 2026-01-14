@@ -130,6 +130,11 @@ class GradWrap(nn.Cell):
 
 
 def test_ascend_lenet():
+    """
+    Feature: Somas Ascend kernel by kernel.
+    Description: LeNet with Somas Ascend kernel by kernel.
+    Expectation: No exception.
+    """
     np.random.seed(1)
     epoch_size = 20
     batch_size = 32
@@ -159,8 +164,14 @@ def test_ascend_lenet():
     return loss_output
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
 def test_ascend_lenet1():
+    """
+    Feature: Somas Ascend kernel by kernel.
+    Description: LeNet with Somas Ascend kernel by kernel.
+    Expectation: No exception.
+    """
     context.set_context(jit_level='O0')
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     loss_output = test_ascend_lenet()
@@ -168,8 +179,14 @@ def test_ascend_lenet1():
     assert loss_output.asnumpy() > 0.003
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="essential", mem_peak=2048.01)
 def test_ascend_lenet2():
+    """
+    Feature: Somas Ascend kernel by kernel.
+    Description: LeNet with Somas Ascend kernel by kernel.
+    Expectation: No exception.
+    """
     context.set_context(jit_level='O0')
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
     loss_output = test_ascend_lenet()
@@ -177,7 +194,8 @@ def test_ascend_lenet2():
     assert loss_output.asnumpy() > 0.003
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
 def test_ascend_lenet3():
     """
     Feature: Somas Ascend kernel by kernel.
@@ -192,7 +210,8 @@ def test_ascend_lenet3():
     assert loss_output.asnumpy() > 0.003
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
 def test_ascend_lenet4():
     """
     Feature: Ascend kernel by kernel and Ascend VMM.
@@ -207,7 +226,8 @@ def test_ascend_lenet4():
     assert loss_output.asnumpy() > 0.003
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
 def test_ascend_lenet5():
     """
     Feature: Ascend kernel by kernel and Ascend VMM.
@@ -273,7 +293,8 @@ def test_ascend_lenet_grad_by_list_tuple():
     return loss_output
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0",
+        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
 def test_ascend_lenet_grad_by_list_tuple1():
     """
     Feature: GradOperation get_by_list pass tuple/list
@@ -287,7 +308,8 @@ def test_ascend_lenet_grad_by_list_tuple1():
     assert loss_output.asnumpy() > 0.003
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
 def test_ascend_lenet_grad_by_list_tuple2():
     """
     Feature: GradOperation get_by_list pass tuple/list with Ascend kernel by kernel Somas.

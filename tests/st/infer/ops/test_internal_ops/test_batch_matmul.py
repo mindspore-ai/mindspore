@@ -208,7 +208,8 @@ def batch_matmul(m, k, n, dim_type, b0=0, b1=0, trans_a=False, trans_b=False, ms
     assert res, "batch matmul compare fail."
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('ms_dtype', [ms.bfloat16])
 @pytest.mark.parametrize('shape', [[16, 32, 64]])
 @pytest.mark.parametrize('batch_size_list', [[1, 1], [5, 1], [8, 8]])
@@ -226,7 +227,8 @@ def test_batch_matmul_small(ms_dtype, shape, batch_size_list, trans_b):
                        trans_b=trans_b, mstype=ms_dtype, profiling=False)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=8.0)
 @pytest.mark.parametrize('ms_dtype', [ms.bfloat16])
 @pytest.mark.parametrize('shape', [[256, 256, 256]])
 @pytest.mark.parametrize('batch_size_list', [[1, 1], [5, 1], [8, 8]])
@@ -244,7 +246,8 @@ def test_batch_matmul_medium(ms_dtype, shape, batch_size_list, trans_b):
                        trans_b=trans_b, mstype=ms_dtype, profiling=False)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=516.0)
 @pytest.mark.parametrize('ms_dtype', [ms.bfloat16])
 @pytest.mark.parametrize('shape', [[1024, 4096, 4096]])
 @pytest.mark.parametrize('batch_size_list', [[1, 1], [5, 1], [8, 8]])
@@ -262,7 +265,8 @@ def test_batch_matmul_large(ms_dtype, shape, batch_size_list, trans_b):
                        trans_b=trans_b, mstype=ms_dtype, profiling=False)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=8.00)
 @pytest.mark.parametrize('ms_dtype', [ms.float16])
 @pytest.mark.parametrize('shape', [[16, 32, 64], [256, 256, 256]])
 @pytest.mark.parametrize('batch_size_list', [[1, 1], [5, 1], [8, 8]])
@@ -281,7 +285,8 @@ def test_batch_matmul_3dx_ndw_fp16(ms_dtype, shape, batch_size_list, trans_b, di
                  trans_b=trans_b, mstype=ms_dtype, profiling=False)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=516.00)
 @pytest.mark.parametrize('ms_dtype', [ms.bfloat16])
 @pytest.mark.parametrize('shape', [[1024, 4096, 4096]])
 @pytest.mark.parametrize('batch_size_list', [[1, 1], [5, 1], [8, 8]])
@@ -374,7 +379,8 @@ def batch_matmul_swft(m, k, n, dim_type, b0=0, b1=0, trans_a=False, trans_b=Fals
     assert res, "batch matmul compare fail."
 
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=8.00)
 @pytest.mark.parametrize('batch_size', [16, 32])
 @pytest.mark.parametrize('trans_b', [True, False])
 def test_batch_matmul_swft(batch_size, trans_b):

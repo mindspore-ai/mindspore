@@ -87,7 +87,7 @@ def test_ms_syntax_operator_int_in_list_str():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_ms_syntax_operator_int_in_list_combine():
     """
     Feature: simple expression
@@ -113,7 +113,7 @@ def test_ms_syntax_operator_int_in_tuple_int():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_ms_syntax_operator_int_in_tuple_str():
     """
     Feature: simple expression
@@ -140,7 +140,7 @@ def test_ms_syntax_operator_int_in_dict_str():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_ms_syntax_operator_str_in_dict_str():
     """
     Feature: simple expression
@@ -182,7 +182,7 @@ def test_ms_syntax_operator_int_in_dict_combine():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_ms_syntax_operator_tensor_in_list_tensor():
     """
     Feature: simple expression

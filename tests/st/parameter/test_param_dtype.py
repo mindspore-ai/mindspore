@@ -21,7 +21,8 @@ from mindspore.common.initializer import initializer
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_parameter_set_dtype(mode):
     """

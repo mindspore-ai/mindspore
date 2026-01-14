@@ -56,7 +56,7 @@ def kthvalue_backward_func(x, k, dim, keepdim):
     return ms.grad(kthvalue_forward_func, (0))(x, k, dim, keepdim)
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential')
+          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dim', [0, 2])
 @pytest.mark.parametrize('keepdim', [True, False])
@@ -91,7 +91,7 @@ def test_ops_kthvalue_normal(context_mode, dim, keepdim):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dim', [0])
 @pytest.mark.parametrize('keepdim', [True, False])
@@ -126,7 +126,7 @@ def test_ops_kthvalue_bfloat16(context_mode, dim, keepdim):
 
 
 @arg_mark(plat_marks=['platform_ascend'],
-          level_mark='level1', card_mark='onecard', essential_mark='unessential')
+          level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_ops_kthvalue_dynamic_shape():
     """
     Feature: pyboost function.

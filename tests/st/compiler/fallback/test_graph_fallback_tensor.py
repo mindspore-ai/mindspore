@@ -55,7 +55,7 @@ def test_fallback_control_sink_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_np_tensor_list():
     """
     Feature: Fallback feature
@@ -122,7 +122,7 @@ def test_fallback_tensor_compare_with_variable():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_np_tensor_add():
     """
     Feature: Fallback feature

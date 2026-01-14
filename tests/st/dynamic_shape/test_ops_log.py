@@ -86,7 +86,8 @@ def test_op_log_gpu():
     op_log_backward_testcase()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.75)
 @test_utils.run_test_with_On
 def test_op_log_ascend():
     """

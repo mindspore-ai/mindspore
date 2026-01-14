@@ -82,7 +82,8 @@ def check_mindspore_data(mindspore_data, expected_data, error_rate_limit=0.05):
     assert int(mindspore_data[2]["audio_fps"]) == int(expected_data[5])
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=8.0)
 def test_read_video_with_h264_pts():
     """
     Feature: read_video
@@ -95,7 +96,8 @@ def test_read_video_with_h264_pts():
     check_mindspore_data(mindspore_output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=8.0)
 def test_read_video_with_h264_sec():
     """
     Feature: read_video
@@ -108,7 +110,8 @@ def test_read_video_with_h264_sec():
     check_mindspore_data(mindspore_output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=8.0)
 def test_read_video_with_h264_start_pts_end_pts():
     """
     Feature: read_video
@@ -132,7 +135,8 @@ def test_read_video_with_h264_start_pts_end_pts():
     check_mindspore_data(mindspore_output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_read_video_with_h265_pts():
     """
     Feature: read_video
@@ -145,7 +149,8 @@ def test_read_video_with_h265_pts():
     check_mindspore_data(mindspore_output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_read_video_with_h265_sec():
     """
     Feature: read_video
@@ -158,7 +163,8 @@ def test_read_video_with_h265_sec():
     check_mindspore_data(mindspore_output, expected_output)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_read_video_with_h265_start_pts_end_pts():
     """
     Feature: read_video
@@ -202,7 +208,8 @@ def read_video_pipeline(independent_process, python_multiprocessing, start_metho
     del os.environ['MS_INDEPENDENT_DATASET']
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=16.0)
 def test_read_video_pipeline_multithreading():
     """
     Feature: read_video
@@ -213,7 +220,8 @@ def test_read_video_pipeline_multithreading():
     read_video_pipeline(independent_process="False", python_multiprocessing=False, start_method=None)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=12.0)
 def test_read_video_pipeline_multiprocessing_fork():
     """
     Feature: read_video
@@ -223,7 +231,8 @@ def test_read_video_pipeline_multiprocessing_fork():
     read_video_pipeline(independent_process="False", python_multiprocessing=True, start_method="fork")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=12.0)
 def test_read_video_pipeline_multiprocessing_spawn():
     """
     Feature: read_video
@@ -233,7 +242,8 @@ def test_read_video_pipeline_multiprocessing_spawn():
     read_video_pipeline(independent_process="False", python_multiprocessing=True, start_method="spawn")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=12.0)
 def test_read_video_pipeline_multithreading_independent():
     """
     Feature: read_video
@@ -243,7 +253,8 @@ def test_read_video_pipeline_multithreading_independent():
     read_video_pipeline(independent_process="True", python_multiprocessing=False, start_method=None)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=12.0)
 def test_read_video_pipeline_multiprocessing_fork_independent():
     """
     Feature: read_video
@@ -253,7 +264,8 @@ def test_read_video_pipeline_multiprocessing_fork_independent():
     read_video_pipeline(independent_process="True", python_multiprocessing=True, start_method="fork")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=12.0)
 def test_read_video_pipeline_multiprocessing_spawn_independent():
     """
     Feature: read_video

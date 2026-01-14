@@ -46,7 +46,8 @@ def normal_backward_func(x):
     plat_marks=["platform_ascend"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential"
+    essential_mark="essential",
+    mem_peak=2.00
 )
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_normal_backward(mode):
@@ -70,6 +71,7 @@ def test_normal_backward(mode):
     level_mark="level0",
     card_mark="onecard",
     essential_mark="essential",
+    mem_peak=2.00
 )
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_normal_forward(mode):

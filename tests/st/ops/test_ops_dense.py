@@ -24,7 +24,7 @@ def get_bias_shape(shape_w):
     return ()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1.00)
 @pytest.mark.parametrize(
     "shape_x, shape_w, has_bias, e_shape, e_grad_x_shape, e_grad_w_shape, e_grad_b_shape",
     [
@@ -56,7 +56,7 @@ def test_static(mode, dynamic, shape_x, shape_w, has_bias, e_shape, e_grad_x_sha
     dense_case(dynamic, e_grad_b_shape, e_grad_w_shape, e_grad_x_shape, e_shape, has_bias, mode, shape_w, shape_x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1.00)
 @pytest.mark.parametrize(
     "shape_x, shape_w, has_bias, e_shape, e_grad_x_shape, e_grad_w_shape, e_grad_b_shape",
     [
@@ -154,7 +154,7 @@ def dense_case(dynamic, e_grad_b_shape, e_grad_w_shape, e_grad_x_shape, e_shape,
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.0)
 def test_op():
     """
     Feature: ops.Dense

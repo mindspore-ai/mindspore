@@ -34,7 +34,7 @@ class Net(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.02)
 def test_assign():
     """
     Feature: simple expression

@@ -78,7 +78,8 @@ def get_output(gradient, var1, v1, m1, var2, v2, m2, var3, v3, m3, var4,
     return output
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_parallel_fusion_ascend():
     """
     Feature: test graph kernel parallel

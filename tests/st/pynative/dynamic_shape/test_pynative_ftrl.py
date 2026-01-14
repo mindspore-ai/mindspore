@@ -38,7 +38,7 @@ class NetWithSparseGatherV2(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_pynative_ftrl_net():
     indices = Tensor(np.array([0, 0, 1]).astype(np.int32))
     label = Tensor(np.zeros([2, 1, 2]).astype(np.float32))
@@ -60,7 +60,7 @@ def test_pynative_ftrl_net():
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.0)
 def test_pynative_lazy_adam_net():
     indices = Tensor(np.array([0, 0, 1]).astype(np.int32))
     label = Tensor(np.zeros([2, 1, 2]).astype(np.float32))

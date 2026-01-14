@@ -121,7 +121,8 @@ def test_fast_gelu_input_dim_20480_1024():
     fast_gelu_forward_cmp(input_shape)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=164.0)
 def test_fast_gelu_input_dim_20480_1024_bf16():
     """
     Feature: test fast_gelu functional API.

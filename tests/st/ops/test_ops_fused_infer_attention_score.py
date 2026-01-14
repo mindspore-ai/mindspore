@@ -66,7 +66,8 @@ def generate_inputs(B, N1, N2, S1, S2, D, input_layout, dtype, return_tensor=Tru
     return query, key, value
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=48.0)
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
 @test_utils.run_test_with_On
@@ -89,7 +90,8 @@ def test_ops_fused_infer_attention_score_in_pfa_branch(mode, input_layout):
     np.testing.assert_allclose(actual_out.asnumpy(), expect_out.asnumpy(), rtol=5e-3, atol=5e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=30.0)
 @pytest.mark.parametrize('mode', [ms.context.GRAPH_MODE, ms.context.PYNATIVE_MODE])
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD"])
 @test_utils.run_test_with_On
@@ -112,7 +114,8 @@ def test_ops_fused_infer_attention_score_in_ifa_branch(mode, input_layout):
     np.testing.assert_allclose(actual_out.asnumpy(), expect_out.asnumpy(), rtol=5e-3, atol=5e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=22.0)
 @pytest.mark.parametrize('input_layout', ["BSH", "BNSD", "BSND", "BNSD_BSND"])
 def test_ops_fused_infer_attention_score_dynamic(input_layout):
     """

@@ -97,7 +97,7 @@ def test_none_compare():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_none_is_sequence_input():
     """
     Feature: Support None.
@@ -270,7 +270,7 @@ def test_none_assign_print():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_none_is_input():
     """
     Feature: Support None.
@@ -416,7 +416,7 @@ def test_none_is_output_of_function_with_side_effect_equal():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_none_is_input_of_dict_return():
     """
     Feature: Support None.
@@ -436,7 +436,7 @@ def test_none_is_input_of_dict_return():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_none_nested_input_of_dict_return():
     """
     Feature: Support None.
@@ -456,7 +456,7 @@ def test_none_nested_input_of_dict_return():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_none_is_input_of_tuple_return():
     """
     Feature: Support None.
@@ -567,7 +567,7 @@ def test_none_is_return_of_sub_graph_control_flow_raise():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_none_is_return_raise():
     """
     Feature: Support None.

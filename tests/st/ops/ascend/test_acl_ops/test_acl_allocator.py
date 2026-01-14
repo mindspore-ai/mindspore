@@ -40,7 +40,8 @@ def run_command(cmd, log_path, enable_acl_allocator):
         os.remove(log_path)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_disable_acl_allocator():
     """
     Feature: Acl Allocator Config
@@ -53,7 +54,8 @@ def test_disable_acl_allocator():
                 f"{sh_path}/{test_case}.log", False)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_enable_acl_allocator():
     """
     Feature: Acl Allocator Config

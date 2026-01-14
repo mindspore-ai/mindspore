@@ -24,7 +24,7 @@ from tests.device_utils import set_device
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=25604.01
 )
 def test_pynative_multi_stream_vmm():
     """
@@ -54,7 +54,7 @@ def test_pynative_multi_stream_vmm():
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=29698.01
 )
 def test_pynative_single_stream_vmm():
     """

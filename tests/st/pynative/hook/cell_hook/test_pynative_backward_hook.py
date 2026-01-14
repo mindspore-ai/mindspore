@@ -1063,7 +1063,7 @@ class InplaceNet(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_pynative_backward_hook_single_inplace_net():
     """
     Feature: PyNative cell backward hook.
@@ -1094,7 +1094,7 @@ class MultiInputInplaceNet(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_pynative_backward_hook_multi_inplace_net():
     """
     Feature: PyNative cell backward hook.

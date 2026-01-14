@@ -43,7 +43,8 @@ def slice_ext_backward_func(x, dim, start, end, step):
     return ops.grad(slice_ext_forward_func, (0))(x, dim, start, end, step) # pylint: disable=not-callable
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=2048.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_ops_slice_ext(context_mode):
     """
@@ -74,7 +75,7 @@ def test_ops_slice_ext(context_mode):
     np.allclose(output_grad.asnumpy(), expect_grad, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_ops_slice_ext_case01(context_mode):
     """
