@@ -23,14 +23,18 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+static const int32_t kProcessReportTimeout = 500;
+
 void *callback_thread_func(void *data) {
   pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr);
   pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr);
 #ifdef WITH_BACKEND
-  auto callback_thread = reinterpret_cast<CallbackThread *>(data);
-  while (callback_thread->flag_.load()) {
+  auto flag_ptr = static_cast<std::shared_ptr<std::atomic_bool> *>(data);
+  // Copy the shared_ptr to increase reference count
+  auto flag_shared = *flag_ptr;
+  while (flag_shared->load()) {
     try {
-      auto ret = CALL_ASCEND_API(aclrtProcessReport, callback_thread->default_timeout_);
+      auto ret = CALL_ASCEND_API(aclrtProcessReport, kProcessReportTimeout);
       if (ret && ret != ACL_ERROR_WAIT_CALLBACK_TIMEOUT && ret != ACL_ERROR_RT_REPORT_TIMEOUT) {
         MS_LOG(DEBUG) << "aclrtProcessReport err : " << ret << ".";
       }
