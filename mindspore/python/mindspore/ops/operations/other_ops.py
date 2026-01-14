@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Other operators."""
+# pylint: disable=unused-import
 import functools
 from mindspore import log as logger
 from mindspore.ops import signature as sig

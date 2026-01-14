@@ -13,6 +13,8 @@
 # limitations under the License.
 # ============================================================================
 
+"""Test the overload tensor_method.tensor_isinf."""
+
 from tests.mark_utils import arg_mark
 from tests.st.utils import test_utils
 
@@ -22,6 +24,7 @@ import pytest
 from mindspore import context
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
+from mindspore.ops import tensor_method as tm
 
 
 @test_utils.run_with_cell
@@ -29,10 +32,17 @@ def isinf_forward(x):
     return x.isinf()
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend910b'],
-          level_mark='level1',
-          card_mark='onecard',
-          essential_mark='unessential')
+@test_utils.run_with_cell
+def tensor_method_isinf_forward(x):
+    return tm.tensor_isinf(x)
+
+
+@arg_mark(
+    plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend910b'],
+    level_mark='level1',
+    card_mark='onecard',
+    essential_mark='unessential'
+)
 @pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_tensor_isinf(context_mode):
     """
@@ -47,5 +57,7 @@ def test_tensor_isinf(context_mode):
 
     input_x = Tensor(input_np, mstype.float16)
     output = isinf_forward(input_x).asnumpy()
+    output_tensor_method = tensor_method_isinf_forward(input_x).asnumpy()
     expect = np.isinf(input_np)
     assert np.array_equal(output, expect)
+    assert np.array_equal(output_tensor_method, expect)

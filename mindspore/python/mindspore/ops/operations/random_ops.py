@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Operators for random."""
+# pylint: disable=unused-import
 from __future__ import absolute_import
 
 from mindspore.common._decorator import deprecated

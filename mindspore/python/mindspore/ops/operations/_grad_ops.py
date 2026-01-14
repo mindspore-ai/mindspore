@@ -29,16 +29,17 @@ from mindspore.common import dtype as mstype
 from mindspore.communication.management import GlobalComm
 from mindspore.common._utils import is_shape_unknown, is_dim_unknown
 from mindspore.common._decorator import deprecated
-from mindspore.ops.auto_generate import (AbsGrad, ACosGrad, LogitGrad, AcoshGrad, AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad,
-                             SqrtGrad, BatchNormGrad, BatchNormGradGrad, BiasAddGrad, GeLUGrad, FastGeLUGrad,
-                             AvgPoolGrad, MinimumGrad, LogSoftmaxGrad, GluGrad, PReLUGrad, ReluGrad, ReLU6Grad, EluGrad,
-                             GatherDGradV2, ResizeBilinearGrad, ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
-                             SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad, GridSampler2DGrad,
-                             ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad, ResizeNearestNeighborGrad, LayerNormGrad,
-                             HShrinkGrad, LayerNormGradGrad, SiLUGrad, MaximumGrad, MaximumGradGrad, RmsNormGrad,
-                             FlashAttentionScoreGrad, UpsampleTrilinear3DGrad, UpsampleNearest3DGrad, MaskedSelectGrad,
-                             BinaryCrossEntropyGrad, SoftShrinkGrad, SoftMarginLossGrad, SeluGrad, SmoothL1LossGrad,
-                             AdaptiveMaxPool2DGrad)
+from mindspore.ops.auto_generate import (
+    AbsGrad, ACosGrad, LogitGrad, AcoshGrad, AsinGrad, AsinhGrad, ReciprocalGrad, RsqrtGrad,
+    SqrtGrad, BatchNormGrad, BatchNormGradGrad, BiasAddGrad, GeLUGrad, FastGeLUGrad,
+    AvgPoolGrad, MinimumGrad, LogSoftmaxGrad, GluGrad, PReLUGrad, ReluGrad, ReLU6Grad, EluGrad,
+    GatherDGradV2, ResizeBilinearGrad, ResizeLinear1DGrad, ResizeNearestNeighborV2Grad,
+    SigmoidGrad, HSwishGrad, NLLLossGrad, AtanGrad, GridSampler3DGrad, GridSampler2DGrad,
+    ResizeBicubicGrad, HSigmoidGrad, CholeskyGrad, ResizeNearestNeighborGrad, LayerNormGrad,
+    HShrinkGrad, LayerNormGradGrad, SiLUGrad, MaximumGrad, MaximumGradGrad, RmsNormGrad,
+    FlashAttentionScoreGrad, UpsampleTrilinear3DGrad, UpsampleNearest3DGrad, MaskedSelectGrad,
+    BinaryCrossEntropyGrad, SoftShrinkGrad, SoftMarginLossGrad, SeluGrad, SmoothL1LossGrad,
+    AdaptiveMaxPool2DGrad)
 
 
 class SparseFillEmptyRowsGrad(Primitive):
