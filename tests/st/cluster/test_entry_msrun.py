@@ -423,3 +423,34 @@ def test_mccl_310p_float16():
         "test_mccl_and_hccl.py --dtype float16"
     )
     assert return_code == 0
+
+
+# mindspore.communication API in communication/management.py
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+def test_communication_create_group_exception():
+    """
+    Feature: test exception scenario for create_group.
+    Description: create_group with sub-group in all ranks.
+    Expectation: exception.
+    """
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 "
+        "--master_port=10969 --join=True "
+        "pytest -sv test_communication_api.py::test_create_group_exception"
+    )
+    assert return_code == 0
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='unessential')
+def test_communication_get_rank_exception():
+    """
+    Feature: test exception scenario for get_rank.
+    Description: get_rank with sub-group in all ranks.
+    Expectation: exception.
+    """
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 "
+        "--master_port=10969 --join=True "
+        "pytest -sv test_communication_api.py::test_get_rank_exception"
+    )
+    assert return_code == 0
