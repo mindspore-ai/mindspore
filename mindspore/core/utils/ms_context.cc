@@ -714,6 +714,12 @@ inline std::string SetToString(const std::set<std::string> &kernel_list) {
 }
 
 void MsContext::SetMsInternalEnableCustomKernelList() {
+  static std::atomic<bool> internal_list_inited = false;
+  bool expected = false;
+  if (!internal_list_inited.compare_exchange_strong(expected, true)) {
+    return;
+  }
+
   const std::string kDefaultEnabledOpList =
     "MatMul,RmsNorm,Add,Sub,FlashAttentionScore,PagedAttention,PagedAttentionMask,AddRmsNorm,AddLayerNorm,"
     "MatMulAllReduce,InferenceMatmulSplit,AddRmsNormQuantV2,InferenceSwiGLU,QbmmAllReduceAdd,QbmmAdd,"
