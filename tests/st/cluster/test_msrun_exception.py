@@ -18,7 +18,7 @@ This test is for msrun launch with exception.
 import os
 import argparse
 
-import minsdpore as ms
+import mindspore as ms
 import mindspore.dataset as ds
 import mindspore.dataset.transforms as C
 import mindspore.dataset.vision as CV
