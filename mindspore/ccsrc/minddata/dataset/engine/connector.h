@@ -20,10 +20,11 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "minddata/dataset/util/task_manager.h"
+
+#include "minddata/dataset/util/cond_var.h"
 #include "minddata/dataset/util/queue.h"
 #include "minddata/dataset/util/services.h"
-#include "minddata/dataset/util/cond_var.h"
+#include "minddata/dataset/util/task_manager.h"
 
 namespace mindspore {
 namespace dataset {
@@ -154,13 +155,13 @@ class Connector {
   }
 
   void Print(std::ostream &out, bool showAll) const {
-    out << "\n--------- Connector ------------"
-        << "\nConnector Name           : " << my_name_ << "\nNumber of consumers      : " << num_consumers_
-        << "\nNumber of producers      : " << num_producers_ << "\n";
+    out << "\n--------- Connector ------------" << "\nConnector Name           : " << my_name_
+        << "\nNumber of consumers      : " << num_consumers_ << "\nNumber of producers      : " << num_producers_
+        << "\n";
   }
 
   friend std::ostream &operator<<(std::ostream &out, const Connector &con) {
-    con.print(out, false);
+    con.Print(out, false);
     return out;
   }
 

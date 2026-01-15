@@ -219,11 +219,12 @@
 /tests/ut/cpp/cluster/ @zhangyinxia
 /tests/ut/cpp/common/ @limingqi107
 /tests/ut/cpp/common/pynative/ @chujinjin
+/tests/ut/cpp/dataset/ @jonyguo
 /tests/ut/cpp/frontend/ @ginfung
 /tests/ut/cpp/frontend/np_dtypes/ @changzherui
 /tests/ut/cpp/frontend/parallel/ @yangzhenzhang
 /tests/ut/cpp/kernel/ @limingqi107
-/tests/ut/cpp/minddata/ @jonyguo
+/tests/ut/cpp/mindrecord/ @jonyguo
 /tests/ut/cpp/plugin/ @limingqi107
 /tests/ut/cpp/plugin/ascend/graph_optimizer/pass/ir_fusion_infer/ @liulili-huawei
 /tests/ut/cpp/pybind_api/ @chujinjin
