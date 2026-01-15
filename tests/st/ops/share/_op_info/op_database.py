@@ -4444,6 +4444,20 @@ op_db: Dict[str, OpInfo] = {
         op_dynamic_inputs_func=dynamic_sample_inputs_add_sub_ext,
         op_error_inputs_func=error_inputs_add_sub_ext_func,
     ),
+    'mint.all':ReductionOpInfo(
+        name='mint.all',
+        op=mint.all,
+        ref=torch.all,
+        is_differentiable=False,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
+        dtypes_cpu=tuple(),
+        dtypes_gpu=tuple(),
+        op_basic_reference_inputs_func=wrap_sample_inputs(
+            basic_reference_inputs_reduction_op_common_func, '_default_keepdim', skip=True
+        ),
+        supports_multiple_dims=False,
+    ),
     'mint.broadcast_to': OpInfo(
         name='mint.broadcast_to',
         op=mint.broadcast_to,
@@ -7286,6 +7300,7 @@ reduction_op_db = [
     'mint.min',
     'mint.prod',
     'Tensor.max',
+    'mint.all',
 ]
 
 binary_op_kbk_db = [
@@ -7322,6 +7337,7 @@ reduction_op_kbk_db = [
     'Tensor.argmin',
     'mint.min',
     'Tensor.max',
+    'mint.all',
 ]
 
 def get_op_info(op_name: str, *, op_database: Optional[Dict[str, OpInfo]] = None) -> OpInfo:
