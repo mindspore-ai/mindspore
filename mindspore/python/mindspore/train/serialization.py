@@ -2486,8 +2486,8 @@ def async_ckpt_thread_status():
     When performing asynchronous save checkpoint, you can determine whether the asynchronous thread is completed.
 
     Returns:
-        bool, True, Asynchronous save checkpoint thread is running.
-        False, Asynchronous save checkpoint thread is not executing.
+        bool. ``True`` if asynchronous save checkpoint thread is running,
+        ``False`` if asynchronous save checkpoint thread is not executing.
 
     Examples:
         >>> import mindspore as ms
@@ -2646,23 +2646,24 @@ def ckpt_to_safetensors(file_path, save_path=None, name_map=None, file_name_rege
     used for securely storing Tensors with fast speed (zero copy).
 
     Note:
-        The number of multiprocess settings is related to the size of the host, and it is not recommended to set it
-        too large, otherwise it may cause freezing.
-        The safetensors format does not support the enc verification function. If ckpt is enabled to save enc
-        verification, an error will be generated when performing the conversion.
-        The safetensors format currently does not support crc verification function. If ckpt contains crc verification
-        information, the crc verification information will be lost after conversion to safetensors.
+        The number of multiprocess settings should be set according to the host size, and it is not recommended to set
+        it too large, otherwise it may cause freezing.
+        The safetensors format does not support the encryption verification function. If the checkpoint file has
+        encryption verification enabled, an error will be generated when performing the conversion.
+        The safetensors format currently does not support the crc verification function. If the checkpoint file
+        contains crc verification information, the crc verification information will be lost after conversion to
+        safetensors.
 
     Args:
         file_path (str): Path to the directory containing checkpoint files or a single checkpoint file (.ckpt).
         save_path (str, optional): Directory path where safetensors files will be saved. Default: ``None``.
         name_map (dict, optional): Dictionary mapping original parameter names to new names. Default: ``None``.
         file_name_regex (str, optional): Regular expression used to match the file that needs to be converted.
-                                   Default: ``None``.
+            Default: ``None``.
         processes_num (int, optional): Number of processes to use for parallel processing. Default: 1.
     Raises:
         ValueError: If the input path is invalid or the save_path is not a directory,
-                    or the file_path does not end with '.ckpt'.
+            or the file_path does not end with '.ckpt'.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
