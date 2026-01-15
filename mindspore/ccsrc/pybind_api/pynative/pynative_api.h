@@ -43,6 +43,10 @@ PYNATIVE_EXPORT void RegFunctionBase(py::module *m);
 PYNATIVE_EXPORT void RegTensorMeta(py::module *m);
 }  // namespace pynative::autograd
 
+namespace pynative::hyper_offload {
+PYNATIVE_EXPORT void RegOffloadModule(py::module *m);
+}  // namespace pynative::hyper_offload
+
 namespace tensor {
 void RegMetaTensor(const py::module *m);
 void RegCSRTensor(const py::module *m);

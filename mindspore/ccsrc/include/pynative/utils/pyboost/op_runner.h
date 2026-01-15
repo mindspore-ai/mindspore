@@ -42,6 +42,30 @@ using TensorPtr = tensor::TensorPtr;
 namespace kernel {
 namespace pyboost {
 using TensorPtr = tensor::TensorPtr;
+
+// Pre-hook function type for tracing operator execution (called before op execution).
+// Parameters: op_name (string), input values (vector of ValuePtr)
+using OpRunnerPreHookFunc = std::function<void(const std::string &, const std::vector<ValuePtr> &)>;
+
+// Post-hook function type for tracing operator execution (called after op execution).
+// Parameters: op_name (string), input values (vector of ValuePtr), output value (ValuePtr)
+using OpRunnerPostHookFunc = std::function<void(const std::string &, const std::vector<ValuePtr> &, const ValuePtr &)>;
+
+// Hook entry with fast check function to avoid unnecessary conversions.
+struct HookEntry {
+  std::function<bool()> is_enabled;  // Fast check: returns true if hook needs to execute
+};
+
+// Pre-hook entry.
+struct PreHookEntry : HookEntry {
+  OpRunnerPreHookFunc handler;  // Actual execution function
+};
+
+// Post-hook entry.
+struct PostHookEntry : HookEntry {
+  OpRunnerPostHookFunc handler;  // Actual execution function
+};
+
 // OpRunner is a base class for operators.
 // OpRunner records the operator's input abstract,
 // output abstract and output Tensors for grad,
@@ -212,6 +236,133 @@ class PYBOOST_API OpRunner : public std::enable_shared_from_this<OpRunner> {
 
   void UpdateOutputShape(const TensorPtr &tensor, const ShapeVector &shape) { tensor->set_shape(shape); }
 
+  // Register a pre-hook with is_enabled check function and handler function.
+  // The is_enabled function is called first to avoid unnecessary conversions.
+  static void RegisterPreHook(std::function<bool()> is_enabled, const OpRunnerPreHookFunc &handler) {
+    pre_hooks_.emplace_back(PreHookEntry{{std::move(is_enabled)}, handler});
+  }
+
+  // Register a post-hook with is_enabled check function and handler function.
+  // The is_enabled function is called first to avoid unnecessary conversions.
+  static void RegisterPostHook(std::function<bool()> is_enabled, const OpRunnerPostHookFunc &handler) {
+    post_hooks_.emplace_back(PostHookEntry{{std::move(is_enabled)}, handler});
+  }
+
+  // Clear all registered hooks.
+  static void ClearPreHook() { pre_hooks_.clear(); }
+  static void ClearPostHook() { post_hooks_.clear(); }
+  static void ClearAllHooks() {
+    pre_hooks_.clear();
+    post_hooks_.clear();
+  }
+
+  // Check if any hook is registered.
+  static bool HasPreHook() { return !pre_hooks_.empty(); }
+  static bool HasPostHook() { return !post_hooks_.empty(); }
+
+  // Call all registered pre-hook functions with op_name and input arguments.
+  // First checks is_enabled for all hooks, only converts if any hook needs to execute.
+  template <typename... Args>
+  static void CallPreHook(const std::string &op_name, const Args &...args) {
+    if (!HasPreHook()) {
+      return;
+    }
+    // Skip if already inside a PostHook execution (prevents nested calls from internal ops).
+    if (PostHookGuard::IsInPostHook()) {
+      return;
+    }
+    // Fast path: check if any hook needs to execute
+    bool any_need_execute = false;
+    for (const auto &hook : pre_hooks_) {
+      if (hook.is_enabled()) {
+        any_need_execute = true;
+        break;
+      }
+    }
+    if (!any_need_execute) {
+      return;
+    }
+
+    // Convert inputs only when needed
+    std::vector<ValuePtr> inputs;
+    inputs.reserve(sizeof...(args));
+    CollectHookValues(&inputs, args...);
+
+    // Execute hooks that need to run
+    for (const auto &hook : pre_hooks_) {
+      if (hook.is_enabled()) {
+        hook.handler(op_name, inputs);
+      }
+    }
+  }
+
+  // Call all registered post-hook functions with op_name, input arguments, and output.
+  // First checks is_enabled for all hooks, only converts if any hook needs to execute.
+  // Skips execution if already inside a PostHook (prevents nested calls from internal ops).
+  template <typename OutputType, typename... Args>
+  static void CallPostHook(const std::string &op_name, const OutputType &output, const Args &...args) {
+    if (!HasPostHook()) {
+      return;
+    }
+
+    // Skip if already inside a PostHook execution (prevents nested calls from internal ops).
+    if (PostHookGuard::IsInPostHook()) {
+      return;
+    }
+
+    // Fast path: check if any hook needs to execute
+    bool any_need_execute = false;
+    for (const auto &hook : post_hooks_) {
+      if (hook.is_enabled()) {
+        any_need_execute = true;
+        break;
+      }
+    }
+    if (!any_need_execute) {
+      return;
+    }
+
+    // Convert inputs and output only when needed
+    std::vector<ValuePtr> inputs;
+    inputs.reserve(sizeof...(args));
+    CollectHookValues(&inputs, args...);
+    ValuePtr output_value = ConvertOutputToValue(output);
+
+    // Use PostHookGuard to mark we're inside PostHook execution.
+    // This prevents internal ops from triggering nested PostHook calls.
+    PostHookGuard guard;
+
+    // Execute hooks that need to run
+    for (const auto &hook : post_hooks_) {
+      if (hook.is_enabled()) {
+        hook.handler(op_name, inputs, output_value);
+      }
+    }
+  }
+
+  // Convert output to ValuePtr (handles single tensor, tuple of tensors, vector of tensors, etc.)
+  static ValuePtr ConvertOutputToValue(const tensor::TensorPtr &tensor) { return tensor; }
+
+  static ValuePtr ConvertOutputToValue(const ValuePtr &value) { return value; }
+
+  template <typename... Args>
+  static ValuePtr ConvertOutputToValue(const std::tuple<Args...> &tuple) {
+    std::vector<ValuePtr> values;
+    values.reserve(sizeof...(Args));
+    std::apply([&values](const Args &...args) { (CollectSingleHookValue(&values, args), ...); }, tuple);
+    return std::make_shared<ValueTuple>(values);
+  }
+
+  template <typename T>
+  static ValuePtr ConvertOutputToValue(const std::vector<T> &vec) {
+    std::vector<ValuePtr> values;
+    values.reserve(vec.size());
+    for (const auto &item : vec) {
+      CollectSingleHookValue(&values, item);
+    }
+    return std::make_shared<ValueTuple>(values);
+  }
+
  protected:
   // Op primitive, may delete latter.
   PrimitivePtr primitive_{nullptr};
@@ -231,8 +382,74 @@ class PYBOOST_API OpRunner : public std::enable_shared_from_this<OpRunner> {
   ValueSimpleInfoPtr output_value_simple_info_;
   inline static pynative::AbstractConverter kAbstractConverter;
   bool skip_tracker_{true};
+  // Static hook functions for hyper offload tracing (supports multiple hooks).
+  inline static std::vector<PreHookEntry> pre_hooks_;
+  inline static std::vector<PostHookEntry> post_hooks_;
 
  private:
+  // Helper functions for collecting hook arguments into ValuePtr vector (shared by pre/post hooks).
+  static void CollectHookValues(std::vector<ValuePtr> *values) {}
+
+  template <typename T, typename... Rest>
+  static void CollectHookValues(std::vector<ValuePtr> *values, const T &first, const Rest &...rest) {
+    CollectSingleHookValue(values, first);
+    CollectHookValues(values, rest...);
+  }
+
+  // Overload for shared_ptr<Value-derived> (e.g., BoolImmPtr)
+  template <typename T>
+  static void CollectSingleHookValue(std::vector<ValuePtr> *values, const std::shared_ptr<T> &val,
+                                     typename std::enable_if<std::is_base_of_v<Value, T>>::type * = nullptr) {
+    if (val != nullptr) {
+      values->emplace_back(std::static_pointer_cast<Value>(val));
+    }
+  }
+
+  // Overload for ValuePtr
+  static void CollectSingleHookValue(std::vector<ValuePtr> *values, const ValuePtr &val) {
+    if (val != nullptr) {
+      values->emplace_back(val);
+    }
+  }
+
+  // Overload for TensorPtr
+  static void CollectSingleHookValue(std::vector<ValuePtr> *values, const tensor::TensorPtr &tensor) {
+    if (tensor != nullptr) {
+      values->emplace_back(std::static_pointer_cast<Value>(tensor));
+    }
+  }
+
+  // Overload for optional types
+  template <typename T>
+  static void CollectSingleHookValue(std::vector<ValuePtr> *values, const std::optional<T> &opt) {
+    if (opt.has_value()) {
+      CollectSingleHookValue(values, opt.value());
+    } else {
+      values->emplace_back(kNone);
+    }
+  }
+
+  // Overload for vector types
+  template <typename T>
+  static void CollectSingleHookValue(std::vector<ValuePtr> *values, const std::vector<T> &vec) {
+    for (const auto &item : vec) {
+      CollectSingleHookValue(values, item);
+    }
+  }
+
+  // Overload for arithmetic types (int, int64_t, float, double, etc.)
+  // This handles view ops that take raw numeric arguments like split_size, dim
+  template <typename T>
+  static void CollectSingleHookValue(std::vector<ValuePtr> *values, T val,
+                                     typename std::enable_if<std::is_arithmetic_v<T>>::type * = nullptr) {
+    values->emplace_back(MakeValue(val));
+  }
+
+  // Overload for std::string
+  static void CollectSingleHookValue(std::vector<ValuePtr> *values, const std::string &val) {
+    values->emplace_back(MakeValue(val));
+  }
+
   void CollectTrackerTensor(const ValuePtr &val, std::vector<tensor::TensorPtr> *tensors) {
     auto tensor = std::dynamic_pointer_cast<tensor::Tensor>(val);
     if (tensor != nullptr) {

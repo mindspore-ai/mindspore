@@ -53,6 +53,7 @@
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "pynative/hyper_offload/offload_manager.h"
 
 namespace mindspore {
 namespace pynative {
@@ -847,6 +848,7 @@ void GradExecutor::ClearRes() {
   finded_top_cell_ = nullptr;
   ready_run_top_cell_.clear();
   dynamic_inputs_cells_.clear();
+  pynative::hyper_offload::OffloadManager::GetInstance().ClearResources();
 }
 
 void GradExecutor::WorkerJoin() { runtime::Pipeline::Get().bprop_stage()->WorkerJoin(); }

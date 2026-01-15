@@ -53,19 +53,25 @@ ${return_type} ${op_name}_inner(${input_args_with_type}) {
     auto [packed_args, dispatch_callback, is_guard_callback] = PackArgs(${input_args});
     return HandleMsDispatch(handle_callback, packed_args, dispatch_callback, is_guard_callback, "${class_name}");
   }
-  return ${op_name}_view_impl(${input_args});
+  ${return_type} output; 
+  OpRunner::CallPreHook("${op_name}", ${input_args});
+  {
+    PostHookGuard guard;
+    output = ${op_name}_view_impl(${input_args});
+  }
+  OpRunner::CallPostHook("${op_name}", output, ${input_args});
+  return output;
 }
 
 ${return_type} ${op_name}(${input_args_with_type}) {
   MS_LOG(DEBUG) << "In ${op_name} function";
 
   bool skip_tracker = ProfileTracker::ProfileTrackerTask(prim::kPrim${class_name});
-
+  
   auto output = ${op_name}_inner(${input_args});
 
   ProfileTracker::ProfileTrackerInput(prim::kPrim${class_name}, skip_tracker, ${input_args});
   ProfileTracker::ProfileTrackerOutput(prim::kPrim${class_name}, skip_tracker, output);
-
   static auto ${op_name}_grad_func = AutoGradFactory::Get().ops_auto_grad_registers().${class_name}GradFuncObj;
   if (${op_name}_grad_func) {
     ${op_name}_grad_func(output, ${input_args});

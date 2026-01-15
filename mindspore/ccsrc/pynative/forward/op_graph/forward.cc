@@ -48,13 +48,13 @@ using mindspore::profiler::ProfilerManager;
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "pynative/backward/grad_utils.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_reg.h"
-#include "include/pynative/utils/pyboost/auto_generate/contiguous.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "include/utils/tensor_py.h"
 #include "utils/current_state.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "include/runtime/utils/dispatch/dispatch_env.h"
 #include "include/pynative/utils/pyboost/functions/dispatch.h"
+#include "include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 
 namespace mindspore {
 namespace pynative {
@@ -317,8 +317,8 @@ tensor::TensorPtr TensorContiguous(const tensor::TensorPtr &tensor) {
   const DeviceContext *device_context = runtime::OpRunner::GetDeviceContext(old_device_address->GetDeviceType());
   MS_EXCEPTION_IF_NULL(device_context);
   GilReleaseWithCheck release_gil;
-  auto contiguous_op = CREATE_PYBOOST_OP(Contiguous, device_context->GetDeviceType());
-  const auto &contiguous_tensor = contiguous_op->Call(tensor);
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
+  auto contiguous_tensor = kernel::pyboost::contiguous(tensor);
   // Need to wait contiguous finish in heterogeneous scenarios.
   runtime::Pipeline::Get().WaitForward();
   return contiguous_tensor;

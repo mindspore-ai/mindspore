@@ -45,7 +45,8 @@ from mindspore.graph.dynamic_shape._auto_dynamic import is_auto_dynamic, convert
 from mindspore import log as logger
 from mindspore.common.hook_handle import HookHandle, _update_hook_version
 from mindspore import context, ops
-from mindspore._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
+from mindspore._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType, \
+    OffloadManager
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
 from mindspore.graph.api import _cell_graph_executor, _pynative_executor, cells_compile_cache, \
@@ -4055,6 +4056,63 @@ class Cell(Cell_):
             grad: 20.0
         """
         _register_parameter_forward_hook(self, hook)
+
+    def auto_offload(self):
+        """
+        Enable automatic offload for this Cell.
+
+        This method enables automatic memory offload for the forward and backward passes of this Cell.
+        During the first step (warm-up phase), it traces the computation graph. In subsequent steps
+        (replay phase), it applies offload strategies based on the traced graph.
+
+        The offload mechanism works by:
+        - Registering forward_pre_hook and forward_hook to trace/execute forward pass
+        - Registering backward_pre_hook and backward_hook to trace/execute backward pass
+
+        Note:
+            - This feature only works in PyNative mode.
+            - The computation graph structure must be static (no dynamic control flow).
+
+        Returns:
+            Cell, the cell itself.
+
+        Examples:
+            >>> import mindspore.nn as nn
+            >>> from mindspore._c_expression import OffloadManager
+            >>> net = nn.Dense(128, 256)
+            >>> net.auto_offload()
+            >>> # Training loop
+            >>> for step, data in enumerate(dataset):
+            ...     loss = train_step(data)
+            ...     if step == 0:
+            ...         OffloadManager.get_instance().analyse()
+        """
+        # Get or create offload context for this cell
+        offload_key = id(self)
+        manager = OffloadManager.get_instance()
+        ctx = manager.get_or_create_offload_ctx(offload_key)
+
+        # Forward hooks (async for pipeline)
+        def forward_pre_hook_fn(cell, inputs):
+            ctx.start_offload_async()
+
+        def forward_hook_fn(cell, inputs, output):
+            ctx.end_offload_async()
+
+        # Backward hooks (sync, no pipeline at this level)
+        def backward_pre_hook_fn(cell, grad_output):
+            ctx.start_offload()
+
+        def backward_hook_fn(cell, grad_input, grad_output):
+            ctx.end_offload()
+
+        # Register hooks
+        self.register_forward_pre_hook(forward_pre_hook_fn)
+        self.register_forward_hook(forward_hook_fn)
+        self.register_backward_pre_hook(backward_pre_hook_fn)
+        self.register_backward_hook(backward_hook_fn)
+
+        return self
 
 
 class GraphCell(Cell):

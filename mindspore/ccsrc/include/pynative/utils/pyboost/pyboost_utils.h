@@ -649,6 +649,22 @@ inline ValuePtr OpOutputsToValues(const std::tuple<Ts...> &outputs) {
   std::apply([&add_tensor_if_valid](const auto &...args) { (add_tensor_if_valid(args), ...); }, outputs);
   return std::make_shared<ValueTuple>(values);
 }
+
+// Guard class to prevent nested PostHook calls.
+// When executing PostHook, internal ops may also trigger PostHook, causing orphan nodes in trace graph.
+// This guard marks that we're inside a PostHook execution, and nested PostHook calls will be skipped.
+class PYBOOST_API PostHookGuard {
+ public:
+  PostHookGuard() { ++in_post_hook_depth_; }
+  ~PostHookGuard() { --in_post_hook_depth_; }
+
+  // Check if currently inside a PostHook execution (depth > 0 means nested call).
+  static bool IsInPostHook() { return in_post_hook_depth_ > 0; }
+
+ private:
+  // Use depth counter to handle potential nested scenarios correctly.
+  inline static thread_local int in_post_hook_depth_ = 0;
+};
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -52,6 +52,7 @@ void RegPyNativeModule(py::module *m) {
   mindspore::pynative::autograd::RegTensorMeta(m);
   mindspore::pynative::autograd::RegFunctionBase(m);
   mindspore::pytree::RegPyTree(m);
+  mindspore::pynative::hyper_offload::RegOffloadModule(m);
   RegTensorDoc(m);
   (void)m->def(
     "_unsafe_set_version_counter",
