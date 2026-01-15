@@ -40,6 +40,10 @@ dtypes_integral = (
     ms.uint8, ms.uint16, ms.uint32, ms.uint64,
 )
 
+dtypes_common = (
+    int, float, complex, bool
+)
+
 device_names = [
     'ascend',
     'cpu',
