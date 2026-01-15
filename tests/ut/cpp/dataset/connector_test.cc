@@ -14,31 +14,32 @@
  * limitations under the License.
  */
 
+#include "minddata/dataset/engine/connector.h"
+
 #include <fcntl.h>
+
+#include <chrono>
 #include <iostream>
 #include <memory>
-#include <vector>
-#include <chrono>
+#include <ostream>
 #include <thread>
-
+#include <vector>
 
 #include "common/common.h"
-#include "minddata/dataset/engine/connector.h"
 #include "minddata/dataset/util/task_manager.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
 
 class MindDataTestConnector : public UT::Common {
-public:
-
+ public:
   MindDataTestConnector();
 
   // Test scenario: single producer, single consumer.
   // This means there is only one queue in the connector.
   Status Run_test_0();
 
-  // Test scenario: multiple producers, multiple cosumers
+  // Test scenario: multiple producers, multiple consumers
   // A chain of three layer of thread groups connected by two Connectors between
   // two layer. You can set different num of threads on layer 1 and 2, and layer 3
   // that does the serialization to _ouput vector needs to be single thread.
@@ -47,7 +48,7 @@ public:
 
   void SetSleepMilliSec(uint32_t ms) { sleep_ms_ = ms; }
 
-private:
+ private:
   std::unique_ptr<TaskGroup> tg_;
   uint32_t last_input_;
   uint32_t sleep_ms_ = 0;
@@ -56,26 +57,16 @@ private:
 
   // This worker loop is to be called by a single thread. It will pop my_conn Connector
   // and populate output vector
-  Status SerialWorkerPull(
-                          int tid,
-                          std::shared_ptr<Connector<uint32_t>> my_conn,
-                          std::vector<uint32_t> *output
-                          );
+  Status SerialWorkerPull(int tid, std::shared_ptr<Connector<uint32_t>> my_conn, std::vector<uint32_t> *output);
 
   // This worker loop read from input_ vector that have complete list of tasks/elements.
   // The assignment from the elements in input_ to each worker is ensured in RoundRobin,
   // i.e., tid-0 will pick input_[0], tid-1 will pick input_[1], so-on circular.
-  Status FirstWorkerPush(
-                         int tid,
-                         std::shared_ptr<Connector<uint32_t> > my_conn,
-                         int start_in,
-                         int offset);
+  Status FirstWorkerPush(int tid, std::shared_ptr<Connector<uint32_t>> my_conn, int start_in, int offset);
 
   // This worker loop read from a Connector and put the result into another Connector.
-  Status MidWorkerJob(
-                      int tid,
-                      std::shared_ptr<Connector<uint32_t> > from_conn,
-                      std::shared_ptr<Connector<uint32_t> > to_conn);
+  Status MidWorkerJob(int tid, std::shared_ptr<Connector<uint32_t>> from_conn,
+                      std::shared_ptr<Connector<uint32_t>> to_conn);
 
   Status ValidateOutput(const std::vector<uint32_t> &output);
 
@@ -123,7 +114,27 @@ TEST_F(MindDataTestConnector, Test2) {
   ASSERT_TRUE(rc.IsOk());
 }
 
+/// Feature: Connector
+/// Description: Test Connector print function.
+/// Expectation: The output is as expected.
+TEST_F(MindDataTestConnector, TestPrint) {
+  MS_LOG(INFO) << "MindDataTestConnector TestPrint.";
+  auto connector = Connector<uint32_t>(1, 1, 10);
 
+  // Test << operator.
+  std::ostringstream oss;
+  oss << connector;
+  std::string connector_info = oss.str();
+  EXPECT_TRUE(connector_info.find("Connector Name           :") != std::string::npos);
+  EXPECT_TRUE(connector_info.find("Number of consumers      : 1") != std::string::npos);
+  EXPECT_TRUE(connector_info.find("Number of producers      : 1") != std::string::npos);
+
+  // Test Print function
+  oss.str("");
+  oss.clear();
+  connector.Print(oss, true);
+  EXPECT_EQ(oss.str(), connector_info);
+}
 
 // Implementation of MindDataTestConnector class and the helper functions.
 MindDataTestConnector::MindDataTestConnector() : tg_(new TaskGroup()) {
@@ -138,31 +149,26 @@ Status MindDataTestConnector::Run_test_0() {
   Status rc;
   std::vector<uint32_t> output;
   wp.Clear();
-  auto my_conn = std::make_shared<Connector<uint32_t>>(1,  // num of producers
-                                                      1,  // num of consumers
-                                                      10);  // capacity of each queue
+  auto my_conn = std::make_shared<Connector<uint32_t>>(1,    // num of producers
+                                                       1,    // num of consumers
+                                                       10);  // capacity of each queue
   MS_ASSERT(my_conn != nullptr);
 
   rc = my_conn->Register(tg_.get());
   RETURN_IF_NOT_OK(rc);
 
   // Spawn a thread to read input_ vector and put it in my_conn
-  rc = tg_->CreateAsyncTask("Worker Push",
-                            std::bind(&MindDataTestConnector::FirstWorkerPush,
-                                      this,  // passing this instance
-                                      0,  // id = 0 for this simple one to one case
-                                      my_conn,  // the connector
-                                      0,  // start index to read from the input_ list
-                                      1));  // the offset to read the next index
+  rc = tg_->CreateAsyncTask("Worker Push", std::bind(&MindDataTestConnector::FirstWorkerPush,
+                                                     this,     // passing this instance
+                                                     0,        // id = 0 for this simple one to one case
+                                                     my_conn,  // the connector
+                                                     0,        // start index to read from the input_ list
+                                                     1));      // the offset to read the next index
   RETURN_IF_NOT_OK(rc);
 
   // Spawn another thread to read from my_conn and write to _output vector.
   rc = tg_->CreateAsyncTask("Worker Pull",
-                            std::bind(&MindDataTestConnector::SerialWorkerPull,
-                                      this,
-                                      0,
-                                      my_conn,
-                                      &output));
+                            std::bind(&MindDataTestConnector::SerialWorkerPull, this, 0, my_conn, &output));
   RETURN_IF_NOT_OK(rc);
   // Wait for the threads to finish.
   rc = wp.Wait();
@@ -187,13 +193,11 @@ Status MindDataTestConnector::Run_test_1() {
   int conn1_qcap = 5;
   int conn2_qcap = 10;
 
-  auto conn1 = std::make_shared<Connector<uint32_t>>(l1_threads,  // num of producers
-                                                     l2_threads,  // num of consumers
+  auto conn1 = std::make_shared<Connector<uint32_t>>(l1_threads,   // num of producers
+                                                     l2_threads,   // num of consumers
                                                      conn1_qcap);  // the cap of each queue
 
-  auto conn2 = std::make_shared<Connector<uint32_t>>(l2_threads,
-                                                     l3_threads,
-                                                     conn2_qcap);
+  auto conn2 = std::make_shared<Connector<uint32_t>>(l2_threads, l3_threads, conn2_qcap);
 
   rc = conn1->Register(tg_.get());
   RETURN_IF_NOT_OK(rc);
@@ -202,34 +206,30 @@ Status MindDataTestConnector::Run_test_1() {
 
   // Instantiating the threads in the first layer
   for (int i = 0; i < l1_threads; i++) {
-    rc = tg_->CreateAsyncTask("First Worker Push",
-                              std::bind(&MindDataTestConnector::FirstWorkerPush,
-                                        this,  // passing this instance
-                                        i,  // thread id in this group of thread
-                                        conn1,  // the connector
-                                        i,  // start index to read from the input_ list
-                                        l1_threads));   // the offset to read the next index
+    rc = tg_->CreateAsyncTask("First Worker Push", std::bind(&MindDataTestConnector::FirstWorkerPush,
+                                                             this,          // passing this instance
+                                                             i,             // thread id in this group of thread
+                                                             conn1,         // the connector
+                                                             i,             // start index to read from the input_ list
+                                                             l1_threads));  // the offset to read the next index
     RETURN_IF_NOT_OK(rc);
   }
 
   // Instantiating the threads in the 2nd layer
   for (int i = 0; i < l2_threads; i++) {
-    rc = tg_->CreateAsyncTask("Mid Worker Job",
-                              std::bind(&MindDataTestConnector::MidWorkerJob,
-                                        this,  // passing this instance
-                                        i,  // thread id in this group of thread
-                                        conn1,  // the 1st connector
-                                        conn2));    // the 2nd connector
+    rc = tg_->CreateAsyncTask("Mid Worker Job", std::bind(&MindDataTestConnector::MidWorkerJob,
+                                                          this,     // passing this instance
+                                                          i,        // thread id in this group of thread
+                                                          conn1,    // the 1st connector
+                                                          conn2));  // the 2nd connector
     RETURN_IF_NOT_OK(rc);
   }
 
   // Last layer doing serialization to one queue to check if the order is preserved
-  rc = tg_->CreateAsyncTask("Worker Pull",
-                            std::bind(&MindDataTestConnector::SerialWorkerPull,
-                                      this,
-                                      0,  // thread id = 0, since it's the only one
-                                      conn2,  // popping the data from conn2
-                                      &output));
+  rc = tg_->CreateAsyncTask("Worker Pull", std::bind(&MindDataTestConnector::SerialWorkerPull, this,
+                                                     0,      // thread id = 0, since it's the only one
+                                                     conn2,  // popping the data from conn2
+                                                     &output));
   RETURN_IF_NOT_OK(rc);
   // Wait for the threads to finish.
   rc = wp.Wait();
@@ -242,11 +242,8 @@ Status MindDataTestConnector::Run_test_1() {
   return ValidateOutput(output);
 }
 
-Status MindDataTestConnector::SerialWorkerPull(
-                                               int tid,
-                                               std::shared_ptr<Connector<uint32_t>> my_conn,
-                                               std::vector<uint32_t> *output
-                                       ) {
+Status MindDataTestConnector::SerialWorkerPull(int tid, std::shared_ptr<Connector<uint32_t>> my_conn,
+                                               std::vector<uint32_t> *output) {
   Status rc;
   TaskManager::FindMe()->Post();
   while (1) {
@@ -272,11 +269,8 @@ Status MindDataTestConnector::SerialWorkerPull(
   return Status::OK();
 }
 
-Status MindDataTestConnector::FirstWorkerPush(
-                                      int tid,
-                                      std::shared_ptr<Connector<uint32_t> > my_conn,
-                                      int start_in,
-                                      int offset)  {
+Status MindDataTestConnector::FirstWorkerPush(int tid, std::shared_ptr<Connector<uint32_t>> my_conn, int start_in,
+                                              int offset) {
   TaskManager::FindMe()->Post();
   MS_ASSERT(my_conn != nullptr);
   Status rc;
@@ -284,17 +278,16 @@ Status MindDataTestConnector::FirstWorkerPush(
     rc = my_conn->Push(tid, input_[i]);
 
     // Emulate different processing time for each thread
-    if (sleep_ms_ != 0)
+    if (sleep_ms_ != 0) {
       GoToSleep(sleep_ms_);
+    }
   }
   return Status::OK();
 }
 
 // This worker loop read from a Connector and put the result into another Connector.
-Status MindDataTestConnector::MidWorkerJob(
-                                   int tid,
-                                   std::shared_ptr<Connector<uint32_t> > from_conn,
-                                   std::shared_ptr<Connector<uint32_t> > to_conn) {
+Status MindDataTestConnector::MidWorkerJob(int tid, std::shared_ptr<Connector<uint32_t>> from_conn,
+                                           std::shared_ptr<Connector<uint32_t>> to_conn) {
   MS_ASSERT((from_conn != nullptr) && (to_conn != nullptr));
   Status rc;
   TaskManager::FindMe()->Post();
