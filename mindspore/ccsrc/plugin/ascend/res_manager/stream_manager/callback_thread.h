@@ -28,28 +28,23 @@ void *callback_thread_func(void *data);
 
 // Callback thread for ascend streams.
 struct CallbackThread {
-  ~CallbackThread() {
-    cancel();
-    if (thread_) {
-      pthread_join(thread_, nullptr);
-    }
-  }
+  explicit CallbackThread() : flag_(std::make_shared<std::atomic_bool>(true)) {}
+  ~CallbackThread() { cancel(); }
 
   // pthread_cancel may cause bug now, so just set flag to false.
   void cancel() {
-    if (flag_.load()) {
-      flag_.store(false);
+    if (flag_->load()) {
+      flag_->store(false);
     }
   }
 
   int create() {
-    flag_.store(true);
-    return pthread_create(&thread_, nullptr, &callback_thread_func, this);
+    flag_->store(true);
+    return pthread_create(&thread_, nullptr, &callback_thread_func, &flag_);
   }
 
-  pthread_t thread_;
-  std::atomic_bool flag_{true};
-  int32_t default_timeout_{500};
+  pthread_t thread_{0};
+  std::shared_ptr<std::atomic_bool> flag_;
 };
 using CallbackThreadPtr = std::shared_ptr<CallbackThread>;
 }  // namespace ascend
