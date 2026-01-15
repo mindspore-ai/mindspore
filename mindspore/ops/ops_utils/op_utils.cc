@@ -1245,5 +1245,44 @@ const std::unordered_set<std::string> &GetAllOpPluginKernelNames() {
   });
   return op_names;
 }
+
+const std::unordered_set<std::string> &GetAllOpPluginComputeDependOps() {
+  static std::once_flag init_flag;
+  static int (*get_op_count)() = nullptr;
+  static char **(*get_all_ops)() = nullptr;
+  static std::unordered_set<std::string> op_names;
+  std::call_once(init_flag, []() {
+    void *handle = GetOpPluginHandle();
+    if (handle == nullptr) {
+      return;
+    }
+    constexpr auto get_op_count_func_name = "GetComputeDependOpCount";
+    constexpr auto get_all_ops_func_name = "GetAllOpPluginComputeDependOps";
+    get_op_count = reinterpret_cast<std::add_pointer<int()>::type>(DL_SYM(handle, get_op_count_func_name));
+    get_all_ops = reinterpret_cast<std::add_pointer<char **()>::type>(DL_SYM(handle, get_all_ops_func_name));
+    if (get_op_count == nullptr || get_all_ops == nullptr) {
+      // Not an error - older plugins may not have this function
+      MS_LOG(INFO) << "Compute depend ops functions not found in op plugin library. "
+                   << "This is expected for older plugin versions.";
+      return;
+    }
+    int op_count = get_op_count();
+    char **op_names_ptr = get_all_ops();
+    for (int i = 0; i < op_count; ++i) {
+      op_names.insert(std::string(op_names_ptr[i]));
+    }
+  });
+  return op_names;
+}
+
+bool IsOpPluginComputeDependOp(const std::string &op_name) {
+  static const std::unordered_set<std::string> *op_names_cache = nullptr;
+  static std::once_flag cache_flag;
+  std::call_once(cache_flag, []() { op_names_cache = &GetAllOpPluginComputeDependOps(); });
+  if (op_names_cache->empty()) {
+    return false;
+  }
+  return op_names_cache->find(op_name) != op_names_cache->end();
+}
 }  // namespace ops
 }  // namespace mindspore

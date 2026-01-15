@@ -21,16 +21,17 @@
 #include <windows.h>
 #endif
 
-#include <vector>
-#include <map>
-#include <string>
 #include <algorithm>
 #include <functional>
+#include <map>
+#include <numeric>
+#include <string>
+#include <vector>
 #include "kernel/cpu/cpu_common.h"
-#include "utils/file_utils.h"
-#include "utils/ms_utils.h"
 #include "kernel/cpu/op_plugin/op_plugin_utils.h"
 #include "ops_utils/op_utils.h"
+#include "utils/file_utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace kernel {
@@ -65,6 +66,8 @@ bool CustomOpPluginCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
     return false;
   }
 
+  is_compute_depend_op_ = ops::IsOpPluginComputeDependOp(kernel_name_);
+
   for (size_t i = 0; i < inputs.size(); i++) {
     auto in_shape = inputs[i]->GetShapeVector();
     auto dtype = inputs[i]->dtype_id();
@@ -92,6 +95,8 @@ bool CustomOpPluginCpuKernelMod::Init(const std::vector<KernelTensor *> &inputs,
 bool CustomOpPluginCpuKernelMod::Launch(const std::vector<KernelTensor *> &inputs,
                                         const std::vector<KernelTensor *> &workspace,
                                         const std::vector<KernelTensor *> &outputs) {
+  kernel_info_.SetOutputShapeInfo(nullptr);
+
   std::vector<void *> params;
   kernel_info_.SetKernelInput(inputs);
 
@@ -123,6 +128,10 @@ bool CustomOpPluginCpuKernelMod::Launch(const std::vector<KernelTensor *> &input
                          "terminate execution. If termination is not your purpose, please set return value to 0.";
   }
 
+  if (kernel_info_.GetOutputShapeInfo() != nullptr) {
+    MS_LOG(INFO) << "Output shapes calculated by plugin for " << kernel_name_;
+  }
+
   return true;
 }
 
@@ -152,6 +161,26 @@ int CustomOpPluginCpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs
                        [](auto &v) { return &v[0]; });
 
   return static_cast<int>(KRET_OK);
+}
+
+void CustomOpPluginCpuKernelMod::UpdateOutputShapeAndSize(const std::vector<KernelTensor *> &inputs,
+                                                          const std::vector<KernelTensor *> &outputs) {
+  auto *output_info = kernel_info_.GetOutputShapeInfo();
+  MS_EXCEPTION_IF_NULL(output_info);
+  if (output_info->shape_calculated.size() != outputs.size()) {
+    MS_LOG(EXCEPTION) << "For '" << kernel_name_
+                      << "', the number of outputs calculated by plugin is not equal to the number of outputs, "
+                      << "the number of outputs calculated by plugin is " << output_info->shape_calculated.size()
+                      << ", and the number of outputs is " << outputs.size();
+  }
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    if (output_info->shape_calculated[i]) {
+      const auto &shape = output_info->output_shapes[i];
+      outputs[i]->SetShapeVector(shape);
+      outputs[i]->set_size(std::accumulate(shape.begin(), shape.end(), 1LL, std::multiplies<int64_t>()) *
+                           UnitSizeInBytes(outputs[i]->dtype_id()));
+    }
+  }
 }
 MS_KERNEL_FACTORY_REG(NativeCpuKernelMod, CustomOpPlugin, CustomOpPluginCpuKernelMod);
 }  // namespace op_plugin

@@ -65,6 +65,30 @@ std::enable_if_t<has_int_or_vector_int_v<Args...>, std::vector<tensor::TensorPtr
   return {};
 }
 
+inline void UpdateOutputShapesFromPlugin(op_plugin::OpPluginKernelParam &param, std::shared_ptr<OpRunner> op) {
+  auto *output_info = param.kernel_info.GetOutputShapeInfo();
+  if (!output_info) {
+    return;
+  }
+  const auto &outputs = op->outputs();
+  auto simple_infer_ptr = op->output_value_simple_info();
+  MS_EXCEPTION_IF_NULL(simple_infer_ptr);
+
+  if (outputs.size() != output_info->shape_calculated.size() ||
+      outputs.size() != simple_infer_ptr->shape_vector_.size()) {
+    MS_LOG(EXCEPTION) << "For '" << op->primitive()->name() << "', output size mismatch: outputs=" << outputs.size()
+                      << ", shape_calculated=" << output_info->shape_calculated.size()
+                      << ", shape_vector=" << simple_infer_ptr->shape_vector_.size();
+  }
+
+  for (size_t i = 0; i < outputs.size(); ++i) {
+    if (output_info->shape_calculated[i]) {
+      op->UpdateOutputShape(outputs[i], output_info->output_shapes[i]);
+      simple_infer_ptr->shape_vector_[i] = output_info->output_shapes[i];
+    }
+  }
+}
+
 // The InplaceIndex indicates the input tensor the output corresponds to in a inplace operation.
 template <std::size_t... InplaceIndices, typename... Args>
 std::enable_if_t<!has_int_or_vector_int_v<Args...>, std::vector<tensor::TensorPtr>> PyboostLaunchOpPluginKernel(
@@ -142,6 +166,7 @@ std::enable_if_t<!has_int_or_vector_int_v<Args...>, std::vector<tensor::TensorPt
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "Launch op plugin kernel failed, op name: " << op_name << ", return code: " << ret;
     }
+    UpdateOutputShapesFromPlugin(op_plugin_param, op);
   }));
   op->ProfileTrackerInput(args...);
   op->ProfileTrackerOutput(outputs);

@@ -49,6 +49,10 @@ def cumsum_ext_forward_func(x, dim):
 def inplace_relu_forward_func(x):
     mint.nn.functional.relu_(x)
 
+@test_utils.run_with_cell
+def unique_forward_func(x):
+    return ms.ops.unique(x)
+
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
           essential_mark='essential')
@@ -223,3 +227,27 @@ def test_py_method_dispatch(mode):
     output_tensor = add_scalar_tensor(x, alpha)
     assert np.allclose(output_func.asnumpy(), expect)
     assert np.allclose(output_tensor.asnumpy(), expect)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+          essential_mark='essential')
+@pytest.mark.parametrize('mode', ['pynative', 'kbk'])
+def test_dynamic_output_shape(mode):
+    """
+    Feature: op_plugin kernel with dynamic output shape
+    Description: Test op_plugin kernel that computes output shape at runtime (compute depend op)
+    Expectation: Correct result with dynamically determined output shape.
+    """
+    set_mode(mode)
+    # Input with duplicates: [1, 2, 5, 2] -> unique values [1, 2, 5], indices [0, 1, 2, 1]
+    x = Tensor([1, 2, 5, 2], ms.int32)
+    unique_values, indices = unique_forward_func(x)
+
+    # Verify unique values (order may vary based on implementation)
+    expected_unique = np.array([1, 2, 5], dtype=np.int32)
+    expected_indices = np.array([0, 1, 2, 1], dtype=np.int32)
+
+    assert unique_values.shape[0] == 3, f"Expected 3 unique values, got {unique_values.shape[0]}"
+    assert indices.shape[0] == 4, f"Expected 4 indices, got {indices.shape[0]}"
+    assert np.allclose(unique_values.asnumpy(), expected_unique)
+    assert np.allclose(indices.asnumpy(), expected_indices)

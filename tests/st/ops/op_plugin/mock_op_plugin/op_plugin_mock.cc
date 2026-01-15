@@ -14,16 +14,20 @@
  * limitations under the License.
  */
 
-#include <cstring>
-#include <cstdlib>
-#include <unordered_set>
-#include <string>
-#include <vector>
 #include <algorithm>
-#include <iterator>
+#include <cstdlib>
+#include <cstring>
+#include <cstdint>
+#include <vector>
 
-const std::unordered_set<std::string> register_op_name = {"LogicalAnd", "CumsumExt", "InplaceReLU", "InplaceNormal",
-                                                          "Randn",      "StackExt",  "SumExt",      "AddScalar"};
+const std::vector<const char *> kRegisteredOpNames = {
+  "AddScalar", "CumsumExt", "InplaceNormal", "InplaceReLU", "LogicalAnd", "Randn", "StackExt", "SumExt", "Unique"};
+
+const std::vector<const char *> kComputeDependOpNames = {"Unique"};
+
+namespace {
+inline bool StrEqual(const char *a, const char *b) { return std::strcmp(a, b) == 0; }
+}  // namespace
 
 // Configuration state tracking for tests
 namespace {
@@ -57,22 +61,17 @@ bool IsKernelRegistered(const char *name) {
   if (name == nullptr) {
     return false;
   }
-  return register_op_name.find(name) != register_op_name.end();
+  return std::find_if(kRegisteredOpNames.begin(), kRegisteredOpNames.end(),
+                      [name](const char *s) { return StrEqual(s, name); }) != kRegisteredOpNames.end();
 }
 
-int GetRegisteredOpCount() { return register_op_name.size(); }
+int GetRegisteredOpCount() { return static_cast<int>(kRegisteredOpNames.size()); }
 
-const char **GetAllRegisteredOps() {
-  static std::vector<const char *> op_names;
-  static bool initialized = false;
-  if (!initialized) {
-    op_names.reserve(register_op_name.size());
-    std::transform(register_op_name.begin(), register_op_name.end(), std::back_inserter(op_names),
-                   [](const std::string &name) { return name.c_str(); });
-    initialized = true;
-  }
-  return op_names.data();
-}
+const char **GetAllRegisteredOps() { return const_cast<const char **>(kRegisteredOpNames.data()); }
+
+int GetComputeDependOpCount() { return static_cast<int>(kComputeDependOpNames.size()); }
+
+const char **GetAllOpPluginComputeDependOps() { return const_cast<const char **>(kComputeDependOpNames.data()); }
 
 // Configuration setup function called by MindSpore
 int OpPluginConfSetup(const OpPluginConfig *config) {

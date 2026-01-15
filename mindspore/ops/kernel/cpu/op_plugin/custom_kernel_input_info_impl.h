@@ -18,6 +18,7 @@
 #define MINDSPORE_OPS_KERNEL_CPU_OP_PLUGIN_CUSTOM_KERNEL_INPUT_INFO_IMPL_H_
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <vector>
 #include <optional>
@@ -32,6 +33,8 @@ class KernelInputInfoImpl : public KernelInputInfo {
  public:
   KernelInputInfoImpl() = default;
   virtual ~KernelInputInfoImpl() = default;
+  KernelInputInfoImpl(KernelInputInfoImpl &&) = default;
+  KernelInputInfoImpl &operator=(KernelInputInfoImpl &&) = default;
   void SetKernelInput(const std::vector<kernel::KernelTensor *> &inputs) { inputs_ = inputs; }
   size_t GetInputSize() { return inputs_.size(); }
   bool IsScalarInput(size_t idx) final { return inputs_[idx]->type_id() != TypeId::kObjectTypeTensorType; }
@@ -115,8 +118,14 @@ class KernelInputInfoImpl : public KernelInputInfo {
     return std::make_optional<OpPluginTensorStorageInfo>(OpPluginTensorStorageInfo{strides, storage_offset});
   }
 
+  OpPluginOutputShapeInfo *GetOutputShapeInfo() override { return output_shape_info_.get(); }
+  void SetOutputShapeInfo(std::unique_ptr<OpPluginOutputShapeInfo> info) override {
+    output_shape_info_ = std::move(info);
+  }
+
  private:
   std::vector<kernel::KernelTensor *> inputs_;
+  std::unique_ptr<OpPluginOutputShapeInfo> output_shape_info_;
 };
 }  // namespace op_plugin
 }  // namespace mindspore::kernel
