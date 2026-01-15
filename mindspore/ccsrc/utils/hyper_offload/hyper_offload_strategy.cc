@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-#include "plugin/ascend/kernel_executor/hyper_offload/hyper_offload_strategy.h"
+#include "utils/hyper_offload/hyper_offload_strategy.h"
+
+#include <algorithm>
 
 namespace mindspore {
-namespace device {
-namespace ascend {
+namespace utils {
 namespace hyper_offload {
 namespace {
 struct AbsoluteDistance {
@@ -61,8 +62,9 @@ RelativeDistanceList GenerateRelativeDistanceList(const AbsoluteDistanceList &ab
   for (size_t i = 1; i < absolute_distance_list.size(); ++i) {
     int current_distance =
       absolute_distance_list[i].absolute_distance - absolute_distance_list[i - 1].absolute_distance;
-    (void)relative_distance_list.emplace_back(RelativeDistance{
-      absolute_distance_list[i - 1].node, absolute_distance_list[i].node, IntToSize(current_distance)});
+    auto cur_relative_distance =
+      RelativeDistance{absolute_distance_list[i - 1].node, absolute_distance_list[i].node, IntToSize(current_distance)};
+    (void)relative_distance_list.emplace_back(cur_relative_distance);
   }
   return relative_distance_list;
 }
@@ -115,8 +117,7 @@ std::optional<OffloadInfo> GenerateOffloadInfo(const UserInfo &user_info, const 
   return OffloadInfo{user_info.node, replace_info_list};
 }
 
-OffloadInfoList GenerateOffloadInfoList(const KernelGraphPtr &kernel_graph, const UserInfoList &user_info_list) {
-  const auto &execution_order = kernel_graph->execution_order();
+OffloadInfoList GenerateOffloadInfoList(const CNodePtrList &execution_order, const UserInfoList &user_info_list) {
   OffloadInfoList offload_info_list;
   for (const auto &cur_user_info : user_info_list) {
     const auto &offload_info_opt = GenerateOffloadInfo(cur_user_info, execution_order);
@@ -130,9 +131,9 @@ OffloadInfoList GenerateOffloadInfoList(const KernelGraphPtr &kernel_graph, cons
 }
 }  // namespace
 
-OffloadInfoList DistanceBaseHyperOffloadStrategy::Run(const KernelGraphPtr &kernel_graph) {
-  const auto &user_info_list = CollectAllNodeUsers(kernel_graph->execution_order());
-  const auto &offload_info_list = GenerateOffloadInfoList(kernel_graph, user_info_list);
+OffloadInfoList DistanceBaseHyperOffloadStrategy::Run(const CNodePtrList &execution_order,
+                                                      const UserInfoList &user_info_list) {
+  const auto &offload_info_list = GenerateOffloadInfoList(execution_order, user_info_list);
   MS_LOG(INFO) << "offload_info_list size: " << offload_info_list.size();
   return offload_info_list;
 }
@@ -146,6 +147,5 @@ OffloadInfoList OffloadInfoFilterByNumber::Filter(const OffloadInfoList &offload
   return filtered_offload_list;
 }
 }  // namespace hyper_offload
-}  // namespace ascend
-}  // namespace device
+}  // namespace utils
 }  // namespace mindspore

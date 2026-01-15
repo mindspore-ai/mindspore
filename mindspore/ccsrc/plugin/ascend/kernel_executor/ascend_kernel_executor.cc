@@ -46,7 +46,7 @@
 #include "plugin/ascend/graph_optimizer/stream_assign/acl_stream_assign.h"
 #include "plugin/ascend/stress_detect/stress_detect.h"
 #include "plugin/ascend/kernel_executor/rts/rt_kernel_build.h"
-#include "mindspore/ccsrc/plugin/ascend/kernel_executor/hyper_offload/hyper_offload.h"
+#include "mindspore/ccsrc/plugin/ascend/kernel_executor/hyper_offload/kernel_hyper_offload.h"
 #include "kernel/ascend/hccl/hccl_kernel_metadata.h"
 #include "kernel/ascend/hccl/hccl_kernel_build.h"
 #include "kernel/ascend/simu/kernel_mod_impl/simu_kernel_build.h"
@@ -1271,9 +1271,10 @@ void AscendKernelExecutor::PreprocessBeforeRun(const FuncGraphPtr &graph) const 
   }
   ResetNodeIds({kernel_graph});
   hyper_offload::ReorderControlFlowNodes(kernel_graph);
-  hyper_offload::HyperOffloadOptimizer::Run(kernel_graph);
+  hyper_offload::KernelHyperOffloadOptimizer optimizer;
+  optimizer.Run(kernel_graph);
   DoStreamAssign(kernel_graph);
-  hyper_offload::HyperOffloadOptimizer::AddEventToHyperOffloadOps(kernel_graph);
+  optimizer.AddEventToHyperOffloadOps(kernel_graph);
   CreateEventKernelMod(kernel_graph);
   ExecKernelModResize(kernel_graph);
   kernel_graph->PrintGraphExecuteOrder();

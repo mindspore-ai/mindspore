@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,56 +14,47 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_HYPER_OFFLOAD_STRATEGY_H_
-#define MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_HYPER_OFFLOAD_STRATEGY_H_
+#ifndef MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_STRATEGY_H_
+#define MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_STRATEGY_H_
 
-#include <utility>
-#include <vector>
 #include <memory>
-#include "include/utils/anfalgo.h"
-#include "plugin/ascend/kernel_executor/hyper_offload/hyper_offload_utils.h"
+#include <vector>
+
+#include "ir/anf.h"
+#include "utils/hyper_offload/hyper_offload_utils.h"
+
 namespace mindspore {
-namespace device {
-namespace ascend {
+namespace utils {
 namespace hyper_offload {
-struct ReplaceInfo {
-  KernelWithIndex replace_start_node;
-  std::vector<KernelWithIndex> replace_rest_nodes;
-};
-using ReplaceInfoList = std::vector<ReplaceInfo>;
-
-struct OffloadInfo {
-  KernelWithIndex data_node;
-  ReplaceInfoList replace_info_list;
-};
-using OffloadInfoList = std::vector<OffloadInfo>;
-
 class HyperOffloadStrategy {
  public:
   virtual ~HyperOffloadStrategy() = default;
-  virtual OffloadInfoList Run(const KernelGraphPtr &kernel_graph) = 0;
+  // Execute the strategy to determine offload information.
+  virtual OffloadInfoList Run(const CNodePtrList &execution_order, const UserInfoList &user_info_list) = 0;
 };
 using HyperOffloadStrategyPtr = std::unique_ptr<HyperOffloadStrategy>;
 
 class DistanceBaseHyperOffloadStrategy : public HyperOffloadStrategy {
  public:
-  OffloadInfoList Run(const KernelGraphPtr &kernel_graph) override;
+  // Execute the distance-based strategy.
+  OffloadInfoList Run(const CNodePtrList &execution_order, const UserInfoList &user_info_list) override;
 };
 using DistanceBaseHyperOffloadStrategyPtr = std::unique_ptr<DistanceBaseHyperOffloadStrategy>;
 
 class OffloadInfoFilter {
  public:
   virtual ~OffloadInfoFilter() = default;
-  virtual OffloadInfoList Filter(const OffloadInfoList& offload_info_list) = 0;
+  // Filter the offload information list.
+  virtual OffloadInfoList Filter(const OffloadInfoList &offload_info_list) = 0;
 };
 
 class OffloadInfoFilterByNumber : public OffloadInfoFilter {
  public:
-  OffloadInfoList Filter(const OffloadInfoList& offload_info_list) override;
+  // Filter offload information based on the number limit.
+  OffloadInfoList Filter(const OffloadInfoList &offload_info_list) override;
 };
 }  // namespace hyper_offload
-}  // namespace ascend
-}  // namespace device
+}  // namespace utils
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PLUGIN_DEVICE_ASCEND_HAL_HARDWARE_HYPER_OFFLOAD_STRATEGY_H_
+#endif  // MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_STRATEGY_H_
