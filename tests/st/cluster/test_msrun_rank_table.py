@@ -127,7 +127,10 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
 if __name__ == "__main__":
     init()
     rank_id = get_rank()
+    env_rank_id =  os.environ.get('RANK_ID')
     device_id = os.environ.get('DEVICE_ID')
+    assert rank_id == env_rank_id
+
     context.set_auto_parallel_context(parallel_mode="data_parallel", gradients_mean=True, device_num=get_group_size())
 
     # create sub communication group
