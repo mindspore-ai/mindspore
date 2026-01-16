@@ -17,6 +17,10 @@
 #include "include/runtime/pipeline/async_rqueue.h"
 
 #include <utility>
+#include <map>
+#include <memory>
+#include <vector>
+#include <string>
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include "include/utils/signal_util.h"
 #endif
@@ -25,6 +29,7 @@
 #include "utils/log_adapter.h"
 #include "utils/ms_exception.h"
 #include "tools/profiler/profiler.h"
+#include "runtime/pipeline/task/task.h"
 
 namespace mindspore {
 namespace runtime {

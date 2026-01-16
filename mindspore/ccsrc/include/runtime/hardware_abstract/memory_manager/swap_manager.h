@@ -24,12 +24,15 @@
 
 #include "include/runtime/memory/mem_pool/dynamic_mem_pool.h"
 #include "device_address/device_address.h"
-#include "runtime/hardware_abstract/memory_manager/io_handle.h"
 #include "include/runtime/hardware_abstract/memory_manager/pin_mem_pool.h"
 #include "runtime/hardware_abstract/visible.h"
 
 namespace mindspore {
 namespace device {
+class IOHandle;
+using IOHandlePtr = std::shared_ptr<IOHandle>;
+using AsyncIOToken = size_t;
+
 class RUNTIME_HARDWARE_EXPORT SwapManager {
  public:
   SwapManager(size_t stream_id, DynamicMemPool *device_memory_pool, PinMemPool *pin_mem_pool);

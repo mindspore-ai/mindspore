@@ -26,6 +26,10 @@
 #include "plugin/gpu/res_manager/gpu_res_manager.h"
 
 namespace mindspore {
+class DeviceEvent;
+using DeviceEventPtr = std::shared_ptr<DeviceEvent>;
+using DeviceEventPtrList = std::vector<DeviceEventPtr>;
+
 namespace device {
 namespace gpu {
 #define SUPPORTED_CAP 5.3

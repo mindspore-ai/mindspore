@@ -53,6 +53,7 @@
 #include "utils/stream_guard.h"
 #include "utils/log_adapter.h"
 #include "include/runtime/utils/dispatch/dispatch_env.h"
+#include "runtime/pipeline/task/task.h"
 
 namespace mindspore {
 using tensor::TensorPtr;

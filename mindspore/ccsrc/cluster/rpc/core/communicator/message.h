@@ -19,25 +19,11 @@
 
 #include <string>
 #include <memory>
+#include "include/cluster/rpc/constants.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
-enum class Protos : uint32_t { RAW = 0, PROTOBUF = 1, FLATBUFFERS = 2 };
-
-enum class Command {
-  TERMINATE = 0,
-  REGISTER = 1,
-  HEARTBEAT = 2,
-  SEND_DATA = 3,
-  FETCH_METADATA = 4,
-  FINISH = 5,
-  COLLECTIVE_SEND_DATA = 6,
-  FAILURE_EVENT = 7
-};
-
-enum class Role { SERVER = 0, WORKER = 1, SCHEDULER = 2 };
-
 struct MessageHeader {
   Protos message_proto_ = Protos::RAW;
   uint32_t message_meta_length_ = 0;

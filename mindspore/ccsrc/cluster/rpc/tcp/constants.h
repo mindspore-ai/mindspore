@@ -17,7 +17,13 @@
 #ifndef MINDSPORE_CCSRC_DISTRIBUTED_RPC_TCP_CONSTANTS_H_
 #define MINDSPORE_CCSRC_DISTRIBUTED_RPC_TCP_CONSTANTS_H_
 
+#ifdef _WIN32
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#include <windows.h>
+#else
 #include <arpa/inet.h>
+#endif
 #include <string>
 #include <csignal>
 #include <queue>

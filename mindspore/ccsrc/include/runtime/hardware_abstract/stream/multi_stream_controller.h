@@ -27,11 +27,13 @@
 #include <utility>
 
 #include "async/spinlock.h"
-#include "runtime/hardware_abstract/event/device_event.h"
 #include "include/runtime/hardware_abstract/device_context/device_context.h"
 #include "runtime/hardware_abstract/visible.h"
 
 namespace mindspore {
+class DeviceEvent;
+using DeviceEventPtr = std::shared_ptr<DeviceEvent>;
+
 namespace device {
 class TaskIdOnStreamManager;
 using TaskIdOnStreamManagerPtr = std::shared_ptr<TaskIdOnStreamManager>;

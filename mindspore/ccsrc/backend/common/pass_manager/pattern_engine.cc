@@ -15,10 +15,13 @@
  */
 
 #include "include/backend/common/pass_manager/pattern_engine.h"
+#include <string>
+#include <vector>
 #include "ir/anf.h"
 #include "utils/convert_utils_base.h"
 #include "include/backend/common/pass_manager/helper.h"
 #include "utils/anf_utils.h"
+#include "backend/common/pass_manager/visitor.h"
 
 namespace mindspore {
 static int GetNextTag() {

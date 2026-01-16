@@ -18,6 +18,7 @@
 
 #include "common/common_test.h"
 #include "include/runtime/memory/mem_pool/mem_dynamic_allocator.h"
+#include "runtime/hardware_abstract/event/device_event.h"
 
 namespace mindspore {
 namespace device {

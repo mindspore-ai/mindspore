@@ -18,11 +18,14 @@
 
 #include <functional>
 #include <string>
+#include <memory>
+#include <vector>
 
 #include "include/utils/offload_context.h"
 #include "include/utils/common.h"
 #include "utils/file_utils.h"
 #include "utils/temp_file_manager.h"
+#include "runtime/hardware_abstract/memory_manager/io_handle.h"
 
 namespace mindspore {
 namespace device {

@@ -26,15 +26,26 @@
 #include <memory>
 #include <string>
 #include "include/cluster/rpc/constants.h"
-#include "cluster/rpc/core/communicator/message.h"
-#include "cluster/rpc/core/communicator/task_executor.h"
 #include "cluster/rpc/core/node.h"
-#include "cluster/rpc/core/node_info.h"
 #include "utils/ms_exception.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
+// Events reported to the business layer, include cluster event and node event.
+enum class ClusterEvent {
+  NODE_TIMEOUT = 1,
+  SCHEDULER_TIMEOUT = 2,
+  READY_FOR_SCALE_OUT = 3,
+  READY_FOR_SCALE_IN = 4,
+  CLUSTER_SCALE_OUT_DONE = 5,
+  CLUSTER_SCALE_IN_DONE = 6,
+  ON_PREPARE_PERSIST = 7,
+  ON_BEGIN_PERSIST = 8,
+  ON_SEND_META_DATA = 9,
+  CLUSTER_SCALE_OUT_ROLLBACK_DONE = 10
+};
+
 class CLUSTER_EXPORT AbstractNode : public Node {
  public:
   AbstractNode()

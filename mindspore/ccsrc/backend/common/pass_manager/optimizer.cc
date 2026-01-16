@@ -21,9 +21,17 @@
 #include "utils/anf_utils.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/backend/common/pass_manager/helper.h"
+#include "backend/common/pass_manager/visitor.h"
 
 namespace mindspore {
 namespace opt {
+PatternPass::PatternPass(const std::string &name, bool multigraph)
+    : NodePass(name),
+      multigraph_(multigraph),
+      pattern_engine_(PatternEngine(std::make_shared<Visitor>())),
+      primitive_vars_(std::make_shared<PrimitiveVarMap>()),
+      equiv_(std::make_shared<Equiv>()) {}
+
 void PatternPass::GetOrigNodes() {
   MS_EXCEPTION_IF_NULL(equiv_);
   orig_nodes_.clear();

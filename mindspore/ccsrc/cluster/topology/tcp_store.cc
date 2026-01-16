@@ -13,9 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <memory>
+#include <string>
 #include "include/cluster/rpc/tcp_store.h"
 #include "utils/ms_utils.h"
 #include "include/utils/utils.h"
+#if defined(__linux__) && defined(WITH_BACKEND)
+#include "cluster/rpc/core/comm_util.h"
+#include "cluster/topology/meta_server_node.h"
+#endif
 
 namespace mindspore {
 namespace distributed {

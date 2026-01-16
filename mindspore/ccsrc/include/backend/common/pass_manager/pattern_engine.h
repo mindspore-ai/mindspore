@@ -150,6 +150,7 @@ inline bool operator!=(const VarPtr &lhs, const VarPtr &rhs) { return !(lhs == r
 
 std::ostream &operator<<(std::ostream &os, const VarPtr &var);
 
+class Visitor;
 using Equiv = std::map<VarPtr, BaseRef>;
 using EquivPtr = std::shared_ptr<Equiv>;
 using PrimitiveVarMap = std::unordered_map<PrimitivePtr, VarPtr>;

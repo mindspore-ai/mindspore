@@ -29,6 +29,8 @@ namespace mindspore {
 namespace distributed {
 namespace rpc {
 class TCPComm;
+class EventLoopGroup;
+using EventLoopGroupPtr = std::shared_ptr<EventLoopGroup>;
 
 class CLUSTER_EXPORT TCPServer : public RPCServerBase {
  public:

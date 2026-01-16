@@ -29,10 +29,6 @@
 #include <mutex>
 #include <atomic>
 #include <condition_variable>
-#include "cluster/rpc/core/cluster_config.h"
-#include "cluster/rpc/core/comm_util.h"
-#include "cluster/rpc/core/communicator/ssl_client.h"
-#include "cluster/rpc/core/communicator/ssl_wrapper.h"
 #include "include/cluster/rpc/constants.h"
 #include "include/cluster/topology/ps_context.h"
 #include "cluster/rpc/core/communicator/tcp_message_handler.h"

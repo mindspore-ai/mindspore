@@ -36,12 +36,14 @@
 #include "include/runtime/memory/mem_pool/dynamic_mem_pool.h"
 #include "include/backend/visible.h"
 #include "include/utils/stream_util.h"
-#include "runtime/hardware_abstract/event/device_event.h"
 #ifdef __APPLE__
 #include "async/spinlock.h"
 #endif
 
 namespace mindspore {
+class DeviceEvent;
+using DeviceEventPtr = std::shared_ptr<DeviceEvent>;
+
 namespace device {
 struct DynamicMemBuf : public EventBase {
   DynamicMemBuf(DeviceMemPtr addr, DynamicMemBufStatus status, size_t size, uint32_t stream_id)

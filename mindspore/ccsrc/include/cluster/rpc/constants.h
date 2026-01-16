@@ -35,6 +35,23 @@ template <typename T>
 class PersistentData;
 }  // namespace distributed::persistent
 namespace ps {
+namespace core {
+enum class Protos : uint32_t { RAW = 0, PROTOBUF = 1, FLATBUFFERS = 2 };
+
+enum class Command {
+  TERMINATE = 0,
+  REGISTER = 1,
+  HEARTBEAT = 2,
+  SEND_DATA = 3,
+  FETCH_METADATA = 4,
+  FINISH = 5,
+  COLLECTIVE_SEND_DATA = 6,
+  FAILURE_EVENT = 7
+};
+
+enum class Role { SERVER = 0, WORKER = 1, SCHEDULER = 2 };
+}  // namespace core
+
 constexpr char kEnvCommType[] = "MS_COMM_TYPE";
 constexpr char kEnvInterface[] = "MS_INTERFACE";
 constexpr char kEnvPServerNum[] = "MS_SERVER_NUM";
@@ -89,7 +106,7 @@ constexpr int64_t kPullCmd = 51;
 constexpr size_t kInvalidKey = UINT64_MAX;
 constexpr int64_t kInvalidID = -1;
 
-constexpr uint32_t kMaxMessageSize = static_cast<uint32_t>(100 * (uint32_t(1) << 20));
+constexpr uint32_t kMaxMessageSize = static_cast<uint32_t>(100 * (static_cast<uint32_t>(1) << 20));
 constexpr char kServerNum[] = "server_num";
 constexpr char kWorkerNum[] = "worker_num";
 constexpr char kNodesIds[] = "node_ids";
