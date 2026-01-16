@@ -42,5 +42,5 @@ mindspore.ops.nsa_select_attention
         - **RuntimeError** - `query`、`key` 与 `value` 的数据类型不一致。
         - **RuntimeError** - `query`、`key` 与 `value` 的 batch 大小不相等。
         - **RuntimeError** - `head_num` 与 `query` 的头维度不匹配。
-        - **RuntimeError** - `topk_indices` 存在超出有效范围  :math:`0 \leq index \leq S_2 / 64` 的取值。
+        - **RuntimeError** - `topk_indices` 存在超出有效范围 :math:`0 \leq index \leq S_2 / 64` 的取值。
         - **RuntimeError** - 维度约束不满足：:math:`D_q == D_k` 且 :math:`D_k >= D_v`。

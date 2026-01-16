@@ -11,8 +11,8 @@ mindspore.ops.max_unpool2d
 
     .. math::
         \begin{array}{ll} \\
-        H_{out} = (H{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
-        W_{out} = (W{in} - 1) \times stride[1] - 2 \times padding[1] + kernel\_size[1] \\
+        H_{out} = (H_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
+        W_{out} = (W_{in} - 1) \times stride[1] - 2 \times padding[1] + kernel\_size[1] \\
         \end{array}
 
     参数：
@@ -26,8 +26,8 @@ mindspore.ops.max_unpool2d
         - **padding** (Union[int, tuple[int]]) - 填充值。默认 ``0`` 。若为int类型，则长宽方向的填充大小相同，均为 `padding` 。
           若为tuple类型，则tuple中的两个值分别代表长宽方向填充的大小。
         - **output_size** (tuple[int]，可选) - 输出shape。默认 ``None`` 。
-          如果output_size为()，那么输出shape根据 ``kernel_size`` 、 ``stride`` 和 ``padding`` 计算得出。
-          如果output_size不为()，那么 `output_size` 必须满足格式 :math:`(N, C, H, W)` ， :math:`(C, H, W)` 或 :math:`(H, W)` ，取值范围需满足：
+          如果 `output_size` 为()，那么输出shape根据 ``kernel_size`` 、 ``stride`` 和 ``padding`` 计算得出。
+          如果 `output_size` 不为()，那么 `output_size` 必须满足格式 :math:`(N, C, H, W)` ， :math:`(C, H, W)` 或 :math:`(H, W)` ，取值范围需满足：
           :math:`[(N, C, H_{out} - stride[0], W_{out} - stride[1]), (N, C, H_{out} + stride[0], W_{out} + stride[1])]`。
 
     返回：

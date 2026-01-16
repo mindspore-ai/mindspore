@@ -5,7 +5,7 @@ mindspore.ops.layer_norm
 
     在mini-batch输入上应用层归一化（Layer Normalization）。
 
-    层归一化在递归神经网络中被广泛的应用。适用单个训练用例的mini-batch输入上应用归一化，详见论文 `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_ 。
+    层归一化在递归神经网络中被广泛地应用。适用于单个训练用例的mini-batch输入上应用归一化，详见论文 `Layer Normalization <https://arxiv.org/pdf/1607.06450.pdf>`_ 。
 
     与批归一化（Batch Normalization）不同，层归一化在训练和测试时执行完全相同的计算。
     应用于所有通道和像素，即使batch_size=1也适用。公式如下：

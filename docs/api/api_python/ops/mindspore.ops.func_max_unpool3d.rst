@@ -11,9 +11,9 @@ mindspore.ops.max_unpool3d
 
     .. math::
         \begin{array}{ll} \\
-        D_{out} = (D{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
-        H_{out} = (H{in} - 1) \times stride[1] - 2 \times padding[1] + kernel\_size[1] \\
-        W_{out} = (W{in} - 1) \times stride[2] - 2 \times padding[2] + kernel\_size[2] \\
+        D_{out} = (D_{in} - 1) \times stride[0] - 2 \times padding[0] + kernel\_size[0] \\
+        H_{out} = (H_{in} - 1) \times stride[1] - 2 \times padding[1] + kernel\_size[1] \\
+        W_{out} = (W_{in} - 1) \times stride[2] - 2 \times padding[2] + kernel\_size[2] \\
         \end{array}
 
     参数：
@@ -46,4 +46,4 @@ mindspore.ops.max_unpool3d
         - **ValueError** - `x` 的长度不为4或5。
         - **ValueError** - `output_size` 的类型不是tuple。
         - **ValueError** - `output_size` 的长度不为0、4或5。
-        - **ValueError** - `output_size` 的取值与根据 `kernel_size` , `stride` , `padding` 计算得到的结果差距太大。
+        - **ValueError** - `output_size` 的取值与根据 ``kernel_size`` 、 ``stride`` 和 ``padding`` 计算得到的结果差距太大。
