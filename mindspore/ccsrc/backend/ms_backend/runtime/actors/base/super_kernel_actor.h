@@ -180,6 +180,8 @@ class SuperKernelActor : public DebugAwareActor {
   void LinkKernelActor(const CNodePtr &kernel, size_t input_index, const AnfNodePtr &input_node, size_t output_index);
   void LinkKernelActorByDeviceType(const CNodePtr &kernel, size_t input_index, const AnfNodePtr &input_node,
                                    size_t output_index);
+  void CheckDeviceTypeValid(const DeviceTensorPtr &input_device_tensor, const DeviceContext *input_device_context,
+                            const CNodePtr &kernel, const AnfNodePtr &input_kernel, size_t input_index);
 
   void RunGraphKernelByKernel(OpContext<KernelTensor> *const context);
 
