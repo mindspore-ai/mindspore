@@ -199,7 +199,7 @@ def _contiguous(tensor):
 
 def all_reduce(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async_op=False):
     """
-    Reduce tensors across all devices in such a way that all deviceswill get the same final result,
+    Reduce tensors across all devices in such a way that all devices will get the same final result,
     returns the tensor which is all reduced.
 
     Note:
@@ -339,7 +339,7 @@ def reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_G
         The tensors must have the same shape and format in all processes of the collection.
 
     Args:
-        tensor(Tensor): The input tensor to be reduced and scattered, suppose it has a shape :math:`(N, *)`, where `*`
+        tensor (Tensor): The input tensor to be reduced and scattered, suppose it has a shape :math:`(N, *)`, where `*`
             means any number of additional dimensions. N must be divisible by rank_size.
             rank_size refers to the number of cards in the communication group.
         op (str, optional): Specifies an operation used for element-wise reductions,
@@ -349,7 +349,7 @@ def reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_G
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
 
     Returns:
-        Tuple(Tensor, CommHandle), the output tensor has the same dtype as `input_x` with a shape of
+        Tuple(Tensor, CommHandle), the output tensor has the same dtype as `tensor` with a shape of
         :math:`(N/rank\_size, *)`. CommHandle is an async work handle, if `async_op` is set to True.
         CommHandle will be None, when `async_op` is False.
 
@@ -454,7 +454,7 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
         >>> print(output)
         Process with rank 1: [[4. 4. 4. 4. 4. 4. 4. 4.]
                              [4. 4. 4. 4. 4. 4. 4. 4.]],
-        Other proesses: [0.].
+        Other processes: [0.].
     """
 
     if not isinstance(tensor, (Tensor, Tensor_)):
@@ -473,18 +473,18 @@ class P2POp:
         - `tensor` will not be modified in-place by final result.
 
     Args:
-        op(Union[str, function]): Only string of ``"isend"`` and ``"irecv"`` are allow.
+        op (Union[str, function]): Only string of ``"isend"`` and ``"irecv"`` are allow.
                                   Or function of ``comm_func.isend`` and ``comm_func.irecv`` are allow.
-        tensor(Union[Tensor, Tuple(int)]): tensor for sending/receiving or receive tensor shape
+        tensor (Union[Tensor, Tuple(int)]): tensor for sending/receiving or receive tensor shape
                                            when `op` is ``"irecv"``.
-        peer(int): remote global rank for send/receive.
-        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
+        peer (int): remote global rank for send/receive.
+        group (str, optional): The communication group to work on. Default: ``None`` , which
             means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
-        tag(int, optional): currently not supported yet. default: ``0``.
+        tag (int, optional): currently not supported yet. Default: ``0``.
 
     Keyword Args:
         recv_dtype (mindspore.dtype, optional): when `tensor` is a tuple shape, this arg will be used and has
-                                               to be configured. default: ``None``
+            to be configured. Default: ``None`` .
 
     Returns:
         P2POp Object.
@@ -659,11 +659,11 @@ def batch_isend_irecv(p2p_op_list):
 
 def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
     r"""
-    Scatter tensor evently across the processes in the specified communication group.
+    Scatter tensor evenly across the processes in the specified communication group.
 
     Note:
         The interface behavior only support Tensor input and scatter evenly, which
-        is different from that of `pytoch.distributed.scatter`.
+        is different from that of `pytorch.distributed.scatter`.
         Only the tensor in process `src` (global rank) will do scatter.
         Only support PyNative mode, Graph mode is not currently supported.
 
@@ -678,7 +678,7 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
         Tensor, the shape of output is :math:`(x_1/src\_rank, x_2, ..., x_R)`. The dimension 0 of data is equal to
         the dimension of input tensor divided by `src`, and the other dimension keep the same.
 
-    Raise:
+    Raises:
         TypeError: If the type of the first input parameter is not Tensor, or any of `op` and `group` is not a str.
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
@@ -735,7 +735,7 @@ def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         tensor (Tensor): The tensor to be gathered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        dst(int, optional): Specifies the rank(global rank) of the process that receive the tensor.
+        dst (int, optional): Specifies the rank(global rank) of the process that receive the tensor.
             And only process `dst` will receive the gathered tensor. Default: ``0``.
         group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
 
@@ -744,7 +744,8 @@ def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
         sum of the dimension of input tensor, and the other dimension keep the same.
 
     Raise:
-        TypeError: If the type of the first input parameter is not Tensor, or any of `op` and `group` is not a str.
+        TypeError: If the type of the first input parameter is not Tensor, `dst` is not an int,
+            or `group` is not a str.
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
@@ -1156,8 +1157,7 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
 
     Returns:
         Tuple(Tensor, CommHandle), the shape of output is :math:`(x_1, x_2, ..., x_R)`.
-        CommHandle is an async work handle, if `async_op` is set to True.
-        CommHandle will be None, when `async_op` is False.
+        CommHandle is an async work handle.
 
     Raises:
         TypeError: If `src` is not an int or `group` is not a str.
@@ -1511,7 +1511,7 @@ def all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False)
         CommHandle will be None, when `async_op` is False.
 
     Raises:
-        TypeError: If `input` or `output` is not tensor. `group` is not a str, or async_op is not bool.
+        TypeError: If `input` or `output` is not Tensor, `group` is not str, or `async_op` is not bool.
 
     Supported Platforms:
         ``Ascend``
