@@ -16,6 +16,7 @@
 
 #include "utils/hyper_offload/hyper_offload.h"
 
+#include <atomic>
 #include <unordered_map>
 #include "include/utils/anfalgo.h"
 #include "primitive/framework_ops.h"
@@ -27,7 +28,7 @@ namespace utils {
 namespace hyper_offload {
 namespace {
 void AddSingleParameterOperations(const FuncGraphPtr &graph, const CNodePtr &node, const CNodePtrList &exec_order,
-                                  const HandleNewNodeCallback &callback, HyperOffloadOperations *operations) {
+                                  const HandleNewNodeCallback &callback, HyperOffloadOperations &operations) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
   if (IsPrimitiveCNode(node, prim::kPrimConditionSwitch)) {
@@ -51,7 +52,7 @@ void AddSingleParameterOperations(const FuncGraphPtr &graph, const CNodePtr &nod
       auto to_device_node = BuildToDeviceNode(graph, data_node, callback);
       to_device_node->set_abstract(real_input->abstract());
       UpdateNodeInput(node, i, to_device_node);
-      operations->AddOperationBefore(node_index, to_device_node);
+      operations.AddOperationBefore(node_index, to_device_node);
       continue;
     }
     const auto &param_res = GetRemoteParameter(graph, input);
@@ -61,20 +62,20 @@ void AddSingleParameterOperations(const FuncGraphPtr &graph, const CNodePtr &nod
     auto to_device_node = BuildToDeviceNode(graph, input, callback);
     to_device_node->set_abstract(dyn_cast<abstract::AbstractRefTensor>(input->abstract())->CloneAsTensor());
     UpdateNodeInput(node, i, to_device_node);
-    operations->AddOperationBefore(node_index, to_device_node);
+    operations.AddOperationBefore(node_index, to_device_node);
     auto to_remote_node = BuildInplaceToHostNode(graph, to_device_node, param_res.value(), node, callback);
     to_remote_nodes.push_back(to_remote_node);
   }
 
   for (const auto &to_remote_node : to_remote_nodes) {
-    operations->AddOperationAfter(node_index, to_remote_node);
+    operations.AddOperationAfter(node_index, to_remote_node);
   }
   return;
 }
 
 void AddSingleActivationOperations(const OffloadInfo &offload_info, const std::vector<KernelWithIndex> &outputs,
                                    const FuncGraphPtr &graph, const CNodePtrList &exec_order,
-                                   const HandleNewNodeCallback &callback, HyperOffloadOperations *operations) {
+                                   const HandleNewNodeCallback &callback, HyperOffloadOperations &operations) {
   MS_EXCEPTION_IF_NULL(graph);
   const auto &data_node_info = offload_info.data_node;
   auto data_node = data_node_info.first;
@@ -102,7 +103,7 @@ void AddSingleActivationOperations(const OffloadInfo &offload_info, const std::v
   auto data_iter = std::find(exec_order.begin(), exec_order.end(), data_node_info.first);
   MS_EXCEPTION_IF_CHECK_FAIL(data_iter != exec_order.end(), "Fail to find node in execution order.");
   size_t data_node_index = std::distance(exec_order.begin(), data_iter);
-  operations->AddOperationAfter(data_node_index, to_remote_node);
+  operations.AddOperationAfter(data_node_index, to_remote_node);
 
   for (const auto &cur_replace_info : offload_info.replace_info_list) {
     auto to_device_node = BuildToDeviceNode(graph, to_remote_node, callback);
@@ -118,7 +119,7 @@ void AddSingleActivationOperations(const OffloadInfo &offload_info, const std::v
     auto change_node_iter = std::find(exec_order.begin(), exec_order.end(), change_nodes_infos[0].first);
     if (change_node_iter != exec_order.end()) {
       size_t change_node_index = std::distance(exec_order.begin(), change_node_iter);
-      operations->AddOperationBefore(change_node_index, to_device_node);
+      operations.AddOperationBefore(change_node_index, to_device_node);
     }
   }
 
@@ -139,25 +140,197 @@ void AddSingleActivationOperations(const OffloadInfo &offload_info, const std::v
     UpdateNodeInput(output, IntToSize(index), to_device_node);
     if (!exec_order.empty()) {
       size_t last_index = exec_order.size() - 1;
-      operations->AddOperationAfter(last_index, to_device_node);
+      operations.AddOperationAfter(last_index, to_device_node);
     }
   }
   return;
 }
+
+void AddEventNodesForSingleD2HNode(const FuncGraphPtr &graph, const CNodePtr &d2h_node, const CNodePtrList &exec_order,
+                                   HyperOffloadOperations &ops, EventNodeFactory &event_factory, size_t node_index) {
+  constexpr size_t data_index = 1;
+  auto data_node = d2h_node->input(data_index);
+
+  // Creation events: Send (Calc->Transfer) after A, Recv (Transfer) before D2H.
+  auto [send_creation, recv_creation] =
+    event_factory.CreateSendRecvPair(kCalculateStreamId, kTransferStreamId, kSendRecvBeforeD2H, data_node);
+  // Completion events: Send (Transfer->Calc) after D2H, Recv (Calc) later.
+  auto [send_completion, recv_completion] =
+    event_factory.CreateSendRecvPair(kTransferStreamId, kCalculateStreamId, kSendRecvAfterD2H, data_node);
+
+  // Insert Send_Creation, Recv_Creation, D2H, Send_Completion at node_index.
+  // Note: AddOperationAfter appends to the list.
+  // We want order: [Send_Creation, Recv_Creation, D2H, Send_Completion]
+  // Since D2H is already in the list, we remove it and re-add everything in order.
+  ops.RemoveNode(d2h_node);
+  ops.AddOperationAfter(node_index, send_creation);
+  ops.AddOperationAfter(node_index, recv_creation);
+  ops.AddOperationAfter(node_index, d2h_node);
+  ops.AddOperationAfter(node_index, send_completion);
+
+  // Handle Recv_Completion insertion
+  static size_t release_distance = HyperOffloadConfig::GetInstance().release_distance();
+  size_t target_index = node_index + release_distance;
+  if (target_index >= exec_order.size()) {
+    target_index = exec_order.size() - 1;
+  }
+  // Insert Recv_Completion after the target node.
+  ops.AddOperationAfter(target_index, recv_completion);
+
+  auto free_node = BuildFreeDataNode(graph, data_node, kDeviceType);
+  auto assign_node = BuildAssignDataNode(graph, data_node, d2h_node, kHostType);
+  ops.AddOperationAfter(target_index, free_node->cast<CNodePtr>());
+  ops.AddOperationAfter(target_index, assign_node->cast<CNodePtr>());
+}
+
+void AddEventNodesForD2HNodes(const FuncGraphPtr &graph, const CNodePtrList &exec_order, HyperOffloadOperations &ops,
+                              EventNodeFactory &event_factory) {
+  // Iterate over the original execution order
+  // We make a copy of the operations list for each index because we modify the ops object
+  // which might affect the underlying storage or iterators if we were iterating them directly.
+  const auto &all_ops = ops.GetOperations();
+  MS_EXCEPTION_IF_CHECK_FAIL(all_ops.size() == exec_order.size(),
+                             "The size of operations is not equal to the size of original order.");
+  for (size_t i = 0; i < exec_order.size(); ++i) {
+    // Copy the list of operations at this index
+    const auto &current_ops = all_ops[i].operations;
+    for (const auto &node : current_ops) {
+      if (IsD2HNode(node)) {
+        AddEventNodesForSingleD2HNode(graph, node, exec_order, ops, event_factory, i);
+      }
+    }
+  }
+}
+
+void AddEventNodesForNonLastH2DNode(const FuncGraphPtr &graph, const CNodePtr &h2d_node,
+                                    const AnfNodePtr &original_data, size_t first_user_idx, size_t last_user_idx,
+                                    const CNodePtr &recv_node, HyperOffloadOperations &ops) {
+  ops.AddOperationBefore(first_user_idx, recv_node);
+  // Before First User: AssignData(A, A2, Device)
+  auto assign_dev = BuildAssignDataNode(graph, original_data, h2d_node, kDeviceType);
+  ops.AddOperationBefore(first_user_idx, assign_dev->cast<CNodePtr>());
+
+  // After Last User: FreeData(A, Device) -> AssignData(A, A1, Host)
+  constexpr size_t data_index = 1;
+  auto input_node = h2d_node->input(data_index);
+  auto free_dev = BuildFreeDataNode(graph, original_data, kDeviceType);
+  auto assign_host = BuildAssignDataNode(graph, original_data, input_node, kHostType);
+
+  ops.AddOperationAfter(last_user_idx, free_dev->cast<CNodePtr>());
+  ops.AddOperationAfter(last_user_idx, assign_host->cast<CNodePtr>());
+}
+
+void AddEventNodesForLastH2DNode(const FuncGraphPtr &graph, const CNodePtr &h2d_node, const AnfNodePtr &original_data,
+                                 size_t first_user_idx, const CNodePtr &recv_node, HyperOffloadOperations &ops) {
+  ops.AddOperationBefore(first_user_idx, recv_node);
+  // Before First User: FreeData(A, Host) -> AssignData(A, A3, Device)
+  auto free_host = BuildFreeDataNode(graph, original_data, kHostType);
+  auto assign_dev = BuildAssignDataNode(graph, original_data, h2d_node, kDeviceType);
+
+  ops.AddOperationBefore(first_user_idx, free_host->cast<CNodePtr>());
+  ops.AddOperationBefore(first_user_idx, assign_dev->cast<CNodePtr>());
+}
+
+void AddEventNodesForH2DNodes(const FuncGraphPtr &graph, const CNodePtrList &exec_order, HyperOffloadOperations &ops,
+                              EventNodeFactory &event_factory) {
+  // 1. Collect all H2D nodes and group them by input (D2H node or Host node)
+  // Map: InputNode -> List of (Index in exec_order, H2D Node)
+  std::unordered_map<AnfNodePtr, std::vector<std::pair<size_t, CNodePtr>>> h2d_groups;
+
+  constexpr size_t data_index = 1;
+  const auto &all_ops = ops.GetOperations();
+  for (size_t i = 0; i < all_ops.size(); ++i) {
+    for (const auto &node : all_ops[i].operations) {
+      if (IsH2DNode(node)) {
+        auto input_node = node->input(data_index);
+        (void)h2d_groups[input_node].emplace_back(i, node);
+      }
+    }
+  }
+
+  // 2. Process each group
+  for (const auto &group_entry : h2d_groups) {
+    const auto &h2d_list = group_entry.second;
+    auto input_node = group_entry.first;
+    AnfNodePtr original_data = nullptr;
+    if (IsD2HNode(input_node)) {
+      original_data = input_node->cast<CNodePtr>()->input(data_index);
+    } else {
+      // If input is not D2H, assume it is the data itself (e.g. host parameter)
+      original_data = input_node;
+    }
+
+    size_t count = h2d_list.size();
+    for (size_t i = 0; i < count; ++i) {
+      auto [node_index, h2d_node] = h2d_list[i];
+      bool is_last = (i == count - 1);
+
+      // Create Send/Recv pair: Send (Transfer -> Calc), Recv (Calc)
+      auto [send_node, recv_node] =
+        event_factory.CreateSendRecvPair(kTransferStreamId, kCalculateStreamId, kSendRecvAfterH2D, original_data);
+
+      // A. Insert Send node after H2D node
+      ops.RemoveNode(h2d_node);
+      ops.AddOperationAfter(node_index, h2d_node);
+      ops.AddOperationAfter(node_index, send_node);
+
+      // Find first and last user in exec_order
+      size_t first_user_idx = exec_order.size();
+      size_t last_user_idx = 0;
+      bool found_user = false;
+
+      for (size_t k = 0; k < exec_order.size(); ++k) {
+        auto node = exec_order[k];
+        for (const auto &input : node->inputs()) {
+          if (input == h2d_node) {
+            if (!found_user) {
+              first_user_idx = k;
+              found_user = true;
+            }
+            last_user_idx = k;
+          }
+        }
+      }
+
+      if (!found_user) {
+        MS_LOG(EXCEPTION) << "H2D node " << h2d_node->fullname_with_scope() << " has no users in execution order.";
+      }
+
+      if (!is_last) {
+        AddEventNodesForNonLastH2DNode(graph, h2d_node, original_data, first_user_idx, last_user_idx, recv_node, ops);
+      } else {
+        AddEventNodesForLastH2DNode(graph, h2d_node, original_data, first_user_idx, recv_node, ops);
+      }
+    }
+  }
+}
+
+void AddEventNodes(const FuncGraphPtr &graph, const CNodePtrList &exec_order, HyperOffloadOperations &ops) {
+  MS_EXCEPTION_IF_NULL(graph);
+  EventNodeFactory event_factory(graph);
+  AddEventNodesForD2HNodes(graph, exec_order, ops, event_factory);
+  AddEventNodesForH2DNodes(graph, exec_order, ops, event_factory);
+}
 }  // namespace
+
+bool HyperOffloadOptimizer::SkipHyperOffloadOptimizer(const HyperOffloadInput &input) {
+  if (!HyperOffloadConfig::GetInstance().enable_hyper_offload()) {
+    return true;
+  }
+  if (!input.enable_offload_parameter && !input.enable_offload_activation) {
+    return true;
+  }
+  if (input.graph == nullptr || input.exec_order.empty()) {
+    return true;
+  }
+  return false;
+}
 
 HyperOffloadPlan HyperOffloadOptimizer::Run(const HyperOffloadInput &input) {
   HyperOffloadPlan plan;
   plan.graph = input.graph;
   plan.exec_order = input.exec_order;
-  plan.event_plan.clear();
-  if (!HyperOffloadConfig::GetInstance().enable_hyper_offload()) {
-    return plan;
-  }
-  if (!input.enable_offload_parameter && !input.enable_offload_activation) {
-    return plan;
-  }
-  if (plan.graph == nullptr || plan.exec_order.empty()) {
+  if (SkipHyperOffloadOptimizer(input)) {
     return plan;
   }
 
@@ -171,11 +344,13 @@ HyperOffloadPlan HyperOffloadOptimizer::Run(const HyperOffloadInput &input) {
     auto param_ops = GenerateParameterOperations(plan.graph, plan.exec_order, input.callback);
     hyper_offload_operations.MergeFrom(param_ops);
   }
+  AdjustHyperOffloadNodePosition(hyper_offload_operations);
+  AddEventNodes(plan.graph, plan.exec_order, hyper_offload_operations);
 
-  AdjustHyperOffloadNodePosition(&hyper_offload_operations);
   plan.exec_order = BuildExecutionOrder(plan.exec_order, hyper_offload_operations);
-  plan.event_plan = GenerateEventPlan(plan.graph, plan.exec_order);
   plan.hyper_offload_operations = hyper_offload_operations;
+  AssignHyperOffloadIds(plan.exec_order);
+  MS_LOG(INFO) << plan.hyper_offload_operations.ToString(input.exec_order);
   return plan;
 }
 
@@ -186,7 +361,7 @@ HyperOffloadOperations HyperOffloadOptimizer::GenerateParameterOperations(const 
   HyperOffloadOperations params_operation;
   params_operation.Init(exec_order.size());
   for (const auto &node : exec_order) {
-    AddSingleParameterOperations(graph, node, exec_order, callback, &params_operation);
+    AddSingleParameterOperations(graph, node, exec_order, callback, params_operation);
   }
   return params_operation;
 }
@@ -210,7 +385,7 @@ HyperOffloadOperations HyperOffloadOptimizer::GenerateActivationOperations(const
 
   const auto &outputs = common::AnfAlgo::GetAllOutputWithIndex(graph->output());
   for (const auto &offload_info : offload_info_list) {
-    AddSingleActivationOperations(offload_info, outputs, graph, exec_order, callback, &activation_operation);
+    AddSingleActivationOperations(offload_info, outputs, graph, exec_order, callback, activation_operation);
   }
   return activation_operation;
 }
@@ -232,65 +407,53 @@ CNodePtrList HyperOffloadOptimizer::BuildExecutionOrder(const CNodePtrList &exec
   return new_execution_order;
 }
 
-void HyperOffloadOptimizer::AdjustHyperOffloadNodePosition(HyperOffloadOperations *hyper_offload_operations) {
-  MS_EXCEPTION_IF_NULL(hyper_offload_operations);
-  const auto &h2d_nodes = hyper_offload_operations->GetAllH2DNodes();
-  static size_t prefetch_distance = HyperOffloadConfig::GetInstance().prefetch_distance();
-  for (const auto &h2d_node : h2d_nodes) {
-    hyper_offload_operations->MoveAhead(h2d_node, prefetch_distance);
+void HyperOffloadOptimizer::AssignHyperOffloadIds(const CNodePtrList &exec_order) {
+  std::unordered_map<AnfNodePtr, std::string> node_to_key_cache;
+
+  std::function<std::string(const AnfNodePtr &)> get_key = [&](const AnfNodePtr &node) -> std::string {
+    if (node == nullptr) {
+      return "";
+    }
+    if (node_to_key_cache.count(node)) {
+      return node_to_key_cache[node];
+    }
+
+    std::string key;
+    if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > 1, "Node inputs size check failed.");
+      auto index = common::AnfAlgo::GetTupleGetItemOutIndex(cnode);
+      key = get_key(cnode->input(1)) + "_idx_" + std::to_string(index);
+    } else if (IsD2HNode(node) || IsH2DNode(node) ||
+               IsOneOfPrimitiveCNode(node,
+                                     {kFreeDataPrimitive, kAssignDataPrimitive, prim::kPrimSend, prim::kPrimReceive})) {
+      auto cnode = node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > 1, "Node inputs size check failed.");
+      key = get_key(cnode->input(1));
+    } else {
+      key = node->fullname_with_scope();
+    }
+
+    node_to_key_cache[node] = key;
+    return key;
+  };
+
+  for (const auto &node : exec_order) {
+    auto key = get_key(node);
+    if (key.empty()) {
+      continue;
+    }
+    size_t id = std::hash<std::string>{}(key);
+    node->set_user_data(kHyperOffloadId, std::make_shared<size_t>(id));
   }
 }
 
-std::vector<EventPlan> HyperOffloadOptimizer::GenerateEventPlan(const FuncGraphPtr &graph,
-                                                                const CNodePtrList &exec_order) {
-  MS_EXCEPTION_IF_NULL(graph);
-  std::vector<EventPlan> events;
-  if (exec_order.empty()) {
-    return events;
+void HyperOffloadOptimizer::AdjustHyperOffloadNodePosition(HyperOffloadOperations &hyper_offload_operations) {
+  const auto &h2d_nodes = hyper_offload_operations.GetAllH2DNodes();
+  static size_t prefetch_distance = HyperOffloadConfig::GetInstance().prefetch_distance();
+  for (const auto &h2d_node : h2d_nodes) {
+    hyper_offload_operations.MoveAhead(h2d_node, prefetch_distance);
   }
-
-  const auto &all_node_users = CollectAllNodeUsers(exec_order);
-  static size_t release_distance = HyperOffloadConfig::GetInstance().release_distance();
-
-  for (const auto &node : exec_order) {
-    if (!IsD2HNode(node)) {
-      continue;
-    }
-    constexpr size_t data_index = 1;
-    auto data_node = node->input(data_index);
-    auto data_node_last_user = FindLastRealUser(data_node, all_node_users);
-    CNodePtr insert_node = nullptr;
-
-    auto find_insert_node = [&](const AnfNodePtr &start_node) -> CNodePtr {
-      auto iter = std::find(exec_order.begin(), exec_order.end(), start_node);
-      if (iter == exec_order.end()) {
-        return nullptr;
-      }
-
-      size_t index = std::distance(exec_order.begin(), iter);
-      size_t target_index = index + release_distance;
-
-      if (target_index >= exec_order.size()) {
-        return exec_order.back();
-      }
-      return exec_order[target_index];
-    };
-
-    if (data_node_last_user.has_value()) {
-      auto last_user_node = data_node_last_user.value();
-      insert_node = find_insert_node(last_user_node);
-    } else {
-      insert_node = find_insert_node(node);
-    }
-
-    if (insert_node != nullptr) {
-      EventPlan hint;
-      hint.send_insert_after = node;
-      hint.recv_insert_after = insert_node;
-      events.push_back(hint);
-    }
-  }
-  return events;
 }
 }  // namespace hyper_offload
 }  // namespace utils

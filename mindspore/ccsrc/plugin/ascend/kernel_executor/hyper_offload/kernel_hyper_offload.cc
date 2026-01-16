@@ -274,11 +274,52 @@ void KernelHyperOffloadOptimizer::UpdateRefMapForHyperOffloadInput(const KernelG
   }
 }
 
+std::pair<CNodePtrList, std::vector<EventPlan>> KernelHyperOffloadOptimizer::GenerateExecutionOrderAndEventPlan(
+  const CNodePtrList &exec_order) {
+  std::map<uint32_t, EventPlan> event_map;
+  CNodePtrList new_execution_order;
+  CNodePtr cur_real_node = nullptr;
+
+  // Collect all send/recv nodes with type kSendRecvAfterD2H and filter other types of EventNodes.
+  for (const auto &node : exec_order) {
+    if (!node->has_user_data(utils::hyper_offload::kHyperOffloadEventNodeType)) {
+      (void)new_execution_order.emplace_back(node);
+      cur_real_node = node;
+      continue;
+    }
+    auto event_type =
+      node->user_data<utils::hyper_offload::EventNodeType>(utils::hyper_offload::kHyperOffloadEventNodeType);
+    MS_EXCEPTION_IF_NULL(event_type);
+    if (*event_type != utils::hyper_offload::kSendRecvAfterD2H) {
+      continue;
+    }
+    MS_EXCEPTION_IF_CHECK_FAIL(node->has_user_data(utils::hyper_offload::kHyperOffloadEventId),
+                               "Event node has no event_id attribute.");
+    auto event_id = *(node->user_data<uint32_t>(utils::hyper_offload::kHyperOffloadEventId));
+    MS_EXCEPTION_IF_NULL(cur_real_node);
+    if (IsPrimitiveCNode(node, prim::kPrimSend)) {
+      event_map[event_id].send_insert_after = cur_real_node;
+    } else if (IsPrimitiveCNode(node, prim::kPrimReceive)) {
+      event_map[event_id].recv_insert_after = cur_real_node;
+    }
+  }
+
+  // Generate event_plan according to event_map.
+  std::vector<EventPlan> events;
+  for (const auto &pair : event_map) {
+    MS_EXCEPTION_IF_NULL(pair.second.send_insert_after);
+    MS_EXCEPTION_IF_NULL(pair.second.recv_insert_after);
+    (void)events.emplace_back(pair.second);
+  }
+  return std::pair<CNodePtrList, std::vector<EventPlan>>(new_execution_order, events);
+}
+
 void KernelHyperOffloadOptimizer::ApplyHyperOffloadOptimizer(const KernelGraphPtr &kernel_graph) {
   const auto &input = GenerateHyperOffloadInput(kernel_graph);
-  auto plan = utils::hyper_offload::HyperOffloadOptimizer::Run(input);
-  kernel_graph->set_execution_order(plan.exec_order);
-  events_ = plan.event_plan;
+  const auto &plan = utils::hyper_offload::HyperOffloadOptimizer::Run(input);
+  const auto &[new_execution_order, events] = GenerateExecutionOrderAndEventPlan(plan.exec_order);
+  kernel_graph->set_execution_order(new_execution_order);
+  events_ = events;
 }
 
 void KernelHyperOffloadOptimizer::Run(const KernelGraphPtr &kernel_graph) {
@@ -311,13 +352,13 @@ void KernelHyperOffloadOptimizer::AddEventToHyperOffloadOps(const KernelGraphPtr
     if (iter == event_map.end()) {
       event_map[event_hint.send_insert_after] = {send_node};
     } else {
-      event_map[event_hint.send_insert_after].emplace_back(send_node);
+      (void)event_map[event_hint.send_insert_after].emplace_back(send_node);
     }
     iter = event_map.find(event_hint.recv_insert_after);
     if (iter == event_map.end()) {
       event_map[event_hint.recv_insert_after] = {recv_node};
     } else {
-      event_map[event_hint.recv_insert_after].emplace_back(recv_node);
+      (void)event_map[event_hint.recv_insert_after].emplace_back(recv_node);
     }
   }
 

@@ -28,6 +28,8 @@
 #include "abstract/dshape.h"
 #include "utils/compile_config.h"
 #include "utils/log_adapter.h"
+#include "primitive/framework_ops.h"
+#include "primitive/other_ops.h"
 
 namespace mindspore {
 namespace utils {
@@ -99,11 +101,11 @@ class TestHyperOffloadCommon : public UT::Common {
     // Create computation nodes
     auto add_node = CreateCNode(graph, "Add", {param1, param2});
     add_node->set_abstract(input_abs);
-    exec_order.push_back(add_node);
+    (void)exec_order.emplace_back(add_node);
     
     auto mul_node = CreateCNode(graph, "Mul", {add_node, param1});
     mul_node->set_abstract(input_abs);
-    exec_order.push_back(mul_node);
+    (void)exec_order.emplace_back(mul_node);
     
     // Set graph output
     graph->set_output(mul_node);
@@ -127,52 +129,52 @@ class TestHyperOffloadCommon : public UT::Common {
     // node1 at position 0
     auto node1 = CreateCNode(graph, "Add", {param1, param2});
     node1->set_abstract(input_abs);
-    exec_order.push_back(node1);
+    (void)exec_order.emplace_back(node1);
     
     // Create first user of node1 at position 1 (distance = 1)
     auto node2 = CreateCNode(graph, "Mul", {node1, param3});
     node2->set_abstract(input_abs);
-    exec_order.push_back(node2);
+    (void)exec_order.emplace_back(node2);
     
     // Create intermediate nodes that don't use node1 (positions 2-6)
     // This creates a gap to ensure relative distance > select_distance(5)
     auto node3 = CreateCNode(graph, "Sub", {node2, param1});
     node3->set_abstract(input_abs);
-    exec_order.push_back(node3);
+    (void)exec_order.emplace_back(node3);
     
     auto node4 = CreateCNode(graph, "Add", {node3, param2});
     node4->set_abstract(input_abs);
-    exec_order.push_back(node4);
+    (void)exec_order.emplace_back(node4);
     
     auto node5 = CreateCNode(graph, "Mul", {node4, param3});
     node5->set_abstract(input_abs);
-    exec_order.push_back(node5);
+    (void)exec_order.emplace_back(node5);
     
     auto node6 = CreateCNode(graph, "Sub", {node5, param1});
     node6->set_abstract(input_abs);
-    exec_order.push_back(node6);
+    (void)exec_order.emplace_back(node6);
     
     auto node7 = CreateCNode(graph, "Add", {node6, param2});
     node7->set_abstract(input_abs);
-    exec_order.push_back(node7);
+    (void)exec_order.emplace_back(node7);
     
     // Create second user of node1 at position 7 (distance = 7)
     // Relative distance from node2 (pos 1) to node8 (pos 7) = 7 - 1 = 6 > 5, triggers offload
     auto node8 = CreateCNode(graph, "Add", {node1, node7});
     node8->set_abstract(input_abs);
-    exec_order.push_back(node8);
+    (void)exec_order.emplace_back(node8);
     
     // Create more intermediate nodes
     auto node9 = CreateCNode(graph, "Mul", {node8, param1});
     node9->set_abstract(input_abs);
-    exec_order.push_back(node9);
+    (void)exec_order.emplace_back(node9);
     
     // Create third user of node1 at position 9 (distance = 9)
     // Relative distance from node8 (pos 7) to node10 (pos 9) = 9 - 7 = 2 (not > 5)
     // But the previous relative distance (6) already triggered offload
     auto node10 = CreateCNode(graph, "Mul", {node9, node1});
     node10->set_abstract(input_abs);
-    exec_order.push_back(node10);
+    (void)exec_order.emplace_back(node10);
     
     // Set graph output
     graph->set_output(node10);
@@ -211,7 +213,6 @@ TEST_F(TestHyperOffloadCommon, TestHyperOffloadCommonRun_Basic) {
   EXPECT_NE(plan.graph, nullptr);
   EXPECT_EQ(plan.graph, graph);
   EXPECT_EQ(plan.exec_order.size(), exec_order.size());
-  EXPECT_TRUE(plan.event_plan.empty());
 }
 
 // Feature: HyperOffload.
@@ -399,7 +400,7 @@ TEST_F(TestHyperOffloadCommon, TestOffloadActivationFlow) {
 
   EXPECT_NE(plan.graph, nullptr);
   // For this single OffloadInfo (node1), we expect exactly one D2H and one H2D to be inserted.
-  EXPECT_EQ(plan.exec_order.size(), original_size + 2);
+  EXPECT_EQ(plan.exec_order.size(), original_size + 12);
 
   // Helper lambda to find index of a node in execution order
   auto find_index = [](const CNodePtrList &order, const AnfNodePtr &target) -> size_t {
@@ -474,82 +475,47 @@ TEST_F(TestHyperOffloadCommon, TestOffloadStrategyWithLargeGraph) {
 }
 
 // Feature: HyperOffload.
-// Description: test function HyperOffload.
+// Description: test function AssignHyperOffloadIds.
 // Expectation: Correct result.
-TEST_F(TestHyperOffloadCommon, TestGenerateEventPlan) {
+TEST_F(TestHyperOffloadCommon, TestAssignHyperOffloadIds_Tuple) {
   auto graph = CreateSimpleGraph();
+  // Create a node that outputs a tuple (abstract).
+  auto input_abs_element = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2, 3});
+  auto input_abs_tuple = std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{input_abs_element, input_abs_element});
+  
+  auto param = CreateParameter(graph, "param_tuple", input_abs_tuple);
+
+  // Create TupleGetItem nodes
+  auto getitem0 = CreateCNode(graph, "TupleGetItem", {param, NewValueNode(MakeValue(static_cast<int64_t>(0)))});
+  auto getitem1 = CreateCNode(graph, "TupleGetItem", {param, NewValueNode(MakeValue(static_cast<int64_t>(1)))});
+  auto getitem0_dup = CreateCNode(graph, "TupleGetItem", {param, NewValueNode(MakeValue(static_cast<int64_t>(0)))});
+
   CNodePtrList exec_order;
+  (void)exec_order.emplace_back(getitem0);
+  (void)exec_order.emplace_back(getitem1);
+  (void)exec_order.emplace_back(getitem0_dup);
 
-  // Create input parameters
-  auto input_abs = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2, 3});
-  auto param1 = CreateParameter(graph, "param1", input_abs);
-  auto param2 = CreateParameter(graph, "param2", input_abs);
+  HyperOffloadOptimizer::AssignHyperOffloadIds(exec_order);
 
-  // Node 0: Computation (Data)
-  auto node_data = CreateCNode(graph, "Add", {param1, param2});
-  node_data->set_abstract(input_abs);
-  exec_order.push_back(node_data);
+  // Helper to get ID
+  auto get_id = [](const AnfNodePtr &node) -> size_t {
+    auto id_ptr = node->user_data<size_t>(kHyperOffloadId);
+    if (id_ptr) return *id_ptr;
+    return 0;
+  };
 
-  // Node 1: CopyToHost (D2H) using Node 0
-  auto d2h_node = BuildToHostNode(graph, node_data);
-  exec_order.push_back(d2h_node);
+  size_t id0 = get_id(getitem0);
+  size_t id1 = get_id(getitem1);
+  size_t id0_dup = get_id(getitem0_dup);
 
-  // Node 2: Dummy Node
-  auto node2 = CreateCNode(graph, "Mul", {param1, param2});
-  node2->set_abstract(input_abs);
-  exec_order.push_back(node2);
+  EXPECT_NE(id0, 0);
+  EXPECT_NE(id1, 0);
+  EXPECT_NE(id0_dup, 0);
 
-  // Node 3: Dummy Node
-  auto node3 = CreateCNode(graph, "Sub", {param1, param2});
-  node3->set_abstract(input_abs);
-  exec_order.push_back(node3);
-
-  // Node 4: Dummy Node (Target for recv, 1 (D2H index) + 3 (release_distance 2? No wait SetUp says 2?))
-  // Wait, in SetUp I set release_distance to 2.
-  // D2H is at index 1.
-  // Target index = 1 + 2 = 3.
-  // So Recv should be after Node 3 (index 3).
-
-  auto node4 = CreateCNode(graph, "Add", {param1, param2});
-  node4->set_abstract(input_abs);
-  exec_order.push_back(node4);
-
-  // Add dummy users to node_data to ensure CollectAllNodeUsers works,
-  // but ensure D2H is the last user if we want to test the "no last user" branch,
-  // OR add a real user after D2H to test the "has last user" branch.
-
-  // Case 1: D2H is the effectively last user (FindLastRealUser returns nullopt)
-  // node_data users: d2h_node.
-  // d2h_node is D2H, so FindLastRealUser returns nullopt.
-  // Base node = d2h_node (index 1).
-  // release_distance = 2.
-  // Insert node index = 1 + 2 = 3 (node3).
-
-  auto events = HyperOffloadOptimizer::GenerateEventPlan(graph, exec_order);
-
-  ASSERT_EQ(events.size(), 1);
-  EXPECT_EQ(events[0].send_insert_after, d2h_node);
-  EXPECT_EQ(events[0].recv_insert_after, node3);
-
-
-  // Case 2: node_data has a real user AFTER D2H.
-  // Add Node 5 using node_data.
-  auto node5 = CreateCNode(graph, "Mul", {node_data, param1});
-  node5->set_abstract(input_abs);
-  exec_order.push_back(node5);
-
-  // Now users of node_data: d2h_node (idx 1), node5 (idx 5).
-  // Last user is node5.
-  // Base node = node5 (index 5).
-  // Insert node index = 5 + 2 = 7.
-  // But exec_order size is 6 (0 to 5).
-  // So it should be clamped to last node (node5).
-
-  auto events2 = HyperOffloadOptimizer::GenerateEventPlan(graph, exec_order);
-  ASSERT_EQ(events2.size(), 1);
-  EXPECT_EQ(events2[0].send_insert_after, d2h_node);
-  EXPECT_EQ(events2[0].recv_insert_after, node5);
+  EXPECT_NE(id0, id1);
+  EXPECT_EQ(id0, id0_dup);
 }
+
 }  // namespace hyper_offload
 }  // namespace utils
 }  // namespace mindspore

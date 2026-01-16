@@ -28,12 +28,6 @@
 namespace mindspore {
 namespace utils {
 namespace hyper_offload {
-// Event insertion hint: describes logical position "insert after a node"
-struct EventPlan {
-  CNodePtr send_insert_after;
-  CNodePtr recv_insert_after;
-};
-
 struct HyperOffloadInput {
   FuncGraphPtr graph;
   CNodePtrList exec_order;
@@ -46,7 +40,6 @@ struct HyperOffloadPlan {
   FuncGraphPtr graph;
   CNodePtrList exec_order;
   HyperOffloadOperations hyper_offload_operations;
-  std::vector<EventPlan> event_plan;
 };
 
 class COMMON_EXPORT HyperOffloadOptimizer {
@@ -56,8 +49,9 @@ class COMMON_EXPORT HyperOffloadOptimizer {
 
   // Run the hyper offload optimizer.
   static HyperOffloadPlan Run(const HyperOffloadInput &input);
-  // Generate the event plan for synchronization.
-  static std::vector<EventPlan> GenerateEventPlan(const FuncGraphPtr &graph, const CNodePtrList &exec_order);
+
+  // Assign unique IDs to offload nodes.
+  static void AssignHyperOffloadIds(const CNodePtrList &exec_order);
 
  private:
   // Generate offload operations for parameters.
@@ -70,7 +64,9 @@ class COMMON_EXPORT HyperOffloadOptimizer {
   static CNodePtrList BuildExecutionOrder(const CNodePtrList &execution_order,
                                           const HyperOffloadOperations &hyper_offload_operations);
   // Adjust the position of hyper offload nodes.
-  static void AdjustHyperOffloadNodePosition(HyperOffloadOperations *ops);
+  static void AdjustHyperOffloadNodePosition(HyperOffloadOperations &ops);
+  // Check whether need to skip hyper offload optimizer according to config and input.
+  static bool SkipHyperOffloadOptimizer(const HyperOffloadInput &input);
 };
 }  // namespace hyper_offload
 }  // namespace utils
