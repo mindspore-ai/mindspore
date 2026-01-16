@@ -1510,7 +1510,7 @@ class SoftShrink(Cell):
 
     Args:
         lambd (number, optional): The threshold :math:`\lambda` defined by the Soft Shrink formula,
-            no less than zero.Default: ``0.5``.
+            no less than zero. Default: ``0.5``.
 
     Inputs:
         - **input** (Tensor) - The input tensor. Supported dtypes:
