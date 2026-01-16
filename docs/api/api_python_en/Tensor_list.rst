@@ -24,6 +24,13 @@
     :exclude-members: flatten_gradients
     :members:
 
+{% elif fullname == "mindspore.nn.Rprop" %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: construct
+    :members:
+
 {% elif "mindspore.experimental.optim" in fullname and "lr_scheduler" not in fullname and objname[0].istitle() %}
 {{ fullname | underline }}
 
