@@ -109,11 +109,13 @@ class GlobalComm:
     World communication information. The GlobalComm is a global class. The members contain:
 
     - ``BACKEND`` : The communication library used, using ``"hccl"`` / ``"nccl"`` / ``"mccl"`` .
-      ``"hccl"`` means Huawei Collective Communication Library(HCCL),
-      ``"nccl"`` means NVIDIA Collective Communication Library(NCCL),
-      ``"mccl"`` means MindSpore Collective Communication Library(MCCL).
+      ``"hccl"`` means Huawei Collective Communication Library (HCCL),
+      ``"nccl"`` means NVIDIA Collective Communication Library (NCCL),
+      ``"mccl"`` means MindSpore Collective Communication Library (MCCL).
     - ``WORLD_COMM_GROUP`` : Global communication domain,
       using ``"hccl_world_group"`` / ``"nccl_world_group"`` / ``"mccl_world_group"`` .
+    - ``INITED`` : Whether the distributed communication has been initialized.
+    - ``CHECK_ENVS`` : Whether to check environment variables.
     """
     BACKEND = DEFAULT_BACKEND
     WORLD_COMM_GROUP = HCCL_WORLD_COMM_GROUP
