@@ -1318,13 +1318,13 @@ def unique_ext(input, sorted=True, return_inverse=False, return_counts=False, di
 
 
     Returns:
-        A tensor or a tuple of tensors:
+        A tensor or a tuple of tensors.
 
-        - output(Tensor) - The unique elements of input tensor.
-        - inverse_indices(Tensor) - Return when ``return_inverse`` is True. It represents the indices for where
+        - output (Tensor) - The unique elements of input tensor.
+        - inverse_indices (Tensor) - Return when ``return_inverse`` is True. It represents the indices for where
           elements in `input` map to in `output`. When ``dim`` is ``None``, it has same shape as `input`,
           otherwise, the shape is input.shape[dim].
-        - counts(Tensor) - Return when ``return_counts`` is True. It represents the number of occurrences for each
+        - counts (Tensor) - Return when ``return_counts`` is True. It represents the number of occurrences for each
           unique element from `input` within `output`.  When ``dim`` is ``None``,
           it has same shape as `output`, otherwise, the shape is output.shape[dim].
 
