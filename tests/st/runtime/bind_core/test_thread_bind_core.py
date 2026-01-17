@@ -277,6 +277,7 @@ def test_msrun_bind_core_manual_bind_thread_manual():
     env += f"export AFFINITY_CPU_LIST='{affinity_cpu_list}';"
     env += f"export AFFINITY_CPU_LIST_2='{affinity_cpu_list_2}';"
     env += f"export MODULE_TO_CPU_DICT='{module_to_cpu_dict}';"
+    env += "export MS_DEV_RUNTIME_CONF='actor_thread_fix_bind:true';"
 
     real_path = os.path.realpath(os.getcwd())
     script = real_path + "/run_bind.py"
@@ -310,10 +311,11 @@ def test_msrun_bind_core_manual_bind_thread_manual():
     assert manual_policy_str in worker_0_log
     assert re.search(r"This module: 0 is assigned a bind core list: .*?\{0, 1, 2, 3\}", worker_0_log)
     assert re.search(r"This module: 1 is assigned a bind core list: .*?\{7, 8\}", worker_0_log)
-    assert re.search(r"Success to bind core to .*?\{7, 8\} for thread \d+", worker_0_log)
+    assert re.search(r"Success to bind core to 7 for thread \d+", worker_0_log)
     assert re.search(r"This module: 2 is assigned a bind core list: .*?\{9, 10\}", worker_0_log)
     with open(worker_1, "r", encoding="utf-8") as f:
         worker_1_log = f.read()
     manual_policy_str = ("Module bind core policy generated: {'main': [20, 21, 22, 23], "
                          "'minddata': [24, 25], 'runtime': [27, 28], 'pynative': [29, 30]}")
     assert manual_policy_str in worker_1_log
+    assert re.search(r"Success to bind core to 27 for thread \d+", worker_1_log)

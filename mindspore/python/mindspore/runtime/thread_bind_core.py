@@ -14,10 +14,12 @@
 # ============================================================================
 
 """Executor manager interfaces."""
+import json
 import subprocess
 import re
 import os
 import ast
+from itertools import chain
 from mindspore import log as logger
 from mindspore import context
 from mindspore.communication import get_local_rank_size
@@ -65,20 +67,6 @@ def execute_command(cmd_list, timeout=10):
         raise RuntimeError(f"Failed to execute '{cmd_str}'! {e}") from e
 
 
-def _adapt_to_dict(affinity_cpu_list):
-    """
-    Adapt to dict type affinity_cpu_list.
-    """
-    if not isinstance(affinity_cpu_list, dict):
-        return affinity_cpu_list
-
-    logical_device_id = context.get_context("device_id")
-    simulation_level = os.getenv("MS_SIMULATION_LEVEL", "").strip()
-    physical_device_id = _get_physical_device_id(logical_device_id, simulation_level)
-    device_key = f"device{physical_device_id}"
-    return affinity_cpu_list.get(device_key, False)
-
-
 def _validate_affinity_cpu_list(affinity_cpu_list):
     """
     Validate the user-configured affinity_cpu_list.
@@ -92,16 +80,14 @@ def _validate_affinity_cpu_list(affinity_cpu_list):
     if affinity_cpu_list is None:
         return
 
-    if not isinstance(affinity_cpu_list, list):
-        raise TypeError(f"The parameter '{affinity_cpu_list}' must be list, but got {type(affinity_cpu_list)}")
-
-    range_pattern = re.compile(r'^\d+-\d+$')
+    range_pattern = re.compile(r'^(\d+-\d+|\d+)(,(\d+-\d+|\d+))*$')
 
     for cpu_range in affinity_cpu_list:
         if not isinstance(cpu_range, str):
             raise ValueError(f"CPU range '{cpu_range}' in '{affinity_cpu_list}' should be a string.")
         if not range_pattern.match(cpu_range):
-            raise ValueError(f"CPU range '{cpu_range}' in '{affinity_cpu_list}' should be in format 'cpuidX-cpuidY'.")
+            raise ValueError(f"CPU range '{cpu_range}' in '{affinity_cpu_list}' should be in format "
+                             "'cpuidX-cpuidY' or 'cpuidX,cpuidY,cpuidZ'.")
 
 
 def _validate_module_cpu_index(module_to_cpu_dict):
@@ -117,15 +103,12 @@ def _validate_module_cpu_index(module_to_cpu_dict):
     if module_to_cpu_dict is None:
         return
 
-    if not isinstance(module_to_cpu_dict, dict):
-        raise TypeError(f"The parameter '{module_to_cpu_dict}' must be dict, but got {type(module_to_cpu_dict)}")
-
     for module_name, cpu_indices in module_to_cpu_dict.items():
         if not isinstance(cpu_indices, list):
             raise ValueError(f"The value of module_to_cpu_dict: {cpu_indices} should be a list.")
-        for cpu_id in cpu_indices:
-            if not isinstance(cpu_id, int) or cpu_id < 0:
-                raise ValueError(f"CPU index '{cpu_id}' for module '{module_name}' in '{cpu_indices}' "
+        for cpu_index in cpu_indices:
+            if not isinstance(cpu_index, int) or cpu_index < 0:
+                raise ValueError(f"CPU index '{cpu_index}' for module '{module_name}' in '{cpu_indices}' "
                                  "should be a non-negative integer.")
 
 
@@ -171,6 +154,161 @@ def _get_available_cpus():
         return []
 
     return sorted(list(set(available_cpus)))
+
+
+def _expand_ranges(ranges):
+    """
+    Expand ranges/ids to a sorted unique id list.
+
+    Args:
+        ranges (str or int): e.g. "0-4,6,9-10" or 3
+
+    Returns:
+        list[int]: Sorted, unique ids.
+    """
+    if ranges is None:
+        return []
+
+    cpu_ids = []
+    if isinstance(ranges, int):
+        cpu_ids.append(ranges)
+    elif isinstance(ranges, str):
+        if ",," in ranges or ranges.startswith(",") or ranges.endswith(","):
+            raise ValueError(f"CPU range '{ranges}' is invalid due to empty segment.")
+        segments = [seg.strip() for seg in ranges.split(",") if seg.strip()]
+        for seg in segments:
+            if "-" in seg:
+                endpoints = seg.split("-")
+                if len(endpoints) != 2:
+                    raise ValueError(f"CPU range '{seg}' is invalid.")
+                start, end = int(endpoints[0]), int(endpoints[1])
+                if start > end:
+                    raise ValueError(f"CPU range '{seg}' start should not exceed end.")
+                cpu_ids.extend(range(start, end + 1))
+            else:
+                cpu_ids.append(int(seg))
+    else:
+        raise TypeError(f"The parameter '{ranges}' must be str/int, but got {type(ranges)}")
+    return sorted(set(cpu_ids))
+
+
+def _int_list_to_range_str(num_list):
+    """
+    Convert a CPU id list to condensed range string.
+    """
+    if not num_list:
+        return ""
+    ranges = []
+    start = num_list[0]
+    for i in range(1, len(num_list)):
+        if num_list[i] != num_list[i - 1] + 1:
+            ranges.append((start, num_list[i - 1]))
+            start = num_list[i]
+    ranges.append((start, num_list[-1]))
+
+    parts = []
+    for s_val, e_val in ranges:
+        if s_val == e_val:
+            parts.append(str(s_val))
+        else:
+            parts.append(f"{s_val}-{e_val}")
+    return ",".join(parts)
+
+
+def _load_bind_file(bind_file):
+    """
+    Load and validate a bind json file.
+    """
+    if not isinstance(bind_file, str):
+        raise TypeError(f"The parameter 'bind_file' must be a string path, but got {type(bind_file)}")
+    if not os.path.isfile(bind_file):
+        raise ValueError(f"The bind file '{bind_file}' does not exist.")
+    with open(bind_file, "r", encoding="utf-8") as fp:
+        try:
+            content = json.load(fp)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Failed to parse bind file '{bind_file}' as JSON.") from e
+    if not isinstance(content, dict):
+        raise ValueError(f"The bind file '{bind_file}' content must be a JSON object.")
+    return content
+
+
+def _validate_bind_config(bind_config, bind_file):
+    """
+    Validate bind_file's input bind_cpu_mode/bind_memory_mode/actor_thread_fix_bind.
+    """
+    if not isinstance(bind_config, dict):
+        raise ValueError(f"The 'bind_config' field in bind file '{bind_file}' must be an object.")
+    cpu_mode = str(bind_config.get("bind_cpu_mode", "none")).lower()
+    if cpu_mode not in {"cpu", "numa", "none"}:
+        raise ValueError("'bind_cpu_mode' only supports 'cpu'/'numa'/'none'.")
+    mem_mode = str(bind_config.get("bind_memory_mode", "none")).lower()
+    if mem_mode not in {"numa", "none"}:
+        raise ValueError("'bind_memory_mode' only supports 'numa'/'none'.")
+    if "actor_thread_fix_bind" in bind_config:
+        atfb = bind_config.get("actor_thread_fix_bind")
+        if not isinstance(atfb, bool):
+            raise ValueError("'actor_thread_fix_bind' only supports bool type True/False.")
+    return bind_config
+
+
+def _extract_affinity_from_bind_file(bind_file):
+    """
+    Extract affinity_cpu_list and module_to_cpu_dict from a bind json file for current device.
+    """
+    content = _load_bind_file(bind_file)
+    bind_config = _validate_bind_config(content.get("bind_config", {}), bind_file)
+    fix_bind = bind_config.get("actor_thread_fix_bind", None)
+    if fix_bind is None:
+        actor_thread_fix_bind = ""
+    else:
+        actor_thread_fix_bind = "True" if fix_bind else "False"
+    cpu_mode = str(bind_config.get("bind_cpu_mode", "none")).lower()
+    if cpu_mode != "cpu":
+        logger.warning(f"bind_file '{bind_file}' is provided but 'bind_cpu_mode' is not 'cpu'. "
+                       "Skip enabling set_cpu_affinity based on bind_file.")
+        return None, None, None
+    bind_cpu = content.get("bind_cpu", {})
+    if not isinstance(bind_cpu, dict):
+        raise ValueError(f"The 'bind_cpu' field in bind file '{bind_file}' must be a dict.")
+
+    logical_device_id = context.get_context("device_id")
+    simulation_level = os.getenv("MS_SIMULATION_LEVEL", "").strip()
+    physical_device_id = _get_physical_device_id(logical_device_id, simulation_level)
+    device_key = f"device{physical_device_id}"
+    device_cpu_cfg = bind_cpu.get(device_key)
+    if device_cpu_cfg is None:
+        logger.warning(f"bind_file '{bind_file}' has no 'bind_cpu' config for {device_key}, "
+                       "Skip enabling set_cpu_affinity.")
+        return None, None, None
+    if not isinstance(device_cpu_cfg, dict):
+        logger.warning(f"bind_file '{bind_file}' entry for {device_key}, type of {device_cpu_cfg} should be dict, "
+                       f"but got {type(device_cpu_cfg)}. Skip enabling set_cpu_affinity.")
+        return None, None, None
+
+    module_cpu_map = {}
+    for module, ranges in device_cpu_cfg.items():
+        if not isinstance(ranges, (str, int)):
+            raise ValueError(f"The 'bind_cpu' entry for {module}, type of {ranges} should be string/int, "
+                             f"but got {type(ranges)}.")
+        module_cpu_map[module] = _expand_ranges(ranges)
+
+    all_cpus = sorted(set(chain.from_iterable(module_cpu_map.values())))
+    if not all_cpus:
+        logger.warning(f"bind_file '{bind_file}' has empty cpu list for {device_key}. "
+                       "Skip enabling set_cpu_affinity.")
+        return None, None, None
+
+    affinity_cpu_list = [_int_list_to_range_str(all_cpus)]
+    cpu_to_index = {cpu_id: idx for idx, cpu_id in enumerate(all_cpus)}
+    module_to_cpu_dict = {
+        module: [cpu_to_index[cpu] for cpu in cpu_ids if cpu in cpu_to_index]
+        for module, cpu_ids in module_cpu_map.items() if module != "main"
+    }
+    # When msrun doesn't provide a bind file, allow set_cpu_affinity to bind "main".
+    if not os.getenv("MSRUN_BIND_FILE", "").strip() and "main" in module_cpu_map:
+        module_to_cpu_dict["main"] = [cpu_to_index[cpu] for cpu in module_cpu_map["main"] if cpu in cpu_to_index]
+    return affinity_cpu_list, module_to_cpu_dict, actor_thread_fix_bind
 
 
 def _get_available_numas():
@@ -592,11 +730,28 @@ def _customize_generate_strategy(affinity_cpu_list, available_cpus):
     cpu_list_for_device = []
 
     for cpu_range_str in affinity_cpu_list:
-        endpoints = cpu_range_str.split("-")
-        for cid in range(int(endpoints[0]), int(endpoints[1]) + 1):
-            if cid not in available_cpus:
-                raise RuntimeError(f"CPU id:{cid} set in affinity_cpu_list:{affinity_cpu_list} is not available.")
-            cpu_list_for_device.append(cid)
+        segments = [seg.strip() for seg in str(cpu_range_str).split(",") if seg.strip()]
+        for segment in segments:
+            if "-" in segment:
+                endpoints = segment.split("-")
+                if len(endpoints) != 2:
+                    raise RuntimeError(
+                        f"CPU segment '{segment}' in affinity_cpu_list:{affinity_cpu_list} is invalid."
+                    )
+                start_val, end_val = int(endpoints[0]), int(endpoints[1])
+                for cid in range(start_val, end_val + 1):
+                    if cid not in available_cpus:
+                        raise RuntimeError(
+                            f"CPU id:{cid} set in affinity_cpu_list:{affinity_cpu_list} is not available."
+                        )
+                    cpu_list_for_device.append(cid)
+            else:
+                cid = int(segment)
+                if cid not in available_cpus:
+                    raise RuntimeError(
+                        f"CPU id:{cid} set in affinity_cpu_list:{affinity_cpu_list} is not available."
+                    )
+                cpu_list_for_device.append(cid)
 
     if not cpu_list_for_device:
         logger.warning("Available CPUs is less than 1. Will not enable bind core feature.")

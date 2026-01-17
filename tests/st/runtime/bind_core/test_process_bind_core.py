@@ -219,7 +219,7 @@ def test_msrun_bind_core_manual_only_scheduler():
     assert re.search(r"Start worker process with rank id:1.*? Execute command:(?!.*taskset).*?", output_log)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards',
         essential_mark='essential')
 def test_msrun_bind_core_manual_scheduler_and_worker():
     """
@@ -325,7 +325,7 @@ def test_msrun_bind_core_manual_wrong_key_value():
             text=True
         )
     print(err_info.value.stderr, flush=True)
-    assert "Value for device0:0-10 should be a list, but got <class 'str'>" in err_info.value.stderr
+    assert "Type of value for device0:0-10 should be a list, but got <class 'str'>" in err_info.value.stderr
 
     # Test for wrong value [0-9].
     bind_core_arg = '{"device0":[["0-9"]], "scheduler":[], "device1":["20-29"]}'
@@ -359,3 +359,18 @@ def test_msrun_bind_core_manual_wrong_key_value():
         "CPU 0~9 in ['0~9'] should be in format 'cpuidX', 'cpuidX,cpuidY' or 'cpuidX-cpuidY'."
         in err_info.value.stderr
     )
+
+    # Test for exceed core limit ["300-500"].
+    bind_core_arg = '{"device0":["0-10"], "scheduler":[], "device1":["300-500"]}'
+    msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\
+                f"--bind_core='{bind_core_arg}' {script}"
+    with pytest.raises(subprocess.CalledProcessError) as err_info:
+        subprocess.run(
+            f"{env} {msrun_cmd}",
+            shell=True,
+            check=True,
+            capture_output=True,
+            text=True
+        )
+    print(err_info.value.stderr, flush=True)
+    assert "CORE id 300 in '--bind_core' is not available." in err_info.value.stderr

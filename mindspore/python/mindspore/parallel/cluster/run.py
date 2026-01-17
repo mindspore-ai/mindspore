@@ -16,6 +16,8 @@
 import ast
 import re
 import json
+import os
+import hashlib
 from argparse import REMAINDER, ArgumentParser, ArgumentTypeError
 from .process_entity import _ProcessManager
 
@@ -29,26 +31,33 @@ def _parse_and_validate_bind_generic(value, resource):
     else:
         raise ValueError(f"Unsupported bind {resource}.")
 
-    if value.lower() == "true":
-        return True
-    if value.lower() == "false":
-        return False
-
-    try:
-        value_dict = json.loads(value)
-    except json.JSONDecodeError as e:
-        raise ArgumentTypeError("Failed to parse JSON into a dictionary") from e
+    if isinstance(value, str):
+        if value.lower() == "true":
+            return True
+        if value.lower() == "false":
+            return False
+        try:
+            value_dict = json.loads(value)
+        except json.JSONDecodeError as e:
+            raise ArgumentTypeError("Failed to parse JSON into a dictionary") from e
+    elif isinstance(value, dict):
+        value_dict = value
+    else:
+        raise ArgumentTypeError(f"Type of {value} should be bool or dict, but got {type(value)}.")
 
     if isinstance(value_dict, dict):
+        # New-style bind file uses dedicated keys, skip per-device validation here.
+        if any(k in value_dict for k in ("bind_config", "bind_cpu", "bind_memory")):
+            return value_dict
         resource_pattern = re.compile(r'^(\d+-\d+|\d+(?:,\d+)*)$')
-        
+
         for device, affinity_list in value_dict.items():
             if not re.fullmatch(r"device\d+|scheduler", device):
                 raise ArgumentTypeError(f"Key {device} must be in format 'scheduler' or 'deviceX'.")
 
             if not isinstance(affinity_list, list):
                 raise ArgumentTypeError(
-                    f"Value for {device}:{affinity_list} should be a list, but got {type(affinity_list)}."
+                    f"Type of value for {device}:{affinity_list} should be a list, but got {type(affinity_list)}."
                 )
 
             normalized_list = []
@@ -67,7 +76,7 @@ def _parse_and_validate_bind_generic(value, resource):
             value_dict[device] = normalized_list
         return value_dict
 
-    raise ArgumentTypeError(f"Type of {value} should be bool or dict, but got {type(value)}.")
+    raise ArgumentTypeError(f"Type of {value} should be bool or dict, but got {type(value_dict)}.")
 
 
 def _parse_and_validate_bind_core(value):
@@ -77,6 +86,28 @@ def _parse_and_validate_bind_core(value):
 
 def _parse_and_validate_bind_numa(value):
     """Parse input argument of --bind_numa."""
+    if isinstance(value, str) and os.path.isfile(value):
+        abs_path = os.path.abspath(value)
+        try:
+            with open(abs_path, "r", encoding="utf-8") as f:
+                raw = f.read()
+                config = json.loads(raw)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ArgumentTypeError(f"Failed to load bind_numa json file: {value}.") from exc
+        if not isinstance(config, dict):
+            raise ArgumentTypeError(f"bind_numa json file '{value}' should be a json object.")
+        bind_config = config.get("bind_config", {})
+        if not isinstance(bind_config, dict):
+            raise ArgumentTypeError("bind_config must be a json object.")
+        cpu_mode = str(bind_config.get("bind_cpu_mode", "none")).lower()
+        if cpu_mode not in ("cpu", "numa", "none"):
+            raise ArgumentTypeError("'bind_cpu_mode' only supports 'cpu'/'numa'/'none'.")
+        mem_mode = str(bind_config.get("bind_memory_mode", "none")).lower()
+        if mem_mode not in ("numa", "none"):
+            raise ArgumentTypeError("'bind_memory_mode' only supports 'numa'/'none'.")
+        os.environ["MSRUN_BIND_FILE"] = abs_path
+        os.environ["MSRUN_BIND_FILE_HASH"] = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+        return config
     return _parse_and_validate_bind_generic(value, "NUMA")
 
 

@@ -38,7 +38,8 @@ class RUNTIME_UTILS_EXPORT ThreadBindCore {
     static ThreadBindCore instance;
     return instance;
   }
-  void enable_thread_bind_core(const ModuleBindCorePolicy &module_bind_core_strategy);
+  void enable_thread_bind_core(const ModuleBindCorePolicy &module_bind_core_strategy,
+                               const std::string &actor_thread_fix_bind);
   bool parse_thread_bind_core_policy(const kBindCoreModule &module_name);
   std::vector<int> get_thread_bind_core_list(const kBindCoreModule &module_name);
   void bind_thread_core(const std::vector<int> &cpu_list);
@@ -51,6 +52,7 @@ class RUNTIME_UTILS_EXPORT ThreadBindCore {
   void bind_thread_core(const std::vector<int> &cpu_list, int64_t thread_or_process_id, bool is_thread = false);
   bool unbind_thread_core(const std::string &thread_name);
   bool is_enable_thread_bind_core_{false};
+  std::string actor_thread_fix_bind_;
 
  private:
   ModuleBindCorePolicy process_bind_core_policy_;

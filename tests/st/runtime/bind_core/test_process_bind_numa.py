@@ -259,7 +259,7 @@ def test_msrun_bind_numa_manual_only_scheduler():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
 def test_msrun_bind_numa_manual_scheduler_and_worker():
     """
     Feature: Runtime msrun --bind_numa arg.
@@ -372,8 +372,23 @@ def test_msrun_bind_numa_manual_wrong_key_value():
         in err_info.value.stderr
     )
 
+    # Test for exceed NUMA limit ["300-500"].
+    bind_numa_arg = '{"device0":["0-1"], "scheduler":[], "device1":["50-60"]}'
+    msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\
+                f"--bind_numa='{bind_numa_arg}' {script}"
+    with pytest.raises(subprocess.CalledProcessError) as err_info:
+        subprocess.run(
+            f"{env} {msrun_cmd}",
+            shell=True,
+            check=True,
+            capture_output=True,
+            text=True
+        )
+    print(err_info.value.stderr, flush=True)
+    assert "NUMA id 50 in '--bind_numa' is not available." in err_info.value.stderr
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
 def test_msrun_bind_numa_true_bind_core_true():
     """
     Feature: Runtime msrun --bind_numa and --bind_core arg.
@@ -413,7 +428,7 @@ def test_msrun_bind_numa_true_bind_core_true():
     )
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
 def test_msrun_bind_numa_manual_bind_core_manual():
     """
     Feature: Runtime msrun --bind_numa and --bind_core arg.

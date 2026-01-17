@@ -14,9 +14,11 @@
 # ============================================================================
 
 """Executor manager interfaces."""
+import os
+import hashlib
 from mindspore._c_expression import RuntimeConf
 from mindspore.runtime.thread_bind_core import _get_cpu_affinity_strategy, _validate_affinity_cpu_list, \
-    _validate_module_cpu_index, _adapt_to_dict
+    _validate_module_cpu_index, _extract_affinity_from_bind_file
 from mindspore._checkparam import args_type_check
 from mindspore import _checkparam as Validator
 from mindspore import log as logger
@@ -65,7 +67,8 @@ def dispatch_threads_num(threads_num):
     return RuntimeConf.get_instance().set_dispatch_threads_num(threads_num)
 
 
-def set_cpu_affinity(enable_affinity, affinity_cpu_list=None, module_to_cpu_dict=None):
+@args_type_check(enable_affinity=bool, affinity_cpu_list=list, module_to_cpu_dict=dict, bind_file=str)
+def set_cpu_affinity(enable_affinity, affinity_cpu_list=None, module_to_cpu_dict=None, bind_file=None):
     """
     Enable thread-level core binding to allocate specific CPU cores for key MindSpore modules (main thread, pynative,
     runtime, and minddata), preventing performance instability caused by CPU core contention among MindSpore threads.
@@ -111,6 +114,9 @@ def set_cpu_affinity(enable_affinity, affinity_cpu_list=None, module_to_cpu_dict
             of ``int`` indices representing CPU cores (e.g., ``{"main": [0,1], "minddata": [6,7]}``).
             Default: ``None`` (automatically binds core for module `"main"`). Passing an empty dict `{}`
             behaves the same as ``None``.
+        bind_file (str, optional): Path to a unified bind JSON file. When set, ``affinity_cpu_list`` and
+            ``module_to_cpu_dict`` are populated from the file for the current device, and other manual settings
+            are ignored.
 
     Raises:
         TypeError: The `enable_affinity` parameter is not a boolean.
@@ -138,25 +144,49 @@ def set_cpu_affinity(enable_affinity, affinity_cpu_list=None, module_to_cpu_dict
         >>> ms.set_device("Ascend", 1)
         >>> ms.runtime.set_cpu_affinity(True, ["10-19", "23-40"], {"main": [0,1,2,3], "runtime": [4,5,6]})
     """
-    affinity_cpu_list = _adapt_to_dict(affinity_cpu_list)
-    if affinity_cpu_list is False:
-        return
-
-    _validate_affinity_cpu_list(affinity_cpu_list)
-    _validate_module_cpu_index(module_to_cpu_dict)
-
+    actor_thread_fix_bind = ""
     if RuntimeConf.get_instance().is_thread_bind_core_configured():
         raise RuntimeError("The 'mindspore.runtime.set_cpu_affinity' cannot be set repeatedly.")
     if not enable_affinity:
         RuntimeConf.get_instance().set_thread_bind_core_configured()
         return
+
+    msrun_bind_file = os.getenv("MSRUN_BIND_FILE", "").strip()
+    msrun_bind_file_hash = os.getenv("MSRUN_BIND_FILE_HASH", "").strip()
+    if bind_file is not None:
+        bind_file = os.path.abspath(bind_file)
+        if msrun_bind_file and os.path.abspath(msrun_bind_file) != bind_file:
+            raise ValueError(f"The bind_file '{bind_file}' is inconsistent with msrun bind file "
+                             f"'{msrun_bind_file}'. Please keep them the same.")
+        if msrun_bind_file_hash:
+            try:
+                with open(bind_file, "r", encoding="utf-8") as f:
+                    raw = f.read()
+                current_hash = hashlib.sha256(raw.encode("utf-8")).hexdigest()
+            except OSError as exc:
+                raise ValueError(f"Failed to read '{bind_file}' for hash check.") from exc
+            if current_hash != msrun_bind_file_hash:
+                raise ValueError(f"The '{bind_file}' content has changed since msrun was launched. "
+                                 "Please keep the file consistent.")
+        affinity_cpu_list, module_to_cpu_dict, actor_thread_fix_bind = _extract_affinity_from_bind_file(bind_file)
+        if affinity_cpu_list is None and module_to_cpu_dict is None:
+            RuntimeConf.get_instance().set_thread_bind_core_configured()
+            return
+    else:
+        if msrun_bind_file:
+            logger.warning("MSRUN_BIND_FILE is set but bind_file is not provided to set_cpu_affinity; "
+                           "skip bind_file consistency check.")
+
+    _validate_affinity_cpu_list(affinity_cpu_list)
+    _validate_module_cpu_index(module_to_cpu_dict)
+
     module_bind_core_strategy = _get_cpu_affinity_strategy(affinity_cpu_list, module_to_cpu_dict)
     if not module_bind_core_strategy:
         logger.warning("set_cpu_affinity is not enabled because the environment does not meet the "
                        "basic conditions for binding core.")
         RuntimeConf.get_instance().set_thread_bind_core_configured()
         return
-    RuntimeConf.get_instance().thread_bind_core(module_bind_core_strategy)
+    RuntimeConf.get_instance().thread_bind_core(module_bind_core_strategy, actor_thread_fix_bind)
 
 
 @args_type_check(thread_num=int, kernel_group_num=int)

@@ -1284,7 +1284,7 @@ void GraphScheduler::BindCoreForRuntimeThread(ActorThreadPool *thread_pool) cons
   } else {
     std::vector<pthread_t> threads;
     GetRuntimeThreadIds(thread_pool, &threads);
-    const auto &actor_thread_fix_bind = runtime::GetRuntimeConfigValue(runtime::kRuntimeActorThreadFixBind);
+    const auto &actor_thread_fix_bind = bind_core_manager.actor_thread_fix_bind_;
     thread_pool->APIThreadPoolSetAffinity(threads, cpu_list, actor_thread_fix_bind);
   }
   is_bind_core_ = true;

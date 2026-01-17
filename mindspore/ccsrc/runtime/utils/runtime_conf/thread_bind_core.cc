@@ -34,6 +34,7 @@
 #include "utils/convert_utils_base.h"
 #include "utils/distributed_meta.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
+#include "include/runtime/utils/runtime_conf/runtime_env.h"
 
 namespace mindspore {
 namespace runtime {
@@ -44,12 +45,21 @@ constexpr char kRunTimeThread[] = "runtime";
 constexpr char kDataThread[] = "minddata";
 }  // namespace
 
-void ThreadBindCore::enable_thread_bind_core(const ModuleBindCorePolicy &bind_core_policy) {
+void ThreadBindCore::enable_thread_bind_core(const ModuleBindCorePolicy &bind_core_policy,
+                                             const std::string &actor_thread_fix_bind) {
   if (is_enable_thread_bind_core_) {
     MS_LOG(WARNING)
-      << "Thead bind core has already been enabled and will be implemented based on the first binding policy.";
+      << "Thread bind core has already been enabled and will be implemented based on the first binding policy.";
     return;
   }
+
+  if (!actor_thread_fix_bind.empty()) {
+    actor_thread_fix_bind_ = actor_thread_fix_bind;
+  } else {
+    const auto &env_actor_thread_fix_bind = runtime::GetRuntimeConfigValue(runtime::kRuntimeActorThreadFixBind);
+    actor_thread_fix_bind_ = env_actor_thread_fix_bind;
+  }
+
   process_bind_core_policy_ = bind_core_policy;
   is_enable_thread_bind_core_ = true;
 }
