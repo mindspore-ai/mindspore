@@ -19,9 +19,10 @@
 
 #include <cstdint>
 #include <memory>
-#include <string>
-#include <vector>
 #include <optional>
+#include <string>
+#include <utility>
+#include <vector>
 #include "base/bfloat16.h"
 #include "base/float16.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_tensor.h"
@@ -70,22 +71,22 @@ class KernelInputInfoImpl : public KernelInputInfo {
     }
   }
 
-  float GetFloatInput(size_t idx) {
+  double GetFloatInput(size_t idx) {
     const auto dtype = inputs_[idx]->dtype_id();
     switch (dtype) {
       case TypeId::kNumberTypeFloat16:
-        return static_cast<float>(inputs_[idx]->GetValueWithCheck<float16>());
+        return static_cast<double>(inputs_[idx]->GetValueWithCheck<float16>());
       case TypeId::kNumberTypeBFloat16:
-        return static_cast<float>(inputs_[idx]->GetValueWithCheck<bfloat16>());
+        return static_cast<double>(inputs_[idx]->GetValueWithCheck<bfloat16>());
       case TypeId::kNumberTypeFloat32:
       case TypeId::kNumberTypeFloat:
-        return inputs_[idx]->GetValueWithCheck<float>();
+        return static_cast<double>(inputs_[idx]->GetValueWithCheck<float>());
       case TypeId::kNumberTypeFloat64:
       case TypeId::kNumberTypeDouble:
-        return static_cast<float>(inputs_[idx]->GetValueWithCheck<double>());
+        return inputs_[idx]->GetValueWithCheck<double>();
       default:
-        // Fallback to float (will throw with a helpful message if size/type mismatch).
-        return inputs_[idx]->GetValueWithCheck<float>();
+        // Fallback to double (will throw with a helpful message if size/type mismatch).
+        return inputs_[idx]->GetValueWithCheck<double>();
     }
   }
 
@@ -93,14 +94,31 @@ class KernelInputInfoImpl : public KernelInputInfo {
 
   std::vector<int64_t> GetIntVecInput(size_t idx) { return inputs_[idx]->GetValueWithCheck<std::vector<int64_t>>(); }
 
-  std::vector<float> GetFloatVecInput(size_t idx) { return inputs_[idx]->GetValueWithCheck<std::vector<float>>(); }
+  std::vector<double> GetFloatVecInput(size_t idx) {
+    const auto dtype = inputs_[idx]->dtype_id();
+    if (dtype == TypeId::kNumberTypeFloat64 || dtype == TypeId::kNumberTypeDouble) {
+      return inputs_[idx]->GetValueWithCheck<std::vector<double>>();
+    }
+    const auto values = inputs_[idx]->GetValueWithCheck<std::vector<float>>();
+    return std::vector<double>(values.begin(), values.end());
+  }
 
   std::vector<std::vector<int64_t>> GetInt2DVecInput(size_t idx) {
     return inputs_[idx]->GetValueWithCheck<std::vector<std::vector<int64_t>>>();
   }
 
-  std::vector<std::vector<float>> GetFloat2DVecInput(size_t idx) {
-    return inputs_[idx]->GetValueWithCheck<std::vector<std::vector<float>>>();
+  std::vector<std::vector<double>> GetFloat2DVecInput(size_t idx) {
+    const auto dtype = inputs_[idx]->dtype_id();
+    if (dtype == TypeId::kNumberTypeFloat64 || dtype == TypeId::kNumberTypeDouble) {
+      return inputs_[idx]->GetValueWithCheck<std::vector<std::vector<double>>>();
+    }
+    const auto values = inputs_[idx]->GetValueWithCheck<std::vector<std::vector<float>>>();
+    std::vector<std::vector<double>> result;
+    result.reserve(values.size());
+    for (const auto &row : values) {
+      result.emplace_back(row.begin(), row.end());
+    }
+    return result;
   }
 
   int GetInputTypeId(size_t idx) { return static_cast<int>(inputs_[idx]->dtype_id()); }
