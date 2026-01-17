@@ -17,6 +17,7 @@
 #include <complex>
 #include <map>
 #include <memory>
+#include <vector>
 #include "ir/tensor_new.h"
 #include "ops/ops_frontend_func_impl.h"
 #include "ops_utils/op_utils.h"
@@ -27,7 +28,7 @@
 namespace mindspore {
 namespace ops {
 template <typename T, typename U>
-void ImplMulsHelp(const void *x1, float x2, void *result, size_t size) {
+void ImplMulsHelp(const void *x1, double x2, void *result, size_t size) {
   MS_EXCEPTION_IF_NULL(x1);
   MS_EXCEPTION_IF_NULL(result);
   const U *x1_data = static_cast<const U *>(x1);
@@ -40,7 +41,7 @@ void ImplMulsHelp(const void *x1, float x2, void *result, size_t size) {
 }
 
 template <typename T>
-void ImplMulsBoolHelp(const void *x1, float x2, void *result, size_t size) {
+void ImplMulsBoolHelp(const void *x1, double x2, void *result, size_t size) {
   MS_EXCEPTION_IF_NULL(x1);
   MS_EXCEPTION_IF_NULL(result);
   const T *x1_data = static_cast<const T *>(x1);
@@ -52,7 +53,7 @@ void ImplMulsBoolHelp(const void *x1, float x2, void *result, size_t size) {
 }
 
 template <typename T>
-void ImplMuls(const void *x1, TypeId x1_type, float x2, void *result, size_t size) {
+void ImplMuls(const void *x1, TypeId x1_type, double x2, void *result, size_t size) {
   switch (x1_type) {
     case kNumberTypeBool:
       ImplMulsHelp<T, bool>(x1, x2, result, size);
@@ -99,7 +100,7 @@ void ImplMuls(const void *x1, TypeId x1_type, float x2, void *result, size_t siz
 }
 
 template <typename T>
-void ImplMulsComplex(const void *x1, TypeId x1_type, float x2, void *result, size_t size) {
+void ImplMulsComplex(const void *x1, TypeId x1_type, double x2, void *result, size_t size) {
   switch (x1_type) {
     case kNumberTypeComplex64:
       ImplMulsHelp<T, std::complex<float>>(x1, x2, result, size);
@@ -113,7 +114,7 @@ void ImplMulsComplex(const void *x1, TypeId x1_type, float x2, void *result, siz
 }
 
 template <typename T>
-void ImplMulsBool(const void *x1, TypeId x1_type, float x2, void *result, size_t size) {
+void ImplMulsBool(const void *x1, TypeId x1_type, double x2, void *result, size_t size) {
   switch (x1_type) {
     case kNumberTypeBool:
       ImplMulsBoolHelp<bool>(x1, x2, result, size);
@@ -123,7 +124,7 @@ void ImplMulsBool(const void *x1, TypeId x1_type, float x2, void *result, size_t
   }
 }
 
-using HandlerMuls = std::function<void(const void *x1, TypeId x1_type, float x2, void *result, size_t size)>;
+using HandlerMuls = std::function<void(const void *x1, TypeId x1_type, double x2, void *result, size_t size)>;
 std::map<TypeId, HandlerMuls> muls_impl_list = {{kNumberTypeBool, ImplMulsBool<bool>},
                                                 {kNumberTypeInt8, ImplMuls<int8_t>},
                                                 {kNumberTypeInt16, ImplMuls<int16_t>},
@@ -161,11 +162,10 @@ class MulsFrontendFuncImpl : public OpFrontendFuncImpl {
     auto data_size = x1_tensor->DataSize();
     auto x1_type = x1_tensor->data_type();
     auto x2_type = input_args[kIndex1]->GetType()->type_id();
-    // get common type between tensor and scalar
-    TypeId common_type = ConvertTypeBetweenTensorAndScalar(x1_type, x2_type, GetHashId(x1_type, x2_type));
-    if (common_type == kTypeUnknown) {
-      return nullptr;
-    }
+    // Keep the type promotion rule consistent with infer stage (MulsFuncImpl::InferType).
+    // NOTE: PromoteTensorScalarType only promotes by category level (bool < int < float < complex),
+    // and keeps tensor dtype when both are in the same category (e.g. float32 tensor * float64 scalar -> float32).
+    TypeId common_type = PromoteTensorScalarType(x1_type, x2_type);
     MS_LOG(DEBUG) << "For [" << primitive->name() << "], first input type: " << input_args[kIndex0]->GetType()
                   << ", typeid: " << input_args[kIndex0]->GetType()->type_id();
     MS_LOG(DEBUG) << "For [" << primitive->name() << "], second input type: " << input_args[kIndex1]->GetType()
