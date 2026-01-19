@@ -24,6 +24,7 @@ import mindspore as ms
 from mindspore import nn
 from mindspore import Tensor, Parameter, ops
 from mindspore import dtype as mstype
+from mindspore.graph.api import _pynative_executor
 import torch
 import torch.nn as nn_pt
 
@@ -1105,8 +1106,10 @@ def test_setitem_exception(mode, capture_mode):
     with pytest.raises(IndexError) as exc:
         if mode == ms.PYNATIVE_MODE:
             ms_x[2, 0, 0] = -1
+            _pynative_executor.sync()
         else:
             _ = func1(ms_x)
+            _pynative_executor.sync()
     assert "is out of bounds" in str(exc.value)
 
     @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
@@ -1116,8 +1119,10 @@ def test_setitem_exception(mode, capture_mode):
     with pytest.raises(IndexError) as exc:
         if mode == ms.PYNATIVE_MODE:
             ms_x[0, 0, 0, 0] = -1
+            _pynative_executor.sync()
         else:
             _ = func2(ms_x)
+            _pynative_executor.sync()
     assert "too many indices" in str(exc.value)
 
     @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
@@ -1127,8 +1132,10 @@ def test_setitem_exception(mode, capture_mode):
     with pytest.raises(IndexError) as exc:
         if mode == ms.PYNATIVE_MODE:
             ms_x[0, 't'] = -1
+            _pynative_executor.sync()
         else:
             _ = func3(ms_x)
+            _pynative_executor.sync()
     assert "Invalid tensor index type" in str(exc.value)
 
     @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
@@ -1138,8 +1145,10 @@ def test_setitem_exception(mode, capture_mode):
     with pytest.raises(ValueError) as exc:
         if mode == ms.PYNATIVE_MODE:
             ms_x[0:3:-1] = -1
+            _pynative_executor.sync()
         else:
             _ = func4(ms_x)
+            _pynative_executor.sync()
     assert "slice step must be positive" in str(exc.value)
 
     @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
@@ -1149,8 +1158,10 @@ def test_setitem_exception(mode, capture_mode):
     with pytest.raises(TypeError) as exc:
         if mode == ms.PYNATIVE_MODE:
             ms_x[0] = (1, 2, 3)
+            _pynative_executor.sync()
         else:
             _ = func5(ms_x)
+            _pynative_executor.sync()
     assert "the type of value can only be bool, int, float or Tensor." in str(
         exc.value)
 
@@ -1161,8 +1172,10 @@ def test_setitem_exception(mode, capture_mode):
     with pytest.raises(TypeError) as exc:
         if mode == ms.PYNATIVE_MODE:
             ms_x[0] = [1, 2, 3]
+            _pynative_executor.sync()
         else:
             _ = func6(ms_x)
+            _pynative_executor.sync()
     assert "the type of value can only be bool, int, float or Tensor." in str(
         exc.value)
 
@@ -1174,8 +1187,10 @@ def test_setitem_exception(mode, capture_mode):
     with pytest.raises(TypeError) as exc:
         if mode == ms.PYNATIVE_MODE:
             ms_x[0] = -1
+            _pynative_executor.sync()
         else:
             _ = func7(ms_x)
+            _pynative_executor.sync()
     assert "Invalid index of a 0-dim tensor." in str(exc.value)
 
     @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
@@ -1185,8 +1200,10 @@ def test_setitem_exception(mode, capture_mode):
     with pytest.raises(TypeError) as exc:
         if mode == ms.PYNATIVE_MODE:
             ms_x[0:1] = -1
+            _pynative_executor.sync()
         else:
             _ = func8(ms_x)
+            _pynative_executor.sync()
     assert "Invalid index of a 0-dim tensor." in str(exc.value)
 
     @ms.jit(capture_mode=capture_mode, jit_level="O0", backend="ms_backend")
@@ -1197,8 +1214,10 @@ def test_setitem_exception(mode, capture_mode):
     with pytest.raises(TypeError) as exc:
         if mode == ms.PYNATIVE_MODE:
             ms_x[Tensor(1.4), :, :] = -1
+            _pynative_executor.sync()
         else:
             _ = func9(ms_x)
+            _pynative_executor.sync()
     assert "For 'InplaceIndexPut', tensors used as indices must be long, int, uint8, or bool tensors" in str(
         exc.value)
 

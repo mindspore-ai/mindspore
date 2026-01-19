@@ -503,6 +503,13 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         """__setitem__ process, called by TensorPy::TensorSetItem"""
         return tensor_operator_registry.get('_tensor_setitem')(self, index, value)
 
+    def __iter__(self):
+        if self.ndim == 0:
+            raise TypeError("iteration over a 0-d tensor")
+        dims = self.shape[0]
+        for i in range(dims):
+            yield self[i]
+
     @property
     def _dtensor_info(self):
         """

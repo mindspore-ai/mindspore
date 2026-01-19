@@ -1438,14 +1438,7 @@ extern PyObject *TensorPython_GetItem(PyObject *self, PyObject *args) {
   }
   if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && !trace::IsTracing() &&
       !Tensor::CheckStub()) {
-    PyType<TensorPy> *py_tensor = (PyType<TensorPy> *)self;
-    TensorPtr tensor = py_tensor->value.GetTensor();
-    PyObject *py_result_obj;
-    TensorPtr result = TensorIndex::TensorGetItem(tensor, py::reinterpret_borrow<py::object>(py_index), &py_result_obj);
-    if (result == nullptr) {
-      return py_result_obj;
-    }
-    return tensor::PackTensor(result);
+    return TensorIndex::TensorGetItem(self, py::reinterpret_borrow<py::object>(py_index));
   }
   py::object self_obj = py::reinterpret_borrow<py::object>(self);
   py::object py_index_obj = py::reinterpret_borrow<py::object>(py_index);
@@ -1463,11 +1456,8 @@ extern PyObject *TensorPython_SetItem(PyObject *self, PyObject *args) {
   }
   if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice && !trace::IsTracing() &&
       !Tensor::CheckStub()) {
-    PyType<TensorPy> *py_tensor = (PyType<TensorPy> *)self;
-    TensorPtr tensor = py_tensor->value.GetTensor();
-    TensorPtr result = TensorIndex::TensorSetItem(tensor, py::reinterpret_borrow<py::object>(py_index),
-                                                  py::reinterpret_borrow<py::object>(py_value));
-    return tensor::PackTensor(result);
+    return TensorIndex::TensorSetItem(self, py::reinterpret_borrow<py::object>(py_index),
+                                      py::reinterpret_borrow<py::object>(py_value));
   }
   py::object self_obj = py::reinterpret_borrow<py::object>(self);
   py::object py_index_obj = py::reinterpret_borrow<py::object>(py_index);

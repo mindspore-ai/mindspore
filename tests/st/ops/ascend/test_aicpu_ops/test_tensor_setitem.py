@@ -14,9 +14,9 @@
 # ============================================================================
 
 import numpy as np
-import mindspore.context as context
-import mindspore.nn as nn
+from mindspore import context, nn
 from mindspore import Tensor
+from tests.mark_utils import arg_mark
 
 
 class Net(nn.Cell):
@@ -25,7 +25,7 @@ class Net(nn.Cell):
         return input_x
 
 
-def test_tensor_setitem_net(input_shape, update_shape, slice_tuple, dtype):
+def net_for_tensor_setitem(input_shape, update_shape, slice_tuple, dtype):
     input_np = np.zeros(input_shape, dtype)
     update_np = np.ones(update_shape, dtype)
     input_tensor = Tensor(input_np)
@@ -36,49 +36,64 @@ def test_tensor_setitem_net(input_shape, update_shape, slice_tuple, dtype):
     assert (output.asnumpy() == input_np).all()
 
 
-def test_tensor_setitem_net_many_dtype(input_shape, update_shape, slice_tuple, dtypes):
+def run_net_for_many_dtype(input_shape, update_shape, slice_tuple, dtypes):
     for dtype in dtypes:
-        test_tensor_setitem_net(input_shape, update_shape, slice_tuple, dtype)
+        net_for_tensor_setitem(input_shape, update_shape, slice_tuple, dtype)
 
 
-support_dtype = (np.int64, np.int32, np.float64, np.float32)
+def run_tensor_setitem_all(support_dtype):
+    run_net_for_many_dtype((10,), (5,), (slice(0, 5),), support_dtype)
+    run_net_for_many_dtype((10,), (5,), (slice(5, 10),), support_dtype)
+    run_net_for_many_dtype((10, 10), (5, 10), (slice(0, 5),), support_dtype)
+    run_net_for_many_dtype((10, 10), (5, 10), (slice(5, 10),), support_dtype)
+    run_net_for_many_dtype((10, 10), (5,), (9, slice(5, 10)), support_dtype)
+    run_net_for_many_dtype((10, 10, 10), (5, 10), (0, slice(5, 10)), support_dtype)
+    run_net_for_many_dtype((10, 10, 10), (5, 10), (9, slice(5, 10)), support_dtype)
 
 
-def test_tensor_setitem_all():
-    test_tensor_setitem_net_many_dtype((10,), (5,), (slice(0, 5),), support_dtype)
-    test_tensor_setitem_net_many_dtype((10,), (5,), (slice(5, 10),), support_dtype)
-    test_tensor_setitem_net_many_dtype((10, 10), (5, 10), (slice(0, 5),), support_dtype)
-    test_tensor_setitem_net_many_dtype((10, 10), (5, 10), (slice(5, 10),), support_dtype)
-    test_tensor_setitem_net_many_dtype((10, 10), (5,), (9, slice(5, 10)), support_dtype)
-    test_tensor_setitem_net_many_dtype((10, 10, 10), (5, 10), (0, slice(5, 10)), support_dtype)
-    test_tensor_setitem_net_many_dtype((10, 10, 10), (5, 10), (9, slice(5, 10)), support_dtype)
-
-
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+          mem_peak=1024.01)
 def test_tensor_copy_slices_ascend_graph():
+    support_dtype = (np.int64, np.int32, np.float32)
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    test_tensor_setitem_all()
+    run_tensor_setitem_all(support_dtype)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+          mem_peak=1024.01)
 def test_tensor_copy_slices_ascend_pynative():
+    support_dtype = (np.int64, np.int32, np.float32, np.float64)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    test_tensor_setitem_all()
+    run_tensor_setitem_all(support_dtype)
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+          mem_peak=1024.01)
 def test_tensor_copy_slices_gpu_graph():
+    support_dtype = (np.int64, np.int32, np.float32)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-    test_tensor_setitem_all()
+    run_tensor_setitem_all(support_dtype)
 
 
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+          mem_peak=1024.01)
 def test_tensor_copy_slices_gpu_pynative():
+    support_dtype = (np.int64, np.int32, np.float32, np.float64)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
-    test_tensor_setitem_all()
+    run_tensor_setitem_all(support_dtype)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+          mem_peak=1024.01)
 def test_tensor_copy_slices_cpu_graph():
+    support_dtype = (np.int64, np.int32, np.float32)
     context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    test_tensor_setitem_all()
+    run_tensor_setitem_all(support_dtype)
 
 
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+          mem_peak=1024.01)
 def test_tensor_copy_slices_cpu_pynative():
+    support_dtype = (np.int64, np.int32, np.float32, np.float64)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
-    test_tensor_setitem_all()
+    run_tensor_setitem_all(support_dtype)
