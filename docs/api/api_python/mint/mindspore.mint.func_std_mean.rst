@@ -3,7 +3,7 @@ mindspore.mint.std_mean
 
 .. py:function:: mindspore.mint.std_mean(input, dim=None, *, correction=1, keepdim=False)
 
-    默认情况下，返回Tensor各维度上的标准差和均值。如果 dim 是维度列表，则计算对应维度的标准差和均值。
+    计算tensor在指定维度上的标准差及平均值。
 
     标准差 (:math:`\sigma`) 计算如下：
 
@@ -16,18 +16,15 @@ mindspore.mint.std_mean
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **input** (Tensor) - 输入Tensor。支持的数据类型：float16、float32。
-        - **dim** (Union[int, tuple(int), list(int)], 可选) - 指定计算标准差和平均值的维度。默认值： ``None``。
+        - **input** (Tensor) - 输入tensor。支持的数据类型：mindspore.float16、mindspore.float32。
+        - **dim** (Union[int, tuple(int), list(int)], 可选) - 指定维度。如果为 ``None`` ，计算 `input` 中的所有元素。默认 ``None``。
 
     关键字参数：
-        - **correction** (int, 可选) - 样本大小和样本自由度之间的差异。默认采用贝塞尔校正。默认值： ``1`` 。
-        - **keepdim** (bool, 可选) - 是否保留输出Tensor的维度。如果为 ``True`` ，则保留缩小的维度，大小为1。否则移除维度。默认值： ``False`` 。
+        - **correction** (int, 可选) - 样本大小和样本自由度之间的差异。默认采用贝塞尔校正。默认 ``1`` 。
+        - **keepdim** (bool, 可选) - 输出tensor是否保留维度。如果为 ``True`` ，则保留缩小的维度，大小为1。否则移除维度。默认 ``False`` 。
 
     返回：
-        包含标准差和均值的tuple。
+        两个tensor组成的tuple(std, mean)。
 
     异常：
-        - **TypeError** - `input` 不是Tensor。
-        - **TypeError** - `dim` 不是以下数据类型之一：int、tuple、list或Tensor。
-        - **TypeError** - `keepdim` 不是bool类型。
         - **ValueError** - `dim` 超出范围。
