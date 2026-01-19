@@ -11,8 +11,6 @@ next_after:
 
         Where eps is the smallest representable increment value for the input tensor's dtype.
 
-        For more detailed information, refer to `A Self Regularized Non-Monotonic Neural Activation Function <https://arxiv.org/abs/1908.08681>`_.
-
         Args:
             input (Tensor): The first input tensor.
             other (Tensor): The second input tensor.
