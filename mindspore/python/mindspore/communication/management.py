@@ -300,7 +300,7 @@ def release():
     Release distributed resource. e.g. HCCL/NCCL/MCCL.
 
     Note:
-        This method should be used after init(). If not, resource will be released when program ends.
+        This method should be used after `init()` . If not, resource will be released when program ends.
 
     Raises:
         RuntimeError: If failed to release distributed resource.

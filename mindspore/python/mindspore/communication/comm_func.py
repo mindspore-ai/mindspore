@@ -199,7 +199,7 @@ def _contiguous(tensor):
 
 def all_reduce(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async_op=False):
     """
-    Reduce tensors across all devices in such a way that all deviceswill get the same final result,
+    Reduce tensors across all devices in such a way that all devices will get the same final result,
     returns the tensor which is all reduced.
 
     Note:
@@ -267,7 +267,7 @@ def all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP, async_op=F
     Gathers tensors from the specified communication group and returns the tensor which is all gathered.
 
     Note:
-        - The tensors must have the same shape and format in all processes of the collection.
+        The tensors must have the same shape and format in all processes of the collection.
 
     Args:
         tensor (Tensor): The input tensor to be all gathered into tensor.
@@ -339,7 +339,7 @@ def reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_G
         The tensors must have the same shape and format in all processes of the collection.
 
     Args:
-        tensor(Tensor): The input tensor to be reduced and scattered, suppose it has a shape :math:`(N, *)`, where `*`
+        tensor (Tensor): The input tensor to be reduced and scattered, suppose it has a shape :math:`(N, *)`, where `*`
             means any number of additional dimensions. N must be divisible by rank_size.
             rank_size refers to the number of cards in the communication group.
         op (str, optional): Specifies an operation used for element-wise reductions,
@@ -349,7 +349,7 @@ def reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_G
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
 
     Returns:
-        Tuple(Tensor, CommHandle), the output tensor has the same dtype as `input_x` with a shape of
+        Tuple(Tensor, CommHandle), the output tensor has the same dtype as `tensor` with a shape of
         :math:`(N/rank\_size, *)`. CommHandle is an async work handle, if `async_op` is set to True.
         CommHandle will be None, when `async_op` is False.
 
@@ -454,7 +454,7 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
         >>> print(output)
         Process with rank 1: [[4. 4. 4. 4. 4. 4. 4. 4.]
                              [4. 4. 4. 4. 4. 4. 4. 4.]],
-        Other proesses: [0.].
+        Other processes: [0.].
     """
 
     if not isinstance(tensor, (Tensor, Tensor_)):
@@ -473,18 +473,18 @@ class P2POp:
         - `tensor` will not be modified in-place by final result.
 
     Args:
-        op(Union[str, function]): Only string of ``"isend"`` and ``"irecv"`` are allow.
+        op (Union[str, function]): Only string of ``"isend"`` and ``"irecv"`` are allow.
                                   Or function of ``comm_func.isend`` and ``comm_func.irecv`` are allow.
-        tensor(Union[Tensor, Tuple(int)]): tensor for sending/receiving or receive tensor shape
+        tensor (Union[Tensor, Tuple(int)]): tensor for sending/receiving or receive tensor shape
                                            when `op` is ``"irecv"``.
-        peer(int): remote global rank for send/receive.
-        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP`` , which
+        peer (int): remote global rank for send/receive.
+        group (str, optional): The communication group to work on. Default: ``None`` , which
             means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
-        tag(int, optional): currently not supported yet. default: ``0``.
+        tag (int, optional): currently not supported yet. Default: ``0``.
 
     Keyword Args:
         recv_dtype (mindspore.dtype, optional): when `tensor` is a tuple shape, this arg will be used and has
-                                               to be configured. default: ``None``
+            to be configured. Default: ``None``.
 
     Returns:
         P2POp Object.
@@ -660,26 +660,26 @@ def batch_isend_irecv(p2p_op_list):
 
 def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
     r"""
-    Scatter tensor evently across the processes in the specified communication group.
+    Scatter tensor evenly across the processes in the specified communication group.
 
     Note:
-        The interface behavior only support Tensor input and scatter evenly, which
-        is different from that of `pytoch.distributed.scatter`.
-        Only the tensor in process `src` (global rank) will do scatter.
-        Only support PyNative mode, Graph mode is not currently supported.
+        - The interface behavior only support Tensor input and scatter evenly, which
+          is different from that of `pytorch.distributed.scatter`.
+        - Only the tensor in process `src` (global rank) will do scatter.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
-        tensor (Tensor):  The input tensor to be scattered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        tensor (Tensor): The input tensor to be scattered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         src (int, optional): Specifies the rank(global rank) of the process that send the tensor.
             And only process `src` will send the tensor.
-        group (str, optional): The communication group to work on.
-            Default: "GlobalComm.WORLD_COMM_GROUP".
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``,
+            which means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
 
     Returns:
         Tensor, the shape of output is :math:`(x_1/src\_rank, x_2, ..., x_R)`. The dimension 0 of data is equal to
         the dimension of input tensor divided by `src`, and the other dimension keep the same.
 
-    Raise:
+    Raises:
         TypeError: If the type of the first input parameter is not Tensor, or any of `op` and `group` is not a str.
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
@@ -736,16 +736,18 @@ def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
 
     Args:
         tensor (Tensor): The tensor to be gathered. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        dst(int, optional): Specifies the rank(global rank) of the process that receive the tensor.
+        dst (int, optional): Specifies the rank(global rank) of the process that receive the tensor.
             And only process `dst` will receive the gathered tensor. Default: ``0``.
-        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``,
+            which means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
 
     Returns:
         Tensor, the shape of output is :math:`(\sum x_1, x_2, ..., x_R)`. The dimension 0 of data is equal to
         sum of the dimension of input tensor, and the other dimension keep the same.
 
-    Raise:
-        TypeError: If the type of the first input parameter is not Tensor, or any of `op` and `group` is not a str.
+    Raises:
+        TypeError: If the type of the first input parameter is not Tensor, `dst` is not an int,
+            or `group` is not a str.
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
@@ -793,20 +795,21 @@ def broadcast(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
     Broadcasts the tensor to the whole group.
 
     Note:
-        The tensors must have the same shape and format in all processes of the collection.
-        Only support PyNative mode, Graph mode is not currently supported.
+        - The tensors must have the same shape and format in all processes of the collection.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The tensor to be broadcasted. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         src (int, optional): Specifies the rank(global rank) of the process that broadcast the tensor.
             And only process `src` will broadcast the tensor.
-        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``,
+            which means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
 
     Returns:
         Tensor, tensor has the same shape as input tensor :math:`(x_1, x_2, ..., x_R)`.
 
     Raises:
-        TypeError: If src is not an integer or group is not a string.
+        TypeError: If `src` is not an integer or `group` is not a string.
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
@@ -858,7 +861,8 @@ def barrier(group=GlobalComm.WORLD_COMM_GROUP):
     will be woken and continue their task.
 
     Args:
-        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``,
+            which means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
 
     Raises:
         RuntimeError: If backend is invalid, or distributed initialization fails.
@@ -920,18 +924,19 @@ def send(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     Send tensors to the specified dest_rank.
 
     Note:
-        Send and Receive must be used in combination and have same tag.
+        - Send and Receive must be used in combination and have same tag.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        dst (int, optional): A required integer identifying the destination rank(global rank). Default: 0.
-        group (str, optional): The communication group to work on.
-            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
+        dst (int, optional): A required integer identifying the destination rank(global rank). Default: ``0``.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``,
+            which means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
         tag (int, optional): A required integer identifying the send/recv message tag. The message will
-            be received by the Receive op with the same "tag". Default: 0.
+            be received by the Receive op with the same "tag". Default: ``0``.
 
     Raises:
-        TypeError: `dst` is not an int or `group` is not a str。
+        TypeError: If `dst` is not an int or `group` is not a str.
         ValueError: If the rank ID of the process is greater than the rank size of the communication group.
 
     Supported Platforms:
@@ -988,19 +993,19 @@ def recv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     Receive tensors from src.
 
     Note:
-        Send and Receive must be used in combination and have same tag.
-        The shape and dtype of input `tensor` is used to receive tensor, but the value
-        of input `tensor` would not take effect.
-        Only support PyNative mode, Graph mode is not currently supported.
+        - Send and Receive must be used in combination and have same tag.
+        - The shape and dtype of input `tensor` is used to receive tensor, but the value
+          of input `tensor` would not take effect.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The shape and dtype of this
             tensor is used to receive tensor, but the value of input `tensor` would not take effect.
-        src (int, optional): A required integer identifying the source rank(global rank). Default: 0.
-        group (str, optional): The communication group to work on.
-            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
+        src (int, optional): A required integer identifying the source rank(global rank). Default: ``0``.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``,
+            which means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
         tag (int, optional): A required integer identifying the send/recv message tag. The message will
-            be received by the Send op with the same "tag". Default: 0.
+            be received by the send op with the same "tag". Default: ``0``.
 
     Returns:
         Tensor, the shape of output is :math:`(x_1, x_2, ..., x_R)`.
@@ -1067,22 +1072,22 @@ def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     Send tensors to the specified dest_rank asynchronously.
 
     Note:
-        Send and Receive must be used in combination and have same tag.
-        Only support PyNative mode, Graph mode is not currently supported.
+        - Send and Receive must be used in combination and have same tag.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
-        dst (int, optional): A required integer identifying the destination rank(global rank). Default: 0.
-        group (str, optional): The communication group to work on.
-            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
+        dst (int, optional): A required integer identifying the destination rank(global rank). Default: ``0``.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``,
+            which means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
         tag (int, optional): A required integer identifying the send/recv message tag. The message will
-            be received by the Receive op with the same "tag". Default: 0.
+            be received by the Receive op with the same "tag". Default: ``0``.
 
     Returns:
         CommHandle, it is an async work handle.
 
     Raises:
-        TypeError: `dst` is not an int or `group` is not a str。
+        TypeError: If `dst` is not an int or `group` is not a str.
         ValueError: If the rank ID of the process is greater than the rank size of the communication group.
 
     Supported Platforms:
@@ -1141,24 +1146,23 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     Receive tensors from src asynchronously.
 
     Note:
-        Send and Receive must be used in combination and have same tag.
-        The shape and dtype of input `tensor` is used to receive tensor, but the value
-        of input `tensor` would not take effect.
-        Only support PyNative mode, Graph mode is not currently supported.
+        - Send and Receive must be used in combination and have same tag.
+        - The shape and dtype of input `tensor` is used to receive tensor, but the value
+          of input `tensor` would not take effect.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The shape and dtype of this
             tensor is used to receive tensor, but the value of input `tensor` would not take effect.
-        src (int, optional): A required integer identifying the source rank(global rank). Default: 0.
-        group (str, optional): The communication group to work on.
-            Default: "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
+        src (int, optional): A required integer identifying the source rank(global rank). Default: ``0``.
+        group (str, optional): The communication group to work on. Default: ``GlobalComm.WORLD_COMM_GROUP``, which
+            means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
         tag (int, optional): A required integer identifying the send/recv message tag. The message will
-            be received by the Send op with the same "tag". Default: 0.
+            be received by the Send op with the same "tag". Default: ``0``.
 
     Returns:
         Tuple(Tensor, CommHandle), the shape of output is :math:`(x_1, x_2, ..., x_R)`.
-        CommHandle is an async work handle, if `async_op` is set to True.
-        CommHandle will be None, when `async_op` is False.
+        CommHandle is an async work handle.
 
     Raises:
         TypeError: If `src` is not an int or `group` is not a str.
@@ -1219,22 +1223,22 @@ def all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=Non
     scatter and gather list of tensor to/from all rank according to input/output tensor list.
 
     Note:
-        tensor shape in `output_shape_list` and `input_tensor_list` should be match across ranks.
-        Only support PyNative mode, Graph mode is not currently supported.
+        - tensor shape in `output_shape_list` and `input_tensor_list` should be match across ranks.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         output_shape_list (Union[Tuple(Tensor), List(Tensor), Tuple(Tuple(int))]): List of shape
             that indicate the gathered tensors shape from remote ranks.
         input_tensor_list (Union[Tuple(Tensor), List(Tensor)]):
             List of tensors to scatter to the remote rank.
-        group (str, optional): The communication group to work on.
-            Default: None, which means "hccl_world_group" on Ascend, "nccl_world_group" on GPU.
+        group (str, optional): The communication group to work on. Default: ``None``,
+            which means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
 
     Returns:
         Tuple(Tuple(Tensor), CommHandle), the tensors is gathered from remote ranks.
-        CommHandle is an async work handle, if `async_op` is set to True.
-        CommHandle will be None, when `async_op` is False.
+        CommHandle is an async work handle, if `async_op` is set to ``True``.
+        CommHandle will be ``None``, when `async_op` is ``False``.
 
     Raises:
         TypeError: If `input_tensor_list` is not list of tensors.
@@ -1370,8 +1374,8 @@ def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes
     and receives the sliced chunks from the other devices, which are then merged into an output Tensor.
 
     Note:
-        'output_shape' and 'tensor' shape should be match across ranks.
-        Only support PyNative mode, Graph mode is not currently supported.
+        - 'output_shape' and 'tensor' shape should be match across ranks.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         output_shape (Union(Tensor, tuple(int))): shape to indicate the shape
@@ -1388,8 +1392,8 @@ def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes
     Returns:
         tuple(Tensor, CommHandle), the output tensor is gathered concatenated from remote ranks.
         If the numel of tensor gathered from remote is zero, it will return a Tensor with shape `()`,
-        and value has no actual meaning. CommHandle is an async work handle, if `async_op` is set to True.
-        CommHandle will be None, when `async_op` is False.
+        and value has no actual meaning. CommHandle is an async work handle, if `async_op` is set to ``True``.
+        CommHandle will be ``None``, when `async_op` is ``False``.
 
     Raises:
         TypeError: If `tensor` is not tensor.
@@ -1503,16 +1507,16 @@ def all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False)
             :math:`\text{send_count_matrix}[i*\text{rank_size}+j]` represents the amount of data sent by
             rank i to rank j, and the basic unit is first dimension sizes. Among them, `rank_size`
             indicates the size of the communication group.
-        group (str, optional): The communication group to work on. If ``None``, which means ``"hccl_world_group"`` in
-            Ascend. Default: ``None``.
+        group (str, optional): The communication group to work on. Default: ``None``, which
+            means ``"hccl_world_group"`` in Ascend, and ``"nccl_world_group"`` in GPU.
         async_op (bool, optional): Whether this operator should be an async operator. Default: ``False`` .
 
     Returns:
-        CommHandle. CommHandle is an async work handle, if `async_op` is set to True.
-        CommHandle will be None, when `async_op` is False.
+        CommHandle. CommHandle is an async work handle, if `async_op` is set to ``True``.
+        CommHandle will be ``None``, when `async_op` is ``False``.
 
     Raises:
-        TypeError: If `input` or `output` is not tensor. `group` is not a str, or async_op is not bool.
+        TypeError: If `input` or `output` is not Tensor, `group` is not str, or `async_op` is not bool.
 
     Supported Platforms:
         ``Ascend``
