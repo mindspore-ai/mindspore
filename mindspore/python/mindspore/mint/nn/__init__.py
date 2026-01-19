@@ -908,9 +908,9 @@ class BCELoss(Cell):
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            And it must have the same shape and data type as `inputs`. Default: ``None`` .
+            And it must have the same shape and data type as `inputs`. Default ``None`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
-            ``'sum'`` . Default: ``'mean'`` .
+            ``'sum'`` . Default ``'mean'`` .
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
@@ -918,17 +918,16 @@ class BCELoss(Cell):
 
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(N, *)` where :math:`*` means, any number
-          of additional dimensions. The data type must be float16 or float32 or bfloat16(only supported
+          of additional dimensions. The data type must be mindspore.float16, mindspore.float32 or mindspore.bfloat16(only supported
           by Atlas A2 training series products).
         - **target** (Tensor) - The label tensor with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The same shape and data type as `input`.
 
     Outputs:
         Tensor, has the same dtype as `input`. if `reduction` is ``'none'``, then it has the same shape as `input`.
-        Otherwise, it is a scalar Tensor.
+        Otherwise, it is a scalar tensor.
 
     Raises:
-        TypeError: If dtype of `input`, `target` or `weight` (if given) is not float16, float32 or bfloat16.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
         ValueError: If shape of `input` is not the same as `target` or `weight` (if given).
 
@@ -936,13 +935,11 @@ class BCELoss(Cell):
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
-        >>> from mindspore import nn
-        >>> import numpy as np
-        >>> weight = ms.Tensor(np.array([[1.0, 2.0, 3.0], [4.0, 3.3, 2.2]]), ms.float32)
-        >>> loss = nn.BCELoss(weight=weight, reduction='mean')
-        >>> input = ms.Tensor(np.array([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]]), ms.float32)
-        >>> target = ms.Tensor(np.array([[0, 1, 0], [0, 0, 1]]), ms.float32)
+        >>> import mindspore
+        >>> weight = mindspore.tensor([[1.0, 2.0, 3.0], [4.0, 3.3, 2.2]])
+        >>> loss = mindspore.mint.nn.BCELoss(weight=weight, reduction='mean')
+        >>> input = mindspore.tensor([[0.1, 0.2, 0.3], [0.5, 0.7, 0.9]])
+        >>> target = mindspore.tensor([[0, 1, 0], [0, 0, 1]])
         >>> output = loss(input, target)
         >>> print(output)
         1.8952923

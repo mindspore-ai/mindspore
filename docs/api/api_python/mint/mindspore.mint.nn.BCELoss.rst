@@ -29,21 +29,20 @@ mindspore.mint.nn.BCELoss
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。与输入数据的shape和数据类型相同。默认值： ``None`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **weight** (Tensor, 可选) - 指定每个批次二值交叉熵的权重。与输入数据的shape和数据类型相同。默认 ``None`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
 
-          - ``"none"``：不应用规约方法。
+          - ``"none"``：不应用归约方法。
           - ``"mean"``：计算输出元素的加权平均值。
           - ``"sum"``：计算输出元素的总和。
 
     输入：
-        - **input** (Tensor) - 预测值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。数据类型必须为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。
-        - **target** (Tensor) - 目标值Tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。与 `input` 的shape和数据类型相同。
+        - **input** (Tensor) - 预测值tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。数据类型必须为mindspore.float16、mindspore.float32或mindspore.bfloat16（仅Atlas A2训练系列产品支持）。
+        - **target** (Tensor) - 目标值tensor，shape :math:`(N, *)` ，其中 :math:`*` 代表任意数量的附加维度。与 `input` 的shape和数据类型相同。
 
     输出：
-        Tensor，数据类型与 `input` 相同。如果 `reduction` 为 ``'none'`` ，则shape与 `input` 相同。否则，输出为Scalar的Tensor。
+        Tensor，数据类型与 `input` 相同。如果 `reduction` 为 ``'none'`` ，则shape与 `input` 相同。否则，输出为scalar的tensor。
 
     异常：
-        - **TypeError** - `input`，`target` 或 `weight` （如果给定）的数据类型不是float16、float32或bfloat16。
         - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'`` 或 ``'sum'`` 。
         - **ValueError** - `input` 的shape与 `target` 或 `weight` （如果给定）不同。
