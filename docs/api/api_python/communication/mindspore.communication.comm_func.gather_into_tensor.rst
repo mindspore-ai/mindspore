@@ -19,7 +19,7 @@ mindspore.communication.comm_func.gather_into_tensor
         Tensor，即 :math:`(\sum x_1, x_2, ..., x_R)`。Tensor第0维等于输入数据第0维求和，其他shape相同。
 
     异常：
-        - **TypeError** - 首个输入的数据类型不为Tensor，`dst` 或 `group` 不是str。
+        - **TypeError** - 首个输入的数据类型不为Tensor、`dst` 不是int，或 `group` 不是str。
         - **RuntimeError** - 目标设备无效，或者后端无效，或者分布式初始化失败。
 
     样例：
