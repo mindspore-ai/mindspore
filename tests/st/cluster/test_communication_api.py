@@ -31,10 +31,9 @@ def test_create_group_exception():
     init()
     sub_group_name = "sub_group_0_7"
     sub_group_rank_list = [0, 7]
-    if get_rank() in [0, 7]:
+    if get_rank() in sub_group_rank_list:
         create_group(sub_group_name, sub_group_rank_list)
     else:
-        # The ValueError has been caught and re-raised as RuntimeError.
         with pytest.raises(RuntimeError) as error_info:
             create_group(sub_group_name, sub_group_rank_list)
         assert "Group sub_group_0_7 doesn't contain the global rank" in str(error_info.value)
@@ -49,10 +48,10 @@ def test_get_rank_exception():
     init()
     sub_group_name = "sub_group_0_7"
     sub_group_rank_list = [0, 7]
-    if get_rank() in [0,7]:
+    if get_rank() in sub_group_rank_list:
         create_group(sub_group_name, sub_group_rank_list)
         get_rank(sub_group_name)
     else:
-        with pytest.raises(ValueError) as error_info:
-            create_group(sub_group_name, sub_group_rank_list)
+        with pytest.raises(RuntimeError) as error_info:
+            get_rank(sub_group_name)
         assert "The group sub_group_0_7 does not exist." in str(error_info.value)
