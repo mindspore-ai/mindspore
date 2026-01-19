@@ -3997,7 +3997,7 @@ def vander(x, N=None):
 
 def var_ext(input, dim=None, *, correction=1, keepdim=False):
     r"""
-    Calculates the variance over the dimensions specified by `dim`. `dim` can be a single dimension, list of
+    Calculate the variance over the dimensions specified by `dim`. `dim` can be a single dimension, list of
     dimensions, or None to reduce over all dimensions.
 
     The variance (:math:`\delta ^2`) is calculated as:
@@ -4012,43 +4012,25 @@ def var_ext(input, dim=None, *, correction=1, keepdim=False):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        input (Tensor): The tensor used to calculate the variance.
-        dim (None, int, tuple(int), optional): The dimension or dimensions to reduce. Defaults to ``None``.
-            If ``None``, all dimensions are reduced.
+        input (Tensor): The input tensor.
+        dim (None, int, tuple(int), optional): Specify the dimension for computation. If ``None`` , 
+            compute all elements in the input . Default ``None``.
 
     Keyword Args:
         correction (int, optional): The difference between the sample size and sample degrees of freedom. Defaults
-            to Bessel’s correction. Defaults to ``1``.
-        keepdim (bool, optional): Whether the output tensor has dim retained or not. If ``True`` , keep these
-            reduced dimensions and the length is 1. If ``False``, don't keep these dimensions. Defaults to ``False``.
+            to Bessel’s correction. Default ``1``.
+        keepdim (bool, optional): Whether the output tensor has dim retained. Default ``False``.
 
     Returns:
-        Tensor, the variance.
-        Suppose the shape of `input` is :math:`(x_0, x_1, ..., x_R)`:
-
-        - If `dim` is () and `keepdim` is set to ``False`` , returns a 0-D Tensor, indicating the variance of all
-          elements in `input`.
-        - If `dim` is int, e.g. ``1`` and `keepdim` is set to ``False`` , then the returned Tensor has shape
-          :math:`(x_0, x_2, ..., x_R)`.
-        - If `dim` is tuple(int) or list(int), e.g. ``(1, 2)`` and `keepdim` is set to ``False`` , then the returned
-          Tensor has shape :math:`(x_0, x_3, ..., x_R)`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `input` is not in bfloat16, float16, flaot32.
-        TypeError: If `dim` is not one of the followings: None, int, list, tuple.
-        TypeError: If `correction` is not an int.
-        TypeError: If `keepdim` is not a bool.
-        ValueError: If `dim` is out of range :math:`[-input.ndim, input.ndim)`.
-
+        Tensor
+        
     Supported Platforms:
         ``Ascend``
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, ops
-        >>> input = Tensor([[8, 2, 1], [5, 9, 3], [4, 6, 7]], mindspore.float32)
-        >>> output = ops.var_ext(input, dim=0, correction=1, keepdim=True)
+        >>> input = mindspore.tensor([[8, 2, 1], [5, 9, 3], [4, 6, 7]], mindspore.float32)
+        >>> output = mindspore.ops.var_ext(input, dim=0, correction=1, keepdim=True)
         >>> print(output)
         [[ 4.333333, 12.333333, 9.333333]]
     """
