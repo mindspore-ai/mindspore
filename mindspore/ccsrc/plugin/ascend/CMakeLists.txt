@@ -49,32 +49,10 @@ set_target_properties(mindspore_ascend PROPERTIES INSTALL_RPATH
 
 include(${CMAKE_SOURCE_DIR}/cmake/dependency_metadef.cmake)
 
+MESSAGE("USE DAV LIB PATH: ${ASCEND_PATH}")
 find_library(GE_RUNNER ge_runner ${ASCEND_CANN_RUNTIME_PATH})
 find_library(GRAPH graph ${ASCEND_CANN_RUNTIME_PATH})
-target_link_libraries(mindspore_ascend PRIVATE ${GE_RUNNER} ${GRAPH})
-
-MESSAGE("USE DAV LIB PATH: ${ASCEND_PATH}")
-find_library(ERROR_MANAGER error_manager ${ASCEND_CANN_RUNTIME_PATH})
-find_library(RUNTIME_LIB runtime ${ASCEND_CANN_RUNTIME_PATH})
-find_library(TSDCLIENT tsdclient HINTS ${ASCEND_CANN_RUNTIME_PATH})
-find_library(DATATRANSFER datatransfer HINTS ${ASCEND_CANN_RUNTIME_PATH})
 find_library(ACL ascendcl ${ASCEND_CANN_RUNTIME_PATH})
-find_library(ACL_DVPP acl_dvpp ${ASCEND_CANN_RUNTIME_PATH})
-find_library(ACL_NNOPBASE nnopbase ${ASCEND_CANN_RUNTIME_PATH})
-find_library(ACL_DVPP_OP acl_dvpp_op ${ASCEND_CANN_RUNTIME_PATH})
-find_library(ACL_DVPP_MPI acl_dvpp_mpi ${ASCEND_CANN_RUNTIME_PATH})
-find_library(PLATFORM platform ${ASCEND_CANN_RUNTIME_PATH})
 find_library(PROFILING msprofiler ${ASCEND_CANN_RUNTIME_PATH})
-find_library(CANN_KB cann_kb ${ASCEND_CANN_RUNTIME_PATH})
-find_library(COMPRESS compress ${ASCEND_CANN_RUNTIME_PATH})
-find_library(OPSKERNEL opskernel ${ASCEND_CANN_RUNTIME_PATH})
-find_library(AICPU_ASCEND_ENGINE aicpu_ascend_engine ${ASCEND_CANN_PLUGIN_PATH})
-find_library(HOST_CPU_ENGINE host_cpu_engine ${ASCEND_CANN_PLUGIN_PATH})
-find_library(AICPU_TF_ENGINE aicpu_tf_engine ${ASCEND_CANN_PLUGIN_PATH})
-find_library(AOE_TUNING libaoe_tuning.so ${ASCEND_CANN_RUNTIME_PATH})
-find_library(SLICE slice ${ASCEND_CANN_RUNTIME_PATH})
-find_library(AOE_EXECUTOR aoe_executor ${ASCEND_CANN_RUNTIME_PATH})
 
-target_link_libraries(mindspore_ascend PRIVATE ${RUNTIME_LIB} ${TSDCLIENT} ${DATATRANSFER} ${ERROR_MANAGER}
-        -Wl,--no-as-needed ${PLATFORM} ${ACL} ${PROFILING} ${CANN_KB} ${COMPRESS} ${OPSKERNEL}
-        ${HOST_CPU_ENGINE} ${SLICE} ${AOE_EXECUTOR} ${ACL_DVPP_OP} ${ACL_DVPP_MPI})
+target_link_libraries(mindspore_ascend PRIVATE -Wl,--no-as-needed ${GE_RUNNER} ${GRAPH} ${ACL} ${PROFILING})
