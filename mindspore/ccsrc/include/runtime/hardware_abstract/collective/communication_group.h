@@ -23,7 +23,6 @@
 #include <memory>
 #include <sstream>
 #include <algorithm>
-#include "pybind11/pybind11.h"
 #include "runtime/hardware_abstract/visible.h"
 
 namespace mindspore {
@@ -116,7 +115,7 @@ static constexpr size_t GetCommLibFileRelPathPos() noexcept {
     if (ret != (result)) {                                                                              \
       std::ostringstream oss;                                                                           \
       oss << "Error in file " << REL_FILE_PATH << " | Error on line " << __LINE__ << ": " << (message); \
-      throw pybind11::value_error(oss.str());                                                           \
+      throw std::runtime_error(oss.str());                                                              \
     }                                                                                                   \
   } while (0)
 
@@ -126,7 +125,7 @@ static constexpr size_t GetCommLibFileRelPathPos() noexcept {
       std::ostringstream oss;                                                                                 \
       oss << "Error in file " << REL_FILE_PATH << " | Error on line " << __LINE__ << ": The pointer[" << #ptr \
           << "] is null.";                                                                                    \
-      throw pybind11::value_error(oss.str());                                                                 \
+      throw std::runtime_error(oss.str());                                                                    \
     }                                                                                                         \
   } while (0)
 #endif  // MINDSPORE_CCSRC_INCLUDE_RUNTIME_HARDWARE_ABSTRACT_COLLECTIVE_COMMUNICATION_GROUP_H_
