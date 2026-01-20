@@ -18,6 +18,8 @@
 #include <map>
 #include <functional>
 #include <algorithm>
+#include <cmath>
+#include <vector>
 #include "mindspore/ops/infer/apply_ftrl.h"
 #include "infer/apply_ftrl.h"
 #include "ops_utils/op_utils.h"
@@ -159,8 +161,10 @@ void ApplyFtrlCpuKernelMod::LaunchApplyFtrl(const std::vector<KernelTensor *> &i
       const T learning_rate_power_val = -lr_power[0];
       for (size_t i = start; i < end; ++i) {
         auto cur_accum = accum[i] + grad[i] * grad[i];
-        const T accum_power = pow(accum[i], learning_rate_power_val);
-        const T cur_accum_power = pow(cur_accum, learning_rate_power_val);
+        const T accum_power =
+          static_cast<T>(std::pow(static_cast<double>(accum[i]), static_cast<double>(learning_rate_power_val)));
+        const T cur_accum_power =
+          static_cast<T>(std::pow(static_cast<double>(cur_accum), static_cast<double>(learning_rate_power_val)));
         linear[i] += grad[i] - (cur_accum_power - accum_power) / lr[0] * var[i];
         if (abs(linear[i]) > l1[0]) {
           auto sign_linear_mul_l1 = linear[i] ? l1[0] : -l1[0];
