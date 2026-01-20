@@ -1527,7 +1527,7 @@ class SoftShrink(Cell):
     Examples:
         >>> import mindspore
         >>> input = mindspore.tensor([[ 0.5297,  0.7871,  1.1754], [ 0.7836,  0.6218, -1.1542]], mindspore.float16)
-        >>> softshrink = mindspore.nn.Softshrink()
+        >>> softshrink = mindspore.nn.SoftShrink()
         >>> output = softshrink(input)
         >>> print(output)
         [[ 0.02979  0.287    0.676  ]
