@@ -961,6 +961,9 @@ def laplace(shape, mean, lambda_param, seed=None):
     .. math::
         \text{f}(x;μ,λ) = \frac{1}{2λ}\exp(-\frac{|x-μ|}{λ}),
 
+    where :math:`μ` is the mean, representing `mean`, and :math:`λ` is the scale,
+    representing `lambda_param`.
+
     .. warning::
         The Ascend backend does not support the reproducibility of random numbers, so
         the `seed` parameter has no effect.

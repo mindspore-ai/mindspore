@@ -9,7 +9,7 @@ mindspore.ops.polar
 
     .. math::
 
-        y_{i} =  abs_{i} * \cos(angle_{i}) + abs_{i} * \sin(angle_{i}) * j
+        y_{i} = abs_{i} * \cos(angle_{i}) + abs_{i} * \sin(angle_{i}) * j
 
     参数：
         - **abs** (Tensor, float) - 极径。

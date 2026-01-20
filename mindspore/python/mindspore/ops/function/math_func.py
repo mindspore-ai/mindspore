@@ -1117,7 +1117,7 @@ def inplace_add(x, v, indices):
     for each `i, ..., j` in `indices` :
 
     .. math::
-        x[\text{indices}[i, ..., j]] \mathrel{+}= y[i, ..., j]
+        x[\text{indices}[i, ..., j]] \mathrel{+}= v[i, ..., j]
 
     Args:
         x (Tensor): The input tensor.
@@ -1762,7 +1762,7 @@ def polar(abs, angle):  # pylint: disable=redefined-outer-name
 
     .. math::
 
-        y_{i} =  abs_{i} * \cos(angle_{i}) + abs_{i} * \sin(angle_{i}) * j
+        y_{i} = abs_{i} * \cos(angle_{i}) + abs_{i} * \sin(angle_{i}) * j
 
     Args:
         abs (Tensor, float): Radial distance.
@@ -2188,7 +2188,7 @@ def inv(x):
     Computes Reciprocal of input tensor element-wise.
 
     .. math::
-        out_i = \frac{1}{x_{i} }
+        out_i = \frac{1}{x_{i}}
 
     Args:
         x (Tensor): The input tensor.

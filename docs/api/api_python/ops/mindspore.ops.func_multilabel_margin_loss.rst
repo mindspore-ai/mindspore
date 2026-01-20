@@ -6,7 +6,7 @@ mindspore.ops.multilabel_margin_loss
     用于优化多标签分类问题的合页损失。
 
     创建一个标准，用于优化输入 :math:`x` （一个2D小批量Tensor）
-    和输出 :math:`y` （一个目标类别索引的2DTensor）之间的多标签分类合页损失（基于边距的损失）：
+    和输出 :math:`y` （一个目标类别索引的2D Tensor）之间的多标签分类合页损失（基于边距的损失）：
     对于每个小批量样本：
 
     .. math::
@@ -39,4 +39,4 @@ mindspore.ops.multilabel_margin_loss
         - **TypeError** - 当 `target` 数据类型不是int32时。
         - **ValueError** - 当 `input` 的数据维度不是以下其中之一时：1、2。
         - **ValueError** - 当 `input` 和 `target` 的shape不相同时。
-        - **ValueError** - 当 `reduction` 的值不是以下其中之一时： ``'none'`` 、  ``'mean'`` 、 ``'sum'`` 。
+        - **ValueError** - 当 `reduction` 的值不是以下其中之一时： ``'none'`` 、 ``'mean'`` 、 ``'sum'`` 。

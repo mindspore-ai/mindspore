@@ -11,9 +11,9 @@ mindspore.ops.nan_to_num
 
     参数：
         - **input** (Tensor) - 输入tensor。
-        - **nan** (number，可选) -  `NaN` 的替换值，默认 ``None`` 。
-        - **posinf** (number，可选) -  `posinf` 的替换值。如果为 None ，则为 `input` 类型支持的上限，默认 ``None`` 。
-        - **neginf** (number，可选) -  `neginf` 的替换值。如果为 None ，则为 `input` 类型支持的下限，默认 ``None`` 。
+        - **nan** (number，可选) - `NaN` 的替换值，默认 ``None`` 。
+        - **posinf** (number，可选) - `posinf` 的替换值。如果为 ``None`` ，则为 `input` 类型支持的上限，默认 ``None`` 。
+        - **neginf** (number，可选) - `neginf` 的替换值。如果为 ``None`` ，则为 `input` 类型支持的下限，默认 ``None`` 。
 
     返回：
         Tensor

@@ -3,12 +3,12 @@ mindspore.ops.inplace_add
 
 .. py:function:: mindspore.ops.inplace_add(x, v, indices)
 
-    根据索引将 `x` 加 `v` 。
+    根据索引将 `x` 加到 `v` 中。
 
     对于 `indices` 的每个元素下标 :math:`i, ..., j` ：
 
     .. math::
-        x[\text{index}[i, ..., j]] \mathrel{+}= y[i, ..., j]
+        x[\text{index}[i, ..., j]] \mathrel{+}= v[i, ..., j]
 
     参数：
         - **x** (Tensor) - 输入tensor。

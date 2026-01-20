@@ -6,7 +6,7 @@ mindspore.ops.multilabel_soft_margin_loss
     基于最大熵计算用于多标签优化的损失。
 
     多标签软间隔损失通常用于多标签分类任务中，其中输入样本可以属于多个目标类别。
-    给定输入 :math:`input` 和二元标签 :math:`output` ，其shape为 :math:`(N,C)` ， :math:`N` 表示样本数量， :math:`C` 表示样本类别数，损失计算公式如下：
+    给定输入 :math:`input` 和二元标签 :math:`output` ，其shape为 :math:`(N, C)` ， :math:`N` 表示样本数量， :math:`C` 表示样本类别数，损失计算公式如下：
 
     .. math::
         \mathcal{loss\left( input , output \right)} = - \frac{1}{N}\frac{1}{C}\sum_{i = 1}^{N}
@@ -15,7 +15,7 @@ mindspore.ops.multilabel_soft_margin_loss
 
     其中， :math:`input_{ij}` 表示样本 :math:`i` 在 :math:`j` 类别的概率得分。 :math:`output_{ij}` 表示样本 :math:`i` 是否属于类别 :math:`j` ，
     当 :math:`output_{ij}=1` 时表示属于，为0时表示不属于。对于多标签分类任务，每个样本可以属于多个类别，即标签 :math:`output` 中可以含有多个1。
-    如果 `weight` 不为None，将会和每个分类的loss相乘。
+    如果 `weight` 不为 ``None``，将会和每个分类的loss相乘。
 
     参数：
         - **input** (Tensor) - shape为 :math:`(N, C)` 的Tensor，N为batch size，C为类别个数。
