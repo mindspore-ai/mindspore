@@ -270,12 +270,8 @@ tensor::TensorPtr PyBoostUtils::CreateOutputTensor(const DeviceContext *device_c
   auto input_device_address = input->device_address();
   MS_EXCEPTION_IF_NULL(input_device_address);
 
-  // Create view output address
-  auto output_device_address = std::make_shared<device::DeviceAddress>(
-    nullptr, input_device_address->GetSize(), device_context->GetDeviceType(), input_device_address->stream_id());
-  MS_EXCEPTION_IF_NULL(output_device_address);
-  output_device_address->set_device_pointer(input_device_address->device_pointer());
-  output_tensor->set_device_address(output_device_address);
+  // View tensor shares the device_address with input tensor
+  output_tensor->set_device_address(input_device_address);
   output_tensor->set_storage_info(storage_info);
   MS_LOG(DEBUG) << "Create output tensor " << output_tensor->ToString() << " with " << storage_info->ToString();
 
