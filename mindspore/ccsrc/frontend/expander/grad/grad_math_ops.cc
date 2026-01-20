@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 #include <algorithm>
+#include <cmath>
 #include <cstddef>
 #include <cstdint>
 #include <functional>
-#include <unordered_map>
 #include <iterator>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
-#include <cmath>
 
 #include "frontend/expander/bprop/bprop_irbuilder.h"
 #include "frontend/expander/grad/grad_utils.h"
@@ -206,6 +210,10 @@ static bool IsColMajor2DTensor(const NodePtr &node, const std::string &op_name) 
                              << " or " << strides;
   }
   return (strides[0] == 1 && strides[1] == shape[0]);
+}
+
+static inline bool IsComplexType(TypeId type_id) {
+  return type_id == kNumberTypeComplex64 || type_id == kNumberTypeComplex128;
 }
 
 static NodePtr MmMat1Backward(BpropBuilder *ib, const TypePtr &input_type, const NodePtr &dout, const NodePtr &mat1,
@@ -2322,7 +2330,12 @@ REG_BPROP_BUILDER("Sinh").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Cos").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   const auto &x = ib->GetInput(i0);
   const auto &dout = ib->GetInput(i2);
-  auto dx = ib->Mul(dout, (ib->Neg(ib->Sin(x))));
+  auto x_dtype_id = ib->GetDtypeId(x);
+  if (IsComplexType(x_dtype_id)) {
+    auto dx = ib->Mul(dout, ib->Neg(ib->Conj(ib->Sin(x))));
+    return {dx};
+  }
+  auto dx = ib->Mul(dout, ib->Neg(ib->Sin(x)));
   return {dx};
 });
 
@@ -2566,19 +2579,21 @@ REG_BPROP_BUILDER("LogSumExp").SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Erf").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   const auto &x = ib->GetInput(i0);
   const auto &dout = ib->GetInput(i2);
-  auto half_root_pi = ib->ValueByType(2 / sqrt(pi), ib->GetDtype(x));
-  auto x_square = ib->Square(x);
-  auto dx = ib->Mul((ib->Muls(dout, half_root_pi)), (ib->Exp(ib->Neg(x_square))));
-  return {dx};
+  auto half_root_pi = ib->Value<double>(2.0 / sqrt(pi));
+  auto pow_2 = ib->PowTensorScalar(x, ib->Value<int64_t>(2));
+  auto dx = ib->Mul((ib->Muls((ib->Exp(ib->Neg(pow_2))), half_root_pi)), dout);
+  auto dx_cast = ib->Cast(dx, ib->GetDtype(x));
+  return {dx_cast};
 });
 
 REG_BPROP_BUILDER("Erfc").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   const auto &x = ib->GetInput(i0);
   const auto &dout = ib->GetInput(i2);
-  auto half_root_pi = ib->ValueByType(-2 / sqrt(pi), ib->GetDtype(x));
-  auto x_square = ib->Square(x);
-  auto dx = ib->Mul((ib->Muls(dout, half_root_pi)), (ib->Exp(ib->Neg(x_square))));
-  return {dx};
+  auto half_root_pi = ib->Value<double>(-2.0 / sqrt(pi));
+  auto pow_2 = ib->PowTensorScalar(x, ib->Value<int64_t>(2));
+  auto dx = ib->Mul((ib->Muls((ib->Exp(ib->Neg(pow_2))), half_root_pi)), dout);
+  auto dx_cast = ib->Cast(dx, ib->GetDtype(x));
+  return {dx_cast};
 });
 
 REG_BPROP_BUILDER("Pow").SetBody(BODYFUNC(ib) {
@@ -2722,11 +2737,15 @@ REG_BPROP_BUILDER("Expm1").FreeUselessValues_I({}).SetBody(BODYFUNC(ib) {
 
 REG_BPROP_BUILDER("Exp2").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
   constexpr const double LOG_2 = 0.69314718055994530942;
-  const auto &out = ib->GetInput(i1);
+  auto out = ib->GetInput(i1);
   const auto &dout = ib->GetInput(i2);
 
   // dx = dout * ln2 * 2^x -> dx = dout * ln2 * out
-  auto dx = ib->Mul(dout, ib->Muls(out, ib->ValueByType(LOG_2, ib->GetDtype(out))));
+  auto out_dtype_id = ib->GetDtypeId(out);
+  if (IsComplexType(out_dtype_id)) {
+    out = ib->Conj(out);
+  }
+  auto dx = ib->Mul(dout, ib->Muls(out, ib->Value<double>(LOG_2)));
   return {dx};
 });
 
@@ -3508,6 +3527,10 @@ REG_BPROP_BUILDER("Reciprocal").SetUnusedInputs({i0}).SetBody(BODYFUNC(ib) {
 REG_BPROP_BUILDER("Log").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   const auto &x = ib->GetInput(i0);
   const auto &dout = ib->GetInput(i2);
+  auto x_dtype_id = ib->GetDtypeId(x);
+  if (IsComplexType(x_dtype_id)) {
+    return {ib->Div(dout, ib->Conj(x))};
+  }
   return {ib->Div(dout, x)};
 });
 
@@ -3521,14 +3544,17 @@ REG_BPROP_BUILDER("Log2").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   const auto &x = ib->GetInput(i0);
   const auto &dout = ib->GetInput(i2);
   double denominator = 0.6931471805599453;
-  return {ib->Div(dout, ib->Muls(x, ib->Value<double>(denominator)))};
+  auto x_dtype_id = ib->GetDtypeId(x);
+  auto x_used = IsComplexType(x_dtype_id) ? ib->Conj(x) : x;
+  return {ib->Div(dout, ib->Muls(x_used, ib->Value<double>(denominator)))};
 });
-
 REG_BPROP_BUILDER("Log10").SetUnusedInputs({i1}).SetBody(BODYFUNC(ib) {
   const auto &x = ib->GetInput(i0);
   const auto &dout = ib->GetInput(i2);
   double denominator = 2.3025850929940456;
-  return {ib->Div(dout, ib->Muls(x, ib->Value<double>(denominator)))};
+  auto x_dtype_id = ib->GetDtypeId(x);
+  auto x_used = IsComplexType(x_dtype_id) ? ib->Conj(x) : x;
+  return {ib->Div(dout, ib->Muls(x_used, ib->Value<double>(denominator)))};
 });
 
 REG_BPROP_BUILDER("Floor").SetUnusedInputs({i0, i1, i2}).SetBody(BODYFUNC(ib) {
@@ -4504,7 +4530,8 @@ REG_BPROP_BUILDER("AddcdivExt").SetBody(BODYFUNC(ib) {
     tensor1->need_compute_grad_out()
       ? BinopGradCommon(
           ib, out, tensor1, dout,
-          ib->Mul(dout, ib->Div(ib->FillScalar(ib->Value(shape), value, ib->Value((int64_t)dtype)), tensor2)))[1]
+          ib->Mul(dout,
+                  ib->Div(ib->FillScalar(ib->Value(shape), value, ib->Value(static_cast<int64_t>(dtype))), tensor2)))[1]
       : ib->OutZeros(tensor1);
   auto bc_dtensor2 =
     tensor2->need_compute_grad_out()

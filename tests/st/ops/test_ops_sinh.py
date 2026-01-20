@@ -26,8 +26,18 @@ def generate_random_input(shape, dtype):
     return np.random.randn(*shape).astype(dtype)
 
 
+def generate_random_complex_input(shape, dtype):
+    real = np.random.rand(*shape).astype(np.float32) + 0.5
+    imag = np.random.rand(*shape).astype(np.float32) + 0.5
+    return (real + 1j * imag).astype(dtype)
+
+
 def generate_expect_forward_output(x):
     return np.sinh(x)
+
+
+def generate_expect_backward_output_complex(x):
+    return np.cosh(np.conj(x))
 
 
 @test_utils.run_with_cell
@@ -74,6 +84,32 @@ def test_ops_sinh_forward_backward(mode):
         output = (jit(sinh_backward_func, jit_level="O0"))(ms.Tensor(x))
     expect = np.array([[1.543081, 3.762196, 10.067662], [27.308231, 74.20995, 201.71562]])
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+
+@pytest.mark.level1
+@pytest.mark.env_onecard
+@pytest.mark.platform_x86_cpu
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.parametrize('mode', ['pynative', 'KBK'])
+def test_ops_sinh_complex(mode):
+    """
+    Feature: pyboost function.
+    Description: test function sinh forward and backward with complex input.
+    Expectation: expect correct result.
+    """
+    x = generate_random_complex_input((2, 3, 4, 5), np.complex64)
+    if mode == 'pynative':
+        ms.set_context(mode=ms.PYNATIVE_MODE)
+        output = sinh_forward_func(ms.Tensor(x))
+        output_grad = sinh_backward_func(ms.Tensor(x))
+    else:
+        output = (jit(sinh_forward_func, jit_level="O0"))(ms.Tensor(x))
+        output_grad = (jit(sinh_backward_func, jit_level="O0"))(ms.Tensor(x))
+    expect = generate_expect_forward_output(x)
+    expect_grad = generate_expect_backward_output_complex(x)
+    np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(output_grad.asnumpy(), expect_grad, rtol=1e-4, atol=1e-4)
 
 
 @pytest.mark.level1

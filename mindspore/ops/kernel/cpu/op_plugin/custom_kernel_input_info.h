@@ -57,13 +57,13 @@ class KernelInputInfo {
 
   virtual bool GetBoolInput(size_t idx) = 0;
   virtual int64_t GetIntInput(size_t idx) = 0;
-  virtual float GetFloatInput(size_t idx) = 0;
+  virtual double GetFloatInput(size_t idx) = 0;
   virtual std::string GetStrInput(size_t idx) = 0;
 
   virtual std::vector<int64_t> GetIntVecInput(size_t idx) = 0;
-  virtual std::vector<float> GetFloatVecInput(size_t idx) = 0;
+  virtual std::vector<double> GetFloatVecInput(size_t idx) = 0;
   virtual std::vector<std::vector<int64_t>> GetInt2DVecInput(size_t idx) = 0;
-  virtual std::vector<std::vector<float>> GetFloat2DVecInput(size_t idx) = 0;
+  virtual std::vector<std::vector<double>> GetFloat2DVecInput(size_t idx) = 0;
   virtual int GetInputTypeId(size_t idx) = 0;
   virtual std::optional<OpPluginTensorStorageInfo> GetInputTensorLayout(size_t idx) = 0;
 

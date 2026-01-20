@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""ST cases for log2."""
 import pytest
 import numpy as np
 import mindspore as ms
@@ -25,12 +26,22 @@ def generate_random_input(shape, dtype):
     return np.random.randint(1, 10, size=shape).astype(dtype)
 
 
+def generate_random_complex_input(shape, dtype):
+    real = np.random.rand(*shape).astype(np.float32) + 0.5
+    imag = np.random.rand(*shape).astype(np.float32) + 0.5
+    return (real + 1j * imag).astype(dtype)
+
+
 def generate_expect_forward_output(x):
     return np.log2(x)
 
 
 def generate_expect_backward_output(x):
     return 1 / (np.log(2) * x)
+
+
+def generate_expect_backward_output_complex(x):
+    return 1 / (np.log(2) * np.conj(x))
 
 
 def log2_func(x):
@@ -47,7 +58,12 @@ def log2_backward_func(x):
     return ms.grad(log2_forward_func, (0))(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(
+    plat_marks=['platform_ascend'],
+    level_mark='level1',
+    card_mark='onecard',
+    essential_mark='essential'
+)
 @pytest.mark.parametrize("context_mode", ['pynative', 'KBK'])
 def test_ops_log2_normal(context_mode):
     """
@@ -64,13 +80,50 @@ def test_ops_log2_normal(context_mode):
         ms.context.set_context(mode=ms.GRAPH_MODE, jit_level="O0")
         output = log2_forward_func(ms.Tensor(x))
         output_grad = log2_backward_func(ms.Tensor(x))
+    else:
+        raise ValueError(f"Unsupported context_mode: {context_mode}")
     expect_forward = generate_expect_forward_output(x)
     expect_backward = generate_expect_backward_output(x)
     np.testing.assert_allclose(output.asnumpy(), expect_forward, rtol=1e-4)
     np.testing.assert_allclose(output_grad.asnumpy(), expect_backward, rtol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(
+    plat_marks=['platform_ascend'],
+    level_mark='level1',
+    card_mark='onecard',
+    essential_mark='essential'
+)
+@pytest.mark.parametrize("context_mode", ['pynative', 'KBK'])
+def test_ops_log2_complex(context_mode):
+    """
+    Feature: pyboost function.
+    Description: test complex input for log2 forward and backward.
+    Expectation: expect correct result.
+    """
+    x = generate_random_complex_input((2, 3, 4, 5), np.complex64)
+    if context_mode == 'pynative':
+        ms.context.set_context(mode=ms.PYNATIVE_MODE)
+        output = log2_forward_func(ms.Tensor(x))
+        output_grad = log2_backward_func(ms.Tensor(x))
+    elif context_mode == 'KBK':
+        ms.context.set_context(mode=ms.GRAPH_MODE, jit_level="O0")
+        output = log2_forward_func(ms.Tensor(x))
+        output_grad = log2_backward_func(ms.Tensor(x))
+    else:
+        raise ValueError(f"Unsupported context_mode: {context_mode}")
+    expect_forward = generate_expect_forward_output(x)
+    expect_backward = generate_expect_backward_output_complex(x)
+    np.testing.assert_allclose(output.asnumpy(), expect_forward, rtol=1e-4, atol=1e-4)
+    np.testing.assert_allclose(output_grad.asnumpy(), expect_backward, rtol=1e-4, atol=1e-4)
+
+
+@arg_mark(
+    plat_marks=['platform_ascend'],
+    level_mark='level1',
+    card_mark='onecard',
+    essential_mark='unessential'
+)
 def test_mint_log2_dynamic():
     """
     Feature: pyboost function.
