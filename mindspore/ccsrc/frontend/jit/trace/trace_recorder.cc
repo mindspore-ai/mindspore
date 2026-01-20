@@ -783,17 +783,6 @@ AnfNodePtr TraceRecorder::GetTensorNode(const py::object &tensor_obj, const Debu
 }
 
 AnfNodePtr TraceRecorder::GetTupleNode(const py::tuple &tuple_obj, const DebugInfoPtr &debug_info, bool set_abstract) {
-  // Find the object firstly.
-  const auto &obj_str = GetPyObjId(tuple_obj);
-  MS_LOG(DEBUG) << "To find node by tuple, whose obj id: " << obj_str
-                << ", tuple_obj: " << py::str(py::cast<py::object>(tuple_obj));
-  auto iter = py_obj_node_map_.find(obj_str);
-  if (iter != py_obj_node_map_.cend()) {
-    MS_LOG(DEBUG) << "Found preceding node by tuple obj id: " << obj_str
-                  << ", tuple_obj: " << py::str(py::cast<py::object>(tuple_obj))
-                  << ", node: " << iter->second->DebugString();
-    return iter->second;
-  }
   // Create MakeTuple CNode.
   AnfNodePtrList make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
   for (size_t i = 0; i < tuple_obj.size(); ++i) {
@@ -804,9 +793,7 @@ AnfNodePtr TraceRecorder::GetTupleNode(const py::tuple &tuple_obj, const DebugIn
   if (set_abstract) {
     make_tuple_cnode->set_abstract(GetAbstract(tuple_obj));
   }
-  py_obj_node_map_[obj_str] = make_tuple_cnode;
-  MS_LOG(DEBUG) << "Not found preceding node by tuple obj id: " << obj_str
-                << ", tuple_obj: " << py::str(py::cast<py::object>(tuple_obj))
+  MS_LOG(DEBUG) << "Creating new maketuple node. Tuple_obj: " << py::str(py::cast<py::object>(tuple_obj))
                 << ", new node: " << make_tuple_cnode->DebugString();
   return make_tuple_cnode;
 }
@@ -936,18 +923,6 @@ void TraceRecorder::SetNode(const py::object &obj, const AnfNodePtr &node, const
 
 void TraceRecorder::SetTupleNode(const py::tuple &tuple_obj, const AnfNodePtr &node, const DebugInfoPtr &debug_info,
                                  bool set_abstract) {
-  if (!IsMutable(tuple_obj)) {
-    const auto &obj_str = GetPyObjId(tuple_obj);
-    py_obj_node_map_[obj_str] = node;
-    MS_LOG(DEBUG) << "Set node for tuple, whose obj id: " << obj_str << ", [" << py::str(tuple_obj.get_type()) << "] "
-                  << py::str(py::cast<py::object>(tuple_obj)) << ", " << node->DebugString()
-                  << ", line: " << trace::GetDebugInfoStr(debug_info, "", kSourceLineTipDiscard);
-    if (set_abstract) {
-      node->set_abstract(GetAbstract(tuple_obj));
-    }
-    // Not return, create tensor -> node relation by tuple items in advance.
-  }
-  // It's mutable tuple.
   for (size_t i = 0; i < tuple_obj.size(); ++i) {
     if (!IsMutable(tuple_obj) && !tensor::IsTensorPy(tuple_obj[i])) {
       continue;
