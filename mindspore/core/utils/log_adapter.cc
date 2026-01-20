@@ -86,7 +86,7 @@ static std::string GetLogLevel(MsLogLevel level) {
 }
 
 // convert MsLogLevel to corresponding glog level
-static int GetGlogLevel(MsLogLevel level) {
+static google::LogSeverity GetGlogLevel(MsLogLevel level) {
   switch (level >= this_thread_max_log_level ? this_thread_max_log_level : level) {
     case MsLogLevel::kDebug:
     case MsLogLevel::kInfo:
