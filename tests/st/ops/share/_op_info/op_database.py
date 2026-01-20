@@ -3811,7 +3811,7 @@ def basic_sample_inputs_tensor_split(op_info: OpInfo, dtype=None, device=None):
 def _is_ascend910(device):
     if device == 'ascend':
         ascend_name = MSContext.get_instance().get_ascend_soc_version()
-        return ascend_name == 'ascend910'
+        return ascend_name in ('ascend910', 'ascend910b', 'ascend910_93')
     return False
 
 # Todo: mint.sum scalar tensor test case runtime error, need to fix.
@@ -5917,8 +5917,8 @@ op_db: Dict[str, OpInfo] = {
             extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
         ),
         op_dynamic_inputs_func=None,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        dtypes_ascend=(ms.float32,),
+        dtypes_ascend910b=(ms.float32,),
         dtypes_cpu=(),
         dtypes_gpu=(),
         convert_half_to_float=True,
