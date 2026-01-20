@@ -10,7 +10,7 @@ mindspore.ops.laplace
     .. math::
         \text{f}(x;μ,λ) = \frac{1}{2λ}\exp(-\frac{|x-μ|}{λ}),
 
-    其中 :math:`μ` 为均值，代表了 `mean`， :math:`λ` 为方差，代表了 `lambda_param`。
+    其中 :math:`μ` 为均值，代表了 `mean`， :math:`λ` 为尺度，代表了 `lambda_param`。
 
     .. warning::
         Ascend后端不支持随机数重现功能， `seed` 参数不起作用。

@@ -1117,7 +1117,7 @@ def inplace_add(x, v, indices):
     for each `i, ..., j` in `indices` :
 
     .. math::
-        x[\text{indices}[i, ..., j]] \mathrel{+}= y[i, ..., j]
+        x[\text{indices}[i, ..., j]] \mathrel{+}= v[i, ..., j]
 
     Args:
         x (Tensor): The input tensor.

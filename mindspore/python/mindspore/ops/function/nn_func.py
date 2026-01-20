@@ -7480,7 +7480,7 @@ def multi_margin_loss(input, target, p=1, margin=1, weight=None, reduction='mean
         TypeError: If dtype of `p` or `target` is not int.
         TypeError: If dtype of `margin` is not int.
         TypeError: If dtype of `reduction` is not str.
-        TypeError: If dtype of `input` is not float16, float or float64.
+        TypeError: If dtype of `input` is not float16, float32 or float64.
         TypeError: If dtype of `weight` and `input` is not the same.
         ValueError: If `p` is not 1 or 2.
         ValueError: If `reduction` is not one of {'none','sum','mean'}.
@@ -7837,7 +7837,7 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
     Applying 2D LPPooling operation on an input Tensor can be regarded as forming a 2D input plane.
 
     Typically the input is of shape :math:`(N, C, H_{in}, W_{in})`, the output is of shape
-    :math:`(N, C, H_{in}, W_{in})`, with the same shape as input, the operation is as follows.
+    :math:`(N, C, H_{out}, W_{out})`, with the same shape as input, the operation is as follows.
 
     .. math::
         f(X) = \sqrt[p]{\sum_{x \in X} x^{p}}
@@ -7862,7 +7862,7 @@ def lp_pool2d(x, norm_type, kernel_size, stride=None, ceil_mode=False):
         ceil_mode (bool): Whether to use ceil or floor to calculate output shape. Default: ``False`` .
 
     Returns:
-        - **output** (Tensor) - LPPool2d result, with shape :math:`(N, C, H_{in}, W_{in})`,
+        - **output** (Tensor) - LPPool2d result, with shape :math:`(N, C, H_{out}, W_{out})`,
           It has the same data type as `x`, where
 
           .. math::

@@ -33,7 +33,7 @@ mindspore.ops.multi_margin_loss
         - **TypeError** - `p` 或者 `target` 数据类型不是int。
         - **TypeError** - `margin` 数据类型不是int。
         - **TypeError** - `reduction` 数据类型不是str。
-        - **TypeError** - `input` 数据类型不是以下之一：float16、float、float64。
+        - **TypeError** - `input` 数据类型不是以下之一：float16、float32、float64。
         - **TypeError** - `weight` 和 `input` 的数据类型不相同。
         - **ValueError** - `p` 的值不是以下之一：1、2。
         - **ValueError** - `reduction` 的值不是以下之一：{"none","sum","mean"}。

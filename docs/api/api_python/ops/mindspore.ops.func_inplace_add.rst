@@ -8,7 +8,7 @@ mindspore.ops.inplace_add
     对于 `indices` 的每个元素下标 :math:`i, ..., j` ：
 
     .. math::
-        x[\text{index}[i, ..., j]] \mathrel{+}= y[i, ..., j]
+        x[\text{index}[i, ..., j]] \mathrel{+}= v[i, ..., j]
 
     参数：
         - **x** (Tensor) - 输入tensor。
