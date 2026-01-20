@@ -18,7 +18,7 @@
 /mindspore/ccsrc/frontend/ @ginfung
 /mindspore/ccsrc/frontend/expander/grad/ @liangchenghui
 /mindspore/ccsrc/frontend/operator/meta_dsl/func_op/ @liangchenghui
-/mindspore/ccsrc/frontend/np_dtypes/ @changzherui
+/mindspore/ccsrc/frontend/np_dtypes/ @hz893
 /mindspore/ccsrc/frontend/parallel/ @yangzhenzhang
 /mindspore/ccsrc/include/ @limingqi107
 /mindspore/ccsrc/include/backend/distributed/ @zhangyinxia
@@ -122,10 +122,10 @@
 /mindspore/python/mindspore/hal/ @limingqi107
 /mindspore/python/mindspore/mindrecord/ @jonyguo
 /mindspore/python/mindspore/mint/ @liangchenghui
-/mindspore/python/mindspore/mint/optim/ @limingqi107
+/mindspore/python/mindspore/mint/optim/ @hz893
 /mindspore/python/mindspore/mint/distributed/ @zhangyinxia
 /mindspore/python/mindspore/multiprocessing/ @hz893
-/mindspore/python/mindspore/nn/ @changzherui
+/mindspore/python/mindspore/nn/ @hz893
 /mindspore/python/mindspore/nn/grad/ @ginfung
 /mindspore/python/mindspore/nn/layer/ @liangchenghui
 /mindspore/python/mindspore/nn/layer/container.py @chujinjin
@@ -146,7 +146,7 @@
 /mindspore/python/mindspore/rewrite/ @changzherui
 /mindspore/python/mindspore/runtime/ @limingqi107
 /mindspore/python/mindspore/scipy/ @yi-zhang95
-/mindspore/python/mindspore/train/ @changzherui
+/mindspore/python/mindspore/train/ @hz893
 /mindspore/python/mindspore/train/callback/_train_fault_tolerance.py @fary86
 /mindspore/python/mindspore/train/callback/_on_request_exit.py @fary86
 /mindspore/python/mindspore/utils/utils.py @fary86
@@ -163,7 +163,7 @@
 /tests/st/custom/ops_custom/ @limingqi107
 /tests/st/custom/custom_op_builder/kernel_mod/ @limingqi107
 /tests/st/custom/custom_op_builder/pyboost/ @chujinjin
-/tests/st/container/ @changzherui
+/tests/st/container/ @hz893
 /tests/st/cpu_data_parallel/ @zhangyinxia
 /tests/st/dataloader/ @jonyguo
 /tests/st/dataset/ @jonyguo
@@ -185,20 +185,21 @@
 /tests/st/mem_reuse/ @limingqi107
 /tests/st/mindscience/ @yi-zhang95
 /tests/st/mint/ @liangchenghui
-/tests/st/mix_precision/ @changzherui
+/tests/st/mint/optim/ @hz893
+/tests/st/mix_precision/ @hz893
 /tests/st/networks/large_models/ @suhaibo
 /tests/st/networks/mindformers @suhaibo
 /tests/st/cluster/ @zhangyinxia
 /tests/st/collective_ops/ @zhangyinxia
-/tests/st/nn/ @changzherui
+/tests/st/nn/ @hz893
 /tests/st/nontask_sink/ @zhangyinxia
 /tests/st/numpy_native/ @yi-zhang95
 /tests/st/offload/ @limingqi107
 /tests/st/ops/ @liangchenghui
-/tests/st/frontend @hz893
-/tests/st/optimizer/ @changzherui
-/tests/st/optimizer_ex/ @changzherui
-/tests/st/parameter/ @changzherui
+/tests/st/frontend/ @hz893
+/tests/st/optimizer/ @hz893
+/tests/st/optimizer_ex/ @hz893
+/tests/st/parameter/ @hz893
 /tests/st/pi_jit/ @ginfung
 /tests/st/pynative/ @chujinjin
 /tests/st/rewrite/ @changzherui
@@ -206,11 +207,11 @@
 /tests/st/scipy_st/ @yi-zhang95
 /tests/st/scripts/ @nicholas_yhr
 /tests/st/sparse/ @yi-zhang95
-/tests/st/tensor/ @changzherui
+/tests/st/tensor/ @chujinjin
 /tests/st/tools/ @DavidFFFan
 /tests/st/tools/tre/ @fary86
 /tests/st/tools/uce/ @fary86
-/tests/st/train/ @changzherui
+/tests/st/train/ @hz893
 /tests/st/vmap/ @yi-zhang95
 
 # The maintainers of tests/ut/cpp.
@@ -221,7 +222,7 @@
 /tests/ut/cpp/common/pynative/ @chujinjin
 /tests/ut/cpp/dataset/ @jonyguo
 /tests/ut/cpp/frontend/ @ginfung
-/tests/ut/cpp/frontend/np_dtypes/ @changzherui
+/tests/ut/cpp/frontend/np_dtypes/ @hz893
 /tests/ut/cpp/frontend/parallel/ @yangzhenzhang
 /tests/ut/cpp/kernel/ @limingqi107
 /tests/ut/cpp/mindrecord/ @jonyguo
@@ -265,7 +266,7 @@
 /tests/ut/python/mindrecord/ @jonyguo
 /tests/ut/python/mint/ @liangchenghui
 /tests/ut/python/multiprocessing/ @hz893
-/tests/ut/python/nn/ @changzherui
+/tests/ut/python/nn/ @hz893
 /tests/ut/python/nn/grad/ @ginfung
 /tests/ut/python/nn/layer/ @liangchenghui
 /tests/ut/python/nn/loss/ @zwiori
@@ -281,7 +282,7 @@
 /tests/ut/python/rewrite/ @changzherui
 /tests/ut/python/runtime/ @limingqi107
 /tests/ut/python/scipy/ @yi-zhang95
-/tests/ut/python/train/ @changzherui
+/tests/ut/python/train/ @hz893
 /tests/ut/python/ops/composite/ @ginfung
 
 # The maintainers of other code directories.
