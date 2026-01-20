@@ -6179,7 +6179,7 @@ op_db: Dict[str, OpInfo] = {
         op=mint.erfinv,
         ref=torch.erfinv,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d not in [ms.bfloat16, ms.double]),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d != ms.double),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.double)),
         domain=(-1, 1),
         dtypes_cpu=(),
         dtypes_gpu=(),
