@@ -33,6 +33,7 @@
 /mindspore/ccsrc/plugin/ascend/res_manager/mbuf_manager/tensorreport_utils.* @fary86
 /mindspore/ccsrc/plugin/ascend/res_manager/collective/ @zhangyinxia
 /mindspore/ccsrc/plugin/ascend/stress_detect/ @fary86
+/mindspore/ccsrc/plugin/ascend/kernel_executor/hyper_offload/ @zh_qh
 /mindspore/ccsrc/plugin/cpu/res_manager/collective/ @zhangyinxia
 /mindspore/ccsrc/plugin/cpu/profiler/ @tangmengcheng
 /mindspore/ccsrc/plugin/gpu/res_manager/collective/ @zhangyinxia
@@ -62,6 +63,7 @@
 /mindspore/ccsrc/utils/symbol_engine/ @ginfung
 /mindspore/ccsrc/utils/*tensor*.cc @chujinjin
 /mindspore/ccsrc/utils/*utils*.cc @ginfung
+/mindspore/ccsrc/utils/hyper_offload/ @zh_qh
 
 # The maintainers of mindspore/core.
 /mindspore/core/ @ginfung
@@ -213,6 +215,7 @@
 /tests/st/tools/uce/ @fary86
 /tests/st/train/ @hz893
 /tests/st/vmap/ @yi-zhang95
+/tests/st/hyper_offload/ @zh_qh
 
 # The maintainers of tests/ut/cpp.
 /tests/ut/cpp/backend/ @limingqi107
@@ -247,6 +250,7 @@
 /tests/ut/cpp/utils/*utils*.cc @ginfung
 /tests/ut/cpp/mindir/ @ginfung
 /tests/ut/cpp/ops/ @liangchenghui
+/tests/ut/cpp/utils/hyper_offload/ @zh_qh
 
 # The maintainers of tests/ut/python.
 /tests/ut/data/dataset/ @jonyguo
