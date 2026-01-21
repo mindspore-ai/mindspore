@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "include/cluster/rpc/tcp_store.h"
 #include <memory>
 #include <string>
-#include "include/cluster/rpc/tcp_store.h"
 #include "utils/ms_utils.h"
 #include "include/utils/utils.h"
 #if defined(__linux__) && defined(WITH_BACKEND)
