@@ -13,7 +13,7 @@ mindspore.ops.hardshrink
         0, & \text{ otherwise }
         \end{cases}
 
-    HardShrink激活函数图：
+    Hard Shrink激活函数图：
 
     .. image:: ../images/Hardshrink.png
         :align: center

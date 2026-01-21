@@ -9,7 +9,7 @@ mindspore.ops.group_norm
 
     Group Normalization把通道划分为组，然后计算每一组之内的均值和方差，以进行归一化。其中 :math:`\gamma` 是通过训练学习出的scale值，:math:`\beta` 是通过训练学习出的shift值。
 
-    公式如下，
+    公式如下：
 
     .. math::
         y = \frac{x - \mathrm{E}[x]}{\sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta

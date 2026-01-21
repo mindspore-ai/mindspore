@@ -18,7 +18,7 @@ mindspore.ops.deformable_conv2d
     其中 :math:`\Delta{p_{k}}` 和 :math:`\Delta{m_{k}}` 分别为第k个位置的可学习偏移和调制标量。细节请参考论文 `Deformable ConvNets v2: More Deformable, Better Results <https://arxiv.org/abs/1811.11168>`_ 和 `Deformable Convolutional Networks <https://arxiv.org/abs/1703.06211>`_ 。
 
     参数：
-        - **x** (Tensor) - 一个四维Tensor，表示输入图像。数据格式为"NCHW"，shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 。Dytpe为float16或float32。
+        - **x** (Tensor) - 一个四维Tensor，表示输入图像。数据格式为"NCHW"，shape为 :math:`(N, C_{in}, H_{in}, W_{in})` 。数据类型为float16或float32。
         - **weight** (Tensor) - 一个四维Tensor，表示可学习的滤波器。数据类型必须与 `x` 相同，shape为 :math:`(C_{out}, C_{in} / groups, H_{f}, W_{f})` 。
         - **offsets** (Tensor) - 一个四维Tensor，存储x和y坐标的偏移，以及可变形卷积的输入掩码mask。数据格式为"NCHW"，shape为 :math:`(batch, 3 * deformable\_groups * H_{f} * W_{f}, H_{out}, W_{out})` ，注意其中C维度的存储顺序为(offset_x, offset_y, mask)。数据类型必须与 `x` 相同。
         - **kernel_size** (tuple[int]) - 一个包含两个整数的元组，表示卷积核的大小。
@@ -28,7 +28,7 @@ mindspore.ops.deformable_conv2d
         - **dilations** (tuple[int], 可选) - 一个包含四个整数的元组，表示对于输入的每个维度的膨胀系数。其维度顺序依据 `x` 的数据格式，对应N和C维度的值必须设置成1。默认值为 ``(1, 1, 1, 1)`` 。
         - **groups** (int, 可选) - 一个int32类型的整数，表示从输入通道到输出通道的阻塞连接数。输入通道数和输出通道数必须都能被 `groups` 整除。默认值为 ``1`` 。
         - **deformable_groups** (int, 可选) - 一个int32类型的整数，表示可变形卷积组数。输入通道数必须能被 `deformable_groups` 整除。默认值为 ``1`` 。
-        - **modulated** (bool, 可选) - 指定可变形二维卷积的版本。 ``True`` 表示v2，False表示v1。当前只支持设置为v2版本。默认值为 ``True`` 。
+        - **modulated** (bool, 可选) - 指定可变形二维卷积的版本。 ``True`` 表示v2， ``False`` 表示v1。当前只支持设置为v2版本。默认值为 ``True`` 。
 
     返回：
         Tensor，一个四维Tensor，表示输出特征图。数据类型与 `x` 相同，数据格式为"NCHW"，shape为 :math:`(N, C_{out}, H_{out}, W_{out})` 。

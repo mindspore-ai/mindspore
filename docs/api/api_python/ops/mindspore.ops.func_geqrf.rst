@@ -17,4 +17,4 @@ mindspore.ops.geqrf
         两个tensor组成的tuple( `y` , `tau` )。
 
         - **y** (Tensor) - 隐式存储 `Q` 和 `R` 矩阵。 `Q` （Householder反射向量）存储在对角线下方， `R` 的元素存储在对角线及上方。
-        - **tau** (Tensor) - 存储每个Householder变换的缩放因子(Householder反射系数)。
+        - **tau** (Tensor) - 存储每个Householder变换的缩放因子（Householder反射系数）。
