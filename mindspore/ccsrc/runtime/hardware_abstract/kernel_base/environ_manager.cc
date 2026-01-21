@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "include/runtime/hardware_abstract/kernel_base/environ_manager.h"
 #include <memory>
 #include <vector>
-#include "include/runtime/hardware_abstract/kernel_base/environ_manager.h"
 #include "utils/ms_utils.h"
 #include "utils/log_adapter.h"
 #include "include/utils/utils.h"
