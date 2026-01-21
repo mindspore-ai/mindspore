@@ -5546,7 +5546,7 @@ def ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reducti
         ValueError: If the shape of `target_lengths` does not match N. N is batch size of `log_probs` .
         ValueError: If the value of `blank` is not in range [0, num_labels|C). C is number of classes of `log_probs` .
         RuntimeError: If any value of `input_lengths` is larger than T. T is the length of `log_probs`.
-        RuntimeError: If any target_lengths[i] is not in range [0, input_length[i]].
+        RuntimeError: If any target_lengths[i] is not in range [0, input_lengths[i]].
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -7670,7 +7670,8 @@ def gelu(input, approximate='none'):
         :align: center
 
     Args:
-        input (Tensor): The input of the activation function GeLU, the data type is float16, float32 or float64.
+        input (Tensor): The input of the activation function GeLU,
+            the data type is bfloat16, float16, float32 or float64.
         approximate (str, optional): the gelu approximation algorithm to use.
             Acceptable vaslues are ``'none'`` and ``'tanh'`` .
             Default: ``'none'`` .
@@ -7699,7 +7700,7 @@ def gelu(input, approximate='none'):
 
     x_dtype = dtype_(input)
     if x_dtype not in [mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16]:
-        raise TypeError(f"For gelu, the input dtype must be float16, float32 or float64, "
+        raise TypeError(f"For gelu, the input dtype must be bfloat16, float16, float32 or float64, "
                         f"but got {x_dtype}.")
     if approximate == 'tanh':
         output = gelu_(input)

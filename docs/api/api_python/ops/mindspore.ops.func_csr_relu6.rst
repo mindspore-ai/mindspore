@@ -8,7 +8,7 @@
     .. math::
         \text{ReLU6}(x) = \min(\max(0,x), 6)
 
-    返回 :math:`\min(\max(0,x), 6)` 元素的值。
+    返回值为 :math:`\min(\max(0,x), 6)` 。
 
     参数：
         - **x** (CSRTensor) - csr_relu6的输入，数据类型为float16或float32。

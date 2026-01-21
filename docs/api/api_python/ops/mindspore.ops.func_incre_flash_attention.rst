@@ -3,9 +3,9 @@ mindspore.ops.incre_flash_attention
 
 .. py:function:: mindspore.ops.incre_flash_attention(query, key, value, attn_mask=None, actual_seq_lengths=None, pse_shift=None, \
                                                      dequant_scale1=None, quant_scale1=None, dequant_scale2=None, quant_scale2=None, \
-                                                     quant_offset2=None, antiquant_scale=None, antiquant_offset=None,block_table=None, \
-                                                     num_heads=1,input_layout='BSH', scale_value=1.0, num_key_value_heads=0, \
-                                                     block_size=0,inner_precise=1, kv_padding_size=None)
+                                                     quant_offset2=None, antiquant_scale=None, antiquant_offset=None, block_table=None, \
+                                                     num_heads=1, input_layout='BSH', scale_value=1.0, num_key_value_heads=0, \
+                                                     block_size=0, inner_precise=1, kv_padding_size=None)
 
     增量推理场景接口。
 
@@ -17,7 +17,7 @@ mindspore.ops.incre_flash_attention
     - H：隐藏层大小
     - kvH： `key` / `value` 的隐藏层大小
 
-    其中 :math:`H=N\times D`, :math:`kvH=kvN\times D` 。
+    其中 :math:`H=N\times D` ， :math:`kvH=kvN\times D` 。
 
     self-attention（自注意力）利用输入样本自身的关系构建了一种注意力模型。其原理是假设有一个长度为 :math:`n` 的输入样本序列 :math:`x` ， :math:`x` 的每个元素都是一个 :math:`d` 维向量，
     可以将每个 :math:`d` 维向量看作一个token embedding，将这样一条序列经过3个权重矩阵变换得到3个维度为 :math:`n\times d` 的矩阵。
@@ -73,7 +73,7 @@ mindspore.ops.incre_flash_attention
         - **value** (Union[tuple, list]) - 公式中的输入V，数据类型为float16、bfloat16或int8。shape为 :math:`(B, S, kvH)` / :math:`(B, kvN, S, D)` 。
         - **attn_mask** (Tensor，可选) - 注意力掩码Tensor，数据类型为bool、int8或uint8。shape为 :math:`(B, S)` / :math:`(B, 1, S)` / :math:`(B, 1, 1, S)` 。默认 ``None`` 。
         - **actual_seq_lengths** (Union[Tensor, tuple[int], list[int]]，可选) - 描述每个输入的实际序列长度，数据类型为int64。shape为 :math:`(B, )` 。默认值: ``None`` 。
-        - **pse_shift** (Tensor，可选) - 位置编码Tensor，数据类型为float16或bfloat16。输入Tensorshape为 :math:`(1, N, 1, S)` / :math:`(B, N, 1, S)` 。默认值: ``None`` 。
+        - **pse_shift** (Tensor，可选) - 位置编码Tensor，数据类型为float16或bfloat16。输入Tensor的shape为 :math:`(1, N, 1, S)` / :math:`(B, N, 1, S)` 。默认值: ``None`` 。
         - **dequant_scale1** (Tensor，可选) - 量化参数，数据类型为uint64或float32。当前未使能。默认值: ``None`` 。
         - **quant_scale1** (Tensor，可选) - 量化参数，数据类型为float32。当前未使能。默认值: ``None`` 。
         - **dequant_scale2** (Tensor，可选) - 量化参数，数据类型为uint64或float32。当前未使能。默认值: ``None`` 。

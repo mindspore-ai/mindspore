@@ -18,7 +18,6 @@ mindspore.ops.dense_to_sparse_coo
         - **values** (Tensor) - 一维张量，用来给 `indices` 中的每个元素提供数值。
         - **shape** (tuple(int)) - 整数元组，用来指定稀疏矩阵的稠密形状。
 
-
     异常：
         - **TypeError** - `tensor` 不是Tensor。
         - **ValueError** - `tensor` 不是二维Tensor。
