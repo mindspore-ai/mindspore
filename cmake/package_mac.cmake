@@ -51,8 +51,8 @@ install(
 )
 
 if(USE_GLOG)
-    install(FILES ${glog_LIBPATH}/libmindspore_glog.0.4.0.dylib
-        DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_glog.0.dylib COMPONENT mindspore)
+    install(FILES ${glog_LIBPATH}/libglog.0.7.1.dylib
+        DESTINATION ${INSTALL_LIB_DIR} RENAME libglog.2.dylib COMPONENT mindspore)
 endif()
 
 if(ENABLE_CPU AND NOT WIN32)

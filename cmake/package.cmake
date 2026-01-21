@@ -91,8 +91,8 @@ if(ENABLE_GPU)
 endif()
 
 if(USE_GLOG)
-    install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_glog.so.0 COMPONENT mindspore)
+    install(FILES ${glog_LIBPATH}/libglog.so.0.7.1
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libglog.so.2 COMPONENT mindspore)
 endif()
 
 if(ENABLE_MINDDATA)

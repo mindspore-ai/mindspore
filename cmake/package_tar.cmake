@@ -66,7 +66,7 @@ if(ENABLE_GPU)
 endif()
 
 if(USE_GLOG)
-    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libmindspore_glog*)
+    file(GLOB_RECURSE GLOG_LIB_LIST ${glog_LIBPATH}/libglog*)
     install(
             FILES ${GLOG_LIB_LIST}
             DESTINATION ${INSTALL_LIB_DIR}

@@ -33,6 +33,7 @@
 #ifdef USE_GLOG
 #define GLOG_NO_ABBREVIATED_SEVERITIES
 #define google mindspore_private
+#define GLOG_USE_GLOG_EXPORT
 #include "glog/logging.h"
 #undef google
 #endif
