@@ -3,7 +3,7 @@ mindspore.ops.hardtanh
 
 .. py:function:: mindspore.ops.hardtanh(input, min_val=-1.0, max_val=1.0)
 
-    逐元素元素计算hardtanh激活函数。hardtanh函数定义为：
+    逐元素计算hardtanh激活函数。hardtanh函数定义为：
 
     .. math::
         \text{hardtanh}(input) = \begin{cases}

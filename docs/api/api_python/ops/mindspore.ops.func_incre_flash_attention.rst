@@ -73,7 +73,7 @@ mindspore.ops.incre_flash_attention
         - **value** (Union[tuple, list]) - 公式中的输入V，数据类型为float16、bfloat16或int8。shape为 :math:`(B, S, kvH)` / :math:`(B, kvN, S, D)` 。
         - **attn_mask** (Tensor，可选) - 注意力掩码Tensor，数据类型为bool、int8或uint8。shape为 :math:`(B, S)` / :math:`(B, 1, S)` / :math:`(B, 1, 1, S)` 。默认 ``None`` 。
         - **actual_seq_lengths** (Union[Tensor, tuple[int], list[int]]，可选) - 描述每个输入的实际序列长度，数据类型为int64。shape为 :math:`(B, )` 。默认值: ``None`` 。
-        - **pse_shift** (Tensor，可选) - 位置编码Tensor，数据类型为float16或bfloat16。输入Tensorshape为 :math:`(1, N, 1, S)` / :math:`(B, N, 1, S)` 。默认值: ``None`` 。
+        - **pse_shift** (Tensor，可选) - 位置编码Tensor，数据类型为float16或bfloat16。输入Tensor的shape为 :math:`(1, N, 1, S)` / :math:`(B, N, 1, S)` 。默认值: ``None`` 。
         - **dequant_scale1** (Tensor，可选) - 量化参数，数据类型为uint64或float32。当前未使能。默认值: ``None`` 。
         - **quant_scale1** (Tensor，可选) - 量化参数，数据类型为float32。当前未使能。默认值: ``None`` 。
         - **dequant_scale2** (Tensor，可选) - 量化参数，数据类型为uint64或float32。当前未使能。默认值: ``None`` 。

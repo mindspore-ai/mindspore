@@ -3,14 +3,14 @@ mindspore.ops.ctc_loss
 
 .. py:function:: mindspore.ops.ctc_loss(log_probs, targets, input_lengths, target_lengths, blank=0, reduction="mean", zero_infinity=False)
 
-    计算CTC（Connectist Temporal Classification）损失和梯度。
+    计算CTC（Connectionist Temporal Classification）损失和梯度。
 
     CTC是序列标注问题中的一种损失函数，主要用于处理序列标注问题中的输入与输出标签的对齐问题。
     传统序列标注算法需要每一时刻输入与输出符号完全对齐，而CTC拓展了标签集合，添加了空元素。
     在使用拓展标签集合对序列进行标注后，所有可以通过映射函数转换为真实序列的预测序列，都是正确的预测结果，也就是说无需数据对齐处理，即可得到预测序列。
     其目标函数就是最大化所有正确的预测序列的概率和。
 
-    关于CTCLoss算法详细介绍，请参考 `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data withRecurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_ 。
+    关于CTCLoss算法详细介绍，请参考 `Connectionist Temporal Classification: Labeling Unsegmented Sequence Data with Recurrent Neural Networks <http://www.cs.toronto.edu/~graves/icml_2006.pdf>`_ 。
 
     参数：
         - **log_probs** (Tensor) - 输入Tensor，shape :math:`(T, N, C)` 。其中T表示输入长度，N表示批次大小，C是分类数，包含空白。
@@ -40,4 +40,4 @@ mindspore.ops.ctc_loss
         - **ValueError** - `target_lengths` 的shape大小不等于N。N是 `log_probs` 的批次大小。
         - **ValueError** - `blank` 值不介于0到C之间。C是 `log_probs` 的分类数。
         - **RuntimeError** - `input_lengths` 的值大于T。T是 `log_probs` 的长度。
-        - **RuntimeError** - `target_lengths[i]` 的取值范围不在0到 `input_length[i]` 之间。
+        - **RuntimeError** - `target_lengths[i]` 的取值范围不在0到 `input_lengths[i]` 之间。
