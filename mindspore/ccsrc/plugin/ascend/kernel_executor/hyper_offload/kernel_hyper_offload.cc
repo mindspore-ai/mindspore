@@ -316,7 +316,8 @@ std::pair<CNodePtrList, std::vector<EventPlan>> KernelHyperOffloadOptimizer::Gen
 
 void KernelHyperOffloadOptimizer::ApplyHyperOffloadOptimizer(const KernelGraphPtr &kernel_graph) {
   const auto &input = GenerateHyperOffloadInput(kernel_graph);
-  const auto &plan = utils::hyper_offload::HyperOffloadOptimizer::Run(input);
+  utils::hyper_offload::HyperOffloadOptimizer optimizer(input);
+  const auto &plan = optimizer.Run();
   const auto &[new_execution_order, events] = GenerateExecutionOrderAndEventPlan(plan.exec_order);
   kernel_graph->set_execution_order(new_execution_order);
   events_ = events;

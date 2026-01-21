@@ -136,22 +136,22 @@ std::string HyperOffloadOperations::ToString(const CNodePtrList &origin_executio
 
   // Helper to print added nodes with specific attributes
   auto print_added_node = [&](const CNodePtr &node) {
-    std::string extra_info;
+    oss << "    [Added] " << node->DebugString();
     auto event_id_ptr = node->user_data<uint32_t>(kHyperOffloadEventId);
     if (event_id_ptr != nullptr) {
-      extra_info += " EventId: " + std::to_string(*event_id_ptr);
+      oss << " EventId: " << *event_id_ptr;
     }
     auto pair_id_ptr = node->user_data<size_t>(kHyperOffloadEventStreamId);
     if (pair_id_ptr != nullptr) {
-      extra_info += " StreamId: " + std::to_string(*pair_id_ptr);
+      oss << " StreamId: " << *pair_id_ptr;
     }
 
     auto offload_id = GetHyperOffloadId(node);
     if (offload_id.has_value()) {
-      extra_info += " OffloadId: " + std::to_string(offload_id.value());
+      oss << " OffloadId: " << offload_id.value();
     }
 
-    oss << "    [Added] " << node->DebugString() << extra_info << "\n";
+    oss << "\n";
   };
 
   oss << "========== HyperOffloadOperations Trace Start ==========" << "\n";
@@ -167,12 +167,12 @@ std::string HyperOffloadOperations::ToString(const CNodePtrList &origin_executio
   // Print Original Order and Attached Operations
   for (size_t i = 0; i < origin_execution_order.size(); ++i) {
     auto origin_node = origin_execution_order[i];
-    std::string origin_info;
+    oss << "[" << i << "] [Origin] " << origin_node->DebugString();
     auto origin_offload_id = GetHyperOffloadId(origin_node);
     if (origin_offload_id.has_value()) {
-      origin_info += " OffloadId: " + std::to_string(origin_offload_id.value());
+      oss << " OffloadId: " << origin_offload_id.value();
     }
-    oss << "[" << i << "] [Origin] " << origin_node->DebugString() << origin_info << "\n";
+    oss << "\n";
 
     const auto &added_ops = operations_[i].operations;
     for (const auto &node : added_ops) {

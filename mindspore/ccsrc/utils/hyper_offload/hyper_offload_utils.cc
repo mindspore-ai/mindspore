@@ -303,24 +303,22 @@ std::optional<size_t> GetFreeOrAssignNodeType(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (IsPrimitiveCNode(node, kFreeDataPrimitive)) {
     auto cnode = node->cast<CNodePtr>();
-    if (cnode->inputs().size() < 3) {
-      return std::nullopt;
-    }
-    auto value_node = cnode->input(2)->cast<ValueNodePtr>();
-    if (!value_node) {
-      return std::nullopt;
-    }
+    constexpr size_t free_data_input_size = 3;
+    MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() == free_data_input_size,
+                               "FreeData node input size is not correct");
+    constexpr size_t type_input_index = 2;
+    auto value_node = cnode->input(type_input_index)->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
     return GetValue<size_t>(value_node->value());
   }
   if (IsPrimitiveCNode(node, kAssignDataPrimitive)) {
     auto cnode = node->cast<CNodePtr>();
-    if (cnode->inputs().size() < 4) {
-      return std::nullopt;
-    }
-    auto value_node = cnode->input(3)->cast<ValueNodePtr>();
-    if (!value_node) {
-      return std::nullopt;
-    }
+    constexpr size_t assign_data_input_size = 4;
+    MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() == assign_data_input_size,
+                               "AssignData node input size is not correct");
+    constexpr size_t type_input_index = 3;
+    auto value_node = cnode->input(type_input_index)->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
     return GetValue<size_t>(value_node->value());
   }
   return std::nullopt;

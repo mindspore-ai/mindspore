@@ -44,29 +44,38 @@ struct HyperOffloadPlan {
 
 class COMMON_EXPORT HyperOffloadOptimizer {
  public:
-  HyperOffloadOptimizer() = default;
+  explicit HyperOffloadOptimizer(const HyperOffloadInput &input);
   ~HyperOffloadOptimizer() = default;
 
   // Run the hyper offload optimizer.
-  static HyperOffloadPlan Run(const HyperOffloadInput &input);
+  HyperOffloadPlan Run();
 
   // Assign unique IDs to offload nodes.
   static void AssignHyperOffloadIds(const CNodePtrList &exec_order);
 
  private:
   // Generate offload operations for parameters.
-  static HyperOffloadOperations GenerateParameterOperations(const FuncGraphPtr &graph, const CNodePtrList &exec_order,
-                                                            const HandleNewNodeCallback &callback);
+  void GenerateParameterOperations();
   // Generate offload operations for activations.
-  static HyperOffloadOperations GenerateActivationOperations(const FuncGraphPtr &graph, const CNodePtrList &exec_order,
-                                                             const HandleNewNodeCallback &callback);
+  void GenerateActivationOperations();
   // Build the new execution order with offload operations inserted.
-  static CNodePtrList BuildExecutionOrder(const CNodePtrList &execution_order,
-                                          const HyperOffloadOperations &hyper_offload_operations);
+  CNodePtrList BuildExecutionOrder();
   // Adjust the position of hyper offload nodes.
-  static void AdjustHyperOffloadNodePosition(HyperOffloadOperations &ops);
+  void AdjustHyperOffloadNodePosition();
   // Check whether need to skip hyper offload optimizer according to config and input.
-  static bool SkipHyperOffloadOptimizer(const HyperOffloadInput &input);
+  bool SkipHyperOffloadOptimizer();
+
+  // Helper functions
+  void AddSingleParameterOperations(const CNodePtr &node);
+  void AddSingleActivationOperations(const OffloadInfo &offload_info, const std::vector<KernelWithIndex> &outputs);
+  void AddEventNodes();
+
+  FuncGraphPtr graph_;
+  CNodePtrList exec_order_;
+  HandleNewNodeCallback callback_;
+  bool enable_offload_parameter_;
+  bool enable_offload_activation_;
+  HyperOffloadOperations operations_;
 };
 }  // namespace hyper_offload
 }  // namespace utils

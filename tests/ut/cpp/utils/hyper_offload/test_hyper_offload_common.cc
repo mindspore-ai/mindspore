@@ -208,7 +208,8 @@ TEST_F(TestHyperOffloadCommon, TestHyperOffloadCommonRun_Basic) {
   input.enable_offload_parameter = false;
   input.enable_offload_activation = false;
   
-  auto plan = HyperOffloadOptimizer::Run(input);
+  HyperOffloadOptimizer optimizer(input);
+  auto plan = optimizer.Run();
   
   EXPECT_NE(plan.graph, nullptr);
   EXPECT_EQ(plan.graph, graph);
@@ -231,7 +232,8 @@ TEST_F(TestHyperOffloadCommon, TestHyperOffloadCommonRun_Disabled) {
   input.enable_offload_parameter = true;
   input.enable_offload_activation = true;
   
-  auto plan = HyperOffloadOptimizer::Run(input);
+  HyperOffloadOptimizer optimizer(input);
+  auto plan = optimizer.Run();
   
   // When HyperOffload is disabled, should return original input
   EXPECT_NE(plan.graph, nullptr);
@@ -255,7 +257,8 @@ TEST_F(TestHyperOffloadCommon, TestHyperOffloadCommonRun_EmptyInput) {
   input.enable_offload_parameter = true;
   input.enable_offload_activation = true;
   
-  auto plan = HyperOffloadOptimizer::Run(input);
+  HyperOffloadOptimizer optimizer(input);
+  auto plan = optimizer.Run();
   
   EXPECT_NE(plan.graph, nullptr);
   EXPECT_TRUE(plan.exec_order.empty());
@@ -273,7 +276,8 @@ TEST_F(TestHyperOffloadCommon, TestHyperOffloadCommonRun_NullGraph) {
   input.enable_offload_parameter = true;
   input.enable_offload_activation = true;
   
-  auto plan = HyperOffloadOptimizer::Run(input);
+  HyperOffloadOptimizer optimizer(input);
+  auto plan = optimizer.Run();
   
   EXPECT_EQ(plan.graph, nullptr);
   EXPECT_EQ(plan.exec_order.size(), exec_order.size());
@@ -396,7 +400,8 @@ TEST_F(TestHyperOffloadCommon, TestOffloadActivationFlow) {
   input.enable_offload_parameter = false;
   input.enable_offload_activation = true;
 
-  auto plan = HyperOffloadOptimizer::Run(input);
+  HyperOffloadOptimizer optimizer(input);
+  auto plan = optimizer.Run();
 
   EXPECT_NE(plan.graph, nullptr);
   // For this single OffloadInfo (node1), we expect exactly one D2H and one H2D to be inserted.
