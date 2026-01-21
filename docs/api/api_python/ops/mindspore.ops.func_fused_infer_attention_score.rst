@@ -100,7 +100,7 @@ mindspore.ops.fused_infer_attention_score
             - per-channel模式：两个参数BNSD场景下shape为 :math:`(2, N, 1, D)` ，BSND场景下shape为 :math:`(2, N, D)` ，
               BSH场景下shape为 :math:`(2, H)` ，其中，2分别对应到key和value，N为num_key_value_heads。参数数据类型和query数据类型相同，antiquant_mode置0。
             - per-tensor模式：两个参数的shape均为 :math:`(2)` ，数据类型和query数据类型相同，antiquant_mode置0。
-            - per-token模式：两个参数的shape均为 :math:`(2, B, S)` ，据类型固定为float32，antiquant_mode置1。
+            - per-token模式：两个参数的shape均为 :math:`(2, B, S)` ，数据类型固定为float32，antiquant_mode置1。
 
           - 支持对称量化和非对称量化：
 

@@ -12,7 +12,7 @@ mindspore.ops.csr_to_coo
         - **tensor** (CSRTensor) - 一个CSR矩阵，必须是二维。
 
     返回：
-        返回一个二维的COOTensor，是原COOTensor的CSR格式表示。
+        返回一个二维的COOTensor，是原CSRTensor的COO格式表示。
 
     异常：
         - **TypeError** - `tensor` 不是CSRTensor。
