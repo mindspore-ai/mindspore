@@ -22,6 +22,9 @@
 #include <numeric>
 #include <iostream>
 #include <string>
+#include <map>
+#include <set>
+#include <vector>
 #include "utils/ms_utils.h"
 
 namespace mindspore {
@@ -189,7 +192,7 @@ void ValidateIndices(kernel::KernelTensor *indices, ShapeVector shape2, int64_t 
   Int64_matrix indices_flat(indices_ptr, set2_nums, set2_dim);
   for (int64_t i = 0; i < set2_nums; i++) {
     for (int64_t j = 0; j < shape2_size; j++) {
-      if ((indices_flat(i, j) >= shape2[j]) | (indices_flat(i, j) < 0)) {
+      if ((indices_flat(i, j) >= shape2[j]) || (indices_flat(i, j) < 0)) {
         MS_EXCEPTION(RuntimeError) << "For 'DenseToSparseSetOperation', "
                                    << "the dimension " << j << " of values in 'x2_indices' must be in range(0, "
                                    << (shape2[j] - 1) << "), but got " << indices_flat(i, j) << ".";
