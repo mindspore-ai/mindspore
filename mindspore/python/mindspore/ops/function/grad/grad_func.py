@@ -117,14 +117,14 @@ def grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=False, sen
         has_aux (bool): If ``True`` , only the first output of `fn` contributes the gradient of `fn`, while the other
             outputs will be returned straightly. It means the `fn` must return more than one outputs in this case.
             Default: ``False`` .
-        return_ids(bool): Whether return the tuple made by gradients and the index to specify which inputs
+        return_ids (bool): Whether return the tuple made by gradients and the index to specify which inputs
             to be differentiated or the name of parameters of the training network that need to calculate the gradient.
             If ``True`` , the output gradients will be replaced by the tuples made by gradients and the index to specify
             which inputs to be differentiated or the name of parameters of the training network.
             Default: ``False`` .
         sens_param (bool): Whether to append sensitivity (gradient with respect to output) as input.
             If `sens_param` is ``False`` , a `ones_like(outputs)` sensitivity will be attached automatically.
-            If `sensor_param` is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
+            If `sens_param` is ``True`` , a sensitivity (gradient with respect to output) needs to be transferred
             through the positional parameter or key-value pair parameter. If the value is transferred through
             the key-value pair parameter, the key must be sens.
             Default: ``False`` .

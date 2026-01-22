@@ -865,10 +865,10 @@ def _check_contains_variable(item_dtype, item_value):
 
 
 def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=True):
-    """Used to calculate constant in graph copmpiling process and improve compile performance in GRAPH_MODE.
+    """Used to calculate constant in graph compiling process and improve compile performance in GRAPH_MODE.
 
     Args:
-        fn (function, optional): A `fn` use as the infer_value of the output operator. Default: ``None`` .
+        fn (function, optional): A `fn` used as the infer_value of the output operator. Default: ``None`` .
         get_instance (bool, optional): If ``True`` , return the instance of operator,
                              otherwise return the operator class. Default: ``True`` .
         name (str, optional): Defines the operator name. If `name` is ``None`` , use the function name as op name.
@@ -877,12 +877,12 @@ def constexpr(fn=None, get_instance=True, name=None, reuse_result=True, check=Tr
                              and reuse the result next time,
                              otherwise the operator will always be executed. Default: ``True`` .
         check (bool, optional): If ``True`` , the parameters will be checked
-            and the warning message will raised if the parameter is not const value. Default: ``True`` .
+            and the warning message will be raised if the parameter is not const value. Default: ``True`` .
 
     Examples:
 
         >>> import mindspore as ms
-        >>> # define a constant calculate function with for loop inside and use use constexpr to accelerate the compile
+        >>> # define a constant calculate function with for loop inside and use constexpr to accelerate the compile
         >>> # process.
         >>> @ms.constexpr
         ... def for_loop_calculate(range_num):

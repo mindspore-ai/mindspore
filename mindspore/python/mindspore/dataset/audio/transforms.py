@@ -540,7 +540,7 @@ class BassBiquad(AudioTensorOperation):
 class Biquad(TensorOperation):
     """
     Perform a biquad filter of input audio.
-    Mathematical fomulas refer to: `Digital_biquad_filter <https://en.wikipedia.org/wiki/Digital_biquad_filter>`_ .
+    Mathematical formulas refer to: `Digital_biquad_filter <https://en.wikipedia.org/wiki/Digital_biquad_filter>`_ .
 
     Args:
         b0 (float): Numerator coefficient of current input, x[n].
@@ -637,7 +637,7 @@ class ComplexNorm(AudioTensorOperation):
         (16,) float64
         >>>
         >>> # Use the transform in eager mode
-        >>> waveform = np.random.random([16, 2])  # 1 samples
+        >>> waveform = np.random.random([16, 2])  # 1 sample
         >>> output = audio.ComplexNorm()(waveform)
         >>> print(output.shape, output.dtype)
         (16,) float64
@@ -1653,7 +1653,7 @@ class InverseMelScale(AudioTensorOperation):
         sgdargs (dict, optional): Arguments for the SGD optimizer. Default: ``None``, will be set to
             {'sgd_lr': 0.1, 'sgd_momentum': 0.9}.
         norm (NormType, optional): Normalization method, can be ``NormType.SLANEY`` or ``NormType.NONE``.
-            Default: ``NormType.NONE``, no narmalization.
+            Default: ``NormType.NONE``, no normalization.
         mel_type (MelType, optional): Mel scale to use, can be ``MelType.SLANEY`` or ``MelType.HTK``.
             Default: ``MelType.HTK``.
 
@@ -2177,7 +2177,7 @@ class MaskAlongAxisIID(AudioTensorOperation):
 
     Args:
         mask_param (int): Number of columns to be masked, will be uniformly sampled from
-            [0, mask_param], must be non negative.
+            [0, mask_param], must be non-negative.
         mask_value (float): Value to assign to the masked columns.
         axis (int): Axis to apply mask on (1 for frequency and 2 for time).
 
@@ -2248,7 +2248,7 @@ class MelScale(AudioTensorOperation):
         n_stft (int, optional): Number of bins in STFT. Default: ``201``.
         norm (NormType, optional): Type of norm, value should be ``NormType.SLANEY`` or ``NormType.NONE``.
             If `norm` is ``NormType.SLANEY``, divide the triangular mel weight by the width of the mel band.
-            Default: ``NormType.NONE``, no narmalization.
+            Default: ``NormType.NONE``, no normalization.
         mel_type (MelType, optional): Type to use, value should be ``MelType.SLANEY`` or ``MelType.HTK``.
             Default: ``MelType.HTK``.
 
@@ -2322,7 +2322,7 @@ class MelSpectrogram(AudioTensorOperation):
         n_fft (int, optional): Size of FFT, creates `n_fft // 2 + 1` bins, which should be greater than 0 and less than
             twice of the last dimension size of the input. Default: ``400``.
         win_length (int, optional): Window size, which should be greater than 0 and no more than `n_fft` . Default:
-            None, will be set to `n_fft` .
+            ``None`` , will be set to `n_fft` .
         hop_length (int, optional): Length of hop between STFT windows, which should be greater than 0.
             Default: ``None``, will be set to `win_length // 2` .
         f_min (float, optional): Minimum frequency, which can't be greater than `f_max` . Default: ``0.0``.
@@ -2340,8 +2340,8 @@ class MelSpectrogram(AudioTensorOperation):
             can be ``BorderType.REFLECT``, ``BorderType.CONSTANT``, ``BorderType.EDGE`` or ``BorderType.SYMMETRIC``.
             Default: ``BorderType.REFLECT``.
         onesided (bool, optional): Controls whether to return half of results to avoid redundancy. Default: ``True``.
-        norm (NormType, optional): If 'slaney', divide the triangular mel weights by the width of the mel band
-            (area normalization). Default: ``NormType.NONE``, no narmalization.
+        norm (NormType, optional): If ``NormType.SLANEY``, divide the triangular mel weights by the width of the mel
+            band (area normalization). Default: ``NormType.NONE``, no normalization.
         mel_scale (MelType, optional): Mel scale to use, can be ``MelType.SLANEY`` or ``MelType.HTK``.
             Default: ``MelType.HTK``.
 
@@ -2367,7 +2367,7 @@ class MelSpectrogram(AudioTensorOperation):
         ValueError: If `n_mels` is a negative number.
         ValueError: If `f_min` is greater than `f_max` .
         ValueError: If `f_max` is a negative number.
-        ValueError: If `f_min` is not less than `sample_rate // 2` when `f_max` is set to None.
+        ValueError: If `f_min` is not less than `sample_rate // 2` when `f_max` is set to ``None``.
         ValueError: If `power` is not positive.
         ValueError: If `pad` is a negative number.
         ValueError: If `win_length` is not positive.
@@ -2469,11 +2469,11 @@ class MFCC(AudioTensorOperation):
             - 'mel_scale': MelType.HTK
 
     Raises:
-        TypeError: If `sample_rate` is not of type int.      
+        TypeError: If `sample_rate` is not of type int.
         TypeError: If `n_mfcc` is not of type int.
         TypeError: If `dct_type` is not of type int.
         TypeError: If `norm` is not of type :class:`mindspore.dataset.audio.NormMode` .
-        TypeError: If `log_mels` is not of type bool.         
+        TypeError: If `log_mels` is not of type bool.
         TypeError: If `melkwargs` is not of type dict.
         ValueError: If `sample_rate` is a negative number.
         ValueError: If `n_mfcc` is a negative number.
@@ -3200,7 +3200,7 @@ class Spectrogram(TensorOperation):
         window (WindowType, optional): Window function that is applied/multiplied to each frame/window,
             can be ``WindowType.BARTLETT``, ``WindowType.BLACKMAN``, ``WindowType.HAMMING``, ``WindowType.HANN``
             or ``WindowType.KAISER``. Currently, Kaiser window is not supported on macOS. Default: ``WindowType.HANN``.
-        power (float, optional): Exponent for the magnitude spectrogram, must be non negative,
+        power (float, optional): Exponent for the magnitude spectrogram, must be non-negative,
             e.g., ``1`` for energy, ``2`` for power, etc. Default: ``2.0``.
         normalized (bool, optional): Whether to normalize by magnitude after stft. Default: ``False``.
         center (bool, optional): Whether to pad waveform on both sides. Default: ``True``.
@@ -3301,7 +3301,7 @@ class TimeMasking(AudioTensorOperation):
         TypeError: If `time_mask_param` is not of type int.
         ValueError: If `time_mask_param` is greater than the length of audio waveform in time domain.
         TypeError: If `mask_start` is not of type int.
-        ValueError: If `mask_start` a negative number.
+        ValueError: If `mask_start` is a negative number.
         TypeError: If `mask_value` is not of type float.
         ValueError: If `mask_value` is a negative number.
         RuntimeError: If input tensor is not in shape of <..., freq, time>.
@@ -3502,7 +3502,7 @@ class Vad(AudioTensorOperation):
         noise_down_time (float, optional): Time constant used by the adaptive noise estimator for when the noise level
             is decreasing. Default: ``0.01``.
         noise_reduction_amount (float, optional): Amount of noise reduction to use in the detection algorithm.
-            Default: 1.35.
+            Default: ``1.35``.
         measure_freq (float, optional): Frequency of the algorithm's processing/measurements. Default: ``20.0``.
         measure_duration (float, optional): The duration of measurement. Default: ``None``,
             will use twice the measurement period.
@@ -3625,7 +3625,7 @@ class Vol(AudioTensorOperation):
 
     Args:
         gain (float): Gain at the boost (or attenuation).
-            If `gain_type` is ``GainType.AMPLITUDE``, it is a non negative amplitude ratio.
+            If `gain_type` is ``GainType.AMPLITUDE``, it is a non-negative amplitude ratio.
             If `gain_type` is ``GainType.POWER``, it is a power (voltage squared).
             If `gain_type` is ``GainType.DB``, it is in decibels.
         gain_type (GainType, optional): Type of gain, can be ``GainType.AMPLITUDE``, ``GainType.POWER``

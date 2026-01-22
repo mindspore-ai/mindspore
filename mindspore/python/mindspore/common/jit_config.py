@@ -20,8 +20,8 @@ class JitConfig:
 
     Args:
         jit_level (str, optional): Used to control the compilation optimization level.
-            Supports ["O0", "O1", "O2"]. Default: ``""`` , The framework automatically selects the execution method.
-            Not recommended, it is recommended to use the JIT decorator.
+            Supports ["O0", "O1", "O2"]. Default: ``""`` , which indicates that the framework automatically selects the
+            execution method. Not recommended, it is recommended to use the JIT decorator.
 
             - ``"O0"``: Except for optimizations that may affect functionality, all other optimizations are turned off,
               adopt KernelByKernel execution mode.
@@ -57,17 +57,17 @@ class JitConfig:
               able to be exported.
 
         debug_level (str, optional): Set debugging level for graph compiling.
-            The value must be ``"RELEASE"`` or ``"DEBUG"``. Default value: ``RELEASE``.
+            The value must be ``"RELEASE"`` or ``"DEBUG"``. Default: ``"RELEASE"``.
 
-            - ``RELEASE``: Used for normally running, and some debug information will be discard to get a better
+            - ``"RELEASE"``: Used for normally running, and some debug information will be discarded to get a better
               compiling performance.
-            - ``DEBUG``: Used for debugging when errors occur, more information will be record in compiling process.
+            - ``"DEBUG"``: Used for debugging when errors occur, more information will be recorded in compiling process.
 
-        infer_boost (str, optional): enable infer boost mode.
-            The value must be ``"on"`` , ``"off"``. Default to an "off", which means that disable infer boost.
-            when infer boost mode is enabled, MindSpore will use high perf kernel lib, use faster runtime make
-            infer speed is best.
-            Note: current infer boost only support `jit_level` == ``"O0"`` and only Atlas A2 series products
+        infer_boost (str, optional): Enable infer boost mode.
+            The value must be ``"on"`` or ``"off"``. Default: ``"off"``, which means that infer boost is disabled.
+            When infer boost mode is enabled, MindSpore will use high perf kernel lib, use faster runtime to make
+            inference speed the best.
+            Note: current infer boost only supports `jit_level` == ``"O0"`` and only Atlas A2 series products
             are supported.
 
         **kwargs (dict): A dictionary of keyword arguments that the class needs.
