@@ -20,7 +20,7 @@ mindspore.mint.var
         - **dim** (None，int，tuple(int), 可选) - 指定计算维度。如果为 ``None`` ，计算 input 中的所有元素。默认 ``None`` 。
 
     关键字参数：
-        - **correction** (int, 可选) - 样本大小和样本自由度之间的差异。默认为Bessel校正，默认 ``1`` 。
+        - **correction** (int, 可选) - 样本大小和样本自由度之间的差异。默认采用贝塞尔校正，取值 ``1`` 。
         - **keepdim** (bool, 可选) - 输出tensor是否保留维度。默认 ``False`` 。
 
     返回：

@@ -4027,7 +4027,7 @@ def var_ext(input, dim=None, *, correction=1, keepdim=False):
 
     Keyword Args:
         correction (int, optional): The difference between the sample size and sample degrees of freedom. Defaults
-            to Bessel’s correction. Default ``1``.
+            to Bessel's correction, with a value of ``1``.
         keepdim (bool, optional): Whether the output tensor has dim retained. Default ``False``.
 
     Returns:
