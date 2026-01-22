@@ -259,8 +259,33 @@ def test_autograd_saved_tensor_op_output_no_cycle():
 
     input_x = ops.rand(10, 10, dtype=ms.float32)
     ms.value_and_grad(forward_fn, grad_position=0)(input_x)
-
+    ms.runtime.synchronize()
     assert DelRecordHook.record_list == [0] * 5
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
+def test_autograd_saved_tensor_output_unpack_no_cycle():
+    """
+    Features: Saved Tensor.
+    Description: Test that unpacking saved output tensor does not cause circular references
+                 and memory leak.
+    Expectation: All hooks are released normally and no circular references occur.
+    """
+
+    def func(x):
+        output = ops.relu(x)
+        output.register_hook(DelRecordHook())
+        return output
+
+    DelRecordHook.record_list.clear()
+
+    x = ops.rand(3, 3)
+    ms.grad(ms.grad(func))(x)
+    ms.runtime.synchronize()
+    assert DelRecordHook.record_list == [0]
 
 
 @arg_mark(plat_marks=['platform_ascend'],
@@ -298,12 +323,14 @@ def test_autograd_saved_tensor_view_inplace_no_cycle():
 
     input_x = ops.rand(10, 10, dtype=ms.float32)
     ms.value_and_grad(forward_view_inplace_fn, grad_position=0)(input_x, False)
+    ms.runtime.synchronize()
     assert DelRecordHook.record_list == [0, 0]
 
     DelRecordHook.record_list.clear()
 
     input_x = ops.rand(10, 10, dtype=ms.float32)
     ms.value_and_grad(forward_view_inplace_fn, grad_position=0)(input_x, True)
+    ms.runtime.synchronize()
     assert DelRecordHook.record_list == [0, 0]
 
 

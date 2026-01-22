@@ -90,7 +90,7 @@ TensorPtr SavedTensor::UnWrapToTensor(const BackwardNodePtr &saved_for) {
   }
 
   auto data =
-    saved_tensor_hook_ ? CommonUtils::ShallowCopyAndDetachForTensor(saved_tensor_hook_->RunUnpackHook()) : data_;
+    CommonUtils::ShallowCopyAndDetachForTensor(saved_tensor_hook_ ? saved_tensor_hook_->RunUnpackHook() : data_);
   // recover
   auto auto_grad_meta_data = std::make_shared<AutoGradMetaData>(gn);
   if (is_leaf_) {
