@@ -995,94 +995,73 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
     r'''
     sum(input, *, dtype=None) -> Tensor
 
-    Calculate sum of all elements in Tensor.
+    Calculate sum of all elements in tensor.
 
     Args:
         input (Tensor): The input tensor.
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): The desired data type of returned tensor. Default ``None`` .
 
     Returns:
-        A Tensor, sum of all elements in `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
+        Tensor
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, mint
-        >>> from mindspore import dtype as mstype
-        >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
+        >>> x = mindspore.tensor([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
         ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
-        ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mstype.float32)
-        >>> out = mint.sum(x)
-        >>> print(out)
-        270.0
+        ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]], mindspore.float32)
+        >>> mindspore.mint.sum(x)
+        Tensor(shape=[], dtype=Float32, value= 270)
 
     .. function:: sum(input, dim, keepdim=False, *, dtype=None) -> Tensor
         :noindex:
 
-    Calculate sum of Tensor elements over a given dim.
+    Calculate sum of tensor elements over a given dim.
 
     Note:
         The `dim` with tensor type is only used for compatibility with older versions and is not recommended.
 
     Args:
         input (Tensor): The input tensor.
-        dim (Union[int, tuple(int), list(int), Tensor]): Dimensions along which a sum is performed.
-            If the `dim` is a tuple or list of ints, a sum is performed on all the dimensions specified in the tuple.
-            Must be in the range :math:`[-input.ndim, input.ndim)` .
-        keepdim (bool): Whether the output tensor has `dim` retained or not.
-            If ``True`` , keep these reduced dimensions and the length is 1.
-            If ``False`` , don't keep these dimensions. Default: ``False`` .
+        dim (Union[int, tuple(int), list(int), Tensor]): Specify the dimension to compute.
+        keepdim (bool, optional): Whether the output tensor has 'dim' retained. Default ``False`` .
 
     Keyword Args:
-        dtype (:class:`mindspore.dtype`, optional): The desired data type of returned Tensor. Default: ``None`` .
+        dtype (:class:`mindspore.dtype`, optional): The desired data type of returned tensor. Default ``None`` .
 
     Returns:
-        A Tensor, sum of elements over a given `dim` in `input`.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `dim` is not an int, tulpe(int), list(int) or Tensor.
-        ValueError: If `dim` is not in the range :math:`[-input.ndim, input.ndim)` .
-        TypeError: If `keepdim` is not a bool.
+        Tensor
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
-        >>> import numpy as np
-        >>> from mindspore import Tensor, mint
-        >>> from mindspore import dtype as mstype
-        >>> x = Tensor(np.array([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
+        >>> x = mindspore.tensor([[[1, 1, 1, 1, 1, 1], [2, 2, 2, 2, 2, 2], [3, 3, 3, 3, 3, 3]],
         ...                      [[4, 4, 4, 4, 4, 4], [5, 5, 5, 5, 5, 5], [6, 6, 6, 6, 6, 6]],
-        ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]]), mstype.float32)
-        >>> out = mint.sum(x)
-        >>> print(out)
-        270.0
-        >>> out = mint.sum(x, dim=2)
-        >>> print(out)
-        [[ 6. 12. 18.]
-         [24. 30. 36.]
-         [42. 48. 54.]]
-        >>> out = mint.sum(x, dim=2, keepdim=True)
-        >>> print(out)
-        [[[ 6.]
-          [12.]
-          [18.]]
-         [[24.]
-          [30.]
-          [36.]]
-         [[42.]
-          [48.]
-          [54.]]]
+        ...                      [[7, 7, 7, 7, 7, 7], [8, 8, 8, 8, 8, 8], [9, 9, 9, 9, 9, 9]]], mindspore.float32)
+        >>> mindspore.mint.sum(x, dim=2)
+        Tensor(shape=[3, 3], dtype=Float32, value=
+        [[ 6.00000000e+00,  1.20000000e+01,  1.80000000e+01],
+         [ 2.40000000e+01,  3.00000000e+01,  3.60000000e+01],
+         [ 4.20000000e+01,  4.80000000e+01,  5.40000000e+01]])]
+        >>> mindspore.mint.sum(x, dim=2, keepdim=True)
+        Tensor(shape=[3, 3, 1], dtype=Float32, value=
+        [[[ 6.00000000e+00],
+          [ 1.20000000e+01],
+          [ 1.80000000e+01]],
+         [[ 2.40000000e+01],
+          [ 3.00000000e+01],
+          [ 3.60000000e+01]],
+         [[ 4.20000000e+01],
+          [ 4.80000000e+01],
+          [ 5.40000000e+01]]])
+        >>> mindspore.mint.sum(x, dim=[1, 2])
+        Tensor(shape=[3], dtype=Float32, value= [ 3.60000000e+01,  9.00000000e+01,  1.44000000e+02])
     '''
     return ops.auto_generate.sum_ext(input, dim, keepdim, dtype)
 
