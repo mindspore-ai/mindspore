@@ -4402,7 +4402,7 @@ def std_mean_ext(input, dim=None, *, correction=1, keepdim=False):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        input (Tensor): The input tensor. Supported dtypes: mindspore.float16, mindspore.float32.
+        input (Tensor): The input tensor.
         dim (Union[int, tuple(int), list(int)], optional):
             Specify the dimensions for computation. If ``None`` , compute all elements in the `input` . 
                 Default ``None`` .
