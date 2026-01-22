@@ -495,10 +495,10 @@ class CrossEntropyLoss(Cell):
 
 class BCEWithLogitsLoss(Cell):
     r"""
-    Adds sigmoid activation function to `input` as logits, and uses this logits to compute binary cross entropy
+    Add sigmoid activation function to `input` as logits, and use this logits to compute binary cross entropy
     between the logits and the target.
 
-    Sets input `input` as :math:`X`, input `target` as :math:`Y`, output as :math:`L`. Then,
+    Set input `input` as :math:`X`, input `target` as :math:`Y`, output as :math:`L`. Then,
 
     .. math::
         p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}}
@@ -517,10 +517,11 @@ class BCEWithLogitsLoss(Cell):
 
     Args:
         weight (Tensor, optional): A rescaling weight applied to the loss of each batch element.
-            If not None, it can be broadcast to a tensor with shape of `target`, data type must be float16, float32 or
-            bfloat16(only Atlas A2 series products are supported). Default: ``None`` .
+            If not None, it can be broadcast to a tensor with shape of `target`, data type must be 
+            mindspore.float16, mindspore.float32 or
+            mindspore.bfloat16(only Atlas A2 series products are supported). Default ``None`` .
         reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
-            ``'sum'`` . Default: ``'mean'`` .
+            ``'sum'`` . Default ``'mean'`` .
 
             - ``'none'``: no reduction will be applied.
             - ``'mean'``: compute and return the weighted mean of elements in the output.
@@ -528,12 +529,13 @@ class BCEWithLogitsLoss(Cell):
 
         pos_weight (Tensor, optional): A weight of positive examples. Must be a vector with length equal to the
             number of classes. If not None, it must be broadcast to a tensor with shape of `input`, data type
-            must be float16, float32 or bfloat16(only Atlas A2 series products are supported). Default: ``None`` .
+            must be mindspore.float16, mindspore.float32 or 
+            mindspore.bfloat16(only Atlas A2 series products are supported). Default ``None`` .
 
     Inputs:
         - **input** (Tensor) - Input `input` with shape :math:`(N, *)` where :math:`*` means, any number
-          of additional dimensions. The data type must be float16, float32 or bfloat16(only Atlas A2 series products
-          are supported).
+          of additional dimensions. The data type must be mindspore.float16, mindspore.float32 or 
+          mindspore.bfloat16(only Atlas A2 series products are supported).
         - **target** (Tensor) - Ground truth label with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The same shape and data type as `input`.
 
@@ -542,9 +544,6 @@ class BCEWithLogitsLoss(Cell):
         Otherwise, a scalar value will be returned.
 
     Raises:
-        TypeError: If input `input` or `target` is not Tensor.
-        TypeError: If `weight` or `pos_weight` is a parameter.
-        TypeError: If data type of `reduction` is not string.
         ValueError: If `weight` or `pos_weight` can not be broadcast to a tensor with shape of `input`.
         ValueError: If `reduction` is not one of ``'none'``, ``'mean'``, ``'sum'``.
 
@@ -552,12 +551,10 @@ class BCEWithLogitsLoss(Cell):
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
-        >>> from mindspore import mint
-        >>> import numpy as np
-        >>> input = ms.Tensor(np.array([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]]).astype(np.float32))
-        >>> target = ms.Tensor(np.array([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]]).astype(np.float32))
-        >>> loss = mint.nn.BCEWithLogitsLoss()
+        >>> import mindspore
+        >>> input = mindspore.tensor([[-0.8, 1.2, 0.7], [-0.1, -0.4, 0.7]])
+        >>> target = mindspore.tensor([[0.3, 0.8, 1.2], [-0.6, 0.1, 2.2]])
+        >>> loss = mindspore.mint.nn.BCEWithLogitsLoss()
         >>> output = loss(input, target)
         >>> print(output)
         0.3463612
