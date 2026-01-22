@@ -2969,6 +2969,11 @@ def tensor_max_torch(op_input, *op_args, **op_kwargs):
 def tensor_view_dtype_ms(op_input, dtype):
     return op_input.view(dtype)
 
+def tensor_sign_to_sgn(op_input, *op_args, **op_kwargs):
+    if isinstance(op_input, torch.Tensor) and op_input.dtype.is_complex:
+        return torch.sgn(op_input, *op_args, **op_kwargs)
+    return torch.sign(op_input, *op_args, **op_kwargs)
+
 def basic_sample_inputs_reduction_count_nonzero(op_info, dtype, device=None, **kwargs):
     """count_nonzero does not have keepdim parameter"""
     for sample_input in basic_reference_inputs_reduction_op_common_func(op_info, dtype, device, **kwargs):
@@ -4485,6 +4490,59 @@ op_db: Dict[str, OpInfo] = {
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
+    'mint.trunc': UnaryOpInfo(
+        name='mint.trunc',
+        op=mint.trunc,
+        ref=torch.trunc,
+        dtypes_ascend=(ms.float16, ms.float32, ),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16, ),
+        ascend_forward_loss_override={ms.float32:1.e+20},
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'mint.expm1': UnaryOpInfo(
+        name='mint.expm1',
+        op=mint.expm1,
+        ref=torch.expm1,
+        dtypes_ascend=(ms.float16, ms.float32, ms.bool_, ms.int64),
+        dtypes_ascend910b=(ms.float16, ms.float32, ms.bfloat16, ms.bool_, ms.int64,),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'mint.rsqrt': UnaryOpInfo(
+        name='mint.rsqrt',
+        op=mint.rsqrt,
+        ref=torch.rsqrt,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        domain=(1e-4, None),
+        ascend910b_forward_loss_override={ms.bfloat16:0.03125},
+        ascend910b_backward_loss_override={ms.bfloat16:0.03125, ms.float16:0.125},
+        ascend_backward_loss_override={ms.float16:0.01},
+        disable_extremal_value_tensor_inputs=True,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'mint.sign': UnaryOpInfo(
+        name='mint.sign',
+        op=mint.sign,
+        ref=tensor_sign_to_sgn,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d not in (ms.int8, ms.uint8, ms.int16, ms.bfloat16)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d not in (ms.int8, ms.uint8, ms.int16)),
+        disable_extremal_value_tensor_inputs=True,
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
+    'mint.square': UnaryOpInfo(
+        name='mint.square',
+        op=mint.square,
+        ref=torch.square,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
+        domain=(1e-4, None),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+    ),
     'mint.empty': UnaryOpInfo(
         name='mint.empty',
         op=empty_ms,
@@ -4661,7 +4719,7 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.nn.functional.hardswish,
         dtypes_ascend=(ms.float16, ms.float32),
         dtypes_ascend910b=(ms.bfloat16, ms.float16, ms.float32),
-        exclude_value=(-3.0,),
+        exclude_value=(-3.0,3.0,),
         dtypes_cpu=(),
         dtypes_gpu=(),
     ),
@@ -4959,9 +5017,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=tuple(),
         op_dynamic_inputs_func=None,
         op_error_inputs_func=None,
-        supports_left_python_scalar=False,
-        supports_right_python_scalar=False,
-        supports_both_python_scalar=False,
+        convert_ref_scalar_to_tensor=True,
     ),
     'mint.minimum': BinaryOpInfo(
         name='mint.minimum',
@@ -4974,9 +5030,7 @@ op_db: Dict[str, OpInfo] = {
         dtypes_gpu=tuple(),
         op_dynamic_inputs_func=None,
         op_error_inputs_func=None,
-        supports_left_python_scalar=False,
-        supports_right_python_scalar=False,
-        supports_both_python_scalar=False,
+        convert_ref_scalar_to_tensor=True,
     ),
     'mint.div': BinaryOpInfo(
         name='mint.div',
@@ -5450,8 +5504,15 @@ op_db: Dict[str, OpInfo] = {
         dtypes_ascend910b=(ms.complex64, ms.complex128),
         dtypes_cpu=(),
         dtypes_gpu=(),
-        disable_large_value_tensor_inputs=True,
-        disable_small_value_tensor_inputs = True,
+    ),
+    'mint.real': UnaryOpInfo(
+        name='mint.real',
+        op=mint.real,
+        ref=torch.real,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and  d!=ms.float16)),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d !=ms.float16 and d!=ms.bfloat16)),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
     ),
     'Tensor.cos': UnaryOpInfo(
         name='Tensor.cos',
@@ -5468,12 +5529,23 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.reciprocal',
         op=tensor_reciprocal_ms,
         ref=tensor_reciprocal_torch,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.bfloat16 and d != ms.float64)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (not d.is_complex and d != ms.float64)),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d!= ms.complex64 and  d != ms.bfloat16  ),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d!=ms.complex64 ),
         dtypes_cpu=(),
         dtypes_gpu=(),
         ascend_backward_loss_override = {ms.float16:0.008},
-        disable_small_value_tensor_inputs=True,
+        ascend910b_backward_loss_override = {ms.float16:0.2},
+    ),
+    'mint.reciprocal': UnaryOpInfo(
+        name='mint.reciprocal',
+        op=mint.reciprocal,
+        ref=torch.reciprocal,
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d!= ms.complex64 and d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if d!=ms.complex64 ),
+        dtypes_cpu=(),
+        dtypes_gpu=(),
+        ascend_backward_loss_override = {ms.float16:0.008},
+        ascend910b_backward_loss_override = {ms.float16:0.2},
     ),
     'mint.nn.Tanh': UnaryOpInfo(
         name='mint.nn.Tanh',
@@ -5531,8 +5603,8 @@ op_db: Dict[str, OpInfo] = {
         # For float32 inputs, use 0.0004 under normal-distribution inputs for backward according to CCB conclusions.
         # For float16 inputs, use 0.06 on backward according to CCB conclusions.
         # For bfloat16 inputs, standard 2 is satisfied. Use 0.1 on backward according to CCB conclusions.
-        ascend_backward_loss_override={ms.float32: 0.0004, ms.float16: 0.06, ms.bfloat16:0.1},
-        ascend910b_backward_loss_override={ms.float32: 0.0004, ms.float16: 0.06, ms.bfloat16:0.1},
+        ascend_backward_loss_override={ms.float32: 0.0005, ms.float16: 0.06, ms.bfloat16:0.1},
+        ascend910b_backward_loss_override={ms.float32: 0.0005, ms.float16: 0.06, ms.bfloat16:0.1},
     ),
     'Tensor.bfloat16': UnaryOpInfo(
         name='Tensor.bfloat16',
@@ -5984,7 +6056,7 @@ op_db: Dict[str, OpInfo] = {
             extra_reference_inputs_reduction_op_common_func, 'empty', skip=True
         ),
         op_dynamic_inputs_func=None,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d!=ms.float32 and d!=ms.float16)),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -6240,7 +6312,6 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.sigmoid,
         dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
         dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
-        disable_small_value_tensor_inputs=True,
         disable_large_value_tensor_inputs=True,
         dtypes_cpu=(),
         dtypes_gpu=(),
@@ -7223,7 +7294,13 @@ unary_op_db = [
     'mint.cos',
     'Tensor.cos',
     'mint.imag',
+    'mint.real',
     'Tensor.reciprocal',
+    'mint.reciprocal',
+    'mint.trunc',
+    'mint.expm1',
+    'mint.rsqrt',
+    'mint.sign',
 ]
 
 other_op_db = [

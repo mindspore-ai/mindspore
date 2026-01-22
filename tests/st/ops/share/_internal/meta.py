@@ -27,14 +27,14 @@ import warnings
 import torch
 import numpy as np
 import mindspore as ms
-from mindspore import nn
+from mindspore import nn, ops
 from mindspore._c_expression import MSContext
 from mindspore.common.dtype import _dtype_to_nptype
 from mindspore.common.api import _pynative_executor
 from typing import Optional, Union, List, final
 from tests.st.utils.test_utils import single_golden_compare, double_golden_compare, OpTypes
 from tests.st.ops.share._internal.utils import (
-    OpSampleInput, OpDynamicInput, is_op_input_dynamic, make_tensor, ms_asnumpy
+    OpSampleInput, OpDynamicInput, is_op_input_dynamic, make_tensor, ms_asnumpy, torch_asnumpy
 )
 from tests.st.ops.share._op_info.op_info import OpInfo
 from tests.st.ops.share._op_info.op_common import get_default_loss, dtypes_extra_uint
@@ -321,6 +321,25 @@ class OpsFactory():
                     return ms_asnumpy(tensor)
                 return tensor
 
+            #910A will probably exceed limit 65504 at float16 or 3.4028235e+38 at float32 while calculate some
+            #operators， mindspore will generate 65504/3.4028235e+38 while torch offer inf
+            def _convert_910a_float_limit_to_inf(actual, expect, actual_dtype):
+                if self._device=='ascend' and MSContext.get_instance().get_ascend_soc_version() == "ascend910":
+                    if actual_dtype==ms.float16 and isinstance(expect, torch.Tensor):
+                        actual = ops.where(ops.logical_and(actual >= 65504,
+                                 ms.Tensor(torch_asnumpy(torch.isinf(expect)))),
+                                 ms.Tensor(np.inf, dtype=actual_dtype),actual)
+                        actual = ops.where(ops.logical_and(actual <= -65504,
+                                        ms.Tensor(torch_asnumpy(torch.isneginf(expect)))),
+                                           ms.Tensor(-np.inf, dtype=actual_dtype), actual)
+                    elif actual_dtype==ms.float32 and isinstance(expect, torch.Tensor):
+                        actual = ops.where(ops.logical_and(actual >= 3.4028235e+38,
+                                        ms.Tensor(torch_asnumpy(torch.isinf(expect)))),
+                                           ms.Tensor(np.inf, dtype=actual_dtype), actual)
+                        actual = ops.where(ops.logical_and(actual <= -3.4028235e+38,
+                                        ms.Tensor(torch_asnumpy(torch.isneginf(expect)))),
+                                           ms.Tensor(-np.inf, dtype=actual_dtype), actual)
+                return actual
             if isinstance(actual, (ms.Tensor, torch.Tensor, np.ndarray)):
                 actual_dtype = actual.dtype
             else:
@@ -337,6 +356,7 @@ class OpsFactory():
             rtol = loss if rtol is None else rtol
             atol = loss if atol is None else atol
 
+            actual = _convert_910a_float_limit_to_inf(actual, expect, actual_dtype)
             actual = convert_tensor_to_nparray(actual)
             expect = convert_tensor_to_nparray(expect)
 
@@ -437,7 +457,8 @@ class OpsFactory():
             if self._inplace_op:
                 sample_input = sample_input.copy()
             sample_input = sample_input.astorch(convert_half_to_float=self._convert_half_to_float,
-                                                convert_extra_uint=self._convert_extra_uint)
+                                                convert_extra_uint=self._convert_extra_uint,
+                            convert_scalar_to_tensor=getattr(self.op_info, 'convert_ref_scalar_to_tensor',False))
             op_input, op_args, op_kwargs = sample_input.op_input, sample_input.op_args, sample_input.op_kwargs
             outi = torch_fn(op_input, *op_args, **op_kwargs)
             out.append(outi)
@@ -577,7 +598,8 @@ class OpsFactory():
         for sample_input in self._sample_inputs:
             if self._inplace_op:
                 sample_input = sample_input.copy()
-            sample_input = sample_input.astorch(convert_half_to_float=self._convert_half_to_float)
+            sample_input = sample_input.astorch(convert_half_to_float=self._convert_half_to_float,
+                            convert_scalar_to_tensor=getattr(self.op_info, 'convert_ref_scalar_to_tensor',False))
             op_input, op_args, op_kwargs = sample_input.op_input, sample_input.op_args, sample_input.op_kwargs
             # handle op_input
             tensor_inputs = []
@@ -708,7 +730,8 @@ class OpsFactory():
             if self._inplace_op:
                 running_input = running_input.copy()
             running_input = running_input.astorch(convert_half_to_float=self._convert_half_to_float,
-                                                  convert_extra_uint=self._convert_extra_uint)
+                                                  convert_extra_uint=self._convert_extra_uint,
+                            convert_scalar_to_tensor=getattr(self.op_info, 'convert_ref_scalar_to_tensor',False))
             op_input, op_args, op_kwargs = running_input.op_input, running_input.op_args, running_input.op_kwargs
             outi = torch_fn(op_input, *op_args, **op_kwargs)
             out.append(outi)
@@ -800,7 +823,8 @@ class OpsFactory():
         for running_input in self._dynamic_inputs.op_running_inputs:
             if self._inplace_op:
                 running_input = running_input.copy()
-            running_input = running_input.astorch(convert_half_to_float=self._convert_half_to_float)
+            running_input = running_input.astorch(convert_half_to_float=self._convert_half_to_float,
+                         convert_scalar_to_tensor=getattr(self.op_info, 'convert_ref_scalar_to_tensor',False))
             op_input, op_args, op_kwargs = running_input.op_input, running_input.op_args, running_input.op_kwargs
 
             tensor_inputs = []

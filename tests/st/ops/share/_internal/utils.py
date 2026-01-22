@@ -27,6 +27,7 @@ import mindspore as ms
 from mindspore.common.api import _pynative_executor
 from mindspore.common.dtype import _dtype_to_nptype
 from mindspore._c_expression import MSContext
+from tests.st.ops.share._op_info.op_common import dtypes_common
 from typing import Optional, Tuple, Union, Dict, List, Any
 
 class OpSampleInput:
@@ -61,13 +62,13 @@ class OpSampleInput:
         self.sample_name = sample_name if sample_name is not None else "UnknownSample"
         self.loss = loss
 
-    def transform(self, fn, method_name):
+    def transform(self, fn, method_name, convert_scalar_to_tensor = False):
         """Apply a transformation recursively to op_input/op_args/op_kwargs.
 
         Args:
             fn: A callable used to transform each leaf element.
             method_name: Suffix appended to `sample_name` for traceability.
-
+            convert_scalar_to_tensor: If True, convert scalar to Tensor.
         Returns:
             A new OpSampleInput with transformed fields.
         """
@@ -88,7 +89,10 @@ class OpSampleInput:
             elif isinstance(x, dict):
                 return {k: _transform(v) for k, v in x.items()}
             else:
-                return x
+                if convert_scalar_to_tensor:
+                    return _transform_to(x)
+                else:
+                    return x
 
         transformed_op_input, transformed_op_args, transformed_op_kwargs = (
             _transform(self.op_input),
@@ -178,13 +182,14 @@ class OpSampleInput:
             *,
             convert_half_to_float: Optional[bool] = False,
             convert_extra_uint: Optional[bool] = False,
+            convert_scalar_to_tensor: Optional[bool] = False,
     ):
         """Convert MindSpore tensors and dtypes to PyTorch counterparts.
 
         Args:
             convert_half_to_float: Cast float16 to float32 for reference backends.
             convert_extra_uint: Convert extra uint dtypes to supported types.
-
+            convert_scalar_to_tensor : Convert scalar dtypes to supported types.
         Returns:
             A new OpSampleInput converted for PyTorch execution.
         """
@@ -211,12 +216,14 @@ class OpSampleInput:
                                     convert_half_to_float=convert_half_to_float,
                                     convert_extra_uint=convert_extra_uint)
                 return torch.tensor(np_arr, dtype=torch.bfloat16) if x.dtype == ms.bfloat16 else torch.tensor(np_arr)
+            elif convert_scalar_to_tensor and type(x) in dtypes_common:
+                return torch.tensor(x)
             elif x in ms.dtype.all_types:
                 return _dtype_to_torch_dtype(x)
 
             return x
 
-        return self.transform(_astorch, 'astorch')
+        return self.transform(_astorch, 'astorch', convert_scalar_to_tensor = convert_scalar_to_tensor)
 
     def discontiguous(self):
         """Make all Tensor leaves discontiguous in memory when possible."""

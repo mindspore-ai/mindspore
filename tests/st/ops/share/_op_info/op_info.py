@@ -761,6 +761,7 @@ class BinaryOpInfo(OpInfo):
             supports_left_python_scalar: Optional[bool] = True,
             supports_right_python_scalar: Optional[bool] = True,
             supports_both_python_scalar: Optional[bool] = True,
+            convert_ref_scalar_to_tensor: Optional[bool] = False,
             disable_small_value_tensor_inputs: Optional[bool] = False,
             disable_large_value_tensor_inputs: Optional[bool] = False,
             disable_broadcasting_and_discontiguous_tensor_inputs: Optional[bool] = False,
@@ -779,6 +780,7 @@ class BinaryOpInfo(OpInfo):
         self.supports_left_python_scalar = supports_left_python_scalar
         self.supports_right_python_scalar = supports_right_python_scalar
         self.supports_both_python_scalar = supports_both_python_scalar
+        self.convert_ref_scalar_to_tensor = convert_ref_scalar_to_tensor
         self.op_error_inputs_func = error_inputs_binary_op_common_func(op_error_inputs_func)
         self.disable_small_value_tensor_inputs = disable_small_value_tensor_inputs
         self.disable_large_value_tensor_inputs = disable_large_value_tensor_inputs
