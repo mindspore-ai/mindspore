@@ -4387,8 +4387,7 @@ def std_mean(input, axis=None, ddof=0, keepdims=False):
 
 def std_mean_ext(input, dim=None, *, correction=1, keepdim=False):
     r"""
-    By default, return the standard deviation and mean of each dimension in Tensor.
-    If dim is a dimension list, calculate the standard deviation and mean of the corresponding dimension.
+    Compute the standard deviation and mean of the tensor along a specified dimension.
 
     The standard deviation (:math:`\sigma`) is calculated as:
 
@@ -4403,39 +4402,54 @@ def std_mean_ext(input, dim=None, *, correction=1, keepdim=False):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        input (Tensor): The input tensor. Supported dtypes: float16, float32.
+        input (Tensor): The input tensor. Supported dtypes: mindspore.float16, mindspore.float32.
         dim (Union[int, tuple(int), list(int)], optional):
-            Specify the dimensions for calculating standard deviation and mean. Default value: ``None``.
+            Specify the dimensions for computation. If ``None`` , compute all elements in the `input` . 
+                Default ``None`` .
 
     Keyword Args:
         correction (int, optional): Difference between the sample size and sample degrees of freedom.
-            Defaults to Bessel's correction. Default: ``1``.
-        keepdim (bool, optional): Whether to preserve the dimensions of the output Tensor.
-            If True, retain the reduced dimension with a size of 1. Otherwise, remove the dimensions.
-            Default value: ``False``.
+            Defaults to Bessel's correction. Default ``1`` .
+        keepdim (bool, optional): Whether the output tensor has dim retained.
+            If ``True`` , retain the reduced dimension with a size of 1. Otherwise, remove the dimensions.
+            Default ``False`` .
 
     Returns:
-        A tuple of standard deviation and mean.
+        Tuple(std, mean) of 2 tensors.
 
     Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `dim` is not one of the following data types: int, tuple, list, or Tensor.
-        TypeError: If `keepdim` is not a bool.
         ValueError: If `dim` is out of range.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
-        >>> input = ms.Tensor([[1, 2, 3, 4], [-1, 1, 4, -10]], ms.float32)
-        >>> output_std, output_mean = ms.ops.function.math_func.std_mean_ext(input, 1, correction=2, keepdim=True)
-        >>> print(output_std)
-        [[1.5811388]
-         [7.3824115]]
-        >>> print(output_mean)
-        [[ 2.5]
-         [-1.5]]
+        >>> import mindspore
+        >>> input = mindspore.tensor([[1.0, 2.0, 3.0, 4.0], [-1.0, 1.0, 4.0, -10.0]])
+        >>> output_std, output_mean = mindspore.mint.std_mean(input)
+        >>> output_std
+        Tensor(shape=[], dtype=Float32, value= 4.56696)
+        >>> output_mean
+        Tensor(shape=[], dtype=Float32, value= 0.5)
+        >>> output_std, output_mean = mindspore.mint.std_mean(input, dim=0)
+        >>> output_std
+        Tensor(shape=[4], dtype=Float32, value= [ 1.41421354e+00,  7.07106769e-01,  7.07106769e-01,  9.89949512e+00])
+        >>> output_mean
+        Tensor(shape=[4], dtype=Float32, value= [ 0.00000000e+00,  1.50000000e+00,  3.50000000e+00, -3.00000000e+00])
+        >>> output_std, output_mean = mindspore.mint.std_mean(input, dim=1, keepdim=True)
+        >>> output_std
+        Tensor(shape=[2, 1], dtype=Float32, value=
+        [[ 1.29099441e+00],
+         [ 6.02771425e+00]])
+        >>> output_mean
+        Tensor(shape=[2, 1], dtype=Float32, value=
+        [[ 2.50000000e+00],
+         [-1.50000000e+00]])
+        >>> output_std, output_mean = mindspore.mint.std_mean(input, dim=1, correction=2)
+        >>> output_std
+        Tensor(shape=[2], dtype=Float32, value= [ 1.58113885e+00,  7.38241148e+00])
+        >>> output_mean
+        Tensor(shape=[2], dtype=Float32, value= [ 2.50000000e+00, -1.50000000e+00])
     """
     return std_mean_op(input, dim, correction, keepdim)
 
