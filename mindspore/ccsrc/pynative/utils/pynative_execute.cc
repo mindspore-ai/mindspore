@@ -33,6 +33,7 @@
 #include "ir/cell.h"
 #include "include/utils/python_utils.h"
 #include "include/pynative/utils/pyboost/kernel_mod_cache.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "include/frontend/jit/ps/pass_interface.h"
 #include "include/runtime/pipeline/pipeline.h"
 #include "include/utils/pynative/adapter.h"
@@ -201,6 +202,7 @@ void PyNativeExecutor::ClearRes() const {
   }
   ad::ClearDFunctor();
   pipeline::ReclaimOptimizer();
+  (void)kernel::pyboost::OpRunStatus::Get().GetLastOp();
   MS_LOG(DEBUG) << "Clear all res";
 }
 
