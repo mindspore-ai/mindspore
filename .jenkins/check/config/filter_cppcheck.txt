@@ -2,6 +2,7 @@
 "mindspore/mindspore/ccsrc/debug/anf_ir_utils.cc"                                                     "stlFindInsert"
 "mindspore/mindspore/ccsrc/frontend/jit/ps/parse/parse.cc"                                            "stlFindInsert"
 "mindspore/mindspore/ccsrc/frontend/jit/ps/parse/data_converter.cc"                                   "stlFindInsert"
+"mindspore/mindspore/ccsrc/utils/hyper_offload/hyper_offload.cc"                                      "stlFindInsert"
 "mindspore/mindspore/ccsrc/frontend/jit/ps/parse/data_converter.cc"                                   "variableScope"
 "mindspore/mindspore/ccsrc/backend/graph_compiler/transform.cc"                                       "containerOutOfBounds"
 "mindspore/mindspore/ccsrc/backend/graph_compiler/transform.cc"                                       "constVariable"

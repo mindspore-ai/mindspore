@@ -18,6 +18,8 @@
 #define MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_UTILS_H_
 
 #include <vector>
+#include <string>
+#include <utility>
 #include <optional>
 
 #include "ir/anf.h"
@@ -30,6 +32,33 @@ namespace utils {
 namespace hyper_offload {
 using KernelWithIndex = common::KernelWithIndex;
 using HandleNewNodeCallback = std::function<void(const AnfNodePtr &new_node, const AnfNodePtr &context_node)>;
+
+// Indicate the type of data for FreeData or AssignData node.
+constexpr size_t kDeviceType = 0;
+constexpr size_t kHostType = 1;
+
+// Indicate the stream id for send and recv node.
+constexpr size_t kCalculateStreamId = 0;
+constexpr size_t kTransferStreamId = 1;
+
+// Attribute key for hyper offload nodes. HyperOffload nodes for the same data should have the same value.
+constexpr auto kHyperOffloadId = "hyper_offload_data_id";
+// Attribute key for unique id for pair of send and recv node.
+constexpr auto kHyperOffloadEventId = "hyper_offload_event_id";
+// Attribute key for stream id for send and recv node.
+constexpr auto kHyperOffloadEventStreamId = "hyper_offload_event_stream_id";
+// Attribute key for event type for event node.
+constexpr auto kHyperOffloadEventNodeType = "hyper_offload_event_node_type";
+
+const PrimitivePtr kFreeDataPrimitive = std::make_shared<Primitive>("FreeData");
+const PrimitivePtr kAssignDataPrimitive = std::make_shared<Primitive>("AssignData");
+
+enum EventNodeType {
+  kSendRecvBeforeD2H,
+  kSendRecvAfterD2H,
+  kSendRecvAfterH2D,
+  kFreeAndSwitchData,
+};
 
 struct UserInfo {
   KernelWithIndex node;
@@ -101,6 +130,32 @@ COMMON_EXPORT std::optional<ParameterPtr> FindParameterByRefName(const FuncGraph
 COMMON_EXPORT std::optional<ParameterPtr> GetRemoteParameter(const FuncGraphPtr &graph, const AnfNodePtr &node);
 // Update the input of a node at a specific index.
 COMMON_EXPORT void UpdateNodeInput(const CNodePtr &node, const size_t input_index, const AnfNodePtr &new_input_node);
+
+// Factor class to create send and recv node.
+class COMMON_EXPORT EventNodeFactory {
+ public:
+  explicit EventNodeFactory(const FuncGraphPtr &fg) : fg_(fg), event_id_(0) {}
+  std::pair<CNodePtr, CNodePtr> CreateSendRecvPair(size_t send_stream_id, size_t recv_stream_id, EventNodeType type,
+                                                   const AnfNodePtr &data_node);
+
+ private:
+  FuncGraphPtr fg_;
+  uint32_t event_id_;
+};
+
+// Build FreeData node with kDeviceType or kHostType.
+COMMON_EXPORT AnfNodePtr BuildFreeDataNode(const FuncGraphPtr &fg, const AnfNodePtr &node, size_t type);
+// Build AssignData node with kDeviceType or kHostType.
+COMMON_EXPORT AnfNodePtr BuildAssignDataNode(const FuncGraphPtr &fg, const AnfNodePtr &node,
+                                             const AnfNodePtr &data_node, size_t type);
+// Get the HyperOffloadId from a node.
+COMMON_EXPORT std::optional<size_t> GetHyperOffloadId(const AnfNodePtr &node);
+// Get the node type (kDeviceType or kHostType) for FreeData or AssignData node.
+COMMON_EXPORT std::optional<size_t> GetFreeOrAssignNodeType(const AnfNodePtr &node);
+// Get the stream id for Send or Recv node.
+COMMON_EXPORT std::optional<size_t> GetSendOrRecvStreamId(const AnfNodePtr &node);
+// Get the EventNodeType from a node.
+COMMON_EXPORT std::optional<EventNodeType> GetEventNodeType(const AnfNodePtr &node);
 }  // namespace hyper_offload
 }  // namespace utils
 }  // namespace mindspore

@@ -31,6 +31,11 @@ using utils::hyper_offload::IsD2HNode;
 using utils::hyper_offload::IsH2DNode;
 using utils::hyper_offload::IsViewOrInplaceNode;
 
+struct EventPlan {
+  CNodePtr send_insert_after;
+  CNodePtr recv_insert_after;
+};
+
 struct ConditionSwitchInfo {
   CNodePtr switch_cnode;
   std::string true_subgraph;
@@ -53,13 +58,15 @@ class KernelHyperOffloadOptimizer {
   void AddEventToHyperOffloadOps(const KernelGraphPtr &kernel_graph);
 
  private:
-  static bool EnableHyperOffloadForGraph(const KernelGraphPtr &kernel_graph);
-  static bool EnableHyperOffloadParameterForGraph(const KernelGraphPtr &kernel_graph);
-  static bool EnableHyperOffloadActivationForGraph(const KernelGraphPtr &kernel_graph);
-  static HyperOffloadInput GenerateHyperOffloadInput(const KernelGraphPtr &kernel_graph);
-  static void UpdateRefMapForHyperOffloadInput(const KernelGraphPtr &kernel_graph);
+  bool EnableHyperOffloadForGraph(const KernelGraphPtr &kernel_graph);
+  bool EnableHyperOffloadParameterForGraph(const KernelGraphPtr &kernel_graph);
+  bool EnableHyperOffloadActivationForGraph(const KernelGraphPtr &kernel_graph);
+  HyperOffloadInput GenerateHyperOffloadInput(const KernelGraphPtr &kernel_graph);
+  void UpdateRefMapForHyperOffloadInput(const KernelGraphPtr &kernel_graph);
   void ApplyHyperOffloadOptimizer(const KernelGraphPtr &kernel_graph);
-  std::vector<mindspore::utils::hyper_offload::EventPlan> events_;
+  std::pair<CNodePtrList, std::vector<EventPlan>> GenerateExecutionOrderAndEventPlan(const CNodePtrList &exec_order);
+
+  std::vector<EventPlan> events_;
 };
 
 void ReorderControlFlowNodes(const KernelGraphPtr &kernel_graph);

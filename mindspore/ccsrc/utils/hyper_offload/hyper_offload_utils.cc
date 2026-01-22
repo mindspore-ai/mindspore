@@ -247,6 +247,103 @@ void UpdateNodeInput(const CNodePtr &node, const size_t input_index, const AnfNo
   MS_EXCEPTION_IF_NULL(node);
   node->set_input(input_index, new_input_node);
 }
+
+std::pair<CNodePtr, CNodePtr> EventNodeFactory::CreateSendRecvPair(size_t send_stream_id, size_t recv_stream_id,
+                                                                   EventNodeType type, const AnfNodePtr &data_node) {
+  MS_EXCEPTION_IF_CHECK_FAIL(send_stream_id != recv_stream_id, "Send and recv stream id should not be the same");
+  auto send_prim = std::make_shared<Primitive>(prim::kPrimSend->name());
+  auto recv_prim = std::make_shared<Primitive>(prim::kPrimReceive->name());
+  auto send_node = fg_->NewCNode({NewValueNode(send_prim), data_node});
+  auto recv_node = fg_->NewCNode({NewValueNode(recv_prim), data_node});
+
+  MS_LOG(INFO) << "CreateSendRecvPair event_id_: " << event_id_;
+
+  // Add pair send, recv node with the same event id.
+  send_node->set_user_data(kHyperOffloadEventId, std::make_shared<uint32_t>(event_id_));
+  recv_node->set_user_data(kHyperOffloadEventId, std::make_shared<uint32_t>(event_id_));
+  ++event_id_;
+
+  // Add corresponding stream_id to pair send and recv node.
+  send_node->set_user_data(kHyperOffloadEventStreamId, std::make_shared<size_t>(send_stream_id));
+  recv_node->set_user_data(kHyperOffloadEventStreamId, std::make_shared<size_t>(recv_stream_id));
+  // Add event type to pair send and recv node.
+  send_node->set_user_data(kHyperOffloadEventNodeType, std::make_shared<EventNodeType>(type));
+  recv_node->set_user_data(kHyperOffloadEventNodeType, std::make_shared<EventNodeType>(type));
+  return std::pair<CNodePtr, CNodePtr>(send_node, recv_node);
+}
+
+AnfNodePtr BuildFreeDataNode(const FuncGraphPtr &fg, const AnfNodePtr &node, size_t type) {
+  MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(node);
+  auto free_node = fg->NewCNode({NewValueNode(kFreeDataPrimitive), node, NewValueNode(MakeValue(type))});
+  free_node->set_user_data(kHyperOffloadEventNodeType, std::make_shared<EventNodeType>(kFreeAndSwitchData));
+  return free_node;
+}
+
+AnfNodePtr BuildAssignDataNode(const FuncGraphPtr &fg, const AnfNodePtr &node, const AnfNodePtr &data_node,
+                               size_t type) {
+  MS_EXCEPTION_IF_NULL(fg);
+  MS_EXCEPTION_IF_NULL(node);
+  MS_EXCEPTION_IF_NULL(data_node);
+  auto assign_node = fg->NewCNode({NewValueNode(kAssignDataPrimitive), node, data_node, NewValueNode(MakeValue(type))});
+  assign_node->set_user_data(kHyperOffloadEventNodeType, std::make_shared<EventNodeType>(kFreeAndSwitchData));
+  return assign_node;
+}
+
+std::optional<size_t> GetHyperOffloadId(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto user_data = node->user_data<size_t>(kHyperOffloadId);
+  if (user_data != nullptr) {
+    return *user_data;
+  }
+  return std::nullopt;
+}
+
+std::optional<size_t> GetFreeOrAssignNodeType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (IsPrimitiveCNode(node, kFreeDataPrimitive)) {
+    auto cnode = node->cast<CNodePtr>();
+    constexpr size_t free_data_input_size = 3;
+    MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() == free_data_input_size,
+                               "FreeData node input size is not correct");
+    constexpr size_t type_input_index = 2;
+    auto value_node = cnode->input(type_input_index)->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    return GetValue<size_t>(value_node->value());
+  }
+  if (IsPrimitiveCNode(node, kAssignDataPrimitive)) {
+    auto cnode = node->cast<CNodePtr>();
+    constexpr size_t assign_data_input_size = 4;
+    MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() == assign_data_input_size,
+                               "AssignData node input size is not correct");
+    constexpr size_t type_input_index = 3;
+    auto value_node = cnode->input(type_input_index)->cast<ValueNodePtr>();
+    MS_EXCEPTION_IF_NULL(value_node);
+    return GetValue<size_t>(value_node->value());
+  }
+  return std::nullopt;
+}
+
+std::optional<size_t> GetSendOrRecvStreamId(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return std::nullopt;
+  }
+  auto user_data = node->user_data<size_t>(kHyperOffloadEventStreamId);
+  if (user_data != nullptr) {
+    return *user_data;
+  }
+  return std::nullopt;
+}
+
+std::optional<EventNodeType> GetEventNodeType(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  auto user_data = node->user_data<EventNodeType>(kHyperOffloadEventNodeType);
+  if (user_data != nullptr) {
+    return *user_data;
+  }
+  return std::nullopt;
+}
 }  // namespace hyper_offload
 }  // namespace utils
 }  // namespace mindspore

@@ -17,6 +17,7 @@
 #include "utils/hyper_offload/hyper_offload_operation.h"
 
 #include <algorithm>
+#include <sstream>
 #include "utils/log_adapter.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"
 
@@ -123,6 +124,65 @@ void HyperOffloadOperations::MoveAhead(const CNodePtr &node, size_t ahead_distan
 const NodeOperations &HyperOffloadOperations::GetPreOperations() const { return pre_operations_; }
 
 const std::vector<NodeOperations> &HyperOffloadOperations::GetOperations() const { return operations_; }
+
+std::string HyperOffloadOperations::ToString(const CNodePtrList &origin_execution_order) const {
+  std::ostringstream oss;
+
+  if (operations_.size() != origin_execution_order.size()) {
+    oss << "HyperOffloadOperations size mismatch: operations_ size " << operations_.size()
+        << " vs origin execution order size " << origin_execution_order.size();
+    return oss.str();
+  }
+
+  // Helper to print added nodes with specific attributes
+  auto print_added_node = [&](const CNodePtr &node) {
+    oss << "    [Added] " << node->DebugString();
+    auto event_id_ptr = node->user_data<uint32_t>(kHyperOffloadEventId);
+    if (event_id_ptr != nullptr) {
+      oss << " EventId: " << *event_id_ptr;
+    }
+    auto pair_id_ptr = node->user_data<size_t>(kHyperOffloadEventStreamId);
+    if (pair_id_ptr != nullptr) {
+      oss << " StreamId: " << *pair_id_ptr;
+    }
+
+    auto offload_id = GetHyperOffloadId(node);
+    if (offload_id.has_value()) {
+      oss << " OffloadId: " << offload_id.value();
+    }
+
+    oss << "\n";
+  };
+
+  oss << "========== HyperOffloadOperations Trace Start ==========" << "\n";
+
+  // Print Pre-Operations
+  if (!pre_operations_.operations.empty()) {
+    oss << "[Pre-Operations]:\n";
+    for (const auto &node : pre_operations_.operations) {
+      print_added_node(node);
+    }
+  }
+
+  // Print Original Order and Attached Operations
+  for (size_t i = 0; i < origin_execution_order.size(); ++i) {
+    auto origin_node = origin_execution_order[i];
+    oss << "[" << i << "] [Origin] " << origin_node->DebugString();
+    auto origin_offload_id = GetHyperOffloadId(origin_node);
+    if (origin_offload_id.has_value()) {
+      oss << " OffloadId: " << origin_offload_id.value();
+    }
+    oss << "\n";
+
+    const auto &added_ops = operations_[i].operations;
+    for (const auto &node : added_ops) {
+      print_added_node(node);
+    }
+  }
+
+  oss << "========== HyperOffloadOperations Trace End ==========";
+  return oss.str();
+}
 }  // namespace hyper_offload
 }  // namespace utils
 }  // namespace mindspore

@@ -18,10 +18,12 @@
 #define MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_OPERATION_H_
 
 #include <vector>
+#include <string>
 #include <optional>
 #include <algorithm>
 
 #include "ir/anf.h"
+#include "include/utils/visible.h"
 
 namespace mindspore {
 namespace utils {
@@ -31,7 +33,7 @@ struct NodeOperations {
   CNodePtrList operations;
 };
 
-class HyperOffloadOperations {
+class COMMON_EXPORT HyperOffloadOperations {
  public:
   // Initialize the operations list with a given size.
   void Init(size_t size);
@@ -60,6 +62,12 @@ class HyperOffloadOperations {
   // Get all H2D nodes in the operations.
   CNodePtrList GetAllH2DNodes() const;
 
+  // Convert the operations to a string with the original execution order.
+  std::string ToString(const CNodePtrList &origin_execution_order) const;
+
+  // Remove a node from the operations.
+  void RemoveNode(const CNodePtr &node);
+
  private:
   // Operations corresponding to each position in the original execution sequence
   std::vector<NodeOperations> operations_;
@@ -72,9 +80,6 @@ class HyperOffloadOperations {
     // Valid only when is_pre=false, indicates attached after original_order[index]
     size_t index = 0;
   };
-
-  // Remove a node from the operations.
-  void RemoveNode(const CNodePtr &node);
 
   // Get the attachment position of a node.
   AttachPosition GetAttachPosition(const CNodePtr &node) const;
