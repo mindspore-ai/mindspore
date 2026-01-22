@@ -4460,8 +4460,7 @@ def std_mean_ext(input, dim=None, *, correction=1, keepdim=False):
 
 def var_mean_ext(input, dim=None, *, correction=1, keepdim=False):
     r"""
-    By default, return the variance and mean of each dimension in Tensor.
-    If dim is a dimension list, calculate the variance and mean of the corresponding dimension.
+    Compute the variance and the mean of the tensor along a specified dimension.
 
     The variance (:math:`\sigma ^2`) is calculated as:
 
@@ -4476,39 +4475,40 @@ def var_mean_ext(input, dim=None, *, correction=1, keepdim=False):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        input (Tensor): The input tensor. Supported dtypes: float16, float32.
+        input (Tensor): The input tensor. 
         dim (Union[int, tuple(int), list(int)], optional):
-            Specify the dimensions for calculating variance and mean. Default value: ``None``.
+            Specify the dimensions for computation. Default ``None``.
 
     Keyword Args:
         correction (int, optional): Difference between the sample size and sample degrees of freedom.
-            Defaults to Bessel's correction. Default: ``1``.
-        keepdim (bool, optional): Whether to preserve the dimensions of the output Tensor.
-            If True, retain the reduced dimension with a size of 1. Otherwise, remove the dimensions.
-            Default value: ``False``.
+            Defaults to Bessel's correction, value ``1``.
+        keepdim (bool, optional): Whether the output tensor has dim retained.
+            Default ``False``.
 
     Returns:
-        A tuple of variance and mean.
-
-    Raises:
-        TypeError: If `input` is not a Tensor.
-        TypeError: If `dim` is not one of the following data types: int, tuple, list, or Tensor.
-        TypeError: If `keepdim` is not a bool.
-        ValueError: If `dim` is out of range.
+        Tuple(var, mean) of 2 tensors.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
-        >>> input = ms.Tensor([[1, 2, 3, 4], [-1, 1, 4, -10]], ms.float32)
-        >>> output_var, output_mean = ms.ops.function.math_func.var_mean_ext(input, 1, correction=2, keepdim=True)
-        >>> print(output_var)
-        [[ 2.5]
-         [54.5]]
-        >>> print(output_mean)
-        [[ 2.5]
-         [-1.5]]
+        >>> import mindspore
+        >>> input = mindspore.tensor([[1, 3, 4, 2], [4, 2, 5, 3], [5, 4, 2, 3]], mindspore.float32)
+        >>> output = mindspore.ops.function.math_func.var_mean_ext(input, 0, correction=1)
+        >>> print(output)
+        (Tensor(shape=[4], dtype=Float32, value= 
+        [ 4.33333302e+00,  1.00000000e+00,  2.33333349e+00,  3.33333313e-01]),
+        Tensor(shape=[4], dtype=Float32, value= 
+        [ 3.33333349e+00,  3.00000000e+00,  3.66666675e+00,  2.66666675e+00]))
+        >>> output = mindspore.ops.function.math_func.var_mean_ext(input, 1, correction=2, keepdim=True)
+        >>> print(output)
+        (Tensor(shape=[3, 1], dtype=Float32, value=
+        [[ 2.50000000e+00],
+         [ 2.50000000e+00],
+         [ 2.50000000e+00]]), Tensor(shape=[3, 1], dtype=Float32, value=
+         [[ 2.50000000e+00],
+          [ 3.50000000e+00],
+          [ 3.50000000e+00]]))
     """
     return var_mean_op(input, dim, correction, keepdim)
 
