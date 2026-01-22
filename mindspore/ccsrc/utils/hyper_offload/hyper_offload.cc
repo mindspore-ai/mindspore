@@ -37,6 +37,10 @@ HyperOffloadOptimizer::HyperOffloadOptimizer(const HyperOffloadInput &input)
 void HyperOffloadOptimizer::AddSingleParameterOperations(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph_);
   MS_EXCEPTION_IF_NULL(node);
+  auto node_enable_offload = GetNodeEnableOffload(node);
+  if (node_enable_offload.has_value() && !node_enable_offload.value()) {
+    return;
+  }
   if (IsPrimitiveCNode(node, prim::kPrimConditionSwitch)) {
     return;
   }
@@ -284,8 +288,16 @@ void HyperOffloadOptimizer::AssignHyperOffloadIds(const CNodePtrList &exec_order
 
 void HyperOffloadOptimizer::AdjustHyperOffloadNodePosition() {
   const auto &h2d_nodes = operations_.GetAllH2DNodes();
-  const size_t prefetch_distance = HyperOffloadConfig::GetInstance().prefetch_distance();
+  constexpr size_t data_index = 1;
   for (const auto &h2d_node : h2d_nodes) {
+    auto input_node = h2d_node->input(data_index);
+    AnfNodePtr data_node = input_node;
+    if (IsD2HNode(input_node)) {
+      auto d2h_node = input_node->cast<CNodePtr>();
+      data_node = d2h_node->input(data_index);
+    }
+    size_t prefetch_distance =
+      GetNodePrefetchDistance(data_node).value_or(HyperOffloadConfig::GetInstance().prefetch_distance());
     operations_.MoveAhead(h2d_node, prefetch_distance);
   }
 }

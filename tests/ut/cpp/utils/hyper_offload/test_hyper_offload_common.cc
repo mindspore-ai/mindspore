@@ -521,6 +521,203 @@ TEST_F(TestHyperOffloadCommon, TestAssignHyperOffloadIds_Tuple) {
   EXPECT_EQ(id0, id0_dup);
 }
 
+// Feature: HyperOffload.
+// Description: test enable_offload=false prevents node from being offloaded.
+// Expectation: Node with enable_offload=false should not be offloaded even if it meets offload conditions.
+TEST_F(TestHyperOffloadCommon, TestEnableOffloadFalse) {
+  auto graph = CreateSimpleGraph();
+  auto exec_order = CreateLargeExecutionOrder(graph);
+  
+  ASSERT_FALSE(exec_order.empty()) << "exec_order should not be empty";
+  auto node1 = exec_order[0];
+  auto cnode1 = node1->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode1);
+    cnode1->AddAttr("enable_offload", MakeValue(false));
+  
+  auto enable_opt = GetNodeEnableOffload(node1);
+  ASSERT_TRUE(enable_opt.has_value());
+    EXPECT_FALSE(enable_opt.value()) << "enable_offload should be false";
+  
+  auto user_info_list = CollectAllNodeUsers(exec_order);
+  DistanceBaseHyperOffloadStrategy strategy;
+  auto offload_info_list = strategy.Run(exec_order, user_info_list);
+  
+  bool node1_found = false;
+  for (const auto &offload_info : offload_info_list) {
+    if (offload_info.data_node.first == node1) {
+      node1_found = true;
+      break;
+    }
+  }
+  EXPECT_FALSE(node1_found) << "Node with enable_offload=false should not be offloaded";
+}
+
+// Feature: HyperOffload.
+// Description: test node prefetch_distance attribute is prioritized over global config.
+// Expectation: When node has prefetch_distance attribute, it should be used instead of global config.
+TEST_F(TestHyperOffloadCommon, TestNodePrefetchDistancePriority) {
+  auto graph = CreateSimpleGraph();
+  auto exec_order = CreateLargeExecutionOrder(graph);
+  
+  ASSERT_FALSE(exec_order.empty()) << "exec_order should not be empty";
+  constexpr size_t custom_prefetch_distance = 5;
+  auto node1 = exec_order[0];
+  auto cnode1 = node1->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode1);
+  cnode1->AddAttr("prefetch_distance", MakeValue(custom_prefetch_distance));
+  
+  auto prefetch_opt = GetNodePrefetchDistance(node1);
+  ASSERT_TRUE(prefetch_opt.has_value());
+  EXPECT_EQ(prefetch_opt.value(), custom_prefetch_distance) << "Node prefetch_distance should match set value";
+  
+  HyperOffloadInput input;
+  input.graph = graph;
+  input.exec_order = exec_order;
+  input.enable_offload_parameter = false;
+  input.enable_offload_activation = true;
+  
+  HyperOffloadOptimizer optimizer(input);
+  auto plan = optimizer.Run();
+  
+  EXPECT_NE(plan.graph, nullptr);
+  EXPECT_GE(plan.exec_order.size(), exec_order.size());
+  
+  auto find_h2d_for_node1 = [&](const CNodePtrList &order) -> size_t {
+    for (size_t i = 0; i < order.size(); ++i) {
+      if (IsH2DNode(order[i])) {
+        constexpr size_t data_index = 1;
+        auto input_node = order[i]->input(data_index);
+        if (IsD2HNode(input_node)) {
+          auto d2h_node = input_node->cast<CNodePtr>();
+          if (d2h_node->input(data_index) == node1) {
+            return i;
+          }
+        }
+      }
+    }
+    return order.size();
+  };
+  
+  size_t h2d_idx = find_h2d_for_node1(plan.exec_order);
+  EXPECT_NE(h2d_idx, plan.exec_order.size()) << "H2D node for node1 should exist";
+  
+  auto find_node1_idx = [&](const CNodePtrList &order) -> size_t {
+    for (size_t i = 0; i < order.size(); ++i) {
+      if (order[i] == node1) {
+        return i;
+      }
+    }
+    return order.size();
+  };
+  
+  size_t node1_idx = find_node1_idx(plan.exec_order);
+  EXPECT_NE(node1_idx, plan.exec_order.size()) << "node1 should exist in execution order";
+  
+  if (h2d_idx < node1_idx) {
+    size_t actual_distance = node1_idx - h2d_idx;
+    EXPECT_LE(actual_distance, custom_prefetch_distance) 
+      << "H2D node should be moved ahead according to prefetch_distance";
+  }
+}
+
+// Feature: HyperOffload.
+// Description: test node release_distance attribute is prioritized over global config.
+// Expectation: When node has release_distance attribute, it should be used instead of global config.
+TEST_F(TestHyperOffloadCommon, TestNodeReleaseDistancePriority) {
+  auto graph = CreateSimpleGraph();
+  auto exec_order = CreateLargeExecutionOrder(graph);
+  
+  ASSERT_FALSE(exec_order.empty()) << "exec_order should not be empty";
+  constexpr size_t custom_release_distance = 5;
+  auto node1 = exec_order[0];
+  auto cnode1 = node1->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode1);
+  cnode1->AddAttr("release_distance", MakeValue(custom_release_distance));
+  
+  auto release_opt = GetNodeReleaseDistance(node1);
+  ASSERT_TRUE(release_opt.has_value());
+  EXPECT_EQ(release_opt.value(), custom_release_distance) << "Node release_distance should match set value";
+  
+  HyperOffloadInput input;
+  input.graph = graph;
+  input.exec_order = exec_order;
+  input.enable_offload_parameter = false;
+  input.enable_offload_activation = true;
+  
+  HyperOffloadOptimizer optimizer(input);
+  auto plan = optimizer.Run();
+  
+  EXPECT_NE(plan.graph, nullptr);
+  EXPECT_GT(plan.exec_order.size(), exec_order.size()) 
+    << "Event nodes should be added when release_distance attribute is set";
+  
+  auto find_d2h_for_node1 = [&](const CNodePtrList &order) -> size_t {
+    for (size_t i = 0; i < order.size(); ++i) {
+      if (IsD2HNode(order[i])) {
+        constexpr size_t data_index = 1;
+        if (order[i]->input(data_index) == node1) {
+          return i;
+        }
+      }
+    }
+    return order.size();
+  };
+  
+  size_t d2h_idx = find_d2h_for_node1(plan.exec_order);
+  EXPECT_NE(d2h_idx, plan.exec_order.size()) << "D2H node for node1 should exist";
+  
+  size_t d2h_original_idx = 0;
+  for (size_t i = 0; i < exec_order.size(); ++i) {
+    if (exec_order[i] == node1) {
+      d2h_original_idx = i;
+      break;
+    }
+  }
+  
+  size_t target_idx = d2h_original_idx + custom_release_distance;
+  if (target_idx >= exec_order.size()) {
+    target_idx = exec_order.size() - 1;
+  }
+  
+  auto find_recv_completion = [&](const CNodePtrList &order, size_t start_idx) -> size_t {
+    for (size_t i = start_idx; i < order.size(); ++i) {
+      if (IsPrimitiveCNode(order[i], prim::kPrimReceive)) {
+        auto event_type = order[i]->user_data<EventNodeType>(kHyperOffloadEventNodeType);
+        if (event_type && *event_type == kSendRecvAfterD2H) {
+          constexpr size_t data_index = 1;
+          auto input_node = order[i]->input(data_index);
+          if (input_node == node1) {
+            return i;
+          }
+        }
+      }
+    }
+    return order.size();
+  };
+  
+  size_t recv_idx = find_recv_completion(plan.exec_order, d2h_idx);
+  EXPECT_NE(recv_idx, plan.exec_order.size()) << "Recv completion node should exist";
+  
+  auto find_target_node_idx = [&](const CNodePtrList &order, size_t target_original_idx) -> size_t {
+    if (target_original_idx >= exec_order.size()) {
+      return order.size();
+    }
+    auto target_node = exec_order[target_original_idx];
+    for (size_t i = 0; i < order.size(); ++i) {
+      if (order[i] == target_node) {
+        return i;
+      }
+    }
+    return order.size();
+  };
+  
+  size_t target_node_idx = find_target_node_idx(plan.exec_order, target_idx);
+  if (target_node_idx != plan.exec_order.size()) {
+    EXPECT_GE(recv_idx, target_node_idx) 
+      << "Recv completion should be inserted after target node according to release_distance";
+  }
+}
+
 }  // namespace hyper_offload
 }  // namespace utils
 }  // namespace mindspore
