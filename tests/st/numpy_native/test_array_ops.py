@@ -21,7 +21,7 @@ import mindspore.runtime as rt
 import mindspore.numpy as mnp
 from mindspore import context, Tensor, int32
 from mindspore.nn import Cell
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 from .utils import rand_int, run_non_kw_test, check_all_results, match_array, \
     rand_bool, match_res, run_multi_test, to_tensor, match_all_arrays

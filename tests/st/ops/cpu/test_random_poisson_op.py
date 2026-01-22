@@ -20,7 +20,7 @@ import mindspore as ms
 from mindspore import nn
 from mindspore.ops.function import random_func as R
 from mindspore import Tensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',

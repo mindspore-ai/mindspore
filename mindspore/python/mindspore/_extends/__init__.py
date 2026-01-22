@@ -18,6 +18,9 @@ Extension functions.
 Python functions that will be called in the c++ parts of MindSpore.
 """
 from __future__ import absolute_import
-from .utils import cell_attr_register
+from mindspore.graph._utils.cell_attr_register import cell_attr_register
+
+# Import the following modules to maintain compatibility
+import mindspore.graph._utils.cell_attr_register as utils
 
 __all__ = ["cell_attr_register"]

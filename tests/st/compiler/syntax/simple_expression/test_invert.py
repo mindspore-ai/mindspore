@@ -18,7 +18,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, context
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)

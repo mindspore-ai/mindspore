@@ -22,7 +22,7 @@ import mindspore.ops.operations as P
 from mindspore import Tensor, context, jit
 from mindspore import dtype as mstype
 from mindspore.ops.operations._inner_ops import TopTypeof
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)

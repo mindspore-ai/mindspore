@@ -24,7 +24,7 @@ from mindspore import Tensor
 from mindspore.ops.auto_generate.gen_ops_prim import IndexAddExt, Mul
 from mindspore.parallel.auto_parallel import AutoParallel
 from mindspore.parallel.shard import Layout
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn.utils import no_init_parameters
 from hccl_test.manage.api import Hccl
 

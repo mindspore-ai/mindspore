@@ -39,7 +39,7 @@ from mindspore.ops.function.math_func import isclose
 from mindspore.ops.auto_generate import abs
 from mindspore.ops.auto_generate import clone
 from mindspore.ops.function.array_func import full_like_ext as full_like
-from mindspore._check_jit_forbidden_api import jit_forbidden_register
+from mindspore.graph._utils.check_jit_forbidden_api import jit_forbidden_register
 from mindspore.graph._check_supported import jit_view_unsupported
 # 1
 from mindspore.ops.function.math_func import divide

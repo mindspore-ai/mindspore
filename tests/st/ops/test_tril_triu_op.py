@@ -20,7 +20,7 @@ import mindspore.nn as nn
 import mindspore as ms
 import mindspore.ops.operations.array_ops as P
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 
 class TrilNet(nn.Cell):

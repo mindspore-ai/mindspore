@@ -14,7 +14,7 @@
 # ============================================================================
 """test dict operations"""
 from mindspore import Tensor, jit
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore
 from mindspore import nn
 from mindspore.ops import operations as P

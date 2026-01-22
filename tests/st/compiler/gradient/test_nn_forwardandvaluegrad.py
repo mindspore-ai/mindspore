@@ -19,7 +19,7 @@ import torch
 import torch.nn as nn_pt
 from mindspore import nn, context, ops
 from mindspore import jit, Tensor, Parameter, ParameterTuple, dtype
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)

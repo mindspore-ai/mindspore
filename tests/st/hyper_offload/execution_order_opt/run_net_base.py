@@ -16,7 +16,7 @@
 import numpy as np
 from mindspore import dtype as mstype
 from mindspore import Tensor, jit
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 
 
 @jit(auto_offload="activaction")

@@ -40,7 +40,7 @@ from mindspore.ops.operations.nn_ops import PadV3
 from mindspore.ops.operations.nn_ops import ChannelShuffle
 from mindspore.ops.operations.nn_ops import TripletMarginLoss
 from mindspore.ops.operations._sequence_ops import TupleToTensor, TensorToTuple, ListToTensor
-from mindspore.common.api import _function_forbid_reuse
+from mindspore.graph.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import log_softmax, dense, prelu, celu, fast_gelu, silu, elu, sigmoid, relu6, \
     softmax_impl, swiglu, logsigmoid_op, kl_div_op, divs_op, l1_loss_ext, inplace_sigmoid
 from mindspore.ops.auto_generate import relu_op, inplace_relu_op

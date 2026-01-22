@@ -23,7 +23,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 from dump_test_utils import generate_dump_json
 from tests.mark_utils import arg_mark
 from tests.security_utils import security_off_wrap

@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import ops
 from mindspore import Tensor
 from mindspore.common import dtype
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from tests.mark_utils import arg_mark
 from tests.st.pi_jit.one_stage.test_utils import save_graph_ir, check_ir_num
 

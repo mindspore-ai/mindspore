@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations.sparse_ops import SparseToDenseV2
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 import mindspore.common.dtype as mstype
 
 

@@ -18,7 +18,7 @@ import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore import Tensor, Parameter
 import mindspore as ms
-import mindspore.common.api as me
+import mindspore.graph.api as me
 from mindspore.common.initializer import initializer
 from mindspore.common import set_seed
 from hccl_test.manage.api import Hccl

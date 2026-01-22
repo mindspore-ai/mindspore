@@ -23,7 +23,7 @@ from mindspore.common.initializer import initializer
 from mindspore.train import Model
 from mindspore.parallel.shard import Layout
 from mindspore.nn import PipelineCell
-import mindspore.common.lazy_inline as lazy_inline
+from mindspore.graph.lazy_inline import lazy_inline
 from .test_dynamic_data_sink import GeneratorFakeData
 import mindspore.dataset as ds
 from mindspore._c_expression import MSContext, ms_ctx_param

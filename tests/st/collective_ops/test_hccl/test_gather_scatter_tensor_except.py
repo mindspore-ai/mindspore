@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import context
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops.communication import (
     init_process_group,
     get_rank,

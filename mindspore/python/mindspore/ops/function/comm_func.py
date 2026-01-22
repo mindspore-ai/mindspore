@@ -24,8 +24,8 @@ import numpy as np
 from mindspore import log as logger
 from mindspore.common import dtype as mstype
 from mindspore._checkparam import args_type_check
-from mindspore.common.api import jit_class
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import jit_class
+from mindspore.graph.api import _pynative_executor
 from mindspore.runtime.stream import synchronize
 from mindspore.ops.operations.comm_ops import ReduceOp
 from mindspore.ops.auto_generate import cat

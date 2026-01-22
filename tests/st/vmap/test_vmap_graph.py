@@ -23,7 +23,7 @@ import mindspore.ops.functional as F
 from mindspore import dtype as mstype
 from mindspore.common import Tensor
 from mindspore.ops.functional import vmap
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common.parameter import Parameter
 
 from tests.mark_utils import arg_mark

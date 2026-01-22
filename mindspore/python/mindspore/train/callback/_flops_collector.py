@@ -24,7 +24,7 @@ from math import floor
 from mindspore import _checkparam as Validator
 from mindspore import log as logger
 from mindspore.train.callback._callback import Callback
-from mindspore.common.api import flops_collection
+from mindspore.graph.api import flops_collection
 
 from mindspore.communication.management import (create_group, get_group_size,
                                                 get_rank)

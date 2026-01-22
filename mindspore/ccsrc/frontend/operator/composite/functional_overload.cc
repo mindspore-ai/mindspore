@@ -504,13 +504,13 @@ std::string PrimitiveConverter::BuildDetailedErrorMsg(const std::vector<std::str
 }
 
 FuncGraphPtr DeprecatedTensorMethod::GenerateFuncGraph(const abstract::AbstractBasePtrList &) {
-  static const std::string module_path = "mindspore._extends.parse.deprecated.deprecated_tensor_method";
+  static const std::string module_path = "mindspore.graph._parse.deprecated.deprecated_tensor_method";
   static const std::string method_map = "deprecated_tensor_method_map";
   py::dict map_obj = python_adapter::GetPyFn(module_path, method_map);
   const auto &method_name = method();
   if (!map_obj.contains(py::str(method_name))) {
     MS_LOG(INTERNAL_EXCEPTION) << "As a deprecated Tensor method, '" << method_name
-                               << "' should be registered in _extends/parse/deprecated/deprecated_tensor_method.py::"
+                               << "' should be registered in graph/_parse/deprecated/deprecated_tensor_method.py::"
                                << method_map;
   }
   const std::string &function_name = map_obj[py::str(method_name)].cast<std::string>();

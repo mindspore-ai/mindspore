@@ -18,7 +18,7 @@ import pytest
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations.random_ops import Uniform
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore.common.dtype as mstype
 import numpy as np
 

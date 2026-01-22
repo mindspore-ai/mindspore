@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 import mindspore.ops.operations.nn_ops as P
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target='Ascend')
 

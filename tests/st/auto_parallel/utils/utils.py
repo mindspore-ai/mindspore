@@ -45,8 +45,8 @@ from mindspore import nn
 from mindspore._c_expression import typing
 from mindspore._c_expression import MSContext
 from mindspore.common import set_seed
-from mindspore.common.api import jit
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import jit
+from mindspore.graph.api import _pynative_executor
 from mindspore import mint
 from tests.st.auto_parallel.utils.grad import GradOfAllInputs
 

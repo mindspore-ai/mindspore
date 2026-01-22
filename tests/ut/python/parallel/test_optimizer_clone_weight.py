@@ -18,7 +18,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
-from mindspore.common.api import _CellGraphExecutor
+from mindspore.graph.api import _CellGraphExecutor
 from mindspore.nn import TrainOneStepCell
 from mindspore.nn.optim import AdamWeightDecay
 from mindspore.ops import operations as P

@@ -19,7 +19,7 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import Tensor, nn, mint, ops, _no_grad
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops.auto_generate.gen_ops_def import as_strided, transpose, broadcast_to
 from tests.st.pynative.utils import GradOfAllInputs, GradOfFirstInput
 from tests.mark_utils import arg_mark

@@ -8,7 +8,7 @@ from bisect import bisect_right
 import math
 from mindspore import ops, Tensor, Parameter
 from mindspore.experimental.optim.optimizer import Optimizer
-from mindspore.common.api import jit_class
+from mindspore.graph.api import jit_class
 import mindspore.common.dtype as mstype
 from mindspore import _checkparam as Validator
 

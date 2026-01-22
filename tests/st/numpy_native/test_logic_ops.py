@@ -19,7 +19,7 @@ import numpy as onp
 
 import mindspore.numpy as mnp
 from mindspore import context
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 from .utils import rand_int, rand_bool, run_binop_test, run_logical_test, match_res, \
     match_all_arrays, to_tensor

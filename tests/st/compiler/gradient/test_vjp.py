@@ -20,7 +20,7 @@ from torch.autograd.functional import vjp
 from mindspore import nn, context, ops, Tensor
 from mindspore.nn.grad import Vjp
 from mindspore.common import dtype
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 

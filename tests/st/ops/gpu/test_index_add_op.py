@@ -24,7 +24,7 @@ from mindspore import Tensor, Parameter, ParameterTuple
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 class NetIndexAdd(nn.Cell):

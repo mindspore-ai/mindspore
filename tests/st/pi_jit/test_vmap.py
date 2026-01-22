@@ -18,7 +18,7 @@ import numpy as np
 import mindspore.ops.functional as F
 from mindspore import dtype as mstype
 from mindspore.common import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore import context
 from tests.mark_utils import arg_mark
 

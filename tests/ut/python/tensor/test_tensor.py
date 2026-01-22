@@ -22,7 +22,7 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-import mindspore.common.api as me
+import mindspore.graph.api as me
 from mindspore import nn
 from mindspore import Tensor, context
 from mindspore.common.initializer import initializer

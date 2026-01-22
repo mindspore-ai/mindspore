@@ -18,7 +18,7 @@ import mindspore
 from mindspore import Tensor, nn
 from mindspore.ops import operations as P
 from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from .comp_network import CompNet, SubNet4, SubNet2
 
 

@@ -19,7 +19,7 @@ import pytest
 from tests.mark_utils import arg_mark
 import mindspore as ms
 from mindspore import Tensor
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 
 ms.set_context(mode=ms.GRAPH_MODE)
 ms.runtime.set_memory(max_size="0.05GB")

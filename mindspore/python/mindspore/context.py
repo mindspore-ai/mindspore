@@ -34,7 +34,7 @@ from mindspore.parallel._auto_parallel_context import _set_auto_parallel_context
 from mindspore.parallel._ps_context import _set_ps_context, _get_ps_context, _reset_ps_context, \
     _need_reset_device_target_for_ps
 from mindspore.hal.device import is_initialized
-from mindspore.common import api
+from mindspore.graph import api
 
 __all__ = ['GRAPH_MODE', 'PYNATIVE_MODE', 'STRICT', 'COMPATIBLE', 'LAX', 'set_context', 'get_context',
            'set_auto_parallel_context', 'get_auto_parallel_context', 'reset_auto_parallel_context', 'ParallelMode',

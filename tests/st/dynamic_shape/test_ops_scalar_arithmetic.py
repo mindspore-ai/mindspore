@@ -17,7 +17,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import context
 from mindspore import ops
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 import mindspore.ops.operations.manually_defined as F
 from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark

@@ -22,7 +22,7 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.common.api import jit, jit_class
+from mindspore.graph.api import jit, jit_class
 
 grad_all = C.GradOperation(get_all=True)
 grad_by_list = C.GradOperation(get_by_list=True)

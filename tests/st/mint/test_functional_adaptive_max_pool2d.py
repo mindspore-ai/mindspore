@@ -21,7 +21,7 @@ import mindspore as ms
 from mindspore import mutable, ops, mint
 from mindspore.common import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.common.dtype import _dtype_to_nptype
 from mindspore.nn import Cell
 

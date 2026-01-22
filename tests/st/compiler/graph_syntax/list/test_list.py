@@ -17,7 +17,7 @@
 import numpy as np
 import pytest
 from mindspore import Tensor, jit
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.nn import Cell, ReLU
 from mindspore.ops import operations as P
 from mindspore.train.model import Model

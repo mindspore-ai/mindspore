@@ -36,7 +36,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common._decorator import deprecated
 from mindspore.common.parameter import Parameter
 from mindspore.communication.management import GlobalComm, get_rank, _get_group, get_group_size
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops.auto_generate import TensorCopySlices, SiLU, Cummin, TopKRouter, TopPRouter, ExtractImagePatches, \
     ApplyCamePart1, ApplyCamePart2, ApplyCamePart3, ApplyCamePart4
 

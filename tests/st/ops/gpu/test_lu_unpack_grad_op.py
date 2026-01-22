@@ -21,7 +21,7 @@ import torch
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations import _grad_ops as G
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore.common.dtype as mstype
 
 

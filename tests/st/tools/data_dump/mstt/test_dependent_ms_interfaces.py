@@ -20,7 +20,7 @@ import tempfile
 import numpy as np
 import mindspore as ms
 from mindspore._c_expression import MSContext, CreationType
-from mindspore.common.api import _pynative_executor as executor
+from mindspore.graph.api import _pynative_executor as executor
 from mindspore.ops.operations import _inner_ops as inner
 
 from tests.mark_utils import arg_mark

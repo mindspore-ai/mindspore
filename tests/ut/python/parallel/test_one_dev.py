@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 import mindspore.common.dtype as mstype
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.common.parameter import Parameter
 from mindspore.nn.loss.loss import LossBase
 from mindspore.nn.optim.momentum import Momentum

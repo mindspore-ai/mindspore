@@ -50,7 +50,7 @@ enum ParseStatusCode : int64_t {
   PARSE_FAILURE = 0xFF
 };
 
-constexpr char kStandardMethodModelName[] = "mindspore._extends.parse.standard_method";
+constexpr char kStandardMethodModelName[] = "mindspore.graph._parse.standard_method";
 
 // Max loop count of for statement, when loop count is less then this value, the for loop will be unrolled, otherwise it
 // will be sunk(i.e. not unrolled)

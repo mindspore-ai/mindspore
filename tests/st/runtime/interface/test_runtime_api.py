@@ -17,7 +17,7 @@ from tests.mark_utils import arg_mark
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.common.api import _bind_device_context
+from mindspore.graph.api import _bind_device_context
 
 
 class Add(nn.Cell):

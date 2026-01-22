@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations.math_ops as P
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 
 class PolarNet(nn.Cell):

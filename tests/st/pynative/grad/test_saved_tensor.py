@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import ops, nn, Tensor, _Function
-from mindspore.common.api import _pynative_executor, _disable_saved_tensors_hooks
+from mindspore.graph.api import _pynative_executor, _disable_saved_tensors_hooks
 from mindspore.ops import CustomOpBuilder
 from tests.mark_utils import arg_mark
 from tests.st.pynative.utils import GradOfAllInputs, GradOfFirstInput, GradOfAllParams

@@ -19,7 +19,7 @@ from mindspore import context
 from mindspore.nn import Cell
 from mindspore.ops import functional as F
 from mindspore.common import mutable
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 from sequence_help import TupleFactory, context_prepare
 
 context.set_context(mode=context.GRAPH_MODE)

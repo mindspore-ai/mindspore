@@ -26,7 +26,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.seed import _get_graph_seed
 from mindspore.common.tensor import Tensor
 from mindspore.ops.operations.random_ops import RandomShuffle, RandomChoiceWithMask
-from mindspore.common.api import _function_forbid_reuse
+from mindspore.graph.api import _function_forbid_reuse
 from mindspore.ops.auto_generate import randperm
 from mindspore.common.generator import default_generator
 from mindspore.ops.auto_generate import UniformExt, NormalTensorTensor, \

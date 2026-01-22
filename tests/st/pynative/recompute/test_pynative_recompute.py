@@ -26,7 +26,7 @@ from mindspore.dataset import vision
 from mindspore import nn
 import mindspore.ops.functional as F
 from mindspore.common._grad_function import _Function
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore import Tensor, Parameter
 from mindspore import context, hal, jit
 from mindspore import ParameterTuple

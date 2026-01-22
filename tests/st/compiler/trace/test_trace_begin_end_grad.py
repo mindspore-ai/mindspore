@@ -28,8 +28,8 @@ from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 import mindspore.ops as ops
 import mindspore.nn as nn
 from mindspore.train import Model
-from mindspore.common.jit_begin_end import _jit_begin as jit_begin
-from mindspore.common.jit_begin_end import _jit_end as jit_end
+from mindspore.graph.jit_begin_end import _jit_begin as jit_begin
+from mindspore.graph.jit_begin_end import _jit_end as jit_end
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.common.parameter import Parameter, ParameterTuple
 from tests.mark_utils import arg_mark

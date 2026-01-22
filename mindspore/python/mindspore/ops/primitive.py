@@ -18,15 +18,15 @@ import functools
 import inspect
 import copy
 import numpy as np
-from mindspore.common.api import _wrap_func
+from mindspore.graph.api import _wrap_func
 from mindspore.log import _LogActionOnce
 from mindspore import log as logger
 from mindspore.parallel._utils import _is_in_auto_parallel_mode, _is_in_data_parallel_mode, \
     _is_in_hybrid_parallel_mode, SUPPORTED_TUPLE_IN_TUPLE_STRATEGY
 from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.parallel.shard import Layout
-from mindspore.common.api import _pynative_executor
-from mindspore.common.jit_context import jit_context
+from mindspore.graph.api import _pynative_executor
+from mindspore.graph.jit_context import jit_context
 from mindspore._c_expression import Primitive_, PrimitiveFunction_, prim_type, typing
 from mindspore import _checkparam as Validator
 from mindspore.ops import signature as sig

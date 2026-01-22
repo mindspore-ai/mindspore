@@ -47,7 +47,7 @@ from mindspore import nn
 from mindspore.boost import AutoBoost
 from mindspore.context import ParallelMode
 from mindspore.train.dataset_helper import DatasetHelper, connect_network_with_dataset
-from mindspore.common.api import _pynative_executor, ARG_SPECIFIED, TOTAL_ARG_LEN
+from mindspore.graph.api import _pynative_executor, ARG_SPECIFIED, TOTAL_ARG_LEN
 from mindspore.dataset.core.config import get_debug_mode
 from mindspore.dataset.engine.datasets import _set_training_dataset, _reset_training_dataset
 from mindspore.train import amp

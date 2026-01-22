@@ -128,7 +128,7 @@ from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops._utils.arg_dtype_cast import type_it
 from mindspore.ops._utils.arg_handler import *
 from mindspore._c_expression import OpDtype
-from mindspore.common.jit_context import jit_context
+from mindspore.graph.jit_context import jit_context
 from mindspore._checkparam import is_stub_tensor
 """
 

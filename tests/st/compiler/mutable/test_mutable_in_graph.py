@@ -25,7 +25,7 @@ from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 from mindspore.common import mutable
 from mindspore import context
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)

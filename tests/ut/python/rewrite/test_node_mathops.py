@@ -17,7 +17,7 @@ import numpy as np
 import mindspore
 from mindspore import Tensor, nn
 from mindspore.rewrite import SymbolTree, ScopedValue
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 
 
 class SimpleNet(nn.Cell):

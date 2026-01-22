@@ -22,9 +22,9 @@ namespace py = pybind11;
 
 PyObjRegistry::PyObjRegistry() {
   Data::GetInstance().enable_grad_ =
-    py::module::import("mindspore.common").attr("api").attr("_pynative_executor").attr("enable_grad");
+    py::module::import("mindspore.graph").attr("api").attr("_pynative_executor").attr("enable_grad");
   Data::GetInstance().set_enable_grad_ =
-    py::module::import("mindspore.common").attr("api").attr("_pynative_executor").attr("set_enable_grad");
+    py::module::import("mindspore.graph").attr("api").attr("_pynative_executor").attr("set_enable_grad");
 }
 
 PyObjRegistry::Data &PyObjRegistry::Data::GetInstance() {

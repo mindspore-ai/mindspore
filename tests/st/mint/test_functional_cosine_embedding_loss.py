@@ -24,7 +24,7 @@ import mindspore as ms
 from mindspore import Tensor, context
 from mindspore.mint import nn
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 from tests.mark_utils import arg_mark
 from tests.st.pynative.utils import GradOfAllInputs, allclose_nparray

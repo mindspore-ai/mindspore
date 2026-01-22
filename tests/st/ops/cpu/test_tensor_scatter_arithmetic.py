@@ -24,7 +24,7 @@ from mindspore.ops import vmap
 from mindspore.common import dtype as mstype
 from mindspore.common import Tensor
 from mindspore.common import Parameter
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 func_map = {
     "add": ops.TensorScatterAdd,

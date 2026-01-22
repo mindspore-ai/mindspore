@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import mint, Generator
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops.auto_generate import NormalTensorTensor, NormalTensorFloat, \
     NormalFloatTensor, NormalFloatFloat
 from tests.st.utils import test_utils

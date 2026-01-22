@@ -20,7 +20,7 @@ from mindspore.ops import operations as P
 from mindspore import Tensor, context
 from mindspore.ops.functional import vmap
 from mindspore.ops import functional as F
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
 

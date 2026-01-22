@@ -24,7 +24,7 @@ from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
-from mindspore.common.api import jit_class
+from mindspore.graph.api import jit_class
 from mindspore._c_expression import _tft_start_record_threads, _tft_finish_record_threads
 from mindspore._c_expression import set_is_reboot_node, tft_register_config, set_reboot_type
 

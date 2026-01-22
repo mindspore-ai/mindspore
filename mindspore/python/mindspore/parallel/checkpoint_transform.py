@@ -801,7 +801,7 @@ def sync_pipeline_shared_parameters(net):
 
     layout_dict = net.parameter_layout_dict
     if (_is_in_auto_parallel_mode() or (type(parallel_net).__name__ == 'AutoParallel')) and not layout_dict:
-        from mindspore.common.api import _get_parameter_layout
+        from mindspore.graph.api import _get_parameter_layout
         layout_dict = _get_parameter_layout()
 
     # switch to standalone mode

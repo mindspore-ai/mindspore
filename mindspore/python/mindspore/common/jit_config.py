@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Huawei Technologies Co., Ltd
+# Copyright 2022-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,95 +14,6 @@
 # ============================================================================
 """JitConfig for compile."""
 
-class JitConfig:
-    """
-    Jit config for compile.
+from mindspore.graph._mark_deprecated import mark_deprecated
 
-    Args:
-        jit_level (str, optional): Used to control the compilation optimization level.
-            Supports ["O0", "O1", "O2"]. Default: ``""`` , which indicates that the framework automatically selects the
-            execution method. Not recommended, it is recommended to use the JIT decorator.
-
-            - ``"O0"``: Except for optimizations that may affect functionality, all other optimizations are turned off,
-              adopt KernelByKernel execution mode.
-            - ``"O1"``: Using commonly used optimizations and automatic operator fusion optimizations,
-              adopt KernelByKernel execution mode.
-            - ``"O2"``: Utilizes the GraphEngine, a graph compilation and execution engine within CANN,
-              for Ascend model compilation and execution. Note: O2 only supports GRAPH Mode in Ascend,
-              only supports whole graph sinking or sub graph sinking in pipeline parallel, and does not support
-              dynamic shape scenes. In addition, this mode incurs additional compilation costs and is difficult to
-              debug and tune.
-
-        exc_mode (str, optional): Control the execution mode of the model.
-            Supports ["auto", "sink", "no_sink"]. Default: ``"auto"`` .
-            The specific implementation method is as follows:
-
-            - ``"auto"``: The framework automatically selects the execution method.
-            - ``"sink"``: Support the network to load and load the entire device at once, and then execute it by
-              input driver, without the need to iterate through each operator to achieve better execution performance.
-              This mode is only supported on the Ascend backend.
-            - ``"no_sink"``: The network model is executed asynchronously one by one using a single operator.
-
-        jit_syntax_level (str, optional): JIT syntax level for graph compiling.
-            The value must be ``"STRICT"`` , ``"LAX"`` or ``""`` . Default to an empty string, which means that this
-            JitConfig configuration will be ignored and the jit_syntax_level of ms.context will be used.
-            For more details about ms.context, refer to
-            `set_context <https://www.mindspore.cn/docs/en/master/api_python/mindspore/mindspore.set_context.html>`_ .
-            Default: ``""`` .
-
-            - ``"STRICT"``: Only basic syntax is supported, and execution performance is optimal. Can be used for MindIR
-              load and export.
-            - ``"LAX"``: Compatible with all Python syntax as much as possible. However, execution performance may be
-              affected and not optimal. Cannot be used for MindIR load and export due to some syntax that may not be
-              able to be exported.
-
-        debug_level (str, optional): Set debugging level for graph compiling.
-            The value must be ``"RELEASE"`` or ``"DEBUG"``. Default: ``"RELEASE"``.
-
-            - ``"RELEASE"``: Used for normally running, and some debug information will be discarded to get a better
-              compiling performance.
-            - ``"DEBUG"``: Used for debugging when errors occur, more information will be recorded in compiling process.
-
-        infer_boost (str, optional): Enable infer boost mode.
-            The value must be ``"on"`` or ``"off"``. Default: ``"off"``, which means that infer boost is disabled.
-            When infer boost mode is enabled, MindSpore will use high perf kernel lib, use faster runtime to make
-            inference speed the best.
-            Note: current infer boost only supports `jit_level` == ``"O0"`` and only Atlas A2 series products
-            are supported.
-
-        **kwargs (dict): A dictionary of keyword arguments that the class needs.
-
-    Examples:
-        >>> from mindspore import JitConfig
-        >>>
-        >>> jitconfig = JitConfig(jit_level="O1")
-        >>>
-        >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
-        >>> net = LeNet5()
-        >>>
-        >>> net.set_jit_config(jitconfig)
-    """
-    def __init__(self, jit_level="", exc_mode="auto", jit_syntax_level="", debug_level="RELEASE",
-                 infer_boost="off", **kwargs):
-        if jit_level not in ["", "O0", "O1", "O2"]:
-            raise ValueError("For 'jit_level' must be one of ['O0', 'O1', 'O2'].")
-        if exc_mode not in ["auto", "sink", "no_sink"]:
-            raise ValueError("For 'exc_mode' must be one of '['auto', 'sink', 'no_sink']'.")
-        if jit_syntax_level != "" and jit_syntax_level not in ["STRICT", "COMPATIBLE", "LAX"]:
-            raise ValueError("For 'jit_syntax_level' must be one of '['STRICT', 'LAX']'.")
-        if debug_level not in ["RELEASE", "DEBUG"]:
-            raise ValueError("For 'debug_level' must be one of '['RELEASE', 'DEBUG']'.")
-        if infer_boost != "" and infer_boost not in ["on", "off"]:
-            raise ValueError("For 'infer_boost' must be one of '['on', 'off']'.")
-        self.jit_config_dict = kwargs
-        self.jit_config_dict["jit_level"] = jit_level
-        self.jit_config_dict["exc_mode"] = exc_mode
-        self.jit_config_dict["jit_syntax_level"] = jit_syntax_level
-        self.jit_config_dict["debug_level"] = debug_level
-        self.jit_config_dict["infer_boost"] = infer_boost
-        if "backend" not in self.jit_config_dict:
-            if jit_level in ["O0", "O1"]:
-                self.jit_config_dict["backend"] = "ms_backend"
-            elif jit_level == "O2":
-                self.jit_config_dict["backend"] = "GE"
+mark_deprecated(__name__, 'mindspore.graph.jit_config')

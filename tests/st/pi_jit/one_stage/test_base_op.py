@@ -24,7 +24,7 @@ from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common import dtype
 from mindspore.common import mutable
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from tests.mark_utils import arg_mark
 from mindspore._c_expression import get_code_extra
 from tests.st.pi_jit.share.utils import pi_jit_with_config, assert_equal, match_array

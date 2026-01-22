@@ -15,7 +15,7 @@
 import numpy as np
 import mindspore as ms
 import mindspore.context as context
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore import Tensor, Parameter
 from mindspore.nn import Cell, TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
@@ -69,6 +69,11 @@ def compile_net(net):
 
 
 def test_net():
+    """
+    Feature: Test AutoParallelMultiGraph.
+    Description: Test the functionality of AutoParallelMultiGraph.
+    Expectation: success
+    """
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
     strategy = ((4, 1), (4, 1))
     net = ParallelFloorDivBpropNet(mul_size=(128, 96), test_size=(128, 96), strategy=strategy, strategy2=strategy)

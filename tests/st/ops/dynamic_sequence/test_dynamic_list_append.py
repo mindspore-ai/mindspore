@@ -20,7 +20,7 @@ from mindspore import context, Tensor
 from mindspore.common import mutable
 from mindspore.nn import Cell
 from mindspore.ops.composite import GradOperation
-from mindspore._extends.parse.standard_method import list_append
+from mindspore.graph._parse.standard_method import list_append
 from sequence_help import context_prepare
 
 context.set_context(mode=context.GRAPH_MODE)

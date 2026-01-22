@@ -18,7 +18,7 @@ import mindspore as ms
 from mindspore import nn, ops, Tensor, context, Parameter, jit
 from mindspore.ops import GradOperation
 from mindspore.common import ParameterTuple
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore._c_expression import CreationType
 from tests.mark_utils import arg_mark
 from tests.st.pynative.utils import GradOfAllInputs

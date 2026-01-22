@@ -18,7 +18,7 @@ import math
 
 import mindspore as ms
 import mindspore.common.initializer as init
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine

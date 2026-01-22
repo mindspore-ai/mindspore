@@ -19,7 +19,7 @@ import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 class NetNone(nn.Cell):

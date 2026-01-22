@@ -16,7 +16,7 @@
 import numpy as np
 import pytest
 from mindspore.common import mutable
-from mindspore.common.api import _CellGraphExecutor, _JitExecutor
+from mindspore.graph.api import _CellGraphExecutor, _JitExecutor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 import mindspore.nn as nn

@@ -20,7 +20,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import dtype as mstype
 from mindspore import Tensor, ops, nn, jit
-from mindspore.common.api import _frontend_compile
+from mindspore.graph.api import _frontend_compile
 
 graph_save_path = './graph_save_path'
 

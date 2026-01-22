@@ -17,7 +17,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import ops, nn, Tensor, Symbol, enable_dynamic
 from mindspore.ops import functional as F
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from tests.mark_utils import arg_mark
 import pytest
 

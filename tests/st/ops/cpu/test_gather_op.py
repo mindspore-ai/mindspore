@@ -18,7 +18,7 @@ import pytest
 import numpy as np
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.common import dtype as mstype

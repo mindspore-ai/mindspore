@@ -25,7 +25,7 @@ import mindspore.nn as nn
 import mindspore.ops as P
 from mindspore import Tensor
 from mindspore.ops.operations import nn_ops as G
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 DEVICE_TARGET = "CPU"
 CTX_MODE = ms.context.GRAPH_MODE

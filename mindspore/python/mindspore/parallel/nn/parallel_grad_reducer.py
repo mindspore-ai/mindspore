@@ -21,7 +21,7 @@ from mindspore.nn.cell import Cell
 from mindspore.ops import functional as F, composite as C, operations as P
 import mindspore.common.dtype as mstype
 from mindspore.common.sparse_tensor import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common.parameter import Parameter
 from mindspore.nn.layer import Identity
 from mindspore.parallel._utils import _get_enable_parallel_optimizer

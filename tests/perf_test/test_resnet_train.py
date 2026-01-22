@@ -19,7 +19,7 @@ import numpy as np
 
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from .resnet_example import resnet50
 from ..train_step_wrap import train_step_with_loss_warp
 

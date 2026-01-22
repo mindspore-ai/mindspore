@@ -28,7 +28,7 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 
 class ParserFactory():

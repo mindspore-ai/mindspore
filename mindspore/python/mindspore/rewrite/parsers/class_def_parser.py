@@ -20,7 +20,7 @@ import sys
 from textwrap import dedent
 from mindspore import log as logger
 from mindspore.nn import Cell
-from mindspore._extends.parse.namespace import ModuleNamespace
+from mindspore.graph._parse.namespace import ModuleNamespace
 from mindspore._extends.ast_checker import AstChecker
 from . import Parser, ParserRegister, reg_parser
 from ..node import NodeManager

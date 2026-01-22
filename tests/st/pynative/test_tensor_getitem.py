@@ -23,7 +23,7 @@ from mindspore import dtype as mstype
 from mindspore.nn import Cell
 from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import composite as C
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 grad_by_list_with_sens = C.GradOperation(get_by_list=True, sens_param=True)

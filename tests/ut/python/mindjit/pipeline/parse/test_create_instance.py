@@ -27,7 +27,7 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore import context, ops, dtype
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common import Tensor, Parameter
 from mindspore.ops import operations as P
 from tests.ut.python.ut_filter import non_graph_engine

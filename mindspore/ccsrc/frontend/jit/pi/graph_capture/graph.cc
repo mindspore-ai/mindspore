@@ -1014,9 +1014,10 @@ std::string FrameStates::ToString() const {
 }
 
 void GraphBreakException::set_error() const {
-  py::object exception_type = py::module::import("mindspore.common._pijit_context").attr("Unsupported");
+  py::object exception_type = py::module::import("mindspore.graph._utils.pijit_context").attr("Unsupported");
   if (exception_type.ptr() == nullptr || !PyType_Check(exception_type.ptr())) {
-    MS_LOG(WARNING) << "Cannot import 'Unsupported' from 'mindspore.common._pijit_context', use RuntimeError instead";
+    MS_LOG(WARNING) << "Cannot import 'Unsupported' from 'mindspore.graph._utils.pijit_context', "
+                    << "use RuntimeError instead";
     PyErr_SetString(PyExc_RuntimeError, what());
   } else {
     PyErr_SetString(exception_type.ptr(), what());

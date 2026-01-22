@@ -138,8 +138,10 @@
       "tests/mindspore_test_framework",
       ".gitignore",
       "tests/device_utils.py",
+      "tests/ops_common.py",
       "tests/st",
-      "tests/vm_impl"
+      "tests/vm_impl",
+      "tests/perf_test"
     ],
     "LLT": [
       "Smoke_CPU_Win_Level0"
@@ -283,8 +285,10 @@
       "tests/mindspore_test_framework",
       ".gitignore",
       "tests/device_utils.py",
+      "tests/ops_common.py",
       "tests/st",
-      "tests/vm_impl"
+      "tests/vm_impl",
+      "tests/perf_test"
     ],
     "LLT": [
       "Smoke_Ascend",
@@ -403,8 +407,10 @@
       "tests/mindspore_test_framework",
       ".gitignore",
       "tests/device_utils.py",
+      "tests/ops_common.py",
       "tests/st",
-      "tests/vm_impl"
+      "tests/vm_impl",
+      "tests/perf_test"
     ],
     "LLT": [
       "Smoke_GPU"
@@ -516,8 +522,10 @@
       "tests/mindspore_test_framework",
       ".gitignore",
       "tests/device_utils.py",
+      "tests/ops_common.py",
       "tests/st",
-      "tests/vm_impl"
+      "tests/vm_impl",
+      "tests/perf_test"
     ],
     "LLT": [
       "Smoke_CPU_CentOS_Level0",

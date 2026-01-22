@@ -16,7 +16,7 @@
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor, ops, context
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops.operations._sequence_ops import TupleToTensor
 from tests.mark_utils import arg_mark
 

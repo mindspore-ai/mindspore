@@ -25,7 +25,7 @@ from mindspore.common.tensor import Tensor
 from mindspore import ops
 from mindspore.ops.composite import GradOperation
 from mindspore.common._register_for_recompute import recompute_registry
-from mindspore.common.api import _pynative_executor, _no_grad, _run_in_jit, saved_tensors_hooks
+from mindspore.graph.api import _pynative_executor, _no_grad, _run_in_jit, saved_tensors_hooks
 from mindspore.common.generator import get_rng_state, set_rng_state
 from mindspore.common._grad_function import _Function
 from mindspore.train.amp import AmpDecorator

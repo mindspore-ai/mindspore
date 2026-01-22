@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 Helper module for pijit analyze
 """
 
-__all__ = ['pijit_func_white_list_map', "get_tensor_method_name"]
+from mindspore.graph._mark_deprecated import mark_deprecated
 
-from .pijit_func_white_list import _func_map as pijit_func_white_list_map
-from .tensor_func_list import get_tensor_method_name
+mark_deprecated(__name__, 'mindspore.graph._pijit')

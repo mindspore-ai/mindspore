@@ -20,7 +20,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
@@ -246,59 +246,119 @@ def transpose_d2(nptype):
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_transpose_float32():
+    """
+    Feature: Test Transpose with float32.
+    Description: Test the functionality of Transpose with float32.
+    Expectation: success
+    """
     transpose1(np.float32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_transpose_float16():
+    """
+    Feature: Test Transpose with float16.
+    Description: Test the functionality of Transpose with float16.
+    Expectation: success
+    """
     transpose1(np.float16)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_transpose_int32():
+    """
+    Feature: Test Transpose with int32.
+    Description: Test the functionality of Transpose with int32.
+    Expectation: success
+    """
     transpose1(np.int32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_transpose_int64():
+    """
+    Feature: Test Transpose with int64.
+    Description: Test the functionality of Transpose with int64.
+    Expectation: success
+    """
     transpose1(np.int64)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_transpose_dynamic_int64():
+    """
+    Feature: Test Transpose with dynamic int64.
+    Description: Test the functionality of Transpose with dynamic int64.
+    Expectation: success
+    """
     transpose_d(np.int64)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_transpose_dynamic_two_inputs_int64():
+    """
+    Feature: Test Transpose with dynamic two inputs int64.
+    Description: Test the functionality of Transpose with dynamic two inputs int64.
+    Expectation: success
+    """
     transpose_d2(np.int64)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_transpose_dynamic_float32():
+    """
+    Feature: Test Transpose with dynamic float32.
+    Description: Test the functionality of Transpose with dynamic float32.
+    Expectation: success
+    """
     transpose_d(np.float32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_transpose_dynamic_float16():
+    """
+    Feature: Test Transpose with dynamic float16.
+    Description: Test the functionality of Transpose with dynamic float16.
+    Expectation: success
+    """
     transpose_d(np.float16)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_transpose_dynamic_int32():
+    """
+    Feature: Test Transpose with dynamic int32.
+    Description: Test the functionality of Transpose with dynamic int32.
+    Expectation: success
+    """
     transpose_d(np.int32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_transpose_dynamic_two_inputs_float32():
+    """
+    Feature: Test Transpose with dynamic two inputs float32.
+    Description: Test the functionality of Transpose with dynamic two inputs float32.
+    Expectation: success
+    """
     transpose_d2(np.float32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_transpose_dynamic_two_inputs_float16():
+    """
+    Feature: Test Transpose with dynamic two inputs float16.
+    Description: Test the functionality of Transpose with dynamic two inputs float16.
+    Expectation: success
+    """
     transpose_d2(np.float16)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_transpose_dynamic_two_inputs_int32():
+    """
+    Feature: Test Transpose with dynamic two inputs int32.
+    Description: Test the functionality of Transpose with dynamic two inputs int32.
+    Expectation: success
+    """
     transpose_d2(np.int32)

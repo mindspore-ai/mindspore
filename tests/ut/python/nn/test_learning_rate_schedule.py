@@ -17,7 +17,7 @@ import pytest
 
 from mindspore import Tensor
 from mindspore.nn import learning_rate_schedule as lr_schedules
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 import mindspore.common.dtype as mstype
 
 

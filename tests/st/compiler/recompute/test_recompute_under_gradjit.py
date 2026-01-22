@@ -20,7 +20,7 @@ import shutil
 import numpy as np
 from mindspore.nn import Cell
 from mindspore.common import Tensor, Parameter
-from mindspore.common.lazy_inline import lazy_inline
+from mindspore.graph.lazy_inline import lazy_inline
 import mindspore.ops.operations as P
 from mindspore import ops, nn, jit, context, recompute
 from mindspore.nn import SoftmaxCrossEntropyWithLogits

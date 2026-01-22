@@ -21,7 +21,7 @@ from mindspore import nn, Tensor, ops, context, jit, Model
 from mindspore.nn import Cell
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
-from mindspore.common.api import _cell_graph_executor, _JitExecutor
+from mindspore.graph.api import _cell_graph_executor, _JitExecutor
 from mindspore.common.parameter import Parameter
 from mindspore import dataset as ds
 from tests.security_utils import security_off_wrap

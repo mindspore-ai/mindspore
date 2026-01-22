@@ -23,7 +23,7 @@ from mindspore import nn
 from mindspore import context
 from mindspore import Tensor, ops
 from mindspore.common import dtype
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.nn.grad import Jvp, Vjp
 from tests.mark_utils import arg_mark
 

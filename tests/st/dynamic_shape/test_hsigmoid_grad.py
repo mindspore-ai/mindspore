@@ -20,7 +20,7 @@ from tests.mark_utils import arg_mark
 
 from mindspore import ops
 from mindspore import Tensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore as ms
 
 

@@ -20,7 +20,7 @@ import mindspore as ms
 import mindspore.nn as nn
 import mindspore.ops as P
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore import mutable
 from mindspore.common import Parameter
 from mindspore import dtype as mstype

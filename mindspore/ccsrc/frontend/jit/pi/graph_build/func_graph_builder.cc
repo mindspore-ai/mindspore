@@ -122,7 +122,7 @@ AbstractBasePtr BuildAbstractForInputObject(const py::object &object) {
   if (broaden) {
     abs = AbstractBroaden(abs);
   } else if (HasTensorWithGradData(value)) {
-    py::object can_be_mutable = python_adapter::CallPyFn("mindspore.common.mutable", "_check_element_type", object);
+    py::object can_be_mutable = python_adapter::CallPyFn("mindspore.graph.mutable", "_check_element_type", object);
     // Mutable can only handle scene when all element in python object can be braoden.
     // If input sequence contains element such as None, string, mutable can not add be the input sequence.
     if (!py::bool_(can_be_mutable)) {
@@ -1149,8 +1149,8 @@ py::object FuncGraphBuilder::ConvertMethod(const std::string &class_name, const 
 }
 
 py::object FuncGraphBuilder::ConvertFunction(const py::object &obj) {
-  auto dict = python_adapter::GetPyObjAttr(python_adapter::GetPyModule("mindspore._extends.parse.resources"),
-                                           "convert_object_map");
+  auto dict =
+    python_adapter::GetPyObjAttr(python_adapter::GetPyModule("mindspore.graph._parse.resources"), "convert_object_map");
   auto callable_obj_ptr = PyDict_GetItem(dict.ptr(), obj.ptr());
   return callable_obj_ptr == nullptr ? py::object() : py::cast<py::object>(callable_obj_ptr);
 }

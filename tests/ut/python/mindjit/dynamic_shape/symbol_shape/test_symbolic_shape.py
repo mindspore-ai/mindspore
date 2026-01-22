@@ -20,7 +20,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import ops, Tensor, Symbol, enable_dynamic
 from mindspore.ops import functional as F
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 
 def check_ir_symbolic_shape(dir_path, target_str, expect_num):

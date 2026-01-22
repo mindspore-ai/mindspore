@@ -4,7 +4,7 @@ from mindspore import Tensor
 from mindspore import dtype as mstype
 from mindspore import ops
 from mindspore._c_expression import get_code_extra, clear_jit_compile_results
-from mindspore.common._pijit_context import PIJitCaptureContext
+from mindspore.graph._utils.pijit_context import PIJitCaptureContext
 
 
 def get_empty_tensor(dtype=mstype.float32):

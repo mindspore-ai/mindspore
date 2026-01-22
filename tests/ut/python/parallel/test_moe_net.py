@@ -14,7 +14,7 @@
 # ============================================================================
 from mindspore import context, Parameter
 from mindspore.parallel.shard import Layout
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.common.initializer import initializer
 from mindspore.nn import Cell, TrainOneStepCell, Momentum
 import mindspore.common.dtype as mstype

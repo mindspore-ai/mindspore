@@ -18,7 +18,7 @@ import pytest
 import numpy as np
 from mindspore import jit, context, Tensor
 from mindspore import dtype as mstype
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 
 context.set_context(mode=context.GRAPH_MODE)
 

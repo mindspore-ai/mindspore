@@ -15,7 +15,7 @@
 import numpy as np
 import mindspore as ms
 import mindspore.context as context
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore import Tensor, Parameter
 import mindspore.nn as nn
 from mindspore.nn import Cell, TrainOneStepCell, Momentum
@@ -74,6 +74,11 @@ def compile_net(net):
 
 
 def test_net():
+    """
+    Feature: Test MulDivBn.
+    Description: Test the functionality of MulDivBn.
+    Expectation: success
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=4, global_rank=0)
     strategy = ((4, 1), (4, 1))

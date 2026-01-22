@@ -22,7 +22,7 @@ from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
-from mindspore.common.jit_context import jit_context
+from mindspore.graph.jit_context import jit_context
 from mindspore.ops.primitive import prim_attr_register, Primitive, PrimitiveWithInfer
 from mindspore._checkparam import check_hook_fn
 from mindspore.ops import operations as P
@@ -795,7 +795,7 @@ class Assert(PrimitiveWithInfer):
           File "<stdin>", line 1, in <module>
           File "mindspore/ops/primitive.py", line 294, in __call__
             return _run_op(self, self.name, args)
-          File "mindspore/common/api.py", line 99, in wrapper
+          File "mindspore/graph/api.py", line 99, in wrapper
             results = fn(*arg, **kwargs)
           File "mindspore/ops/primitive.py", line 743, in _run_op
             output = real_run_op(obj, op_name, args)

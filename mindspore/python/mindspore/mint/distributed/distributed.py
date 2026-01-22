@@ -27,7 +27,7 @@ from mindspore.ops import ReduceOp, cat
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import TensorPy as Tensor_
 from mindspore.ops.primitive import _primexpr
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.communication._comm_helper import (
     _destroy_group_helper,
     _get_rank_helper,

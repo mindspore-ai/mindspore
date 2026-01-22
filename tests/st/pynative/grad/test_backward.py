@@ -20,7 +20,7 @@ import pytest
 import mindspore as ms
 from mindspore import _Function
 from mindspore import Tensor, jit, _no_grad
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops import stop_gradient
 from mindspore._c_expression import run_backward, pyboost_detach
 from tests.mark_utils import arg_mark

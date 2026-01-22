@@ -17,7 +17,7 @@
 import pytest
 import numpy as np
 from mindspore.nn import Cell
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore import jit, Tensor
 from tests.mark_utils import arg_mark
 from tests.st.compiler.utils import allclose_nparray

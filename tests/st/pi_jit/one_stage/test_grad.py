@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore import ops
 from mindspore import dtype as mstype
 from mindspore import Tensor, context, Parameter
-from mindspore.common.api import jit, _no_grad
+from mindspore.graph.api import jit, _no_grad
 from mindspore.ops.composite import GradOperation
 from mindspore.common.parameter import ParameterTuple
 from mindspore._c_expression import jit_mode_pi_enable, jit_mode_pi_disable, get_code_extra

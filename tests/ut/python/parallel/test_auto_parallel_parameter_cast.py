@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from mindspore.parallel import set_algo_parameters
 from mindspore.parallel._utils import _reset_op_id as reset_op_id

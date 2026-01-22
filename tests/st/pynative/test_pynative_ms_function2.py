@@ -20,7 +20,7 @@ from torch import nn as nn_pt
 import mindspore as ms
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common.tensor import Tensor
 from tests.mark_utils import arg_mark
 from .utils import allclose_nparray

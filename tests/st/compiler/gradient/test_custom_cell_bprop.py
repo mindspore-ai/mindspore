@@ -28,8 +28,8 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore import ops
 from mindspore._extends import cell_attr_register
-from mindspore._extends.parse import compile_config
-from mindspore.common.api import _pynative_executor
+from mindspore.graph._parse import compile_config
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=context.GRAPH_MODE)

@@ -23,7 +23,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import nn, Tensor, Parameter, mint
 from mindspore.common import JitConfig
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 RUNNING_MODES = [

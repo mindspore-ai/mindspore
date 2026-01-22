@@ -18,7 +18,7 @@ import numpy as np
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, context, Symbol, Layout
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.ops.auto_generate.gen_ops_prim import MeanExt, Mul
 
 def setup_function():

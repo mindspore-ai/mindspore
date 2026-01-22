@@ -17,7 +17,7 @@ import numpy as np
 
 import mindspore as ms
 from mindspore.common.parameter import Parameter
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn import Cell
 from mindspore.ops import stop_gradient
 from mindspore.ops import operations as P

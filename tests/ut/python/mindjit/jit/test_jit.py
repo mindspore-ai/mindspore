@@ -17,7 +17,7 @@ import pytest
 import mindspore.nn as nn
 from mindspore.ops import composite as C
 from mindspore import context, Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 grad_all = C.GradOperation(get_all=True)
 

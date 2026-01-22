@@ -16,7 +16,7 @@
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import operations as P
 
 context.set_context(device_target="Ascend")

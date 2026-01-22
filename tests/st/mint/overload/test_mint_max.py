@@ -20,7 +20,7 @@ from tests.mark_utils import arg_mark
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, mint
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 class MaxNet(nn.Cell):

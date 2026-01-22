@@ -18,7 +18,7 @@ import psutil
 import numpy as np
 import mindspore as ms
 from mindspore import ms_memory_recycle, context, nn, Tensor, Parameter
-from mindspore.common.api import cells_compile_cache
+from mindspore.graph.api import cells_compile_cache
 from mindspore.ops import composite as C
 
 

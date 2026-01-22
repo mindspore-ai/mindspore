@@ -21,7 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
 

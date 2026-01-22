@@ -23,7 +23,7 @@ import mindspore.context as context
 
 from mindspore import Tensor
 from mindspore.ops.composite import GradOperation
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')

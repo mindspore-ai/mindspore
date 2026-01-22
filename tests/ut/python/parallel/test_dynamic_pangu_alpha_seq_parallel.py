@@ -23,7 +23,7 @@ from mindspore.common.initializer import initializer, Normal, TruncatedNormal
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore import context, Tensor, Parameter
 from mindspore.nn import TrainOneStepCell, Momentum
 from mindspore import Symbol

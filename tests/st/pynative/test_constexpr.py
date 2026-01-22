@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 from mindspore.ops.primitive import constexpr
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from tests.mark_utils import arg_mark
 
 

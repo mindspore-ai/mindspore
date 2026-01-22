@@ -45,7 +45,7 @@ py::function GetBpropFunction(const std::string &name) {
 }
 
 py::function GetComputeFunction(const std::string &name) {
-  static const std::string module = "mindspore._extends.builtin_operations";
+  static const std::string module = "mindspore.graph._parse.builtin_operations";
   py::module mod = py::module::import(common::SafeCStr(module));
   if (!py::hasattr(mod, common::SafeCStr(name))) {
     PyErr_SetString(PyExc_NotImplementedError, common::SafeCStr(name));

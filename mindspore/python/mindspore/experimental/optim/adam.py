@@ -10,7 +10,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.experimental.optim.optimizer import Optimizer
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 _adam_opt = ops.MultitypeFuncGraph("adam_opt")
 adam_op = ops.Adam(False, False)

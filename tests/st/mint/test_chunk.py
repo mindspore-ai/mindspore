@@ -22,7 +22,7 @@ from tests.mark_utils import arg_mark
 
 import mindspore as ms
 from mindspore import mint, Tensor, jit, context, ops
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tools import allclose_nparray, needs_backward
 
 # Set fixed random seed for reproducibility

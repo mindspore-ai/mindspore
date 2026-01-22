@@ -14,7 +14,7 @@
 # ============================================================================
 import numpy as np
 import mindspore as ms
-from mindspore.common.api import _no_recursive as no_recursive
+from mindspore.graph.api import _no_recursive as no_recursive
 
 ms.set_context(mode=ms.GRAPH_MODE)
 

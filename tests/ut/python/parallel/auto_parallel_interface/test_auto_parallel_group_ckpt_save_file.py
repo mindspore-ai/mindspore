@@ -20,7 +20,7 @@ from mindspore import Tensor, Parameter
 import mindspore.nn as nn
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn.utils import no_init_parameters
 from mindspore.common.initializer import initializer
 from tests.ut.python.ops.test_math_ops import VirtualLoss

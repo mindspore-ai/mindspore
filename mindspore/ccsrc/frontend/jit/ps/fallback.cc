@@ -225,7 +225,7 @@ CNodePtr CreatePyInterpretCNode(const FuncGraphPtr &fg, const std::string &scrip
 }
 
 void SetPyObjectToLocalVariable(const std::string &key, const py::object &value) {
-  py::module mod = python_adapter::GetPyModule("mindspore.common._jit_fallback_utils");
+  py::module mod = python_adapter::GetPyModule("mindspore.graph._utils.jit_fallback_utils");
   constexpr auto set_local_variable = "set_local_variable";
   MS_LOG(DEBUG) << set_local_variable << "([" << key << "]/" << key << ", " << value << ")";
   (void)python_adapter::CallPyModFn(mod, set_local_variable, key, value);
@@ -239,7 +239,8 @@ AnfNodePtr ConvertPyObjectToPyExecute(const FuncGraphPtr &fg, const std::string 
 
   // Get the value node from the dict in IR.
   std::stringstream script_buffer;
-  script_buffer << "__import__('mindspore').common._jit_fallback_utils.get_local_variable(" << value_node_key << ")";
+  script_buffer << "__import__('mindspore').graph._utils.jit_fallback_utils.get_local_variable(" << value_node_key
+                << ")";
   const std::string &script = script_buffer.str();
   const auto script_str = std::make_shared<StringImm>(script);
 
@@ -265,7 +266,8 @@ AnfNodePtr ConvertPyObjectToPyInterpret(const FuncGraphPtr &fg, const std::strin
 
   // Build the script
   std::stringstream script_buffer;
-  script_buffer << "__import__('mindspore').common._jit_fallback_utils.get_local_variable(" << value_node_key << ")";
+  script_buffer << "__import__('mindspore').graph._utils.jit_fallback_utils.get_local_variable(" << value_node_key
+                << ")";
   const std::string &script = script_buffer.str();
   auto script_str = std::make_shared<parse::Script>(script);
   auto script_node = NewValueNode(script_str);

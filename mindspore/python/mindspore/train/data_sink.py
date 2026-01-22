@@ -17,7 +17,7 @@ from functools import wraps
 from mindspore import ops
 from mindspore import context
 from mindspore.common.dtype import _pytype_to_dtype
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.train._utils import _exec_datagraph, _get_types_and_shapes, enable_data_broadcast
 from mindspore.train.dataset_helper import _has_dynamic_shape, _check_inputs
 import mindspore.dataset as ds

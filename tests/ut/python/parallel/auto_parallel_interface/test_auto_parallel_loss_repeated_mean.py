@@ -20,7 +20,7 @@ from mindspore.nn import Cell, TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
 from mindspore.ops._primitive_cache import _get_cache_prim
 from mindspore.ops.auto_generate.gen_ops_prim import Convolution
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn.utils import no_init_parameters
 from mindspore.common.initializer import initializer
 from parallel.utils.utils import ParallelValidator

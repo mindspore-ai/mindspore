@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops.operations import sparse_ops as P
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore.common.dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")

@@ -21,7 +21,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.nn.optim import Momentum
 from mindspore.common import dtype as mstype
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore import context, Tensor, ParameterTuple
 from mindspore.nn.wrap.cell_wrapper import WithLossCell
 from mindspore.common.initializer import TruncatedNormal

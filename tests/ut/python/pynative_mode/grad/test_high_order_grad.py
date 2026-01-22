@@ -14,7 +14,7 @@
 # ============================================================================
 """ test_high_order_grad """
 from mindspore import context
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 import mindspore.ops.composite as C
 
 

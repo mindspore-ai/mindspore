@@ -23,7 +23,7 @@ from mindspore import Tensor
 from mindspore import Parameter
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 

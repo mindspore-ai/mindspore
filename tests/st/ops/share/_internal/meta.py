@@ -30,7 +30,7 @@ import mindspore as ms
 from mindspore import nn, ops
 from mindspore._c_expression import MSContext
 from mindspore.common.dtype import _dtype_to_nptype
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from typing import Optional, Union, List, final
 from tests.st.utils.test_utils import single_golden_compare, double_golden_compare, OpTypes
 from tests.st.ops.share._internal.utils import (

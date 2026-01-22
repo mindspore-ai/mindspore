@@ -23,7 +23,7 @@ import mindspore
 
 
 class Modifier:
-    def __init__(self, module_name='mindspore._extends.parse.compile_config', package=None):
+    def __init__(self, module_name='mindspore.graph._parse.compile_config', package=None):
         self.module_name = module_name
         self.package = package
         self.running = False

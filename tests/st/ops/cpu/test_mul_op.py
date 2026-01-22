@@ -16,7 +16,7 @@ import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 import numpy as np
 import pytest
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 from mindspore import Tensor, context
 from mindspore.ops import operations as P

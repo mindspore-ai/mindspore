@@ -1,4 +1,4 @@
-# Copyright 2020-2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,13 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """Define Monad default value."""
+
 from __future__ import absolute_import
-from mindspore._c_expression import IOMonad, UMonad
+from mindspore.graph._mark_deprecated import mark_deprecated
 
-# Universe monad default value.
-U = UMonad()
-
-# IO monad default value.
-IO = IOMonad()
-
-__all__ = ['U', 'IO']
+mark_deprecated(__name__, 'mindspore.graph._utils.monad')

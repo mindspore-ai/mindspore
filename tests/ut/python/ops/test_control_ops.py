@@ -26,7 +26,7 @@ from mindspore.ops import functional as F
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter, ParameterTuple
 from mindspore.common import jit
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 
 context.set_context(mode=context.GRAPH_MODE)
 

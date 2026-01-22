@@ -26,7 +26,7 @@ from mindspore import Tensor, mint
 from mindspore.common import dtype as mstype
 from mindspore.mint.distributed import get_world_size
 from mindspore.communication import GlobalComm
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.mint.distributed import broadcast, get_global_rank
 from mindspore.parallel.distributed.flatten_grad_buffer import FlattenGradBuffer
 from mindspore._c_expression import Reducer, _find_unused_parameters

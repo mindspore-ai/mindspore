@@ -51,9 +51,9 @@ from mindspore.log import vlog_print
 from mindspore._checkparam import check_input_data, check_input_dataset
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _cell_graph_executor as _executor
-from mindspore.common.api import _JitExecutor
-from mindspore.common.api import _get_parameter_layout
+from mindspore.graph.api import _cell_graph_executor as _executor
+from mindspore.graph.api import _JitExecutor
+from mindspore.graph.api import _get_parameter_layout
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter, _offload_if_config
 from mindspore.common.tensor import Tensor

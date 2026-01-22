@@ -22,7 +22,7 @@ This module provides:
 import functools
 import pytest
 import mindspore as ms
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.st.ops.share._internal.meta import OpsFactory
 from tests.st.ops.share._internal.utils import OpSampleInput, make_tensor
 from tests.st.ops.share._op_info.op_info import OpInfo

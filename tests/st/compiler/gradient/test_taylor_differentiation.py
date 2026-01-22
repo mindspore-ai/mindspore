@@ -21,7 +21,7 @@ from mindspore import ops
 from mindspore import Tensor, jit, Parameter
 from mindspore.ops.functional import jet, derivative, grad
 from mindspore.common import dtype
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 context.set_context(jit_level='O0')
