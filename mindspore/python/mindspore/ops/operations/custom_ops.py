@@ -1203,19 +1203,26 @@ class _MultiSoProxy:
             AttributeError: If the attribute is not found in any applicable module or
             is incompatible with the current execution mode.
         """
+        if name in self.__dict__:
+            return self.__dict__[name]
+
+        mode = context.get_context("mode")
         if self.func_module is not None and hasattr(self.func_module, name):
-            return getattr(self.func_module, name)
-        if context.get_context("mode") == ms.PYNATIVE_MODE:
-            if hasattr(self.so_module, name):
-                return getattr(self.so_module, name)
+            obj = getattr(self.func_module, name)
+        elif mode == ms.PYNATIVE_MODE and hasattr(self.so_module, name):
+            obj = getattr(self.so_module, name)
+        else:
+            if mode == ms.PYNATIVE_MODE:
+                raise AttributeError(
+                    f"Custom op '{name}' is neither in func_module nor in so_module."
+                )
             raise AttributeError(
-                f"Custom op '{name}' is neither in func_module nor in so_module."
+                f"Custom op '{name}' does not support GRAPH mode. "
+                f"Please register it for GRAPH mode or switch to PYNATIVE mode."
             )
 
-        raise AttributeError(
-            f"Custom op '{name}' does not support GRAPH mode. "
-            f"Please register it for GRAPH mode or switch to PYNATIVE mode."
-        )
+        self.__dict__[name] = obj
+        return obj
 
 
 class CustomOpBuilder:
