@@ -50,7 +50,7 @@ Type                            Description
 ``number``                      Number, including base data types above, such as ``int16`` , ``float32`` .
 ``list_``                       List constructed by ``tensor`` , such as ``List[T0,T1,...,Tn]`` , where the element ``Ti`` can be of different types.
 ``tuple_``                      Tuple constructed by ``tensor`` , such as ``Tuple[T0,T1,...,Tn]`` , where the element ``Ti`` can be of different types.
-``function``                    Function. Return in two ways, when function is not None, returns Func directly, the other returns Func(args: List[T0,T1,...,Tn], retval: T) when function is None.
+``function``                    Function. Returns in two ways: when function is not None, it returns Func directly; otherwise, it returns Func(args: List[T0,T1,...,Tn], retval: T) when function is None.
 ``type_type``                   Type definition of type.
 ``type_none``                   No matching return type, corresponding to the ``type(None)`` in Python.
 ``symbolic_key``                The value of a variable is used as a key of the variable in ``env_type`` .
@@ -60,7 +60,7 @@ Type                            Description
 Type conversion rules
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-When some inputs of an operator are required to have the same target type, type promotion will be automatically performed according to the type conversion rules. If these inputs have types of different sizes and categories (where ``complex > float > int > bool`` ), they will be promoted a type with sufficient size and category.
+When some inputs of an operator are required to have the same target type, type promotion will be automatically performed according to the type conversion rules. If these inputs have types of different sizes and categories (where ``complex > float > int > bool`` ), they will be promoted to a type with sufficient size and category.
 
 For the type conversion rules between Tensor and Tensor, please refer to the following table. The first row and the first column in the table both represent the types of the input ``Tensor``, and the corresponding position in the table represents the type of the output ``Tensor``. ``-`` indicates that no type promotion will be performed.
 

@@ -195,16 +195,16 @@ def _get_cur_rank_dp(parameter_layout_dict):
 def get_ckpt_path_with_strategy(cur_ckpt_path, cur_strategy_path):
     """
     Find available checkpoint file path from all backup checkpoint files of current rank.
-    It suppose that checkpoint path contains substring 'rank_{rank_id}' which is used to
-    distinguish between different path.If cur_ckpt_path doesn't have 'rank_{rank_id}' substring, will return
-    cur_ckpt_path itself when cur_ckpt_path is exist, otherwise return None.
+    It supposes that checkpoint path contains substring 'rank_{rank_id}' which is used to
+    distinguish between different paths. If cur_ckpt_path doesn't have 'rank_{rank_id}' substring, will return
+    cur_ckpt_path itself when cur_ckpt_path exists, otherwise return None.
 
     Note:
-       This API must be called after the communication is initialized because the cluster information
-       needs to be obtained internally.
+        This API must be called after the communication is initialized because the cluster information
+        needs to be obtained internally.
 
     Args:
-        cur_ckpt_path (str): the checkpoint file path which cur rank needs.
+        cur_ckpt_path (str): the checkpoint file path which current rank needs.
         cur_strategy_path (str): strategy file path for current rank.
 
     Returns:
@@ -218,7 +218,7 @@ def get_ckpt_path_with_strategy(cur_ckpt_path, cur_strategy_path):
         >>> ms.set_context(mode=ms.GRAPH_MODE)
         >>> ms.set_auto_parallel_context(parallel_mode=ms.ParallelMode.DATA_PARALLEL, gradients_mean=True)
         >>> init()
-        >>> ckpt_file= "./rank_5/iteration-1_40.ckpt"
+        >>> ckpt_file = "./rank_5/iteration-1_40.ckpt"
         >>> strategy_file = "./src_pipeline_strategys/src_strategy_5.ckpt"
         >>> ckpt_file_new = get_ckpt_path_with_strategy(ckpt_file, strategy_file)
         >>> print(ckpt_file_new)
