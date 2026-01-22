@@ -23,7 +23,7 @@ from mindspore.ops.functional import grad, value_and_grad, get_grad
 from mindspore.ops import composite as C
 from mindspore.common import dtype as mstype
 from mindspore import Parameter, ParameterTuple
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 

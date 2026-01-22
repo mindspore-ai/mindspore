@@ -19,7 +19,7 @@ import tensorflow as tf
 import mindspore as ms
 from mindspore import ops, context, Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.nn import Cell
 
 from tests.mark_utils import arg_mark

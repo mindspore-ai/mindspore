@@ -21,7 +21,7 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops.function.random_func import rand_ext, rand_like_ext
 from mindspore.ops.function.random_func import randn_ext, randn_like_ext
 from mindspore.ops.function.random_func import randint_ext, randint_like_ext

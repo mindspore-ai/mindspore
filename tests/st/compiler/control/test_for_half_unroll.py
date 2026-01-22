@@ -18,7 +18,7 @@ from tests.mark_utils import arg_mark
 import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 
 context.set_context(mode=context.GRAPH_MODE)
 context.set_context(jit_config={"jit_level": "O0"})

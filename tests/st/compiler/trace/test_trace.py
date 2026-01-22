@@ -21,9 +21,9 @@ import pytest
 from tests.mark_utils import arg_mark
 from tests.st.compiler.auto_monad.capture import Capture, capture, check_output
 import mindspore as ms
-from mindspore.common.api import _pynative_executor
-from mindspore.common.jit_begin_end import _jit_begin as jit_begin
-from mindspore.common.jit_begin_end import _jit_end as jit_end
+from mindspore.graph.api import _pynative_executor
+from mindspore.graph.jit_begin_end import _jit_begin as jit_begin
+from mindspore.graph.jit_begin_end import _jit_end as jit_end
 from mindspore.ops import functional as F
 import mindspore.common.dtype as mstype
 

@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import mint, nn
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.st.utils import test_utils
 from tests.st.ops.test_tools.test_op import TEST_OP
 from tests.mark_utils import arg_mark

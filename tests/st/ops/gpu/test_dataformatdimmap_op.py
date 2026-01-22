@@ -17,8 +17,8 @@ from tests.mark_utils import arg_mark
 import numpy as np
 import pytest
 
-from mindspore.common.api import jit
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import jit
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops.functional import vmap

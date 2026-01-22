@@ -17,7 +17,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor
 from mindspore.common import ParameterTuple
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common._stub_tensor import StubTensor
 from tests.st.pynative.utils import GradOfAllInputs
 

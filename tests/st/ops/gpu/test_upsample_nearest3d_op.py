@@ -22,7 +22,7 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops.operations.nn_ops import UpsampleNearest3D
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 class UpsampleNearest3DNet(nn.Cell):

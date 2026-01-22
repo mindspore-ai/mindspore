@@ -52,7 +52,7 @@ import mindspore.ops.operations as P
 from mindspore import Tensor
 from mindspore import context
 from mindspore.common.parameter import Parameter
-from mindspore.common.lazy_inline import lazy_inline
+from mindspore.graph.lazy_inline import lazy_inline
 from tests.mark_utils import arg_mark
 from tests.st.auto_parallel.model_parallel import FakeData
 from tests.st.auto_parallel.utils.modeltrain_base import modeltrainbase

@@ -32,13 +32,13 @@ from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor, _TensorMeta
 from mindspore.common.hook_handle import _update_hook_version
 from mindspore import _checkparam as Validator
-from mindspore._check_jit_forbidden_api import jit_forbidden_register
+from mindspore.graph._utils.check_jit_forbidden_api import jit_forbidden_register
 from mindspore._c_expression import TensorPy as Tensor_
 from mindspore.parallel._tensor import _get_slice_index
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.communication._comm_helper import _is_initialized
 from mindspore.communication import get_group_size, get_rank
-import mindspore.common._monad as monad
+import mindspore.graph._utils.monad as monad
 
 __all__ = ['Parameter', 'ParameterTuple']
 

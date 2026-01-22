@@ -25,7 +25,7 @@ import pytest
 from mindspore import context
 import mindspore.common.dtype as mstype
 from mindspore import nn
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common.tensor import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum

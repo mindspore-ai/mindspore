@@ -251,7 +251,7 @@ AnfNodePtr HyperMap::HyperMapDynamicConverter(const FuncGraphPtr &func_graph, co
   }
   auto inner_fg = std::make_shared<FuncGraph>();
   auto func_input = inner_fg->add_parameter();
-  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string module = "mindspore.graph._parse.standard_method";
   std::string func_name;
   std::vector<AnfNodePtr> ret_inputs;
   if (type_id == kObjectTypeList) {
@@ -1696,7 +1696,7 @@ FuncGraphPtr HasNext::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list
     fg->set_output(ret);
     return fg;
   }
-  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string module = "mindspore.graph._parse.standard_method";
   const std::string func_name = "ms_hasnext";
   py::function fn = python_adapter::GetPyFn(module, func_name);
   auto prim_func = parse::ParsePythonCode(fn);
@@ -1720,7 +1720,7 @@ FuncGraphPtr Next::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
     fg->set_output(ret);
     return fg;
   }
-  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string module = "mindspore.graph._parse.standard_method";
   const std::string func_name = input_abs->isa<abstract::AbstractDictionary>() ? "dict_next" : "ms_next";
   py::function fn = python_adapter::GetPyFn(module, func_name);
   auto prim_func = parse::ParsePythonCode(fn);
@@ -1760,7 +1760,7 @@ FuncGraphPtr TupleFunc::GenerateFuncGraph(const AbstractBasePtrList &args_abs_li
       return fg;
     }
   }
-  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string module = "mindspore.graph._parse.standard_method";
   const std::string func_name = "tuple_func";
   py::function fn = python_adapter::GetPyFn(module, func_name);
   auto prim_func = parse::ParsePythonCode(fn);
@@ -1800,7 +1800,7 @@ FuncGraphPtr ListFunc::GenerateFuncGraph(const AbstractBasePtrList &args_abs_lis
       return fg;
     }
   }
-  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string module = "mindspore.graph._parse.standard_method";
   const std::string func_name = "list_func";
   py::function fn = python_adapter::GetPyFn(module, func_name);
   auto prim_func = parse::ParsePythonCode(fn);
@@ -1834,7 +1834,7 @@ FuncGraphPtr DictFunc::GenerateFuncGraph(const AbstractBasePtrList &args_abs_lis
     fg->set_output(input);
     return fg;
   }
-  const std::string module = "mindspore._extends.parse.standard_method";
+  const std::string module = "mindspore.graph._parse.standard_method";
   const std::string func_name = "dict_func";
   py::function fn = python_adapter::GetPyFn(module, func_name);
   FuncGraphPtr prim_func = parse::ParsePythonCode(fn);

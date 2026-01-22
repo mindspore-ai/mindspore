@@ -24,7 +24,7 @@ import numpy as np
 import mindspore.dataset as ds
 from mindspore import Tensor, context
 from mindspore.ops import operations as P
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 
 from tests.mark_utils import arg_mark
 

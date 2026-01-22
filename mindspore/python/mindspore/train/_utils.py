@@ -32,7 +32,7 @@ from mindspore.common import dtype as mstype
 from mindspore import context
 from mindspore import log as logger
 from mindspore import _checkparam as Validator
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
 from mindspore.train.checkpoint_pb2 import Checkpoint

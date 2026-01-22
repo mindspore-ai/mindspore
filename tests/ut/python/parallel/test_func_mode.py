@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, context, jit
 from mindspore import dataset as ds
 from mindspore.ops import operations as P
-from mindspore.common.jit_config import JitConfig
+from mindspore.graph.jit_config import JitConfig
 
 context.set_context(mode=ms.GRAPH_MODE)
 context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", dataset_strategy="full_batch")

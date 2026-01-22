@@ -18,7 +18,7 @@ test select operation on CPU.
 import numpy as np
 import pytest
 from mindspore import Tensor, context, nn, ops
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore import dtype as mstype

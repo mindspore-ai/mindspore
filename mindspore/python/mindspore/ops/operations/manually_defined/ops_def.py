@@ -36,7 +36,7 @@ from mindspore.ops.operations.manually_defined._inner import ScalarCast
 from mindspore.common.initializer import Zero
 from mindspore.common.parameter import Parameter
 from mindspore.ops.auto_generate.gen_ops_prim import FlashAttentionScore, FusedInferAttentionScore
-from mindspore.common.jit_context import jit_context
+from mindspore.graph.jit_context import jit_context
 
 
 dtype_to_type_id = DtypeToEnum()

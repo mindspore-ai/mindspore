@@ -21,7 +21,7 @@ import mindspore.ops.functional as F
 from mindspore import context
 from mindspore import set_seed
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 from .utils import rand_int, rand_bool, match_array, match_res, match_meta, \
     match_all_arrays, run_multi_test, to_tensor

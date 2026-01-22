@@ -22,7 +22,7 @@ from mindspore import Tensor
 from mindspore.experimental.optim import SGD
 from mindspore.experimental.optim import Adam
 from mindspore.experimental.optim import AdamW
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.experimental import optim
 
 

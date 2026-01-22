@@ -30,7 +30,7 @@ from mindspore._c_expression import TensorPy as Tensor_
 from mindspore.common import dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore import _checkparam as Validator
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.train._utils import _check_lineage_value, _check_to_numpy, _make_directory, check_value_type, \
     check_summary_param
 from mindspore.train.summary._summary_adapter import get_event_file_name, package_graph_event

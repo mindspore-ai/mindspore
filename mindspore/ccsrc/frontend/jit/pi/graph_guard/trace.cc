@@ -67,7 +67,7 @@ static const char kIsSeqShapeUnknown[] = "is_sequence_shape_unknown";
 static const char kTrainingFlag[] = "training";
 static const char kMindSporePackPrefix[] = "mindspore.";
 
-constexpr const char *kFuncWhiteListModuleName = "mindspore._extends.pijit.pijit_func_white_list";
+constexpr const char *kFuncWhiteListModuleName = "mindspore.graph._pijit.pijit_func_white_list";
 constexpr const char *kGuardFuncMapName = "_guard_func_map";
 
 static PyObject *RichCompare(PyObject *left, PyObject *right, int oparg);

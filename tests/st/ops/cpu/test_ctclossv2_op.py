@@ -22,7 +22,7 @@ from mindspore import Tensor, context, nn
 from mindspore.ops import operations as P
 from mindspore.ops import function as F
 from mindspore.ops.composite import GradOperation
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 class Net(nn.Cell):

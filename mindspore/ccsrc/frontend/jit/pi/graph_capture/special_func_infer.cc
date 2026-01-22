@@ -34,7 +34,7 @@ namespace mindspore {
 namespace pijit {
 extern ValueNode *GetBoundSelfHelper(CallNode *call_node, bool *is_method);
 
-constexpr const char *kModuleName = "mindspore._extends.pijit.pijit_func_white_list";
+constexpr const char *kModuleName = "mindspore.graph._pijit.pijit_func_white_list";
 constexpr const char *kFuncMapName = "_func_map";
 constexpr const char *kSlotCallName = "__call__";
 constexpr const size_t kDictPopParamsNum = 2;
@@ -612,14 +612,14 @@ enum FuncKey {
   FUNC_KEY_DICT_POP,              // "dict.pop"
   FUNC_KEY_PRIMITIVE,             // "mindspore._c_expression.Primitive_"
   FUNC_KEY_META_FUNCG_RAPH,       // "mindspore._c_expression.MetaFuncGraph_"
-  FUNC_KEY_PSJIT_CODE,            // "mindspore.common.api.jit.<locals>.staging_specialize"
+  FUNC_KEY_PSJIT_CODE,            // "mindspore.graph.api.jit.<locals>.staging_specialize"
   FUNC_KEY_CONSTEXPR,             // "mindspore.ops.primitive.constexpr"
   FUNC_KEY_PRIMEXPR,              // "mindspore.ops.primitive._primexpr"
   FUNC_KEY_GET_CACHE_PRIM,        // "mindspore.ops._primitive_cache._get_cache_prim"
   FUNC_KEY_REGISTRY_GET,          // "mindspore.common._register_for_tensor.Registry.get"
   FUNC_KEY_TENSOR_ASTYPE,         // "mindspore.common.tensor.Tensor.astype"
   FUNC_KEY_GRAD_OPERATIONS_CODE,  // "mindspore.ops.composite.base._Grad.__call__.<locals>.after_grad"
-  FUNC_KEY_PSJIT_CONVERTMAP,      // "mindspore._extends.parse.resources.convert_object_map"
+  FUNC_KEY_PSJIT_CONVERTMAP,      // "mindspore.graph._parse.resources.convert_object_map"
   FUNC_KEY_GRAPH_CELL,            // "mindspore.nn.cell.GraphCell"
   FUNC_KEY_MS_API,                // mindspore api
   FUNC_KEY_MAPPING_GET,           // mapping get

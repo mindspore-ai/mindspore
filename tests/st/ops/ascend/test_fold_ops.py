@@ -18,7 +18,7 @@ import pytest
 from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore import ops
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore.context as context
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F

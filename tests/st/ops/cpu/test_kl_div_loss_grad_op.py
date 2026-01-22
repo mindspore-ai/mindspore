@@ -21,7 +21,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.functional import vmap
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 

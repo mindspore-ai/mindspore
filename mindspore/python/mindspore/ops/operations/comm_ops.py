@@ -23,7 +23,7 @@ from mindspore import _checkparam as validator
 from mindspore.communication.management import get_rank, get_group_size, GlobalComm, _get_group
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import PrimitiveWithInfer, PrimitiveWithCheck, Primitive, prim_attr_register
-from mindspore.common.api import context
+from mindspore.graph.api import context
 
 
 class ReduceOp:

@@ -20,7 +20,7 @@ import pytest
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore.ops.composite.base import core
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 from mindspore import Tensor
 from mindspore.ops import functional as F

@@ -18,8 +18,8 @@ import os
 import pytest
 import numpy as np
 from mindspore import Tensor, context, jit, nn
-from mindspore.common.api import _cell_graph_executor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _cell_graph_executor
+from mindspore.graph.api import _pynative_executor
 
 context.set_context(mode=context.GRAPH_MODE)
 

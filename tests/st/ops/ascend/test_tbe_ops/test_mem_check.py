@@ -22,7 +22,7 @@ import mindspore.nn as nn
 import mindspore.ops as ops
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.common.api import _pynative_executor, jit
+from mindspore.graph.api import _pynative_executor, jit
 
 
 class GatherNet(nn.Cell):

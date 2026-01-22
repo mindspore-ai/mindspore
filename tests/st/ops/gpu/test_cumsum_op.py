@@ -20,7 +20,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import operations as P
 
 
@@ -130,24 +130,49 @@ def cum_sum(nptype):
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cum_sum_uint8():
+    """
+    Feature: Test CumSum.
+    Description: Test the functionality of CumSum.
+    Expectation: success
+    """
     cum_sum(np.uint8)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cum_sum_int8():
+    """
+    Feature: Test CumSum with int32.
+    Description: Test the functionality of CumSum with int32.
+    Expectation: success
+    """
     cum_sum(np.int8)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cum_sum_int32():
+    """
+    Feature: Test CumSum with float16.
+    Description: Test the functionality of CumSum with float16.
+    Expectation: success
+    """
     cum_sum(np.int32)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cum_sum_float16():
+    """
+    Feature: Test CumSum with float32.
+    Description: Test the functionality of CumSum with float32.
+    Expectation: success
+    """
     cum_sum(np.float16)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cum_sum_float32():
+    """
+    Feature: Test CumSum with float32.
+    Description: Test the functionality of CumSum with float32.
+    Expectation: success
+    """
     cum_sum(np.float32)

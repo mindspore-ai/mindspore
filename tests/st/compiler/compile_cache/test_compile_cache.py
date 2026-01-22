@@ -19,7 +19,7 @@ import subprocess
 import pytest
 import numpy as np
 from mindspore import mutable, Tensor, nn, jit, ops
-from mindspore.common.api import ms_compile_cache
+from mindspore.graph.api import ms_compile_cache
 from mindspore import dtype as mstype
 from tests.st.networks import utils
 from tests.st.utils import test_utils

@@ -41,7 +41,7 @@ from mindspore.parallel import set_algo_parameters, get_algo_parameters, reset_a
 from mindspore.parallel.function import reshard
 from mindspore.rewrite import SymbolTree, ScopedValue, Node, NodeType
 from mindspore.safeguard import obfuscate_ckpt, load_obf_params_into_net
-from mindspore._check_jit_forbidden_api import get_obj_module_and_name_info, is_jit_forbidden_module, \
+from mindspore.graph._utils.check_jit_forbidden_api import get_obj_module_and_name_info, is_jit_forbidden_module, \
     is_invalid_or_jit_forbidden_method
 from mindspore import mint
 from mindspore.ops._utils import arg_handler, arg_dtype_cast
@@ -49,6 +49,9 @@ from mindspore import onnx
 from mindspore import graph
 from mindspore import multiprocessing
 from mindspore._c_expression import frombuffer
+
+# Import the following modules to maintain compatibility
+import mindspore.graph._utils.check_jit_forbidden_api as _check_jit_forbidden_api
 
 __all__ = ["run_check"]
 __all__.extend(__version__)

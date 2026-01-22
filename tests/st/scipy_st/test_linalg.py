@@ -22,7 +22,7 @@ import scipy as osp
 import mindspore.nn as nn
 import mindspore.scipy as msp
 from mindspore import context, Tensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore.numpy as mnp
 from mindspore.scipy.linalg import det
 

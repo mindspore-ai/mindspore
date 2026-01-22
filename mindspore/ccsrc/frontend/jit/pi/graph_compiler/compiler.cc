@@ -66,7 +66,7 @@ bool CanbeMutable(const py::object &arg) {
     return false;
   }
   if (py::isinstance<py::dict>(arg) || py::isinstance<py::list>(arg) || py::isinstance<py::tuple>(arg)) {
-    py::object o = python_adapter::CallPyFn("mindspore.common.mutable", "_check_element_type", arg);
+    py::object o = python_adapter::CallPyFn("mindspore.graph.mutable", "_check_element_type", arg);
     return py::isinstance<py::bool_>(o) && py::bool_(o);
   }
   return false;
@@ -76,7 +76,7 @@ void MarkArgumentMutable(const py::tuple &args) {
   for (size_t idx = 0; idx < args.size(); idx++) {
     if (CanbeMutable(args[idx])) {
       MS_LOG(DEBUG) << "Make argument mutable, arg index: " << idx << ", arg object: " << py::str(args[idx]);
-      args[idx] = python_adapter::CallPyFn("mindspore.common", "mutable", args[idx]);
+      args[idx] = python_adapter::CallPyFn("mindspore.graph.mutable", "mutable", args[idx]);
     }
   }
 }
@@ -100,9 +100,9 @@ void MarkArgumentMutableWithParams(const py::tuple &args, const AnfNodePtrList &
       if (GraphUtils::IsMutable(arg)) {
         continue;
       }
-      py::object o = python_adapter::CallPyFn("mindspore.common.mutable", "_check_element_type", arg);
+      py::object o = python_adapter::CallPyFn("mindspore.graph.mutable", "_check_element_type", arg);
       if (py::isinstance<py::bool_>(o) && py::bool_(o)) {
-        args[index] = python_adapter::CallPyFn("mindspore.common", "mutable", arg);
+        args[index] = python_adapter::CallPyFn("mindspore.graph.mutable", "mutable", arg);
         MS_LOG(DEBUG) << "Add mutable to object";
       } else {
         MS_LOG(INFO) << "Failed to make argument mutable, arg object: " << py::str(arg);
@@ -167,7 +167,7 @@ PyObject *RunGraph(const std::string &phase, const py::tuple &args, const std::s
   }
   FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
   MS_EXCEPTION_IF_NULL(ms_func_graph);
-  ret = python_adapter::CallPyFn("mindspore.common.api", "_convert_python_data", ret);
+  ret = python_adapter::CallPyFn("mindspore.graph.api", "_convert_python_data", ret);
   ret.inc_ref();
   return ret.ptr();
 }

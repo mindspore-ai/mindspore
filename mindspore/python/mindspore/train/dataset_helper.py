@@ -20,9 +20,9 @@ import copy
 
 from mindspore import _checkparam as Validator
 from mindspore import log as logger
-from mindspore.common.dynamic_shape._auto_dynamic import is_auto_dynamic, convert_new_shapes
+from mindspore.graph.dynamic_shape._auto_dynamic import is_auto_dynamic, convert_new_shapes
 from mindspore.common.dtype import _pytype_to_dtype
-from mindspore.common.api import _cell_graph_executor, _is_args_fullmode, ARG_SPECIFIED
+from mindspore.graph.api import _cell_graph_executor, _is_args_fullmode, ARG_SPECIFIED
 from mindspore.common._utils import is_shape_unknown
 from mindspore.dataset.core import config as dataset_config
 from mindspore.dataset.engine import offload
@@ -34,7 +34,7 @@ from mindspore.parallel._utils import _get_device_num, _get_global_rank, _need_t
     _origin_shapes, _dynamic_shape_for_dataset
 from mindspore.parallel._ps_context import _is_role_sched
 from mindspore.ops import operations as P
-from mindspore.common.dynamic_shape.auto_dynamic_shape import _auto_dynamic_shape
+from mindspore.graph.dynamic_shape.auto_dynamic_shape import _auto_dynamic_shape
 
 
 def _send_data(dataset, epoch_num):

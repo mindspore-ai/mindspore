@@ -310,7 +310,7 @@ void Capture(const py::list &args, const PrimitivePtr &prim, py::object *res) {
   if (!IsTracing()) {
     return;
   }
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   std::string method = "prepare_op";
   py::tuple op_info = jit_context.attr(method.c_str())(prim->name(), res, *args);
   const py::object &prim_res = op_info[kPrimResultIndex];
@@ -328,7 +328,7 @@ void CapturePy(PyObject *args, const PrimitivePtr &prim, PyObject **res) {
   }
   py::list py_args = py::reinterpret_borrow<py::list>(args);
   py::object py_res = py::reinterpret_borrow<py::object>(*res);
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   std::string method = "prepare_op";
   py::tuple op_info = jit_context.attr(method.c_str())(prim->name(), py_res, *py_args);
   const py::object &prim_res = op_info[kPrimResultIndex];
@@ -344,7 +344,7 @@ void CaptureResolveOperation(const py::tuple &args, const std::string &named_pri
   if (!IsTracing()) {
     return;
   }
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   std::string method = "prepare_op";
   py::tuple op_info = jit_context.attr(method.c_str())(named_primitive, res, *args);
   const py::object &prim_res = op_info[kPrimResultIndex];
@@ -352,7 +352,7 @@ void CaptureResolveOperation(const py::tuple &args, const std::string &named_pri
   const py::list &linenos = op_info[kLineNumberIndex];
   const py::tuple &inputs = op_info[kArgsIndex];
   auto trope =
-    python_adapter::GetPyObjAttr(python_adapter::GetPyModule("mindspore._extends.parse.resources"), "trope_ns");
+    python_adapter::GetPyObjAttr(python_adapter::GetPyModule("mindspore.graph._parse.resources"), "trope_ns");
   parse::NameSpacePtr name_space = std::make_shared<parse::NameSpace>("CommonOPS", trope);
   parse::SymbolPtr symbol = std::make_shared<parse::Symbol>(named_primitive);
   MS_LOG(DEBUG) << "name_space: " << name_space->ToString() << ", symbol: " << symbol->ToString();
@@ -370,7 +370,7 @@ void Capture(const std::vector<py::object> &args_vec, const PrimitivePtr &prim, 
   for (size_t i = 0; i < args_vec.size(); i++) {
     args[i] = args_vec[i];
   }
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   std::string method = "prepare_op";
   py::tuple op_info = jit_context.attr(method.c_str())(prim->name(), res, *args);
   const py::object &prim_res = op_info[kPrimResultIndex];
@@ -391,7 +391,7 @@ void CapturePy(const std::vector<PyObject *> &args_vec, const PrimitivePtr &prim
     args[i] = py::reinterpret_borrow<py::object>(args_vec[i]);
   }
   py::object py_res = py::reinterpret_borrow<py::object>(*res);
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   std::string method = "prepare_op";
   py::tuple op_info = jit_context.attr(method.c_str())(prim->name(), py_res, *args);
   const py::object &prim_res = op_info[kPrimResultIndex];
@@ -405,7 +405,7 @@ void CapturePy(const std::vector<PyObject *> &args_vec, const PrimitivePtr &prim
 
 py::object CaptureRun(const py::args &args, const py::object &res, const py::object &prim_py) {
   // Capture node from trace func.
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   std::string method = "run_op";
   return jit_context.attr(method.c_str())(prim_py, res, *args);
 }
@@ -421,7 +421,7 @@ void PassNodeInArg(PyObject *origin_obj, PyObject *new_obj) {
 }
 
 bool Compiled() {
-  auto jit_context = python_adapter::CallPyFn("mindspore.common.jit_context", "jit_context");
+  auto jit_context = python_adapter::CallPyFn("mindspore.graph.jit_context", "jit_context");
   if (py::isinstance<py::none>(jit_context)) {
     return false;
   }
@@ -450,7 +450,7 @@ void TraceRecorder::PassNode(const py::object &origin_obj, const py::object &new
 FuncGraphPtr TraceRecorder::InitTopGraph(const DebugInfoPtr &debug_info) {
   if (!graph_stack_.empty()) {
     Clear();
-    (void)python_adapter::CallPyFn("mindspore.common.jit_context", "set_jit_context", py::none());
+    (void)python_adapter::CallPyFn("mindspore.graph.jit_context", "set_jit_context", py::none());
     MS_LOG(EXCEPTION) << "The maximum nesting level for using the jit trace and jit ast decorators is one."
                       << " Please check the current code for its nesting usage.";
   }
@@ -605,7 +605,7 @@ void TraceRecorder::NewFuncGraphNode(const py::tuple &info, const py::args &inpu
   const py::bool_ &is_nested = info[kIsNested];
   if (is_nested) {
     Clear();
-    (void)python_adapter::CallPyFn("mindspore.common.jit_context", "set_jit_context", py::none());
+    (void)python_adapter::CallPyFn("mindspore.graph.jit_context", "set_jit_context", py::none());
     MS_LOG(EXCEPTION) << "The maximum nesting level for using the jit trace and jit ast decorators is one."
                       << " Please check the current code for its nesting usage.";
   }

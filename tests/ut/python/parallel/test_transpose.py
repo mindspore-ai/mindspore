@@ -20,7 +20,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.common.parameter import Parameter
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P

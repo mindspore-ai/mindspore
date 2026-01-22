@@ -14,7 +14,7 @@
 # ============================================================================
 import mindspore.context as context
 import mindspore.nn as nn
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P

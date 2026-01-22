@@ -18,7 +18,7 @@ from __future__ import absolute_import
 from mindspore import ops
 from mindspore.ops import operations as P
 import mindspore.common.dtype as mstype
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore import _checkparam as validator
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register

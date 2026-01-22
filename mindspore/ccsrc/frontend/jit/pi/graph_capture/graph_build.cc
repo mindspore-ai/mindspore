@@ -4659,7 +4659,7 @@ std::string GetClassTypeName(const py::object &obj) {
 
 py::object ConvertPythonBuiltInFunction(const py::object &obj, const std::string &func_name) {
   py::str func_name_obj = py::str(func_name);
-  auto dict = python_adapter::GetPyObjAttr(python_adapter::GetPyModule("mindspore._extends.parse.resources"),
+  auto dict = python_adapter::GetPyObjAttr(python_adapter::GetPyModule("mindspore.graph._parse.resources"),
                                            "convert_class_to_function_map");
   auto callable_obj_ptr = PyDict_GetItem(dict.ptr(), func_name_obj.ptr());
   return callable_obj_ptr == nullptr ? py::object() : py::cast<py::object>(callable_obj_ptr);

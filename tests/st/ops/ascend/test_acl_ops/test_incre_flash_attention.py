@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import mutable
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common import dtype as mstype
 from mindspore.ops.function.nn_func import incre_flash_attention
 

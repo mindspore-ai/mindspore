@@ -20,7 +20,7 @@ import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 
 
 class ChannelShuffleNet(nn.Cell):

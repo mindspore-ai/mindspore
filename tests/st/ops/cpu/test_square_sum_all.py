@@ -20,7 +20,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 from mindspore.ops import functional as F
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore as ms
 import mindspore.ops.operations as P
 

@@ -19,7 +19,7 @@ import numpy as np
 
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 
 
 class AvgNet(nn.Cell):
@@ -34,6 +34,11 @@ class AvgNet(nn.Cell):
 
 
 def test_compile_avg():
+    """
+    Feature: Test AvgPool2d.
+    Description: Test the functionality of AvgPool2d.
+    Expectation: success
+    """
     net = AvgNet(3, 1)
     x = Tensor(np.ones([1, 3, 16, 50]).astype(np.float32))
     _cell_graph_executor.compile(net, x)
@@ -56,6 +61,11 @@ class MaxNet(nn.Cell):
 
 
 def test_compile_max():
+    """
+    Feature: Test MaxPool2d.
+    Description: Test the functionality of MaxPool2d.
+    Expectation: success
+    """
     net = MaxNet(3, stride=1, padding=0)
     x = Tensor(np.random.randint(0, 255, [1, 3, 6, 6]).astype(np.float32))
     _cell_graph_executor.compile(net, x)

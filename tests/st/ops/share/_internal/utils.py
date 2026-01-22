@@ -24,7 +24,7 @@ import math
 import torch
 import numpy as np
 import mindspore as ms
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.common.dtype import _dtype_to_nptype
 from mindspore._c_expression import MSContext
 from tests.st.ops.share._op_info.op_common import dtypes_common

@@ -29,7 +29,7 @@ from .common import dtype as mstype
 from . import context
 from . import ops
 from .ops import constexpr
-from .common.api import jit_class, jit
+from mindspore.graph.api import jit_class, jit
 from .common.parameter import Parameter
 from .common.tensor import Tensor
 from .train.loss_scale_manager import DynamicLossScaleManager, LossScaleManager, FixedLossScaleManager

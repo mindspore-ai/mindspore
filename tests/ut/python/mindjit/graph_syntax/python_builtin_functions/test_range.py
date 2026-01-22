@@ -15,7 +15,7 @@
 import numpy as np
 import pytest
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
 import mindspore as ms

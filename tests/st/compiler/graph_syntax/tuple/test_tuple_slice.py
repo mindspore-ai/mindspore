@@ -17,7 +17,7 @@
 import pytest
 from mindspore.nn import Cell
 from mindspore.common.tensor import Tensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore import jit
 from tests.mark_utils import arg_mark
 

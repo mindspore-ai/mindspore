@@ -24,8 +24,8 @@ import pytest
 
 import mindspore.nn as nn
 from mindspore import context
-from mindspore._extends.parse.standard_method import ms_len
-from mindspore.common.api import jit, jit_class
+from mindspore.graph._parse.standard_method import ms_len
+from mindspore.graph.api import jit, jit_class
 from mindspore.common.tensor import Tensor
 from mindspore.ops.composite.base import core
 from mindspore.ops.primitive import constexpr

@@ -17,7 +17,7 @@
 import numpy as np
 import mindspore as ms
 from mindspore import nn
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.communication import init, get_rank, get_group_size
 from mindspore.ops.auto_generate import SignalWaitUntil, PutMemSignal, CreateSymmetricMemory
 

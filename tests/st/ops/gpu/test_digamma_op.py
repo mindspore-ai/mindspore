@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.ops.operations.math_ops import Digamma
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 
 class DigammaNet(nn.Cell):

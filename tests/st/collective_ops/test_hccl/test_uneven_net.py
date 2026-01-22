@@ -17,7 +17,7 @@
 
 #msrun --worker_num=2 --local_worker_num=2 --master_port=10923 --bind_core True --join True --cluster_time_out=800  pytest -sv --disable-warnings test_uneven_net.py
 import mindspore.nn as nn
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.communication.management import init, get_rank
 from mindspore.nn import Dense
 from mindspore.nn import Momentum

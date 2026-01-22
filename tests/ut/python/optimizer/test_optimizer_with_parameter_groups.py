@@ -18,7 +18,7 @@ import pytest
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
 from mindspore import context
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.common.tensor import Tensor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.optim import Momentum, SGD, RMSProp, Adam

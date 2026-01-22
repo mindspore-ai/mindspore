@@ -24,7 +24,7 @@ from mindspore.experimental.optim import Adam
 from mindspore.experimental.optim import AdamW
 from mindspore.experimental.optim.lr_scheduler import StepLR
 from mindspore.experimental.optim.lr_scheduler import LinearLR
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 
 class Network(nn.Cell):

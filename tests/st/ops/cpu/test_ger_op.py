@@ -15,7 +15,7 @@
 import mindspore.nn as nn
 import numpy as np
 import pytest
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops.functional import vmap
 
 from mindspore import Tensor

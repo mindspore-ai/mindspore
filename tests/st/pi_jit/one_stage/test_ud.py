@@ -19,7 +19,7 @@ import numpy as np
 import mindspore.nn as nn
 from math import cos
 from mindspore import Tensor, context
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from tests.mark_utils import arg_mark
 from tests.st.pi_jit.share.utils import pi_jit_with_config
 

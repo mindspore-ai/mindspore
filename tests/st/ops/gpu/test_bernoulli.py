@@ -19,7 +19,7 @@ import pytest
 import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import mindspore.context as context
 from mindspore.ops import functional as F
 from mindspore.ops.operations import _inner_ops as inner

@@ -20,7 +20,7 @@ import mindspore.nn as nn
 import mindspore.ops.functional as F
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.communication.management import init
 from mindspore.nn.loss.loss import _Loss

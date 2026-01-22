@@ -19,7 +19,7 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore import context
 from mindspore import ops
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from ..share.utils import match_array, assert_executed_by_graph_mode
 
 

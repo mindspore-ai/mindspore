@@ -23,7 +23,7 @@ from mindspore import nn
 from mindspore import Tensor, context
 from mindspore import dtype as mstype
 
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 class BoolTensorIndexGetItem(nn.Cell):
     def construct(self, x, index):

@@ -21,7 +21,7 @@ import numpy as np
 from mindspore import nn
 from mindspore import ops
 from mindspore import jit, Tensor, Parameter
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 from tests.mark_utils import arg_mark
 import mindspore.common.dtype as mstype
 

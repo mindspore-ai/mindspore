@@ -15,7 +15,7 @@
 import mindspore as ms
 from mindspore import context
 from mindspore.ops import operations as P
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common.tensor import Tensor
 import mindspore.nn as nn
 

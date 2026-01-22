@@ -17,7 +17,7 @@
 
 from mindspore import context
 from mindspore.common import ParameterTuple
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.nn import Cell
 from mindspore.ops.composite.base import GradOperation
 

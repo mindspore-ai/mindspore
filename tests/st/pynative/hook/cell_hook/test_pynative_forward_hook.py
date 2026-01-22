@@ -21,7 +21,7 @@ from mindspore import Tensor
 from mindspore import context
 from mindspore.ops import GradOperation
 from mindspore.common import ParameterTuple
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore import ops as P
 from tests.mark_utils import arg_mark
 from tests.st.pynative.hook.cell_hook.common import assert_jit_net, assert_jit_grad_net_by_grad_op, \

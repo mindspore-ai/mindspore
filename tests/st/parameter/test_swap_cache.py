@@ -16,7 +16,7 @@
 import numpy as np
 import mindspore as ms
 from mindspore._c_expression import swap_cache
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import operations as P
 from tests.mark_utils import arg_mark
 

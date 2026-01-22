@@ -5083,7 +5083,7 @@ class TraceGraphEvaluator final : public TransitionPrimEvaluator {
     }
     py::tuple output;
     try {
-      output = python_adapter::CallPyFn("mindspore.common.jit_trace", "nested_run", func_obj, cell_obj, *py_inputs);
+      output = python_adapter::CallPyFn("mindspore.graph.jit_trace", "nested_run", func_obj, cell_obj, *py_inputs);
     } catch (const std::exception &e) {
       MS_LOG(EXCEPTION) << "Encounter error: " << e.what() << " When compiling nested trace graph.";
     }

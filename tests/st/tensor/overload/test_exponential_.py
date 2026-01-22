@@ -3,7 +3,7 @@ import pytest
 from tests.mark_utils import arg_mark
 import mindspore as ms
 from mindspore import context
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 class Net(ms.nn.Cell):
     def construct(self, input_x, lambd=1, generator=None):

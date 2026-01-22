@@ -24,7 +24,7 @@ import numpy as np
 import mindspore as ms
 from einops import rearrange
 from mindspore import ops, mint
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 from tests.st.utils import test_utils
 from tests.st.ops.test_tools.test_op import TEST_OP

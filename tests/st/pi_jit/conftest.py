@@ -24,7 +24,7 @@ import sys
 from typing import Dict
 
 from mindspore._c_expression import update_pijit_default_config
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 
 
 def pytest_runtest_setup(item):

@@ -18,7 +18,7 @@ import numpy as np
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from ....train_step_wrap import train_step_with_loss_warp, train_step_with_sens
 

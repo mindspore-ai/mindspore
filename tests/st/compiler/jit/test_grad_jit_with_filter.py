@@ -18,7 +18,7 @@ import shutil
 import subprocess
 import numpy as np
 from mindspore import Tensor, Parameter, ParameterTuple, jit, ops, context
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 from mindspore import nn
 from mindspore.ops.auto_generate import TransposeView
 from tests.mark_utils import arg_mark

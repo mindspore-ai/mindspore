@@ -15,7 +15,7 @@
 """Test string operations"""
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore._c_expression import get_code_extra
 
 from tests.st.pi_jit.share.utils import match_array

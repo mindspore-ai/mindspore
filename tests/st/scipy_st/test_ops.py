@@ -28,7 +28,7 @@ from mindspore.ops.operations.math_ops import Cholesky
 from mindspore.ops.operations.linalg_ops import Eigh
 from mindspore.scipy.ops import Eig, LinearSumAssignment
 from mindspore.scipy.utils import _nd_transpose
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 from tests.mark_utils import arg_mark
 from tests.st.scipy_st.utils import create_sym_pos_matrix, create_random_rank_matrix, compare_eigen_decomposition

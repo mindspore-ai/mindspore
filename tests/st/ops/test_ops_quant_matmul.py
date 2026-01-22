@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 import mindspore as ms
 from mindspore import ops, Tensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 # ascend backend can't support fp8 dtypes on 910b, fp8 dtypes need A5 now.

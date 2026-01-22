@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 from mindspore import Tensor, ops, nn, context
 from mindspore.ops.functional import jacfwd, jacrev
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 context.set_context(mode=context.GRAPH_MODE)
 

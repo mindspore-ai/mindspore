@@ -23,7 +23,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C, operations as P
 from mindspore.ops.operations.comm_ops import AllReduce
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, Adam
 
 grad_all = C.GradOperation(get_all=True)

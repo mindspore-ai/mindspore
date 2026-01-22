@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
 from mindspore import Symbol
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.ops.auto_generate.gen_ops_prim import Max, Mul
 
 def setup_function():

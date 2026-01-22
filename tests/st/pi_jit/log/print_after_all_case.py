@@ -18,7 +18,7 @@ import numpy as np
 
 from mindspore import jit, ops
 from mindspore.common import Tensor
-from mindspore.common._pijit_context import PIJitCaptureContext
+from mindspore.graph._utils.pijit_context import PIJitCaptureContext
 from mindspore.nn import Cell
 
 from tests.st.pi_jit.share.grad import GradOfFirstInput

@@ -5300,7 +5300,7 @@ struct CompileConfigCollectRegister {
   CompileConfigCollectRegister() noexcept {
     CompileConfigManager::set_collect_func([]() {
       std::map<std::string, std::string> compile_config;
-      const auto module_name = "mindspore._extends.parse.compile_config";
+      const auto module_name = "mindspore.graph._parse.compile_config";
       py::list config_list = py::cast<py::list>(python_adapter::GetPyFn(module_name, "__all__"));
       for (size_t i = 0; i < config_list.size(); ++i) {
         auto config_name = config_list[i].cast<std::string>();

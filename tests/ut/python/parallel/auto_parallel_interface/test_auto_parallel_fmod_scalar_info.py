@@ -14,7 +14,7 @@
 
 import mindspore as ms
 from mindspore import context, Tensor, nn
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.ops import operations as P
 from mindspore.parallel.shard import Layout
 from parallel.auto_parallel_interface._utils import init_hccl, set_parallel_mode, remove_files

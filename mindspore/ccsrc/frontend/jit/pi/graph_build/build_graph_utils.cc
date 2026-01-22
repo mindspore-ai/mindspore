@@ -258,7 +258,7 @@ py::tuple GetMethodInfo(const py::object &obj) {
 }
 
 std::string GetTensorMethodName(const py::object &obj) {
-  constexpr auto tensor_func_list_mod_str = "mindspore._extends.pijit.tensor_func_list";
+  constexpr auto tensor_func_list_mod_str = "mindspore.graph._pijit.tensor_func_list";
   constexpr auto get_tensor_method_name_str = "get_tensor_method_name";
   py::module mod = python_adapter::GetPyModule(tensor_func_list_mod_str);
   py::object name_obj = python_adapter::CallPyModFn(mod, get_tensor_method_name_str, FunctionId(obj));

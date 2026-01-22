@@ -17,7 +17,7 @@ import pytest
 
 import mindspore as ms
 from mindspore import ops, nn, context, Tensor
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.parallel.shard import Layout
 from mindspore.nn import Cell
 from mindspore.nn.utils import no_init_parameters

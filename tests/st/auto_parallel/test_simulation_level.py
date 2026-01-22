@@ -21,7 +21,7 @@ import mindspore.nn as nn
 import mindspore.dataset as ds
 from mindspore import context, Tensor
 from mindspore.train import Model
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell, Momentum
 from mindspore.nn import PipelineCell
 from mindspore.communication.management import init, create_group, destroy_group, get_group_size, get_rank, \

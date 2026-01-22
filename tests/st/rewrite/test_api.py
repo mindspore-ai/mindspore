@@ -16,7 +16,7 @@
 import mindspore.nn as nn
 from mindspore.rewrite import SymbolTree, Node, ScopedValue
 from mindspore import Tensor
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 import numpy as np
 import pytest
 from tests.mark_utils import arg_mark

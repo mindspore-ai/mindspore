@@ -21,7 +21,7 @@ import subprocess
 import numpy as np
 import mindspore as ms
 from mindspore import jit
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 from tests.mark_utils import arg_mark
 
 match_dyn_mem = re.compile(r'Used peak memory usage \(without fragments\)\: (.*?)M', re.S)

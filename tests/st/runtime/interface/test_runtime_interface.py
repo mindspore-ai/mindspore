@@ -19,7 +19,7 @@ import mindspore as ms
 from mindspore import nn
 from mindspore import context
 from mindspore.ops import operations as P
-from mindspore.common.api import _frontend_compile, _graph_split
+from mindspore.graph.api import _frontend_compile, _graph_split
 from tests.mark_utils import arg_mark
 
 context.set_context(mode=ms.GRAPH_MODE, jit_config={"jit_level": "O0"})

@@ -20,7 +20,7 @@ import mindspore as ms
 from mindspore.communication import init, create_group
 from mindspore.communication.comm_func import all_to_all_v_c
 from mindspore.communication.management import get_rank, get_group_size
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 # 'all_to_all_single_with_output_shape' function only supports KernelByKernel mode by now.
 np.random.seed(1)

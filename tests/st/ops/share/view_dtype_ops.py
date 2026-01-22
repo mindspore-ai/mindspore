@@ -23,7 +23,7 @@ import hashlib
 import mindspore as ms
 import numpy as np
 from mindspore.ops.auto_generate.gen_ops_def import as_strided
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.st.ops.share._internal.meta import OpsFactory
 from tests.st.ops.share._internal.utils import make_tensor, OpSampleInput, OpErrorInput, ms_asnumpy, torch_asnumpy
 from tests.st.ops.share._op_info.op_info import OpInfo

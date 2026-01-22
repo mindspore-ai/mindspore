@@ -23,7 +23,7 @@ from mindspore.common.parameter import Parameter
 import mindspore.common.dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.parallel import set_algo_parameters
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from tests.dataset_mock import MindData
 
 

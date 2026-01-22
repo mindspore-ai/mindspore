@@ -21,7 +21,7 @@ import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 import mindspore.common.dtype as mstype
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.parallel._cost_model_context import _set_algo_single_loop
 from tests.dataset_mock import MindData
 

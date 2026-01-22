@@ -23,7 +23,7 @@ from mindspore import dtype as mstype
 from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore.ops.composite import HyperMap
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.nn import Cell
 
 context.set_context(mode=context.GRAPH_MODE)

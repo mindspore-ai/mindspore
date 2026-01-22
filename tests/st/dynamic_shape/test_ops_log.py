@@ -19,7 +19,7 @@ from tests.mark_utils import arg_mark
 import mindspore.nn as nn
 from mindspore import Tensor, context
 from mindspore.common import dtype as mstype
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import auto_generate as P
 from mindspore.ops.composite import GradOperation
 

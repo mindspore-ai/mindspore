@@ -17,7 +17,7 @@ import numpy as np
 
 from mindspore import context, nn, Tensor
 from mindspore import log as logger
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 import mindspore.dataset as de

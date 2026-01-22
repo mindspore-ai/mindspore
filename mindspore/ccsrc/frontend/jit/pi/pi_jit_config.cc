@@ -30,7 +30,7 @@ GraphJitConfig kPIJitConfigDefault;
 
 constexpr int kDefaultMaxTraceDepth = 16;
 
-constexpr const char *kModuleName = "mindspore._extends.pijit.pijit_func_white_list";
+constexpr const char *kModuleName = "mindspore.graph._pijit.pijit_func_white_list";
 constexpr const char *kFuncMapName = "_func_map";
 constexpr const char *kGuardFuncMapName = "guard_func_map";
 

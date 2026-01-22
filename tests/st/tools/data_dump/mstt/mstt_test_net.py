@@ -18,8 +18,8 @@ import os
 import mindspore as ms
 from mindspore import nn, ops, jit, Tensor, Parameter, value_and_grad
 from mindspore._c_expression import PyNativeExecutor_
-from mindspore.common._pijit_context import PIJitCaptureContext
-from mindspore.common.api import _JitExecutor, _PyNativeExecutor
+from mindspore.graph._utils.pijit_context import PIJitCaptureContext
+from mindspore.graph.api import _JitExecutor, _PyNativeExecutor
 import numpy as np
 
 
@@ -146,7 +146,7 @@ def run_net(dump_path):
 
     PIJitCaptureContext.__enter__ = empty
     PIJitCaptureContext.__exit__ = empty
-    setattr(ms.common.api, '_JitExecutor', JitDump)
+    setattr(ms.graph.api, '_JitExecutor', JitDump)
     setattr(_PyNativeExecutor, 'grad', JitDump.grad)
     setattr(ops, 'mul', wrapped_mul)
 

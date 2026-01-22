@@ -17,7 +17,7 @@ import pytest
 import numpy as np
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import jit_class
+from mindspore.graph.api import jit_class
 from tests.mark_utils import arg_mark
 from tests.st.pi_jit.share.utils import pi_jit_with_config
         

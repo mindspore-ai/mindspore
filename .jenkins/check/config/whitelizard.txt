@@ -114,6 +114,7 @@ mindspore/mindspore/python/mindspore/ops/_utils/arg_dtype_cast.py:do_type_cast
 mindspore/mindspore/python/mindspore/context.py:set_auto_parallel_context
 mindspore/mindspore/python/mindspore/context.py:set_context
 mindspore/mindspore/python/mindspore/common/tensor.py:__init__
+mindspore/mindspore/python/mindspore/nn/optim/sgd.py:__init__
 mindspore/mindspore/python/mindspore/nn/layer/thor_layer.py:__init__
 mindspore/mindspore/python/mindspore/common/parameter.py:set_data
 mindspore/mindspore/python/mindspore/ops/_grad_experimental/grad_math_ops.py:get_bprop_fft_with_size.bprop
@@ -207,7 +208,7 @@ mindspore/mindspore/ccsrc/pybind_api/frontend/dtype_py.cc:mindspore::RegTyping
 mindspore/mindspore/ccsrc/pybind_api/pynative/tensor/tensor_py_reg.cc:mindspore::tensor::RegTensorPyFunction
 mindspore/mindspore/ops/kernel/cpu/native/eltwise_grad_cpu_kernel.cc:mindspore::kernel::EltWiseGradCpuTypeFunc<T>::InitFunc
 mindspore/mindspore/python/mindspore/ops/function/nn_func.py:conv3d
-mindspore/mindspore/python/mindspore/common/api.py:_convert_python_data
+mindspore/mindspore/python/mindspore/graph/api.py:_convert_python_data
 mindspore/mindspore/ops/kernel/cpu/native/crop_and_resize_cpu_kernel.cc:mindspore::kernel::CropAndResizeCpuKernelMod::LaunchKernel
 mindspore/mindspore/ops/kernel/cpu/native/cast_cpu_kernel.cc:mindspore::kernel::Cast
 mindspore/mindspore/ops/kernel/cpu/native/sparse_add_cpu_kernel.cc:mindspore::kernel::sparse_add_cpu::SparseAddCpuKernelMod::LaunchKernel

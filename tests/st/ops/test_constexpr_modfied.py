@@ -208,7 +208,7 @@ def test_unsqueeze():
     Description: Verify the result of unsqueeze
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import unsqueeze
+    from mindspore.graph._parse.standard_method import unsqueeze
 
     class Net(nn.Cell):
         def __init__(self):
@@ -254,7 +254,7 @@ def test_tensor_bool():
     Description: Verify the result of tensor_bool
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import tensor_bool
+    from mindspore.graph._parse.standard_method import tensor_bool
 
     class Net(nn.Cell):
         def __init__(self):
@@ -300,7 +300,7 @@ def test_topk():
     Description: Verify the result of topk
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import topk
+    from mindspore.graph._parse.standard_method import topk
 
     class Net(nn.Cell):
         def __init__(self):
@@ -324,7 +324,7 @@ def test_bernoulli():
     Description: Verify the result of bernoulli
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import bernoulli
+    from mindspore.graph._parse.standard_method import bernoulli
 
     class Net(nn.Cell):
         def __init__(self):
@@ -349,7 +349,7 @@ def test_view():
     Description: Verify the result of view
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import view
+    from mindspore.graph._parse.standard_method import view
 
     class Net(nn.Cell):
         def __init__(self):
@@ -374,7 +374,7 @@ def test_reshape():
     Description: Verify the result of reshape
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import reshape
+    from mindspore.graph._parse.standard_method import reshape
 
     class Net(nn.Cell):
         def __init__(self):
@@ -399,7 +399,7 @@ def test_swapaxes():
     Description: Verify the result of swapaxes
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import swapaxes
+    from mindspore.graph._parse.standard_method import swapaxes
 
     class Net(nn.Cell):
         def __init__(self):
@@ -430,7 +430,7 @@ def test_squeeze():
     Description: Verify the result of squeeze
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import squeeze
+    from mindspore.graph._parse.standard_method import squeeze
 
     class Net(nn.Cell):
         def __init__(self):
@@ -456,7 +456,7 @@ def test_argmax():
     Description: Verify the result of argmax
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import argmax
+    from mindspore.graph._parse.standard_method import argmax
 
     class Net(nn.Cell):
         def __init__(self):
@@ -481,7 +481,7 @@ def test_diagonal():
     Description: Verify the result of diagonal
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import diagonal
+    from mindspore.graph._parse.standard_method import diagonal
 
     class Net(nn.Cell):
         def __init__(self):
@@ -506,7 +506,7 @@ def test_take():
     Description: Verify the result of take
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import take
+    from mindspore.graph._parse.standard_method import take
 
     class Net(nn.Cell):
         def __init__(self):
@@ -532,7 +532,7 @@ def test_choose():
     Description: Verify the result of choose
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import choose
+    from mindspore.graph._parse.standard_method import choose
 
     class Net(nn.Cell):
         def __init__(self):
@@ -559,7 +559,7 @@ def test_var():
     Description: Verify the result of var
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import var
+    from mindspore.graph._parse.standard_method import var
 
     class Net(nn.Cell):
         def __init__(self):
@@ -584,7 +584,7 @@ def test_searchsorted():
     Description: Verify the result of searchsorted
     Expectation: success
     """
-    from mindspore._extends.parse.standard_method import searchsorted
+    from mindspore.graph._parse.standard_method import searchsorted
 
     class Net(nn.Cell):
         def __init__(self):

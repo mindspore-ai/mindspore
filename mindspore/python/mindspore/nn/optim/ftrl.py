@@ -17,7 +17,7 @@ from __future__ import absolute_import
 
 from mindspore.ops import functional as F, composite as C, operations as P
 from mindspore.ops.composite.multitype_ops.zeros_like_impl import zeros_like
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore import _checkparam as validator
 from mindspore.nn.optim.optimizer import Optimizer
 from mindspore.nn.optim.optimizer import opt_init_args_register

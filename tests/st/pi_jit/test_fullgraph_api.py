@@ -18,7 +18,7 @@ import pytest
 
 from mindspore import Tensor, ops, context, jit
 from mindspore.nn import Cell
-from mindspore.common._pijit_context import Unsupported
+from mindspore.graph._utils.pijit_context import Unsupported
 
 from tests.st.pi_jit.share.utils import pi_jit_with_config, match_array
 from tests.mark_utils import arg_mark

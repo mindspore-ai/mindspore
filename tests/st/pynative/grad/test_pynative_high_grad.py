@@ -21,7 +21,7 @@ from mindspore import Tensor, Parameter
 from mindspore import ops
 from mindspore.ops import operations as P
 from mindspore import jit
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.st.pynative.utils import GradOfFirstInput, GradOfAllInputs, HighGrad
 from tests.mark_utils import arg_mark
 

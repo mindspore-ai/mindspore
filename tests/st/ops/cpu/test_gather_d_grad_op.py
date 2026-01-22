@@ -22,7 +22,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops.composite import GradOperation
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
@@ -52,6 +52,11 @@ class NetGatherDGrad(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='unessential')
 def test_gatherd_grad_fp32():
+    """
+    Feature: Test GatherDGrad with float32.
+    Description: Test the functionality of GatherDGrad with float32.
+    Expectation: success
+    """
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(5, 5, 5).astype(np.float32) * prop
     index = np.random.randint(0, 5, (5, 3, 5)).astype(np.int32)
@@ -68,6 +73,11 @@ def test_gatherd_grad_fp32():
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='unessential')
 def test_gatherd_grad_fp16():
+    """
+    Feature: Test GatherDGrad with float16.
+    Description: Test the functionality of GatherDGrad with float16.
+    Expectation: success
+    """
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(5, 5, 5).astype(np.float16) * prop
     index = np.random.randint(0, 5, (3, 5, 5)).astype(np.int32)
@@ -84,6 +94,11 @@ def test_gatherd_grad_fp16():
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='unessential')
 def test_gatherd_grad_int32():
+    """
+    Feature: Test GatherDGrad with int32.
+    Description: Test the functionality of GatherDGrad with int32.
+    Expectation: success
+    """
     prop = 100 if np.random.random() > 0.5 else -100
     x = np.random.randn(5, 5, 5).astype(np.int32) * prop
     index = np.random.randint(0, 5, (5, 5, 7)).astype(np.int64)
@@ -100,6 +115,11 @@ def test_gatherd_grad_int32():
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='essential')
 def test_gatherd_grad_checkresult():
+    """
+    Feature: Test GatherDGrad with checkresult.
+    Description: Test the functionality of GatherDGrad with checkresult.
+    Expectation: success
+    """
     x = np.array([[[-146.76097, 119.84371], [91.22607, -166.12923]],
                   [[37.67479, -8.696029], [43.804962, -23.369316]]], np.float32)
     index = np.array([[[0, 1], [0, 0]], [[0, 0], [0, 1]]], np.int32)

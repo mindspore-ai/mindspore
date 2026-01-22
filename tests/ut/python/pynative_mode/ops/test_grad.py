@@ -18,7 +18,7 @@ import numpy as np
 import mindspore as ms
 import mindspore.ops.operations as P
 from mindspore import Tensor, context
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import composite as C
 from ...ut_filter import non_graph_engine
 

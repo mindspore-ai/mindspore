@@ -20,7 +20,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
 
@@ -50,6 +50,11 @@ class Net(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='unessential')
 def test_net():
+    """
+    Feature: Test HSigmoid.
+    Description: Test the functionality of HSigmoid.
+    Expectation: success
+    """
     x = np.array([-1, -2, 0, 2, 1]).astype(np.float32)
     hswish = Net()
     y = hswish(Tensor(x))

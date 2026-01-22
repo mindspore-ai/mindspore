@@ -23,7 +23,7 @@ from mindspore import Tensor, Parameter
 from mindspore import context, jit, ops
 from mindspore import dtype as mstype
 from mindspore.nn import Cell
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 from tests.mark_utils import arg_mark
 from tests.mindspore_test_framework.mindspore_test import mindspore_test

@@ -15,7 +15,7 @@
 """Top-level reference to dtype of common module."""
 from __future__ import absolute_import
 from mindspore.common import dtype
-from mindspore.common.api import ms_memory_recycle, jit, jit_class, _no_grad, saved_tensors_hooks, \
+from mindspore.graph.api import ms_memory_recycle, jit, jit_class, _no_grad, saved_tensors_hooks, \
     register_saved_tensors_hooks, flops_collection, set_recursion_limit
 from mindspore.common.dtype import Type, int8, byte, int16, short, int, int32, intc, long, int64, intp, \
     uint8, ubyte, uint16, ushort, uint32, uintc, uint64, uintp, float16, half, \
@@ -31,19 +31,30 @@ from mindspore.common.seed import set_seed, get_seed
 from mindspore.common.tensor import Tensor, tensor
 from mindspore.common.storage import UntypedStorage
 from mindspore.common.sparse_tensor import RowTensor, RowTensorInner, SparseTensor, COOTensor, CSRTensor
-from mindspore.common.mutable import mutable
-from mindspore.common.jit_config import JitConfig
-from mindspore.common.lazy_inline import lazy_inline
-from mindspore.common.no_inline import no_inline
-from mindspore.common.mindir_util import load_mindir, save_mindir
-from mindspore.common.symbol import Symbol
+from mindspore.graph.mutable import mutable
+from mindspore.graph.jit_config import JitConfig
+from mindspore.graph.lazy_inline import lazy_inline
+from mindspore.graph.no_inline import no_inline
+from mindspore.graph._utils.mindir_util import load_mindir, save_mindir
+from mindspore.graph.symbol import Symbol
 from mindspore.common.recompute import recompute
 from mindspore.common import generator
 from mindspore.common.generator import (
     Generator, default_generator, seed, manual_seed, initial_seed, get_rng_state, set_rng_state)
 from mindspore.ops.function.array_func import is_tensor, from_numpy
 from mindspore.common._grad_function import _Function
-from mindspore.common.dynamic_shape.enable_dynamic import enable_dynamic
+from mindspore.graph.dynamic_shape.enable_dynamic import enable_dynamic
+
+# Import the following modules to maintain compatibility
+import mindspore.graph._utils.mindir_util as mindir_util
+import mindspore.graph._utils.monad as _monad
+import mindspore.graph._utils.pijit_context as _pijit_context
+import mindspore.graph.api as api
+import mindspore.graph.dynamic_shape as dynamic_shape
+import mindspore.graph.jit_config as jit_config
+import mindspore.graph.jit_context as jit_context
+import mindspore.graph.jit_trace as jit_trace
+import mindspore.graph.symbol as symbol
 
 try:
     import triton

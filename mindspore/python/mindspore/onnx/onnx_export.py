@@ -23,7 +23,7 @@ import mindspore.nn as nn
 from mindspore import log as logger
 from mindspore._checkparam import check_input_dataset
 from mindspore import _checkparam as Validator
-from mindspore.common.api import _cell_graph_executor as _executor
+from mindspore.graph.api import _cell_graph_executor as _executor
 from mindspore.train.serialization import _calculation_net_size
 from mindspore.dataset.engine.datasets import Dataset
 

@@ -18,7 +18,7 @@ import pytest
 from mindspore.nn import Cell
 from mindspore.ops import operations as op
 from mindspore import Tensor, jit, context
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 from tests.st.pynative.utils import GradOfAllInputs
 from tests.st.compiler.utils import OpsFactory

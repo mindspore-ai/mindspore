@@ -18,10 +18,10 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor, JitConfig
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark

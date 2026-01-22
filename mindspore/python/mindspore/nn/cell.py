@@ -40,26 +40,26 @@ from typing import (
 import weakref
 import mindspore as ms
 from mindspore._checkparam import args_type_check, check_hook_fn
-from mindspore.common.dynamic_shape._auto_dynamic import is_auto_dynamic, convert_inputs_to_dynamic
+from mindspore.graph.dynamic_shape._auto_dynamic import is_auto_dynamic, convert_inputs_to_dynamic
 from mindspore import log as logger
 from mindspore.common.hook_handle import HookHandle, _update_hook_version
 from mindspore import context, ops
 from mindspore._c_expression import init_pipeline, update_func_graph_hyper_params, Cell_, FuncGraph, MixedPrecisionType
 from mindspore import _checkparam as Validator
 from mindspore.common import dtype as mstype
-from mindspore.common.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache, \
+from mindspore.graph.api import _cell_graph_executor, _pynative_executor, _get_args_for_run, cells_compile_cache, \
     _no_grad, _get_mutable_flags
-from mindspore.common.api import _convert_python_data
-from mindspore.common.api import _process_dyn_args, _generate_dyn_compile_args
+from mindspore.graph.api import _convert_python_data
+from mindspore.graph.api import _process_dyn_args, _generate_dyn_compile_args
 from mindspore.common.parameter import _Buffer, Parameter, ParameterTuple, _is_parameter_generated
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import Primitive
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.parallel.shard import Shard
 from mindspore.parallel._utils import _init_auto_parallel_context, _clear_auto_parallel_context
-from mindspore._check_jit_forbidden_api import jit_forbidden_register
+from mindspore.graph._utils.check_jit_forbidden_api import jit_forbidden_register
 from mindspore.common._register_for_recompute import recompute_registry
-from mindspore.common.jit_config import JitConfig
+from mindspore.graph.jit_config import JitConfig
 
 _global_buffer_registration_hooks: Dict[int, Callable] = OrderedDict()
 _EXTRA_STATE_KEY_SUFFIX = "_extra_state"
@@ -1182,7 +1182,7 @@ class Cell(Cell_):
             >>> import mindspore.nn as nn
             >>> from mindspore import ops
             >>> from mindspore.common import Tensor, Parameter
-            >>> from mindspore.common.lazy_inline import lazy_inline
+            >>> from mindspore.graph.lazy_inline import lazy_inline
             >>>
             >>> class Block(nn.Cell):
             ...     def __init__(self):

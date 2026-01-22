@@ -19,7 +19,7 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops.composite import GradOperation
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
@@ -39,6 +39,11 @@ class Grad(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='essential')
 def test_net():
+    """
+    Feature: Test AvgPoolGrad.
+    Description: Test the functionality of AvgPoolGrad.
+    Expectation: success
+    """
     x = np.arange(1 * 1 * 6 * 6).reshape((1, 1, 6, 6)).astype(np.float32)
     net = nn.AvgPool2d(kernel_size=3, stride=2, pad_mode='valid')
     out = net(Tensor(x))

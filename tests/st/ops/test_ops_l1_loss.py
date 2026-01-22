@@ -14,7 +14,7 @@
 # ============================================================================
 import pytest
 import numpy as np
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.mint.nn.functional import l1_loss
 from mindspore.mint.nn import L1Loss
 import mindspore as ms

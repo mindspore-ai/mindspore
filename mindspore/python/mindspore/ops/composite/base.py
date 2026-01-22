@@ -34,8 +34,8 @@ from mindspore._c_expression import GradOperation_, HyperMap_, Map_, MultitypeFu
     HandleBoolTensor_, PreSetitemByTuple_, StarredGetItem_, RecomputeBlock_, \
     StarredUnpack_, StarredUnpackMerge_, IterConverter_, HasNext_, Next_, MSContext
 from mindspore.common import dtype as mstype
-from mindspore.common.api import jit, _pynative_executor, _wrap_func
-from mindspore.common.api import _add_flags, _core
+from mindspore.graph.api import jit, _pynative_executor, _wrap_func
+from mindspore.graph.api import _add_flags, _core
 from mindspore.ops import signature as sig
 
 __all__ = [TupleAdd_, ListAdd_, UnpackCall_, TupleGetItemTensor_, SequenceSliceGetItem_,

@@ -19,7 +19,7 @@ import numpy as np
 
 import mindspore as ms
 from mindspore import ops
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import _ms_pyfunc
 from mindspore import Tensor
 from tests.mark_utils import arg_mark

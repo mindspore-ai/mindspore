@@ -24,7 +24,7 @@ from mindspore.ops import composite as C
 from mindspore import nn, Tensor, Parameter, _Function
 from mindspore.nn.optim import Momentum
 from mindspore import ops, COOTensor, CSRTensor
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops.composite import GradOperation
 from mindspore.ops.auto_generate import GroupedMatmul
 from tests.st.pynative.utils import GradOfFirstInput, GradOfAllInputs, GradOfAllParams, GradOfAllInputsAndParams

@@ -19,7 +19,7 @@ from mindspore.nn import Cell
 from mindspore import Tensor
 from mindspore import context
 from mindspore import jit
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 

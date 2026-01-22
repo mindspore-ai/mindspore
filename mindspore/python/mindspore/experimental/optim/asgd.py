@@ -9,7 +9,7 @@ from mindspore import ops
 from mindspore.common import Tensor, Parameter
 import mindspore.common.dtype as mstype
 from mindspore.experimental.optim.optimizer import Optimizer, check_not_less_than, check_not_less_than_without_equal
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 _asgd_opt = ops.MultitypeFuncGraph("asgd_opt")
 

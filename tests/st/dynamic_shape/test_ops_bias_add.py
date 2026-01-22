@@ -17,7 +17,7 @@ import pytest
 import mindspore as ms
 from mindspore import Tensor
 from mindspore import ops, jit
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
 

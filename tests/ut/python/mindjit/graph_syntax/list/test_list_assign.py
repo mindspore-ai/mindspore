@@ -22,7 +22,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore import Tensor, jit
 from mindspore import context
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 
 
 def test_list_index_1d():

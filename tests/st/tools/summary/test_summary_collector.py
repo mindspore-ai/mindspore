@@ -22,7 +22,7 @@ from collections import Counter
 import numpy as np
 import pytest
 from mindspore.common import set_seed
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.common.initializer import Normal
 from mindspore.nn.optim import Momentum
 from mindspore.train import Loss, Model

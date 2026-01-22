@@ -20,7 +20,7 @@ import mindspore as ms
 from mindspore import Tensor
 from mindspore.ops import operations as P
 from mindspore.nn import Cell
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops.composite import GradOperation
 from .ms_function_export_mindir import excute_export_mindir
 from .utils import GradOfAllInputs

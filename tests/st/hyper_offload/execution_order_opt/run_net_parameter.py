@@ -17,7 +17,7 @@ import numpy as np
 from mindspore import nn
 from mindspore import dtype as mstype
 from mindspore import Tensor, Parameter, jit
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 
 
 class TestNet(nn.Cell):

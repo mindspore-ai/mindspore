@@ -21,7 +21,7 @@ from tests.st.utils import test_utils
 
 import mindspore as ms
 from mindspore import nn
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 
 class MinPythonNet(nn.Cell):

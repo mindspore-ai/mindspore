@@ -20,7 +20,7 @@ from mindspore.common import Tensor, dtype, Parameter
 from mindspore.ops import operations as P
 from mindspore import jit, context
 import mindspore.ops.functional as F
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 
 context.set_context(mode=context.GRAPH_MODE)
 

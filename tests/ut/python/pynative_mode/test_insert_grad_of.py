@@ -19,7 +19,7 @@ import mindspore
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from ....mindspore_test_framework.utils.bprop_util import bprop

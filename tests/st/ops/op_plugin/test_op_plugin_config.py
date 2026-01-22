@@ -25,7 +25,7 @@ from tests.mark_utils import arg_mark
 from tests.st.ops.op_plugin.mock_build import build_and_setup_mock_plugin # pylint: disable=unused-import
 
 import mindspore as ms
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 ms.set_context(device_target="CPU")
 

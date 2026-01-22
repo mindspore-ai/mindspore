@@ -18,7 +18,7 @@ import numpy as np
 import mindspore.nn as nn
 import mindspore.context as context
 from mindspore import Tensor
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from gat import GAT
 
 context.set_context(mode=context.GRAPH_MODE)

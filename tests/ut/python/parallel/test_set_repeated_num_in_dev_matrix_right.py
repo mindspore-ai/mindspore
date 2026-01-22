@@ -18,7 +18,7 @@ import mindspore as ms
 from mindspore import context, Tensor
 from mindspore.nn import Cell, TrainOneStepCell, Momentum
 from mindspore.ops import operations as P
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from parallel.utils.utils import ParallelValidator, compile_net
 
 def setup_function():

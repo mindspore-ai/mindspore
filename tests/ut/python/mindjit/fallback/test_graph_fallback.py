@@ -22,7 +22,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn.probability import distribution
 import mindspore.common.dtype as mstype
-import mindspore.common._monad as monad
+import mindspore.graph._utils.monad as monad
 import mindspore.scipy.linalg as alg
 
 context.set_context(mode=context.GRAPH_MODE)

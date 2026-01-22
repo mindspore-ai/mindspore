@@ -19,7 +19,7 @@ import pytest
 import mindspore.nn as nn
 from mindspore import dtype as mstype
 from mindspore import Tensor, Parameter
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.nn.wrap.cell_wrapper import _VirtualDatasetCell
 from mindspore.nn.optim import Adam, AdamWeightDecay, Lamb, Momentum

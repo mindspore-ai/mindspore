@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import context
 from mindspore.common import dtype as mstype
 from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from ..ut_filter import non_graph_engine

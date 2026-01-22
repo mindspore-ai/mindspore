@@ -34,8 +34,8 @@ from mindspore._c_expression import TensorPy as TensorPy_
 from mindspore._c_expression import _rmod_instance
 from mindspore import _checkparam as validator
 from mindspore._checkparam import is_stub_tensor, check_hook_fn
-from mindspore._check_jit_forbidden_api import jit_forbidden_register
-from mindspore.common.symbol import Symbol
+from mindspore.graph._utils.check_jit_forbidden_api import jit_forbidden_register
+from mindspore.graph.symbol import Symbol
 from mindspore._c_expression import is_reboot_node
 
 np_types = (np.int8, np.int16, np.int32, np.int64,

@@ -16,7 +16,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import numpy as np
 import pytest
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.ops.composite import GradOperation
 
 import mindspore

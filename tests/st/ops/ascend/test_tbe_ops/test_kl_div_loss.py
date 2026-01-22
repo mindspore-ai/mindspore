@@ -19,7 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.functional as F
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops import operations as P
 from mindspore.ops.functional import vmap
 

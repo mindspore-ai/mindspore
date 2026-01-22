@@ -17,7 +17,7 @@ from mindspore import Tensor, context, nn
 from mindspore.ops import operations as P
 from mindspore.common.parameter import Parameter
 from mindspore.nn import Cell
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from tests.st.pynative.utils import GradOfAllParams
 
 

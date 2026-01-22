@@ -19,7 +19,7 @@ import mindspore.nn as nn
 from mindspore import context, Parameter, jit
 from mindspore import dataset as ds
 from mindspore.ops import operations as P
-from mindspore.common.jit_config import JitConfig
+from mindspore.graph.jit_config import JitConfig
 from mindspore.common.initializer import initializer
 from mindspore.ops import functional as F
 

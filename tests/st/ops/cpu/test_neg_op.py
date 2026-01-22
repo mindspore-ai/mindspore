@@ -16,7 +16,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import numpy as np
 import pytest
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.ops.composite import GradOperation
 
 from mindspore import Tensor
@@ -49,6 +49,11 @@ class Net(nn.Cell):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',
           essential_mark='unessential')
 def test_net():
+    """
+    Feature: Test Neg.
+    Description: Test the functionality of Neg.
+    Expectation: success
+    """
     x = np.random.randn(2, 3, 3, 4).astype(np.float32)
     y_expect = -x
     net = Net()

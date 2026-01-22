@@ -19,7 +19,7 @@ import mindspore as ms
 from mindspore import Tensor, Parameter
 from mindspore import nn
 from mindspore import ops
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 import pytest
 from tests.mark_utils import arg_mark
 

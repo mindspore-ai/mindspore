@@ -22,7 +22,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.context import set_auto_parallel_context
 from mindspore.ops.operations.nn_ops import FlashAttentionScore
 from mindspore.ops.auto_generate import FusedInferAttentionScore
