@@ -393,7 +393,7 @@ class Dropout2dExt(Cell):
     (For a 4-D tensor with a shape of :math:`(N, C, H, W)`, the channel feature map refers to a 2-D feature map
     with the shape of :math:`(H, W)`).
 
-    For example, the :math:`j`-th channel of the :math:`i`-th sample in the batched input is a to-be-processed
+    For example, the :math:`j` -th channel of the :math:`i` -th sample in the batched input is a to-be-processed
     2-D tensor input[i,j].
     Each channel will be zeroed out independently on every forward call with probability `p` using samples
     from a Bernoulli distribution.
