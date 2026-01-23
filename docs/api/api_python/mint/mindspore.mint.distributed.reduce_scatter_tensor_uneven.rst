@@ -14,7 +14,7 @@ mindspore.mint.distributed.reduce_scatter_tensor_uneven
         - **output** (Tensor) - 输出张量，与输入张量具有相同数据类型，shape为 :math:`(input\_split\_sizes[rank], *)`，其中rank是当前的设备的id。
         - **input** (Tensor) - 待归约分发的输入张量，shape为 :math:`(N, *)`，`*` 表示任意数量的附加维度，N应为各rank的 `input_split_sizes` 值之和。
         - **input_split_sizes** (list[int], 可选) - 输入张量在第一个维度的切分尺寸列表。当为None时，将按通信组大小对输入张量进行均分。默认值： ``None``。
-        - **op** (str, 可选) - 规约的具体操作。可选值： ``"sum"`` 、 ``"max"`` 、 ``"min"`` 。默认值： ``ReduceOp.SUM``。
+        - **op** (str, 可选) - 归约的具体操作。可选值： ``"sum"`` 、 ``"max"`` 、 ``"min"`` 。默认值： ``ReduceOp.SUM``。
         - **group** (str，可选) - 通信组名称，如果为 ``None``，Ascend平台表示为 ``"hccl_world_group"`` 。 默认值： ``None``。
         - **async_op** (bool, 可选) - 本算子是否是异步算子。默认值： ``False``。
 

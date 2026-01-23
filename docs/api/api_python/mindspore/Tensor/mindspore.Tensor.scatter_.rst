@@ -49,7 +49,7 @@ mindspore.Tensor.scatter\_
 
     根据 `index` 使用 `src` 中的值更新当前张量 `self` 。
 
-    使用 `reduce` 指定的规约操作，对 `self` 被 `dim` 选中的维度使用 `index` 进行索引，对其他维度按顺序遍历，将 `src` 中的值累加或累乘到 `self` 中，并返回 `self` 自身。
+    使用 `reduce` 指定的归约操作，对 `self` 被 `dim` 选中的维度使用 `index` 进行索引，对其他维度按顺序遍历，将 `src` 中的值累加或累乘到 `self` 中，并返回 `self` 自身。
     此操作是 :func:`mindspore.Tensor.gather` 的原地更新版本的逆操作。
     除替换操作将根据参数 `reduce` 的值更改为累加或累乘外，其他操作与不带有 `reduce` 参数的接受 `src` 的重载保持一致。
 
@@ -75,7 +75,7 @@ mindspore.Tensor.scatter\_
         - **src** (Tensor) - 指定对 `self` 进行更新操作的数据。其rank与dtype必须与 `self` 的相同。
 
     关键字参数：
-        - **reduce** (str) - 进行的规约操作，支持 ``"add"`` ， ``"multiply"`` 。当 `reduce` 设置为 ``"add"`` 时，`src` 将根据 `index` 累加到 `self` 。当 `reduce` 设置为 ``"multiply"`` 时，`src` 将根据 `index` 累乘到 `self` 。
+        - **reduce** (str) - 进行的归约操作，支持 ``"add"`` ， ``"multiply"`` 。当 `reduce` 设置为 ``"add"`` 时，`src` 将根据 `index` 累加到 `self` 。当 `reduce` 设置为 ``"multiply"`` 时，`src` 将根据 `index` 累乘到 `self` 。
 
     返回：
         Tensor，返回被修改后的 `self` 自身。
@@ -134,7 +134,7 @@ mindspore.Tensor.scatter\_
 
     根据 `index` 使用 `value` 更新当前张量 `self` 。
 
-    使用 `reduce` 指定的规约操作，对 `self` 被 `dim` 选中的维度使用 `index` 进行索引，对其他维度按顺序遍历，将 `value` 中的值累加或累乘到 `self` 中，并返回 `self` 自身。
+    使用 `reduce` 指定的归约操作，对 `self` 被 `dim` 选中的维度使用 `index` 进行索引，对其他维度按顺序遍历，将 `value` 中的值累加或累乘到 `self` 中，并返回 `self` 自身。
     此操作是 :func:`mindspore.Tensor.gather` 的原地更新版本的逆操作。
     除替换操作将根据参数 `reduce` 的值更改为累加或累乘外，其他行为与不带有 `reduce` 参数的接受 `value` 的重载保持一致。
 
@@ -160,7 +160,7 @@ mindspore.Tensor.scatter\_
         - **value** (int, float, bool) - 指定对 `self` 进行更新操作的数据。可视为将尝试将其广播为shape及dtype与 `self` 一致的Tensor并视为 `src` 参与运算。
 
     关键字参数：
-        - **reduce** (str) - 进行的规约操作，支持 ``"add"`` ， ``"multiply"`` 。当 `reduce` 设置为 ``"add"`` 时， `src` 将根据 `index` 累加到 `self` 。当 `reduce` 设置为 ``"multiply"`` 时， `src` 将根据 `index` 累乘到 `self` 。
+        - **reduce** (str) - 进行的归约操作，支持 ``"add"`` ， ``"multiply"`` 。当 `reduce` 设置为 ``"add"`` 时， `src` 将根据 `index` 累加到 `self` 。当 `reduce` 设置为 ``"multiply"`` 时， `src` 将根据 `index` 累乘到 `self` 。
 
     返回：
         Tensor，返回被修改后的 `self` 自身。

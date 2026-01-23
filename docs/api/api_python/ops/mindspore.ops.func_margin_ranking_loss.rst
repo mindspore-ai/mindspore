@@ -15,9 +15,9 @@ mindspore.ops.margin_ranking_loss
         - **input2** (Tensor) - 输入Tensor，shape :math:`(N, *)` 。shape和数据类型与 `input1` 相同。
         - **target** (Tensor) - 输入值为1或-1。假设 `input1` 的shape是 :math:`(x_1, x_2, x_3, ..., x_R)` ，那么 `target` 的shape必须是 :math:`(x_1, x_2, x_3, ..., x_R)` 。
        	- **margin** (float, 可选) - 指定运算的调节因子。默认 ``0.0`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``"none"`` 、 ``"mean"`` 、 ``"sum"`` ，默认 ``"mean"`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``"none"`` 、 ``"mean"`` 、 ``"sum"`` ，默认 ``"mean"`` 。
 
-          - ``"none"``：不应用规约方法。
+          - ``"none"``：不应用归约方法。
           - ``"mean"``：计算输出元素的平均值。
           - ``"sum"``：计算输出元素的总和。
 

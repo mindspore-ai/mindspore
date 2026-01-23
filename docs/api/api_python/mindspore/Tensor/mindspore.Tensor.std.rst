@@ -21,7 +21,7 @@ mindspore.Tensor.std
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **dim** (None, int, tuple(int), 可选) - 用来进行规约计算的维度。默认值为 ``None`` ，所有维度都进行规约计算。
+        - **dim** (None, int, tuple(int), 可选) - 用来进行归约计算的维度。默认值为 ``None`` ，所有维度都进行归约计算。
 
     关键字参数：
         - **correction** (int, 可选) - 样本大小和样本自由度之间的差异。默认值为 ``1`` ，即对应Bessel校正。

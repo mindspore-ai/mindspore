@@ -3,14 +3,14 @@ mindspore.communication.comm_func.reduce_scatter_tensor
 
 .. py:function:: mindspore.communication.comm_func.reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async_op=False)
 
-    规约并且分发指定通信组中的Tensor，返回分发后的Tensor。
+    归约并且分发指定通信组中的Tensor，返回分发后的Tensor。
 
     .. note::
         集合中所有进程的Tensor必须具有相同的shape和格式。
 
     参数：
-        - **tensor** (Tensor) - 输入待规约且分发的Tensor，假设其形状为 :math:`(N, *)` ，其中 `*` 为任意数量的额外维度。N必须能够被rank_size整除，rank_size为当前通讯组里面的计算卡数量。
-        - **op** (str, 可选) - 规约的具体操作。如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 和 ``"min"`` 。默认值： ``ReduceOp.SUM`` 。
+        - **tensor** (Tensor) - 输入待归约且分发的Tensor，假设其形状为 :math:`(N, *)` ，其中 `*` 为任意数量的额外维度。N必须能够被rank_size整除，rank_size为当前通讯组里面的计算卡数量。
+        - **op** (str, 可选) - 归约的具体操作。如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 和 ``"min"`` 。默认值： ``ReduceOp.SUM`` 。
         - **group** (str, 可选) - 工作的通信组。默认值： ``GlobalComm.WORLD_COMM_GROUP`` （即Ascend平台为 ``"hccl_world_group"`` ，GPU平台为 ``"nccl_world_group"`` ）。
         - **async_op** (bool, 可选) - 本算子是否是异步算子。默认值： ``False`` 。
 
