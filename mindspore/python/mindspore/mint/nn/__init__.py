@@ -904,7 +904,8 @@ class BCELoss(Cell):
 
     Inputs:
         - **input** (Tensor) - The input tensor with shape :math:`(N, *)` where :math:`*` means, any number
-          of additional dimensions. The data type must be mindspore.float16, mindspore.float32 or mindspore.bfloat16(only supported
+          of additional dimensions. The data type must be mindspore.float16,
+          mindspore.float32 or mindspore.bfloat16(only supported
           by Atlas A2 training series products).
         - **target** (Tensor) - The label tensor with shape :math:`(N, *)` where :math:`*` means, any number
           of additional dimensions. The same shape and data type as `input`.

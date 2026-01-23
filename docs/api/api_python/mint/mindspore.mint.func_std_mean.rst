@@ -16,7 +16,7 @@ mindspore.mint.std_mean
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **input** (Tensor) - 输入tensor。支持的数据类型：mindspore.float16、mindspore.float32。
+        - **input** (Tensor) - 输入tensor。
         - **dim** (Union[int, tuple(int), list(int)], 可选) - 指定维度。如果为 ``None`` ，计算 `input` 中的所有元素。默认 ``None``。
 
     关键字参数：
