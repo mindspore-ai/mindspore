@@ -4405,7 +4405,7 @@ def std_mean_ext(input, dim=None, *, correction=1, keepdim=False):
         input (Tensor): The input tensor.
         dim (Union[int, tuple(int), list(int)], optional):
             Specify the dimensions for computation. If ``None`` , compute all elements in the `input` . 
-                Default ``None`` .
+            Default ``None`` .
 
     Keyword Args:
         correction (int, optional): Difference between the sample size and sample degrees of freedom.

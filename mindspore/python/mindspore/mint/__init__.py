@@ -1034,7 +1034,7 @@ def sum(input, dim=None, keepdim=False, *, dtype=None):
         Tensor(shape=[3, 3], dtype=Float32, value=
         [[ 6.00000000e+00,  1.20000000e+01,  1.80000000e+01],
          [ 2.40000000e+01,  3.00000000e+01,  3.60000000e+01],
-         [ 4.20000000e+01,  4.80000000e+01,  5.40000000e+01]])]
+         [ 4.20000000e+01,  4.80000000e+01,  5.40000000e+01]])
         >>> mindspore.mint.sum(x, dim=2, keepdim=True)
         Tensor(shape=[3, 3, 1], dtype=Float32, value=
         [[[ 6.00000000e+00],
