@@ -18,9 +18,9 @@ mindspore.ops.ctc_loss
         - **input_lengths** (Union(tuple, Tensor)) - 输入长度，shape为 :math:`(N)` 的Tensor或tuple。
         - **target_lengths** (Union(tuple, Tensor)) - 目标长度，shape为 :math:`(N)` 的Tensor或tuple。
         - **blank** (int，可选) - 空白标签。默认 ``0`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
 
-          - ``'none'``：不应用规约方法。
+          - ``'none'``：不应用归约方法。
           - ``'mean'``：计算输出元素的平均值。
           - ``'sum'``：计算输出元素的总和。
 

@@ -7,7 +7,7 @@ mindspore.train.CosineSimilarity
 
     参数：
         - **similarity** (str，可选) - 计算逻辑。 ``'cosine'`` 表示相似度计算逻辑， ``'dot'`` 表示矩阵点乘计算逻辑。默认值： ``'cosine'`` 。
-        - **reduction** (str，可选) - 规约计算方式。支持 ``'none'`` 、 ``'sum'`` 或 ``'mean'`` 。默认值： ``'none'`` 。
+        - **reduction** (str，可选) - 归约计算方式。支持 ``'none'`` 、 ``'sum'`` 或 ``'mean'`` 。默认值： ``'none'`` 。
         - **zero_diagonal** (bool，可选) - 如果为 ``True`` ，则对角线将设置为零。默认值： ``True`` 。
 
     .. py:method:: clear()

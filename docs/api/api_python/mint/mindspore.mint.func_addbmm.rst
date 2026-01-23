@@ -3,7 +3,7 @@ mindspore.mint.addbmm
 
 .. py:function:: mindspore.mint.addbmm(input, batch1, batch2, *, beta=1, alpha=1)
 
-    对 `batch1` 和 `batch2` 应用批量矩阵乘法后进行规约加， `input` 和最终的结果相加。
+    对 `batch1` 和 `batch2` 应用批量矩阵乘法后进行归约加， `input` 和最终的结果相加。
     `alpha` 是 `batch1` 和 `batch2` 矩阵乘法的乘数， `beta` 是 `input` 的乘数。如果 `beta` 是0，那么 `input` 将会被忽略。
 
     .. math::

@@ -3,7 +3,7 @@ mindspore.parallel.nn.PipelineGradReducer
 
 .. py:class:: mindspore.parallel.nn.PipelineGradReducer(parameters, scale_sense=1.0, opt_shard=None)
 
-    函数式训练场景下，实现流水线并行的梯度规约及累加。
+    函数式训练场景下，实现流水线并行的梯度归约及累加。
 
     参数：
         - **parameters** (list) - 将进行pp并行的网络参数。

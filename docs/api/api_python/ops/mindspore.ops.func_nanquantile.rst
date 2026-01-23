@@ -3,7 +3,7 @@ mindspore.ops.nanquantile
 
 .. py:function:: mindspore.ops.nanquantile(input, q, axis=None, keepdims=False)
 
-    此接口为mindspore.ops.quantile()的变体，计算的时候会忽略NaN值。如果进行规约计算维度的所有值都是NaN，则返回的分位数为NaN。
+    此接口为mindspore.ops.quantile()的变体，计算的时候会忽略NaN值。如果进行归约计算维度的所有值都是NaN，则返回的分位数为NaN。
 
     详情请参考 :func:`mindspore.ops.quantile` 。
 

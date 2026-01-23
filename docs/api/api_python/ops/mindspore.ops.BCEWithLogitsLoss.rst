@@ -41,9 +41,9 @@ mindspore.ops.BCEWithLogitsLoss
     :math:`P_c>1` 增大召回率, :math:`P_c<1` 增大精度。
 
     参数：
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认值： ``'mean'`` 。
 
-          - ``'none'``：不应用规约方法。
+          - ``'none'``：不应用归约方法。
           - ``'mean'``：计算输出元素的加权平均值。
           - ``'sum'``：计算输出元素的总和。
 
