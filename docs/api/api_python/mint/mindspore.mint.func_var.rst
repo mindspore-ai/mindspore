@@ -17,7 +17,7 @@ mindspore.mint.var
 
     参数：
         - **input** (Tensor) - 用来求方差的Tensor。
-        - **dim** (None，int，tuple(int), 可选) - 用来进行规约计算的维度。默认值为 ``None`` ，所有维度都进行规约计算。
+        - **dim** (None，int，tuple(int), 可选) - 用来进行归约计算的维度。默认值为 ``None`` ，所有维度都进行归约计算。
 
     关键字参数：
         - **correction** (int, 可选) - 样本大小和样本自由度之间的差异。默认为Bessel校正，默认值为 ``1`` 。

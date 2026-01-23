@@ -19,9 +19,9 @@ mindspore.mint.nn.functional.cosine_embedding_loss
         - **input2** (Tensor) - 输入Tensor，shape为 :math:`(N, D)` 或 :math:`(D)` 。数据类型与 `input1` 相同，shape需与 `input1` 一致或满足广播规则。
         - **target** (Tensor) - 标签Tensor，输入值为1或-1。shape为 :math:`(N)` 或 :math:`()` 。
         - **margin** (float，可选) - 指定负样本运算中的调节因子，取值范围[-1.0, 1.0]，范围外的取值不会报错，但无实际意义。默认值： ``0.0`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``"none"`` 、 ``"mean"`` 、 ``"sum"`` ，默认值： ``"mean"`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``"none"`` 、 ``"mean"`` 、 ``"sum"`` ，默认值： ``"mean"`` 。
 
-          - ``"none"`` ：不应用规约方法。
+          - ``"none"`` ：不应用归约方法。
           - ``"mean"`` ：计算输出元素的平均值。
           - ``"sum"`` ：计算输出元素的总和。
 

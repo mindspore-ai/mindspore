@@ -3,13 +3,13 @@ mindspore.ops.ReduceScatter
 
 .. py:class:: mindspore.ops.ReduceScatter(op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP)
 
-    规约并且分发指定通信组中的张量，返回分发后的张量。
+    归约并且分发指定通信组中的张量，返回分发后的张量。
 
     .. note::
         在集合的所有过程中，Tensor必须具有相同的shape和格式。
 
     参数：
-        - **op** (str, 可选) - 指定用于元素的规约操作，如SUM和MAX。默认值： ``ReduceOp.SUM`` 。
+        - **op** (str, 可选) - 指定用于元素的归约操作，如SUM和MAX。默认值： ``ReduceOp.SUM`` 。
         - **group** (str, 可选) - 要处理的通信组。默认值： ``GlobalComm.WORLD_COMM_group`` 。
 
     输入：

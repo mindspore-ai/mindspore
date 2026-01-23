@@ -32,9 +32,9 @@ mindspore.ops.huber_loss
     参数：
         - **input** (Tensor) - 输入预测值，任意维度的Tensor。
         - **target** (Tensor) - 目标值，通常情况下与 `input` 的shape和dtype相同。但是当 `target` 和 `x` 的shape不同时，需要保证他们之间可以互相广播。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式，可选 ``'none'`` 、 ``'mean'`` 、 ``'sum'`` ，默认 ``'mean'`` 。
 
-          - ``'none'``：不应用规约方法。
+          - ``'none'``：不应用归约方法。
           - ``'mean'``：计算输出元素的平均值。
           - ``'sum'``：计算输出元素的总和。
 
