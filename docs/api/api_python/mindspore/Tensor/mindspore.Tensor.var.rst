@@ -43,7 +43,7 @@ mindspore.Tensor.var
     其中 :math:`x` 表示用来计算方差的样本集， :math:`\bar{x}` 表示样本的均值， :math:`N` 表示样本的数量， :math:`\delta N` 则为 `correction` 的值。
 
     参数：
-        - **dim** (None，int，tuple(int)，可选) - 用来进行规约计算的维度。默认值为 ``None`` ，所有维度都进行规约计算。
+        - **dim** (None，int，tuple(int)，可选) - 用来进行归约计算的维度。默认值为 ``None`` ，所有维度都进行归约计算。
 
     关键字参数：
         - **correction** (int，可选) - 样本大小和样本自由度之间的差异。 `correction=1` 则对应Bessel校正，默认值为 ``1`` 。

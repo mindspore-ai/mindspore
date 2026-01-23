@@ -26,7 +26,7 @@ mindspore.mint.nn.KLDivLoss
         仅当 `reduction` 设置为 ``"batchmean"`` 时，输出才与Kullback-Leibler散度的数学定义一致。
 
     参数：
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式。默认值： ``'mean'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式。默认值： ``'mean'`` 。
         - **log_target** (bool，可选) - 指定输入 `target` 是否在对数空间内。默认值： ``False`` 。
 
     输入：

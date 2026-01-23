@@ -13,7 +13,7 @@
 
     输入：
         - **x** (Tensor[bool]) - bool类型的输入Tensor。
-        - **axis** (Union[int, tuple(int), list(int), Tensor]，可选) - 要规约计算的维度。默认值:  ``()`` ，在所有维度上规约。只允许常量值。取值必须在[-rank(`x`), rank(`x`))范围内。
+        - **axis** (Union[int, tuple(int), list(int), Tensor]，可选) - 要归约计算的维度。默认值:  ``()`` ，在所有维度上归约。只允许常量值。取值必须在[-rank(`x`), rank(`x`))范围内。
 
     输出：
         bool类型的Tensor。

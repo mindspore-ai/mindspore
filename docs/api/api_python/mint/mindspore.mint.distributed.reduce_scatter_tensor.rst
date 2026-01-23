@@ -3,7 +3,7 @@ mindspore.mint.distributed.reduce_scatter_tensor
 
 .. py:function:: mindspore.mint.distributed.reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=False)
 
-    规约并且分发指定通信组中的Tensor，返回分发后的Tensor。
+    归约并且分发指定通信组中的Tensor，返回分发后的Tensor。
 
     .. note::
         - 在集合的所有过程中，Tensor必须具有相同的shape和格式。
@@ -11,8 +11,8 @@ mindspore.mint.distributed.reduce_scatter_tensor
 
     参数：
         - **output** (Tensor) - 输出分发的Tensor，其shape为 :math:`(N/rank\_size, *)`。
-        - **input** (Tensor) - 输入待规约且分发的Tensor，假设其shape为 :math:`(N, *)` ，其中 `*` 为任意数量的额外维度。N必须能够被rank_size整除，rank_size为当前通讯组里面的计算卡数量。
-        - **op** (str, 可选) - 规约的具体操作。如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 、和 ``"min"`` 。默认值： ``ReduceOp.SUM`` 。
+        - **input** (Tensor) - 输入待归约且分发的Tensor，假设其shape为 :math:`(N, *)` ，其中 `*` 为任意数量的额外维度。N必须能够被rank_size整除，rank_size为当前通讯组里面的计算卡数量。
+        - **op** (str, 可选) - 归约的具体操作。如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 、和 ``"min"`` 。默认值： ``ReduceOp.SUM`` 。
         - **group** (str，可选) - 通信组名称，如果为 ``None`` ，Ascend平台表示为 ``"hccl_world_group"`` 。 默认值： ``None`` 。
         - **async_op** (bool, 可选) - 本算子是否是异步算子。默认值： ``False`` 。
 

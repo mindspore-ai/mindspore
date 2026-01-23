@@ -3,16 +3,16 @@ mindspore.communication.comm_func.reduce
 
 .. py:function:: mindspore.communication.comm_func.reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP)
 
-    规约指定通信组中的Tensor，并将规约结果发送到目标为dst的进程(全局的进程编号)中，返回发送到目标进程的Tensor。
+    归约指定通信组中的Tensor，并将归约结果发送到目标为dst的进程(全局的进程编号)中，返回发送到目标进程的Tensor。
 
     .. note::
-        - 只有目标为 `dst` 的进程（全局的进程编号）才会收到规约操作后的输出。其他进程只得到一个形状为[1]的Tensor，且该Tensor没有数学意义。
+        - 只有目标为 `dst` 的进程（全局的进程编号）才会收到归约操作后的输出。其他进程只得到一个形状为[1]的Tensor，且该Tensor没有数学意义。
         - 当前支持PyNative模式，不支持Graph模式。
 
     参数：
-        - **tensor** (Tensor) - 输入待规约的Tensor，shape为 :math:`(x_1, x_2, ..., x_R)` 。
-        - **dst** (int) - 指定接收输出的目标进程编号，只有该进程会接收规约操作后的输出结果。
-        - **op** (str, 可选) - 规约的具体操作。如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 和 ``"min"`` 。默认值： ``ReduceOp.SUM`` 。
+        - **tensor** (Tensor) - 输入待归约的Tensor，shape为 :math:`(x_1, x_2, ..., x_R)` 。
+        - **dst** (int) - 指定接收输出的目标进程编号，只有该进程会接收归约操作后的输出结果。
+        - **op** (str, 可选) - 归约的具体操作。如 ``"sum"`` 、 ``"prod"`` 、 ``"max"`` 和 ``"min"`` 。默认值： ``ReduceOp.SUM`` 。
         - **group** (str, 可选) - 工作的通信组。默认值： ``GlobalComm.WORLD_COMM_GROUP`` （即Ascend平台为 ``"hccl_world_group"`` ，GPU平台为 ``"nccl_world_group"`` ）。
 
     返回：
