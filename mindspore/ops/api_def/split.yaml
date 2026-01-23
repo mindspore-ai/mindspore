@@ -1,12 +1,12 @@
 split:
-  - op_yaml: split_tensor_op.yaml
+  - op_yaml: split_tensor_view_op.yaml
     py_method: tensor_split_tensor # callback to python function "def tensor_split_tensor"
     Ascend: pyboost
     CPU: py_method
     GPU: py_method
     interface: tensor
 
-  - op_yaml: split_with_size_op.yaml
+  - op_yaml: split_with_size_view_op.yaml
     py_method: tensor_split_with_size # callback to python function "def tensor_split_with_size"
     Ascend: pyboost
     CPU: py_method

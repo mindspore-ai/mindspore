@@ -1,4 +1,4 @@
-# Copyright 2024 Huawei Technologies Co., Ltd
+# Copyright 2024-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ from mindspore.ops.auto_generate import broadcast_to
 # 19 ceil
 from mindspore.ops.function.math_func import ceil
 # 20 chunk
-from mindspore.ops.function.array_func import chunk
+from mindspore.ops.function.array_func import chunk_view
 # 21 clamp
 from mindspore.ops.auto_generate import clamp_tensor, clamp_scalar
 # 22 clip
@@ -250,7 +250,7 @@ from mindspore.ops.auto_generate import sin
 # 97 sort
 from mindspore.ops.function.array_func import sort
 # 98 split
-from mindspore.ops.function.array_func import split
+from mindspore.ops.function.array_func import split, split_view
 # 99 sqrt
 from mindspore.ops.auto_generate import sqrt
 # 100 square
@@ -396,7 +396,7 @@ from mindspore.ops.function.array_func import new_zeros
 from mindspore.ops.auto_generate import cosh
 from mindspore.ops.auto_generate import sinc
 from mindspore.ops.auto_generate import sinh
-from mindspore.ops.function.array_func import unsqueeze
+from mindspore.ops.function.array_func import unsqueeze_view
 
 # 186
 from mindspore.ops.function.math_func import addcdiv
@@ -570,11 +570,11 @@ def tensor_ceil(input):
 
 # 20 chunk
 def deprecated_tensor_chunk(input, chunks, axis=0):
-    return chunk(input, chunks, axis)
+    return chunk_view(input, chunks, axis)
 
 
 def tensor_chunk(input, chunks, dim=0):
-    return chunk(input, chunks, dim)
+    return chunk_view(input, chunks, dim)
 
 
 # 21 clamp
@@ -1083,15 +1083,19 @@ def tensor_sort(input, dim=-1, descending=False, stable=False):
 
 # 98 split
 def deprecated_tensor_split(input, split_size_or_sections, axis=0):
+    return split_view(input, split_size_or_sections, axis)
+
+
+def tensor_split(input, split_size_or_sections, axis=0):
     return split(input, split_size_or_sections, axis)
 
 
 def tensor_split_tensor(input, split_size, dim=0):
-    return deprecated_tensor_split(input, split_size, dim)
+    return tensor_split(input, split_size, dim)
 
 
 def tensor_split_with_size(input, split_size, dim=0):
-    return deprecated_tensor_split(input, split_size, dim)
+    return tensor_split(input, split_size, dim)
 
 
 # 99 sqrt
@@ -1763,7 +1767,7 @@ def tensor_unsqueeze(input, dim):
 
 
 def deprecated_tensor_unsqueeze(input, dim):
-    return unsqueeze(input, dim)
+    return unsqueeze_view(input, dim)
 
 
 # 204 erfc

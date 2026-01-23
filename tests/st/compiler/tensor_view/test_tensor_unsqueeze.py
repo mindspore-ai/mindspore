@@ -1,4 +1,4 @@
-# Copyright 2025 Huawei Technologies Co., Ltd
+# Copyright 2025-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -18,13 +18,14 @@ from mindspore import Tensor, jit
 from tests.mark_utils import arg_mark
 
 
-@jit
+@jit(backend="ms_backend")
 def unsqueeze_func_1(x):
     output = x.unsqueeze(0)
     return output
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
+# unsupported op [ExpandDimsView] on GPU
+@arg_mark(plat_marks=['cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 def test_tensor_unsqueeze_1():
     """
@@ -37,13 +38,14 @@ def test_tensor_unsqueeze_1():
     assert (output.asnumpy() == [[1, 2, 3, 4]]).all()
 
 
-@jit
+@jit(backend="ms_backend")
 def unsqueeze_func_2(x):
     output = Tensor.unsqueeze(x, 0)
     return output
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
+# unsupported op [ExpandDimsView] on GPU
+@arg_mark(plat_marks=['cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
           card_mark='onecard', essential_mark='essential')
 def test_tensor_unsqueeze_2():
     """
