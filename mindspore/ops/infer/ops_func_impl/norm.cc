@@ -14,12 +14,25 @@
  * limitations under the License.
  */
 
+#include <vector>
 #include "infer/ops_func_impl/norm.h"
 #include "primitive/op_name.h"
 #include "infer/ops_func_impl/reduce_arithmetic.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 namespace mindspore {
 namespace ops {
+namespace {
+std::vector<TypeId> InferNormOutputType(TypeId input_type) {
+  if (input_type == kNumberTypeComplex64) {
+    return {kNumberTypeFloat32};
+  }
+  if (input_type == kNumberTypeComplex128) {
+    return {kNumberTypeFloat64};
+  }
+  return {input_type};
+}
+}  // namespace
+
 ShapeArray NormFuncImpl::InferShape(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {
   return NormInferShape(primitive, input_infos);
 }
@@ -27,11 +40,11 @@ ShapeArray NormFuncImpl::InferShape(const PrimitivePtr &primitive, const InferIn
 std::vector<TypeId> NormFuncImpl::InferType(const PrimitivePtr &primitive, const InferInfoPtrList &input_infos) const {
   const auto input_type = input_infos[kInputIndex0]->GetType();
   if (input_infos[kInputIndex4]->IsNone()) {
-    return {input_type};
+    return InferNormOutputType(input_type);
   }
   auto dtype_opt = input_infos[kInputIndex4]->GetScalarValue<int64_t>();
   if (!dtype_opt.has_value()) {
-    return {input_type};
+    return InferNormOutputType(input_type);
   }
   return {static_cast<TypeId>(dtype_opt.value())};
 }
