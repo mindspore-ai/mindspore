@@ -95,10 +95,10 @@ class FusedAdamW(Optimizer):
         - This is an experimental optimizer API that is subject to change or deletion.
           This module must be used with lr scheduler module in `LRScheduler Class
           <https://www.mindspore.cn/docs/en/master/api_python/mindspore.experimental.html#lrscheduler-class>`_ .
-        - For Ascend, it is only supported on platforms above Atlas A2.
+        - For Ascend, only Atlas A2 series products are supported.
 
     Args:
-        params (Union[tuple, list]): list of parameters to optimize or dicts defining
+        params (Union[list(Parameter), list(dict)]): list of parameters to optimize or dicts defining
             parameter groups.
         lr (float, optional): learning rate. Default: ``1e-3``.
         betas (Tuple[float, float], optional): The exponential decay rate for the moment estimations.
@@ -116,9 +116,6 @@ class FusedAdamW(Optimizer):
         - **gradients** (tuple[Tensor]) - The gradients of `params`.
 
     Raises:
-        ValueError: If the learning rate is not float.
-        ValueError: If the learning rate is less than 0.
-        ValueError: If the `eps` is less than 0.
         ValueError: If the `betas` not in the range of [0, 1).
         ValueError: If the `weight_decay` is less than 0.
 

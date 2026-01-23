@@ -596,6 +596,7 @@ Algorithms
 
     mindspore.mint.optim.Adam
     mindspore.mint.optim.AdamW
+    mindspore.mint.optim.FusedAdamW
     mindspore.mint.optim.SGD
 
 mindspore.mint.linalg

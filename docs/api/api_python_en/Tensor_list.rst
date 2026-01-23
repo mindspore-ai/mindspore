@@ -144,6 +144,13 @@
     :exclude-members:
     :members:
 
+{% elif fullname == "mindspore.mint.optim.FusedAdamW" %}
+{{ fullname | underline }}
+
+.. autoclass:: {{ name }}
+    :exclude-members: add_param_group, construct, contiguous_params
+    :members:
+
 {% elif objname[0].istitle() %}
 {{ fullname | underline }}
 
