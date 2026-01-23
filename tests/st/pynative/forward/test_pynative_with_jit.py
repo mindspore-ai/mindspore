@@ -152,7 +152,7 @@ def test_multi_stream_with_jit_output():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2136.03)
 def test_pynative_and_graph_mixed_run():
     """
     Feature: test pynative and graph mixed run

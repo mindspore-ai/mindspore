@@ -83,7 +83,8 @@ def run_offload_cell_offload(net, folder_path):
     return forward_output, backward_output
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
+        essential_mark="essential", mem_peak=74.0)
 def test_offload_op_offload1():
     """
     Feature: Offload with lazy inline.
@@ -143,7 +144,8 @@ def test_offload_op_offload1():
     assert np.all(backward_output.asnumpy() == offload_backward_output.asnumpy())
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
+        essential_mark="essential", mem_peak=74.0)
 def test_offload_op_offload2():
     """
     Feature: Offload with lazy inline.
@@ -206,7 +208,8 @@ def test_offload_op_offload2():
     assert np.all(backward_output.asnumpy() == offload_backward_output.asnumpy())
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
+        essential_mark="essential", mem_peak=74.0)
 def test_offload_op_with_recompute1():
     """
     Feature: Offload with recompute.
@@ -266,7 +269,8 @@ def test_offload_op_with_recompute1():
     assert np.all(backward_output.asnumpy() == offload_backward_output.asnumpy())
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
+        essential_mark="essential", mem_peak=74.0)
 def test_offload_op_with_recompute2():
     """
     Feature: Offload with recompute.
@@ -326,7 +330,8 @@ def test_offload_op_with_recompute2():
     assert np.all(backward_output.asnumpy() == offload_backward_output.asnumpy())
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
+        essential_mark="essential", mem_peak=74.0)
 def test_offload_op_with_recompute3():
     """
     Feature: Offload with lazy inline.
@@ -389,7 +394,8 @@ def test_offload_op_with_recompute3():
     assert np.all(backward_output.asnumpy() == offload_backward_output.asnumpy())
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
+        essential_mark="essential", mem_peak=102.0)
 def test_offload_op_with_recompute4():
     """
     Feature: Offload with lazy inline.
@@ -486,7 +492,8 @@ def test_offload_op_with_recompute4():
     assert np.all(backward_output.asnumpy() == offload_backward_output.asnumpy())
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level1", card_mark="onecard",
+        essential_mark="essential", mem_peak=88.0)
 def test_offload_op_with_recompute5():
     """
     Feature: Offload with lazy inline.

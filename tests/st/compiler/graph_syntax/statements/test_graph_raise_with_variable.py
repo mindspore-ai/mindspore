@@ -509,7 +509,7 @@ class CellInList(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_cell_in_list():
     """
     Feature: graph raise.
@@ -612,7 +612,7 @@ def judge_tuple_index_dim(data, tuple_index, x):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_raise_in_sub_func_graph_with_isolate_node():
     """
     Feature: graph raise.

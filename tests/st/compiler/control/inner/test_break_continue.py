@@ -62,7 +62,7 @@ class ForBreakForwardNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_for_break_forward():
     """
     Feature: Control flow
@@ -77,7 +77,7 @@ def test_for_break_forward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 def test_for_break_backward():
     """
     Feature: Control flow
@@ -116,7 +116,7 @@ class WhileBreakForwardNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_while_break_forward():
     """
     Feature: Control flow
@@ -130,7 +130,8 @@ def test_while_break_forward():
     assert graph_mode_out == Tensor(np.array(15))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 def test_while_break_backward():
     """
     Feature: Control flow
@@ -177,7 +178,7 @@ class IfAfterIfInWhileBreakForwardNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_if_after_if_in_while_break_forward():
     """
     Feature: Control flow
@@ -194,7 +195,7 @@ def test_if_after_if_in_while_break_forward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_if_after_if_in_while_break_backward():
     """
     Feature: Control flow
@@ -213,7 +214,7 @@ def test_if_after_if_in_while_break_backward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_if_after_for_in_if_break():
     """
     Feature: Control flow
@@ -259,7 +260,8 @@ def test_if_after_for_in_if_break():
     assert graph_backward_res == (Tensor(1, mstype.int32),)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_if_after_for_in_for_break():
     """
     Feature: Control flow
@@ -332,7 +334,7 @@ class WhileAfterWhileInWhileBreakForwardNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_while_after_while_in_while_break_forward():
     """
     Feature: Control flow
@@ -349,7 +351,7 @@ def test_while_after_while_in_while_break_forward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_while_after_while_in_while_break_backward():
     """
     Feature: Control flow
@@ -384,7 +386,7 @@ class TwoBreakDeadForwardNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_2break_dead_block():
     """
     Feature: Control flow
@@ -418,7 +420,7 @@ class ForInFor2BreakForwardNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 def test_for_in_for_break():
     """
     Feature: Control flow
@@ -434,7 +436,7 @@ def test_for_in_for_break():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_while_true_break():
     """
     Feature: Control flow
@@ -469,7 +471,7 @@ def test_while_true_break():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_continue_stuck_in_vm():
     """
     Feature: Control flow
@@ -508,7 +510,7 @@ def test_continue_stuck_in_vm():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 def test_partial_eliminate_while_for_if_break():
     """
     Feature: nest control flow.

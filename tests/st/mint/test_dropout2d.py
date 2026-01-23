@@ -101,7 +101,8 @@ def compare_grad(x, p, grad):
     assert (elem_count * (keep_prob - 0.02)) < keep_count < (elem_count * (keep_prob + 0.02))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2672.00)
 @pytest.mark.parametrize('shape', [(1280, 128), (3, 4096, 1280), (100, 100, 100, 100)])
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('inplace', [True, False])
@@ -136,7 +137,8 @@ def test_func_dropout2d(shape, mode, inplace):
     compare_grad(x1_np, p, grad)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=5120.01)
 @pytest.mark.parametrize('shape', [(1280, 128), (3, 4096, 1280), (100, 100, 100, 100)])
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('inplace', [True, False])
@@ -169,7 +171,8 @@ def test_nn_Dropout2d(shape, mode, inplace):
     compare_grad(x1_np, p, grad)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1336.0)
 @pytest.mark.parametrize('shape', [(100, 100, 100, 100)])
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_func_dropout2d_bfloat16(shape, mode):
@@ -197,7 +200,8 @@ def test_func_dropout2d_bfloat16(shape, mode):
     compare_grad(x, p, output_grad)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 def test_func_dropout2d_dynamic():
     """
     Feature: mint.nn.functional.dropout2d
@@ -227,7 +231,8 @@ def test_func_dropout2d_dynamic():
             disable_case=['ScalarTensor'])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['kbk', 'pynative'])
 @pytest.mark.parametrize('inplace', [True, False])
 def test_func_dropout2d_rng_state(mode, inplace):
@@ -262,7 +267,8 @@ def test_func_dropout2d_rng_state(mode, inplace):
         assert (out1.asnumpy() == out3.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['kbk', 'pynative'])
 @pytest.mark.parametrize('inplace', [True, False])
 def test_nn_dropout2d_rng_state(mode, inplace):
@@ -297,7 +303,8 @@ def test_nn_dropout2d_rng_state(mode, inplace):
         assert (out1.asnumpy() == out3.asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', ['kbk', 'pynative'])
 def test_func_dropout2d_generalize(mode):
     """

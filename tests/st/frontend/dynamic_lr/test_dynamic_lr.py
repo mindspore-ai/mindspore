@@ -27,7 +27,7 @@ from .test_radam_optim import test_radam_group_dynamic
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.01)
 @pytest.mark.parametrize('mode', ["pynative", "KBK", "GE"])
 def test_dynamic_lr(mode):
     """

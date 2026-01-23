@@ -34,7 +34,8 @@ def train(add):
     add(Tensor(x), Tensor(y))
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_aic_metrics_memory_access_kbk_profiler():
     """
     Feature: Aicore metrics is memory access Profiler

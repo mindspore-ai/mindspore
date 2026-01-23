@@ -21,7 +21,8 @@ from mindspore import nn, Tensor, Parameter, ops
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_morph_custom_bprop_001():
     """
     Feature: Morph.

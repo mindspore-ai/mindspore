@@ -86,8 +86,7 @@ def generate_expect_backward_output_tensor(x, value, grad):
     plat_marks=["platform_ascend"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-)
+    essential_mark="essential", mem_peak=1.00)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_fill__forward_scalar(mode):
     """
@@ -129,7 +128,7 @@ def test_fill__forward_scalar(mode):
     plat_marks=["platform_ascend"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=2048.00
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_fill__forward_tensor(mode):
@@ -166,8 +165,7 @@ def test_fill__forward_tensor(mode):
     plat_marks=["platform_ascend"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-)
+    essential_mark="essential", mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_fill__backward_scalar(mode):
     """
@@ -203,8 +201,7 @@ def test_fill__backward_scalar(mode):
     plat_marks=["platform_ascend"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-)
+    essential_mark="essential", mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_fill__backward_tensor(mode):
     """
@@ -242,7 +239,7 @@ def test_fill__backward_tensor(mode):
     plat_marks=["platform_ascend"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=2048.00
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float16, np.int32, np.int64])
@@ -274,7 +271,7 @@ def test_fill__dtype(mode, dtype):
     plat_marks=["platform_ascend"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=2048.00
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize("shape", [(1,), (10,), (5, 5), (2, 3, 4), (1, 2, 3, 4)])

@@ -878,7 +878,8 @@ class TestMultiProcessDataLoader:
         """
         self.dataloader = DataLoader(MyDataset(10), num_workers=2)
 
-    @arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
+            essential_mark="essential", mem_peak=1.00)
     @pytest.mark.parametrize("pin_memory", (False, True))
     def test_pin_memory(self, monkeypatch, pin_memory):
         """
@@ -1157,7 +1158,8 @@ class TestMultiProcessDataLoader:
 
         assert result.returncode == 1, "The subprocess should raise RuntimeError."
 
-    @arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+    @arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
+            essential_mark="essential", mem_peak=1.00)
     def test_pin_memory_thread_exit(self, monkeypatch):
         """
         Feature: Test DataLoader with pin memory thread exit.

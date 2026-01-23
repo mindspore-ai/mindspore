@@ -126,7 +126,8 @@ class TestMultiOutput():
         assert np.allclose(grad_sampling_loc.asnumpy(), output[1].asnumpy())
         assert np.allclose(grad_attn_weight.asnumpy(), output[2].asnumpy())
 
-    @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+    @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+            essential_mark='essential', mem_peak=42.00)
     @pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
     def test_cpp_infer_shape_type(self, context_mode):
         """
@@ -142,7 +143,8 @@ class TestMultiOutput():
             self.value, self.shapes, self.level_start_index, self.sampling_locations, self.attention_weights)
         self.compare_out(grad_value, grad_sampling_loc, grad_attn_weight)
 
-    @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+    @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+            essential_mark='essential', mem_peak=58.0)
     @pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
     def test_python_infer_shape_type(self, context_mode):
         """
@@ -165,7 +167,8 @@ class TestMultiOutput():
             self.value, self.shapes, self.level_start_index, self.sampling_locations, self.attention_weights)
         self.compare_out(grad_value, grad_sampling_loc, grad_attn_weight)
 
-    @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+    @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+            essential_mark='essential', mem_peak=42.0)
     @pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
     def test_cpp_infer_shape_python_infer_type(self, context_mode):
         """
@@ -181,7 +184,8 @@ class TestMultiOutput():
             self.value, self.shapes, self.level_start_index, self.sampling_locations, self.attention_weights)
         self.compare_out(grad_value, grad_sampling_loc, grad_attn_weight)
 
-    @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+    @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+            essential_mark='essential', mem_peak=46.0)
     @pytest.mark.parametrize('context_mode', [ms.PYNATIVE_MODE])
     def test_python_infer_shape_cpp_infer_type(self, context_mode):
         """

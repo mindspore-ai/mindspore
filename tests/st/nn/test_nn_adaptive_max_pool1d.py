@@ -65,7 +65,7 @@ def nn_adaptive_max_pool1d_case2(input_binary_data=None, output_binary_data=None
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_adaptive_max_pool1d(mode):
     """
@@ -83,7 +83,7 @@ def test_adaptive_max_pool1d(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=20.0)
 def test_adaptive_max_pool1d_dyn():
     """
     Feature: Dynamic shape of adaptive_max_pool1d

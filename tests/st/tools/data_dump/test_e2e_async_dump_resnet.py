@@ -84,7 +84,7 @@ def run_trans_flag(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=106.0)
 @security_off_wrap
 def test_ascend_kernel_by_kernel_resnet():
     """
@@ -97,7 +97,7 @@ def test_ascend_kernel_by_kernel_resnet():
     run_trans_flag("test_e2e_dump_kbk_resnet")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=106.0)
 @security_off_wrap
 def test_ascend_dvm_resnet():
     """

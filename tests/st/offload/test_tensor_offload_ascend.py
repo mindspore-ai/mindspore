@@ -103,7 +103,8 @@ class AsyncMoveTo(nn.Cell):
         return add_out.asnumpy()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_tensor_offload_d2h(mode):
     """
@@ -131,7 +132,8 @@ def test_tensor_offload_d2h(mode):
     assert np.allclose(sync_out, async_out, 1e-05, 1e-05)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_tensor_offload_h2d(mode):
     """
@@ -160,7 +162,8 @@ def test_tensor_offload_h2d(mode):
     assert np.allclose(async_out, normal_out, 1e-05, 1e-05)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_abnormal_case1(mode):
     """
@@ -174,7 +177,8 @@ def test_abnormal_case1(mode):
     assert np.allclose(x.asnumpy(), y.asnumpy(), 1e-05, 1e-05)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_abnormal_case2(mode):
     """
@@ -190,7 +194,8 @@ def test_abnormal_case2(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_abnormal_case3(mode):
     """
@@ -206,7 +211,8 @@ def test_abnormal_case3(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_abnormal_case4(mode):
     """
@@ -226,7 +232,8 @@ def test_abnormal_case4(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [context.PYNATIVE_MODE])
 def test_move_to_change_type(mode):
     """

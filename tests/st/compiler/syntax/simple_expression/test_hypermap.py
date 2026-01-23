@@ -72,7 +72,8 @@ class HyperMapNet(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_single_element_hypermap_with_tensor_input():
     """
     Feature: HyperMap
@@ -92,7 +93,8 @@ def test_single_element_hypermap_with_tensor_input():
     assert np.allclose(output[1].asnumpy(), expect_output_2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_double_elements_hypermap_tensor_tuple_inputs():
     """
     Feature: HyperMap
@@ -113,7 +115,8 @@ def test_double_elements_hypermap_tensor_tuple_inputs():
     assert np.allclose(output[1].asnumpy(), expect_output_2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_double_elements_hypermap_tensor_list_inputs():
     """
     Feature: HyperMap
@@ -134,7 +137,8 @@ def test_double_elements_hypermap_tensor_list_inputs():
     assert np.allclose(output[1].asnumpy(), expect_output_2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.75)
 def test_doubel_elements_hypermap_correct_mix_inputs():
     """
     Feature: HyperMap

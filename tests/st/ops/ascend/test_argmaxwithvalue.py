@@ -44,7 +44,8 @@ def get_output(x, axis, keep_dims):
 
 
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_argmax_with_value(mode):
     """
     Feature: Test primitive argmaxwithvalue operator.

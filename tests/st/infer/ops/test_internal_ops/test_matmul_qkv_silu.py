@@ -133,7 +133,8 @@ def _test_matmul_qkv(m=0, k=0, n0=0, n1=0, n2=0, silu_index=None, mstype=ms.floa
     assert result, "compare correct."
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=114.00)
 @pytest.mark.parametrize('m', [1, 32])
 @pytest.mark.parametrize('k', [1024])
 @pytest.mark.parametrize('mstype', [ms.float16])

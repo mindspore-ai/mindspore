@@ -46,7 +46,8 @@ class InferValueNet(nn.Cell):
     def construct(self):
         return self.tile(self.x, self.multiples)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_tile_bfloat16(mode):
     """
@@ -65,7 +66,8 @@ def test_tile_bfloat16(mode):
                               [0.3, 0.4, 0.3, 0.4]]).astype(np.float32)
     np.testing.assert_allclose(output.float().asnumpy(), expect_output, 1e-3, 1e-3)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_tile_bfloat16_infer_value(mode):
     """

@@ -19,7 +19,8 @@ import os
 
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_tre_step_resume_training():
     """
     Feature: Test TREError step resuming training.

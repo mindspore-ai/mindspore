@@ -216,7 +216,7 @@ class StopGradientInplaceParameterNet(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_auto_grad_stop_gradient_inplace():
     """
     Feature: Test stop gradient inplace.
@@ -239,7 +239,7 @@ def test_auto_grad_stop_gradient_inplace():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_auto_grad_stop_gradient_inplace_input():
     """
     Feature: Test stop gradient inplace.
@@ -261,7 +261,7 @@ def test_auto_grad_stop_gradient_inplace_input():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_no_grad_stop_gradient_inplace_view():
     """
     Feature: Test stop gradient inplace view in no grad mode.
@@ -278,7 +278,7 @@ def test_no_grad_stop_gradient_inplace_view():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.00)
 def test_auto_grad_stop_gradient_inplace_view_error():
     """
     Feature: Test stop gradient inplace view exception.

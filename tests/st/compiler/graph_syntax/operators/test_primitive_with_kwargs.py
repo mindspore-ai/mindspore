@@ -19,7 +19,8 @@ from mindspore import ops
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_primitive_with_part_keyword_by_search_sorted_forward():
     """
     Feature: Primitive

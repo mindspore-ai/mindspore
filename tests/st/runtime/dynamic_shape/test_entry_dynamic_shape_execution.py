@@ -17,7 +17,8 @@ import os
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_dynamic_shape_execution_with_conf_thread_num():
     """
     Feature: Test dynamic shape execution with configure thread number.
@@ -41,7 +42,7 @@ def test_dynamic_shape_execution_with_conf_thread_num():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_computed_depend_case_with_conf_thread_num():
     """
     Feature: Test dynamic shape with computed depend ops(unique) execution and config thread number.

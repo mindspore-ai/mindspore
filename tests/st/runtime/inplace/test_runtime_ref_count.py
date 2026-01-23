@@ -22,7 +22,8 @@ from tests.mark_utils import arg_mark
 
 context.set_context(mode=ms.GRAPH_MODE, jit_config={"jit_level": "O0"})
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 def test_output_paramter_double():
     """
     Feature: Support tensor inplace.
@@ -41,7 +42,8 @@ def test_output_paramter_double():
     print(net(input_x, input_y))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_output_cnode_double():
     """
     Feature: Support tensor inplace.
@@ -60,7 +62,8 @@ def test_output_cnode_double():
     print(net(input_x, input_y))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 def test_output_paramter_double_control_flow():
     """
     Feature: Support tensor inplace.
@@ -80,7 +83,8 @@ def test_output_paramter_double_control_flow():
     print(net(input_x, input_y))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 def test_no_used_input_from_copy_actor_to_super_kerenl_actor():
     """
     Feature: Support runtime ref count.
@@ -108,7 +112,8 @@ def test_no_used_input_from_copy_actor_to_super_kerenl_actor():
     assert out[1] == -1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 def test_no_used_input_from_super_kernel_actor_to_super_kerenl_actor():
     """
     Feature: Support runtime ref count.
@@ -140,7 +145,8 @@ def test_no_used_input_from_super_kernel_actor_to_super_kerenl_actor():
     assert out[3] == 9
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 def test_no_used_input_from_parameter_store_to_super_kerenl_actor():
     """
     Feature: Support runtime ref count.
@@ -168,7 +174,8 @@ def test_no_used_input_from_parameter_store_to_super_kerenl_actor():
     assert out[1] == 9
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_no_used_flag_parameter():
     """
     Feature: Support runtime ref count.
@@ -193,7 +200,8 @@ def test_no_used_flag_parameter():
     assert out == 6
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 def test_no_used_flag_parameter_2():
     """
     Feature: Support runtime ref count.
@@ -213,7 +221,8 @@ def test_no_used_flag_parameter_2():
     print(grads)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 def test_entrance_to_fusion_to_kernel_actor():
     """
     Feature: Support runtime ref count.
@@ -262,7 +271,8 @@ def test_entrance_to_fusion_to_kernel_actor():
     print(out3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 def test_output_ref_count_max():
     """
     Feature: Support runtime ref count.

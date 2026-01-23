@@ -26,7 +26,7 @@ from tests.st.pynative.utils import GradOfAllInputs, GradOfFirstInput, GradOfAll
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_autograd_saved_tensor_version_check():
     """
     Features: Saved Tensor Version check.
@@ -68,7 +68,7 @@ def test_autograd_saved_tensor_version_check():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_autograd_custom_function_saved_tensor_version_check():
     """
     Features: Saved Tensor Version check.
@@ -115,7 +115,7 @@ def test_autograd_custom_function_saved_tensor_version_check():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_autograd_custom_bprop_cell_saved_tensor_version_check():
     """
     Features: Saved Tensor Version check.
@@ -164,7 +164,7 @@ def test_autograd_custom_bprop_cell_saved_tensor_version_check():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_autograd_saved_tensor_inplace_detach():
     """
     Features: Saved Tensor.
@@ -266,7 +266,7 @@ def test_autograd_saved_tensor_op_output_no_cycle():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_autograd_saved_tensor_view_inplace_no_cycle():
     """
     Features: Saved Tensor.
@@ -543,7 +543,7 @@ def test_autograd_saved_tensor_hook_custom_bprop_cell():
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.0)
 def test_autograd_saved_tensor_hook_custom_cpp_function():
     """
     Features: Saved Tensor Hook.
@@ -602,7 +602,7 @@ def test_autograd_saved_tensor_hook_no_grad():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_autograd_saved_tensor_hook_pack_hook_with_inplace_modification_error():
     """
     Features: Saved Tensor Hook.
@@ -638,7 +638,7 @@ def unpack_to_ascend(x):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=22.00)
 def test_saved_tensor_hook_offload():
     """
     Features: Saved Tensor Hook.
@@ -678,7 +678,7 @@ def test_saved_tensor_hook_offload():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=22.0)
 def test_saved_tensor_custom_function_hook_offload():
     """
     Features: Saved Tensor Hook.

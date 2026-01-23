@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+""" test_dvm_pynative.py """
 import os
 import shutil
 import subprocess
@@ -27,7 +27,7 @@ def _delete_dir(dir_name):
 def _check_dump(dump_dir):
     for file_name in os.listdir(dump_dir):
         if file_name.startswith("lazy_fusion_"):
-            with open(os.path.join(dump_dir, file_name)) as f:
+            with open(os.path.join(dump_dir, file_name), encoding='utf-8') as f:
                 for line in f:
                     if line.find("kernel id:") != -1:
                         return True
@@ -68,7 +68,8 @@ def _run_new_process(file_name, output_dir, dump_as_text=False):
     _delete_dir(output_dir)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=622.00)
 def test_op():
     """
     Feature: test dvm op precision
@@ -78,7 +79,8 @@ def test_op():
     _run_new_process("dvm_op_pynative.py", "dvm_op")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_matmul():
     """
     Feature: test dvm matmul op precision
@@ -88,7 +90,8 @@ def test_matmul():
     _run_new_process("dvm_matmul_pynative.py", "dvm_matmul")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=158.00)
 def test_fuse():
     """
     Feature: test dvm fuse op precision
@@ -98,7 +101,8 @@ def test_fuse():
     _run_new_process("dvm_fuse_pynative.py", "dvm_fuse")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=158.00)
 def test_dump():
     """
     Feature: test dvm fuse op dump

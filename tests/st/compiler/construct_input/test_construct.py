@@ -87,7 +87,8 @@ class NetPytorch(nn_torch.Module):
         return out
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_no_tensor_028():
     """
     Feature: Test construct.
@@ -123,7 +124,8 @@ def test_parser_construct_no_tensor_028():
     assert grad_input == ()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_no_tensor_029():
     """
     Feature: Test construct.
@@ -157,7 +159,8 @@ def test_parser_construct_no_tensor_029():
     assert np.allclose(out_torch.numpy(), out_me_2.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_no_tensor_041():
     """
     Feature: Test construct.
@@ -184,7 +187,8 @@ def test_parser_construct_no_tensor_041():
     assert ret.shape == (2, 3, 4, 5)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_no_tensor_042():
     """
     Feature: Test construct.
@@ -210,7 +214,8 @@ def test_parser_construct_no_tensor_042():
     assert result.shape == (2, 2)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize("dst_type", [np.bool_, np.int32, np.float16, np.uint8])
 def test_parser_construct_no_tensor_043(dst_type):
     """
@@ -253,7 +258,8 @@ def test_parser_construct_no_tensor_043(dst_type):
     assert np.allclose(input_grad_torch.numpy(), input_grad_me.asnumpy(), loss, loss)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_001():
     """
     Feature: Test construct.
@@ -297,7 +303,8 @@ def test_parser_construct_001():
     assert np.allclose(grad_pt, grad_me.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_002():
     """
     Feature: Test construct.
@@ -348,7 +355,8 @@ def test_parser_construct_002():
     assert np.allclose(grad_pt, grad_me.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_005():
     """
     Feature: Test construct.
@@ -400,7 +408,8 @@ def test_parser_construct_005():
     assert np.allclose(grad_pt, grad_me.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_006():
     """
     Feature: Test construct.
@@ -451,7 +460,8 @@ def test_parser_construct_006():
     assert np.allclose(grad_pt, grad_me.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_007():
     """
     Feature: Test construct.
@@ -505,7 +515,8 @@ def test_parser_construct_007():
     assert np.allclose(grad_pt, grad_me.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_009():
     """
     Feature: Test construct.
@@ -566,7 +577,8 @@ def test_parser_construct_009():
     assert np.allclose(grad_pt, grad_me.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_010():
     """
     Feature: Test construct.
@@ -620,7 +632,8 @@ def test_parser_construct_010():
     assert np.allclose(grad_pt, grad_me.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_011():
     """
     Feature: Test construct.
@@ -681,7 +694,8 @@ def test_parser_construct_011():
     assert np.allclose(grad_pt, grad_me.asnumpy(), 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parser_construct_012():
     """
     Feature: Test construct.

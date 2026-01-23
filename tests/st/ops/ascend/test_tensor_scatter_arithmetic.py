@@ -93,7 +93,7 @@ def tensor_scatter_add_forward_func(input_x, indices, updates):
     return ops.tensor_scatter_add(input_x, indices, updates)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.02)
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.float16, mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -109,7 +109,7 @@ def test_tensor_scatter_arithmetic_small_float(func, data_type, index_type):
 
     compare_with_numpy(func, input_x, indices, updates)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.02)
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.int32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -126,7 +126,8 @@ def test_tensor_scatter_arithmetic_small_int(func, data_type, index_type):
     compare_with_numpy(func, input_x, indices, updates)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=1024.10)
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.int32, mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -151,7 +152,8 @@ def test_tensor_scatter_arithmetic_multi_dims(func, data_type, index_type):
     compare_with_numpy(func, input_x, indices, updates)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -172,7 +174,7 @@ def test_tensor_scatter_arithmetic_function_op(func, data_type, index_type):
     np.testing.assert_allclose(output.asnumpy(), expected, rtol=1e-6)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
@@ -198,7 +200,7 @@ def test_tensor_scatter_arithmetic_tensor_op(func, data_type, index_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=3072.01)
 @pytest.mark.parametrize('data_type', [mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])
 def test_tensor_scatter_add_dynamic(data_type, index_type):
@@ -222,7 +224,8 @@ def test_tensor_scatter_add_dynamic(data_type, index_type):
             case_config={'deterministic_use_origin_inputs': True})
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1040.01)
 @pytest.mark.parametrize('func', ['add', 'sub'])
 @pytest.mark.parametrize('data_type', [mstype.float32])
 @pytest.mark.parametrize('index_type', [mstype.int32])

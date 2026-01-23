@@ -262,7 +262,8 @@ def execute_network_with_compare(input_data, static_net, dynamic_net):
     print("performance diff ratio: ", diff_time / static_net_cost_time)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 def test_async_pipe_dynamic_vs_static_shape_block_num_5():
     """
     Feature: Graph support async pipeline.
@@ -307,7 +308,8 @@ def test_async_pipe_large_input_dynamic_vs_static_shape_block_num_50():
     execute_network_with_compare(input_data, static_net, dynamic_net)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_async_pipe_single_input_multi_output_depend_op():
     """
     Feature: Graph support async pipeline.
@@ -332,7 +334,8 @@ def test_async_pipe_single_input_multi_output_depend_op():
     print("Total time cost: ", cost_time, flush=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_async_pipe_single_input_multi_output_not_depend_op():
     """
     Feature: Graph support async pipeline.
@@ -358,7 +361,8 @@ def test_async_pipe_single_input_multi_output_not_depend_op():
     print("Total time cost: ", cost_time, flush=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_async_pipe_single_input_multi_output_only_graph():
     """
     Feature: Graph support async pipeline.
@@ -383,7 +387,8 @@ def test_async_pipe_single_input_multi_output_only_graph():
     print("Total time cost: ", cost_time, flush=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_async_pipe_multi_input_multi_output_depend_op():
     """
     Feature: Graph support async pipeline.
@@ -408,7 +413,8 @@ def test_async_pipe_multi_input_multi_output_depend_op():
     print("Total time cost: ", cost_time, flush=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_async_pipe_multi_input_multi_output_without_depend_op():
     """
     Feature: Graph support async pipeline.
@@ -433,7 +439,8 @@ def test_async_pipe_multi_input_multi_output_without_depend_op():
     print("Total time cost: ", cost_time, flush=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_async_pipe_multi_input_multi_output_graph_only():
     """
     Feature: Graph support async pipeline.
@@ -458,7 +465,8 @@ def test_async_pipe_multi_input_multi_output_graph_only():
     print("Total time cost: ", cost_time, flush=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_async_pipe_single_input_multi_output_with_grad_depend_op():
     """
     Feature: Graph support async pipeline.
@@ -484,7 +492,8 @@ def test_async_pipe_single_input_multi_output_with_grad_depend_op():
     print("Total time cost: ", cost_time, flush=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_async_pipe_single_input_multi_output_with_grad():
     """
     Feature: Graph support async pipeline.
@@ -510,7 +519,8 @@ def test_async_pipe_single_input_multi_output_with_grad():
     print("Total time cost: ", cost_time, flush=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_async_pipe_single_input_multi_output_only_graph_with_grad():
     """
     Feature: Graph support async pipeline.

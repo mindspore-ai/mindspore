@@ -29,7 +29,8 @@ def clean_core_files(root_dir="."):
                     pass
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=6.00)
 def test_single_withstream_multi_event():
     """
     Feature: Support event and with stream in graph mode.
@@ -56,7 +57,8 @@ def test_single_withstream_multi_event():
     assert "RaceChecker: Write error" not in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=10.00)
 def test_multi_withstream_single_event():
     """
     Feature: Support event and with stream in graph mode.
@@ -83,7 +85,8 @@ def test_multi_withstream_single_event():
     assert "RaceChecker: Write error" not in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=10.00)
 def test_multi_withstream_multi_event():
     """
     Feature: Support event and with stream in graph mode.
@@ -110,7 +113,8 @@ def test_multi_withstream_multi_event():
     assert "RaceChecker: Write error" not in output_log
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_eventwait_before_eventrecord():
     """
     Feature: Support event and with stream in graph mode.

@@ -166,7 +166,8 @@ def _set_mode(mode):
         context.set_context(mode=ms.PYNATIVE_MODE, device_target='Ascend')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('data_type', [mstype.float32, mstype.float16])
 @pytest.mark.parametrize('reduction', ['none', 'mean', 'sum'])
 @pytest.mark.parametrize('margin', [-0.5, 0.0, 0.5])
@@ -192,7 +193,8 @@ def _nn_cel_forward(x1, x2, tgt):
     return net(x1, x2, tgt)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.00)
 def test_nn_cel_dynamic_shape_TEST_OP():
     """
     Feature: Dynamic shape/rank for nn.CosineEmbeddingLoss via TEST_OP

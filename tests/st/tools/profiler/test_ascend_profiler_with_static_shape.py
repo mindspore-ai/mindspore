@@ -28,7 +28,7 @@ from model_zoo import TinyTransformer
 from fake_dataset import FakeDataset
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=1024.03)
 def test_ascend_graph_mode_profiler_with_static_shape_all_parameters_on():
     """
     Feature: Ascend Graph Mode Profiler with All Parameters Enabled
@@ -64,7 +64,7 @@ def test_ascend_graph_mode_profiler_with_static_shape_all_parameters_on():
 
 
 @pytest.mark.skip(reason="View feature no support")
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_ascend_pynative_mode_profiler_with_static_shape_all_parameters_on():
     """
     Feature: Ascend pynative Mode Profiler with All Parameters Enabled
@@ -101,7 +101,7 @@ def test_ascend_pynative_mode_profiler_with_static_shape_all_parameters_on():
         check_ascend_profiler_pynative_files(tmpdir, rank_id)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1.00)
 def test_ascend_kbk_mode_profiler_with_static_shape_all_parameters_on():
     """
     Feature: Ascend kbk Mode Profiler with All Parameters Enabled

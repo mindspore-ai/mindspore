@@ -164,7 +164,7 @@ def set_mode(mode):
 
 
 @arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
-          essential_mark="essential")
+          essential_mark="essential", mem_peak=2.00)
 @pytest.mark.parametrize("context_mode", ["PYNATIVE_MODE", "GRAPH_MODE"])
 def test_mint_lerp_normal(context_mode):
     """
@@ -198,7 +198,7 @@ def test_mint_lerp_normal(context_mode):
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=1.00
 )
 def test_mint_lerp_dynamic_shape():
     """

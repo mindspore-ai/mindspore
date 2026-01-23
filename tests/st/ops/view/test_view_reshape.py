@@ -55,7 +55,7 @@ def test_reshape_single_op():
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.55)
 def test_reshape_multiple_op():
     """
     Feature: reshape

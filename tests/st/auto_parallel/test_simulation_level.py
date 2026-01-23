@@ -11,13 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+""" test_simulation_level.py """
 import os
 os.environ["MS_SIMULATION_LEVEL"] = "3"
 
 import numpy as np
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 import mindspore.dataset as ds
 from mindspore import context, Tensor
 from mindspore.train import Model
@@ -35,7 +35,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 class DenseNet(nn.Cell):
     def __init__(self, has_bias=True, activation='relu'):
-        super(DenseNet, self).__init__()
+        super().__init__()
         self.fc1 = nn.Dense(128, 128, has_bias=has_bias, activation=activation)
         self.fc2 = nn.Dense(128, 128, has_bias=has_bias, activation=activation)
         self.fc3 = nn.Dense(128, 128, has_bias=has_bias, activation=activation)
@@ -63,7 +63,7 @@ input_ = Tensor(np.ones([32, 128]).astype(np.float32) * 0.01)
 label_ = Tensor(np.zeros([32, 128]).astype(np.float32))
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential", mem_peak=2048.01)
 def test_run_graph_kbk():
     """
     Feature: simulation level.
@@ -90,7 +90,8 @@ def test_run_graph_kbk():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="essential", mem_peak=0.01)
 def test_get_rank_id_env():
     """
     Feature: simulation level.
@@ -106,7 +107,8 @@ def test_get_rank_id_env():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
 def test_get_local_rank_id():
     """
     Feature: simulation level.
@@ -122,7 +124,8 @@ def test_get_local_rank_id():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
 def test_create_group():
     """
     Feature: simulation level.
@@ -143,7 +146,8 @@ def test_create_group():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="unessential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="unessential", mem_peak=0.01)
 def test_destroy_group():
     """
     Feature: simulation level.
@@ -161,7 +165,8 @@ def test_destroy_group():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="essential", mem_peak=0.01)
 def test_get_world_rank_from_group_rank():
     """
     Feature: simulation level.
@@ -180,7 +185,8 @@ def test_get_world_rank_from_group_rank():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1",
+        card_mark="onecard", essential_mark="essential", mem_peak=1.00)
 def test_get_group_rank_from_world_rank():
     """
     Feature: simulation level.
@@ -199,7 +205,8 @@ def test_get_group_rank_from_world_rank():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
+        essential_mark="essential", mem_peak=0.01)
 def test_simulation_graph():
     """
     Feature: simulation level.
@@ -219,7 +226,8 @@ def test_simulation_graph():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
+        essential_mark="essential", mem_peak=4.00)
 def test_run_graph():
     """
     Feature: simulation level.
@@ -244,7 +252,8 @@ def test_run_graph():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
+        essential_mark="essential", mem_peak=0.01)
 def test_build_model_with_dataset():
     """
     Feature: simulation level.
@@ -271,7 +280,8 @@ def test_build_model_with_dataset():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="essential", mem_peak=2048.0)
 def test_simu_execute_graph():
     """
     Feature: simulation level.
@@ -296,7 +306,8 @@ def test_simu_execute_graph():
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
+        essential_mark="essential", mem_peak=4.00)
 def test_simu_execute_pipeline_graph():
     """
     Feature: simulation level.
@@ -329,7 +340,8 @@ def test_simu_execute_pipeline_graph():
     context.reset_auto_parallel_context()
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level0", card_mark="onecard",
+        essential_mark="essential", mem_peak=2.00)
 def test_simu_execute_simu_barrier():
     """
     Feature: simulation level.
@@ -341,7 +353,8 @@ def test_simu_execute_simu_barrier():
     barrier()
     os.environ["MS_SIMULATION_LEVEL"] = ""
 
-@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="onecard",
+        essential_mark="essential", mem_peak=1024.01)
 def test_pyboost_comm():
     """
     Feature: simulation level.

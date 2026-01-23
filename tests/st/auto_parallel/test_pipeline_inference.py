@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_pipeline_inference.py """
 import os
 from tests.mark_utils import arg_mark
 

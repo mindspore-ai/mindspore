@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+""" test_jit_config.py """
 import os
 import shutil
 import subprocess
@@ -43,7 +44,8 @@ def get_jit_config_from_jit_grad_ir(para, save_graphs_path):
     return out_after
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_jit_grad_with_ms_backend():
     """
     Feature: Test setting ms_backend to jit in pynative grad.
@@ -82,7 +84,8 @@ def test_jit_grad_with_ms_backend():
             shutil.rmtree(save_graphs_path)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_multiple_jit_grad_with_ms_backend():
     """
     Feature: Test setting ms backend to multiple jit in pynative grad.
@@ -129,7 +132,8 @@ def test_multiple_jit_grad_with_ms_backend():
             shutil.rmtree(save_graphs_path)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_multiple_jit_grad_with_different_backend():
     """
     Feature: Test setting different backend to multiple jit in pynative grad.
@@ -183,7 +187,8 @@ def test_multiple_jit_grad_with_different_backend():
 
 
 @pytest.mark.skip(reason="jit grad cannot set to ge mode right now.")
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_set_ge_raise_error():
     """
     Feature: Set backend to ge, raise error if success.

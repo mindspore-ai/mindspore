@@ -19,7 +19,8 @@ from mindspore._c_expression import UMonad
 from tests.st.backend.ms_backend.common.backend_graph import BackendGraph
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_partition_graph_between_shape_and_reshape_1():
     """
     Feature: graph partition for control flow.
@@ -87,7 +88,8 @@ def test_partition_graph_between_shape_and_reshape_2():
     print(out)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 def test_control_flow_if_input_heter():
     """
     Feature: test control flow if input heter.
@@ -112,7 +114,8 @@ def test_control_flow_if_input_heter():
     print('output: ', out)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_control_flow_call_same_graph_for_monad():
     """
     Feature: test control flow.

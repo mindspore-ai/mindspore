@@ -116,7 +116,8 @@ def _test_swiglu_reshape_dynamic_quant(shape, dim, np_dtype, has_smooth_scale=Fa
     np.testing.assert_allclose(scale_np, scale_expect, atol=1e-2, rtol=1e-2)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=124.00)
 @pytest.mark.parametrize('shape', [(4, 16, 6144), (8, 256, 5502), (3, 4, 32768), (7, 4, 32766)])
 @pytest.mark.parametrize('dim', [-1])
 @pytest.mark.parametrize('dtype', [bfloat16])

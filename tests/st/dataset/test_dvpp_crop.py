@@ -61,7 +61,8 @@ class VideoDataset:
         return 10
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=28.0)
 def test_dvpp_crop_operation_01():
     """
     Feature: Crop operation on device
@@ -166,7 +167,8 @@ def test_dvpp_crop_operation_01():
     assert (crop_op == crop_op_cpu).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=26.0)
 def test_dvpp_crop_operation_02():
     """
     Feature: Crop operation on device
@@ -216,7 +218,8 @@ def test_dvpp_crop_operation_02():
     assert (crop_op == crop_op_cpu).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=8.0)
 def test_dvpp_crop_exception_01():
     """
     Feature: Crop operation on device
@@ -324,7 +327,8 @@ def test_dvpp_crop_exception_01():
         v_trans.Crop(coordinates=[10, 2147483648], size=100).device(device_target="Ascend")
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_dvpp_crop_exception_02():
     """
     Feature: Crop operation on device

@@ -51,7 +51,7 @@ def upsample_nearest3d_grad(gradOut, input_size, output_size, scale_factor):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=36.00)
 @pytest.mark.parametrize("mode", ["GRAPH_MODE_O0", "PYNATIVE_MODE"])
 def test_upsample_nearest(mode):
     """
@@ -221,7 +221,7 @@ def test_upsample_nearest(mode):
 
 
 @arg_mark(plat_marks=['platform_gpu'],
-          level_mark='level0', card_mark='onecard', essential_mark='essential')
+          level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=36.00)
 @pytest.mark.parametrize("mode", ["GRAPH_MODE_O0", "PYNATIVE_MODE"])
 def test_upsample_nearest_gpu(mode):
     """
@@ -384,7 +384,7 @@ def test_upsample_nearest_gpu(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1', card_mark='onecard', essential_mark='essential')
+          level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 def test_upsample_nearest_1d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -407,7 +407,7 @@ def test_upsample_nearest_1d_size_dynamic():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1', card_mark='onecard', essential_mark='essential')
+          level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=36.0)
 def test_upsample_nearest_1d_scale_factor_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -430,7 +430,7 @@ def test_upsample_nearest_1d_scale_factor_dynamic():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1', card_mark='onecard', essential_mark='essential')
+          level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=8.0)
 def test_upsample_nearest_2d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -453,7 +453,7 @@ def test_upsample_nearest_2d_size_dynamic():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b', 'platform_gpu', 'cpu_linux'],
-          level_mark='level1', card_mark='onecard', essential_mark='essential')
+          level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 def test_upsample_nearest_2d_scale_factor_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -476,7 +476,7 @@ def test_upsample_nearest_2d_scale_factor_dynamic():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=3072.01)
 def test_upsample_nearest_3d_size_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -499,7 +499,7 @@ def test_upsample_nearest_3d_size_dynamic():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 def test_upsample_nearest_3d_scale_factor_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -570,7 +570,7 @@ def test_upsample_nearest_3d_error(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", ["GRAPH_MODE", "GRAPH_MODE_O0", "PYNATIVE_MODE"])
 def test_vmap_upsample_nearest3d(mode):
     """
@@ -622,7 +622,7 @@ def test_vmap_upsample_nearest3d(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", ["GRAPH_MODE", "GRAPH_MODE_O0", "PYNATIVE_MODE"])
 def test_vmap_upsample_nearest3d_grad(mode):
     """

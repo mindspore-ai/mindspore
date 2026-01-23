@@ -20,7 +20,8 @@ import numpy as np
 from tests.st.backend.ms_backend.common.backend_graph import BackendGraph
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_any_type_base():
     """
     Feature: Test any type.
@@ -46,7 +47,8 @@ def test_any_type_base():
     assert np.allclose(out.asnumpy(), np.ones(shape).astype(np.float32) * 2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_any_type_ref_count():
     """
     Feature: Test parameter output in any type graph.
@@ -86,7 +88,8 @@ def test_any_type_ref_count():
     assert np.allclose(out.asnumpy(), np.ones(shape).astype(np.float32) * 4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_any_type_value_tuple_input():
     """
     Feature: Test any type.
@@ -116,7 +119,8 @@ def test_any_type_value_tuple_input():
     assert np.allclose(out.asnumpy(), np.ones(shape).astype(np.float32) * 2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_any_type_same_output_1():
     """
     Feature: Test any type.
@@ -145,7 +149,8 @@ def test_any_type_same_output_1():
     assert np.allclose(out[1].asnumpy(), np.ones(shape).astype(np.float32) * 2)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_any_type_same_output_2():
     """
     Feature: Test any type.

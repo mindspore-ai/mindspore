@@ -118,7 +118,8 @@ def run_batch_norm_element_grad():
     compare(expects, outputs)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=14.00)
 def test_sync_bn():
     """
     Feature: test sync bn op

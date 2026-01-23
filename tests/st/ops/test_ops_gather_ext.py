@@ -94,7 +94,7 @@ def gather_ext_backward_func(x, dim, indices):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', 'GE'])
 @pytest.mark.parametrize('input_dtype', [np.float32])
 @pytest.mark.parametrize('index_dtype', [np.int64])
@@ -120,7 +120,7 @@ def test_gather_ext_static_shape(mode, input_dtype, index_dtype):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=3072.00)
 def test_gather_ext_dynamic_shape():
     """
     Feature: Test gather with dynamic shape in graph mode.
@@ -140,7 +140,7 @@ def test_gather_ext_dynamic_shape():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('param_jit_level', ["O2", "O0"])
 def test_gather_ext_vmap(param_jit_level):
     """
@@ -248,7 +248,7 @@ def _test_gather_ext_vmap_perf(batch):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ['pynative', 'GE', 'KBK'])
 def test_gather_ext_grad(mode):
     """

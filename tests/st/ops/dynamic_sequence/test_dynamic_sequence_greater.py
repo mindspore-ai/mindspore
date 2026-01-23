@@ -48,7 +48,7 @@ class GreaterEqualNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_seq_greater_than():
     """
     Feature: test tuple_greater_than op
@@ -67,7 +67,7 @@ def test_seq_greater_than():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.0)
 def test_seq_greater_equal():
     """
     Feature: test tuple_greater_equal op
@@ -103,7 +103,7 @@ def test_seq_greater_than_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_seq_greater_equal_grad():
     """
     Feature: test tuple_greater_equal grad op

@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+""" test_backend_common_unify.py """
 import numpy as np
 import mindspore as ms
 from mindspore import nn, Tensor, Parameter, ops
 from tests.st.backend.ge_backend.ge_pass.util import Capture, capture, WrapNet, GradNetWrtX
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.25)
 def test_renorm():
     """
     Feature: Validate opt pass keep node scope and id.
@@ -46,7 +48,7 @@ def test_renorm():
     cap.check_output(patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_reduce_mean():
     """
     Feature: Validate opt pass keep node scope and id.
@@ -73,7 +75,7 @@ def test_reduce_mean():
     cap.check_output(patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_histogram_fixedwidth():
     """
     Feature: Validate opt pass keep node scope and id.
@@ -101,7 +103,8 @@ def test_histogram_fixedwidth():
     cap.check_output(patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.75)
 def test_clipbynorm():
     """
     Feature: Validate opt pass keep node scope and id.
@@ -139,7 +142,7 @@ def test_clipbynorm():
     cap.check_output(patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.02)
 def test_adam_weightdecay():
     """
     Feature: Validate opt pass keep node scope and id.
@@ -177,7 +180,8 @@ def test_adam_weightdecay():
     cap.check_output(patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_cdistfission():
     """
     Feature: Validate opt pass keep node scope and id.
@@ -210,7 +214,8 @@ def test_cdistfission():
     cap.check_output(patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_cdistgrad_fission():
     """
     Feature: Validate opt pass keep node scope and id.
@@ -241,7 +246,8 @@ def test_cdistgrad_fission():
     cap.check_output(patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.75)
 def test_sparse_softmax_entropy():
     """
     Feature: Validate opt pass keep node scope and id.
@@ -275,7 +281,8 @@ def test_sparse_softmax_entropy():
     cap.check_output(patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_dropout():
     """
     Feature: Validate opt pass keep node scope and id.
@@ -305,7 +312,8 @@ def test_dropout():
     cap.check_output(patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.75)
 def test_dropout_grad():
     """
     Feature: Validate opt pass keep node scope and id.
@@ -332,7 +340,8 @@ def test_dropout_grad():
     cap.check_output(patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_batchnorm_grad():
     """
     Feature: Validate opt pass keep node scope and id.
@@ -364,7 +373,7 @@ def test_batchnorm_grad():
     cap.check_output(patterns)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_bn_grad2bninfer_grad():
     """
     Feature: Validate opt pass keep node scope and id.

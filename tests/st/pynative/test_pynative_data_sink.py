@@ -172,7 +172,7 @@ def use_feed_train(network, epoch, dataset, input_x):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_data_sink_fn_ms_function_jit_config_none(mode):
     """

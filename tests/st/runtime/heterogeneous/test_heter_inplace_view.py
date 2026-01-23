@@ -22,7 +22,8 @@ from mindspore.ops import operations as P
 from tests.mark_utils import arg_mark
 import pytest
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_inplace_ops_with_view_input_in_heterogeneous():
     """
     Feature: Inplace operator doesn't accept a view input

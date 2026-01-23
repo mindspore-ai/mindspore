@@ -911,7 +911,8 @@ def test_cell_register_saved_tensors_hooks_mixed_registration():
                        atol=1e-12, rtol=1e-12)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_cell_register_saved_tensors_hooks_with_mem_side_effect():
     """
     Feature: saved tensors hooks.

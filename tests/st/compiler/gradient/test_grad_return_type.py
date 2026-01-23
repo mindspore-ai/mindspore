@@ -1738,7 +1738,8 @@ def test_construct_get_grad_by_parameter(mode):
     assert np.allclose(grad_out.asnumpy(), expect_grad_input)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_grad_input2_weight1_input_weigt_list():
     """
     Feature: Gradient

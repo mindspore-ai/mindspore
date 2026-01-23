@@ -28,7 +28,7 @@ from .test_model_checkpoint_callback import test_model_checkpoint_prefix_directo
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=4756.75)
 @pytest.mark.parametrize('mode', ["pynative", "KBK", "GE"])
 def test_checkpoint_testcases(mode):
     """

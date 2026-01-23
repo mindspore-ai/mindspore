@@ -50,7 +50,8 @@ def squeeze0(x, axis):
     return fun
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.02)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 @pytest.mark.offline_infer_executor
 def test_pynative_ms_function_double_ms_fun(mode):
@@ -119,7 +120,7 @@ def test_pynative_ms_function_double_ms_fun(mode):
             allclose_nparray(out1[i].asnumpy(), out_me[i].asnumpy(), 0, 0)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=1024.03)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_pynative_ms_function_for_fun_same_scalar(mode):
     """

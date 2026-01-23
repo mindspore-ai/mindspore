@@ -35,7 +35,8 @@ def inplace_scatter_add_backward_func(input_x, dim, index, src):
     grad = ops.GradOperation(get_all=True)
     return grad(Net(), (0, 3))(input_x, dim, index, src)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_inplace_scatter_add_normal(mode):
     """
@@ -68,7 +69,8 @@ def test_inplace_scatter_add_normal(mode):
     assert np.allclose(out1.asnumpy(), expect1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=34.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_inplace_scatter_add_bfloat16(mode):
     """
@@ -99,7 +101,8 @@ def test_inplace_scatter_add_bfloat16(mode):
     assert np.allclose(out1.float().asnumpy(), expect1, rtol=4e-3, atol=4e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_inplace_scatter_add_dynamic():
     """
     Feature: test dynamic by TEST_OP.

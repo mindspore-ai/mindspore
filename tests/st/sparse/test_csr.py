@@ -29,7 +29,7 @@ from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_make_csr():
     """
     Feature: Test CSRTensor Constructor in Graph and PyNative.
@@ -56,7 +56,7 @@ def test_make_csr():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_csr_attr():
     """
     Feature: Test CSRTensor GetAttr in Graph and PyNative.
@@ -114,7 +114,7 @@ def test_csr_attr():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_csr_tensor_in_while():
     """
     Feature: Test CSRTensor in while loop.
@@ -368,7 +368,7 @@ def test_csr_ops():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.02)
 def test_csrtensor_export_and_import_mindir():
     """
     Feature: Test exporting and loading CSRTensor MindIR.

@@ -28,7 +28,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.0)
 def test_return_interpret_object():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -67,7 +67,7 @@ def test_raise_error_in_variable_scene():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_str_format_in_variable_scene():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -102,7 +102,7 @@ def test_numpy_asarray_with_variable_scene():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_in_with_none():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -137,7 +137,7 @@ def test_sequence_in_sequence():
 
 @pytest.mark.skip(reason="not support now")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_all_with_variable():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -156,7 +156,7 @@ def test_all_with_variable():
 
 @pytest.mark.skip(reason="not support now")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_slice_with_variable():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -175,7 +175,7 @@ def test_slice_with_variable():
 
 @pytest.mark.skip(reason="not support now")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_slice_with_mutable_input():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -192,7 +192,7 @@ def test_slice_with_mutable_input():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_compress_with_mutable_input():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -229,7 +229,7 @@ def test_math_ceil_with_variable():
 
 @pytest.mark.skip(reason="not support now")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_unpack_interpret_node():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -274,7 +274,7 @@ def test_call_third_party_class():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_np_ix_with_variable():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -317,7 +317,7 @@ def test_generate_tensor_using_variable_numpy_array():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_numpy_prod_with_variable_axis():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -336,7 +336,7 @@ def test_numpy_prod_with_variable_axis():
 
 @pytest.mark.skip(reason="not support now")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_for_with_interpret_object():
     """
     Feature: Support JIT Fallback runtime feature.
@@ -357,7 +357,7 @@ def test_for_with_interpret_object():
 
 @pytest.mark.skip(reason="not support now")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_for_with_interpret_object_2():
     """
     Feature: Support JIT Fallback runtime feature.

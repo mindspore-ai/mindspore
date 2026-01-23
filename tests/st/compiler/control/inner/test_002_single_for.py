@@ -28,7 +28,7 @@ grad_all = C.GradOperation(get_all=True)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_single_for_01():
     """
     Feature: Control flow
@@ -74,7 +74,7 @@ def test_single_for_01():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_single_for_02():
     """
     Feature: Control flow
@@ -120,7 +120,7 @@ def test_single_for_02():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_single_for_03():
     """
     Feature: Control flow
@@ -175,7 +175,7 @@ def test_single_for_03():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_single_for_04():
     """
     Feature: Control flow
@@ -222,7 +222,7 @@ def test_single_for_04():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_single_for_05():
     """
     Feature: Control flow

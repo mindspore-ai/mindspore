@@ -30,7 +30,8 @@ PWD = os.path.dirname(__file__)
 TEST_DATA_DATASET_FUNC = PWD + "/data"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=70.0)
 def test_dvpp_solarize_operation_01():
     """
     Feature: Solarize operation on device
@@ -134,7 +135,8 @@ def test_dvpp_solarize_operation_01():
     assert (op == op_dvpp).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_dvpp_solarize_operation_02():
     """
     Feature: Solarize operation on device
@@ -242,7 +244,8 @@ def test_dvpp_solarize_operation_02():
     assert (op == op_dvpp).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_dvpp_solarize_operation_03():
     """
     Feature: Solarize operation on device
@@ -292,7 +295,8 @@ def test_dvpp_solarize_operation_03():
     assert (op == op_dvpp).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=98.0)
 def test_dvpp_solarize_exception_01():
     """
     Feature: Solarize operation on device
@@ -400,7 +404,8 @@ def test_dvpp_solarize_exception_01():
         op(image)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_dvpp_solarize_exception_02():
     """
     Feature: Solarize operation on device

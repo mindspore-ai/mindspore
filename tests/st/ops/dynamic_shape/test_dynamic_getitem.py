@@ -256,7 +256,7 @@ def test_dynamic_getitem_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_dynamic_getitem_tensor_001():
     """
     Feature: Test Tensor slice for dynamic shape in feed mode.
@@ -298,7 +298,7 @@ def test_dynamic_getitem_tensor_001():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_getitem_slice():
     """
     Feature: Test Tensor slice for dynamic shape in feed mode.
@@ -333,7 +333,7 @@ def test_dynamic_getitem_slice():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_rank_getitem_slice():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -369,7 +369,7 @@ def test_dynamic_rank_getitem_slice():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_rank_getitem_with_single_basic_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -408,7 +408,7 @@ def test_dynamic_rank_getitem_with_single_basic_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_rank_getitem_tuple_with_basic_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -445,7 +445,7 @@ def test_dynamic_rank_getitem_tuple_with_basic_index():
 
 @pytest.mark.skip(reason="Need to be fixed.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_dynamic_rank_getitem_with_tensor_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -480,7 +480,7 @@ def test_dynamic_rank_getitem_with_tensor_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_rank_getitem_tuple_with_multi_tensor_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -516,7 +516,7 @@ def test_dynamic_rank_getitem_tuple_with_multi_tensor_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_rank_getitem_with_list_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -549,7 +549,7 @@ def test_dynamic_rank_getitem_with_list_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_dynamic_rank_getitem_tuple_with_mix_index():
     """
     Feature: Test Tensor slice for dynamic rank in feed mode.
@@ -618,7 +618,7 @@ def test_dynamic_getitem_slice_001():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_getitem_int():
     """
     Feature: Test Tensor slice for dynamic shape in feed mode.
@@ -693,7 +693,7 @@ def test_dynamic_getitem_int_001():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_getitem_int_002():
     """
     Feature: Test Tensor slice for twice for dynamic shape in feed mode.
@@ -799,7 +799,7 @@ def test_dynamic_getitem_tuple():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.00)
 def test_dynamic_getitem_tuple_001():
     """
     Feature: Test Tensor slice for dynamic shape in feed mode.
@@ -832,7 +832,7 @@ def test_dynamic_getitem_tuple_001():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_getitem_tuple_002():
     """
     Feature: Test Tensor slice for twice for dynamic shape in feed mode.
@@ -868,7 +868,7 @@ def test_dynamic_getitem_tuple_002():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 def test_dynamic_getitem_tuple_003():
     """
     Feature: Test Tensor slice for twice for dynamic shape in feed mode.
@@ -904,7 +904,7 @@ def test_dynamic_getitem_tuple_003():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", [lambda x: x, ms.jit])
 def test_parser_dynamic_input_index_ellipsis(mode):
     """
@@ -948,7 +948,7 @@ def test_parser_dynamic_input_index_ellipsis(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", [lambda x: x, ms.jit])
 def test_parser_dynamic_input_index_tensor(mode):
     """
@@ -981,7 +981,7 @@ def test_parser_dynamic_input_index_tensor(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [lambda x: x, ms.jit])
 def test_parser_dynamic_input_index_tuple(mode):
     """

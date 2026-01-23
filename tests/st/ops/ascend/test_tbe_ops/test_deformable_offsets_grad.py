@@ -59,7 +59,8 @@ class Grad(nn.Cell):
         return self.grad(self.network)(x, w, offset, output_grad)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.02)
 def test_deformable_conv2d_grad():
     """"
     Feature: deformable_conv2d_grad function

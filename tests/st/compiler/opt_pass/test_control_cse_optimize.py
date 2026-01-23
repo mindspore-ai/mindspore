@@ -63,7 +63,8 @@ def read_file(saved_graphs_path):
     return content
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.95)
 def test_ctrl_cse_optimize_with_if():
     """
     Feature: Control-flow aware CSE optimization.
@@ -116,7 +117,8 @@ def test_ctrl_cse_optimize_with_if():
     assert len(conv2d_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_ctrl_cse_optimize_with_while():
     """
     Feature: Control-flow aware CSE optimization.
@@ -165,7 +167,8 @@ def test_ctrl_cse_optimize_with_while():
     assert len(conv2d_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.95)
 def test_ctrl_cse_optimize_with_if_for():
     """
     Feature: Control-flow aware CSE optimization.
@@ -215,7 +218,8 @@ def test_ctrl_cse_optimize_with_if_for():
     assert len(conv2d_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.95)
 def test_ctrl_cse_optimize_with_func():
     """
     Feature: Control-flow aware CSE optimization.
@@ -278,7 +282,8 @@ def test_ctrl_cse_optimize_with_func():
     assert len(conv2d_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.92)
 def test_ctrl_cse_optimize_with_subnet():
     """
     Feature: Control-flow aware CSE optimization.
@@ -355,7 +360,8 @@ def test_ctrl_cse_optimize_with_subnet():
     assert len(conv2d_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=1024.25)
 def test_ctrl_cse_optimize_with_subnet_and_sink():
     """
     Feature: Control-flow aware CSE optimization.
@@ -431,7 +437,8 @@ def test_ctrl_cse_optimize_with_subnet_and_sink():
     assert len(conv2d_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_ctrl_cse_optimize_with_heterogeneous_and_parameter():
     """
     Feature: Control-flow aware CSE optimization.
@@ -488,7 +495,8 @@ def test_ctrl_cse_optimize_with_heterogeneous_and_parameter():
     assert len(conv2d_num) == 1
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.95)
 def test_ctrl_cse_optimize_with_dynamic_shape():
     """
     Feature: Control-flow aware CSE optimization.

@@ -23,7 +23,8 @@ from tests.mark_utils import arg_mark
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential',
+          mem_peak=4.00)
 def test_pynative_aclop_multi_stream():
     '''
     Feature: run allreduce op in pynative mode using msrun.

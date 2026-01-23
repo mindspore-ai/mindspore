@@ -230,7 +230,7 @@ def test_return_make_list_node_4():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_return_list_with_nest():
     """
     Feature: Return list in graph
@@ -247,7 +247,7 @@ def test_return_list_with_nest():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_return_list_with_nest_2():
     """
     Feature: Return list in graph
@@ -315,7 +315,7 @@ def test_return_make_list_with_nest_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_return_buildin_list_func():
     """
     Feature: Return list in graph
@@ -332,7 +332,7 @@ def test_return_buildin_list_func():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_return_buildin_list_func_2():
     """
     Feature: Return list in graph
@@ -385,7 +385,7 @@ def test_return_dynamic_length_list_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_return_list_from_third_party():
     """
     Feature: Return list in graph
@@ -440,7 +440,7 @@ def test_return_list_from_third_party_3():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_return_list_from_dict_attribute():
     """
     Feature: Return list in graph

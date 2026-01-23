@@ -42,7 +42,7 @@ def test_str_format_single_input():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_str_format_mutiple_input():
     """
     Feature: JIT Fallback
@@ -60,7 +60,7 @@ def test_str_format_mutiple_input():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_str_format_input():
     """
     Feature: JIT Fallback
@@ -81,7 +81,7 @@ def test_fallback_str_format_input():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_format_with_number_placeholder_input():
     """
     Feature: JIT Fallback
@@ -102,7 +102,7 @@ def test_format_with_number_placeholder_input():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_format_with_key_input():
     """
     Feature: JIT Fallback
@@ -125,7 +125,7 @@ def test_format_with_key_input():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_format_with_list_index():
     """
     Feature: JIT Fallback
@@ -147,7 +147,7 @@ def test_format_with_list_index():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_format_with_tuple_index():
     """
     Feature: JIT Fallback
@@ -170,7 +170,7 @@ def test_format_with_tuple_index():
 
 @pytest.mark.skip("need make dict do not eliminate before opt A.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_format_with_map():
     """
     Feature: JIT Fallback
@@ -197,7 +197,7 @@ def test_format_with_map():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_format_as_function():
     """
     Feature: JIT Fallback
@@ -220,7 +220,7 @@ def test_format_as_function():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_format_number():
     """
     Feature: JIT Fallback
@@ -254,7 +254,7 @@ def test_format_number():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_format_padding():
     """
     Feature: JIT Fallback
@@ -283,7 +283,7 @@ def test_format_padding():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_str_format_using_cell():
     """
     Feature: JIT Fallback
@@ -311,7 +311,7 @@ def test_str_format_using_cell():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_str_format_using_cell_in_init():
     """
     Feature: JIT Fallback

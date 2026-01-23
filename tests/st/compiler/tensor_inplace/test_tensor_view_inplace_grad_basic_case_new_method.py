@@ -27,7 +27,8 @@ from mindspore.ops.functional import grad
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_classic_case1():
     """
     Feature: Support tensor inplace view gradient.
@@ -52,7 +53,8 @@ def test_classic_case1():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_classic_case2():
     """
     Feature: Support tensor inplace view gradient.
@@ -79,7 +81,8 @@ def test_classic_case2():
 
 # scene1:
 # multi node with same area
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene1_case1():
     """
     Feature: Support tensor inplace view gradient.
@@ -106,7 +109,8 @@ def test_scene1_case1():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene2_case1():
     """
     Feature: Support tensor inplace view gradient.
@@ -131,7 +135,8 @@ def test_scene2_case1():
 
 # scene2:
 # x[0] += x[1]
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene2_case2():
     """
     Feature: Support tensor inplace view gradient.
@@ -160,7 +165,8 @@ def test_scene2_case2():
 
 # scene3:
 # nested view
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene3_case1():
     """
     Feature: Support tensor inplace view gradient.
@@ -186,7 +192,8 @@ def test_scene3_case1():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene3_case2():
     """
     Feature: Support tensor inplace view gradient.
@@ -213,7 +220,8 @@ def test_scene3_case2():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_scene3_case3():
     """
     Feature: Support tensor inplace view gradient.
@@ -242,7 +250,8 @@ def test_scene3_case3():
 
 # scene4:
 # return viewed_output
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene4_case1():
     """
     Feature: Support tensor inplace view gradient.
@@ -269,7 +278,8 @@ def test_scene4_case1():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_virtual_view_classic_case1():
     """
     Feature: Support tensor inplace view gradient.
@@ -294,7 +304,8 @@ def test_virtual_view_classic_case1():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_virtual_view_classic_case2():
     """
     Feature: Support tensor inplace view gradient.
@@ -320,7 +331,8 @@ def test_virtual_view_classic_case2():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_virtual_view_classic_case3():
     """
     Feature: Support tensor inplace view gradient.
@@ -347,7 +359,8 @@ def test_virtual_view_classic_case3():
 
 # scene5:
 # inplace op change x_view_input before view op
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene5_case1():
     """
     Feature: Support tensor inplace view gradient.
@@ -373,7 +386,8 @@ def test_scene5_case1():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene5_case2():
     """
     Feature: Support tensor inplace view gradient.
@@ -401,7 +415,8 @@ def test_scene5_case2():
 
 # scene6:
 # view_output1 and view_output2
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene6_case1():
     """
     Feature: Support tensor inplace view gradient.
@@ -430,7 +445,8 @@ def test_scene6_case1():
 
 # scene7:
 # nested view return view
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene7_case1():
     """
     Feature: Support tensor inplace view gradient.
@@ -457,7 +473,8 @@ def test_scene7_case1():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene7_case2():
     """
     Feature: Support tensor inplace view gradient.
@@ -484,7 +501,8 @@ def test_scene7_case2():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene7_case3():
     """
     Feature: Support tensor inplace view gradient.
@@ -510,7 +528,8 @@ def test_scene7_case3():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_scene7_case4():
     """
     Feature: Support tensor inplace view gradient.
@@ -537,7 +556,8 @@ def test_scene7_case4():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_scene7_case5():
     """
     Feature: Support tensor inplace view gradient.
@@ -565,7 +585,8 @@ def test_scene7_case5():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_scene7_case6():
     """
     Feature: Support tensor inplace view gradient.
@@ -594,7 +615,8 @@ def test_scene7_case6():
     assert (out_expect[1].asnumpy() == out_jit[1].asnumpy()).all()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_scene7_case7():
     """
     Feature: Support tensor inplace view gradient.
@@ -629,7 +651,8 @@ def generator_dataset(size, x_shape=(16, 3, 32, 32), y_shape=(16, 3, 32, 32)):
         yield (x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=6.00)
 def test_view_and_inplace_improve():
     """
     Feature: Support tensor inplace view gradient.

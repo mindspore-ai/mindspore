@@ -80,7 +80,7 @@ def test_fallback_sum_with_x_tensor_n_not_default_1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 def test_fallback_sum_with_x_tensor_n_not_default_2():
     """
     Feature: JIT Fallback
@@ -99,7 +99,7 @@ def test_fallback_sum_with_x_tensor_n_not_default_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_fallback_sum_with_x_list_of_tensor():
     """
     Feature: JIT Fallback
@@ -118,7 +118,7 @@ def test_fallback_sum_with_x_list_of_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_fallback_sum_with_tensor_0d(mode):
     """
@@ -138,7 +138,7 @@ def test_fallback_sum_with_tensor_0d(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_fallback_sum_with_x_unsupported_operand_type_error_1():
     """
     Feature: JIT Fallback
@@ -192,7 +192,8 @@ def test_fallback_sum_with_x_tensor_n_default_2():
     assert np.allclose(out.asnumpy(), np.array([3, 3]))
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_grad_sum_list_min():
     """
     Feature: Grad of sum/list/min.

@@ -81,7 +81,8 @@ def test_pyboost_aclnn_cache():
     for _ in range(5):
         net(x)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_aclnn_cache_length_kbyk():
     """
     Feature: aclnn cache
@@ -96,7 +97,8 @@ def test_aclnn_cache_length_kbyk():
     os.system("rm -rf log_cache_kbyk_1.txt")
     del os.environ["VLOG_v"]
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_global_aclnn_cache_kbyk():
     """
     Feature: global aclnn cache
@@ -112,7 +114,8 @@ def test_global_aclnn_cache_kbyk():
     os.system("rm -rf log_cache_kbyk_2.txt")
     del os.environ["VLOG_v"]
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_global_aclnn_cache_pyboost():
     """
     Feature: global aclnn cache
@@ -155,7 +158,8 @@ def test_aclnn_cache_with_multi_input_2():
     for _ in range(5):
         mint.cat([x.view(-1).contiguous() for x in x_list], dim=0)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=12.00)
 def test_aclnn_cache_with_multi_input():
     """
     Feature: aclnn cache with multi input
@@ -224,7 +228,8 @@ def test_aclnn_cache_memory_kbk():
     net(x)
     del os.environ["MS_DEV_RUNTIME_CONF"]
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=14108.00)
 def test_aclnn_cache_host_memory_kbk():
     """
     Feature: aclnn cache host memory
@@ -267,7 +272,8 @@ def test_aclnn_cache_memory_pyboost():
         if i % 200 == 0:
             print(f'step {i}, memory usage: {psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2} MB')
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=38.00)
 def test_aclnn_cache_host_memory_pyboost():
     """
     Feature: aclnn cache host memory
@@ -285,7 +291,8 @@ def test_aclnn_cache_host_memory_pyboost():
     os.system("rm -rf log_cache_memory_pyboost.txt")
     del os.environ["MS_DEV_RUNTIME_CONF"]
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=6.00)
 def test_sync_aclnn_op_kbyk():
     """
     Feature: sync aclnn op
@@ -313,7 +320,8 @@ def test_sync_aclnn_op_kbyk():
 
     del os.environ["MS_DEV_RUNTIME_CONF"]
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_sync_aclnn_op_pyboost():
     """
     Feature: sync aclnn op

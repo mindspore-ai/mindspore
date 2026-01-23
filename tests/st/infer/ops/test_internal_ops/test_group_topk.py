@@ -123,7 +123,8 @@ def run(input_param, token_dtype, is_dynamic=False):
             ms_out.astype(ms.float32).asnumpy(), golden_out.astype(np.float32), rtol=1e-2, atol=1e-2)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=104.00)
 @pytest.mark.parametrize('token_dtype', [np.float16, bfloat16])
 @pytest.mark.parametrize('input_param', [[64, 1024, 8, 3, 2], [359, 256, 8, 4, 2]])
 @pytest.mark.parametrize('is_dynamic', [False, True])

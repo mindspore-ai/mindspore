@@ -31,7 +31,8 @@ PWD = os.path.dirname(__file__)
 TEST_DATA_DATASET_FUNC = PWD + "/data"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=104.0)
 def test_dvpp_equalize_operation_01():
     """
     Feature: Equalize operation on device
@@ -135,7 +136,8 @@ def test_dvpp_equalize_operation_01():
     assert np.allclose(equalize_op(image), equalize_op_cpu(image), rtol=1, atol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_dvpp_equalize_operation_02():
     """
     Feature: Equalize operation on device
@@ -164,7 +166,8 @@ def test_dvpp_equalize_operation_02():
     assert np.allclose(equalize_op(image1), equalize_op_cpu1(new_arr), rtol=1, atol=1)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_dvpp_equalize_exception_01():
     """
     Feature: Equalize operation on device

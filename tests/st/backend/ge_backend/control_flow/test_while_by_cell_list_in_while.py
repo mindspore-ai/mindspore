@@ -23,8 +23,7 @@ from tests.mark_utils import arg_mark
     plat_marks=["platform_ascend", "platform_ascend910b"],
     level_mark="level0",
     card_mark="onecard",
-    essential_mark="essential",
-)
+    essential_mark="essential", mem_peak=0.01)
 def test_while_by_cell_list_in_while():
     """
     Feature: unify ge and vm backend

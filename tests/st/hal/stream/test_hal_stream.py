@@ -22,7 +22,7 @@ from tests.device_utils import set_device
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.0)
 def test_runtime_simple_stream():
     """
     Feature: runtime stream api.
@@ -40,7 +40,7 @@ def test_runtime_simple_stream():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_runtime_set_stream():
     """
     Feature: runtime stream api.
@@ -58,7 +58,7 @@ def test_runtime_set_stream():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_runtime_stream_query():
     """
     Feature: runtime stream api.
@@ -78,7 +78,7 @@ def test_runtime_stream_query():
     assert s1.query()
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=6.00)
 def test_runtime_wait_stream():
     """
     Feature: runtime stream api.
@@ -104,7 +104,7 @@ def test_runtime_wait_stream():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=3072.01)
 def test_runtime_wait_event():
     """
     Feature: runtime stream api.
@@ -133,7 +133,7 @@ def test_runtime_wait_event():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_runtime_synchronize():
     """
     Feature: runtime stream api.
@@ -157,7 +157,7 @@ def test_runtime_synchronize():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.25)
 def test_runtime_jit_stream():
     """
     Feature: runtime stream api.
@@ -187,7 +187,7 @@ def test_runtime_jit_stream():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 def test_runtime_grad_stream():
     """
     Feature: runtime stream api.
@@ -210,7 +210,7 @@ def test_runtime_grad_stream():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_runtime_get_stream():
     """
     Feature: runtime stream api.
@@ -228,7 +228,7 @@ def test_runtime_get_stream():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=3072.01)
 def test_runtime_multi_streams():
     """
     Feature: runtime stream api.
@@ -265,7 +265,7 @@ def test_runtime_multi_streams():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_runtime_none_streams():
     """
     Feature: runtime stream api.
@@ -281,7 +281,7 @@ def test_runtime_none_streams():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=21504.0)
 def test_runtime_record_stream():
     """
     Feature: runtime record stream.

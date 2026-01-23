@@ -38,7 +38,8 @@ class InputNetTopK(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_topk():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -74,7 +75,8 @@ class InputNetAtan(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_atan():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -105,7 +107,8 @@ class InputNetArgMax(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_argmax():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -136,7 +139,8 @@ class InputNetClipScalar(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_clip_scalar():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -169,7 +173,8 @@ class InputNetClipTensor(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_clip_tensor():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -203,7 +208,8 @@ class InputNetPad(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_pad():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -236,7 +242,8 @@ class InputNetSub(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_sub():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -270,7 +277,8 @@ class InputNetMatMul(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_matmul_and_input_output_names():
     """
     Feature: Convert mindir to onnx and infer by onnx and change input output node names
@@ -309,7 +317,8 @@ class InputNetTranspose(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_transpose():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -342,7 +351,8 @@ class InputNetSplitTensor(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_split_tensor():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -374,7 +384,8 @@ class InputNetAddExt(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_add_ext():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -412,7 +423,8 @@ class InputNetSliceExt(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_slice_ext():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -447,7 +459,8 @@ class InputNetBatchNormExt(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 def test_convert_model_with_batch_norm_ext():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -487,7 +500,8 @@ class InputNetBatchNorm(nn.Cell):
         return output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_convert_model_with_batch_norm():
     """
     Feature: Convert mindir to onnx and infer by onnx
@@ -518,7 +532,8 @@ class BatchMatmulExtNet(nn.Cell):
         return gen.BatchMatMulExt()(a, b)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_export_batchmatmulext():
     """
     Feature: Export ops.BatchMatMulExt to onnx
@@ -546,7 +561,8 @@ class IdentityNet(nn.Cell):
         return gen.Identity()(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_export_identity():
     """
     Feature: Export ops.Identity to onnx
@@ -572,7 +588,8 @@ class ConvolutionNet(nn.Cell):
         return gen.Convolution()(x, weight, bias, stride, padding, dilation, transposed, output_padding, groups)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize('bias, stride, padding, dilation, transposed, output_padding, groups',
                          [(0, 1, 0, 1, False, 0, 1), ([1], [2, 2], [1, 1], [2, 2], False, [0, 0], 1)])
 def test_export_convolution(bias, stride, padding, dilation, transposed, output_padding, groups):
@@ -608,7 +625,8 @@ class Conv2DExtNet(nn.Cell):
         return conv2d(x, weight, bias, stride, padding, dilation, groups)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('bias, stride, padding, dilation, groups',
                          [(0, 1, 0, 1, 1), ([1], [2, 2], [1, 1], [2, 2], 1)])
 def test_export_conv2dext(bias, stride, padding, dilation, groups):
@@ -643,7 +661,8 @@ class ConvTranspose2DNet(nn.Cell):
         return gen.ConvTranspose2D()(x, weight, bias, stride, padding, output_padding, groups, dilation)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 @pytest.mark.parametrize('bias, stride, padding, output_padding, groups, dilation',
                          [(0, 2, 0, 1, 1, 2), ([1], [2, 2], [1, 1], [1, 1], 1, [2, 2])])
 def test_export_convtranspose2d(bias, stride, padding, output_padding, groups, dilation):
@@ -678,7 +697,8 @@ class UpsampleNearest2DNet(nn.Cell):
         return gen.UpsampleNearest2D()(x, output_size, scales)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('output_size, scales', [([8, 8], None), (None, [1.5, 1.5])])
 def test_export_upsamplenearest2d(output_size, scales):
     """
@@ -713,7 +733,8 @@ class MeshgridNet(nn.Cell):
         return self.meshgrid_op(a)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 @pytest.mark.parametrize('indexing', ['ij'])
 def test_export_meshgrid(indexing):
     """
@@ -753,7 +774,8 @@ class StackExtNet(nn.Cell):
         return self.stack_ext_op((x, y, z))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_stackext():
     """
     Feature: Export ops.StackExt to onnx
@@ -791,7 +813,8 @@ class DenseNet(nn.Cell):
         return self.dense_op(x, w, b)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_export_dense():
     """
     Feature: Export ops.Dense to onnx
@@ -839,7 +862,8 @@ class ArgMaxWithValueNet(nn.Cell):
         raise RuntimeError("When call ArgMaxWithValueNet construct, the flag should be less than 3!")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_argmaxwithvalue():
     """
     Feature: Export ops.ArgMaxWithValue to onnx
@@ -876,7 +900,8 @@ class StridedSliceNet(nn.Cell):
         return P.StridedSlice()(x, (0, 0), (1, 1), (1, 1))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_stridedslice():
     """
     Feature: Export ops.StridedSlice to onnx
@@ -904,7 +929,8 @@ class SumExtNet(nn.Cell):
         return mint.sum(x, dim=2, keepdim=True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_sumext():
     """
     Feature: Export mint.sum to onnx
@@ -938,7 +964,8 @@ class SquareNet(nn.Cell):
         return self.square(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_square():
     """
     Feature: Export ops.Square to onnx
@@ -970,7 +997,8 @@ class SiLUNet(nn.Cell):
         return self.silu(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_export_silu():
     """
     Feature: Export nn.SiLU to onnx
@@ -1002,7 +1030,8 @@ class ModNet(nn.Cell):
         return self.mod(x, y)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_export_mod():
     """
     Feature: Export ops.Mod to onnx
@@ -1036,7 +1065,8 @@ class AvgPoolNet(nn.Cell):
         return self.avgpool(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=2048.01)
 def test_export_avgpool():
     """
     Feature: Export ops.AvgPool to onnx
@@ -1068,7 +1098,8 @@ class SoftmaxNet(nn.Cell):
         return self.softmax(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_softmax():
     """
     Feature: Export nn.Softmax to onnx
@@ -1100,7 +1131,8 @@ class SqueezeNet(nn.Cell):
         return self.squeeze(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.0)
 def test_export_squeeze():
     """
     Feature: Export ops.Squeeze to onnx
@@ -1133,7 +1165,8 @@ class MulsNet(nn.Cell):
         return z
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_export_muls():
     """
     Feature: Export Muls to onnx
@@ -1156,7 +1189,8 @@ def test_export_muls():
         raise RuntimeError("Export operator Muls to ONNX failed!")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_export_muls_with_saved_dirs():
     """
     Feature: Export Muls to onnx and set dirs
@@ -1193,7 +1227,8 @@ class ConvReluModel(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 def test_export_param_keep_initializers():
     """
     Feature: Export model with export_params=False and keep_initializers=True.
@@ -1247,7 +1282,8 @@ class DynamicNetwork(nn.Cell):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_dynamic_axes():
     """
     Feature: Export model with dynamic_axes and different input shape for export and onnxruntime

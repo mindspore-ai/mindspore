@@ -94,7 +94,7 @@ class SelfObjectGetattrNet(ms.nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 def test_call_other_object_method_runtime():
     """
     Feature: getattr for custom class.
@@ -137,7 +137,7 @@ class GlobalObjectGetattrNet(ms.nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_call_no_self_other_object_method_runtime():
     """
     Feature: getattr for custom class.
@@ -230,7 +230,7 @@ def test_resolve_cust_class():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_resolve_cust_ms_function_call_class():
     """
     Feature: Syntax resolve.
@@ -262,7 +262,7 @@ class UserDefinedTupleNet:
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_pyexecute_with_stub_tensor():
     """
     Feature: Fallback runtime.
@@ -288,7 +288,7 @@ class UserDefinedListNet:
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_pyexecute_with_stub_tensor_2():
     """
     Feature: Fallback runtime.
@@ -314,7 +314,7 @@ class UserDefinedDictNet:
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_pyexecute_with_stub_tensor_3():
     """
     Feature: Fallback runtime.
@@ -490,7 +490,8 @@ def test_custom_class_jit():
     assert out == 14
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_kwargs_is_custom_class_attr():
     """
     Feature: Support the kwargs is any.

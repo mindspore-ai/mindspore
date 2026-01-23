@@ -22,7 +22,7 @@ from tests.st.pi_jit.share.utils import assert_executed_by_graph_mode, pi_jit_wi
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=3072.01)
 def test_method_clamp():
     """
     Feature: Functional.

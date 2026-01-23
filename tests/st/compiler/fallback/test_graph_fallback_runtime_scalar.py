@@ -160,7 +160,7 @@ def test_scalar_in_tuple_output():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_int_asnumpy():
     """
     Feature: Return scalar.
@@ -178,7 +178,7 @@ def test_int_asnumpy():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_int_asnumpy_calculation():
     """
     Feature: Return scalar.
@@ -214,7 +214,7 @@ def test_int_tensor_asnumpy_calculation():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_int_mutable():
     """
     Feature: Return scalar.
@@ -231,7 +231,7 @@ def test_int_mutable():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_float_mutable():
     """
     Feature: Return scalar.
@@ -248,7 +248,7 @@ def test_float_mutable():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_bool_condition():
     """
     Feature: Return scalar.
@@ -326,7 +326,7 @@ def test_tensor_condition():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_bool_asnumpy():
     """
     Feature: Return scalar.
@@ -343,7 +343,7 @@ def test_bool_asnumpy():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_bool_asnumpy_condition():
     """
     Feature: Return scalar.
@@ -423,7 +423,7 @@ def test_scalar_in_inner_function():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_scalar_tuple_in_inner_function():
     """
     Feature: Return scalar.

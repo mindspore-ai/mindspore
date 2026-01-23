@@ -40,7 +40,8 @@ def get_output(x0, x1, rounding_mode, enable_graph_kernel):
     return output
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize("data_type", [mindspore.float16, mindspore.float32, mindspore.bfloat16])
 @pytest.mark.parametrize("rounding_mode", [None, "floor", "trunc"])
 def test_div_mod(data_type, rounding_mode):

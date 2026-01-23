@@ -56,7 +56,7 @@ def generate_test_cases(dtype, mode, reduction):
     assert np.allclose(output.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.02)
 @pytest.mark.parametrize("data_type", [np.float16, np.float32])
 @pytest.mark.parametrize('run_mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 @pytest.mark.parametrize('reduction', ["none", "mean", "batchmean", "sum"])
@@ -69,7 +69,8 @@ def test_kl_div_loss_grad_with_static_input(data_type, run_mode, reduction):
     generate_test_cases(data_type, run_mode, reduction)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.75)
 def test_vmap_case():
     """
     Feature: KLDivLossGrad with vmap mode.

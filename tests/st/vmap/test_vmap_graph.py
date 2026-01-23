@@ -15,9 +15,9 @@
 """test vmap in graph mode"""
 import platform
 import numpy as np
-import mindspore.nn as nn
+from mindspore import nn
 import mindspore.numpy as mnp
-import mindspore.context as context
+from mindspore import context
 import mindspore.ops.operations as P
 import mindspore.ops.functional as F
 from mindspore import dtype as mstype
@@ -71,7 +71,7 @@ def test_vmap_cond():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.25)
 def test_vmap_gradient():
     """
     Feature: vmap
@@ -289,7 +289,7 @@ def test_vmap_general_rule():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.01)
 def test_vmap_nested_axes():
     """
     Feature: vmap
@@ -335,7 +335,7 @@ def test_vmap_nested_axes():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.25)
 def test_vmap_with_tuple_input():
     """
     Feature: vmap
@@ -440,7 +440,7 @@ def test_vmap_as_vmap_input():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.00)
 def test_vmap_with_celllist_nested_grad():
     """
     Feature: vmap

@@ -873,7 +873,7 @@ def test_grad_const_tuple_or_list_tensor_arg_to_mutable():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_grad_const_dict_tensor_to_mutable():
     """
     Feature: Support mutable in graph.
@@ -1789,7 +1789,8 @@ def test_return_scalar_not_top_cell():
     assert isinstance(out, int) and out == 25
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_output_mutable_list():
     """
     Feature: Support mutable in graph.

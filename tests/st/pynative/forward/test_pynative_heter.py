@@ -144,7 +144,7 @@ def test_pynative_heterogeneous3():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_pynative_heterogeneous():
     """
     Feature: PyNative Heterogeneous

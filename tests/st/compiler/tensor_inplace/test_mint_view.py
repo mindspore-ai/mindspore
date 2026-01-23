@@ -157,7 +157,8 @@ def test_squeeze_mint():
     os.remove(log_file_name)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_t_mint():
     """
     Feature: test t mint api.

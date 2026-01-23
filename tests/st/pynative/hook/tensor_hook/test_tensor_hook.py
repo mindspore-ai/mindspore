@@ -445,7 +445,7 @@ def test_tensor_backward_hook_register_error():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_tensor_backward_hook_inplace():
     """
     Feature: Tensor backward hook.

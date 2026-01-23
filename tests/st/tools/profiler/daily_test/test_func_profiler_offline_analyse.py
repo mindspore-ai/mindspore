@@ -36,7 +36,8 @@ def collect_profiler_data():
         net(src, tgt)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_profiler_offline_analyse_path_correct_001():
     """
     Feature: Profiler Offline Analysis

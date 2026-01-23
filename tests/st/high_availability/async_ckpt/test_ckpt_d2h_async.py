@@ -105,7 +105,8 @@ def create_dataset(data_path, batch_size=32, num_parallel_workers=1):
     return mnist_ds
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=10.0)
 def test_ckpt_d2h_async_910b():
     """
     Feature: ckpt d2h copy async.
@@ -147,7 +148,8 @@ def test_ckpt_d2h_async_910b():
     del os.environ['MS_ENABLE_CKPT_D2H_ASYNC']
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.57)
 def test_ckpt_d2h_async_910a():
     """
     Feature: ckpt d2h copy async.

@@ -45,7 +45,7 @@ class SetWithTensorOrStorageCustom(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_set_(mode):
     """
@@ -129,7 +129,7 @@ def test_tensor_set_(mode):
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_set_errors(mode):
     """
@@ -210,7 +210,7 @@ def test_tensor_set_errors(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_set_errors_with_different_device(mode):
     """
@@ -253,7 +253,8 @@ def test_tensor_set_errors_with_different_device(mode):
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1.00
+          )
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_inplace_copy_after_set_(mode):
     """
@@ -353,7 +354,7 @@ def test_setitem_after_set_cpu(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_setitem_after_set_ascend(mode):
     """
@@ -387,7 +388,7 @@ def test_setitem_after_set_ascend(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_inplace_add_after_set_with_lazy_copy(mode):
     """
@@ -421,7 +422,7 @@ def test_inplace_add_after_set_with_lazy_copy(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_inplace_add_after_set_with_lazy_copy_error(mode):
     """
@@ -455,7 +456,7 @@ def test_inplace_add_after_set_with_lazy_copy_error(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_set_increase_storage_size_ascend(mode):
     """
@@ -515,7 +516,7 @@ def test_set_increase_storage_size_cpu(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_set_expand_size_not_memory_leak(mode):
     """

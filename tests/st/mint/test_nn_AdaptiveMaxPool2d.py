@@ -111,7 +111,7 @@ def set_context_mode(mode):
                       'cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=20.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_n_adaptivemaxpool2d_input_2x64x32x32_output_size_16x16_return_indices_true_fp16(mode):
     """
@@ -133,7 +133,7 @@ def test_n_adaptivemaxpool2d_input_2x64x32x32_output_size_16x16_return_indices_t
                       'cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=20.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_n_adaptivemaxpool2d_input_2x64x32x32_output_size_16x16_return_indices_false_fp16(mode):
     """
@@ -154,7 +154,7 @@ def test_n_adaptivemaxpool2d_input_2x64x32x32_output_size_16x16_return_indices_f
                       'cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_n_adaptivemaxpool2d_input_2x64x32x32_output_size_nonexnone_return_indices_false_fp16(mode):
     """
@@ -175,7 +175,7 @@ def test_n_adaptivemaxpool2d_input_2x64x32x32_output_size_nonexnone_return_indic
                       'cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_n_adaptivemaxpool2d_input_2x64x32x32_output_size_nonex10_return_indices_false_fp16(mode):
     """
@@ -196,7 +196,7 @@ def test_n_adaptivemaxpool2d_input_2x64x32x32_output_size_nonex10_return_indices
                       'cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_n_adaptivemaxpool2d_input_2x64x32x32_output_size_10xnone_return_indices_false_fp16(mode):
     """

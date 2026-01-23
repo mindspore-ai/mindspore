@@ -69,7 +69,8 @@ def get_max_memory_baseline(file_name, log_file_name):
     os.environ['MS_DEV_RUNTIME_CONF']=""
     return memory_useage
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=58145)
 def test_net_base():
     """
     Feature: Hyper offload auto optimize with execution order.
@@ -91,7 +92,8 @@ def test_net_parameter():
     assert max_memory < max_memory_baseline
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_net_all():
     """
     Feature: Hyper offload auto optimize with execution order.
@@ -102,7 +104,8 @@ def test_net_all():
     assert max_memory < 160
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_net_all_trace():
     """
     Feature: Hyper offload auto optimize with execution order.
@@ -114,7 +117,8 @@ def test_net_all_trace():
     assert max_memory < 400
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parameter_with_remote():
     """
     Feature: Hyper offload auto optimize with execution order.
@@ -141,7 +145,8 @@ def test_parameter_with_remote():
     compile_config.HYPER_OFFLOAD_PREFETCH_DISTANCE = origin_prefetch_distance
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_wrong_auto_offload_input():
     """
     Feature: Hyper offload auto optimize with execution order.
@@ -155,7 +160,8 @@ def test_wrong_auto_offload_input():
         foo(Tensor([1, 2, 3]))
     assert "For 'auto_offload', the value of 'auto_offload' must be one of " in str(e.value)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_parameter_with_too_long_prefetch_distance():
     """
     Feature: Hyper offload auto optimize with execution order.

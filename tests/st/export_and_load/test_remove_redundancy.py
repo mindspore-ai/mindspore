@@ -92,7 +92,8 @@ def test_remove_redundancy_0_0(mode):
         shutil.rmtree(f"device{i}_redundancy00")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE])
 def test_save_remove_redundancy_error(mode):
     '''

@@ -29,7 +29,8 @@ from file_check import FileChecker
 from model_zoo import TinyAddNet
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_ascend_profiler_offline_analyse_with_single_device():
     """
     Feature: Ascend Offline Profiler Analysis with Single Device
@@ -53,7 +54,8 @@ def test_ascend_profiler_offline_analyse_with_single_device():
         check_ascend_offline_analyse_files(ascend_ms_dir)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.00)
 def test_ascend_profiler_offline_analyse_with_multi_devices():
     """
     Feature: Ascend Offline Profiler Analysis with Multi Devices
@@ -81,7 +83,8 @@ def test_ascend_profiler_offline_analyse_with_multi_devices():
         check_ascend_offline_analyse_files(copy_ascend_ms_dir)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_new_profiler_offline_analyse_with_single_device():
     """
     Feature: Ascend Offline Profiler Analysis with Single Device
@@ -107,7 +110,8 @@ def test_new_profiler_offline_analyse_with_single_device():
         check_ascend_offline_analyse_files(ascend_ms_dir, True)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 def test_new_profiler_offline_analyse_with_multi_devices():
     """
     Feature: Ascend Offline Profiler Analysis with Multi Devices

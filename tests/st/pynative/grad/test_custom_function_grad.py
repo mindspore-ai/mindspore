@@ -396,7 +396,7 @@ class CustomFunctionDirtyTensorError1Net(_Function):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.0)
 def test_custom_function_dirty_tensor_must_all_be_output():
     """
     Feature: Custom autograd function.
@@ -428,7 +428,7 @@ class CustomFunctionDirtyTensorError2Net(_Function):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.00)
 def test_custom_function_dirty_tensor_is_need_grad_leaf():
     """
     Feature: Custom autograd function.
@@ -466,7 +466,7 @@ class CustomFunctionLeafNet(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_custom_function_dirty_tensor_not_leaf_no_grad():
     """
     Feature: Custom autograd function.
@@ -489,7 +489,7 @@ class CustomFunctionLeafNet1(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.00)
 def test_custom_function_dirty_tensor_not_leaf_need_grad():
     """
     Feature: Custom autograd function.
@@ -523,7 +523,7 @@ class InplaceMulOp(_Function):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.0)
 def test_custom_function_dirty_tensor_is_view():
     """
     Feature: Custom autograd function.
@@ -553,7 +553,7 @@ class CustomFunctionNotLeafNet(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.00)
 def test_custom_function_dirty_view_multi_output_error():
     """
     Feature: Custom autograd function.
@@ -604,7 +604,7 @@ def test_custom_function_output_is_input():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_custom_function_output_is_input_inplace_error():
     """
     Feature: Custom autograd function.
@@ -712,7 +712,7 @@ class CustomFunctionViewNotInAndDirtyWrapNet(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.0)
 def test_custom_function_view_not_in_and_dirty():
     """
     Feature: Custom autograd function.
@@ -753,7 +753,7 @@ class CustomFunctionMultiDiffOutputWrapNet(nn.Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.00)
 def test_custom_function_multi_diff_output():
     """
     Feature: Custom autograd function.

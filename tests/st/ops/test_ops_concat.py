@@ -71,7 +71,7 @@ def forward_datas_prepare(shape, num=2, axis=0, diff_shapes=False, need_expect=T
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("params", [(((2, 2), (2, 3)), 1), (((3, 2, 3), (3, 3, 3)), -2)])
 def test_concat_normal(mode, params):
@@ -122,7 +122,8 @@ def test_concat_bfloat16(mode, params):
         assert np.allclose(out.float().asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.00)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_concat_mixed_dtype(mode):
     """
@@ -149,7 +150,7 @@ def test_concat_mixed_dtype(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("params", [(((2, 2), (2, 3)), 1), (((3, 2, 3), (3, 3, 3)), -2)])
 def test_concat_vmap(mode, params):
@@ -172,7 +173,7 @@ def test_concat_vmap(mode, params):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=3072.00)
 def test_concat_dynamic():
     """
     Feature: test dynamic by TEST_OP.
@@ -190,7 +191,7 @@ def test_concat_dynamic():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("dyn_mode", ["dyn_shape", "dyn_rank"])
 def test_concat_forward_dynamic(mode, dyn_mode):
@@ -224,7 +225,7 @@ def test_concat_forward_dynamic(mode, dyn_mode):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("dyn_mode", ["dyn_shape", "dyn_rank"])
 def test_concat_backward_dynamic(mode, dyn_mode):
@@ -324,7 +325,8 @@ def test_concat_backward_dyn_seq(mode, dyn_mode):
         assert np.allclose(out.asnumpy(), expect)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_concat_with_input_complex64(mode):
     """
@@ -385,7 +387,8 @@ def test_concat_with_dyn_len_sequence_input():
     print(grad)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_concat_with_single_input():
     """
     Feature: Concat ops.

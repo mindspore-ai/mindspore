@@ -115,7 +115,8 @@ class ParserFactory(OpsFactory):
             allclose_nparray(input_grad_pytorch, input_grad_mindspore, self.loss, self.loss)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_pynative_ms_function_control_for_multi_if_break(mode):
     """

@@ -312,7 +312,7 @@ def adaptive_max_pool2d_forward_dyn_func(input_x):
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=20.01)
 @pytest.mark.parametrize('return_indices', [True, False])
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_f_adaptive_max_pool2d_bfloat16_3d_9x4x9_random(mode, return_indices):
@@ -344,7 +344,7 @@ def test_f_adaptive_max_pool2d_bfloat16_3d_9x4x9_random(mode, return_indices):
                       'cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=20.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_f_adaptive_max_pool2d_float32_3d_9x4x9_random(mode):
     """
@@ -368,7 +368,7 @@ def test_f_adaptive_max_pool2d_float32_3d_9x4x9_random(mode):
                       'cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=20.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_f_adaptive_max_pool2d_float32_3d_9x4x9_random_none_none(mode):
     """
@@ -392,7 +392,7 @@ def test_f_adaptive_max_pool2d_float32_3d_9x4x9_random_none_none(mode):
                       'cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=20.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_f_adaptive_max_pool2d_float32_3d_9x4x9_random_none(mode):
     """
@@ -416,7 +416,7 @@ def test_f_adaptive_max_pool2d_float32_3d_9x4x9_random_none(mode):
                       'cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_f_adaptive_max_pool2d_float16_4d_4x7x7x5_random(mode):
     """
@@ -442,7 +442,7 @@ def test_f_adaptive_max_pool2d_float16_4d_4x7x7x5_random(mode):
                       'cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_f_adaptive_max_pool2d_float64_4d_8x5x6x9_random(mode):
     """
@@ -742,7 +742,8 @@ def test_f_adaptive_max_pool2d_input_dtype_uint64(mode):
                       'cpu_linux'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01
+          )
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_f_adaptive_max_pool2d_input_rank_1d_invalid(mode):
     """
@@ -1097,7 +1098,7 @@ def test_dynamic_shape_f_adaptive_max_pool2d_dyn_rank_2(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=20.0)
 def test_ops_adaptive_max_pool2d_dynamic_shape():
     """
     Feature: mint.nn.functional.adaptive_max_pool2d (dynamic shape)
@@ -1114,7 +1115,7 @@ def test_ops_adaptive_max_pool2d_dynamic_shape():
 @arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.01)
 @pytest.mark.parametrize('mode', ['pynative', 'kbk'])
 def test_f_adaptive_max_pool2d_float32_empty_tensor(mode):
     """

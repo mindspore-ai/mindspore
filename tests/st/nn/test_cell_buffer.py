@@ -52,7 +52,7 @@ class ComplexNet(nn.Cell):
     plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential')
+    essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_buffer_basic(mode):
     """
@@ -88,7 +88,7 @@ def test_buffer_basic(mode):
     plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential')
+    essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_complex_net_buffer(mode):
     """
@@ -129,7 +129,7 @@ def test_complex_net_buffer(mode):
     plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential')
+    essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_buffer_exception(mode):
     """
@@ -196,7 +196,7 @@ class NetTorch(nn_torch.Module):
     plat_marks=['cpu_linux', 'platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential')
+    essential_mark='essential', mem_peak=0.01)
 def test_named_buffers_with_one_cell():
     """
     Feature: test named_buffers with parameters
@@ -257,7 +257,7 @@ def modify_buffer_based_on_name2(cell, name, buffer):  # pylint: disable=unused-
     plat_marks=['cpu_linux', 'platform_ascend910b'],
     level_mark='level0',
     card_mark='onecard',
-    essential_mark='essential')
+    essential_mark='essential', mem_peak=2.00)
 def test_register_buffer_hook():
     """
     Feature: test register_buffer hook with one cell

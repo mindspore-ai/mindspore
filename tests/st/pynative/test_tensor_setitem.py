@@ -238,7 +238,7 @@ class TensorItemSetWithNumber(Cell):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_itemset_with_number():
     net = TensorItemSetWithNumber()
     input_1d_np = np.array([1]).astype(np.float32)
@@ -406,7 +406,7 @@ def test_itemset_by_tuple_with_number():
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_itemset_all():
     """
     Feature: Test setitem

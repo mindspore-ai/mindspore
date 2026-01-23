@@ -23,7 +23,8 @@ from mindspore.ops import DataType, CustomRegOp
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 def test_custom_arg_pool_2d_aclnn(context_mode):
     """
@@ -86,7 +87,8 @@ def test_custom_arg_pool_2d_aclnn(context_mode):
     assert np.allclose(output.asnumpy(), expected, rtol=1e-4, atol=1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
 def test_custom_arg_pool_2d_py_infer_aclnn(context_mode):
     """

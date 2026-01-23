@@ -105,7 +105,7 @@ def run_trans_flag(test_name):
         del os.environ['MINDSPORE_DUMP_CONFIG']
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.0)
 @security_off_wrap
 def test_ascend_kernel_by_kernel_dynamic_shape():
     """
@@ -118,7 +118,7 @@ def test_ascend_kernel_by_kernel_dynamic_shape():
     run_trans_flag("test_e2e_dump_dynamic_shape")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @security_off_wrap
 def test_ascend_kernel_by_kernel_dynamic_shape_custom_statistic():
     """

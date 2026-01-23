@@ -25,7 +25,7 @@ context.set_context(jit_config={"jit_level": "O0"})
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 def test_for_half_unroll_basic():
     """
     Feature: Half unroll compile optimization for for statement.
@@ -53,7 +53,7 @@ def test_for_half_unroll_basic():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_for_half_unroll_if():
     """
     Feature: Half unroll compile optimization for for statement.

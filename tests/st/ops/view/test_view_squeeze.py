@@ -60,7 +60,7 @@ def test_squeeze_single_op():
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.02)
 def test_squeeze_multiple_op():
     """
     Feature: squeeze

@@ -12,13 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+""" test_tensor_inplace_view.py """
 import pytest
 import os
 import re
 import shutil
 import numpy as np
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import context, Tensor
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
@@ -29,7 +30,8 @@ context.set_context(mode=ms.GRAPH_MODE)
 
 
 @pytest.mark.skip(reason="The operation is Unsupported")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_tensor_view_inplace_reshape():
     """
     Feature: Support tensor inplace view.
@@ -53,7 +55,8 @@ def test_tensor_view_inplace_reshape():
 
 
 @pytest.mark.skip(reason="The operation is Unsupported")
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_tensor_view_inplace_split():
     """
     Feature: Support tensor inplace view.
@@ -91,7 +94,8 @@ class ViewOut(nn.Cell):
         return x * 3
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_graph_view_out():
     """
     Feature: Runtime view graph mode.
@@ -124,7 +128,8 @@ class ViewOut2(nn.Cell):
         return x * 3 + y
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_graph_view_out_tensormove():
     """
     Feature: Runtime view graph mode.
@@ -147,7 +152,8 @@ def test_graph_view_out_tensormove():
     assert np.allclose(out_graph.asnumpy(), z.asnumpy(), rtol=10e-4, atol=10e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_setitem_simple_case():
     """
     Feature: Support tensor slice forward execute.
@@ -201,13 +207,14 @@ def find_newest_validateir_file(folder_path):
 
 def read_file(save_path):
     filename = find_newest_validateir_file(save_path)
-    with open((os.path.join(filename)), 'r') as f:
+    with open((os.path.join(filename)), 'r', encoding="utf-8") as f:
         content = f.read()
     clean_all_ir_files(save_path)
     return content
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 def test_split_tensor_view_op():
     """
     Feature: View feature.

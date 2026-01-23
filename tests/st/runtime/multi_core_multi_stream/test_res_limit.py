@@ -46,7 +46,7 @@ def function_entry_and_exit(func):
     return wrapper
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @function_entry_and_exit
 def test_runtime_get_device_limit():
     """
@@ -62,7 +62,7 @@ def test_runtime_get_device_limit():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @function_entry_and_exit
 def test_runtime_set_device_limit():
     """
@@ -108,7 +108,7 @@ def test_runtime_set_device_limit():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @function_entry_and_exit
 def test_runtime_get_stream_limit():
     """
@@ -139,7 +139,7 @@ def test_runtime_get_stream_limit():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @function_entry_and_exit
 def test_runtime_set_stream_limit():
     """
@@ -180,7 +180,7 @@ def test_runtime_set_stream_limit():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @function_entry_and_exit
 def test_runtime_reset_stream_limit():
     """
@@ -206,7 +206,7 @@ def test_runtime_reset_stream_limit():
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2.0)
 @function_entry_and_exit
 def test_runtime_stream_limit_ctx():
     """

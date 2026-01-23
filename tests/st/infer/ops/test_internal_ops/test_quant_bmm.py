@@ -138,7 +138,8 @@ def qbmm(m, k, n, trans_a=False, trans_b=False, scale_dtype=ms.int64, with_outer
     np.testing.assert_allclose(output_np, expect_np, rtol=0.002, atol=0.002)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=34.00)
 @pytest.mark.parametrize('input_shape', [(128, 2560, 5120),
                                          (1024, 1024, 1024)])
 def test_qbmm_False_True(input_shape):
@@ -151,7 +152,8 @@ def test_qbmm_False_True(input_shape):
     qbmm(m, k, n, trans_a=False, trans_b=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=24.00)
 @pytest.mark.parametrize('input_shape', [(128, 512, 1024),
                                          (1024, 1024, 1024)])
 @pytest.mark.parametrize('tb', [False, True])
@@ -167,7 +169,8 @@ def test_qbmm_add(input_shape, tb, is_dyn):
          with_outer_add=True, is_dyn=is_dyn)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=20.01)
 def test_qbmm_add_continuous():
     """
     Feature: test qbmm operator in graph mode
@@ -182,7 +185,8 @@ def test_qbmm_add_continuous():
          with_outer_add=True, is_dyn=True)
 
 
-@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend310p'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=354.00)
 @pytest.mark.parametrize('m', [1, 128, 1024])
 def test_qbmm_with_pertoken_ds(m):
     """

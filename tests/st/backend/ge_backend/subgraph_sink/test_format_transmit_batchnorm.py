@@ -40,7 +40,7 @@ class Addnet(nn.Cell):
         return self.add(param, x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.02)
 def test_format_transmit_batchnorm():
     """
     Feature: special format

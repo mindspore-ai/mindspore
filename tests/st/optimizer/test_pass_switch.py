@@ -68,7 +68,8 @@ def _test_add_rmsnorm_fusion():
         Tensor(gamma, dtype=gamma_ms_dtype))
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=108.0)
 def test_pass_switch_by_add_rms_norm():
     """
     Feature: test pass switch in graph mode

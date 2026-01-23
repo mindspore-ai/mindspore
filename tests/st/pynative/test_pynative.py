@@ -39,7 +39,7 @@ class NetTest(Cell):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_pynative_and_graph_mixed_run():
     """
     Feature: test pynative and graph mixed run
@@ -65,7 +65,7 @@ def test_pynative_and_graph_mixed_run():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=16.00)
 def test_pynative_runop_dynamic_shape():
     """
     Feature: PyNative dynamic shape.

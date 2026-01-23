@@ -57,7 +57,8 @@ def run_bias_add_grad(shape, dtype):
                        rtol, atol, equal_nan=True)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("dtype", [np.float32, np.float16])
 @pytest.mark.parametrize("shape", [[48, 64], [32, 48, 64], [2, 32, 48, 64]])
 def test_bias_add_grad_ascend(dtype, shape):

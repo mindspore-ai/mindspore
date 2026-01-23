@@ -48,7 +48,8 @@ class TinyNet(ms.nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_func_profiler_mstx_dot_with_schedule_001():
     """
     Feature: Profiler MSTX Marks

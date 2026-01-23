@@ -65,7 +65,8 @@ class ReLUNetWithSortInBprop(Cell):
         return self.sort(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_dfx_sort_exception_axis_value():
     """
     Feature: Dfx Check.
@@ -83,7 +84,8 @@ def test_dfx_sort_exception_axis_value():
         error_log.value)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_dfx_sort_exception_axis_value_in_bporp():
     """
     Feature: Dfx Check.

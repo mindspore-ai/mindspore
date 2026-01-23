@@ -66,7 +66,7 @@ def permute_backward(mode, x, dims):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_mint_permute_normal(mode):
     """
@@ -146,7 +146,7 @@ def generate_expect_backward_output(x, dims, grad):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_std(mode):
     """
@@ -176,7 +176,7 @@ def test_permute_std(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [
     np.float16, np.float32, np.float64,
@@ -221,7 +221,7 @@ def test_permute_dtype_coverage(mode, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('input_shape,dims', [
     ((2, 3, 4), (2, 0, 1)),  # 3D permute
@@ -262,7 +262,7 @@ def test_permute_dimensions(mode, input_shape, dims):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('special_type',
                          ['inf', 'nan', 'zero', 'large', 'small'])
@@ -293,7 +293,7 @@ def test_permute_special_values(mode, special_type):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_empty_tensor(mode):
     """
@@ -330,7 +330,7 @@ def test_permute_empty_tensor(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('has_dynamic_rank', [False, True])
 def test_permute_dynamic_shape_advanced(mode, has_dynamic_rank):
@@ -377,7 +377,7 @@ def test_permute_dynamic_shape_advanced(mode, has_dynamic_rank):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_identity(mode):
     """
@@ -417,7 +417,7 @@ def test_permute_identity(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_zero_bias(mode):
     """
@@ -449,7 +449,7 @@ def test_permute_zero_bias(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_non_contiguous(mode):
     """
@@ -483,7 +483,7 @@ def test_permute_non_contiguous(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_functional_interface(mode):
     """
@@ -509,7 +509,7 @@ def test_permute_functional_interface(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_jit_mode(mode):
     """
@@ -544,7 +544,7 @@ def test_permute_jit_mode(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_large_tensors(mode):
     """
@@ -577,7 +577,7 @@ def test_permute_large_tensors(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_high_dimension(mode):
     """
@@ -610,7 +610,7 @@ def test_permute_high_dimension(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_very_large_tensors(mode):
     """
@@ -642,7 +642,7 @@ def test_permute_very_large_tensors(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [np.complex64, np.complex128])
 def test_permute_complex_dtypes(mode, dtype):
@@ -667,7 +667,7 @@ def test_permute_complex_dtypes(mode, dtype):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_reverse_dims(mode):
     """
@@ -708,7 +708,7 @@ def test_permute_reverse_dims(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_transpose_equivalent(mode):
     """
@@ -742,7 +742,7 @@ def test_permute_transpose_equivalent(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_inplace_view(mode):
     """
@@ -780,7 +780,7 @@ def test_permute_inplace_view(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_view_backward(mode):
     """
@@ -827,7 +827,7 @@ def test_permute_view_backward(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('input_shape,dims', [
     ((2, 3, 4), (2, 0, 1)),
@@ -869,7 +869,7 @@ def test_permute_view_multiple_shapes(mode, input_shape, dims):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_permute_view_chain(mode):
     """
@@ -914,7 +914,7 @@ def test_permute_view_chain(mode):
 
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 @pytest.mark.parametrize('dtype', [np.float32, np.float64,
                                    np.int32, np.int64])

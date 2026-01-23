@@ -114,7 +114,7 @@ def tensor_copy_limits_testcase(mode, shape, dtypes=None):
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b',
                       'platform_gpu',
                       'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=6.00)
 @pytest.mark.parametrize("mode", ['pynative', 'kbk', 'ge'])
 def test_tensor_copy_limits(mode):
     """
@@ -128,7 +128,7 @@ def test_tensor_copy_limits(mode):
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b',
                       'platform_gpu',
                       'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=2.0)
 @pytest.mark.parametrize("mode", ['pynative', 'kbk', 'ge'])
 @pytest.mark.parametrize("shape", [(0,), (2, 0)])
 @pytest.mark.parametrize("dtype", [ms.int32, ms.int64, ms.uint32, ms.uint64])
@@ -157,7 +157,7 @@ def test_tensor_copy_empty_tensor(mode, shape, dtype):
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b',
                       'platform_gpu',
                       'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=24576.00)
 @pytest.mark.parametrize("mode", ['pynative', 'kbk', 'ge'])
 def test_tensor_copy_limits_large_size(mode):
     """

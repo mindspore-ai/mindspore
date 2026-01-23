@@ -45,7 +45,7 @@ def test_np_linspace():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_np_arange_slice_1():
     """
     Feature: JIT Fallback
@@ -208,7 +208,7 @@ def test_np_transpose():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_np_broadcast():
     """
     Feature: JIT Fallback
@@ -273,7 +273,7 @@ def test_np_squeeze():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_np_concat():
     """
     Feature: JIT Fallback
@@ -345,7 +345,7 @@ def test_np_element():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_np_bitwise():
     """
     Feature: JIT Fallback
@@ -370,7 +370,7 @@ def test_np_bitwise():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_np_char_1():
     """
     Feature: JIT Fallback
@@ -400,7 +400,7 @@ def test_np_char_1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_np_char_2():
     """
     Feature: JIT Fallback
@@ -422,7 +422,7 @@ def test_np_char_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_np_degree():
     """
     Feature: JIT Fallback
@@ -541,7 +541,7 @@ def test_np_statistic():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_np_sort():
     """
     Feature: JIT Fallback
@@ -589,7 +589,7 @@ def test_np_extract():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_np_matrix():
     """
     Feature: JIT Fallback

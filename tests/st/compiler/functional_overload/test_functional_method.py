@@ -22,7 +22,7 @@ from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_method_clamp():
     """
     Feature: Functional.

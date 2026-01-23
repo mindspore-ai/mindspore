@@ -41,7 +41,7 @@ def pow_backward_func(x, y):
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @test_utils.run_test_with_On
 def test_pow_tensor_scalar_fallback():
     """
@@ -63,7 +63,7 @@ def test_pow_tensor_scalar_fallback():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize("context_mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("data_type", [np.float32])
 @test_utils.run_test_with_On
@@ -115,7 +115,7 @@ def test_pow_op_normal(context_mode, data_type):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=4.0)
 def test_pow_dynamic_shape():
     """
     Feature: Test pow with dynamic shape in graph mode.

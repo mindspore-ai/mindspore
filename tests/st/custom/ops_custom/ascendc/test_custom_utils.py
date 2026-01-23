@@ -20,7 +20,8 @@ from mindspore.ops import DataType, CustomRegOp
 from mindspore.ops.operations._custom_ops_utils import CustomInfoGenerator, CustomCodeGenerator
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_info_generator_add():
     """
     Feature: Custom op testcase
@@ -33,7 +34,8 @@ def test_info_generator_add():
     assert aclnn_api_types == expected_api_types
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_info_generator_grouped_matmul():
     """
     Feature: Custom op testcase
@@ -48,7 +50,8 @@ def test_info_generator_grouped_matmul():
     assert aclnn_api_types == expected_api_types
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_info_generator_abs():
     """
     Feature: Custom op testcase
@@ -74,7 +77,8 @@ def test_info_generator_abs():
     assert aclnn_api_types == expected_api_types
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_info_generator_abs_grad():
     """
     Feature: Custom op testcase
@@ -100,7 +104,8 @@ def test_info_generator_abs_grad():
     assert reg_info == expect_reg_info
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_code_generator_add():
     """
     Feature: Custom op testcase
@@ -126,7 +131,8 @@ def test_code_generator_add():
         assert ''.join(file_content.split()) == ''.join(callback_func.split())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_code_generator_sort():
     """
     Feature: Custom op testcase
@@ -155,7 +161,8 @@ def test_code_generator_sort():
         assert ''.join(file_content.split()) == ''.join(callback_func.split())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_code_generator_mul():
     """
     Feature: Custom op testcase
@@ -178,7 +185,8 @@ def test_code_generator_mul():
         assert ''.join(file_content.split()) == ''.join(callback_func.split())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_code_generator_arg_min():
     """
     Feature: Custom op testcase
@@ -201,7 +209,8 @@ def test_code_generator_arg_min():
         assert ''.join(file_content.split()) == ''.join(callback_func.split())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_code_generator_batch_norm():
     """
     Feature: Custom op testcase

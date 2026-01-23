@@ -32,7 +32,7 @@ class Net(ms.nn.Cell):
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_empty_normal1(mode):
     """
@@ -55,7 +55,7 @@ def test_empty_normal1(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_empty_normal2():
     """
     Feature: Ops.
@@ -74,7 +74,7 @@ def test_empty_normal2():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_empty_normal3(mode):
     """
@@ -97,7 +97,7 @@ def test_empty_normal3(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_empty_normal4(mode):
     """
@@ -120,7 +120,7 @@ def test_empty_normal4(mode):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_empty_normal5(mode):
     """
@@ -146,7 +146,7 @@ def empty_forward_func_dyn_test(input_size, dtype=None):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_empty_dynamic_shape():
     """
     Feature: Test empty with dynamic shape in graph mode.
@@ -161,7 +161,7 @@ def test_empty_dynamic_shape():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.parametrize('pin_memory', [None, True, False])
 def test_empty_pin_memory(pin_memory):
     """

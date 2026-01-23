@@ -67,7 +67,8 @@ class CustomNetTypeBool(ms.nn.Cell):
     def construct(self, x, y, z):
         return py_func_type_bool(x, y, z)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_py_func_type_scalar():
     """
     Feature: custom operator callback to Python function

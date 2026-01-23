@@ -88,7 +88,8 @@ class LeNet5(nn.Cell, HookBase):
         return x
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=10.00)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_pynative_hook_lenet_train_with_construct_hook_and_register_cell_hook(mode):
     """

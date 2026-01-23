@@ -23,7 +23,7 @@ from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_shape(mode):
     """
@@ -47,7 +47,7 @@ def test_tensor_shape(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_const_arg(mode):
     """
@@ -64,7 +64,7 @@ def test_tensor_const_arg(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_is_pinned(mode):
     """
@@ -80,7 +80,7 @@ def test_tensor_is_pinned(mode):
     assert not y.is_pinned()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_init_flag(mode):
     """
@@ -102,7 +102,7 @@ def test_tensor_init_flag(mode):
     assert not x.is_init()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_param_info(mode):
     """
@@ -120,7 +120,7 @@ def test_tensor_param_info(mode):
     assert x.param_info.name == "new_name"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_dtype(mode):
     """
@@ -136,7 +136,7 @@ def test_tensor_dtype(mode):
     assert x.dtype == mstype.float16
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_offload(mode):
     """
@@ -154,7 +154,7 @@ def test_tensor_offload(mode):
     assert is_file_exist
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_is_signed(mode):
     """
@@ -170,7 +170,7 @@ def test_tensor_is_signed(mode):
     assert not y.is_signed()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_tostring(mode):
     """
@@ -191,7 +191,7 @@ def test_tensor_tostring(mode):
     assert 'Tensor(shape=[1, 3], dtype=Int32, value=\n<uninitialized>)' in y_str
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_requires_grad(mode):
     """
@@ -212,7 +212,7 @@ def test_tensor_requires_grad(mode):
         _pynative_executor.sync()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_data_sync(mode):
     """
@@ -225,7 +225,7 @@ def test_tensor_data_sync(mode):
     assert x.data_sync() is None
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [ms.int8, ms.uint8, ms.int16, ms.uint16, ms.uint16, ms.int32, ms.uint32,
                                    ms.int64, ms.uint64])
@@ -242,7 +242,7 @@ def test_tensor_tolist1(mode, dtype):
     assert np.allclose(output, expect_output)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [ms.float16, ms.float64, ms.bfloat16])
 def test_tensor_tolist2(mode, dtype):
@@ -258,7 +258,7 @@ def test_tensor_tolist2(mode, dtype):
     assert np.allclose(output, expect_output)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [ms.bool])
 def test_tensor_tolist3(mode, dtype):
@@ -274,7 +274,7 @@ def test_tensor_tolist3(mode, dtype):
     assert output == expect_output
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 @pytest.mark.parametrize('dtype', [ms.complex128])
 def test_tensor_tolist4(mode, dtype):
@@ -290,7 +290,7 @@ def test_tensor_tolist4(mode, dtype):
     assert np.allclose(output, expect_output)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_operator_assign_value(mode):
     """
@@ -306,7 +306,7 @@ def test_tensor_operator_assign_value(mode):
     assert y.nbytes == x.nbytes
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_tensor_storage(mode):
     """

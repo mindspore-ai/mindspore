@@ -22,7 +22,8 @@ from tests.mark_utils import arg_mark
 @arg_mark(plat_marks=['cpu_linux', 'platform_gpu', 'platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1.00
+          )
 def test_run_check_mindir_version():
     """
     Feature: check and warn mindir version

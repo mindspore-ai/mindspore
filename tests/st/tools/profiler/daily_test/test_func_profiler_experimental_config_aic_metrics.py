@@ -46,7 +46,8 @@ def collect_profiler_data(tmpdir):
     profile.stop()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_func_profiler_resnet50_aic_metrics_memory_access_l2():
     """
     Feature: Profiler AIC Metrics

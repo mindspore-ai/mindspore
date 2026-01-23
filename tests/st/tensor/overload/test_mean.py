@@ -61,7 +61,7 @@ def mean_forward_func(x, axis=None, keep_dims=False):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_method_mean_python(mode):
     """
@@ -105,7 +105,7 @@ def test_method_mean_python(mode):
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.0)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE])
 def test_method_mean_pyboost(mode):
     """
@@ -165,7 +165,8 @@ def test_method_mean_pyboost(mode):
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential',
+          mem_peak=2.00)
 def test_tensor_mean_dynamic():
     """
     Feature: Test mean op.

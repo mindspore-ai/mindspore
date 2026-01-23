@@ -39,7 +39,7 @@ class NetPy(nn.Cell):
                       'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatter_add_pyboost(mode):
     """
@@ -68,7 +68,7 @@ def test_scatter_add_pyboost(mode):
                       'platform_ascend910b'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_scatter_add_python(mode):
     """

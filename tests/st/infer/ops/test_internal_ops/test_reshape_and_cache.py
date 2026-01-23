@@ -126,7 +126,8 @@ def create_np_inputs(dtype=np.float16, kv_dim=3):
     return key_update, value_update, key_cache, value_cache, slot_map
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=624.00)
 @pytest.mark.parametrize('np_dtype', [np.float16, bfloat16, np.int8])
 @pytest.mark.parametrize('mode', [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_reshape_and_cache_net(np_dtype, mode):
@@ -161,7 +162,8 @@ def test_reshape_and_cache_net(np_dtype, mode):
         assert np.allclose(ms_v_cache.asnumpy(), np_v_cache_out, 0.001, 0.001)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=490.00)
 @pytest.mark.parametrize('np_dtype', [np.float16, np.int8, bfloat16])
 @pytest.mark.parametrize('kv_dim', [2, 3])
 def test_reshape_and_cache_key(np_dtype, kv_dim):

@@ -34,7 +34,7 @@ class OpsCell(Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_unsortedsegmentsum_grad():
     """
     Feature: UnsortedSegmentSum
@@ -53,7 +53,7 @@ def test_unsortedsegmentsum_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 def test_unsortedsegmentmin_grad():
     """
     Feature: UnsortedSegmentMin
@@ -71,7 +71,7 @@ def test_unsortedsegmentmin_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_unsortedsegmentmax_grad():
     """
     Feature: UnsortedSegmentMax
@@ -89,7 +89,7 @@ def test_unsortedsegmentmax_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=18.00)
 def test_Gatherdgrad_grad():
     """
     Feature: GatherD
@@ -107,7 +107,7 @@ def test_Gatherdgrad_grad():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_embeddinglookup_grad():
     """
     Feature: EmbeddingLookup
@@ -123,7 +123,7 @@ def test_embeddinglookup_grad():
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_affine_grid_grad():
     """
     Feature: gpu backend of operator AffineGrid with grad
@@ -142,7 +142,7 @@ def test_affine_grid_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_ops_clip_by_norm_with_grad():
     """
     Feature: ops.clip_by_norm with grad
@@ -179,7 +179,7 @@ def test_rgbtohsv_with_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_silu_with_grad():
     """
     Feature: nn.SiLU with grad
@@ -196,7 +196,7 @@ def test_silu_with_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=34.00)
 def test_igamma_grad():
     """
     Feature: Igamma with grad.
@@ -221,7 +221,7 @@ def test_igamma_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_minimum_grad():
     """
     Feature: minimum with grad
@@ -238,7 +238,7 @@ def test_minimum_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_maximum_grad():
     """
     Feature: maximum with grad
@@ -255,7 +255,7 @@ def test_maximum_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_addcdiv_float32_with_grad():
     """
     Feature: Addcdiv with grad
@@ -273,7 +273,7 @@ def test_addcdiv_float32_with_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_addcmul_float32_with_grad():
     """
     Feature: Addcmul with grad
@@ -291,7 +291,7 @@ def test_addcmul_float32_with_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_asin_with_grad():
     """
     Feature: Asin_with_grad
@@ -312,7 +312,7 @@ def test_asin_with_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_asinh_grad_with_grad():
     """
     Feature: Asinhgrad_with_grad
@@ -331,7 +331,7 @@ def test_asinh_grad_with_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_acos_grad():
     """
     Feature: Acosgrad_with_grad
@@ -350,7 +350,7 @@ def test_acos_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_acosh_grad():
     """
     Feature: Acoshgrad_with_grad
@@ -370,7 +370,7 @@ def test_acosh_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_atan_grad_float():
     """
     Feature: Atangrad_with_grad
@@ -389,7 +389,7 @@ def test_atan_grad_float():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_log1p_with_grad():
     """
     Feature: log1p
@@ -411,7 +411,7 @@ class LogAddExpNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_tensor_logaddexp_with_grad():
     """
     Feature: tensor.logaddexp with grad
@@ -433,7 +433,7 @@ class LogAddExp2Net(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_tensor_logaddexp2_with_grad():
     """
     Feature: tensor.logaddexp2 with grad
@@ -455,7 +455,7 @@ class LogSumExpNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_tensor_logsumexp_with_grad():
     """
     Feature: Tensor.logsumexp with grad
@@ -474,7 +474,7 @@ def test_tensor_logsumexp_with_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_expm1_with_grad():
     """
     Feature: Test expm1 with grad.
@@ -491,7 +491,7 @@ def test_expm1_with_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_exp2_with_grad():
     """
     Feature: Test exp2 with grad.
@@ -508,7 +508,7 @@ def test_exp2_with_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_tan_grad():
     """
     Feature: Test tan with grad.
@@ -525,7 +525,7 @@ def test_tan_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_sinc_grad():
     """
     Feature: Test sinc with grad.
@@ -542,7 +542,7 @@ def test_sinc_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_squared_difference_grad():
     """
     Feature: Test squared difference with grad.
@@ -559,7 +559,7 @@ def test_squared_difference_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_square_sum_all_grad():
     """
     Feature: Test squared sum all with grad.
@@ -576,7 +576,7 @@ def test_square_sum_all_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_erfinv_grad():
     """
     Feature: Test erfinv with grad.
@@ -594,7 +594,7 @@ def test_erfinv_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_betainc_grad():
     """
     Feature: Test betainc with grad.
@@ -615,7 +615,7 @@ def test_betainc_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_lp_norm_grad():
     """
     Feature: Test LpNorm with grad.
@@ -637,7 +637,7 @@ def test_lp_norm_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_renorm_grad():
     """
     Feature: Test renorm with grad.
@@ -654,7 +654,7 @@ def test_renorm_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_polygamma_grad():
     """
     Feature: Test polygamma with grad.
@@ -672,7 +672,7 @@ def test_polygamma_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_zeta_grad():
     """
     Feature: Test zeta with grad.
@@ -688,7 +688,7 @@ def test_zeta_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_meanext_grad():
     """
     Feature: Test meanext with grad.
@@ -706,7 +706,7 @@ def test_meanext_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_selu_grad():
     """
     Feature: Test selu with grad.
@@ -722,7 +722,7 @@ def test_selu_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_sigmoidgrad_grad():
     """
     Feature: Test sigmoidgrad with grad.
@@ -744,7 +744,7 @@ def test_sigmoidgrad_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_softplusgrad_grad():
     """
     Feature: Test softplusGrad with grad.
@@ -762,7 +762,7 @@ def test_softplusgrad_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_softsign_grad():
     """
     Feature: Test softsign with grad.
@@ -778,7 +778,7 @@ def test_softsign_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_tanhgrad_grad():
     """
     Feature: tanhgrad_with_grad
@@ -797,7 +797,7 @@ def test_tanhgrad_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2.00)
 def test_bcewithlogitsloss_grad():
     """
     Feature: bcewithlogitsloss_with_grad
@@ -819,7 +819,7 @@ def test_bcewithlogitsloss_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'cpu_linux'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_celu_grad():
     """
     Feature: celu withgrad

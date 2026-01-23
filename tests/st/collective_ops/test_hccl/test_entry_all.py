@@ -391,7 +391,8 @@ def test_comm_multi_stream_raise_error():
                             "pytest -s test_multi_stream.py::test_comm_multi_stream_raise_error")
     assert return_code == 0
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards",
+        essential_mark="essential")
 @test_utils.run_test_with_On
 def test_ops_all_gather_into_tensor_net():
     """
@@ -404,7 +405,8 @@ def test_ops_all_gather_into_tensor_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards",
+        essential_mark="essential")
 @test_utils.run_test_with_On
 def test_ops_all_gather_net():
     """
@@ -482,7 +484,8 @@ def test_ops_all_to_all_single_net():
     assert return_code == 0
 
 
-@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards", essential_mark="essential")
+@arg_mark(plat_marks=["platform_ascend910b"], level_mark="level0", card_mark="allcards",
+        essential_mark="essential")
 @test_utils.run_test_with_On
 def test_alltoall_grad_net():
     """

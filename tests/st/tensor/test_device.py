@@ -34,7 +34,8 @@ def test_get_device():
     assert b.device == "Ascend:6"
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_get_device_cpu():
     """
     Feature: get tensor device

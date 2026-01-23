@@ -575,7 +575,8 @@ class Net12(nn.Cell):
         return out
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_parse_hook_register_middle_fallback():
     """
     Feature: Tensor.register_hook(hook_fn) inside graph.

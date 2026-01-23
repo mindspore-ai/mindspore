@@ -88,7 +88,8 @@ class ContextModel(nn.Cell):
         return inputs.reshape(inputs.shape[0], -1, self.hidden_dim)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=490.00)
 def test_host_memory_with_cyclic_multiple_model():
     """
     Feature: host memory

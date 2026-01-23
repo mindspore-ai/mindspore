@@ -31,7 +31,8 @@ def setup_teardown():
     os.environ["MS_DEV_HYPER_OFFLOAD"] = "0"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("input_x", [Tensor([1, 2, 3, 4]), Parameter(Tensor([1, 2, 3, 4]), name='param')])
 def test_tensor_get_data(input_x):
     """
@@ -51,7 +52,8 @@ def test_tensor_get_data(input_x):
     assert np.all(ret1.asnumpy() == np.array((1, 2, 3, 4)))
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("input_x", [Tensor([1, 2, 3, 4]), Parameter(Tensor([1, 2, 3, 4]), name='param')])
 def test_tensor_get_data_inplace(input_x):
     """
@@ -74,7 +76,8 @@ def test_tensor_get_data_inplace(input_x):
     assert np.all(input_x.asnumpy() == ret1.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 @pytest.mark.parametrize("input_x", [Tensor([1, 2, 3, 4]), Parameter(Tensor([1, 2, 3, 4]), name='param')])
 def test_tensor_set_data(input_x):
     """
@@ -96,7 +99,7 @@ def test_tensor_set_data(input_x):
     assert np.all(input_x.asnumpy() == ret1.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=2.0)
 @pytest.mark.parametrize("input_x", [Tensor([1, 2, 3, 4]), Parameter(Tensor([1, 2, 3, 4]), name='param')])
 def test_tensor_set_data_inplace(input_x):
     """
@@ -121,7 +124,7 @@ def test_tensor_set_data_inplace(input_x):
     assert np.all(input_x.asnumpy() == ret1.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 @pytest.mark.skip(reason="Error messages are inconsistent when the value of non_blocking is different.")
 @pytest.mark.parametrize("input_x", [Tensor([1, 2, 3, 4]), Parameter(Tensor([1, 2, 3, 4]), name='param')])
 @pytest.mark.parametrize("non_blocking", [True, False])
@@ -148,7 +151,8 @@ def test_tensor_data_del(input_x, non_blocking):
     assert "Async device to device failed" in str(err.value)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("input_x", [Tensor([1, 2, 3, 4]), Parameter(Tensor([1, 2, 3, 4]), name='param')])
 @pytest.mark.parametrize("device_type", ["Ascend", "CPU"])
@@ -177,7 +181,7 @@ def test_tensor_explicit_inplace_to(mode, input_x, device_type, non_blocking):
     assert np.allclose(input_x.asnumpy(), ret1.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("mode", [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 @pytest.mark.parametrize("input_x", [Tensor([1, 2, 3, 4]), Parameter(Tensor([1, 2, 3, 4]), name='param')])
 @pytest.mark.parametrize("device_type", ["Ascend", "CPU"])

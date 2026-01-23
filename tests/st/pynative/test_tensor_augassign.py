@@ -30,7 +30,7 @@ def setup_module():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_tesnsor_augassign_by_slice():
     input_np_3d = np.arange(120).reshape(4, 5, 6).astype(np.float32)
     input_tensor_3d = Tensor(input_np_3d, mstype.float32)

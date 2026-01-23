@@ -255,7 +255,7 @@ def test__update_data_raise_on_non_tensor():
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_pynative_fallback():
     """
     Feature: Pynative fallback

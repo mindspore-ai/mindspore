@@ -67,7 +67,7 @@ def generator():
         yield (np.ones([2, 2]).astype(np.float32), np.ones([2]).astype(np.int32))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential', mem_peak=1024.25)
 def test_ascend_profiler():
     """
     Feature: Ascend Profiler

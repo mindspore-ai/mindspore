@@ -21,7 +21,8 @@ context.set_context(jit_level='O0')
 
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_avg_pool_grad():
     """
     Description: Auto-diff AvgPool in ge backend
@@ -30,7 +31,8 @@ def test_avg_pool_grad():
     utils.run_testcase('pass_avg_pool_grad')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_dropout():
     """
     Description: run dropout and dropoutgrad in ge backend
@@ -39,7 +41,8 @@ def test_dropout():
     utils.run_testcase('pass_dropout')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_reduce_axis_update():
     """
     Description: test axis of reduce operator is empty
@@ -48,7 +51,8 @@ def test_reduce_axis_update():
     utils.run_testcase('pass_reduce_axis_update')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_convert_attr_to_input():
     """
     Description: test convert attr to input
@@ -57,7 +61,8 @@ def test_convert_attr_to_input():
     utils.run_testcase('pass_convert_attr_to_input')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_convert_resize_nearest_neighbor_x_dtype():
     """
     Description: test convert ReszieNearestNeighborX dtype
@@ -65,7 +70,8 @@ def test_convert_resize_nearest_neighbor_x_dtype():
     """
     utils.run_testcase('pass_convert_resize_nearest_neighbor_x_dtype')
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_adaptive_max_pool2d_x_dtype():
     """
     Description: test AdaptiveMaxPool2DGeCheck dtype

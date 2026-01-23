@@ -21,7 +21,8 @@ from mindspore import jit, ops
 from mindspore import Tensor
 from tests.mark_utils import arg_mark
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_ops_get_data():
     """
     Feature: Hyper offload base operator
@@ -61,7 +62,8 @@ def test_ops_get_data():
     os.environ["MS_DEV_HYPER_OFFLOAD"] = "0"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 def test_remote_ops_copy_to_host():
     """
     Feature: Hyper offload base operator
@@ -82,7 +84,8 @@ def test_remote_ops_copy_to_host():
     os.environ["MS_DEV_HYPER_OFFLOAD"] = "0"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_copy_to_host():
     """
     Feature: Hyper offload base operator
@@ -106,7 +109,8 @@ def test_copy_to_host():
     os.environ["MS_DEV_HYPER_OFFLOAD"] = "0"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_memory_ops_set_data():
     """
     Feature: Hyper offload base operator
@@ -165,7 +169,8 @@ def test_memory_ops_set_data():
     os.environ["MS_DEV_HYPER_OFFLOAD"] = "0"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_remote_ops_copy_to():
     """
     Feature: Hyper offload base operator
@@ -188,7 +193,8 @@ def test_remote_ops_copy_to():
     os.environ["MS_DEV_HYPER_OFFLOAD"] = "0"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_ops_to_host_free_set_data():
     """
     Feature: Hyper offload base operator
@@ -211,7 +217,8 @@ def test_ops_to_host_free_set_data():
     os.environ["MS_DEV_HYPER_OFFLOAD"] = "0"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2.0)
 def test_remote_ops_copy_to_and_free():
     """
     Feature: Hyper offload base operator

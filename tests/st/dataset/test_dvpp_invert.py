@@ -30,7 +30,8 @@ PWD = os.path.dirname(__file__)
 TEST_DATA_DATASET_FUNC = PWD + "/data"
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=114.0)
 def test_dvpp_invert_operation_01():
     """
     Feature: Invert operation on device
@@ -109,7 +110,8 @@ def test_dvpp_invert_operation_01():
     assert (invert_op == invert_op_dvpp).all()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=98.0)
 def test_dvpp_invert_exception_01():
     """
     Feature: Invert operation on device

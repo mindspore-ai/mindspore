@@ -59,7 +59,7 @@ class CheckProfilerFiles:
             assert not os.path.exists(dataset_csv)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_ascend_profiler():
     """
     Feature: Ascend Profiler

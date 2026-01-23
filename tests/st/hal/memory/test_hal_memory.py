@@ -35,7 +35,7 @@ class Net(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1.00)
 def test_runtime_memory_stats():
     """
     Feature: runtime memory api.
@@ -55,7 +55,7 @@ def test_runtime_memory_stats():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_runtime_memory_reserved():
     """
     Feature: runtime memory api.
@@ -74,7 +74,7 @@ def test_runtime_memory_reserved():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_runtime_memory_allocated():
     """
     Feature: runtime memory api.
@@ -93,7 +93,7 @@ def test_runtime_memory_allocated():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_runtime_max_memory_reserved():
     """
     Feature: runtime memory api.
@@ -112,7 +112,7 @@ def test_runtime_max_memory_reserved():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_runtime_max_memory_allocated():
     """
     Feature: runtime memory api.
@@ -131,7 +131,7 @@ def test_runtime_max_memory_allocated():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_runtime_memory_summary():
     """
     Feature: runtime memory api.
@@ -150,7 +150,7 @@ def test_runtime_memory_summary():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 def test_runtime_reset_peak_memory_stats():
     """
     Feature: runtime memory api.
@@ -173,7 +173,7 @@ def test_runtime_reset_peak_memory_stats():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_runtime_reset_max_memory_reserved():
     """
     Feature: runtime memory api.
@@ -194,7 +194,7 @@ def test_runtime_reset_max_memory_reserved():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_runtime_reset_max_memory_allocated():
     """
     Feature: runtime memory api.

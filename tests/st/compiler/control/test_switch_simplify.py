@@ -96,7 +96,8 @@ def test_switch_simplify_avoid_dead_node():
     assert np.allclose(sgrad.asnumpy(), np.array([0.], np.float32))
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 def test_tensor_condition():
     """
     Feature: control flow function.
@@ -187,7 +188,8 @@ class PixelshuffleMock():
         return grads
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_dynamic_shape_mint_n_pixelshuffle_dyn_rank_1():
     """
     Feature: Switch simplify pass.

@@ -150,8 +150,8 @@ def test_scalar_div():
     fact.grad_impl()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scalar_mod():
     """
     Feature: test ScalarMod.
@@ -175,7 +175,7 @@ def test_scalar_mod():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scalar_floordiv():
     """
     Feature: test ScalarFloorDiv.
@@ -199,7 +199,7 @@ def test_scalar_floordiv():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scalar_eq():
     """
     Feature: test scalar_eq.
@@ -222,8 +222,8 @@ def test_scalar_eq():
     fact.grad_impl()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scalar_ge():
     """
     Feature: test scalar_ge.
@@ -246,8 +246,8 @@ def test_scalar_ge():
     fact.grad_impl()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scalar_gt():
     """
     Feature: test scalar_gt.
@@ -270,8 +270,8 @@ def test_scalar_gt():
     fact.grad_impl()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scalar_le():
     """
     Feature: test scalar_le.
@@ -294,8 +294,8 @@ def test_scalar_le():
     fact.grad_impl()
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+        level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scalar_lt():
     """
     Feature: test scalar_lt.
@@ -319,7 +319,7 @@ def test_scalar_lt():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_bool_not():
     """
     Feature: test bool_not.
@@ -389,7 +389,7 @@ def test_scalar_usub():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scalar_log():
     """
     Feature: test uadd.

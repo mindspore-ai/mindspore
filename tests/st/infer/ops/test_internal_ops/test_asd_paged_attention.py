@@ -198,7 +198,8 @@ class AsdPagedAttentionTest(PagedAttentionTest):
             self.compare()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=386.00)
 @pytest.mark.parametrize("ms_dtype", [ms.float16, ms.bfloat16])
 @pytest.mark.parametrize('is_dyn', [False, True])
 def test_internel_asd_paged_attention(enable_asd_env_fixture, ms_dtype, is_dyn):
@@ -274,7 +275,8 @@ def test_internel_asd_paged_attention(enable_asd_env_fixture, ms_dtype, is_dyn):
         assert err_ratio < 0.05
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=332.00)
 def test_asd_paged_attention_batch_16_seq_1024_emb_128(enable_asd_env_fixture):
     """
     Feature: test asd paged attention operator
@@ -304,7 +306,8 @@ def test_asd_paged_attention_batch_16_seq_1024_emb_128(enable_asd_env_fixture):
     AsdPagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=304.00)
 def test_asd_paged_attention_batch_100_seq_128_emb_128(enable_asd_env_fixture):
     """
     Feature: test asd paged attention operator
@@ -334,7 +337,8 @@ def test_asd_paged_attention_batch_100_seq_128_emb_128(enable_asd_env_fixture):
     AsdPagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=194.00)
 @pytest.mark.parametrize('is_amask', [True])
 def test_asd_paged_attention_bsh_lookahead(enable_asd_env_fixture, is_amask):
     """
@@ -373,7 +377,8 @@ def test_asd_paged_attention_bsh_lookahead(enable_asd_env_fixture, is_amask):
     AsdPagedAttentionTest(i_test_dict)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=170.00)
 def test_asd_paged_attention_th_lookahead(enable_asd_env_fixture):
     """
     Feature: test asd paged attention operator with TH layout lookahead
@@ -402,7 +407,8 @@ def test_asd_paged_attention_th_lookahead(enable_asd_env_fixture):
     AsdPagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=196.00)
 def test_asd_paged_attention_fake_lookahead(enable_asd_env_fixture):
     """
     Feature: test asd paged attention operator with fake lookahead
@@ -442,7 +448,8 @@ def test_asd_paged_attention_fake_lookahead(enable_asd_env_fixture):
     AsdPagedAttentionTest(i_test_dict)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=226.00)
 def test_paged_attention_asd_quant(enable_asd_env_fixture):
     """
     Feature: test asd paged attention operator with quantization
@@ -472,7 +479,8 @@ def test_paged_attention_asd_quant(enable_asd_env_fixture):
     PagedAttentionTest(i_test)  # ??? why not AsdPagedAttentionTest
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=278.00)
 def test_paged_attention_asd_mla_combine_cache_norm(enable_asd_env_fixture):
     """
     Feature: test asd paged attention operator with MLA combined cache normalization
@@ -504,7 +512,8 @@ def test_paged_attention_asd_mla_combine_cache_norm(enable_asd_env_fixture):
     AsdPagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=278.00)
 def test_paged_attention_asd_mla_combine_cache_norm2(enable_asd_env_fixture):
     """
     Feature: test asd paged attention operator with MLA combined cache normalization
@@ -536,7 +545,8 @@ def test_paged_attention_asd_mla_combine_cache_norm2(enable_asd_env_fixture):
     AsdPagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=272.00)
 @pytest.mark.parametrize('sq', [1, 2])
 def test_paged_attention_asd_mla_fp16(enable_asd_env_fixture, sq):
     """
@@ -570,7 +580,8 @@ def test_paged_attention_asd_mla_fp16(enable_asd_env_fixture, sq):
     AsdPagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=272.01)
 @pytest.mark.parametrize('sq', [1, 2])
 def test_paged_attention_asd_mla_fp32(enable_asd_env_fixture, sq):
     """
@@ -604,7 +615,8 @@ def test_paged_attention_asd_mla_fp32(enable_asd_env_fixture, sq):
     AsdPagedAttentionTest(i_test)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='unessential', mem_peak=278.00)
 def test_paged_attention_asd_mla_combine_cache_norm_dyn(enable_asd_env_fixture):
     """
     Feature: test asd paged attention operator with MLA combined cache normalization in dynamic shape

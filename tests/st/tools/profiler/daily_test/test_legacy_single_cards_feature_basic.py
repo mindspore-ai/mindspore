@@ -75,7 +75,8 @@ def generator_profiler_data(tmpdir, cfg):
     profiler.analyse()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_func_profiler_single_card_resnet_sink_false_framework_all_14():
     """
     Feature: Legacy Profiler Single Card
@@ -96,7 +97,8 @@ def test_func_profiler_single_card_resnet_sink_false_framework_all_14():
         profiler_check()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_func_profiler_pynative_host_timeline_set_host_stack_true():
     """
     Feature: Profiler PyNative Host Timeline
@@ -118,7 +120,8 @@ def test_func_profiler_pynative_host_timeline_set_host_stack_true():
         profiler_check()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_func_profiler_single_card_resnet_sink_false_framework_memory_16():
     """
     Feature: Profiler Single Card Memory

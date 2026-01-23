@@ -16,7 +16,8 @@ import tests.st.backend.ge_backend.ge_test_utils as utils
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_return_constant_list():
     """
     Feature: Return list in graph
@@ -26,7 +27,8 @@ def test_return_constant_list():
     utils.run_testcase('ge_fallback_list', 'test_return_constant_list')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_return_constant_list_2():
     """
     Feature: Return list in graph
@@ -37,7 +39,8 @@ def test_return_constant_list_2():
 
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_return_constant_list_3():
     """
     Feature: Return list in graph
@@ -47,7 +50,8 @@ def test_return_constant_list_3():
     utils.run_testcase('ge_fallback_list', 'test_return_constant_list_3')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_return_make_list_node():
     """
     Feature: Return list in graph
@@ -57,7 +61,8 @@ def test_return_make_list_node():
     utils.run_testcase('ge_fallback_list', 'test_return_make_list_node')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_return_list_with_nest():
     """
     Feature: Return list in graph
@@ -67,7 +72,8 @@ def test_return_list_with_nest():
     utils.run_testcase('ge_fallback_list', 'test_return_list_with_nest')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_return_make_list_with_nest():
     """
     Feature: Return list in graph
@@ -77,7 +83,8 @@ def test_return_make_list_with_nest():
     utils.run_testcase('ge_fallback_list', 'test_return_make_list_with_nest')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_return_buildin_list_func():
     """
     Feature: Return list in graph
@@ -87,7 +94,8 @@ def test_return_buildin_list_func():
     utils.run_testcase('ge_fallback_list', 'test_return_buildin_list_func')
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_return_list_from_third_party():
     """
     Feature: Return list in graph

@@ -58,7 +58,7 @@ def aoe_online():
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=1024.01
 )
 def test_aoe():
     """

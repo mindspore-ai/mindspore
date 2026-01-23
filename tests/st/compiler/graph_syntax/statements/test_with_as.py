@@ -306,7 +306,7 @@ def test_with_continue():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_with_twice():
     """
     Feature: Support with as statement.

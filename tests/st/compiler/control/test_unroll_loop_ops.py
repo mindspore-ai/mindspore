@@ -26,7 +26,7 @@ context.set_context(jit_config={"jit_level": "O0"})
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 def test_while_loop():
     """
     Feature: control flow
@@ -57,7 +57,7 @@ def test_while_loop():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_while_loop2():
     """
     Feature: control flow
@@ -186,7 +186,7 @@ def test_while_loop_with_nested_for():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 def test_scan_unroll():
     """
     Feature: control flow
@@ -216,7 +216,7 @@ def test_scan_unroll():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_scan_not_unroll():
     """
     Feature: control flow
@@ -246,7 +246,7 @@ def test_scan_not_unroll():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_scan_simple_loop():
     """
     Feature: control flow
@@ -321,7 +321,7 @@ def test_scan_with_nested_foriloop():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 def test_foriloop_unroll():
     """
     Feature: control flow
@@ -345,7 +345,7 @@ def test_foriloop_unroll():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.00)
 def test_foriloop_with_nested_foriloop():
     """
     Feature: control flow
@@ -433,7 +433,7 @@ def test_high_order_with_unroll_as_false():
 
 @pytest.mark.skip(reason="Cannot process ops.xx both in loop_func and whileloop declaration in construct")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_while_loop_unsupport1():
     """
     Feature: control flow
@@ -469,7 +469,7 @@ def test_while_loop_unsupport1():
 
 @pytest.mark.skip(reason="Unsupported loop func with side effect")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_scan_unsupport1():
     """
     Feature: control flow

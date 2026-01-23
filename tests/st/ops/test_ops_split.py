@@ -43,7 +43,8 @@ def split_dyn_shape_func(x, axis=0, output_num=2):
     return ops.Split(axis, output_num)(x)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_SDV1(context_mode):
     """
@@ -65,7 +66,7 @@ def test_split_ext_int_SDV1(context_mode):
     assert np.allclose(first_output.shape, expect_shape)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_SD5B(context_mode):
     """
@@ -87,7 +88,8 @@ def test_split_ext_int_SD5B(context_mode):
     assert np.allclose(first_output.shape, expect_shape)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_SDV2(context_mode):
     """
@@ -109,7 +111,8 @@ def test_split_ext_int_SDV2(context_mode):
     assert np.allclose(first_output.shape, expect_shape)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_forward(context_mode):
     """
@@ -132,7 +135,8 @@ def test_split_ext_int_forward(context_mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_split_ext_int_backward(context_mode):
     """
@@ -152,7 +156,8 @@ def test_split_ext_int_backward(context_mode):
     assert grads.asnumpy().shape == expect_shape
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_f_split_ext_list_forward(context_mode):
     """
@@ -176,7 +181,8 @@ def test_f_split_ext_list_forward(context_mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_f_split_ext_list_backward(context_mode):
     """
@@ -215,7 +221,8 @@ def test_f_split_ext_dynamic():
             disable_mode=["GRAPH_MODE_GE"])
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize('mode', [ms.context.PYNATIVE_MODE, ms.context.GRAPH_MODE])
 def test_split_dynamic(mode):
     """

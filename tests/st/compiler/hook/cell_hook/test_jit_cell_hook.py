@@ -104,7 +104,8 @@ def compare_with_torch(ms_net, torch_net):
                        input_ms_grad[1].asnumpy(), 0.00001, 0.00001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_jit_cell_hook(mode):
     """

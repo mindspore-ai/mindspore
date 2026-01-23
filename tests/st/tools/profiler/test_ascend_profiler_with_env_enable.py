@@ -75,7 +75,7 @@ class TestEnvEnableProfiler:
         """Run after each test case end."""
         cleanup()
 
-    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1.00)
     def test_ascend_profiler(self):
         """
         Feature: Ascend Profiler
@@ -91,7 +91,7 @@ class TestEnvEnableProfiler:
         CheckProfilerFiles(self.device_id, self.rank_id, ascend_profiler_output_path, "Ascend", "all")
         assert status == 0
 
-    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+    @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1.00)
     def test_host_profiler_time(self):
         """
         Feature: Ascend Profiler

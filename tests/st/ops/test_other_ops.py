@@ -33,7 +33,7 @@ ops_params_dict = {
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=36.00)
 @pytest.mark.parametrize("mode", ops_params_dict['test_other_op_reference_forward'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_other_op_reference_forward'][1])
 def test_other_op_reference_forward(mode, op_info):
@@ -52,7 +52,7 @@ def test_other_op_reference_forward(mode, op_info):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ops_params_dict['test_other_op_reference_backward'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_other_op_reference_backward'][1])
 def test_other_op_reference_backward(mode, op_info):
@@ -71,7 +71,7 @@ def test_other_op_reference_backward(mode, op_info):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ops_params_dict['test_other_op_reference_forward_kbk'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_other_op_reference_forward_kbk'][1])
 def test_other_op_reference_forward_kbk(mode, op_info):
@@ -90,7 +90,7 @@ def test_other_op_reference_forward_kbk(mode, op_info):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=36.00)
 @pytest.mark.parametrize("mode", ops_params_dict['test_other_op_reference_backward_kbk'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_other_op_reference_backward_kbk'][1])
 def test_other_op_reference_backward_kbk(mode, op_info):
@@ -109,7 +109,7 @@ def test_other_op_reference_backward_kbk(mode, op_info):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 @pytest.mark.parametrize("mode", ops_params_dict['test_other_op_dynamic_forward'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_other_op_dynamic_forward'][1])
 def test_other_op_dynamic_forward(mode, op_info):
@@ -129,7 +129,7 @@ def test_other_op_dynamic_forward(mode, op_info):
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", ops_params_dict['test_other_op_dynamic_backward'][0])
 @pytest.mark.parametrize("op_info", ops_params_dict['test_other_op_dynamic_backward'][1])
 def test_other_op_dynamic_backward(mode, op_info):

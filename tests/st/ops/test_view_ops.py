@@ -26,7 +26,7 @@ from tests.st.ops.share._op_info.op_database import get_op_info
                       'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", ['pynative'])
 @pytest.mark.parametrize("op_info", ['Tensor.view(dtype)'])
 def test_view_dtype_reference_forward(mode, op_info):
@@ -47,7 +47,7 @@ def test_view_dtype_reference_forward(mode, op_info):
                       'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", ['pynative'])
 @pytest.mark.parametrize("op_info", ['Tensor.view(dtype)'])
 def test_view_dtype_reference_backward(mode, op_info):
@@ -68,7 +68,7 @@ def test_view_dtype_reference_backward(mode, op_info):
                       'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level1',
           card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize("mode", ['pynative'])
 @pytest.mark.parametrize("op_info", ['Tensor.view(dtype)'])
 def test_view_dtype_error(mode, op_info):

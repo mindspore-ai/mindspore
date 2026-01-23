@@ -20,7 +20,7 @@ from tests.mark_utils import arg_mark
     plat_marks=["platform_ascend"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="essential",
+    essential_mark="essential", mem_peak=0.01
 )
 def test_sparse_tensor():
     """

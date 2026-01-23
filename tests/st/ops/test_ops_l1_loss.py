@@ -56,7 +56,8 @@ def l1_loss_backward_func(inputx, target, reduction="mean"):
     return grad_op(inputx, target, reduction)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.0)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_l1_loss_forward(mode, reduction):
@@ -84,7 +85,8 @@ def test_ops_l1_loss_forward(mode, reduction):
     np.testing.assert_allclose(output_backward_value[0].asnumpy(), expect_backward_value, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=2048.0)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_nn_L1Loss(mode, reduction):
@@ -111,7 +113,8 @@ def test_ops_nn_L1Loss(mode, reduction):
     np.testing.assert_allclose(output_backward_value[0].asnumpy(), expect_backward_value, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=2048.00)
 @pytest.mark.parametrize("reduction", ["mean", "sum", "none"])
 def test_ops_l1_loss_dynamic_shape(reduction):
     """
@@ -132,7 +135,8 @@ def test_ops_l1_loss_dynamic_shape(reduction):
                          'all_dim_zero': True})
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_ops_l1_loss_promote_dtype(mode):
     """

@@ -44,7 +44,7 @@ class NetTupleLe(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_seq_dyn_le():
     """
     Feature: test sequence getitem op
@@ -60,7 +60,7 @@ def test_seq_dyn_le():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_seq_dyn_lt():
     """
     Feature: test sequence getitem op
@@ -108,7 +108,7 @@ def test_seq_lt():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_seq_getitem_grad():
     """
     Feature: test sequence getitem grad op

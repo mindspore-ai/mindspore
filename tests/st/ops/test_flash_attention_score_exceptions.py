@@ -63,7 +63,7 @@ def _fas_call(query, key, value, head_num, real_shift=None, drop_mask=None,
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=0.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_keep_prob_zero_with_drop_mask_raises(mode):
@@ -87,6 +87,7 @@ def test_keep_prob_zero_with_drop_mask_raises(mode):
     level_mark='level1',
     card_mark='onecard',
     essential_mark='unessential',
+    mem_peak=2.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_tnd_missing_actual_seq_raises(mode):
@@ -114,6 +115,7 @@ def test_tnd_missing_actual_seq_raises(mode):
     level_mark='level1',
     card_mark='onecard',
     essential_mark='unessential',
+    mem_peak=2.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_tnd_actual_seq_qlen_none_raises(mode):
@@ -142,7 +144,7 @@ def test_tnd_actual_seq_qlen_none_raises(mode):
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=4.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_tnd_actual_seq_kvlen_none_raises(mode):
@@ -171,7 +173,7 @@ def test_tnd_actual_seq_kvlen_none_raises(mode):
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=4.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_tnd_actual_seq_last_not_equal_t_raises(mode):
@@ -201,7 +203,7 @@ def test_tnd_actual_seq_last_not_equal_t_raises(mode):
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=0.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_keep_prob_out_of_range_raises(mode):
@@ -223,7 +225,7 @@ def test_keep_prob_out_of_range_raises(mode):
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=0.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_bsh_hidden_not_divisible_by_headnum_raises(mode):
@@ -251,6 +253,7 @@ def test_bsh_hidden_not_divisible_by_headnum_raises(mode):
     level_mark='level1',
     card_mark='onecard',
     essential_mark='unessential',
+    mem_peak=0.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_bnsd_query_headnum_mismatch_raises(mode):
@@ -278,6 +281,7 @@ def test_bnsd_query_headnum_mismatch_raises(mode):
     level_mark='level1',
     card_mark='onecard',
     essential_mark='unessential',
+    mem_peak=0.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_sbh_wrong_rank_raises(mode):
@@ -312,7 +316,7 @@ def _gen_bsh_mismatch_heads(b=2, s=16, n_q=4, n_kv=3, d=16):
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=1.00
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_n2_not_factor_of_n1_raises(mode):
@@ -347,7 +351,7 @@ def _gen_tnd_inputs(b=2, n_q=2, n_kv=2, s1=8, s2=8, d=16):
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=4.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_tnd_attn_mask_wrong_shape_raises(mode):
@@ -370,7 +374,7 @@ def test_tnd_attn_mask_wrong_shape_raises(mode):
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=2.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_tnd_actual_seq_len_mismatch_raises(mode):
@@ -393,7 +397,7 @@ def test_tnd_actual_seq_len_mismatch_raises(mode):
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=4.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_tnd_actual_seq_not_monotonic_raises(mode):
@@ -416,7 +420,7 @@ def test_tnd_actual_seq_not_monotonic_raises(mode):
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=4.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_tnd_real_shift_requires_same_seq_lists_raises(mode):
@@ -443,7 +447,7 @@ def test_tnd_real_shift_requires_same_seq_lists_raises(mode):
     plat_marks=['platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential',
+    essential_mark='unessential', mem_peak=2.01
 )
 @pytest.mark.parametrize('mode', ['KBK', 'pynative'])
 def test_attn_mask_wrong_dtype_raises(mode):

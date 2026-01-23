@@ -82,7 +82,8 @@ def run_dump_int16(dump_scene):
             assert np.isclose(float(stat['Min Value']), np_min, rtol=1e-3, atol=1e-5)
             assert np.isclose(float(stat['Max Value']), np_max, rtol=1e-3, atol=1e-5)
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 @security_off_wrap
 def test_e2e_kbyk_dump_int16():
     """
@@ -92,7 +93,7 @@ def test_e2e_kbyk_dump_int16():
     """
     run_dump_int16("sync_dump")
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 @security_off_wrap
 def test_async_kbyk_dump_int16():
     """

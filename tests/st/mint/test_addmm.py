@@ -68,7 +68,8 @@ def addmm_backward_func_tensor(input1, batch1, batch2, beta=1, alpha=1):
     return output_grad, b1_grad, b2_grad
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_addmm_tensor(mode):
     """
@@ -126,7 +127,8 @@ def test_addmm_tensor(mode):
     np.testing.assert_allclose(b2_grad2.asnumpy(), expect_b2_grad2, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_addmm_normal(mode):
     """
@@ -184,7 +186,8 @@ def test_addmm_normal(mode):
     np.testing.assert_allclose(b2_grad2.asnumpy(), expect_b2_grad2, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_addmm_column_major_views(mode):
     """
@@ -236,7 +239,8 @@ def test_addmm_column_major_views(mode):
     np.testing.assert_allclose(m2_grad.asnumpy(), expect_mat2_grad, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_addmm_input_with_first_dim_1(mode):
     """
@@ -272,7 +276,8 @@ def test_addmm_input_with_first_dim_1(mode):
     np.testing.assert_allclose(mat2_grad.asnumpy(), expect_mat2_grad, 1e-4, 1e-4)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_addmm_dynamic_shape():
     """
     Feature: Test dynamic shape.
