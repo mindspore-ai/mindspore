@@ -99,6 +99,10 @@ bool IsValidOffloadNode(const UserInfo &user_info) {
   if (std::any_of(user_info.users.begin(), user_info.users.end(), [](const auto &e) { return IsD2HNode(e.first); })) {
     return false;
   }
+  auto node_enable_offload = GetNodeEnableOffload(node);
+  if (node_enable_offload.has_value() && !node_enable_offload.value()) {
+    return false;
+  }
   return true;
 }
 
@@ -166,6 +170,9 @@ CNodePtr BuildToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &data_node,
   (void)inputs.emplace_back(sync_node);
   auto ret_node = graph->NewCNode(inputs);
   ret_node->set_abstract(data_node->abstract());
+  if (data_node->isa<CNode>()) {
+    common::AnfAlgo::CopyNodeAttrs(data_node, ret_node);
+  }
   if (callback != nullptr) {
     callback(ret_node, data_node);
   }
@@ -183,6 +190,9 @@ CNodePtr BuildInplaceToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &dat
   (void)inputs.emplace_back(sync_node);
   auto ret_node = graph->NewCNode(inputs);
   ret_node->set_abstract(data_node->abstract());
+  if (depend_node->isa<CNode>()) {
+    common::AnfAlgo::CopyNodeAttrs(depend_node, ret_node);
+  }
   if (callback != nullptr) {
     callback(ret_node, depend_node);
   }
@@ -198,6 +208,9 @@ CNodePtr BuildToDeviceNode(const FuncGraphPtr &graph, const AnfNodePtr &data_nod
   depend_node->set_abstract(std::make_shared<abstract::AbstractScalar>(false));
   auto ret_node = graph->NewCNode({NewValueNode(prim), data_node, depend_node, depend_node});
   ret_node->set_abstract(data_node->abstract());
+  if (data_node->isa<CNode>()) {
+    common::AnfAlgo::CopyNodeAttrs(data_node, ret_node);
+  }
   if (callback != nullptr) {
     callback(ret_node, data_node);
   }
@@ -343,6 +356,39 @@ std::optional<EventNodeType> GetEventNodeType(const AnfNodePtr &node) {
     return *user_data;
   }
   return std::nullopt;
+}
+
+namespace {
+template <typename T>
+std::optional<T> GetNodeAttrValue(const AnfNodePtr &node, const char *attr_name) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return std::nullopt;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  auto attr = cnode->GetAttr(attr_name);
+  if (attr == nullptr) {
+    return std::nullopt;
+  }
+  return GetValue<T>(attr);
+}
+}  // namespace
+
+std::optional<size_t> GetNodePrefetchDistance(const AnfNodePtr &node) {
+  constexpr const char *kPrefetchDistanceAttr = "prefetch_distance";
+  auto value = GetNodeAttrValue<size_t>(node, kPrefetchDistanceAttr);
+  return value;
+}
+
+std::optional<size_t> GetNodeReleaseDistance(const AnfNodePtr &node) {
+  constexpr const char *kReleaseDistanceAttr = "release_distance";
+  auto value = GetNodeAttrValue<size_t>(node, kReleaseDistanceAttr);
+  return value;
+}
+
+std::optional<bool> GetNodeEnableOffload(const AnfNodePtr &node) {
+  constexpr const char *kEnableOffloadAttr = "enable_offload";
+  return GetNodeAttrValue<bool>(node, kEnableOffloadAttr);
 }
 }  // namespace hyper_offload
 }  // namespace utils

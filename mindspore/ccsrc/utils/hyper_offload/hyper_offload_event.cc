@@ -55,7 +55,8 @@ void HyperOffloadEventInjector::AddEventNodesForSingleD2HNode(const CNodePtr &d2
   operations_->AddOperationAfter(node_index, send_completion);
 
   // Handle Recv_Completion insertion
-  const size_t release_distance = HyperOffloadConfig::GetInstance().release_distance();
+  const size_t release_distance =
+    GetNodeReleaseDistance(data_node).value_or(HyperOffloadConfig::GetInstance().release_distance());
   size_t target_index = node_index + release_distance;
   if (target_index >= exec_order_.size()) {
     target_index = exec_order_.size() - 1;

@@ -156,6 +156,12 @@ COMMON_EXPORT std::optional<size_t> GetFreeOrAssignNodeType(const AnfNodePtr &no
 COMMON_EXPORT std::optional<size_t> GetSendOrRecvStreamId(const AnfNodePtr &node);
 // Get the EventNodeType from a node.
 COMMON_EXPORT std::optional<EventNodeType> GetEventNodeType(const AnfNodePtr &node);
+// Get prefetch_distance from node attribute, return nullopt if not found.
+COMMON_EXPORT std::optional<size_t> GetNodePrefetchDistance(const AnfNodePtr &node);
+// Get release_distance from node attribute, return nullopt if not found.
+COMMON_EXPORT std::optional<size_t> GetNodeReleaseDistance(const AnfNodePtr &node);
+// Get enable_offload from node attribute, return nullopt if not found.
+COMMON_EXPORT std::optional<bool> GetNodeEnableOffload(const AnfNodePtr &node);
 }  // namespace hyper_offload
 }  // namespace utils
 }  // namespace mindspore
