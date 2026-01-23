@@ -108,7 +108,7 @@ py::object GeneratorImpl::step(const py::handle &step_py) {
   auto step_tensor = tensor::ConvertToTensor(step_py);
   TensorCheck(step_tensor, ParamTypeId, 1, "Step");
   auto step_val = *static_cast<param_type *>(step_tensor->cpu()->data_c());
-  auto old_offset = std::make_shared<tensor::Tensor>(ParamTypeId, ShapeVector({1}))->cpu();
+  auto old_offset = std::make_shared<tensor::Tensor>(ParamTypeId, ShapeVector({}))->cpu();
   auto old_offset_data = static_cast<param_type *>(old_offset->data_c());
   *old_offset_data = *offset_data_;
   *offset_data_ = *offset_data_ + step_val;
