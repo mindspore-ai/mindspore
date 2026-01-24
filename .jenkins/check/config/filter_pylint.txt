@@ -19,6 +19,7 @@
 "mindspore/mindspore/python/mindspore/parallel/_cell_wrapper.py"                                                         "global-variable-not-assigned"
 "mindspore/mindspore/python/mindspore/parallel/_cell_wrapper.py"                                                         "no-else-continue"
 "mindspore/mindspore/python/mindspore/parallel/_cell_wrapper.py"                                                         "super-with-arguments"
+"mindspore/tests/ut/python/parallel/test_dynamic_shape_graph_utils.py"                                                   "super-with-arguments"
 "mindspore/mindspore/python/mindspore/parallel/_utils.py"                                                                "consider-using-enumerate"
 "mindspore/mindspore/python/mindspore/parallel/checkpoint_transform.py"                                                  "possibly-used-before-assignment"
 "mindspore/mindspore/python/mindspore/parallel/checkpoint_transform.py"                                                  "f-string-without-interpolation"

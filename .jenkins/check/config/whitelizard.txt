@@ -105,6 +105,7 @@ mindspore/mindspore/python/mindspore/ops/function/math_func.py:norm
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:matrix_norm
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:einsum
 mindspore/mindspore/python/mindspore/ops/function/math_func.py:diag_embed
+mindspore/mindspore/python/mindspore/ops/function/math_func.py:stft
 mindspore/mindspore/python/mindspore/ops/function/random_func.py:multinomial
 mindspore/mindspore/python/mindspore/ops/function/random_func.py:multinomial_ext
 mindspore/mindspore/python/mindspore/ops/function/random_func.py:normal_ext

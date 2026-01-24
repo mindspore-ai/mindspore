@@ -63,7 +63,7 @@ def test_hardtanh_std(mode):
     x_np = generate_random_input((2, 3))
     x = ms.Tensor(x_np, dtype=ms.float32)
     min_val = -1.0
-    max_val = 4.0
+    max_val = 4.0     
     expect = generate_expect_forward_output(x_np, min_val, max_val)
     expect_grad = generate_expect_backward_output(x_np, min_val, max_val)
 

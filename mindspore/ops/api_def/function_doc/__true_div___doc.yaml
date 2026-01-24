@@ -1,0 +1,5 @@
+__truediv__:
+  description: |
+    __truediv__(input, other) -> Tensor
+
+    Alias for :func:`mindspore.mint.div`.

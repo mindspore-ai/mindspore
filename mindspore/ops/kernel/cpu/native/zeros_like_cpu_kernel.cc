@@ -17,6 +17,7 @@
 #include "kernel/cpu/native/zeros_like_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
+#include "base/bfloat16.h"
 
 namespace mindspore {
 namespace kernel {
@@ -69,6 +70,8 @@ std::vector<std::pair<KernelAttr, ZerosLikeCpuKernelMod::ZerosLikeFunc>> ZerosLi
    &ZerosLikeCpuKernelMod::LaunchKernel<float>},
   {KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
    &ZerosLikeCpuKernelMod::LaunchKernel<double>},
+  {KernelAttr().AddInputAttr(kNumberTypeBFloat16).AddOutputAttr(kNumberTypeBFloat16),
+   &ZerosLikeCpuKernelMod::LaunchKernel<bfloat16>},
   {KernelAttr().AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
    &ZerosLikeCpuKernelMod::LaunchKernel<int8_t>},
   {KernelAttr().AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
