@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "ops/utils/general_infer_utils.h"
 #include <vector>
 #include <memory>
-#include "ir/tensor_new.h"
-#include "common/common_test.h"
-#include "abstract/abstract_value.h"
+#include "tests/ut/cpp/ops/test_binary_ops.h"
+#include "ops/utils/general_infer_utils.h"
 #include "ops/test_ops.h"
-#include "ops/test_ops_dyn_cases.h"
-#include "ops/test_ops_cmp_utils.h"
 #include "ops/test_value_utils.h"
-#include "abstract/ops/primitive_infer_map.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "abstract/abstract_value.h"
+#include "ir/tensor_new.h"
 
 namespace mindspore::ops {
 namespace {
@@ -65,6 +62,9 @@ std::vector<GeneralInferParam> prepare_params() {
 
 INSTANTIATE_TEST_CASE_P(Divs, GeneralInferTest, testing::ValuesIn(prepare_params()));
 
+// Use REGISTER_BINARY_OP_INFER_VALUE_TEST from the framework
+REGISTER_BINARY_OP_INFER_VALUE_TEST(TestDivsInferValue, InferValue);
+
 template <typename T>
 tensor::TensorPtr CreateTensorPtr(const TypeId &type, const ShapeVector &shape, std::vector<T> value) {
   void *data_ptr = &value[0];
@@ -72,54 +72,30 @@ tensor::TensorPtr CreateTensorPtr(const TypeId &type, const ShapeVector &shape, 
   return tensor;
 }
 
-struct DivsInferValueParams {
-  tensor::TensorPtr input;
-  ValuePtr other;
-  tensor::TensorPtr out;
-};
-
-class TestDivsInferValue : public TestOps, public testing::WithParamInterface<DivsInferValueParams> {};
-
-TEST_P(TestDivsInferValue, dyn_shape_infer_value) {
-  const auto &param = GetParam();
-  ASSERT_NE(param.input, nullptr);
-  auto input = param.input->ToAbstract();
-  auto other = param.other->ToAbstract();
-
-  auto input_args = abstract::AbstractBasePtrList{input, other};
-  auto value_opt = abstract::InferValueByFuncImpl(prim::kPrimDivs, input_args);
-  if (!value_opt.has_value()) {
-    MS_LOG(ERROR) << "Divs have no infer value implement!";
-    ASSERT_TRUE(false);
-  }
-  auto infer_out = value_opt.value();
-  if (infer_out == nullptr) {
-    MS_LOG(ERROR) << "Divs can not infer value with inputs: " << input_args;
-    ASSERT_TRUE(false);
-  }
-  auto infer_tensor = infer_out->cast<tensor::TensorPtr>();
-  ASSERT_NE(infer_tensor, nullptr);
-  ASSERT_TRUE(infer_tensor->ValueEqual(*param.out));
-}
-
 INSTANTIATE_TEST_CASE_P(
-  TestDivsInferValue, TestDivsInferValue,
+  DivsInferValue, TestDivsInferValue,
   testing::Values(
-    DivsInferValueParams{
-      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{2, 4, 6.8, 8}),
-      CreatePyInt(2),
-      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1, 2, 3.4, 4})
-    },
-    DivsInferValueParams{
-      CreateTensorPtr<double>(kNumberTypeFloat64, ShapeVector{2, 2}, std::vector<double>{2, 4, 6.8, 8}),
-      CreatePyInt(2),
-      CreateTensorPtr<double>(kNumberTypeFloat64, ShapeVector{2, 2}, std::vector<double>{1, 2, 3.4, 4})
-    },
-    DivsInferValueParams{
-      CreateTensorPtr<int32_t>(kNumberTypeInt32, ShapeVector{2, 2}, std::vector<int32_t>{2, 4, 6, 8}),
-      CreatePyInt(2),
-      CreateTensorPtr<double>(kNumberTypeFloat64, ShapeVector{2, 2}, std::vector<double>{1, 2, 3, 4})
-    }
-  )
-);
+    BinaryOpInferValueParams{
+      "Divs",
+      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{2, 4, 6.8, 8})
+        ->ToAbstract()
+        ->BuildValue(),
+      CreatePyInt(2)->ToAbstract()->BuildValue(),
+      CreateTensorPtr<float>(kNumberTypeFloat32, ShapeVector{2, 2}, std::vector<float>{1, 2, 3.4, 4})},
+    BinaryOpInferValueParams{
+      "Divs",
+      CreateTensorPtr<double>(kNumberTypeFloat64, ShapeVector{2, 2}, std::vector<double>{2, 4, 6.8, 8})
+        ->ToAbstract()
+        ->BuildValue(),
+      CreatePyInt(2)->ToAbstract()->BuildValue(),
+      CreateTensorPtr<double>(kNumberTypeFloat64, ShapeVector{2, 2}, std::vector<double>{1, 2, 3.4, 4})},
+    // Int/Int -> Float (True Div)
+    BinaryOpInferValueParams{
+      "Divs",
+      CreateTensorPtr<int32_t>(kNumberTypeInt32, ShapeVector{2, 2}, std::vector<int32_t>{5, 10, 6, 8})
+        ->ToAbstract()
+        ->BuildValue(),
+      CreatePyInt(2)->ToAbstract()->BuildValue(),
+      // Generic ConstInfer returns Float64 for integer division to preserve precision.
+      CreateTensorPtr<double>(kNumberTypeFloat64, ShapeVector{2, 2}, std::vector<double>{2.5, 5.0, 3.0, 4.0})}));
 }  // namespace mindspore::ops

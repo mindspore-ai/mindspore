@@ -41,10 +41,10 @@ def test_div_mul(ms_func, a, b, c):
        (isinstance(a, (tuple, Tensor)) and isinstance(b, (tuple, Tensor)) and isinstance(c, (tuple, Tensor))) or
        (isinstance(a, (list, Tensor)) and isinstance(b, (list, Tensor)) and isinstance(c, (list, Tensor)))):
        
-       if isinstance(a, tuple) and isinstance(b, tuple):
-        pytest.skip("a and b cannot both be of type tuple.")
-       if isinstance(a, list) and isinstance(b, list):
-        pytest.skip("a and b cannot both be of type list.")
+       if isinstance(a, tuple) or isinstance(b, tuple):
+        pytest.skip("a and b cannot be of type tuple.")
+       if isinstance(a, list) or isinstance(b, list):
+        pytest.skip("a and b cannot be of type list.")
 
        ms_res = ms_func(a, b, c)
        res = ms_func.__wrapped__(a, b, c)

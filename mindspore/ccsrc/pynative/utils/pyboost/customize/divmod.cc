@@ -90,7 +90,7 @@ tensor::TensorPtr DivModCustomize(const std::shared_ptr<OpRunner> &op, const Ten
     div_op->Call(x_tensor, y_tensor);
 
     if (mode == ops::RoundingMode::TRUNC) {
-      auto act_tensor = PyBoostUtils::CastTensor(div_op->outputs()[0], x_tensor->Dtype()->type_id(),
+      auto act_tensor = PyBoostUtils::CastTensor(div_op->outputs()[0], op->output(0)->Dtype()->type_id(),
                                                  op->device_context()->GetDeviceType());
       TruncCall(op, act_tensor);
     } else {

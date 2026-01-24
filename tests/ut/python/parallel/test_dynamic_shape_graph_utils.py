@@ -14,7 +14,7 @@
 # ============================================================================
 """Test graph_utils.cc model"""
 import numpy as np
-import mindspore.nn as nn
+from mindspore import nn
 import mindspore.common.dtype as mstype
 from mindspore import Symbol
 from mindspore.ops import operations as P
@@ -866,8 +866,7 @@ def test_greater_equal_op_with_two_dynamic_axis():
     assert validator.check_node_inputs('Cast-0', ['GreaterEqual-0', 42])
     assert validator.check_node_inputs('AllGather-0', ['Cast-0'])
     assert validator.check_node_inputs('Flatten-0', ['AllGather-0'])
-    assert validator.check_node_inputs('Cast-1', ['Flatten-0', 43])
-    assert validator.check_node_inputs('Split-2', ['Cast-1', 0, 8])
+    assert validator.check_node_inputs('Split-2', ['Flatten-0', 0, 8])
     assert validator.check_node_inputs('TupleGetItem-3', ['Split-2', 0])
     assert validator.check_node_inputs('Flatten-1', ['TupleGetItem-0'])
     assert validator.check_node_inputs('Split-3', ['Flatten-1', 0, 8])

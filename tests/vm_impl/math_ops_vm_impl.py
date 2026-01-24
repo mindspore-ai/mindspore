@@ -21,9 +21,9 @@ from mindspore._c_expression import typing
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.auto_generate.gen_ops_prim import SubExt
-from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
-from .vm_interface import vm
 from mindspore.ops.auto_generate.gen_ops_prim import AddExt, SubScalar, Muls
+from mindspore.ops.vm_impl_registry import vm_impl_registry as vm_impl_getters
+from tests.vm_impl.vm_interface import vm
 
 
 # pylint: disable=unused-argument
@@ -278,6 +278,18 @@ def vm_impl_real_div(self):
         y = y.asnumpy()
         out = x / y
         out = np.array(out, x.dtype)
+        return Tensor(out)
+
+    return vm_impl
+
+
+@vm_impl_getters.register(P.Reciprocal)
+def vm_impl_reciprocal(self):
+    """Generate vm_impl function for Reciprocal."""
+
+    def vm_impl(x):
+        x = x.asnumpy()
+        out = np.reciprocal(x)
         return Tensor(out)
 
     return vm_impl

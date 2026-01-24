@@ -15,83 +15,83 @@
  */
 #include <vector>
 #include <memory>
-#include "common/common_test.h"
-#include "ir/dtype/type.h"
-#include "abstract/dshape.h"
-#include "utils/tensor_construct_utils.h"
-#include "ir/primitive.h"
-#include "abstract/abstract_value.h"
-#include "include/backend/common/pass_manager/helper.h"
+#include "tests/ut/cpp/ops/test_binary_ops.h"
+#include "ops/utils/general_infer_utils.h"
 #include "ops/test_ops.h"
-#include "infer/ops_func_impl/divmod.h"
 #include "ops/test_value_utils.h"
+#include "op_enum.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "abstract/ops/primitive_infer_map.h"
+#include "abstract/abstract_value.h"
+#include "ir/tensor_new.h"
 
-namespace mindspore {
-namespace ops {
+namespace mindspore::ops {
+namespace {
+std::vector<GeneralInferParam> prepare_divmod_params() {
+  GeneralInferParamGenerator generator;
 
-struct DivModShape {
-  std::vector<int64_t> x_shape;
-  std::vector<int64_t> y_shape;
-  ValuePtr rounding_mode;
-  std::vector<int64_t> out_shape;
-};
+  // Floor DivMod: 7 // 3 = 2, 7 % 3 = 1
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{2}, kNumberTypeInt32}, InferInfoParam{ShapeVector{2}, kNumberTypeInt32},
+                    InferInfoParam{ShapeVector{}, kNumberTypeInt64,
+                                   CreateScalar<int64_t>(static_cast<int64_t>(RoundingMode::FLOOR))}})
+    .FeedExpectedOutput({{2}}, {kNumberTypeInt32});
 
-struct DivModType {
-  TypePtr x_type;
-  TypePtr y_type;
-  TypePtr out_type;
-};
+  // Trunc DivMod: -7 // 3 = -2, -7 % 3 = -1
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{2}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{2}, kNumberTypeFloat32},
+                    InferInfoParam{ShapeVector{}, kNumberTypeInt64,
+                                   CreateScalar<int64_t>(static_cast<int64_t>(RoundingMode::TRUNC))}})
+    .FeedExpectedOutput({{2}}, {kNumberTypeFloat32});
 
-class TestDivMod : public TestOps, public testing::WithParamInterface<std::tuple<DivModShape, DivModType>> {};
+  // Broadcast
+  generator
+    .FeedInputArgs({InferInfoParam{ShapeVector{2, 1}, kNumberTypeInt32},
+                    InferInfoParam{ShapeVector{3}, kNumberTypeInt32},
+                    InferInfoParam{ShapeVector{}, kNumberTypeInt64,
+                                   CreateScalar<int64_t>(static_cast<int64_t>(RoundingMode::FLOOR))}})
+    .FeedExpectedOutput({{2, 3}}, {kNumberTypeInt32});
 
-TEST_P(TestDivMod, DivMod_dyn_shape) {
-  const auto &shape_param = std::get<0>(GetParam());
-  const auto &dtype_param = std::get<1>(GetParam());
-
-  DivModFuncImpl DivMod_func_impl;
-  auto prim = std::make_shared<Primitive>("DivMod");
-  auto x = std::make_shared<abstract::AbstractTensor>(dtype_param.x_type, shape_param.x_shape);
-  auto y = std::make_shared<abstract::AbstractTensor>(dtype_param.y_type, shape_param.y_shape);
-  auto expect_shape = std::make_shared<abstract::TensorShape>(shape_param.out_shape);
-  auto expect_dtype = std::make_shared<TensorType>(dtype_param.out_type);
-
-  auto out_shape = DivMod_func_impl.InferShape(prim, {x, y, shape_param.rounding_mode->ToAbstract()});
-  ASSERT_TRUE(*out_shape == *expect_shape);
-  auto out_dtype = DivMod_func_impl.InferType(prim, {x, y, shape_param.rounding_mode->ToAbstract()});
-  ASSERT_TRUE(*out_dtype == *expect_dtype);
+  return generator.Generate();
 }
+}  // namespace
 
-auto DivModOpShapeTestCases =
-  testing::ValuesIn({/* y is number */
-                     DivModShape{{10}, {}, CreateScalar<int64_t>(2), {10}},
-                     DivModShape{{10, 1, 2}, {}, CreateScalar<int64_t>(2), {10, 1, 2}},
-                     DivModShape{{10, 4, 2}, {}, CreateScalar<int64_t>(2), {10, 4, 2}},
-                     DivModShape{{10, 1, -1}, {}, CreateScalar<int64_t>(2), {10, 1, -1}},
-                     DivModShape{{-2}, {}, CreateScalar<int64_t>(2), {-2}},
-                     /* x is number */
-                     DivModShape{{}, {10}, CreateScalar<int64_t>(2), {10}},
-                     DivModShape{{}, {10, 1, 2}, CreateScalar<int64_t>(2), {10, 1, 2}},
-                     DivModShape{{}, {10, 4, 2}, CreateScalar<int64_t>(2), {10, 4, 2}},
-                     DivModShape{{}, {10, 1, -1}, CreateScalar<int64_t>(2), {10, 1, -1}},
-                     DivModShape{{}, {-2}, CreateScalar<int64_t>(2), {-2}},
-                     /* x and y both tensor */
-                     DivModShape{{4, 5}, {2, 3, 4, 5}, CreateScalar<int64_t>(2), {2, 3, 4, 5}},
-                     DivModShape{{2, 1, 4, 5, 6, 9}, {9}, CreateScalar<int64_t>(2), {2, 1, 4, 5, 6, 9}},
-                     DivModShape{{2, 3, 4, -1}, {2, 3, 4, 5}, CreateScalar<int64_t>(2), {2, 3, 4, 5}},
-                     DivModShape{{2, 3, 4, -1}, {-1, -1, 4, 5}, CreateScalar<int64_t>(2), {2, 3, 4, 5}},
-                     DivModShape{{2, 1, 4, -1}, {-1, -1, 4, 5}, CreateScalar<int64_t>(2), {2, -1, 4, 5}},
-                     DivModShape{{2, 1, 4, 5, 6, 9}, {-2}, CreateScalar<int64_t>(2), {-2}},
-                     DivModShape{{2, 1, 4, 5, -1, 9}, {-2}, CreateScalar<int64_t>(2), {-2}},
-                     DivModShape{{-2}, {2, 1, 4, 5, 6, 9}, CreateScalar<int64_t>(2), {-2}},
-                     DivModShape{{-2}, {2, 1, 4, 5, -1, 9}, CreateScalar<int64_t>(2), {-2}},
-                     DivModShape{{-2}, {-2}, CreateScalar<int64_t>(2), {-2}}});
+INSTANTIATE_TEST_CASE_P(DivMod, GeneralInferTest, testing::ValuesIn(prepare_divmod_params()));
 
-auto DivModOpTypeTestCases = testing::ValuesIn({
-  DivModType{kFloat16, kFloat16, kFloat16},
-  DivModType{kFloat32, kFloat32, kFloat32},
-  DivModType{kFloat64, kFloat64, kFloat64},
-});
+// Use REGISTER_TERNARY_OP_INFER_VALUE_TEST from the framework
+REGISTER_TERNARY_OP_INFER_VALUE_TEST(TestDivModInferValue, InferValue);
 
-INSTANTIATE_TEST_CASE_P(TestDivMod, TestDivMod, testing::Combine(DivModOpShapeTestCases, DivModOpTypeTestCases));
-}  // namespace ops
-}  // namespace mindspore
+// Helper
+namespace {
+template <typename T>
+tensor::TensorPtr CreateDivModTensor(const TypeId &type, const ShapeVector &shape, std::vector<T> value) {
+  void *data_ptr = &value[0];
+  auto tensor = tensor::from_buffer(type, shape, data_ptr, type);
+  return tensor;
+}
+}  // namespace
+
+INSTANTIATE_TEST_CASE_P(
+  DivModInferValue, TestDivModInferValue,
+  testing::Values(
+    // Floor: 10, 20 with 3, 3 -> 3, 6 (quot); 1, 2 (rem)
+    TernaryOpInferValueParams{
+      "DivMod", CreateDivModTensor<int32_t>(kNumberTypeInt32, {2}, {10, 20})->ToAbstract()->BuildValue(),
+      CreateDivModTensor<int32_t>(kNumberTypeInt32, {2}, {3, 3})->ToAbstract()->BuildValue(),
+      CreateScalar<int64_t>(static_cast<int64_t>(RoundingMode::FLOOR))->ToAbstract()->BuildValue(),
+      CreateDivModTensor<int32_t>(kNumberTypeInt32, {2}, {3, 6})},
+    // Trunc: -10, -20 with 3, 3 -> -3, -6 (quot); -1, -2 (rem)
+    TernaryOpInferValueParams{
+      "DivMod", CreateDivModTensor<float>(kNumberTypeFloat32, {2}, {-10.0, -20.0})->ToAbstract()->BuildValue(),
+      CreateDivModTensor<float>(kNumberTypeFloat32, {2}, {3.0, 3.0})->ToAbstract()->BuildValue(),
+      CreateScalar<int64_t>(static_cast<int64_t>(RoundingMode::TRUNC))->ToAbstract()->BuildValue(),
+      CreateDivModTensor<float>(kNumberTypeFloat32, {2}, {-3.0, -6.0})},
+    // Mixed: F32 / F16 -> F32 (Trunc)
+    TernaryOpInferValueParams{
+      "DivMod", CreateDivModTensor<float>(kNumberTypeFloat32, {2}, {-10.0, -20.0})->ToAbstract()->BuildValue(),
+      CreateDivModTensor<float16>(kNumberTypeFloat16, {2}, {float16(3.0), float16(3.0)})->ToAbstract()->BuildValue(),
+      CreateScalar<int64_t>(static_cast<int64_t>(RoundingMode::TRUNC))->ToAbstract()->BuildValue(),
+      CreateDivModTensor<float>(kNumberTypeFloat32, {2}, {-3.0, -6.0})}));
+
+}  // namespace mindspore::ops

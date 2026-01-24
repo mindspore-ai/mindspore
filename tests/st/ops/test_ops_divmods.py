@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Test DivMods
+"""
 import pytest
 import numpy as np
 from tests.st.utils import test_utils
@@ -25,7 +28,7 @@ from mindspore import mint, nn
 
 class DivModsNetTensorTensor(nn.Cell):
     def __init__(self):
-        super(DivModsNetTensorTensor, self).__init__()
+        super().__init__()
         self.x = Tensor([2, -3, 2.4, 4], dtype=ms.float16)
         self.y = Tensor([1, 2, 2, 4], dtype=ms.float16)
 
@@ -34,7 +37,7 @@ class DivModsNetTensorTensor(nn.Cell):
 
 class DivModsNetTensorTensor2(nn.Cell):
     def __init__(self):
-        super(DivModsNetTensorTensor2, self).__init__()
+        super().__init__()
         self.x = Tensor([2, -3, 2.4, 4], dtype=ms.float16)
         self.y = Tensor([1, 2, 2, 4], dtype=ms.float16)
 
@@ -44,7 +47,7 @@ class DivModsNetTensorTensor2(nn.Cell):
 
 class DivModsNetTensorScalar(nn.Cell):
     def __init__(self):
-        super(DivModsNetTensorScalar, self).__init__()
+        super().__init__()
         self.x = Tensor([2, -3, 2.4, 4], dtype=ms.float16)
         self.y = 2
 
@@ -54,7 +57,7 @@ class DivModsNetTensorScalar(nn.Cell):
 
 class DivModsNetTensorScalar2(nn.Cell):
     def __init__(self):
-        super(DivModsNetTensorScalar2, self).__init__()
+        super().__init__()
         self.x = Tensor([2, -3, 2.4, 4], dtype=ms.float16)
         self.y = 2
 
@@ -94,10 +97,12 @@ def divmods_floor_backward_func(x, y):
 
 def set_mode(mode):
     """
-    set mode
+    set_mode
     """
-    if mode == "KBK":
-        context.set_context(mode=context.GRAPH_MODE, jit_config={"jit_level": "O0"})
+    if mode == "GE":
+        context.set_context(mode=context.GRAPH_MODE, jit_config={'jit_level': 'O2'})
+    elif mode == "KBK":
+        context.set_context(mode=context.GRAPH_MODE, jit_config={'jit_level': 'O0'})
     else:
         context.set_context(mode=context.PYNATIVE_MODE)
 
@@ -110,7 +115,7 @@ def compare_result(actual, expected):
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
         essential_mark='essential', mem_peak=0.01)
-@pytest.mark.parametrize("mode", ["KBK"])
+@pytest.mark.parametrize("mode", ["KBK", "GE"])
 def test_divmods_infer_value(mode):
     """
     Feature: Divmods for infer value
@@ -136,9 +141,9 @@ def test_divmods_infer_value(mode):
     np.allclose(out4.asnumpy(), np.array([1, -2, 1, 2]), 0.0001, 0.0001)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential',
-        mem_peak=2048.00)
-@pytest.mark.parametrize("mode", ["KBK", "PYBOOST"])
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
+@pytest.mark.parametrize("mode", ["KBK", "PYBOOST", "GE"])
 def test_divmods_static(mode):
     """
     Feature: DivMods

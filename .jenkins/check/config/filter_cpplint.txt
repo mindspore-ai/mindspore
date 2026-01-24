@@ -22,6 +22,8 @@
 "mindspore/mindspore/ops/kernel/cpu/native/arithmetic_self_cpu_kernel.cc"                  "readability/braces"
 "mindspore/mindspore/ops/kernel/cpu/utils/cpu_utils.h"                  "readability/braces"
 "mindspore/mindspore/ops/kernel/cpu/native/sparse_add_cpu_kernel.cc" "whitespace/indent"
+"mindspore/mindspore/ops/kernel/cpu/native/div_cpu_kernel.cc" "whitespace/indent"
+"mindspore/mindspore/ops/kernel/gpu/cuda/math/elementwise_ops_gpu_kernel.cc" "whitespace/indent"
 "mindspore/mindspore/ops/kernel/cpu/native/sparse_matrix_add_cpu_kernel.cc" "whitespace/indent"
 "mindspore/mindspore/ops/kernel/cpu/native/sparse_matrix_mul_cpu_kernel.cc" "whitespace/indent"
 "mindspore/mindspore/ops/kernel/cpu/native/unique_consecutive_cpu_kernel.cc" "whitespace/indent"

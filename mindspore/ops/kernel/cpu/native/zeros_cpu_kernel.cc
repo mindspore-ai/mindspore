@@ -65,6 +65,7 @@ bool ZerosCpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> &
     &ZerosCpuKernelMod::LaunchKernel<T>
 
 std::vector<std::pair<KernelAttr, ZerosCpuKernelMod::ZerosFunc>> ZerosCpuKernelMod::func_list_ = {
+  {ZEROS_CPU_REG(kNumberTypeInt64, kNumberTypeBFloat16, bfloat16)},
   {ZEROS_CPU_REG(kNumberTypeInt64, kNumberTypeFloat16, float16)},
   {ZEROS_CPU_REG(kNumberTypeInt64, kNumberTypeFloat32, float)},
   {ZEROS_CPU_REG(kNumberTypeInt64, kNumberTypeFloat64, double)},

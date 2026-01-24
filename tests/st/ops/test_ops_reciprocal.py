@@ -17,7 +17,7 @@ import numpy as np
 import pytest
 
 import mindspore as ms
-from mindspore import ops
+from mindspore import ops, Tensor
 from mindspore.ops.auto_generate.gen_ops_def import Reciprocal
 
 from tests.mark_utils import arg_mark
@@ -303,3 +303,40 @@ def test_ops_reciprocal_backward_dynamic_rank(context_mode):
     output = test_cell(ms.Tensor(x2))
     expect = generate_expect_backward_output(x2)
     np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-3)
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.00)
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE])
+def test_ops_reciprocal_infer_value(context_mode):
+    """
+    Feature: Constant folding for Reciprocal.
+    Description: Test Reciprocal with constant inputs including int/bool types.
+    Expectation: Correct float32 output and constant folding occurs.
+    """
+    ms.context.set_context(mode=context_mode)
+
+    class ReciprocalInferValueNet(ms.nn.Cell):
+        def __init__(self, x_np, dtype):
+            super().__init__()
+            self.reciprocal = Reciprocal()
+            self.x = Tensor(x_np, dtype)
+
+        def construct(self):
+            return self.reciprocal(self.x)
+
+    # Int inputs
+    net_int = ReciprocalInferValueNet([1, 2, 4], ms.int32)
+    output_int = net_int()
+    expect_int = np.array([1.0, 0.5, 0.25], dtype=np.float32)
+    assert output_int.dtype == ms.float32
+    np.testing.assert_allclose(output_int.asnumpy(), expect_int, rtol=1e-3)
+
+    # Bool inputs
+    net_bool = ReciprocalInferValueNet([True, False], ms.bool_)
+    output_bool = net_bool()
+    # 1/True = 1.0, 1/False = inf
+    assert output_bool.dtype == ms.float32
+    out_numpy = output_bool.asnumpy()
+    assert np.isclose(out_numpy[0], 1.0)
+    assert np.isinf(out_numpy[1])

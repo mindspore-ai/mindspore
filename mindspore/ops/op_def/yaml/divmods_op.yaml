@@ -20,3 +20,5 @@ divmods:
     dispatch:
         enable: True
         Ascend: DivModsAscend
+        GPU: DivModsGPU
+        CPU: DivModsCPU
