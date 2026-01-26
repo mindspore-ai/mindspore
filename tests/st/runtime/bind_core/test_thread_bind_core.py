@@ -43,7 +43,7 @@ def _check_env_valid_cpu_resource():
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
           card_mark='onecard', essential_mark='essential', mem_peak=0.01)
-def test_bind_core_auto():
+def test_bind_thread_auto():
     """
     Feature: Runtime set_cpu_affinity api.
     Description: Test runtime.set_cpu_affinity api which automatically bind thread core.
@@ -57,8 +57,8 @@ def test_bind_core_auto():
     env += "export GLOG_v=1;"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
-    output = real_path + "/thread_bind_core_auto.log"
+    script = real_path + "/run_bind.py"
+    output = real_path + "/test_bind_thread_auto.log"
     assert os.path.exists(script)
 
     cmd = f"{env} python {script} > {output} 2>&1"
@@ -76,7 +76,7 @@ def test_bind_core_auto():
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0',
           card_mark='onecard', essential_mark='essential', mem_peak=4.00)
-def test_bind_core_manual():
+def test_bind_thread_manual():
     """
     Feature: Runtime set_cpu_affinity api.
     Description: Test runtime.set_cpu_affinity api which manually bind thread core for dynamic shape.
@@ -96,9 +96,9 @@ def test_bind_core_manual():
     env += f"export MODULE_TO_CPU_DICT='{module_to_cpu_dict}';"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
-    output = real_path + "/thread_bind_core_manual.log"
+    output = real_path + "/test_bind_thread_manual.log"
 
     cmd = f"{env} python {script} > {output} 2>&1"
     os.system(cmd)
@@ -118,7 +118,7 @@ def test_bind_core_manual():
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
           card_mark='onecard', essential_mark='essential', mem_peak=0.01)
-def test_bind_core_empty_module_assigned():
+def test_bind_thread_manual_empty_module_assigned():
     """
     Feature: Runtime set_cpu_affinity api.
     Description: Test runtime.set_cpu_affinity empty module_to_cpu_dict.
@@ -133,9 +133,9 @@ def test_bind_core_empty_module_assigned():
     env += "export MODULE_TO_CPU_DICT='{}';"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
-    output = real_path + "/thread_bind_core_empty_module.log"
+    output = real_path + "/test_bind_thread_manual_empty_module_assigned.log"
 
     cmd = f"{env} python {script} > {output} 2>&1"
     os.system(cmd)
@@ -149,7 +149,7 @@ def test_bind_core_empty_module_assigned():
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
           card_mark='onecard', essential_mark='essential', mem_peak=0.01)
-def test_bind_core_manual_no_available_cpus():
+def test_bind_thread_manual_no_available_cpus():
     """
     Feature: Runtime set_cpu_affinity api.
     Description: Test runtime.set_cpu_affinity api manually input unavailable cpu list.
@@ -163,7 +163,7 @@ def test_bind_core_manual_no_available_cpus():
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1',
           card_mark='onecard', essential_mark='essential', mem_peak=0.01)
-def test_bind_core_repeatly_call():
+def test_bind_thread_repeatly_call():
     """
     Feature: Runtime set_cpu_affinity api.
     Description: Test runtime.set_cpu_affinity api repeatedly called..
@@ -177,7 +177,7 @@ def test_bind_core_repeatly_call():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
-def test_msrun_bind_true_thread_bind_auto():
+def test_msrun_bind_core_true_bind_thread_auto():
     """
     Feature: Runtime set_cpu_affinity api with msrun --bind_core arg.
     Description: Test runtime.set_cpu_affinity and msrun --bind_core with auto bind core policy.
@@ -188,10 +188,10 @@ def test_msrun_bind_true_thread_bind_auto():
     env += "export GLOG_v=1;"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
-    output = real_path + "/msrun_bind_true_thread_bind_auto.log"
-    msrun_path = real_path + "/msrun_bind_true_thread_bind_auto"
+    output = real_path + "/test_msrun_bind_core_true_bind_thread_auto.log"
+    msrun_path = real_path + "/test_msrun_bind_core_true_bind_thread_auto"
     worker_0 = f'{msrun_path}/worker_0.log'
 
     msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\
@@ -217,8 +217,49 @@ def test_msrun_bind_true_thread_bind_auto():
     assert re.search("Skip to bind thread core for 'runtime actor'", worker_0_log)
 
 
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards', essential_mark='essential')
+def test_msrun_bind_numa_true_bind_thread_auto():
+    """
+    Feature: Runtime set_cpu_affinity api with msrun --bind_numa arg.
+    Description: Test runtime.set_cpu_affinity and msrun --bind_numa with auto bind policy.
+    Expectation: Expected log in stdout.
+    """
+    env = "export DISTRIBUTED=1;"
+    env += "export THREAD_BIND=1;"
+    env += "export GLOG_v=1;"
+
+    real_path = os.path.realpath(os.getcwd())
+    script = real_path + "/run_bind.py"
+    assert os.path.exists(script)
+    output = real_path + "/test_msrun_bind_numa_true_bind_thread_auto.log"
+    msrun_path = real_path + "/test_msrun_bind_numa_true_bind_thread_auto"
+    worker_0 = f'{msrun_path}/worker_0.log'
+
+    msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\
+                f"--log_dir={msrun_path} --bind_numa=True {script}"
+    return_code = os.system(f"{env} {msrun_cmd} > {output} 2>&1")
+
+    assert os.path.exists(output)
+    assert os.path.exists(worker_0)
+
+    # check results of msrun --bind_numa arg.
+    with open(output, "r", encoding="utf-8") as f:
+        output_log = f.read()
+        print(output_log, flush=True)
+    assert return_code == 0
+    assert re.search(r"Execute command: numactl --membind (\d+) --cpunodebind (\d+) .*", output_log)
+
+    # check results of mindspore.runtime.set_cpu_affinity API.
+    with open(worker_0, "r", encoding="utf-8") as f:
+        worker_0_log = f.read()
+    assert re.search(r"Module bind core policy from msrun: \{'main': \[([\d, ]*)\]\}", worker_0_log)
+    assert re.search(r"This module: 0 is assigned a bind core list: .+?", worker_0_log)
+    assert re.search("Skip to bind thread core for 'pynative'", worker_0_log)
+    assert re.search("Skip to bind thread core for 'runtime actor'", worker_0_log)
+
+
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='allcards', essential_mark='essential')
-def test_msrun_bind_manual_thread_bind_manual():
+def test_msrun_bind_core_manual_bind_thread_manual():
     """
     Feature: Runtime set_cpu_affinity api with msrun --bind_core arg.
     Description: Test runtime.set_cpu_affinity and msrun --bind_core with customized bind core policy.
@@ -238,10 +279,10 @@ def test_msrun_bind_manual_thread_bind_manual():
     env += f"export MODULE_TO_CPU_DICT='{module_to_cpu_dict}';"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
-    output = real_path + "/msrun_bind_manual_thread_bind_manual.log"
-    msrun_path = real_path + "/msrun_bind_manual_thread_bind_manual"
+    output = real_path + "/test_msrun_bind_core_manual_bind_thread_manual.log"
+    msrun_path = real_path + "/test_msrun_bind_core_manual_bind_thread_manual"
     worker_0 = f'{msrun_path}/worker_0.log'
     worker_1 = f'{msrun_path}/worker_1.log'
     msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\

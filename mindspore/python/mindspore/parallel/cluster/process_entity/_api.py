@@ -23,8 +23,15 @@ import socket
 import psutil
 import mindspore.log as logger
 from mindspore.utils import RSCPluginHandle
-from ._utils import _generate_cmd, _generate_url, _is_local_ip, _convert_addr_to_ip, _send_scale_num, \
-    _get_local_ip, _generate_auto_bind_core_strategy
+from ._utils import (
+    _generate_cmd,
+    _generate_url,
+    _is_local_ip,
+    _convert_addr_to_ip,
+    _send_scale_num,
+    _get_local_ip,
+    _generate_bind_context,
+)
 
 
 class _Node:
@@ -167,6 +174,7 @@ class _ProcessManager:
         self.worker_log_name = args.worker_log_name
         self.tail_worker_log = args.tail_worker_log
         self.cluster_time_out = args.cluster_time_out
+        self.bind_numa = args.bind_numa
         self.bind_core = args.bind_core
         self.rank_table_file = args.rank_table_file
 
@@ -211,9 +219,7 @@ class _ProcessManager:
             finally:
                 os.umask(origin_mask)
 
-        self.device_to_cpu_map = {}
-        if self.bind_core is True:
-            self.device_to_cpu_map = _generate_auto_bind_core_strategy(self.local_worker_num)
+        self.binding_context = _generate_bind_context(self.local_worker_num, self.bind_numa, self.bind_core)
 
         self.proc_rank_map = {}
         self.enable_mindx = False
@@ -276,7 +282,7 @@ class _ProcessManager:
         # For Scheduler, 'RANK_ID' is always 0.
         os.environ['RANK_ID'] = str(0)
         log_name = os.path.join(self.log_dir, "scheduler.log")
-        cmd = _generate_cmd(self.cmd, self.cmd_args, -1, {}, self.bind_core)
+        cmd = _generate_cmd(self.cmd, self.cmd_args, -1, self.binding_context)
         print(f"Start scheduler process, log file:{log_name}. Execute command: {' '.join(cmd)}", flush=True)
 
         msn = _MetaServerNode(self.worker_num, self.master_addr, self.master_port, self.cluster_time_out,
@@ -303,7 +309,7 @@ class _ProcessManager:
             # Reset RANK_ID env to sim_rank_id if sim_rank_id is set.
             os.environ["RANK_ID"] = str(self.sim_rank_id)
             logger.warning(f"In dryrun case, RANK_ID is assigned to {self.sim_rank_id}.")
-        cmd = _generate_cmd(self.cmd, self.cmd_args, local_rank, self.device_to_cpu_map, self.bind_core)
+        cmd = _generate_cmd(self.cmd, self.cmd_args, local_rank, self.binding_context)
         print(f"Start worker process with rank id:{node_id}, log file:{log_name}. "
               f"Environment variable [RANK_ID={node_id}] is exported. Execute command: {' '.join(cmd)}", flush=True)
 
@@ -339,7 +345,7 @@ class _ProcessManager:
         """
 
         def signal_handler(sig, frame):
-            logger.warning("msrun process received SIGNIN (Ctrl+C), terminating all workers.")
+            logger.warning("msrun process received SIGINT (Ctrl+C), terminating all workers.")
             self.kill_all_processes()
             sys.exit(0)
 
@@ -389,7 +395,7 @@ class _ProcessManager:
         """
         for p_tail in self.tail_cgn_processes:
             if p_tail is not None:
-                logger.debug("Tail worker log process:{p_tail.pid} has been killed!")
+                logger.debug(f"Tail worker log process:{p_tail.pid} has been killed!")
                 p_tail.kill()
 
     def kill_worker_processes(self):

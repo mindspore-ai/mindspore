@@ -20,11 +20,15 @@ from argparse import REMAINDER, ArgumentParser, ArgumentTypeError
 from .process_entity import _ProcessManager
 
 
-def parse_and_validate_bind_core(value):
-    """
-    Parse input argument of --bind_core.
+def _parse_and_validate_bind_generic(value, resource):
+    """Generic parsing and validation function for bind parameters."""
+    if resource == "CPU":
+        desc = "cpuidX"
+    elif resource == "NUMA":
+        desc = "numaidX"
+    else:
+        raise ValueError(f"Unsupported bind {resource}.")
 
-    """
     if value.lower() == "true":
         return True
     if value.lower() == "false":
@@ -36,23 +40,44 @@ def parse_and_validate_bind_core(value):
         raise ArgumentTypeError("Failed to parse JSON into a dictionary") from e
 
     if isinstance(value_dict, dict):
-        cpu_pattern = re.compile(r'^\d+(-\d+)?$')
-        for device, affinity_cpu_list in value_dict.items():
+        resource_pattern = re.compile(r'^(\d+-\d+|\d+(?:,\d+)*)$')
+        
+        for device, affinity_list in value_dict.items():
             if not re.fullmatch(r"device\d+|scheduler", device):
-                raise ArgumentTypeError(f"Key {device} must be in format 'scheduler' or 'deviceX' (X ≥ 0).")
-            if not isinstance(affinity_cpu_list, list):
-                raise ArgumentTypeError(f"Value for {device}:{affinity_cpu_list} should be a list, "
-                                        f"but got {type(affinity_cpu_list)}.")
+                raise ArgumentTypeError(f"Key {device} must be in format 'scheduler' or 'deviceX'.")
 
-            for cpu_item in affinity_cpu_list:
-                if not isinstance(cpu_item, str):
-                    raise ArgumentTypeError(f"CPU {cpu_item} in {affinity_cpu_list} should be a string.")
-                if not cpu_pattern.match(cpu_item):
-                    raise ArgumentTypeError(f"CPU {cpu_item} in {affinity_cpu_list} should be "
-                                            "in format 'cpuidX' or 'cpuidX-cpuidY'.")
+            if not isinstance(affinity_list, list):
+                raise ArgumentTypeError(
+                    f"Value for {device}:{affinity_list} should be a list, but got {type(affinity_list)}."
+                )
+
+            normalized_list = []
+            for item in affinity_list:
+                if not isinstance(item, str):
+                    raise ArgumentTypeError(
+                        f"{resource} {item} in {affinity_list} should be a string."
+                    )
+                cleaned_item = re.sub(r'\s+', '', item)
+                if not resource_pattern.match(cleaned_item):
+                    raise ArgumentTypeError(
+                        f"{resource} {item} in {affinity_list} should be in format "
+                        f"'{desc}', '{desc},{desc[0:-1]}Y' or '{desc}-{desc[0:-1]}Y'."
+                    )
+                normalized_list.append(cleaned_item)
+            value_dict[device] = normalized_list
         return value_dict
 
     raise ArgumentTypeError(f"Type of {value} should be bool or dict, but got {type(value)}.")
+
+
+def _parse_and_validate_bind_core(value):
+    """Parse input argument of --bind_core."""
+    return _parse_and_validate_bind_generic(value, "CPU")
+
+
+def _parse_and_validate_bind_numa(value):
+    """Parse input argument of --bind_numa."""
+    return _parse_and_validate_bind_generic(value, "NUMA")
 
 
 def get_args():
@@ -115,10 +140,18 @@ def get_args():
     parser.add_argument(
         "--bind_core",
         default=False,
-        type=parse_and_validate_bind_core,
+        type=_parse_and_validate_bind_core,
         help="specifies whether msrun should bind CPU cores to spawned processes. "
              "If set to True, msrun will bind core based on the environment automatically, "
              "and if passed a dict, msrun will bind core based on this dict information."
+    )
+    parser.add_argument(
+        "--bind_numa",
+        default=False,
+        type=_parse_and_validate_bind_numa,
+        help="specifies whether msrun should bind NUMA to spawned processes. "
+             "If set to True, msrun will bind NUMA based on the environment automatically, "
+             "and if passed a dict, msrun will bind NUMA based on this dict information."
     )
     parser.add_argument(
         "--sim_level",

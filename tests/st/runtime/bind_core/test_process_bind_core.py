@@ -24,7 +24,7 @@ from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
         essential_mark='essential')
-def test_msrun_bind_true():
+def test_msrun_bind_core_true():
     """
     Feature: Runtime msrun --bind_core arg.
     Description: Test msrun --bind_core with auto bind core policy.
@@ -34,9 +34,9 @@ def test_msrun_bind_true():
     env += "export GLOG_v=2;"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
-    output = real_path + "/msrun_bind_true.log"
+    output = real_path + "/test_msrun_bind_core_true.log"
 
     msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\
                 f"--bind_core=True {script}"
@@ -48,14 +48,14 @@ def test_msrun_bind_true():
         output_log = f.read()
         print(output_log, flush=True)
     assert return_code == 0
-    assert re.search(r"Start scheduler process.*? Execute command:(?!.*taskset -c).*?", output_log)
+    assert re.search(r"Start scheduler process.*? Execute command:(?!.*taskset).*?", output_log)
     assert re.search(r"Start worker process with rank id:0.*? Execute command: taskset -c (\d+)-(\d+) .*", output_log)
     assert re.search(r"Start worker process with rank id:1.*? Execute command: taskset -c (\d+)-(\d+) .*", output_log)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
         essential_mark='essential')
-def test_msrun_bind_false():
+def test_msrun_bind_core_false():
     """
     Feature: Runtime msrun --bind_core arg.
     Description: Test msrun --bind_core with False.
@@ -65,9 +65,9 @@ def test_msrun_bind_false():
     env += "export GLOG_v=2;"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
-    output = real_path + "/msrun_bind_false.log"
+    output = real_path + "/test_msrun_bind_core_false.log"
 
     msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\
                 f"--bind_core=False {script}"
@@ -79,14 +79,14 @@ def test_msrun_bind_false():
         output_log = f.read()
         print(output_log, flush=True)
     assert return_code == 0
-    assert re.search(r"Start scheduler process.*? Execute command:(?!.*taskset -c).*?", output_log)
+    assert re.search(r"Start scheduler process.*? Execute command:(?!.*taskset).*?", output_log)
     assert re.search(r"Start worker process with rank id:0.*? Execute command:(?!.*taskset -c).*?", output_log)
     assert re.search(r"Start worker process with rank id:1.*? Execute command:(?!.*taskset -c).*?", output_log)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
         essential_mark='essential')
-def test_msrun_bind_manual_only_worker():
+def test_msrun_bind_core_manual_only_worker():
     """
     Feature: Runtime msrun --bind_core arg.
     Description: Test msrun --bind_core with customized bind core policy.
@@ -97,9 +97,9 @@ def test_msrun_bind_manual_only_worker():
     env += "export GLOG_v=2;"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
-    output = real_path + "/msrun_bind_manual_only_worker.log"
+    output = real_path + "/test_msrun_bind_core_manual_only_worker.log"
     msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\
                 f"--bind_core='{bind_core_arg}' {script}"
 
@@ -111,27 +111,27 @@ def test_msrun_bind_manual_only_worker():
         output_log = f.read()
         print(output_log, flush=True)
     assert return_code == 0
-    assert re.search(r"Start scheduler process.*? Execute command:(?!.*taskset -c).*?", output_log)
+    assert re.search(r"Start scheduler process.*? Execute command:(?!.*taskset).*?", output_log)
     assert re.search(r"Start worker process with rank id:0.*? Execute command: taskset -c 10-19 .*?", output_log)
     assert re.search(r"Start worker process with rank id:1.*? Execute command: taskset -c 20-29 .*?", output_log)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
         essential_mark='essential')
-def test_msrun_bind_manual_single_worker():
+def test_msrun_bind_core_manual_single_worker():
     """
     Feature: Runtime msrun --bind_core arg.
     Description: Test msrun --bind_core with customized bind core policy.
     Expectation: Bind core for single worker, expected log in stdout.
     """
-    bind_core_arg = '{"device0":["10-19"]}'
+    bind_core_arg = '{"device0":["10 -19"," 21,22 ,23","25"]}'
     env = "export DISTRIBUTED=1;"
     env += "export GLOG_v=2;"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
-    output = real_path + "/msrun_bind_manual_single_worker.log"
+    output = real_path + "/test_msrun_bind_core_manual_single_worker.log"
     msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\
                 f"--bind_core='{bind_core_arg}' {script}"
 
@@ -143,15 +143,17 @@ def test_msrun_bind_manual_single_worker():
         output_log = f.read()
         print(output_log, flush=True)
     assert return_code == 0
-    assert re.search(r"Start scheduler process.*? Execute command:(?!.*taskset -c).*?", output_log)
-    assert re.search(r"Start worker process with rank id:0.*? Execute command: taskset -c 10-19 .*?", output_log)
+    assert re.search(r"Start scheduler process.*? Execute command:(?!.*taskset).*?", output_log)
+    assert re.search(
+        r"Start worker process with rank id:0.*? Execute command: taskset -c 10-19,21,22,23,25 .*?", output_log,
+    )
     assert "Cannot find process[1] in args '--bind_core'." in output_log
     assert re.search(r"Start worker process with rank id:1.*? Execute command:(?!.*taskset -c).*?", output_log)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
         essential_mark='essential')
-def test_msrun_bind_manual_only_worker_wrong_sequence():
+def test_msrun_bind_core_manual_only_worker_wrong_sequence():
     """
     Feature: Runtime msrun --bind_core arg.
     Description: Test msrun --bind_core with customized bind core policy.
@@ -162,9 +164,9 @@ def test_msrun_bind_manual_only_worker_wrong_sequence():
     env += "export GLOG_v=2;"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
-    output = real_path + "/msrun_bind_manual_only_worker_wrong_sequence.log"
+    output = real_path + "/test_msrun_bind_core_manual_only_worker_wrong_sequence.log"
     msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\
                 f"--bind_core='{bind_core_arg}' {script}"
 
@@ -176,16 +178,16 @@ def test_msrun_bind_manual_only_worker_wrong_sequence():
         output_log = f.read()
         print(output_log, flush=True)
     assert return_code == 0
-    assert re.search(r"Start scheduler process.*? Execute command:(?!.*taskset -c).*?", output_log)
+    assert re.search(r"Start scheduler process.*? Execute command:(?!.*taskset).*?", output_log)
     assert "Cannot find physical_device_id[0] for process[0] in args '--bind_core'." in output_log
-    assert re.search(r"Start worker process with rank id:0.*? Execute command:(?!.*taskset -c).*?", output_log)
+    assert re.search(r"Start worker process with rank id:0.*? Execute command:(?!.*taskset).*?", output_log)
     assert "Cannot find physical_device_id[1] for process[1] in args '--bind_core'." in output_log
-    assert re.search(r"Start worker process with rank id:1.*? Execute command:(?!.*taskset -c).*?", output_log)
+    assert re.search(r"Start worker process with rank id:1.*? Execute command:(?!.*taskset).*?", output_log)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
         essential_mark='essential')
-def test_msrun_bind_manual_only_scheduler():
+def test_msrun_bind_core_manual_only_scheduler():
     """
     Feature: Runtime msrun --bind_core arg.
     Description: Test msrun --bind_core with customized bind core policy.
@@ -196,9 +198,9 @@ def test_msrun_bind_manual_only_scheduler():
     env += "export GLOG_v=2;"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
-    output = real_path + "/msrun_bind_manual_only_scheduler.log"
+    output = real_path + "/test_msrun_bind_core_manual_only_scheduler.log"
     msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\
                 f"--bind_core='{bind_core_arg}' {script}"
 
@@ -212,14 +214,14 @@ def test_msrun_bind_manual_only_scheduler():
     assert return_code == 0
     assert re.search(r"Start scheduler process.*? Execute command: taskset -c 0-9 .*?", output_log)
     assert "Cannot find process[0] in args '--bind_core'." in output_log
-    assert re.search(r"Start worker process with rank id:0.*? Execute command:(?!.*taskset -c).*?", output_log)
+    assert re.search(r"Start worker process with rank id:0.*? Execute command:(?!.*taskset).*?", output_log)
     assert "Cannot find process[1] in args '--bind_core'." in output_log
-    assert re.search(r"Start worker process with rank id:1.*? Execute command:(?!.*taskset -c).*?", output_log)
+    assert re.search(r"Start worker process with rank id:1.*? Execute command:(?!.*taskset).*?", output_log)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
         essential_mark='essential')
-def test_msrun_bind_manual_scheduler_and_worker():
+def test_msrun_bind_core_manual_scheduler_and_worker():
     """
     Feature: Runtime msrun --bind_core arg.
     Description: Test msrun --bind_core with customized bind core policy.
@@ -230,9 +232,9 @@ def test_msrun_bind_manual_scheduler_and_worker():
     env += "export GLOG_v=2;"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
-    output = real_path + "/msrun_bind_manual_scheduler_and_worker.log"
+    output = real_path + "/test_msrun_bind_core_manual_scheduler_and_worker.log"
     msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\
                 f"--bind_core='{bind_core_arg}' {script}"
 
@@ -251,7 +253,7 @@ def test_msrun_bind_manual_scheduler_and_worker():
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
         essential_mark='essential')
-def test_msrun_bind_manual_empty_list_and_single_core():
+def test_msrun_bind_core_manual_empty_list_and_single_core():
     """
     Feature: Runtime msrun --bind_core arg.
     Description: Test msrun --bind_core with customized bind core policy.
@@ -262,14 +264,13 @@ def test_msrun_bind_manual_empty_list_and_single_core():
     env += "export GLOG_v=2;"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
-    output = real_path + "/msrun_bind_manual_empty_list_and_single_core.log"
+    output = real_path + "/test_msrun_bind_core_manual_empty_list_and_single_core.log"
     msrun_cmd = "msrun --worker_num=2 --local_worker_num=2 --master_port=12333 --join=True "\
                 f"--bind_core='{bind_core_arg}' {script}"
 
     return_code = os.system(f"{env} {msrun_cmd} > {output} 2>&1")
-    assert os.path.exists(output)
 
     # check results of msrun --bind_core arg.
     with open(output, "r", encoding="utf-8") as f:
@@ -277,11 +278,13 @@ def test_msrun_bind_manual_empty_list_and_single_core():
         print(output_log, flush=True)
     assert return_code == 0
     assert re.search(r"Start scheduler process.*? Execute command: taskset -c 10", output_log)
-    assert re.search(r"Start worker process with rank id:0.*? Execute command:(?!.*taskset -c).*?", output_log)
+    assert re.search(r"Start worker process with rank id:0.*? Execute command:(?!.*taskset).*?", output_log)
     assert re.search(r"Start worker process with rank id:1.*? Execute command: taskset -c 20-29,31 .*?", output_log)
 
 
-def test_msrun_bind_manual_wrong_key_value():
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='allcards',
+        essential_mark='essential')
+def test_msrun_bind_core_manual_wrong_key_value():
     """
     Feature: Runtime msrun --bind_core arg.
     Description: Test msrun --bind_core with customized bind core policy and wrong parameters.
@@ -291,7 +294,7 @@ def test_msrun_bind_manual_wrong_key_value():
     env += "export GLOG_v=2;"
 
     real_path = os.path.realpath(os.getcwd())
-    script = real_path + "/run_bind_core.py"
+    script = real_path + "/run_bind.py"
     assert os.path.exists(script)
 
     # Test for wrong key "DEVICE0".
@@ -307,7 +310,7 @@ def test_msrun_bind_manual_wrong_key_value():
             text=True
         )
     print(err_info.value.stderr, flush=True)
-    assert "Key DEVICE0 must be in format 'scheduler' or 'deviceX' (X ≥ 0)" in err_info.value.stderr
+    assert "Key DEVICE0 must be in format 'scheduler' or 'deviceX'." in err_info.value.stderr
 
     # Test for wrong value "0-10".
     bind_core_arg = '{"device0":"0-10", "scheduler":[], "device1":["20-29"]}'
@@ -352,4 +355,7 @@ def test_msrun_bind_manual_wrong_key_value():
             text=True
         )
     print(err_info.value.stderr, flush=True)
-    assert "CPU 0~9 in ['0~9'] should be in format 'cpuidX' or 'cpuidX-cpuidY'" in err_info.value.stderr
+    assert (
+        "CPU 0~9 in ['0~9'] should be in format 'cpuidX', 'cpuidX,cpuidY' or 'cpuidX-cpuidY'."
+        in err_info.value.stderr
+    )
