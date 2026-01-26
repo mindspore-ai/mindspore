@@ -1,6 +1,6 @@
 <!--  Thanks for sending a pull request!  Here are some tips for you:
 
-1) If this is your first time, please read our contributor guidelines: https://gitee.com/mindspore/mindspore/blob/master/CONTRIBUTING.md
+1) If this is your first time, please read our contributor guidelines: https://atomgit.com/mindspore/mindspore/blob/master/CONTRIBUTING.md
 
 2) If you want to contribute your code but don't know who will review and merge, please add label `mindspore-assistant` to the pull request, we will find and do it as soon as possible.
 -->
@@ -25,7 +25,7 @@ Usage: `Fixes #<issue number>`, or `Fixes (paste link of issue)`.
 Fixes #
 
 
-**Code review checklist [[illustration]](https://gitee.com/mindspore/community/blob/master/security/code_review_checklist_mechanism.md)**:
+**Code review checklist [[illustration]](https://atomgit.com/mindspore/community/blob/master/security/code_review_checklist_mechanism.md)**:
 
 + - [ ] whether to verify the function's return value (It is forbidden to use void to mask the return values of security functions and self-developed functions. C++ STL functions can be masked if there is no problem)
 + - [ ] Whether to comply with ***SOLID principle / Demeter's law***
