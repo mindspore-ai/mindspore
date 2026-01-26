@@ -45,7 +45,7 @@ For other defined types, see the following table.
 ============================   =================
 Type                            Description
 ============================   =================
-``tensor``                      MindSpore's ``tensor`` type. Data format uses NCHW. For details, see `tensor <https://www.gitee.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/common/tensor.py>`_.
+``tensor``                      MindSpore's ``tensor`` type. Data format uses NCHW. For details, see `tensor <https://www.atomgit.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/common/tensor.py>`_.
 ``complex``                     Complex scalar.
 ``number``                      Number, including base data types above, such as ``int16`` , ``float32`` .
 ``list_``                       List constructed by ``tensor`` , such as ``List[T0,T1,...,Tn]`` , where the element ``Ti`` can be of different types.

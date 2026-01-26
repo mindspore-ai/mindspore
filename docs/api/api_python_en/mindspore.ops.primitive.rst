@@ -16,7 +16,7 @@ The module import method is as follows:
 
     import mindspore.ops as ops
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops.primitive` operators in MindSpore, please refer to the link `mindspore.ops.primitive API Interface Change <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates_en.md>`_ .
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops.primitive` operators in MindSpore, please refer to the link `mindspore.ops.primitive API Interface Change <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/ops_api_updates_en.md>`_ .
 
 Operator Primitives
 -------------------

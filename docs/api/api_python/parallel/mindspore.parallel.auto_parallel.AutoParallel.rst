@@ -229,10 +229,10 @@
 
     .. py:method:: transformer_opt(file_path)
 
-        并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_。当设置为None时，表示不启用。
+        并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://atomgit.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_。当设置为None时，表示不启用。
 
         参数：
-            - **file_path** (Union[str, None]) - 并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ 。
+            - **file_path** (Union[str, None]) - 并行加速配置文件，配置项可以参考 `parallel_speed_up.json <https://atomgit.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ 。
               当设置为None时，表示不启用。
 
               - **recomputation_communication_overlap** (bool): 为 ``True`` 时表示开启反向重计算和通信掩盖。默认值： ``False`` 。

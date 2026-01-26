@@ -10,7 +10,7 @@ mint接口当前是实验性接口，在图编译模式为O0和PyNative模式下
 
     from mindspore import mint
 
-MindSpore中 `mindspore.mint` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.mint API接口变更 <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/mint_api_updates_cn.md>`_ 。
+MindSpore中 `mindspore.mint` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.mint API接口变更 <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/mint_api_updates_cn.md>`_ 。
 
 Tensor
 ---------------

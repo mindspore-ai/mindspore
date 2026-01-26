@@ -1273,7 +1273,7 @@ class CustomOpBuilder:
         - If the `backend` argument is provided, additional default flags will be automatically added to
           the compilation and linking steps to support the operator's target backend. The default options
           can be referenced in the implementation of the `get_cflags` and `get_ldflags` methods in the `CustomOpBuilder
-          <https://gitee.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/ops/operations/custom_ops.py>`_.
+          <https://atomgit.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/ops/operations/custom_ops.py>`_.
         - The `sources` argument must point to valid source files for the custom operator.
 
     Supported Platforms:

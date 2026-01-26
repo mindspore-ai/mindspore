@@ -23,7 +23,7 @@ For individual contributor, please refer to [ICLA online document](https://www.m
 
 ## Getting Started
 
-- Fork the repository on [Github](https://github.com/mindspore-ai/mindspore) or [Gitee](https://gitee.com/mindspore/mindspore).
+- Fork the repository on [Github](https://github.com/mindspore-ai/mindspore) or [AtomGit](https://atomgit.com/mindspore/mindspore).
 - Read the [README.md](README.md) and [install page](https://www.mindspore.cn/install/en) for project information and build instructions.
 
 ## Contribution Workflow
@@ -67,9 +67,9 @@ Please follow this style to make MindSpore easy to review, maintain and develop.
     # For GitHub
     git clone https://github.com/{insert_your_forked_repo}/mindspore.git
     git remote add upstream https://github.com/mindspore-ai/mindspore.git
-    # For Gitee
-    git clone https://gitee.com/{insert_your_forked_repo}/mindspore.git
-    git remote add upstream https://gitee.com/mindspore/mindspore.git
+    # For AtomGit
+    git clone https://atomgit.com/{insert_your_forked_repo}/mindspore.git
+    git remote add upstream https://atomgit.com/mindspore/mindspore.git
     ```
 
 - Develop code locally
@@ -118,11 +118,11 @@ When reporting issues, refer to this format:
 - **If you find an unclosed issue, which is exactly what you are going to solve,** please put some comments on that issue to tell others you would be in charge of it.
 - **If an issue is opened for a while,** it's recommended for contributors to precheck before working on solving that issue.
 - **If you resolve an issue which is reported by yourself,** it's also required to let others know before closing that issue.
-- **If you want the issue to be responded as quickly as possible,** please try to label it, you can find kinds of labels on [Label List](https://gitee.com/mindspore/community/blob/master/archived_sigs/dx/docs/labels.md)
+- **If you want the issue to be responded as quickly as possible,** please try to label it, you can find kinds of labels on [Label List](https://atomgit.com/mindspore/community/blob/master/archived_sigs/dx/docs/labels.md)
 
 ### Propose PRs
 
-- Raise your idea as an *issue* on [GitHub](https://github.com/mindspore-ai/mindspore/issues) or [Gitee](https://gitee.com/mindspore/mindspore/issues)
+- Raise your idea as an *issue* on [GitHub](https://github.com/mindspore-ai/mindspore/issues) or [AtomGit](https://atomgit.com/mindspore/mindspore/issues)
 - If it is a new feature that needs lots of design details, a design proposal should also be submitted.
 - After reaching consensus in the issue discussions and design proposal reviews, complete the development on the forked repo and submit a PR.
 - None of PRs is not permitted until it receives **2+ LGTM** from approvers. Please NOTICE that approver is NOT allowed to add *LGTM* on his own PR.

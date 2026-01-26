@@ -96,7 +96,7 @@ class _ExperimentalConfig:
             html>`_ .
             Note that in step 3 of configuring user permissions, the content in the msprof_data_collection.sh
             script needs to be replaced with `msprof_data_collection.sh
-            <https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/mindspore/script/
+            <https://atomgit.com/mindspore/mindspore/blob/master/docs/api/api_python/mindspore/script/
             msprof_data_collection.sh>`_.
 
             Final deliverables by `MindStudio Insight

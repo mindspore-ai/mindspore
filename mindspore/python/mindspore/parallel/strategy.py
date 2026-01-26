@@ -65,7 +65,7 @@ def get_strategy_metadata(network, rank_id=None) -> Dict[int, Dict[str, List[Lay
         >>> ms.set_seed(1)
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> with no_init_parameters():
         ...     net = LeNet5()
         ...     optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -75,7 +75,7 @@ def get_strategy_metadata(network, rank_id=None) -> Dict[int, Dict[str, List[Lay
         >>> model = Model(network=train_net, loss_fn=loss, optimizer=optim, metrics=None)
         >>>
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>>
         >>> enable_save_strategy_online()

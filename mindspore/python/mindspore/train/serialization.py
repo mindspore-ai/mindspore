@@ -686,7 +686,7 @@ def save_checkpoint(save_obj, ckpt_file_name, integrated_save=True,
         >>> import mindspore as ms
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> ms.save_checkpoint(net, "./lenet.ckpt",
         ...                    choice_func=lambda x: x.startswith("conv") and not x.startswith("conv1"))
@@ -1488,10 +1488,10 @@ def load_checkpoint_async(ckpt_file_name, net=None, strict_load=False, filter_pr
         >>> mindspore.set_device(device_target="Ascend")
         >>> context.set_context(mode=context.GRAPH_MODE)
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> ckpt_file = "./checkpoint/LeNet5-1_32.ckpt"
         >>> net = LeNet5()
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
@@ -1709,7 +1709,7 @@ def load_param_into_net(net, parameter_dict, strict_load=False, remove_redundanc
         >>> import mindspore as ms
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> ckpt_file_name = "./checkpoint/LeNet5-1_32.ckpt"
         >>> param_dict = ms.load_checkpoint(ckpt_file_name, filter_prefix="conv1")
@@ -2018,7 +2018,7 @@ def export(net, *inputs, file_name, file_format, **kwargs):
         >>> from mindspore import Tensor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.export(net, input_tensor, file_name='lenet', file_format='MINDIR')
@@ -2100,7 +2100,7 @@ def _get_funcgraph(net, *inputs):
         >>> from mindspore import Tensor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.get_funcgraph(net, input_tensor)

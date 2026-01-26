@@ -11,7 +11,7 @@ mindspore.ops提供了大量的function接口，包括神经网络函数、数�
 
     from mindspore import ops
 
-MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.ops API接口变更 <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/func_api_updates_cn.md>`_ 。
+MindSpore中 `mindspore.ops` 接口与上一版本相比，新增、删除和支持平台的变化信息请参考 `mindspore.ops API接口变更 <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/func_api_updates_cn.md>`_ 。
 
 Tensor操作函数
 ----------------
