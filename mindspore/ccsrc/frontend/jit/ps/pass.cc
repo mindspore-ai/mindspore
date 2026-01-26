@@ -1718,6 +1718,70 @@ bool EliminateUnusedParamsPass(const ResourcePtr &resource) {
   return true;
 }
 
+void ParseOffloadAnnotation(const CNodePtr &cnode, std::string_view comments) {
+  // Format: @jit.offload: [release[N]] [prefetch[M]] [on|off]
+  static constexpr std::string_view annotation = "@jit.offload:";
+  size_t pos = comments.find(annotation);
+  if (pos == std::string_view::npos) {
+    return;
+  }
+  pos += annotation.size();
+  size_t end = comments.find('\n', pos);
+  std::string_view content = comments.substr(pos, (end == std::string_view::npos) ? std::string_view::npos : end - pos);
+
+  auto parse_content = [&](const std::string_view key, const std::string_view attr) {
+    size_t start = content.find(key);
+    if (start == std::string_view::npos) return;
+    size_t end = content.find(']', start);
+    if (end == std::string_view::npos) return;
+
+    std::string val_str(content.substr(start + key.size(), end - start - key.size()));
+    try {
+      size_t val = std::stoull(val_str);
+      std::string attr_str(attr);
+      cnode->AddAttr(attr_str, MakeValue<size_t>(val));
+      MS_LOG(DEBUG) << "AddAttr " << attr_str << ": " << val;
+    } catch (const std::exception &e) {
+      MS_LOG(WARNING) << "Parse offload annotation failed. Node: " << cnode->fullname_with_scope()
+                      << ". Comment: " << comments << ". Error:" << e.what();
+    }
+  };
+
+  parse_content("release[", "release_distance");
+  parse_content("prefetch[", "prefetch_distance");
+
+  if (content.find("on") != std::string_view::npos) {
+    cnode->AddAttr("enable_offload", MakeValue<bool>(true));
+    MS_LOG(DEBUG) << "AddAttr enable_offload:" << true;
+  } else if (content.find("off") != std::string_view::npos) {
+    cnode->AddAttr("enable_offload", MakeValue<bool>(false));
+    MS_LOG(DEBUG) << "AddAttr enable_offload:" << false;
+  }
+}
+
+bool ProcessOffloadAnnotationPass(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  MS_EXCEPTION_IF_NULL(resource->manager());
+  auto manager = resource->manager();
+  const auto &all_nodes = manager->all_nodes();
+
+  for (const auto &node : all_nodes) {
+    if (node == nullptr || !node->isa<CNode>()) {
+      continue;
+    }
+
+    auto cnode = node->cast<CNodePtr>();
+    MS_LOG(DEBUG) << "Process node:" << cnode->fullname_with_scope();
+    std::string comments;
+    DumpCommentsInCurrentScope(cnode->debug_info(), comments);
+    if (!comments.empty()) {
+      ParseOffloadAnnotation(cnode, comments);
+    }
+  }
+
+  return true;
+}
+
 bool ValidatePass(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   MS_EXCEPTION_IF_NULL(resource->func_graph());

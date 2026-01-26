@@ -94,6 +94,8 @@ COMMON_EXPORT void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, Ordere
 
 COMMON_EXPORT void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer, size_t sub_graphs_size);
 
+COMMON_EXPORT void DumpCommentsInCurrentScope(const DebugInfoPtr &debug_info, std::string &result);
+
 struct ParamPtrEqual {
   bool operator()(AnfNodePtr const &t1, AnfNodePtr const &t2) const {
     const ParameterPtr param1 = dyn_cast<Parameter>(t1);

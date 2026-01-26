@@ -49,6 +49,8 @@ bool AutoParallelPass(const ResourcePtr &resource);
 bool AutoParallelSymbolPassWithReNormalize(const ResourcePtr &resource);
 bool ParallelVirtualDatasetPass(const ResourcePtr &resource);
 bool EliminateUnusedParamsPass(const ResourcePtr &resource);
+bool ProcessOffloadAnnotationPass(const ResourcePtr &resource);
+void ParseOffloadAnnotation(const CNodePtr &cnode, std::string_view comments);
 bool ValidatePass(const ResourcePtr &resource);
 bool GradPartialTransformPass(const ResourcePtr &resource);
 bool PynativeOptPass(const ResourcePtr &resource);

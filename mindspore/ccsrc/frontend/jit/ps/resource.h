@@ -73,6 +73,7 @@ const char kRewriterAfterJitBprop[] = "rewriter_after_jit_bprop_graph";
 const char kOptAfterJitGrad[] = "opt_after_jit_grad";
 const char kWaitDistCommInitDone[] = "wait_dist_comm_init_done";
 const char kUnusedParamsEliminate[] = "eliminate_unused_params";
+const char kOffloadAnnotation[] = "process_offload_annotation";
 const char kValidate[] = "validate";
 const char kLoadMindir[] = "load_mindir";
 const char kInferMindir[] = "infer_mindir";
