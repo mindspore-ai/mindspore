@@ -8,9 +8,9 @@
 
 #### Dataset
 
-- [STABLE] The [mindspore.dataset.dataloader.DataLoader](https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.dataloader.html) API is added, which is consistent with the mainstream API usage in the industry in terms of usage and functions, facilitating user reference. In addition, various commonly used methods for `datasets`, `samplers`, `collate functions`, and `tools` are added.
+- [STABLE] The [mindspore.dataset.dataloader.DataLoader](https://www.mindspore.cn/docs/en/master/api_python/mindspore.dataset.dataloader.html) API is added, aligning with industry-standard API design patterns and functions to enhance user experience. In addition, various commonly used methods for `datasets`, `samplers`, `collate functions`, and `tools` are added.
 - [STABLE] The `.send(...)` and `.recv(...)` APIs are added for communication between nodes of the dataset object. These APIs enable the dataset data processing results to be transmitted between different nodes.
-- [STABLE] When `.map(...)` is used for data augmentation and a custom PyFunc augmentation function is used in multi-process mode, if the PyFunc function execution is slow or hung, a warning will be printed to notify the user: `** worker subprocess stack:...`.
+- [STABLE] When `.map(...)` is used for data augmentation and a custom PyFunc augmentation function is used in multi-process mode, if the PyFunc function execution is slow or hangs, a warning will be printed to notify the user: `** worker subprocess stack:...`.
 
 #### Executor
 
