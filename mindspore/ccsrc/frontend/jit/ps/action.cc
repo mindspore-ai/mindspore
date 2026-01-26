@@ -35,6 +35,7 @@
 #include "ir/func_graph_cloner.h"
 #include "ir/param_info.h"
 #include "ir/cell.h"
+#include "ir/func_graph_flag.h"
 #include "device_address/device_address.h"
 #include "include/frontend/jit/ps/action_interface.h"
 #include "include/utils/pynative/grad_state.h"
@@ -65,6 +66,7 @@
 #include "frontend/jit/ps/resource.h"
 #include "frontend/jit/ps/remove_value_node_dup.h"
 #include "frontend/jit/ps/event_message_print.h"
+#include "include/frontend/jit/ps/static_analysis/custom_infer_registry.h"
 #include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/ad/grad.h"
 #include "frontend/optimizer/custom_pass/custom_pass_executor.h"
@@ -97,7 +99,6 @@
 #include "primitive/auto_generate/gen_ops_primitive_p.h"
 #include "primitive/auto_generate/gen_ops_primitive_r.h"
 #include "primitive/auto_generate/gen_ops_primitive_s.h"
-#include "ir/func_graph_flag.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -1368,6 +1369,7 @@ bool TypeInferenceAction(const ResourcePtr &resource) {
   if (resource->func_graph() == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "AbstractSpecialize error";
   }
+  OpWrapperRegistry::GetInstance()->set_type_inference_flag(true);
   SetMindIRLoadFlag(resource);
   // Abstract analyze
   auto engine = resource->engine();
@@ -1414,6 +1416,7 @@ bool TypeInferenceAction(const ResourcePtr &resource) {
   SetMindIRLoadFlag(resource);
   SetViewInplaceGradFlag(resource);
   abstract::ReOrderParameterForwardHookNodes(new_fg, resource);
+  OpWrapperRegistry::GetInstance()->set_type_inference_flag(false);
 
   MS_LOG(DEBUG) << "End graph: " << new_fg->ToString() << ", return: " << new_fg->get_return()->DebugString(true);
   return true;

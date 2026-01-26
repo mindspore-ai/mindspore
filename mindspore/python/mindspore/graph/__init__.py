@@ -18,7 +18,14 @@
 from mindspore.graph.custom_pass import CustomPassType
 from mindspore.graph.custom_pass import register_custom_pass
 from mindspore.graph.custom_backend import register_custom_backend
+from mindspore.graph.custom_infer import register_op_infer, register_op_wrapper, clear_op_infer, clear_op_wrapper
 
 __all__ = [
-    "CustomPassType", "register_custom_pass", "register_custom_backend"
+    "register_custom_pass",
+    "register_custom_backend",
+    "register_op_infer",
+    "register_op_wrapper",
+    "clear_op_infer",
+    "clear_op_wrapper",
+    "CustomPassType",
 ]

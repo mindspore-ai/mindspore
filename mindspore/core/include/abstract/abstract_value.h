@@ -745,6 +745,8 @@ class MS_CORE_API AbstractTensor : public AbstractUndetermined {
 
   AbstractBasePtr PartialBroaden() const override;
 
+  AbstractBasePtr element() const { return element_; }
+
  protected:
   bool equal_to(const AbstractTensor &other) const;
 };

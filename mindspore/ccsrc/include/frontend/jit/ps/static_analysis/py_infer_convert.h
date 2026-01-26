@@ -26,7 +26,11 @@ namespace py = pybind11;
 
 namespace mindspore {
 namespace abstract {
-FRONTEND_EXPORT py::tuple PreparePyInputs(const AbstractBasePtrList &args);
+/// \brief Prepare Python inputs from abstract arguments for inference value functions
+/// \param[in] args List of abstract base pointers needed to be converted.
+/// \param[in] create_empty_tensor If true, create empty tensor when argument is a tensor with anyvalue (default: false)
+/// \return Python tuple containing converted arguments, each converted to dictionary format via ConvertAbstractToPython
+FRONTEND_EXPORT py::tuple PreparePyInputs(const AbstractBasePtrList &args, bool create_empty_tensor = false);
 FRONTEND_EXPORT AbstractBasePtr PyInferRes2Abstract(const PrimitivePyPtr &prim_py, const py::dict &output);
 }  // namespace abstract
 }  // namespace mindspore

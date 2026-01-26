@@ -163,6 +163,8 @@ void RegFrontendModule(py::module *m) {
   RegFuncGraph(m);
   mindspore::trace::RegTraceRecorderPy(m);
   RegUpdateFuncGraphHyperParams(m);
+  RegOpInferRegistryPy(m);
+  RegOpWrapperRegistryPy(m);
 
   RegParamInfo(m);
   RegPrimitive(m);

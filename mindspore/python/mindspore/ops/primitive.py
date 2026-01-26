@@ -861,6 +861,8 @@ def _check_contains_variable(item_dtype, item_value):
         for i in range(len(item_value)):
             if _check_contains_variable(item_dtype[i], list(item_value.values())[i]):
                 return True
+    if hasattr(item_value, 'created_empty_tensor'):
+        return item_dtype is not None and item_value.created_empty_tensor
     return item_dtype is not None and item_value is None
 
 

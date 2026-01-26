@@ -316,6 +316,9 @@ constexpr auto kSeqChunk = "seq_chunk";
 constexpr auto kChunk = "chunk";
 constexpr auto kMicro = "micro";
 
+// custom infer
+constexpr auto kCustomAttrName = "custom_attr_name";
+
 // User data key.
 
 // pyexecute.

@@ -39,6 +39,10 @@ FRONTEND_EXPORT void RegPrimitiveFrontEval();
 namespace trace {
 FRONTEND_EXPORT void RegTraceRecorderPy(const py::module *m);
 }
+
+FRONTEND_EXPORT void RegOpInferRegistryPy(const py::module *m);
+
+FRONTEND_EXPORT void RegOpWrapperRegistryPy(const py::module *m);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_PYBIND_API_FRONTEND_FRONTEND_API_H_
