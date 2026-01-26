@@ -5,6 +5,8 @@
       "CODEOWNERS",
       ".jenkins",
       ".clang-format",
+      ".github",
+      ".gitcode",
       "setup.py",
       "requirements.txt",
       "docker",
