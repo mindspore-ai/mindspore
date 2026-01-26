@@ -5012,7 +5012,8 @@ op_db: Dict[str, OpInfo] = {
         ref=torch.maximum,
         #On Ascend 910A and 910B, float64 is not supported due to backward compatibility, so we need to exclude it.
         dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float64),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.float64),
+        dtypes_ascend910b=tuple(
+            d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.float64),
         dtypes_cpu=tuple(),
         dtypes_gpu=tuple(),
         op_dynamic_inputs_func=None,
@@ -5416,9 +5417,8 @@ op_db: Dict[str, OpInfo] = {
         name='mint.sinh',
         op=mint.sinh,
         ref=torch.sinh,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint16 and d != ms.uint32
-                                                           and d != ms.uint64)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d != ms.uint16 and d != ms.uint32 and d != ms.uint64)),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5476,9 +5476,8 @@ op_db: Dict[str, OpInfo] = {
         name='mint.cos',
         op=mint.cos,
         ref=torch.cos,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint16 and d != ms.uint32
-                                                           and d != ms.uint64)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d != ms.uint16 and d != ms.uint32 and d != ms.uint64)),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5568,9 +5567,8 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.cos',
         op=tensor_cos_ms,
         ref=tensor_cos_torch,
-        dtypes_ascend=tuple(d for d in dtypes_as_torch if (d != ms.bfloat16 and d != ms.uint16
-                                                           and d != ms.uint32 and d != ms.uint64)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if (d != ms.uint16 and d != ms.uint32 and d != ms.uint64)),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
         dtypes_gpu=(),
         disable_large_value_tensor_inputs=True,
@@ -5669,8 +5667,8 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.bool',
         op=tensor_bool_ms,
         ref=tensor_bool_torch,
-        dtypes_ascend=(tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.bool_)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bool_),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex),
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
@@ -5679,8 +5677,8 @@ op_db: Dict[str, OpInfo] = {
         name='Tensor.double',
         op=tensor_double_ms,
         ref=tensor_double_torch,
-        dtypes_ascend=(tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.bfloat16 and d != ms.double)),
-        dtypes_ascend910b=tuple(d for d in dtypes_as_torch if not d.is_complex and d != ms.double),
+        dtypes_ascend=tuple(d for d in dtypes_as_torch if d != ms.bfloat16),
+        dtypes_ascend910b=tuple(d for d in dtypes_as_torch),
         dtypes_cpu=(),
         dtypes_gpu=(),
         is_differentiable=False,
@@ -6326,9 +6324,7 @@ op_db: Dict[str, OpInfo] = {
         name='mint.exp',
         op=mint.exp,
         ref=torch.exp,
-        dtypes_ascend=(
-            ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128, ms.int64, ms.bool_
-        ),
+        dtypes_ascend=(ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128, ms.int64, ms.bool_),
         dtypes_ascend910b=(
             ms.bfloat16, ms.float16, ms.float32, ms.float64, ms.complex64, ms.complex128, ms.int64, ms.bool_
         ),
@@ -7459,6 +7455,7 @@ binary_op_kbk_db = [
     'mint.eq',
     'mint.ne',
     'mint.mul',
+    'mint.maximum',
 ]
 
 binary_op_error_db = [
@@ -7472,6 +7469,8 @@ unary_op_kbk_db = [
     'mint.nn.functional.relu',
     'mint.tile',
     'mint.acosh',
+    'mint.clone',
+    'Tensor.contiguous',
 ]
 
 other_op_kbk_db = [
