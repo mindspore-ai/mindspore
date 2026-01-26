@@ -59,7 +59,7 @@ class CSVDataset(SourceDataset, UnionBaseDataset):
         column_names (list[str], optional): List of column names of the dataset. Default: ``None``. If this
             is not provided, infers the column_names from the first row of CSV file.
         num_samples (int, optional): The number of samples to be included in the dataset.
-            Default: ``None``, will include all images.
+            Default: ``None``, will include all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: ``None``, will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
@@ -341,7 +341,7 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
     The columns of generated dataset depend on the source TFRecord files.
 
     Note:
-        'TFRecordDataset' is not support on Windows platform yet.
+        'TFRecordDataset' is not supported on Windows platform yet.
 
     Args:
         dataset_files (Union[str, list[str]]): String or list of files to be read or glob strings to search for a
@@ -457,7 +457,6 @@ class TFRecordDataset(SourceDataset, UnionBaseDataset):
 
 class OBSMindDataset(GeneratorDataset):
     """
-
     A source dataset that reads and parses MindRecord dataset which stored in cloud storage
     such as OBS, Minio or AWS S3.
 
@@ -503,7 +502,7 @@ class OBSMindDataset(GeneratorDataset):
             This argument should only be specified when `num_shards` is also specified.
 
     Raises:
-        RuntimeError: If `sync_obs_path` do not exist.
+        RuntimeError: If `sync_obs_path` does not exist.
         ValueError: If `columns_list` is invalid.
         RuntimeError: If `num_shards` is specified but `shard_id` is None.
         RuntimeError: If `shard_id` is specified but `num_shards` is None.

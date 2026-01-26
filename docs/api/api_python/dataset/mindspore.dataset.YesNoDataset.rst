@@ -56,7 +56,7 @@ mindspore.dataset.YesNoDataset
 
         @NetworkResource{Kaldi_audio_project,
         author    = {anonymous},
-        url       = "http://wwww.openslr.org/1/"
+        url       = "http://www.openslr.org/1/"
         }
 
 
