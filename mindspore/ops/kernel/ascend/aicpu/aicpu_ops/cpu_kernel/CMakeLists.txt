@@ -54,6 +54,8 @@ target_link_libraries(mindspore_cpu_kernels PRIVATE
 
 if(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend/libcpu_kernels_context.a")
     set(CONTEXT_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend/libcpu_kernels_context.a")
+elseif(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend910/libcpu_kernels_context.a")
+    set(CONTEXT_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend910/libcpu_kernels_context.a")
 else()
     message(FATAL_ERROR "Can not find libcpu_kernels_context.a in the environment."
                         "Please check if the cann package is installed properly.")
@@ -61,6 +63,8 @@ endif()
 
 if(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend/libascend_protobuf.a")
     set(PROTOBUF_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend/libascend_protobuf.a")
+elseif(EXISTS "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend910/libascend_protobuf.a")
+    set(PROTOBUF_LIB "${ASCEND_CANN_AICPU_KERNEL_PATH}/lib/Ascend910/libascend_protobuf.a")
 else()
     message(FATAL_ERROR "Can not find libascend_protobuf.a in the environment."
                         "Please check if the cann package is installed properly.")
