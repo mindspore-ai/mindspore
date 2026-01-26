@@ -29,12 +29,6 @@ extern "C" {
 struct HcomOperation;
 }  // extern C
 
-using OptionsType = std::map<std::string, std::string>;
-using HExecCallBack = std::function<void(HcclResult)>;
-
-PLUGIN_METHOD(InitHcomGraphAdapter, ge::Status, const OptionsType &);
-PLUGIN_METHOD(FinalizeHcomGraphAdapter, ge::Status);
-
 ORIGIN_METHOD(HcclBroadcast, HcclResult, void *, uint64_t, HcclDataType, uint32_t, HcclComm, aclrtStream);
 ORIGIN_METHOD(HcclAllReduce, HcclResult, void *, void *, uint64_t, HcclDataType, HcclReduceOp, HcclComm, aclrtStream);
 ORIGIN_METHOD(HcclReduce, HcclResult, void *, void *, uint64_t, HcclDataType, HcclReduceOp, uint32_t, HcclComm,
