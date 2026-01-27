@@ -12,22 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""ST tests for select operator on GPU."""
+
 from tests.mark_utils import arg_mark
 
 import numpy as np
 import pytest
 
-import mindspore
-import mindspore.context as context
-import mindspore.nn as nn
-import mindspore.ops as ops
+import mindspore as ms
+from mindspore import context
+from mindspore import nn
+from mindspore import ops
 from mindspore import Tensor, jit
 from mindspore.ops import operations as P
 
 
 class Net(nn.Cell):
     def __init__(self):
-        super(Net, self).__init__()
+        super().__init__()
         self.select = P.Select()
 
     def construct(self, cond_op, input_x, input_y):
@@ -94,8 +96,8 @@ def test_tensor_select_input_tensor():
     Expectation: Assert result.
     """
     cond = Tensor([True, False])
-    x = Tensor([2, 3], mindspore.int32)
-    y = Tensor([1, 2], mindspore.int32)
+    x = Tensor([2, 3], ms.int32)
+    y = Tensor([1, 2], ms.int32)
     output1 = x.select(cond, y)
     output2 = select_tensor_fn(cond, x, y)
     assert np.all(output1.asnumpy() == np.array([2, 2]))
@@ -110,7 +112,7 @@ def test_tensor_select_input_number():
     Expectation: Assert result.
     """
     cond = Tensor([True, False])
-    x = Tensor([2, 3], mindspore.int32)
+    x = Tensor([2, 3], ms.int32)
     y = 5
     output1 = x.select(cond, y)
     output2 = select_tensor_fn(cond, x, y)
@@ -128,8 +130,8 @@ def test_select_fn_vmap():
     select_vmap_1 = ops.vmap(select_ops_fn, (0, 0, 0))
     select_vmap_2 = ops.vmap(select_ops_fn, (0, 0, None))
     condition = Tensor([[True, False], [True, True]])
-    x = Tensor([[2, 3], [3, 1]], mindspore.int32)
-    y = Tensor([[1, 2], [5, 6]], mindspore.int32)
+    x = Tensor([[2, 3], [3, 1]], ms.int32)
+    y = Tensor([[1, 2], [5, 6]], ms.int32)
     output1 = select_vmap_1(condition, x, y)
     output2 = select_vmap_2(condition, x, 5)
     assert np.all(output1.asnumpy() == np.array([[2, 2], [3, 1]]))
@@ -146,9 +148,42 @@ def test_select_tensor_vmap():
     select_vmap_1 = ops.vmap(select_tensor_fn, (0, 0, 0))
     select_vmap_2 = ops.vmap(select_tensor_fn, (0, 0, None))
     condition = Tensor([[True, False], [True, True]])
-    x = Tensor([[2, 3], [3, 1]], mindspore.int32)
-    y = Tensor([[1, 2], [5, 6]], mindspore.int32)
+    x = Tensor([[2, 3], [3, 1]], ms.int32)
+    y = Tensor([[1, 2], [5, 6]], ms.int32)
     output1 = select_vmap_1(condition, x, y)
     output2 = select_vmap_2(condition, x, 5)
     assert np.all(output1.asnumpy() == np.array([[2, 2], [3, 1]]))
     assert np.all(output2.asnumpy() == np.array([[2, 5], [3, 1]]))
+
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='essential')
+@pytest.mark.parametrize("mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_select_broadcast_forward_backward(mode):
+    """
+    Feature: Test select operator broadcast.
+    Description: select with broadcasted x, check forward and backward.
+    Expectation: forward and grads are correct.
+    """
+    context.set_context(mode=mode, device_target="GPU")
+    cond = Tensor(np.array([[True, False], [True, False]]).astype(np.bool_))
+    x = Tensor(np.array([[10.], [20.]]).astype(np.float32))
+    y = Tensor(np.array([[1., 2.], [3., 4.]]).astype(np.float32))
+    output = ops.select(cond, x, y)
+    expect_out = np.array([[10., 2.], [20., 4.]]).astype(np.float32)
+    np.testing.assert_allclose(output.asnumpy(), expect_out, rtol=1e-6,
+                               atol=1e-6)
+
+    sens = Tensor(np.array([[1., 2.], [3., 4.]]).astype(np.float32))
+
+    def select_forward(c, a, b):
+        return ops.select(c, a, b)
+
+    grad_fn = ops.grad(select_forward, grad_position=(1, 2), sens_param=True)
+    dx, dy = grad_fn(cond, x, y, sens)
+    expect_dx = np.array([[1.], [3.]]).astype(np.float32)
+    expect_dy = np.array([[0., 2.], [0., 4.]]).astype(np.float32)
+    np.testing.assert_allclose(dx.asnumpy(), expect_dx, rtol=1e-6,
+                               atol=1e-6)
+    np.testing.assert_allclose(dy.asnumpy(), expect_dy, rtol=1e-6,
+                               atol=1e-6)

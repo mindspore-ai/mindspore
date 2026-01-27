@@ -41,10 +41,11 @@ struct TrinaryBroadcastStrideInfo {
   size_t in2_stride[8];
   size_t out_stride[8];
 };
-TrinaryBroadcastStrideInfo TrinaryBroadcastCalStride(const size_t dim_size, const std::vector<int64_t> &in0_shape,
-                                                     const std::vector<int64_t> &in1_shape,
-                                                     const std::vector<int64_t> &in2_shape,
-                                                     const std::vector<int64_t> &out_shape);
+CUDA_LIB_EXPORT TrinaryBroadcastStrideInfo TrinaryBroadcastCalStride(const size_t dim_size,
+                                                                     const std::vector<int64_t> &in0_shape,
+                                                                     const std::vector<int64_t> &in1_shape,
+                                                                     const std::vector<int64_t> &in2_shape,
+                                                                     const std::vector<int64_t> &out_shape);
 
 template <typename T>
 __global__ void BroadcastToCpyCuda(size_t dim_size, size_t output_num, UnaryBroadcastStrideInfo strides, T *input,
