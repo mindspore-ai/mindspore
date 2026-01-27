@@ -311,7 +311,7 @@ class ASCEND_RES_MANAGER_EXPORT FASInputLayoutMode {
  public:
   static std::string ConvertEnumToString(int64_t id) {
     static const std::vector<std::string> input_layout_modes = {"BSH", "BNSD", "SBH", "BSND",     "TND",
-                                                                "TH",  "NSD",  "SH",  "BNSD_BSND"};
+                                                                "TH",  "NSD",  "SH",  "BNSD_BSND", "PA_BSND"};
     if (id < 0 || id >= static_cast<int64_t>(input_layout_modes.size())) {
       MS_LOG(EXCEPTION) << "Invalid input layout mode " << id;
       return "";

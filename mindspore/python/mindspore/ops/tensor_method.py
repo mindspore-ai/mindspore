@@ -2094,3 +2094,13 @@ def _tensor_nsa_compress_attention(
     ):
     """Placeholder for unsupported devices: nsa_compress_attention."""
     raise RuntimeError("'nsa_compress_attention' is only supported on Ascend.")
+
+
+def _tensor_sparse_flash_attention(query, key, value, sparse_indices, scale_value, *,
+                                   block_table=None, actual_seq_lengths_query=None, actual_seq_lengths_kv=None,
+                                   query_rope=None, key_rope=None, sparse_block_size=1,
+                                   layout_query='BSND', layout_kv='BSND', sparse_mode=3,
+                                   pre_tokens=9223372036854775807, next_tokens=9223372036854775807,
+                                   attention_mode=0, return_softmax_lse=False):
+    """Placeholder for unsupported devices: sparse_flash_attention."""
+    raise RuntimeError("'sparse_flash_attention' is only supported on Ascend.")
