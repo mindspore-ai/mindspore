@@ -20,14 +20,14 @@
 #include "mindspore/ops/op_def/sequence_ops.h"
 #include "common/py_func_graph_fetcher.h"
 
+#include "include/frontend/jit/ps/action_interface.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "ir/anf.h"
 #include "ir/visitor.h"
 #include "ir/func_graph_cloner.h"
-#include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/arithmetic_simplify.h"
-#include "frontend/jit/ps/action.h"
 
 #include "mindspore/ccsrc/utils/ir_dump/draw.h"
 #include "frontend/operator/ops.h"

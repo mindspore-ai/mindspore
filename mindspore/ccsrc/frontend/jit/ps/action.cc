@@ -2215,6 +2215,10 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag,
     // Eliminate the virtual mirror node
     (void)actions.emplace_back(std::make_pair(kOptAfterJitGrad, OptAfterJitGrad));
 
+    if ((common::GetEnv("MS_DEV_HYPER_OFFLOAD") == "1")) {
+      (void)actions.emplace_back(std::make_pair(kOffloadAnnotation, ProcessOffloadAnnotationPass));
+    }
+
     // Mind Compiler finish.
     (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
 
@@ -2306,6 +2310,9 @@ std::vector<PassItem> JitPipeline(const ResourcePtr &resource, bool build_top_gr
     (void)jit_passes.emplace(kRewriterAfterJitBprop, RewriterAfterOptAPassAfterJitBprop);
     (void)jit_passes.emplace(kOptAfterJitGrad, OptAfterJitGrad);
     (void)jit_passes.emplace(kSymbolEngineOpt, SymbolEngineOptGroup);
+    if ((common::GetEnv("MS_DEV_HYPER_OFFLOAD") == "1")) {
+      (void)jit_passes.emplace(kOffloadAnnotation, ProcessOffloadAnnotationPass);
+    }
     (void)jit_passes.emplace(kValidate, ValidatePass);
     (void)jit_passes.emplace(kBackendPass, BackendPass);
     for (const auto &action : jit_passes) {

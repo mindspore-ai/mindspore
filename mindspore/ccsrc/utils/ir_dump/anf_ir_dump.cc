@@ -20,6 +20,7 @@
 #include <list>
 #include <utility>
 #include <algorithm>
+#include <numeric>
 #include <fstream>
 #include <iomanip>
 #include <nlohmann/json.hpp>
@@ -853,11 +854,12 @@ void DumpShape(const AnfNodePtr &node, const FuncGraphPtr &sub_graph, const std:
   gsub->buffer << std::endl;
 }
 
-void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+std::pair<std::list<DebugInfoPtr>, HashSet<DebugInfoPtr>> CollectDebugInfos(const DebugInfoPtr &debug_info,
+                                                                            bool collect_shadowed = true) {
   auto dump_debug_info = debug_info;
   std::list<DebugInfoPtr> need_dump_debug_infos;
-  const auto &shadow_debug_infos_map = debug_info->shadow_debug_infos_map();
   HashSet<DebugInfoPtr> all_shadowed_debug_infos;
+  const auto &shadow_debug_infos_map = debug_info->shadow_debug_infos_map();
   // If contain real location, print real location.
   if (!debug_info->real_loc().empty()) {
     need_dump_debug_infos.insert(need_dump_debug_infos.cend(), debug_info->real_loc().cbegin(),
@@ -883,7 +885,9 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
                       << (shadowed_debug_info->trace_info() != nullptr ? shadowed_debug_info->trace_info()->name()
                                                                        : "none");
         need_dump_debug_infos.push_front(shadow_debug_info);
-        all_shadowed_debug_infos.emplace(shadowed_debug_info);
+        if (collect_shadowed) {
+          all_shadowed_debug_infos.emplace(shadowed_debug_info);
+        }
       }
       if (dump_debug_info->trace_info() == nullptr) {
         break;
@@ -891,6 +895,26 @@ void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::share
       dump_debug_info = dump_debug_info->trace_info()->debug_info();
     }
   }
+  return {need_dump_debug_infos, all_shadowed_debug_infos};
+}
+
+void DumpCommentsInCurrentScope(const DebugInfoPtr &debug_info, std::string &result) {
+  auto [need_dump_debug_infos, _] = CollectDebugInfos(debug_info, false);
+  (void)_;
+  for (const auto &cur_debug_info : need_dump_debug_infos) {
+    if (cur_debug_info != nullptr && cur_debug_info->location() != nullptr) {
+      const auto &comments = cur_debug_info->location()->comments();
+      result = std::accumulate(comments.begin(), comments.end(), result,
+                               [](const std::string &acc, const std::string &comment) {
+                                 return comment.empty() ? acc : acc + comment + "\n";
+                               });
+    }
+  }
+  MS_LOG(DEBUG) << "Comments: " << result;
+}
+
+void DumpLocationInCurrentScope(const DebugInfoPtr &debug_info, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  auto [need_dump_debug_infos, all_shadowed_debug_infos] = CollectDebugInfos(debug_info);
   HashSet<std::string> visited_locations;
   for (const auto &cur_debug_info : need_dump_debug_infos) {
     if (cur_debug_info != nullptr && cur_debug_info->location() != nullptr) {
