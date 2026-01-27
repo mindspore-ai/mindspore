@@ -26,7 +26,7 @@ def split_func_1(x):
 
 # unsupported op [SplitTensorView] on GPU
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048)
 def test_tensor_split_1():
     """
     Feature: Support tensor view api.
@@ -48,7 +48,7 @@ def split_func_2(x):
 
 # unsupported op [SplitTensorView] on GPU
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048)
 def test_tensor_split_2():
     """
     Feature: Support tensor view api.
@@ -68,9 +68,9 @@ def split_func_3(x):
     return output
 
 
-# unsupported op [SplitWithSizeView] on GPU
+# # unsupported op [SplitWithSizeView] on GPU
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048)
 def test_tensor_split_3():
     """
     Feature: Support tensor view api.
@@ -92,7 +92,7 @@ def split_func_4(x):
 
 # unsupported op [SplitWithSizeView] on GPU
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048)
 def test_tensor_split_4():
     """
     Feature: Support tensor view api.

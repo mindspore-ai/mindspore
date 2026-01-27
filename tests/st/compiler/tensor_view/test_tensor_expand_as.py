@@ -25,7 +25,7 @@ def expand_as_func_1(x, other):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024)
 def test_tensor_expand_as_1():
     """
     Feature: Support tensor view api.
@@ -45,7 +45,7 @@ def expand_as_func_2(x, other):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024)
 def test_tensor_expand_as_2():
     """
     Feature: Support tensor view api.

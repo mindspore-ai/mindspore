@@ -25,7 +25,7 @@ def hsplit_func_1(x):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=3072)
 def test_tensor_hsplit_1():
     """
     Feature: Support tensor view api.
@@ -46,7 +46,7 @@ def hsplit_func_2(x):
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=3072)
 def test_tensor_hsplit_2():
     """
     Feature: Support tensor view api.

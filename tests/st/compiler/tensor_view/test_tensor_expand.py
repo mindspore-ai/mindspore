@@ -27,7 +27,7 @@ def expand_func_1(x, shape):
 
 @pytest.mark.skip(reason="has not supported")
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024)
 def test_tensor_expand_1():
     """
     Feature: Support tensor view api.
@@ -48,7 +48,7 @@ def expand_func_2(x, shape):
 
 @pytest.mark.skip(reason="has not supported")
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=1024)
 def test_tensor_expand_2():
     """
     Feature: Support tensor view api.

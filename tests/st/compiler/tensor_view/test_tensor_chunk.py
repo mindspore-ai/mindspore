@@ -26,7 +26,7 @@ def tensor_chunk_func_1(x):
 
 # unsupported op [ChunkView] on GPU
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048)
 def test_tensor_chunk_1():
     """
     Feature: Support tensor view api.
@@ -48,7 +48,7 @@ def tensor_chunk_func_2(x):
 
 # unsupported op [ChunkView] on GPU
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048)
 def test_tensor_chunk_2():
     """
     Feature: Support tensor view api.
