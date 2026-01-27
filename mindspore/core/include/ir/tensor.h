@@ -445,6 +445,15 @@ class MS_CORE_API Tensor : public MetaTensor {
   ///
   void set_storage_info(const TensorStorageInfoPtr &storage_info);
 
+  /// \brief Get tensor's storage info for implicit copy.
+  ///
+  /// \return Tensor storage info, the value is nullptr default.
+  TensorStorageInfoPtr implicit_copy_storage_info() const;
+
+  /// \brief Set tensor's implicit storage info.
+  ///
+  void set_implicit_copy_storage_info(const TensorStorageInfoPtr &storage_info);
+
   /// \brief Set synchronization status.
   ///
   /// \param[in] sync_status The input synchronization status.
@@ -756,12 +765,17 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   // shared_ptr size 16
   Version version_{};
+
   Format format_{Format::DEFAULT_FORMAT};
   Format implicit_copy_format_{Format::DEFAULT_FORMAT};
+
   mutable DeviceAddressPtr device_sync_{nullptr};
+  TensorStorageInfoPtr storage_info_{nullptr};
+
   mutable DeviceAddressPtr implicit_copy_address_{nullptr};
+  TensorStorageInfoPtr implicit_copy_storage_info_{nullptr};
+
   AutoGradMetaInterfacePtr auto_grad_meta_data_{nullptr};
-  TensorStorageInfoPtr storage_info_;
   // Tensor base shape which contain dynamic shape info.
   BaseShapePtr base_shape_ptr_{nullptr};
   std::shared_ptr<Tensor> cache_tensor_ptr_{nullptr};

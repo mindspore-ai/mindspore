@@ -250,7 +250,7 @@ class BACKEND_EXPORT GraphParameterStore {
   // Record the parameter may be concurrently used, if equal to 1, fetch parameter can not use lock.
   std::vector<std::vector<size_t>> parameter_used_times_;
   std::vector<std::vector<std::function<void(size_t)>>> async_copy_funcs_;
-  // Record non-weight ref max input, so that do not tranverse the store when releasing data.
+  // Record non-weight ref max input, so that do not transverse the store when releasing data.
   std::set<std::pair<size_t, size_t>> non_weight_ref_max_inputs_;
   std::map<DeviceTensorPosition, std::pair<TypePtr, KernelWithIndex>> release_data_info_;
   // Record released device addresses, used for check input next step.

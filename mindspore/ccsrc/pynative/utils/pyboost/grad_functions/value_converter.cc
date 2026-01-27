@@ -28,7 +28,7 @@ namespace {
 tensor::TensorPtr GetContiguousTensor(device::DeviceType device_target, const tensor::TensorPtr &tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   auto device_address = tensor->device_address();
-  if (device_address == nullptr || device_address->GetTensorStorageInfo() == nullptr) {
+  if (device_address == nullptr || tensor->storage_info() == nullptr) {
     return tensor;
   }
 

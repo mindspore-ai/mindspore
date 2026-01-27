@@ -336,7 +336,7 @@ std::vector<KernelTensorPtr> DeviceAddressUtils::CreateKernelTensorForTensorValu
       if (output_address->GetDeviceType() == device_context->GetDeviceType()) {
         // We need to set tensor->device_address to ValueNode even if the tensor is a forward_output tensor
         // in PyNative Bprop graph. ValueNode device_address is necessary for GraphSchedule::Transform.
-        AnfAlgo::SetOutputAddr(tensor->device_address(), output_idx, value_node);
+        AnfAlgo::SetOutputAddr(tensor->device_address(), tensor->storage_info(), output_idx, value_node);
         auto kernel_tensor = AnfAlgo::GetOutputKernelTensor(value_node, output_idx, false);
         MS_EXCEPTION_IF_NULL(kernel_tensor);
         kernel_tensor->set_format(tensor->format());
@@ -905,8 +905,9 @@ KernelTensorPtr DeviceAddressUtils::CloneEmptyKernelTensor(const KernelTensorPtr
   new_kernel_tensor->set_user_data(old_kernel_tensor->user_data());
   new_kernel_tensor->set_need_sync_user_data(old_kernel_tensor->need_sync_user_data());
   new_kernel_tensor->set_device_address(new_device_address);
-
+  new_kernel_tensor->set_tensor_storage_info(nullptr);
   MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+
   auto &old_device_address = old_kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(old_device_address);
 
@@ -942,10 +943,10 @@ void DeviceAddressUtils::LazyCopy(const tensor::TensorPtr &tensor, size_t stream
   }
   MS_EXCEPTION_IF_NULL(dst);
   MS_LOG(DEBUG) << "Lazy copy for dst " << dst->ToString() << " src " << src->ToString() << " on stream " << stream_id;
-  DeviceAddressExtPtr src_ext =
-    std::make_shared<DeviceAddressExt>(tensor->implicit_copy_format(), tensor->data_type(), tensor->shape());
+  DeviceAddressExtPtr src_ext = std::make_shared<DeviceAddressExt>(
+    tensor->implicit_copy_format(), tensor->data_type(), tensor->shape(), tensor->implicit_copy_storage_info());
   DeviceAddressExtPtr dst_ext =
-    std::make_shared<DeviceAddressExt>(tensor->format(), tensor->data_type(), tensor->shape());
+    std::make_shared<DeviceAddressExt>(tensor->format(), tensor->data_type(), tensor->shape(), tensor->storage_info());
   if (src->GetDeviceType() != device::DeviceType::kCPU && dst->GetDeviceType() == device::DeviceType::kCPU) {
     if (!SyncCopy(dst, src, stream_id, src_ext, dst_ext)) {
       MS_LOG(EXCEPTION) << "Lazy Sync copy failed. dst " << dst->ToString() << " src " << src->ToString()
@@ -958,6 +959,7 @@ void DeviceAddressUtils::LazyCopy(const tensor::TensorPtr &tensor, size_t stream
     }
   }
   tensor->set_implicit_copy_address(nullptr);
+  tensor->set_implicit_copy_storage_info(nullptr);
   MS_LOG(DEBUG) << "Copy success, and delete implicit address of tensor " << tensor->ToString();
 }
 
@@ -1004,8 +1006,10 @@ void DeviceAddressUtils::CreateInputTensorAddress(const DeviceContext *device_co
 
   // keep origin device_address and execute in another thread.
   tensor->set_implicit_copy_address(addr);
+  tensor->set_implicit_copy_storage_info(tensor->storage_info());
   tensor->set_implicit_copy_format(tensor->format());
   tensor->set_device_address(device_address);
+  tensor->set_storage_info(nullptr);
   tensor->set_format(format);
   MS_LOG(DEBUG) << "Create input tensor device address " << device_address << " for " << index
                 << "th input, Shape: " << tensor->shape() << ", Type: " << TypeIdToType(tensor->data_type())->ToString()
@@ -1059,6 +1063,7 @@ KernelTensorPtr DeviceAddressUtils::CreateInputKernelTensor(const DeviceContext 
       kernel_tensor->set_device_address(device_address);
       kernel_tensor->SetShapeVector(tensor->shape());
       kernel_tensor->set_format(tensor->format());
+      kernel_tensor->set_tensor_storage_info(tensor->storage_info());
       MS_LOG(DEBUG) << "Input tensor already have address " << device_address.get() << " and device Ptr "
                     << device_address->GetPtr() << ", kernel tensor info: " << kernel_tensor->ToString();
       return kernel_tensor;
@@ -1077,6 +1082,7 @@ KernelTensorPtr DeviceAddressUtils::CreateInputKernelTensor(const DeviceContext 
   device_address->set_from_persistent_mem(tensor->is_parameter());
   tensor->set_device_address(device_address);
   tensor->set_format(format);
+  tensor->set_storage_info(kernel_tensor->tensor_storage_info());
 
   auto mem_type =
     tensor->is_parameter() ? memory::mem_pool::MemType::kWeight : memory::mem_pool::MemType::kConstantValue;
@@ -1207,6 +1213,7 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
     MS_EXCEPTION_IF_NULL(device_address);
     tensor->set_device_address(device_address);
     tensor->set_format(format);
+    tensor->set_storage_info(nullptr);
     MS_LOG(DEBUG) << "Create output tensor device address " << device_address << " for " << i
                   << "th output, Shape: " << tensor_shape << ", Type: " << TypeIdToType(data_type)->ToString()
                   << ", Size:" << tensor_size;
@@ -1224,6 +1231,7 @@ void DeviceAddressUtils::CreateOutputTensorAddress(const DeviceContext *device_c
     std::make_shared<device::DeviceAddress>(nullptr, size, device_context->GetDeviceType(), stream_id);
   MS_EXCEPTION_IF_NULL(device_address);
   output_tensor->set_device_address(device_address);
+  output_tensor->set_storage_info(nullptr);
   output_tensor->set_format(format);
   MS_LOG(DEBUG) << "Create output tensor device address " << device_address
                 << "the output, Shape: " << static_cast<int64_t>(size / GetTypeByte(TypeIdToType(data_type)))

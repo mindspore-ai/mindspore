@@ -17,7 +17,14 @@
 #include "backend/ms_backend/runtime/graph_scheduler/control_flow/control_node_parser.h"
 #include <unordered_map>
 #include <functional>
+#include <queue>
 #include <map>
+#include <algorithm>
+#include <utility>
+#include <memory>
+#include <vector>
+#include <set>
+#include <string>
 #include "ir/tensor_new.h"
 #include "ir/dtype/tensor_type.h"
 #include "primitive/sparse_tensor_ops.h"
@@ -399,7 +406,7 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
     }
   }
   CreateBuildInfoForFrontNode(front_node_with_index, backend_node);
-  device::DeviceAddressPtr address = nullptr;
+
   // Create device tensor.
   std::string output_format = AnfAlgo::GetOutputFormat(backend_node, 0);
 
@@ -409,12 +416,13 @@ void CreateDeviceTensorForValueNode(const KernelWithIndex &front_node_with_index
     device_context->device_context_key().device_id_);
   AnfAlgo::SetOutputKernelTensor(kernel_tensor, front_node_with_index.second, front_node.get());
   kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(backend_node));
-  address = kernel_tensor->device_address();
+  const auto &address = kernel_tensor->device_address();
+
   MS_EXCEPTION_IF_NULL(address);
   MS_LOG(DEBUG) << "Create address for front node:" << front_node->DebugString()
                 << " backend node:" << backend_node->DebugString() << " index:" << front_node_with_index.second
                 << " addr:" << address << " size:" << tensor_size;
-  AnfAlgo::SetOutputAddr(address, front_node_with_index.second, front_node);
+  AnfAlgo::SetOutputAddr(address, kernel_tensor->tensor_storage_info(), front_node_with_index.second, front_node);
   auto node_kernel_tensor = AnfAlgo::GetOutputKernelTensor(front_node, front_node_with_index.second, false);
   node_kernel_tensor->set_new_ref_count(SIZE_MAX);
 }
@@ -495,10 +503,12 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
   // the value node is a multi-level tuple.
   size_t size = FetchOutputSizeByNode(node, front_node_with_index.second, type_id);
   device::DeviceAddressPtr address = nullptr;
+  TensorStorageInfoPtr storage_info{nullptr};
   const auto &device_name = device::GetDeviceNameByType(device_context->device_context_key().device_type_);
   if (node->isa<ValueNode>()) {
     const auto &node_value = node->cast<ValueNodePtr>()->value();
     MS_EXCEPTION_IF_NULL(node_value);
+
     // Create device tensor.
     const auto &sub_abstract = common::AnfAlgo::FetchAbstractByIndex(node->abstract(), front_node_with_index.second);
     MS_EXCEPTION_IF_NULL(sub_abstract);
@@ -508,8 +518,10 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
     AnfAlgo::SetOutputKernelTensor(kernel_tensor, front_node_with_index.second, node.get());
     kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(node));
     address = kernel_tensor->device_address();
+    storage_info = kernel_tensor->tensor_storage_info();
     MS_LOG(INFO) << "Create kernel tensor:" << kernel_tensor->ToString()
                  << " for node that has no corresponding backend node:" << node->DebugString();
+
     MS_EXCEPTION_IF_NULL(address);
     auto node_kernel_tensor = AnfAlgo::GetOutputKernelTensor(node, front_node_with_index.second, false);
     MS_EXCEPTION_IF_NULL(node_kernel_tensor);
@@ -522,10 +534,11 @@ void CreateDeviceTensorForFrontNode(const KernelWithIndex &front_node_with_index
     AnfAlgo::SetOutputKernelTensor(kernel_tensor, front_node_with_index.second, node.get());
     kernel_tensor->set_stream_id(AnfAlgo::GetStreamId(node));
     address = kernel_tensor->device_address();
+    storage_info = kernel_tensor->tensor_storage_info();
     MS_LOG(INFO) << "Create kernel tensor:" << kernel_tensor->ToString()
                  << " for node that has no corresponding backend node:" << node->DebugString();
   }
-  AnfAlgo::SetOutputAddr(address, front_node_with_index.second, node);
+  AnfAlgo::SetOutputAddr(address, storage_info, front_node_with_index.second, node);
 }
 
 // Fetch all funcgraph by a seed graph, if a calls b, b calls c, and c calls a, return a set of a, b, c.
@@ -603,7 +616,7 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
     MS_EXCEPTION_IF_NULL(real_cnode);
     if (real_cnode->HasAttr(kAttrReplaceRealKernelInBackend) && real_node->abstract() != nullptr) {
       size_t output_num = common::AnfAlgo::GetOutputNumByAbstract(real_node->abstract());
-      MS_LOG(INFO) << "Fetch an tuple get item with repalce flag:" << real_node->DebugString()
+      MS_LOG(INFO) << "Fetch an tuple get item with replace flag:" << real_node->DebugString()
                    << " output num:" << output_num;
       for (size_t i = 0; i < output_num; ++i) {
         (void)results.emplace_back(real_node, i);
@@ -633,7 +646,7 @@ std::vector<KernelWithIndex> FetchInputNodeByNode(const AnfNodePtr &node) {
   return results;
 }
 
-// Add formal parameter and real parameter into realationship map.
+// Add formal parameter and real parameter into relationship map.
 void AddFormalToRealParameter(const AnfNodePtr &formal_parameter, const AnfNodePtr &real_parameter,
                               const CallNodeToFuncGraph &call_node_to_func_graphs,
                               FormalToRealParameter *const formal_to_real_parameters) {
@@ -2103,7 +2116,7 @@ void ControlNodeParser::FetchDeviceContextByNode(const std::vector<KernelWithInd
 
 void ControlNodeParser::ParseDeviceContextForReturnNode(const DeviceContext *default_context) {
   MS_EXCEPTION_IF_NULL(default_context);
-  // Collect the call realationship between funcgraphs.
+  // Collect the call relationship between funcgraphs.
   FuncGraphCallRelation func_graph_call_relation;
   for (const auto &call_node_to_func_graphs : call_node_to_func_graphs_) {
     const auto &call_node = call_node_to_func_graphs.first;

@@ -16,6 +16,9 @@
 
 #include "backend/ms_backend/runtime/actors/control_flow/condition_gather_runner.h"
 #include <utility>
+#include <set>
+#include <string>
+#include <memory>
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "backend/ms_backend/runtime/graph_executor/pipeline/runtime_pipeline.h"
 #include "backend/ms_backend/runtime/actors/hyper_offload/mem_use_analyzer.h"
@@ -263,8 +266,7 @@ void ConditionGatherRunner::UpdateRefDeviceAddress(OpContext<KernelTensor> *cons
 
     MS_EXCEPTION_IF_NULL(output_kernel_tensors_[i]->device_address());
     MS_EXCEPTION_IF_NULL(input_kernel_tensors_[input_index]->device_address());
-    output_kernel_tensors_[i]->device_address()->set_tensor_storage_info(
-      input_kernel_tensors_[input_index]->device_address()->GetTensorStorageInfo());
+    output_kernel_tensors_[i]->set_tensor_storage_info(input_kernel_tensors_[input_index]->tensor_storage_info());
     output_kernel_tensors_[i]->set_pointer_ref_count(input_kernel_tensors_[input_index].get());
     output_kernel_tensors_[i]->IncreaseNewRefCount(GetAID().Name());
     MS_LOG(DEBUG) << "Actor:" << GetAID() << " increase new ref count:" << output_kernel_tensors_[i]->new_ref_count()

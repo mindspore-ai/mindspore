@@ -16,6 +16,11 @@
 
 #include "device_address/device_address.h"
 #include <complex>
+#include <string>
+#include <vector>
+#include <memory>
+#include <utility>
+#include <unordered_map>
 #include "ir/format_utils.h"
 #include "utils/ms_context.h"
 #include "device_address/convert_tensor_utils.h"
@@ -108,6 +113,39 @@ bool AsyncCopy(const DeviceAddressPtr &dst_device_address, const DeviceAddressPt
   return g_async_copy_func[static_cast<int>(device::DeviceType::kGPU)](dst_device_address, src_device_address,
                                                                        stream_id, keep_host, src_ext, dst_ext);
 }
+
+void CheckHeterogeneousCopy(const DeviceAddressPtr &dst_device_address, const TensorStorageInfoPtr &dst_storage_info,
+                            const DeviceAddressPtr &src_device_address, const TensorStorageInfoPtr &src_storage_info) {
+  const auto &dst_device_type = dst_device_address->GetDeviceType();
+  const auto &src_device_type = src_device_address->GetDeviceType();
+  if (dst_device_type == src_device_type) {
+    return;
+  }
+  if ((dst_device_type == device::DeviceType::kAscend && src_device_type == device::DeviceType::kCPU) &&
+      (dst_storage_info != nullptr || src_storage_info != nullptr)) {
+    MS_LOG(EXCEPTION) << "Invalid sync host to device for tensor with storage info, src device address: "
+                      << src_device_address->ToString() << ", dst device_address: " << dst_device_address->ToString();
+  }
+  if ((dst_device_type == device::DeviceType::kCPU && src_device_type == device::DeviceType::kAscend) &&
+      (dst_storage_info != nullptr || src_storage_info != nullptr)) {
+    MS_LOG(WARNING) << "Invalid sync device to host for tensor with storage info, src device address: "
+                    << src_device_address->ToString() << ", dst device_address: " << dst_device_address->ToString();
+  }
+}
+
+bool SyncCopy(const DeviceAddressPtr &dst_device_address, const TensorStorageInfoPtr &dst_storage_info,
+              const DeviceAddressPtr &src_device_address, const TensorStorageInfoPtr &src_storage_info,
+              size_t stream_id) {
+  CheckHeterogeneousCopy(dst_device_address, dst_storage_info, src_device_address, src_storage_info);
+  return SyncCopy(dst_device_address, src_device_address, stream_id);
+}
+
+bool AsyncCopy(const DeviceAddressPtr &dst_device_address, const TensorStorageInfoPtr &dst_storage_info,
+               const DeviceAddressPtr &src_device_address, const TensorStorageInfoPtr &src_storage_info,
+               size_t stream_id, bool keep_src) {
+  CheckHeterogeneousCopy(dst_device_address, dst_storage_info, src_device_address, src_storage_info);
+  return AsyncCopy(dst_device_address, src_device_address, stream_id, keep_src);
+}
 namespace device {
 DevicePtrDeleterMakerFunc g_deleter_func[static_cast<int>(device::DeviceType::kDeviceEnd)];
 void SetDevicePtrDeleterMaker(device::DeviceType device_type, DevicePtrDeleterMakerFunc &&func) {
@@ -135,7 +173,6 @@ DeviceAddress::DeviceAddress(const DeviceAddress &other) {
                       ? std::make_shared<DevicePointer>(other.device_pointer_->ptr(), other.device_pointer_->deleter(),
                                                         other.device_pointer_->allocator())
                       : std::make_shared<DevicePointer>();
-  tensor_storage_info_ = other.tensor_storage_info_;
   stream_id_ = other.stream_id_;
   size_ = other.size_;
   device_type_ = other.device_type_;
@@ -151,10 +188,7 @@ DeviceAddress::~DeviceAddress() {
 
 std::string DeviceAddress::ToString() const {
   std::ostringstream ofs;
-  ofs << this << " device type:" << GetDeviceType() << " tensor storage info:" << tensor_storage_info_;
-  if (tensor_storage_info_ != nullptr) {
-    ofs << tensor_storage_info_->ToString();
-  }
+  ofs << this << " device type:" << GetDeviceType();
   ofs << " size:" << size_ << " device id:" << device_id()
       << " device name:" << device::GetDeviceNameByType(device_type_) << " device point:";
   if (device_pointer_ == nullptr) {
@@ -175,12 +209,7 @@ const void *DeviceAddress::GetPtr() const { return GetDevicePtr(); }
 
 void DeviceAddress::set_ptr(void *ptr) { device_pointer_->set_ptr(ptr); }
 
-size_t DeviceAddress::GetSize() const {
-  if (tensor_storage_info_ && (tensor_storage_info_->ori_size != 0)) {
-    return tensor_storage_info_->ori_size;
-  }
-  return size();
-}
+size_t DeviceAddress::GetSize() const { return size(); }
 
 void DeviceAddress::SetSize(size_t size) { size_ = size; }
 
@@ -203,12 +232,6 @@ bool DeviceAddress::need_recycle() const { return need_recycle_; }
 void DeviceAddress::set_need_recycle(bool need_recycle) { need_recycle_ = need_recycle; }
 
 void *DeviceAddress::GetMutablePtr() const { return GetDevicePtr(); }
-
-TensorStorageInfoPtr DeviceAddress::GetTensorStorageInfo() const { return tensor_storage_info_; }
-
-void DeviceAddress::set_tensor_storage_info(const TensorStorageInfoPtr &tensor_storage_info) {
-  tensor_storage_info_ = tensor_storage_info;
-}
 
 device::DeviceType DeviceAddress::GetDeviceType() const { return device_type_; }
 void DeviceAddress::SetDeviceType(const device::DeviceType &device_type) { device_type_ = device_type; }

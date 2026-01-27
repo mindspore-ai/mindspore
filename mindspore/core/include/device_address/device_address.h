@@ -207,9 +207,6 @@ class MS_CORE_API DeviceAddress {
   void set_need_recycle(bool need_recycle);
   void *GetMutablePtr() const;
 
-  TensorStorageInfoPtr GetTensorStorageInfo() const;
-  void set_tensor_storage_info(const TensorStorageInfoPtr &tensor_storage_info);
-
   device::DeviceType GetDeviceType() const;
   void SetDeviceType(const device::DeviceType &device_type);
 
@@ -281,7 +278,6 @@ class MS_CORE_API DeviceAddress {
   tensor::TensorDataPtr data_;
 
   DevicePointerPtr device_pointer_;
-  TensorStorageInfoPtr tensor_storage_info_{nullptr};
   uint32_t stream_id_{0};
   size_t size_{0};
   // The device target name, such as "GPU","Ascend".
@@ -313,16 +309,19 @@ struct DeviceAddressExt {
   Format format_{Format::DEFAULT_FORMAT};
   TypeId dtype_id_{kTypeUnknown};
   ShapeVector shape_vector_{};
+  TensorStorageInfoPtr tensor_storage_info_{nullptr};
   std::string ToString() const {
     std::ostringstream ofs;
     ofs << this << " format:" << kernel::GetFormatFromEnumToStr(format_) << " type id:" << TypeIdLabel(dtype_id_)
         << " shape: {";
     std::for_each(shape_vector_.begin(), shape_vector_.end(), [&ofs](auto axis) { ofs << axis << " "; });
-    ofs << "}";
+    ofs << "}"
+        << " tensor_storage_info: " << (tensor_storage_info_ != nullptr ? tensor_storage_info_->ToString() : "null");
     return ofs.str();
   }
-  DeviceAddressExt(Format format, TypeId dtype_id, const ShapeVector &shape_vector)
-      : format_(format), dtype_id_(dtype_id), shape_vector_(shape_vector) {}
+  DeviceAddressExt(Format format, TypeId dtype_id, const ShapeVector &shape_vector,
+                   const TensorStorageInfoPtr &tensor_storage_info = nullptr)
+      : format_(format), dtype_id_(dtype_id), shape_vector_(shape_vector), tensor_storage_info_(tensor_storage_info) {}
 };
 using DeviceAddressExtPtr = std::shared_ptr<DeviceAddressExt>;
 

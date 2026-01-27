@@ -176,13 +176,13 @@ class TestKernelExecutor : public device::KernelExecutor {
         if (AnfAlgo::OutputAddrExist(input_node, index)) {
           continue;
         }
-        AnfAlgo::SetOutputAddr(std::make_shared<TestDeviceAddress>(nullptr, tensor_size), index, input_node);
+        AnfAlgo::SetOutputAddr(std::make_shared<TestDeviceAddress>(nullptr, tensor_size), nullptr, index, input_node);
       }
       size_t output_num = AnfAlgo::GetOutputTensorNum(node);
       for (size_t output_index = 0; output_index < output_num; ++output_index) {
         size_t tensor_size = AnfAlgo::GetOutputTensorMemSize(node, output_index);
         (void)output_size_list.emplace_back(tensor_size);
-        AnfAlgo::SetOutputAddr(std::make_shared<TestDeviceAddress>(nullptr, tensor_size), output_index, node);
+        AnfAlgo::SetOutputAddr(std::make_shared<TestDeviceAddress>(nullptr, tensor_size), nullptr, output_index, node);
       }
 
       const size_t kDefaultWorkSpaceSize = 4;
@@ -191,7 +191,7 @@ class TestKernelExecutor : public device::KernelExecutor {
       kernel_mod_ptr->SetOutputSizeList(output_size_list);
       kernel_mod_ptr->SetWorkspaceSizeList({kDefaultWorkSpaceSize});
       AnfAlgo::SetKernelMod(kernel_mod_ptr, node.get());
-      AnfAlgo::SetWorkspaceAddr(std::make_shared<TestDeviceAddress>(nullptr, kDefaultWorkSpaceSize), 0, node);
+      AnfAlgo::SetWorkspaceAddr(std::make_shared<TestDeviceAddress>(nullptr, kDefaultWorkSpaceSize), nullptr, 0, node);
     }
   }
 

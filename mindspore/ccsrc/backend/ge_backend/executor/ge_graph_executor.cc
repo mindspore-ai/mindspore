@@ -15,6 +15,12 @@
  */
 
 #include "backend/ge_backend/executor/ge_graph_executor.h"
+
+#include <iostream>
+#include <vector>
+#include <memory>
+#include <string>
+#include <unordered_set>
 #include <tuple>
 #include <functional>
 #include <algorithm>
@@ -199,7 +205,8 @@ void ClearForwardOutputAddress(const KernelGraphPtr &graph) {
         auto device_address = kernel_tensor->device_address();
         MS_EXCEPTION_IF_NULL(device_address);
         auto new_kernel_tensor = DeviceAddressUtils::CloneEmptyKernelTensor(kernel_tensor);
-        AnfAlgo::SetOutputAddr(new_kernel_tensor->device_address(), 0, parameter);
+        AnfAlgo::SetOutputAddr(new_kernel_tensor->device_address(), new_kernel_tensor->tensor_storage_info(), 0,
+                               parameter);
         MS_LOG(DEBUG) << "Clear old address " << device_address.get() << " and set new address "
                       << new_kernel_tensor->device_address().get() << " to parameter " << parameter->name();
       }

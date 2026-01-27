@@ -57,7 +57,6 @@ class CPUKernelExecutor : public KernelExecutor {
 
   bool ExecuteKernelTask(const runtime::KernelTaskType &task_type, const tensor::TensorPtrList &input_tensors,
                          const tensor::TensorPtrList &output_tensors, const size_t &stream_id) const override;
-
   bool ExecuteKernelTask(const runtime::KernelTaskType &task_type,
                          const std::vector<KernelTensor *> &input_kernel_tensors,
                          const std::vector<KernelTensor *> &output_kernel_tensors,

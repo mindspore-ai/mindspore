@@ -15,6 +15,11 @@
  */
 
 #include "backend/ms_backend/runtime/graph_scheduler/base/scheduler_helper.h"
+#include <memory>
+#include <string>
+#include <vector>
+#include <set>
+#include <utility>
 #include "primitive/framework_ops.h"
 #include "primitive/array_ops.h"
 #include "backend/ms_backend/runtime/graph_scheduler/dump/actor_dump.h"
@@ -1608,6 +1613,7 @@ KernelTensorPtr SchedulerHelper::CloneKernelTensorWithDeviceInfo(const KernelTen
   new_kernel_tensor->set_user_data(kernel_tensor->user_data());
   new_kernel_tensor->set_need_sync_user_data(kernel_tensor->need_sync_user_data());
   new_kernel_tensor->set_device_address(new_device_address);
+  new_kernel_tensor->set_tensor_storage_info(nullptr);
   return new_kernel_tensor;
 }
 }  // namespace runtime

@@ -174,7 +174,7 @@ class PYBOOST_API OpRunner : public std::enable_shared_from_this<OpRunner> {
         }
         device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
           MarkTensorAsInput, "PyNative", device::GetDeviceNameByType(device_address->GetDeviceType()),
-          device_address->GetPtr(), tensor->data_type(), tensor->shape(), device_address->GetTensorStorageInfo());
+          device_address->GetPtr(), tensor->data_type(), tensor->shape(), tensor->storage_info());
       }
     }));
   }
@@ -287,14 +287,13 @@ class PYBOOST_API OpRunner : public std::enable_shared_from_this<OpRunner> {
           MS_LOG(WARNING) << "Tracker: input tensor device address is nullptr, primitive: " << primitive->name();
           continue;
         }
-        MS_EXCEPTION_IF_NULL(device_address);
         if (device_address->GetPtr() == nullptr) {
           MS_LOG(WARNING) << "Tracker: input tensor device ptr is nullptr, primitive: " << primitive->name();
           continue;
         }
         device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
           MarkTensorAsOutput, "PyNative", device::GetDeviceNameByType(device_address->GetDeviceType()),
-          device_address->GetPtr(), tensor->data_type(), tensor->shape(), device_address->GetTensorStorageInfo());
+          device_address->GetPtr(), tensor->data_type(), tensor->shape(), tensor->storage_info());
       }
       device::tracker::CALL_MEMORY_TRACKER(DelNestedTask);
     }));

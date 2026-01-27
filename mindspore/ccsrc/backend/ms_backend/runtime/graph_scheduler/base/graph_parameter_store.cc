@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 #include "backend/ms_backend/runtime/graph_scheduler/base/graph_parameter_store.h"
-
+#include <vector>
+#include <utility>
 #include <algorithm>
 #include <string>
 #include "backend/ms_backend/runtime/graph_scheduler/heterogeneous/device_tensor_copy_store.h"
@@ -326,6 +327,7 @@ void GraphParameterStore::ReleaseData() {
         }
         release_data_info_[{position}] = {kernel_tensor->GetType(), device_tensor->GetNodeIndex()};
         kernel_tensor->set_device_address(nullptr);
+        kernel_tensor->set_tensor_storage_info(nullptr);
       }
     }
   }

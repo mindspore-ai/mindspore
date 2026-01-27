@@ -15,6 +15,8 @@
  */
 #include "view/view_strides_calculator.h"
 #include <vector>
+#include <string>
+#include <utility>
 #include <memory>
 #include <functional>
 #include <numeric>
@@ -129,7 +131,7 @@ TensorStorageInfoPtr CheckSetStorageInfo(const tensor::TensorPtr &origin_tensor,
 
   bool isContiguous = IsContiguous(shape, stride);
 
-  const TensorStorageInfoPtr &origin_storage_info = origin_device_address->GetTensorStorageInfo();
+  const TensorStorageInfoPtr &origin_storage_info = origin_tensor->storage_info();
   std::vector<int64_t> ori_shape;
   std::vector<int64_t> ori_stride;
   if (origin_storage_info == nullptr) {

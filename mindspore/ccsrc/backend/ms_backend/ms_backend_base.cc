@@ -1530,6 +1530,7 @@ void MSBackendBase::ConstructOutputByTupleTensor(tensor::TensorPtr output_tensor
 
     // Fill the outputs.
     split_tensor->set_device_address(split_device_tensor);
+    split_tensor->set_storage_info(kernel_tensor->tensor_storage_info());
     outputs->emplace_back(split_tensor);
   }
 }
@@ -1675,6 +1676,7 @@ void MSBackendBase::ConstructOutputs(runtime::ActorSet *actor_set, VectorRef *ou
     for (auto &tuple_tensor : tuple_tensors) {
       MS_EXCEPTION_IF_NULL(tuple_tensor);
       tuple_tensor->set_device_address(nullptr);
+      tuple_tensor->set_storage_info(nullptr);
     }
   }
 }

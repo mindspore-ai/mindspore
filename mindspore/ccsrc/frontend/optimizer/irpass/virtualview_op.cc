@@ -17,6 +17,8 @@
 #include "frontend/optimizer/irpass/virtualview_op.h"
 #include <unordered_set>
 #include <vector>
+#include <utility>
+#include <unordered_map>
 #include "frontend/optimizer/irpass/virtualviewgrad_op.h"
 #include "frontend/optimizer/irpass/view_inplace_utils.h"
 #include "ir/graph_utils.h"
@@ -168,8 +170,8 @@ void VirtualViewInsertProcesser::InitViewInfoFromParams() {
 }
 
 AnfNodePtr VirtualViewInsertProcesser::CreateVirtualViewNode(const AnfNodePtr &view_output, AnfNodePtr *last_umonad) {
-  auto view_node_result = IsCreatedByViewOp(view_output);
-  const auto &view_node = std::get<0>(view_node_result);
+  const auto view_info = IsCreatedByViewOp(view_output);
+  const auto &view_node = std::get<0>(view_info);
   MS_EXCEPTION_IF_NULL(view_node);
   MS_EXCEPTION_IF_CHECK_FAIL(view_node->inputs().size() > kIndex2,
                              "Input size should be larger than 2, view_node: " + view_node->DebugString());

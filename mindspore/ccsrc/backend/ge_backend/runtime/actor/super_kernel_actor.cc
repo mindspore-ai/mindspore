@@ -16,6 +16,9 @@
 
 #include <set>
 #include <algorithm>
+#include <vector>
+#include <string>
+#include <map>
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "backend/ge_backend/runtime/actor/super_kernel_actor.h"
 #include "backend/ge_backend/runtime/scheduler_helper.h"
@@ -400,12 +403,13 @@ bool SuperKernelActor::CopyInputDataPersistedHandle(const KernelTensorPtr &input
     auto node_device_address = node_kernel_tensor->device_address();
     MS_EXCEPTION_IF_NULL(node_device_address);
     auto new_kernel_tensor = node_kernel_tensor->CloneKernelTensor();
+    MS_EXCEPTION_IF_NULL(new_kernel_tensor);
     // create device address with correct context.
     auto new_device_address = std::make_shared<device::DeviceAddress>(
       node_device_address->device_pointer()->ptr(), node_device_address->size(),
       device::GetDeviceTypeByName(device_name), node_device_address->stream_id());
     new_kernel_tensor->set_device_address(new_device_address);
-    MS_EXCEPTION_IF_NULL(new_kernel_tensor);
+    new_kernel_tensor->set_tensor_storage_info(nullptr);
     new_kernel_tensor->SetShapeVector(node_kernel_tensor->GetShapeVector());
     new_kernel_tensor->SetDeviceType(node_device_tensor->GetDeviceType());
     new_kernel_tensor->set_device_ptr(nullptr);

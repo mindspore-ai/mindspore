@@ -15,6 +15,10 @@
  */
 
 #include "backend/ge_backend/runtime/actor/output_actor.h"
+#include <memory>
+#include <vector>
+#include <algorithm>
+#include <string>
 #include "utils/convert_utils.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
 #include "ir/map_tensor.h"
@@ -149,6 +153,7 @@ void OutputActor::FreeSummaryNodeMem() {
 
 void OutputActor::ClearOutputCache() {
   output_node_to_tensor_device_address_.clear();
+  output_node_to_tensor_storage_info_.clear();
   outputs_.clear();
   outputs_.resize(outputs_num_);
   output_nodes_.clear();
@@ -373,6 +378,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   // Create the device address and put it into host tensor.
   if (output_node_to_tensor_device_address_.count({output_node, output_index}) > 0) {
     tensor->set_device_address(output_node_to_tensor_device_address_[{output_node, output_index}]);
+    tensor->set_storage_info(output_node_to_tensor_storage_info_[{output_node, output_index}]);
   } else {
     auto kernel_tensor = AnfAlgo::CreateKernelTensor(nullptr, device_tensor->GetSize(), output_kernel_tensor->format(),
                                                      output_kernel_tensor->dtype_id(),
@@ -389,7 +395,9 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
                   << " output position:" << output_position
                   << ", origin output kernel tensor: " << output_kernel_tensor->ToString();
     tensor->set_device_address(tensor_device_address);
+    tensor->set_storage_info(kernel_tensor->tensor_storage_info());
     output_node_to_tensor_device_address_[{output_node, output_index}] = tensor_device_address;
+    output_node_to_tensor_storage_info_[{output_node, output_index}] = kernel_tensor->tensor_storage_info();
   }
 
   return tensor;
@@ -437,6 +445,7 @@ void OutputActor::UpdateOutputDeviceAddress() {
     }
     if (repeat_index.find(i) != repeat_index.end() && i > repeat_index[i] && outputs_[i] != nullptr) {
       tensor->set_device_address(outputs_[repeat_index[i]]->device_address());
+      tensor->set_storage_info(outputs_[repeat_index[i]]->storage_info());
       continue;
     }
 
@@ -505,12 +514,13 @@ void OutputActor::UpdateOutputDeviceAddress() {
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
       MarkTensorAsOutput, GetAID().Name(), device::GetDeviceNameByType(device_tensor->GetDeviceType()),
       device_tensor->GetPtr(), output_kernel_tensors_[i]->dtype_id(), output_kernel_tensors_[i]->GetShapeVector(),
-      device_tensor->GetTensorStorageInfo());
+      output_kernel_tensors_[i]->tensor_storage_info());
   }
 
   // output types used for construct outputs.
   RecordOutputTypes(&output_types_, output_kernel_tensors_, output_nodes_.size());
   output_node_to_tensor_device_address_.clear();
+  output_node_to_tensor_storage_info_.clear();
   output_nodes_.clear();
   output_nodes_.resize(outputs_num_);
   output_kernel_tensors_.clear();

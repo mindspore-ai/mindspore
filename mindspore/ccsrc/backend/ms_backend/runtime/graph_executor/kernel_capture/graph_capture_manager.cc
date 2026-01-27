@@ -17,6 +17,9 @@
 #include "backend/ms_backend/runtime/graph_executor/kernel_capture/graph_capture_manager.h"
 #include <string>
 #include <algorithm>
+#include <queue>
+#include <vector>
+#include <utility>
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "backend/ms_backend/runtime/graph_scheduler/base/parameter_store.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
@@ -131,7 +134,7 @@ bool GraphCaptureManager::FindSupportCaptureKernelPositions(const std::vector<Ke
   capture_graph_num_ = capture_kernel_range_positions_.size();
   MS_LOG(INFO) << "Capture graph num: " << capture_graph_num_;
   auto executor_size = executors_.size();
-  MS_LOG(DEBUG) << "Dump executor info for capture grpah: ";
+  MS_LOG(DEBUG) << "Dump executor info for capture graph: ";
   for (size_t i = 0; i < executor_size; i++) {
     std::string executor_mode = (executors_[i].first == CAPTURE_GRAPH ? "capture graph" : "kernel");
     std::ostringstream executor_mode_info;
@@ -342,7 +345,7 @@ void GraphCaptureManager::FetchAllInputsBeforeCaptureGraph(
       // deal with normal inputs
       if (fixed_addrs_for_set_inputs_[shape_key_].find(parameter_index.second.first) ==
           fixed_addrs_for_set_inputs_[shape_key_].end()) {
-        const auto storage_info = device_tensor->GetTensorStorageInfo();
+        const auto storage_info = kernel_tensor->tensor_storage_info();
         if (storage_info) {
           MS_LOG(EXCEPTION)
             << "The input[" << kernel_input_index << "] of kernel(" << kernel_actor->GetAID().Name()
@@ -517,7 +520,7 @@ void GraphCaptureManager::UpdateFixAddressBeforeReplayGraph(
     MS_EXCEPTION_IF_NULL(kernel_tensor);
     const auto &device_tensor = kernel_tensor->device_address();
     MS_EXCEPTION_IF_NULL(device_tensor);
-    const auto storage_info = device_tensor->GetTensorStorageInfo();
+    const auto storage_info = kernel_tensor->tensor_storage_info();
     if (storage_info) {
       MS_LOG(EXCEPTION) << "The input[" << kernel_input_index << "] of kernel(" << kernel_actor->GetAID().Name()
                         << ") got a non-contiguous memory layout tensor, and framework will automatically convert it "

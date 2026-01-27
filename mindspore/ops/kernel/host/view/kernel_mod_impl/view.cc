@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "kernel/host/view/kernel_mod_impl/view.h"
-
+#include <vector>
 #include "kernel/host/view/view_utils.h"
 #include "view/view_strides_calc.h"
 #include "view/view_strides_calculator.h"
@@ -34,10 +34,8 @@ void ViewView::UpdateOutputTensorInfo(const std::vector<KernelTensor *> &inputs,
     MS_EXCEPTION(ValueError) << "For View the component of shape can't be less than -1, but got " << shape;
   }
   ops::OldTensorInfoPtr old_info = GetOldTensorInfo(inputs[kIndex0]);
-
   auto infos =
     ops::ViewStridesCalc(old_info->old_shape, old_info->old_strides, inputs[kIndex0]->tensor_storage_info(), shape);
-  infos[0]->ori_size = inputs[0]->size();
   outputs[kIndex0]->set_tensor_storage_info(infos[0]);
 }
 

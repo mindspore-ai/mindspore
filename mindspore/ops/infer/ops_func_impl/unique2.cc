@@ -28,8 +28,8 @@ namespace mindspore::ops {
 namespace {
 TypePtr Unique2InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   auto y_type = input_args[kIndex0]->GetType();
-  auto indices_type = kInt64;
-  auto counts_type = kInt64;
+  auto indices_type = std::make_shared<TensorType>(kInt64);
+  auto counts_type = std::make_shared<TensorType>(kInt64);
   return std::make_shared<Tuple>(std::vector<TypePtr>{y_type->Clone(), indices_type, counts_type});
 }
 

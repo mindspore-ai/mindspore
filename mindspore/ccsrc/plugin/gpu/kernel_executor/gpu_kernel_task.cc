@@ -104,6 +104,7 @@ bool GpuContiguousKernelTask::RunWithRet() {
       device_context->device_context_key().device_id_);
 
     shape_dev_addr = shape_kernel_tensor->device_address();
+
     strides_dev_addr = strides_kernel_tensor->device_address();
 
     MallocMemoryAndCopyValue(shape_dev_addr, device_context, input_storage_info->shape);

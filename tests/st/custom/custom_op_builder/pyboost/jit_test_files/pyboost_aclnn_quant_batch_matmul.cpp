@@ -68,7 +68,7 @@ void set_nz_storage(const ms::Tensor &tensor, const std::string &nz_format) {
   auto storage_info = std::make_shared<TensorStorageInfo>(nd_shape, strides, nz_shape, strides, true);
   MS_EXCEPTION_IF_NULL(tensor.tensor());
   MS_EXCEPTION_IF_NULL(tensor.tensor()->device_address());
-  tensor.tensor()->device_address()->set_tensor_storage_info(storage_info);
+  tensor.tensor()->set_storage_info(storage_info);
 }
 
 ms::Tensor quant_batch_matmul_custom(const ms::Tensor &x1, const ms::Tensor &x2, const ms::Tensor &scale,

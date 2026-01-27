@@ -147,6 +147,9 @@
 "mindspore/mindspore/ccsrc/frontend/optimizer/ad/pynative_jit_grad.cc"                      "whitespace/newline"
 "mindspore/mindspore/ccsrc/backend/ms_backend/runtime/graph_scheduler/base/graph_scheduler.cc"                 "readability/casting"
 "mindspore/mindspore/ccsrc/backend/ms_backend/runtime/actors/base/abstract_actor.h"                            "whitespace/newline"
+"mindspore/mindspore/ccsrc/backend/common/kernel_graph/anf_runtime_algorithm.cc"                 "whitespace/newline"      
+"mindspore/mindspore/ccsrc/backend/ms_backend/ms_backend_base.cc"                                "whitespace/newline"
+"mindspore/mindspore/ops/kernel/ascend/acl_ir/op_api_cache.cc"                                   "readability/casting"
 
 # Modelzoo
 "mindspore/model_zoo/official/cv/yolov4_tiny/infer/mxbase/src/Yolov4TinyDetection.h"                 "runtime/references"

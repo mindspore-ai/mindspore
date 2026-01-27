@@ -54,6 +54,7 @@ void PrimBpropOptGraphLevel2Info::TryFreeOneValue(const ValuePtrList &op_args,
     if (!param_info_vec[i].using_flg_ && !param_info_vec[i].tuple_flg_ && op_args[i]->isa<tensor::Tensor>()) {
       auto value = op_args[i]->cast<tensor::TensorPtr>();
       value->set_device_address(nullptr);
+      value->set_storage_info(nullptr);
       value->set_format(Format::DEFAULT_FORMAT);
     } else if (param_info_vec[i].tuple_flg_ && op_args[i]->isa<ValueTuple>()) {
       auto value = op_args[i]->cast<ValueTuplePtr>();

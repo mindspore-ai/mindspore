@@ -15,8 +15,13 @@
  */
 
 #include "backend/ge_backend/runtime/actor/actor_common.h"
+
 #include <memory>
 #include <unordered_map>
+#include <vector>
+#include <set>
+#include <string>
+
 #include "primitive/framework_op_name.h"
 #include "primitive/framework_ops.h"
 #include "primitive/structure_op_name.h"
@@ -264,6 +269,7 @@ void FreeMemoryByValueNode(const std::vector<std::weak_ptr<ValueNode>> &held_by_
     auto tensor = value->cast<tensor::TensorPtr>();
     MS_EXCEPTION_IF_NULL(tensor);
     tensor->set_device_address(nullptr);
+    tensor->set_storage_info(nullptr);
     runtime::DeviceTensorStore::GetInstance().Remove(value_node.get());
   }
 }

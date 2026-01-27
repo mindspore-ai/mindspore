@@ -218,6 +218,7 @@ void CopyHostTensorToKernelTensor(const tensor::TensorPtr &host_tensor, const ke
   MS_EXCEPTION_IF_NULL(host_tensor);
   MS_EXCEPTION_IF_NULL(kernel_tensor);
   MS_EXCEPTION_IF_NULL(context);
+  const auto &device_storage_info = kernel_tensor->tensor_storage_info();
   auto device_tensor = kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_tensor);
   // No used device address need skip.
@@ -249,6 +250,7 @@ void CopyHostTensorToKernelTensor(const tensor::TensorPtr &host_tensor, const ke
                   << " to host tensor:" << host_tensor->ToString()
                   << " by data node:" << node_index.first->DebugString();
     host_tensor->set_device_address(kernel_tensor->device_address());
+    host_tensor->set_storage_info(kernel_tensor->tensor_storage_info());
     kernel_tensor->set_new_ref_count(SIZE_MAX);
   }
   if (enable_async_copy) {

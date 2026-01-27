@@ -395,6 +395,7 @@ tensor::TensorPtr PostRunOp::CreateOutputTensor(const AnfNodePtr &output_node, s
   // Put device tensor into host tensor.
   tensor->set_device_address(device_tensor);
   tensor->set_format(kernel_tensor->format());
+  tensor->set_storage_info(kernel_tensor->tensor_storage_info());
   tensor->set_sync_status(kNeedSyncDeviceToHost);
   return tensor;
 }
@@ -422,7 +423,7 @@ void PostRunOp::ClearGraphDeviceAddress(const KernelGraphPtr &graph, const Devic
       if (is_gradient_out) {
         new_device_address->set_from_persistent_mem(true);
       }
-      AnfAlgo::SetOutputAddr(new_device_address, i, node);
+      AnfAlgo::SetOutputAddr(new_device_address, new_kernel_tensor->tensor_storage_info(), i, node);
     }
 
     // Clear old workspace device address of kernel
@@ -454,7 +455,7 @@ void PostRunOp::ClearInputDeviceAddress(const KernelGraphPtr &graph, const Devic
         continue;
       }
       auto new_kernel_tensor = runtime::DeviceAddressUtils::CloneEmptyKernelTensor(kernel_tensor, device_context);
-      AnfAlgo::SetOutputAddr(new_kernel_tensor->device_address(), 0, node);
+      AnfAlgo::SetOutputAddr(new_kernel_tensor->device_address(), new_kernel_tensor->tensor_storage_info(), 0, node);
     }
   }
 }
@@ -551,6 +552,7 @@ tensor::TensorPtr PostRunOp::CreateOutputTensorDynamicImpl(const OpCompilerInfoP
   address->set_padding_type(op_compiler_info->graph_outputs_padding_type_[idx_in_graph_outputs]);
   tensor->set_device_address(address);
   tensor->set_format(kernel_tensor->format());
+  tensor->set_storage_info(kernel_tensor->tensor_storage_info());
   return tensor;
 }
 
@@ -589,6 +591,7 @@ void ViewBackend::RunViewKernelTask(const pynative::BaseOpRunInfo &base_op_run_i
 
       input_tensor->set_device_address(input_addr);
       input_tensor->set_format(kernel_tensor->format());
+      input_tensor->set_storage_info(kernel_tensor->tensor_storage_info());
       RunAllocMemTask(device_context, input_tensor, enable_async);
       (void)input_tensors.emplace_back(input_tensor);
     } else {

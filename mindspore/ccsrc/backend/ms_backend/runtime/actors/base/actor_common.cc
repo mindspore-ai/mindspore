@@ -23,6 +23,7 @@
 #include <string>
 #include <utility>
 #include <unordered_map>
+
 #include "ir/tensor_new.h"
 #include "primitive/framework_op_name.h"
 #include "primitive/framework_ops.h"
@@ -1114,7 +1115,7 @@ void PrepareParameterWithCopy(const std::pair<KernelWithIndex, size_t> &paramete
   auto inner_index = parameter_index.first.second;
   auto kernel_tensor = graph_parameter_store->Fetch(outer_index, inner_index);
   MS_EXCEPTION_IF_NULL(kernel_tensor);
-  auto device_tensor = kernel_tensor->device_address();
+  const auto &device_tensor = kernel_tensor->device_address();
   if (device_tensor == nullptr) {
     abstract::BaseShapePtr shape;
     if (tensor->base_shape_ptr() == nullptr || (!tensor->base_shape_ptr()->isa<abstract::SequenceShape>())) {
@@ -1132,7 +1133,7 @@ void PrepareParameterWithCopy(const std::pair<KernelWithIndex, size_t> &paramete
     MS_EXCEPTION_IF_NULL(type);
     auto device_type = graph_parameter_store->GetParameterDeviceType(outer_index, inner_index);
     auto new_device_tensor = std::make_shared<device::DeviceAddress>(device_type);
-    auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(new_device_tensor, shape, type, nullptr);
+    auto new_kernel_tensor = std::make_shared<kernel::KernelTensor>(new_device_tensor, nullptr, shape, type, nullptr);
     new_kernel_tensor->set_size(LongToSize(tensor->DataNBytes()));
     MS_VLOG(VL_RUNTIME_FRAMEWORK_DEVICE_ADDRESS)
       << "Refresh store device tensor, from: " << new_device_tensor.get() << ", to null,"
@@ -1141,7 +1142,7 @@ void PrepareParameterWithCopy(const std::pair<KernelWithIndex, size_t> &paramete
     new_device_tensor->SetNodeIndex(old_addr_info.second.first, old_addr_info.second.second);
     new_device_tensor->set_from_persistent_mem(true);
     kernel_tensor->set_device_address(new_device_tensor);
-    device_tensor = new_device_tensor;
+    kernel_tensor->set_tensor_storage_info(nullptr);
   }
 
   auto front_node = parameter_index.first;
@@ -1151,6 +1152,7 @@ void PrepareParameterWithCopy(const std::pair<KernelWithIndex, size_t> &paramete
   if (graph_parameter_store->GetPositionWeight(outer_index) || common::AnfAlgo::HasAbstractRef(front_node.first) ||
       IsRefOutputInTuple(front_node.first, inner_index)) {
     tensor->set_device_address(device_tensor);
+    tensor->set_storage_info(kernel_tensor->tensor_storage_info());
     tensor->set_format(kernel_tensor->format());
     kernel_tensor->set_new_ref_count(SIZE_MAX);
     MS_VLOG(VL_RUNTIME_FRAMEWORK_DEVICE_ADDRESS) << "Set new ref count to max for device address:" << device_tensor
@@ -1192,7 +1194,7 @@ void CheckInputSize(const KernelTensorPtr &kernel_tensor, Tensor *tensor, size_t
       }
       auto device_tensor = tmp->device_address();
       // The input size for static shape and normal format remains unchanged.
-      if (device_tensor && device_tensor->GetTensorStorageInfo() == nullptr &&
+      if (device_tensor && kernel_tensor->tensor_storage_info() == nullptr &&
           (tmp->format() == DEFAULT_FORMAT || tmp->format() == ND) && device_tensor->size() != tensor->Size()) {
         MS_LOG(ERROR) << "The tensor size " << tensor->Size() << " is different from device tensor size "
                       << device_tensor->size() << ", outer index: " << outer_index << ", inner index: " << inner_index
@@ -1202,12 +1204,12 @@ void CheckInputSize(const KernelTensorPtr &kernel_tensor, Tensor *tensor, size_t
   }
 }
 
-device::DeviceAddressPtr PrepareOffloadedParameter(Tensor *tensor, const KernelTensorPtr &kernel_tensor,
-                                                   const device::DeviceAddressPtr &device_address) {
+void PrepareOffloadedParameter(Tensor *tensor, const KernelTensorPtr &kernel_tensor) {
   MS_EXCEPTION_IF_NULL(tensor);
   const auto &tensor_address = tensor->device_address();
   MS_EXCEPTION_IF_NULL(tensor_address);
   MS_EXCEPTION_IF_NULL(kernel_tensor);
+  const auto &device_address = kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_address);
   if (tensor->device_address()->GetDeviceType() != device::DeviceType::kCPU) {
     Pipeline::Get().WaitForward();
@@ -1215,7 +1217,7 @@ device::DeviceAddressPtr PrepareOffloadedParameter(Tensor *tensor, const KernelT
   auto allocator = device_address->allocator();
   const auto size = device_address->GetSize();
   if (device_address->GetDeviceType() != device::DeviceType::kCPU || allocator == nullptr) {
-    return tensor_address;
+    return;
   }
 
   auto pinned_tensor_address = std::static_pointer_cast<device::DeviceAddress>(
@@ -1232,10 +1234,12 @@ device::DeviceAddressPtr PrepareOffloadedParameter(Tensor *tensor, const KernelT
       }
     }
   }
-  tensor->set_device_address(pinned_tensor_address);
+
   kernel_tensor->set_device_address(tensor_address);
+  kernel_tensor->set_tensor_storage_info(tensor->storage_info());
+  tensor->set_device_address(pinned_tensor_address);
+  tensor->set_storage_info(nullptr);
   MS_LOG(INFO) << "User pin memory for offloaded parameter.";
-  return pinned_tensor_address;
 }
 
 void PrepareParameter(const std::pair<KernelWithIndex, size_t> &parameter_index, const AID &from_aid,
@@ -1263,17 +1267,22 @@ void PrepareParameter(const std::pair<KernelWithIndex, size_t> &parameter_index,
   MS_EXCEPTION_IF_NULL(tensor);
   CheckInputSize(kernel_tensor, tensor, outer_index, inner_index);
   auto tensor_address = tensor->device_address();
+  auto storage_info = tensor->storage_info();
   if (tensor_address == nullptr) {
     // Tensor with initializer but didn't init_data yet.
     auto empty_tensor = tensor::from_spec(tensor->data_type(), tensor->shape(), device::DeviceType::kCPU);
     tensor->set_device_address(empty_tensor->device_address());
+    tensor->set_storage_info(nullptr);
     tensor_address = empty_tensor->device_address();
+    storage_info = nullptr;
   }
-  auto device_tensor = kernel_tensor->device_address();
 
+  auto device_tensor = kernel_tensor->device_address();
   if (graph_parameter_store->GetOffloaded(outer_index, inner_index) &&
       !graph_parameter_store->GetPinned(outer_index, inner_index)) {
-    tensor_address = PrepareOffloadedParameter(tensor, kernel_tensor, device_tensor);
+    PrepareOffloadedParameter(tensor, kernel_tensor);
+    tensor_address = tensor->device_address();
+    storage_info = tensor->storage_info();
     graph_parameter_store->SetPinned(outer_index, inner_index, true);
     MS_LOG(DEBUG) << "Prepare offloaded parameter: " << front_node.first->fullname_with_scope();
   }
@@ -1282,7 +1291,7 @@ void PrepareParameter(const std::pair<KernelWithIndex, size_t> &parameter_index,
                   << device::GetDeviceNameByType(
                        graph_parameter_store->GetParameterDeviceType(outer_index, inner_index))
                   << " outer index:" << outer_index << " inner index:" << inner_index;
-    if (!IsContiguousStorage(tensor_address->GetTensorStorageInfo())) {
+    if (!IsContiguousStorage(storage_info)) {
       MS_LOG(EXCEPTION) << "Not support non-contiguous heter graph input index:" << outer_index
                         << " inner index:" << inner_index << " device address:" << tensor_address->ToString()
                         << " parameter store device type:"
@@ -1318,6 +1327,7 @@ void PrepareParameter(const std::pair<KernelWithIndex, size_t> &parameter_index,
                  << " for graph parameter kernel tensor:" << kernel_tensor->ToString();
   }
   kernel_tensor->set_device_address(tensor_address);
+  kernel_tensor->set_tensor_storage_info(storage_info);
   UpdateDynamicShapeAndSize(tensor, kernel_tensor, outer_index, inner_index);
 }
 

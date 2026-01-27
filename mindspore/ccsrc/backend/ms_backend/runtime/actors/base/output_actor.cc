@@ -260,6 +260,7 @@ void OutputActor::FetchParameterInput(OpContext<KernelTensor> *const context) {
     if (iter != old_to_new_kernel_tensor_.end()) {
       MS_EXCEPTION_IF_NULL(iter->second);
       new_tensor->set_device_address(iter->second->device_address());
+      new_tensor->set_storage_info(iter->second->tensor_storage_info());
       new_tensor->set_format(iter->second->format());
     } else {
       auto kernel_tensor = AnfAlgo::CreateKernelTensor(
@@ -270,10 +271,10 @@ void OutputActor::FetchParameterInput(OpContext<KernelTensor> *const context) {
       kernel_tensor->SetType(parameter_kernel_tensor->GetType());
       kernel_tensor->SetShape(parameter_kernel_tensor->GetShape());
       kernel_tensor->set_stream_id(device_tensor->stream_id());
-      kernel_tensor->set_tensor_storage_info(device_tensor->GetTensorStorageInfo());
+      kernel_tensor->set_tensor_storage_info(parameter_kernel_tensor->tensor_storage_info());
       auto tensor_device_address = kernel_tensor->device_address();
       MS_EXCEPTION_IF_NULL(tensor_device_address);
-      if (device_tensor->GetTensorStorageInfo() != nullptr) {
+      if (parameter_kernel_tensor->tensor_storage_info() != nullptr) {
         new_tensor->set_shape(parameter_kernel_tensor->GetShapeVector());
       }
       // SetShape will calculate a default size by host shape, need to set real device size for special format.
@@ -283,8 +284,9 @@ void OutputActor::FetchParameterInput(OpContext<KernelTensor> *const context) {
         << " output position:" << output_position << ", origin output device tensor: " << device_tensor;
       old_to_new_kernel_tensor_[parameter_kernel_tensor.get()] = kernel_tensor;
       new_tensor->set_device_address(tensor_device_address);
+      new_tensor->set_storage_info(kernel_tensor->tensor_storage_info());
     }
-    if (device_tensor->GetTensorStorageInfo() != nullptr) {
+    if (parameter_kernel_tensor->tensor_storage_info() != nullptr) {
       new_tensor->set_contiguous_callback(
         [this](const tensor::TensorPtr &self) -> DeviceAddressPtr { return MakeTensorContiguousCallback(self); });
     }
@@ -498,12 +500,13 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
       auto type = std::make_shared<Tuple>();
       auto temp_device_address =
         std::make_shared<device::DeviceAddress>(device_contexts_[output_position]->GetDeviceType());
-      auto kernel_tensor = std::make_shared<kernel::KernelTensor>(temp_device_address, shape, type, nullptr);
+      auto kernel_tensor = std::make_shared<kernel::KernelTensor>(temp_device_address, nullptr, shape, type, nullptr);
       MS_EXCEPTION_IF_NULL(kernel_tensor);
       MS_LOG(DEBUG) << "Create kernel tensor:" << kernel_tensor->ToString();
       auto tensor_device_address = kernel_tensor->device_address();
       MS_EXCEPTION_IF_NULL(tensor_device_address);
       tensor->set_device_address(tensor_device_address);
+      tensor->set_storage_info(kernel_tensor->tensor_storage_info());
       tensor->set_format(kernel_tensor->format());
     }
     return tensor;
@@ -563,6 +566,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
   if (iter != old_to_new_kernel_tensor_.end()) {
     MS_EXCEPTION_IF_NULL(iter->second);
     tensor->set_device_address(iter->second->device_address());
+    tensor->set_storage_info(iter->second->tensor_storage_info());
   } else {
     auto kernel_tensor =
       AnfAlgo::CreateKernelTensor(nullptr, device_tensor->GetSize(), node_kernel_tensor->format(),
@@ -580,6 +584,7 @@ TensorPtr OutputActor::CreateOutputTensor(const AnfNodePtr &output_node, size_t 
       << " output index:" << output_index << " output position:" << output_position
       << ", origin output device tensor: " << device_tensor;
     tensor->set_device_address(kernel_tensor->device_address());
+    tensor->set_storage_info(kernel_tensor->tensor_storage_info());
     old_to_new_kernel_tensor_[node_kernel_tensor.get()] = kernel_tensor;
   }
 
@@ -651,6 +656,7 @@ void SetDeviceAddressForDiffDtype(const tensor::TensorPtr &tensor, const KernelT
   }
   auto new_tensor = tensor::from_spec(tensor->data_type(), tensor->shape(), device::DeviceType::kCPU);
   tensor->set_device_address(new_tensor->device_address());
+  tensor->set_storage_info(nullptr);
   MS_LOG(DEBUG) << "Copy output from kernel tensor:" << kernel_tensor->ToString()
                 << " to tensor:" << tensor->ToString();
   if (!SyncCopy(tensor, kernel_tensor.get(), kernel_tensor->stream_id())) {
@@ -774,7 +780,7 @@ void OutputActor::HandleOutput() {
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
       MarkTensorAsOutput, GetAID().Name(), device::GetDeviceNameByType(device_tensor->GetDeviceType()),
       device_tensor->GetPtr(), kernel_tensor->dtype_id(), kernel_tensor->GetShapeVector(),
-      device_tensor->GetTensorStorageInfo());
+      kernel_tensor->tensor_storage_info());
   }
 }
 

@@ -109,7 +109,7 @@ class BACKEND_COMMON_EXPORT DeviceAddressUtils {
     auto type = tmp_abs->GetType();
     auto value = tmp_abs->GetValue();
     auto device_address = std::make_shared<device::DeviceAddress>(device_context->GetDeviceType());
-    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(device_address, shape, type, value);
+    auto kernel_tensor = std::make_shared<kernel::KernelTensor>(device_address, nullptr, shape, type, value);
     device_address->set_from_persistent_mem(true);
     kernel_tensor->set_new_ref_count(SIZE_MAX);
 

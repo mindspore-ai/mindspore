@@ -65,6 +65,7 @@ void UpdateInputTensorFromDevice(const std::vector<AnfNodePtr> &input_nodes,
     auto &input_node = input_nodes[i];
     MS_EXCEPTION_IF_NULL(tensor);
     auto tensor_address = tensor->device_address();
+
     auto node_address = AnfAlgo::GetMutableOutputAddr(input_node, 0);
     // node_address can't be null
     MS_EXCEPTION_IF_NULL(node_address);
@@ -85,8 +86,10 @@ void UpdateInputTensorFromDevice(const std::vector<AnfNodePtr> &input_nodes,
         tensor->set_need_pipeline_sync(true);
         tensor->set_implicit_copy_address(tensor_address);
         tensor->set_implicit_copy_format(tensor->format());
+        tensor->set_implicit_copy_storage_info(tensor->storage_info());
         tensor->set_device_address(node_address);
         tensor->set_format(node_kernel_tensor->format());
+        tensor->set_storage_info(node_kernel_tensor->tensor_storage_info());
         MS_LOG(DEBUG) << "Set to_device callback for tensor " << tensor->ToString() << " id " << tensor->id();
       }
     }
@@ -123,10 +126,10 @@ void SetDeviceAddress(const AnfNodePtr &input_node, const tensor::TensorPtr &inp
   // The DeviceType and format of DeviceAddress is always the same after UpdateInputTensor
   if (tensor_address != nullptr && tensor_address != node_address) {
     auto address = tensor_address;
-    if (tensor_address->GetTensorStorageInfo() != nullptr) {
+    if (input_tensor->storage_info() != nullptr) {
       MS_EXCEPTION(RuntimeError) << "Not support view tensor.";
     }
-    AnfAlgo::SetOutputAddr(address, 0, input_node);
+    AnfAlgo::SetOutputAddr(address, input_tensor->storage_info(), 0, input_node);
   }
 }
 
@@ -192,7 +195,7 @@ void CopyTensorDataToDevice(const tensor::TensorPtr &tensor, const AnfNodePtr &n
 
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
     MarkTensorAsOutput, "PyNative", device::GetDeviceNameByType(device_address->GetDeviceType()),
-    device_address->GetPtr(), tensor->data_type(), tensor->shape(), device_address->GetTensorStorageInfo());
+    device_address->GetPtr(), tensor->data_type(), tensor->shape(), tensor->storage_info());
 }
 
 void CopyValueNodeDataToDevice(const KernelGraphPtr &graph, const device::DeviceContext *device_context) {
@@ -1017,7 +1020,7 @@ void DynamicOpRunner::UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compi
     const auto &input_edge = inputs[i];
 
     auto device_address = input_tensor->device_address();
-    if (device_address->GetTensorStorageInfo() != nullptr) {
+    if (input_tensor->storage_info() != nullptr) {
       MS_EXCEPTION(RuntimeError) << "Not support view tensor for " << op_compiler_info->graph_info_;
     }
 
@@ -1034,12 +1037,15 @@ void DynamicOpRunner::UpdateInputDeviceAddress(const OpCompilerInfoPtr &op_compi
                     << device::GetDeviceNameByType(new_device_address->GetDeviceType());
       input_tensor->set_implicit_copy_address(device_address);
       input_tensor->set_implicit_copy_format(input_tensor->format());
+      input_tensor->set_implicit_copy_storage_info(input_tensor->storage_info());
       input_tensor->set_device_address(new_device_address);
       input_tensor->set_format(input_edge->kernel_tensor_->format());
+      input_tensor->set_storage_info(input_edge->kernel_tensor_->tensor_storage_info());
     } else {
       MS_LOG(DEBUG) << "Input device type is same, set tensor device address to ir input.";
       input_edge->kernel_tensor_->set_device_address(device_address);
       input_edge->kernel_tensor_->set_format(input_tensor->format());
+      input_edge->kernel_tensor_->set_tensor_storage_info(input_tensor->storage_info());
     }
 
     if (device_address->GetDeviceType() == device::DeviceType::kCPU && input_edge->ignore_h2d_) {

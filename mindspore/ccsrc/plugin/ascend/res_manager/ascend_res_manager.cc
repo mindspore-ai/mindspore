@@ -271,6 +271,14 @@ size_t GetCommonAlignSize(size_t input_size) {
 size_t GetCommunicationAlignSize(size_t input_size) {
   return ((input_size + kMemAlignSize - 1) / kMemAlignSize) * kMemAlignSize + kTwiceMemAlignSize;
 }
+
+bool IsContiguous(const DeviceAddressExtPtr &device_ext) {
+  if (device_ext == nullptr || device_ext->tensor_storage_info_ == nullptr) {
+    return true;
+  }
+  const auto &storage_info = device_ext->tensor_storage_info_;
+  return storage_info->is_contiguous && SizeOf(storage_info->shape) == SizeOf(storage_info->ori_shape);
+}
 }  // namespace
 
 std::function<CollectiveCommunicationLib *(void)> gLoadCollectiveCommLibCallback;
@@ -976,15 +984,11 @@ bool AscendResManager::AsyncDeviceToHost(const DeviceAddressPtr &dst_device_sync
   const auto &src_device_address = dynamic_cast<const DeviceAddress *>(src_device_sync.get());
   MS_EXCEPTION_IF_NULL(dst_device_address);
   MS_EXCEPTION_IF_NULL(src_device_address);
-  auto is_contigous = [](const TensorStorageInfoPtr &info) {
-    return SizeOf(info->shape) == SizeOf(info->ori_shape) && info->is_contiguous;
-  };
-  if ((src_device_address->GetTensorStorageInfo() != nullptr &&
-       !is_contigous(src_device_address->GetTensorStorageInfo())) ||
-      (dst_device_address->GetTensorStorageInfo() != nullptr &&
-       !is_contigous(dst_device_address->GetTensorStorageInfo()))) {
-    MS_LOG(WARNING) << "Invalid sync device to host for tensor storage info in device address:"
-                    << src_device_address->ToString() << " and:" << dst_device_address->ToString();
+  if (!IsContiguous(src_ext) || !IsContiguous(dst_ext)) {
+    MS_LOG(WARNING) << "Invalid sync device to host for device address:" << src_device_address->ToString()
+                    << " with tensor info " << (src_ext != nullptr ? src_ext->ToString() : "null") << " and "
+                    << dst_device_address->ToString() << " with tensor info "
+                    << (dst_ext != nullptr ? dst_ext->ToString() : "null");
   }
   BindDeviceToCurrentThread(false);
   if (src_ext == nullptr || dst_ext == nullptr) {
@@ -1177,15 +1181,11 @@ bool AscendResManager::AsyncHostToDevice(const DeviceAddressPtr &dst_device_sync
   MS_EXCEPTION_IF_NULL(dst_device_address);
   MS_EXCEPTION_IF_NULL(src_device_address);
 
-  auto is_contigous = [](const TensorStorageInfoPtr &info) {
-    return SizeOf(info->shape) == SizeOf(info->ori_shape) && info->is_contiguous;
-  };
-  if ((src_device_address->GetTensorStorageInfo() != nullptr &&
-       !is_contigous(src_device_address->GetTensorStorageInfo())) ||
-      (dst_device_address->GetTensorStorageInfo() != nullptr &&
-       !is_contigous(dst_device_address->GetTensorStorageInfo()))) {
-    MS_LOG(EXCEPTION) << "Invalid sync host to device for tensor storage info in device address:"
-                      << src_device_address->ToString() << " and:" << dst_device_address->ToString();
+  if (!IsContiguous(src_ext) || !IsContiguous(dst_ext)) {
+    MS_LOG(EXCEPTION) << "Invalid sync host to device for device address:" << src_device_address->ToString()
+                      << " with tensor info " << (src_ext != nullptr ? src_ext->ToString() : "null") << " and "
+                      << dst_device_address->ToString() << " with tensor info "
+                      << (dst_ext != nullptr ? dst_ext->ToString() : "null");
   }
   BindDeviceToCurrentThread(false);
   if (src_ext == nullptr || dst_ext == nullptr) {
@@ -1541,6 +1541,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> AscendResManager::AllocDevic
       host_context->device_res_manager_->SyncAllStreams();
       SyncCopy(device_address, tensor->device_address(), device_address->stream_id());
       tensor->set_device_address(device_address);
+      tensor->set_storage_info(nullptr);
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(MarkTensorAsOutput, "PyNative", device_name, device_ptr,
                                                      tensor->data_type(), tensor->shape(), tensor->storage_info());
       ptr += before_padding_sizes[i];
@@ -1590,6 +1591,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> AscendResManager::AllocDevic
     host_context->device_res_manager_->SyncAllStreams();
     SyncCopy(device_address, tensor->device_address(), device_address->stream_id());
     tensor->set_device_address(device_address);
+    tensor->set_storage_info(nullptr);
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddCompileTimeMemInfo, "PyNative", before_padding_sizes[i], ptr,
                                                    memory::mem_pool::MemType::kContinuousMemory);
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(MarkTensorAsOutput, "PyNative",
@@ -1653,6 +1655,7 @@ tensor::TensorPtr AscendResManager::GetSliceByTensorListIndexHandle(const std::v
   auto device_address = std::make_shared<device::DeviceAddress>(ptr, size, device::DeviceType::kAscend, stream_id);
   tensor->set_format(Format::ND);
   tensor->set_device_address(device_address);
+  tensor->set_storage_info(nullptr);
   return tensor;
 }
 
@@ -1674,6 +1677,7 @@ TensorPtr AscendResManager::GetSliceByPaddingShapeHandle(const tensor::TensorPtr
                 << ", shape:" << shape << ", data_type:" << TypeIdToString(type_id);
   tensor->set_format(Format::ND);
   tensor->set_device_address(device_address);
+  tensor->set_storage_info(nullptr);
   return tensor;
 }
 

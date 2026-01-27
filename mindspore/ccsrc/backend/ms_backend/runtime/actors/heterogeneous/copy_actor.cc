@@ -15,7 +15,7 @@
  */
 
 #include "backend/ms_backend/runtime/actors/heterogeneous/copy_actor.h"
-
+#include <string>
 #include <utility>
 #include "backend/ms_backend/runtime/actors/base/memory_manager_actor.h"
 #include "async/async.h"
@@ -91,7 +91,7 @@ void CopyActor::OnMemoryAllocFinish(OpContext<KernelTensor> *const context) {
   if (IsRunningFailed(context)) {
     return;
   }
-  if (!IsContiguousStorage(input_kernel_tensors_[0]->device_address()->GetTensorStorageInfo())) {
+  if (!IsContiguousStorage(input_kernel_tensors_[0]->tensor_storage_info())) {
     std::stringstream error_info;
     error_info << "Not support non-contiguous input: " << input_kernel_tensors_[0]->ToString()
                << " for actor:" << GetAID();

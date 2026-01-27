@@ -52,7 +52,7 @@ tensor::TensorPtr CopyCustomizeCall(const std::shared_ptr<OpRunner> &op, const T
 
   const auto &input_device_sync = input_tensor->device_address();
   MS_EXCEPTION_IF_NULL(input_device_sync);
-  if (input_device_sync->GetTensorStorageInfo() == nullptr) {
+  if (input_tensor->storage_info() == nullptr) {
     op->set_primitive(prim::kPrimTensorMove);
     // Get inputs kernel tensors, the not-tensor value will malloc here
     const auto &input_address_info =

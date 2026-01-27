@@ -501,7 +501,7 @@ bool ProcessOverflow(const KernelTensorPtr &overflow_kernel_tensor, uint32_t set
 }
 
 ShapeVector GetOriOutputTensorShape(const TensorInfoForDump &tensor_info, TypeId host_type) {
-  auto tensor_storage_info = tensor_info.kernel_tensor->device_address()->GetTensorStorageInfo();
+  auto tensor_storage_info = tensor_info.kernel_tensor->tensor_storage_info();
   auto host_shape = tensor_storage_info == nullptr ? tensor_info.host_shape : tensor_storage_info->ori_shape;
   if (host_type == kNumberTypeInt4 && !GetSampleNum()) {
     constexpr int64_t kNumber2 = 2;
@@ -579,7 +579,7 @@ void LaunchDumpCallback(const std::vector<TensorInfoForDump> &tensor_info_list, 
       auto ret = host_context->device_res_manager_->CopyDirectly(
         out_tensor->data_c(), host_size, tensor_info.device_ptr, device_size, device::CopyType::kD2H);
       MS_LOG(DEBUG) << "Callback aclrtmemcpy for " << file_path << ". result is: " << ret << file_path;
-      auto tensor_storage_info = tensor_info.kernel_tensor->device_address()->GetTensorStorageInfo();
+      auto tensor_storage_info = tensor_info.kernel_tensor->tensor_storage_info();
       // Convert the non-contiguous Tensor to contiguous
       if (tensor_storage_info != nullptr) {
         out_tensor = ExtractContiguousTensor(out_tensor, tensor_info.host_shape, tensor_info.host_type,

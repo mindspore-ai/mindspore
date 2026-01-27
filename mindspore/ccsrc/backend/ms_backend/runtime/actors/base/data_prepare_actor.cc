@@ -104,7 +104,7 @@ void SyncTensorData(const TensorPtr &host_tensor, const KernelTensorPtr &kernel_
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
       MarkTensorAsOutput, "SyncTensorData", device::GetDeviceNameByType(device_tensor->GetDeviceType()),
       device_tensor->GetPtr(), kernel_tensor->dtype_id(), kernel_tensor->GetShapeVector(),
-      device_tensor->GetTensorStorageInfo());
+      kernel_tensor->tensor_storage_info());
     if (memory::mem_pool::IsNeedProfilieMemoryLog()) {
       auto output_address = reinterpret_cast<std::uintptr_t>(device_tensor.get());
       MS_LOG(WARNING) << "Need Profile Memory, alloc type: SyncTensorData, device address class ptr: " << output_address
@@ -400,7 +400,7 @@ void DataPrepareActor::UpdateDeviceAddressForDataNode(const AnfNodePtr &input_no
     return;
   }
 
-  AnfAlgo::SetOutputAddr(tensor_address, 0, input_node);
+  AnfAlgo::SetOutputAddr(tensor_address, input_tensor->storage_info(), 0, input_node);
   MS_VLOG(VL_RUNTIME_FRAMEWORK_DEVICE_ADDRESS) << "Update device address of " << input_node->DebugString() << " to "
                                                << tensor_address.get() << " ptr:" << tensor_address->GetPtr();
   tensor_address->SetNodeIndex(input_node, 0);
@@ -997,6 +997,7 @@ void DataPrepareActor::PrepareDataForValueNodeTensor(const ValueNodePtr &node, c
 
   SyncTensorData(tensor, kernel_tensor, node, device_context, context, real_strategy_);
   tensor->set_device_address(device_tensor);
+  tensor->set_storage_info(kernel_tensor->tensor_storage_info());
   MS_VLOG(VL_RUNTIME_FRAMEWORK_DEVICE_ADDRESS)
     << "Prepare device data for value node: " << node->DebugString() << ", output index: " << 0
     << " device address:" << device_tensor << " ptr:" << device_tensor->GetPtr();
@@ -1064,10 +1065,10 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
   }
   static std::string name = "Alloc memory";
   kernel_tensor->IncreaseNewRefCount(name);
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
-    MarkTensorAsOutput, "PrepareDataForControlValueNode", device::GetDeviceNameByType(device_tensor->GetDeviceType()),
-    device_tensor->GetPtr(), kernel_tensor->dtype_id(), kernel_tensor->GetShapeVector(),
-    device_tensor->GetTensorStorageInfo());
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(MarkTensorAsOutput, "PrepareDataForControlValueNode",
+                                                 device::GetDeviceNameByType(device_tensor->GetDeviceType()),
+                                                 device_tensor->GetPtr(), kernel_tensor->dtype_id(),
+                                                 kernel_tensor->GetShapeVector(), kernel_tensor->tensor_storage_info());
   if (memory::mem_pool::IsNeedProfilieMemoryLog()) {
     auto output_address = reinterpret_cast<uintptr_t>(device_tensor.get());
     MS_LOG(WARNING) << "Need Profile Memory, alloc type: PrepareDataForControlValueNode, device address class ptr: "
@@ -1086,6 +1087,7 @@ void DataPrepareActor::PrepareDataForControlValueNode(const KernelWithIndex &nod
     SET_OPCONTEXT_FAIL_RET_WITH_ERROR((*context), error_info);
   }
   tensor->set_device_address(device_tensor);
+  tensor->set_storage_info(kernel_tensor->tensor_storage_info());
 }
 
 void DataPrepareActor::PrepareDataForStringValue(const ValueNodePtr &node, size_t index, const AnfNodePtr &front_node,
@@ -1144,10 +1146,10 @@ void DataPrepareActor::PrepareDataForStringValue(const ValueNodePtr &node, size_
   }
   static std::string name = "Alloc memory";
   kernel_tensor->IncreaseNewRefCount(name);
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
-    MarkTensorAsOutput, "PrepareDataForStringValue", device::GetDeviceNameByType(device_tensor->GetDeviceType()),
-    device_tensor->GetPtr(), kernel_tensor->dtype_id(), kernel_tensor->GetShapeVector(),
-    device_tensor->GetTensorStorageInfo());
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(MarkTensorAsOutput, "PrepareDataForStringValue",
+                                                 device::GetDeviceNameByType(device_tensor->GetDeviceType()),
+                                                 device_tensor->GetPtr(), kernel_tensor->dtype_id(),
+                                                 kernel_tensor->GetShapeVector(), kernel_tensor->tensor_storage_info());
   if (memory::mem_pool::IsNeedProfilieMemoryLog()) {
     auto output_address = reinterpret_cast<uintptr_t>(device_tensor.get());
     MS_LOG(WARNING) << "Need Profile Memory, alloc type: PrepareDataForValueNode, device address class ptr: "
@@ -1216,10 +1218,10 @@ void DataPrepareActor::PrepareDataForSequenceAndScalarValue(const ValueNodePtr &
   }
   static std::string name = "Alloc memory";
   kernel_tensor->IncreaseNewRefCount(name);
-  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
-    MarkTensorAsOutput, "PrepareDataForSequenceAndScalarValue",
-    device::GetDeviceNameByType(device_tensor->GetDeviceType()), device_tensor->GetPtr(), kernel_tensor->dtype_id(),
-    kernel_tensor->GetShapeVector(), device_tensor->GetTensorStorageInfo());
+  device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(MarkTensorAsOutput, "PrepareDataForSequenceAndScalarValue",
+                                                 device::GetDeviceNameByType(device_tensor->GetDeviceType()),
+                                                 device_tensor->GetPtr(), kernel_tensor->dtype_id(),
+                                                 kernel_tensor->GetShapeVector(), kernel_tensor->tensor_storage_info());
   if (memory::mem_pool::IsNeedProfilieMemoryLog()) {
     auto output_address = reinterpret_cast<uintptr_t>(device_tensor.get());
     MS_LOG(WARNING) << "Need Profile Memory, alloc type: PrepareDataForValueNode, device address class ptr: "
@@ -1310,7 +1312,7 @@ void DataPrepareActor::CopyDataFromDeviceTensorStore(const AnfNodePtr &front_nod
         MarkTensorAsOutput, "CopyDataFromDeviceTensorStore",
         device::GetDeviceNameByType(another_device_tensor->GetDeviceType()), another_device_tensor->GetPtr(),
         another_kernel_tensor->dtype_id(), another_kernel_tensor->GetShapeVector(),
-        another_device_tensor->GetTensorStorageInfo());
+        another_kernel_tensor->tensor_storage_info());
     }
     if (memory::mem_pool::IsNeedProfilieMemoryLog() && need_alloc_memory) {
       auto output_address = reinterpret_cast<uintptr_t>(another_device_tensor.get());
@@ -1363,18 +1365,22 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   auto device_tensor = node_kernel_tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_tensor);
   auto host_tensor_address = tensor->device_address();
+  auto host_tensor_storage_info = tensor->storage_info();
   Format host_format = tensor->format();
   if (host_tensor_address == nullptr) {
     // Tensor with initializer but didn't init_data yet.
     auto empty_tensor = tensor::from_spec(tensor->data_type(), tensor->shape(), device::DeviceType::kCPU);
     tensor->set_device_address(empty_tensor->device_address());
+    tensor->set_storage_info(nullptr);
     host_tensor_address = empty_tensor->device_address();
+    host_tensor_storage_info = nullptr;
     MS_EXCEPTION_IF_NULL(host_tensor_address);
     MS_LOG(DEBUG) << "Create device address:" << host_tensor_address->ToString() << " for host tensor:" << tensor.get()
                   << " for backend node:" << backend_node->DebugString() << " front node:" << front_node->DebugString();
   }
   auto host_kernel_tensor = node_kernel_tensor->CloneKernelTensor();
   host_kernel_tensor->set_device_address(host_tensor_address);
+  host_kernel_tensor->set_tensor_storage_info(host_tensor_storage_info);
   MS_LOG(DEBUG) << "Create kernel tensor:" << host_kernel_tensor->ToString();
   auto skip_h2d = TftIsRebootNode();
   // Use the device address of host tensor to set device tensor.
@@ -1391,6 +1397,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
         kernel_tensor->set_stream_id(device_tensor->stream_id());
         host_kernel_tensor = kernel_tensor;
         host_tensor_address = host_kernel_tensor->device_address();
+        host_tensor_storage_info = host_kernel_tensor->tensor_storage_info();
         host_format = host_kernel_tensor->format();
         MS_EXCEPTION_IF_NULL(host_tensor_address);
         MS_VLOG(VL_RUNTIME_FRAMEWORK_DEVICE_ADDRESS) << "Create kernel tensor:" << kernel_tensor->ToString();
@@ -1398,6 +1405,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
       } else {
         host_tensor_address = device_tensor;
         host_format = node_kernel_tensor->format();
+        host_tensor_storage_info = node_kernel_tensor->tensor_storage_info();
       }
       is_need_sync = true;
     }
@@ -1428,9 +1436,10 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
           SET_OPCONTEXT_FAIL_RET_WITH_ERROR_BY_STRATEGY(real_strategy_, (*context), error_info);
         }
         host_tensor_address = device_tensor;
+        host_tensor_storage_info = node_kernel_tensor->tensor_storage_info();
       } else {
         (void)address_modified_input_nodes_.insert(backend_node.get());
-        AnfAlgo::SetOutputAddr(host_tensor_address, 0, backend_node);
+        AnfAlgo::SetOutputAddr(host_tensor_address, host_tensor_storage_info, 0, backend_node);
         node_kernel_tensor->set_format(host_format);
       }
     }
@@ -1440,6 +1449,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
   MS_EXCEPTION_IF_NULL(host_tensor_address);
   host_tensor_address->SetNodeIndex(backend_node, 0);
   host_kernel_tensor->set_device_address(host_tensor_address);
+  host_kernel_tensor->set_tensor_storage_info(host_tensor_storage_info);
   DeviceTensorStore::GetInstance().Insert(front_node.get(), host_kernel_tensor);
 
   // If the ptr of device tensor is not nullptr, it indicates that the device data has been prepared.
@@ -1450,6 +1460,7 @@ void DataPrepareActor::PrepareDataForWeightNode(const AnfNodePtr &backend_node, 
                    TftIsRebootNode());
   }
   tensor->set_device_address(host_tensor_address);
+  tensor->set_storage_info(host_tensor_storage_info);
 
   // Allocate another device memory and copy data from host tensor to another device(if exist).
   CopyDataFromDeviceTensorStore(front_node, backend_node, host_kernel_tensor, device_context, context);
@@ -1502,7 +1513,7 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
     auto kernel_tensor = kernel_tensors[0];
     MS_EXCEPTION_IF_NULL(kernel_tensor);
     MS_EXCEPTION_IF_NULL(kernel_tensor->device_address());
-    auto host_tensor_address = std::dynamic_pointer_cast<DeviceTensor>(tensor->device_address());
+    auto host_tensor_address = tensor->device_address();
     if ((kernel_tensor->device_address() == host_tensor_address) || (kernel_tensor->device_address()->IsPtrValid())) {
       continue;
     }
@@ -1514,6 +1525,7 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
                  << ", device type:" << kernel_tensor->device_address()->GetDeviceType();
     if (host_tensor_address == nullptr) {
       tensor->set_device_address(kernel_tensor->device_address());
+      tensor->set_storage_info(kernel_tensor->tensor_storage_info());
       auto device_context = device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(
         {kernel_tensor->device_address()->GetDeviceType(), kernel_tensor->device_address()->device_id()});
       SyncTensorData(tensor, kernel_tensor, node, device_context, context, GraphExecutionStrategy::kPipeline,
@@ -1526,6 +1538,7 @@ void DataPrepareActor::PrepareDeviceTensorStoreForControlNode(const ControlNodeP
       }
       host_tensor_address->SetNodeIndex(node, 0);
       kernel_tensor->set_device_address(host_tensor_address);
+      kernel_tensor->set_tensor_storage_info(tensor->storage_info());
       DeviceTensorStore::GetInstance().Remove(front_parameter.get());
       DeviceTensorStore::GetInstance().Insert(front_parameter.get(), kernel_tensor);
     }

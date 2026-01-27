@@ -37,9 +37,7 @@ TEST_F(TestViewView, ViewFunction) {
   auto input_storage_info =
     std::make_shared<TensorStorageInfo>(std::vector<int64_t>{2, 2}, std::vector<int64_t>{1, 2},
                                         std::vector<int64_t>{2, 2}, std::vector<int64_t>{2, 1}, false);
-  const auto &input_device_address = input_tensor->device_address();
-  ASSERT_TRUE(input_device_address != nullptr);
-  input_device_address->set_tensor_storage_info(input_storage_info);
+  input_tensor->set_storage_info(input_storage_info);
   ASSERT_THROW(ViewBasicTypeCalc(input_tensor, {4}), std::exception);
 }
 }  // namespace ops

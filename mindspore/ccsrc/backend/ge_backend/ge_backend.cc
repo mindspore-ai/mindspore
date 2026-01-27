@@ -1340,6 +1340,7 @@ void GEBackend::ConstructInputsRefMode(const KernelGraphPtr &func_graph, const V
           host_tensor_address = device_tensor;
           flatten_tensors[j]->set_device_address(host_tensor_address);
           flatten_tensors[j]->set_format(kernel_tensor->format());
+          flatten_tensors[j]->set_storage_info(kernel_tensor->tensor_storage_info());
           is_need_sync = true;
         } else if (host_tensor_address->GetDeviceType() != device_tensor->GetDeviceType()) {
           // device_type not same -> sync_to_host & copy_to_device
@@ -1348,6 +1349,7 @@ void GEBackend::ConstructInputsRefMode(const KernelGraphPtr &func_graph, const V
           host_tensor_address = device_tensor;
           origin_tensor->set_device_address(device_tensor);
           origin_tensor->set_format(kernel_tensor->format());
+          origin_tensor->set_storage_info(kernel_tensor->tensor_storage_info());
           is_need_sync = true;
         } else {
           // other not same condition -> device_copy
@@ -1357,6 +1359,7 @@ void GEBackend::ConstructInputsRefMode(const KernelGraphPtr &func_graph, const V
           host_tensor_address = device_tensor;
           flatten_tensors[j]->set_device_address(device_tensor);
           flatten_tensors[j]->set_format(kernel_tensor->format());
+          flatten_tensors[j]->set_storage_info(kernel_tensor->tensor_storage_info());
           is_need_sync = false;
         }
       } else {
@@ -1369,6 +1372,7 @@ void GEBackend::ConstructInputsRefMode(const KernelGraphPtr &func_graph, const V
             continue;
           } else if (host_tensor_address->GetPtr() == nullptr) {
             flatten_tensors[j]->set_device_address(nullptr);
+            flatten_tensors[j]->set_storage_info(nullptr);
             host_tensor_address = nullptr;
             is_need_sync = true;
           } else if (host_tensor_address->GetDeviceType() != device_tensor->GetDeviceType()) {
@@ -1516,6 +1520,7 @@ void GEBackend::ConstructOutputs(const KernelGraphPtr &func_graph, std::vector<t
                   << ", origin output kernel tensor: " << output_kernel_tensor->ToString();
     out_tensor->set_device_address(tensor_device_address);
     out_tensor->set_format(kernel_tensor->format());
+    out_tensor->set_storage_info(kernel_tensor->tensor_storage_info());
     outputs->emplace_back(out_tensor);
     output_types->emplace_back(kernel_tensor->GetType());
   }
@@ -1983,6 +1988,7 @@ void GEBackend::ConstructOutputs(mindspore::ge_backend::runtime::ActorSet *actor
     for (auto &tuple_tensor : tuple_tensors) {
       MS_EXCEPTION_IF_NULL(tuple_tensor);
       tuple_tensor->set_device_address(nullptr);
+      tuple_tensor->set_storage_info(nullptr);
     }
   }
 }

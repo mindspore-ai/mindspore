@@ -447,7 +447,8 @@ void OpCompiler::UpdateRefNodeOutputDeviceAddress(const KernelGraphPtr &graph) {
       continue;
     }
     auto input_addr = AnfAlgo::GetMutableOutputAddr(input_node, input_node_output_index, false);
-    AnfAlgo::SetOutputAddr(input_addr, output_index, ref_node);
+    auto input_storage_info = AnfAlgo::GetMutableOutputStorageInfo(input_node, input_node_output_index, false);
+    AnfAlgo::SetOutputAddr(input_addr, input_storage_info, output_index, ref_node);
   }
 }
 }  // namespace pynative
