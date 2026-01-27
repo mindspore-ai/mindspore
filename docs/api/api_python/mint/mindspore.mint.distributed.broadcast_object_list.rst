@@ -9,6 +9,9 @@ mindspore.mint.distributed.broadcast_object_list
         - 类似 :func:`mindspore.mint.distributed.broadcast` 方法，传入的参数为Python对象。
         - 当前仅支持PyNative模式，不支持Graph模式。
 
+    .. warning::
+        本接口会隐式使用pickle模块，该模块是不安全的。核心原因是反序列化时会执行任意代码，攻击者可通过构造恶意对象触发系统命令执行。因此，调用者须自行保障接口使用数据的安全性。
+
     参数：
         - **object_list** (list[Any]) - 待广播出去的或接收广播的Python对象。
         - **src** (int，可选) - 表示发送源的进程编号。只有该进程会广播张量。默认值： ``0`` 。

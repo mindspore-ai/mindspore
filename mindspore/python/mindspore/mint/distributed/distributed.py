@@ -85,6 +85,8 @@ BACKEND_MCCL = "mccl"
 _GROPU_SIZE_CACHE = {}
 _GROPU_RANK_CACHE = {}
 
+SAFE_PICKLE = False  # Macro switch for safe unpickling
+
 safe_builtins = {
     'range',
     'complex',
@@ -125,8 +127,9 @@ class RestrictedUnpickler(pickle.Unpickler):
 
 def restricted_loads(s):
     """Helper function analogous to pickle.loads()."""
-    return RestrictedUnpickler(io.BytesIO(s)).load()
-
+    if SAFE_PICKLE:
+        return RestrictedUnpickler(io.BytesIO(s)).load()
+    return _unpickler(io.BytesIO(s)).load()
 
 def _object_to_tensor(obj, size=0):
     f = io.BytesIO()
@@ -551,7 +554,7 @@ def init_process_group(backend="hccl",
 def destroy_process_group(group=None):
     """
     Destroy the user collective communication group.
-    If group is None or "hccl_world_group", Destroy all group and release collective communication lib.
+    If group is None or ``"hccl_world_group"``, Destroy all group and release collective communication lib.
 
     Note:
         - This method isn't supported in GPU and CPU versions of MindSpore.
@@ -2219,7 +2222,7 @@ def recv(tensor, src=0, group=None, tag=0):
             be received by the Send op with the same "tag". Default: ``0``. It is a reserved parameter currently.
 
     Returns:
-        int, If success, return ``0``.
+        int. If successful, it will return ``0``.
 
     Raises:
         TypeError: If the `tensor` is not Tensor, `src` is not an int or `group` is not a str.
@@ -2285,16 +2288,22 @@ def send_object_list(object_list, dst, group=None, device=None):
         - Only support PyNative mode, Graph mode is not currently supported.
         - Similar to :func:`mindspore.mint.distributed.send`, but Python objects can be passed in.
 
+    .. warning::
+        This interface will implicitly use the pickle module, which is not secure. The core reason
+        is that deserialization can execute arbitrary code, and attackers can trigger system command
+        execution by constructing malicious objects. Therefore, the caller must ensure the security
+        of the data used by the interface on their own.
+
     Args:
-        object_list (List[Any]): List of input objects to sent.
+        object_list (list[Any]): List of input objects to sent.
             Each object must be picklable. Receiver must provide lists of equal sizes.
-        dst (int): Destination global rank to send ``object_list`` to.
-        group (str, optional): The process group to work on. If None,
-            the default process group will be used. Default: ``None``.
+        dst (int): Destination global rank to send `object_list` to.
+        group (str, optional): The process group to work on. If ``None``,
+            the Ascend platform is ``"hccl_world_group"``. Default: ``None``.
         device (str, optional): Currently it is a reserved parameter. Default: ``None``.
 
     Raises:
-        TypeError: If the `dst` is not an int or `group` is not a str.
+        TypeError: If `dst` is not of type int, `group` is not of type str, or `object_ist` is not of type list.
         ValueError: If the `dst` process rank id is same as the current process.
 
     Supported Platforms:
@@ -2368,19 +2377,26 @@ def recv_object_list(object_list, src=0, group=None, device=None):
         - Only support PyNative mode, Graph mode is not currently supported.
         - Similar to :func:`mindspore.mint.distributed.recv`, but can receive Python objects.
 
+    .. warning::
+        This interface will implicitly use the pickle module, which is not secure. The core reason
+        is that deserialization can execute arbitrary code, and attackers can trigger system command
+        execution by constructing malicious objects. Therefore, the caller must ensure the security
+        of the data used by the interface on their own.
+
     Args:
-        object_list (List[Any]): List of objects to receive into.
+        object_list (list[Any]): List of objects to receive into.
             Must provide a list of sizes equal to the size of the list being sent.
         src (int, optional): A required integer identifying the source global rank. Default: ``0``.
-        group (str, optional): The process group to work on. If None,
-            the default process group will be used. Default: ``None``.
+        group (str, optional): The process group to work on. If ``None``,
+            the Ascend platform is ``"hccl_world_group"``. Default: ``None``.
         device (str, optional): Currently it is a reserved parameter. Default: ``None``.
 
     Returns:
-        int, If success, return ``0``.
+        int. If successful, it will return ``0``.
 
     Raises:
-        TypeError: If the `src` is not an int or `group` is not a str.
+        TypeError: If `src` is not of type int, `group` is not of type str, or `object_ist` is not of type list.
+        ValueError: If the `src` process rank id is same as the current process.
 
     Supported Platforms:
         ``Ascend``
@@ -2429,7 +2445,7 @@ def recv_object_list(object_list, src=0, group=None, device=None):
     recv(object_sizes_tensor, src=src, group=group)
     
     # Calculate total size and create tensor to receive serialized objects
-    total_size = int(sum([size.item() for size in object_sizes_tensor]))
+    total_size = int(sum(size.item() for size in object_sizes_tensor))
     data = np.zeros(total_size, dtype=np.int8)
     object_tensor = Tensor(data, dtype=mstype.int8)
     
@@ -3248,6 +3264,12 @@ def scatter_object_list(scatter_object_output_list, scatter_object_input_list, s
         - Only the objects in process `src` (global rank) will do scatter.
         - Only support PyNative mode, Graph mode is not currently supported.
 
+    .. warning::
+        This interface will implicitly use the pickle module, which is not secure. The core reason
+        is that deserialization can execute arbitrary code, and attackers can trigger system command
+        execution by constructing malicious objects. Therefore, the caller must ensure the security
+        of the data used by the interface on their own.
+
     Args:
         scatter_object_output_list (list[Any]): Non-empty list whose first element
             will store the object scattered to this rank.
@@ -3340,6 +3362,12 @@ def gather_object(obj, object_gather_list=None, dst=0, group=None):
         - Similar to :func:`mindspore.mint.distributed.gather`, but Python objects can be passed in.
         - Only support PyNative mode, Graph mode is not currently supported.
 
+    .. warning::
+        This interface will implicitly use the pickle module, which is not secure. The core reason
+        is that deserialization can execute arbitrary code, and attackers can trigger system command
+        execution by constructing malicious objects. Therefore, the caller must ensure the security
+        of the data used by the interface on their own.
+
     Args:
         obj (Any): The python objects to be gathered.
         object_gather_list (list[Any], optional): List of same-sized tensors to use for gathered data.
@@ -3420,6 +3448,12 @@ def broadcast_object_list(object_list, src=0, group=None, device=None):
     Note:
         - Similar to :func:`mindspore.mint.distributed.broadcast`, but Python objects can be passed in.
         - Only support PyNative mode, Graph mode is not currently supported.
+
+    .. warning::
+        This interface will implicitly use the pickle module, which is not secure. The core reason
+        is that deserialization can execute arbitrary code, and attackers can trigger system command
+        execution by constructing malicious objects. Therefore, the caller must ensure the security
+        of the data used by the interface on their own.
 
     Args:
         object_list (list[Any]): list of input to be sent if src is the rank of current process,
@@ -3505,6 +3539,12 @@ def all_gather_object(object_list, obj, group=None):
     Note:
         - Similar to :func:`mindspore.mint.distributed.all_gather`, but Python objects can be passed in.
         - Only support PyNative mode, Graph mode is not currently supported.
+
+    .. warning::
+        This interface will implicitly use the pickle module, which is not secure. The core reason
+        is that deserialization can execute arbitrary code, and attackers can trigger system command
+        execution by constructing malicious objects. Therefore, the caller must ensure the security
+        of the data used by the interface on their own.
 
     Args:
         object_list (list[Any]): Output Python object list.

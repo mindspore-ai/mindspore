@@ -115,6 +115,8 @@ __all__ = [
     "reduce",
     "P2POp",
     "batch_isend_irecv",
+    "send_object_list",
+    "recv_object_list",
     "all_gather_object",
     "broadcast_object_list",
     "gather_object",
@@ -131,6 +133,7 @@ _pickler = pickle.Pickler
 _unpickler = pickle.Unpickler
 BACKEND_HCCL = "hccl"
 BACKEND_MCCL = "mccl"
+SAFE_PICKLE = False  # Macro switch for safe unpickling
 _GROPU_SIZE_CACHE = {}
 _GROPU_RANK_CACHE = {}
 
@@ -196,7 +199,9 @@ class RestrictedUnpickler(pickle.Unpickler):
 
 def restricted_loads(s):
     """Helper function analogous to pickle.loads()."""
-    return RestrictedUnpickler(io.BytesIO(s)).load()
+    if SAFE_PICKLE:
+        return RestrictedUnpickler(io.BytesIO(s)).load()
+    return _unpickler(io.BytesIO(s)).load()
 
 
 def _object_to_tensor(obj, size=0):
@@ -239,6 +244,8 @@ comm_funcs = [
     "broadcast_object_list",
     "gather_object",
     "scatter_object_list",
+    "send_object_list",
+    "recv_object_list",
     'gather_into_tensor',
     'scatter_tensor',
     'all_to_all_v_c'
@@ -811,7 +818,7 @@ def init_process_group(backend="hccl",
 def destroy_process_group(group=None):
     """
     Destroy the user collective communication group.
-    If group is None or "hccl_world_group", Destroy all group and release collective communication lib.
+    If group is None or ``"hccl_world_group"``, Destroy all group and release collective communication lib.
 
     Note:
         - This method isn't supported in GPU and CPU versions of MindSpore.
@@ -3425,6 +3432,12 @@ def scatter_object_list(scatter_object_output_list, scatter_object_input_list, s
         - Only the objects in process `src` (global rank) will do scatter.
         - Only support PyNative mode, Graph mode is not currently supported.
 
+    .. warning::
+        This interface will implicitly use the pickle module, which is not secure. The core reason
+        is that deserialization can execute arbitrary code, and attackers can trigger system command
+        execution by constructing malicious objects. Therefore, the caller must ensure the security
+        of the data used by the interface on their own.
+
     Args:
         scatter_object_output_list (list[Any]): Non-empty list whose first element
             will store the object scattered to this rank.
@@ -3519,6 +3532,12 @@ def gather_object(obj, object_gather_list=None, dst=0, group=None):
         - Similar to :func:`mindspore.ops.communication.gather`, but Python objects can be passed in.
         - Only support PyNative mode, Graph mode is not currently supported.
 
+    .. warning::
+        This interface will implicitly use the pickle module, which is not secure. The core reason
+        is that deserialization can execute arbitrary code, and attackers can trigger system command
+        execution by constructing malicious objects. Therefore, the caller must ensure the security
+        of the data used by the interface on their own.
+
     Args:
         obj (Any): The python objects to be gathered.
         object_gather_list (list[Any], optional): List of same-sized tensors to use for gathered data.
@@ -3601,6 +3620,12 @@ def broadcast_object_list(object_list, src=0, group=None, device=None):
     Note:
         - Similar to :func:`mindspore.ops.communication.broadcast`, but Python objects can be passed in.
         - Only support PyNative mode, Graph mode is not currently supported.
+
+    .. warning::
+        This interface will implicitly use the pickle module, which is not secure. The core reason
+        is that deserialization can execute arbitrary code, and attackers can trigger system command
+        execution by constructing malicious objects. Therefore, the caller must ensure the security
+        of the data used by the interface on their own.
 
     Args:
         object_list (list[Any]): list of input to be sent if src is the rank of current process,
@@ -3687,6 +3712,12 @@ def all_gather_object(object_list, obj, group=None):
 
     Note:
         Similar to :func:`mindspore.ops.communication.all_gather`, but Python objects can be passed in.
+
+    .. warning::
+        This interface will implicitly use the pickle module, which is not secure. The core reason
+        is that deserialization can execute arbitrary code, and attackers can trigger system command
+        execution by constructing malicious objects. Therefore, the caller must ensure the security
+        of the data used by the interface on their own.
 
     Args:
         object_list (list[Any]): Output Python object list.
@@ -3857,3 +3888,190 @@ def all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False)
     )
     _, handle = _deal_comm_outputs(result, async_op)
     return handle
+
+
+def send_object_list(object_list, dst, group=None, device=None):
+    """
+    Send picklable objects to dst synchronously.
+
+    Note:
+        - Only support PyNative mode, Graph mode is not currently supported.
+        - Similar to :func:`mindspore.ops.communication.send`, but Python objects can be passed in.
+
+    .. warning::
+        This interface will implicitly use the pickle module, which is not secure. The core reason
+        is that deserialization can execute arbitrary code, and attackers can trigger system command
+        execution by constructing malicious objects. Therefore, the caller must ensure the security
+        of the data used by the interface on their own.
+
+    Args:
+        object_list (list[Any]): List of input objects to sent.
+            Each object must be picklable. Receiver must provide lists of equal sizes.
+        dst (int): Destination global rank to send `object_list` to.
+        group (str, optional): The process group to work on. If ``None``,
+            the Ascend platform is ``"hccl_world_group"``. Default: ``None``.
+        device (str, optional): Currently it is a reserved parameter. Default: ``None``.
+
+    Raises:
+        TypeError: If `dst` is not of type int, `group` is not of type str, or `object_ist` is not of type list.
+        ValueError: If the `dst` process rank id is same as the current process.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For Ascend devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
+            for more details.
+
+            This example should be run with 2 devices.
+
+        >>> from mindspore.ops.communication import init_process_group, send_object_list, recv_object_list, get_rank
+        >>> init_process_group()
+        >>> this_rank = get_rank()
+        >>> if this_rank == 0:
+        ...     objects = ["foo", 12, {1: 2}]  # any picklable object
+        ...     send_object_list(objects, dst=1)
+        >>> else:
+        ...     objects = [None, None, None]
+        ...     recv_object_list(objects, src=0)
+        ...     print(objects)
+        ['foo', 12, {1: 2}]
+    """
+    if is_inplace_func("send_object_list") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
+    if not isinstance(dst, int):
+        raise TypeError("For send_object_list, the dst must be int")
+    if group is None:
+        group = GlobalComm.WORLD_COMM_GROUP
+    if not isinstance(group, str):
+        raise TypeError(
+            "The argument 'group' must be type of string, "
+            "but got 'group' type : {}.".format(type(group))
+        )
+    if not isinstance(object_list, list):
+        raise TypeError("For send_object_list, the object_list must be a list")
+    if get_rank() == dst:
+        raise ValueError(
+            "Invalid destination rank: destination rank should not be the same as "
+            "the rank of the current process."
+        )
+
+    # Serialize object_list elements to tensors
+    tensor_list, size_list = zip(
+        *[_object_to_tensor(obj) for obj in object_list]
+    )
+    object_size_list = [Tensor([size], dtype=mstype.int32) for size in size_list]
+    object_sizes_tensor = cat(object_size_list)
+
+    # Send object sizes
+    send(object_sizes_tensor, dst=dst, group=group)
+
+    # Concatenate and send serialized object tensors
+    if len(tensor_list) == 1:
+        object_tensor = tensor_list[0]
+    else:
+        object_tensor = cat(tensor_list)
+
+    send(object_tensor, dst=dst, group=group)
+
+
+def recv_object_list(object_list, src=0, group=None, device=None):
+    """
+    Receive picklable objects from src synchronously.
+
+    Note:
+        - Only support PyNative mode, Graph mode is not currently supported.
+        - Similar to :func:`mindspore.ops.communication.recv`, but can receive Python objects.
+
+    .. warning::
+        This interface will implicitly use the pickle module, which is not secure. The core reason
+        is that deserialization can execute arbitrary code, and attackers can trigger system command
+        execution by constructing malicious objects. Therefore, the caller must ensure the security
+        of the data used by the interface on their own.
+
+    Args:
+        object_list (list[Any]): List of objects to receive into.
+            Must provide a list of sizes equal to the size of the list being sent.
+        src (int, optional): A required integer identifying the source global rank. Default: ``0``.
+        group (str, optional): The process group to work on. If ``None``,
+            the Ascend platform is ``"hccl_world_group"``. Default: ``None``.
+        device (str, optional): Currently it is a reserved parameter. Default: ``None``.
+
+    Returns:
+        int. If successful, it will return ``0``.
+
+    Raises:
+        TypeError: If `src` is not of type int, `group` is not of type str, or `object_ist` is not of type list.
+        ValueError: If the `src` process rank id is same as the current process.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        .. note::
+            Before running the following examples, you need to configure the communication environment variables.
+
+            For Ascend devices, it is recommended to use the msrun startup method
+            without any third-party or configuration file dependencies.
+            Please see the `msrun startup
+            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
+            for more details.
+
+            This example should be run with 2 devices.
+
+        >>> from mindspore.ops.communication import init_process_group, send_object_list, recv_object_list, get_rank
+        >>> init_process_group()
+        >>> this_rank = get_rank()
+        >>> if this_rank == 0:
+        ...     objects = ["foo", 12, {1: 2}]  # any picklable object
+        ...     send_object_list(objects, dst=1)
+        >>> else:
+        ...     objects = [None, None, None]
+        ...     recv_object_list(objects, src=0)
+        ...     print(objects)
+        ['foo', 12, {1: 2}]
+    """
+    if is_inplace_func("recv_object_list") is False:
+        raise ValueError("Non-inplace mode is currently not supported.")
+    if not isinstance(src, int):
+        raise TypeError("For recv_object_list, the src must be int")
+    if group is None:
+        group = GlobalComm.WORLD_COMM_GROUP
+    if not isinstance(group, str):
+        raise TypeError(
+            "The argument 'group' must be type of string, "
+            "but got 'group' type : {}.".format(type(group))
+        )
+    if not isinstance(object_list, list):
+        raise TypeError("For recv_object_list, the object_list must be a list")
+
+    # Create tensor to receive object sizes
+    data = np.zeros(len(object_list), dtype=np.int32)
+    object_sizes_tensor = Tensor(data, dtype=mstype.int32)
+
+    # Receive object sizes
+    recv(object_sizes_tensor, src=src, group=group)
+
+    # Calculate total size and create tensor to receive serialized objects
+    total_size = int(sum(size.item() for size in object_sizes_tensor))
+    data = np.zeros(total_size, dtype=np.int8)
+    object_tensor = Tensor(data, dtype=mstype.int8)
+
+    # Receive serialized objects
+    recv(object_tensor, src=src, group=group)
+
+    # Deserialize objects using their stored sizes
+    offset = 0
+    for i, obj_size in enumerate(object_sizes_tensor):
+        obj_size_int = int(obj_size.item())
+        obj_view = object_tensor[offset: offset + obj_size_int]
+        offset += obj_size_int
+        object_list[i] = _tensor_to_object(obj_view, obj_size_int)
+
+    return 0
