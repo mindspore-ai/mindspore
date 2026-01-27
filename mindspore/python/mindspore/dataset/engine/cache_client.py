@@ -84,7 +84,7 @@ class DatasetCache:
 
     def get_stat(self):
         r"""
-        Get the statistics from a cache. After data pipeline, three types of statistics can be obtained,
+        Get the statistics from a cache. After the data pipeline, three types of statistics can be obtained,
         including average number of cache hits (avg_cache_sz), number of caches in memory (num_mem_cached)
         and number of caches in disk (num_disk_cached).
 
