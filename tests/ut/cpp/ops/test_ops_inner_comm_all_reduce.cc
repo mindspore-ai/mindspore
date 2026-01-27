@@ -25,7 +25,7 @@ OP_FUNC_IMPL_TEST_DECLARE(InnerCommAllReduce, EltwiseOpParams);
 
 OP_FUNC_IMPL_TEST_CASES(InnerCommAllReduce, testing::Values(EltwiseOpParams{{2, 3, 4}, kFloat16, {2, 3, 4}, kFloat16},
                                                             EltwiseOpParams{{2, 3, 4}, kFloat32, {2, 3, 4}, kFloat32},
-                                                            EltwiseOpParams{{2, 3, 4}, kFloat64, {2, 3, 4}, kFloat64},
+                                                            EltwiseOpParams{{2, 3, 4}, kBool, {2, 3, 4}, kBool},
                                                             EltwiseOpParams{{2, 3, 4}, kBFloat16, {2, 3, 4}, kBFloat16},
                                                             EltwiseOpParams{{-1, 3, 4}, kFloat32, {-1, 3, 4}, kFloat32},
                                                             EltwiseOpParams{{-1, -1, -1}, kFloat32, {-1, -1, -1}, kFloat32},

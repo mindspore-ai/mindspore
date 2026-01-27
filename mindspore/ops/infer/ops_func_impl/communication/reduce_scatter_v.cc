@@ -98,15 +98,7 @@ class ReduceScatterVInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input0 must be a Tensor, but got: " << x_type->ToString()
                               << ".";
     }
-    // flag to check different valid types on ascend
-    auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-
-    const std::set<TypePtr> valid_types = {kInt8, kInt16, kInt32, kFloat16, kFloat32, kBFloat16};
-    if (!is_ascend) {
-      (void)CheckAndConvertUtils::CheckTypeValid("x", x_type, common_valid_types_with_bool, prim_name);
-    } else {
-      (void)CheckAndConvertUtils::CheckTypeValid("x", x_type, valid_types, prim_name);
-    }
+    (void)CheckAndConvertUtils::CheckTypeValid("x", x_type, comm_ops_reduce_valid_types_with_bool, prim_name);
     return x_type->Clone();
   }
 

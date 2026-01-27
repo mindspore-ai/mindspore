@@ -17,7 +17,7 @@
 
 import os
 import numpy as np
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import dtype as mstype
 from mindspore.ops import operations as P
@@ -35,7 +35,7 @@ init()
 
 class AllGatherNet(nn.Cell):
     def __init__(self):
-        super(AllGatherNet, self).__init__()
+        super(AllGatherNet, self).__init__() # pylint: disable=super-with-arguments
         self.all_gather = P.AllGather()
 
     def construct(self, x):
@@ -44,7 +44,7 @@ class AllGatherNet(nn.Cell):
 
 class AllGatherFuncNet(nn.Cell):
     def __init__(self, group=GlobalComm.WORLD_COMM_GROUP):
-        super(AllGatherFuncNet, self).__init__()
+        super(AllGatherFuncNet, self).__init__() # pylint: disable=super-with-arguments
         self.group = group
 
     def construct(self, x):
@@ -87,4 +87,16 @@ def test_hccl_all_gather_into_tensor_func_8p():
     x = np.ones([3, 4]).astype(np.float32)
     expect_output = np.ones([24, 4]).astype(np.float32)
     output, _ = all_gather_into_tensor(Tensor(x, mstype.float32))
+    assert np.allclose(output.asnumpy(), expect_output)
+
+
+def test_hccl_all_gather_into_tensor_func_bool():
+    """
+    Feature: test 'all_gather_into_tensor' communication function.
+    Description: test 'all_gather_into_tensor' communication function.
+    Expectation: expect correct result.
+    """
+    x = np.ones([3, 4]).astype(np.bool_)
+    expect_output = np.ones([24, 4]).astype(np.bool_)
+    output, _ = all_gather_into_tensor(Tensor(x, mstype.bool_))
     assert np.allclose(output.asnumpy(), expect_output)

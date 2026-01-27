@@ -31,6 +31,7 @@
 #include "ops_utils/op_constants.h"
 #include "primitive/other_ops.h"
 #include "primitive/op_name.h"
+#include "mindspore/ops/ops_utils/op_utils.h"
 #include "ops/primitive_c.h"
 #include "utils/check_convert_utils.h"
 #include "utils/log_adapter.h"
@@ -101,17 +102,8 @@ class ReduceScatterInfer : public abstract::OpInferBase {
 
   TypePtr InferType(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) const override {
     auto dtype = input_args[kIndex0]->GetType();
-    const std::set<TypePtr> default_valid_types = {kInt8, kInt32, kInt64, kFloat16, kFloat32, kBFloat16, kComplex64};
-    const std::set<TypePtr> gpu_valid_types = {kBool,   kInt8,    kInt32,   kUInt32, kInt64,
-                                               kUInt64, kFloat16, kFloat32, kFloat64};
-    const std::string input_name = "input";
-    auto context_ptr = MsContext::GetInstance();
-    auto is_gpu = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kGPUDevice);
-    if (is_gpu) {
-      (void)CheckAndConvertUtils::CheckTensorTypeValid(input_name, dtype, gpu_valid_types, primitive->name());
-    } else {
-      (void)CheckAndConvertUtils::CheckTensorTypeValid(input_name, dtype, default_valid_types, primitive->name());
-    }
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("input", dtype, comm_ops_reduce_valid_types_with_bool,
+                                                     primitive->name());
     return dtype;
   }
 };

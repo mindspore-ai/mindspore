@@ -95,14 +95,7 @@ class AllGatherVInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input0 must be a Tensor, but got: " << x_type->ToString()
                               << ".";
     }
-    // flag to check different valid types on ascend
-    auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-
-    if (!is_ascend) {
-      (void)CheckAndConvertUtils::CheckTypeValid("x", x_type, common_valid_types_with_bool, prim_name);
-    } else {
-      (void)CheckAndConvertUtils::CheckTypeValid("x", x_type, common_valid_types, prim_name);
-    }
+    (void)CheckAndConvertUtils::CheckTypeValid("x", x_type, comm_ops_valid_types_with_bool, prim_name);
     return x_type->Clone();
   }
 

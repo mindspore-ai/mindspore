@@ -50,13 +50,7 @@ BaseShapePtr InnerCommAllGatherFuncImpl::InferShape(const PrimitivePtr &primitiv
 TypePtr InnerCommAllGatherFuncImpl::InferType(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) const {
   auto type = input_args[kIndex0]->GetType();
-  const std::set<TypePtr> default_target_dtypes = {kInt8,    kUInt8,   kInt32,    kInt64,
-                                                   kFloat16, kFloat32, kBFloat16, kComplex64};
-  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("input", type, common_valid_types_with_bool, primitive->name());
-  } else {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("input", type, default_target_dtypes, primitive->name());
-  }
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", type, comm_ops_valid_types_with_bool, primitive->name());
   return type;
 }
 }  // namespace ops

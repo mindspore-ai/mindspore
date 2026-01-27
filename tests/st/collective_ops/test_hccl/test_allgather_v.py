@@ -17,8 +17,8 @@
 
 import os
 import numpy as np
-import mindspore.nn as nn
 import mindspore as ms
+from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops.operations import AllGatherV
 from mindspore.communication.management import init, get_group_size, get_rank
@@ -34,7 +34,7 @@ world_size = get_group_size()
 
 class AllGatherVNet(nn.Cell):
     def __init__(self):
-        super(AllGatherVNet, self).__init__()
+        super(AllGatherVNet, self).__init__() # pylint: disable=super-with-arguments
         self.all_gatherv = AllGatherV()
 
     def construct(self, x, output_split_sizes):
@@ -51,7 +51,7 @@ def test_hccl_all_gather_v_list():
     output_split_sizes = [1 for _ in range(world_size)]
     net = AllGatherVNet()
     output = net(Tensor(data, dtype=ms.int64), output_split_sizes)
-    expect_output = [i for i in range(world_size)]
+    expect_output = list(range(world_size))
     if isinstance(output, tuple):
         assert np.allclose(output[0].asnumpy(), expect_output)
     else:
@@ -68,7 +68,7 @@ def test_hccl_all_gather_v_tensor1():
     output_split_sizes = [1 for _ in range(world_size)]
     net = AllGatherVNet()
     output = net(Tensor(data, dtype=ms.int64), Tensor(output_split_sizes))
-    expect_output = [i for i in range(world_size)]
+    expect_output = list(range(world_size))
     if isinstance(output, tuple):
         assert np.allclose(output[0].asnumpy(), expect_output)
     else:
@@ -113,6 +113,28 @@ def test_hccl_all_gather_v_tensor3():
         output_split_sizes = [8, 0]
         net = AllGatherVNet()
         output = net(Tensor(data, dtype=ms.int64), Tensor(output_split_sizes))
+        if isinstance(output, tuple):
+            assert np.allclose(output[0].asnumpy(), expect_output)
+        else:
+            assert np.allclose(output.asnumpy(), expect_output)
+
+
+def test_hccl_all_gather_v_tensor_bool():
+    """
+    Feature: test 'AllGatherV' communication operation.
+    Description: test 'AllGatherV' communication operation.
+    Expectation: expect correct result.
+    """
+    if world_size == 2:
+        data = []
+        expect_output = [1, 2, 3, 4, 5, 6, 7, 8]
+        if this_rank == 0:
+            data = [1, 2, 3, 4, 5, 6, 7, 8]
+        if this_rank == 1:
+            data = []
+        output_split_sizes = [8, 0]
+        net = AllGatherVNet()
+        output = net(Tensor(data, dtype=ms.bool_), Tensor(output_split_sizes))
         if isinstance(output, tuple):
             assert np.allclose(output[0].asnumpy(), expect_output)
         else:

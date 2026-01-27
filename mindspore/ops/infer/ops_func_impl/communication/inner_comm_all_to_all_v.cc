@@ -48,11 +48,7 @@ BaseShapePtr InnerCommAllToAllVFuncImpl::InferShape(const PrimitivePtr &primitiv
 TypePtr InnerCommAllToAllVFuncImpl::InferType(const PrimitivePtr &primitive,
                                               const std::vector<AbstractBasePtr> &input_args) const {
   auto type = input_args[kIndex0]->GetType();
-  if (MsContext::GetInstance()->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("input", type, common_valid_types, primitive->name());
-  } else {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("input", type, common_valid_types_with_bool, primitive->name());
-  }
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("input", type, comm_ops_valid_types_with_bool, primitive->name());
   return type;
 }
 }  // namespace ops

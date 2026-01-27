@@ -51,6 +51,7 @@ INSTANTIATE_TEST_CASE_P(
   TestAllGather, TestAllGather,
   testing::Values(AllGatherShapeParams{{3, 4, 5}, kFloat32, CreateScalar<int64_t>(2), {6, 4, 5}, kFloat32},
                   AllGatherShapeParams{{3, 4, 5}, kFloat16, CreateScalar<int64_t>(4), {12, 4, 5}, kFloat16},
+                  AllGatherShapeParams{{-1, 4, 5}, kBool, CreateScalar<int64_t>(2), {-1, 4, 5}, kBool},
                   AllGatherShapeParams{{-1, 4, 5}, kInt64, CreateScalar<int64_t>(2), {-1, 4, 5}, kInt64},
                   AllGatherShapeParams{{3, -1, -1}, kInt64, CreateScalar<int64_t>(2), {6, -1, -1}, kInt64}));
 }  // namespace ops

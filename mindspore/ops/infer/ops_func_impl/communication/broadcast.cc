@@ -39,20 +39,7 @@ namespace mindspore {
 namespace ops {
 MIND_API_OPERATOR_IMPL(Broadcast, BaseOperator);
 void CheckParallelValidTypes(const AbstractBasePtr x, const std::string &op_name) {
-  // The data type check is only migrated from the previous corresponding python code,
-  // and need further confirmation is required
-  const std::set<TypePtr> default_target_dtypes = {kInt8, kInt32, kFloat16, kFloat32, kBFloat16, kBool};
-  const std::set<TypePtr> target_dtypes = common_valid_types_with_bool;
-  auto context_ptr = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context_ptr);
-  // This bad code is used for parallel check, it should be removed as soon as possible!!!
-  // The same bad checks are in parallel communication ops, such as AllReduce.
-  auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-  if (!is_ascend) {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x->GetType(), target_dtypes, op_name);
-  } else {
-    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x->GetType(), default_target_dtypes, op_name);
-  }
+  (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x->GetType(), comm_ops_valid_types_with_bool, op_name);
 }
 
 class OPS_API BroadcastInfer : public abstract::OpInferBase {
