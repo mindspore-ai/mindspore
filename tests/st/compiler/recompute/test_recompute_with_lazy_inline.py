@@ -20,7 +20,7 @@ from tests.st.utils import test_utils
 from tests.mark_utils import arg_mark
 from mindspore.common import Tensor, Parameter
 from mindspore import context, lazy_inline, nn, ops
-import mindspore.common.dtype as dtype
+from mindspore.common import dtype
 
 match_dyn_mem = re.compile(r'Used peak memory usage \(without fragments\)\: (.*?)M', re.S)
 
@@ -40,8 +40,8 @@ def run_testcase(testcase_name, expect_memory_usage):
     assert not os.path.exists(log_filename)
 
     cmd = (f"export GLOG_v=1; export MS_ALLOC_CONF=\"memory_recycle:False\"; "
-           f"export MS_DEV_RUNTIME_CONF=\"ge_kernel:False\"; pytest -s test_recompute.py::") + \
-          testcase_name + " > " + log_filename + " 2>&1"
+           f"export MS_DEV_RUNTIME_CONF=\"ge_kernel:False\"; pytest -s "
+           f"test_recompute.py::{testcase_name} > {log_filename} 2>&1")
     subprocess.check_output(cmd, shell=True)
     assert os.path.exists(log_filename)
     with open(log_filename, "r") as f:
@@ -66,6 +66,17 @@ def test_recompute_cell_recompute():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048)
+def test_recompute_cell_recompute_with_output_recompute():
+    """
+    Feature: Recompute with lazy inline.
+    Description: Each block is set recompute by the cell recompute api with output_recompute=True.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+    run_testcase("test_recompute_block_recompute_with_output_recompute", 88)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
         essential_mark='essential', mem_peak=4.00)
 def test_recompute_cell_recompute_func_api():
     """
@@ -74,6 +85,17 @@ def test_recompute_cell_recompute_func_api():
     Expectation: Run successfully and the memory usage is reduced.
     """
     run_testcase("test_recompute_block_recompute_func_api", 43)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
+def test_recompute_cell_recompute_func_api_with_output_recompute():
+    """
+    Feature: Recompute with lazy inline.
+    Description: Each block is set recompute by the recomputed func api with output_recompute=True.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+    run_testcase("test_recompute_block_recompute_func_api_with_output_recompute", 88)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
@@ -130,6 +152,17 @@ def test_recompute_cell_and_op_recompute1():
     Expectation: Run successfully and the memory usage is reduced.
     """
     run_testcase("test_recompute_cell_and_op_recompute1", 63)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
+def test_recompute_cell_and_op_recompute_with_output_recompute():
+    """
+    Feature: Recompute with lazy inline.
+    Description: Each block is set recompute by both the primitive and cell recompute api.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+    run_testcase("test_recompute_cell_and_op_recompute_with_output_recompute", 61)
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',

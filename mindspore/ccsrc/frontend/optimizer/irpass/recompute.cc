@@ -17,6 +17,10 @@
 #include "frontend/optimizer/irpass/recompute.h"
 #include <set>
 #include <unordered_map>
+#include <utility>
+#include <vector>
+#include <algorithm>
+#include <string>
 #include "primitive/array_ops.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
@@ -24,9 +28,39 @@
 #include "primitive/auto_generate/gen_ops_primitive_u.h"
 #include "primitive/auto_generate/gen_ops_primitive_z.h"
 
+/**
+ * @file recompute.cc
+ * @brief Recomputation optimization pass implementation
+ *
+ * Recomputation is a memory optimization technique to reduce memory usage during training.
+ * The core idea is: recompute the forward intermediate results during backward propagation,
+ * instead of saving these results during forward propagation.
+ *
+ * Key concepts:
+ * - K-Graph: A composite graph containing forward computation and backward propagation function,
+ *            with output structure (forward_result, bprop_fn)
+ * - Primal: The original forward computation function or operator
+ * - Forward Getter: TupleGetItem node (index=0) that retrieves forward result from K-graph
+ * - Bprop Getter: TupleGetItem node (index=1) that retrieves backward function from K-graph
+ *
+ * Workflow:
+ * 1. Traverse all K-graph caller nodes marked for recomputation
+ * 2. Replace forward result usage with original Primal to avoid saving intermediate results
+ * 3. Re-execute K-graph call during backward propagation to achieve recomputation
+ * 4. Add appropriate dependency edges to ensure recomputation executes at the correct timing
+ */
 namespace mindspore {
 namespace opt {
 namespace irpass {
+
+/**
+ * @brief Check if a K-graph caller node has a bprop getter
+ * @param opt Optimizer pointer for accessing FuncGraphManager
+ * @param k_fg_caller K-graph caller node
+ * @return True if there exists a TupleGetItem (index=1) that retrieves the backward function
+ *
+ * K-graph output structure is (forward_result, bprop_fn), index=1 corresponds to bprop function
+ */
 bool HasBpropGetter(const OptimizerPtr &opt, const AnfNodePtr &k_fg_caller) {
   MS_EXCEPTION_IF_NULL(opt);
   auto manager = opt->manager();
@@ -45,10 +79,28 @@ bool HasBpropGetter(const OptimizerPtr &opt, const AnfNodePtr &k_fg_caller) {
 }
 
 namespace {
+// Scope prefix for gradient computation nodes
 constexpr auto kGradientsFlag = "Gradients";
+// Attribute marking that node has been replaced with Primal
 constexpr auto kAttrReplacedWithPrimal = "replaced_with_primal";
+// Attribute marking MakeTuple nodes created during recomputation
 constexpr auto kAttrRecomputeMakeTuple = "recompute_make_tuple";
 
+void DumpRecomputeIR([[maybe_unused]] const std::string &filename, [[maybe_unused]] const FuncGraphPtr &func_graph) {
+#ifdef ENABLE_DUMP_IR
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  if (context->CanDump(kIntroductory)) {
+    DumpIR(filename, func_graph);
+  }
+#endif
+}
+
+/**
+ * @brief Check if node is within Cell-level recomputation scope
+ * @param node Node to check
+ * @return True if node's fullname_with_scope starts with "recompute"
+ */
 bool WithRecomputedScope(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
@@ -58,6 +110,11 @@ bool WithRecomputedScope(const AnfNodePtr &node) {
   return full_name_with_scope.compare(0, strlen(kAttrRecompute), kAttrRecompute) == 0;
 }
 
+/**
+ * @brief Check if node is a recompute K-graph caller
+ * @param node Node to check
+ * @return True if the called FuncGraph has FUNC_GRAPH_RECOMPUTE_K_GRAPH flag
+ */
 bool IsRecomputeKGraphCaller(const AnfNodePtr &node) {
   auto cnode = dyn_cast_ptr<CNode>(node);
   if (cnode == nullptr) {
@@ -70,10 +127,22 @@ bool IsRecomputeKGraphCaller(const AnfNodePtr &node) {
   return false;
 }
 
+/**
+ * @brief Check if node is within gradient computation scope
+ * @param node Node to check
+ * @return True if node's fullname_with_scope starts with "Gradients"
+ */
 bool WithGradientScope(const AnfNodePtr &node) {
   return node->fullname_with_scope().compare(0, strlen(kGradientsFlag), kGradientsFlag) == 0;
 }
 
+/**
+ * @brief Check if node originates from backward propagation output
+ * @param node Node to check
+ * @return True if node can be traced back to bprop function output
+ *
+ * Traces through TupleGetItem chain to check if the origin is a gradient graph
+ */
 bool IsFromBpropOutput(const AnfNodePtr &node) {
   if (!IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
     return false;
@@ -98,11 +167,23 @@ bool IsFromBpropOutput(const AnfNodePtr &node) {
   return fg->has_flag(FUNC_GRAPH_RECOMPUTE_GRAD_GRAPH);
 }
 
+/**
+ * @brief Check if node is a gradient computation node
+ * @param node Node to check
+ * @return True if node is within gradient scope or originates from bprop output
+ */
 bool IsGradNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   return WithGradientScope(node) || IsFromBpropOutput(node);
 }
 
+/**
+ * @brief Check if MakeTuple node is a K-graph return value
+ * @param make_tuple MakeTuple node
+ * @return True if it matches K-graph return structure (forward_result, bprop_fn)
+ *
+ * K-graph output is a tuple containing 2 elements: forward result and bprop function
+ */
 bool IsFpropReturn(const AnfNodePtr &make_tuple) {
   auto cnode = make_tuple->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode);
@@ -113,6 +194,13 @@ bool IsFpropReturn(const AnfNodePtr &make_tuple) {
   return IsValueNode<FuncGraph>(cnode->input(fprop_output_size));
 }
 
+/**
+ * @brief Get Primal (forward computation result) from K-graph
+ * @param k_fg K-graph
+ * @return Forward computation result node, or nullptr if not exists
+ *
+ * K-graph output structure: MakeTuple(primal_result, bprop_fn)
+ */
 AnfNodePtr GetPrimalFromFprop(const FuncGraphPtr &k_fg) {
   if (!IsPrimitiveCNode(k_fg->output(), prim::kPrimMakeTuple)) {
     return nullptr;
@@ -126,14 +214,45 @@ AnfNodePtr GetPrimalFromFprop(const FuncGraphPtr &k_fg) {
   return k_fg_outputs[kIndex1];
 }
 
+/**
+ * @brief Determine if a new Primal output should be added for the node
+ * @param node Node to check
+ * @return True if node is not a gradient node
+ *
+ * Only nodes in forward propagation need to be replaced with new Primal output
+ */
 bool ShouldAddNewPrimalOutput(const AnfNodePtr &node) { return !IsGradNode(node); }
 
+/**
+ * @brief Check if node is a forward propagation Depend node
+ * @param node Node to check
+ * @return True if it's Depend without kRecomputeInsert attribute
+ *
+ * Depend nodes inserted by recomputation have kRecomputeInsert attribute
+ */
 bool IsForwardDepend(const AnfNodePtr &node) {
   return IsPrimitiveCNode(node, prim::kPrimDepend) && !node->cast_ptr<CNode>()->HasAttr(kRecomputeInsert);
 }
 
+/**
+ * @brief Add new Primal nodes for users of the original Primal node
+ * @param manager FuncGraph manager
+ * @param fg Current FuncGraph
+ * @param origin_primal Original Primal node (usually TupleGetItem)
+ * @param new_primal Newly created Primal node
+ * @param not_recompute_cell_output Whether to not recompute Cell output
+ * @param origin_to_new_primal Mapping from original nodes to new nodes
+ * @return True if any edge was modified
+ *
+ * This function recursively processes all users of the original Primal node:
+ * - TupleGetItem: Create new TupleGetItem to get corresponding output
+ * - Depend: Create new Depend node
+ * - MakeTuple: Create new MakeTuple node
+ * - Others: Replace edge to new Primal only if original Primal is Cell with non-recompute output,
+ *           or if it's not a recompute K-graph caller and not a gradient node
+ */
 bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg, const AnfNodePtr &origin_primal,
-                      const AnfNodePtr &new_primal, bool recompute_cell,
+                      const AnfNodePtr &new_primal, bool not_recompute_cell_output,
                       std::unordered_map<AnfNodePtr, AnfNodePtr> *origin_to_new_primal) {
   bool changed = false;
   auto node_users = manager->node_users()[origin_primal];
@@ -146,14 +265,16 @@ bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg
       auto new_primal_getitem = fg->NewCNode({NewValueNode(prim::kPrimTupleGetItem), new_primal,
                                               user->cast_ptr<CNode>()->input(kInputNodeOutputIndexInTupleGetItem)});
       changed =
-        AddNewPrimalNode(manager, fg, user, new_primal_getitem, recompute_cell, origin_to_new_primal) || changed;
+        AddNewPrimalNode(manager, fg, user, new_primal_getitem, not_recompute_cell_output, origin_to_new_primal) ||
+        changed;
       continue;
     }
     if (IsForwardDepend(user) && ShouldAddNewPrimalOutput(user)) {
       // Make new depend node in forward to get corresponding output.
       auto new_depend = fg->NewCNode(user->cast_ptr<CNode>()->inputs());
       new_depend->set_input(IntToSize(node_and_idx.second), new_primal);
-      changed = AddNewPrimalNode(manager, fg, user, new_depend, recompute_cell, origin_to_new_primal) || changed;
+      changed =
+        AddNewPrimalNode(manager, fg, user, new_depend, not_recompute_cell_output, origin_to_new_primal) || changed;
       continue;
     }
     // The op like concat will have a make_tuple input.
@@ -180,12 +301,13 @@ bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg
       new_primal_make_tuple->AddAttr(kAttrRecomputeMakeTuple, MakeValue(true));
       (void)origin_to_new_primal->emplace(user, new_primal_make_tuple);
       changed =
-        AddNewPrimalNode(manager, fg, user, new_primal_make_tuple, recompute_cell, origin_to_new_primal) || changed;
+        AddNewPrimalNode(manager, fg, user, new_primal_make_tuple, not_recompute_cell_output, origin_to_new_primal) ||
+        changed;
       continue;
     }
 
     // Set edge to not recomputed primal nodes.
-    if (recompute_cell || (!IsRecomputeKGraphCaller(user) && !IsGradNode(user))) {
+    if (not_recompute_cell_output || (!IsRecomputeKGraphCaller(user) && !IsGradNode(user))) {
       MS_LOG(DEBUG) << "Set edge to user: " << user->DebugString() << ", new primal: " << new_primal->DebugString();
       manager->SetEdge(user, node_and_idx.second, new_primal);
       changed = true;
@@ -194,15 +316,45 @@ bool AddNewPrimalNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg
   return changed;
 }
 
-bool IsRecomputeCell(const FuncGraphPtr &k_fg) {
-  MS_EXCEPTION_IF_NULL(k_fg);
+/**
+ * @brief Check if K-graph is a recompute Cell
+ * @param k_fg K-graph
+ * @param recompute_cell_output [out] Output parameter indicating whether to recompute Cell output
+ * @return True if K-graph's Primal is a FuncGraph (not Primitive)
+ *
+ * Recompute Cell is an entire Cell marked by user via cell.recompute(),
+ * as opposed to single operator recomputation
+ */
+bool IsRecomputeCell(const FuncGraphPtr &k_fg, bool *recompute_cell_output = nullptr) {
+  if (k_fg == nullptr) {
+    return false;
+  }
   auto primal_iter = k_fg->transforms().find("primal");
   if (primal_iter == k_fg->transforms().end()) {
     MS_LOG_WITH_NODE(EXCEPTION, k_fg->return_node()) << "The k_fg: " << k_fg << " should have primal part.";
   }
-  return primal_iter->second.func_graph() != nullptr;
+  auto primal_fg = primal_iter->second.func_graph();
+  if (primal_fg == nullptr) {
+    return false;
+  }
+  if (!primal_fg->has_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE)) {
+    MS_LOG(ERROR) << "The primal graph " << primal_fg->ToString() << " should have output recompute attribute.";
+    return false;
+  }
+  if (recompute_cell_output != nullptr) {
+    *recompute_cell_output = GetValue<bool>(primal_fg->get_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE));
+  }
+  return true;
 }
 
+/**
+ * @brief Check if K-graph caller node has inputs from other recomputed nodes
+ * @param k_fg_caller_cnode K-graph caller node
+ * @return True if any input comes from a K-graph marked for recomputation
+ *
+ * Used to determine if current recompute node depends on outputs from other recompute nodes,
+ * which affects the dependency edge insertion strategy
+ */
 bool HasRecomputedInput(const CNodePtr &k_fg_caller_cnode) {
   for (auto &input : k_fg_caller_cnode->inputs()) {
     if (IsPrimitiveCNode(input, prim::kPrimMakeTuple)) {
@@ -227,14 +379,26 @@ bool HasRecomputedInput(const CNodePtr &k_fg_caller_cnode) {
       continue;
     }
     auto call_fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
-    // The output of recomputed cell would not be recomputed.
-    if (call_fg != nullptr && call_fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH) && !IsRecomputeCell(call_fg)) {
+    if (call_fg == nullptr) {
+      continue;
+    }
+    // Check the input is set recomputed, include recomputed cell with output recomputed.
+    auto recompute_cell_output = false;
+    auto recompute_cell = IsRecomputeCell(call_fg, &recompute_cell_output);
+    if (call_fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH) && (!recompute_cell || recompute_cell_output)) {
       return true;
     }
   }
   return false;
 }
 
+/**
+ * @brief Check if node is a TupleGetItem that retrieves forward result (index=0)
+ * @param node Node to check
+ * @return True if it's TupleGetItem with index=0
+ *
+ * K-graph output is (forward_result, bprop_fn), index=0 retrieves forward result
+ */
 bool IsForwardGetterTupleGetItem(const AnfNodePtr &node) {
   if (!IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
     return false;
@@ -246,6 +410,12 @@ bool IsForwardGetterTupleGetItem(const AnfNodePtr &node) {
   return false;
 }
 
+/**
+ * @brief Get the forward result getter of a K-graph caller node
+ * @param manager FuncGraph manager
+ * @param node K-graph caller node
+ * @return Forward result getter (TupleGetItem, index=0), or nullptr if not exists
+ */
 AnfNodePtr GetForwardGetter(const FuncGraphManagerPtr &manager, const CNodePtr &node) {
   const auto &user_nodes = manager->node_users()[node];
   auto iter = std::find_if(user_nodes.begin(), user_nodes.end(), [](const auto &node_and_idx) -> bool {
@@ -257,6 +427,14 @@ AnfNodePtr GetForwardGetter(const FuncGraphManagerPtr &manager, const CNodePtr &
   return nullptr;
 }
 
+/**
+ * @brief Check if node's output is used by other recomputed nodes
+ * @param manager FuncGraph manager
+ * @param node Node to check
+ * @return True if node's users include recompute K-graph callers
+ *
+ * Recursively checks through TupleGetItem, MakeTuple, Depend intermediate nodes
+ */
 bool HasRecomputedOutput(const FuncGraphManagerPtr &manager, const AnfNodePtr &node) {
   // The forward part may have multiple outputs.
   if (IsOneOfPrimitiveCNode(node, {prim::kPrimTupleGetItem, prim::kPrimMakeTuple, prim::kPrimDepend})) {
@@ -267,6 +445,15 @@ bool HasRecomputedOutput(const FuncGraphManagerPtr &manager, const AnfNodePtr &n
   return IsRecomputeKGraphCaller(node);
 }
 
+/**
+ * @brief Get users of the node in gradient computation
+ * @param manager FuncGraph manager
+ * @param node Current node
+ * @param pre_node Previous node (for exclusion)
+ * @param grad_users [out] Output parameter storing list of gradient users
+ *
+ * Collects users of current node in gradient computation for determining recomputation dependencies
+ */
 void GetGradUsers(const FuncGraphManagerPtr &manager, const CNodePtr &node, const CNodePtr &pre_node,
                   std::vector<AnfNodePtr> *grad_users) {
   // The forward part may have multiple outputs.
@@ -287,6 +474,14 @@ void GetGradUsers(const FuncGraphManagerPtr &manager, const CNodePtr &node, cons
   }
 }
 
+/**
+ * @brief Check if dependency node originates from forward result getter
+ * @param forward_getter Forward result getter node
+ * @param depend_node Dependency node to check
+ * @return True if depend_node directly or indirectly originates from forward_getter
+ *
+ * Used to avoid creating cycles in dependency chain
+ */
 bool IsFromForwardGetter(const AnfNodePtr &forward_getter, const AnfNodePtr &depend_node) {
   if (forward_getter == depend_node) {
     return true;
@@ -299,6 +494,18 @@ bool IsFromForwardGetter(const AnfNodePtr &forward_getter, const AnfNodePtr &dep
                      [&forward_getter](const auto &input) { return IsFromForwardGetter(forward_getter, input); });
 }
 
+/**
+ * @brief Collect dependencies for recomputation nodes
+ * @param manager FuncGraph manager
+ * @param k_fg_caller K-graph caller node
+ * @param final_nodes [out] Set of final nodes to process
+ * @param dependencies [out] Set of dependency nodes
+ *
+ * Analyzes which nodes the recomputation node needs to depend on for correct execution:
+ * - If no forward output is used by other recompute nodes, depends on dout (input gradient of bprop)
+ * - If there are gradient users, depends on other inputs of those gradient nodes
+ * - Recursively processes TupleGetItem, MakeTuple, Depend intermediate nodes
+ */
 void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_caller,
                      mindspore::CompactSet<CNodePtr> *final_nodes, mindspore::CompactSet<AnfNodePtr> *dependencies) {
   if (final_nodes->find(k_fg_caller) != final_nodes->end()) {
@@ -362,6 +569,13 @@ void GetDependencies(const FuncGraphManagerPtr &manager, const CNodePtr &k_fg_ca
   }
 }
 
+/**
+ * @brief Get K-graph caller from TupleGetItem node
+ * @param node TupleGetItem node
+ * @return The CNode if TupleGetItem's index=0 and input is CNode; otherwise nullptr
+ *
+ * Used to trace back from forward result getter to K-graph caller node
+ */
 CNodePtr GetKGraphCallerFromTupleGetitem(const AnfNodePtr &node) {
   auto idx = GetValueNode<Int64ImmPtr>(node->cast<CNodePtr>()->input(kInputNodeOutputIndexInTupleGetItem));
   // The k_fg_caller return a tuple of forward result and bprop.
@@ -373,6 +587,14 @@ CNodePtr GetKGraphCallerFromTupleGetitem(const AnfNodePtr &node) {
   return k_fg_caller->cast<CNodePtr>();
 }
 
+/**
+ * @brief Recursively collect all recompute K-graph callers
+ * @param final_node Starting node
+ * @param recompute_k_fg_callers [out] Output parameter storing all recompute K-graph callers
+ *
+ * Starting from given node, recursively traverses inputs to collect all K-graph caller nodes
+ * marked for recomputation
+ */
 void GetAllRecomputeKFgCallers(const CNodePtr &final_node, mindspore::HashSet<CNodePtr> *recompute_k_fg_callers) {
   for (const auto &input : final_node->inputs()) {
     if (!input->isa<CNode>()) {
@@ -393,6 +615,16 @@ void GetAllRecomputeKFgCallers(const CNodePtr &final_node, mindspore::HashSet<CN
   }
 }
 
+/**
+ * @brief Check if node originates from recompute K-graph caller
+ * @param bprop_fg Backward propagation FuncGraph
+ * @param recompute_k_fg_callers Set of recompute K-graph callers
+ * @param node Node to check
+ * @param is_from_recompute_k_fg_caller [in/out] Cache map for results
+ * @return True if node directly or indirectly originates from recompute K-graph caller
+ *
+ * Used to filter dependency nodes to avoid creating cyclic dependencies
+ */
 bool IsFromRecomputeKFgCaller(const FuncGraphPtr &bprop_fg, const mindspore::HashSet<CNodePtr> &recompute_k_fg_callers,
                               const CNodePtr &node, mindspore::HashMap<CNodePtr, bool> *is_from_recompute_k_fg_caller) {
   auto iter = is_from_recompute_k_fg_caller->find(node);
@@ -431,6 +663,12 @@ bool IsFromRecomputeKFgCaller(const FuncGraphPtr &bprop_fg, const mindspore::Has
   return false;
 }
 
+/**
+ * @brief Add kAttrDuplicated attribute to all nodes in K-graph
+ * @param k_fg K-graph
+ *
+ * Marks these nodes as duplicated nodes after recomputation, for debugging purposes
+ */
 void AddDuplicatedAttr(const FuncGraphPtr &k_fg) {
   for (const auto &node : k_fg->nodes()) {
     if (!node->isa<CNode>()) {
@@ -440,6 +678,13 @@ void AddDuplicatedAttr(const FuncGraphPtr &k_fg) {
   }
 }
 
+/**
+ * @brief Add CSE attribute to nodes within recomputation scope
+ * @param root Root FuncGraph
+ * @param changed Whether any changes occurred
+ *
+ * Marks nodes that need Common Subexpression Elimination (CSE) after recomputation
+ */
 void AddCseAttr(const FuncGraphPtr &root, bool changed) {
   if (!changed) {
     return;
@@ -454,7 +699,18 @@ void AddCseAttr(const FuncGraphPtr &root, bool changed) {
   }
 }
 
-AnfNodePtr GetPrimal(const FuncGraphPtr &k_fg, bool *recompute_cell) {
+/**
+ * @brief Get Primal (original forward computation function or operator) from K-graph
+ * @param k_fg K-graph
+ * @param recompute_cell [out] Output parameter indicating whether it's a recompute Cell
+ * @param recompute_cell_output [out] Output parameter indicating whether to recompute Cell output
+ * @return Primal node (ValueNode of FuncGraph or Primitive)
+ *
+ * K-graph's transforms contains "primal" information:
+ * - FuncGraph: Forward subgraph
+ * - Primitive: Forward operator
+ */
+AnfNodePtr GetPrimal(const FuncGraphPtr &k_fg, bool *recompute_cell, bool *recompute_cell_output) {
   auto primal_iter = k_fg->transforms().find("primal");
   if (primal_iter == k_fg->transforms().end()) {
     return nullptr;
@@ -464,6 +720,11 @@ AnfNodePtr GetPrimal(const FuncGraphPtr &k_fg, bool *recompute_cell) {
   if (primal_fg != nullptr) {
     primal = NewValueNode(primal_fg);
     *recompute_cell = true;
+    if (primal_fg->has_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE)) {
+      *recompute_cell_output = GetValue<bool>(primal_fg->get_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE));
+    } else {
+      MS_LOG(ERROR) << "The primal graph " << primal_fg->ToString() << " should have output recompute attribute.";
+    }
   } else {
     auto primal_primitive = primal_iter->second.primitive();
     if (primal_primitive != nullptr) {
@@ -473,12 +734,28 @@ AnfNodePtr GetPrimal(const FuncGraphPtr &k_fg, bool *recompute_cell) {
   return primal;
 }
 
+/**
+ * @brief Check if node is nested recomputation
+ * @param node Node to check
+ * @return True if node's FuncGraph is also marked for recomputation
+ *
+ * Nested recomputation means the node itself is marked for recomputation,
+ * and its containing graph is also marked for recomputation.
+ * This case requires special handling
+ */
 bool IsNestedRecomputed(const AnfNodePtr &node) {
   auto fg = node->func_graph();
   MS_EXCEPTION_IF_NULL(fg);
   return fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH);
 }
 
+/**
+ * @brief Copy forward computation attributes from K-graph to new Primal node
+ * @param new_primal Newly created Primal CNode
+ * @param k_fg K-graph
+ *
+ * Ensures new Primal node preserves original computation's attribute information
+ */
 void SetPrimalAttrs(const CNodePtr &new_primal, const FuncGraphPtr &k_fg) {
   auto forward_in_k_fg = GetPrimalFromFprop(k_fg);
   auto forward_cnode_in_k_fg = dyn_cast<CNode>(forward_in_k_fg);
@@ -487,6 +764,15 @@ void SetPrimalAttrs(const CNodePtr &new_primal, const FuncGraphPtr &k_fg) {
   }
 }
 
+/**
+ * @brief Find or register Monad free variable for backward graph
+ * @param bprop_fg Backward propagation FuncGraph
+ * @param monad Monad node (UMonad or IOMonad)
+ * @param bprop_to_monad_fv [in/out] Mapping from bprop graph to Monad free variable
+ * @return Corresponding Monad free variable
+ *
+ * Ensures each backward graph has only one Monad free variable, avoiding duplicate creation
+ */
 AnfNodePtr FindMonadFv(const FuncGraphPtr &bprop_fg, const AnfNodePtr &monad,
                        mindspore::HashMap<FuncGraphPtr, AnfNodePtr> *bprop_to_monad_fv) {
   auto iter = bprop_to_monad_fv->find(bprop_fg);
@@ -498,6 +784,17 @@ AnfNodePtr FindMonadFv(const FuncGraphPtr &bprop_fg, const AnfNodePtr &monad,
 }
 }  // namespace
 
+/**
+ * @brief Copy original node's inputs and handle Monad free variables
+ * @param bprop_fg Backward propagation FuncGraph
+ * @param node Original node
+ * @param depend_nodes Dependency nodes (for inserting Depend)
+ * @param new_inputs [out] Output parameter storing new input list
+ *
+ * Copies original node's inputs to new input list, while:
+ * - Handling UMonad and IOMonad free variables, ensuring each bprop graph has only one
+ * - Inserting Depend node at first input to establish recomputation dependency
+ */
 void Recomputation::CopyOriginalInputs(const FuncGraphPtr &bprop_fg, const CNodePtr &node,
                                        const AnfNodePtr &depend_nodes, std::vector<AnfNodePtr> *new_inputs) {
   (void)std::transform(node->inputs().begin(), node->inputs().end(), std::back_inserter(*new_inputs),
@@ -521,6 +818,23 @@ void Recomputation::CopyOriginalInputs(const FuncGraphPtr &bprop_fg, const CNode
   }
 }
 
+/**
+ * @brief Move K-graph caller node to backward propagation graph
+ * @param manager FuncGraph manager
+ * @param bprop_fg Backward propagation FuncGraph
+ * @param node Node to move
+ * @param depend_nodes Dependency nodes
+ * @param origin_to_new_nodes [in/out] Mapping from original nodes to new nodes
+ * @return New node created in backward graph
+ *
+ * When K-graph caller node and bprop caller are not in the same graph,
+ * need to move K-graph caller node to backward graph for execution, achieving recomputation.
+ *
+ * Processing flow:
+ * 1. If it's recompute K-graph caller, create new node and add dependencies
+ * 2. If it's TupleGetItem/MakeTuple/Depend intermediate node, recursively process its inputs
+ * 3. Replace original bprop getter with newly created K-graph caller node
+ */
 CNodePtr Recomputation::MoveKCallerToBprop(const FuncGraphManagerPtr &manager, const FuncGraphPtr &bprop_fg,
                                            const CNodePtr &node, const AnfNodePtr &depend_nodes,
                                            std::unordered_map<CNodePtr, CNodePtr> *origin_to_new_nodes) {
@@ -545,20 +859,24 @@ CNodePtr Recomputation::MoveKCallerToBprop(const FuncGraphManagerPtr &manager, c
           MoveKCallerToBprop(manager, bprop_fg, input->cast<CNodePtr>(), depend_nodes, origin_to_new_nodes));
       }
     }
-    if (IsRecomputeCell(GetValueNode<FuncGraphPtr>(node->input(0)))) {
-      // Add the dout input of its bprop function to the dependencies.
+    bool recompute_cell_output = false;
+    if (IsRecomputeCell(GetValueNode<FuncGraphPtr>(node->input(0)), &recompute_cell_output)) {
       auto new_depend_nodes = depend_nodes;
-      auto bprop_caller = GetBpropCaller(manager, GetBpropGetter(manager, node));
-      if (bprop_caller != nullptr) {
-        std::vector<AnfNodePtr> new_depend_nodes_inputs;
-        auto depend_cnode = depend_nodes->cast<CNodePtr>();
-        MS_EXCEPTION_IF_NULL(depend_cnode);
-        (void)std::copy(depend_cnode->inputs().begin(), depend_cnode->inputs().end(),
-                        std::back_inserter(new_depend_nodes_inputs));
-        auto bprop_caller_cnode = bprop_caller->cast<CNodePtr>();
-        MS_EXCEPTION_IF_NULL(bprop_caller_cnode);
-        (void)new_depend_nodes_inputs.emplace_back(bprop_caller_cnode->input(1));
-        new_depend_nodes = bprop_fg->NewCNode(new_depend_nodes_inputs);
+      if (!recompute_cell_output) {
+        // If do not recompute cell output, add the dout input of its bprop function to the dependencies
+        // because the recomputed cell will not output to other recomputed nodes.
+        auto bprop_caller = GetBpropCaller(manager, GetBpropGetter(manager, node));
+        if (bprop_caller != nullptr) {
+          std::vector<AnfNodePtr> new_depend_nodes_inputs;
+          auto depend_cnode = depend_nodes->cast<CNodePtr>();
+          MS_EXCEPTION_IF_NULL(depend_cnode);
+          (void)std::copy(depend_cnode->inputs().begin(), depend_cnode->inputs().end(),
+                          std::back_inserter(new_depend_nodes_inputs));
+          auto bprop_caller_cnode = bprop_caller->cast<CNodePtr>();
+          MS_EXCEPTION_IF_NULL(bprop_caller_cnode);
+          (void)new_depend_nodes_inputs.emplace_back(bprop_caller_cnode->input(1));
+          new_depend_nodes = bprop_fg->NewCNode(new_depend_nodes_inputs);
+        }
       }
       for (size_t i = 1; i < new_inputs.size(); ++i) {
         auto depend = bprop_fg->NewCNode({NewValueNode(prim::kPrimDepend), new_inputs[i], new_depend_nodes});
@@ -609,6 +927,24 @@ CNodePtr Recomputation::MoveKCallerToBprop(const FuncGraphManagerPtr &manager, c
   return new_node;
 }
 
+/**
+ * @brief Add dependency edges for recomputation nodes
+ * @param manager FuncGraph manager
+ * @param fg Current FuncGraph
+ * @param k_fg_caller_cnode K-graph caller node
+ *
+ * Core function: Ensures recomputation executes at the correct timing
+ *
+ * Processing flow:
+ * 1. Collect dependencies for recomputation node (GetDependencies)
+ * 2. Filter out dependency nodes that could create cycles
+ * 3. Create MakeTuple node to wrap all dependencies
+ * 4. Attach dependencies to recomputation input via Depend node
+ *
+ * Two scenarios:
+ * - Same graph: Insert Depend directly in current graph
+ * - Cross graph: Need to move K-graph caller to backward graph (MoveKCallerToBprop)
+ */
 void Recomputation::AddDependNodes(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg,
                                    const CNodePtr &k_fg_caller_cnode) {
   // Get the nodes which the recomputed part should depend on;
@@ -692,6 +1028,16 @@ void Recomputation::AddDependNodes(const FuncGraphManagerPtr &manager, const Fun
   }
 }
 
+/**
+ * @brief Replace the final forward result getter
+ * @param manager FuncGraph manager
+ * @param fg Current FuncGraph
+ * @param origin_forward_getter Original forward result getter
+ * @param new_forward_getter New forward result getter
+ *
+ * Recursively replaces all users of original forward result getter to use the new getter.
+ * Handles TupleGetItem, Depend and other intermediate node cases.
+ */
 void Recomputation::ReplaceFinalForwardGetter(const FuncGraphManagerPtr &manager, const FuncGraphPtr &fg,
                                               const AnfNodePtr &origin_forward_getter,
                                               const AnfNodePtr &new_forward_getter) {
@@ -735,18 +1081,45 @@ void Recomputation::ReplaceFinalForwardGetter(const FuncGraphManagerPtr &manager
   }
 }
 
+/**
+ * @brief Main entry point for recomputation optimization pass
+ * @param root Root FuncGraph
+ * @param opt Optimizer
+ * @return True if graph was modified
+ *
+ * Overall processing flow:
+ * 1. Check if recomputation should execute before inline
+ * 2. Traverse all nodes in reverse topological order, find recompute K-graph forward getters
+ *    (TupleGetItem index=0)
+ * 3. For each recompute K-graph caller node:
+ *    a. Get Primal (retrieve original forward computation from K-graph's transforms["primal"])
+ *    b. Create new Primal caller node: new_primal = fg->NewCNodeInOrder({primal, inputs...})
+ *    c. Replace non-gradient users of forward result with new Primal (AddNewPrimalNode)
+ *       - Gradient computation part still uses original K-graph call, ensuring re-execution
+ *         during backward
+ *    d. Mark K-graph caller node: kAttrReplacedWithPrimal, to avoid duplicate processing
+ *    e. If current node has no inputs from other recompute nodes, add dependency edges
+ *       (AddDependNodes)
+ *       - Dependency edges ensure recomputation executes at correct timing during backward
+ * 4. Add CSE attribute to nodes within recomputation scope for subsequent CSE optimization
+ *
+ * Key aspects of recompute node generation:
+ * - K-graph caller node preserved: Original K-graph caller node is not deleted,
+ *   it will re-execute during backward propagation
+ * - New Primal node: Creates independent forward computation node for non-gradient users,
+ *   avoiding saving intermediate results
+ * - Dependency edge insertion: Controls recomputation execution timing via Depend node,
+ *   depending on dout (backward gradient input)
+ *
+ * Memory optimization principle:
+ * - Original: Forward propagation saves intermediate results → Backward directly uses them
+ * - Recomputation: Forward doesn't save → Backward recomputes via K-graph
+ */
 bool Recomputation::operator()(const FuncGraphPtr &root, const OptimizerPtr &opt) {
   if (!RecomputeBeforeInline()) {
     return false;
   }
-#ifdef ENABLE_DUMP_IR
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  bool enable_save_graphs = context->CanDump(kIntroductory);
-  if (enable_save_graphs) {
-    DumpIR("before_recompute_root.ir", root);
-  }
-#endif
+  DumpRecomputeIR("before_recompute_root.ir", root);
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(opt);
   auto manager = opt->manager();
@@ -773,7 +1146,8 @@ bool Recomputation::operator()(const FuncGraphPtr &root, const OptimizerPtr &opt
       continue;
     }
     bool recompute_cell = false;
-    auto primal = GetPrimal(k_fg, &recompute_cell);
+    bool recompute_cell_output = false;
+    auto primal = GetPrimal(k_fg, &recompute_cell, &recompute_cell_output);
     if (primal == nullptr) {
       continue;
     }
@@ -789,7 +1163,8 @@ bool Recomputation::operator()(const FuncGraphPtr &root, const OptimizerPtr &opt
       SetPrimalAttrs(new_primal, k_fg);
     }
     std::unordered_map<AnfNodePtr, AnfNodePtr> origin_to_new_primal;
-    bool change = AddNewPrimalNode(manager, fg, node, new_primal, recompute_cell, &origin_to_new_primal);
+    bool change =
+      AddNewPrimalNode(manager, fg, node, new_primal, recompute_cell && !recompute_cell_output, &origin_to_new_primal);
     changed = change || changed;
     if (change && recompute_cell) {
       static int64_t recomput_subgraph_id = 1;
@@ -807,11 +1182,7 @@ bool Recomputation::operator()(const FuncGraphPtr &root, const OptimizerPtr &opt
     AddDependNodes(manager, fg, k_fg_caller_cnode);
   }
   AddCseAttr(root, changed);
-#ifdef ENABLE_DUMP_IR
-  if (enable_save_graphs) {
-    DumpIR("after_recompute_root.ir", root);
-  }
-#endif
+  DumpRecomputeIR("after_recompute_root.ir", root);
   return changed;
 }
 }  // namespace irpass

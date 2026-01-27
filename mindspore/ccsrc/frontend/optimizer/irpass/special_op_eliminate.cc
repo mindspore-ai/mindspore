@@ -272,7 +272,7 @@ AnfNodePtr ResetDeferInline::operator()(const OptimizerPtr &, const AnfNodePtr &
     if (RecomputeBeforeInline()) {
       fg->erase_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH);
       fg->erase_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH);
-      fg->erase_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE);
+      fg->erase_flag(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE);
     }
   }
   return nullptr;

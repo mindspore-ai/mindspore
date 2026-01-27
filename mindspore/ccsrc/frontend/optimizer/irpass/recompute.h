@@ -189,7 +189,7 @@ class RemoveNotRecomputeNode : public AnfVisitor {
       return false;
     }
     auto primal_fg = primal_iter->second.func_graph();
-    if (primal_fg == nullptr || !primal_fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+    if (primal_fg == nullptr || !primal_fg->has_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE)) {
       return false;
     }
 

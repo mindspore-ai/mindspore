@@ -2627,7 +2627,7 @@ class Cell(Cell_):
 
         The hook function should be one of the following signatures:
 
-        - `hook_fn(cell, args) -> None or new_args` , when `with_kwargs` is ``Flase`` .
+        - `hook_fn(cell, args) -> None or new_args` , when `with_kwargs` is ``False`` .
         - `hook_fn(cell, args, kwargs) -> None or (new_args, new_kwargs)` , when `with_kwargs` is ``True`` .
 
         where:
@@ -2638,8 +2638,8 @@ class Cell(Cell_):
           `with_kwargs` is ``True`` .
 
         Note:
-            - The `hook_fn` can modify the forward inputs by returning new inputs. If `with_kwargs` is ``Flase`` , a
-              single value (whick will be wrapped into a tuple unless already a tuple) or a tuple of args should be
+            - The `hook_fn` can modify the forward inputs by returning new inputs. If `with_kwargs` is ``False`` , a
+              single value (which will be wrapped into a tuple unless already a tuple) or a tuple of args should be
               returned. If `with_kwargs` is ``True`` , both `args` and `kwargs` should be returned.
             - In order to prevent running failed when switching to graph mode, it is not recommended to call it in the
               `construct` function of Cell object.
@@ -3555,15 +3555,12 @@ class Cell(Cell_):
             param.comm_fusion = fusion_type
         return self
 
-    def _set_recompute_scope(self, mode):
+    def _set_recompute_scope(self):
         prefix = 'recompute_'
-        if mode:
-            if self._scope is None:
-                self._scope = prefix
-            elif not self._scope.startswith(prefix):
-                self._scope = prefix + self._scope
-        elif self._scope is not None and self._scope.startswith(prefix):
-            self._scope = self._scope[len(prefix):]
+        if self._scope is None:
+            self._scope = prefix
+        elif not self._scope.startswith(prefix):
+            self._scope = prefix + self._scope
 
     def _mp_comm_recompute(self, mp_comm_recompute=True):
         """
@@ -3592,11 +3589,10 @@ class Cell(Cell_):
         for cell in self.cells():
             cell._recompute_slice_activation(slice_activation)
 
-    def _recompute(self, mode=True, output_recompute=False):
+    def _recompute(self, should_add_flag=True, output_recompute=False):
         """
         Set the cell recomputed.
         """
-        Validator.check_bool(mode)
         Validator.check_bool(output_recompute)
         if not self._has_config_recompute:  # pylint: disable=E0203
             self._has_config_recompute = True
@@ -3604,11 +3600,11 @@ class Cell(Cell_):
             logger.info("The recompute interface can be configured only once."
                         " When the parent cell is configured, the child cell should not be configured")
             return
-        self._set_recompute_scope(mode)
-        if mode and not output_recompute:
-            self.add_flags(output_no_recompute=True)
+        self._set_recompute_scope()
+        if should_add_flag:
+            self.add_flags(output_recompute=output_recompute)
         for cell in self.cells():
-            cell._recompute(mode, True)
+            cell._recompute(False, True)
 
     @args_type_check(mp_comm_recompute=bool, parallel_optimizer_comm_recompute=bool)
     def recompute(self, *, use_reentrant=True, output_recompute=False, **kwargs):
@@ -3627,7 +3623,7 @@ class Cell(Cell_):
               Therefore, when the parent cell is configured, the child cell should not be configured.
             - The outputs of cell are excluded from recomputation by default, which is based on our configuration
               experience to reduce memory footprint. If a cell has only one primitive and the primitive is wanted
-              to be set recomputed, use the recompute api of the primtive.
+              to be set recomputed, use the recompute api of the primitive.
             - When the memory remains after applying the recomputation, configuring 'mp_comm_recompute=False'
               to improve performance if necessary.
             - When the memory still not enough after applying the recompute, configuring
@@ -3658,7 +3654,7 @@ class Cell(Cell_):
         if output_recompute:
             use_reentrant = False
         self._recompute_cell = recompute_registry.get()(self.construct, use_reentrant, output_recompute)
-        self._recompute()
+        self._recompute(True, output_recompute)
         if 'mp_comm_recompute' in kwargs:
             self._mp_comm_recompute(kwargs.get('mp_comm_recompute', False))
         if 'parallel_optimizer_comm_recompute' in kwargs:
