@@ -6008,7 +6008,7 @@ def conv1d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     where :math:`\text{kernel_size}` is the width of the kernel.
     If we consider the input and output channels as well as the `groups` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size})`,
-    where `groups` is the number of groups dividing `x`'s input channel when applying group convolution.
+    where `groups` is the number of groups dividing `input`'s input channel when applying group convolution.
 
     For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_
@@ -6160,7 +6160,7 @@ def conv2d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     respectively.
     If we consider the input and output channels as well as the `groups` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]}, \text{kernel_size[1]})`,
-    where `groups` is the number of groups dividing `x`'s input channel when applying group convolution.
+    where `groups` is the number of groups dividing `input`'s input channel when applying group convolution.
 
     For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ and
@@ -7111,7 +7111,7 @@ def conv3d(input, weight, bias=None, stride=1, pad_mode="valid", padding=0, dila
     If we consider the input and output channels as well as the `groups` parameter, the complete kernel shape
     will be :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]},
     \text{kernel_size[1]}, \text{kernel_size[2]})`,
-    where `groups` is the number of groups dividing `x`'s input channel when applying group convolution.
+    where `groups` is the number of groups dividing `input`'s input channel when applying group convolution.
 
     For more details about convolution layer, please refer to `Gradient Based Learning Applied to Document Recognition
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.

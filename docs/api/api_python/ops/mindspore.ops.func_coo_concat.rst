@@ -10,7 +10,7 @@ mindspore.ops.coo_concat
 
     参数：
         - **sp_input** (Union[list(COOTensor), tuple(COOTensor)]) - 输入的需要concat合并的稀疏张量。
-        - **concat_dim** (scalar) - 指定需要合并的轴序号, 它的取值必须是在[-rank, rank)之内，
+        - **concat_dim** (scalar) - 指定需要合并的轴序号，它的取值必须是在[-rank, rank)之内，
           其中rank为 `sp_input` 中COOTensor的shape的维度值，默认 ``0`` 。
 
     返回：

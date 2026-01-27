@@ -61,7 +61,7 @@ mindspore.mint.nn.functional.conv2d
         - **TypeError** -  如果 `kernel_size` ， `stride` 或 `dilation` 既不是int也不是tuple。
         - **TypeError** -  如果 `bias` 不是Tensor。
         - **ValueError** - 如果 `bias` 的shape不是 :math:`(C_{out})` 。
-        - **ValueError** - 如果 `stride` 或 `diation` 小于1。
+        - **ValueError** - 如果 `stride` 或 `dilation` 小于1。
         - **ValueError** - 如果 `padding` 是 ``"same"`` ， `stride` 不等于1。
         - **ValueError** - 输入参数不满足卷积输出公式。
         - **ValueError** - `kernel_size` 不能超过输入特征图的大小。
