@@ -127,7 +127,7 @@ bool AscendCommunicationGroup::Initialize(void *root_info) {
   }
   // If communication is obtained directly via the external hcom (InitByHcclComm), which does not depend on the
   // synchronization of HCCL, the uniqueID will not be cleared.
-  if (group_rank == 0 && hccl_config_.find("hccl_comm") == hccl_config_.end()) {
+  if (group_rank == 0) {
     distributed::collective::CollectiveManager::instance()->ClearUniqueID(name_);
   }
   (void)CALL_ASCEND_API(aclrtResetDevice, device_id);
@@ -144,18 +144,24 @@ bool AscendCommunicationGroup::Finalize() {
     return true;
   }
 
-  // This function will be called at a lonesome thread that has no rtContext, so HcclCommDestroy will be failed.
-  // Delete these codes when these threads can be bind.
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-  (void)CALL_ASCEND_API(aclrtSetDevice, device_id);
   static auto destroy_hccl_watchdog_handler_cb = GET_COMMON_CALLBACK(DestroyWatchDogHandler, void, const std::string &);
   if (destroy_hccl_watchdog_handler_cb != nullptr) {
     destroy_hccl_watchdog_handler_cb(name_);
   }
-  (void)HcclCommDestroy(comm_);
-  (void)CALL_ASCEND_API(aclrtResetDevice, device_id);
+
+  // HcclCommDestroy is only called when the communicator is created by MindSpore. If communicator is passed in via
+  // group's options, the finalization of the HCCL communicator is not managed by MindSpore.
+  if (hccl_config_.find("hccl_comm") == hccl_config_.end()) {
+    // This function will be called at a lonesome thread that has no rtContext, so HcclCommDestroy will be failed.
+    // Delete these codes when these threads can be bind.
+    auto ms_context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(ms_context);
+    auto device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    (void)CALL_ASCEND_API(aclrtSetDevice, device_id);
+    (void)HcclCommDestroy(comm_);
+    (void)CALL_ASCEND_API(aclrtResetDevice, device_id);
+  }
+
   initialized_ = false;
   comm_ = nullptr;
   return true;

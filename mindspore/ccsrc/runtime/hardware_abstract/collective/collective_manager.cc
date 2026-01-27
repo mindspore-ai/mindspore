@@ -349,7 +349,7 @@ bool CollectiveManager::CreateCommunicationGroup(const std::string &group_name,
                            "Failed to create device communication group" + group_name);
   PROF_END(CreateCommunicationGroupOnDeviceSide);
 
-  SubmitCreateDeviceCommTask(group_name);
+  SubmitCreateDeviceCommTask(group_name, config);
   if (config.async) {
     // If this is in async manner, it's user's duty to call SubmitCreateDeviceCommTask and join the result.
     MS_LOG(WARNING) << "This group's communicator is async created " << group_name;
@@ -896,7 +896,7 @@ bool CollectiveManager::ResumeHcclComm() {
   return true;
 }
 
-bool CollectiveManager::CreateDeviceCommunicator(const std::string &group_name, const int32_t buffsize) {
+bool CollectiveManager::CreateDeviceCommunicator(const std::string &group_name, const GroupOptions &config) {
   MS_LOG(INFO) << "Create device communicator for " << group_name;
   MS_EXCEPTION_IF_NULL(device_comm_lib_instance_);
   CommunicationGroupPtr group = device_comm_lib_instance_->GetGroup(group_name);
@@ -910,9 +910,10 @@ bool CollectiveManager::CreateDeviceCommunicator(const std::string &group_name, 
   // Step 1: Generate and broadcast device information of the root node (required for NPU backend without rank table).
   static bool use_ranktable = !common::GetEnv("RANK_TABLE_FILE").empty();
   bool use_cross_cluster = DistributedMeta::GetInstance()->enable_cross_cluster();
+  bool use_config_hcom = (config.hccl_config.find("hccl_comm") != config.hccl_config.end());
   bool ret = false;
   void *root_info;
-  if (!is_mccl && (!use_ranktable || use_cross_cluster)) {
+  if (!is_mccl && !use_config_hcom && (!use_ranktable || use_cross_cluster)) {
     size_t root_info_size = 0;
     PROF_START(GenerateRootInfo);
     root_info = group->GenerateRootInfo(&root_info_size);
@@ -1070,7 +1071,7 @@ bool CollectiveManager::WaitCommInitDone(const std::string &group_name) {
   return true;
 }
 
-void CollectiveManager::SubmitCreateDeviceCommTask(const std::string &group_name, const int32_t buffsize) {
+void CollectiveManager::SubmitCreateDeviceCommTask(const std::string &group_name, const GroupOptions &config) {
   if (!run_init_comm_task_thread_.joinable()) {
     run_init_comm_task_thread_ = std::thread(&CollectiveManager::RunInitCommTasks, this);
     MS_LOG(INFO) << "Launch init comm thread.";
@@ -1080,7 +1081,7 @@ void CollectiveManager::SubmitCreateDeviceCommTask(const std::string &group_name
     return;
   }
   std::unique_lock<std::mutex> lock(task_queue_mutex_);
-  init_comm_task_queue_.push(std::make_pair(group_name, buffsize));
+  init_comm_task_queue_.push(std::make_pair(group_name, config));
   task_list_.push_back(group_name);
   task_queue_blocker_.notify_one();
   MS_LOG(INFO) << "Submit init communicator task for " << group_name
@@ -1105,10 +1106,10 @@ void CollectiveManager::RunInitCommTasks() {
     lock.unlock();
 
     std::string group_name = task_element.first;
-    int32_t buffsize = task_element.second;
+    GroupOptions config = task_element.second;
     try {
       MS_LOG(INFO) << "Create device communicator in thread for group: " << group_name;
-      if (!CreateDeviceCommunicator(group_name, buffsize)) {
+      if (!CreateDeviceCommunicator(group_name, config)) {
         MS_LOG(EXCEPTION) << "Failed to init communicator asynchronizely for group " << group_name
                           << ". Please check ERROR log.";
       }
