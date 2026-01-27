@@ -23,6 +23,7 @@ message RegistrationMessage {
   string role = 3;
   string host_ip = 4;
   uint32 device_id = 5;
+  string allocated_rank_id = 6;
 }
 
 message RegistrationRespMessage {

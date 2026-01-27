@@ -38,7 +38,8 @@ TEST_F(TestMSCollectiveTopo, InitCollectiveTopoNode) {
   std::string server_port = "8090";
   common::SetEnv(distributed::cluster::topology::kEnvMetaServerHost, server_host.c_str());
   common::SetEnv(distributed::cluster::topology::kEnvMetaServerPort, server_port.c_str());
-
+  common::SetEnv("MS_RETRY_INTERVAL_LOWER", "1");
+  common::SetEnv("MS_RETRY_INTERVAL_UPPER", "1");
   size_t total_node_num = 8;
   common::SetEnv("MS_WORKER_NUM", std::to_string(total_node_num).c_str());
   std::vector<std::shared_ptr<distributed::cluster::topology::ComputeGraphNode>> cgns;
