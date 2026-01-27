@@ -686,6 +686,7 @@ mindspore.mint.distributed
     mindspore.mint.distributed.new_group
     mindspore.mint.distributed.P2POp
     mindspore.mint.distributed.recv
+    mindspore.mint.distributed.recv_object_list
     mindspore.mint.distributed.reduce
     mindspore.mint.distributed.reduce_scatter
     mindspore.mint.distributed.reduce_scatter_tensor
@@ -693,4 +694,5 @@ mindspore.mint.distributed
     mindspore.mint.distributed.scatter
     mindspore.mint.distributed.scatter_object_list
     mindspore.mint.distributed.send
+    mindspore.mint.distributed.send_object_list
     mindspore.mint.distributed.TCPStore

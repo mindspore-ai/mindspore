@@ -42,6 +42,8 @@ from mindspore.mint.distributed.distributed import (
     irecv,
     send,
     recv,
+    send_object_list,
+    recv_object_list,
     barrier,
     broadcast,
     reduce,
@@ -989,6 +991,84 @@ def test_hccl_recv():
         recv(output, src="test")
     with pytest.raises(TypeError):
         recv(output, group=1)
+
+
+@log_function_entry_exit
+def test_hccl_send_object_list():
+    """
+    Feature: test distributed op
+    Description: test comm op in python native
+    Expectation: success
+    """
+    # 同步场景
+    if rank % 2 == 0:
+        objects = ["foo", 12, {1: 2}]  # any picklable object
+        send_object_list(objects, dst=(rank + 1) % size)
+    else:
+        objects = [None, None, None]
+        recv_object_list(objects, src=(rank - 1) % size)
+        assert objects == ["foo", 12, {1: 2}]
+    # group场景
+    if rank == 2 or rank == 4:
+        group = new_group([2,4])
+        if rank == 4:
+            objects = ["test", 42, {"key": "value"}]
+            send_object_list(objects, dst=2, group=group)
+        else:
+            objects = [None, None, None]
+            recv_object_list(objects, src=4, group=group)
+            assert objects == ["test", 42, {"key": "value"}]
+    # 异常场景
+    with pytest.raises(TypeError):
+        send_object_list(1, dst=1)
+    with pytest.raises(TypeError):
+        send_object_list(["test"], dst="test")
+    with pytest.raises(TypeError):
+        send_object_list(["test"], dst=1, group=1)
+    with pytest.raises(ValueError):
+        send_object_list(["test"], dst=rank)
+    with pytest.raises(TypeError):
+        recv_object_list(1, src=0)
+    with pytest.raises(TypeError):
+        recv_object_list(["test"], src="test")
+    with pytest.raises(TypeError):
+        recv_object_list(["test"], src=0, group=1)
+
+
+@log_function_entry_exit
+def test_hccl_recv_object_list():
+    """
+    Feature: test distributed op
+    Description: test comm op in python native
+    Expectation: success
+    """
+    # 同步场景
+    if rank % 2 == 0:
+        objects = ["bar", 34, {"a": "b"}]  # any picklable object
+        send_object_list(objects, dst=(rank + 1) % size)
+    else:
+        objects = [None, None, None]
+        out = recv_object_list(objects, src=(rank - 1) % size)
+        assert out == 0
+        assert objects == ["bar", 34, {"a": "b"}]
+    # group场景
+    if rank == 3 or rank == 5:
+        group = new_group([3,5])
+        if rank == 5:
+            objects = [1, 2, 3]
+            send_object_list(objects, dst=3, group=group)
+        else:
+            objects = [None, None, None]
+            out = recv_object_list(objects, src=5, group=group)
+            assert out == 0
+            assert objects == [1, 2, 3]
+    # 异常场景
+    with pytest.raises(TypeError):
+        recv_object_list(1)
+    with pytest.raises(TypeError):
+        recv_object_list(["test"], src="test")
+    with pytest.raises(TypeError):
+        recv_object_list(["test"], group=1)
 
 
 @log_function_entry_exit
