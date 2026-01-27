@@ -47,7 +47,7 @@ class PipelineCell(Cell):
     Examples:
         >>> import mindspore.nn as nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> net = nn.PipelineCell(net, 4, stage_config={"cell_name_0": 0, "cell_name_1": 1})
     """
@@ -179,7 +179,7 @@ class Pipeline(PipelineCell):
     Examples:
         >>> from mindspore.parallel.nn import Pipeline
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> net = Pipeline(net, 4, stage_config={"cell_name_0": 0, "cell_name_1": 1})
     """
@@ -210,7 +210,7 @@ class MicroBatchInterleaved(Cell):
     Examples:
         >>> import mindspore.nn as nn
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> net = nn.MicroBatchInterleaved(net, 2)
     """
@@ -260,7 +260,7 @@ class GradAccumulation(Cell):
     Examples:
         >>> from mindspore.parallel.nn import GradAccumulation
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> net = GradAccumulation(net, 4)
     """

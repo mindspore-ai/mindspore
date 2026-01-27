@@ -1,11 +1,11 @@
-![MindSpore标志](https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-logo.png "MindSpore logo")
+![MindSpore标志](https://raw.atomgit.com/mindspore/mindspore/raw/master/docs/MindSpore-logo.png "MindSpore logo")
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/mindspore.svg)](https://pypi.org/project/mindspore)
 [![PyPI](https://badge.fury.io/py/mindspore.svg)](https://badge.fury.io/py/mindspore)
 [![Downloads](https://static.pepy.tech/badge/mindspore)](https://pepy.tech/project/mindspore)
 [![DockerHub](https://img.shields.io/docker/pulls/mindspore/mindspore-cpu.svg)](https://hub.docker.com/r/mindspore/mindspore-cpu)
 [![LICENSE](https://img.shields.io/github/license/mindspore-ai/mindspore.svg?style=flat-square)](https://github.com/mindspore-ai/mindspore/blob/master/LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://gitee.com/mindspore/mindspore/pulls)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://atomgit.com/mindspore/mindspore/pulls)
 
 [View English](./README.md)
 
@@ -38,7 +38,7 @@ MindSpore提供了友好的设计和高效的执行，旨在提升数据科学�
 
 同时，MindSpore作为全球AI开源社区，致力于进一步开发和丰富AI软硬件应用生态。
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture-zh.png" alt="MindSpore Architecture"/>
+<img src="https://raw.atomgit.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture-zh.png" alt="MindSpore Architecture"/>
 
 欲了解更多详情，请查看我们的[总体架构](https://www.mindspore.cn/tutorials/zh-CN/master/beginner/introduction.html)。
 
@@ -53,7 +53,7 @@ PyTorch采用的是操作符重载法。相较于代码变换法，操作符重�
 
 MindSpore则采用的是代码变换法。一方面，它支持自动控制流的自动微分，因此像PyTorch这样的模型构建非常方便。另一方面，MindSpore可以对神经网络进行静态编译优化，以获得更好的性能。
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/Automatic-differentiation.png" alt="Automatic Differentiation" width="600"/>
+<img src="https://raw.atomgit.com/mindspore/mindspore/raw/master/docs/Automatic-differentiation.png" alt="Automatic Differentiation" width="600"/>
 
 MindSpore自动微分的实现可以理解为程序本身的符号微分。MindSpore IR是一个函数中间表达式，它与基础代数中的复合函数具有直观的对应关系。复合函数的公式由任意可推导的基础函数组成。MindSpore IR中的每个原语操作都可以对应基础代数中的基本功能，从而可以建立更复杂的流控制。
 
@@ -61,7 +61,7 @@ MindSpore自动微分的实现可以理解为程序本身的符号微分。MindS
 
 MindSpore自动并行的目的是构建数据并行、模型并行和混合并行相结合的训练方法。该方法能够自动选择开销最小的模型切分策略，实现自动分布并行训练。
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/Automatic-parallel.png" alt="Automatic Parallel" width="600"/>
+<img src="https://raw.atomgit.com/mindspore/mindspore/raw/master/docs/Automatic-parallel.png" alt="Automatic Parallel" width="600"/>
 
 目前MindSpore采用的是算子切分的细粒度并行策略，即图中的每个算子被切分为一个集群，完成并行操作。在此期间的切分策略可能非常复杂，但是作为一名Python开发者，您无需关注底层实现，只要顶层API计算是有效的即可。
 
@@ -98,24 +98,24 @@ MindSpore提供跨多个后端的构建选项：
 
 使用pip方式，在不同的环境安装MindSpore，可参考以下文档。
 
-- [Ascend环境使用pip方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip.md)
-- [GPU环境使用pip方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_pip.md)
-- [CPU环境使用pip方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_pip.md)
+- [Ascend环境使用pip方式安装MindSpore](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip.md)
+- [GPU环境使用pip方式安装MindSpore](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_gpu_install_pip.md)
+- [CPU环境使用pip方式安装MindSpore](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_cpu_install_pip.md)
 
 ### 源码编译方式安装
 
 使用源码编译方式，在不同的环境安装MindSpore，可参考以下文档。
 
-- [Ascend环境使用源码编译方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source.md)
-- [GPU环境使用源码编译方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_source.md)
-- [CPU环境使用源码编译方式安装MindSpore](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_source.md)
+- [Ascend环境使用源码编译方式安装MindSpore](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source.md)
+- [GPU环境使用源码编译方式安装MindSpore](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_gpu_install_source.md)
+- [CPU环境使用源码编译方式安装MindSpore](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_cpu_install_source.md)
 
 ### Docker镜像
 
 MindSpore的Docker镜像托管在[Huawei SWR](https://support.huaweicloud.com/swr/index.html)上。
 使用Docker方式，在不同的环境安装MindSpore，可参考以下文档。
 
-- [通过Docker方式安装MindSpore Ascend版本](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_docker.md)
+- [通过Docker方式安装MindSpore Ascend版本](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_docker.md)
 
 ## 快速入门
 
@@ -123,13 +123,13 @@ MindSpore的Docker镜像托管在[Huawei SWR](https://support.huaweicloud.com/sw
 
 ## 文档
 
-有关安装指南、教程和API的更多详细信息，请参阅[用户文档](https://gitee.com/mindspore/docs)。
+有关安装指南、教程和API的更多详细信息，请参阅[用户文档](https://atomgit.com/mindspore/docs)。
 
 ## 社区
 
 ### 治理
 
-查看MindSpore如何进行[开放治理](https://gitee.com/mindspore/community/blob/master/governance.md)。
+查看MindSpore如何进行[开放治理](https://atomgit.com/mindspore/community/blob/master/governance.md)。
 
 ### 交流
 
@@ -139,7 +139,7 @@ MindSpore的Docker镜像托管在[Huawei SWR](https://support.huaweicloud.com/sw
 
 ## 贡献
 
-欢迎参与贡献。更多详情，请参阅我们的[贡献者Wiki](https://gitee.com/mindspore/mindspore/blob/master/CONTRIBUTING.md)。
+欢迎参与贡献。更多详情，请参阅我们的[贡献者Wiki](https://atomgit.com/mindspore/mindspore/blob/master/CONTRIBUTING.md)。
 
 ## 版本维护策略
 
@@ -185,8 +185,8 @@ MindSpore的版本有以下几种维护阶段：
 
 ## 版本说明
 
-版本说明请参阅[RELEASE](https://gitee.com/mindspore/mindspore/blob/master/RELEASE.md)。
+版本说明请参阅[RELEASE](https://atomgit.com/mindspore/mindspore/blob/master/RELEASE.md)。
 
 ## 许可证
 
-[Apache License 2.0](https://gitee.com/mindspore/mindspore/blob/master/LICENSE)
+[Apache License 2.0](https://atomgit.com/mindspore/mindspore/blob/master/LICENSE)

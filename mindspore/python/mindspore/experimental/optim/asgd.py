@@ -75,7 +75,7 @@ class ASGD(Optimizer):
         >>> from mindspore import nn
         >>> from mindspore.experimental import optim
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optimizer = optim.ASGD(net.trainable_params(), lr=0.1)

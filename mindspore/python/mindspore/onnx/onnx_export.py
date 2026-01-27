@@ -72,7 +72,7 @@ def export(net, *inputs, file_name, input_names=None, output_names=None, export_
         >>> from mindspore import Tensor
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> input_tensor = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
         >>> ms.onnx.export(net, input_tensor, file_name='lenet.onnx', input_names=['input1'], output_names=['output1'])

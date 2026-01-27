@@ -1,11 +1,11 @@
-![MindSpore Logo](https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-logo.png "MindSpore logo")
+![MindSpore Logo](https://raw.atomgit.com/mindspore/mindspore/raw/master/docs/MindSpore-logo.png "MindSpore logo")
 
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/mindspore.svg)](https://pypi.org/project/mindspore)
 [![PyPI](https://badge.fury.io/py/mindspore.svg)](https://badge.fury.io/py/mindspore)
 [![Downloads](https://static.pepy.tech/badge/mindspore)](https://pepy.tech/project/mindspore)
 [![DockerHub](https://img.shields.io/docker/pulls/mindspore/mindspore-cpu.svg)](https://hub.docker.com/r/mindspore/mindspore-cpu)
 [![LICENSE](https://img.shields.io/github/license/mindspore-ai/mindspore.svg?style=flat-square)](https://github.com/mindspore-ai/mindspore/blob/master/LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://gitee.com/mindspore/mindspore/pulls)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](https://atomgit.com/mindspore/mindspore/pulls)
 
 [查看中文](./README_CN.md)
 
@@ -41,7 +41,7 @@ processor, and software hardware co-optimization. At the meantime MindSpore as
 a global AI open source community, aims to further advance the development and
 enrichment of the AI software/hardware application ecosystem.
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture.png" alt="MindSpore Architecture"/>
+<img src="https://raw.atomgit.com/mindspore/mindspore/raw/master/docs/MindSpore-architecture.png" alt="MindSpore Architecture"/>
 
 For more details please check out our [Architecture Guide](https://www.mindspore.cn/tutorials/en/master/beginner/introduction.html).
 
@@ -56,7 +56,7 @@ PyTorch used OO. Compared to ST, OO generates gradient graph in runtime, so it d
 
 MindSpore implemented automatic differentiation based on ST. On the one hand, it supports automatic differentiation of automatic control flow, so it is quite convenient to build models like PyTorch. On the other hand, MindSpore can perform static compilation optimization on neural networks to achieve great performance.
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/Automatic-differentiation.png" alt="Automatic Differentiation" width="600"/>
+<img src="https://raw.atomgit.com/mindspore/mindspore/raw/master/docs/Automatic-differentiation.png" alt="Automatic Differentiation" width="600"/>
 
 The implementation of MindSpore automatic differentiation can be understood as the symbolic differentiation of the program itself. Because MindSpore IR is a functional intermediate expression, it has an intuitive correspondence with the composite function in basic algebra. The derivation formula of the composite function composed of arbitrary basic functions can be derived. Each primitive operation in MindSpore IR can correspond to the basic functions in basic algebra, which can build more complex flow control.
 
@@ -64,7 +64,7 @@ The implementation of MindSpore automatic differentiation can be understood as t
 
 The goal of MindSpore automatic parallel is to build a training method that combines data parallelism, model parallelism, and hybrid parallelism. It can automatically select a least cost model splitting strategy to achieve automatic distributed parallel training.
 
-<img src="https://gitee.com/mindspore/mindspore/raw/master/docs/Automatic-parallel.png" alt="Automatic Parallel" width="600"/>
+<img src="https://raw.atomgit.com/mindspore/mindspore/raw/master/docs/Automatic-parallel.png" alt="Automatic Parallel" width="600"/>
 
 At present, MindSpore uses a fine-grained parallel strategy of splitting operators, that is, each operator in the figure is split into a cluster to complete parallel operations. The splitting strategy during this period may be very complicated, but as a developer advocating Pythonic, you don't need to care about the underlying implementation, as long as the top-level API compute is efficient.
 
@@ -101,24 +101,24 @@ For installation using `pip`, take `CPU` and `Linux-x86` build version as an exa
 
 Use pip mode method to install MindSpore in different environments. Refer to the following documents.
 
-- [Using pip mode method to install MindSpore in Ascend environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip_en.md)
-- [Using pip mode method to install MindSpore in GPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_pip_en.md)
-- [Using pip mode method to install MindSpore in CPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_pip_en.md)
+- [Using pip mode method to install MindSpore in Ascend environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_pip_en.md)
+- [Using pip mode method to install MindSpore in GPU environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_gpu_install_pip_en.md)
+- [Using pip mode method to install MindSpore in CPU environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_cpu_install_pip_en.md)
 
 ### Source code compilation installation
 
 Use the source code compilation method to install MindSpore in different environments. Refer to the following documents.
 
-- [Using the source code compilation method to install MindSpore in Ascend environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source_en.md)
-- [Using the source code compilation method to install MindSpore in GPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_gpu_install_source_en.md)
-- [Using the source code compilation method to install MindSpore in CPU environment](https://gitee.com/mindspore/docs/blob/master/install/mindspore_cpu_install_source_en.md)
+- [Using the source code compilation method to install MindSpore in Ascend environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_source_en.md)
+- [Using the source code compilation method to install MindSpore in GPU environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_gpu_install_source_en.md)
+- [Using the source code compilation method to install MindSpore in CPU environment](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_cpu_install_source_en.md)
 
 ### Docker Image
 
 MindSpore docker image is hosted on [Huawei SWR](https://support.huaweicloud.com/swr/index.html).
 Use Docker to install MindSpore in different environments, refer to the following documents.
 
-- [Installing MindSpore in Ascend by Docker](https://gitee.com/mindspore/docs/blob/master/install/mindspore_ascend_install_docker_en.md)
+- [Installing MindSpore in Ascend by Docker](https://atomgit.com/mindspore/docs/blob/master/install/mindspore_ascend_install_docker_en.md)
 
 ## Quickstart
 
@@ -128,13 +128,13 @@ to implement the image classification.
 ## Docs
 
 More details about installation guide, tutorials and APIs, please see the
-[User Documentation](https://gitee.com/mindspore/docs).
+[User Documentation](https://atomgit.com/mindspore/docs).
 
 ## Community
 
 ### Governance
 
-Check out how MindSpore Open Governance [works](https://gitee.com/mindspore/community/blob/master/governance.md).
+Check out how MindSpore Open Governance [works](https://atomgit.com/mindspore/community/blob/master/governance.md).
 
 ### Communication
 
@@ -144,7 +144,7 @@ Check out how MindSpore Open Governance [works](https://gitee.com/mindspore/comm
 
 ## Contributing
 
-Welcome contributions. See our [Contributor Wiki](https://gitee.com/mindspore/mindspore/blob/master/CONTRIBUTING.md) for
+Welcome contributions. See our [Contributor Wiki](https://atomgit.com/mindspore/mindspore/blob/master/CONTRIBUTING.md) for
 more details.
 
 ## Maintenance phases
@@ -191,8 +191,8 @@ Project stable branches will be in one of the following states:
 
 ## Release Notes
 
-The release notes, see our [RELEASE](https://gitee.com/mindspore/mindspore/blob/master/RELEASE.md).
+The release notes, see our [RELEASE](https://atomgit.com/mindspore/mindspore/blob/master/RELEASE.md).
 
 ## License
 
-[Apache License 2.0](https://gitee.com/mindspore/mindspore/blob/master/LICENSE)
+[Apache License 2.0](https://atomgit.com/mindspore/mindspore/blob/master/LICENSE)

@@ -67,7 +67,7 @@ class AutoParallel(Cell):
         >>> ms.set_seed(1)
         >>>
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>>
         >>> def create_dataset(batch_size):
         ...    dataset_path = os.getenv("DATA_PATH")
@@ -222,7 +222,7 @@ class AutoParallel(Cell):
         Examples:
             >>> from mindspore.parallel.auto_parallel import AutoParallel
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> parallel_net = AutoParallel(net, parallel_mode="semi_auto")
             >>> parallel_net.no_init_parameters_in_compile()
@@ -563,7 +563,7 @@ class AutoParallel(Cell):
         Examples:
             >>> from mindspore.parallel.auto_parallel import AutoParallel
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> parallel_net = AutoParallel(net, parallel_mode="semi_auto")
             >>> comm_config = {"openstate": True, "allreduce": {"mode": "auto", "config": None}}
             >>> net.comm_fusion(config=comm_config)
@@ -600,7 +600,7 @@ class AutoParallel(Cell):
         Examples:
             >>> from mindspore.parallel.auto_parallel import AutoParallel
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> parallel_net = AutoParallel(net, parallel_mode="semi_auto")
             >>> parallel_net.print_local_norm()
@@ -655,13 +655,13 @@ class AutoParallel(Cell):
     def transformer_opt(self, file_path):
         r"""
         Check and set speedup config for auto parallel, configuration can refer to `parallel_speed_up.json
-        <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
+        <https://atomgit.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
         If this parameter is set to None, it is disabled.
 
         Args:
             file_path(Union[str, None]): The path to the parallel speed up json file, configuration can refer to
                 `parallel_speed_up.json
-                <https://gitee.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
+                <https://atomgit.com/mindspore/mindspore/blob/master/config/parallel_speed_up.json>`_ .
                 If its value is None or '', it does not take effect. Default None.
 
                 - recomputation_communication_overlap (bool): Enable overlap between recompute ops and communication ops
@@ -734,7 +734,7 @@ class AutoParallel(Cell):
             >>> from mindspore.parallel.auto_parallel import AutoParallel
             >>>
             >>> # Define the network structure of LeNet5. Refer to
-            >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+            >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
             >>> net = LeNet5()
             >>> net = AutoParallel(net, parallel_mode="semi_auto")
             >>> net.transformer_opt("./parallel_speed_up.json")

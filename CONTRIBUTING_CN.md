@@ -24,7 +24,7 @@
 
 ## 快速入门
 
-- 在[Github](https://github.com/mindspore-ai/mindspore)或[Gitee](https://gitee.com/mindspore/mindspore)上fork代码仓。
+- 在[Github](https://github.com/mindspore-ai/mindspore)或[AtomGit](https://atomgit.com/mindspore/mindspore)上fork代码仓。
 - 参见[README_CN.md](README_CN.md)和[安装页面](https://www.mindspore.cn/install)了解项目信息和构建说明。
 
 ## 贡献流程
@@ -68,9 +68,9 @@
     # 在GitHub上：
     git clone https://github.com/{insert_your_forked_repo}/mindspore.git
     git remote add upstream https://github.com/mindspore-ai/mindspore.git
-    # 在Gitee上：
-    git clone https://gitee.com/{insert_your_forked_repo}/mindspore.git
-    git remote add upstream https://gitee.com/mindspore/mindspore.git
+    # 在AtomGit上：
+    git clone https://atomgit.com/{insert_your_forked_repo}/mindspore.git
+    git remote add upstream https://atomgit.com/mindspore/mindspore.git
     ```
 
 - 本地开发代码。
@@ -119,11 +119,11 @@
 - **解决issue时，请先评论**，告知他人由您来负责解决该issue。
 - **对于长时间未关闭的issue**，建议贡献者在解决该issue之前进行预先检查。
 - **如您自行解决了自己报告的issue**，仍需在关闭该issue之前告知他人。
-- **如需issue快速响应**，可为issue添加标签。标签详情，参见[标签列表](https://gitee.com/mindspore/community/blob/master/archived_sigs/dx/docs/labels.md)。
+- **如需issue快速响应**，可为issue添加标签。标签详情，参见[标签列表](https://atomgit.com/mindspore/community/blob/master/archived_sigs/dx/docs/labels.md)。
 
 ### 提交PR
 
-- 在[GitHub](https://github.com/mindspore-ai/mindspore/issues)或[Gitee](https://gitee.com/mindspore/mindspore/issues)上通过issue提出您的想法。
+- 在[GitHub](https://github.com/mindspore-ai/mindspore/issues)或[AtomGit](https://atomgit.com/mindspore/mindspore/issues)上通过issue提出您的想法。
 - 如果是需要大量设计细节的新功能，还应提交设计方案。
 - 经issue讨论和设计方案评审达成共识后，在已fork的代码仓开发，并提交PR。
 - 任何PR至少需要位2位审批人的LGTM标签。请注意，审批人不允许在自己的PR上添加LGTM标签。

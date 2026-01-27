@@ -11,7 +11,7 @@ The module import method is as follows:
 
     from mindspore import ops
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops` operators in MindSpore, please refer to the link `mindspore.ops API Interface Change <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/func_api_updates_en.md>`_.
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.ops` operators in MindSpore, please refer to the link `mindspore.ops API Interface Change <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/func_api_updates_en.md>`_.
 
 Tensor Operation Functions
 --------------------------

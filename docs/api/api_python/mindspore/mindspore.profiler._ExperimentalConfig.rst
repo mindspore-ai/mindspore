@@ -37,7 +37,7 @@ mindspore.profiler._ExperimentalConfig
         - **host_sys** (list, 可选) - 表示采集host侧系统类调用类、存储类、cpu占用率数据。默认值： ``[]`` ，表示不采集host侧系统类数据。需要将 :class:`mindspore.profiler.profile` 中的 `start_profile` 参数设置为 ``False``。
           当前只有**root用户**支持采集DISK或OSRT数据，且需要提前安装好iotop、perf、ltrace三方工具，详细步骤请参考 `安装三方工具 <https://www.hiascend.com/document/detail/zh/mindstudio/80RC1/T&ITools/Profiling/atlasprofiling_16_0136.html>`_ ；
           安装三方工具成功后，需要配置用户权限，详细步骤请参考 `配置用户权限 <https://www.hiascend.com/document/detail/zh/mindstudio/80RC1/T&ITools/Profiling/atlasprofiling_16_0137.html>`_ ，
-          注意在配置用户权限的第3步中，需要将msprof_data_collection.sh脚本中的内容替换为 `msprof_data_collection.sh <https://gitee.com/mindspore/mindspore/blob/master/docs/api/api_python/mindspore/script/msprof_data_collection.sh>`_ 。
+          注意在配置用户权限的第3步中，需要将msprof_data_collection.sh脚本中的内容替换为 `msprof_data_collection.sh <https://atomgit.com/mindspore/mindspore/blob/master/docs/api/api_python/mindspore/script/msprof_data_collection.sh>`_ 。
 
           可以通过 `MindStudio Insight <https://www.hiascend.com/developer/download/community/result?module=pt+sto+cann>`_ 工具进行可视化分析。
           详细分析请参考 `host侧CPU数据分析 <https://www.hiascend.com/document/detail/zh/mindstudio/80RC1/T&ITools/Profiling/atlasprofiling_16_0106.html>`_ 、

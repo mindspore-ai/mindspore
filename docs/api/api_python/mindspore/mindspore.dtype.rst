@@ -44,7 +44,7 @@ MindSpore支持以下基础数据类型：
 ============================   =================
 类型                            描述
 ============================   =================
-``Tensor``                      MindSpore中的张量类型。数据格式采用NCHW。详情请参考 `tensor <https://www.gitee.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/common/tensor.py>`_ 。
+``Tensor``                      MindSpore中的张量类型。数据格式采用NCHW。详情请参考 `tensor <https://www.atomgit.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/common/tensor.py>`_ 。
 ``complex``                     复数标量。
 ``number``                      数值型，包括上述基础数据类型，例如 ``int16``、``float32``。
 ``list_``                       由 ``tensor`` 构造的列表，例如 ``List[T0,T1,...,Tn]`` ，其中元素 ``Ti`` 可以是不同的类型。

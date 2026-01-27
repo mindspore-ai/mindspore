@@ -102,7 +102,7 @@ class DistributedDataParallel(nn.Cell):
         >>> ms.set_context(mode=ms.PYNATIVE_MODE)
         >>> init_process_group()
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> net = DistributedDataParallel(module=net,
         ...                              bucket_cap_mb=None,
@@ -119,7 +119,7 @@ class DistributedDataParallel(nn.Cell):
         >>> grad_fn = ms.value_and_grad(forward_fn, None, net.trainable_params(), has_aux=True)
         >>>
         >>> # Create the dataset taking MNIST as an example. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/mnist.py
         >>> dataset = create_dataset()
         >>> for epoch in range(1):
         ...     step = 0

@@ -10,7 +10,7 @@ The module import method is as follows:
 
     from mindspore import mint
 
-Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.mint` operators in MindSpore, please refer to the link `mindspore.mint API Interface Change <https://gitee.com/mindspore/docs/blob/master/resource/api_updates/mint_api_updates_en.md>`_ .
+Compared with the previous version, the added, deleted and supported platforms change information of `mindspore.mint` operators in MindSpore, please refer to the link `mindspore.mint API Interface Change <https://atomgit.com/mindspore/docs/blob/master/resource/api_updates/mint_api_updates_en.md>`_ .
 
 Tensor
 ---------------
