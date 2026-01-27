@@ -71,10 +71,11 @@ BinaryBroadcastStrideInfo BinaryBroadcastCalStride(const size_t dim_size, const 
   return strides;
 }
 
-TrinaryBroadcastStrideInfo TrinaryBroadcastCalStride(const size_t dim_size, const std::vector<int64_t> &in0_shape,
-                                                     const std::vector<int64_t> &in1_shape,
-                                                     const std::vector<int64_t> &in2_shape,
-                                                     const std::vector<int64_t> &out_shape) {
+CUDA_LIB_EXPORT TrinaryBroadcastStrideInfo TrinaryBroadcastCalStride(const size_t dim_size,
+                                                                     const std::vector<int64_t> &in0_shape,
+                                                                     const std::vector<int64_t> &in1_shape,
+                                                                     const std::vector<int64_t> &in2_shape,
+                                                                     const std::vector<int64_t> &out_shape) {
   TrinaryBroadcastStrideInfo strides;
   strides.in0_stride[dim_size - 1] = 1;
   strides.in1_stride[dim_size - 1] = 1;
