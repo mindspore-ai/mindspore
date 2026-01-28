@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for masked_fill operator forward/backward behaviors."""
 # ============================================================================
 import os
 import pytest
@@ -37,6 +38,16 @@ def masked_fill_forward_func(input_x, mask, value):
 def masked_fill_backward_func(input_x, mask, value):
     # pylint: disable=E1102
     return ops.grad(masked_fill_forward_func, (0, 1))(input_x, mask, value)
+
+
+@test_utils.run_with_cell
+def masked_fill_backward_with_sens(input_x, mask, value, sens):
+    return ms.grad(masked_fill_forward_func, (0,), sens_param=True)(input_x, mask, value, sens)
+
+
+@test_utils.run_with_cell
+def masked_fill_value_grad_with_sens(input_x, mask, value, sens):
+    return ms.grad(masked_fill_forward_func, (2,), sens_param=True)(input_x, mask, value, sens)
 
 
 @test_utils.run_with_cell
@@ -69,6 +80,80 @@ def test_ops_masked_fill_normal(context_mode):
     np.testing.assert_allclose(input_x_output.asnumpy(), expect_input_x_output, rtol=1e-3)
     expect_mask_output = np.asarray([0., 0., 0., 0.]).astype(np.float32)
     np.testing.assert_allclose(mask_output.asnumpy(), expect_mask_output, rtol=1e-3)
+
+
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', essential_mark='essential')
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_masked_fill_backward_nan_inf(context_mode):
+    """
+    Feature: pyboost function.
+    Description: test masked_fill backward with nan/inf sens.
+    Expectation: masked positions are zeroed without propagating nan/inf.
+    """
+    ms.context.set_context(mode=context_mode)
+    input_x = ms.Tensor(np.array([1., 2., 3.]).astype(np.float32))
+    mask = ms.Tensor(np.array([True, False, True]).astype(np.bool_))
+    value = ms.Tensor(0.0, ms.float32)
+    sens = ms.Tensor(np.array([np.nan, np.inf, -1.]).astype(np.float32))
+    input_grad = masked_fill_backward_with_sens(input_x, mask, value, sens)
+    expect_input_grad = np.asarray([0., np.inf, 0.]).astype(np.float32)
+    np.testing.assert_allclose(input_grad.asnumpy(), expect_input_grad, rtol=1e-3, atol=1e-6)
+
+
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
+          card_mark='onecard', essential_mark='essential')
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_masked_fill_value_grad(context_mode):
+    """
+    Feature: pyboost function.
+    Description: test masked_fill value grad with custom sens.
+    Expectation: value grad equals sum of grad at masked positions.
+    """
+    ms.context.set_context(mode=context_mode)
+    input_x = ms.Tensor(np.array([[1., 2.], [3., 4.]]).astype(np.float32))
+    mask = ms.Tensor(np.array([[True, False], [False, True]]).astype(np.bool_))
+    value = ms.Tensor(0.5, ms.float32)
+    sens = ms.Tensor(np.array([[1.0, 2.0], [3.0, 4.0]]).astype(np.float32))
+    value_grad = masked_fill_value_grad_with_sens(input_x, mask, value, sens)
+    expect_value_grad = np.asarray(1.0 + 4.0).astype(np.float32)
+    np.testing.assert_allclose(value_grad.asnumpy(), expect_value_grad, rtol=1e-3, atol=1e-6)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+          essential_mark='essential')
+def test_ops_masked_fill_value_grad_ge_o2():
+    """
+    Feature: pyboost function.
+    Description: test masked_fill value grad under GE O2 mode.
+    Expectation: run without SumExt adapter error.
+    """
+    context.set_context(mode=ms.GRAPH_MODE, jit_level='O2', device_target="Ascend")
+    input_x = ms.Tensor(np.array([[1., 2.], [3., 4.]]).astype(np.float32))
+    mask = ms.Tensor(np.array([[True, False], [False, True]]).astype(np.bool_))
+    value = ms.Tensor(0.5, ms.float32)
+    sens = ms.Tensor(np.array([[1.0, 2.0], [3.0, 4.0]]).astype(np.float32))
+    value_grad = masked_fill_value_grad_with_sens(input_x, mask, value, sens)
+    expect_value_grad = np.asarray(1.0 + 4.0).astype(np.float32)
+    np.testing.assert_allclose(value_grad.asnumpy(), expect_value_grad, rtol=1e-3, atol=1e-6)
+
+
+@arg_mark(plat_marks=['platform_ascend910b', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+          level_mark='level1', card_mark='onecard', essential_mark='essential')
+@pytest.mark.parametrize('context_mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
+def test_ops_masked_fill_value_grad_nan_inf(context_mode):
+    """
+    Feature: pyboost function.
+    Description: test masked_fill value grad with nan/inf sens.
+    Expectation: nan/inf on masked-out positions are excluded.
+    """
+    ms.context.set_context(mode=context_mode)
+    input_x = ms.Tensor(np.array([1., 2., 3., 4.]).astype(np.float32))
+    mask = ms.Tensor(np.array([False, True, True, False]).astype(np.bool_))
+    value = ms.Tensor(0.5, ms.float32)
+    sens = ms.Tensor(np.array([np.nan, 2.0, np.inf, -3.0]).astype(np.float32))
+    value_grad = masked_fill_value_grad_with_sens(input_x, mask, value, sens)
+    assert np.isinf(value_grad.asnumpy())
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',

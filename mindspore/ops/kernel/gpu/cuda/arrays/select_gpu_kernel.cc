@@ -15,6 +15,10 @@
  */
 
 #include "kernel/gpu/cuda/arrays/select_gpu_kernel.h"
+
+#include <utility>
+#include <vector>
+
 #include "mindspore/ops/infer/ops_func_impl/select.h"
 #include "utils/ms_context.h"
 
@@ -29,7 +33,10 @@ bool SelectGpuKernelMod::LaunchKernel(const std::vector<kernel::KernelTensor *> 
   auto *input_y = reinterpret_cast<T *>(inputs[2]->device_ptr());
   auto *output = reinterpret_cast<T *>(outputs[0]->device_ptr());
   auto status =
-    CalSelect(input_cond, input_x, input_y, output, output_size_, reinterpret_cast<cudaStream_t>(cuda_stream_));
+    is_need_broadcast_
+      ? CalSelectBroadcast(input_cond, input_x, input_y, output, dim_size_, output_size_, strides_, device_id_,
+                           reinterpret_cast<cudaStream_t>(cuda_stream_))
+      : CalSelect(input_cond, input_x, input_y, output, output_size_, reinterpret_cast<cudaStream_t>(cuda_stream_));
   CHECK_CUDA_STATUS(status, kernel_name_);
   return true;
 }
@@ -138,9 +145,9 @@ int SelectGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
     return ret;
   }
 
-  auto shape_signed = inputs[0]->GetShapeVector();
-  auto shape = Convert2SizeTClipNeg(shape_signed);
-  is_null_input_ = CHECK_SHAPE_NULL(shape, kernel_name_, "input");
+  auto output_shape = outputs[0]->GetShapeVector();
+  auto output_shape_size_t = Convert2SizeTClipNeg(output_shape);
+  is_null_input_ = CHECK_SHAPE_NULL(output_shape_size_t, kernel_name_, "output");
   if (is_null_input_) {
     return true;
   }
@@ -155,8 +162,37 @@ int SelectGpuKernelMod::Resize(const std::vector<KernelTensor *> &inputs, const 
     return KRET_RESIZE_FAILED;
   }
   output_size_ = kSelectOutputSizeInit;
-  for (size_t x : shape) {
+  for (size_t x : output_shape_size_t) {
     output_size_ = output_size_ * x;
+  }
+  auto cond_shape = inputs[kIndex0]->GetShapeVector();
+  auto x_shape = inputs[kIndex1]->GetShapeVector();
+  auto y_shape = inputs[kIndex2]->GetShapeVector();
+  is_need_broadcast_ = (cond_shape != output_shape) || (x_shape != output_shape) || (y_shape != output_shape);
+  if (is_need_broadcast_) {
+    constexpr size_t kMaxBroadcastDim = 8;
+    dim_size_ = output_shape.size();
+    if (dim_size_ > kMaxBroadcastDim) {
+      MS_LOG(EXCEPTION) << "For '" << kernel_name_ << "', the broadcast dim size must be <= " << kMaxBroadcastDim
+                        << ", but got " << dim_size_;
+    }
+    auto AlignShape = [](const std::vector<int64_t> &shape, size_t dim_size) {
+      std::vector<int64_t> aligned(dim_size, 1);
+      if (shape.empty()) {
+        return aligned;
+      }
+      size_t offset = dim_size - shape.size();
+      for (size_t i = 0; i < shape.size(); ++i) {
+        aligned[offset + i] = shape[i];
+      }
+      return aligned;
+    };
+    auto cond_shape_aligned = AlignShape(cond_shape, dim_size_);
+    auto x_shape_aligned = AlignShape(x_shape, dim_size_);
+    auto y_shape_aligned = AlignShape(y_shape, dim_size_);
+    auto out_shape_aligned = AlignShape(output_shape, dim_size_);
+    strides_ =
+      TrinaryBroadcastCalStride(dim_size_, cond_shape_aligned, x_shape_aligned, y_shape_aligned, out_shape_aligned);
   }
   return KRET_OK;
 }
