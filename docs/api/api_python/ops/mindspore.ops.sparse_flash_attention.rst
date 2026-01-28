@@ -14,11 +14,9 @@ mindspore.ops.sparse_flash_attention
     - D_rope： `query_rope` / `key_rope` 的头维度，固定为 64。
 
     .. note::
-        - **attention_mode 约束**：当前仅支持 attention_mode=2（MLA-absorb模式）。使用 attention_mode=2 时，必须同时提供 query_rope 和 key_rope。使用 attention_mode=0 或其他值不受支持，会导致错误。
-        - **return_softmax_lse 约束**：如果需要调用反向（梯度计算）或需要有效的 softmax_max/softmax_sum 输出，必须设置为 True。
-        - **ACLNN 新增约束**：N2 必须为 1。
-        - **ACLNN 新增约束**：N1 必须为 2 的幂且不超过 128。
-        - **ACLNN 新增约束**：sparse_indices 的最后一维 sparse_size（也称 selected_block_size）必须为 2048。
+        - **attention_mode 约束**：当前仅支持 attention_mode=2（MLA-absorb模式）。使用 attention_mode=2 时，必须同时提供 query_rope 和 key_rope。
+        - **return_softmax_lse 约束**：True表示返回，但图模式下不支持，False表示不返回；默认值为False。该参数仅在训练且 `layout_kv` 不为 PA_BSND 场景支持。
+        - **layout 约束**：`layout_kv` 为 PA_BSND 时，`layout_query` 和 `layout_kv` 无需一致；`layout_kv` 为 BSND 或 TND 时，`layout_query` 和 `layout_kv` 需保持一致。
 
     sparse_flash_attention的计算公式定义如下：
 

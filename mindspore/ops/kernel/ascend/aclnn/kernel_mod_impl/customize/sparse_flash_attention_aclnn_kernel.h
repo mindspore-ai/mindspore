@@ -37,6 +37,12 @@ class SparseFlashAttentionAscend : public AclnnKernelMod {
   void GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) override;
   bool Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
               const std::vector<KernelTensor *> &outputs, void *stream_ptr) override;
+  std::vector<size_t> GetUseLessOutputIdx() const override {
+    if (!return_softmax_lse_) {
+      return {kIndex1, kIndex2};
+    }
+    return {};
+  }
 
  private:
   double scale_value_ = 1.0;

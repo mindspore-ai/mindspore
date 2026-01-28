@@ -52,6 +52,17 @@ constexpr size_t kSFAGradOutputDKeyRopeIndex = 4;
 constexpr size_t kSFAGradOutputsNum = 5;
 
 bool IsGradOptionalInputNone(const InferInfoPtr &input) { return input->IsNone(); }
+
+void CheckRank3Or4(const ShapeVector &shape, const std::string &name, const std::string &op_name) {
+  if (IsDynamicShape(shape)) {
+    return;
+  }
+  const size_t rank = shape.size();
+  if (rank != 3 && rank != 4) {
+    MS_EXCEPTION(ValueError) << "For '" << op_name << "', the shapes of the input " << name
+                             << " should be 3 or 4 dimensional, but got " << rank << "-dimensional.";
+  }
+}
 }  // namespace
 
 ShapeArray SparseFlashAttentionGradFuncImpl::InferShape(const PrimitivePtr &primitive,
@@ -72,6 +83,17 @@ ShapeArray SparseFlashAttentionGradFuncImpl::InferShape(const PrimitivePtr &prim
   if (query_info->IsDynamicRank()) {
     ShapeVector dyn_rank{abstract::Shape::kShapeRankAny};
     return {dyn_rank, dyn_rank, dyn_rank, dyn_rank, dyn_rank};
+  }
+
+  auto op_name = primitive->name();
+  CheckRank3Or4(query_shape, "query", op_name);
+  CheckRank3Or4(key_shape, "key", op_name);
+  CheckRank3Or4(value_shape, "value", op_name);
+  if (!IsGradOptionalInputNone(query_rope_info)) {
+    CheckRank3Or4(query_rope_info->GetShape(), "query_rope", op_name);
+  }
+  if (!IsGradOptionalInputNone(key_rope_info)) {
+    CheckRank3Or4(key_rope_info->GetShape(), "key_rope", op_name);
   }
 
   // d_query has same shape as query

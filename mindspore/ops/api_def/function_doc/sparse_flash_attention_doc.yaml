@@ -29,9 +29,6 @@ sparse_flash_attention:
         - Supports graph mode.
         - D value constraint: D of query/key/value equals 512, D of query_rope/key_rope equals 64.
         - Data types of query, key, value must be consistent.
-        - ACLNN constraint: KV_N (N2) must be 1.
-        - ACLNN constraint: N1 must be power of 2 and <= 128.
-        - ACLNN constraint: sparse_size (last dim of sparse_indices, also called selected_block_size) must be 2048.
         - sparse_block_size must divide block_size evenly.
         - When layout_kv is PA_BSND, layout_query and layout_kv do not need to be consistent.
         - When layout_kv is BSND or TND, layout_query and layout_kv must be consistent.

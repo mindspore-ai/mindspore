@@ -40,7 +40,6 @@ std::vector<tensor::TensorPtr> SparseFlashAttentionGradAscendCustomize(
   OpRunner::InferOpOutput(op, query, key, value, sparse_indices, d_out, out, softmax_max, softmax_sum, scale_value,
                           sparse_block_size, query_rope, key_rope, actual_seq_qlen, actual_seq_kvlen, layout,
                           sparse_mode, pre_tokens, next_tokens);
-
   // Get scalar values
   auto scale_value_val = static_cast<double>(GetValue<float>(scale_value));
   auto sparse_block_size_val = GetValue<int64_t>(sparse_block_size);
