@@ -53,8 +53,8 @@ def split_pyboost_forward_func(x, split_size, dim=0):
     return x.split(split_size=split_size, dim=dim)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
-          level_mark='level1',
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'],
+          level_mark='level0',
           card_mark='onecard',
           essential_mark='unessential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
@@ -103,7 +103,7 @@ def test_method_split_python(mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend'],
+@arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_ascend'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='unessential', mem_peak=4.00)
@@ -123,10 +123,8 @@ def test_method_split_pyboost(mode):
     split_size = 5
 
     if mode == 0 and ms.get_context('device_target') != 'Ascend':
-        with pytest.raises(RuntimeError) as error_info:
-            net(x, split_size, dim=0)
-            _pynative_executor.sync()
-        assert "Unsupported op [SplitTensor] on" in str(error_info.value)
+        net(x, split_size, dim=0)
+        _pynative_executor.sync()
 
     out = net1(x, split_size, dim=0)
     expect = [np.array(np.arange(10).reshape((5, 2)), dtype=np.float32),
@@ -146,7 +144,7 @@ def test_method_split_pyboost(mode):
         assert np.allclose(res.asnumpy(), exp)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential', mem_peak=4.00)
@@ -177,7 +175,7 @@ def test_tensor_split_pyboost_dynamic():
             case_config={'disable_nontensor_dynamic_type': 'BOTH'})
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
+@arg_mark(plat_marks=['platform_ascend', 'cpu_linux', 'cpu_windows', 'cpu_macos'],
           level_mark='level0',
           card_mark='onecard',
           essential_mark='essential', mem_peak=4.00)

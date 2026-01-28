@@ -5,10 +5,3 @@ unbind:
     CPU: py_method
     GPU: py_method
     interface: tensor
-
-  - op_yaml: deprecated/unstack_method.yaml
-    py_method: deprecated_tensor_unbind
-    Ascend: py_method
-    CPU: py_method
-    GPU: py_method
-    interface: tensor

@@ -12,16 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""Test mint chunk."""
 import numpy as np
 import pytest
-from tests.mark_utils import arg_mark
 
 import mindspore as ms
-import mindspore.nn as nn
-from mindspore import Tensor
+from mindspore import Tensor, nn
 from mindspore.graph.api import _pynative_executor
-
+from tests.mark_utils import arg_mark
 
 class Net(nn.Cell):
     def construct(self, x, chunks, dim):
@@ -61,9 +59,9 @@ class Net6(nn.Cell):
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos', 'platform_gpu', 'platform_ascend',
                       'platform_ascend910b'],
-          level_mark='level1',
+          level_mark='level0',
           card_mark='onecard',
-          essential_mark='unessential', mem_peak=2048.00)
+          essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_chunk_pyboost(mode):
     """
@@ -75,7 +73,8 @@ def test_chunk_pyboost(mode):
     net3 = Net3()
     a = Tensor(np.arange(9).astype(np.float32))
     # For the time being, cpu or gpu is not ok in graph mode.
-    if ms.get_context('device_target') != 'Ascend' and ms.get_context('mode') == ms.GRAPH_MODE:
+    if ms.get_context('device_target') != 'Ascend' and ms.get_context('device_target') != 'CPU' and ms.get_context(
+            'mode') == ms.GRAPH_MODE:
         with pytest.raises(RuntimeError):
             net3(a, 3, 0)
             _pynative_executor.sync()

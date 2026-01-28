@@ -1,5 +1,5 @@
 chunk:
-  - op_yaml: chunk_op.yaml
+  - op_yaml: chunk_view_op.yaml
     py_method: tensor_chunk
     Ascend: pyboost
     CPU: py_method
