@@ -30,7 +30,7 @@ class LineReader:
         filename (str): Filename to be read.
 
     Raises:
-        TypeError: If `filename` is not of type int.
+        TypeError: If `filename` is not of type str.
         RuntimeError: If `filename` does not exist or is not a regular file.
 
     Examples:

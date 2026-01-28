@@ -259,8 +259,8 @@ class Compose(CompoundOperation):
 
     .. Note::
         Compose takes a list of transformations in `mindspore.dataset.transforms` / `mindspore.dataset.vision`
-        and user-defined Python callable objects to combine as single data augmentation.
-        For user-defined Python callable objects, the return value is required to be type numpy.ndarray.
+        and user-defined Python callable objects to combine as a single data augmentation.
+        For user-defined Python callable objects, the return value is required to be of type numpy.ndarray.
 
     Args:
         transforms (list): List of transformations to be applied.
@@ -269,7 +269,7 @@ class Compose(CompoundOperation):
         TypeError: If `transforms` is not of type list.
         ValueError: If `transforms` is empty.
         TypeError: If elements of `transforms` are neither Python callable objects nor data
-            processing operations in transforms.py.
+            processing operations in the audio, text, transforms, or vision modules.
 
     Supported Platforms:
         ``CPU``
@@ -299,7 +299,7 @@ class Compose(CompoundOperation):
         ...     break
         (3, 100, 100) float32
         >>>
-        >>> # Compose is also be invoked implicitly, by just passing in a list of ops
+        >>> # Compose can also be invoked implicitly, by just passing in a list of ops
         >>> # the above example then becomes:
         >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["image"])
         >>> transforms_list = [vision.RandomHorizontalFlip(0.5),
@@ -436,14 +436,14 @@ class Compose(CompoundOperation):
 
 class Concatenate(TensorOperation):
     """
-    Concatenate data with input array along given axis, only 1D data is supported.
+    Concatenate data with the input array along a given axis. Only 1D data is supported.
 
     Args:
         axis (int, optional): The axis along which the arrays will be concatenated. Default: ``0``.
         prepend (numpy.ndarray, optional): NumPy array to be prepended to the input array.
-            Default: ``None``, not to prepend array.
+            Default: ``None``, no array will be prepended.
         append (numpy.ndarray, optional): NumPy array to be appended to the input array.
-            Default: ``None``, not to append array.
+            Default: ``None``, no array will be appended.
 
     Raises:
         TypeError: If `axis` is not of type int.
@@ -459,7 +459,7 @@ class Concatenate(TensorOperation):
         >>> import mindspore.dataset.transforms as transforms
         >>>
         >>> # Use the transform in dataset pipeline mode
-        >>> # concatenate string
+        >>> # concatenate strings
         >>> prepend_tensor = np.array(["dw", "df"])
         >>> append_tensor = np.array(["dwsdf", "df"])
         >>> concatenate_op = transforms.Concatenate(0, prepend_tensor, append_tensor)
@@ -493,10 +493,10 @@ class Concatenate(TensorOperation):
 
 class Duplicate(TensorOperation):
     """
-    Duplicate the input tensor to output, only support transform one column each time.
+    Duplicate the input tensor to the output. Only one column can be transformed at a time.
 
     Raises:
-        RuntimeError: If given tensor has two columns.
+        RuntimeError: If the given tensor has two columns.
 
     Supported Platforms:
         ``CPU``
@@ -550,14 +550,13 @@ class Fill(TensorOperation):
 
     Args:
         fill_value (Union[str, bytes, int, float, bool]): scalar value
-            to fill the tensor with.
+            used to fill the tensor.
 
     Raises:
         TypeError: If `fill_value` is not of type str, float, bool, int or bytes.
 
     Supported Platforms:
         ``CPU``
-
 
     Examples:
         >>> import numpy as np
@@ -609,7 +608,7 @@ class Mask(TensorOperation):
 
     Raises:
         TypeError: `operator` is not of type Relational.
-        TypeError: `constant` is not of type string int, float or bool.
+        TypeError: `constant` is not of type str, int, float or bool.
         TypeError: `dtype` is not of type mindspore.dtype.
 
     Supported Platforms:
@@ -669,14 +668,14 @@ class OneHot(TensorOperation):
     Args:
         num_classes (int): Total number of classes. Must be greater than the maximum value
             of the input labels.
-        smoothing_rate (float, optional): The amount of label smoothing. Must be between
-            [0.0, 1.0]. Default: ``0.0``, no label smoothing.
+        smoothing_rate (float, optional): The amount of label smoothing. Must be in the
+            range [0.0, 1.0]. Default: ``0.0``, no label smoothing.
 
     Raises:
         TypeError: If `num_classes` is not of type int.
         TypeError: If `smoothing_rate` is not of type float.
         ValueError: If `smoothing_rate` is not in range of [0.0, 1.0].
-        RuntimeError: If input label is not of type int.
+        RuntimeError: If the input label is not of type int.
         RuntimeError: If the dimension of the input label is not 1.
 
     Supported Platforms:
@@ -719,19 +718,21 @@ class OneHot(TensorOperation):
 
 class PadEnd(TensorOperation):
     """
-    Pad input tensor according to pad_shape, input tensor needs to have same rank.
+    Pad input tensor according to pad_shape. The input tensor needs to have the same rank.
 
     Args:
-        pad_shape (list(int)): List of integers representing the shape needed. Dimensions that set to ``None`` will
-            not be padded (i.e., original dim will be used). Shorter dimensions will truncate the values.
+        pad_shape (list(int)): List of integers representing the shape needed. Dimensions that
+            are set to ``None`` will not be padded (i.e., original dim will be used). Shorter
+            dimensions will truncate the values.
         pad_value (Union[str, bytes, int, float, bool], optional): Value used to pad. Default: ``None``.
-            Default to ``0`` in case of tensors of Numbers, or empty string in case of tensors of strings.
+            When ``None``, defaults to ``0`` for tensors of numbers, or to empty string
+            for tensors of strings.
 
     Raises:
         TypeError: If `pad_shape` is not of type list.
         TypeError: If `pad_value` is not of type str, float, bool, int or bytes.
-        TypeError: If elements of `pad_shape` is not of type int.
-        ValueError: If elements of `pad_shape` is not of positive.
+        TypeError: If elements of `pad_shape` are not of type int.
+        ValueError: If elements of `pad_shape` are not positive.
 
     Supported Platforms:
         ``CPU``
@@ -821,15 +822,15 @@ class RandomApply(CompoundOperation):
 
     Args:
         transforms (list): List of transformations to be applied.
-        prob (float, optional): The probability to apply the transformation list. Default: ``0.5``.
+        prob (float, optional): The probability of applying the transformation list. Default: ``0.5``.
 
     Raises:
         TypeError: If `transforms` is not of type list.
         ValueError: If `transforms` is empty.
         TypeError: If elements of `transforms` are neither Python callable objects nor data
-            processing operations in transforms.py.
+            processing operations in the audio, text, transforms, or vision modules.
         TypeError: If `prob` is not of type float.
-        ValueError: If `prob` is not in range [0.0, 1.0].
+        ValueError: If `prob` is not in the range [0.0, 1.0].
 
     Supported Platforms:
         ``CPU``
@@ -891,16 +892,16 @@ class RandomApply(CompoundOperation):
 
 class RandomChoice(CompoundOperation):
     """
-    Randomly select one transform from a list to apply.
+    Randomly select one transform from a list and apply it.
 
     Args:
-        transforms (list): List of transforms to be selected from.
+        transforms (list): List of transforms from which one is randomly selected and applied.
 
     Raises:
         TypeError: If `transforms` is not of type list.
         ValueError: If `transforms` is empty.
         TypeError: If elements of `transforms` are neither Python callable objects nor data
-            processing operations in transforms.py.
+            processing operations in the audio, text, transforms, or vision modules.
 
     Supported Platforms:
         ``CPU``
@@ -969,7 +970,7 @@ class RandomOrder(PyTensorOperation):
     Raises:
         TypeError: If `transforms` is not of type list.
         TypeError: If elements of `transforms` are neither Python callable objects nor data
-            processing operations in mindspore.dataset.transforms.transforms.
+            processing operations in the audio, text, transforms, or vision modules.
         ValueError: If `transforms` is empty.
 
     Supported Platforms:
@@ -1028,7 +1029,7 @@ class RandomOrder(PyTensorOperation):
 
 class Relational(IntEnum):
     """
-    Relational operator.
+    An enumeration of relational operators.
 
     Available values are as follows:
 
@@ -1093,9 +1094,9 @@ class Slice(TensorOperation):
             - If the input type is int, it will slice the element with the specified index value.
               Negative index is also supported.
             - If the input type is list[int], it will slice all the elements with the specified index values.
-              Negative index is also supported.
+              Negative indices are also supported.
             - If the input type is `slice <https://docs.python.org/3.7/library/functions.html#slice>`_ ,
-              it will slice according to its specified start position, stop position and step size.
+              it will slice according to its specified start position, stop position, and step size.
             - If the input type is `Ellipsis <https://docs.python.org/3.7/library/constants.html#Ellipsis>`_ ,
               all elements will be sliced.
             - If the input is None, all elements will be sliced.
@@ -1155,15 +1156,15 @@ class TypeCast(TensorOperation):
     Tensor operation to cast to a given MindSpore data type or NumPy data type.
 
     Note:
-        This operation is executed on the CPU by default, but it is also supported
-        to be executed on the GPU or Ascend via heterogeneous acceleration.
+        This operation is executed on the CPU by default, but it can also be executed
+        on the GPU or Ascend via heterogeneous acceleration.
 
     Args:
         data_type (Union[mindspore.dtype, numpy.dtype]): mindspore.dtype or numpy.dtype (e.g. `numpy.float32`)
             to be cast to.
 
     Raises:
-        TypeError: If `data_type` is not of MindSpore data type bool, int, float, string or type `numpy.dtype` .
+        TypeError: If `data_type` is not of MindSpore data type bool, int, float, str or type `numpy.dtype`.
 
     Supported Platforms:
         ``CPU`` ``GPU`` ``Ascend``
@@ -1211,20 +1212,20 @@ class TypeCast(TensorOperation):
 
 class Unique(TensorOperation):
     """
-    Perform the unique operation on the input tensor, only support transform one column each time.
+    Perform the unique operation on the input tensor. Only one column can be transformed at a time.
 
-    Return 3 tensor: unique output tensor, index tensor, count tensor.
+    Returns 3 tensors: unique output tensor, index tensor, and count tensor.
 
-    - Output tensor contains all the unique elements of the input tensor
+    - The output tensor contains all the unique elements of the input tensor
       in the same order that they occur in the input tensor.
-    - Index tensor that contains the index of each element of the input tensor in the unique output tensor.
-    - Count tensor that contains the count of each element of the output tensor in the input tensor.
+    - The index tensor contains the index of each element of the input tensor in the unique output tensor.
+    - The count tensor contains the count of each element of the output tensor in the input tensor.
 
     Note:
         Call batch op before calling this function.
 
     Raises:
-        RuntimeError: If given Tensor has two columns.
+        RuntimeError: If the given tensor has two columns.
 
     Supported Platforms:
         ``CPU``
