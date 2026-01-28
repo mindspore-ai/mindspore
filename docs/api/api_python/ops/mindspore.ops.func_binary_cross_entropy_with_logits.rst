@@ -38,7 +38,7 @@ mindspore.ops.binary_cross_entropy_with_logits
         \end{array}
 
     其中 c 是类别数目（c>1 表示多标签二元分类，c=1 表示单标签二元分类），n 是批次中样本的数量，:math:`P_c` 是 第c类正例的权重。
-    :math:`P_c>1` 增大召回率, :math:`P_c<1` 增大精度。
+    :math:`P_c>1` 增大召回率， :math:`P_c<1` 增大精度。
 
     参数：
         - **input** (Tensor) - 输入预测值。其数据类型为float16、float32或bfloat16（仅Atlas A2训练系列产品支持）。

@@ -15,7 +15,7 @@ mindspore.ops.batch_dot
 
     参数：
         - **x1** (Tensor) - 第一个batch向量。
-        - **x2** (Tensor) - 第一个batch向量。
+        - **x2** (Tensor) - 第二个batch向量。
         - **axes** (Union[int, tuple(int), list(int)]) - 指定计算轴。默认 ``None`` 。
 
     返回：

@@ -468,9 +468,9 @@ def bincount(input, weights=None, minlength=0):
     """
     Count the frequency of each value in the input tensor of non-negative ints.
 
-    If you don't specify `minlength`, the length of output tensor the length of the output tensor is max( `input` ) + 1.
+    - If you don't specify `minlength`, the length of output tensor is max( `input` ) + 1.
 
-    If `minlength` is specified, the length of the output tensor is max([max( `input` ) + 1, `minlength`]).
+    - If `minlength` is specified, the length of the output tensor is max([max( `input` ) + 1, `minlength`]).
 
     If 'weights' is specified, the output results are weighted. If `n` is the value at position `i`,
     i.e ``out[n] += weight[i]`` instead of ``out[n] += 1``.
@@ -1506,8 +1506,8 @@ def cov(input, *, correction=1, fweights=None, aweights=None):
 
     Keyword Args:
         correction (int, optional): The difference between sample size and sample degrees of freedom.
-            `correction = 0` will return the simple average. Defaults to Bessel's correction, `correction = 1` which
-            returns the unbiased estimate, even if both `fweights` and `aweights` are specified.
+            `correction = 0` will return the simple average. Default: ``1``, Bessel's correction.
+            Return the unbiased estimate, even if both `fweights` and `aweights` are specified.
         fweights (Tensor, optional): 0D or 1D tensor containing integer frequency weight, indicating
             the number of repetition of each observation vector. Its numel must equal the number of columns of `input`.
             Ignored if `None`. Default ``None`` .

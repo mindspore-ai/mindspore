@@ -30,7 +30,7 @@ mindspore.ops.cov
         - **input** (Tensor) - 零维、一维或二维输入tensor。
 
     关键字参数：
-        - **correction** (int，可选) - 样本大小与样本自由度之间的差值。`correction = 0` 将返回简单平均值。默认为Bessel校正 `correction = 1`，即使指定了 `fweights` 和 `aweights` ，也会返回无偏估计。
+        - **correction** (int，可选) - 样本大小与样本自由度之间的差值。`correction = 0` 将返回简单平均值。默认 ``1`` ，表示Bessel校正，即使指定了 `fweights` 和 `aweights` ，也会返回无偏估计。
         - **fweights** (Tensor, 可选) - 标量或一维tensor，表示每一个观测向量的重复次数（频率）。必须为整数类型。元素数必须等于输入 `input` 的列数。若为None则忽略。默认 ``None`` 。
         - **aweights** (Tensor, 可选) - 标量或一维tensor，表示每一个观测向量的重要性（权重），重要性越高对应值越大。必须为浮点数类型。元素数必须等于输入 `input` 的列数。若为None则忽略。默认 ``None`` 。
 
