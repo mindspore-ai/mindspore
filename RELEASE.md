@@ -827,7 +827,7 @@ For details, refer to [Ascend Performance Tuning](https://www.mindspore.cn/docs/
 #### PyNative
 
 - [Beta] PyNative mode supports the inplace operator process, introduces the inplace operators. Taking the [mindspore.mint.nn.functional.relu](https://www.mindspore.cn/docs/en/r2.5.0/api_python/mint/mindspore.mint.nn.functional.relu.html) as an example, if you want to use the inplace updated version of the relu operator, you can call the [mindspore.mint.nn.functional.relu_](https://www.mindspore.cn/docs/en/r2.5.0/api_python/mint/mindspore.mint.nn.functional.relu_.html).
-- [STABLE] Enable the environment variable MS_SIMULATION_LEVEL=1 to enable the PyNative dryrun, the multi-device process can be simulated without occupying the device, and the display memory usage can be viewed in logs. For details, refer to [Environment Variables](https://www.mindspore.cn/docs/en/r2.5.0/api_python/env_var_list.html?highlight=ms_simulation_level#%E5%88%86%E5%B8%83%E5%BC%8F%E5%B9%B6%E8%A1%8C)。
+- [STABLE] Enable the environment variable MS_SIMULATION_LEVEL=1 to enable the PyNative dryrun, the multi-device process can be simulated without occupying the device, and the display memory usage can be viewed in logs. For details, refer to [Environment Variables](https://www.mindspore.cn/docs/en/r2.5.0/api_python/env_var_list.html#distributed-parallel).
 
 #### FrontEnd
 
