@@ -38,11 +38,13 @@
 /mindspore/ccsrc/plugin/cpu/profiler/ @tangmengcheng
 /mindspore/ccsrc/plugin/gpu/res_manager/collective/ @zhangyinxia
 /mindspore/ccsrc/pybind_api/ @chujinjin
-/mindspore/ccsrc/pybind_api/ir/ @ginfung
-/mindspore/ccsrc/pybind_api/pynative/tensor/ @chujinjin
+/mindspore/ccsrc/pybind_api/frontend/ @ginfung
+/mindspore/ccsrc/pybind_api/pynative/ @chujinjin
 /mindspore/ccsrc/pybind_api/backend/ @limingqi107
 /mindspore/ccsrc/pybind_api/runtime/ @limingqi107
+/mindspore/ccsrc/pybind_api/ops/ @liangchenghui
 /mindspore/ccsrc/pybind_api/ops/custom/ @limingqi107
+/mindspore/ccsrc/pybind_api/parallel/ @yangzhenzhang
 /mindspore/ccsrc/pybind_api/tools/ @fary86
 /mindspore/ccsrc/pybind_api/tools/data_dump_py.cc @DavidFFFan
 /mindspore/ccsrc/pynative/utils/pyboost/ @chujinjin
