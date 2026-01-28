@@ -11,7 +11,7 @@ mindspore.dataset.utils.LineReader
         - **filename** (str) - 待读取的文件名。
 
     异常：
-        - **TypeError** - `filename` 无效。
+        - **TypeError** - `filename` 不是str类型。
         - **RuntimeError** - `filename` 不存在或者不是常规文件。
 
     .. py:method:: close()
