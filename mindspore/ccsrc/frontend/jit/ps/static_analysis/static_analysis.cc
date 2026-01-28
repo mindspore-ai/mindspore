@@ -44,7 +44,7 @@
 #include "frontend/jit/ps/static_analysis/evaluator.h"
 #include "frontend/jit/ps/debug/trace.h"
 #include "include/utils/pipeline/fallback.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/convert_utils_py.h"
 #include "include/utils/python_adapter.h"
 #include "include/frontend/operator/frontend_primitive_infer.h"

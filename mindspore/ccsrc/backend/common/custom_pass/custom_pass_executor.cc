@@ -25,7 +25,7 @@
 #include "include/utils/utils.h"
 
 #ifdef ENABLE_DUMP_IR
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #endif
 
 namespace mindspore {

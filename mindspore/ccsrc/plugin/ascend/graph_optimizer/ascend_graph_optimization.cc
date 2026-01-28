@@ -28,7 +28,7 @@
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "ir/graph_utils.h"
 #include "tools/profiler/profiling.h"
-#include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
+#include "include/utils/ir_dump/dump_proto_interface.h"
 #include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore {

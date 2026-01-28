@@ -21,7 +21,7 @@
 #include "ir/dtype.h"
 #include "ops/op_def.h"
 #include "abstract/abstract_value.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/python_adapter.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/cc_implementations.h"

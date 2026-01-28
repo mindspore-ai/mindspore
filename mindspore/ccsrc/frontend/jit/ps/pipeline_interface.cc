@@ -45,8 +45,8 @@
 #include "include/utils/parallel_context.h"
 #include "utils/config_manager.h"
 #include "include/frontend/jit/ps/action_interface.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
+#include "include/utils/ir_dump/dump_proto_interface.h"
 
 namespace mindspore {
 namespace pipeline {

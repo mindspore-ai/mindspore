@@ -19,7 +19,7 @@
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "ir/manager.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "backend/common/pass/communication_op_fusion.h"
 #include "include/backend/common/pass_manager/optimizer.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"

@@ -20,7 +20,7 @@
 #include "common/common_test.h"
 #include "backend/common/pass/mindir/space_batch_nd_attr_update.h"
 #include "include/utils/anfalgo.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 
 namespace mindspore {
 class SpaceBatchNDAttrUpdate : public UT::Common {

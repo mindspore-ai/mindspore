@@ -16,8 +16,8 @@
 
 #include <regex>
 #include "frontend/parallel/graph_util/graph_info.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
+#include "include/utils/ir_dump/draw_interface.h"
 #include "utils/ms_context.h"
 #include "ir/graph_utils.h"
 #include "include/frontend/jit/ps/executor/graph_executor_py.h"

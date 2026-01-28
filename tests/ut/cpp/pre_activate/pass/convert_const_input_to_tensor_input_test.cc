@@ -17,7 +17,7 @@
 #include "primitive/nn_ops.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "common/py_func_graph_fetcher.h"
 #include "include/backend/common/pass_manager/optimizer.h"
 #include "include/backend/common/pass_manager/pass_manager.h"

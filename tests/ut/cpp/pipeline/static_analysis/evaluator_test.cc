@@ -22,7 +22,7 @@
 
 #include "pipeline/static_analysis/helper.h"
 
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
+#include "include/utils/ir_dump/draw_interface.h"
 
 namespace mindspore {
 namespace abstract {

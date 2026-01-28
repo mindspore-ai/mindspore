@@ -21,7 +21,7 @@
 #include "backend/common/pass/ir_fission/bn_split.h"
 #include "backend/common/pass/ir_fission/bn_grad_split.h"
 #include "include/utils/anfalgo.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 
 namespace mindspore {
 class BnSplit : public UT::Common {

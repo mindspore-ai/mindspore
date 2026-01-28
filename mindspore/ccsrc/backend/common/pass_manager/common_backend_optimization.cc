@@ -38,7 +38,7 @@
 #include "backend/common/pass/replace_addn_fusion.h"
 #include "backend/common/pass/transpose_to_reshape_pass.h"
 #include "utils/ms_context.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #ifdef ENABLE_DUMP_IR
 #include "include/backend/common/kernel_graph/session_basic.h"
 #endif

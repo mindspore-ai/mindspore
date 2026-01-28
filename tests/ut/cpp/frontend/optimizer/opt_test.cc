@@ -35,7 +35,7 @@
 #include "frontend/optimizer/irpass/pynative_no_grad_eliminate.h"
 #include "frontend/jit/ps/action.h"
 
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
+#include "include/utils/ir_dump/draw_interface.h"
 #include "frontend/operator/ops.h"
 #include "include/utils/pipeline/cse.h"
 #include "utils/convert_utils.h"

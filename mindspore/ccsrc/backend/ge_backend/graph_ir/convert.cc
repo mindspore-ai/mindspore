@@ -26,7 +26,7 @@
 #include "op_proto/inc/elewise_calculation_ops.h"
 #include "op_proto/inc/save_ops.h"
 #include "op_proto/inc/state_ops.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/anfalgo.h"
 #include "utils/config_manager.h"
 #include "include/utils/utils.h"

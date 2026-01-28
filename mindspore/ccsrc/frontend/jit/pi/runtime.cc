@@ -44,7 +44,7 @@
 #include "include/frontend/jit/ps/executor/jit_executor_py.h"
 #include "frontend/jit/pi/python_adapter/py_frame.h"
 #include "include/runtime/pipeline/pipeline.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "frontend/jit/pi/graph_capture/code_generator.h"
 #include "utils/convert_utils_base.h"
 #include "frontend/jit/pi/eval_frame_hook.h"

@@ -35,7 +35,7 @@
 #include "include/frontend/optimizer/optimizer.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/backend/common/pass_manager/helper.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/anfalgo.h"
 #include "include/utils/comm_manager.h"
 #include "include/utils/parallel_context.h"

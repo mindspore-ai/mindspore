@@ -19,7 +19,7 @@
 #include "common/common_test.h"
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/swiglu_dynamic_quant_fusion.h"
 #include "include/utils/anfalgo.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "utils/phase.h"
 #include "pre_activate/common/pattern_to_pattern_pass_utils.h"
 #include "utils/ms_context.h"

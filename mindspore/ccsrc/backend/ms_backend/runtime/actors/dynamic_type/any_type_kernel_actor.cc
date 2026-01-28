@@ -18,7 +18,7 @@
 #include <set>
 #include <unordered_map>
 #include <functional>
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "primitive/framework_ops.h"
 #include "include/utils/pipeline/fallback.h"
 #include "ir/graph_utils.h"

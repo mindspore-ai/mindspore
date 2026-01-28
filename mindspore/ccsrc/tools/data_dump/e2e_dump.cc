@@ -34,7 +34,7 @@
 #include "utils/config_manager.h"
 #include "utils/convert_utils.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
 #include "tools/data_dump/common/csv_writer.h"
 #include "tools/data_dump/debugger/debugger_utils.h"
 #include "tools/data_dump/dump_json_parser.h"

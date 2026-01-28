@@ -16,111 +16,21 @@
 #ifndef MINDSPORE_CCSRC_UTILS_IR_DUMP_ANF_IR_DUMP_H_
 #define MINDSPORE_CCSRC_UTILS_IR_DUMP_ANF_IR_DUMP_H_
 
-#include <string>
-#include <memory>
-#include <vector>
-#include <unordered_map>
-
-#include "ir/dtype/type.h"
-#include "ir/anf.h"
-#include "include/utils/common.h"
-#include "include/utils/visible.h"
-#include "utils/ordered_map.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 
 namespace mindspore {
-enum LocDumpMode : int { kOff = 0, kTopStack = 1, kWholeStack = 2, kInValid = 3 };
 auto constexpr kDumpConfigLineLevel0 = "LINE_LEVEL0";
 auto constexpr kDumpConfigLineLevel1 = "LINE_LEVEL1";
 auto constexpr kDumpConfigLineLevel2 = "LINE_LEVEL2";
 auto constexpr kDumpConfigDisableBackend = "DISABLE_BACKEND";
 auto constexpr kDumpConfigEnablePassIR = "ENABLE_PASS_IR";
-struct DumpConfig {
-  LocDumpMode dump_line_level = kInValid;
-  bool disable_backend_dump = false;
-  bool enable_dump_pass_ir = false;
-};
-
-struct SubGraphIRInfo {
-  int32_t local_var;
-  std::ostringstream buffer;
-  OrderedMap<AnfNodePtr, int32_t> local_var_map;
-  int32_t format_level;
-  int32_t cnode_num = 0;
-};
-COMMON_EXPORT void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph,
-                             const OrderedMap<AnfNodePtr, int32_t> &para_map,
-                             const std::shared_ptr<SubGraphIRInfo> &gsub, bool dump_full_name = false,
-                             LocDumpMode dump_location = kWholeStack);
-COMMON_EXPORT int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer,
-                                 OrderedMap<AnfNodePtr, int32_t> *para_map);
-COMMON_EXPORT void OutputOrderList(const FuncGraphPtr &sub_graph, std::ostringstream &oss);
+void DumpCNode(const CNodePtr &node, const FuncGraphPtr &sub_graph, const OrderedMap<AnfNodePtr, int32_t> &para_map,
+               const std::shared_ptr<SubGraphIRInfo> &gsub, bool dump_full_name = false,
+               LocDumpMode dump_location = kWholeStack);
 constexpr char PARALLEL_STRATEGY[] = "strategy";
-COMMON_EXPORT void DumpIRHead(const FuncGraphPtr &graph, std::ostringstream &buffer);
-COMMON_EXPORT void SaveIRFile(const std::string &filename, const std::string &str, const std::string &target_file);
-COMMON_EXPORT void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,
-                          LocDumpMode dump_location = kWholeStack, const std::string &target_file = "");
-COMMON_EXPORT void DumpIR(std::ostringstream &graph_buffer, const FuncGraphPtr &graph, bool dump_full_name = false,
-                          int dump_location = kWholeStack, bool avoid_circle = false);
-COMMON_EXPORT void DumpParallelJson(const std::string &filename, const FuncGraphPtr &graph,
-                                    const int64_t global_rank_id,
-                                    const std::unordered_map<std::string, std::vector<uint32_t>> &group_map);
-COMMON_EXPORT void GatherInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &node);
+void SaveIRFile(const std::string &filename, const std::string &str, const std::string &target_file);
 
-COMMON_EXPORT void DumpIRForRDR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name = false,
-                                LocDumpMode dump_location = kOff);
-COMMON_EXPORT DumpConfig GetDumpConfig();
 void GetValueText(const ValuePtr &value, const std::shared_ptr<SubGraphIRInfo> &gsub);
-
-COMMON_EXPORT void DumpOperator(const AnfNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub);
-
-COMMON_EXPORT void DumpOperands(const AnfNodePtr &node, const OrderedMap<AnfNodePtr, int32_t> &para_map,
-                                const std::shared_ptr<SubGraphIRInfo> &gsub);
-
-COMMON_EXPORT void DumpOperateAttrs(const AnfNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &gsub);
-
-COMMON_EXPORT void DumpCNodeAttrs(const CNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &gsub);
-
-COMMON_EXPORT void DumpCNodePrimalAttrs(const CNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &gsub);
-
-COMMON_EXPORT void DumpParallelInfo(const CNodePtr &node, const std::shared_ptr<SubGraphIRInfo> &gsub);
-
-COMMON_EXPORT int32_t DumpParams(const FuncGraphPtr &graph, std::ostringstream &buffer,
-                                 OrderedMap<AnfNodePtr, int32_t> *para_map);
-
-COMMON_EXPORT void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePtr, int32_t> *para_map,
-                                    OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> *const sub_graphs,
-                                    int32_t total_para, bool dump_full_name = false,
-                                    LocDumpMode dump_location = kWholeStack);
-
-COMMON_EXPORT void DumpGlobalInfoEntry(const FuncGraphPtr &graph, std::ostringstream &buffer, size_t sub_graphs_size);
-
-COMMON_EXPORT void DumpCommentsInCurrentScope(const DebugInfoPtr &debug_info, std::string &result);
-
-struct ParamPtrEqual {
-  bool operator()(AnfNodePtr const &t1, AnfNodePtr const &t2) const {
-    const ParameterPtr param1 = dyn_cast<Parameter>(t1);
-    const ParameterPtr param2 = dyn_cast<Parameter>(t2);
-
-    if (param1 == nullptr || param2 == nullptr) {
-      return false;
-    }
-
-    return *param1 == *param2;
-  }
-};
-
-struct ParamPtrHasher {
-  std::size_t operator()(AnfNodePtr const &param) const {
-    const ParameterPtr parameter = dyn_cast<Parameter>(param);
-    if (parameter == nullptr) {
-      return 0;
-    }
-    std::size_t hash = std::hash<std::string>()(parameter->name());
-    return hash;
-  }
-};
-
-using ParamIndexMap = OrderedMap<AnfNodePtr, int, ParamPtrHasher, ParamPtrEqual, true>;
 
 class AnfExporter {
  public:
@@ -150,10 +60,6 @@ class AnfExporter {
   bool export_used_ = true;       // whether export function graphs used in current exporting function graph
   bool check_integrity_ = false;  // whether check integrity or not, when dumping ir for loading, must set it to true
 };
-
-COMMON_EXPORT void GetSubgraphAttrAsString(const FuncGraphPtr &func_graph, std::ostringstream &oss);
-
-COMMON_EXPORT void ExportIR(const std::string &filename, const FuncGraphPtr &func_graph);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_IR_DUMP_ANF_IR_DUMP_H_

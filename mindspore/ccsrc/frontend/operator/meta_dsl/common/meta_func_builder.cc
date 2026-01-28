@@ -19,7 +19,7 @@
 #include <utility>
 #include "ir/anf.h"
 #include "ops/op_def.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "frontend/operator/cc_implementations.h"
 #include "mindspore/ccsrc/frontend/operator/meta_dsl/common/meta_impl.h"
 #include "ir/func_graph_flag.h"

@@ -28,8 +28,8 @@
 
 #include "backend/ge_backend/graph_ir/utils.h"
 #include "include/utils/utils.h"
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/draw_interface.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "backend/ge_backend/utils/device_address_utils.h"

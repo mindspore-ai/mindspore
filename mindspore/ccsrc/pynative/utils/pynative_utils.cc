@@ -36,7 +36,7 @@
 #include "ir/cell.h"
 #include "include/utils/utils.h"
 #include "include/utils/convert_utils_py.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/pynative/common_utils.h"
 #include "include/utils/stub_tensor.h"
 #include "pynative/backward/jit_grad/jit_grad.h"

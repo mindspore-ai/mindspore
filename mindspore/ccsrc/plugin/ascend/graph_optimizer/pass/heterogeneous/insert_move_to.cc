@@ -23,7 +23,7 @@
 
 #include "plugin/ascend/graph_optimizer/pass/heterogeneous/move_to_utils.h"
 #include "primitive/framework_ops.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/utils/anfalgo.h"
 #include "include/utils/offload_context.h"

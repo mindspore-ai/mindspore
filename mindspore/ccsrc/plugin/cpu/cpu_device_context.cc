@@ -63,7 +63,7 @@
 #include "plugin/cpu/res_manager/collective/ms_collective_comm_lib.h"
 #endif
 #ifdef ENABLE_DUMP_IR
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #endif
 #include "tools/profiler/profiler.h"
 #include "include/utils/parallel_context.h"

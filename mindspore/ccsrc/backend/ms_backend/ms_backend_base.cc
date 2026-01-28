@@ -40,7 +40,7 @@
 #include "include/utils/callbacks.h"
 #include "include/utils/scoped_long_running.h"
 #include "utils/convert_utils.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/pipeline/fallback.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"

@@ -32,7 +32,7 @@
 #include "include/utils/common.h"
 #include "utils/config_manager.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
 #include "proto/debug_graph.pb.h"
 #include "runtime/hardware_abstract/utils.h"
 #include "tools/data_dump/common/csv_writer.h"

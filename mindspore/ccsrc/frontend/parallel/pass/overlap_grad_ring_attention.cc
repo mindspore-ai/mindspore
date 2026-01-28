@@ -35,7 +35,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/utils.h"
 #include "include/utils/anfalgo.h"
 #include "include/utils/parallel_context.h"

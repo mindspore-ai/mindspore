@@ -17,7 +17,7 @@
 #include "primitive/other_ops.h"
 #include "primitive/array_ops.h"
 #include "frontend/operator/ops.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "common/py_func_graph_fetcher.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/backend/common/pass_manager/optimizer.h"

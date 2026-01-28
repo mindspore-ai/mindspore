@@ -25,7 +25,7 @@
 #include "backend/ms_backend/graph_fusion/core/graph_kernel_utils.h"
 #include "backend/ms_backend/graph_fusion/graph_kernel_helper.h"
 #include "backend/common/pass/insert_type_transform_op.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/utils.h"
 #include "ir/graph_utils.h"
 #include "primitive/array_ops.h"

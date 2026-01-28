@@ -22,7 +22,7 @@
 #include "ir/meta_func_graph.h"
 #include "frontend/expander/bprop/bprop.h"
 #include "frontend/expander/utils.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 
 namespace mindspore {
 namespace expander {

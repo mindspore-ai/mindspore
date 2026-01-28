@@ -25,7 +25,7 @@
 #include "utils/ms_context.h"
 #include "utils/log_adapter.h"
 #include "frontend/operator/ops.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "utils/convert_utils.h"
 #include "include/frontend/jit/ps/action_interface.h"
 #include "frontend/jit/ps/resource.h"

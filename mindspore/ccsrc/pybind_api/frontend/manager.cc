@@ -42,7 +42,7 @@
 #include "include/utils/comm_manager.h"
 #include "include/backend/common/ms_device_shape_transfer.h"
 #include "utils/interpret_node_recorder.h"
-#include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
+#include "include/utils/ir_dump/dump_proto_interface.h"
 #include "include/backend/common/kernel_graph/session_factory.h"
 #include "include/backend/backend_manager/backend_manager.h"
 #include "include/runtime/hardware_abstract/device_context/device_context_manager.h"

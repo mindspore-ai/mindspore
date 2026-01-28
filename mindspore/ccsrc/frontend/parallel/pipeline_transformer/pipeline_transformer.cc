@@ -49,7 +49,7 @@
 #include "utils/ms_context.h"
 #include "utils/tensor_construct_utils.h"
 #include "frontend/parallel/parallel_node_check.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "primitive/auto_generate/gen_ops_primitive_a.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"

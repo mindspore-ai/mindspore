@@ -20,7 +20,7 @@
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_qbmm_add_fusion.h"
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_matmul_split_fusion.h"
 #include "include/utils/anfalgo.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "utils/phase.h"
 #include "pre_activate/common/pattern_to_pattern_pass_utils.h"
 #include "ir/tensor_new.h"

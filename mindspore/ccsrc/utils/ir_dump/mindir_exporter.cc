@@ -28,6 +28,7 @@
 #include "ir/dtype/ref.h"
 #include "ir/dtype/tensor_type.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/dump_proto_interface.h"
 #include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
 #include "ops/op_def.h"
 #include "primitive/array_ops.h"

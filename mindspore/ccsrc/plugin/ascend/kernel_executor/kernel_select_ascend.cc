@@ -43,7 +43,7 @@
 #include "kernel/ascend/acl_ir/op_api_util.h"
 #include "kernel/ascend/acl_ir/op_api_exec.h"
 #include "kernel/ascend/acl_ir/ge_adapter_info.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "tools/profiler/profiling.h"
 #include "backend/common/pass/insert_type_transform_op.h"
 #include "plugin/cpu/kernel_executor/kernel_select/kernel_select_cpu.h"

@@ -26,8 +26,8 @@
 
 #include "tools/profiler/profiling.h"
 #include "tools/profiler/mstx/mstx_impl.h"
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/draw_interface.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/jit/ps/resource.h"
 #include "frontend/jit/ps/action.h"

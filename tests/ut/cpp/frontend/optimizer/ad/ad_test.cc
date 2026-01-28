@@ -33,7 +33,7 @@
 #include "ir/tensor_new.h"
 #include "frontend/jit/ps/resource.h"
 #include "frontend/jit/ps/parse/parse.h"
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
+#include "include/utils/ir_dump/draw_interface.h"
 #include "utils/convert_utils.h"
 #include "frontend/operator/ops.h"
 #include "include/frontend/optimizer/optimizer.h"
