@@ -540,7 +540,7 @@ bool TCPComm::Disconnect(const std::string &dst_url) {
   std::lock_guard<std::mutex> lock(*conn_mutex_);
   auto conn = conn_pool_->FindConnection(dst_url);
   if (conn != nullptr) {
-    std::lock_guard<std::mutex> conn_lock(conn->conn_owned_mutex_);
+    std::lock_guard<std::mutex> conn_lock(conn->mutex_);
     conn_pool_->DeleteConnection(dst_url);
   }
   return true;
