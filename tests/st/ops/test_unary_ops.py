@@ -18,9 +18,8 @@ Tests for unary operation.
 import pytest
 from tests.mark_utils import arg_mark
 from tests.st.ops.share._internal.unary_ops import UnaryOpsFactory
-from tests.st.ops.share._op_info.op_database import (get_op_info, unary_op_db, unary_op_kbk_db, unary_op_error_db,
-                                                     unary_op_error_db_kbk)
-
+from tests.st.ops.share._op_info.op_database import (get_op_info, unary_op_error_kbk_db,
+                                                     unary_op_db, unary_op_kbk_db, unary_op_error_db)
 ops_params_dict = {
     'test_unary_op_reference_forward' : (['pynative'], unary_op_db),
     'test_unary_op_reference_backward' : (['pynative'], unary_op_db),
@@ -29,7 +28,7 @@ ops_params_dict = {
     'test_unary_op_dynamic_forward' : (['kbk'], unary_op_kbk_db),
     'test_unary_op_dynamic_backward' : (['kbk'], unary_op_kbk_db),
     'test_unary_op_error': (['pynative'], unary_op_error_db),
-    'test_unary_op_error_kbk': (['kbk'], unary_op_error_db_kbk),
+    'test_unary_op_error_kbk': (['kbk'], unary_op_error_kbk_db),
 }
 
 @arg_mark(plat_marks=['platform_ascend'],
@@ -166,7 +165,6 @@ def test_unary_op_error(mode, op_info):
     fact.set_context_mode(mode=mode)
     fact.test_unary_op_error()
 
-
 @arg_mark(plat_marks=['platform_ascend'],
           level_mark='level1',
           card_mark='onecard',
@@ -176,7 +174,7 @@ def test_unary_op_error(mode, op_info):
 def test_unary_op_error_kbk(mode, op_info):
     '''
     Feature: unary operations
-    Description: Test unary op kbk mode error cases.
+    Description: Test unary op error cases.
     Expectation: Run success without error.
     '''
     fact = UnaryOpsFactory(
