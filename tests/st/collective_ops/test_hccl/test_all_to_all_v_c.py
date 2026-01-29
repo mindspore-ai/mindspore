@@ -17,7 +17,7 @@
 
 import numpy as np
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore.ops.operations import AlltoAllVC
 from mindspore.communication.management import init, get_rank, get_group_size
 
@@ -30,7 +30,7 @@ world_size = get_group_size()
 
 class AlltoAllVCNet(nn.Cell):
     def __init__(self, group=None):
-        super(AlltoAllVCNet, self).__init__()
+        super(AlltoAllVCNet, self).__init__() # pylint: disable=super-with-arguments
         self.all_to_all = AlltoAllVC()
     def construct(self, x, send_count_matrix):
         return self.all_to_all(x, send_count_matrix)
@@ -46,7 +46,7 @@ def test_hccl_alltoallvc_tensor1():
     send_count_matrix = [1 for _ in range(world_size * world_size)]
     net = AlltoAllVCNet()
     output = net(ms.Tensor(data, dtype=ms.float32), ms.Tensor(send_count_matrix))
-    expect_output = [i for i in range(world_size)]
+    expect_output = list(range(world_size))
     if isinstance(output, tuple):
         assert np.allclose(output[0].asnumpy(), expect_output)
     else:
@@ -168,7 +168,23 @@ def test_hccl_alltoallvc_list1():
     send_count_matrix = [1 for _ in range(world_size * world_size)]
     net = AlltoAllVCNet()
     output = net(ms.Tensor(data, dtype=ms.int64), send_count_matrix)
-    expect_output = [i for i in range(world_size)]
+    expect_output = list(range(world_size))
+    if isinstance(output, tuple):
+        assert np.allclose(output[0].asnumpy(), expect_output)
+    else:
+        assert np.allclose(output.asnumpy(), expect_output)
+
+def test_hccl_alltoallvc_list_bool():
+    """
+    Feature: test 'AlltoAllVC' communication operator.
+    Description: test 'AlltoAllVC' communication operator.
+    Expectation: expect correct result.
+    """
+    data = [this_rank for i in range(world_size)]
+    send_count_matrix = [1 for _ in range(world_size * world_size)]
+    net = AlltoAllVCNet()
+    output = net(ms.Tensor(data, dtype=ms.bool_), send_count_matrix)
+    expect_output = list(range(world_size))
     if isinstance(output, tuple):
         assert np.allclose(output[0].asnumpy(), expect_output)
     else:

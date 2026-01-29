@@ -17,7 +17,7 @@
 
 import os
 import numpy as np
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor
 from mindspore import dtype as mstype
 from mindspore.ops import operations as P
@@ -35,7 +35,7 @@ init()
 
 class AllReduceNet(nn.Cell):
     def __init__(self):
-        super(AllReduceNet, self).__init__()
+        super(AllReduceNet, self).__init__() # pylint: disable=super-with-arguments
         self.mul = P.Mul()
         self.all_reduce = P.AllReduce()
         self.add = P.Add()
@@ -55,7 +55,7 @@ class AllReduceNet(nn.Cell):
 
 class AllReduceFuncNet(nn.Cell):
     def __init__(self, op=ReduceOp.SUM):
-        super(AllReduceFuncNet, self).__init__()
+        super(AllReduceFuncNet, self).__init__() # pylint: disable=super-with-arguments
         self.op = op
 
     def construct(self, x):
@@ -98,4 +98,16 @@ def test_hccl_allreduce_func_8p():
     x = np.ones([3, 4]).astype(np.float32)
     expect_output = [[8, 8, 8, 8], [8, 8, 8, 8], [8, 8, 8, 8]]
     output, _ = all_reduce(Tensor(x, mstype.float32))
+    assert np.allclose(output.asnumpy(), expect_output)
+
+
+def test_hccl_allreduce_func_bool():
+    """
+    Feature: test 'all_reduce' communication function.
+    Description: test 'all_reduce' communication function.
+    Expectation: expect correct result.
+    """
+    x = np.ones([3, 4]).astype(np.bool_)
+    expect_output = [[8, 8, 8, 8], [8, 8, 8, 8], [8, 8, 8, 8]]
+    output, _ = all_reduce(Tensor(x, mstype.bool_))
     assert np.allclose(output.asnumpy(), expect_output)

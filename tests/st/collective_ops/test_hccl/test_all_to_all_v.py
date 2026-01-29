@@ -17,7 +17,7 @@
 
 import numpy as np
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore.ops.operations.comm_ops import AlltoAllV
 from mindspore.communication.comm_func import all_to_all_with_output_shape, all_to_all_single_with_output_shape
 from mindspore.communication.management import init, get_rank, get_group_size
@@ -31,7 +31,7 @@ world_size = get_group_size()
 
 class AlltoAllVNet(nn.Cell):
     def __init__(self, group=None):
-        super(AlltoAllVNet, self).__init__()
+        super(AlltoAllVNet, self).__init__() # pylint: disable=super-with-arguments
         self.all_to_all = AlltoAllV(group=group)
     def construct(self, x, send_numel_list, recv_numel_list):
         return self.all_to_all(x, send_numel_list, recv_numel_list)
@@ -91,6 +91,24 @@ def test_hccl_alltoall_tensor_2p():
     net = AllToAllTensorFunNet()
     output = net(output, input_x)
     expect_output = np.array(data, dtype=np.float32)
+    if isinstance(output, tuple):
+        assert np.allclose(output[0].asnumpy(), expect_output)
+    else:
+        assert np.allclose(output.asnumpy(), expect_output)
+
+
+def test_hccl_alltoall_tensor_bool():
+    """
+    Feature: test 'AlltoAllV' communication operator.
+    Description: test 'AlltoAllV' communication operator.
+    Expectation: expect correct result.
+    """
+    data = [i + this_rank for i in range(world_size)]
+    input_x = ms.Tensor(data, dtype=ms.bool_)
+    output = (world_size,)
+    net = AllToAllTensorFunNet()
+    output = net(output, input_x)
+    expect_output = np.array(data, dtype=np.bool_)
     if isinstance(output, tuple):
         assert np.allclose(output[0].asnumpy(), expect_output)
     else:

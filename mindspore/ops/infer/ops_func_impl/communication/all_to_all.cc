@@ -96,19 +96,7 @@ class AlltoAllInfer : public abstract::OpInferBase {
       MS_EXCEPTION(TypeError) << "For '" << prim_name << "', input must be a Tensor, but got: " << x_type->ToString()
                               << ".";
     }
-
-    const std::set<TypePtr> default_target_dtypes = {kInt8,   kInt16,  kInt32,   kInt64,   kUInt8,   kUInt16,
-                                                     kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBFloat16};
-    const std::set<TypePtr> target_dtypes = common_valid_types_with_bool;
-    auto context_ptr = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context_ptr);
-    auto is_ascend = (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
-    if (!is_ascend) {
-      (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, target_dtypes, prim_name);
-    } else {
-      (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, default_target_dtypes, prim_name);
-    }
-
+    (void)CheckAndConvertUtils::CheckTensorTypeValid("x", x_type, comm_ops_valid_types_with_bool, prim_name);
     return x_type;
   }
 

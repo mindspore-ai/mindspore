@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""test hccl broadcast with 2p"""
 import numpy as np
 
 import mindspore as ms
@@ -93,6 +93,3 @@ def test_hccl_broadcast_func_2p_bool():
     out = broadcast(data, src=0)
     expect_output = ms.Tensor([1, 1, 1], dtype=ms.bool_)
     assert np.allclose(expect_output.asnumpy(), out.asnumpy())
-
-
-test_hccl_broadcast_func_2p()
