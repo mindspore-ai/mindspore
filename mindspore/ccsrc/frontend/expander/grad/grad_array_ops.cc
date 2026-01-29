@@ -2855,23 +2855,19 @@ REG_BPROP_BUILDER("MaskedFill").FreeUselessValues_IO({i0, i2}, {}).SetBody(BODYF
   const auto &value = ib->GetInput(i2);
   auto dout = ib->GetInput(i4);
   auto dmask = ib->OutZeros(mask);
-  mask = ib->Cast(mask, kFloat32);
-  dout = ib->Cast(dout, kFloat32);
-  NodePtr dinput =
-    input_data->need_compute_grad_out() ? ib->Mul(dout, ib->Sub((ib->Tensor(1, ib->GetDtype(mask))), mask)) : nullptr;
-  NodePtr dvalue = value->need_compute_grad_out() ? ib->Mul(dout, mask) : nullptr;
-  auto bout = BinopGradCommon(ib, input_data, mask, dinput, dvalue);
-
-  dinput = input_data->need_compute_grad_out() ? ib->Cast(bout[0], ib->GetDtype(input_data)) : ib->OutZeros(input_data);
+  NodePtr dinput = nullptr;
+  NodePtr dvalue = nullptr;
+  const auto &zero = ib->Tensor(0, ib->GetDtype(dout));
+  if (input_data->need_compute_grad_out()) {
+    auto dout_masked = ib->MaskedFill(dout, mask, zero);
+    auto grads = BinopGradCommon(ib, input_data, dout, dout_masked, nullptr);
+    dinput = ib->Cast(grads[0], ib->GetDtype(input_data));
+  } else {
+    dinput = ib->OutZeros(input_data);
+  }
   if (value->need_compute_grad_out()) {
-    auto mask_shape = mask->shape();
-    if (IsDynamicRank(mask_shape)) {
-      auto mask_rank = ib->Shape(ib->Shape(mask, true), true);
-      auto axis_node = ib->Range(ib->TensorToScalar(mask_rank));
-      dvalue = ib->SumExt(bout[1], ib->TensorToTuple(axis_node), ib->Value(false));
-    } else {
-      dvalue = ib->SumExt(bout[1], ib->EmitValue(kNone), ib->Value(false));
-    }
+    auto dout_masked = ib->Select(mask, dout, zero);
+    dvalue = ib->SumExt(dout_masked, ib->EmitValue(kNone), ib->Value(false));
     dvalue = ib->Cast(dvalue, ib->GetDtype(value));
   } else {
     dvalue = ib->OutZeros(value);

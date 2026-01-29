@@ -24,6 +24,7 @@
 #include "kernel/gpu/gpu_kernel.h"
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/select_impl.cuh"
+#include "kernel/gpu/cuda_impl/cuda_ops/broadcast_to_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -61,6 +62,9 @@ class SelectGpuKernelMod : public NativeGpuKernelMod, public MatchKernelHelper<S
   bool is_null_input_{true};
   void *cuda_stream_{nullptr};
   size_t output_size_{0};
+  bool is_need_broadcast_{false};
+  size_t dim_size_{0};
+  TrinaryBroadcastStrideInfo strides_{};
 };
 }  // namespace kernel
 }  // namespace mindspore

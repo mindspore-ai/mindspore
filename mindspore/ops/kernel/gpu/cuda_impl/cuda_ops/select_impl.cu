@@ -20,6 +20,7 @@
 #include "include/cuda_fp16.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/elementwise/elementswise_pub_impl.cuh"
 #include "kernel/gpu/cuda_impl/cuda_ops/util.cuh"
+#include "kernel/gpu/cuda_impl/cuda_ops/broadcast_to_impl.cuh"
 // Select
 template <typename T>
 struct SelectFunctor {
@@ -31,6 +32,38 @@ cudaError_t CalSelect(const bool *cond, const T *input_x, const T *input_y, T *o
                       cudaStream_t cuda_stream) {
   SelectFunctor<T> functor;
   cuda::elementwise::Ternary(functor, (uint)(count), output, cond, input_x, input_y, cuda_stream);
+  return GetCudaStatus();
+}
+
+template <typename T>
+__global__ void SelectBroadcastKernel(size_t dim_size, size_t count, TrinaryBroadcastStrideInfo strides,
+                                      const bool *cond, const T *input_x, const T *input_y, T *output) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < count; pos += blockDim.x * gridDim.x) {
+    size_t cur_pos = pos;
+    size_t cond_pos = 0;
+    size_t x_pos = 0;
+    size_t y_pos = 0;
+    for (size_t idx = 0; idx < dim_size; ++idx) {
+      const size_t cur_out_idx = cur_pos / strides.out_stride[idx];
+      cond_pos += cur_out_idx * strides.in0_stride[idx];
+      x_pos += cur_out_idx * strides.in1_stride[idx];
+      y_pos += cur_out_idx * strides.in2_stride[idx];
+      cur_pos -= cur_out_idx * strides.out_stride[idx];
+    }
+    output[pos] = cond[cond_pos] ? input_x[x_pos] : input_y[y_pos];
+  }
+}
+
+template <typename T>
+cudaError_t CalSelectBroadcast(const bool *cond, const T *input_x, const T *input_y, T *output, const size_t dim_size,
+                               const size_t count, const TrinaryBroadcastStrideInfo &strides,
+                               const uint32_t device_id, cudaStream_t cuda_stream) {
+  if (count == 0) {
+    return GetCudaStatus();
+  }
+  const size_t thread_num = count > 1024 ? 1024 : count;
+  SelectBroadcastKernel<<<CUDA_BLOCKS_CAL(device_id, count, thread_num), thread_num, 0, cuda_stream>>>(
+    dim_size, count, strides, cond, input_x, input_y, output);
   return GetCudaStatus();
 }
 
@@ -71,3 +104,90 @@ template CUDA_LIB_EXPORT cudaError_t CalSelect<Complex<float>>(const bool *cond,
 template CUDA_LIB_EXPORT cudaError_t CalSelect<Complex<double>>(const bool *cond, const Complex<double> *input_x,
                                                                 const Complex<double> *input_y, Complex<double> *output,
                                                                 const size_t count, cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<double>(const bool *cond, const double *input_x,
+                                                                const double *input_y, double *output,
+                                                                const size_t dim_size, const size_t count,
+                                                                const TrinaryBroadcastStrideInfo &strides,
+                                                                const uint32_t device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<float>(const bool *cond, const float *input_x,
+                                                               const float *input_y, float *output,
+                                                               const size_t dim_size, const size_t count,
+                                                               const TrinaryBroadcastStrideInfo &strides,
+                                                               const uint32_t device_id,
+                                                               cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<half>(const bool *cond, const half *input_x,
+                                                              const half *input_y, half *output,
+                                                              const size_t dim_size, const size_t count,
+                                                              const TrinaryBroadcastStrideInfo &strides,
+                                                              const uint32_t device_id,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<bool>(const bool *cond, const bool *input_x,
+                                                              const bool *input_y, bool *output,
+                                                              const size_t dim_size, const size_t count,
+                                                              const TrinaryBroadcastStrideInfo &strides,
+                                                              const uint32_t device_id,
+                                                              cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<int8_t>(const bool *cond, const int8_t *input_x,
+                                                                const int8_t *input_y, int8_t *output,
+                                                                const size_t dim_size, const size_t count,
+                                                                const TrinaryBroadcastStrideInfo &strides,
+                                                                const uint32_t device_id,
+                                                                cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<uint8_t>(const bool *cond, const uint8_t *input_x,
+                                                                 const uint8_t *input_y, uint8_t *output,
+                                                                 const size_t dim_size, const size_t count,
+                                                                 const TrinaryBroadcastStrideInfo &strides,
+                                                                 const uint32_t device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<int16_t>(const bool *cond, const int16_t *input_x,
+                                                                 const int16_t *input_y, int16_t *output,
+                                                                 const size_t dim_size, const size_t count,
+                                                                 const TrinaryBroadcastStrideInfo &strides,
+                                                                 const uint32_t device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<uint16_t>(const bool *cond, const uint16_t *input_x,
+                                                                  const uint16_t *input_y, uint16_t *output,
+                                                                  const size_t dim_size, const size_t count,
+                                                                  const TrinaryBroadcastStrideInfo &strides,
+                                                                  const uint32_t device_id,
+                                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<int32_t>(const bool *cond, const int32_t *input_x,
+                                                                 const int32_t *input_y, int32_t *output,
+                                                                 const size_t dim_size, const size_t count,
+                                                                 const TrinaryBroadcastStrideInfo &strides,
+                                                                 const uint32_t device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<uint32_t>(const bool *cond, const uint32_t *input_x,
+                                                                  const uint32_t *input_y, uint32_t *output,
+                                                                  const size_t dim_size, const size_t count,
+                                                                  const TrinaryBroadcastStrideInfo &strides,
+                                                                  const uint32_t device_id,
+                                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<int64_t>(const bool *cond, const int64_t *input_x,
+                                                                 const int64_t *input_y, int64_t *output,
+                                                                 const size_t dim_size, const size_t count,
+                                                                 const TrinaryBroadcastStrideInfo &strides,
+                                                                 const uint32_t device_id,
+                                                                 cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<uint64_t>(const bool *cond, const uint64_t *input_x,
+                                                                  const uint64_t *input_y, uint64_t *output,
+                                                                  const size_t dim_size, const size_t count,
+                                                                  const TrinaryBroadcastStrideInfo &strides,
+                                                                  const uint32_t device_id,
+                                                                  cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<Complex<float>>(const bool *cond, const Complex<float> *input_x,
+                                                                        const Complex<float> *input_y,
+                                                                        Complex<float> *output, const size_t dim_size,
+                                                                        const size_t count,
+                                                                        const TrinaryBroadcastStrideInfo &strides,
+                                                                        const uint32_t device_id,
+                                                                        cudaStream_t cuda_stream);
+template CUDA_LIB_EXPORT cudaError_t CalSelectBroadcast<Complex<double>>(const bool *cond,
+                                                                         const Complex<double> *input_x,
+                                                                         const Complex<double> *input_y,
+                                                                         Complex<double> *output, const size_t dim_size,
+                                                                         const size_t count,
+                                                                         const TrinaryBroadcastStrideInfo &strides,
+                                                                         const uint32_t device_id,
+                                                                         cudaStream_t cuda_stream);
