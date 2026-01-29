@@ -55,12 +55,8 @@ find_library(GRAPH graph ${ASCEND_CANN_RUNTIME_PATH})
 find_library(PROFILING msprofiler ${ASCEND_CANN_RUNTIME_PATH})
 # libascendcl.so will be spilted to libacl_rt.so and libacl_mdl.so in the future.
 find_library(ACL ascendcl ${ASCEND_CANN_RUNTIME_PATH})
-find_library(ACL_RT acl_rt ${ASCEND_CANN_RUNTIME_PATH})
 if(NOT ACL)
     set(ACL "")
 endif()
-if(NOT ACL_RT)
-    set(ACL_RT "")
-endif()
 
-target_link_libraries(mindspore_ascend PRIVATE -Wl,--no-as-needed ${GE_RUNNER} ${GRAPH} ${ACL} ${ACL_RT} ${PROFILING})
+target_link_libraries(mindspore_ascend PRIVATE -Wl,--no-as-needed ${GE_RUNNER} ${GRAPH} ${ACL} ${PROFILING})
