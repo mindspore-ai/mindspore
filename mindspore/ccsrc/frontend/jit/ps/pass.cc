@@ -466,6 +466,12 @@ bool OffloadActivationWrapper(const FuncGraphPtr &root, const opt::OptimizerPtr 
 }
 REGISTER_OPT_PASS_FUNC(OffloadActivationWrapper)
 
+bool RewriterBeforeOptAWrapper(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
+  auto manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  return opt::RewriterBeforeOptA(root, manager);
+}
+
 bool parallel_mode() {
 #if defined(__linux__) && defined(WITH_BACKEND)
   if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
@@ -498,6 +504,7 @@ void AddMetaMorphosis(const ResourcePtr &resource, const std::string &add_before
       opt::OptPassGroupMap map_meta_morph(
         {{"meta_morphosis", opt::OptPassConfig({irpass.meta_morphosis_}, true)},
          {"meta_morphosis_renormalize", opt::OptPassConfig::Renormalize(true)},
+         {"meta_morphosis_rewriter_before_opt_a", opt::OptPassConfig(RewriterBeforeOptAWrapper, true)},
          {"meta_morphosis_auto_monad_grad", opt::OptPassConfig(ReAutoMonadWrapper, true), jump_to}});
       (void)map_a->insert(it, map_meta_morph.begin(), map_meta_morph.end());
     }
