@@ -1,4 +1,4 @@
-# Copyright 2025 Huawei Technologies Co., Ltd
+# Copyright 2025-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,44 +13,134 @@
 # limitations under the License.
 # ==============================================================================
 """Test tensor view."""
+import os
+import shutil
+import pytest
+import numpy as np
 import mindspore as ms
 from mindspore import Tensor, jit
+from mindspore.common import dtype as mstype
 from tests.mark_utils import arg_mark
+from view_test_utils import TensorViewTestModule, check_ir_view_op
 
 
-@jit
-def tensor_swapaxes_func_1(x):
-    output = x.swapaxes(0, 2)
-    return output
+@jit(backend="ms_backend")
+def swapaxes_forward_method(x, axis0, axis1):
+    return x.swapaxes(axis0, axis1)
+
+
+@jit(backend="ms_backend")
+def swapaxes_forward_class(x, axis0, axis1):
+    return Tensor.swapaxes(x, axis0, axis1)
+
+
+@jit(backend="ms_backend")
+def swapaxes_backward_method(x, axis0, axis1, sens):
+    return ms.grad(swapaxes_forward_method, grad_position=0, sens_param=True)(x, axis0, axis1, sens)
+
+
+@jit(backend="ms_backend")
+def swapaxes_backward_class(x, axis0, axis1, sens):
+    return ms.grad(swapaxes_forward_class, grad_position=0, sens_param=True)(x, axis0, axis1, sens)
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
           card_mark='onecard', essential_mark='essential', mem_peak=2048)
-def test_tensor_swapaxes_1():
+@pytest.mark.parametrize('method_type', ['method', 'class'])
+@pytest.mark.parametrize('data_type', [mstype.float16, mstype.float32, mstype.float64,
+                                       mstype.int16, mstype.int32, mstype.int64])
+def test_tensor_swapaxes_different_type(method_type, data_type):
     """
     Feature: Support tensor view api.
     Description: Support tensor swapaxes api with view operator.
     Expectation: Run success and expected to use the TransposeExtView operator.
     """
-    a = ms.tensor(ms.ops.ones(([2, 3, 4])))
-    output = tensor_swapaxes_func_1(a)
-    assert output.shape == (4, 3, 2)
+    x = Tensor(np.ones((2, 3, 4)), dtype=data_type)
+    axis0 = 0
+    axis1 = 2
+    tester = TensorViewTestModule("swapaxes", [x, axis0, axis1])
 
-
-@jit
-def tensor_swapaxes_func_2(x):
-    output = Tensor.swapaxes(x, 0, 2)
-    return output
+    if method_type == 'method':
+        tester.forward_cmp(swapaxes_forward_method)
+        tester.backward_cmp(swapaxes_backward_method)
+    else:
+        tester.forward_cmp(swapaxes_forward_class)
+        tester.backward_cmp(swapaxes_backward_class)
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential', mem_peak=2048)
-def test_tensor_swapaxes_2():
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048)
+@pytest.mark.parametrize('shape', [
+    (2, 3),
+    (2, 3, 4),
+    (2, 3, 4, 5),
+])
+@pytest.mark.parametrize('method_type', ['method', 'class'])
+def test_tensor_swapaxes_different_dimensions(shape, method_type):
     """
     Feature: Support tensor view api.
     Description: Support tensor swapaxes api with view operator.
     Expectation: Run success and expected to use the TransposeExtView operator.
     """
-    a = ms.tensor(ms.ops.ones(([2, 3, 4])))
-    output = tensor_swapaxes_func_2(a)
-    assert output.shape == (4, 3, 2)
+    x = Tensor(np.random.randn(*shape), dtype=ms.float32)
+    axis0 = 0
+    axis1 = -1
+    tester = TensorViewTestModule("swapaxes", [x, axis0, axis1])
+
+    if method_type == 'method':
+        tester.forward_cmp(swapaxes_forward_method)
+        tester.backward_cmp(swapaxes_backward_method)
+    else:
+        tester.forward_cmp(swapaxes_forward_class)
+        tester.backward_cmp(swapaxes_backward_class)
+
+
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential', mem_peak=2048)
+@pytest.mark.parametrize('val', [np.nan, np.inf])
+@pytest.mark.parametrize('method_type', ['method', 'class'])
+def test_tensor_swapaxes_inf_nan(val, method_type):
+    """
+    Feature: Support tensor view api.
+    Description: Support tensor swapaxes api with view operator with inf/nan.
+    Expectation: Run success and expected to use the TransposeExtView operator.
+    """
+    x = Tensor(np.full((2, 3, 4), val), dtype=ms.float32)
+    axis0 = 0
+    axis1 = 2
+    tester = TensorViewTestModule("swapaxes", [x, axis0, axis1])
+
+    if method_type == 'method':
+        tester.forward_cmp(swapaxes_forward_method)
+        tester.backward_cmp(swapaxes_backward_method)
+    else:
+        tester.forward_cmp(swapaxes_forward_class)
+        tester.backward_cmp(swapaxes_backward_class)
+
+
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential', mem_peak=2048)
+def test_tensor_swapaxes_ir_view():
+    """
+    Feature: Support tensor view api.
+    Description: Support tensor swapaxes api with view operator.
+    Expectation: Run success and expected to use the TransposeExtView operator.
+    """
+    dir_path = 'ir_swapaxes'
+    target_op_name = 'TransposeExtView'
+    ms.context.set_context(save_graphs=True, save_graphs_path=dir_path)
+    os.environ['MS_DEV_DUMP_IR_PASSES'] = 'validate'
+
+    if os.path.isdir(dir_path):
+        shutil.rmtree(dir_path)
+
+    x1 = Tensor(np.random.randn(2, 3, 4), dtype=mstype.float32)
+    x2 = Tensor(np.random.randn(2, 3, 4, 5), dtype=mstype.float32)
+
+    swapaxes_forward_method(x1, 0, 2)
+    check_ir_view_op(dir_path, target_op_name)
+
+    swapaxes_forward_class(x2, 0, -1)
+    check_ir_view_op(dir_path, target_op_name)
+    os.unsetenv('MS_DEV_DUMP_IR_PASSES')
+    ms.context.set_context(save_graphs=False)

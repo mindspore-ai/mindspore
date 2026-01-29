@@ -224,6 +224,7 @@ def test_tensor_split_ir_view_int():
     split_forward_class(x2, size, dim)
     check_ir_view_op(dir_path, target_op_name)
     os.unsetenv('MS_DEV_DUMP_IR_PASSES')
+    ms.context.set_context(save_graphs=False)
 
 @arg_mark(plat_marks=['cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
           essential_mark='essential', mem_peak=2048)
@@ -253,3 +254,4 @@ def test_tensor_split_ir_view_list():
     split_forward_class(x2, size2, dim)
     check_ir_view_op(dir_path, target_op_name)
     os.unsetenv('MS_DEV_DUMP_IR_PASSES')
+    ms.context.set_context(save_graphs=False)

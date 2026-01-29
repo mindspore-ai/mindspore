@@ -1,7 +1,7 @@
 expand_as:
   - op_yaml: expand_as_op.yaml
     py_method: tensor_expand_as
-    Ascend: pyboost
+    Ascend: py_method
     CPU: py_method
     GPU: py_method
     interface: tensor

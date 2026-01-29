@@ -1,4 +1,4 @@
-# Copyright 2025 Huawei Technologies Co., Ltd
+# Copyright 2025-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,62 +13,219 @@
 # limitations under the License.
 # ==============================================================================
 """Test tensor view."""
+import os
+import shutil
+import pytest
 import numpy as np
 import mindspore as ms
 from mindspore import Tensor, jit
+from mindspore.common import dtype as mstype
 from tests.mark_utils import arg_mark
+from view_test_utils import TensorViewTestModule, check_ir_view_op
 
-@jit
-def t_func_1(x):
-    output = x.t()
-    return output
+@jit(backend="ms_backend")
+def t_forward_method(x):
+    return x.t()
+
+@jit(backend="ms_backend")
+def t_forward_class(x):
+    return Tensor.t(x)
+
+@jit(backend="ms_backend")
+def t_backward_method(x, sens):
+    return ms.grad(t_forward_method, grad_position=0, sens_param=True)(x, sens)
+
+@jit(backend="ms_backend")
+def t_backward_class(x, sens):
+    return ms.grad(t_forward_class, grad_position=0, sens_param=True)(x, sens)
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential', mem_peak=1024)
-def test_tensor_t_1():
+          card_mark='onecard', essential_mark='essential', mem_peak=2048)
+@pytest.mark.parametrize('method_type', ['method', 'class'])
+@pytest.mark.parametrize('data_type', [mstype.float16, mstype.float32, mstype.float64,
+                                       mstype.int16, mstype.int32, mstype.int64])
+def test_tensor_t_different_type(method_type, data_type):
     """
     Feature: Support tensor view api.
     Description: Support tensor t api with view operator.
     Expectation: Run success and expected to use the TransposeExtView operator.
     """
-    x = ms.tensor([[1, 2, 3], [2, 3, 4]])
-    output = t_func_1(x)
-    assert (output.asnumpy() == [[1, 2], [2, 3], [3, 4]]).all()
+    x = Tensor(np.arange(6).reshape(2, 3), dtype=data_type)
+    tester = TensorViewTestModule("t", [x])
 
-
-@jit
-def t_func_2(x):
-    output = Tensor.t(x)
-    return output
+    if method_type == 'method':
+        tester.forward_cmp(t_forward_method)
+        tester.backward_cmp(t_backward_method)
+    else:
+        tester.forward_cmp(t_forward_class)
+        tester.backward_cmp(t_backward_class)
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential', mem_peak=1024)
-def test_tensor_t_2():
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048)
+@pytest.mark.parametrize('shape', [(2, 3), (3, 4)])
+@pytest.mark.parametrize('method_type', ['method', 'class'])
+def test_tensor_t_different_dimensions(shape, method_type):
     """
     Feature: Support tensor view api.
     Description: Support tensor t api with view operator.
     Expectation: Run success and expected to use the TransposeExtView operator.
     """
-    x = ms.tensor([[1, 2, 3], [2, 3, 4]])
-    output = t_func_2(x)
-    assert (output.asnumpy() == [[1, 2], [2, 3], [3, 4]]).all()
+    x = Tensor(np.random.randn(*shape), dtype=ms.float32)
+    tester = TensorViewTestModule("t", [x])
 
-@jit
-def T_func_1(x):
-    output = x.T
-    return output
+    if method_type == 'method':
+        tester.forward_cmp(t_forward_method)
+    else:
+        tester.forward_cmp(t_forward_class)
+
+
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential', mem_peak=2048)
+@pytest.mark.parametrize('val', [np.nan, np.inf])
+@pytest.mark.parametrize('method_type', ['method', 'class'])
+def test_tensor_t_inf_nan(val, method_type):
+    """
+    Feature: Support tensor view api.
+    Description: Support tensor t api with view operator with inf/nan.
+    Expectation: Run success and expected to use the TransposeExtView operator.
+    """
+    x = Tensor(np.full((2, 3), val), dtype=ms.float32)
+    tester = TensorViewTestModule("t", [x])
+
+    if method_type == 'method':
+        tester.forward_cmp(t_forward_method)
+    else:
+        tester.forward_cmp(t_forward_class)
 
 
 @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
-          card_mark='onecard', essential_mark='essential', mem_peak=1024)
-def test_tensor_T_1():
+          card_mark='onecard', essential_mark='essential', mem_peak=2048)
+def test_tensor_t_ir_view():
+    """
+    Feature: Support tensor view api.
+    Description: Support tensor t api with view operator.
+    Expectation: Run success and expected to use the TransposeExtView operator.
+    """
+    dir_path = 'ir_t'
+    target_op_name = 'TransposeExtView'
+    ms.context.set_context(save_graphs=True, save_graphs_path=dir_path)
+    os.environ['MS_DEV_DUMP_IR_PASSES'] = 'validate'
+
+    if os.path.isdir(dir_path):
+        shutil.rmtree(dir_path)
+
+    x1 = Tensor(np.random.randn(2, 3), dtype=mstype.float32)
+    t_forward_method(x1)
+    check_ir_view_op(dir_path, target_op_name)
+    t_forward_class(x1)
+    check_ir_view_op(dir_path, target_op_name)
+    os.unsetenv('MS_DEV_DUMP_IR_PASSES')
+    ms.context.set_context(save_graphs=False)
+
+
+@jit(backend="ms_backend")
+def T_forward_method(x):
+    return x.T
+
+
+@jit(backend="ms_backend")
+def T_forward_class(x):
+    return Tensor.transpose(x)
+
+
+@jit(backend="ms_backend")
+def T_backward_method(x, sens):
+    return ms.grad(T_forward_method, grad_position=0, sens_param=True)(x, sens)
+
+
+@jit(backend="ms_backend")
+def T_backward_class(x, sens):
+    return ms.grad(T_forward_class, grad_position=0, sens_param=True)(x, sens)
+
+
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential', mem_peak=2048)
+@pytest.mark.parametrize('data_type', [mstype.float16, mstype.float32, mstype.float64,
+                                       mstype.int16, mstype.int32, mstype.int64])
+@pytest.mark.parametrize('method_type', ['method', 'class'])
+def test_tensor_T_different_type(data_type, method_type):
     """
     Feature: Support tensor view api.
     Description: Support tensor T api with view operator.
     Expectation: Run success and expected to use the TransposeExtView operator.
     """
-    x = Tensor(np.array([[1, 2], [3, 4]]))
-    output = T_func_1(x)
-    assert (output.asnumpy() == [[1, 3], [2, 4]]).all()
+    x = Tensor(np.random.randn(2, 3, 4), dtype=data_type)
+    tester = TensorViewTestModule("T", [x])
+    if method_type == 'method':
+        tester.forward_cmp(T_forward_method)
+        tester.backward_cmp(T_backward_method)
+    else:
+        tester.forward_cmp(T_forward_class)
+        tester.backward_cmp(T_backward_class)
+
+
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048)
+@pytest.mark.parametrize('shape', [(2, 3), (2, 3, 4), (2, 3, 4, 5)])
+@pytest.mark.parametrize('method_type', ['method', 'class'])
+def test_tensor_T_different_dimensions(shape, method_type):
+    """
+    Feature: Support tensor view api.
+    Description: Support tensor T api with view operator.
+    Expectation: Run success and expected to use the TransposeExtView operator.
+    """
+    x = Tensor(np.random.randn(*shape), dtype=ms.float32)
+    tester = TensorViewTestModule("T", [x])
+    if method_type == 'method':
+        tester.forward_cmp(T_forward_method)
+        tester.backward_cmp(T_backward_method)
+    else:
+        tester.forward_cmp(T_forward_class)
+        tester.backward_cmp(T_backward_class)
+
+
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
+          essential_mark='unessential', mem_peak=2048)
+@pytest.mark.parametrize('val', [np.nan, np.inf])
+@pytest.mark.parametrize('method_type', ['method', 'class'])
+def test_tensor_T_inf_nan(val, method_type):
+    """
+    Feature: Support tensor view api.
+    Description: Support tensor T api with view operator with inf/nan.
+    Expectation: Run success and expected to use the TransposeExtView operator.
+    """
+    x = Tensor(np.full((2, 3, 4), val), dtype=ms.float32)
+    tester = TensorViewTestModule("T", [x])
+    if method_type == 'method':
+        tester.forward_cmp(T_forward_method)
+        tester.backward_cmp(T_backward_method)
+    else:
+        tester.forward_cmp(T_forward_class)
+        tester.backward_cmp(T_backward_class)
+
+
+@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
+          card_mark='onecard', essential_mark='essential', mem_peak=2048)
+def test_tensor_T_ir_view():
+    """
+    Feature: Support tensor view api.
+    Description: Support tensor T api with view operator.
+    Expectation: Run success and expected to use the TransposeExtView operator.
+    """
+    dir_path = 'ir_T'
+    target_op_name = 'TransposeExtView'
+    os.environ['MS_DEV_DUMP_IR_PASSES'] = 'validate'
+    ms.context.set_context(save_graphs=True, save_graphs_path=dir_path)
+
+    if os.path.isdir(dir_path):
+        shutil.rmtree(dir_path)
+
+    x1 = Tensor(np.random.randn(2, 3, 4), dtype=mstype.float32)
+    T_forward_method(x1)
+    check_ir_view_op(dir_path, target_op_name)
+    T_forward_class(x1)
+    check_ir_view_op(dir_path, target_op_name)
+    ms.context.set_context(save_graphs=False)
+    os.unsetenv('MS_DEV_DUMP_IR_PASSES')
