@@ -1433,6 +1433,43 @@ def test_hccl_reduce_scatter_diff_shape():
 
 
 @log_function_entry_exit
+def test_hccl_reduce_scatter_diff_shape_with_mem_test():
+    """
+    Feature: test distributed op
+    Description: Add a previously existing use case for memory issues in multi operator cascading scenarios
+    Expectation: success
+    """
+    # 同步场景一维tensor
+    # rank i: ([0, 1, 2...size-0], [0,1, 2...size-ii-1], [0, 1, 2...size-ii-2], ...)
+    # output: ([0*size, 1*size, 2*size...(size-0)*size], [0*size, 1*size, 2*size...(size-1)*size], ...)
+    input_list = [ms.Tensor(list(range(0, size-ii)), dtype=ms.int32) for ii in range(size)]
+    output_tensor = ms.Tensor(np.zeros([size-rank]).astype(np.int32))
+    expect_output = (np.array(list(range(size-rank)), dtype=np.int32)) * size
+    output_handle = reduce_scatter(output_tensor, input_list)
+    assert output_handle is None
+    assert np.allclose(output_tensor.asnumpy(), expect_output)
+    output_add = output_tensor + output_tensor
+    assert np.allclose(output_add.asnumpy(), expect_output * 2)
+    zero_tensor = ms.Tensor(np.zeros([size-rank]).astype(np.int32))
+    output_add = output_add - zero_tensor
+    assert np.allclose(output_add.asnumpy(), expect_output * 2)
+
+    # rank i: ([0], [1, 2], [2, 3, 4], ...)
+    # output: ([0*size], [1*size, 2*size], [2*size, 3*size, 4*size], ...)
+    input_list = [ms.Tensor(list(range(ii, ii + ii + 1)), dtype=ms.int32) for ii in range(size)]
+    output_tensor = ms.Tensor(np.zeros([rank + 1]).astype(np.int32))
+    expect_output = (np.array(list(range(rank + 1)), dtype=np.int32) + rank) * size
+    output_handle = reduce_scatter(output_tensor, input_list)
+    assert output_handle is None
+    assert np.allclose(output_tensor.asnumpy(), expect_output)
+    output_add = output_tensor + output_tensor
+    assert np.allclose(output_add.asnumpy(), expect_output * 2)
+    zero_tensor = ms.Tensor(np.zeros([rank + 1]).astype(np.int32))
+    output_add = output_add - zero_tensor
+    assert np.allclose(output_add.asnumpy(), expect_output * 2)
+
+
+@log_function_entry_exit
 def test_hccl_gather():
     """
     Feature: test distributed op
