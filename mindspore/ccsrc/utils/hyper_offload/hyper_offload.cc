@@ -294,6 +294,7 @@ void HyperOffloadOptimizer::AdjustHyperOffloadNodePosition() {
     AnfNodePtr data_node = input_node;
     if (IsD2HNode(input_node)) {
       auto d2h_node = input_node->cast<CNodePtr>();
+      MS_EXCEPTION_IF_NULL(d2h_node);
       data_node = d2h_node->input(data_index);
     }
     size_t prefetch_distance =

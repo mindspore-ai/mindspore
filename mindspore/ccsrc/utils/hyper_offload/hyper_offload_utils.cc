@@ -366,6 +366,7 @@ std::optional<T> GetNodeAttrValue(const AnfNodePtr &node, const char *attr_name)
     return std::nullopt;
   }
   auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
   auto attr = cnode->GetAttr(attr_name);
   if (attr == nullptr) {
     return std::nullopt;
