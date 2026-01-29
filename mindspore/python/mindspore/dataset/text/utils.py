@@ -62,7 +62,7 @@ class CharNGram(cde.CharNGram):
             >>>
             >>> char_n_gram = text.CharNGram.from_file("/path/to/char_n_gram/file", max_vectors=None)
             >>> to_vectors = text.ToVectors(char_n_gram)
-            >>> # Look up a token into vectors according CharNGram model.
+            >>> # Look up tokens and get vectors according to the CharNGram model.
             >>> word_vector = to_vectors(["word1", "word2"])
         """
 
@@ -74,8 +74,8 @@ class FastText(cde.FastText):
     """
     FastText pre-trained word embeddings.
 
-    FastText allows one to create an unsupervised learning or supervised learning algorithm vector
-    representations for words.
+    FastText allows one to create vector representations for words using unsupervised or
+    supervised learning algorithms.
     """
 
     @classmethod
@@ -104,7 +104,7 @@ class FastText(cde.FastText):
             >>> import mindspore.dataset.text as text
             >>> fast_text = text.FastText.from_file("/path/to/fast_text/file", max_vectors=None)
             >>> to_vectors = text.ToVectors(fast_text)
-            >>> # Look up a token into vectors according FastText model.
+            >>> # Look up tokens and get vectors according to the FastText model.
             >>> word_vector = to_vectors(["word1", "word2"])
         """
 
@@ -116,7 +116,7 @@ class GloVe(cde.GloVe):
     """
     Global Vectors (GloVe) pre-trained word embeddings.
 
-    GloVe is an unsupervised learning algorithm for obtaining vector representations for word.
+    GloVe is an unsupervised learning algorithm for obtaining vector representations for words.
     """
 
     @classmethod
@@ -145,7 +145,7 @@ class GloVe(cde.GloVe):
             >>> import mindspore.dataset.text as text
             >>> glove = text.GloVe.from_file("/path/to/glove/file", max_vectors=None)
             >>> to_vectors = text.ToVectors(glove)
-            >>> # Look up a token into vectors according GloVe model.
+            >>> # Look up tokens and get vectors according to the GloVe model.
             >>> word_vector = to_vectors(["word1", "word2"])
         """
 
@@ -159,7 +159,7 @@ class JiebaMode(IntEnum):
 
     Possible enumeration values are: ``JiebaMode.MIX``, ``JiebaMode.MP``, ``JiebaMode.HMM``.
 
-    - ``JiebaMode.MIX``: tokenize with a mix of MPSegment and HMMSegment algorithm.
+    - ``JiebaMode.MIX``: tokenize with a mix of MPSegment and HMMSegment algorithms.
     - ``JiebaMode.MP``: tokenize with MPSegment algorithm.
     - ``JiebaMode.HMM``: tokenize with Hidden Markov Model Segment algorithm.
     """
@@ -191,7 +191,7 @@ class NormalizeForm(IntEnum):
 
 class SentencePieceModel(IntEnum):
     """
-    Subword algorithms for SentencePiece.
+    Subword algorithm model types for SentencePiece.
 
     Available values are as follows:
 
@@ -217,7 +217,7 @@ DE_C_INTER_SENTENCEPIECE_MODE = {
 
 class SentencePieceVocab:
     """
-    SentencePiece object that is used to do words segmentation.
+    SentencePiece object that is used to do word segmentation.
     """
 
     def __init__(self):
@@ -231,7 +231,7 @@ class SentencePieceVocab:
 
         Args:
             dataset (Dataset): Dataset to build SentencePiece.
-            col_names (list): The list of the col name.
+            col_names (list): The list of column names.
             vocab_size (int): Vocabulary size.
             character_coverage (float): Amount of characters covered by the model. Recommend ``0.9995`` for
                 languages with rich character set like Japanese or Chinese and ``1.0`` for other languages with small
@@ -271,20 +271,21 @@ class SentencePieceVocab:
         Build a SentencePiece object from a file.
 
         Args:
-            file_path (list): Path to the file which contains the SentencePiece list.
+            file_path (list): List of paths to the files that contain the SentencePiece list.
             vocab_size (int): Vocabulary size.
             character_coverage (float): Amount of characters covered by the model. Recommend ``0.9995`` for
                 languages with rich character set like Japanese or Chinese and ``1.0`` for other languages with small
                 character set.
             model_type (SentencePieceModel): The desired subword algorithm. See :class:`~.text.SentencePieceModel`
                 for details on optional values.
-            params (dict): A dictionary with no incoming parameters(The parameters are derived from SentencePiece
-                library).
+            params (dict): A dictionary with no incoming parameters (the parameters are derived from the
+                SentencePiece library).
 
         Returns:
             SentencePieceVocab, vocab built from the file.
 
         Examples:
+            >>> import mindspore.dataset.text as text
             >>> from mindspore.dataset.text import SentencePieceVocab, SentencePieceModel
             >>> vocab = SentencePieceVocab.from_file(["/path/to/sentence/piece/vocab/file"], 5000, 0.9995,
             ...                                      SentencePieceModel.UNIGRAM, {})
@@ -303,11 +304,11 @@ class SentencePieceVocab:
     @check_save_model
     def save_model(cls, vocab, path, filename):
         """
-        Save model into given filepath.
+        Save the model to the given path.
 
         Args:
             vocab (SentencePieceVocab): A SentencePiece object.
-            path (str): Path to store model.
+            path (str): Path to store the model.
             filename (str): The name of the file.
 
         Examples:
@@ -322,12 +323,12 @@ class SentencePieceVocab:
 
 class SPieceTokenizerLoadType(IntEnum):
     """
-    Model input type for the SentencePiece tokenizer.
+    Model input types for the SentencePiece tokenizer.
 
     Available values are as follows:
 
-    - ``SPieceTokenizerLoadType.FILE``: Load model from specified file path.
-    - ``SPieceTokenizerLoadType.MODEL``: Load model from specified vocab object.
+    - ``SPieceTokenizerLoadType.FILE``: Load the model from the specified file path.
+    - ``SPieceTokenizerLoadType.MODEL``: Load the model from the specified vocab object.
     """
 
     FILE = 0
@@ -340,8 +341,8 @@ class SPieceTokenizerOutType(IntEnum):
 
     Possible enumeration values are: ``SPieceTokenizerOutType.STRING``, ``SPieceTokenizerOutType.INT``.
 
-    - SPieceTokenizerOutType.STRING: means output type of SentencePiece Tokenizer is string.
-    - SPieceTokenizerOutType.INT: means output type of SentencePiece Tokenizer is int.
+    - SPieceTokenizerOutType.STRING: The output type of the SentencePiece tokenizer is string.
+    - SPieceTokenizerOutType.INT: The output type of the SentencePiece tokenizer is int.
     """
 
     STRING = 0
@@ -379,7 +380,7 @@ class Vectors(cde.Vectors):
             >>> import mindspore.dataset.text as text
             >>> vector = text.Vectors.from_file("/path/to/vectors/file", max_vectors=None)
             >>> to_vectors = text.ToVectors(vector)
-            >>> # Look up a token into vectors according Vector model.
+            >>> # Look up tokens in vectors according to the Vector model.
             >>> word_vector = to_vectors(["word1", "word2"])
         """
 
@@ -403,12 +404,12 @@ class Vocab:
         """
         Build a Vocab from a given dataset.
 
-        The samples in the dataset are used as a corpus to create Vocab, in which the Token is arranged in ascending
+        The samples in the dataset are used as a corpus to create Vocab, in which the Tokens are arranged in ascending
         order of Token frequency, and Tokens with the same frequency are arranged in alphabetical order.
 
         Args:
             dataset (Dataset): The dataset to build the Vocab from.
-            columns (list[str], optional): The name of the data columns used to create the Vocab.
+            columns (list[str], optional): The names of the data columns used to create the Vocab.
                 Default: ``None`` , use all columns.
             freq_range (tuple[int, int], optional): The Token frequency range used to create the Vocab. Must contain
                 two elements representing the minimum and maximum frequencies, within which the Token will be retained.
@@ -418,9 +419,9 @@ class Vocab:
                 selected to build the Vocab. This operation will be performed after Token frequency filtering. If
                 the value is greater than the total number of Tokens, all Tokens will be retained. Default: ``None`` ,
                 there is no limit to the number of Tokens.
-            special_tokens (list[str], optional):  A list of special Token to append to the Vocab. Default: ``None`` ,
-                no special Token is appended.
-            special_first (bool, optional): Whether to add the special Token to the top of the Vocab, otherwise to
+            special_tokens (list[str], optional): A list of special Tokens to append to the Vocab. Default: ``None`` ,
+                no special Tokens are appended.
+            special_first (bool, optional): Whether to add the special Tokens to the top of the Vocab, otherwise to
                 the bottom of the Vocab. Default: ``True``.
 
         Returns:
@@ -428,7 +429,7 @@ class Vocab:
 
         Raises:
             TypeError: If `columns` is not of type list[str].
-            TypeError: If `freq_range` is not of type tuple[int, int]l.
+            TypeError: If `freq_range` is not of type tuple[int, int].
             ValueError: If element of `freq_range` is negative.
             TypeError: If `top_k` is not of type int.
             ValueError: If `top_k` is not positive.
@@ -444,7 +445,7 @@ class Vocab:
             >>> vocab = text.Vocab.from_dataset(dataset, "text", freq_range=None, top_k=None,
             ...                                 special_tokens=["<pad>", "<unk>"],
             ...                                 special_first=True)
-            >>> # Use the vocab to look up string to id
+            >>> # Use the vocab to look up strings to ids
             >>> lookup = text.Lookup(vocab, "<unk>")
             >>> id = lookup("text1")
         """
@@ -462,9 +463,9 @@ class Vocab:
 
         Args:
             word_list (list[str]): The Token list to build the Vocab from.
-            special_tokens (list[str], optional):  A list of special Token to append to the Vocab. Default: ``None`` ,
-                no special Token is appended.
-            special_first (bool, optional): Whether to add the special Token to the top of the Vocab, otherwise to
+            special_tokens (list[str], optional): A list of special Tokens to append to the Vocab. Default: ``None`` ,
+                no special Tokens are appended.
+            special_first (bool, optional): Whether to add the special Tokens to the top of the Vocab, otherwise to
                 the bottom of the Vocab. Default: ``True``.
 
         Returns:
@@ -501,10 +502,10 @@ class Vocab:
             delimiter (str, optional): The separator for the Token in the file line. The string before the separator
                 will be treated as a Token. Default: ``''``, the whole line will be treated as a Token.
             vocab_size (int, optional): The upper limit on the number of Tokens that Vocab can contain.
-                Default: ``None`` , no upper limit on the number of Token.
-            special_tokens (list[str], optional):  A list of special Token to append to the Vocab. Default: ``None`` ,
-                no special Token is appended.
-            special_first (bool, optional): Whether to add the special Token to the top of the Vocab, otherwise to
+                Default: ``None`` , no upper limit on the number of Tokens.
+            special_tokens (list[str], optional): A list of special Tokens to append to the Vocab. Default: ``None`` ,
+                no special Tokens are appended.
+            special_first (bool, optional): Whether to add the special Tokens to the top of the Vocab, otherwise to
                 the bottom of the Vocab. Default: ``True``.
 
         Returns:
@@ -578,7 +579,7 @@ class Vocab:
 
     def vocab(self):
         """
-        Get the dictionary of the mappings between Tokens and its IDs.
+        Get the dictionary of the mappings between Tokens and their IDs.
 
         Returns:
             dict[str, int], the dictionary of mappings between Tokens and IDs.

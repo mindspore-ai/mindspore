@@ -9,8 +9,7 @@ mindspore.dataset.text.NormalizeUTF8
         Windows平台尚不支持 `NormalizeUTF8` 。
 
     参数：
-        - **normalize_form** (:class:`~.text.NormalizeForm`, 可选) - 想要使用的规范化模式。可选值详见 :class:`~.text.NormalizeForm` 。
-          默认值： ``NormalizeForm.NFKC`` 。
+        - **normalize_form** (:class:`~.text.NormalizeForm`, 可选) - 想要使用的规范化模式。可选值详见 :class:`~.text.NormalizeForm` 。默认值：``NormalizeForm.NFKC``。
 
     异常：
         - **TypeError** - 当 `normalize_form` 不为 :class:`~.text.NormalizeForm` 类型。

@@ -97,7 +97,7 @@ DE_C_INTER_SENTENCEPIECE_OUTTYPE = {
 
 class AddToken(TextTensorOperation):
     """
-    Add token to beginning or end of sequence.
+    Add a token to the beginning or end of a sequence.
 
     Args:
         token (str): The token to be added.
@@ -160,13 +160,14 @@ class JiebaTokenizer(TextTensorOperation):
     Use Jieba tokenizer to tokenize Chinese strings.
 
     Note:
-        The dictionary files used by Hidden Markov Model segment and Max Probability segment can be
+        The dictionary files used by Hidden Markov Model segmentation and Max Probability
+        segmentation can be
         obtained through the `cppjieba GitHub <https://github.com/yanyiwu/cppjieba/tree/master/dict>`_ .
         Please ensure the validity and integrity of these files.
 
     Args:
-        hmm_path (str): Path to the dictionary file used by Hidden Markov Model segment.
-        mp_path (str): Path to the dictionary file used by Max Probability segment.
+        hmm_path (str): Path to the dictionary file used by Hidden Markov Model segmentation.
+        mp_path (str): Path to the dictionary file used by Max Probability segmentation.
         mode (JiebaMode, optional): The desired segment algorithms. See :class:`~.text.JiebaMode`
             for details on optional values. Default: ``JiebaMode.MIX`` .
         with_offsets (bool, optional): Whether to output the start and end offsets of each
@@ -367,15 +368,16 @@ class JiebaTokenizer(TextTensorOperation):
 
 class Lookup(TextTensorOperation):
     """
-    Look up a word into an id according to the input vocabulary table.
+    Look up a word and return its id according to the input vocabulary table.
 
     Args:
         vocab (Vocab): A vocabulary object.
-        unknown_token (str, optional): Word is used for lookup. In case of the word is out of vocabulary (OOV),
-            the result of lookup will be replaced with unknown_token. If the unknown_token is not specified or
-            it is OOV, runtime error will be thrown. Default: ``None``, means no unknown_token is specified.
-        data_type (mindspore.dtype, optional): The data type that lookup operation maps
-            string to. Default: ``mstype.int32``.
+        unknown_token (str, optional): The token to use when the word to look up is out of vocabulary (OOV).
+            In that case, the lookup result will be replaced with unknown_token. If unknown_token is not
+            specified or the word is OOV and unknown_token is not in the vocabulary, a runtime error will
+            be thrown. Default: ``None``, which means no unknown_token is specified.
+        data_type (mindspore.dtype, optional): The data type that the lookup operation maps
+            strings to. Default: ``mstype.int32``.
 
     Raises:
         TypeError: If `vocab` is not of type text.Vocab.
@@ -425,29 +427,29 @@ class Lookup(TextTensorOperation):
 
 class Ngram(TextTensorOperation):
     """
-    Generate n-gram from a 1-D string Tensor.
+    Generate n-grams from a 1-D string Tensor.
 
     Refer to `N-gram <https://en.wikipedia.org/wiki/N-gram#Examples>`_
-    for an overview of what n-gram is and how it works.
+    for an overview of what an n-gram is and how it works.
 
     Args:
         n (list[int]): n in n-gram, which is a list of positive integers. For example, if n=[4, 3], then the result
             would be a 4-gram followed by a 3-gram in the same tensor. If the number of words is not enough to make up
-            for a n-gram, an empty string will be returned. For example, 3 grams on ["mindspore", "best"] will result in
-            an empty string produced.
-        left_pad (tuple, optional): Padding performed on left side of the sequence shaped like ("pad_token", pad_width).
-            `pad_width` will be capped at n-1. For example, specifying left_pad=("_", 2) would pad left side of the
-            sequence with "__". Default: ``('', 0)``.
-        right_pad (tuple, optional): Padding performed on right side of the sequence shaped like
+            an n-gram, an empty string will be returned. For example, 3-gram on ["mindspore", "best"] will result in
+            an empty string.
+        left_pad (tuple, optional): Padding performed on the left side of the sequence shaped like ("pad_token",
+            pad_width). `pad_width` will be capped at n-1. For example, specifying left_pad=("_", 2) would pad the left
+            side of the sequence with "__". Default: ``('', 0)``.
+        right_pad (tuple, optional): Padding performed on the right side of the sequence shaped like
             ("pad_token", pad_width). `pad_width` will be capped at n-1. For example, specifying right_pad=("_", 2)
-            would pad right side of the sequence with "__". Default: ``('', 0)``.
-        separator (str, optional): Symbol used to join strings together. For example, if 2-gram is
-            ["mindspore", "amazing"] with separator is ``"-"``, the result would be ["mindspore-amazing"].
-            Default: ``' '``, which will use whitespace as separator.
+            would pad the right side of the sequence with "__". Default: ``('', 0)``.
+        separator (str, optional): Symbol used to join strings together. For example, if the 2-gram is
+            ["mindspore", "amazing"] and the separator is ``"-"``, the result would be ["mindspore-amazing"].
+            Default: ``' '``, which will use whitespace as the separator.
 
     Raises:
-        TypeError: If values of `n` not positive is not of type int.
-        ValueError: If values of `n` not positive.
+        TypeError: If any value in `n` is not of type int.
+        ValueError: If any value in `n` is not positive.
         ValueError: If `left_pad` is not a tuple of length 2.
         ValueError: If `right_pad` is not a tuple of length 2.
         TypeError: If `separator` is not of type string.
@@ -497,10 +499,10 @@ class Ngram(TextTensorOperation):
 
 class PythonTokenizer:
     """
-    Class that applies user-defined string tokenizer into input string.
+    Class that applies a user-defined string tokenizer to input strings.
 
     Args:
-        tokenizer (Callable): Python function that takes a `str` and returns a list of `str` as tokens.
+        tokenizer (Callable): A Python function that takes a `str` and returns a list of `str` as tokens.
 
     Raises:
         TypeError: If `tokenizer` is not a callable Python function.
@@ -560,20 +562,20 @@ class PythonTokenizer:
 
 class SentencePieceTokenizer(TextTensorOperation):
     """
-    Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
+    Tokenize a scalar or 1-D string input into tokens using SentencePiece.
 
     Args:
-        mode (Union[str, SentencePieceVocab]): SentencePiece model.
-            If the input parameter is a file, it represents the path of SentencePiece mode to be loaded.
-            If the input parameter is a SentencePieceVocab object, it should be constructed in advanced.
-        out_type (SPieceTokenizerOutType): The type of output, it can be ``SPieceTokenizerOutType.STRING``,
+        mode (Union[str, SentencePieceVocab]): The SentencePiece model.
+            If the input is a string, it represents the path of the SentencePiece model to be loaded.
+            If the input is a SentencePieceVocab object, it should be constructed in advance.
+        out_type (SPieceTokenizerOutType): The type of output, which can be ``SPieceTokenizerOutType.STRING`` or
             ``SPieceTokenizerOutType.INT``.
 
-            - ``SPieceTokenizerOutType.STRING``, means output type of SentencePice Tokenizer is string.
-            - ``SPieceTokenizerOutType.INT``, means output type of SentencePice Tokenizer is int.
+            - ``SPieceTokenizerOutType.STRING``, the output type of SentencePiece tokenizer is string.
+            - ``SPieceTokenizerOutType.INT``, the output type of SentencePiece tokenizer is int.
 
     Raises:
-        TypeError: If `mode` is not of type string or SentencePieceVocab.
+        TypeError: If `mode` is not of type str or SentencePieceVocab.
         TypeError: If `out_type` is not of type SPieceTokenizerOutType.
 
     Supported Platforms:
@@ -623,11 +625,11 @@ class SentencePieceTokenizer(TextTensorOperation):
 
 class SlidingWindow(TextTensorOperation):
     """
-    Construct a tensor from given data (only support 1-D for now), where each element in the dimension `axis`
-    is a slice of data starting at the corresponding position, with a specified width.
+    Construct a tensor from given data (only 1-D is supported for now), where each element along the dimension
+    `axis` is a slice of the data starting at the corresponding position, with a specified width.
 
     Args:
-        width (int): The width of the window. Must be greater than zero.
+        width (int): The width of the window, which must be greater than zero.
         axis (int, optional): The axis along which the sliding window is computed. Default: ``0``.
 
     Raises:
@@ -684,19 +686,19 @@ class SlidingWindow(TextTensorOperation):
 
 class ToNumber(TextTensorOperation):
     """
-    Tensor operation to convert every element of a string tensor to a number.
+    Tensor operation that converts every element of a string tensor to a number.
 
-    Strings are cast according to the rules specified in the following links, except that any strings which represent
-    negative numbers cannot be cast to an unsigned integer type, rules links are as follows:
+    Strings are cast according to the rules specified in the following links, except that any strings that represent
+    negative numbers cannot be cast to an unsigned integer type. The links are as follows:
     https://en.cppreference.com/w/cpp/string/basic_string/stof,
     https://en.cppreference.com/w/cpp/string/basic_string/stoul.
 
     Args:
-        data_type (mindspore.dtype): Type to be cast to. Must be a numeric type in mindspore.dtype.
+        data_type (mindspore.dtype): The type to cast to, which must be a numeric type in mindspore.dtype.
 
     Raises:
         TypeError: If `data_type` is not of type mindspore.dtype.
-        RuntimeError: If strings are invalid to cast, or are out of range after being cast.
+        RuntimeError: If the strings are invalid for casting or are out of range after being cast.
 
     Supported Platforms:
         ``CPU``
@@ -737,20 +739,20 @@ class ToNumber(TextTensorOperation):
 
 class ToVectors(TextTensorOperation):
     """
-    Look up a token into vectors according to the input vector table.
+    Look up a token and return its vector according to the input vector table.
 
     Args:
         vectors (Vectors): A vectors object.
-        unk_init (sequence, optional): Sequence used to initialize out-of-vectors (OOV) token.
-            Default: ``None``, initialize with zero vectors.
-        lower_case_backup (bool, optional): Whether to look up the token in the lower case. If ``False``,
-            each token in the original case will be looked up; if ``True``, each token in the original
-            case will be looked up first, if not found in the keys of the property stoi, the token in the
-            lower case will be looked up. Default: ``False``.
+        unk_init (sequence, optional): Sequence used to initialize the vector for out-of-vocabulary
+            (OOV) tokens. Default: ``None``, which means initialize with zero vectors.
+        lower_case_backup (bool, optional): Whether to look up tokens in lower case. If ``False``,
+            each token in the original case will be looked up. If ``True``, each token in the original
+            case will be looked up first; if the token is not found in the keys of the property stoi,
+            the token in lower case will be looked up. Default: ``False``.
 
     Raises:
         TypeError: If `unk_init` is not of type sequence.
-        TypeError: If elements of `unk_init` is not of type float or int.
+        TypeError: If any element of `unk_init` is not of type float or int.
         TypeError: If `lower_case_backup` is not of type bool.
 
     Supported Platforms:
@@ -802,11 +804,11 @@ class Truncate(TextTensorOperation):
     Truncate the input sequence so that it does not exceed the maximum length.
 
     Args:
-        max_seq_len (int): Maximum allowable length.
+        max_seq_len (int): The maximum allowable length of the sequence.
 
     Raises:
-        TypeError: If `max_length_len` is not of type int.
-        ValueError: If value of `max_length_len` is not greater than or equal to 0.
+        TypeError: If `max_seq_len` is not of type int.
+        ValueError: If `max_seq_len` is not greater than or equal to 0.
         RuntimeError: If the input tensor is not of dtype bool, int, float, double or str.
 
     Supported Platforms:
@@ -857,12 +859,12 @@ class Truncate(TextTensorOperation):
 
 class TruncateSequencePair(TextTensorOperation):
     """
-    Truncate a pair of 1-D string input so that their total length is less than the specified length.
+    Truncate a pair of 1-D string inputs so that their total length is less than the specified length.
 
     Args:
         max_length (int): The maximum total length of the output strings. If it is no less than the
-            total length of the original pair of strings, no truncation is performed; otherwise, the
-            longer of the two input strings is truncated until its total length equals this value.
+            total length of the original pair of strings, no truncation is performed. Otherwise, the
+            longer of the two input strings is truncated until the total length equals this value.
 
     Raises:
         TypeError: If `max_length` is not of type int.
@@ -979,16 +981,16 @@ class UnicodeCharTokenizer(TextTensorOperation):
 
 class WordpieceTokenizer(TextTensorOperation):
     """
-    Tokenize the input text to subword tokens.
+    Tokenize the input text into subword tokens.
 
     Args:
         vocab (Vocab): Vocabulary used to look up words.
         suffix_indicator (str, optional): Prefix flags used to indicate subword suffixes. Default: ``'##'``.
         max_bytes_per_token (int, optional): The maximum length of tokenization, words exceeding this length will
-                not be split. Default: ``100``.
+            not be split. Default: ``100``.
         unknown_token (str, optional): The output for unknown words. When set to an empty string, the corresponding
-                unknown word will be directly returned as the output. Otherwise, the set string will be returned as the
-                output. Default: ``'[UNK]'``.
+            unknown word will be directly returned as the output. Otherwise, the specified string will be returned as
+            the output. Default: ``'[UNK]'``.
         with_offsets (bool, optional): Whether to output the start and end offsets of each
             token in the original string. Default: ``False`` .
 
@@ -1083,15 +1085,16 @@ if platform.system().lower() != 'windows':
             `BasicTokenizer` is not supported on Windows platform yet.
 
         Args:
-            lower_case (bool, optional): Whether to perform lowercase processing on the text. If True, will fold the
-                text to lower case and strip accented characters. If False, will only perform normalization on the
+            lower_case (bool, optional): Whether to perform lowercase processing on the text. If ``True``, will fold the
+                text to lower case and strip accented characters. If ``False``, will only perform normalization on the
                 text, with mode specified by `normalization_form` . Default: ``False``.
-            keep_whitespace (bool, optional): If True, the whitespace will be kept in the output. Default: ``False``.
+            keep_whitespace (bool, optional): If ``True``, the whitespace will be kept in the output.
+                Default: ``False``.
             normalization_form (NormalizeForm, optional): The desired normalization form.
                 See :class:`~.text.NormalizeForm` for details on optional values.
-                Default: ``NormalizeForm.NFKC`` .
-            preserve_unused_token (bool, optional): Whether to preserve special tokens. If True, will not split special
-                tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: ``True``.
+                Default: ``NormalizeForm.NONE`` .
+            preserve_unused_token (bool, optional): Whether to preserve special tokens. If ``True``, will not split
+                special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'. Default: ``True``.
             with_offsets (bool, optional): Whether to output the start and end offsets of each
                 token in the original string. Default: ``False`` .
 
@@ -1183,8 +1186,8 @@ if platform.system().lower() != 'windows':
             max_bytes_per_token (int, optional): The maximum length of tokenization, words exceeding this length will
                 not be split. Default: ``100``.
             unknown_token (str, optional): The output for unknown words. When set to an empty string, the corresponding
-                unknown word will be directly returned as the output. Otherwise, the set string will be returned as the
-                output. Default: ``'[UNK]'``.
+                unknown word will be directly returned as the output. Otherwise, the specified string will be returned
+                as the output. Default: ``'[UNK]'``.
             lower_case (bool, optional): Whether to perform lowercase processing on the text. If ``True``, will fold the
                 text to lower case and strip accented characters. If ``False``, will only perform normalization on the
                 text, with mode specified by `normalization_form` . Default: ``False``.
@@ -1192,7 +1195,7 @@ if platform.system().lower() != 'windows':
                 Default: ``False``.
             normalization_form (NormalizeForm, optional): The desired normalization form.
                 See :class:`~.text.NormalizeForm` for details on optional values.
-                Default: ``NormalizeForm.NFKC`` .
+                Default: ``NormalizeForm.NONE`` .
             preserve_unused_token (bool, optional): Whether to preserve special tokens. If ``True``,
                 will not split special tokens like '[CLS]', '[SEP]', '[UNK]', '[PAD]', '[MASK]'.
                 Default: ``True``.
@@ -1293,12 +1296,12 @@ if platform.system().lower() != 'windows':
 
     class CaseFold(TextTensorOperation):
         """
-        Apply case fold operation on UTF-8 string tensor, which is aggressive that can convert more characters into
+        Apply case fold operation on UTF-8 string tensor. It is more aggressive and can convert more characters into
         lower case than :code:`str.lower` . For supported normalization forms, please refer to
         `ICU_Normalizer2 <https://unicode-org.github.io/icu-docs/apidoc/released/icu4c/classicu_1_1Normalizer2.html>`_ .
 
         Note:
-            CaseFold is not supported on Windows platform yet.
+            `CaseFold` is not supported on Windows platform yet.
 
         Supported Platforms:
             ``CPU``
@@ -1332,12 +1335,12 @@ if platform.system().lower() != 'windows':
 
     class FilterWikipediaXML(TextTensorOperation):
         """
-        Filter the text in the format of Wikipedia XML dumps to "clean" text
+        Filter the text in Wikipedia XML dump format to "clean" text,
         consisting only of lowercase letters (a-z, converted from A-Z),
-        and spaces (never consecutive).
+        and spaces (no consecutive spaces).
 
         Note:
-            FilterWikipediaXML is not supported on Windows platform yet.
+            `FilterWikipediaXML` is not supported on Windows platform yet.
 
         Supported Platforms:
             ``CPU``
@@ -1376,7 +1379,7 @@ if platform.system().lower() != 'windows':
         Normalize the input UTF-8 encoded strings.
 
         Note:
-            NormalizeUTF8 is not supported on Windows platform yet.
+            `NormalizeUTF8` is not supported on Windows platform yet.
 
         Args:
             normalize_form (NormalizeForm, optional): The desired normalization form.
@@ -1429,17 +1432,17 @@ if platform.system().lower() != 'windows':
 
     class RegexReplace(TextTensorOperation):
         """
-        Replace part of the input UTF-8 string with a difference text string using regular expressions.
+        Replace part of the input UTF-8 string with a different text string using regular expressions.
 
         Note:
-            RegexReplace is not supported on Windows platform yet.
+            `RegexReplace` is not supported on Windows platform yet.
 
         Args:
             pattern (str): The regular expression, used to mean the specific, standard textual syntax for
                 representing patterns for matching text.
             replace (str): The string used to replace the matched elements.
             replace_all (bool, optional): Whether to replace all matched elements. If ``False``, only the
-                first matched element will be replaced; otherwise, all matched elements will be replaced.
+                first matched element will be replaced. Otherwise, all matched elements will be replaced.
                 Default: ``True``.
 
         Raises:
@@ -1487,19 +1490,19 @@ if platform.system().lower() != 'windows':
 
     class RegexTokenizer(TextTensorOperation):
         """
-        Tokenize a scalar tensor of UTF-8 string by regex expression pattern.
+        Tokenize a scalar tensor of UTF-8 string using a regex pattern.
 
-        See https://unicode-org.github.io/icu/userguide/strings/regexp.html for supported regex pattern.
+        See https://unicode-org.github.io/icu/userguide/strings/regexp.html for supported regex patterns.
 
         Note:
-            RegexTokenizer is not supported on Windows platform yet.
+            `RegexTokenizer` is not supported on Windows platform yet.
 
         Args:
             delim_pattern (str): The pattern of regex delimiters.
                 The original string will be split by matched elements.
-            keep_delim_pattern (str, optional): The string matched by 'delim_pattern' can be kept as a token
-                if it can be matched by 'keep_delim_pattern'. The default value is an empty str
-                which means that delimiters will not be kept as an output token. Default: ``''``.
+            keep_delim_pattern (str, optional): The string matched by `delim_pattern` can be kept as a token
+                if it can be matched by `keep_delim_pattern`. When empty, delimiters will not be kept as
+                output tokens. Default: ``''``.
             with_offsets (bool, optional): Whether to output the start and end offsets of each
                 token in the original string. Default: ``False`` .
 
@@ -1569,7 +1572,7 @@ if platform.system().lower() != 'windows':
         Tokenize a scalar tensor of UTF-8 string based on Unicode script boundaries.
 
         Note:
-            UnicodeScriptTokenizer is not supported on Windows platform yet.
+            `UnicodeScriptTokenizer` is not supported on Windows platform yet.
 
         Args:
             keep_whitespace (bool, optional): Whether or not emit whitespace tokens. Default: ``False``.
@@ -1644,7 +1647,7 @@ if platform.system().lower() != 'windows':
         Tokenize a scalar tensor of UTF-8 string on ICU4C defined whitespaces, such as: ' ', '\\\\t', '\\\\r', '\\\\n'.
 
         Note:
-            WhitespaceTokenizer is not supported on Windows platform yet.
+            `WhitespaceTokenizer` is not supported on Windows platform yet.
 
         Args:
             with_offsets (bool, optional): Whether to output the start and end offsets of each

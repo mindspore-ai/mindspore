@@ -1,4 +1,4 @@
-﻿mindspore.dataset.text.Vectors
+mindspore.dataset.text.Vectors
 ===============================
 
 .. py:class:: mindspore.dataset.text.Vectors
@@ -17,7 +17,7 @@
               可以通过该值限制加载的向量数量。默认值： ``None`` ，没有上限。
 
         返回：
-            CharNGram，预训练词向量。
+            Vectors，预训练词向量。
 
         异常：
             - **TypeError** - 当 `file_path` 不为str类型。

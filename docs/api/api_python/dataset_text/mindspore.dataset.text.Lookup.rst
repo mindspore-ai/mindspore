@@ -3,7 +3,7 @@ mindspore.dataset.text.Lookup
 
 .. py:class:: mindspore.dataset.text.Lookup(vocab, unknown_token=None, data_type=mstype.int32)
 
-    根据词表，将分词标记(token)映射到其索引值(id)。
+    根据词表，将分词标记（token）映射到其索引值（id）。
 
     参数：
         - **vocab** (:class:`~.text.Vocab`) - 词表对象，用于存储分词和索引的映射。
