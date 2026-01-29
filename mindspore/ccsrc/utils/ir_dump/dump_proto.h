@@ -204,6 +204,10 @@ class IrExportBuilder {
   bool incremental_{false};
   bool is_kernel_graph_{false};
 };
+
+// for lite
+#include "include/utils/visible.h"
+COMMON_EXPORT std::string GetBinaryProtoString(const FuncGraphPtr &func_graph, const bool &incremental = false);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_UTILS_IR_DUMP_PROTO_H_
