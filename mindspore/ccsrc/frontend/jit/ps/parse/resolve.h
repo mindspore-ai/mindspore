@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2025 Huawei Technologies Co., Ltd
+ * Copyright 2019-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,7 +199,8 @@ class Resolver {
   explicit Resolver(const FuncGraphPtr &top_func_graph) : top_func_graph_(top_func_graph) {}
   virtual ~Resolver() = default;
 
-  AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object &obj);
+  AnfNodePtr ResolveParameterObj(const FuncGraphPtr &func_graph, const py::object &obj,
+                                 const AnfNodePtr &origin_node = nullptr);
   bool ResolveObjectToNode(const AnfNodePtr &origin_node, const py::object &obj, AnfNodePtr *const node,
                            bool is_element_obj = false);
   // Resolve symbol in namespace.

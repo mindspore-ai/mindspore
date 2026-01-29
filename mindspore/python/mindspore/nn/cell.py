@@ -1,4 +1,4 @@
-# Copyright 2020-2025 Huawei Technologies Co., Ltd
+# Copyright 2020-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@ from typing import (
     Iterator,
     Any,
     TypeVar,
-    Mapping
+    Mapping,
+    Union
 )
 
 import weakref
@@ -51,6 +52,7 @@ from mindspore.graph.api import _cell_graph_executor, _pynative_executor, _get_a
     _no_grad, _get_mutable_flags
 from mindspore.graph.api import _convert_python_data
 from mindspore.graph.api import _process_dyn_args, _generate_dyn_compile_args
+from mindspore.graph.api import _register_parameter_forward_hook
 from mindspore.common.parameter import _Buffer, Parameter, ParameterTuple, _is_parameter_generated
 from mindspore.common.tensor import Tensor
 from mindspore.ops.primitive import Primitive
@@ -3742,6 +3744,84 @@ class Cell(Cell_):
                 "The backward hook return value size is {} not equal to input size {}".format(
                     len(backward_hook_input), len(grad_input)))
         return backward_hook_input
+
+    def register_parameter_forward_hook(self, hook: Union[Callable, List[Dict[str, Any]]]) -> None:
+        """
+        Register parameter forward hooks for current cell instance.
+
+        This function attaches forward hooks to either the entire network (if `hook` is a callable)
+        or to specific parameters (if `hook` is a list of dictionaries specifying parameter-hook pairs).
+
+        .. warning::
+            This is an experimental API that is subject to change or deletion.
+
+        .. note::
+            - This api only supports graph mode or a function decorated by :func:`mindspore.jit`.
+            - Parameter forward hooks are not supported when parameters are shared across different cells.
+              Example of **unsupported** pattern:
+
+              .. code-block:: python
+
+                  class InnerBlock(nn.Cell):
+                      def __init__(self):
+                          super().__init__()
+                          self.shared_weight = ms.Parameter(ms.Tensor([1.0]), name="shared_weight")
+                      def construct(self, x):
+                          return x * self.shared_weight
+
+                  class OuterNet(nn.Cell):
+                      def __init__(self):
+                          super().__init__()
+                          self.inner = InnerBlock()
+                      def construct(self, x):
+                          out = self.inner(x)
+                          # Cross-cell parameter sharing (not supported with parameter forward hooks)
+                          out = out * self.inner.shared_weight
+                          return out
+
+        Args:
+            hook (Union[Callable, List[Dict[str, Any]]]): The hook(s) to register.
+
+                - If it is a callable function, it will be set as the network-wide parameter forward hook.
+                - If it is a list of dictionaries, each dictionary must contain exactly two keys:
+
+                  - ``"params"``: A list of :class:`mindspore.Parameter` objects.
+                  - ``"hook"``: A callable hook function. The hook will be individually registered on each specified
+                    parameter.
+
+        Raises:
+            ValueError: If any dictionary in the `hook` list does not contain both ``"params"`` and ``"hook"`` keys.
+            TypeError: If any item in ``"params"`` is not a :class:`mindspore.Parameter`,
+                or if the ``"hook"`` value is not callable.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import mindspore as ms
+            >>> from mindspore import nn
+            >>>
+            >>> class SimpleCell(nn.Cell):
+            ...     def __init__(self):
+            ...         super().__init__()
+            ...         self.weight = ms.Parameter(ms.Tensor(2.0))
+            ...     def construct(self, x):
+            ...         return x * self.weight
+            >>>
+            >>> def param_hook_fn(param):
+            ...     return param * 10
+            >>>
+            >>> net = SimpleCell()
+            >>> params_hooks = [{"params": [net.weight], "hook": param_hook_fn}]
+            >>> net.register_parameter_forward_hook(params_hooks)
+            >>> data = ms.Tensor(3.0)
+            >>> out, grad = ms.jit(ms.value_and_grad(net), backend="ms_backend")(data)
+            >>> print("out:", out)
+            out: 60.0
+            >>> print("grad:", grad)
+            grad: 20.0
+        """
+        _register_parameter_forward_hook(self, hook)
 
 
 class GraphCell(Cell):

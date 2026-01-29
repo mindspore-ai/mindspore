@@ -1,5 +1,5 @@
 /**
- * Copyright 2022-2025 Huawei Technologies Co., Ltd
+ * Copyright 2022-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -758,11 +758,13 @@ static void GetNodesToTagAttr(const AnfNodePtr &addattr_node, AnfNodePtrList *no
     GetNodesToTagAttr(*addattr_iter, nodes_to_tag);
   } else {
     // collect nodes to tag
-    std::copy_if(graph_need_inline->nodes().begin(), graph_need_inline->nodes().end(),
-                 std::back_inserter(*nodes_to_tag), [](const AnfNodePtr &node) {
-                   return !IsPrimitiveCNode(node, prim::kPrimDepend) &&
-                          !IsPrimitiveCNode(node, prim::kPrimUpdateState) && !IsPrimitiveCNode(node, prim::kPrimReturn);
-                 });
+    mindspore::TopoSort(graph_need_inline->get_return(), SuccDeeperSimple, [&nodes_to_tag](const AnfNodePtr &node) {
+      if (IsPrimitiveCNode(node) && !IsPrimitiveCNode(node, prim::kPrimDepend) &&
+          !IsPrimitiveCNode(node, prim::kPrimUpdateState)) {
+        nodes_to_tag->push_back(node);
+      }
+      return FOLLOW;
+    });
   }
   return;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2024-2025 Huawei Technologies Co., Ltd
+ * Copyright 2024-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 #include "frontend/jit/ps/pipeline.h"
 #include "frontend/jit/ps/event_message_print.h"
 #include "frontend/jit/ps/validator.h"
+#include "frontend/jit/ps/static_analysis/parameter_forward_hook.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "utils/phase.h"
@@ -422,6 +423,7 @@ void JitExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   FuncGraphLoopBreaker::Inst().CleanMetaFuncGraphs();
   CompileCacheContext::GetInstance().Clear();
   parse::Parser::CleanParserResource();
+  abstract::ClearParameterForwardHookStack();
   MS_LOG(INFO) << "Clean compile resource end";
 }
 }  // namespace pipeline

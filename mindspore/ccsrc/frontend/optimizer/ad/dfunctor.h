@@ -1,7 +1,7 @@
 /**
  * This is the C++ adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
  *
- * Copyright 2020-2025 Huawei Technologies Co., Ltd
+ * Copyright 2020-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,6 +93,8 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   AnfNodePtr MapFuncGraphToK(const AnfNodePtr &primal);
   // Map ValueNode of Parameter to K.
   AnfNodePtr MapParameterToK(const AnfNodePtr &primal);
+  // Try set need_cut_.
+  void TrySetNeedCut(const PrimitivePtr &prim, const CNodePtr &primitive_user);
   // MapObject impls.
   void MapFvObject();
   void MapValueObject();
