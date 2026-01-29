@@ -27,7 +27,7 @@ import warnings
 import torch
 import numpy as np
 import mindspore as ms
-from mindspore import nn, ops
+from mindspore import nn
 from mindspore._c_expression import MSContext
 from mindspore.common.dtype import _dtype_to_nptype
 from mindspore.graph.api import _pynative_executor
@@ -321,25 +321,21 @@ class OpsFactory():
                     return ms_asnumpy(tensor)
                 return tensor
 
-            #910A will probably exceed limit 65504 at float16 or 3.4028235e+38 at float32 while calculate some
-            #operators， mindspore will generate 65504/3.4028235e+38 while torch offer inf
+            # 910A will probably exceed limit 65504 at float16 or 3.4028235e+38 at float32 while calculate some
+            # operators， mindspore will generate 65504/3.4028235e+38 while torch offer inf
             def _convert_910a_float_limit_to_inf(actual, expect, actual_dtype):
-                if self._device=='ascend' and MSContext.get_instance().get_ascend_soc_version() == "ascend910":
-                    if actual_dtype==ms.float16 and isinstance(expect, torch.Tensor):
-                        actual = ops.where(ops.logical_and(actual >= 65504,
-                                 ms.Tensor(torch_asnumpy(torch.isinf(expect)))),
-                                 ms.Tensor(np.inf, dtype=actual_dtype),actual)
-                        actual = ops.where(ops.logical_and(actual <= -65504,
-                                        ms.Tensor(torch_asnumpy(torch.isneginf(expect)))),
-                                           ms.Tensor(-np.inf, dtype=actual_dtype), actual)
-                    elif actual_dtype==ms.float32 and isinstance(expect, torch.Tensor):
-                        actual = ops.where(ops.logical_and(actual >= 3.4028235e+38,
-                                        ms.Tensor(torch_asnumpy(torch.isinf(expect)))),
-                                           ms.Tensor(np.inf, dtype=actual_dtype), actual)
-                        actual = ops.where(ops.logical_and(actual <= -3.4028235e+38,
-                                        ms.Tensor(torch_asnumpy(torch.isneginf(expect)))),
-                                           ms.Tensor(-np.inf, dtype=actual_dtype), actual)
-                return actual
+                if self._device == 'ascend' and MSContext.get_instance().get_ascend_soc_version() == "ascend910":
+                    if actual_dtype == ms.float16:
+                        mask = (actual >= np.array(65504, dtype=np.float16)) & np.isinf(expect)
+                        actual[mask] = np.inf
+                        mask = (actual <= np.array(-65504, dtype=np.float16)) & np.isneginf(expect)
+                        actual[mask] = -np.inf
+                    elif actual_dtype == ms.float32:
+                        mask = (actual >= np.array(3.4028235e+38, dtype=np.float32)) & np.isinf(expect)
+                        actual[mask] = np.inf
+                        mask = (actual <= np.array(-3.4028235e+38, dtype=np.float32)) & np.isneginf(expect)
+                        actual[mask] = -np.inf
+
             if isinstance(actual, (ms.Tensor, torch.Tensor, np.ndarray)):
                 actual_dtype = actual.dtype
             else:
@@ -356,9 +352,9 @@ class OpsFactory():
             rtol = loss if rtol is None else rtol
             atol = loss if atol is None else atol
 
-            actual = _convert_910a_float_limit_to_inf(actual, expect, actual_dtype)
             actual = convert_tensor_to_nparray(actual)
             expect = convert_tensor_to_nparray(expect)
+            _convert_910a_float_limit_to_inf(actual, expect, actual_dtype)
 
             if self._convert_extra_uint:
                 # Normalize dtype pairs when one side has been cast to int64 for

@@ -481,8 +481,12 @@ def make_tensor(
 
         np_dtype, default_random_method, default_low, default_high = dtype_to_np_dtype_dict[dtype]
         random_method = default_random_method if random_method is None else random_method
-        low = default_low if low is None else low
-        high = default_high if high is None else high
+        if dtype in (ms.uint8, ms.uint16, ms.uint32, ms.uint64):
+            low = default_low if low is None or (low < 0) else low
+            high = default_high if high is None or (high < 0) else high
+        else:
+            low = default_low if low is None else low
+            high = default_high if high is None else high
         ndarray = _generate_ndarray_by_random_method(random_method, shape, np_dtype,
                                                   low, high)
         if exclude_value and dtype != ms.bool_ and 0 not in shape:
