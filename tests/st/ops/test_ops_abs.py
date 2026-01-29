@@ -177,3 +177,21 @@ def test_abs_binary_cases(mode):
 
     ops_abs_binary_case1()
     ops_abs_binary_case2()
+
+
+@arg_mark(plat_marks=['platform_ascend'],
+          level_mark='level1',
+          card_mark='onecard',
+          essential_mark='essential', mem_peak=1024.25)
+@pytest.mark.parametrize('mode',
+                         [context.GRAPH_MODE, context.PYNATIVE_MODE])
+def test_abs_dtype_bool(mode):
+    """
+    Feature: test abs operator
+    Description: test abs forward by pyboost
+    Expectation: success
+    """
+    ms.context.set_context(mode=mode)
+    x = Tensor([True, False], ms.bool_)
+    output = abs_forward_func(x)
+    assert np.allclose(output.asnumpy(), [True, False])

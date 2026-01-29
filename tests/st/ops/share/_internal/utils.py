@@ -37,7 +37,9 @@ class OpSampleInput:
         op_input: The first positional input (commonly a Tensor).
         op_args: Extra positional arguments of the operator.
         op_kwargs: Keyword arguments of the operator.
+        grad_position: True if the op and sampleInput support grad else False
         sample_name: A short name for identification in logs.
+        loss: loss for SampleInput
     """
 
     __slots__ = [
@@ -46,6 +48,7 @@ class OpSampleInput:
         "op_kwargs",
         "sample_name",
         "loss",
+        "grad_position"
     ]
 
     def __init__(
@@ -55,12 +58,14 @@ class OpSampleInput:
             op_kwargs: Optional[dict] = None,
             sample_name: Optional[str] = None,
             loss: Optional[float] = None,
+            grad_position: Optional[tuple] = None,
     ):
         self.op_input = op_input
         self.op_args = op_args
         self.op_kwargs = op_kwargs if op_kwargs is not None else {}
         self.sample_name = sample_name if sample_name is not None else "UnknownSample"
         self.loss = loss
+        self.grad_position = grad_position
 
     def transform(self, fn, method_name, convert_scalar_to_tensor = False):
         """Apply a transformation recursively to op_input/op_args/op_kwargs.
@@ -641,3 +646,11 @@ def is_op_input_dynamic(op_input):
                 break
         return result
     return False
+
+def get_intersection_grad_position(op_info, sample_input):
+    if sample_input.grad_position is None:
+        return op_info.grad_position
+    elif op_info.grad_position is None:
+        return sample_input.grad_position
+    else:
+        return tuple(sorted(set(op_info.grad_position) & set(sample_input.grad_position)))
