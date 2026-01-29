@@ -55,7 +55,7 @@ using GroupOptions = device::GroupOptions;
 using CreateDeviceCommFunc = std::function<bool(const std::string &)>;
 // FIFO queue of communicator initialization tasks. The element is a pair and group name and its communicator's buffer
 // size.
-using InitCommTaskQueue = std::queue<std::pair<std::string, int32_t>>;
+using InitCommTaskQueue = std::queue<std::pair<std::string, GroupOptions>>;
 // Group list to be initialized in order. The element will not be deleted.
 using InitCommTaskList = std::vector<std::string>;
 // Initialization task results for each group.
@@ -153,10 +153,10 @@ class RUNTIME_HARDWARE_EXPORT CollectiveManager {
   bool IsAsyncInitGlobalComm();
 
   // This interface will create communicator handle, including preprocessing like root info generating.
-  bool CreateDeviceCommunicator(const std::string &group_name, const int32_t buffsize = -1);
+  bool CreateDeviceCommunicator(const std::string &group_name, const GroupOptions &config);
 
   // Submit init task to init_comm_task_queue_.
-  void SubmitCreateDeviceCommTask(const std::string &group_name, const int32_t hccl_buffsize = -1);
+  void SubmitCreateDeviceCommTask(const std::string &group_name, const GroupOptions &config);
 
   // Wait all communicator to be initialized.
   bool WaitAllCommInitDone();
