@@ -243,11 +243,19 @@ def test_small_allocator():
     test_script_relpath = "test_small_allocator/test_small_allocator_script.py"
     test_script_abspath = os.path.join(cwd, test_script_relpath)
     _, stdout, _ = run_cmd(f"python {test_script_abspath}")
-    fragment_without_small_pool = int(stdout.split()[-1])
+    fragment_without_small_pool = 0
+    for line in stdout.split('\n'):
+        if "fragment_memory_stats" in line:
+            fragment_without_small_pool = int(line.split()[-1])
+            break
 
     os.environ['MS_ALLOC_CONF'] = "enable_small_pool:true"
     _, stdout, _ = run_cmd(f"python {test_script_abspath}")
-    fragment_with_small_pool = int(stdout.split()[-1])
+    fragment_with_small_pool = 0
+    for line in stdout.split('\n'):
+        if "fragment_memory_stats" in line:
+            fragment_with_small_pool = int(line.split()[-1])
+            break
 
     assert fragment_with_small_pool < fragment_without_small_pool
 
