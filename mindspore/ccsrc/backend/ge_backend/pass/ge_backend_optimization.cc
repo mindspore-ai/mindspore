@@ -22,8 +22,8 @@
 #include <vector>
 #include "include/utils/anfalgo.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
+#include "include/utils/ir_dump/dump_proto_interface.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "tools/profiler/profiling.h"
 #include "include/backend/common/pass_manager/graph_optimizer.h"

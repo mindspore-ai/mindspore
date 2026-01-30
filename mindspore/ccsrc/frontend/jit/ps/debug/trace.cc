@@ -28,7 +28,7 @@
 #include "ir/tensor.h"
 #include "ir/graph_utils.h"
 #include "include/utils/common.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "frontend/jit/ps/static_analysis/evaluator.h"
 #include "frontend/jit/ps/static_analysis/async_eval_result.h"
 #include "utils/log_adapter.h"

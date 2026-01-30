@@ -21,7 +21,7 @@
 #include "common/py_func_graph_fetcher.h"
 #include "utils/log_adapter.h"
 #include "frontend/jit/ps/parse/parse.h"
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
+#include "include/utils/ir_dump/draw_interface.h"
 #include "utils/convert_utils.h"
 
 #include "include/frontend/optimizer/optimizer.h"

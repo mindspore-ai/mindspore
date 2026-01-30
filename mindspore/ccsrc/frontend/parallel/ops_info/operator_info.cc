@@ -31,7 +31,7 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/graph_util/graph_utils.h"
 #include "primitive/sequence_ops.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
 #include "include/utils/parallel_context.h"
 #include "ir/tensor.h"
 #include "ir/value.h"

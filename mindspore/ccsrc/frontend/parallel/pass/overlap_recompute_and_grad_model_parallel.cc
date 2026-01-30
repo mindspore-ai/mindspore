@@ -22,7 +22,7 @@
 #include <string>
 #include <queue>
 
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/parallel_context.h"
 #include "include/utils/utils.h"
 #include "ir/func_graph_flag.h"

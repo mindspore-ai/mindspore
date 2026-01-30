@@ -34,7 +34,7 @@
 #include "include/frontend/operator/frontend_primitive_infer.h"
 #include "utils/ms_context.h"
 #include "include/utils/utils.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "ir/func_graph_cloner.h"
 
 namespace mindspore {

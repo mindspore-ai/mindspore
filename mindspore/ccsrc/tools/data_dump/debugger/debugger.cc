@@ -34,8 +34,8 @@
 #include "include/utils/comm_manager.h"
 #include "utils/config_manager.h"
 #include "include/utils/env_config_parser.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "tools/data_dump/dump_json_parser.h"
 #include "tools/data_dump/e2e_dump.h"
 #ifdef ENABLE_DEBUGGER

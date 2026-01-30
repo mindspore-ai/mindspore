@@ -22,7 +22,7 @@
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_matmul_split_fusion.h"
 #include "mindspore/ccsrc/backend/ge_backend/pass/fused_cast_add.h"
 #include "include/utils/anfalgo.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 
 namespace mindspore {
 class TestAttrsTransmitInPass : public UT::Common {

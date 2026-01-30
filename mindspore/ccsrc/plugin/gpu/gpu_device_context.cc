@@ -53,7 +53,7 @@
 #include "kernel/gpu/gpu_kernel_factory.h"
 #include "include/backend/common/pass_manager/common_backend_optimization.h"
 #include "include/backend/common/pass_manager/dynamic_shape_helper.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/comm_manager.h"
 #include "backend/common/pass/optimize_updatestate.h"
 #include "abstract/ops/primitive_infer_map.h"

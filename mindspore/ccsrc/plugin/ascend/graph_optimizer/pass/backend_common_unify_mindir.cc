@@ -19,8 +19,8 @@
 #include <sstream>
 #include <string>
 
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
+#include "include/utils/ir_dump/dump_proto_interface.h"
 #include "include/backend/common/pass_manager/optimizer.h"
 #include "tools/profiler/profiling.h"
 #include "include/utils/parallel_context.h"

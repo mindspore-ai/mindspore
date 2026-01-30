@@ -23,7 +23,7 @@
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "include/utils/anfalgo.h"
 #include "include/utils/common.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
 #include "tools/data_dump/utils.h"
 #include "utils/file_utils.h"
 

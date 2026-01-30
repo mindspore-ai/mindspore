@@ -21,8 +21,8 @@
 #include <algorithm>
 #include <utility>
 
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/draw_interface.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "primitive/structure_ops.h"
 #include "utils/hash_map.h"
 #include "ir/anf.h"

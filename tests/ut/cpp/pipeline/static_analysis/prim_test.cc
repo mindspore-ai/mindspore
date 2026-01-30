@@ -31,7 +31,7 @@
 #include "frontend/jit/ps/static_analysis/prim.h"
 #include "pipeline/static_analysis/helper.h"
 #include "frontend/operator/ops.h"
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
+#include "include/utils/ir_dump/draw_interface.h"
 #include "ir/tensor.h"
 #include "ir/tensor_new.h"
 #include "utils/symbolic.h"

@@ -28,7 +28,7 @@
 #include "utils/compile_config.h"
 #include "utils/ms_context.h"
 #include "include/utils/anfalgo.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "backend/common/expander/fallback/fallback_irbuilder.h"
 
 namespace mindspore {

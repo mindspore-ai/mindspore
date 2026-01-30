@@ -17,30 +17,9 @@
 #define MINDSPORE_CCSRC_UTILS_IR_DUMP_ANF_DUMP_UTILS_H_
 
 #include <string>
-#include <memory>
-#include <utility>
-#include <functional>
-
 #include "ir/anf.h"
-#include "include/utils/visible.h"
-#include "utils/callback_handler.h"
 
 namespace mindspore {
-COMMON_EXPORT std::string GetNodeFuncStr(const AnfNodePtr &nd);
-COMMON_EXPORT std::string GetKernelNodeName(const AnfNodePtr &anf_node);
-
-class COMMON_EXPORT AnfDumpHandler {
-  HANDLER_DEFINE(std::string, PrintInputTypeShapeFormat, AnfNodePtr);
-  HANDLER_DEFINE(std::string, PrintOutputTypeShapeFormat, AnfNodePtr);
-  HANDLER_DEFINE(std::string, PrintInputKernelObjectTypes, AnfNodePtr);
-  HANDLER_DEFINE(std::string, PrintOutputKernelObjectTypes, AnfNodePtr);
-  HANDLER_DEFINE(ValuePtr, InStrategyValue, AnfNodePtr);
-  HANDLER_DEFINE(ValuePtr, InStrategyStageValue, AnfNodePtr);
-  HANDLER_DEFINE(ValuePtr, OutStrategyValue, AnfNodePtr);
-  HANDLER_DEFINE(ValueTuplePtr, InLayoutValue, AnfNodePtr);
-  HANDLER_DEFINE(ValueTuplePtr, OutLayoutValue, AnfNodePtr);
-  HANDLER_DEFINE(std::string, ValueNodeStr, ValueNodePtr);
-  HANDLER_DEFINE(void, DumpDat, std::string, FuncGraphPtr);
-};
+std::string GetNodeFuncStr(const AnfNodePtr &nd);
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_UTILS_IR_DUMP_ANF_DUMP_UTILS_H_

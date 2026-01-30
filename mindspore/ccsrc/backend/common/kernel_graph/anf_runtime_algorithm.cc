@@ -43,7 +43,7 @@
 #include "include/utils/parallel_context.h"
 #include "include/utils/anfalgo.h"
 #include "include/utils/tensor_py.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
 #include "include/backend/common/kernel_graph/kernel_graph.h"
 #include "utils/convert_utils.h"

@@ -30,7 +30,7 @@
 #include "backend/ms_backend/graph_fusion/core/graph_kernel_utils.h"
 #include "backend/ms_backend/graph_fusion/graph_kernel_helper.h"
 #include "include/backend/common/kernel_graph/kernel_graph.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/parallel_context.h"
 #include "include/utils/utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"

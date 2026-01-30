@@ -42,7 +42,7 @@
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/symbol_resolver.h"
 #include "include/utils/pipeline/fallback.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
 #include "utils/log_adapter.h"
 #include "utils/trace_info.h"
 #include "include/utils/tensor_py.h"

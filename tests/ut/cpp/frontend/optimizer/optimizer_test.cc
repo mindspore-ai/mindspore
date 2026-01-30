@@ -27,7 +27,7 @@
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/gradient_eliminate.h"
 #include "frontend/optimizer/py_interpret_to_execute.h"
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
+#include "include/utils/ir_dump/draw_interface.h"
 #include "primitive/auto_generate/gen_ops_primitive_p.h"
 
 namespace mindspore {

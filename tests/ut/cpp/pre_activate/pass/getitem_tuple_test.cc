@@ -18,7 +18,7 @@
 #include "frontend/jit/ps/resource.h"
 #include "frontend/operator/ops.h"
 #include "ir/manager.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/utils.h"
 #include "include/backend/common/pass_manager/optimizer.h"
 #include "backend/common/pass/getitem_tuple.h"

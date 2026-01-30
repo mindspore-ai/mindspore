@@ -36,7 +36,7 @@
 
 #include "utils/ms_context.h"
 
-#include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
+#include "include/utils/ir_dump/dump_proto_interface.h"
 #include "include/utils/compile_cache_context.h"
 #include "utils/config_manager.h"
 #include "include/utils/python_utils.h"

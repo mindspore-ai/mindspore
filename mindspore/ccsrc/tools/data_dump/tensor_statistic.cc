@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "include/backend/common/kernel_graph/session_basic.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
 #include "tools/data_dump/common/csv_writer.h"
 #include "tools/data_dump/debugger/debugger_utils.h"
 #include "tools/data_dump/device_statistic/kernel_launcher.h"

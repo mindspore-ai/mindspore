@@ -21,7 +21,7 @@
 #include "primitive/arithmetic_ops.h"
 #include "common/py_func_graph_fetcher.h"
 #include "frontend/optimizer/ad/dfunctor.h"
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
+#include "include/utils/ir_dump/draw_interface.h"
 #include "utils/convert_utils.h"
 #include "ir/manager.h"
 #include "ir/value.h"

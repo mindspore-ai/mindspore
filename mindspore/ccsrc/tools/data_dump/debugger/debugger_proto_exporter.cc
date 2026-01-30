@@ -28,7 +28,7 @@
 #include "ir/dtype/tensor_type.h"
 #include "ir/graph_utils.h"
 #include "ir/scope.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
 #include "tools/data_dump/debugger/debugger.h"
 #include "tools/data_dump/debugger/debugger_utils.h"
 #include "tools/data_dump/dump_utils.h"

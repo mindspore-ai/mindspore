@@ -27,7 +27,7 @@
 #include "utils/log_adapter.h"
 #include "ir/graph_utils.h"
 #include "utils/misc.h"
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
+#include "include/utils/ir_dump/draw_interface.h"
 
 namespace mindspore {
 namespace abstract {

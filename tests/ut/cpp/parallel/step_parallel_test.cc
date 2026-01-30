@@ -24,7 +24,7 @@
 #include "frontend/parallel/parallel_preprocessor.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
 #include "common/py_func_graph_fetcher.h"
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
+#include "include/utils/ir_dump/draw_interface.h"
 #include "frontend/operator/ops.h"
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
 #include "include/utils/convert_utils_py.h"

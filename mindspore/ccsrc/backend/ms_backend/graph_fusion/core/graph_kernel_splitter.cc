@@ -33,7 +33,7 @@
 #include "backend/ms_backend/graph_fusion/core/graph_builder.h"
 #include "backend/ms_backend/graph_fusion/split_model/split_model_factory.h"
 #include "backend/ms_backend/graph_fusion/core/graph_kernel_splitter_rebuild.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "primitive/auto_generate/gen_ops_primitive_m.h"
 #include "primitive/auto_generate/gen_ops_primitive_r.h"
 #include "primitive/auto_generate/gen_ops_primitive_t.h"

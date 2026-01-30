@@ -26,7 +26,7 @@
 #include "utils/ms_context.h"
 #include "utils/trace_info.h"
 #include "frontend/operator/composite/do_signature.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "primitive/sequence_ops.h"
 #include "primitive/structure_ops.h"
 #include "primitive/framework_ops.h"

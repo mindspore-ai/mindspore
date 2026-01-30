@@ -18,7 +18,7 @@
 
 #include "frontend/jit/ps/resource.h"
 #include "frontend/jit/ps/action.h"
-#include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
+#include "include/utils/ir_dump/dump_proto_interface.h"
 #include "load_mindir/load_model.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"

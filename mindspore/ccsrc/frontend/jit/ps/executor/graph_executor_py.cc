@@ -42,7 +42,7 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/strategy.h"
 
-#include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
+#include "include/utils/ir_dump/dump_proto_interface.h"
 #include "mindspore/ccsrc/utils/symbol_engine/utils.h"
 #include "include/utils/compile_cache_context.h"
 #include "include/utils/tensor_py.h"

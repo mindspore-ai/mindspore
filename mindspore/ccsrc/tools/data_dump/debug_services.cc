@@ -37,7 +37,7 @@
 #include "include/utils/anfalgo.h"
 #include "include/utils/common.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
 #include "nlohmann/json.hpp"
 #include "tools/data_dump/debugger/debugger.h"
 #include "tools/data_dump/debugger/tensor_summary.h"

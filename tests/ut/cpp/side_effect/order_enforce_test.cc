@@ -27,7 +27,7 @@
 #include "frontend/jit/ps/action.h"
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "primitive/auto_generate/gen_ops_primitive_l.h"
 #include "primitive/auto_generate/gen_ops_primitive_t.h"
 

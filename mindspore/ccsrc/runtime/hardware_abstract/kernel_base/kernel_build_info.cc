@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include "utils/log_adapter.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
+#include "include/utils/ir_dump/anf_dump_utils_interface.h"
 #include "include/utils/anfalgo.h"
 
 namespace mindspore {

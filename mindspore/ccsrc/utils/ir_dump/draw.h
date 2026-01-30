@@ -23,7 +23,6 @@
 #include "utils/any.h"
 #include "utils/file_utils.h"
 #include "base/base.h"
-#include "include/utils/visible.h"
 
 namespace mindspore {
 namespace draw {
@@ -93,11 +92,6 @@ class ModelDigraph : public BaseDigraph {
   void Node(const AnfNodePtr &node, int id) override;
   void Edge(const AnfNodePtr &start, const AnfNodePtr &end, int idx, int id_start) override;
 };
-
-// API to draw
-COMMON_EXPORT void Draw(const std::string &filename, const FuncGraphPtr &func_graph);
-COMMON_EXPORT void DrawUserFuncGraph(const std::string &filename, const FuncGraphPtr &func_graph);
-
 }  // namespace draw
 }  // namespace mindspore
 

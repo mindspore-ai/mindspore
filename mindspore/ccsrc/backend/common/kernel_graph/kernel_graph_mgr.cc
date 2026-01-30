@@ -27,7 +27,7 @@
 #include <set>
 #include "primitive/sequence_ops.h"
 #include "primitive/framework_ops.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/backend/common/pass_manager/common_backend_optimization.h"
 #include "backend/common/kernel_graph/jit_call_graph.h"
 #include "utils/log_adapter.h"
@@ -40,7 +40,7 @@
 #include "utils/config_manager.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "load_mindir/load_model.h"
-#include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
+#include "include/utils/ir_dump/dump_proto_interface.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 #include "primitive/auto_generate/gen_ops_primitive_d.h"
 #include "primitive/auto_generate/gen_ops_primitive_l.h"

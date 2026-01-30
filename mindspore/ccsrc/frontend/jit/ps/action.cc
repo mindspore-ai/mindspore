@@ -25,8 +25,8 @@
 #include <algorithm>
 #include <functional>
 
-#include "mindspore/ccsrc/utils/ir_dump/draw.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/draw_interface.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "ir/core_ops_primitive.h"
 #include "primitive/sequence_ops.h"
 #include "primitive/framework_ops.h"

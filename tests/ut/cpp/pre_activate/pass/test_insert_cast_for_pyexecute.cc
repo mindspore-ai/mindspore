@@ -18,7 +18,7 @@
 #include "frontend/operator/ops.h"
 #include "ir/tensor.h"
 #include "ir/manager.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "common/py_func_graph_fetcher.h"
 #include "plugin/cpu/graph_optimizer/pass/train/insert_cast_to_pyexecute.h"
 #include "include/backend/common/pass_manager/optimizer.h"
@@ -27,7 +27,7 @@
 #include "kernel/kernel_build_info.h"
 #include "include/utils/utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {

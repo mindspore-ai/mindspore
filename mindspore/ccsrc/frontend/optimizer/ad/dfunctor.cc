@@ -40,7 +40,7 @@
 #include "utils/ms_context.h"
 #include "frontend/jit/ps/action.h"
 #include "frontend/jit/ps/parse/resolve.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/utils/pynative/adapter.h"
 #include "include/utils/pynative/grad_state.h"
 #include "include/utils/parallel_context.h"

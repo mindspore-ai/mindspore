@@ -17,7 +17,7 @@
 #include "utils/ms_context.h"
 #include "common/backend_common_test.h"
 #include "common/py_func_graph_fetcher.h"
-#include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
+#include "include/utils/ir_dump/anf_ir_dump_interface.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "include/runtime/hardware_abstract/kernel_base/graph_fusion/kash/kernel_pack.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_info.h"
