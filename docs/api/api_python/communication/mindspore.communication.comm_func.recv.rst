@@ -3,6 +3,8 @@ mindspore.communication.comm_func.recv
 
 .. py:function:: mindspore.communication.comm_func.recv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0)
 
+    `mindspore.communication.comm_func.recv` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+
     同步接收Tensor到指定进程。
 
     .. note::

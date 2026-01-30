@@ -3,6 +3,8 @@ mindspore.communication.comm_func.reduce
 
 .. py:function:: mindspore.communication.comm_func.reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP)
 
+    `mindspore.communication.comm_func.reduce` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+
     归约指定通信组中的Tensor，并将归约结果发送到目标为dst的进程(全局的进程编号)中，返回发送到目标进程的Tensor。
 
     .. note::

@@ -20,6 +20,7 @@ from mindspore.communication import GlobalComm, get_group_rank_from_world_rank, 
 from mindspore.communication.management import _get_group
 from mindspore.communication._comm_helper import _get_group_rank_from_world_rank_from_cache_helper, _get_rank_helper
 from mindspore.common.tensor import Tensor
+from mindspore.common._decorator import deprecated
 from mindspore._c_expression import TensorPy as Tensor_
 from mindspore.ops import ReduceOp, cat
 from mindspore.ops._primitive_cache import _get_cache_prim
@@ -197,8 +198,12 @@ def _contiguous(tensor):
     return tensor
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.all_reduce", False)
 def all_reduce(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async_op=False):
     """
+    `mindspore.communication.comm_func.all_reduce` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Reduce tensors across all devices in such a way that all devices will get the same final result,
     returns the tensor which is all reduced.
 
@@ -224,7 +229,7 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -262,8 +267,12 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async
     return _deal_comm_outputs(output, async_op)
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.all_gather_into_tensor", False)
 def all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP, async_op=False):
     """
+    `mindspore.communication.comm_func.comm_func.comm_func.all_gather_into_tensor` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Gathers tensors from the specified communication group and returns the tensor which is all gathered.
 
     Note:
@@ -289,7 +298,7 @@ def all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP, async_op=F
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -330,8 +339,12 @@ def all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP, async_op=F
     return _deal_comm_outputs(output, async_op)
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.reduce_scatter_tensor", False)
 def reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async_op=False):
     r"""
+    `mindspore.communication.comm_func.reduce_scatter_tensor` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Reduces and scatters tensors from the specified communication group and
     returns the tensor which is reduced and scattered.
 
@@ -359,7 +372,7 @@ def reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_G
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -400,8 +413,12 @@ def reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_G
     return _deal_comm_outputs(output, async_op)
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.reduce", False)
 def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
     """
+    `mindspore.communication.comm_func.reduce` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Reduces tensors across the processes in the specified communication group, sends the result
     to the target dst(global rank), and returns the tensor which is sent to the target process.
 
@@ -427,7 +444,7 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -466,6 +483,9 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
 
 class P2POp:
     """
+    `mindspore.communication.comm_func.P2POp` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Object for `batch_isend_irecv` input, to store information of ``"isend"`` and ``"irecv"``.
 
     Note:
@@ -495,7 +515,7 @@ class P2POp:
         NotImplementedError: when `tag` is not 0.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         >>> import numpy as np
@@ -511,6 +531,7 @@ class P2POp:
         >>> recv_op = comm.comm_func.P2POp('irecv', (), 0, recv_dtype=ms.float32)
     """
 
+    @deprecated("2.9.0", "mindspore.ops.communication.P2POp", False)
     def __init__(self, op, tensor, peer, group=None, tag=0, *, recv_dtype=None):
         self.op = op
         self.tensor = tensor
@@ -542,8 +563,12 @@ class P2POp:
         return object.__new__(cls)
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.batch_isend_irecv", False)
 def batch_isend_irecv(p2p_op_list):
     """
+    `mindspore.communication.comm_func.batch_isend_irecv` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Batch send and recv tensors asynchronously.
 
     Note:
@@ -566,7 +591,7 @@ def batch_isend_irecv(p2p_op_list):
         TypeError: If `p2p_op_list` are not all type of `P2POp`.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -658,8 +683,12 @@ def batch_isend_irecv(p2p_op_list):
     return output
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.scatter_tensor", False)
 def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
     r"""
+    `mindspore.communication.comm_func.scatter_tensor` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Scatter tensor evenly across the processes in the specified communication group.
 
     Note:
@@ -684,7 +713,7 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        Deprecated
 
     Examples:
         .. note::
@@ -724,8 +753,12 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
     return _op(tensor)
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.gather_into_tensor", False)
 def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
     r"""
+    `mindspore.communication.comm_func.gather_into_tensor` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Gathers tensors from the specified communication group. The operation will gather the tensor
     from processes according to dimension 0.
 
@@ -751,7 +784,7 @@ def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -790,8 +823,12 @@ def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
     return _op(tensor)
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.broadcast", False)
 def broadcast(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
     """
+    `mindspore.communication.comm_func.broadcast` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Broadcasts the tensor to the whole group.
 
     Note:
@@ -813,7 +850,7 @@ def broadcast(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If device target is invalid, or backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        Deprecated
 
     Examples:
         .. note::
@@ -854,8 +891,12 @@ def broadcast(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
     return _op((tensor,))[0]
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.barrier", False)
 def barrier(group=GlobalComm.WORLD_COMM_GROUP):
     """
+    `mindspore.communication.comm_func.barrier` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Synchronizes all processes in the specified group. Once the process call this operation, it will be blocked until
     all processes call this operation. After all processes finish calling the operations, the blocked processes
     will be woken and continue their task.
@@ -868,7 +909,7 @@ def barrier(group=GlobalComm.WORLD_COMM_GROUP):
         RuntimeError: If backend is invalid, or distributed initialization fails.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -919,8 +960,12 @@ def _deal_comm_outputs(output, async_op, exec_sync=False):
     return (output, default_handle)
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.send", False)
 def send(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     """
+    `mindspore.communication.comm_func.send` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Send tensors to the specified dest_rank.
 
     Note:
@@ -940,7 +985,7 @@ def send(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
         ValueError: If the rank ID of the process is greater than the rank size of the communication group.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -988,8 +1033,12 @@ def send(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     _deal_comm_outputs(output, False)
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.recv", False)
 def recv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     """
+    `mindspore.communication.comm_func.recv` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Receive tensors from src.
 
     Note:
@@ -1015,7 +1064,7 @@ def recv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
         ValueError: If the rank ID of the process is greater than the rank size of the communication group.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -1067,8 +1116,12 @@ def recv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     return output
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.isend", False)
 def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     """
+    `mindspore.communication.comm_func.isend` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Send tensors to the specified dest_rank asynchronously.
 
     Note:
@@ -1091,7 +1144,7 @@ def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
         ValueError: If the rank ID of the process is greater than the rank size of the communication group.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -1141,8 +1194,12 @@ def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     return handle
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.irecv", False)
 def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     """
+    `mindspore.communication.comm_func.irecv` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Receive tensors from src asynchronously.
 
     Note:
@@ -1169,7 +1226,7 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
         ValueError: If the rank ID of the process is greater than the rank size of the communication group.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -1218,8 +1275,12 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     return _deal_comm_outputs(output, True)
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.all_to_all_with_output_shape", False)
 def all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=None, async_op=False):
     """
+    `mindspore.communication.comm_func.all_to_all_with_output_shape` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     scatter and gather list of tensor to/from all rank according to input/output tensor list.
 
     Note:
@@ -1246,7 +1307,7 @@ def all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=Non
         TypeError: If tensors in `input_tensor_list` are not the same type.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -1367,9 +1428,13 @@ def _get_all_to_all_single_numel_list(tensor_shape, output_shape, output_split_s
 _ALL_TO_ALL_CACHE = {}
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.all_to_all_single_with_output_shape", False)
 def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes=None,
                                         input_split_sizes=None, group=None, async_op=False):
     """
+    `mindspore.communication.comm_func.all_to_all_single_with_output_shape` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Based on the slice size of the user input, the input `tensor` is sliced and sent to other devices
     and receives the sliced chunks from the other devices, which are then merged into an output Tensor.
 
@@ -1400,7 +1465,7 @@ def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes
         TypeError: If `output_shape` is not tuple or tensors.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::
@@ -1492,8 +1557,12 @@ def get_cache_group_rank(group=GlobalComm.WORLD_COMM_GROUP):
     return group_rank
 
 
+@deprecated("2.9.0", "mindspore.ops.communication.all_to_all_v_c", False)
 def all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False):
     r"""
+    `mindspore.communication.comm_func.all_to_all_v_c` is deprecated from version 2.9.0 and will be
+    removed in a future version.
+
     Based on the user-specified split size, the input tensor is divided and sent to other devices, where split chunks
     are received and then merged into a single output tensor.
 
@@ -1519,7 +1588,7 @@ def all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False)
         TypeError: If `input` or `output` is not Tensor, `group` is not str, or `async_op` is not bool.
 
     Supported Platforms:
-        ``Ascend``
+        Deprecated
 
     Examples:
         .. note::

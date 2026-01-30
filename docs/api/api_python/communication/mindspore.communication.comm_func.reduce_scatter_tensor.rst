@@ -3,6 +3,8 @@ mindspore.communication.comm_func.reduce_scatter_tensor
 
 .. py:function:: mindspore.communication.comm_func.reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async_op=False)
 
+    `mindspore.communication.comm_func.reduce_scatter_tensor` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+
     归约并且分发指定通信组中的Tensor，返回分发后的Tensor。
 
     .. note::

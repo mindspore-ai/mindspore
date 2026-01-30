@@ -3,6 +3,8 @@ mindspore.communication.comm_func.barrier
 
 .. py:function:: mindspore.communication.comm_func.barrier(group=GlobalComm.WORLD_COMM_GROUP)
 
+    `mindspore.communication.comm_func.barrier` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+
     同步通信域内的多个进程。进程调用到该算子后进入阻塞状态，直到通信域内所有进程调用到该算子，进程被唤醒并继续执行。
 
     参数：

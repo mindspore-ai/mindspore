@@ -3,6 +3,8 @@ mindspore.communication.comm_func.scatter_tensor
 
 .. py:function:: mindspore.communication.comm_func.scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP)
 
+    `mindspore.communication.comm_func.scatter_tensor` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+
     将输入的Tensor均匀散射到通信域的卡上。
 
     .. note::

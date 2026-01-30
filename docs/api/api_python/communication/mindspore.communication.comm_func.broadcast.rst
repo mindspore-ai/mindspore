@@ -3,6 +3,8 @@ mindspore.communication.comm_func.broadcast
 
 .. py:function:: mindspore.communication.comm_func.broadcast(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP)
 
+    `mindspore.communication.comm_func.broadcast` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+
     对输入数据整组广播。
 
     .. note::
