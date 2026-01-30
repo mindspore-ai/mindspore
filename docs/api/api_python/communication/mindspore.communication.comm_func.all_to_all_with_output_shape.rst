@@ -4,6 +4,7 @@ mindspore.communication.comm_func.all_to_all_with_output_shape
 .. py:function:: mindspore.communication.comm_func.all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=None, async_op=False)
 
     `mindspore.communication.comm_func.all_to_all_with_output_shape` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.communication.all_to_all` 替代。
 
     根据用户输入的张量列表，将对应的张量发送到远端设备，并从其他设备接收张量，返回一个接收的张量列表。
 

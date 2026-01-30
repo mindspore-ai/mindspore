@@ -4,6 +4,7 @@ mindspore.communication.comm_func.P2POp
 .. py:class:: mindspore.communication.comm_func.P2POp(op, tensor, peer, group=None, tag=0, *, recv_dtype=None)
 
     `mindspore.communication.comm_func.P2POp` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.communication.P2POp` 替代。
 
     用于存放关于'isend'、'irecv'相关的信息，并用于 `batch_isend_irecv` 接口的入参。
 

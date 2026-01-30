@@ -4,6 +4,7 @@ mindspore.communication.comm_func.isend
 .. py:function:: mindspore.communication.comm_func.isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0)
 
     `mindspore.communication.comm_func.isend` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.communication.isend` 替代。
 
     异步发送Tensor到指定进程。
 

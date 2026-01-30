@@ -202,7 +202,7 @@ def _contiguous(tensor):
 def all_reduce(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async_op=False):
     """
     `mindspore.communication.comm_func.all_reduce` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.all_reduce` instead.
 
     Reduce tensors across all devices in such a way that all devices will get the same final result,
     returns the tensor which is all reduced.
@@ -270,8 +270,9 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async
 @deprecated("2.9.0", "mindspore.ops.communication.all_gather_into_tensor", False)
 def all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP, async_op=False):
     """
-    `mindspore.communication.comm_func.comm_func.comm_func.all_gather_into_tensor` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    `mindspore.communication.comm_func.comm_func.comm_func.all_gather_into_tensor` is deprecated from version 2.9.0
+    and will be removed in a future version. Please use :func:`mindspore.ops.communication.all_gather_into_tensor`
+    instead.
 
     Gathers tensors from the specified communication group and returns the tensor which is all gathered.
 
@@ -343,7 +344,7 @@ def all_gather_into_tensor(tensor, group=GlobalComm.WORLD_COMM_GROUP, async_op=F
 def reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP, async_op=False):
     r"""
     `mindspore.communication.comm_func.reduce_scatter_tensor` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.reduce_scatter_tensor` instead.
 
     Reduces and scatters tensors from the specified communication group and
     returns the tensor which is reduced and scattered.
@@ -417,7 +418,7 @@ def reduce_scatter_tensor(tensor, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_G
 def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
     """
     `mindspore.communication.comm_func.reduce` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.reduce` instead.
 
     Reduces tensors across the processes in the specified communication group, sends the result
     to the target dst(global rank), and returns the tensor which is sent to the target process.
@@ -484,7 +485,7 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=GlobalComm.WORLD_COMM_GROUP):
 class P2POp:
     """
     `mindspore.communication.comm_func.P2POp` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.P2POp` instead.
 
     Object for `batch_isend_irecv` input, to store information of ``"isend"`` and ``"irecv"``.
 
@@ -567,7 +568,7 @@ class P2POp:
 def batch_isend_irecv(p2p_op_list):
     """
     `mindspore.communication.comm_func.batch_isend_irecv` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.batch_isend_irecv` instead.
 
     Batch send and recv tensors asynchronously.
 
@@ -687,7 +688,7 @@ def batch_isend_irecv(p2p_op_list):
 def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
     r"""
     `mindspore.communication.comm_func.scatter_tensor` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.scatter_tensor` instead.
 
     Scatter tensor evenly across the processes in the specified communication group.
 
@@ -757,7 +758,7 @@ def scatter_tensor(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
 def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
     r"""
     `mindspore.communication.comm_func.gather_into_tensor` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.gather_into_tensor` instead.
 
     Gathers tensors from the specified communication group. The operation will gather the tensor
     from processes according to dimension 0.
@@ -827,7 +828,7 @@ def gather_into_tensor(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP):
 def broadcast(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
     """
     `mindspore.communication.comm_func.broadcast` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.broadcast` instead.
 
     Broadcasts the tensor to the whole group.
 
@@ -895,7 +896,7 @@ def broadcast(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP):
 def barrier(group=GlobalComm.WORLD_COMM_GROUP):
     """
     `mindspore.communication.comm_func.barrier` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.barrier` instead.
 
     Synchronizes all processes in the specified group. Once the process call this operation, it will be blocked until
     all processes call this operation. After all processes finish calling the operations, the blocked processes
@@ -964,7 +965,7 @@ def _deal_comm_outputs(output, async_op, exec_sync=False):
 def send(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     """
     `mindspore.communication.comm_func.send` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.send` instead.
 
     Send tensors to the specified dest_rank.
 
@@ -1037,7 +1038,7 @@ def send(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
 def recv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     """
     `mindspore.communication.comm_func.recv` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.recv` instead.
 
     Receive tensors from src.
 
@@ -1120,7 +1121,7 @@ def recv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
 def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     """
     `mindspore.communication.comm_func.isend` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.isend` instead.
 
     Send tensors to the specified dest_rank asynchronously.
 
@@ -1198,7 +1199,7 @@ def isend(tensor, dst=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
 def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     """
     `mindspore.communication.comm_func.irecv` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.irecv` instead.
 
     Receive tensors from src asynchronously.
 
@@ -1275,11 +1276,11 @@ def irecv(tensor, src=0, group=GlobalComm.WORLD_COMM_GROUP, tag=0):
     return _deal_comm_outputs(output, True)
 
 
-@deprecated("2.9.0", "mindspore.ops.communication.all_to_all_with_output_shape", False)
+@deprecated("2.9.0", "mindspore.ops.communication.all_to_all", False)
 def all_to_all_with_output_shape(output_shape_list, input_tensor_list, group=None, async_op=False):
     """
     `mindspore.communication.comm_func.all_to_all_with_output_shape` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.all_to_all` instead.
 
     scatter and gather list of tensor to/from all rank according to input/output tensor list.
 
@@ -1428,12 +1429,12 @@ def _get_all_to_all_single_numel_list(tensor_shape, output_shape, output_split_s
 _ALL_TO_ALL_CACHE = {}
 
 
-@deprecated("2.9.0", "mindspore.ops.communication.all_to_all_single_with_output_shape", False)
+@deprecated("2.9.0", "mindspore.ops.communication.all_to_all_single", False)
 def all_to_all_single_with_output_shape(output_shape, tensor, output_split_sizes=None,
                                         input_split_sizes=None, group=None, async_op=False):
     """
-    `mindspore.communication.comm_func.all_to_all_single_with_output_shape` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    `mindspore.communication.comm_func.all_to_all_single_with_output_shape` is deprecated from version 2.9.0 and
+    will be removed in a future version. Please use :func:`mindspore.ops.communication.all_to_all_single` instead.
 
     Based on the slice size of the user input, the input `tensor` is sliced and sent to other devices
     and receives the sliced chunks from the other devices, which are then merged into an output Tensor.
@@ -1561,7 +1562,7 @@ def get_cache_group_rank(group=GlobalComm.WORLD_COMM_GROUP):
 def all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False):
     r"""
     `mindspore.communication.comm_func.all_to_all_v_c` is deprecated from version 2.9.0 and will be
-    removed in a future version.
+    removed in a future version. Please use :func:`mindspore.ops.communication.all_to_all_v_c` instead.
 
     Based on the user-specified split size, the input tensor is divided and sent to other devices, where split chunks
     are received and then merged into a single output tensor.
@@ -1608,7 +1609,6 @@ def all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False)
         >>> from mindspore.communication.comm_func import all_to_all_v_c
         >>> from mindspore import Tensor
         >>> from mindspore.ops import zeros
-        >>>
         >>> init_process_group()
         >>> this_rank = get_rank()
         >>> if this_rank == 0:

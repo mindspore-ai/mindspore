@@ -4,6 +4,7 @@ mindspore.communication.comm_func.all_to_all_v_c
 .. py:function:: mindspore.communication.comm_func.all_to_all_v_c(output, input, send_count_matrix, group=None, async_op=False)
 
     `mindspore.communication.comm_func.all_to_all_v_c` 从2.9.0版本开始已被弃用，并将在未来版本中被移除。
+    建议使用 :func:`mindspore.ops.communication.all_to_all_v_c` 替代。
 
     根据用户输入的切分大小，把输入tensor切分后，发送到其他的设备上，并从其他设备接收切分块，然后合并到一个输出tensor中。
 
