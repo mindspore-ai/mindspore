@@ -13,4 +13,4 @@ mindspore.ops.aminmax
         - **keepdims** (bool，可选) - 输出tensor是否保留维度。默认 ``False`` 。
 
     返回：
-        两个tensor组成的tuple(min, max)。
+        由两个tensor组成的tuple(min, max)。

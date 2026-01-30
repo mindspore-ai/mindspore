@@ -6,7 +6,7 @@ mindspore.ops.addr
     计算 `vec1` 和 `vec2` 的外积，并加到 `x` 中。
 
     .. note::
-        - 如果 `vec1` 是一个大小为 :math:`N` 的向量， `vec2` 是一个大小为 :math:`M` 的向量，则 `x` 的大小可广播为  。
+        - 如果 `vec1` 是一个大小为 :math:`N` 的向量， `vec2` 是一个大小为 :math:`M` 的向量，
           则 `x` 必须能够与大小为 :math:`(N, M)` 的矩阵进行广播，且输出将是大小为 :math:`(N, M)` 的矩阵。
         - 若 `beta` 为0，那么 `input` 将会被忽略。
 

@@ -1908,7 +1908,6 @@ def flash_attention_score(query, key, value, head_num, real_shift=None, drop_mas
         TypeError: Dtype of `real_shift` has a different dtype as `query`.
         TypeError: `scalar_value` or `keep_prob` is not a double number.
         TypeError: `input_layout` is not a string.
-        TypeError: `num_key_value_heads` is not an int.
         TypeError: `sparse_mode` is not an int.
         TypeError: `real_shift` is not Tensor type.
         TypeError: `drop_mask` is not Tensor type.

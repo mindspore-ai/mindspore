@@ -16,9 +16,9 @@ mindspore.ops.add_rms_norm
         这是一个实验性API，后续可能修改或删除。该API目前只支持在Atlas A2训练系列产品上使用。
 
     参数：
-        - **x1** (Tensor) - AddRmsNorm的输入, 支持的数据类型为: float16、float32、bfloat16。
-        - **x2** (Tensor) - AddRmsNorm的输入, 支持的数据类型为: float16、float32、bfloat16。
-        - **gamma** (Tensor) - 可训练参数（:math:`\gamma`），支持的数据类型： float16、float32、bfloat16。
+        - **x1** (Tensor) - AddRmsNorm的输入，支持的数据类型为：float16、float32、bfloat16。
+        - **x2** (Tensor) - AddRmsNorm的输入，支持的数据类型为：float16、float32、bfloat16。
+        - **gamma** (Tensor) - 可训练参数（:math:`\gamma`），支持的数据类型：float16、float32、bfloat16。
         - **epsilon** (float, 可选) - 一个取值范围为(0, 1]的浮点值，用于避免除零。默认 ``1e-6`` 。
 
     返回：

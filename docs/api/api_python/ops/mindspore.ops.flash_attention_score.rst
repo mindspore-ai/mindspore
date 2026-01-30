@@ -108,7 +108,6 @@ mindspore.ops.flash_attention_score
         - **TypeError** - `real_shift` 的数据类型与 `query` 不一致。
         - **TypeError** - `scalar_value` 或 `keep_prob` 不是double类型。
         - **TypeError** - `input_layout` 不是字符串。
-        - **TypeError** - `num_key_value_heads` 不是整数。
         - **TypeError** - `sparse_mode` 不是整数。
         - **TypeError** - `real_shift` 不是Tensor。
         - **TypeError** - `drop_mask` 不是Tensor。

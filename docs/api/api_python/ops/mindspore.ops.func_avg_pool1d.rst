@@ -12,7 +12,7 @@ mindspore.ops.avg_pool1d
         \text{input}(N_i, C_j, s_0 \times l + n)
 
     .. warning::
-        `kernel_size` 取值为[1, 255]范围内的正整数， `stride` 的取值为[1, 63]范围内的正整数。
+        `kernel_size` 取值为[1, 255]范围内的正整数， `stride` 取值为[1, 63]范围内的正整数。
 
     参数：
         - **input_x** (Tensor) - 输入shape为 :math:`(N, C_{in}, L_{in})` 的Tensor。
@@ -31,5 +31,5 @@ mindspore.ops.avg_pool1d
         - **TypeError** - `ceil_mode` 或 `count_include_pad` 不是bool。
         - **ValueError** - `input_x` 的shape长度不等于3。
         - **ValueError** - `kernel_size` 或 `stride` 小于1。
-        - **ValueError** - `padding` 不是int或者tuple的长度不等于2。
+        - **ValueError** - `padding` 不是int也不是长度为 2 的 tuple。
         - **ValueError** - `padding` 的值小于0。

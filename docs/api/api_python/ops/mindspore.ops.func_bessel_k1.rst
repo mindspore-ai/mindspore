@@ -5,7 +5,6 @@ mindspore.ops.bessel_k1
 
     逐元素计算输入tensor的第二类一阶修正贝塞尔函数值。
 
-
     计算公式定义如下：
 
     .. math::

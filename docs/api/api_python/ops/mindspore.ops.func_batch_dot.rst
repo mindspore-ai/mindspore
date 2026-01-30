@@ -8,7 +8,7 @@ mindspore.ops.batch_dot
     计算 `x1` 和 `x2` 中的向量点积。
 
     .. note::
-        - `x1` 和 `x2` 的第零维表示batch数量,  `x1` 和 `x2` 数据类型为float32且秩大于或等于2。
+        `x1` 和 `x2` 的第零维表示batch数量， `x1` 和 `x2` 数据类型为float32且秩大于或等于2。
 
     .. math::
         output = x1[batch, :] · x2[batch, :]

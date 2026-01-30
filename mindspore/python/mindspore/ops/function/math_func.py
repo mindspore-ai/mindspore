@@ -11754,7 +11754,7 @@ def batch_dot(x1, x2, axes=None):
     Computation of batch dot product between samples in two tensors containing batch dims.
 
     .. note::
-        - `x1` or `x2` first dimension is batch size. Datatype must be float32 and the rank must
+        `x1` or `x2` first dimension is batch size. Datatype must be float32 and the rank must
           be greater than or equal to 2.
 
     .. math::
