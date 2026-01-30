@@ -296,7 +296,8 @@ def test_morph_inner_func_with_complex_args(morph_fn):
     Feature: Morph Primitive
     Description: Verify that Morph can correctly execute an inner function using complex argument signatures,
                  including keyword-only arguments, *args, and **kwargs.
-    Expectation: The result should be (a + b) * (c + d) = (2.0 + 3.0) * (4.0 + 5.0) = 45.0.
+    Expectation: The forward result should be (a + b) * (c + d) = (2.0 + 3.0) * (4.0 + 5.0) = 45.0,
+                 The grad of a, b, c, d should be 9.0, 9.0, 5.0, 5.0.
     """
 
     class MorphNet(nn.Cell):
@@ -313,5 +314,9 @@ def test_morph_inner_func_with_complex_args(morph_fn):
     d = Tensor(5.0, dtype=ms.float32)
 
     net = MorphNet()
-    out = ms.jit(net)(a, b, c, d)
+    out, grad = ms.jit(ms.value_and_grad(net, grad_position=(0, 1, 2, 3)))(a, b, c, d)
     assert np.allclose(out.asnumpy(), 45.0)
+    assert np.allclose(grad[0].asnumpy(), 9.0)
+    assert np.allclose(grad[1].asnumpy(), 9.0)
+    assert np.allclose(grad[2].asnumpy(), 5.0)
+    assert np.allclose(grad[3].asnumpy(), 5.0)

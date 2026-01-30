@@ -429,6 +429,12 @@ REGISTER_OPT_PASS_FUNC(OffloadActivationWrapper)
 bool EventMethodActionWrapper(const FuncGraphPtr &root, const opt::OptimizerPtr &) { return EventMethod(root); }
 REGISTER_OPT_PASS_FUNC(EventMethodActionWrapper)
 
+bool RewriterBeforeOptAWrapper(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) {
+  auto manager = optimizer->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  return opt::RewriterBeforeOptA(root, manager);
+}
+
 bool parallel_mode() {
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   return (parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel);
@@ -457,6 +463,7 @@ void AddMetaMorphosis(const ResourcePtr &resource, const std::string &add_before
         {{"meta_morphosis", opt::OptPassConfig({irpass.meta_morphosis_}, true)},
          {"meta_morphosis_renormalize", opt::OptPassConfig::Renormalize(true)},
          {"meta_morphosis_event_method", opt::OptPassConfig(EventMethodActionWrapper, true)},
+         {"meta_morphosis_rewriter_before_opt_a", opt::OptPassConfig(RewriterBeforeOptAWrapper, true)},
          {"meta_morphosis_auto_monad_grad", opt::OptPassConfig(ReAutoMonadWrapper, true), jump_to}});
       (void)map_a->insert(it, map_meta_morph.begin(), map_meta_morph.end());
     }
