@@ -14,7 +14,7 @@
             - **dataset** (Dataset) - 表示用于构建SentencePiece对象的数据集。
             - **col_names** (list) - 表示列名称的列表。
             - **vocab_size** (int) - 表示词汇大小。
-            - **character_coverage** (float) - 表示模型涵盖的字符数量。推荐值： ``0.9995`` （适用于具有丰富字符集的语言，如日文或中文）、 ``1.0`` （适用于具有小字符集的其他语言）。
+            - **character_coverage** (float) - 表示模型涵盖的字符比例。推荐值： ``0.9995`` （适用于具有丰富字符集的语言，如日文或中文）、 ``1.0`` （适用于具有小字符集的其他语言）。
             - **model_type** (:class:`~.text.SentencePieceModel`) - 想要使用的子词算法。可选值详见 :class:`~.text.SentencePieceModel` 。
             - **params** (dict) - 表示没有传入参数的字典。
 
@@ -29,7 +29,7 @@
         参数：
             - **file_path** (list) - 表示包含SentencePiece文件路径的一个列表。
             - **vocab_size** (int) - 表示词汇大小。
-            - **character_coverage** (float) - 表示模型涵盖的字符数量。推荐值： ``0.9995`` （适用于具有丰富字符集的语言，如日文或中文）、 ``1.0`` （适用于具有小字符集的其他语言）。
+            - **character_coverage** (float) - 表示模型涵盖的字符比例。推荐值： ``0.9995`` （适用于具有丰富字符集的语言，如日文或中文）、 ``1.0`` （适用于具有小字符集的其他语言）。
             - **model_type** (:class:`~.text.SentencePieceModel`) - 想要使用的子词算法。可选值详见 :class:`~.text.SentencePieceModel` 。
             - **params** (dict) - 表示没有传入参数的字典（参数派生自SentencePiece库）。
 

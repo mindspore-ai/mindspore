@@ -15,7 +15,7 @@ mindspore.dataset.text.Ngram
         - **right_pad** (tuple, 可选) - 指定序列的右侧填充，传入tuple的形式为 ("pad_token", pad_width)。
           pad_width 的上限值为 `n` -1。例如，指定 `right_pad=("_", 2)` 将用 "__" 填充序列的右侧。默认值： ``("", 0)`` 。
         - **separator** (str, 可选) - 指定用于将字符串连接在一起的分隔符。
-          例如，如果对 ["mindspore", "amazing"] 应用 2-gram 并指定分隔符为 ``"-"`` ，结果将是 ["mindspore-amazing"]。默认值： ``" "`` ，使用空格作为分隔符。
+          例如，对 ["mindspore", "amazing"] 应用 2-gram 并指定分隔符为 ``"-"`` ，结果将是 ["mindspore-amazing"]。默认值： ``" "`` ，使用空格作为分隔符。
 
     异常：
         - **TypeError** - 参数 `n` 包含的值类型不为int。

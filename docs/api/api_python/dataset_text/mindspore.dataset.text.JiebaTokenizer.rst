@@ -13,7 +13,7 @@ mindspore.dataset.text.JiebaTokenizer
     参数：
         - **hmm_path** (str) - 隐式马尔可夫模型分词所使用的词典文件路径。
         - **mp_path** (str) - 最大概率法分词所使用的词典文件路径。
-        - **mode** (:class:`~.text.JiebaMode`, 可选) - 想要使用的分词算法。可选值详见 :class:`~.text.JiebaMode` 。
+        - **mode** (:class:`~.text.JiebaMode`, 可选) - 想要使用的分词算法。可选值详见 :class:`~.text.JiebaMode` 。默认值： ``JiebaMode.MIX`` 。
         - **with_offsets** (bool, 可选) - 是否输出各Token在原字符串中的起始和结束偏移量。默认值： ``False`` 。
 
     异常：
@@ -32,9 +32,9 @@ mindspore.dataset.text.JiebaTokenizer
 
         参数：
             - **user_dict** (Union[str, dict[str, int]]) - 待添加到Vocab中的词映射。
-              若输入类型为str，表示存储待添加词映射的文件路径，文件的每一行需包含两个字段，间隔一个空格，其中第一个\
-              字段表示词本身，第二个字段需为数字，表示词频。无效的行将被忽略，且不返回错误或告警。
-              若输入类型为dict[str, int]，表示存储待添加词映射的字典，其中键名为词本身，键值为词频。
+              若输入类型为str，表示存储待添加词映射的文件路径。文件的每一行需包含两个字段，间隔一个空格。其中第一个\
+              字段表示词本身；第二个字段需为数字，表示词频。无效的行将被忽略，且不返回错误或告警。
+              若输入类型为dict[str, int]，表示存储待添加词映射的字典，其中键名为词本身、键值为词频。
 
     .. py:method:: add_word(word, freq=None)
 

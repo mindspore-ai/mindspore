@@ -3,7 +3,7 @@ mindspore.dataset.text.RegexReplace
 
 .. py:class:: mindspore.dataset.text.RegexReplace(pattern, replace, replace_all=True)
 
-    使用正则表达式将输入 UTF-8 字符串的部分字符串替换为指定文本。
+    使用正则表达式将输入 UTF-8 字符串中的部分内容替换为指定文本。
 
     .. note:: Windows平台尚不支持 `RegexReplace` 。
 
