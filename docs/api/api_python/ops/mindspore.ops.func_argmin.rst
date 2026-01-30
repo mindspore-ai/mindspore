@@ -3,7 +3,7 @@ mindspore.ops.argmin
 
 .. py:function:: mindspore.ops.argmin(input, axis=None, keepdims=False)
 
-    返回tensor在指定轴上的最大值索引。
+    返回tensor在指定轴上的最小值索引。
 
     参数：
         - **input** (Tensor) - 输入tensor。

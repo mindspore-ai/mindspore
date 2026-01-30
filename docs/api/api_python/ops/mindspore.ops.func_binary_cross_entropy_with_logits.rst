@@ -56,7 +56,7 @@ mindspore.ops.binary_cross_entropy_with_logits
 
     异常：
         - **TypeError** - 输入 `input` ， `target` ， `weight` ， `pos_weight` 不为Tensor。
-        - **TypeError** - 输入 `input` ， `target` ， `weight` ， `pos_weight` 的数据类型不是float16, float32或bfloat16。
+        - **TypeError** - 输入 `input` ， `target` ， `weight` ， `pos_weight` 的数据类型不是float16，float32或bfloat16。
         - **TypeError** - `reduction` 输入数据类型不为string。
         - **ValueError** - `weight` 或 `pos_weight` 不能广播到shape为 `input` 的Tensor。
         - **ValueError** - `reduction` 不为 ``'none'`` 、 ``'mean'``  或 ``'sum'`` 。

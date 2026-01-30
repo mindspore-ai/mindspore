@@ -6,7 +6,7 @@ mindspore.ops.bounding_box_decode
     解码边界框位置信息，计算偏移量。此算子将偏移量转换为Bbox，用于在后续图像中标记目标等。
 
     参数：
-        - **anchor_box** (Tensor) - 锚框。锚框的shape必须为 :math:`(n, 4)` 。
+        - **anchor_box** (Tensor) - 锚框。它的shape必须为 :math:`(n, 4)` 。
         - **deltas** (Tensor) - 框的增量。它的shape与 `anchor_box` 相同。
         - **max_shape** (tuple) - 解码框计算的上限值。
         - **means** (tuple，可选) - 计算 `deltas` 的均值。默认 ``(0.0, 0.0, 0.0, 0.0)`` 。

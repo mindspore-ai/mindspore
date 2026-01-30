@@ -12,7 +12,7 @@ mindspore.ops.avg_pool2d
         \text{input}(N_i, C_j, stride[0] \times h + m, stride[1] \times w + n)
 
     .. warning::
-        - `kernel_size` 取值为[1, 255]范围内的正整数，`stride` 的取值为[1, 63]范围内的正整数。
+        `kernel_size` 取值为[1, 255]范围内的正整数，`stride` 取值为[1, 63]范围内的正整数。
 
     .. note::
         该接口暂不支持Atlas A2 训练系列产品。
