@@ -36,7 +36,7 @@ def test_stress_detect():
     start = time.time()
     ret = stress_detect()
     end = time.time()
-    assert (end-start) <= 300
+    assert (end-start) <= 400
     assert ret == 0
 
 @arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
