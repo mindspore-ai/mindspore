@@ -119,6 +119,8 @@ class GraphCaptureManager {
 
   void SetShapeKey();
 
+  void ResetShapeKey() { shape_key_ = ""; }
+
   const std::string &ShapeKey() const { return shape_key_; }
 
   bool IsInit() const { return init_; }
@@ -151,6 +153,8 @@ class GraphCaptureManager {
   }
 
   size_t GetStreamId() const { return stream_id_; }
+
+  void ResetAclgraphStatus();
 
   void Finalize();
 

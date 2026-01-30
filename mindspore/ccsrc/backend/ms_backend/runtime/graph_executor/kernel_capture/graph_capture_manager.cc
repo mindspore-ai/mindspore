@@ -696,6 +696,12 @@ void GraphCaptureManager::ResetInfoForSingleOp(const std::vector<KernelRunnerPtr
   }
 }
 
+void GraphCaptureManager::ResetAclgraphStatus() {
+  GraphCaptureManager::GetInstance().SetInReplay(false);
+  GraphCaptureManager::GetInstance().SetIncrementGraph(false);
+  GraphCaptureManager::GetInstance().ResetShapeKey();
+}
+
 void GraphCaptureManager::Finalize() {
   capture_graph_ = nullptr;
   if (!capture_graphs_.empty()) {

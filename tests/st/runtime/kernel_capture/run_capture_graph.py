@@ -145,6 +145,27 @@ class Net1(nn.Cell):
         x = self.reshape(x, (2, -1))
         return x
 
+class Net_Multi_Output(nn.Cell):
+    """
+    Net_Multi_Output definition
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.param = Parameter(Tensor(2, ms.float32))
+        self.add = P.Add()
+        self.mul = P.Mul()
+
+    def construct(self, x):
+        x = self.add(x, self.param)
+        for _ in range(5):
+            x = self.add(x, 0.1)
+            x = self.add(x, 0.2)
+        x = self.mul(x, 2)
+        x = self.add(x, 0.5)
+        y = self.mul(x, 2)
+        return x ,y
+
 def expected_output(x):
     return (x + 3.5) * 2 + 0.5
 
