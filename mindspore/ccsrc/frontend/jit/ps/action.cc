@@ -753,7 +753,7 @@ bool CombineLikeGraphs(const ResourcePtr &resource) {
     auto base_graph = cloned_fg_iter->second;
     MS_LOG(DEBUG) << "Basegraph:" << base_graph->ToString();
 
-    if (fg->parameter_obj_nodes().empty() || graphs.size() <= 1 || fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) ||
+    if (fg->parameter_obj_nodes().empty() || graphs.size() <= 1 || fg->has_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE) ||
         fg->stage() != -1) {
       continue;
     }

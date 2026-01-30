@@ -101,7 +101,7 @@ class ReplaceApplicator : public AnfVisitor {
     // 2. The k graph whose primal is set non-recomputed when enable graph reuse.
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    return fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) ||
+    return fg->has_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE) ||
            (RecomputeBeforeInline() &&
             (fg->has_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH) || fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)));
   }
@@ -212,7 +212,7 @@ class InlinerBase : public AnfVisitor {
     // 2. The k graph whose primal is set non-recomputed when enable graph reuse.
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
-    if (fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) ||
+    if (fg->has_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE) ||
         (RecomputeBeforeInline() &&
          (fg->has_flag(FUNC_GRAPH_NOT_RECOMPUTE_K_GRAPH) || fg->has_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH)))) {
       return false;

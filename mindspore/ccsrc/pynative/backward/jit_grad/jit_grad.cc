@@ -286,7 +286,7 @@ bool Jit::GetJitGradGraph(const pipeline::ResourcePtr &resource, const std::stri
 
   // Get top cell recompute flag
   py::object input = resource->source_input();
-  if (input != py::none() && py::hasattr(input, ad::kOutputNoRecompute)) {
+  if (input != py::none() && py::hasattr(input, ad::kOutputRecompute)) {
     MS_LOG(INFO) << "Top cell with recompute flag, do not do recompute again in gradjit, cell: " << py::str(input);
     primal_fg->set_flag(ad::kTopCellWithRecompute, true);
   }

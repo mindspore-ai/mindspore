@@ -1210,8 +1210,8 @@ FunctionBlockPtr Parser::MakeFunctionBlock() {
   // We copy the flags from the top graph to the sub-graphs.
   if (func_graph_ && !func_graph_->attrs().empty()) {
     for (const auto &attr : func_graph_->attrs()) {
-      // The flag FUNC_GRAPH_OUTPUT_NO_RECOMPUTE should be only set in the top graph.
-      if (attr.first != FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) {
+      // The flag FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE should be only set in the top graph.
+      if (attr.first != FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE) {
         block->func_graph()->set_attr(attr.first, attr.second);
       }
     }
@@ -5189,7 +5189,7 @@ bool UpdateFuncGraphFlags(const py::object &obj, const FuncGraphPtr &func_graph,
     if (py::isinstance<py::bool_>(item.second)) {
       auto value = py::cast<bool>(item.second);
       MS_LOG(DEBUG) << "Flag name: " << name << ". Value: " << value;
-      if (!is_construct_function && name == FUNC_GRAPH_OUTPUT_NO_RECOMPUTE) {
+      if (!is_construct_function && name == FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE) {
         continue;
       }
       func_graph->set_flag(name, value);

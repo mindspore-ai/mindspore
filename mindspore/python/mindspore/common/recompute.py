@@ -389,12 +389,12 @@ def recompute(block, *args, use_reentrant=True, output_recompute=False, **kwargs
             such as List/Tuple, If use_reentrant=False is set, we will use the saved_tensors_hook functionality
             to implement recomputation, which supports differentiation of tensors inside complex types.
             Default: ``True``.
-        output_recompute (bool, optional): This keyword is only valid in PyNative mode. If output_recompute=True is
-            set, we will implement recomputation by saved_tensors_hook functionality by default. The output of this cell
-            or function will not be stored by subsequent operations for backward. when there are two adjacent cells both
-            requiring recomputation (where the output of one cell serves as the input to the other), the recomputation
-            of these two cells will be merged. In this case, the output activation values of the first cell will not be
-            stored. If output_recompute=False, we will not merge adjacent cells. Default: ``False``.
+        output_recompute (bool, optional): If output_recompute=True is set, we will implement recomputation by
+            saved_tensors_hook functionality by default. The output of this cell or function will not be stored by
+            subsequent operations for backward. When there are two adjacent cells both requiring recomputation (where
+            the output of one cell serves as the input to the other), the recomputation of these two cells will be
+            merged. In this case, the output activation values of the first cell will not be stored. If
+            output_recompute=False, we will not merge adjacent cells. Default: ``False``.
         \*\*kwargs: Other arguments.
 
     Returns:
@@ -434,7 +434,7 @@ def recompute(block, *args, use_reentrant=True, output_recompute=False, **kwargs
            [4. 8.]]]]
     """
     if _run_in_jit():  # @jit.cond: True
-        return ops.recompute_block(block)(*args, **kwargs)
+        return ops.recompute_block(block, output_recompute)(*args, **kwargs)
     if output_recompute:
         use_reentrant = False
     _check_validation(block, use_reentrant)

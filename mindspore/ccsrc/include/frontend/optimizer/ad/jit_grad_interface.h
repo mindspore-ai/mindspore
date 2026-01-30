@@ -27,7 +27,7 @@
 namespace mindspore {
 namespace ad {
 constexpr auto kTopCellWithRecompute = "top_cell_with_recompute";
-constexpr auto kOutputNoRecompute = "output_no_recompute";
+constexpr auto kOutputRecompute = "output_recompute";
 
 FRONTEND_EXPORT std::pair<bool, FuncGraphPtr> GetBpropGraph(const pynative::GradParamPtr &grad_param);
 FRONTEND_EXPORT void ClearGradCache();

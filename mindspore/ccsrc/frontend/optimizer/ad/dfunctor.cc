@@ -907,7 +907,7 @@ AnfNodePtr DFunctor::MapFuncGraphToK(const AnfNodePtr &primal) {
     functor->k_graph_->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
     functor->tape_->set_flag(GRAPH_FLAG_IS_WHILE_HEADER, true);
   }
-  if (func_graph->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+  if (func_graph->has_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE)) {
     functor->k_graph_->set_flag(FUNC_GRAPH_RECOMPUTE_K_GRAPH, true);
   }
 

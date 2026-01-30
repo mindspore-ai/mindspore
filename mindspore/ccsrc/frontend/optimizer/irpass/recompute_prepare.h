@@ -41,9 +41,11 @@ class SetCellOutputNoRecompute : public AnfVisitor {
     }
 
     auto fg = GetValueNode<FuncGraphPtr>(node);
-    if (fg == nullptr || !fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+    if (fg == nullptr || !fg->has_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE)) {
       return nullptr;
     }
+    auto output_recompute_value = GetValue<bool>(fg->get_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE));
+
     auto output = fg->output();
     if (output == nullptr) {
       return nullptr;
@@ -59,7 +61,7 @@ class SetCellOutputNoRecompute : public AnfVisitor {
       }
       for (const auto &real_output : real_outputs) {
         // Set the attr of cnode in case of shared primitives.
-        if (recompute_after_inline) {
+        if (recompute_after_inline && !output_recompute_value) {
           real_output->AddAttr(kAttrRecompute, MakeValue(false));
         }
 
@@ -74,7 +76,7 @@ class SetCellOutputNoRecompute : public AnfVisitor {
       }
     }
     if (recompute_after_inline) {
-      fg->erase_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE);
+      fg->erase_flag(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE);
     }
     return nullptr;
   }

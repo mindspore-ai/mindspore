@@ -62,7 +62,7 @@ def run_testcase(testcase_name, expect_memory_usage):
         essential_mark='essential', mem_peak=4.00)
 def test_recompute_cell_recompute_with_jit1():
     """
-    Feature: Recompute with lazy inline.
+    Feature: Recompute cell with jit.
     Description: Each block is set recompute by the cell recompute api and run grad in jit.
     Expectation: Run successfully and the memory usage is reduced.
     """
@@ -70,10 +70,21 @@ def test_recompute_cell_recompute_with_jit1():
 
 
 @arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
+def test_recompute_cell_recompute_with_jit_with_output_recompute():
+    """
+    Feature: Recompute cell with jit.
+    Description: Each block is set recompute by the cell recompute api with output_recompute=True and run grad in jit.
+    Expectation: Run successfully and the memory usage is reduced.
+    """
+    run_testcase("test_recompute_block_recompute_with_jit_with_output_recompute", 88)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
         essential_mark='essential', mem_peak=0.01)
 def test_recompute_block_recompute_func_api_with_jit1():
     """
-    Feature: Recompute with lazy inline.
+    Feature: Recompute cell with jit.
     Description: Each block is set recompute by the recomputed func api and run grad in jit.
     Expectation: Run successfully and the memory usage is reduced.
     """
@@ -84,8 +95,9 @@ def test_recompute_block_recompute_func_api_with_jit1():
         essential_mark='essential', mem_peak=0.01)
 def test_recompute_cell_recompute_with_jit2():
     """
-    Feature: Recompute with lazy inline.
+    Feature: Recompute cell with jit.
     Description: Each block is set recompute by the cell recompute api and run grad in jit.
+                 And do recompute before inlined.
     Expectation: Run successfully and the memory usage is reduced.
     """
     run_testcase("test_recompute_block_recompute_with_jit2", 45)

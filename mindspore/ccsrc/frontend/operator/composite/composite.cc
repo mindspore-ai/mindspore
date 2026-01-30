@@ -1872,7 +1872,7 @@ FuncGraphPtr ForHalfUnrollLess::GenerateFuncGraph(const AbstractBasePtrList &arg
 
 namespace {
 bool HasSetRecompute(const FuncGraphPtr &fg) {
-  if (fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
+  if (fg->has_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE)) {
     return true;
   }
   if (fg->has_flag(FUNC_GRAPH_FLAG_PROXY_GRAPH)) {
@@ -1884,15 +1884,17 @@ bool HasSetRecompute(const FuncGraphPtr &fg) {
     if (call_fg == nullptr) {
       return false;
     }
-    return call_fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE);
+    return call_fg->has_attr(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE);
   }
   return false;
 }
 }  // namespace
 
 FuncGraphPtr RecomputeBlock::GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) {
-  if (args_abs_list.size() != 1) {
-    MS_LOG(INTERNAL_EXCEPTION) << "The input size of RecomputeBlock should be 1.";
+  constexpr auto input_size = 2;
+  if (args_abs_list.size() != input_size) {
+    MS_LOG(INTERNAL_EXCEPTION) << "The input size of RecomputeBlock should be " << input_size << ", but got "
+                               << args_abs_list.size();
   }
   MS_EXCEPTION_IF_NULL(args_abs_list[0]);
   auto abs_func = dyn_cast<AbstractFunction>(args_abs_list[0]);
@@ -1915,11 +1917,16 @@ FuncGraphPtr RecomputeBlock::GenerateFuncGraph(const AbstractBasePtrList &args_a
   auto cloned_fg = cloned_fg_iter->second;
   MS_EXCEPTION_IF_NULL(cloned_fg);
   cloned_fg->set_python_obj(origin_fg->python_obj());
+
+  AbstractScalarPtr abs_output_recompute = dyn_cast<AbstractScalar>(args_abs_list[1]);
+  MS_EXCEPTION_IF_NULL(abs_output_recompute);
+  bool output_recompute = GetValue<bool>(abs_output_recompute->BuildValue());
   if (!HasSetRecompute(origin_fg)) {
-    cloned_fg->set_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE, true);
+    cloned_fg->set_flag(FUNC_GRAPH_FLAG_OUTPUT_RECOMPUTE, output_recompute);
   }
   parse::UpdateRecomputeScope(cloned_fg);
   auto fg = std::make_shared<FuncGraph>();
+  (void)fg->add_parameter();
   (void)fg->add_parameter();
   fg->set_output(NewValueNode(cloned_fg));
   return fg;
