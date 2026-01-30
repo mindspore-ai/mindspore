@@ -20,17 +20,17 @@
 #include <string>
 #include <vector>
 
+#include "include/utils/common.h"
 #include "include/utils/visible.h"
 #include "ir/func_graph.h"
 #include "proto/mind_ir.pb.h"
-
-// for lite
-#include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
 
 namespace mindspore {
 using ModelProtoPtr = std::shared_ptr<mind_ir::ModelProto>;
 
 COMMON_EXPORT std::string GetFuncGraphProtoString(const FuncGraphPtr &func_graph);
+
+COMMON_EXPORT std::string GetBinaryProtoString(const FuncGraphPtr &func_graph, const bool &incremental = false);
 
 COMMON_EXPORT ModelProtoPtr GenBinaryProto(const FuncGraphPtr &func_graph);
 
