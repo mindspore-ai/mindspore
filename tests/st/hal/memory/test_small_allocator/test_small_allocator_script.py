@@ -48,4 +48,4 @@ def small_allocator_test_case():
 
 
 if __name__ == '__main__':
-    print(small_allocator_test_case())
+    print("fragment_memory_stats: ", small_allocator_test_case())
