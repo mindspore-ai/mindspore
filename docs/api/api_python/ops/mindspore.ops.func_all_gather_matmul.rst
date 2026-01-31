@@ -42,9 +42,9 @@ mindspore.ops.all_gather_matmul
 
     异常：
         - **TypeError** - 参数的类型不对。
-        - **RuntimeError** - `input` 或 `x2`` 的 dtype 不是 float16 或 bfloat16。
-        - **RuntimeError** - `input` 和 `x2`` 的 dtype 不一致。
-        - **RuntimeError** - `input` 或 `x2`` 的 shape 不是二维。
+        - **RuntimeError** - `input` 或 `x2` 的 dtype 不是 float16 或 bfloat16。
+        - **RuntimeError** - `input` 和 `x2` 的 dtype 不一致。
+        - **RuntimeError** - `input` 或 `x2` 的 shape 不是二维。
         - **RuntimeError** - `input` shape 和 `x2` shape 的 k 不相等。
         - **RuntimeError** - k 小于 ``256`` 或大于等于 ``65535`` 。
         - **RuntimeError** - `bias` 不是 ``None`` 。

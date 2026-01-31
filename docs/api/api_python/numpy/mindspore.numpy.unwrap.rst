@@ -1,7 +1,7 @@
 mindspore.numpy.unwrap
 ======================
 
-.. py:function:: mindspore.numpy.unwrap(p, discont=3.141592653589793, axis=- 1)
+.. py:function:: mindspore.numpy.unwrap(p, discont=3.141592653589793, axis=-1)
 
     通过加或减 ``2*pi`` ，改变数组相邻元素的差值实现解卷绕。 对于弧度数组 `p` ，将其大于 `discont` 的相邻元素之差的绝对值加或减 ``2*pi`` ，直到相邻元素之差的绝对值小于 `discont` ，沿指定轴执行。
 

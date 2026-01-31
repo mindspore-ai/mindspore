@@ -13,4 +13,4 @@ mindspore.numpy.vsplit
         sub-tensor列表。
 
     异常：
-        - **TypeError** - 如果参数 ``indices_or_sections`` 不是整数。
+        - **TypeError** - 如果参数 `indices_or_sections` 不是整数。
