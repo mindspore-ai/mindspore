@@ -296,6 +296,7 @@
 /.jenkins/ @nicholas_yhr
 /cmake/ @nicholas_yhr
 /cmake/external_libs/ @tronzhang @r1chardf1d0
+/cmake/dvm.cmake @gaoxiong1
 /docs/ @gemini524
 /include/ @jjfeing
 /metadef/ @nicholas_yhr
@@ -308,3 +309,4 @@
 /requirements.txt  @tronzhang @r1chardf1d0
 /setup.py  @tronzhang @r1chardf1d0
 /Third_Party_Open_Source_Software_Notice  @tronzhang @r1chardf1d0
+/dvm/ @gaoxiong1

@@ -1,3 +1,0 @@
-[lib information]
-git branch: r2.7
-commit  id: 1941ab79f9c3641b9e7a9c049b2b6a4e75de92b6

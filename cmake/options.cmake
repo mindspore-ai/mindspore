@@ -25,7 +25,6 @@ option(USE_LLVM "Use llvm" OFF)
 option(USE_MS_THREADPOOL_FOR_DNNL "Use ms threadpool for onednn ops" ON)
 option(ONLY_BUILD_DEVICE_PLUGINS "Only build device plugins" OFF)
 option(ENABLE_AIO "Enable aio plugin on linux" OFF)
-option(ENABLE_DVM "enable dvm" OFF)
 option(ENABLE_FFMPEG "Enable ffmpeg" ON)
 option(EXPERIMENT_A5 "enable experiment A5" OFF)
 
@@ -177,10 +176,6 @@ endif()
 
 if(USE_MS_THREADPOOL_FOR_DNNL)
     add_compile_definitions(USE_MS_THREADPOOL_FOR_DNNL)
-endif()
-
-if(ENABLE_DVM)
-    add_compile_definitions(ENABLE_DVM)
 endif()
 
 if(EXPERIMENT_A5)

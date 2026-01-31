@@ -158,6 +158,7 @@
       "build.sh",
       "akg",
       "metadef",
+      "dvm",
       "CMakeLists.txt",
       ".gitignore",
       "third_party",
