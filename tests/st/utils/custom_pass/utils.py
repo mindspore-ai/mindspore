@@ -1,4 +1,4 @@
-# Copyright 2025 Huawei Technologies Co., Ltd
+# Copyright 2025-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -151,3 +151,35 @@ def verify_op_removed_after_pass(
         replacement_count = count_occurrences(after_text, replacement_op)
         logger.info("%s occurrences in after IR: %s", replacement_op, replacement_count)
         assert replacement_count > 0, f"Expected at least one {replacement_op} op in after-graph IR"
+
+
+def verify_frontend_custom_pass_ir_sequence(
+        graph_dir: str,
+        pass_names: list
+) -> bool:
+    """Verify frontend custom pass IR files exist in the expected sequence.
+
+    Frontend custom passes generate IR files with naming pattern:
+    "custom_frontend_pass_" + pass_name + "_" + sequence_number
+    """
+    pattern = re.compile(r'custom_frontend_pass_(?P<passName>.+?)_(?P<seq>\d+)(?=\.ir)')
+    groups = {}
+    for fname in os.listdir(graph_dir):
+        m = pattern.search(fname)
+        if m:
+            pass_name, seq = m.group('passName'), int(m.group('seq'))
+            groups.setdefault(pass_name, []).append(seq)
+
+    for seqs in groups.values():
+        seqs.sort()
+
+    last_seq = -1
+    for target in pass_names:
+        if not groups.get(target):
+            assert False, f"Frontend custom pass IR not found for '{target}'. "
+        seq = groups[target].pop(0)
+        if seq <= last_seq:
+            assert False, f"Frontend custom pass IR '{target}' in wrong order. "
+        last_seq = seq
+        logger.info("Found frontend custom pass IR file: %s_%d", target, seq)
+    return True

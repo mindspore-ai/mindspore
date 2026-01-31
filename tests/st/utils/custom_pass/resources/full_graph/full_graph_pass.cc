@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_CCSRC_PYBIND_API_GRAPH_CUSTOM_PASS_PY_H_
-#define MINDSPORE_CCSRC_PYBIND_API_GRAPH_CUSTOM_PASS_PY_H_
-
-#include <pybind11/pybind11.h>
-
-namespace py = pybind11;
+#include "full_graph/full_graph_pass.h"
+#include "mindspore/core/include/utils/log_adapter.h"
 
 namespace mindspore {
-namespace graph {
+namespace opt {
+bool FullGraphPass::Run(const FuncGraphPtr &func_graph) {
+  auto manager = func_graph->manager();
+  MS_EXCEPTION_IF_NULL(manager);
+  MS_LOG(INFO) << "FullGraphPass Run successfully";
+  return true;
+}
 
-/**
- * @brief Register custom pass related Python bindings
- * @param m Python module object
- */
-void RegCustomPass(py::module *m);
-
-}  // namespace graph
+}  // namespace opt
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_PYBIND_API_GRAPH_CUSTOM_PASS_PY_H_

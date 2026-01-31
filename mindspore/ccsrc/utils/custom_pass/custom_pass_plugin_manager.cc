@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#include "include/backend/common/custom_pass/custom_pass_plugin_manager.h"
+#include "include/utils/custom_pass/custom_pass_plugin_manager.h"
 
 #include <algorithm>
 #include <string>
 #include <unordered_set>
 #include <vector>
 
-#include "backend/common/custom_pass/file_utils.h"
+#include "utils/custom_pass/file_utils.h"
 #include "utils/log_adapter.h"
 
 #if !defined(_WIN32) && !defined(_WIN64)
@@ -34,7 +34,7 @@ namespace mindspore {
 namespace opt {
 
 bool CustomPassPluginManager::LoadPlugin(const std::string &plugin_path, const std::string &pass_name,
-                                         const std::string &device, const std::string &stage) {
+                                         const std::string &device, CustomPassType pass_type) {
   if (!FileUtils::Exists(plugin_path)) {
     MS_LOG(ERROR) << "Plugin file not found: " << plugin_path;
     return false;
@@ -116,7 +116,7 @@ bool CustomPassPluginManager::LoadPlugin(const std::string &plugin_path, const s
     }
 
     // Record pass registration with plugin association
-    RegisterPassExecution(pass_name, actual_plugin_name, device, stage);
+    RegisterPassExecution(pass_name, actual_plugin_name, device, pass_type);
     return true;
   }
 
@@ -154,7 +154,7 @@ bool CustomPassPluginManager::LoadPlugin(const std::string &plugin_path, const s
   handle = nullptr;  // Transfer ownership to PluginInfo
 
   // Record pass registration with plugin association
-  RegisterPassExecution(pass_name, actual_plugin_name, device, stage);
+  RegisterPassExecution(pass_name, actual_plugin_name, device, pass_type);
 
   MS_LOG(INFO) << "Successfully loaded plugin: " << actual_plugin_name << " from " << plugin_path
                << " with pass: " << pass_name;
@@ -243,54 +243,6 @@ std::shared_ptr<CustomPassPlugin> CustomPassPluginManager::GetPlugin(const std::
   return nullptr;
 }
 
-void CustomPassPluginManager::RegisterPassesToOptimizer(std::shared_ptr<GraphOptimizer> optimizer,
-                                                        const std::string &device) {
-  MS_LOG(INFO) << "Starting pass registration in user-defined order for device: " << device;
-
-  auto ordered_pass_manager = std::make_shared<PassManager>("custom_ordered_passes");
-
-  for (const auto &pass_exec : pass_execution_order_) {
-    // Check device compatibility using the recorded device for this specific call
-    if (pass_exec.device != "all" && pass_exec.device != device) {
-      MS_LOG(DEBUG) << "Skipping pass '" << pass_exec.pass_name << "' - device '" << pass_exec.device
-                    << "' incompatible with target device '" << device << "'";
-      continue;
-    }
-
-    // Find plugin by name directly (more efficient than searching by pass name)
-    auto plugin_iter = plugins_.find(pass_exec.plugin_name);
-    if (plugin_iter == plugins_.end() || !plugin_iter->second || !plugin_iter->second->plugin) {
-      MS_LOG(WARNING) << "Plugin '" << pass_exec.plugin_name << "' for pass '" << pass_exec.pass_name
-                      << "' not found or invalid";
-      continue;
-    }
-
-    MS_EXCEPTION_IF_NULL(plugin_iter->second);
-    // Create and add pass inline
-    auto pass = plugin_iter->second->plugin->CreatePass(pass_exec.pass_name);
-    if (pass == nullptr) {
-      MS_LOG(ERROR) << "Failed to create pass '" << pass_exec.pass_name << "' from plugin '"
-                    << plugin_iter->second->plugin->GetPluginName() << "'";
-      continue;
-    }
-
-    ordered_pass_manager->AddPass(pass);
-    MS_LOG(INFO) << "Added pass '" << pass_exec.pass_name << "' from plugin '"
-                 << plugin_iter->second->plugin->GetPluginName() << "' in execution order position "
-                 << ordered_pass_manager->Passes().size();
-  }
-
-  if (ordered_pass_manager->Passes().empty()) {
-    MS_LOG(INFO) << "No passes registered for device: " << device;
-    return;
-  }
-
-  MS_EXCEPTION_IF_NULL(optimizer);
-  optimizer->AddPassManager(ordered_pass_manager);
-  MS_LOG(INFO) << "Added ordered pass manager with " << ordered_pass_manager->Passes().size()
-               << " passes for device: " << device;
-}
-
 // Helper function to validate if a pass exists in a plugin
 bool CustomPassPluginManager::ValidatePassExists(const std::string &pass_name, const std::string &plugin_name,
                                                  const std::vector<std::string> &available_passes) {
@@ -314,10 +266,10 @@ std::string CustomPassPluginManager::FormatAvailablePassesList(const std::vector
 
 // Helper function to register pass execution with consistent logging
 void CustomPassPluginManager::RegisterPassExecution(const std::string &pass_name, const std::string &plugin_name,
-                                                    const std::string &device, const std::string &stage) {
-  pass_execution_order_.emplace_back(pass_name, plugin_name, device, stage, next_registration_order_++);
+                                                    const std::string &device, CustomPassType pass_type) {
+  pass_execution_order_.emplace_back(pass_name, plugin_name, device, pass_type, next_registration_order_++);
   MS_LOG(INFO) << "Added pass '" << pass_name << "' from plugin '" << plugin_name << "' with device '" << device
-               << "' and stage '" << stage << "' to execution order at position " << next_registration_order_;
+               << "' and pass_type '" << pass_type << "' to execution order at position " << next_registration_order_;
 }
 
 bool CustomPassPluginManager::IsPluginLoaded(const std::string &plugin_name) const {

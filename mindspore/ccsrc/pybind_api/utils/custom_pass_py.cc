@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,25 @@
  * limitations under the License.
  */
 
-#include "pybind_api/backend/graph/custom_pass_py.h"
+#include "pybind_api/utils/custom_pass_py.h"
 #include <string>
-#include "include/backend/common/custom_pass/custom_pass_plugin_manager.h"
+#include "include/utils/custom_pass/custom_pass_plugin_manager.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace graph {
 
 void RegCustomPass(py::module *m) {
+  (void)py::enum_<opt::CustomPassType>(*m, "CustomPassType", py::arithmetic())
+    .value("PATTERN", opt::CustomPassType::kPattern)
+    .value("FULL_GRAPH", opt::CustomPassType::kFullGraph)
+    .export_values();
+
   // Register custom pass plugin from Python
   (void)m->def(
     "register_custom_pass",
     [](const std::string &pass_name, const std::string &plugin_so_path, const std::string &device,
-       const std::string &stage) -> bool {
+       opt::CustomPassType pass_type) -> bool {
       using mindspore::opt::CustomPassPluginManager;
       if (plugin_so_path.empty()) {
         MS_LOG(ERROR) << "Plugin path is empty";
@@ -37,8 +42,8 @@ void RegCustomPass(py::module *m) {
         MS_LOG(ERROR) << "Device parameter is empty";
         return false;
       }
-      // Load plugin shared library with device and stage specification
-      bool loaded = CustomPassPluginManager::GetInstance().LoadPlugin(plugin_so_path, pass_name, device, stage);
+      // Load plugin shared library with device and pass type specification
+      bool loaded = CustomPassPluginManager::GetInstance().LoadPlugin(plugin_so_path, pass_name, device, pass_type);
       if (!loaded) {
         MS_LOG(ERROR) << "Failed to load custom pass plugin from: " << plugin_so_path << " for device: " << device;
         return false;
@@ -49,7 +54,7 @@ void RegCustomPass(py::module *m) {
       }
       return true;
     },
-    py::arg("pass_name"), py::arg("plugin_so_path"), py::arg("device"), py::arg("stage"),
+    py::arg("pass_name"), py::arg("plugin_so_path"), py::arg("device"), py::arg("pass_type"),
     "Register a custom optimization pass by loading plugin shared library for specific device");
 }
 

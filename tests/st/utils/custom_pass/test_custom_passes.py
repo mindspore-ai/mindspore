@@ -1,4 +1,4 @@
-# Copyright 2025 Huawei Technologies Co., Ltd
+# Copyright 2025-2026 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -148,7 +148,7 @@ import mindspore as ms
 from mindspore import context, nn, ops, Tensor
 
 # Import test utilities
-from .utils import verify_op_removed_after_pass
+from .utils import verify_op_removed_after_pass, verify_frontend_custom_pass_ir_sequence
 
 
 @arg_mark(plat_marks=['cpu_linux'],
@@ -472,7 +472,7 @@ def test_add_neg_fusion_registration(build_plugin):
 
     # Test registration for CPU device
     success = ms.graph.register_custom_pass("AddNegFusionPass", build_plugin, "cpu")
-    assert success, f"AddNegFusionPass registration failed for CPU"
+    assert success, "AddNegFusionPass registration failed for CPU"
     logger.info("[OK] AddNegFusionPass registration successful for CPU")
 
 
@@ -661,3 +661,133 @@ def test_pass_execution_order_b_a(build_plugin, graphs_dir_fixture):
         replacement_op="PrimFunc_Add"  # Should be replaced by Add, Neg still exists
     )
     logger.info("[OK] B-A pass order test completed - AddN->Add, but Neg preserved (no Sub fusion)")
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
+def test_full_graph_pass_registration(build_plugin):
+    """
+    Feature: test FullGraphPass plugin registration for frontend
+    Description: test plugin registration for frontend custom pass with pass_type=ms.graph.CustomPassType.FULL_GRAPH
+    Expectation: plugin registers successfully
+    """
+    logger.info("=== Testing FullGraphPass Registration (Frontend) ===")
+
+    # Register the frontend pass with pass_type=ms.graph.CustomPassType.FULL_GRAPH
+    success = ms.graph.register_custom_pass("FullGraphPass", build_plugin, "cpu", ms.graph.CustomPassType.FULL_GRAPH)
+    assert success, "FullGraphPass registration failed for frontend pass_type"
+    logger.info("[OK] FullGraphPass registration successful for frontend pass_type")
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
+def test_full_graph_pass_for_frontend(build_plugin, graphs_dir_fixture):
+    """
+    Feature: test full graph pass for frontend
+    Description: test full graph pass for frontend executes and generates expected IR
+    Expectation: pass executes successfully and frontend custom pass IR file exists
+    """
+    logger.info("=== Testing full graph pass for frontend ===")
+
+    # Register the frontend pass with pass_type=ms.graph.CustomPassType.FULL_GRAPH
+    success = ms.graph.register_custom_pass("FullGraphPass", build_plugin, "cpu", ms.graph.CustomPassType.FULL_GRAPH)
+    assert success, "FullGraphPass registration failed"
+    logger.info("[OK] FullGraphPass registered successfully with pass_type=\"fullgraph\"")
+
+    # Setup context for CPU
+    context.set_context(
+        mode=context.GRAPH_MODE,
+        device_target="CPU",
+        save_graphs=True,
+        save_graphs_path=graphs_dir_fixture
+    )
+
+    # Create test data
+    shape = (2, 3, 4)
+    x1 = Tensor(np.random.rand(*shape).astype(np.float32))
+    x2 = Tensor(np.random.rand(*shape).astype(np.float32))
+
+    logger.info("Input shapes: x1=%s, x2=%s", x1.shape, x2.shape)
+
+    # Execute network
+    net = AddNNegNetwork()
+    output = net(x1, x2)
+    logger.info("[OK] Network executed successfully")
+    logger.info("Output shape: %s", output.shape)
+
+    # Verify that frontend custom pass IR file exists
+    verify_frontend_custom_pass_ir_sequence(
+        graph_dir=graphs_dir_fixture,
+        pass_names=["FullGraphPass"]
+    )
+    logger.info("[OK] Frontend custom pass IR file verified")
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
+def test_mixed_passes_execution_order(build_plugin, graphs_dir_fixture):
+    """
+    Feature: test mixed pass execution order
+    Description: test frontend pass FullGraphPass - backend pass ReplaceAddNFusionPass -
+                 frontend pass FullGraphPass2 - backend pass AddNegFusionPass
+    Expectation: mixed passes execute in order and generate expected IR transformations
+    """
+    logger.info("=== Testing mixed passes execution order (Frontend-Backend-Frontend-Backend) ===")
+
+    # Register passes in order: Frontend-Backend-Frontend-Backend
+    success1 = ms.graph.register_custom_pass("FullGraphPass", build_plugin, "cpu", ms.graph.CustomPassType.FULL_GRAPH)
+    assert success1, "FullGraphPass registration failed"
+
+    success2 = ms.graph.register_custom_pass("ReplaceAddNFusionPass", build_plugin, "cpu")
+    assert success2, "ReplaceAddNFusionPass registration failed"
+
+    success3 = ms.graph.register_custom_pass("FullGraphPass2", build_plugin, "cpu", ms.graph.CustomPassType.FULL_GRAPH)
+    assert success3, "FullGraphPass2 registration failed"
+
+    success4 = ms.graph.register_custom_pass("AddNegFusionPass", build_plugin, "cpu")
+    assert success4, "AddNegFusionPass registration failed"
+
+    logger.info("[OK] all passes registered successfully (Frontend-Backend-Frontend-Backend)")
+
+    # Setup context for CPU
+    context.set_context(
+        mode=context.GRAPH_MODE,
+        device_target="CPU",
+        save_graphs=True,
+        save_graphs_path=graphs_dir_fixture
+    )
+
+    # Create test data
+    shape = (2, 3, 4)
+    x1 = Tensor(np.random.rand(*shape).astype(np.float32))
+    x2 = Tensor(np.random.rand(*shape).astype(np.float32))
+
+    logger.info("Input shapes: x1=%s, x2=%s", x1.shape, x2.shape)
+
+    # Execute network
+    net = AddNNegNetwork()
+    output = net(x1, x2)
+    logger.info("[OK] Network executed successfully")
+    logger.info("Output shape: %s", output.shape)
+
+    # Verify frontend pass IR sequence: FullGraphPass, FullGraphPass2
+    verify_frontend_custom_pass_ir_sequence(
+        graph_dir=graphs_dir_fixture,
+        pass_names=["FullGraphPass", "FullGraphPass2"]
+    )
+    logger.info("[OK] Frontend pass IR sequence verified")
+
+    # Verify backend pass IR transformations - same verification as test_pass_execution_order_a_b
+    verify_op_removed_after_pass(
+        graph_dir=graphs_dir_fixture,
+        device="cpu",  # Use cpu since we're running on CPU
+        op_name="PrimFunc_Neg",  # Should be eliminated by AddNeg pass
+        replacement_op="PrimFunc_Sub"  # Should be created by AddNeg pass
+    )
+    logger.info("[OK] Backend pass transformations verified")

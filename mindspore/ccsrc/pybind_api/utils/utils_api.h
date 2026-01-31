@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@ namespace mindspore {
 namespace ops {
 void RegOpEnum(py::module *m);
 }  // namespace ops
+namespace graph {
+void RegCustomPass(py::module *m);
+}  // namespace graph
 void RegReuseDataPtr(py::module *m);
 void RegForkUtils(py::module *m);
 void RegSecurity(py::module *m);

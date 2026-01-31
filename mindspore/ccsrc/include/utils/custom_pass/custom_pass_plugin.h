@@ -1,5 +1,5 @@
 /**
- * Copyright 2025 Huawei Technologies Co., Ltd
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_BACKEND_COMMON_CUSTOM_PASS_CUSTOM_PASS_PLUGIN_H_
-#define MINDSPORE_CCSRC_INCLUDE_BACKEND_COMMON_CUSTOM_PASS_CUSTOM_PASS_PLUGIN_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_UTILS_CUSTOM_PASS_CUSTOM_PASS_PLUGIN_H_
+#define MINDSPORE_CCSRC_INCLUDE_UTILS_CUSTOM_PASS_CUSTOM_PASS_PLUGIN_H_
 
 #include <string>
 #include <vector>
-#include "include/backend/common/pass_manager/pass.h"
-#include "include/backend/visible.h"
+#include "include/utils/visible.h"
 
 namespace mindspore {
 namespace opt {
+class Pass;
 
-class BACKEND_COMMON_EXPORT CustomPassPlugin {
+class COMMON_EXPORT CustomPassPlugin {
  public:
   virtual ~CustomPassPlugin() = default;
 
@@ -43,11 +43,11 @@ class BACKEND_COMMON_EXPORT CustomPassPlugin {
 }  // namespace opt
 }  // namespace mindspore
 
-#define EXPORT_CUSTOM_PASS_PLUGIN(PluginClass)                                                          \
-  extern "C" {                                                                                          \
-  BACKEND_COMMON_EXPORT mindspore::opt::CustomPassPlugin *CreatePlugin() { return new PluginClass(); }  \
-  BACKEND_COMMON_EXPORT void DestroyPlugin(mindspore::opt::CustomPassPlugin *plugin) { delete plugin; } \
-  BACKEND_COMMON_EXPORT const char *GetPluginName() { return #PluginClass; }                            \
+#define EXPORT_CUSTOM_PASS_PLUGIN(PluginClass)                                                  \
+  extern "C" {                                                                                  \
+  COMMON_EXPORT mindspore::opt::CustomPassPlugin *CreatePlugin() { return new PluginClass(); }  \
+  COMMON_EXPORT void DestroyPlugin(mindspore::opt::CustomPassPlugin *plugin) { delete plugin; } \
+  COMMON_EXPORT const char *GetPluginName() { return #PluginClass; }                            \
   }
 
-#endif  // MINDSPORE_CCSRC_INCLUDE_BACKEND_COMMON_CUSTOM_PASS_CUSTOM_PASS_PLUGIN_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_UTILS_CUSTOM_PASS_CUSTOM_PASS_PLUGIN_H_
