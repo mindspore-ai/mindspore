@@ -11755,7 +11755,7 @@ def batch_dot(x1, x2, axes=None):
 
     .. note::
         `x1` or `x2` first dimension is batch size. Datatype must be float32 and the rank must
-          be greater than or equal to 2.
+        be greater than or equal to 2.
 
     .. math::
         output = x1[batch, :] · x2[batch, :]
