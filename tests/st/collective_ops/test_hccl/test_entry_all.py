@@ -26,12 +26,15 @@ from tests.mark_utils import arg_mark
 @arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 def test_hccl_allreduce():
     """
-    Feature: mpi run 8P case
-    Description: mpi run 8P case
+    Feature: msrun 8P case
+    Description: msrun 8P case
     Expectation: success
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    return_code = os.system("msrun --worker_num=8 --local_worker_num=8 --master_port=12345 pytest -s test_allreduce.py")
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_allreduce.py"
+    )
     assert return_code == 0
 
 
@@ -39,11 +42,14 @@ def test_hccl_allreduce():
 @test_utils.run_test_with_On
 def test_hccl_reduce():
     """
-    Feature: mpi run 8P case of 'Reduce' communication operator.
-    Description: mpi run 8P case of 'Reduce' communication operator.
+    Feature: msrun 8P case of 'Reduce' communication operator.
+    Description: msrun 8P case of 'Reduce' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_reduce.py")
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_reduce.py"
+    )
     assert return_code == 0
 
 
@@ -51,35 +57,44 @@ def test_hccl_reduce():
 @test_utils.run_test_with_On
 def test_hccl_barrier():
     """
-    Feature: mpi run 8P case of 'Barrier' communication operator.
-    Description: mpi run 8P case of 'Barrier' communication operator.
+    Feature: msrun 8P case of 'Barrier' communication operator.
+    Description: msrun 8P case of 'Barrier' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_barrier.py")
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_barrier.py"
+    )
     assert return_code == 0
 
 
 @arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 def test_hccl_allgather():
     """
-    Feature: mpi run 8P case
-    Description: mpi run 8P case
+    Feature: msrun 8P case
+    Description: msrun 8P case
     Expectation: success
     """
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-    return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_allgather.py")
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_allgather.py"
+    )
     assert return_code == 0
 
 
 @arg_mark(plat_marks=["platform_ascend"], level_mark="level1", card_mark="allcards", essential_mark="essential")
 def test_hccl_get_process_group_ranks_func_8p():
     """
-    Feature: mpi run 8P case
-    Description: mpi run 8P case
+    Feature: msrun 8P case
+    Description: msrun 8P case
     Expectation: success
     """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
-    return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_get_process_group_ranks.py")
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_get_process_group_ranks.py"
+    )
     assert return_code == 0
 
 
@@ -107,11 +122,14 @@ def test_get_comm_name_create_group_with_options_func_8p():
 @test_utils.run_test_with_On
 def test_hccl_batch_isend_irecv():
     """
-    Feature: mpi run 8P case of 'BatchISendIRecv' communication operator.
-    Description: mpi run 8P case of 'BatchISendIRecv' communication operator.
+    Feature: msrun 8P case of 'BatchISendIRecv' communication operator.
+    Description: msrun 8P case of 'BatchISendIRecv' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 8 pytest -s test_batch_isend_irecv.py")
+    return_code = os.system(
+        "msrun --worker_num=8 --local_worker_num=8 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_batch_isend_irecv.py"
+    )
     assert return_code == 0
 
 
@@ -119,11 +137,14 @@ def test_hccl_batch_isend_irecv():
 @test_utils.run_test_with_On
 def test_hccl_all_to_all_single_with_output_shape():
     """
-    Feature: mpi run 2P case of 'all_to_all_single_with_output_shape' communication operator.
-    Description: mpi run 2P case of 'all_to_all_single_with_output_shape' communication operator.
+    Feature: msrun 2P case of 'all_to_all_single_with_output_shape' communication operator.
+    Description: msrun 2P case of 'all_to_all_single_with_output_shape' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_all_to_all_single_with_output_shape.py")
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_all_to_all_single_with_output_shape.py"
+    )
     assert return_code == 0
 
 
@@ -131,11 +152,14 @@ def test_hccl_all_to_all_single_with_output_shape():
 @test_utils.run_test_with_On
 def test_hccl_broadcast():
     """
-    Feature: mpi run 2P case of 'broadcast' communication operator.
-    Description: mpi run 2P case of 'broadcast' communication operator.
+    Feature: msrun 2P case of 'broadcast' communication operator.
+    Description: msrun 2P case of 'broadcast' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_broadcast.py")
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_broadcast.py"
+    )
     assert return_code == 0
 
 
@@ -143,11 +167,14 @@ def test_hccl_broadcast():
 @test_utils.run_test_with_On
 def test_hccl_gather_into_tensor():
     """
-    Feature: mpi run 2P case of 'gather_into_tensor' communication operator.
-    Description: mpi run 2P case of 'gather_into_tensor' communication operator.
+    Feature: msrun 2P case of 'gather_into_tensor' communication operator.
+    Description: msrun 2P case of 'gather_into_tensor' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_gather_into_tensor.py")
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_gather_into_tensor.py"
+    )
     assert return_code == 0
 
 
@@ -155,18 +182,24 @@ def test_hccl_gather_into_tensor():
 @test_utils.run_test_with_On
 def test_hccl_scatter_tensor():
     """
-    Feature: mpi run 2P case of 'scatter_tensor' communication operator.
-    Description: mpi run 2P case of 'scatter_tensor' communication operator.
+    Feature: msrun 2P case of 'scatter_tensor' communication operator.
+    Description: msrun 2P case of 'scatter_tensor' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s "
-                            "test_scatter_tensor.py::test_hccl_scatter_tensor_func_in_cell_2p")
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_scatter_tensor.py::test_hccl_scatter_tensor_func_in_cell_2p"
+    )
     assert return_code == 0
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s "
-                            "test_scatter_tensor.py::test_hccl_scatter_tensor_func_2p")
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_scatter_tensor.py::test_hccl_scatter_tensor_func_2p"
+    )
     assert return_code == 0
-    return_code = os.system("mpirun --allow-run-as-root -n 4 pytest -s "
-                            "test_scatter_tensor.py::test_scatter_tensor_two_groups")
+    return_code = os.system(
+        "msrun --worker_num=4 --local_worker_num=4 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_scatter_tensor.py::test_scatter_tensor_two_groups"
+    )
     assert return_code == 0
 
 
@@ -174,11 +207,14 @@ def test_hccl_scatter_tensor():
 @test_utils.run_test_with_On
 def test_hccl_send_receive():
     """
-    Feature: mpi run 2P case of 'send' and 'receive' communication operator.
-    Description: mpi run 2P case of 'send' and 'receive' communication operator.
+    Feature: msrun 2P case of 'send' and 'receive' communication operator.
+    Description: msrun 2P case of 'send' and 'receive' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_send_receive.py")
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_send_receive.py"
+    )
     assert return_code == 0
 
 
@@ -186,11 +222,14 @@ def test_hccl_send_receive():
 @test_utils.run_test_with_On
 def test_allgather_v():
     """
-    Feature: mpi run 2P case of 'allgather_v' communication operator.
-    Description: mpi run 2P case of 'allgather_v' communication operator.
+    Feature: msrun 2P case of 'allgather_v' communication operator.
+    Description: msrun 2P case of 'allgather_v' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_allgather_v.py")
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_allgather_v.py"
+    )
     assert return_code == 0
 
 
@@ -198,8 +237,8 @@ def test_allgather_v():
 @test_utils.run_test_with_On
 def test_allgatherv_grad():
     """
-    Feature: mpi run 2P case of allgather_v grad communication operator.
-    Description: mpi run 2P case of allgather_v grad communication operator.
+    Feature: msrun 2P case of allgather_v grad communication operator.
+    Description: msrun 2P case of allgather_v grad communication operator.
     Expectation: success
     """
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True pytest -sv  test_allgatherv_grad.py")
@@ -210,8 +249,8 @@ def test_allgatherv_grad():
 @test_utils.run_test_with_On
 def test_dynamic_shape():
     """
-    Feature: mpi run 2P case of communication dynamic shape operator.
-    Description: mpi run 2P case of communication dynamic shape operator.
+    Feature: msrun 2P case of communication dynamic shape operator.
+    Description: msrun 2P case of communication dynamic shape operator.
     Expectation: success
     """
     return_code = os.system("msrun --worker_num=8 --local_worker_num=8 --join=True pytest -sv  test_dynamic_shape.py")
@@ -222,11 +261,14 @@ def test_dynamic_shape():
 @test_utils.run_test_with_On
 def test_reduce_scatter_tensor_v():
     """
-    Feature: mpi run 2P case of 'reduce_scatter_tensor_v' communication operator.
-    Description: mpi run 2P case of 'reduce_scatter_tensor_v' communication operator.
+    Feature: msrun 2P case of 'reduce_scatter_tensor_v' communication operator.
+    Description: msrun 2P case of 'reduce_scatter_tensor_v' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_reduce_scatter_tensor_v.py")
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_reduce_scatter_tensor_v.py"
+    )
     assert return_code == 0
 
 
@@ -247,11 +289,14 @@ def test_reduce_scatter_tensor_with_diff_reduce_type():
 @test_utils.run_test_with_On
 def test_all_to_all_v_c():
     """
-    Feature: mpi run 2P case of 'all_to_all_v_c' communication operator.
-    Description: mpi run 2P case of 'all_to_all_v_c' communication operator.
+    Feature: msrun 2P case of 'all_to_all_v_c' communication operator.
+    Description: msrun 2P case of 'all_to_all_v_c' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_all_to_all_v_c.py")
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_all_to_all_v_c.py"
+    )
     assert return_code == 0
 
 
@@ -259,11 +304,14 @@ def test_all_to_all_v_c():
 @test_utils.run_test_with_On
 def test_func_all_to_all_v_c():
     """
-    Feature: mpi run 2P case of 'func_all_to_all_v_c' communication operator.
-    Description: mpi run 2P case of 'func_all_to_all_v_c' communication operator.
+    Feature: msrun 2P case of 'func_all_to_all_v_c' communication operator.
+    Description: msrun 2P case of 'func_all_to_all_v_c' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_func_all_to_all_v_c.py")
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_func_all_to_all_v_c.py"
+    )
     assert return_code == 0
 
 
@@ -271,11 +319,10 @@ def test_func_all_to_all_v_c():
 @test_utils.run_test_with_On
 def test_func_all_to_all_v_c1():
     """
-    Feature: mpi run 2P case of 'func_all_to_all_v_c' communication operator.
-    Description: mpi run 2P case of 'func_all_to_all_v_c' communication operator.
+    Feature: msrun 2P case of 'func_all_to_all_v_c' communication operator.
+    Description: msrun 2P case of 'func_all_to_all_v_c' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_func_all_to_all_v_c.py")
     return_code = os.system(
         r"cp  test_func_all_to_all_v_c.py test_func_all_to_all_v_c1.py && "\
         r"sed -i 's/mindspore\.communication\.comm_func\.distributed/mindspore.ops.communication/g' "\
@@ -289,11 +336,14 @@ def test_func_all_to_all_v_c1():
 @test_utils.run_test_with_On
 def test_uneven_net():
     """
-    Feature: mpi run 2P case of 'reduce_scatter_tensor_v' communication operator.
-    Description: mpi run 2P case of 'reduce_scatter_tensor_v' communication operator.
+    Feature: msrun 2P case of 'reduce_scatter_tensor_v' communication operator.
+    Description: msrun 2P case of 'reduce_scatter_tensor_v' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_uneven_net.py")
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_uneven_net.py"
+    )
     assert return_code == 0
 
 
@@ -301,11 +351,14 @@ def test_uneven_net():
 @test_utils.run_test_with_On
 def test_hccl_all_to_all_v():
     """
-    Feature: mpi run 2P case of 'alltoallv' communication operator.
-    Description: mpi run 2P case of 'alltoallv' communication operator.
+    Feature: msrun 2P case of 'alltoallv' communication operator.
+    Description: msrun 2P case of 'alltoallv' communication operator.
     Expectation: success
     """
-    return_code = os.system("mpirun --allow-run-as-root -n 2 pytest -s test_all_to_all_v.py")
+    return_code = os.system(
+        "msrun --worker_num=2 --local_worker_num=2 --master_addr=127.0.0.1 --master_port=10655 --join=True "\
+        "pytest -s test_all_to_all_v.py"
+    )
     assert return_code == 0
 
 
@@ -363,8 +416,8 @@ def test_hccl_multi_stream():
     Expectation: expect correct result.
     """
     os.environ['MS_DEV_RUNTIME_CONF'] = 'multi_stream:group'
-    return_code = os.system("mpirun --allow-run-as-root -n 8 "
-                            "pytest -s ""test_multi_stream.py::test_hccl_multi_stream")
+    return_code = os.system("msrun --worker_num=8 --local_worker_num=8 --join=True "
+                            "pytest -s test_multi_stream.py::test_hccl_multi_stream")
     assert return_code == 0
     del os.environ['MS_DEV_RUNTIME_CONF']
 
@@ -396,8 +449,8 @@ def test_comm_multi_stream_raise_error():
 @test_utils.run_test_with_On
 def test_ops_all_gather_into_tensor_net():
     """
-    Feature: mpi run 2P case of 'all_gather_into_tensor' dynamic and static unified ops.
-    Description: mpi run 2P case of 'all_gather_into_tensor' dynamic and static unified ops.
+    Feature: msrun 2P case of 'all_gather_into_tensor' dynamic and static unified ops.
+    Description: msrun 2P case of 'all_gather_into_tensor' dynamic and static unified ops.
     Expectation: success
     """
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
@@ -410,8 +463,8 @@ def test_ops_all_gather_into_tensor_net():
 @test_utils.run_test_with_On
 def test_ops_all_gather_net():
     """
-    Feature: mpi run 2P case of 'all_gather' dynamic and static unified ops.
-    Description: mpi run 2P case of 'all_gather' dynamic and static unified ops.
+    Feature: msrun 2P case of 'all_gather' dynamic and static unified ops.
+    Description: msrun 2P case of 'all_gather' dynamic and static unified ops.
     Expectation: success
     """
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
@@ -423,8 +476,8 @@ def test_ops_all_gather_net():
 @test_utils.run_test_with_On
 def test_ops_all_reduce_net():
     """
-    Feature: mpi run 2P case of 'test_ops_all_reduce' dynamic and static unified ops.
-    Description: mpi run 2P case of 'test_ops_all_reduce' dynamic and static unified ops.
+    Feature: msrun 2P case of 'test_ops_all_reduce' dynamic and static unified ops.
+    Description: msrun 2P case of 'test_ops_all_reduce' dynamic and static unified ops.
     Expectation: success
     """
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
@@ -436,8 +489,8 @@ def test_ops_all_reduce_net():
 @test_utils.run_test_with_On
 def test_ops_isend_irecv_net():
     """
-    Feature: mpi run 2P case of 'test_ops_isend_irecv' dynamic and static unified ops.
-    Description: mpi run 2P case of 'test_ops_isend_irecv' dynamic and static unified ops.
+    Feature: msrun 2P case of 'test_ops_isend_irecv' dynamic and static unified ops.
+    Description: msrun 2P case of 'test_ops_isend_irecv' dynamic and static unified ops.
     Expectation: success
     """
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
@@ -449,8 +502,8 @@ def test_ops_isend_irecv_net():
 @test_utils.run_test_with_On
 def test_ops_reduce_scatter_tensor_net():
     """
-    Feature: mpi run 2P case of 'test_ops_reduce_scatter_tensor' dynamic and static unified ops.
-    Description: mpi run 2P case of 'test_ops_reduce_scatter_tensor' dynamic and static unified ops.
+    Feature: msrun 2P case of 'test_ops_reduce_scatter_tensor' dynamic and static unified ops.
+    Description: msrun 2P case of 'test_ops_reduce_scatter_tensor' dynamic and static unified ops.
     Expectation: success
     """
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
@@ -462,8 +515,8 @@ def test_ops_reduce_scatter_tensor_net():
 @test_utils.run_test_with_On
 def test_ops_reduce_scatter_net():
     """
-    Feature: mpi run 2P case of 'test_ops_reduce_scatter' dynamic and static unified ops.
-    Description: mpi run 2P case of 'test_ops_reduce_scatter' dynamic and static unified ops.
+    Feature: msrun 2P case of 'test_ops_reduce_scatter' dynamic and static unified ops.
+    Description: msrun 2P case of 'test_ops_reduce_scatter' dynamic and static unified ops.
     Expectation: success
     """
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
@@ -475,8 +528,8 @@ def test_ops_reduce_scatter_net():
 @test_utils.run_test_with_On
 def test_ops_all_to_all_single_net():
     """
-    Feature: mpi run 2P case of 'test_ops_all_to_all_single' dynamic and static unified ops.
-    Description: mpi run 2P case of 'test_ops_all_to_all_single' dynamic and static unified ops.
+    Feature: msrun 2P case of 'test_ops_all_to_all_single' dynamic and static unified ops.
+    Description: msrun 2P case of 'test_ops_all_to_all_single' dynamic and static unified ops.
     Expectation: success
     """
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
@@ -489,8 +542,8 @@ def test_ops_all_to_all_single_net():
 @test_utils.run_test_with_On
 def test_alltoall_grad_net():
     """
-    Feature: mpi run 2P case of 'test_grad_alltoall' dynamic and static unified ops.
-    Description: mpi run 2P case of 'test_grad_alltoall' dynamic and static unified ops.
+    Feature: msrun 2P case of 'test_grad_alltoall' dynamic and static unified ops.
+    Description: msrun 2P case of 'test_grad_alltoall' dynamic and static unified ops.
     Expectation: success
     """
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
@@ -502,8 +555,8 @@ def test_alltoall_grad_net():
 @test_utils.run_test_with_On
 def test_grad_allgather_net():
     """
-    Feature: mpi run 2P case of 'test_grad_alltoall' dynamic and static unified ops.
-    Description: mpi run 2P case of 'test_grad_alltoall' dynamic and static unified ops.
+    Feature: msrun 2P case of 'test_grad_alltoall' dynamic and static unified ops.
+    Description: msrun 2P case of 'test_grad_alltoall' dynamic and static unified ops.
     Expectation: success
     """
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "
@@ -515,8 +568,8 @@ def test_grad_allgather_net():
 @test_utils.run_test_with_On
 def test_grad_allreduce_net():
     """
-    Feature: mpi run 2P case of 'test_grad_allreduce' dynamic and static unified ops.
-    Description: mpi run 2P case of 'test_grad_allreduce' dynamic and static unified ops.
+    Feature: msrun 2P case of 'test_grad_allreduce' dynamic and static unified ops.
+    Description: msrun 2P case of 'test_grad_allreduce' dynamic and static unified ops.
     Expectation: success
     """
     return_code = os.system("msrun --worker_num=2 --local_worker_num=2 --join=True "

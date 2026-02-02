@@ -127,9 +127,9 @@ def test_hccl_all_gather_v_tensor_bool():
     """
     if world_size == 2:
         data = []
-        expect_output = [1, 2, 3, 4, 5, 6, 7, 8]
+        expect_output = [True, True, True, True, True, True, True, True]
         if this_rank == 0:
-            data = [1, 2, 3, 4, 5, 6, 7, 8]
+            data = [True, True, True, True, True, True, True, True]
         if this_rank == 1:
             data = []
         output_split_sizes = [8, 0]
