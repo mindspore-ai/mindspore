@@ -9,4 +9,4 @@ mindspore.dataset.vision.ImageReadMode
 
     - **ImageReadMode.UNCHANGED** - 按照图像原始格式读取。
     - **ImageReadMode.GRAYSCALE** - 读取并转为单通道灰度数据。
-    - **ImageReadMode.COLOR** - 读取并换为3通道RGB彩色数据。
+    - **ImageReadMode.COLOR** - 读取并转为3通道RGB彩色数据。

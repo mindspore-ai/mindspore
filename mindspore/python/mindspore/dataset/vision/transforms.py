@@ -124,7 +124,7 @@ class AdjustBrightness(ImageTensorOperation, PyTensorOperation):
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
-        brightness_factor (float): How much to adjust the brightness, must be non negative.
+        brightness_factor (float): How much to adjust the brightness, must be non-negative.
             ``0.0`` gives a black image, ``1.0`` gives the original image,
             while ``2.0`` increases the brightness by a factor of 2.
 
@@ -238,7 +238,7 @@ class AdjustContrast(ImageTensorOperation, PyTensorOperation):
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
-        contrast_factor (float): How much to adjust the contrast, must be non negative.
+        contrast_factor (float): How much to adjust the contrast, must be non-negative.
             ``0.0`` gives a solid gray image, ``1.0`` gives the original image,
             while ``2.0`` increases the contrast by a factor of 2.
 
@@ -355,10 +355,10 @@ class AdjustGamma(ImageTensorOperation, PyTensorOperation):
     .. _Gamma Correction: https://en.wikipedia.org/wiki/Gamma_correction
 
     Args:
-        gamma (float): Non negative real number.
+        gamma (float): Non-negative real number.
             The output image pixel value is exponentially related to the input image pixel value.
-            gamma larger than ``1.0`` make the shadows darker,
-            while gamma smaller than ``1.0`` make dark regions lighter.
+            `gamma` larger than ``1.0`` makes the shadows darker,
+            while `gamma` smaller than ``1.0`` makes dark regions lighter.
         gain (float, optional): The constant multiplier. Default: ``1.0``.
 
     Raises:
@@ -427,7 +427,7 @@ class AdjustHue(ImageTensorOperation, PyTensorOperation):
 
     Args:
         hue_factor (float): How much to add to the hue channel,
-            must be in range of [-0.5, 0.5].
+            must be in the range [-0.5, 0.5].
 
     Raises:
         TypeError: If `hue_factor` is not of type float.
@@ -537,7 +537,7 @@ class AdjustSaturation(ImageTensorOperation, PyTensorOperation):
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
-        saturation_factor (float): How much to adjust the saturation, must be non negative.
+        saturation_factor (float): How much to adjust the saturation, must be non-negative.
             ``0.0`` gives a black image, ``1.0`` gives the original image
             while ``2.0`` increases the saturation by a factor of 2.
 
@@ -651,7 +651,7 @@ class AdjustSharpness(ImageTensorOperation):
 
     Args:
         sharpness_factor (float): How much to adjust the sharpness, must be
-            non negative. ``0.0`` gives a blurred image, ``1.0`` gives the
+            non-negative. ``0.0`` gives a blurred image, ``1.0`` gives the
             original image while ``2.0`` increases the sharpness by a factor of 2.
 
     Raises:
@@ -756,9 +756,9 @@ class Affine(ImageTensorOperation):
     Args:
         degrees (float): Rotation angle in degrees between ``-180`` and ``180``, clockwise direction.
         translate (Sequence[float, float]): The horizontal and vertical translations, must be a sequence of size 2
-            and value between ``-1.0`` and ``1.0``.
+            and values between ``-1.0`` and ``1.0``.
         scale (float): Scaling factor, which must be positive.
-        shear (Union[float, Sequence[float, float]]): Shear angle value in degrees between ``-180`` to ``180``.
+        shear (Union[float, Sequence[float, float]]): Shear angle value in degrees between ``-180`` and ``180``.
 
             - If float is provided, shear along the x axis with this value, without shearing along the y axis;
             - If Sequence[float, float] is provided, shear along the x axis and y axis with these two values separately.
@@ -773,8 +773,8 @@ class Affine(ImageTensorOperation):
         TypeError: If `degrees` is not of type float.
         TypeError: If `translate` is not of type Sequence[float, float].
         TypeError: If `scale` is not of type float.
-        ValueError: If `scale` is non positive.
-        TypeError: If `shear` is not of float or Sequence[float, float].
+        ValueError: If `scale` is non-positive.
+        TypeError: If `shear` is not of type float or Sequence[float, float].
         TypeError: If `resample` is not of type :class:`~.vision.Inter` .
         TypeError: If `fill_value` is not of type int or tuple[int, int, int].
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
@@ -907,9 +907,9 @@ class AutoAugment(ImageTensorOperation):
             Default: ``Inter.NEAREST``.
         fill_value (Union[int, tuple[int]], optional): Pixel fill value for the area outside the transformed image.
             It can be an int or a 3-tuple. Default: ``0``.
-            
+
             - If it is a 3-tuple, it is used to fill R, G, B channels respectively.
-            - If it is an integer, it is used for all RGB channels. The fill_value values must be in range [0, 255].
+            - If it is an integer, it is used for all RGB channels. The fill_value values must be in the range [0, 255].
 
     Raises:
         TypeError: If `policy` is not of type :class:`mindspore.dataset.vision.AutoAugmentPolicy` .
@@ -966,23 +966,23 @@ class AutoAugment(ImageTensorOperation):
 
 class AutoContrast(ImageTensorOperation, PyTensorOperation):
     """
-    Automatically adjusts the contrast on the input image. This operation calculates histogram of image,
-    reassign cutoff percent
-    of the lightest pixels from histogram to 255, and reassign cutoff percent of the darkest pixels from histogram to 0.
+    Automatically adjusts the contrast on the input image. This operation calculates the histogram of the image,
+    reassigns cutoff percent of the lightest pixels from the histogram to 255, and reassigns cutoff percent of the
+    darkest pixels from the histogram to 0.
 
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
         cutoff (float, optional): Percent of lightest and darkest pixels to cut off from
             the histogram of input image. The value must be in the range [0.0, 50.0]. Default: ``0.0``.
-        ignore (Union[int, sequence], optional): The background pixel values to ignore,
-            The ignore values must be in range [0, 255]. Default: ``None``.
+        ignore (Union[int, sequence], optional): The background pixel values to ignore.
+            The ignore values must be in the range [0, 255]. Default: ``None``.
 
     Raises:
         TypeError: If `cutoff` is not of type float.
         TypeError: If `ignore` is not of type int or sequence.
-        ValueError: If `cutoff` is not in range [0.0, 50.0).
-        ValueError: If `ignore` is not in range [0, 255].
+        ValueError: If `cutoff` is not in the range [0.0, 50.0).
+        ValueError: If `ignore` is not in the range [0, 255].
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -1100,9 +1100,9 @@ class BoundingBoxAugment(ImageTensorOperation):
             Range: [0.0, 1.0]. Default: ``0.3``.
 
     Raises:
-        TypeError: If `transform` is an image processing operation in `mindspore.dataset.vision` .
+        TypeError: If `transform` is not an image processing operation in `mindspore.dataset.vision`.
         TypeError: If `ratio` is not of type float.
-        ValueError: If `ratio` is not in range [0.0, 1.0].
+        ValueError: If `ratio` is not in the range [0.0, 1.0].
         RuntimeError: If given bounding box is invalid.
 
     Supported Platforms:
@@ -1400,7 +1400,7 @@ class Crop(ImageTensorOperation):
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Args:
-        coordinates(sequence): Coordinates of the upper left corner of the cropping image. Must be a sequence of two
+        coordinates (sequence): Coordinates of the upper left corner of the cropping image. Must be a sequence of two
             values, in the form of (top, left).
         size (Union[int, sequence]): The output size of the cropped image.
 
@@ -1512,18 +1512,18 @@ class CutMixBatch(ImageTensorOperation):
     Note that you need to make labels into one-hot format and batched before calling this operation.
 
     Args:
-        image_batch_format (ImageBatchFormat): The method of padding. Can be any of
+        image_batch_format (ImageBatchFormat): The format of the image batch. Can be any of
             [ImageBatchFormat.NHWC, ImageBatchFormat.NCHW].
         alpha (float, optional): Hyperparameter of beta distribution, must be larger than 0. Default: ``1.0``.
         prob (float, optional): The probability by which CutMix is applied to each image,
-            which must be in range: [0.0, 1.0]. Default: ``1.0``.
+            which must be in the range [0.0, 1.0]. Default: ``1.0``.
 
     Raises:
         TypeError: If `image_batch_format` is not of type :class:`mindspore.dataset.vision.ImageBatchFormat` .
         TypeError: If `alpha` is not of type float.
         TypeError: If `prob` is not of type float.
-        ValueError: If `alpha` is less than or equal 0.
-        ValueError: If `prob` is not in range [0.0, 1.0].
+        ValueError: If `alpha` is less than or equal to 0.
+        ValueError: If `prob` is not in the range [0.0, 1.0].
         RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
@@ -1596,8 +1596,8 @@ class CutOut(ImageTensorOperation):
         TypeError: If `length` is not of type integer.
         TypeError: If `is_hwc` is not of type bool.
         TypeError: If `num_patches` is not of type integer.
-        ValueError: If `length` is less than or equal 0.
-        ValueError: If `num_patches` is less than or equal 0.
+        ValueError: If `length` is less than or equal to 0.
+        ValueError: If `num_patches` is less than or equal to 0.
         RuntimeError: If given tensor shape is not <H, W, C>.
 
     Supported Platforms:
@@ -1645,7 +1645,7 @@ class CutOut(ImageTensorOperation):
 class Decode(ImageTensorOperation, PyTensorOperation):
     """
     Decode the input image in RGB mode.
-    Supported image formats: JPEG, BMP, PNG, TIFF, GIF(need `to_pil=True` ), WEBP(need `to_pil=True` ).
+    Supported image formats: JPEG, BMP, PNG, TIFF, GIF (need `to_pil=True`), WEBP (need `to_pil=True`).
 
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
@@ -1836,8 +1836,8 @@ class DecodeVideo(VideoTensorOperation):
     Supported video formats: AVI, H264, H265, MOV, MP4, WMV.
 
     Raises:
-        RuntimeError: If the input ndarray is not 1D array.
-        RuntimeError: If data type of the elements is not uint8.
+        RuntimeError: If the input ndarray is not a 1D array.
+        RuntimeError: If the data type of the elements is not uint8.
         RuntimeError: If the input ndarray is empty.
 
     Supported Platforms:
@@ -1987,7 +1987,7 @@ class Equalize(ImageTensorOperation, PyTensorOperation):
 
 class Erase(ImageTensorOperation):
     """
-    Erase a specified area of the input image and fills it with the specified pixel value `value`.
+    Erases a specified area of the input image and fills it with the specified pixel value `value`.
 
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
@@ -2014,7 +2014,7 @@ class Erase(ImageTensorOperation):
         TypeError: If `width` is not of type int.
         ValueError: If `width` is not positive.
         TypeError: If `value` is not of type float or Sequence[float, float, float].
-        ValueError: If `value` is not in range of [0, 255].
+        ValueError: If `value` is not in the range [0, 255].
         TypeError: If `inplace` is not of type bool.
         RuntimeError: If shape of the input image is not <H, W, C>.
 
@@ -2114,7 +2114,7 @@ class Erase(ImageTensorOperation):
 
 class FiveCrop(PyTensorOperation):
     """
-    Crop the given image into one central crop and four corners.
+    Crops the given image into one central crop and four corners.
 
     Args:
         size (Union[int, Sequence[int, int]]): The size of the cropped image.
@@ -2208,7 +2208,7 @@ class FiveCrop(PyTensorOperation):
 
 class GaussianBlur(ImageTensorOperation):
     r"""
-    Blur input image with the specified Gaussian kernel.
+    Blurs the input image with the specified Gaussian kernel.
 
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
@@ -2233,8 +2233,8 @@ class GaussianBlur(ImageTensorOperation):
     Raises:
         TypeError: If `kernel_size` is not of type int or Sequence[int].
         TypeError: If `sigma` is not of type float or Sequence[float].
-        ValueError: If `kernel_size` is not positive and odd.
-        ValueError: If `sigma` is not positive.
+        ValueError: If `kernel_size` is not both positive and odd.
+        ValueError: If `sigma` is non-positive.
         RuntimeError: If given tensor shape is not <H, W> or <H, W, C>.
 
     Supported Platforms:
@@ -2285,7 +2285,7 @@ class GaussianBlur(ImageTensorOperation):
         Set the device for the current operator execution.
 
         When the device is Ascend, the parameter `kernel_size` only supports values 1, 3, and 5.
-        input shape should be limited from [4, 6] to [8192, 4096].
+        The input shape should be limited from [4, 6] to [8192, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
@@ -2426,7 +2426,7 @@ class Grayscale(PyTensorOperation):
 
 class HorizontalFlip(ImageTensorOperation):
     """
-    Flip the input image horizontally.
+    Flips the input image horizontally.
 
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
@@ -2471,7 +2471,7 @@ class HorizontalFlip(ImageTensorOperation):
         """
         Set the device for the current operator execution.
 
-        When the device is Ascend, input type supports  `uint8` and `float32`,
+        When the device is Ascend, input type supports `uint8` and `float32`,
         input channel supports 1 and 3. The input data has a height limit of [4, 8192]
         and a width limit of [6, 4096].
 
@@ -2521,11 +2521,11 @@ class HorizontalFlip(ImageTensorOperation):
 
 class HsvToRgb(PyTensorOperation):
     """
-    Convert the input numpy.ndarray images from HSV to RGB.
+    Converts the input numpy.ndarray images from HSV to RGB.
 
     Args:
-        is_hwc (bool): If ``True``, means the input image is in shape of <H, W, C> or <N, H, W, C>.
-            Otherwise, it is in shape of <C, H, W> or <N, C, H, W>. Default: ``False``.
+        is_hwc (bool): If ``True``, the input image is in the shape of <H, W, C> or <N, H, W, C>.
+            Otherwise, it is in the shape of <C, H, W> or <N, C, H, W>. Default: ``False``.
 
     Raises:
         TypeError: If `is_hwc` is not of type bool.
@@ -2585,12 +2585,12 @@ class HsvToRgb(PyTensorOperation):
 
 class HWC2CHW(ImageTensorOperation):
     """
-    Transpose the input image from shape <H, W, C> to <C, H, W>.
+    Transposes the input image from shape <H, W, C> to <C, H, W>.
     If the input image is of shape <H, W>, it will remain unchanged.
 
     Note:
-        This operation is executed on the CPU by default, but it is also supported
-        to be executed on the GPU or Ascend via heterogeneous acceleration.
+        This operation is executed on the CPU by default, but it can also be executed
+        on the GPU or Ascend via heterogeneous acceleration.
 
     Raises:
         RuntimeError: If shape of the input image is not <H, W> or <H, W, C>.
@@ -2637,7 +2637,7 @@ class HWC2CHW(ImageTensorOperation):
 
 class Invert(ImageTensorOperation, PyTensorOperation):
     """
-    Invert the colors of the input RGB image.
+    Inverts the colors of the input RGB image.
 
     For each pixel in the image, if the original pixel value is `pixel`,
     the inverted pixel value will be `255 - pixel`.
@@ -2645,7 +2645,7 @@ class Invert(ImageTensorOperation, PyTensorOperation):
     Supports Ascend hardware acceleration and can be enabled through the `.device("Ascend")` method.
 
     Raises:
-        RuntimeError: If the input image is not in shape of <H, W, C>.
+        RuntimeError: If the input image is not in the shape of <H, W, C>.
 
     Supported Platforms:
         ``CPU`` ``Ascend``
@@ -2685,12 +2685,12 @@ class Invert(ImageTensorOperation, PyTensorOperation):
         """
         Set the device for the current operator execution.
 
-        When the device is Ascend, input type supports  `uint8`/`float32`, input channel supports 1/3.
-        input shape should be limited from [4, 6] to [8192, 4096].
+        When the device is Ascend, input type supports `uint8`/`float32`, input channel supports 1/3.
+        The input shape should be limited from [4, 6] to [8192, 4096].
 
         Args:
             device_target (str, optional): The operator will be executed on this device. Currently supports
-                ``CPU`` and ``Ascend`` . Default: ``CPU`` .
+                ``"CPU"`` and ``"Ascend"`` . Default: ``"CPU"`` .
 
         Raises:
             TypeError: If `device_target` is not of type str.

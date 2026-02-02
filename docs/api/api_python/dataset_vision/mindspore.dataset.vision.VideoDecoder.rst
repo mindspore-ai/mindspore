@@ -3,7 +3,7 @@ mindspore.dataset.vision.VideoDecoder
 
 .. py:class:: mindspore.dataset.vision.VideoDecoder(source)
 
-    单流视频解码器，支持读取视频流的元数据以及支持对H264或者H265编码格式的视频提供抽帧能力。
+    单流视频解码器。支持读取视频流元数据，并对H264、H265编码格式的视频提供抽帧能力。
 
     参数：
         - **source** (str) - 视频文件路径。
@@ -25,7 +25,7 @@ mindspore.dataset.vision.VideoDecoder
         异常：
             - **TypeError** - 如果 `indices` 不是list类型。
             - **TypeError** - 如果 `indices` 的值不是int类型。
-            - **ValueError** - 如果 `indices` 的值不在[0，总帧数)范围内。
+            - **ValueError** - 如果 `indices` 的值不在[0, 总帧数)范围内。
 
     .. py:method:: metadata
         :property:

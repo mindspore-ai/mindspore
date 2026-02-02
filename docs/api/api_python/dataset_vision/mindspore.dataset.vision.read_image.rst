@@ -13,12 +13,12 @@ mindspore.dataset.vision.read_image
 
           - **ImageReadMode.UNCHANGED** - 按照图像原始格式读取。
           - **ImageReadMode.GRAYSCALE** - 读取并转为单通道灰度数据。
-          - **ImageReadMode.COLOR** - 读取并换为3通道RGB彩色数据。
+          - **ImageReadMode.COLOR** - 读取并转为3通道RGB彩色数据。
 
     返回：
-        - numpy.ndarray, 三维uint8类型数据，shape为（H, W, C）。
+        numpy.ndarray，三维uint8类型数据，shape为（H, W, C）。
 
     异常：
         - **TypeError** - 如果 `filename` 不是str类型。
         - **TypeError** - 如果 `mode` 不是 :class:`mindspore.dataset.vision.ImageReadMode` 类型。
-        - **RuntimeError** - 如果 `filename` 不存在或不是普通文件或由于格式等原因无法正常读取。
+        - **RuntimeError** - 如果 `filename` 不存在、不是普通文件、或由于格式等原因无法正常读取。

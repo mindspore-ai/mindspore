@@ -63,11 +63,12 @@ class AutoAugmentPolicy(str, Enum):
     AutoAugment policy for different datasets.
 
     Possible enumeration values are: ``AutoAugmentPolicy.IMAGENET``, ``AutoAugmentPolicy.CIFAR10``,
-    AutoAugmentPolicy.SVHN.
+    ``AutoAugmentPolicy.SVHN``.
 
     Each policy contains 25 pairs of augmentation operations. When using AutoAugment, each image is randomly
     transformed with one of these operation pairs. Each pair has 2 different operations. The following shows
-    all of these augmentation operations, including operation names with their probabilities and random params.
+    all of these augmentation operations, including operation names with their probabilities and random
+    parameters.
 
     - ``AutoAugmentPolicy.IMAGENET``: dataset auto augment policy for ImageNet.
 
@@ -149,19 +150,19 @@ class AutoAugmentPolicy(str, Enum):
 
 class Border(str, Enum):
     """
-    Padding Mode, Border Type.
+    Padding mode and border type.
 
     Possible enumeration values are: ``Border.CONSTANT``, ``Border.EDGE``, ``Border.REFLECT``, ``Border.SYMMETRIC``.
 
     - ``Border.CONSTANT`` : means it fills the border with constant values.
     - ``Border.EDGE`` : means it pads with the last value on the edge.
-    - ``Border.REFLECT`` : means it reflects the values on the edge omitting the last value of edge.
+    - ``Border.REFLECT`` : means it reflects the values on the edge omitting the last value of the edge.
       For example, padding [1,2,3,4] with 2 elements on both sides will result in [3,2,1,2,3,4,3,2].
-    - ``Border.SYMMETRIC`` : means it reflects the values on the edge repeating the last value of edge.
+    - ``Border.SYMMETRIC`` : means it reflects the values on the edge repeating the last value of the edge.
       For example, padding [1,2,3,4] with 2 elements on both sides will result in [2,1,1,2,3,4,4,3].
 
     Note:
-        This class derived from class str to support json serializable.
+        This class is derived from class str to support JSON serialization.
     """
     CONSTANT: str = "constant"
     EDGE: str = "edge"
@@ -283,12 +284,14 @@ class ConvertMode(IntEnum):
 
 class ImageBatchFormat(IntEnum):
     """
-    Data Format of images after batch operation.
+    Data format of images after batch operation.
 
     Possible enumeration values are: ``ImageBatchFormat.NHWC``, ``ImageBatchFormat.NCHW``.
 
-    - ``ImageBatchFormat.NHWC``: in orders like, batch N, height H, width W, channels C to store the data.
-    - ``ImageBatchFormat.NCHW``: in orders like, batch N, channels C, height H, width W to store the data.
+    - ``ImageBatchFormat.NHWC``: Stores data in the order of batch (N), height (H), width (W),
+      and channels (C).
+    - ``ImageBatchFormat.NCHW``: Stores data in the order of batch (N), channels (C), height (H),
+      and width (W).
     """
     NHWC = 0
     NCHW = 1
@@ -394,12 +397,12 @@ class Inter(IntEnum):
 
 class SliceMode(IntEnum):
     """
-    Mode to Slice Tensor into multiple parts.
+    Mode for slicing a tensor into multiple parts.
 
     Possible enumeration values are: ``SliceMode.PAD``, ``SliceMode.DROP``.
 
-    - ``SliceMode.PAD``: pad some pixels before slice the Tensor if needed.
-    - ``SliceMode.DROP``: drop remainder pixels before slice the Tensor if needed.
+    - ``SliceMode.PAD``: Pads some pixels before slicing the tensor if needed.
+    - ``SliceMode.DROP``: Drops remaining pixels before slicing the tensor if needed.
     """
     PAD = 0
     DROP = 1
@@ -424,10 +427,11 @@ def encode_jpeg(image, quality=75):
 
     Args:
         image (Union[numpy.ndarray, mindspore.Tensor]): The image to be encoded.
-        quality (int, optional): Quality of the resulting JPEG data, in range of [1, 100]. Default: ``75``.
+        quality (int, optional): Quality of the resulting JPEG data, in the range [1, 100].
+            Default: ``75``.
 
     Returns:
-        numpy.ndarray, one dimension uint8 data.
+        numpy.ndarray, one-dimensional uint8 data.
 
     Raises:
         TypeError: If `image` is not of type numpy.ndarray or mindspore.Tensor.
@@ -462,11 +466,11 @@ def encode_png(image, compression_level=6):
 
     Args:
         image (Union[numpy.ndarray, mindspore.Tensor]): The image to be encoded.
-        compression_level (int, optional): The `compression_level` for encoding, in range of [0, 9].
+        compression_level (int, optional): Compression level for encoding, in the range [0, 9].
             Default: ``6``.
 
     Returns:
-        numpy.ndarray, one dimension uint8 data.
+        numpy.ndarray, one-dimensional uint8 data.
 
     Raises:
         TypeError: If `image` is not of type numpy.ndarray or mindspore.Tensor.
@@ -501,13 +505,14 @@ def get_image_num_channels(image):
     Get the number of input image channels.
 
     Args:
-        image (Union[numpy.ndarray, PIL.Image.Image]): Image to get the number of channels.
+        image (Union[numpy.ndarray, PIL.Image.Image]): The image from which to get the number of
+            channels.
 
     Returns:
         int, the number of input image channels.
 
     Raises:
-        RuntimeError: If the dimension of `image` is less than 2.
+        RuntimeError: If the number of dimensions of `image` is less than 2.
         TypeError: If `image` is not of type numpy.ndarray or PIL Image.
 
     Examples:
@@ -534,14 +539,14 @@ def get_image_size(image):
     Get the size of input image as [height, width].
 
     Args:
-        image (Union[numpy.ndarray, PIL.Image.Image]): The image to get size.
+        image (Union[numpy.ndarray, PIL.Image.Image]): The image from which to get the size.
 
     Returns:
         list[int, int], the image size.
 
     Raises:
-        RuntimeError: If the dimension of `image` is less than 2.
-        TypeError: If `image` is not of type type numpy.ndarray or PIL Image.
+        RuntimeError: If the number of dimensions of `image` is less than 2.
+        TypeError: If `image` is not of type numpy.ndarray or PIL Image.
 
     Examples:
         >>> import mindspore.dataset.vision as vision
@@ -579,14 +584,14 @@ def read_file(filename):
     Read a file in binary mode.
 
     Args:
-        filename(str): The path to the file to be read.
+        filename (str): The path to the file to be read.
 
     Returns:
-        numpy.ndarray, the one dimension uint8 data.
+        numpy.ndarray, one-dimensional uint8 data.
 
     Raises:
         TypeError: If `filename` is not of type str.
-        RuntimeError: If `filename` does not exist or is not a common file.
+        RuntimeError: If `filename` does not exist or is not a regular file.
 
     Supported Platforms:
         ``CPU``
@@ -602,28 +607,29 @@ def read_file(filename):
 
 def read_image(filename, mode=ImageReadMode.UNCHANGED):
     """
-    Read a image file and decode it into one channel grayscale data or RGB color data.
+    Read an image file and decode it into single-channel grayscale data or RGB color data.
     Supported file types are JPEG, PNG, BMP, TIFF.
 
     Args:
-        filename(str): The path to the image file to be read.
-        mode(ImageReadMode, optional): The mode used for decoding the image. It can be
-            ``ImageReadMode.UNCHANGED``, ``ImageReadMode.GRAYSCALE``, ``IMageReadMode.COLOR``.
+        filename (str): The path to the image file to be read.
+        mode (ImageReadMode, optional): The mode used for decoding the image. It can be
+            ``ImageReadMode.UNCHANGED``, ``ImageReadMode.GRAYSCALE``, ``ImageReadMode.COLOR``.
             Default: ``ImageReadMode.UNCHANGED``.
 
             - ImageReadMode.UNCHANGED, remain the output in the original format.
 
             - ImageReadMode.GRAYSCALE, convert the output into one channel grayscale data.
 
-            - IMageReadMode.COLOR, convert the output into three channels RGB color data.
+            - ImageReadMode.COLOR, convert the output into three channels RGB color data.
 
     Returns:
-        numpy.ndarray, three dimensions uint8 data in the shape of (Height, Width, Channels).
+        numpy.ndarray, three-dimensional uint8 data in the shape of (Height, Width, Channels).
 
     Raises:
         TypeError: If `filename` is not of type str.
         TypeError: If `mode` is not of type :class:`mindspore.dataset.vision.ImageReadMode` .
-        RuntimeError: If `filename` does not exist, or not a regular file, or not a supported image file.
+        RuntimeError: If `filename` does not exist, or is not a regular file, or is not a
+            supported image file.
 
     Supported Platforms:
         ``CPU``
@@ -991,7 +997,7 @@ def _read_video_ffmpeg(filename, start_pts=0, end_pts=None, pts_unit="pts"):
 
 def read_video(filename, start_pts=0, end_pts=None, pts_unit="pts"):
     """
-    Read the video, audio, metadata from a video file.
+    Read the video, audio, and metadata from a video file.
 
     It supports AVI, H264, H265, MOV, MP4, WMV file formats on CPU, and H264, H265 file formats on Ascend.
 
@@ -1000,27 +1006,29 @@ def read_video(filename, start_pts=0, end_pts=None, pts_unit="pts"):
         setting video backend with `mindspore.dataset.config.set_video_backend("Ascend")` .
 
     Args:
-        filename(str): The path to the video file to be read.
-        start_pts(Union[float, Fraction, int], optional): The start presentation timestamp of the video.
+        filename (str): The path to the video file to be read.
+        start_pts (Union[float, Fraction, int], optional): The start presentation timestamp of the video.
             Default: ``0``, read from the beginning.
-        end_pts(Union[float, Fraction, int], optional): The end presentation timestamp of the video.
+        end_pts (Union[float, Fraction, int], optional): The end presentation timestamp of the video.
             Default: ``None``, read until the end.
-        pts_unit(str, optional): The unit of the timestamps. It can be any of ["pts", "sec"]. Default: ``"pts"``.
+        pts_unit (str, optional): The unit of the timestamps. It can be any of ["pts", "sec"]. Default: ``"pts"``.
 
     Returns:
-        - numpy.ndarray, four dimensions uint8 data for video. The format is [T, H, W, C]. `T` is the number of frames,
-          `H` is the height, `W` is the width, `C` is the channel for RGB.
-        - numpy.ndarray, two dimensions float for audio. The format is [C, L]. `C` is the number of channels.
-          `L` is the length of the points in one channel.
+        - numpy.ndarray, four-dimensional uint8 data for video. The format is [T, H, W, C]. `T` is
+          the number of frames, `H` is the height, `W` is the width, `C` is the number of channels
+          for RGB.
+        - numpy.ndarray, two-dimensional float data for audio. The format is [C, L]. `C` is the
+          number of channels. `L` is the length of the samples in one channel.
         - dict, metadata for the video and audio.
           It contains video_fps data of type float and audio_fps data of type int.
 
     Raises:
         TypeError: If `filename` is not of type str.
-        TypeError: If `start_pts` is not of type [float, Fraction, int].
-        TypeError: If `end_pts` is not of type [float, Fraction, int].
+        TypeError: If `start_pts` is not of type Union[float, Fraction, int].
+        TypeError: If `end_pts` is not of type Union[float, Fraction, int].
         TypeError: If `pts_unit` is not of type str.
-        RuntimeError: If `filename` does not exist, or not a regular file, or not a supported video file.
+        RuntimeError: If `filename` does not exist, or is not a regular file, or is not a supported
+            video file.
         ValueError: If `start_pts` is less than 0.
         ValueError: If `end_pts` is less than `start_pts`.
         ValueError: If `pts_unit` is not in ["pts", "sec"].
@@ -1073,11 +1081,11 @@ class VideoDecoder:
     from H264/H265-encoded content.
 
     Args:
-        source(str): The path to the video file.
+        source (str): The path to the video file.
 
     Raises:
         TypeError: If `source` is not string.
-        ValueError: If `source` does not exist or permission denied.
+        ValueError: If `source` does not exist or permission is denied.
 
     Examples:
         >>> import mindspore.dataset as ds
@@ -1093,19 +1101,20 @@ class VideoDecoder:
 
     def get_frames_at(self, indices):
         """
-        Retrieves the frame at the specified index.
+        Retrieves the frames at the specified indices.
 
         Args:
             indices (list[int]): List of frame indices to acquire.
 
         Returns:
-            numpy.ndarray, four dimensions uint8 data for video. The format is [T, H, W, C].
-            `T` is the number of frames, `H` is the height, `W` is the width, `C` is the channel for RGB.
+            numpy.ndarray, four-dimensional uint8 data for video. The format is [T, H, W, C].
+            `T` is the number of frames, `H` is the height, `W` is the width, `C` is the number of
+            channels for RGB.
 
         Raises:
             TypeError: If `indices` is not of type list.
-            TypeError: If `indices` value is not of type int.
-            ValueError: If `indices` value is not in range [0, total frames).
+            TypeError: If an element in `indices` is not of type int.
+            ValueError: If an element in `indices` is not in the range [0, total frames).
 
         Supported Platforms:
             ``Ascend``
@@ -1324,18 +1333,20 @@ def read_video_timestamps(filename, pts_unit="pts"):
     It supports AVI, H264, H265, MOV, MP4, WMV files.
 
     Args:
-        filename(str): The path to the video file to be read.
-        pts_unit(str, optional): The unit of the timestamps. It can be any of ["pts", "sec"]. Default: "pts".
+        filename (str): The path to the video file to be read.
+        pts_unit (str, optional): The unit of the timestamps. It can be any of ["pts", "sec"].
+            Default: ``"pts"``.
 
     Returns:
-        - list, when `pts_unit` is set to "pts", list[int] is returned, when `pts_unit` is set to "sec",
-          list[float] is returned.
+        - list. When `pts_unit` is set to ``"pts"``, list[int] is returned; when `pts_unit` is set to
+          ``"sec"``, list[float] is returned.
         - float, the frames per second of the video file.
 
     Raises:
         TypeError: If `filename` is not of type str.
         TypeError: If `pts_unit` is not of type str.
-        RuntimeError: If `filename` does not exist, or not a regular file, or not a supported video file.
+        RuntimeError: If `filename` does not exist, or is not a regular file, or is not a supported
+            video file.
         RuntimeError: If `pts_unit` is not in ["pts", "sec"].
 
     Supported Platforms:
@@ -1361,18 +1372,18 @@ def read_video_timestamps(filename, pts_unit="pts"):
 
 def write_file(filename, data):
     """
-    Write the one dimension uint8 data into a file using binary mode.
+    Write the one-dimensional uint8 data into a file using binary mode.
 
     Args:
         filename (str): The path to the file to be written.
-        data (Union[numpy.ndarray, mindspore.Tensor]): The one dimension uint8 data to be written.
+        data (Union[numpy.ndarray, mindspore.Tensor]): The one-dimensional uint8 data to be written.
 
     Raises:
         TypeError: If `filename` is not of type str.
         TypeError: If `data` is not of type numpy.ndarray or mindspore.Tensor.
-        RuntimeError: If the `filename` is not a common file.
+        RuntimeError: If `filename` is not a regular file.
         RuntimeError: If the data type of `data` is not uint8.
-        RuntimeError: If the shape of `data` is not a one-dimensional array.
+        RuntimeError: If `data` is not a one-dimensional array.
 
     Supported Platforms:
         ``CPU``
@@ -1401,13 +1412,14 @@ def write_jpeg(filename, image, quality=75):
     Args:
         filename (str): The path to the file to be written.
         image (Union[numpy.ndarray, mindspore.Tensor]): The image data to be written.
-        quality (int, optional): Quality of the resulting JPEG file, in range of [1, 100]. Default: ``75``.
+        quality (int, optional): Quality of the resulting JPEG file, in the range [1, 100].
+            Default: ``75``.
 
     Raises:
         TypeError: If `filename` is not of type str.
         TypeError: If `image` is not of type numpy.ndarray or mindspore.Tensor.
         TypeError: If `quality` is not of type int.
-        RuntimeError: If the `filename` does not exist or not a common file.
+        RuntimeError: If `filename` does not exist or is not a regular file.
         RuntimeError: If the data type of `image` is not uint8.
         RuntimeError: If the shape of `image` is not <H, W> or <H, W, 1> or <H, W, 3>.
         RuntimeError: If `quality` is less than 1 or greater than 100.
@@ -1436,19 +1448,19 @@ def write_jpeg(filename, image, quality=75):
 
 def write_png(filename, image, compression_level=6):
     """
-    Write the image into a PNG file.
+    Write the image data into a PNG file.
 
     Args:
         filename (str): The path to the file to be written.
         image (Union[numpy.ndarray, mindspore.Tensor]): The image data to be written.
-        compression_level (int, optional): Compression level for the resulting PNG file, in range of [0, 9].
-            Default: ``6``.
+        compression_level (int, optional): Compression level for the resulting PNG file, in the range
+            [0, 9]. Default: ``6``.
 
     Raises:
         TypeError: If `filename` is not of type str.
         TypeError: If `image` is not of type numpy.ndarray or mindspore.Tensor.
         TypeError: If `compression_level` is not of type int.
-        RuntimeError: If the `filename` does not exist or not a common file.
+        RuntimeError: If `filename` does not exist or is not a regular file.
         RuntimeError: If the data type of `image` is not uint8.
         RuntimeError: If the shape of `image` is not <H, W> or <H, W, 1> or <H, W, 3>.
         RuntimeError: If `compression_level` is less than 0 or greater than 9.
