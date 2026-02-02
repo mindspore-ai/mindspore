@@ -17,4 +17,4 @@ mindspore.numpy.unravel_index
         Tensor，包含坐标数组的tuple，每个数组的shape与索引数组相同。
 
     异常：
-        - **ValueError** - 如果 `order` 不是‘C’或‘F’。
+        - **ValueError** - 如果 `order` 不是 ``'C'`` 或 ``'F'`` 。

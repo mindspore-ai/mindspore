@@ -363,7 +363,7 @@ class TrainFaultTolerance(Callback):
 
     @staticmethod
     def _enable_snapshot():
-        """Check whether parameter snapshot enabled"""
+        """Check whether parameter snapshot is enabled"""
         enable_step_tre = "TRE:2" in os.getenv("MS_ENABLE_TFT", "")
         enable_ckpt_d2h_async = os.getenv("MS_ENABLE_CKPT_D2H_ASYNC") == "1"
         return enable_step_tre or enable_ckpt_d2h_async
@@ -385,7 +385,7 @@ class TrainFaultTolerance(Callback):
         return "TRE:1" in env_enable and "TSP:1" in env_enable
 
     def _check_init(self):
-        """Check if the mindio-ttp had inited"""
+        """Check if the mindio-ttp had initialized"""
         if self.tft is None:
             tft_env = os.getenv("MS_ENABLE_TFT", "")
             if "ARF:1" in tft_env:
@@ -406,7 +406,7 @@ class TrainFaultTolerance(Callback):
         return False
 
     def _set_tft_optimizer_replica(self, run_context):
-        """ Set Mindio TFT optimizer replica info, used internal. """
+        """Set Mindio TFT optimizer replica info, used internally."""
         cur_rank = get_rank()
         cb_params = run_context.original_args()
         train_network = cb_params.train_network
@@ -584,7 +584,7 @@ class TrainFaultTolerance(Callback):
 
         Args:
             run_context (RunContext): Context of the train running. Refer to
-                :class:`mindspore.train.RunContext` for detail.
+                :class:`mindspore.train.RunContext` for details.
         """
         cb_params = run_context.original_args()
         self.cb_params = cb_params
@@ -611,7 +611,7 @@ class TrainFaultTolerance(Callback):
 
         Args:
             run_context (RunContext): Context of the train running. Refer to
-                                      :class:`mindspore.train.RunContext` for detail.
+                                      :class:`mindspore.train.RunContext` for details.
         """
         enable_flags = (
         self._only_enable_tre(),

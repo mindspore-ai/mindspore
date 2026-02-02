@@ -50,16 +50,16 @@ class ReduceLROnPlateau(Callback):
     Args:
         monitor (str, optional): quantity to be monitored. If evaluation is performed on
             the end of train epochs, the valid monitors can be ``"loss"``,
-            ``"eval_loss"`` or metric names passed when instantiate the `Model`;
+            ``"eval_loss"`` or metric names passed when instantiating the `Model`;
             otherwise the valid monitor is ``"loss"``.
             When `monitor` is ``"loss"``, if train network has multiple outputs,
             the first element will be returned as training loss. Default: ``'eval_loss'``.
         factor (float, optional): factor by which the learning rate will be reduced.
             `new_lr = lr * factor`. Default: ``0.1`` .
-        patience (int, optional): `monitor` value is better than history best value over
+        patience (int, optional): `monitor` value is better than historical best value over
             `min_delta` is seen as improvement, `patience` is number of epochs
-            with no improvement that would be waited. When the waiting
-            counter `self.wait` is larger than or equal to `patience`,  the lr
+            with no improvement that would be waited for. When the waiting
+            counter `self.wait` is larger than or equal to `patience`, the lr
             will be reduced. Default: ``10`` .
         verbose (bool, optional): If False: quiet, if True: print related information.
             Default: ``False`` .
@@ -128,7 +128,7 @@ class ReduceLROnPlateau(Callback):
 
     def on_train_begin(self, run_context):
         """
-        Initialize variables at the begin of training.
+        Initialize variables at the beginning of training.
 
         Args:
             run_context (RunContext): Context information of the model. For more details,
@@ -143,7 +143,7 @@ class ReduceLROnPlateau(Callback):
 
     def on_train_epoch_end(self, run_context):
         """
-        monitors the training process and if no improvement is seen for a 'patience' number
+        Monitors the training process and if no improvement is seen for a 'patience' number
         of epochs, the learning rate is reduced.
 
         Args:
@@ -190,9 +190,9 @@ class ReduceLROnPlateau(Callback):
         """
         Get the monitor value at the end of epoch during training.
 
-        If `mindspore.train.callback.ReduceLROnPlateau` used with `model.train`, no evaluation process
-        during training, only monitor="loss" is valid; if it used with `model.fit`, evaluation process will be
-        performed at the end of epoch, valid monitor is "loss", "eval_loss" and metrics passed to `Model`.
+        If `mindspore.train.callback.ReduceLROnPlateau` is used with `model.train`, no evaluation process
+        during training, only monitor="loss" is valid; if it is used with `model.fit`, evaluation process will be
+        performed at the end of epoch, valid monitors are "loss", "eval_loss" and metrics passed to `Model`.
 
         Args:
             cb_params (dict): A dictionary stores context information of the model. For more details,

@@ -25,12 +25,12 @@ class History(Callback):
     """
     Records the network outputs and metrics information into a `History` object.
 
-    - The network outputs information will be the loss value if not custimizing the train network or eval network;
-    - If the train network or eval network is custimized:
+    - The network outputs information will be the loss value if not customizing the train network or eval network;
+    - If the train network or eval network is customized:
 
-      - if the custimized network returns a `Tensor` or `numpy.ndarray`, the mean value of network output
+      - if the customized network returns a `Tensor` or `numpy.ndarray`, the mean value of network output
         will be recorded.
-      - if the custimized network returns a `tuple` or `list`, the first element of network
+      - if the customized network returns a `tuple` or `list`, the first element of network
         outputs will be recorded.
 
     Note:
@@ -61,7 +61,7 @@ class History(Callback):
 
     def begin(self, run_context):
         """
-        Initialize the `epoch` property at the begin of training.
+        Initialize the `epoch` property at the beginning of training.
 
         Args:
             run_context (RunContext): Context of the `mindspore.train.Model.{train | eval}`. For more details,
@@ -74,7 +74,7 @@ class History(Callback):
         Records the first element of network outputs and metrics information at the end of epoch.
 
         Args:
-            run_context (RunContext): Context of the `mindspore.train.Model.{train | eval}`.  For more details,
+            run_context (RunContext): Context of the `mindspore.train.Model.{train | eval}`. For more details,
                     please refer to :class:`mindspore.train.RunContext`.
         """
         cb_params = run_context.original_args()

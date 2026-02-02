@@ -26,13 +26,13 @@ class TimeMonitor(Callback):
     Monitor the time in train or eval process.
 
     Args:
-        data_size (int, optional): How many steps are the intervals between print information each time.
-            if the program get `batch_num` during training, `data_size` will be set to `batch_num`,
+        data_size (int, optional): The number of steps are the intervals between print information each time.
+            if the program gets `batch_num` during training, `data_size` will be set to `batch_num`,
             otherwise `data_size` will be used. If the program does not get `batch_num` during training,
-            meanwhile `data_size` does not set, the program will report an error. Default: ``None`` .
+            meanwhile `data_size` is not set, the program will report an error. Default: ``None`` .
 
         data_time (bool, optional): Whether to show the average time of fetching data in Host.
-            Note that data fetch and network compute are processed sequentially in non dataset sink mode, while
+            Note that data fetch and network computation are processed sequentially in non dataset sink mode, while
             they are asynchronous in dataset sink mode. Default: ``False`` .
 
     Raises:

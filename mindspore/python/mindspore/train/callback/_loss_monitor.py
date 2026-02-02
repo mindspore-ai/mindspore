@@ -66,7 +66,7 @@ class LossMonitor(Callback):
         Print training loss at the end of step.
 
         Args:
-            run_context (RunContext): Include some information of the model.  For more details,
+            run_context (RunContext): Include some information of the model. For more details,
                     please refer to :class:`mindspore.train.RunContext`.
         """
         cb_params = run_context.original_args()
@@ -80,8 +80,8 @@ class LossMonitor(Callback):
             raise ValueError("In epoch: {} step: {}, loss is NAN or INF, training process cannot continue, "
                              "terminating training.".format(cur_epoch_num, cur_step_in_epoch))
 
-        # In disaster recovery scenario, the cb_params.cur_step_num may be rollback to previous step
-        # and be less than self._last_print_time, so self._last_print_time need to be updated.
+        # In disaster recovery scenario, the cb_params.cur_step_num may rollback to previous step
+        # and be less than self._last_print_time, so self._last_print_time needs to be updated.
         if self._per_print_times != 0 and (cb_params.cur_step_num <= self._last_print_time):
             while cb_params.cur_step_num <= self._last_print_time:
                 self._last_print_time -=\
@@ -93,7 +93,7 @@ class LossMonitor(Callback):
 
     def on_train_epoch_end(self, run_context):
         """
-        When LossMonitor used in :func:`mindspore.train.Model.fit`, print eval metrics
+        When LossMonitor is used in :func:`mindspore.train.Model.fit`, print eval metrics
         at the end of epoch if current epoch
         should do evaluation.
 

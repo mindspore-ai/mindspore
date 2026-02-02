@@ -75,10 +75,10 @@ class Metric(metaclass=ABCMeta):
     Base class of metric, which is used to evaluate metrics.
 
     The `clear`, `update`, and `eval` should be called when evaluating metric, and they should be overridden by
-    subclasse. `update` will accumulate intermediate results in the evaluation process, `eval` will evaluate the final
+    subclasses. `update` will accumulate intermediate results in the evaluation process, `eval` will evaluate the final
     result, and `clear` will reinitialize the intermediate results.
 
-    Never use this class directly, but instantiate one of its subclasses instead, for examples,
+    Never use this class directly, but instantiate one of its subclasses instead, for example,
     :class:`mindspore.train.MAE`, :class:`mindspore.train.Recall` etc.
 
     Supported Platforms:
@@ -168,7 +168,7 @@ class Metric(metaclass=ABCMeta):
             :class:`Metric`, its original Class instance.
 
         Raises:
-            ValueError: If the type of input 'indexes'  is not a list or its elements are not all int.
+            ValueError: If the type of input 'indexes' is not a list or its elements are not all int.
         """
         if not isinstance(indexes, list) or not all(isinstance(i, int) for i in indexes):
             raise ValueError("For 'set_indexes', the argument 'indexes' must be a list and all its elements must "

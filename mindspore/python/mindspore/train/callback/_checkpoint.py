@@ -450,7 +450,7 @@ class ModelCheckpoint(Callback):
         to save the checkpoint file. Otherwise, the training may fail.
         If this callback is used in the
         `Model <https://www.mindspore.cn/docs/en/master/api_python/train/mindspore.train.Model.html>`_ function,
-        the checkpoint file will saved parameters of the optimizer by default.
+        the checkpoint file will save parameters of the optimizer by default.
 
     Args:
         prefix (Union[str, callable object], optional): The prefix name or callable object
@@ -545,7 +545,7 @@ class ModelCheckpoint(Callback):
         Save the checkpoint at the end of step.
 
         Args:
-            run_context (RunContext): Context of the train running.
+            run_context (RunContext): Context of the training.
         """
         cb_params = run_context.original_args()
         if self._aiturbo_init_flag:
@@ -647,7 +647,7 @@ class ModelCheckpoint(Callback):
                                    + str(step_num_in_epoch) + f".{self._config.format}"
             # update checkpoint file list.
             self._manager.update_ckpoint_filelist(self._directory, self._prefix)
-            # keep checkpoint files number equal max number.
+            # keep checkpoint files number equal to max number.
             if self._config.keep_checkpoint_max and 0 < self._config.keep_checkpoint_max <= self._manager.ckpoint_num:
                 self._manager.remove_oldest_ckpoint_file()
             elif self._config.keep_checkpoint_per_n_minutes and self._config.keep_checkpoint_per_n_minutes > 0:

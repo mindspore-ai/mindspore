@@ -24,7 +24,7 @@ class LambdaCallback(Callback):
 
     This callback is constructed with anonymous functions that will be called
     at the appropriate time (during `mindspore.train.Model.{train | eval | fit}`). Note that
-    each stage of callbacks expects one positional arguments: `run_context`.
+    each stage of callbacks expects one positional argument: `run_context`.
 
     .. warning::
         This is an experimental API that is subject to change or deletion.
