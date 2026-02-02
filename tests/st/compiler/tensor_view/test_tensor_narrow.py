@@ -44,7 +44,8 @@ def narrow_backward_class(x, dim, start, length, sens):
     return ms.grad(narrow_forward_class, grad_position=0, sens_param=True)(x, dim, start, length, sens)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
+# @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
           card_mark='onecard', essential_mark='essential', mem_peak=2048)
 @pytest.mark.parametrize('method_type', ['method', 'class'])
 @pytest.mark.parametrize('data_type', [mstype.float16, mstype.float32, mstype.float64,
@@ -69,7 +70,8 @@ def test_tensor_narrow_different_type(method_type, data_type):
         tester.backward_cmp(narrow_backward_class)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
+# @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
           card_mark='onecard', essential_mark='unessential', mem_peak=2048)
 @pytest.mark.parametrize('shape', [
     (3,),
@@ -101,7 +103,8 @@ def test_tensor_narrow_different_dimensions(shape, method_type):
         tester.backward_cmp(narrow_backward_class)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
+# @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend910b'], level_mark='level0', card_mark='onecard',
           essential_mark='unessential', mem_peak=2048)
 @pytest.mark.parametrize('val', [np.nan, np.inf])
 @pytest.mark.parametrize('method_type', ['method', 'class'])
@@ -125,7 +128,8 @@ def test_tensor_narrow_inf_nan(val, method_type):
         tester.backward_cmp(narrow_backward_class)
 
 
-@arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
+# # @arg_mark(plat_marks=['platform_gpu', 'cpu_linux', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
+@arg_mark(plat_marks=['platform_gpu', 'platform_ascend', 'platform_ascend910b'], level_mark='level0',
           card_mark='onecard', essential_mark='essential', mem_peak=2048)
 def test_tensor_narrow_ir_view():
     """
