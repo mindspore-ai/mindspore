@@ -350,6 +350,7 @@ class ZeroPad2d(ZeroPadNd_):
 class ZeroPad3d(ZeroPadNd_):
     """
     Pad the last 3 dimension of `input` tensor with 0 using `padding`.
+    The padding mode is (padding_left, padding_right, padding_top, padding_bottom, padding_front, padding_back).
 
     For more information, please refer to :func:`mindspore.mint.nn.functional.pad`.
 
@@ -366,36 +367,24 @@ class ZeroPad3d(ZeroPadNd_):
         Tensor, the tensor after padding.
 
     Raises:
-        TypeError: If `padding` is not an integer of a list or tuple of 6 integers.
-        TypeError: If `input` is not Tensor.
         ValueError: If `padding` contains negative value.
-        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
+        ValueError: If `padding` is a tuple or list, and the length does not match the tensor shape.
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import numpy as np
-        >>> import mindspore as ms
-        >>> x = np.ones(shape=(1, 2, 3, 4)).astype(np.float32)
-        >>> x = ms.Tensor(x)
-        >>> padding = (1, 1, 0, 1, 1, 0)
-        >>> pad3d = ms.mint.nn.ZeroPad3d(padding)
+        >>> import mindspore
+        >>> x = mindspore.mint.ones((1, 2, 3, 4))
+        >>> padding = 1
+        >>> pad3d = mindspore.mint.nn.ZeroPad3d(padding)
         >>> out = pad3d(x)
-        >>> print(out)
-        [[[[0. 0. 0. 0. 0. 0.]
-           [0. 0. 0. 0. 0. 0.]
-           [0. 0. 0. 0. 0. 0.]
-           [0. 0. 0. 0. 0. 0.]]
-          [[0. 1.  1.  1.  1.  0.]
-           [0. 1.  1.  1.  1.  0.]
-           [0. 1.  1.  1.  1.  0.]
-           [0. 0. 0. 0. 0. 0.]]
-          [[0. 1.  1.  1.  1.  0.]
-           [0. 1.  1.  1.  1.  0.]
-           [0. 1.  1.  1.  1.  0.]
-           [0. 0. 0. 0. 0. 0.]]]]
-        >>> print(out.shape)
+        >>> out.shape
+        (1, 4, 5, 6)
+        >>> padding = (1, 1, 0, 1, 1, 0)
+        >>> pad3d = mindspore.mint.nn.ZeroPad3d(padding)
+        >>> out = pad3d(x)
+        >>> out.shape
         (1, 3, 4, 6)
     """
 
