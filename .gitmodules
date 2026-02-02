@@ -49,3 +49,7 @@
 [submodule "tests/st/networks/MindSpeed-Core-MS"]
 	path = tests/st/networks/MindSpeed-Core-MS
 	url = https://gitee.com/ascend/MindSpeed-Core-MS.git
+[submodule "dvm"]
+	path = dvm
+	url = https://gitcode.com/mindspore/dvm.git
+	branch = r2.7

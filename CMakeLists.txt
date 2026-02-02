@@ -146,6 +146,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/init.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/dvm.cmake)
 add_subdirectory(mindspore/core)
 add_subdirectory(mindspore/ops)
 add_subdirectory_with_faster_option(mindspore/ccsrc)

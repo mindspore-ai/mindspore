@@ -42,6 +42,7 @@ check_on_off()
 update_submodule()
 {
   git submodule update --init metadef
+  git submodule update --init dvm
 }
 
 build_exit()

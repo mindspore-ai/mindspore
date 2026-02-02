@@ -279,13 +279,7 @@ void GraphKernelFlags::CheckSupport() const {
     auto is_ascend = (context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice);
     if (is_ascend) {
 #ifndef ENABLE_DVM
-      MS_LOG(WARNING) << "Graph Kernel Fusion is not supported without the prebuild binary file tracked by git lfs, "
-                         "and it will be turned off now. Please perform the following steps:\n\n"
-                         "1. Install git lfs, refer https://github.com/git-lfs/git-lfs/wiki/installation\n"
-                         "2. After installing git lfs, do not forget executing the following command:\n"
-                         "   git lfs install\n"
-                         "3. Re-clone the source codes, the files tracked by git lfs will be downloaded automatically\n"
-                         "4. Re-compile the source codes\n";
+      MS_LOG(WARNING) << "Graph Kernel Fusion is not supported because macro ENABLE_DVM not defined";
       const_cast<GraphKernelFlags *>(this)->opt_level = OptLevel_0;
       return;
 #else

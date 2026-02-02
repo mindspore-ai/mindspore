@@ -102,8 +102,6 @@ parse_device()
     HAS_LLVM=`bash ${BASEPATH}/scripts/build/akg_find_llvm.sh`
     export USE_LLVM=$HAS_LLVM
   fi
-  export ENABLE_DVM="off"
-  source ${BASEPATH}/scripts/build/check_binary_file.sh
   if [[ "X$ENABLE_INTERNAL_KERNELS" == "Xon" ]]; then
     source ${BASEPATH}/scripts/build/check_and_build_ms_kernels_internal.sh
   fi
