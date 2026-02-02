@@ -36,20 +36,20 @@ class OnRequestExit(Callback):
     """
     Respond to the user's closing request, exit the training or eval process, and save the checkpoint and mindir.
 
-    Register OnRequestExit Callback before training, when the user want to exit the training process
+    Register OnRequestExit Callback before training, when the user wants to exit the training process
     and save the training data, could send the registered exit signal 'sig' to the training process or modify the
-    'GracefulExit' that a key in the JSON file specified by the 'config_file' to '1'.
+    'GracefulExit' that is a key in the JSON file specified by the 'config_file' to '1'.
     After the training process executes the current step, saves the current training status,
     including checkpoint and mindir, and then exit the training process.
 
     Args:
-        save_ckpt (bool): Whether save the checkpoint before the training process exit. Default: ``True`` .
-        save_mindir (bool): Whether save the mindir before the training process exit. Default: ``True`` .
+        save_ckpt (bool): Whether to save the checkpoint before the training process exit. Default: ``True`` .
+        save_mindir (bool): Whether to save the mindir before the training process exit. Default: ``True`` .
         file_name (str): The saved checkpoint and mindir file name,
             the checkpoint file add suffix '.ckpt', the mindir file add suffix '.mindir'. Default: ``'Net'`` .
         directory (str): The path to save files. It will generate a 'rank_{id}' path by rank_id
             to save checkpoint and mindir. Default: ``'./'`` .
-        sig (int): The user registered exit signal, it must be a captureable and negligible signal.
+        sig (int): The user registered exit signal, it must be a capturable and negligible signal.
             When the process receives the signal, exits the training or eval process. Default: ``signal.SIGTERM`` .
         config_file (str): A json config file used to exit training process gracefully. Key: ``{"GracefulExit": 1}`` .
             Default: ``None`` .
@@ -59,7 +59,7 @@ class OnRequestExit(Callback):
         ValueError: If the 'save_mindir' is not a bool.
         ValueError: If the 'file_name' is not a str.
         ValueError: If the 'directory' is not a str.
-        ValueError: If the 'sig' is not an int or the 'sig' is ``signal.SIGTERM``.
+        ValueError: If the 'sig' is not an int or the 'sig' is not ``signal.SIGTERM``.
 
     Examples:
         >>> from mindspore import nn

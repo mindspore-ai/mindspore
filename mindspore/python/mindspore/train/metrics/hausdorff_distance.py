@@ -68,8 +68,8 @@ class _ROISpatialData(metaclass=ABCMeta):
 
 class HausdorffDistance(Metric):
     r"""
-    Calculates the Hausdorff distance. Hausdorff distance is the maximum and minimum distance between two point sets.
-    Given two feature sets A and B, the Hausdorff distance between two point sets A and B is defined as follows:
+    Calculates the Hausdorff distance. Hausdorff distance is the maximum and minimum distances between two point sets.
+    Given two feature sets A and B, the Hausdorff distance between them is defined as follows:
 
     .. math::
         \begin{array}{ll} \\
@@ -86,7 +86,7 @@ class HausdorffDistance(Metric):
     Args:
         distance_metric (str, optional): Three distance measurement methods are supported:
                     ``"euclidean"`` (Euclidean Distance) ,  ``"chessboard"`` (Chessboard Distance, Chebyshev Distance)
-                    or  ``"taxicab"`` (Taxicab Distance, Manhattan Distance). Default: ``"euclidean"`` .
+                    or ``"taxicab"`` (Taxicab Distance, Manhattan Distance). Default: ``"euclidean"`` .
         percentile (float, optional): Floating point numbers between 0 and 100.
                             Specify the percentile parameter to get the
                             percentile of the Hausdorff distance. Default: ``None`` .
@@ -210,7 +210,7 @@ class HausdorffDistance(Metric):
         """
         Calculate the surface distances from `y_pred_edges` to `y_edges`.
 
-         Args:
+        Args:
             y_pred_edges (np.ndarray): the edge of the predictions.
             y_edges (np.ndarray): the edge of the ground truth.
         """
@@ -267,8 +267,8 @@ class HausdorffDistance(Metric):
         Updates the internal evaluation result with the inputs: 'y_pred', 'y' and 'label_idx'.
 
         Args:
-            inputs: Input 'y_pred', 'y' and 'label_idx'. 'y_pred' and 'y' are a `Tensor`, list or
-                        numpy.ndarray.  'y_pred' is the predicted binary image. 'y' is the actual
+            inputs: Input 'y_pred', 'y' and 'label_idx'. 'y_pred' and 'y' are `Tensor`, list or
+                        numpy.ndarray. 'y_pred' is the predicted binary image. 'y' is the actual
                         binary image. Data type of 'label_idx' is int or float.
 
         Raises:
@@ -308,10 +308,10 @@ class HausdorffDistance(Metric):
 
     def eval(self):
         """
-        Calculate the no-directed or directed Hausdorff distance.
+        Calculate the non-directed or directed Hausdorff distance.
 
         Returns:
-             numpy.float64, the hausdorff distance.
+            numpy.float64, the hausdorff distance.
 
         Raises:
             RuntimeError: If the update method is not called first, an error will be reported.

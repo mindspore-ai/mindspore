@@ -5,7 +5,7 @@ mindspore.numpy.trunc
 
     逐元素返回输入的截断值。
 
-    标量 `x` 的截断值是距离 `x` 最近且趋近0的整数 `i`，即 `x` 的小数部分被舍弃。
+    标量 `x` 的截断值是距离 `x` 最近且趋近于0的整数 `i`，即 `x` 的小数部分被舍弃。
 
     .. note::
         不支持NumPy参数 `out` 、 `where` 、 `casting` 、 `order` 、 `subok` 、 `signature` 、 `extobj` 。

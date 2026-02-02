@@ -275,7 +275,7 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
 
             - If int, get the gradient with respect to single input.
             - If tuple, get the gradients with respect to selected inputs. `grad_position` begins with 0.
-            - If None, none derivative of any input will be solved, and in this case, `weights` is required.
+            - If None, no derivative of any input will be solved, and in this case, `weights` is required.
 
         weights (Union[ParameterTuple, Parameter, list[Parameter]], optional):
             The parameters of the training network that need to
@@ -283,9 +283,9 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
             Default: ``None`` .
         has_aux (bool, optional): If ``True`` , only the first output of `fn` contributes the gradient of `fn`,
             while the other
-            outputs will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            outputs will be returned straightly. It means the `fn` must return more than one output in this case.
             Default: ``False`` .
-        return_ids(bool, optional): Whether the returned derivation function contains
+        return_ids (bool, optional): Whether the returned derivation function contains
             `grad_position` or `weights` information. If ``True``,
             all gradient values in the returned derivation function will be replaced
             with: [gradient, grad_position] or [gradient, weights].
@@ -360,7 +360,7 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
         >>> weights = net.trainable_params()
         >>>
         >>> # Case 1: gradient with respect to inputs.
-        >>> # For has_aux is set True, only loss contributes to the gradient.
+        >>> # For has_aux is set to True, only loss contributes to the gradient.
         >>> grad_fn = value_and_grad(forward, grad_position=0, weights=None, has_aux=True)
         >>> (loss, logits), inputs_gradient = grad_fn(inputs, labels)
         >>> print(logits.shape)
@@ -369,7 +369,7 @@ def value_and_grad(fn, grad_position=0, weights=None, has_aux=False, return_ids=
         (16, 10) (16, 10)
         >>>
         >>> # Case 2: gradient with respect to weights.
-        >>> # For has_aux is set True, only loss contributes to the gradient.
+        >>> # For has_aux is set to True, only loss contributes to the gradient.
         >>> grad_fn = value_and_grad(forward, grad_position=None, weights=weights, has_aux=True)
         >>> (loss, logits), params_gradient = grad_fn(inputs, labels)
         >>> print(logits.shape)
@@ -930,20 +930,20 @@ def vjp(fn, *inputs, weights=None, has_aux=False):
             Default: ``None`` .
         has_aux (bool, optional): If True, only the first output of `fn` contributes the gradient of `fn`,
             while the other outputs
-            will be returned straightly. It means the `fn` must return more than one outputs in this case.
+            will be returned straightly. It means the `fn` must return more than one output in this case.
             Default: ``False``.
 
     Returns:
         Forward outputs and function to calculate vjp.
 
         - **net_output** (Union[Tensor, tuple[Tensor]]) - The output of `fn(inputs)`.
-          Specially, when `has_aux` is set to
+          Specifically, when `has_aux` is set to
           ``True``, `net_output` is the first output of `fn(inputs)`.
         - **vjp_fn** (Function) - To calculate vector-jacobian-product. Its inputs are the vectors whose shape and
           type should be the same as `net_output` .
         - **aux_value** (Union[Tensor, tuple[Tensor]], optional) - When `has_aux` is ``True``,
           `aux_value` will be returned.
-          It means the second to last outputs of `fn(inputs)`. Specially, `aux_value` does not contribute to gradient.
+          It means the second to last outputs of `fn(inputs)`. Specifically, `aux_value` does not contribute to gradient.
 
     Raises:
         TypeError: `inputs` or `v` does not belong to required types.

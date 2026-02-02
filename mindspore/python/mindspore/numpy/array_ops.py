@@ -981,13 +981,13 @@ def unique(x, return_inverse=False):
 
     Returns:
         Tensor or tuple of Tensors.
-        If `return_inverse` is `False`, return the unique tensor, otherwise return tuple of tensors.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        If `return_inverse` is ``False``, return the unique tensor, otherwise return tuple of tensors.
 
     Raises:
         TypeError: If `x` is not tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.numpy as np
@@ -2430,11 +2430,11 @@ def unravel_index(indices, shape, order='C'):
     Returns:
         Tensor, each array in the tuple has the same shape as the indices array.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
     Raises:
         ValueError: If `order` is not 'C' or 'F'.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore.numpy as np

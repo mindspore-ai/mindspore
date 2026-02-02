@@ -80,7 +80,7 @@ class Fbeta(Metric):
                 if one-hot encoding is used. Shape can also be :math:`(N,)` if category index is used.
 
         Raises:
-            ValueError: class numbers of last input predicted data and current predicted data not match.
+            ValueError: class numbers of last input predicted data and current predicted data do not match.
             ValueError: If the predicted value and true value contain different classes.
         """
         if len(inputs) != 2:

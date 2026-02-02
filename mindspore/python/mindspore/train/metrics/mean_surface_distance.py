@@ -54,7 +54,7 @@ class MeanSurfaceDistance(Metric):
                                 ``"taxicab"`` (Taxicab Distance, Manhattan Distance) Default: ``"euclidean"`` .
         symmetric (bool, optional): Whether to calculate the Mean Surface Distance between y_pred and y.
                           If False, it only calculates :math:`AvgSurDis(y\_pred \rightarrow y)`,
-                          otherwise, the mean of  distance from `y_pred` to `y` and from `y` to `y_pred`, i.e.
+                          otherwise, the mean of distance from `y_pred` to `y` and from `y` to `y_pred`, i.e.
                           :math:`MeanSurDis(y\_pred \leftrightarrow y)`, will be returned. Default: ``False`` .
 
     Supported Platforms:
@@ -95,7 +95,7 @@ class MeanSurfaceDistance(Metric):
         """
         Calculate the surface distances from `y_pred_edges` to `y_edges`.
 
-         Args:
+        Args:
             y_pred_edges (np.ndarray): the edge of the predictions.
             y_edges (np.ndarray): the edge of the ground truth.
         """

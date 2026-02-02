@@ -40,7 +40,7 @@ class EarlyStopping(Callback):
     Stop training when a monitored metric has stopped improving.
 
     Assuming `monitor` is "accuracy", with this, `mode` would be "max" since
-    goal of trianing is to maximize the accuracy, the `model.fit()` training
+    goal of training is to maximize the accuracy, the `model.fit()` training
     loop will check at end of epoch whether the accuracy is no longer
     increasing, considering the `min_delta` and `patience` if applicable.
     Once it's found no longer increasing, `run_context.request_stop()`

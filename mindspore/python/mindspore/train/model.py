@@ -1127,7 +1127,7 @@ class Model:
             cb_params.train_network = train_network
             cb_params.dataset_helper = dataset_helper
 
-            # For data sink dataset_helper only iter once, other wise iter epoch_size times.
+            # For data sink dataset_helper only iter once, otherwise iter epoch_size times.
             for inputs in dataset_helper:
                 if is_graph:
                     cb_params.cur_step_num += dataset_helper.sink_size()
@@ -1381,7 +1381,7 @@ class Model:
     @staticmethod
     def _check_methods_for_custom_callbacks(callbacks, current_mode):
         """
-        Check whether methods of custimized callbacks are valid.
+        Check whether methods of customized callbacks are valid.
 
         Args:
             callbacks (Optional[list[Callback], Callback]): List of callback objects or callback object.
