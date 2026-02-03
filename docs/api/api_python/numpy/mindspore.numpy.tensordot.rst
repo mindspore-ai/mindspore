@@ -21,7 +21,7 @@ mindspore.numpy.tensordot
     参数：
         - **a** (Tensor) - 需计算点积的Tensor。
         - **b** (Tensor) - 需计算点积的Tensor。
-        - **axes** (int或int的序列) -
+        - **axes** (int或int的序列) - 默认值： ``2`` 。
 
           类int值：如果是整数 `N` ，则按顺序对 `a` 的最后 `N` 个轴和 `b` 的前 `N` 个轴进行求和。对应的轴的大小必须匹配。
 

@@ -2183,7 +2183,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
             axis2 (int, optional): Axis to be used as the second axis of the 2-D
                 sub-arrays from which the diagonals should be taken. Defaults to
                 second axis. Default: ``1`` .
-            dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            dtype (:class:`mindspore.dtype`, optional): Overrides the dtype of the
                 output Tensor. Default: ``None`` .
 
         Returns:
@@ -2317,7 +2317,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def uniform(self, from_=0., to=1., generator=None):
         r"""
-        Generates random numbers that follows a uniform distribution within the half-open interval :math:`[from\_, to)`.
+        Generates random numbers that follow a uniform distribution within the half-open interval :math:`[from\_, to)`.
 
         .. math::
             P(x) = \frac{1}{to - from\_}
@@ -2955,7 +2955,7 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
 
     def type_as(self, other):
         r"""
-        Returns self tensor cast to the type of the with the input other tensor.
+        Returns self tensor cast to the type of the input other tensor.
 
         Note:
             When converting complex numbers to boolean type, the imaginary part of the complex number is not

@@ -8,7 +8,7 @@ view:
             shape (Union[tuple(int), int]): Dimension of the output tensor.
 
         Returns:
-            Tensor, which dimension is the input shape's value.
+            Tensor, whose dimension is the input shape's value.
 
         Examples:
             >>> from mindspore import Tensor

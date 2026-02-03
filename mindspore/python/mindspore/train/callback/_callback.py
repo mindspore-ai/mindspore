@@ -114,14 +114,14 @@ class Callback:
     You can use this mechanism to do some custom operations.
 
     Each method of Callback class corresponds to a stage in training or eval process, and those methods
-    have the same input `run_context`, which hold context information of the model in
+    have the same input `run_context`, which holds context information of the model in
     training or eval process. When defining a Callback subclass or creating a custom Callback,
     note that you should override methods with names prefixed with "on_train" or "on_eval",
-    otherwise ValueError will be raised if the custimized Callbacks used in `model.fit`.
+    otherwise ValueError will be raised if the customized Callbacks used in `model.fit`.
 
     When creating a custom Callback, model context information can be obtained in Callback
-    methods by calling `RunContext.original_args()`, which is a dictionary varivable
-    recording current attributes. Users can add custimized attributes to the information.
+    methods by calling `RunContext.original_args()`, which is a dictionary variable
+    recording current attributes. Users can add customized attributes to the information.
     Training process can also be stopped by calling `request_stop` method.
 
     Examples:
@@ -155,7 +155,7 @@ class Callback:
 
     def begin(self, run_context):
         """
-        Called once before the network executing.
+        Called once before the network executes.
         A backwards compatibility alias for `on_train_begin` and `on_eval_begin`.
 
         Note:

@@ -264,7 +264,7 @@ class BatchNorm2d(_BatchNorm):
         >>> import mindspore
         >>> input_x = mindspore.tensor([0.3, 0.4, 0.5, 0.3])
         >>> input_x = input_x.reshape((2, 2, 1, 1))
-        >>> net = mint.nn.BatchNorm2d(2)
+        >>> net = mindspore.mint.nn.BatchNorm2d(2)
         >>> output = net(input_x)
         >>> print(output)
         [[[[0.29999852]]

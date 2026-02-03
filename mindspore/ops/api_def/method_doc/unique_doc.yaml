@@ -4,9 +4,9 @@ unique:
     
     Returns the unique elements of `self`.
 
-    when `return_inverse=True`, also return a tensor containing the index of each value of `self`
+    When `return_inverse=True`, also return a tensor containing the index of each value of `self`
     corresponding to the output unique tensor.
-    when `return_counts=True`, also return a tensor containing the number of occurrences for each
+    When `return_counts=True`, also return a tensor containing the number of occurrences for each
     unique value or tensor.
 
     Args:
@@ -15,7 +15,7 @@ unique:
         return_inverse(bool, optional): Whether to also return the indices for where elements in `self` ended up in
             the returned unique list. Default: ``False`` .
         return_counts(bool, optional): Whether to also return the counts for each unique element. Default: ``False`` .
-        dim(int, optional): the dimension to operate upon. If ``None``, the unique of the flattened `self` is returned.
+        dim(int, optional): The dimension to operate upon. If ``None``, the unique of the flattened `self` is returned.
             Otherwise, each of the tensors indexed by the given dimension is treated as one of the elements to apply the
             unique operation upon. Default: ``None`` .
 

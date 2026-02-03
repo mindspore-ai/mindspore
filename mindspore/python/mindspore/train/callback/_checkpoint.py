@@ -136,7 +136,7 @@ class CheckpointConfig:
         integrated_save (bool, optional): Whether to merge and save the split Tensor in the automatic parallel scenario.
             Integrated save function is only supported in automatic parallel scene, not supported
             in manual parallel. Default: ``True`` .
-        async_save (Union[bool, str], optional):Whether to use asynchronous saving of the checkpoint file or
+        async_save (Union[bool, str], optional): Whether to use asynchronous saving of the checkpoint file or
                                     safetensors file, if True, the asynchronous thread is used by default. If the type
                                     is string, the method of asynchronous saving, it can be "process" or "thread".
                                     Default: ``False`` .
@@ -354,7 +354,7 @@ class CheckpointConfig:
     @property
     def crc_check(self):
         """
-        Get the value of the whether to enable crc check.
+        Get the value of whether to enable crc check.
 
         Returns:
             bool, whether to enable crc check.

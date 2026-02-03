@@ -943,7 +943,8 @@ def vjp(fn, *inputs, weights=None, has_aux=False):
           type should be the same as `net_output` .
         - **aux_value** (Union[Tensor, tuple[Tensor]], optional) - When `has_aux` is ``True``,
           `aux_value` will be returned.
-          It means the second to last outputs of `fn(inputs)`. Specifically, `aux_value` does not contribute to gradient.
+          It means the second to last outputs of `fn(inputs)`.
+          Specifically, `aux_value` does not contribute to gradient.
 
     Raises:
         TypeError: `inputs` or `v` does not belong to required types.

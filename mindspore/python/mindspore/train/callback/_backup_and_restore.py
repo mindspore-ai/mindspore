@@ -103,7 +103,7 @@ class BackupAndRestore(Callback):
 
     def on_train_end(self, run_context):
         """
-        Deleted checkpoint file at the end of train.
+        Delete checkpoint file at the end of train.
 
         Args:
             run_context (RunContext): Context of the process running. For more details,

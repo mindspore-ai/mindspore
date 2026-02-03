@@ -85,7 +85,7 @@ class Accuracy(EvaluationBase):
 
         Raises:
             ValueError: If the number of the inputs is not 2.
-            ValueError: class numbers of last input predicted data and current predicted data not match.
+            ValueError: class numbers of last input predicted data and current predicted data do not match.
 
         """
         if len(inputs) != 2:

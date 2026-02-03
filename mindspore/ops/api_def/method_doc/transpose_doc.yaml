@@ -12,7 +12,7 @@ transpose:
         Transposed tensor, has the same data type as `self`.
     
     Raises:
-        TypeError: If `dim0` or `dim1` is not integer.
+        TypeError: If `dim0` or `dim1` is not an integer.
         ValueError: If `dim0` or `dim1` is not in the range of :math:`[-ndim, ndim-1]`.
     
     Supported Platforms:
@@ -32,7 +32,7 @@ transpose:
     
     Permutes the dimensions of the self tensor according to self permutation.
     
-    For a 1-D array this has no effect, as a transposed vector is simply the same vector.
+    For a 1-D array, this has no effect, as a transposed vector is simply the same vector.
     To convert a 1-D array into a 2D column vector please refer to :func:`mindspore.ops.expand_dims`.
     For a 2-D array, this is a standard matrix transpose. For an n-D array, if axes are given,
     their order indicates how the axes are permuted (see Examples).
