@@ -60,6 +60,8 @@ from mindspore.ops.auto_generate import (minimum, maximum, mul, muls, sin, sinc,
                                          bincount_ext, rotated_iou_op, cat, narrow, var_op, pow, inplace_erfinv_op,
                                          frac_ext, pow_tensor_scalar_op, not_equal_op, isinf, addmv_op, cdist,
                                          addbmm_op, addmm_op, pow_scalar_tensor_op, transpose_op)
+# NOTE: `transpose_op` is not a view op. For `ops.t` / `Tensor.t`, we need the view semantics.
+from mindspore.ops.auto_generate import transpose_ext_view
 # 2
 from mindspore.ops.functional_overload import gmm
 # 3
@@ -1615,7 +1617,8 @@ def t(input):
          [3, 4]])
     """
     if input.ndim == 2:
-        return transpose_op(input, (1, 0))
+        # 2-D transpose: view swap of dim0/dim1
+        return transpose_ext_view(input, 0, 1)
     return input
 
 
