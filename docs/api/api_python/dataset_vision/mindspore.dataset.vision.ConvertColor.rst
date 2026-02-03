@@ -8,7 +8,7 @@ mindspore.dataset.vision.ConvertColor
     支持 Ascend 硬件加速，需要通过 `.device("Ascend")` 方式开启。
 
     参数：
-        - **convert_mode**  (:class:`~.vision.ConvertMode`) - 图像色彩空间转换的模式。
+        - **convert_mode** (:class:`~.vision.ConvertMode`) - 图像色彩空间转换的模式。
 
           - **ConvertMode.COLOR_BGR2BGRA**: 将 BGR 图像转换为 BGRA 图像。
           - **ConvertMode.COLOR_RGB2RGBA**: 将 RGB 图像转换为 RGBA 图像。
@@ -43,7 +43,7 @@ mindspore.dataset.vision.ConvertColor
 
         指定该变换执行的设备。
 
-        当执行设备是 Ascend 时，输入数据支持 `uint8` 或者 `float32` 类型，数据格式支持NHWC，Channels: [1, 3, 4], N只支持1。输入数据的高度限制范围为[4, 8192]，宽度限制范围为[6, 4096]。
+        当执行设备是 Ascend 时，输入数据支持 `uint8` 或者 `float32` 类型。数据格式支持NHWC，Channels 取值为[1, 3, 4]，N只支持1。输入数据的高度限制范围为[4, 8192]，宽度限制范围为[6, 4096]。
 
         参数：
             - **device_target** (str, 可选) - 算子将在指定的设备上运行。当前支持 ``"CPU"`` 和 ``"Ascend"`` 。默认值： ``"CPU"`` 。

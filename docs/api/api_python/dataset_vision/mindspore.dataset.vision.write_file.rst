@@ -6,7 +6,7 @@ mindspore.dataset.vision.write_file
     使用二进制模式将一维uint8类型数据数组写到文件。
 
     参数：
-        - **filename** (str) - 要写入的文件的路径。
+        - **filename** (str) - 要写入的文件路径。
         - **data** (Union[numpy.ndarray, mindspore.Tensor]) - 要写入的一维uint8数据。
 
     异常：

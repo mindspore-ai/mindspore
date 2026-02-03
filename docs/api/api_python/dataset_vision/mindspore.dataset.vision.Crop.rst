@@ -8,8 +8,8 @@ mindspore.dataset.vision.Crop
     支持 Ascend 硬件加速，需要通过 `.device("Ascend")` 方式开启。
 
     参数：
-        - **coordinates**  (sequence) - 裁剪区域的起始左上角坐标。必须是两个值的序列，形式为(上，左)。
-        - **size**  (Union[int, sequence]) - 裁剪区域的尺寸大小。
+        - **coordinates** (sequence) - 裁剪区域的起始左上角坐标。必须是两个值的序列，形式为(上，左)。
+        - **size** (Union[int, sequence]) - 裁剪区域的尺寸大小。
 
           - 如果 `size` 是整数，则返回一个裁剪尺寸大小为 (size, size) 的正方形。
           - 如果 `size` 是一个长度为 2 的序列，则返回一个裁剪尺寸大小为 (高度, 宽度) 的长方形。

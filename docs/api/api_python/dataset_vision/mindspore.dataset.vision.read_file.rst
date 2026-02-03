@@ -9,7 +9,7 @@ mindspore.dataset.vision.read_file
         - **filename** (str) - 待读取文件路径。
 
     返回：
-        - numpy.ndarray, 一维uint8类型数据。
+        numpy.ndarray，一维uint8类型数据。
 
     异常：
         - **TypeError** - 如果 `filename` 不是str类型。
