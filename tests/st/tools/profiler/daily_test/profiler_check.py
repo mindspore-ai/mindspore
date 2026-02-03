@@ -758,7 +758,7 @@ class MSProfilerChecker:
 
     def check_kernel_details(self):
         """
-        910A does not have Mix Block Dim, 'Context ID' is not supported, verify shared fields;
+        910A does not have Mix Block Num, 'Context ID' is not supported, verify shared fields;
         The step ID is only generated when the step is specified in the dynamic profiler of the dynamic graph and in
         the for loop scenario of the dynamic graph scene;
         The data_preprocessing file is only generated when the AI CPU is included in the Accelerator Core;
@@ -768,14 +768,14 @@ class MSProfilerChecker:
         if self.profile_config.get("export_type", "text") in ["text", "dbtext"]:
             if self.profile_config.get("profile_level") == 0:
                 table_head = ["Model ID", "Task ID", "Stream ID", "Name", "Type", "OP State", "Accelerator Core",
-                              "Start Time(us)", "Duration(us)", "Wait Time(us)", "Block Dim"]
+                              "Start Time(us)", "Duration(us)", "Wait Time(us)", "Block Num"]
             else:
                 table_head = ["Model ID", "Task ID", "Stream ID", "Name", "Type", "OP State", "Accelerator Core",
-                              "Start Time(us)", "Duration(us)", "Wait Time(us)", "Block Dim", "Mix Block Dim",
+                              "Start Time(us)", "Duration(us)", "Wait Time(us)", "Block Num", "Mix Block Num",
                               "HF32 Eligible", "Input Shapes", "Input Data Types", "Input Formats", "Output Shapes",
                               "Output Data Types", "Output Formats"]
                 if de != "ascend910b":
-                    table_head.remove("Mix Block Dim")
+                    table_head.remove("Mix Block Num")
             kernel_details_path = check_profiler_path("kernel_details.csv", self.profile_config.get("output_path"))
             logger.warning(f"kernel_details_path is {kernel_details_path}")
             kernel_details_data = pd.read_csv(kernel_details_path)
@@ -829,7 +829,7 @@ class MSProfilerChecker:
                     return False
 
             not_nan_headers = ["Model ID", "Name", "Start Time(us)", "Duration(us)",
-                               "Wait Time(us)", "Block Dim"]
+                               "Wait Time(us)", "Block Num"]
             if self.profile_config.get("profile_level") != 0:
                 add_list_name = ["Type", "Accelerator Core"]
                 not_nan_headers.extend(add_list_name)
