@@ -103,7 +103,7 @@ def test_hccl_alltoall_tensor_bool():
     Description: test 'AlltoAllV' communication operator.
     Expectation: expect correct result.
     """
-    data = [i + this_rank for i in range(world_size)]
+    data = [True for _ in range(world_size)]
     input_x = ms.Tensor(data, dtype=ms.bool_)
     output = (world_size,)
     net = AllToAllTensorFunNet()

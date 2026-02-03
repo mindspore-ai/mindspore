@@ -96,7 +96,19 @@ def test_hccl_all_gather_into_tensor_func_bool():
     Description: test 'all_gather_into_tensor' communication function.
     Expectation: expect correct result.
     """
-    x = np.ones([3, 4]).astype(np.bool_)
-    expect_output = np.ones([24, 4]).astype(np.bool_)
+    x = np.full((3, 4), True, dtype=bool)
+    expect_output = np.full((24, 4), True, dtype=bool)
     output, _ = all_gather_into_tensor(Tensor(x, mstype.bool_))
+    assert np.allclose(output.asnumpy(), expect_output)
+
+
+def test_hccl_all_gather_into_tensor_func_complex64():
+    """
+    Feature: test 'all_gather_into_tensor' communication function.
+    Description: test 'all_gather_into_tensor' communication function.
+    Expectation: expect correct result.
+    """
+    x = np.ones([3, 4]).astype(np.complex64)
+    expect_output = np.ones([24, 4]).astype(np.complex64)
+    output, _ = all_gather_into_tensor(Tensor(x, mstype.complex64))
     assert np.allclose(output.asnumpy(), expect_output)

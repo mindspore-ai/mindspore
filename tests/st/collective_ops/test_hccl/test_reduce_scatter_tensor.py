@@ -109,3 +109,16 @@ def test_hccl_reduce_scatter_diff_reduce_type():
         error_msg = str(e)
         print(error_msg)
         assert "inconsistent" in error_msg
+
+
+def test_hccl_reduce_scatter_complex64():
+    """
+    Feature: test reduce_scatter with different reducing type.
+    Description: test reduce_scatter with different reducing type.
+    Expectation: expect type checking exception.
+    """
+    input_tensor = Tensor(np.ones([8, 8]).astype(np.complex64))
+    output = reduce_scatter_tensor(input_tensor)
+    expect_output = (np.ones([1, 8]) * 8).astype(np.complex64)
+    print("all_gather_into_tensor func output is", output)
+    assert np.allclose(output.asnumpy(), expect_output)

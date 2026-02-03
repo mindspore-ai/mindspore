@@ -21,7 +21,7 @@ from mindspore import nn
 from mindspore import Tensor
 from mindspore import dtype as mstype
 from mindspore.ops import operations as P
-from mindspore.communication.management import init
+from mindspore.communication.management import init, get_group_size
 from mindspore.communication.comm_func import all_reduce
 from mindspore import context
 from mindspore.ops import ReduceOp
@@ -31,6 +31,7 @@ os.environ['HCCL_WHITELIST_DISABLE'] = str(1)
 context.set_context(jit_level='O0')
 context.set_context(device_target="Ascend")
 init()
+world_size = get_group_size()
 
 
 class AllReduceNet(nn.Cell):
@@ -108,6 +109,18 @@ def test_hccl_allreduce_func_bool():
     Expectation: expect correct result.
     """
     x = np.ones([3, 4]).astype(np.bool_)
-    expect_output = [[8, 8, 8, 8], [8, 8, 8, 8], [8, 8, 8, 8]]
+    expect_output = [[True, True, True, True], [True, True, True, True], [True, True, True, True]]
     output, _ = all_reduce(Tensor(x, mstype.bool_))
+    assert np.allclose(output.asnumpy(), expect_output)
+
+
+def test_hccl_allreduce_func_complex64():
+    """
+    Feature: test 'all_reduce' communication function.
+    Description: test 'all_reduce' communication function.
+    Expectation: expect correct result.
+    """
+    x = [1+1j, 2+2j, 3+3j, 4+4j, 5+5j, 6+6j, 7+7j, 8+8j]
+    expect_output = [elem * world_size for elem in x]
+    output, _ = all_reduce(Tensor(x, mstype.complex64))
     assert np.allclose(output.asnumpy(), expect_output)

@@ -52,10 +52,11 @@ const std::set<TypePtr> common_valid_types_with_bool = {
 const std::set<TypePtr> common_valid_types_with_complex = {kInt8,    kInt16,     kInt32,      kInt64,   kUInt8,
                                                            kUInt16,  kUInt32,    kUInt64,     kFloat16, kFloat32,
                                                            kFloat64, kComplex64, kComplex128, kBFloat16};
-const std::set<TypePtr> comm_ops_reduce_valid_types_with_bool = {kInt8,    kInt16,   kInt32, kInt64,
-                                                                 kFloat16, kFloat32, kBool,  kBFloat16};
-const std::set<TypePtr> comm_ops_valid_types_with_bool = {
-  kInt8, kInt16, kInt32, kInt64, kUInt8, kUInt16, kUInt32, kUInt64, kFloat16, kFloat32, kFloat64, kBool, kBFloat16};
+const std::set<TypePtr> comm_ops_reduce_valid_types_with_bool = {kInt8,    kInt16, kInt32,    kInt64,    kFloat16,
+                                                                 kFloat32, kBool,  kBFloat16, kComplex64};
+const std::set<TypePtr> comm_ops_valid_types_with_bool = {kInt8,    kInt16,  kInt32,    kInt64,    kUInt8,
+                                                          kUInt16,  kUInt32, kUInt64,   kFloat16,  kFloat32,
+                                                          kFloat64, kBool,   kBFloat16, kComplex64};
 
 const std::set<TypePtr> common_valid_types_with_complex_and_bool = {
   kInt8,    kInt16,   kInt32,   kInt64,     kUInt8,      kUInt16, kUInt32,  kUInt64,
