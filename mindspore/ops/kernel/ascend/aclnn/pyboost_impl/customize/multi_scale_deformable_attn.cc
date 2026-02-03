@@ -86,7 +86,6 @@ tensor::TensorPtr MultiScaleDeformableAttnAscendCustomize(const std::shared_ptr<
       LAUNCH_ACLNN(aclnnMultiScaleDeformableAttnFunction, device_context, op->stream_id(), value_tensor_cp,
                    shape_tensor_cp, offset_tensor_cp, locations_tensor_cp, weight_tensor_cp, outputs[0]);
     }));
-  op->CreateOutputSimpleInfo();
 
   if (ori_type == kFloat32) {
     return PyBoostUtils::CastTensor(op->output(0), kNumberTypeFloat32, device::DeviceType::kAscend);

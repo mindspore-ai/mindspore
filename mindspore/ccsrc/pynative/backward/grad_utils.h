@@ -69,9 +69,6 @@ struct AutoGradUtil {
   static ValuePtr VectorRefToValue(const VectorRef &vec_ref, bool requires_grad, bool is_out_sequence);
   static void BuildViewAutoGradMeta(const tensor::TensorPtr &src_tensor, const tensor::TensorPtr &output,
                                     autograd::CreationType creation_type, bool requires_grad);
-  static void SetInferOutputToGrad(const PyboostOpRunInfoPtr &op_run_info, const kernel::pyboost::OpPtr &op);
-  static void SetInferOutputToGrad(const OpGradInfoPtr &op_grad_info, const kernel::pyboost::OpPtr &op);
-  static void SetInferMultiOutputToGrad(const OpGradInfoPtr &op_grad_info, const kernel::pyboost::OpPtr &op);
   static ValuePtr MakeOutput(bool requires_grad, const kernel::pyboost::OpPtr &op,
                              const tensor::TensorPtr &base_view = nullptr);
   static ValuePtr MakeMultiOutput(bool requires_grad, const kernel::pyboost::OpPtr &op,
@@ -82,6 +79,15 @@ struct AutoGradUtil {
                              const tensor::TensorPtr &base_view = nullptr);
   static ValuePtr MakeOutput(bool requires_grad, const std::vector<tensor::TensorPtr> &output_tensors,
                              const tensor::TensorPtr &base_view = nullptr);
+  template <typename... Ts>
+  static ValuePtr MakeOutput(bool requires_grad, const std::tuple<Ts...> &tensors,
+                             const tensor::TensorPtr &base_view = nullptr) {
+    constexpr size_t size = std::tuple_size<std::tuple<Ts...>>::value;
+    std::vector<ValuePtr> output_values(size);
+    ProcessTupleOutputs(tensors, output_values, requires_grad, base_view, std::make_index_sequence<size>{});
+    return std::make_shared<ValueTuple>(output_values);
+  }
+
   static void BumpVersion(const ValuePtr &value);
 
   static bool IsPrimNeedGrad(const PrimitivePtr &prim);
@@ -104,8 +110,7 @@ struct AutoGradUtil {
   static void ClearAutoGradStaticCache();
   static void CheckAndSetAbstract(const OpGradInfoPtr &op_grad_info);
   static void CacheOutputAbstract(const ValuePtr &v, const abstract::AbstractBasePtr &abs);
-  static void CheckAndCloneInplaceInput(const kernel::pyboost::OpPtr &inplace_op, const PrimitivePtr &prim,
-                                        device::DeviceType device_target, ValuePtrList &&inputs);
+  static TensorPtr CheckAndCloneInplaceInput(const PrimitivePtr &prim, ValuePtrList &&inputs);
   static ValuePtr ShallowCopyAndDetach(const ValuePtr &value);
   static TensorPtr ViewAsSelfWithNoGrad(const TensorPtr &self);
   static TensorPtr Add(const TensorPtr &input, const TensorPtr &other);
@@ -115,6 +120,30 @@ struct AutoGradUtil {
                                         const std::vector<autograd::TensorMeta> &inputs_meta);
   static tensor::TensorPtr ReduceGrad(const tensor::TensorPtr &grad, const std::vector<int64_t> &reduce_shape);
   static tensor::TensorPtr Cast(const tensor::TensorPtr &grad, const TypePtr &dtype);
+
+ private:
+  template <typename Tuple, size_t... I>
+  static void ProcessTupleOutputs(const Tuple &tensors, std::vector<ValuePtr> &output_values, bool requires_grad,
+                                  const tensor::TensorPtr &base_view, std::index_sequence<I...>) {
+    (void)std::initializer_list<int>{
+      (ProcessSingleOutput(std::get<I>(tensors), output_values[I], requires_grad, base_view), 0)...};
+  }
+
+  static void ProcessSingleOutput(const tensor::TensorPtr &tensor, ValuePtr &output_value, bool requires_grad,
+                                  const tensor::TensorPtr &base_view) {
+    MS_EXCEPTION_IF_NULL(tensor);
+    // Set auto grad meta data for op outputs
+    if (base_view != nullptr && tensor->storage_info() != nullptr) {
+      BuildViewAutoGradMeta(base_view, tensor, autograd::CreationType::kMultiOutput, requires_grad);
+    } else if (requires_grad) {
+      if (tensor->auto_grad_meta_data() == nullptr) {
+        tensor->set_auto_grad_meta_data(std::make_shared<autograd::AutoGradMetaData>(InputType::kOpOutput));
+      } else {
+        tensor->auto_grad_meta_data()->set_input_type(InputType::kOpOutput);
+      }
+    }
+    output_value = tensor;
+  }
 };
 }  // namespace pynative
 }  // namespace mindspore

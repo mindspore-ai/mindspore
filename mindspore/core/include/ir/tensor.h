@@ -748,6 +748,10 @@ class MS_CORE_API Tensor : public MetaTensor {
 
   void set_has_fallback(bool has_fallback) { has_fallback_ = has_fallback; }
 
+  bool has_ms_dispatch() const { return has_ms_dispatch_; }
+
+  void set_has_ms_dispatch(bool has_ms_dispatch) { has_ms_dispatch_ = has_ms_dispatch; }
+
  private:
   inline static GradHookInterfacePtr grad_impl_{nullptr};
   // Really execute callback function when host value is updated of Tensor.
@@ -801,6 +805,7 @@ class MS_CORE_API Tensor : public MetaTensor {
   bool cache_enable_{false};
   bool copy_done_flag_{false};
   bool has_fallback_{false};
+  bool has_ms_dispatch_{false};
 };
 
 // CSRTensor entity class

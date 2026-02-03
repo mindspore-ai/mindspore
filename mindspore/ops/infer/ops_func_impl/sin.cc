@@ -45,6 +45,7 @@ TypePtr SinFuncImpl::InferType(const PrimitivePtr &primitive, const std::vector<
   }
 }
 TypePtrList SinFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  MS_EXCEPTION_IF_NULL(input_values[kIndex0]);
   const auto &x_tensor = input_values[kIndex0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
   const auto &input_type = x_tensor->Dtype();
@@ -60,6 +61,7 @@ TypePtrList SinFuncImpl::InferType(const PrimitivePtr &primitive, const ValuePtr
   }
 }
 ShapeArray SinFuncImpl::InferShape(const PrimitivePtr &primitive, const ValuePtrList &input_values) const {
+  MS_EXCEPTION_IF_NULL(input_values[kIndex0]);
   const auto &x_tensor = input_values[kIndex0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(x_tensor);
   return {x_tensor->shape()};

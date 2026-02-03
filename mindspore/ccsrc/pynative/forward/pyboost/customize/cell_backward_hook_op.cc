@@ -79,8 +79,7 @@ py::object PyboostCellBackwardHookBase(const PrimitivePtr &prim, const py::list 
   if (op_run_info->requires_grad) {
     auto op_grad_info =
       std::make_shared<OpGradInfo>(op_type, op->primitive(), std::vector<ValuePtr>({tensors_tensor_list}), real_out);
-    AutoGradUtil::SetInferMultiOutputToGrad(op_grad_info, op);
-    PyNativeAlgo::PyBoost::DoGrad(op, op_grad_info, op_run_info->async_status);
+    PyNativeAlgo::PyBoost::DoGrad(nullptr, op_grad_info, op_run_info->async_status);
   }
 
   MS_LOG(DEBUG) << "Run Pyboost_CellBackwardHook end";

@@ -179,7 +179,6 @@ void DvmCall(const std::string &op_name, OpRunner *op, const F &func, const Args
   tensor->set_need_pipeline_sync(true);
   auto &outputs = const_cast<std::vector<tensor::TensorPtr> &>(op->outputs());
   outputs.emplace_back(std::move(tensor));
-  op->CreateOutputSimpleInfo();
   CALL_END(op_name, k);
 }
 
@@ -250,7 +249,6 @@ void BinaryDvmCall(const std::string &op_name, OpRunner *op, dvm::BinaryOpType o
   tensor->set_need_pipeline_sync(true);
   auto &outputs = const_cast<std::vector<tensor::TensorPtr> &>(op->outputs());
   outputs.emplace_back(std::move(tensor));
-  op->CreateOutputSimpleInfo();
   CALL_END(op_name, k);
 }
 
@@ -532,7 +530,6 @@ tensor::TensorPtr ConcatAscendDvm::Call(const ValueTuplePtr &tensors_tensor_list
     device_address->SetSize(device_size);
     MS_LOG(INFO) << "Run device task " << op_name() << " end";
   }));
-  CreateOutputSimpleInfo();
   ProfileTrackerInput(tensors_tensor_list, axis);
   ProfileTrackerOutput(outputs_[0]);
   MS_LOG(INFO) << op_name() << " call end";
@@ -1266,7 +1263,6 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> AdamWAscendD
   for (const auto &output : outputs_) {
     output->set_need_pipeline_sync(true);
   }
-  CreateOutputSimpleInfo();
   CALL_END(op_name_, k);
   DumpOp(op_name_, this, var_tensor, m_tensor, v_tensor, max_v_tensor, gradient_tensor, step_tensor, lr, beta1, beta2,
          decay, eps, amsgrad, maximize);
@@ -1285,7 +1281,6 @@ tensor::TensorPtr InplaceCopyAscendDvm::Call(const TensorPtr &variable_tensor, c
     PyBoostUtils::PrepareOpInputs(device_context_, stream_id_, variable_tensor, value_tensor);
     outputs_.push_back(variable_tensor);
     outputs_[0]->set_need_pipeline_sync(true);
-    CreateOutputSimpleInfo();
     return outputs_[0];
   }
   PyBoostUtils::PrepareOpInputs(device_context_, stream_id_, variable_tensor, value_tensor);
@@ -1302,7 +1297,6 @@ tensor::TensorPtr InplaceCopyAscendDvm::Call(const TensorPtr &variable_tensor, c
   outputs_.push_back(variable_tensor);
   k->Output(outputs_[0], value_obj, true);
   outputs_[0]->set_need_pipeline_sync(true);
-  CreateOutputSimpleInfo();
   CALL_END(op_name_, k);
   DumpOp(op_name_, this, variable_tensor, value_tensor, non_blocking);
   FlushLazyFusion();
@@ -1593,7 +1587,6 @@ std::tuple<TensorPtr, TensorPtr> BatchNormStatsAscendDvm::Call(const TensorPtr &
   for (const auto &output : outputs_) {
     output->set_need_pipeline_sync(true);
   }
-  CreateOutputSimpleInfo();
   CALL_END(op_name_, k);
   DumpOp(op_name_, this, input_tensor, eps);
   FlushLazyFusion();  // output shape reshape to 1D, must flush here
@@ -1699,7 +1692,6 @@ std::tuple<TensorPtr, TensorPtr> BatchNormGatherStatsWithCountsAscendDvm::Call(
   for (const auto &output : outputs_) {
     output->set_need_pipeline_sync(true);
   }
-  CreateOutputSimpleInfo();
   CALL_END(op_name_, k);
   DumpOp(op_name_, this, input_tensor, mean_tensor, invstd_tensor, running_mean_tensor_opt, running_var_tensor_opt,
          momentum, eps, counts_tensor_opt);

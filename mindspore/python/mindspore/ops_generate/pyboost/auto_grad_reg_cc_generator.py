@@ -24,6 +24,7 @@ import common.gen_constants as K
 from common.gen_utils import save_file
 from common.base_generator import BaseGenerator
 from pyboost.pyboost_utils import is_optional_param, get_input_dtype, get_output_dtype
+from .pyboost_op_cpp_code_generator import _generate_cpp_func_return
 
 
 class AutoGradRegHeaderGenerator(BaseGenerator):
@@ -40,7 +41,7 @@ class AutoGradRegHeaderGenerator(BaseGenerator):
         self.op_grad_func_template = Template("using ${class_name}GradFunc = std::function<void(${grad_func_args})>;")
         self.op_grad_func_obj_template = Template("${class_name}GradFunc ${class_name}GradFuncObj;")
         self.op_grad_func_args_template = Template(
-            "const kernel::pyboost::OpPtr &, ${input_tensor_prt_args}"
+            "const TensorPtr &clone_tensor, ${input_tensor_prt_args}, ${outputs_args_type}"
         )
         self.op_view_grad_func_args_template = Template(
             "${output_tensor_prt_args}, ${input_tensor_prt_args}"
@@ -98,8 +99,10 @@ class AutoGradRegHeaderGenerator(BaseGenerator):
             input_tensor_prt_args_str += f"const {input_dtype} &, "
         input_tensor_prt_args_str = input_tensor_prt_args_str.rstrip(', ')
         if not op_proto.op_view:
+            outputs_args_type_str = "const " + _generate_cpp_func_return(op_proto) + " &"
             return self.op_grad_func_args_template.replace(input_tensor_prt_args=\
-                                                           input_tensor_prt_args_str)
+                                                           input_tensor_prt_args_str,
+                                                           outputs_args_type=outputs_args_type_str)
         # for view operators, the output is tensor or vector<tensor>
         if len(op_proto.op_returns) != 1:
             raise ValueError(f"the output of {op_proto.op_name} is not tensor,",

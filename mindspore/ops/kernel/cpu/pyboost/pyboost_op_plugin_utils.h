@@ -171,7 +171,6 @@ std::enable_if_t<!has_int_or_vector_int_v<Args...>, std::vector<tensor::TensorPt
   op->ProfileTrackerInput(args...);
   op->ProfileTrackerOutput(outputs);
   MS_LOG(DEBUG) << op_name << " op plugin kernel call end";
-  op->CreateOutputSimpleInfo();
   return outputs;
 }
 }  // namespace mindspore::kernel::pyboost

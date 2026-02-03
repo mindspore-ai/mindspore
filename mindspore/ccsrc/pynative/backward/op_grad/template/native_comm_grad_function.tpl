@@ -11,16 +11,8 @@ NodePtr NativeFunc::${func_name}(${call_args_with_type}) {
   kernel::pyboost::OpRunStatus::Get().set_run_info(
     kernel::pyboost::OpStatus(true, device_target_));
   auto outputs = kernel::pyboost::${operator_name}(${call_args});
-  auto op = kernel::pyboost::OpRunStatus::Get().GetLastOp();
-  abstract::AbstractBasePtr output_abs;
-  if (op->output_value_simple_info() != nullptr) {
-      // Get output abstract
-      output_abs = TransformValueSimpleInfoToAbstract(*op->output_value_simple_info());
-  } else {
-    MS_EXCEPTION_IF_NULL(op->output_abs());
-    output_abs = op->output_abs();
-  }
-  ${output_expr}
+  abstract::AbstractBasePtr output_abs = kernel::pyboost::OpOutputsToAbstract(outputs);
+  auto output_value = kernel::pyboost::OpOutputsToValues(outputs);
   auto output_node = std::make_shared<CommFuncNode>(output_value, output_abs, InputType::kOpOutput, $first_var_name->emitter(), std::get<1>(outputs));
   // Set abstract to tensor cache
   MS_LOG(DEBUG) << "End execute native comm func" << " ${func_name}";

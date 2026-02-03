@@ -192,5 +192,6 @@ void RegFallback(py::module *m) {
          py::return_value_policy::reference_internal)  // <-- important
     .def("__exit__", &NoFallbackGuard::Exit);
 }
+
 }  // namespace pynative
 }  // namespace mindspore

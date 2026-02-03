@@ -793,11 +793,25 @@ PyTypeObject *GetTensorPyType() { return TensorPy_Type; }
 void SetTensorPyType(PyTypeObject *TensorPyType) { TensorPy_Type = TensorPyType; }
 
 py::object PackTensorToPyObject(const TensorPtr &tensor) {
+  if (tensor != nullptr && tensor->has_ms_dispatch()) {
+    static const std::string kSourcePyObj = "source_py_obj";
+    auto py_data = tensor->user_data<tensor::TensorPyUserData>(kSourcePyObj);
+    MS_EXCEPTION_IF_NULL(py_data);
+    return py_data->obj;
+  }
   PyObject *tensor_py = TensorPythonInit(tensor);
   return py::reinterpret_steal<py::object>(tensor_py);
 }
 
 PyObject *PackTensor(const TensorPtr &tensor, bool has_side_effect) {
+  if (tensor != nullptr && tensor->has_ms_dispatch()) {
+    static const std::string kSourcePyObj = "source_py_obj";
+    auto py_data = tensor->user_data<tensor::TensorPyUserData>(kSourcePyObj);
+    MS_EXCEPTION_IF_NULL(py_data);
+    py_data->obj.inc_ref();
+    return py_data->obj.ptr();
+  }
+
   PyObject *python_tensor_class = PyObjManager::Get().GetTensorPythonClass();
   auto tensor_py_type = reinterpret_cast<PyTypeObject *>(python_tensor_class);
   PyObject *obj = tensor_py_type->tp_alloc(tensor_py_type, 0);

@@ -21,6 +21,7 @@
 #include "include/runtime/pipeline/pipeline.h"
 #include "include/pynative/utils/pynative_utils.h"
 #include "include/pynative/forward/pyboost/fallback.h"
+#include "include/utils/pynative/dispatch/ms_dispatch.h"
 
 namespace mindspore {
 namespace py = pybind11;
@@ -41,6 +42,7 @@ void RegPyNativeModule(py::module *m) {
   mindspore::pynative::RegisterFunctional(m);
   mindspore::pynative::RegOpCall(m);
   mindspore::pynative::RegFallback(m);
+  mindspore::pynative::RegMsDispatch(m);
   mindspore::pynative::distributed::RegReducer(m);
   mindspore::pynative::autograd::RegBackwardFunction(m);
   mindspore::pynative::autograd::RegBackwardNode(m);

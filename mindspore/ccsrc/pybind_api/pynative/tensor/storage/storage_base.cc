@@ -146,7 +146,6 @@ void StorageBase::InplaceCopy(const StorageBasePtr &src, bool non_blocking) {
         kernel::pyboost::OpRunStatus::Get().set_run_info(kernel::pyboost::OpStatus(true, device::DeviceType::kAscend));
       }
       kernel::pyboost::inplace_copy(dst_tensor, src_tensor, non_blocking_value);
-      (void)kernel::pyboost::OpRunStatus::Get().GetLastOp();
     }));
 }
 

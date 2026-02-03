@@ -31,6 +31,7 @@
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "mindspore/ops/include/view/view_infer_function.h"
+#include "include/utils/pynative/dispatch/dispatch_stack.h"
 ${include_op_header}
 
 namespace mindspore::pynative {
@@ -44,3 +45,4 @@ AsyncStatus GetAsyncStatus() {
 
 ${function_body}
 }// namespace mindspore::pynative
+

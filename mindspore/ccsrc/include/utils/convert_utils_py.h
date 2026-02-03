@@ -77,7 +77,7 @@ COMMON_EXPORT std::string ConvertPyObjToString(const py::object &obj);
 COMMON_EXPORT tensor::TensorPtr ConvertPyObjToTensor(const py::object &obj);
 COMMON_EXPORT py::tuple CheckBpropOut(const py::object &grads_obj, const py::tuple &py_args,
                                       const std::string &bprop_cls_name);
-py::object ScalarPtrToPyData(const ScalarPtr &value);
+COMMON_EXPORT py::object ScalarPtrToPyData(const ScalarPtr &value);
 py::object CheckAndConvertToScalar(const tensor::TensorPtr &tensor, const AbstractBasePtr &abs);
 COMMON_EXPORT tensor::TensorPtr ConvertTensorAndSyncCompiling(const py::handle &obj);
 }  // namespace mindspore

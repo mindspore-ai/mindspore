@@ -212,20 +212,6 @@ class PYBOOST_API OpRunner : public std::enable_shared_from_this<OpRunner> {
 
   void UpdateOutputShape(const TensorPtr &tensor, const ShapeVector &shape) { tensor->set_shape(shape); }
 
-  void CreateOutputSimpleInfo() {
-    if (output_value_simple_info_ != nullptr) {
-      MS_LOG(DEBUG) << "op:" << primitive_->name() << ", already have simple-info";
-      return;
-    }
-    output_value_simple_info_ = std::make_shared<ValueSimpleInfo>();
-    output_value_simple_info_->is_tuple_output_ = output_is_tuple();
-    output_value_simple_info_->size_ = outputs_.size();
-    for (size_t i = 0; i < outputs_.size(); ++i) {
-      output_value_simple_info_->shape_vector_.emplace_back(outputs_[i]->shape());
-      output_value_simple_info_->dtype_vector_.emplace_back(outputs_[i]->Dtype());
-    }
-  }
-
  protected:
   // Op primitive, may delete latter.
   PrimitivePtr primitive_{nullptr};

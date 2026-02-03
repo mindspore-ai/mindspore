@@ -333,27 +333,6 @@ void AutoGradUtil::BuildViewAutoGradMeta(const tensor::TensorPtr &src_tensor, co
   }
 }
 
-void AutoGradUtil::SetInferOutputToGrad(const PyboostOpRunInfoPtr &op_run_info, const kernel::pyboost::OpPtr &op) {
-  if (op->output_value_simple_info() != nullptr) {
-    op_run_info->output_value_simple_info = op->output_value_simple_info();
-    op_run_info->output_value_simple_info->is_tuple_output_ = false;
-  }
-}
-
-void AutoGradUtil::SetInferOutputToGrad(const OpGradInfoPtr &op_grad_info, const kernel::pyboost::OpPtr &op) {
-  if (op->output_value_simple_info() != nullptr) {
-    op_grad_info->output_value_simple_info = op->output_value_simple_info();
-    op_grad_info->output_value_simple_info->is_tuple_output_ = false;
-  }
-}
-
-void AutoGradUtil::SetInferMultiOutputToGrad(const OpGradInfoPtr &op_grad_info, const kernel::pyboost::OpPtr &op) {
-  if (op->output_value_simple_info() != nullptr) {
-    op_grad_info->output_value_simple_info = op->output_value_simple_info();
-    op_grad_info->output_value_simple_info->is_tuple_output_ = true;
-  }
-}
-
 ValuePtr AutoGradUtil::MakeOutput(bool requires_grad, const kernel::pyboost::OpPtr &op,
                                   const tensor::TensorPtr &base_view) {
   return MakeOutput(requires_grad, op->outputs()[0], base_view);
@@ -724,19 +703,17 @@ void AutoGradUtil::CacheOutputAbstract(const ValuePtr &v, const abstract::Abstra
   }
 }
 
-void AutoGradUtil::CheckAndCloneInplaceInput(const kernel::pyboost::OpPtr &inplace_op, const PrimitivePtr &prim,
-                                             device::DeviceType device_target, ValuePtrList &&inputs) {
+TensorPtr AutoGradUtil::CheckAndCloneInplaceInput(const PrimitivePtr &prim, ValuePtrList &&inputs) {
   auto input_tensor = inputs[0]->cast<tensor::TensorPtr>();
   MS_EXCEPTION_IF_NULL(input_tensor);
   ValuePtr val = nullptr;
   if (!kernel::pyboost::OpRunStatus::Get().RequireGrad() ||
       !BpropExpander::IsCloneInplaceInput(BpropCallback(prim, &inputs, &val))) {
-    return;
+    return nullptr;
   }
   MS_LOG(DEBUG) << "Begin clone src value for op " << prim->name();
-  kernel::pyboost::OpRunStatus::Get().set_run_info(kernel::pyboost::OpStatus(true, device_target));
   auto output = kernel::pyboost::clone(input_tensor);
-  inplace_op->set_clone_tensor(output);
+  return output;
 }
 
 ValuePtr AutoGradUtil::ShallowCopyAndDetach(const ValuePtr &value) {

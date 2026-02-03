@@ -204,6 +204,7 @@ struct PYNATIVE_EXPORT ParserArgs {
   void CheckHasFallback(PyObject *obj);
 
   bool has_fallback() const { return has_fallback_; }
+  bool has_ms_dispatch() const { return has_ms_dispatch_; }
 
   FunctionSignaturePtr signature_;
   std::vector<PyObject *> arg_list_;
@@ -211,6 +212,7 @@ struct PYNATIVE_EXPORT ParserArgs {
   std::vector<ops::OP_DTYPE> src_types_;
   std::vector<ops::OP_DTYPE> dst_types_;
   bool has_fallback_{false};
+  bool has_ms_dispatch_{false};
 };
 
 // parser util
@@ -293,12 +295,14 @@ class PYNATIVE_EXPORT Converter {
   template <typename T>
   std::optional<std::vector<int64_t>> ToBasicIntVectorOptional(PyObject *python_args, size_t i);
   bool has_fallback() const { return has_fallback_; }
+  bool has_ms_dispatch() const { return has_ms_dispatch_; }
 
  private:
   ops::OpDefPtr op_def_;
   // If op not type cast, source_type is default type: DT_BEGIN, if op type cast, source_type is origin type.
   std::vector<ops::OP_DTYPE> source_type_;
   bool has_fallback_{false};
+  bool has_ms_dispatch_{false};
 };
 }  // namespace pynative
 }  // namespace mindspore

@@ -12,7 +12,7 @@ NodePtr NativeFunc::${func_name}(${call_args_with_type}) {
     kernel::pyboost::OpStatus(true, device_target_));
   auto outputs = kernel::pyboost::${operator_name}(${call_args});
   abstract::AbstractBasePtr output_abs = kNativeAbstractConverter.ConvertAbstract(outputs);
-  ${output_expr}
+  auto output_value = kernel::pyboost::OpOutputsToValues(outputs);
   auto output_node = std::make_shared<expander::FuncNode>(output_value, output_abs, InputType::kOpOutput, $first_var_name->emitter());
 
   // Set abstract to tensor cache

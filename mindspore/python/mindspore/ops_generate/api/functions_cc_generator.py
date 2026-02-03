@@ -113,7 +113,6 @@ class FunctionsGenerator(BaseGenerator):
         """
         self.FUNCTIONS_CC_TEMPLATE = template.FUNCTIONS_CC_TEMPLATE
         self.FUNCTION_BODY_TEMPLATE = template.FUNCTION_BODY_TEMPLATE
-        self.FUNCTION_BODY_WRAPPER_TEMPLATE = template.FUNCTION_BODY_WRAPPER_TEMPLATE
         self.FUNCTION_VIEW_BODY_TEMPLATE = template.FUNCTION_VIEW_BODY_TEMPLATE
         self.FUNCTION_VIEW_CUSTOMIZE_BODY_TEMPLATE = template.FUNCTION_VIEW_CUSTOMIZE_BODY_TEMPLATE
         self.FUNCTION_COMM_BODY_TEMPLATE = template.FUNCTION_COMM_BODY_TEMPLATE
@@ -124,7 +123,7 @@ class FunctionsGenerator(BaseGenerator):
             f'#include "{K.MS_OPS_VIEW_PATH}/${{operator_name}}_strides_calc.h"\n'
         )
         self.clone_inplace_input_template = Template(
-            'GetCloneFunc()(op, prim::kPrim${class_name}, device_target, {${grad_args}});'
+            'auto clone_tensor = GetCloneFunc()(prim::kPrim${class_name}, {${grad_args}});'
         )
         self.create_aclnn_op_template = Template(
             'auto op = CREATE_PYBOOST_OP(${class_name}, device_target);'
@@ -191,6 +190,10 @@ class FunctionsGenerator(BaseGenerator):
         storage_calc_str = op_proto.op_class.name
         return_values, _ = op_parser.generate_pyboost_outputs()
         return_type_str = _get_return_type_str(op_proto)
+
+        # Generate unpack_args for ms_dispatch
+        unpack_args_str, unpack_call_args_str = self._get_unpack_and_call_args(op_proto)
+
         function_body = function_body_template.replace(op_name=op_proto.op_name,
                                                        class_name=op_proto.op_class.name,
                                                        input_args_with_type=input_args_with_type,
@@ -201,7 +204,9 @@ class FunctionsGenerator(BaseGenerator):
                                                        call_tensors=call_args_tensors,
                                                        input=call_args[0],
                                                        return_values=return_values,
-                                                       return_type=return_type_str)
+                                                       return_type=return_type_str,
+                                                       unpack_args=unpack_args_str,
+                                                       unpack_call_args=unpack_call_args_str)
         return function_body, pyboost_func_include_header
 
     def _get_function_body(self, op_proto):
@@ -219,6 +224,8 @@ class FunctionsGenerator(BaseGenerator):
         inplace_clone_args = self._get_clone_input_args(op_proto, False, False)
         clone_func_str = self._get_clone_inplace_str(op_proto.op_inplace, op_proto.op_class.name, inplace_clone_args)
         return_type_str = _get_return_type_str(op_proto)
+        # Generate unpack_args and unpack_call_args for ms_dispatch
+        unpack_args_str, unpack_call_args_str = self._get_unpack_and_call_args(op_proto)
         if op_proto.op_dispatch.is_comm_op:
             return_type_with_handle = _get_return_type_with_handle_str(return_type_str)
             comm_body = self.FUNCTION_COMM_BODY_TEMPLATE.replace(op_name=op_proto.op_name,
@@ -227,7 +234,9 @@ class FunctionsGenerator(BaseGenerator):
                                                                  clone_func=clone_func_str,
                                                                  input_args_with_type=input_args_with_type,
                                                                  return_type=return_type_str,
-                                                                 return_type_with_handle=return_type_with_handle)
+                                                                 return_type_with_handle=return_type_with_handle,
+                                                                 unpack_args=unpack_args_str,
+                                                                 unpack_call_args=unpack_call_args_str)
             return comm_body
         create_op_str = self.create_aclnn_op_template.replace(class_name=op_proto.op_class.name)
         if getattr(op_proto.op_dispatch, 'internal_op_ascend') != 'None':
@@ -239,14 +248,32 @@ class FunctionsGenerator(BaseGenerator):
                                                    input_args=input_args,
                                                    clone_func=clone_func_str,
                                                    input_args_with_type=input_args_with_type,
-                                                   return_type=return_type_str)
+                                                   return_type=return_type_str,
+                                                   unpack_args=unpack_args_str,
+                                                   unpack_call_args=unpack_call_args_str)
+        return function_body
 
-        function_body_wrapper \
-            = self.FUNCTION_BODY_WRAPPER_TEMPLATE.replace(op_name=op_proto.op_name,
-                                                          input_args=input_args,
-                                                          input_args_with_type=input_args_with_type,
-                                                          return_type=return_type_str)
-        return function_body + function_body_wrapper
+    def _get_unpack_and_call_args(self, op_proto):
+        """
+        Generate unpack_args and call_args for ms_dispatch.
+
+        Args:
+            op_proto: The operator prototype.
+
+        Returns:
+            tuple: (unpack_args_str, call_args_str)
+        """
+        unpack_lines = []
+        call_args = []
+        for idx, op_arg in enumerate(op_proto.op_args):
+            input_dtype = get_input_dtype(op_arg.arg_dtype, is_optional_param(op_arg), op_proto.op_view)
+            var_name = f"_{op_arg.arg_name}"
+            unpack_lines.append(f"auto {var_name} = UnpackArg<{input_dtype}>(args, {idx});")
+            call_args.append(var_name)
+        # Use \n without extra spaces - Template's add_indent will handle indentation
+        unpack_args_str = "\n".join(unpack_lines)
+        call_args_str = ", ".join(call_args)
+        return unpack_args_str, call_args_str
 
 
     def _get_input_args(self, op_proto, has_type):
@@ -283,7 +310,7 @@ class FunctionsGenerator(BaseGenerator):
             str: Formatted view or inplace first argument names.
         """
         if not is_inplace_op:
-            return ''
+            return 'TensorPtr clone_tensor = nullptr;'
         return self.clone_inplace_input_template.replace(class_name=class_name, grad_args=grad_args)
 
     def _get_clone_input_args(self, op_proto, has_type, with_optional):

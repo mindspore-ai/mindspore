@@ -39,6 +39,8 @@
 #include "include/utils/pynative/adapter.h"
 #include "include/utils/pynative/variable.h"
 #include "include/pynative/forward/pyboost/fallback.h"
+#include "include/utils/pynative/dispatch/ms_dispatch.h"
+#include "include/utils/stub_tensor.h"
 #include "pybind_api/pynative/pynative_api.h"
 
 namespace mindspore::pynative {
@@ -99,6 +101,35 @@ bool CheckHasFallback(const FrontendOpRunInfoPtr &op_run_info) {
   });
 }
 
+bool CheckHasMsDispatch(const FrontendOpRunInfoPtr &op_run_info) {
+  if (!ms_dispatch_enabled()) {
+    return false;
+  }
+  const auto &values = op_run_info->op_grad_info->input_value;
+  return std::any_of(values.begin(), values.end(), [](const ValuePtr &value) {
+    MS_EXCEPTION_IF_NULL(value);
+    if (value->isa<Tensor>()) {
+      return detail::CheckMsDispatch(value->cast<TensorPtr>());
+    } else if (value->isa<ValueTuple>()) {
+      return detail::CheckMsDispatch(value->cast<ValueTuplePtr>());
+    } else if (value->isa<stub::StubNode>()) {
+      auto stub_node = value->cast<stub::StubNodePtr>();
+      MS_EXCEPTION_IF_NULL(stub_node);
+      return detail::CheckMsDispatch(stub_node->WaitValue());
+    }
+    return false;
+  });
+}
+
+bool ShouldDispatchCallback(const FrontendOpRunInfoPtr &op_run_info) {
+  // First check if there is an active dispatch guard
+  if (HasActiveDispatchGuard()) {
+    return true;
+  }
+  // Then check tensor-level ms_dispatch
+  return CheckHasMsDispatch(op_run_info);
+}
+
 py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
   FrontendOpRunInfoPtr op_run_info = forward_executor()->GenerateOpRunInfo(args, true);
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunOp,
@@ -111,10 +142,33 @@ py::object PyNativeExecutor::RunOpStub(const py::args &args) const {
     return pynative::HandleFallback(args, py::kwargs(), py::cast(op_call));
   }
 
+  forward_executor()->WaitForwardTask();
+
+  if (ShouldDispatchCallback(op_run_info)) {
+    MS_LOG(DEBUG) << "Should dispatch to callback.";
+    auto op_call =
+      std::make_shared<OpCall>(op_run_info->base_op_run_info.op_name,
+                               [this](const py::args &args, const py::kwargs &kwargs) { return RunOpStub(args); });
+    auto [dispatch_callback, is_guard_callback] = GetDispatchCallbackFromInput(args);
+    if (is_guard_callback) {
+      // Use guard chain dispatch with GuardChainScope
+      GuardChainScope guard_chain_scope;
+      // Create a callback wrapper that calls RunOpStub
+      auto cpp_callback = [this](const py::args &inner_args) -> py::object { return RunOpStub(inner_args); };
+      return detail::InvokeGuardChain(cpp_callback, args, op_run_info->base_op_run_info.op_name);
+    } else if (!dispatch_callback.is_none()) {
+      // Tensor-level callback
+      return dispatch_callback(py::cast(op_call), args);
+    } else {
+      // No callback found, fall through to normal execution
+      MS_LOG(WARNING) << "ShouldDispatchCallback returned true but no callback found, falling through to normal path";
+    }
+  }
+
   SetCallbackForInputTensor(op_run_info->op_grad_info->input_value);
 
   StoreAsyncStatus(op_run_info);
-  forward_executor()->WaitForwardTask();
+
   // RunOp sync
   PyNativeExecutorTry(forward_executor()->RunOpS, op_run_info);
   return py::reinterpret_steal<py::object>(tensor::Wrap(op_run_info->real_out));
@@ -202,7 +256,6 @@ void PyNativeExecutor::ClearRes() const {
   }
   ad::ClearDFunctor();
   pipeline::ReclaimOptimizer();
-  (void)kernel::pyboost::OpRunStatus::Get().GetLastOp();
   MS_LOG(DEBUG) << "Clear all res";
 }
 

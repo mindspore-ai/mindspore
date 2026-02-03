@@ -24,6 +24,7 @@ import common.gen_constants as K
 from common.gen_utils import save_file
 from common.base_generator import BaseGenerator
 from pyboost.pyboost_utils import is_optional_param, get_input_dtype, is_op_multi_output, get_output_dtype
+from .pyboost_op_cpp_code_generator import _generate_cpp_func_return
 
 
 class AutoGradImplGenerator(BaseGenerator):
@@ -45,7 +46,7 @@ class AutoGradImplGenerator(BaseGenerator):
                                                "ops_auto_grad_registers().${class_name}GradFuncObj) = " + \
                                                "kernel::pyboost::${class_name}GradFunc(DoGrad${class_name});")
         self.do_grad_op_args_with_type = Template(
-            "const kernel::pyboost::OpPtr &op, ${input_args_with_type}"
+            "${input_args_with_type}"
         )
         self.do_grad_view_op_args_with_type = Template(
             "${output_args_with_type}, ${input_args_with_type}"
@@ -92,12 +93,15 @@ class AutoGradImplGenerator(BaseGenerator):
         """
         input_args_str = self._get_input_args(op_proto, False, False, False)
         input_args_with_optional_str = self._get_input_args(op_proto, False, True, False)
-        input_args_with_type_str = self._get_input_args(op_proto, True, False, False)
-        inner_grad_args_with_type = self._get_input_args(op_proto, True, False, False)
+        input_args_with_type_str = ", ".join(self._get_input_args(op_proto, True, False, False))
+        inner_grad_args_with_type = ", ".join(self._get_input_args(op_proto, True, False, False))
         multi_output_str = 'Multi' if is_op_multi_output(op_proto.op_returns) else ''
         grad_args_with_type_str = self.do_grad_op_args_with_type.replace(input_args_with_type=input_args_with_type_str)
         inner_grad_args_with_type =\
             self.do_grad_op_args_with_type.replace(input_args_with_type=inner_grad_args_with_type)
+
+        outputs_with_type_str = "const " + _generate_cpp_func_return(op_proto) + " &outputs"
+
         op_def_name_str = "g" + op_proto.op_class.name
         TRUE = "true"
         FALSE = "false"
@@ -107,6 +111,7 @@ class AutoGradImplGenerator(BaseGenerator):
         return self.DO_GRAD_FUNCTION_BODY_TEMPLATE.replace(class_name=op_proto.op_class.name,
                                                            inner_grad_args_with_type=inner_grad_args_with_type,
                                                            grad_args_with_type=grad_args_with_type_str,
+                                                           outputs_with_type=outputs_with_type_str,
                                                            grad_input_args=input_args_str,
                                                            grad_input_args_with_optional=input_args_with_optional_str,
                                                            is_multi=multi_output_str,
@@ -195,6 +200,7 @@ class AutoGradImplGenerator(BaseGenerator):
         output_dtype = get_output_dtype(op_proto.op_returns[0].arg_dtype)
         output_arg = f"const {output_dtype} &output"
         return output_arg
+
 
     def _get_convert_str(self, op_proto, args_name):
         """

@@ -111,7 +111,6 @@ std::tuple<tensor::TensorPtr, tensor::TensorPtr, tensor::TensorPtr> MultiScaleDe
                    shape_tensor_cp, offset_tensor_cp, locations_trans_tensor_cp, weight_tensor_cp,
                    grad_output_tensor_cp, outputs[0], outputs[1], outputs[2]);
     }));
-  op->CreateOutputSimpleInfo();
 
   auto res_type1 = (ori_type1 == kFloat32) ? kNumberTypeFloat32 : kNumberTypeFloat16;
   auto res_type2 = (ori_type2 == kFloat32) ? kNumberTypeFloat32 : kNumberTypeFloat16;

@@ -1,4 +1,4 @@
-py::object ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_DTYPE>& source_type, ${input_args}) {
+py::object ${func_name}Op(const PrimitivePtr &prim, const std::vector<ops::OP_DTYPE>& source_type, ${input_args}) {
   MS_LOG(DEBUG) << "Run ${func_name} start";
   auto op_run_info = PyNativeAlgo::PyBoost::Init_Pyboost(prim);
   std::string target;
@@ -39,9 +39,6 @@ py::object ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_D
           // Run op
           (void)op->Call(${cast_args});
           ${optional_to_value}
-
-          // Create output value
-          AutoGradUtil::SetInferOutputToGrad(op_run_info, op);
           // Create output value
           auto real_output = AutoGradUtil::Make${is_multi}Output(op_run_info->requires_grad, op${view_arg});
           // Do auto grad
@@ -65,12 +62,12 @@ py::object ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_D
   return py::reinterpret_steal<py::object>(tensor::TransformOutput(py_output, comm_handle_py_obj.release().ptr()));
 }
 
-py::object ${func_name}_Base(const PrimitivePtr &prim, const py::list &args) {
+py::object ${func_name}Base(const PrimitivePtr &prim, const py::list &args) {
   #ifndef ENABLE_TEST
     static Converter converter(&ops::${op_def_name});
     converter.Parse(args);
     ${parser_body}
-    return ${func_name}_OP(prim, converter.source_type(), ${op_args});
+    return ${func_name}Op(prim, converter.source_type(), ${op_args});
   #else
     return PyNativeAlgo::PyBoost::RunPyFunction(prim, args);
   #endif
@@ -84,7 +81,7 @@ py::object ${func_name}(const py::args &args) {
   const auto &prim = PyNativeAlgo::PyBoost::ConvertPrimitive(args[0]);
   runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunOp,
                                      prim->name(), false, true);
-  auto res = ${func_name}_Base(prim, args[1]);
+  auto res = ${func_name}Base(prim, args[1]);
   trace::Capture(args, &res);
   return res;
 }
@@ -97,7 +94,7 @@ class ${class_name}PrimAdapter: public PrimitiveFunctionAdapter {
    py::object Call(const py::list &args) {
      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative, runtime::ProfilerEvent::kRunOp,
                                         "${class_name}", false, true);
-     auto res = ${func_name}_Base(prim::kPrim${class_name}, args);
+     auto res = ${func_name}Base(prim::kPrim${class_name}, args);
      trace::Capture(args, prim::kPrim${class_name}, &res);
      return res;
    }

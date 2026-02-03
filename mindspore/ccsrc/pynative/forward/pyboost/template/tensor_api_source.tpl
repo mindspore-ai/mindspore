@@ -26,11 +26,13 @@
 #include "include/pynative/utils/pynative_utils.h"
 #include "include/frontend/jit/trace/trace_recorder_interface.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
+#include "include/utils/pynative/dispatch/dispatch_stack.h"
 ${ops_inc}
 
 namespace mindspore {
 namespace tensor {
 using TensorOverloadCall = pynative::TensorOverloadCall;
+using InMsDispatchGuard = pynative::InMsDispatchGuard;
 ${tenosr_func_call_body}
 
 }  // namespace tensor

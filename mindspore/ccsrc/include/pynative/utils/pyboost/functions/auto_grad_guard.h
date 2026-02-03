@@ -59,10 +59,6 @@ class PYBOOST_API OpRunStatus {
 
   void ResetRequireGrad(bool require_grad) { require_grad_ = require_grad; }
 
-  void SetLastOp(const OpPtr &op) { last_op_ = op; }
-
-  OpPtr GetLastOp() { return std::move(last_op_); }
-
   void HeterBarrier(device::DeviceType device);
 
   bool IsSafeView() const { return is_safe_view_; }
@@ -80,7 +76,6 @@ class PYBOOST_API OpRunStatus {
   OpStatus status_{};
   bool require_grad_{false};
   bool is_safe_view_{true};
-  OpPtr last_op_{nullptr};
   // Change device name to device type latter.
   device::DeviceType cur_device_;
 };

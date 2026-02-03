@@ -1,4 +1,4 @@
-PyObject* ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_DTYPE>& source_type, ${input_args}) {
+PyObject* ${func_name}Op(const PrimitivePtr &prim, const std::vector<ops::OP_DTYPE>& source_type, ${input_args}) {
   MS_LOG(DEBUG) << "Run ${func_name} start";
   auto op_run_info = PyNativeAlgo::PyBoost::Init_Pyboost(prim);
   op_run_info->source_type = source_type;
@@ -23,5 +23,6 @@ PyObject* ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_DT
   }();
 
   MS_LOG(DEBUG) << "Run ${func_name} end";
-  return tensor::Wrap(outputs);
+  return tensor::WrapOutput(outputs);
 }
+

@@ -90,8 +90,15 @@ class TensorFuncRegCppGenerator(BaseGenerator):
             '  }\n'
             '  ${arg_handler_processor}\n'
             '  MS_LOG(INFO) << "Call Tensor${class_name}";\n'
-            '  auto res = mindspore::pynative::'
-            '  ${pyboost_function}(mindspore::prim::kPrim${class_name}, parse_args.src_types_, ${convert_args});\n'
+            '  PyObject *res;\n'
+            '  if (parse_args.has_ms_dispatch()) {\n'
+            '    InMsDispatchGuard guard;\n'
+            '    res = mindspore::pynative::${pyboost_function}(mindspore::prim::kPrim${class_name},\n'
+            '      parse_args.src_types_, ${convert_args});\n'
+            '  } else {\n'
+            '    res = mindspore::pynative::${pyboost_function}(mindspore::prim::kPrim${class_name},\n'
+            '      parse_args.src_types_, ${convert_args});\n'
+            '  }\n'
             '  trace::CapturePy(parse_args.arg_list_, mindspore::prim::kPrim${class_name}, &res);\n'
             '  return res;\n'
             '};\n'
@@ -485,7 +492,7 @@ class TensorFuncRegCppGenerator(BaseGenerator):
         if func_proto_device == 'pyboost':
             arg_handler_processor_str = self._get_arg_handler_processor(func_proto.func_name, func_proto.op_proto)
             op_parser = OpTemplateParser(func_proto.op_proto)
-            op_pyboost_func_name = op_parser.get_pyboost_func_name() + "_OP"
+            op_pyboost_func_name = op_parser.get_pyboost_func_name() + "Op"
             convert_args_str = op_parser.get_convert_args_str(func_proto.op_proto, is_tensor_api=True)
             self_index = op_parser.get_input_tensor_index(func_proto.op_proto)
 
@@ -514,7 +521,7 @@ class TensorFuncRegCppGenerator(BaseGenerator):
         devices = ['cpu', 'gpu', 'ascend']
         arg_handler_processor_str = self._get_arg_handler_processor(func_proto.func_name, func_proto.op_proto)
         op_parser = OpTemplateParser(func_proto.op_proto)
-        op_pyboost_func_name = op_parser.get_pyboost_func_name() + "_OP"
+        op_pyboost_func_name = op_parser.get_pyboost_func_name() + "Op"
         convert_args_str = op_parser.get_convert_args_str(func_proto.op_proto, is_tensor_api=True)
         self_index = op_parser.get_input_tensor_index(func_proto.op_proto)
 

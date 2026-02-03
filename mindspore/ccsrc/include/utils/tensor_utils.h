@@ -181,6 +181,13 @@ inline T GetTensorData(const tensor::TensorPtr &tensor) {
   auto cpu_tensor = tensor->cpu();
   return *(static_cast<T *>(cpu_tensor->data_c()));
 }
+
+// Wrap synchronous output for immediate return
+// Supports: TensorPtr, std::tuple<TensorPtr...>, std::vector<TensorPtr>
+template <typename T>
+PyObject *WrapOutput(T &&outputs) {
+  return tensor::Wrap(std::forward<T>(outputs));
+}
 }  // namespace tensor
 }  // namespace mindspore
 #endif  // MINDSPORE_MINDSPORE_CCSRC_INCLUDE_COMMON_UTILS_TENSOR_UTILS_H_

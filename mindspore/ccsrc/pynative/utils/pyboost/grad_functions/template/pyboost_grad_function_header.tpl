@@ -24,6 +24,7 @@
 #include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
 #include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
 #include "include/utils/pynative/abstract_converter.h"
+#include <tuple>
 ${composite_headers}
 
 namespace mindspore::runtime {
@@ -93,8 +94,6 @@ session::BackendOpRunInfoPtr GetBackendOpRunInfo(OpRunnerInfo *op_runner_info) {
 }
 
 DoGradFunc do_grad_func{nullptr};
-
-pynative::AbstractConverter kAbstractConverter;
 } // namespace
 
 void RegisterDoGradFunc(const DoGradFunc &grad_func) {
