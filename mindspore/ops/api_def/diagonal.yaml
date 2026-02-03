@@ -1,0 +1,15 @@
+diagonal:
+  - op_yaml: diagonal_view_op.yaml
+    py_method: tensor_diagonal
+    Ascend: pyboost
+    CPU: py_method
+    GPU: py_method
+    interface: tensor
+
+  - op_yaml: deprecated/diagonal_method.yaml
+    py_method: deprecated_tensor_diagonal
+    Ascend: py_method
+    CPU: py_method
+    GPU: py_method
+    interface: tensor
+

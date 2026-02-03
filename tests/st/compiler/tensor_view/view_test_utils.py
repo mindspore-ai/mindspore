@@ -50,7 +50,7 @@ class TensorViewTestModule:
         self.input_args = input_args
         self.op_kwargs = op_kwargs if op_kwargs else {}
         self.inputs_with_grad_torch = []
-        self.input_x_np = input_args[0].asnumpy()
+        self.input_x_np = input_args[0].asnumpy() # Store numpy input for consistency
         self.output_grad_np = None # Cache random gradient
 
         if self.ms_dtype == mstype.float16:
@@ -65,7 +65,33 @@ class TensorViewTestModule:
             self.loss = 0
         self.supports_grad = self.ms_dtype in (mstype.float16, mstype.float32, mstype.float64, mstype.bfloat16)
 
+    def _convert_arg_to_torch(self, arg):
+        """Convert MindSpore Tensor args (and nested tuples/lists) to torch Tensor for reference runs."""
+        if isinstance(arg, Tensor):
+            np_arg = arg.asnumpy()
+            t = torch.from_numpy(np_arg)
+            # Keep dtype semantics aligned with MindSpore bfloat16.
+            if arg.dtype == mstype.bfloat16:
+                t = t.type(torch.bfloat16)
+            return t
+        if isinstance(arg, (tuple, list)):
+            return type(arg)(self._convert_arg_to_torch(a) for a in arg)
+        if isinstance(arg, dict):
+            return {k: self._convert_arg_to_torch(v) for k, v in arg.items()}
+        return arg
+
+    @staticmethod
+    def _torch_to_numpy(t):
+        """Safely convert a torch Tensor (including conjugate views) to numpy."""
+        # PyTorch may return conjugate views (e.g. adjoint). numpy() requires resolving it first.
+        if hasattr(t, "resolve_conj"):
+            t = t.resolve_conj()
+        return t.detach().numpy()
+
     def forward_pytorch_impl(self):
+        self.inputs_with_grad_torch = [] # Reset inputs with grad
+
+        # Prepare input tensor (x) logic aligned with unsqueeze_t_ops.py / chunk_ops.py
         if self.input_x_np.dtype == np.uint16:
             x_np = self.input_x_np.astype(np.int16)
         elif self.input_x_np.dtype == np.uint32:
@@ -85,19 +111,30 @@ class TensorViewTestModule:
         if self.ms_dtype == mstype.bfloat16:
             x = x.type(torch.bfloat16)
 
-        rest_args = self.input_args[1:]
+        rest_args = [self._convert_arg_to_torch(a) for a in self.input_args[1:]]
+        op_kwargs = self._convert_arg_to_torch(self.op_kwargs)
         op = getattr(x, self.op_name)
-        out = op(*rest_args, **self.op_kwargs)
+        # torch property-style APIs (e.g. x.T/x.H/x.mT/x.mH) return a Tensor and are not callable.
+        if isinstance(op, torch.Tensor) and len(rest_args) == 0 and not op_kwargs:
+            out = op
+        # torch.Tensor.permute signature is permute(*dims), but MindSpore tests often pass a single tuple/list.
+        elif self.op_name == "permute" and len(rest_args) == 1 and isinstance(rest_args[0], (tuple, list)):
+            out = op(*rest_args[0], **op_kwargs)
+        # torch.Tensor.transpose requires 2 dims; for MindSpore Tensor.transpose() (no-arg), use permute(reverse_dims).
+        elif self.op_name == "transpose" and len(rest_args) == 0:
+            out = x.permute(*reversed(range(x.dim())))
+        else:
+            out = op(*rest_args, **op_kwargs)
 
         # Output conversion aligned with reference
         if self.ms_dtype == mstype.bfloat16:
             if isinstance(out, (tuple, list)):
-                return [t.detach().float().numpy() for t in out]
-            return out.detach().float().numpy()
+                return [self._torch_to_numpy(t.float()) for t in out]
+            return self._torch_to_numpy(out.float())
 
         if isinstance(out, (tuple, list)):
-            return [t.detach().numpy() for t in out]
-        return out.detach().numpy()
+            return [self._torch_to_numpy(t) for t in out]
+        return self._torch_to_numpy(out)
 
     def backward_pytorch_impl(self):
         # 1. Re-prepare Input
@@ -115,9 +152,17 @@ class TensorViewTestModule:
         self.inputs_with_grad_torch = [x]
 
         # 2. Re-Run Forward
-        rest_args = self.input_args[1:]
+        rest_args = [self._convert_arg_to_torch(a) for a in self.input_args[1:]]
+        op_kwargs = self._convert_arg_to_torch(self.op_kwargs)
         op = getattr(x, self.op_name)
-        out = op(*rest_args, **self.op_kwargs)
+        if isinstance(op, torch.Tensor) and len(rest_args) == 0 and not op_kwargs:
+            out = op
+        elif self.op_name == "permute" and len(rest_args) == 1 and isinstance(rest_args[0], (tuple, list)):
+            out = op(*rest_args[0], **op_kwargs)
+        elif self.op_name == "transpose" and len(rest_args) == 0:
+            out = x.permute(*reversed(range(x.dim())))
+        else:
+            out = op(*rest_args, **op_kwargs)
 
         # 3. Generate or Use Cached Random Sens
         if self.output_grad_np is None:
@@ -134,7 +179,7 @@ class TensorViewTestModule:
                             grad = np.array(grad)
                         self.output_grad_np.append(grad.astype(t.detach().numpy().dtype))
             else:
-                t = out.detach().numpy()
+                t = self._torch_to_numpy(out)
                 if self.ms_dtype == mstype.bfloat16:
                     # For bfloat16, use float32 in numpy
                     self.output_grad_np = np.random.randn(*t.shape).astype(np.float32)
@@ -153,9 +198,9 @@ class TensorViewTestModule:
         grads = []
         for t in self.inputs_with_grad_torch:
             if self.ms_dtype == mstype.bfloat16:
-                grads.append(t.grad.detach().float().numpy())
+                grads.append(self._torch_to_numpy(t.grad.float()))
             else:
-                grads.append(t.grad.detach().numpy())
+                grads.append(self._torch_to_numpy(t.grad))
         return grads
 
     def forward_cmp(self, ms_forward_func):

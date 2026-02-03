@@ -17,6 +17,7 @@
 """standard_method"""
 
 from __future__ import absolute_import
+import builtins
 from mindspore import Tensor, CSRTensor, COOTensor, Parameter
 from mindspore import dtype as mstype
 from mindspore._c_expression import TensorPy as Tensor_
@@ -29,6 +30,7 @@ from mindspore.ops.composite.base import _append, _insert, _pop, _list_clear, _r
 from mindspore.ops.operations._sequence_ops import TensorToTuple
 from mindspore.ops.auto_generate import trace_v2_op, inplace_addmm_op, inplace_index_put_op, inplace_normal_op, \
     inplace_index_add_op, inplace_sign_op, muls_op, mul_op
+from mindspore.ops.auto_generate import transpose_ext_view
 from mindspore.ops.auto_generate import inplace_copy_op, inplace_uniform_op, inplace_erfinv_op
 from mindspore.ops.auto_generate import inplace_scatter_add as inplace_scatter_add_
 from mindspore.ops.auto_generate import inplace_exponential_op
@@ -606,9 +608,11 @@ def transpose(x, *axis):
         >>> print(x.shape)
         (3, 2, 1)
     """
-    ndim = F.rank(x)
+    ndim = x.ndim
     perm = validator.check_transpose_axis(axis, ndim)
-    return F.transpose(x, perm)
+    if ndim <= 1:
+        return x
+    return _transpose_ext_view_by_perm(x, perm)
 
 
 def T(x):
@@ -3010,7 +3014,26 @@ def sub(x, y):
 
 def t(input):
     """Transposes a 2-D tensor."""
-    return F.t(input)
+    if input.ndim == 2:
+        return transpose_ext_view(input, 0, 1)
+    return input
+
+
+def _transpose_ext_view_by_perm(input, perm):
+    """Decompose a general permutation into adjacent swaps with TransposeExtView."""
+    ndim = input.ndim
+    if ndim <= 1:
+        return input
+    cur = list(builtins.range(ndim))
+    out = input
+    for i in builtins.range(ndim):
+        target_axis = perm[i]
+        j = cur.index(target_axis)
+        while j > i:
+            out = transpose_ext_view(out, j - 1, j)
+            cur[j - 1], cur[j] = cur[j], cur[j - 1]
+            j -= 1
+    return out
 
 
 def tan(x):

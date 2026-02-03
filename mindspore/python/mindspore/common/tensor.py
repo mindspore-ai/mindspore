@@ -712,8 +712,12 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         rank = self.ndim
         if rank <= 1:
             return self
-        dims = list(range(rank - 1, -1, -1))
-        return self.permute(dims)
+        # Use swapaxes to avoid relying on permute/transpose implementation details.
+        # swapaxes is lowered to the view op TransposeExtView.
+        out = self
+        for i in range(rank // 2):
+            out = out.swapaxes(i, rank - 1 - i)
+        return out
 
     @staticmethod
     def from_numpy(array):
@@ -2162,6 +2166,11 @@ class Tensor(TensorPy_, metaclass=_TensorMeta):
         The parameter `axis1` of the current interface is the same as the parameter `dim1` of the reference interface,
         the parameter `axis2` of the current interface is the same as the parameter `dim2` of the reference interface.
         """
+        # Prefer the underlying Tensor C++ method generated from mindspore/ops/api_def/diagonal.yaml.
+        # Fall back to the legacy registry path if the method is not available.
+        diagonal_impl = getattr(TensorPy_, "diagonal", None)  # pylint: disable=W0212
+        if diagonal_impl is not None:
+            return diagonal_impl(self, offset, axis1, axis2)
         return tensor_operator_registry.get('diagonal')(self, offset, axis1, axis2)
 
     def diagonal_scatter(self, src, offset=0, dim1=0, dim2=1):

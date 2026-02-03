@@ -31,6 +31,7 @@ from mindspore.ops.auto_generate.gen_ops_prim import (
 from mindspore.ops.auto_generate.gen_ops_prim import (
     floor_div_op, floor_div_scalar_op
 )
+from mindspore.ops.auto_generate.gen_ops_prim import slice_ext_view_op
 from mindspore.ops.auto_generate import (mul, muls)
 # 1 common import
 
@@ -40,6 +41,9 @@ from mindspore import Tensor
 from mindspore.common import dtype as mstype
 # 4 common import
 from mindspore.common import COOTensor, CSRTensor
+
+# 4.5 common import
+from mindspore.ops.operations._sequence_ops import TensorToScalar
 
 # 5 common import
 from mindspore.ops.function.nn_func import gelu
@@ -82,7 +86,7 @@ from mindspore.ops.function.math_func import atan2
 # 16 bool
 
 # 17 broadcast_to
-from mindspore.ops.auto_generate import broadcast_to
+from mindspore.ops.auto_generate import broadcast_to, broadcast_to_view, diagonal_view_impl
 # 18 byte
 
 # 19 ceil
@@ -398,6 +402,9 @@ from mindspore.ops.auto_generate import sinc
 from mindspore.ops.auto_generate import sinh
 from mindspore.ops.function.array_func import unsqueeze_view
 
+# helper for Tensor.narrow view lowering
+_tensor_to_scalar = TensorToScalar()
+
 # 186
 from mindspore.ops.function.math_func import addcdiv
 from mindspore.ops.auto_generate import addcdiv_ext_op
@@ -652,11 +659,19 @@ def tensor_exp(input):
 
 # 33 expand_as
 def tensor_expand_as(input, other):
-    return broadcast_to(input, other.shape)
+    return broadcast_to_view(input, other.shape)
 
 
 def deprecated_tensor_expand_as(input, x):
-    return broadcast_to(input, x.shape)
+    return broadcast_to_view(input, x.shape)
+
+
+def tensor_diagonal(input, offset=0, dim1=0, dim2=1):
+    return diagonal_view_impl(input, offset, dim1, dim2)
+
+
+def deprecated_tensor_diagonal(input, offset=0, axis1=0, axis2=1):
+    return diagonal_view_impl(input, offset, axis1, axis2)
 
 
 # 34 flatten
@@ -909,7 +924,30 @@ def tensor_nan_to_num(input, nan=0.0, posinf=None, neginf=None):
 
 # 72 narrow
 def deprecated_tensor_narrow(input, axis, start, length):
-    return F.narrow(input, axis, start, length)
+    r"""
+    In KBK mode, narrow is lowered to view operator SliceExtView (start/end/step).
+    """
+
+    validator.check_value_type("input", input, Tensor, "narrow")
+    if input.ndim <= 0:
+        raise ValueError("narrow cannot be applied to a 0-dim tensor.")
+    axis = check_axis_in_range(axis, input.ndim)
+    if isinstance(start, Tensor):
+        start = _tensor_to_scalar(start)
+    if isinstance(length, Tensor):
+        length = _tensor_to_scalar(length)
+
+    dim_value = input.shape[axis]
+    # Align with pynative narrow validation:
+    # start in [-dim_value, dim_value], negative start will be wrapped.
+    validator.check_int_range(start, -dim_value, dim_value, validator.INC_BOTH)
+    new_start = start + dim_value if start < 0 else start
+    max_length = dim_value - new_start
+    # length in [0, max_length]
+    validator.check_int_range(length, 0, max_length, validator.INC_BOTH)
+
+    end = new_start + length
+    return slice_ext_view_op(input, axis, new_start, end, 1)
 
 
 # 73 ne
@@ -1209,15 +1247,31 @@ def deprecated_tensor_topk(input, k, dim=None, largest=True, sorted=True):
 def tensor_transpose_ext(input, dim0, dim1):
     return transpose_ext_view(input, dim0, dim1)
 
+def _transpose_ext_view_by_perm(input, perm):
+    """Decompose a general permutation into adjacent swaps with TransposeExtView."""
+    ndim = input.ndim
+    if ndim <= 1:
+        return input
+    cur = list(range(ndim))
+    out = input
+    for i in range(ndim):
+        target_axis = perm[i]
+        j = cur.index(target_axis)
+        while j > i:
+            out = transpose_ext_view(out, j - 1, j)
+            cur[j - 1], cur[j] = cur[j], cur[j - 1]
+            j -= 1
+    return out
+
 
 def deprecated_tensor_transpose(input, *axes):
     perm = validator.check_transpose_axis(axes, input.ndim)
-    return transpose(input, perm)
+    return _transpose_ext_view_by_perm(input, perm)
 
 
 def deprecated_tensor_permute(input, *axis):
     perm = validator.check_transpose_axis(axis, input.ndim)
-    return permute(input, perm)
+    return _transpose_ext_view_by_perm(input, perm)
 
 
 # 112 tril

@@ -102,8 +102,8 @@ from mindspore import _checkparam as validator
 from mindspore.ops._utils.utils import ms_arrange
 
 from mindspore.ops.auto_generate import cat, range, scatter_nd, deepcopy, masked_fill, diagonal, expand_dims, \
-    flip, transpose, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, masked_select, \
-    broadcast_to, strided_slice, ones, zeros, max_, min_, select, zero_, view_as, \
+    flip, transpose, transpose_ext_view, triu, unsorted_segment_sum, diag, gather, gather_d, gather_nd, reshape, \
+    masked_select, broadcast_to, strided_slice, ones, zeros, max_, min_, select, zero_, view_as, \
     expand_as, unstack_ext_view_op, full_like_op, tensor_scatter_add, \
     index_fill_scalar, index_fill_tensor
 from mindspore.ops.auto_generate import take, tensor_scatter_elements as tensor_scatter_elements_ext
@@ -6115,15 +6115,35 @@ def movedim(x, source, destination):
         >>> print(output.shape)
         (4, 3, 5)
     """
-    ndim = ops.rank(x)
+    # Use static rank for graph compilation. `ops.rank(x)` may be a Tensor-like value in graph mode,
+    # which can't be used with Python `range` below.
+    ndim = x.ndim
     source = _check_axis_valid(source, ndim)
     destination = _check_axis_valid(destination, ndim)
     if len(source) != len(destination):
         raise ValueError(
             f"For `source` and `destination` arguments, the number of elements must be the same, but got 'source':"
             f" {len(source)} and 'destination': {len(destination)}.")
+    # Align with PyTorch semantics: source/destination dims must be unique.
+    # Duplicated dims would make the permutation ambiguous and can break perm computation.
+    if isinstance(source, tuple) and len(set(source)) != len(source):
+        raise ValueError(f"For `movedim`, `source` must not contain duplicate dims, but got {source}.")
+    if isinstance(destination, tuple) and len(set(destination)) != len(destination):
+        raise ValueError(f"For `movedim`, `destination` must not contain duplicate dims, but got {destination}.")
     perm = _get_moved_perm(ndim, source, destination)
-    return transpose_(x, perm)
+    # Lower to view ops `TransposeExtView` by decomposing permutation into swaps.
+    if ndim <= 1:
+        return x
+    cur = list(builtins.range(0, ndim))
+    out = x
+    for i in builtins.range(ndim):
+        target_axis = perm[i]
+        j = cur.index(target_axis)
+        while j > i:
+            out = transpose_ext_view(out, j - 1, j)
+            cur[j - 1], cur[j] = cur[j], cur[j - 1]
+            j -= 1
+    return out
 
 
 def moveaxis(x, source, destination):
@@ -6180,18 +6200,8 @@ def swapaxes(input, axis0, axis1):
     axis0, axis1 = _check_swapaxes_axis((axis0, axis1), input.ndim)
     if axis0 == axis1:
         return input
-    if axis0 > axis1:
-        axis0, axis1 = axis1, axis0
-
-    perm = ops.make_range(0, input.ndim)
-    if axis1 + 1 < input.ndim:
-        new_perm = perm[0:axis0] + perm[axis1:axis1 + 1] + \
-            perm[axis0 + 1:axis1] + perm[axis0:axis0 + 1] + perm[axis1 + 1:]
-    else:
-        new_perm = perm[0:axis0] + perm[axis1:axis1 + 1] + \
-            perm[axis0 + 1:axis1] + perm[axis0:axis0 + 1]
-
-    return transpose_(input, new_perm)
+    # Lower to view op `TransposeExtView` (swap two dims) in KBK/graph mode.
+    return transpose_ext_view(input, axis0, axis1)
 
 
 def swapdims(input, dim0, dim1):
@@ -6217,7 +6227,7 @@ def swapdims(input, dim0, dim1):
         >>> print(output.shape)
         (4, 3, 2)
     '''
-    return ops.swapaxes(input, dim0, dim1)
+    return swapaxes(input, dim0, dim1)
 
 
 @constexpr
