@@ -28,8 +28,6 @@
 #include "include/utils/tensor_py.h"
 #include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "abstract/abstract_value.h"
-#include "utils/hyper_offload/hyper_offload_strategy.h"
-#include "utils/hyper_offload/hyper_offload_operation.h"
 
 namespace mindspore {
 namespace utils {
@@ -87,6 +85,35 @@ bool IsViewOrInplaceNode(const AnfNodePtr &node) {
   return prim != nullptr && (prim->graph_view_prim() || prim->inplace_prim());
 }
 
+bool IsViewNode(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
+    return true;
+  }
+  return node->has_user_data("is_view");
+}
+
+bool IsInplaceNode(const AnfNodePtr &node) {
+  if (node == nullptr) {
+    return false;
+  }
+  return node->has_user_data("is_inplace");
+}
+
+KernelWithIndex GetRealDataNodeWithIndex(const AnfNodePtr &node) {
+  auto res = common::AnfAlgo::VisitKernelWithReturnType(node, 0, false);
+  while (IsViewNode(res.first)) {
+    auto cnode = res.first->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(cnode);
+    MS_EXCEPTION_IF_CHECK_FAIL(cnode->inputs().size() > 1, "View node input size is not correct");
+    constexpr size_t data_input_index = 1;
+    res = common::AnfAlgo::VisitKernelWithReturnType(cnode->input(data_input_index), 0, false);
+  }
+  return res;
+}
+
 bool IsValidOffloadNode(const UserInfo &user_info) {
   auto node = user_info.node.first;
   MS_EXCEPTION_IF_NULL(node);
@@ -97,6 +124,15 @@ bool IsValidOffloadNode(const UserInfo &user_info) {
     return false;
   }
   if (std::any_of(user_info.users.begin(), user_info.users.end(), [](const auto &e) { return IsD2HNode(e.first); })) {
+    return false;
+  }
+  bool has_view_user =
+    std::any_of(user_info.users.begin(), user_info.users.end(), [](const auto &e) { return IsViewNode(e.first); });
+  bool has_inplace_user =
+    std::any_of(user_info.users.begin(), user_info.users.end(), [](const auto &e) { return IsInplaceNode(e.first); });
+  // Currently skip view-inplace scenario.
+  if (has_view_user && has_inplace_user) {
+    MS_LOG(ERROR) << "View and inplace user found for node: " << node->DebugString();
     return false;
   }
   auto node_enable_offload = GetNodeEnableOffload(node);
@@ -111,11 +147,12 @@ UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes) {
   for (const CNodePtr &node : nodes) {
     for (size_t i = 0; i < node->inputs().size(); ++i) {
       const auto &input = node->input(i);
-      if (input->abstract() == nullptr || !input->abstract()->isa<abstract::AbstractTensor>()) {
+      const auto &cur_kernel_with_index = GetRealDataNodeWithIndex(input);
+      auto real_input = cur_kernel_with_index.first;
+      if (real_input == nullptr || !real_input->isa<CNode>()) {
         continue;
       }
-      const auto &cur_kernel_with_index = common::AnfAlgo::VisitKernelWithReturnType(input, 0, false);
-      if (!cur_kernel_with_index.first->isa<CNode>()) {
+      if (real_input->abstract() == nullptr || !real_input->abstract()->isa<abstract::AbstractTensor>()) {
         continue;
       }
       auto iter = std::find_if(user_info_list.begin(), user_info_list.end(),
@@ -130,33 +167,6 @@ UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes) {
     }
   }
   return user_info_list;
-}
-
-std::optional<AnfNodePtr> FindLastRealUser(const AnfNodePtr &node, const UserInfoList &user_info_list) {
-  int64_t output_index = 0;
-  if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
-    auto cnode = node->cast<CNodePtr>();
-    constexpr size_t index_pos = 2;
-    auto index_value_node = cnode->input(index_pos)->cast<ValueNodePtr>();
-    output_index = GetValue<int64_t>(index_value_node->value());
-  }
-  auto node_iter = std::find_if(user_info_list.begin(), user_info_list.end(), [&node, output_index](const auto &e) {
-    if (IsPrimitiveCNode(node, prim::kPrimTupleGetItem)) {
-      auto real_data = node->cast<CNodePtr>()->input(1);
-      return e.node.first == real_data && (int64_t)e.node.second == output_index;
-    }
-    return e.node.first == node && (int64_t)e.node.second == output_index;
-  });
-  if (node_iter == user_info_list.end()) {
-    return std::nullopt;
-  }
-  const auto &node_users = node_iter->users;
-  auto last_user = node_users[node_users.size() - 1].first;
-  // ToRemote will be placed right after the data is changed.
-  if (IsD2HNode(last_user)) {
-    return std::nullopt;
-  }
-  return last_user;
 }
 
 CNodePtr BuildToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &data_node,
@@ -390,6 +400,28 @@ std::optional<size_t> GetNodeReleaseDistance(const AnfNodePtr &node) {
 std::optional<bool> GetNodeEnableOffload(const AnfNodePtr &node) {
   constexpr const char *kEnableOffloadAttr = "enable_offload";
   return GetNodeAttrValue<bool>(node, kEnableOffloadAttr);
+}
+
+size_t FindLastUserIndex(const CNodePtrList &exec_order, const AnfNodePtr &data_node, size_t current_node_index) {
+  if (exec_order.empty()) {
+    return current_node_index;
+  }
+  const auto &[target_node, target_index] = GetRealDataNodeWithIndex(data_node);
+  for (size_t i = exec_order.size() - 1; i > current_node_index; --i) {
+    const auto &node = exec_order[i];
+    for (const auto &input : node->inputs()) {
+      // Get original data node to handle view-inplace scenario
+      const auto &[cur_node, cur_index] = GetRealDataNodeWithIndex(input);
+      MS_EXCEPTION_IF_NULL(cur_node);
+      if (!cur_node->isa<CNode>()) {
+        continue;
+      }
+      if (cur_node == target_node && cur_index == target_index) {
+        return i;
+      }
+    }
+  }
+  return current_node_index;
 }
 }  // namespace hyper_offload
 }  // namespace utils

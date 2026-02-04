@@ -25,7 +25,6 @@
 #include "ir/anf.h"
 #include "include/utils/anfalgo.h"
 #include "include/utils/visible.h"
-#include "utils/hyper_offload/hyper_offload_operation.h"
 
 namespace mindspore {
 namespace utils {
@@ -108,12 +107,16 @@ COMMON_EXPORT bool IsD2HNode(const AnfNodePtr &node);
 COMMON_EXPORT bool IsH2DNode(const AnfNodePtr &node);
 // Check if a node is a View or Inplace node.
 COMMON_EXPORT bool IsViewOrInplaceNode(const AnfNodePtr &node);
+// Check if a node is a View node.
+COMMON_EXPORT bool IsViewNode(const AnfNodePtr &node);
+// Check if a node is a Replace node.
+COMMON_EXPORT bool IsInplaceNode(const AnfNodePtr &node);
+// Get the original data node by tracing back through view nodes.
+COMMON_EXPORT KernelWithIndex GetRealDataNodeWithIndex(const AnfNodePtr &node);
 // Check if a user info indicates a valid offload candidate.
 COMMON_EXPORT bool IsValidOffloadNode(const UserInfo &user_info);
 // Collect all users for a list of nodes.
 COMMON_EXPORT UserInfoList CollectAllNodeUsers(const CNodePtrList &nodes);
-// Find the last real user of a node in the execution order.
-COMMON_EXPORT std::optional<AnfNodePtr> FindLastRealUser(const AnfNodePtr &node, const UserInfoList &user_info_list);
 // Build a ToHost (D2H) node.
 COMMON_EXPORT CNodePtr BuildToHostNode(const FuncGraphPtr &graph, const AnfNodePtr &data_node,
                                        const HandleNewNodeCallback &callback = nullptr);
@@ -162,6 +165,10 @@ COMMON_EXPORT std::optional<size_t> GetNodePrefetchDistance(const AnfNodePtr &no
 COMMON_EXPORT std::optional<size_t> GetNodeReleaseDistance(const AnfNodePtr &node);
 // Get enable_offload from node attribute, return nullopt if not found.
 COMMON_EXPORT std::optional<bool> GetNodeEnableOffload(const AnfNodePtr &node);
+// Find the last user of a data node in the execution order, considering TupleGetItem.
+COMMON_EXPORT size_t FindLastUserIndex(const CNodePtrList &exec_order, const AnfNodePtr &data_node,
+                                       size_t current_node_index);
+
 }  // namespace hyper_offload
 }  // namespace utils
 }  // namespace mindspore

@@ -98,6 +98,7 @@ ReplaceInfoList GenerateReplaceInfoList(const RelativeDistanceList &relative_dis
     (void)replace_info_list.back().replace_rest_nodes.emplace_back(new_need_change_node);
   }
   MS_EXCEPTION_IF_CHECK_FAIL(!replace_info_list.empty(), "Replace info list should not be empty");
+  MS_LOG(INFO) << "GenerateReplaceInfoList result size: " << replace_info_list.size();
   return replace_info_list;
 }
 
@@ -106,12 +107,21 @@ std::optional<OffloadInfo> GenerateOffloadInfo(const UserInfo &user_info, const 
     return std::nullopt;
   }
   const auto &absolute_distance_list = GenerateAbsoluteDistanceList(user_info, execution_order);
+  MS_LOG(INFO) << "absolute_distance_list size: " << absolute_distance_list.size();
   if (absolute_distance_list.size() == 1) {
     return std::nullopt;
   }
   const auto &relative_distance_list = GenerateRelativeDistanceList(absolute_distance_list);
+  MS_LOG(INFO) << "relative_distance_list size: " << relative_distance_list.size();
   const auto &replace_info_list = GenerateReplaceInfoList(relative_distance_list);
+  MS_LOG(INFO) << "replace_info_list size: " << replace_info_list.size();
   if (replace_info_list.empty()) {
+    return std::nullopt;
+  }
+  MS_LOG(INFO) << "GenerateOffloadInfo success for node: " << user_info.node.first->DebugString();
+  if (replace_info_list.size() > 1) {
+    MS_LOG(ERROR) << "Replace info list size is greater than 1, node: " << user_info.node.first->DebugString()
+                  << " tmp skip to offload";
     return std::nullopt;
   }
   return OffloadInfo{user_info.node, replace_info_list};
@@ -144,6 +154,7 @@ OffloadInfoList OffloadInfoFilterByNumber::Filter(const OffloadInfoList &offload
     return offload_info_list;
   }
   OffloadInfoList filtered_offload_list{offload_info_list.begin(), offload_info_list.begin() + offload_total_number};
+  MS_LOG(INFO) << "OffloadInfoFilterByNumber filtered list size: " << filtered_offload_list.size();
   return filtered_offload_list;
 }
 }  // namespace hyper_offload

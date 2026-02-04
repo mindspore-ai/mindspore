@@ -20,6 +20,8 @@
 #include "common/common_test.h"
 #include "utils/hyper_offload/hyper_offload.h"
 #include "utils/hyper_offload/hyper_offload_utils.h"
+#include "utils/hyper_offload/hyper_offload_event.h"
+#include "utils/hyper_offload/hyper_offload_operation.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "ir/primitive.h"
@@ -78,8 +80,7 @@ class TestHyperOffloadCommon : public UT::Common {
   }
 
   // Create a CNode
-  CNodePtr CreateCNode(const FuncGraphPtr &graph, const std::string &prim_name,
-                       const std::vector<AnfNodePtr> &inputs) {
+  CNodePtr CreateCNode(const FuncGraphPtr &graph, const std::string &prim_name, const std::vector<AnfNodePtr> &inputs) {
     MS_EXCEPTION_IF_NULL(graph);
     auto prim = std::make_shared<Primitive>(prim_name);
     auto value_node = std::make_shared<ValueNode>(prim);
@@ -92,24 +93,24 @@ class TestHyperOffloadCommon : public UT::Common {
   // Create a simple execution order (for basic tests)
   CNodePtrList CreateSimpleExecutionOrder(const FuncGraphPtr &graph) {
     CNodePtrList exec_order;
-    
+
     // Create input parameters
     auto input_abs = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2, 3});
     auto param1 = CreateParameter(graph, "param1", input_abs);
     auto param2 = CreateParameter(graph, "param2", input_abs);
-    
+
     // Create computation nodes
     auto add_node = CreateCNode(graph, "Add", {param1, param2});
     add_node->set_abstract(input_abs);
     (void)exec_order.emplace_back(add_node);
-    
+
     auto mul_node = CreateCNode(graph, "Mul", {add_node, param1});
     mul_node->set_abstract(input_abs);
     (void)exec_order.emplace_back(mul_node);
-    
+
     // Set graph output
     graph->set_output(mul_node);
-    
+
     return exec_order;
   }
 
@@ -118,67 +119,67 @@ class TestHyperOffloadCommon : public UT::Common {
   // The structure ensures relative distance > select_distance(5) to trigger offload
   CNodePtrList CreateLargeExecutionOrder(const FuncGraphPtr &graph) {
     CNodePtrList exec_order;
-    
+
     // Create input parameters
     auto input_abs = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2, 3});
     auto param1 = CreateParameter(graph, "param1", input_abs);
     auto param2 = CreateParameter(graph, "param2", input_abs);
     auto param3 = CreateParameter(graph, "param3", input_abs);
-    
+
     // Create the first computation node (this node will be offloaded)
     // node1 at position 0
     auto node1 = CreateCNode(graph, "Add", {param1, param2});
     node1->set_abstract(input_abs);
     (void)exec_order.emplace_back(node1);
-    
+
     // Create first user of node1 at position 1 (distance = 1)
     auto node2 = CreateCNode(graph, "Mul", {node1, param3});
     node2->set_abstract(input_abs);
     (void)exec_order.emplace_back(node2);
-    
+
     // Create intermediate nodes that don't use node1 (positions 2-6)
     // This creates a gap to ensure relative distance > select_distance(5)
     auto node3 = CreateCNode(graph, "Sub", {node2, param1});
     node3->set_abstract(input_abs);
     (void)exec_order.emplace_back(node3);
-    
+
     auto node4 = CreateCNode(graph, "Add", {node3, param2});
     node4->set_abstract(input_abs);
     (void)exec_order.emplace_back(node4);
-    
+
     auto node5 = CreateCNode(graph, "Mul", {node4, param3});
     node5->set_abstract(input_abs);
     (void)exec_order.emplace_back(node5);
-    
+
     auto node6 = CreateCNode(graph, "Sub", {node5, param1});
     node6->set_abstract(input_abs);
     (void)exec_order.emplace_back(node6);
-    
+
     auto node7 = CreateCNode(graph, "Add", {node6, param2});
     node7->set_abstract(input_abs);
     (void)exec_order.emplace_back(node7);
-    
+
     // Create second user of node1 at position 7 (distance = 7)
     // Relative distance from node2 (pos 1) to node8 (pos 7) = 7 - 1 = 6 > 5, triggers offload
     auto node8 = CreateCNode(graph, "Add", {node1, node7});
     node8->set_abstract(input_abs);
     (void)exec_order.emplace_back(node8);
-    
+
     // Create more intermediate nodes
     auto node9 = CreateCNode(graph, "Mul", {node8, param1});
     node9->set_abstract(input_abs);
     (void)exec_order.emplace_back(node9);
-    
+
     // Create third user of node1 at position 9 (distance = 9)
     // Relative distance from node8 (pos 7) to node10 (pos 9) = 9 - 7 = 2 (not > 5)
     // But the previous relative distance (6) already triggered offload
     auto node10 = CreateCNode(graph, "Mul", {node9, node1});
     node10->set_abstract(input_abs);
     (void)exec_order.emplace_back(node10);
-    
+
     // Set graph output
     graph->set_output(node10);
-    
+
     return exec_order;
   }
 };
@@ -201,16 +202,16 @@ TEST_F(TestHyperOffloadCommon, TestHyperOffloadConfig) {
 TEST_F(TestHyperOffloadCommon, TestHyperOffloadCommonRun_Basic) {
   auto graph = CreateSimpleGraph();
   auto exec_order = CreateSimpleExecutionOrder(graph);
-  
+
   HyperOffloadInput input;
   input.graph = graph;
   input.exec_order = exec_order;
   input.enable_offload_parameter = false;
   input.enable_offload_activation = false;
-  
+
   HyperOffloadOptimizer optimizer(input);
   auto plan = optimizer.Run();
-  
+
   EXPECT_NE(plan.graph, nullptr);
   EXPECT_EQ(plan.graph, graph);
   EXPECT_EQ(plan.exec_order.size(), exec_order.size());
@@ -222,24 +223,24 @@ TEST_F(TestHyperOffloadCommon, TestHyperOffloadCommonRun_Basic) {
 TEST_F(TestHyperOffloadCommon, TestHyperOffloadCommonRun_Disabled) {
   // Temporarily disable HyperOffload
   (void)common::SetEnv("MS_DEV_HYPER_OFFLOAD", "", 1);
-  
+
   auto graph = CreateSimpleGraph();
   auto exec_order = CreateSimpleExecutionOrder(graph);
-  
+
   HyperOffloadInput input;
   input.graph = graph;
   input.exec_order = exec_order;
   input.enable_offload_parameter = true;
   input.enable_offload_activation = true;
-  
+
   HyperOffloadOptimizer optimizer(input);
   auto plan = optimizer.Run();
-  
+
   // When HyperOffload is disabled, should return original input
   EXPECT_NE(plan.graph, nullptr);
   EXPECT_EQ(plan.graph, graph);
   EXPECT_EQ(plan.exec_order.size(), exec_order.size());
-  
+
   // Re-enable
   (void)common::SetEnv("MS_DEV_HYPER_OFFLOAD", "1");
 }
@@ -250,16 +251,16 @@ TEST_F(TestHyperOffloadCommon, TestHyperOffloadCommonRun_Disabled) {
 TEST_F(TestHyperOffloadCommon, TestHyperOffloadCommonRun_EmptyInput) {
   auto graph = CreateSimpleGraph();
   CNodePtrList empty_exec_order;
-  
+
   HyperOffloadInput input;
   input.graph = graph;
   input.exec_order = empty_exec_order;
   input.enable_offload_parameter = true;
   input.enable_offload_activation = true;
-  
+
   HyperOffloadOptimizer optimizer(input);
   auto plan = optimizer.Run();
-  
+
   EXPECT_NE(plan.graph, nullptr);
   EXPECT_TRUE(plan.exec_order.empty());
 }
@@ -269,16 +270,16 @@ TEST_F(TestHyperOffloadCommon, TestHyperOffloadCommonRun_EmptyInput) {
 // Expectation: Correct result.
 TEST_F(TestHyperOffloadCommon, TestHyperOffloadCommonRun_NullGraph) {
   CNodePtrList exec_order = CreateSimpleExecutionOrder(CreateSimpleGraph());
-  
+
   HyperOffloadInput input;
   input.graph = nullptr;
   input.exec_order = exec_order;
   input.enable_offload_parameter = true;
   input.enable_offload_activation = true;
-  
+
   HyperOffloadOptimizer optimizer(input);
   auto plan = optimizer.Run();
-  
+
   EXPECT_EQ(plan.graph, nullptr);
   EXPECT_EQ(plan.exec_order.size(), exec_order.size());
 }
@@ -290,17 +291,17 @@ TEST_F(TestHyperOffloadCommon, TestNodeIdentification) {
   auto graph = CreateSimpleGraph();
   auto input_abs = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2, 3});
   auto param = CreateParameter(graph, "param", input_abs);
-  
+
   // Create CopyToHost node
   auto copy_to_host = CreateCNode(graph, "CopyToHost", {param});
   EXPECT_TRUE(IsD2HNode(copy_to_host));
   EXPECT_FALSE(IsH2DNode(copy_to_host));
-  
+
   // Create CopyToDevice node
   auto copy_to_device = CreateCNode(graph, "CopyToDevice", {param});
   EXPECT_TRUE(IsH2DNode(copy_to_device));
   EXPECT_FALSE(IsD2HNode(copy_to_device));
-  
+
   // Normal node
   auto add_node = CreateCNode(graph, "Add", {param, param});
   EXPECT_FALSE(IsD2HNode(add_node));
@@ -313,12 +314,12 @@ TEST_F(TestHyperOffloadCommon, TestNodeIdentification) {
 TEST_F(TestHyperOffloadCommon, TestCollectAllNodeUsers) {
   auto graph = CreateSimpleGraph();
   auto exec_order = CreateSimpleExecutionOrder(graph);
-  
+
   auto user_info_list = CollectAllNodeUsers(exec_order);
-  
+
   // Should have nodes collected
   EXPECT_GE(user_info_list.size(), 0);
-  
+
   // Check the structure of each UserInfo
   for (const auto &user_info : user_info_list) {
     EXPECT_NE(user_info.node.first, nullptr);
@@ -333,12 +334,12 @@ TEST_F(TestHyperOffloadCommon, TestBuildOffloadNodes) {
   auto graph = CreateSimpleGraph();
   auto input_abs = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2, 3});
   auto param = CreateParameter(graph, "param", input_abs);
-  
+
   // Test BuildToHostNode
   auto to_host_node = BuildToHostNode(graph, param);
   EXPECT_NE(to_host_node, nullptr);
   EXPECT_TRUE(IsD2HNode(to_host_node));
-  
+
   // Test BuildToDeviceNode
   auto to_device_node = BuildToDeviceNode(graph, param);
   EXPECT_NE(to_device_node, nullptr);
@@ -368,13 +369,13 @@ TEST_F(TestHyperOffloadCommon, TestOffloadInfoFilterByNumber) {
   auto graph = CreateSimpleGraph();
   auto exec_order = CreateLargeExecutionOrder(graph);
   auto user_info_list = CollectAllNodeUsers(exec_order);
-  
+
   DistanceBaseHyperOffloadStrategy strategy;
   auto offload_info_list = strategy.Run(exec_order, user_info_list);
-  
+
   OffloadInfoFilterByNumber filter;
   auto filtered_list = filter.Filter(offload_info_list);
-  
+
   // Filtered list should not exceed configured number
   EXPECT_LE(filtered_list.size(), offload_info_list.size());
   EXPECT_LE(filtered_list.size(), HyperOffloadConfig::GetInstance().select_num());
@@ -461,20 +462,20 @@ TEST_F(TestHyperOffloadCommon, TestOffloadStrategyWithLargeGraph) {
   auto graph = CreateSimpleGraph();
   auto exec_order = CreateLargeExecutionOrder(graph);
   auto user_info_list = CollectAllNodeUsers(exec_order);
-  
+
   // Check if any nodes are identified as offloadable
   EXPECT_GT(user_info_list.size(), 0);
-  
+
   DistanceBaseHyperOffloadStrategy strategy;
   auto offload_info_list = strategy.Run(exec_order, user_info_list);
-  
+
   // In large graph, if distance between nodes is large enough, should have offload info
   // node1 at position 0, node6 at position 5, node8 at position 7, node10 at position 9
   // If distance exceeds select_distance(5), should trigger offload
   MS_LOG(INFO) << "Execution order size: " << exec_order.size();
   MS_LOG(INFO) << "User info list size: " << user_info_list.size();
   MS_LOG(INFO) << "Offload info list size: " << offload_info_list.size();
-  
+
   // Strategy should at least be able to run
   EXPECT_GE(offload_info_list.size(), 0);
 }
@@ -486,8 +487,9 @@ TEST_F(TestHyperOffloadCommon, TestAssignHyperOffloadIds_Tuple) {
   auto graph = CreateSimpleGraph();
   // Create a node that outputs a tuple (abstract).
   auto input_abs_element = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2, 3});
-  auto input_abs_tuple = std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{input_abs_element, input_abs_element});
-  
+  auto input_abs_tuple =
+    std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{input_abs_element, input_abs_element});
+
   auto param = CreateParameter(graph, "param_tuple", input_abs_tuple);
 
   // Create TupleGetItem nodes
@@ -527,21 +529,21 @@ TEST_F(TestHyperOffloadCommon, TestAssignHyperOffloadIds_Tuple) {
 TEST_F(TestHyperOffloadCommon, TestEnableOffloadFalse) {
   auto graph = CreateSimpleGraph();
   auto exec_order = CreateLargeExecutionOrder(graph);
-  
+
   ASSERT_FALSE(exec_order.empty()) << "exec_order should not be empty";
   auto node1 = exec_order[0];
   auto cnode1 = node1->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode1);
-    cnode1->AddAttr("enable_offload", MakeValue(false));
-  
+  cnode1->AddAttr("enable_offload", MakeValue(false));
+
   auto enable_opt = GetNodeEnableOffload(node1);
   ASSERT_TRUE(enable_opt.has_value());
-    EXPECT_FALSE(enable_opt.value()) << "enable_offload should be false";
-  
+  EXPECT_FALSE(enable_opt.value()) << "enable_offload should be false";
+
   auto user_info_list = CollectAllNodeUsers(exec_order);
   DistanceBaseHyperOffloadStrategy strategy;
   auto offload_info_list = strategy.Run(exec_order, user_info_list);
-  
+
   bool node1_found = false;
   for (const auto &offload_info : offload_info_list) {
     if (offload_info.data_node.first == node1) {
@@ -558,30 +560,30 @@ TEST_F(TestHyperOffloadCommon, TestEnableOffloadFalse) {
 TEST_F(TestHyperOffloadCommon, TestNodePrefetchDistancePriority) {
   auto graph = CreateSimpleGraph();
   auto exec_order = CreateLargeExecutionOrder(graph);
-  
+
   ASSERT_FALSE(exec_order.empty()) << "exec_order should not be empty";
   constexpr size_t custom_prefetch_distance = 5;
   auto node1 = exec_order[0];
   auto cnode1 = node1->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode1);
   cnode1->AddAttr("prefetch_distance", MakeValue(custom_prefetch_distance));
-  
+
   auto prefetch_opt = GetNodePrefetchDistance(node1);
   ASSERT_TRUE(prefetch_opt.has_value());
   EXPECT_EQ(prefetch_opt.value(), custom_prefetch_distance) << "Node prefetch_distance should match set value";
-  
+
   HyperOffloadInput input;
   input.graph = graph;
   input.exec_order = exec_order;
   input.enable_offload_parameter = false;
   input.enable_offload_activation = true;
-  
+
   HyperOffloadOptimizer optimizer(input);
   auto plan = optimizer.Run();
-  
+
   EXPECT_NE(plan.graph, nullptr);
   EXPECT_GE(plan.exec_order.size(), exec_order.size());
-  
+
   auto find_h2d_for_node1 = [&](const CNodePtrList &order) -> size_t {
     for (size_t i = 0; i < order.size(); ++i) {
       if (IsH2DNode(order[i])) {
@@ -597,10 +599,10 @@ TEST_F(TestHyperOffloadCommon, TestNodePrefetchDistancePriority) {
     }
     return order.size();
   };
-  
+
   size_t h2d_idx = find_h2d_for_node1(plan.exec_order);
   EXPECT_NE(h2d_idx, plan.exec_order.size()) << "H2D node for node1 should exist";
-  
+
   auto find_node1_idx = [&](const CNodePtrList &order) -> size_t {
     for (size_t i = 0; i < order.size(); ++i) {
       if (order[i] == node1) {
@@ -609,13 +611,13 @@ TEST_F(TestHyperOffloadCommon, TestNodePrefetchDistancePriority) {
     }
     return order.size();
   };
-  
+
   size_t node1_idx = find_node1_idx(plan.exec_order);
   EXPECT_NE(node1_idx, plan.exec_order.size()) << "node1 should exist in execution order";
-  
+
   if (h2d_idx < node1_idx) {
     size_t actual_distance = node1_idx - h2d_idx;
-    EXPECT_LE(actual_distance, custom_prefetch_distance) 
+    EXPECT_LE(actual_distance, custom_prefetch_distance)
       << "H2D node should be moved ahead according to prefetch_distance";
   }
 }
@@ -626,31 +628,31 @@ TEST_F(TestHyperOffloadCommon, TestNodePrefetchDistancePriority) {
 TEST_F(TestHyperOffloadCommon, TestNodeReleaseDistancePriority) {
   auto graph = CreateSimpleGraph();
   auto exec_order = CreateLargeExecutionOrder(graph);
-  
+
   ASSERT_FALSE(exec_order.empty()) << "exec_order should not be empty";
   constexpr size_t custom_release_distance = 5;
   auto node1 = exec_order[0];
   auto cnode1 = node1->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(cnode1);
   cnode1->AddAttr("release_distance", MakeValue(custom_release_distance));
-  
+
   auto release_opt = GetNodeReleaseDistance(node1);
   ASSERT_TRUE(release_opt.has_value());
   EXPECT_EQ(release_opt.value(), custom_release_distance) << "Node release_distance should match set value";
-  
+
   HyperOffloadInput input;
   input.graph = graph;
   input.exec_order = exec_order;
   input.enable_offload_parameter = false;
   input.enable_offload_activation = true;
-  
+
   HyperOffloadOptimizer optimizer(input);
   auto plan = optimizer.Run();
-  
+
   EXPECT_NE(plan.graph, nullptr);
-  EXPECT_GT(plan.exec_order.size(), exec_order.size()) 
+  EXPECT_GT(plan.exec_order.size(), exec_order.size())
     << "Event nodes should be added when release_distance attribute is set";
-  
+
   auto find_d2h_for_node1 = [&](const CNodePtrList &order) -> size_t {
     for (size_t i = 0; i < order.size(); ++i) {
       if (IsD2HNode(order[i])) {
@@ -662,10 +664,10 @@ TEST_F(TestHyperOffloadCommon, TestNodeReleaseDistancePriority) {
     }
     return order.size();
   };
-  
+
   size_t d2h_idx = find_d2h_for_node1(plan.exec_order);
   EXPECT_NE(d2h_idx, plan.exec_order.size()) << "D2H node for node1 should exist";
-  
+
   size_t d2h_original_idx = 0;
   for (size_t i = 0; i < exec_order.size(); ++i) {
     if (exec_order[i] == node1) {
@@ -673,12 +675,12 @@ TEST_F(TestHyperOffloadCommon, TestNodeReleaseDistancePriority) {
       break;
     }
   }
-  
+
   size_t target_idx = d2h_original_idx + custom_release_distance;
   if (target_idx >= exec_order.size()) {
     target_idx = exec_order.size() - 1;
   }
-  
+
   auto find_recv_completion = [&](const CNodePtrList &order, size_t start_idx) -> size_t {
     for (size_t i = start_idx; i < order.size(); ++i) {
       if (IsPrimitiveCNode(order[i], prim::kPrimReceive)) {
@@ -694,10 +696,10 @@ TEST_F(TestHyperOffloadCommon, TestNodeReleaseDistancePriority) {
     }
     return order.size();
   };
-  
+
   size_t recv_idx = find_recv_completion(plan.exec_order, d2h_idx);
   EXPECT_NE(recv_idx, plan.exec_order.size()) << "Recv completion node should exist";
-  
+
   auto find_target_node_idx = [&](const CNodePtrList &order, size_t target_original_idx) -> size_t {
     if (target_original_idx >= exec_order.size()) {
       return order.size();
@@ -710,14 +712,215 @@ TEST_F(TestHyperOffloadCommon, TestNodeReleaseDistancePriority) {
     }
     return order.size();
   };
-  
+
   size_t target_node_idx = find_target_node_idx(plan.exec_order, target_idx);
   if (target_node_idx != plan.exec_order.size()) {
-    EXPECT_GE(recv_idx, target_node_idx) 
+    EXPECT_GE(recv_idx, target_node_idx)
       << "Recv completion should be inserted after target node according to release_distance";
   }
 }
 
+// Feature: HyperOffload.
+// Description: test function HyperOffload for operations with tuple output.
+// Expectation: Correct result.
+TEST_F(TestHyperOffloadCommon, TestHyperOffloadTupleOutput) {
+  auto graph = CreateSimpleGraph();
+  CNodePtrList exec_order;
+
+  // 1. Create parameters for BatchNorm
+  auto input_abs = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2, 3});
+  auto x = CreateParameter(graph, "x", input_abs);
+  auto scale = CreateParameter(graph, "scale", input_abs);
+  auto bias = CreateParameter(graph, "bias", input_abs);
+  auto mean = CreateParameter(graph, "mean", input_abs);
+  auto variance = CreateParameter(graph, "variance", input_abs);
+
+  // 2. Create BatchNorm node (Tuple output)
+  // Inputs: x, scale, bias, mean, variance
+  auto batch_norm = CreateCNode(graph, "BatchNorm", {x, scale, bias, mean, variance});
+
+  // BatchNorm outputs tuple of 5 tensors: y, batch_mean, batch_var, reserve_space_1, reserve_space_2
+  abstract::AbstractBasePtrList abs_list;
+  for (int i = 0; i < 5; ++i) {
+    abs_list.push_back(input_abs);
+  }
+  auto tuple_abs = std::make_shared<abstract::AbstractTuple>(abs_list);
+  batch_norm->set_abstract(tuple_abs);
+  (void)exec_order.emplace_back(batch_norm);
+
+  // 3. Create TupleGetItem nodes
+  // We use the first output (y)
+  auto getitem0 = CreateCNode(graph, "TupleGetItem", {batch_norm, NewValueNode(MakeValue(static_cast<int64_t>(0)))});
+  getitem0->set_abstract(input_abs);
+
+  auto getitem1 = CreateCNode(graph, "TupleGetItem", {batch_norm, NewValueNode(MakeValue(static_cast<int64_t>(1)))});
+  getitem1->set_abstract(input_abs);
+
+  // 4. Create users with large enough distance
+  // User 1 of getitem0 (position: immediate)
+  auto user1 = CreateCNode(graph, "Sub", {getitem0, x});
+  user1->set_abstract(input_abs);
+  (void)exec_order.emplace_back(user1);
+
+  // Create gap nodes
+  auto last_node = user1;
+  for (int i = 0; i < 8; ++i) {
+    auto gap_node = CreateCNode(graph, "Add", {last_node, x});
+    gap_node->set_abstract(input_abs);
+    (void)exec_order.emplace_back(gap_node);
+    last_node = gap_node;
+  }
+
+  // User 2 of getitem0 (position: distant)
+  auto user2 = CreateCNode(graph, "Add", {getitem0, last_node});
+  user2->set_abstract(input_abs);
+  (void)exec_order.emplace_back(user2);
+
+  auto user3 = CreateCNode(graph, "Add", {getitem1, user2});
+  user3->set_abstract(input_abs);
+  (void)exec_order.emplace_back(user3);
+
+  graph->set_output(user3);
+
+  HyperOffloadInput input;
+  input.graph = graph;
+  input.exec_order = exec_order;
+  input.enable_offload_parameter = false;
+  input.enable_offload_activation = true;
+
+  HyperOffloadOptimizer optimizer(input);
+  auto plan = optimizer.Run();
+
+  EXPECT_NE(plan.graph, nullptr);
+  EXPECT_EQ(plan.exec_order.size(), exec_order.size());
+}
+
+// Feature: HyperOffload.
+// Description: test function HyperOffload.
+// Expectation: Correct result.
+TEST_F(TestHyperOffloadCommon, TestD2HEventInjectionWithLongLivedData) {
+  auto graph = CreateSimpleGraph();
+  auto input_abs = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2, 3});
+  auto param = CreateParameter(graph, "data", input_abs);
+  // Use a CNode as the source of data, because FindLastUserIndex only considers CNodes.
+  auto data_node = CreateCNode(graph, "Abs", {param});
+  data_node->set_abstract(input_abs);
+
+  // 1. Create D2H Node (CopyToHost)
+  auto d2h_node = CreateCNode(graph, "CopyToHost", {data_node});
+
+  // 2. Create User Node (uses data_node)
+  auto user_node = CreateCNode(graph, "Add", {data_node, data_node});
+
+  // 3. Construct Execution Order
+  // Index 0: d2h_node
+  // Index 1..10: placeholders
+  // Index 11: user_node
+  CNodePtrList exec_order;
+  (void)exec_order.emplace_back(d2h_node);
+
+  for (int i = 0; i < 10; ++i) {
+    auto no_op = CreateCNode(graph, "NoOp", {});
+    (void)exec_order.emplace_back(no_op);
+  }
+  (void)exec_order.emplace_back(user_node);
+
+  ASSERT_EQ(exec_order.size(), 12);
+  ASSERT_EQ(exec_order[0], d2h_node);
+  ASSERT_EQ(exec_order[11], user_node);
+
+  // 4. Setup Operations
+  HyperOffloadOperations operations;
+  operations.Init(exec_order.size());
+  // Add d2h_node to operations so Injector finds it
+  operations.AddOperationAfter(0, d2h_node);
+
+  // 5. Config (release_distance = 2 from SetUp)
+  // node_index = 0.
+  // release_distance = 2.
+  // last_user_index = 11.
+  // target_index should be max(0+2, 11) = 11.
+  // Since we insert AFTER target_index, it should be appended to operations[11].
+
+  // 6. Run Injector
+  HyperOffloadEventInjector injector(graph, exec_order, &operations);
+  injector.Run();
+
+  // 7. Verify
+  const auto &ops = operations.GetOperations();
+
+  // Helper to check for FreeData by name (avoiding pointer equality issues across TUs)
+  auto is_free_data = [](const CNodePtr &node) {
+    if (!node || node->inputs().empty()) return false;
+    auto prim = GetValueNode<PrimitivePtr>(node->input(0));
+    return prim && prim->name() == "FreeData";
+  };
+
+  // Check index 2 (original target without fix)
+  // It should NOT contain FreeData (unless index 2 is also index 11, which is not)
+  bool found_free_at_2 = false;
+  for (const auto &node : ops[2].operations) {
+    if (is_free_data(node)) {
+      found_free_at_2 = true;
+      break;
+    }
+  }
+  EXPECT_FALSE(found_free_at_2) << "FreeData should not be inserted at index 2 (too early)";
+
+  // Check index 11 (new target)
+  // It SHOULD contain FreeData
+  bool found_free_at_11 = false;
+  for (const auto &node : ops[11].operations) {
+    if (is_free_data(node)) {
+      found_free_at_11 = true;
+      break;
+    }
+  }
+  EXPECT_TRUE(found_free_at_11) << "FreeData should be inserted at index 11 (after last user)";
+}
+
+// Feature: HyperOffload.
+// Description: test function FindLastUserIndex for tuple scene.
+// Expectation: Correct result.
+TEST_F(TestHyperOffloadCommon, TestFindLastUserIndex_Tuple) {
+  auto graph = CreateSimpleGraph();
+  auto input_abs_element = std::make_shared<abstract::AbstractTensor>(kFloat32, ShapeVector{2, 3});
+  auto input_abs_tuple =
+    std::make_shared<abstract::AbstractTuple>(abstract::AbstractBasePtrList{input_abs_element, input_abs_element});
+
+  auto param = CreateParameter(graph, "param", input_abs_element);
+  // Use a CNode as the source of tuple data, because FindLastUserIndex only considers CNodes.
+  auto tuple_source = CreateCNode(graph, "BatchNorm", {param, param, param, param, param});
+  tuple_source->set_abstract(input_abs_tuple);
+
+  // Create TupleGetItem nodes
+  auto getitem0 = CreateCNode(graph, "TupleGetItem", {tuple_source, NewValueNode(MakeValue(static_cast<int64_t>(0)))});
+  getitem0->set_abstract(input_abs_element);
+  auto getitem1 = CreateCNode(graph, "TupleGetItem", {tuple_source, NewValueNode(MakeValue(static_cast<int64_t>(1)))});
+  getitem1->set_abstract(input_abs_element);
+  auto getitem0_dup = CreateCNode(graph, "TupleGetItem", {tuple_source, NewValueNode(MakeValue(static_cast<int64_t>(0)))});
+  getitem0_dup->set_abstract(input_abs_element);
+
+  // Users of getitem0 and getitem1
+  auto user1 = CreateCNode(graph, "Add", {getitem0, getitem0});          // uses getitem0, index 0
+  auto user2 = CreateCNode(graph, "Add", {getitem1, getitem1});          // uses getitem1, index 1
+  auto user3 = CreateCNode(graph, "Add", {getitem0_dup, getitem0_dup});  // uses getitem0_dup, index 2
+
+  CNodePtrList exec_order;
+  (void)exec_order.emplace_back(user1);
+  (void)exec_order.emplace_back(user2);
+  (void)exec_order.emplace_back(user3);
+
+  // Find last user of getitem0 starting from index 0.
+  // It should be user3 because getitem0_dup is equivalent to getitem0.
+  size_t last_idx = FindLastUserIndex(exec_order, getitem0, 0);
+  EXPECT_EQ(last_idx, 2U);
+
+  // Find last user of getitem1 starting from index 0.
+  // It should be user2.
+  size_t last_idx1 = FindLastUserIndex(exec_order, getitem1, 0);
+  EXPECT_EQ(last_idx1, 1U);
+}
 }  // namespace hyper_offload
 }  // namespace utils
 }  // namespace mindspore
