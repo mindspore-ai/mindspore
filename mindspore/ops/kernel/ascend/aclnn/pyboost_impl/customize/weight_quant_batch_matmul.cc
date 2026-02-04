@@ -17,12 +17,13 @@
 #include "kernel/ascend/aclnn/pyboost_impl/customize/weight_quant_batch_matmul.h"
 #include <memory>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "kernel/ascend/aclnn/pyboost_impl/auto_generate/transpose.h"
-#include "mindspore/ops/op_def/op_name.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "mindspore/ccsrc/include/pynative/utils/pyboost/functions/auto_generate/functions.h"
+#include "primitive/op_name.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "ir/device_address_maker.h"
+#include "device_address/device_address_maker.h"
 #include "ir/tensor_new.h"
 
 namespace mindspore {
@@ -96,14 +97,14 @@ tensor::TensorPtr WeightQuantBatchMatmulV2AscendCustomize(
   }
 
   TensorPtr x_tensor_trans = x_tensor;
+
+  kernel::pyboost::RequireGradGuard require_grad_guard(false);
   if (transpose_x_imm) {
-    auto transpose_op = CREATE_PYBOOST_OP(Transpose, device::DeviceType::kAscend);
-    x_tensor_trans = transpose_op->Call(x_tensor_trans, GetWeightQuantBatchMatmulPerm(x_tensor_trans));
+    x_tensor_trans = transpose(x_tensor_trans, GetWeightQuantBatchMatmulPerm(x_tensor_trans));
   }
   TensorPtr weight_tensor_trans = new_weight_tensor;
   if (transpose_weight_imm) {
-    auto transpose_op = CREATE_PYBOOST_OP(Transpose, device::DeviceType::kAscend);
-    weight_tensor_trans = transpose_op->Call(weight_tensor_trans, GetWeightQuantBatchMatmulPerm(weight_tensor_trans));
+    weight_tensor_trans = transpose(weight_tensor_trans, GetWeightQuantBatchMatmulPerm(weight_tensor_trans));
   }
   PyBoostUtils::DispatchRun(std::make_shared<runtime::PyBoostDeviceTask>(
     [op, x_tensor_trans, weight_tensor_trans, antiquant_scale_tensor, antiquant_offset_tensor, quant_scale_tensor,

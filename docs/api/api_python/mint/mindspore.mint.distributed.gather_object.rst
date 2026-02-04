@@ -7,7 +7,7 @@ mindspore.mint.distributed.gather_object
 
     .. note::
         - 类似 :func:`mindspore.mint.distributed.gather` 方法，传入的参数为Python对象。
-        - 当前支持PyNative模式，不支持Graph模式。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **obj** (Any) - 输入待聚合的Python对象。

@@ -24,8 +24,8 @@
 #include "utils/check_convert_utils.h"
 #include "ops_utils/op_constants.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/structure_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 
 namespace mindspore {
 namespace ops {

@@ -8,7 +8,7 @@
     更多参考详见 :func:`mindspore.ops.tensor_scatter_min`。
 
     .. math::
-        output\left [indices  \right ] = \min(input\_x, update)
+        output\left [indices \right ] = \min(input\_x, updates)
 
     输入：
         - **input_x** (Tensor) - 输入Tensor。 `input_x` 的维度必须不小于indices.shape[-1]。

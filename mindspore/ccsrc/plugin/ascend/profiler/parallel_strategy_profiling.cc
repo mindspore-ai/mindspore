@@ -16,20 +16,16 @@
 #include <fstream>
 #include "sys/stat.h"
 #include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
-#include "include/common/utils/comm_manager.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/comm_manager.h"
+#include "include/utils/parallel_context.h"
 #include "plugin/ascend/profiler/ascend_profiling.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "utils/file_utils.h"
 #include "google/protobuf/util/json_util.h"
 #include "nlohmann/json.hpp"
 #include "proto/profiling_parallel.pb.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
-#ifdef WITH_BACKEND
-#include "include/backend/distributed/ps/ps_context.h"
-#include "include/backend/distributed/ps/util.h"
-#endif
+#include "primitive/ascend_op_name.h"
 
 namespace mindspore {
 namespace profiler {
@@ -48,14 +44,6 @@ bool ParallelStrategy::IsProfilingParallelStrategyEnabled() const {
     MS_LOG(INFO) << "Profiling parallel strategy is disabled.";
     return false;
   }
-
-#ifdef WITH_BACKEND
-  if (ps::PSContext::instance()->is_server() || ps::PSContext::instance()->is_scheduler()) {
-    MS_LOG(INFO) << "Current is ps server or ps scheduler, profiling parallel "
-                    "strategy is disabled.";
-    return false;
-  }
-#endif
 
   std::string parallel_mode = parallel::ParallelContext::GetInstance()->parallel_mode();
   if ((parallel_mode == parallel::kAutoParallel) || (parallel_mode == parallel::kSemiAutoParallel) ||

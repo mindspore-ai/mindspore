@@ -26,7 +26,7 @@ mindspore.ops.CustomOpBuilder
           - **op_doc** (Union[list[str], tuple[str], str], 可选) - 自定义算子文档文件（YAML 格式）的路径，可以是单个文件路径或文件路径列表，用于为算子提供额外说明。默认值： ``None`` 。
 
     .. note::
-        - 如果提供了 `backend` 参数，编译和链接步骤中会自动添加支持目标后端的默认编译和链接选项。默认选项可参考 `CustomOpBuilder <https://gitee.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/ops/operations/custom_ops.py>`_ 代码中 `get_cflags` 和 `get_ldflags` 接口的实现。
+        - 如果提供了 `backend` 参数，编译和链接步骤中会自动添加支持目标后端的默认编译和链接选项。默认选项可参考 `CustomOpBuilder <https://atomgit.com/mindspore/mindspore/blob/master/mindspore/python/mindspore/ops/operations/custom_ops.py>`_ 代码中 `get_cflags` 和 `get_ldflags` 接口的实现。
         - `sources` 参数必须指向有效的自定义算子源文件。
 
     .. py:method:: build()

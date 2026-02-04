@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/tensor_layout/map.h"
+#include "include/frontend/parallel/tensor_layout/map.h"
 #include <algorithm>
 #include <utility>
 #include "frontend/parallel/status.h"
 #include "frontend/parallel/tensor_layout/shape_util.h"
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

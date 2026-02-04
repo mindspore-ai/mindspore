@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 #include "backend/common/pass/add_attr_to_node/add_attr_to_node_register.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/kernel_graph.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
+#include "primitive/array_ops.h"
 #include "utils/anf_utils.h"
 
 namespace mindspore {

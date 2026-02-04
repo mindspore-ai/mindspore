@@ -7,7 +7,7 @@
 
     若输入tensor是二维的，则返回一个一维tensor，包含给定偏移位置处的对角线。
 
-    若输入tensor超过二维，则返回由 `dim1` 和 `dim2` 指定二维平面的对角线。返回tensor的shape为移除 `input` 的 `dim1` 和 `dim2` 维度，并且由 `dim1` 和 `dim2` 确定的对角线元素插入 `input` 的最后一维。
+    若输入tensor超过二维，则返回由 `dim1` 和 `dim2` 指定的二维平面的对角线。返回tensor的shape为移除 `input` 的 `dim1` 和 `dim2` 维度，并且由 `dim1` 和 `dim2` 确定的对角线元素插入 `input` 的最后一维。
 
     参数：
         - **input** (Tensor) - 维度至少为二维的输入tensor。

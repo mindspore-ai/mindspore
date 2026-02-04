@@ -15,7 +15,7 @@
  */
 
 #include "kernel/ascend/aclnn/pyboost_impl/customize/einsum_ext.h"
-#include "mindspore/ccsrc/pyboost/customize/einsum_ext.h"
+#include "include/pynative/utils/pyboost/customize/einsum_ext.h"
 
 namespace mindspore {
 namespace kernel {

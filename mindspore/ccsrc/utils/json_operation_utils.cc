@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/json_operation_utils.h"
+#include "include/utils/json_operation_utils.h"
 #include <nlohmann/json.hpp>
 namespace mindspore {
 bool ParseJson(const std::string &str, nlohmann::json *des_json) {

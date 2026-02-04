@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include "include/api/status.h"
+#include "utils/status.h"
 #include "minddata/dataset/include/dataset/constants.h"
 #include "minddata/dataset/kernels/tensor_operation.h"
 

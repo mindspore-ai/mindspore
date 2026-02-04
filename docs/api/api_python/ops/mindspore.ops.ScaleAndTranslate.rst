@@ -3,6 +3,8 @@ mindspore.ops.ScaleAndTranslate
 
 .. py:class:: mindspore.ops.ScaleAndTranslate(kernel_type='lanczos3', antialias=True)
 
+    `ops.ScaleAndTranslate` 从2.8.0版本开始已被弃用，并将在未来版本中被移除。
+
     根缩放并平移输入图像Tensor。
 
     .. note::
@@ -15,16 +17,16 @@ mindspore.ops.ScaleAndTranslate
 
     输入：
         - **images** (Tensor) - 四维Tensor，shape为 :math:`(batch, image\_height, image\_width, channel)` 。
-        - **size** (Tensor) - 缩放和平移操作后输出图像的大小。包含两个正数的的一维Tensor，形状必须为 :math:`(2,)` ，数据类型为int32。
-        - **scale** (Tensor) - 指示缩放因子。包含两个正数的的一维Tensor，形状必须为 :math:`(2,)` ，数据类型为int32。
-        - **translation** (Tensor) - 平移像素值。包含两个数的的一维Tensor，形状必须为 :math:`(2,)` ，数据类型为float32。
+        - **size** (Tensor) - 缩放和平移操作后输出图像的大小。包含两个正数的一维Tensor，形状必须为 :math:`(2,)` ，数据类型为int32。
+        - **scale** (Tensor) - 指示缩放因子。包含两个正数的一维Tensor，形状必须为 :math:`(2,)` ，数据类型为int32。
+        - **translation** (Tensor) - 平移像素值。包含两个数的一维Tensor，形状必须为 :math:`(2,)` ，数据类型为float32。
 
     输出：
         4-D Tensor，其shape为 :math:`(batch, size[0], size[1], channel)` ，数据类型为float32。
 
     异常：
         - **TypeError** - `kernel_type` 不是str类型。
-        - **TypeError** - `antialias` bool类型。
+        - **TypeError** - `antialias` 不是bool类型。
         - **TypeError** - `images` 数据类型无效。
         - **TypeError** - `size` 不是int32类型。
         - **TypeError** - `scale` 不是float32类型。

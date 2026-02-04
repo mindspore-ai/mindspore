@@ -48,7 +48,8 @@ class SaveLossCallback(Callback):
         self.loss.append(loss.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.0)
 def test_dataset_iterator_mode_create_tensor_without_copy():
     """
     Feature: Dataset iterator creates a Tensor from numpy.ndarray without copy.

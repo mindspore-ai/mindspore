@@ -6,7 +6,7 @@ mindspore.Tensor.index_copy\_
     根据 `index` 中的索引顺序，将 `tensor` 的元素复制到 `self` 中。
 
     .. note::
-        `index` 的值必须在 `[0, self.shape[dim])` 范围内，如果超出该范围，结果未定义。
+        `index` 的值必须在 :math:`[0, self.shape[dim])` 范围内，如果超出该范围，结果未定义。
 
         如果 `index` 的值包含重复的索引，则结果是不确定的，因为它取决于最后发生的拷贝操作。
 

@@ -1,7 +1,7 @@
 ﻿mindspore.ops.csr_tanh
 =======================
 
-.. py:function:: mindspore.ops.csr_tanh(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_tanh(x)
 
     逐元素计算CSRTensor输入元素的双曲正切。Tanh函数定义为：
 

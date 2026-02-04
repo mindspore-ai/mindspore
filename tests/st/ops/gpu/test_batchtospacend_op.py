@@ -19,7 +19,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 import mindspore.ops.operations as ops
 from mindspore import Tensor
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 

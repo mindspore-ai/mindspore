@@ -36,20 +36,20 @@ def parse_and_validate_bind_core(value):
         raise ArgumentTypeError("Failed to parse JSON into a dictionary") from e
 
     if isinstance(value_dict, dict):
-        range_pattern = re.compile(r'^\d+-\d+$')
-        for device_id, affinity_cpu_list in value_dict.items():
-            if not re.fullmatch(r"device\d+", device_id):
-                raise ArgumentTypeError(f"Key '{device_id}' must be in format 'deviceX' (X ≥ 0).")
+        cpu_pattern = re.compile(r'^\d+(-\d+)?$')
+        for device, affinity_cpu_list in value_dict.items():
+            if not re.fullmatch(r"device\d+|scheduler", device):
+                raise ArgumentTypeError(f"Key {device} must be in format 'scheduler' or 'deviceX' (X ≥ 0).")
             if not isinstance(affinity_cpu_list, list):
-                raise ArgumentTypeError(f"Value for '{device_id}':{affinity_cpu_list} should be a list, "
+                raise ArgumentTypeError(f"Value for {device}:{affinity_cpu_list} should be a list, "
                                         f"but got {type(affinity_cpu_list)}.")
 
-            for cpu_range in affinity_cpu_list:
-                if not isinstance(cpu_range, str):
-                    raise ArgumentTypeError(f"CPU range '{cpu_range}' in '{affinity_cpu_list}' should be a string.")
-                if not range_pattern.match(cpu_range):
-                    raise ArgumentTypeError(f"CPU range '{cpu_range}' in '{affinity_cpu_list}' should be "
-                                            "in format 'cpuidX-cpuidY'.")
+            for cpu_item in affinity_cpu_list:
+                if not isinstance(cpu_item, str):
+                    raise ArgumentTypeError(f"CPU {cpu_item} in {affinity_cpu_list} should be a string.")
+                if not cpu_pattern.match(cpu_item):
+                    raise ArgumentTypeError(f"CPU {cpu_item} in {affinity_cpu_list} should be "
+                                            "in format 'cpuidX' or 'cpuidX-cpuidY'.")
         return value_dict
 
     raise ArgumentTypeError(f"Type of {value} should be bool or dict, but got {type(value)}.")

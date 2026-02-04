@@ -16,21 +16,22 @@
 #include "frontend/optimizer/irpass/taylor_eliminate.h"
 #include <string>
 #include <vector>
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/math_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "ir/func_graph_cloner.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
 #include "ir/func_graph_flag.h"
+#include "ir/func_graph_cloner.h"
+#include "frontend/operator/primitive_py_utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {
@@ -40,7 +41,7 @@ namespace internal {
 const mindspore::HashSet<std::string> taylor_ops{
   prim::kPrimAdd->name(), prim::kPrimSub->name(), prim::kPrimRealDiv->name(), prim::kPrimDiv->name(),
   prim::kPrimMul->name(), prim::kPrimSin->name(), prim::kPrimCos->name(),     prim::kPrimTan->name(),
-  prim::kPrimExp->name(), prim::kPrimLog->name()};
+  prim::kPrimExp->name(), prim::kPrimLog->name(), prim::kPrimMuls->name()};
 // The ops below are excluded when considering taylor rules.
 const mindspore::HashSet<std::string> taylor_exception_ops{prim::kPrimReturn->name(), prim::kPrimMakeTuple->name(),
                                                            prim::kPrimTupleGetItem->name(), prim::kPrimCast->name()};
@@ -63,11 +64,11 @@ FuncGraphPtr GetTaylorRule(const PrimitivePtr &prim, const pipeline::ResourceBas
   FuncGraphPtr func_graph = nullptr;
   py::function taylor_fn;
   if (prim->is_base() || mindspore::ops::IsPrimitiveFunction(prim->name())) {
-    taylor_fn = GetTaylorRuleFunction(prim->name());
+    taylor_fn = prim::GetTaylorRuleFunction(prim->name());
   } else if (prim->isa<PrimitivePy>()) {
     taylor_fn = prim->cast<PrimitivePyPtr>()->GetTaylorRuleFunction();
     if (py::isinstance<py::none>(taylor_fn)) {
-      taylor_fn = GetTaylorRuleFunction(prim->name());
+      taylor_fn = prim::GetTaylorRuleFunction(prim->name());
     }
   } else {
     MS_LOG_WITH_NODE(EXCEPTION, node) << "Unknown Primitive SubClass: " << prim->ToString();

@@ -17,9 +17,17 @@
 #include <functional>
 #include "securec.h"
 #include "base/bfloat16.h"
+#if __has_include("context/common/cpu_kernel_utils.h")
+#include "context/common/cpu_kernel_utils.h"
+#else
 #include "context/inc/cpu_kernel_utils.h"
+#endif
 #include "unsupported/Eigen/CXX11/Tensor"
+#if __has_include("context/utils/status.h")
+#include "context/utils/status.h"
+#else
 #include "context/common/status.h"
+#endif
 #include "utils/kernel_util.h"
 
 namespace aicpu {
@@ -123,7 +131,8 @@ uint32_t SliceGradKernel::SliceGradTask(CpuKernelContext &ctx) {
 
   // Calc process
   // 1. fill output address with 0
-  int64_t output_num = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t output_num =
+    std::accumulate(output_shape_.begin(), output_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   size_t output_byte = LongToSize(ctx, output_num) * sizeof(S);
   if (memset_s(out_addr, output_byte, 0, output_byte) != EOK) {
     CUST_AICPU_LOGE(ctx, "For 'SliceGrad', memset_s on output tensor address failed!");

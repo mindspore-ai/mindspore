@@ -42,7 +42,7 @@ def unique_forward_func_dynamic(x, is_sorted=True, dim=1):
     plat_marks=['platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential')
+    essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_unique_forward_dim_None(mode):
     """
@@ -80,7 +80,7 @@ def test_tensor_unique_forward_dim_None(mode):
     plat_marks=['platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential')
+    essential_mark='unessential', mem_peak=4.0)
 @pytest.mark.parametrize('mode', [ms.GRAPH_MODE, ms.PYNATIVE_MODE])
 def test_tensor_unique_forward_with_dim(mode):
     """
@@ -119,7 +119,7 @@ def test_tensor_unique_forward_with_dim(mode):
     plat_marks=['platform_ascend', 'platform_ascend910b'],
     level_mark='level1',
     card_mark='onecard',
-    essential_mark='unessential')
+    essential_mark='unessential', mem_peak=4.0)
 def test_tensor_unique_dynamic_shape():
     """
     Feature: pyboost function.

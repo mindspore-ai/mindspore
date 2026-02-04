@@ -52,11 +52,15 @@
 #include "minddata/dataset/data_source/operation/csv_node.h"
 #include "minddata/dataset/data_source/operation/flickr_node.h"
 #include "minddata/dataset/data_source/operation/image_folder_node.h"
+#include "minddata/dataset/data_source/operation/kitti_node.h"
+#include "minddata/dataset/data_source/operation/lj_speech_node.h"
 #include "minddata/dataset/data_source/operation/manifest_node.h"
 #include "minddata/dataset/data_source/operation/mnist_node.h"
+#include "minddata/dataset/data_source/operation/sst2_node.h"
 #include "minddata/dataset/data_source/operation/text_file_node.h"
 #include "minddata/dataset/data_source/operation/tf_record_node.h"
 #include "minddata/dataset/data_source/operation/voc_node.h"
+#include "minddata/dataset/data_source/operation/wiki_text_node.h"
 
 #include "minddata/dataset/data_source/operation/samplers/distributed_sampler_ir.h"
 #include "minddata/dataset/data_source/operation/samplers/pk_sampler_ir.h"
@@ -132,8 +136,9 @@
 #include "minddata/dataset/vision/transform/vertical_flip_ir.h"
 #include "minddata/dataset/text/transform/text_ir.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
+using FuncResult = std::map<std::string, Status (*)(nlohmann::json, std::shared_ptr<TensorOperation> *)>;
+
 /// \brief The Serdes class is used to serialize an IR tree into JSON string and dump into file if file name
 /// specified.
 class Serdes {
@@ -223,8 +228,7 @@ class Serdes {
 
   /// \brief Helper function to map the function pointers
   /// \return map of key to function pointer
-  static std::map<std::string, Status (*)(nlohmann::json json_obj, std::shared_ptr<TensorOperation> *operation)>
-  InitializeFuncPtr();
+  static FuncResult InitializeFuncPtr();
 
   /// \brief Helper function to perform recursive DFS on the optimized IR tree and to match each IR node with its
   /// corresponding dataset op
@@ -235,11 +239,7 @@ class Serdes {
                                                  const std::map<int32_t, std::shared_ptr<DatasetOp>> &op_map);
 
  private:
-  static std::map<std::string, Status (*)(nlohmann::json json_obj, std::shared_ptr<TensorOperation> *operation)>
-    func_ptr_;
+  static FuncResult func_ptr_;
 };
-
-}  // namespace dataset
-}  // namespace mindspore
-
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_SERDES_H_

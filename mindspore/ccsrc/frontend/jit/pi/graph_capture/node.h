@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,8 +111,8 @@ class ValueNode : public InstrNode {
       : InstrNode(Value, opcode, oparg), vobj_(vobj), inputs_(inputs) {}
   virtual ~ValueNode() {}
 
-  std::vector<ValueNode *> &getInputs() { return inputs_; }
-  const std::vector<ValueNode *> &getInputs() const { return inputs_; }
+  std::vector<ValueNode *> &inputs() { return inputs_; }
+  const std::vector<ValueNode *> &inputs() const { return inputs_; }
   ValueNode *input(int i) const { return inputs_[i]; }
   void AddInput(ValueNode *v) { inputs_.push_back(v); }
   void ClearInputs() { inputs_.clear(); }
@@ -122,11 +122,7 @@ class ValueNode : public InstrNode {
   const auto &GetOwnVobj() const { return vobj_; }
   AObject *get_attr(const std::string &nam);
 
-  AObject *binary_subscr(ValueNode *sub);
-
   std::string ToString() const override;
-  ValueNode *GetParent() { return parent_.value_or(nullptr); }
-  void SetParent(ValueNode *parent);
 
   bool IsConstantValue() const;
   void SetConstantValue(bool constant);
@@ -165,9 +161,6 @@ class ValueNode : public InstrNode {
   // which nodes are used, ordered parameter
   std::vector<ValueNode *> inputs_;
 
-  // recode relationship between local and CallNode
-  std::optional<ValueNode *> parent_;
-
   // Trace cache to be reused
   TracePtr trace_;
 
@@ -178,13 +171,8 @@ class ValueNode : public InstrNode {
 // simulate PyCellObject, oparg is index
 class CellVarNode : public ValueNode {
  public:
-  explicit CellVarNode(Type t)
-      : ValueNode(t, nullptr, LOAD_CLOSURE, 0), val_(nullptr), from_param_(CO_CELL_NOT_AN_ARG) {}
+  explicit CellVarNode(Type t) : ValueNode(t, nullptr, LOAD_CLOSURE, 0), val_(nullptr) {}
 
-  // If the cell contains an argument, then this should be the argument index. Plz refer to PyCodeObject.co_cell2arg.
-  // If not an argument, then this index should be CO_CELL_NOT_AN_ARG.
-  void SetFromParam(int i) { from_param_ = i; }
-  int GetFromParam() const { return from_param_; }
   // The object stored in this cell
   auto GetValue() const { return val_; }
   void SetValue(ValueNode *v) { val_ = v; }
@@ -196,7 +184,6 @@ class CellVarNode : public ValueNode {
  private:
   ValueNode *val_;
   std::vector<ValueNode *> cell_oper_;  // record cell operation
-  int from_param_;
 };
 
 class ParamNode : public ValueNode {
@@ -234,20 +221,10 @@ class CallNode : public ValueNode {
   void SetInlineReason(InlineReason r) { reason_ = r; }
   InlineReason GetInlineReason() { return reason_; }
 
-  void AddParam(ValueNode *p) {
-    params_.push_back(p);
-    if (p) {
-      p->SetParent(this);
-    }
-  }
+  void AddParam(ValueNode *p) { params_.push_back(p); }
 
   const auto &GetParams() const { return params_; }
-  std::vector<py::object> GetArgs() {
-    std::vector<py::object> args;
-    std::transform(getInputs().begin() + 1, getInputs().end(), std::back_inserter(args),
-                   [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
-    return args;
-  }
+  std::vector<py::object> GetArgs();
 
   ValueNode *GetSelf() const;
 

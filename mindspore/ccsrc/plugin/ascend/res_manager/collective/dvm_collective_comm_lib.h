@@ -21,7 +21,7 @@
 #include <memory>
 #include <vector>
 #include <string>
-#include "runtime/hardware_abstract/collective/collective_communication_lib.h"
+#include "include/runtime/hardware_abstract/collective/collective_communication_lib.h"
 #include "plugin/ascend/res_manager/collective/dvm_communication_group.h"
 
 #ifndef EXPORT_WRAPPER

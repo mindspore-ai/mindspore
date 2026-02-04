@@ -5,7 +5,7 @@ import numpy as np
 from tests.mark_utils import arg_mark
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cell_dict_getitem():
     """
     Feature: Support CellDict in graph mode.
@@ -37,7 +37,7 @@ def test_cell_dict_getitem():
         assert np.allclose(output.shape, expect_output.shape)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cell_dict_contain():
     """
     Feature: Support CellDict in graph mode.
@@ -68,7 +68,7 @@ def test_cell_dict_contain():
     assert out2 == expect_out2
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cell_dict_get_keys():
     """
     Feature: Support CellDict in graph mode.
@@ -96,7 +96,7 @@ def test_cell_dict_get_keys():
         assert key == expect_key
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cell_dict_get_values():
     """
     Feature: Support CellDict in graph mode.
@@ -133,7 +133,7 @@ def test_cell_dict_get_values():
         assert np.allclose(expect.shape, output.shape)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cell_dict_get_items():
     """
     Feature: Support CellDict in graph mode.
@@ -174,7 +174,7 @@ def test_cell_dict_get_items():
         assert np.allclose(expect.shape, output.shape)
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 def test_cell_dict_duplicated_parameter():
     """
     Feature: Support CellDict in graph mode.

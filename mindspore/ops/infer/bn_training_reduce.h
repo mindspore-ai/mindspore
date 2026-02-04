@@ -20,7 +20,7 @@
 #include <vector>
 
 #include "mindapi/base/types.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include "primitive/nn_ops.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {

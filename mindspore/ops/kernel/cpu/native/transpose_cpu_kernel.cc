@@ -19,7 +19,7 @@
 #include <algorithm>
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "nnacl/errorcode.h"
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 #include "kernel/cpu/native/transpose_cpu_kernel.h"
 
 #include "utils/check_convert_utils.h"

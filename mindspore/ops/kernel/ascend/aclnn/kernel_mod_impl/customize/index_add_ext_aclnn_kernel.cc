@@ -22,15 +22,19 @@ namespace index_add_ext {
 
 void IndexAddExtAscend::GetWorkSpaceInfo(const std::vector<KernelTensor *> &inputs,
                                          const std::vector<KernelTensor *> &outputs) {
+  ClearOpsWorkSpaceList();
   alpha_ = device::ascend::ConvertKernelTensor<ScalarPtr>(inputs[kIndex4]);
   dim_ = inputs[kIndex1]->GetValueWithCheck<int64_t>();
-  GetWorkspaceForResize(inputs[kIndex0], dim_, inputs[kIndex2], inputs[kIndex3], alpha_, outputs[kIndex0]);
+  GetWorkspaceForResizeCopyInput(outputs[kIndex0], inputs[kIndex0]);
+  GetWorkspaceForResizeIndexAddExt(outputs[kIndex0], dim_, inputs[kIndex2], inputs[kIndex3], alpha_, outputs[kIndex0]);
 }
 
 bool IndexAddExtAscend::Launch(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &workspace,
                                const std::vector<KernelTensor *> &outputs, void *stream_ptr) {
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  RunOp(stream_ptr, workspace, inputs[kIndex0], dim_, inputs[kIndex2], inputs[kIndex3], alpha_, outputs[kIndex0]);
+  RunOpCopyInput(stream_ptr, workspace, outputs[kIndex0], inputs[kIndex0]);
+  RunOpIndexAddExt(stream_ptr, workspace, outputs[kIndex0], dim_, inputs[kIndex2], inputs[kIndex3], alpha_,
+                   outputs[kIndex0]);
   return true;
 }
 

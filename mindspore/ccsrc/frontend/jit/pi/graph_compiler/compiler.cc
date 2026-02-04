@@ -20,16 +20,16 @@
 #include <algorithm>
 #include <utility>
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "include/common/utils/convert_utils_py.h"
+#include "include/utils/convert_utils_py.h"
 #include "ir/func_graph.h"
 #include "ir/func_graph_cloner.h"
 #include "frontend/jit/pi/graph_compiler/utils.h"
 #include "frontend/jit/pi/graph_compiler/parser/byte_code_parser.h"
-#include "frontend/jit/ps/executor/jit_executor_py.h"
+#include "include/frontend/jit/ps/executor/jit_executor_py.h"
 #include "frontend/jit/ps/pipeline.h"
 #include "frontend/jit/pi/utils/utils.h"
-#include "include/common/pynative/grad_state.h"
-#include "include/common/pynative/adapter.h"
+#include "include/utils/pynative/grad_state.h"
+#include "include/utils/pynative/adapter.h"
 #include "utils/convert_utils_base.h"
 
 namespace mindspore {
@@ -66,7 +66,7 @@ bool CanbeMutable(const py::object &arg) {
     return false;
   }
   if (py::isinstance<py::dict>(arg) || py::isinstance<py::list>(arg) || py::isinstance<py::tuple>(arg)) {
-    py::object o = python_adapter::CallPyFn("mindspore.common.mutable", "_check_element_type", arg);
+    py::object o = python_adapter::CallPyFn("mindspore.graph.mutable", "_check_element_type", arg);
     return py::isinstance<py::bool_>(o) && py::bool_(o);
   }
   return false;
@@ -76,7 +76,7 @@ void MarkArgumentMutable(const py::tuple &args) {
   for (size_t idx = 0; idx < args.size(); idx++) {
     if (CanbeMutable(args[idx])) {
       MS_LOG(DEBUG) << "Make argument mutable, arg index: " << idx << ", arg object: " << py::str(args[idx]);
-      args[idx] = python_adapter::CallPyFn("mindspore.common", "mutable", args[idx]);
+      args[idx] = python_adapter::CallPyFn("mindspore.graph.mutable", "mutable", args[idx]);
     }
   }
 }
@@ -100,9 +100,9 @@ void MarkArgumentMutableWithParams(const py::tuple &args, const AnfNodePtrList &
       if (GraphUtils::IsMutable(arg)) {
         continue;
       }
-      py::object o = python_adapter::CallPyFn("mindspore.common.mutable", "_check_element_type", arg);
+      py::object o = python_adapter::CallPyFn("mindspore.graph.mutable", "_check_element_type", arg);
       if (py::isinstance<py::bool_>(o) && py::bool_(o)) {
-        args[index] = python_adapter::CallPyFn("mindspore.common", "mutable", arg);
+        args[index] = python_adapter::CallPyFn("mindspore.graph.mutable", "mutable", arg);
         MS_LOG(DEBUG) << "Add mutable to object";
       } else {
         MS_LOG(INFO) << "Failed to make argument mutable, arg object: " << py::str(arg);
@@ -167,7 +167,7 @@ PyObject *RunGraph(const std::string &phase, const py::tuple &args, const std::s
   }
   FuncGraphPtr ms_func_graph = graph_executor->GetFuncGraph(phase);
   MS_EXCEPTION_IF_NULL(ms_func_graph);
-  ret = python_adapter::CallPyFn("mindspore.common.api", "_convert_python_data", ret);
+  ret = python_adapter::CallPyFn("mindspore.graph.api", "_convert_python_data", ret);
   ret.inc_ref();
   return ret.ptr();
 }
@@ -254,7 +254,9 @@ CallableGraph GraphCompiler::Compile(const FuncGraphPtr &func_graph, const py::t
 
 std::pair<std::string, CallableGraph> GraphCompiler::Compile(const FuncGraphPtr &func_graph,
                                                              const CompileInfo &compile_info) {
+  MS_LOG(INFO) << "Start FuncGraph compile";
   if (func_graph == nullptr) {
+    MS_LOG(INFO) << "FuncGraph is NULL!";
     return std::make_pair("", nullptr);
   }
   std::string phase =
@@ -278,6 +280,7 @@ std::pair<std::string, CallableGraph> GraphCompiler::Compile(const FuncGraphPtr 
   }
   phase += ".pi_jit";
   CallableGraph callable = GraphCompiler::Compile(func_graph, args, py::dict(), phase, compile_info);
+  MS_LOG(INFO) << "End FuncGraph compile";
   return std::make_pair(phase, callable);
 }
 }  // namespace pijit

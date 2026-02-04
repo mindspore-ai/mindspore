@@ -6,8 +6,8 @@ mindspore.parallel.load_segmented_checkpoints
     加载指定路径下所有checkpoint文件。当ckpt_file_dir指定路径下存在多个checkpoint文件时，会逐个读取各个checkpoint文件并返回合并后的字典。
 
     .. note::
-        - `specify_prefix` 和 `filter_prefix` 参数已被弃用，推荐使用 `choice_func` 代替。`specify_prefix` 和 `filter_prefix` 的功能相互之间没有影响，并且使用这两个参数中的任何一个都将覆盖 `choice_func` 。
-        - 如果发现没有参数被成功加载，将会报ValueError。
+        - `specify_prefix` 和 `filter_prefix` 参数已被弃用，推荐使用 `choice_func` 代替。`specify_prefix` 和 `filter_prefix` 的功能之间没有影响，并且使用这两个参数中的任何一个都将覆盖 `choice_func` 。
+        - 如果发现没有参数被成功加载，会报ValueError。
 
     参数：
         - **ckpt_file_dir** (str) - checkpoint的文件夹路径。
@@ -17,11 +17,10 @@ mindspore.parallel.load_segmented_checkpoints
         - **dec_key** (Union[None, bytes]) - 用于解密的字节类型密钥，如果值为 ``None`` ，则不需要解密。默认值： ``None`` 。
         - **dec_mode** (str) - 该参数仅当 `dec_key` 不为 ``None`` 时有效。指定解密模式，目前支持 ``"AES-GCM"`` ， ``"AES-CBC"`` 和 ``"SM4-CBC"`` 。默认值： ``"AES-GCM"`` 。
         - **specify_prefix** (Union[str, list[str], tuple[str]]) - 废弃（请参考参数 `choice_func`）。以 `specify_prefix` 开头的参数将会被加载。默认值： ``None`` 。
-        - **choice_func** (Union[None, function]) - 函数的输入值为字符串类型的Parameter名称，并且返回值是一个布尔值。如果返回 ``True`` ，则匹配自定义条件的Parameter将被加载。 如果返回 ``False`` ，则匹配自定义条件的Parameter将被删除。默认值： ``None`` 。
+        - **choice_func** (Union[None, function]) - 函数的输入值为字符串类型的Parameter名称，并且返回值是一个布尔值。如果返回 ``True`` ，则匹配自定义条件的Parameter将被加载。如果返回 ``False`` ，则匹配自定义条件的Parameter将被删除。默认值： ``None`` 。
 
     返回：
-        字典，key是参数名称，value是Parameter类型。当使用 :func:`mindspore.save_checkpoint` 的 `append_dict` 参数和 :class:`mindspore.train.CheckpointConfig` 的 `append_info` 参数保存\
-        checkpoint， `append_dict` 和 `append_info` 是dict类型，且它们的值value是string时，加载checkpoint得到的返回值是string类型，其他情况返回值均是Parameter类型。
+        字典，key是参数名称，value是Parameter类型。当使用 :func:`mindspore.save_checkpoint` 的 `append_dict` 参数和 :class:`mindspore.train.CheckpointConfig` 的 `append_info` 参数保存checkpoint， `append_dict` 和 `append_info` 是dict类型，且它们的值value是string时，加载checkpoint得到的返回值是string类型，其他情况返回值均是Parameter类型。
 
     异常：
         - **TypeError** - ckpt_file_dir入参非字符串类型。

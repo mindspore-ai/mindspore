@@ -22,7 +22,7 @@
 #include "mindspore/ops/ops_utils/op_utils.h"
 #include "ops/ops_frontend_func_impl.h"
 #include "ops/ops_func_impl/simple_infer.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 
 namespace mindspore::ops {
 ShapeArray UniqueConsecutiveFuncImpl::InferShape(const PrimitivePtr &primitive,
@@ -37,7 +37,8 @@ ShapeArray UniqueConsecutiveFuncImpl::InferShape(const PrimitivePtr &primitive,
   }
 
   if (input_infos[kInputIndex3]->IsNone()) {
-    auto y_max_shape = std::accumulate(shape_x.begin(), shape_x.end(), 1, std::multiplies<int64_t>());
+    auto y_max_shape =
+      std::accumulate(shape_x.begin(), shape_x.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
     auto out_shape = x->IsDynamic() ? ShapeVector{abstract::Shape::kShapeDimAny} : ShapeVector{y_max_shape};
     auto inverse_indices_shape = (return_inverse.has_value() && return_inverse.value()) ? shape_x : empty_shape;
     auto counts_shape = (return_counts.has_value() && return_counts.value()) ? out_shape : empty_shape;

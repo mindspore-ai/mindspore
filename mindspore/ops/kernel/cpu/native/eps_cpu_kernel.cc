@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "kernel/cpu/native/eps_cpu_kernel.h"
 #include <algorithm>
 #include <limits>
 #include <cmath>
-#include "kernel/cpu/native/eps_cpu_kernel.h"
 #include "include/runtime/hardware_abstract/kernel_base/ms_factory.h"
 #include "base/float16.h"
 

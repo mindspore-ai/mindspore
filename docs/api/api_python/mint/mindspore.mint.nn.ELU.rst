@@ -14,7 +14,7 @@ mindspore.mint.nn.ELU
         \alpha * (\exp(x_i) - 1), &\text{otherwise.}
         \end{cases}
 
-    其中，:math:`x_i` 表示输入的元素，:math:`\alpha` 表示 `alpha` 参数， `alpha` 决定ELU的平滑度。
+    其中，:math:`x_i` 表示输入的元素，:math:`\alpha` 表示 `alpha` 参数，该参数决定ELU的平滑度。
 
     ELU函数图：
 
@@ -25,15 +25,14 @@ mindspore.mint.nn.ELU
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **alpha** (float, 可选) - ELU的alpha值，数据类型为float。默认值： ``1.0``。
-        - **inplace** (bool, 可选) - 是否使用原地更新模式，数据类型为bool。默认值： ``False``。
+        - **alpha** (float, 可选) - ELU公式的alpha值。默认值：``1.0``。
+        - **inplace** (bool, 可选) - 是否执行in-place操作。默认值：``False``。
 
     输入：
-        - **input** (Tensor) - 用于计算ELU的任意维度的Tensor。
+        - **input** (Tensor) - 任意维度的输入Tensor。
 
     输出：
         Tensor，输出的shape和数据类型与 `input` 相同。
 
     异常：
         - **RuntimeError** - 如果 `input` 的数据类型不是float16、float32或bfloat16。
-        - **TypeError** - 如果 `alpha` 的数据类型不是float。

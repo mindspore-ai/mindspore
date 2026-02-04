@@ -21,11 +21,11 @@
         - **num_parallel_workers** (int, 可选) - 指定读取数据的工作进程数/线程数（由参数 `python_multiprocessing` 决定当前为多进程模式或多线程模式）。默认值： ``1`` 。
         - **shuffle** (bool，可选) - 是否混洗数据集。只有输入的 `source` 参数带有可随机访问属性（`__getitem__`）时，才可以指定该参数。默认值： ``None`` 。下表中会展示不同配置的预期行为。
         - **sampler** (Union[Sampler, Iterable]，可选) - 指定从数据集中选取样本的采样器。只有输入的 `source` 参数带有可随机访问属性（`__getitem__`）时，才可以指定该参数。默认值： ``None`` 。下表中会展示不同配置的预期行为。
-        - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值： ``None`` 。指定此参数后， `num_samples` 表示每个分片的最大样本数。一般在 `数据并行模式训练 <https://www.mindspore.cn/tutorials/zh-CN/master/parallel/data_parallel.html#数据集加载>`_ 的时候使用。
+        - **num_shards** (int, 可选) - 指定分布式训练时数据集划分的片数。默认值： ``None`` 。指定此参数后， `num_samples` 表示每个分片的最大样本数。一般在 `数据并行模式训练 <https://www.mindspore.cn/tutorials/zh-CN/master/parallel/data_parallel.html#数据集加载>`_ 的时候使用。
         - **shard_id** (int, 可选) - 指定分布式训练时使用的分片ID号。默认值： ``None`` 。只有当指定了 `num_shards` 时才能指定此参数。
         - **python_multiprocessing** (bool，可选) - 启用Python多进程模式加速运算。默认值： ``True`` 。当传入 `source` 的Python对象的计算量很大时，开启此选项可能会有较好效果。
         - **max_rowsize** (int, 可选) - 指定在多进程之间复制数据时，共享内存分配的基本单位，单位为MB，总占用的共享内存会随着 ``num_parallel_workers`` 和 :func:`mindspore.dataset.config.set_prefetch_size` 增加而变大。如果设置为 ``-1`` ，共享内存将随数据大小动态分配。仅当参数 `python_multiprocessing` 设为 ``True`` 时，此参数才会生效。默认值： ``None`` ，动态分配共享内存（后续版本将废弃此参数）。
-        - **batch_sampler** (Iterable，可选) - 与 `sampler` 类似，但每次返回1批索引，对应的数据将被合并为1个Batch。不可与 `num_samples` ，`shuffle` ，`num_shards` ，`shard_id` 和 `sampler` 等参数同时使用。默认值： ``None`` ，不使用批采样器。
+        - **batch_sampler** (Iterable，可选) - 与 `sampler` 类似，但每次返回1批索引，对应的数据将被合并为1个Batch。不可与 `num_samples` 、`shuffle` 、`num_shards` 、`shard_id` 和 `sampler` 等参数同时使用。默认值： ``None`` ，不使用批采样器。
         - **collate_fn** (Callable[List[numpy.ndarray]]，可选) - 定义如何将数据列表合并为1个Batch。仅在使用了 `batch_sampler` 时有效。默认值：``None`` ，不指定合并函数。
 
     .. warning::
@@ -33,6 +33,7 @@
         攻击者可构造恶意 pickle 数据，在反序列化过程中执行任意代码。切勿加载可能来自不可信来源或已被篡改的数据。
 
     .. note::
+        - 参数 `column_types` 、 `schema` 和 `max_rowsize` 将在后续版本废弃。
         - 如果配置 `python_multiprocessing=True` （默认值： ``True`` ） 和 `num_parallel_workers>1` （默认值：1） 表示启动了多进程方式进行数据load加速，
           此时随着数据集迭代，子进程的内存占用会逐渐增加，主要是因为自定义数据集的子进程以 Copy-On-Write 的方式获取主进程中的成员变量。
           举例：如果自定义数据集 `__init__` 函数中包含大量成员变量数据（例如：在数据集构建时加载了一个非常大的文件名列表）并且使用了多进程方式，
@@ -72,13 +73,13 @@
         - **RuntimeError** - `column_names` 参数指定的列名数量与 `source` 参数输出的数据数量不匹配。
         - **ValueError** - `num_parallel_workers` 参数超过最大线程数。
         - **ValueError** - 同时指定了 `sampler` 和 `shuffle` 参数。
-        - **ValueError** - 同时指定了 `sampler` 和 `num_shards` 参数或同时指定了 `sampler` 和 `shard_id` 参数。
+        - **ValueError** - 同时指定了 `sampler` 和 `num_shards` 参数，或同时指定了 `sampler` 和 `shard_id` 参数。
         - **ValueError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **ValueError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
-        - **ValueError** - 如果 `batch_sampler` 与 `num_samples` ，`shuffle` ，`num_shards` ，`shard_id` 和 `sampler` 同时指定。
+        - **ValueError** - 如果 `batch_sampler` 与 `num_samples` 、`shuffle` 、`num_shards` 、`shard_id` 和 `sampler` 同时指定。
         - **ValueError** - 如果在指定 `collate_fn` 时没有指定 `batch_sampler` 。
-        - **TypeError** -  如果 `batch_sampler` 不为可迭代类型。
+        - **TypeError** - 如果 `batch_sampler` 不为可迭代类型。
         - **TypeError** - 如果 `collate_fn` 不为可调用函数。
 
     教程样例：

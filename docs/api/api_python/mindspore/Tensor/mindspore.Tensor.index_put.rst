@@ -14,7 +14,7 @@ mindspore.Tensor.index_put
         - **indices** (tuple[Tensor], list[Tensor]) - 元素类型是int32或者int64，用于对 `self` 中的元素进行索引。
           `indices` 中的Tensor的秩应为1-D， `indices` 的size应小于或等于 `self` 的秩， `indices` 中的Tensor应是可广播的。
         - **values** (Tensor) - 一个一维的Tensor，数据类型与 `self` 相同。如果其size为1，则它是可广播的。
-        - **accumulate** (bool，可选) - 如果 `accumulate` 为True， `values` 中的元素被累加到 `self` 的相应元素上；
+        - **accumulate** (bool，可选) - 如果 `accumulate` 为 ``True``， `values` 中的元素被累加到 `self` 的相应元素上；
           否则，用 `values` 中的元素取代 `self` 的相应元素。默认值: ``False`` 。
 
     返回：

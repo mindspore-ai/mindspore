@@ -198,12 +198,12 @@ void LayerNormGradGradCpuKernelMod::LaunchKernel(const std::vector<KernelTensor 
   MS_EXCEPTION_IF_NULL(output_sopd_dy);
   auto output_sopd_g = static_cast<DATA_T *>(outputs[kIndex2]->device_ptr());
   MS_EXCEPTION_IF_NULL(output_sopd_g);
-  size_t num =
-    static_cast<size_t>(std::accumulate(input_shape_.cbegin(), input_shape_.cend(), 1, std::multiplies<int64_t>{}));
-  size_t g_num =
-    static_cast<size_t>(std::accumulate(g_shape_.cbegin(), g_shape_.cend(), 1, std::multiplies<int64_t>{}));
-  size_t mean_num =
-    static_cast<size_t>(std::accumulate(mean_shape_.cbegin(), mean_shape_.cend(), 1, std::multiplies<int64_t>{}));
+  size_t num = static_cast<size_t>(
+    std::accumulate(input_shape_.cbegin(), input_shape_.cend(), static_cast<int64_t>(1), std::multiplies<int64_t>{}));
+  size_t g_num = static_cast<size_t>(
+    std::accumulate(g_shape_.cbegin(), g_shape_.cend(), static_cast<int64_t>(1), std::multiplies<int64_t>{}));
+  size_t mean_num = static_cast<size_t>(
+    std::accumulate(mean_shape_.cbegin(), mean_shape_.cend(), static_cast<int64_t>(1), std::multiplies<int64_t>{}));
   auto inv_std = std::make_unique<DATA_T[]>(mean_num);
   if (num == 0 || num > kMemMaxLen || mean_num == 0 || mean_num > kMemMaxLen) {
     MS_EXCEPTION(ValueError) << "memory allocation failed";

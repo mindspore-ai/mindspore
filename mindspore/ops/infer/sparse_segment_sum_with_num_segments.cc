@@ -19,10 +19,10 @@
 
 #include "abstract/ops/primitive_infer_map.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/sparse_ops.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/sparse_ops.h"
+#include "primitive/op_name.h"
 #include "infer/sparse_segment_sum_with_num_segments.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 
 namespace mindspore {
 namespace ops {

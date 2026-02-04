@@ -22,13 +22,14 @@
 #include <algorithm>
 #include <utility>
 #include <map>
-#include "mindspore/ops/op_def/math_ops.h"
+#include "primitive/math_ops.h"
 #include "nnacl/fp32/reduce_fp32.h"
 
 #include "utils/check_convert_utils.h"
 #include "infer/reduce.h"
 #include "kernel/cpu/nnacl/errorcode.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 
 namespace mindspore {
 namespace kernel {

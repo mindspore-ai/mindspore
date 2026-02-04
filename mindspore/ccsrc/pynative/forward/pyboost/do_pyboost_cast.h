@@ -24,8 +24,8 @@
 #include <map>
 #include <utility>
 #include "pynative/forward/cast_base.h"
-#include "frontend/operator/composite/do_signature.h"
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
+#include "include/utils/operator/primitive_utils.h"
 #include "ir/cell.h"
 
 namespace mindspore {
@@ -39,7 +39,7 @@ class PyBoostCastOperation : public CastBaseOperation {
 
   template <typename... InputArgs, std::size_t... Index>
   auto SetTensorMixPrecisionCastHelper(const PyboostOpRunInfoPtr &op_run_info, const size_t &input_size,
-                                       std::index_sequence<Index...>, const InputArgs &... input_args) {
+                                       std::index_sequence<Index...>, const InputArgs &...input_args) {
     if (op_run_info->mix_type == kAutoPromote) {
       auto [args_type_id, args_has_tensor] = GetTypeInfo(op_run_info, input_size, std::make_tuple(input_args...),
                                                          std::make_index_sequence<sizeof...(InputArgs)>{});
@@ -54,7 +54,7 @@ class PyBoostCastOperation : public CastBaseOperation {
 
   template <typename... InputArgs>
   auto DoMixPrecisionCast(const PyboostOpRunInfoPtr &op_run_info, const size_t &input_size,
-                          const InputArgs &... input_args) {
+                          const InputArgs &...input_args) {
     // Mixed precision conversion tensors which has cast dtype
     if (op_run_info->async_status.disable_mix_precision) {
       return std::make_tuple(input_args...);

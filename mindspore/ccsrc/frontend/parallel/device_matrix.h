@@ -24,7 +24,7 @@
 #include <utility>
 
 #include "frontend/parallel/status.h"
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 
 namespace mindspore {
 namespace parallel {

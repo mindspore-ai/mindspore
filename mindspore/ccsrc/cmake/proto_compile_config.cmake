@@ -1,7 +1,7 @@
 ## make protobuf files
-
+# refresh the onnx sha256sum
 __download_pkg(onnx https://gitee.com/mirrors/ONNX/repository/archive/v1.6.0
-8470ee37fa44510c0ffca591bd17a0b4160ae23f5989014030456778fcb740a1)
+56a2606f684821213ad2a61713521eb9027bd8ac05520be3fb26e997787cedd7)
 file(COPY ${onnx_SOURCE_DIR}/onnx/onnx.proto DESTINATION ${TOP_DIR}/third_party/proto/onnx)
 file(GLOB ONNX_PROTO "" ${CMAKE_SOURCE_DIR}/third_party/proto/onnx/onnx.proto)
 message("onnx proto path is :" ${ONNX_PROTO})
@@ -22,18 +22,13 @@ list(APPEND MINDSPORE_PROTO_LIST ${DISTRIBUTED_CLUSTER_TOPOLOGY_SRCS})
 
 if(ENABLE_DEBUGGER)
     # debugger: compile proto files
-    include_directories("${CMAKE_BINARY_DIR}/tools/debugger")
+    include_directories("${CMAKE_BINARY_DIR}/tools/data_dump/debugger")
     file(
         GLOB_RECURSE DEBUGGER_PROTO_LIST
         RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "tools/data_dump/debugger/debug_graph.proto"
     )
     ms_protobuf_generate(DEBUGGER_PROTO_SRCS DEBUGGER_PROTO_HDRS ${DEBUGGER_PROTO_LIST})
-    if(ENABLE_D)
-        file(GLOB_RECURSE DUMP_DATA_PROTO_LIST FOLLOW_SYMLINKS "${ASCEND_PATH}/latest/include/proto/dump_data.proto")
-        ms_protobuf_generate(DUMP_DATA_PROTO_SRCS DUMP_DATA_PROTO_HDRS ${DUMP_DATA_PROTO_LIST})
-        list(APPEND MINDSPORE_PROTO_LIST ${DUMP_DATA_PROTO_SRCS})
-    endif()
     list(APPEND MINDSPORE_PROTO_LIST ${DEBUGGER_PROTO_SRCS})
 endif()
 

@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <set>
 
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 #include "mindspore/core/include/ir/graph_utils.h"
 #include "mindspore/core/include/ir/value.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
@@ -29,8 +29,8 @@
 #include "frontend/parallel/ops_info/flash_attention_score_info.h"
 #include "frontend/parallel/ops_info/operator_info.h"
 #include "mindspore/ops/infer/ops_func_impl/flash_attention_score.h"
-#include "mindspore/ops/op_def/arithmetic_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/arithmetic_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
 
 namespace mindspore {
 namespace parallel {

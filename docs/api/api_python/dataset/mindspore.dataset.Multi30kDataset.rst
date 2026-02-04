@@ -6,21 +6,19 @@ mindspore.dataset.Multi30kDataset
     Multi30k数据集。
 
     生成的数据集有两列: `[text, translation]`。
-    `text` 列的数据类型为string。
-    `label` 列的数据类型为string。
+    `text` 列和 `translation` 列的数据类型均为string。
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
         - **usage** (str, 可选) - 指定数据集的子集，可取值为 ``'train'`` 、 ``'test'`` 、 ``'valid'`` 或 ``'all'`` 。默认值： ``None`` ，读取全部样本图片。
         - **language_pair** (Sequence[str, str], 可选) - 源语言与目标语言类别，可取值为 ``['en', 'de']`` 或 ``['de', 'en']`` 。默认值： ``None`` ，表示 ``['en', 'de']`` 。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取全部样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
-        - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 是否混洗数据集。默认值： ``None`` ，表示 ``mindspore.dataset.Shuffle.GLOBAL`` 。
-          如果输入 ``False`` ，将不进行混洗。
-          如果输入 ``True`` ，效果与设置 ``mindspore.dataset.Shuffle.GLOBAL`` 相同。
-          如果输入Shuffle枚举值，效果如下表所示：
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数（8），也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
+        - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型或枚举类型进行指定。默认值： ``Shuffle.GLOBAL`` 。
+          如果 `shuffle` 为 ``False`` ，则不混洗；如果 `shuffle` 为 ``True`` ，等同于将 `shuffle` 设置为 ``Shuffle.GLOBAL`` 。
+          通过传入枚举变量设置数据混洗的模式：
 
-          - ``Shuffle.GLOBA`` ：混洗文件和文件中的数据。
+          - ``Shuffle.GLOBAL`` ：混洗文件和样本。
           - ``Shuffle.FILES`` ：仅混洗文件。
 
         - **num_shards** (int, 可选) - 指定分布式训练时将数据集进行划分的分片数。默认值： ``None`` 。指定此参数后， `num_samples` 表示每个分片的最大样本数。一般在 `数据并行模式训练 <https://www.mindspore.cn/tutorials/zh-CN/master/parallel/data_parallel.html#数据集加载>`_ 的时候使用。
@@ -29,13 +27,13 @@ mindspore.dataset.Multi30kDataset
 
     异常：
         - **RuntimeError** - `dataset_dir` 路径下不包含数据文件。
-        - **ValueError** - `usage` 参数取值不为 ``'train'`` 、 ``'test'`` 、 ``'valid'`` 或 ``'all'`` 。
-        - **TypeError** - 如果 `language_pair` 不为Sequence[str, str]类型。
         - **RuntimeError** - 如果 `num_samples` 小于0。
         - **RuntimeError** - `num_parallel_workers` 参数超过系统最大线程数。
         - **RuntimeError** - 指定了 `num_shards` 参数，但是未指定 `shard_id` 参数。
         - **RuntimeError** - 指定了 `shard_id` 参数，但是未指定 `num_shards` 参数。
         - **ValueError** - 如果 `shard_id` 取值不在[0, `num_shards` )范围。
+        - **ValueError** - `usage` 参数取值不为 ``'train'`` 、 ``'test'`` 、 ``'valid'`` 或 ``'all'`` 。
+        - **TypeError** - 如果 `language_pair` 不为Sequence[str, str]类型。
 
     教程样例：
         - `使用数据Pipeline加载 & 处理数据集

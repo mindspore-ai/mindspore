@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-#include "include/backend/distributed/cluster/cluster_context.h"
+#include "include/cluster/topology/cluster_context.h"
 
 #include <mutex>
 #include <vector>
 #include <string>
 #include <memory>
 
-#include "include/backend/distributed/cluster/topology/common.h"
-#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
+#include "include/cluster/topology/common.h"
+#include "include/cluster/topology/compute_graph_node.h"
 #include "cluster/topology/meta_server_node.h"
-#include "cluster/topology/actor_route_table_proxy.h"
-#include "include/backend/distributed/cluster/tcp_store.h"
-#include "include/backend/distributed/cluster/topology/tcp_node.h"
-#include "include/backend/distributed/cluster/utils.h"
-#include "include/backend/distributed/collective/collective_manager.h"
+#include "include/cluster/topology/actor_route_table_proxy.h"
+#include "include/cluster/rpc/tcp_store.h"
+#include "include/cluster/rpc/tcp_node.h"
+#include "cluster/topology/utils.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 #include "proto/topology.pb.h"
 #include "utils/ms_context.h"
 #include "utils/file_utils.h"
 #include "utils/distributed_meta.h"
 #include "nlohmann/json.hpp"
-#include "include/backend/distributed/ps/ps_context.h"
+#include "include/cluster/topology/ps_context.h"
 #include "cluster/rpc/core/comm_util.h"
 #include "cluster/rpc/core/cluster_config.h"
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 #include "utils/ms_exception.h"
 
 namespace mindspore {

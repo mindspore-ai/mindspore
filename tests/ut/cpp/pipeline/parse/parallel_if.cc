@@ -16,22 +16,22 @@
 #include <iostream>
 #include <string>
 #include "common/common_test.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "common/py_func_graph_fetcher.h"
 #include "utils/log_adapter.h"
 #include "frontend/jit/ps/parse/parse.h"
 #include "mindspore/ccsrc/utils/ir_dump/draw.h"
-#include "include/common/utils/convert_utils.h"
+#include "utils/convert_utils.h"
 
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/jit/ps/action.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/tensor_new.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace parse {

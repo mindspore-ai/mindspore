@@ -18,6 +18,5 @@ BASE_PATH=$(cd "$(dirname $0)"; pwd)
 TEST_MODE=$1
 export GLOG_v=1
 export ENABLE_LAZY_INLINE_NO_PIPELINE=1
-export MS_ALLOC_CONF="memory_tracker:True"
 
 python ${BASE_PATH}/test_llama_1p.py --test_mode ${TEST_MODE} > ${TEST_MODE}.log 2>&1

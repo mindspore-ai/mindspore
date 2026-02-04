@@ -1,9 +1,0 @@
-approvers:
-- yuchaojie #
-- hbhu_bin
-- limingqi107
-
-reviewers:
-
-options:
-    no_parent_owners: true

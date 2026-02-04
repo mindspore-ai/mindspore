@@ -18,7 +18,7 @@ This module provides a generator class for creating C++ implementation files for
 
 import os
 
-import common.template as template
+from common import template
 from common.template import Template
 import common.gen_constants as K
 from common.gen_utils import save_file
@@ -140,8 +140,12 @@ class AutoGradImplGenerator(BaseGenerator):
         FALSE = "false"
         bprop_expander = TRUE if op_proto.bprop_expander else FALSE
         non_differentiable = TRUE if op_proto.non_differentiable else FALSE
-        if op_proto.op_name in ["reshape", "expand_dims", "transpose", "slice_ext_view",\
-                                 "select_ext_view", "transpose_ext_view"]:
+        if op_proto.op_name in ["reshape", "view", "expand_dims",
+                                "transpose", "slice_ext_view",
+                                 "select_ext_view", "transpose_ext_view",
+                                 "split_tensor", "split_with_size",
+                                 "expand_dims_view", "squeeze", "transpose_view",
+                                 "split_tensor_view", "split_with_size_view"]:
             do_view_grad_function_body_tpl = self.DO_VIEW_CUSTOMIZE_GRAD_FUNCTION_BODY_TEMPLATE
             convert_basic_to_value = ""
         else:

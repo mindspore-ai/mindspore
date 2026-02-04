@@ -24,12 +24,12 @@ from mindspore.ops import functional as F
 from mindspore.ops.operations import _csr_ops
 import mindspore as ms
 
-from .sparse_utils import get_platform, compare_res, compare_csr
+from tests.st.sparse.sparse_utils import get_platform, compare_res, compare_csr
 from tests.mark_utils import arg_mark
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_make_csr():
     """
     Feature: Test CSRTensor Constructor in Graph and PyNative.
@@ -56,7 +56,7 @@ def test_make_csr():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 def test_csr_attr():
     """
     Feature: Test CSRTensor GetAttr in Graph and PyNative.
@@ -114,7 +114,7 @@ def test_csr_attr():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_csr_tensor_in_while():
     """
     Feature: Test CSRTensor in while loop.
@@ -142,7 +142,7 @@ def test_csr_tensor_in_while():
 
     class CSRTensorWithControlWhile(nn.Cell):
         def __init__(self, shape):
-            super(CSRTensorWithControlWhile, self).__init__()
+            super().__init__()
             self.op1 = CSRTensorValuesDouble()
             self.op2 = CSRTensorValuesAdd2()
             self.shape = shape
@@ -214,7 +214,7 @@ def test_csr_tensor_in_while_cpu():
 
     class CSRTensorWithControlWhile(nn.Cell):
         def __init__(self, shape):
-            super(CSRTensorWithControlWhile, self).__init__()
+            super().__init__()
             self.op1 = CSRTensorValuesDouble()
             self.op2 = CSRTensorValuesAdd2()
             self.shape = shape
@@ -368,7 +368,7 @@ def test_csr_ops():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=0.02)
 def test_csrtensor_export_and_import_mindir():
     """
     Feature: Test exporting and loading CSRTensor MindIR.
@@ -380,7 +380,7 @@ def test_csrtensor_export_and_import_mindir():
 
     class TestCSRTensor(nn.Cell):
         def __init__(self, shape):
-            super(TestCSRTensor, self).__init__()
+            super().__init__()
             self.shape = shape
 
         def construct(self, indptr, indices, values):
@@ -417,7 +417,7 @@ def test_csrops_export_and_import_mindir():
 
     class TestCSRNet(nn.Cell):
         def __init__(self, shape):
-            super(TestCSRNet, self).__init__()
+            super().__init__()
             self.shape = shape
 
         def construct(self, indptr, indices, values, dense_tensor, dense_vector):

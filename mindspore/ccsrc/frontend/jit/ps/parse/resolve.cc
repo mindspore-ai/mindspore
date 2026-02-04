@@ -24,9 +24,9 @@
 #include <algorithm>
 #include <unordered_map>
 
-#include "mindspore/ops/op_def/structure_ops.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/structure_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
 #include "ir/param_info.h"
 #include "ir/value.h"
 #include "ir/map_tensor.h"
@@ -35,26 +35,25 @@
 #include "frontend/jit/ps/fallback.h"
 #include "frontend/jit/ps/parse/data_converter.h"
 #include "frontend/jit/ps/parse/parse.h"
-#include "include/common/utils/python_adapter.h"
-#include "include/common/utils/parallel_context.h"
+#include "include/utils/python_adapter.h"
+#include "include/utils/parallel_context.h"
 #include "utils/any.h"
 #include "frontend/operator/ops.h"
 #include "frontend/optimizer/irpass.h"
 #include "frontend/optimizer/irpass/symbol_resolver.h"
-#include "include/common/fallback.h"
+#include "include/utils/pipeline/fallback.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
-#include "include/common/utils/hook.h"
 #include "utils/log_adapter.h"
 #include "utils/trace_info.h"
-#include "include/common/utils/tensor_py.h"
-#include "include/common/utils/tensor_py_wrapper.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ccsrc/include/common/pynative/variable.h"
+#include "include/utils/tensor_py.h"
+#include "include/utils/tensor_py_wrapper.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "include/utils/pynative/variable.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -414,11 +413,7 @@ AnfNodePtr Resolver::ConvertObjectToNode(const AnfNodePtr &origin_node, const py
   }
 
   if (convert_result->isa<FuncGraph>() && has_recompute_scope) {
-    auto converted_fg = convert_result->cast<FuncGraphPtr>();
-    if (converted_fg->has_flag(FUNC_GRAPH_OUTPUT_NO_RECOMPUTE)) {
-      MS_LOG(EXCEPTION) << "The cell passed into the recompute api should be set recomputed only once.";
-    }
-    UpdateRecomputeScope(converted_fg);
+    UpdateRecomputeScope(convert_result->cast<FuncGraphPtr>());
   }
   ConvertLoadedGraph(func_graph, convert_result);
   AnfNodePtr output = NewValueNode(convert_result);
@@ -662,6 +657,21 @@ FuncGraphPtr ResolveCellHook(const py::object &obj, const std::string &hook_dict
   return hook_func;
 }
 
+FuncGraphPtr ResolveSaveTensorHook(const py::object &obj, const std::string &hook_name) {
+  auto hook_obj = py::getattr(obj, hook_name.c_str(), py::none());
+  if (py::isinstance<py::none>(hook_obj)) {
+    return nullptr;
+  }
+
+  if (!py::isinstance<py::function>(hook_obj)) {
+    MS_EXCEPTION(TypeError) << "The attribute '" << hook_name << "' from '" << py::str(obj)
+                            << "' should be a function.";
+  }
+  auto hook_func = parse::ParsePythonCode(hook_obj);
+  MS_EXCEPTION_IF_NULL(hook_func);
+  return hook_func;
+}
+
 namespace {
 FuncGraphPtr MakeDummyForwardPreHook() {
   auto forward_pre_hook = std::make_shared<FuncGraph>();
@@ -788,6 +798,36 @@ void UnsetTraceTag(const py::object &obj) {
   }
 }
 
+void MarkDeferInlineForSavedTensorsHooks(const AnfNodePtr &resolved_node, const py::object &obj) {
+  MS_EXCEPTION_IF_NULL(resolved_node);
+  auto func_graph = GetValueNode<FuncGraphPtr>(resolved_node);
+  if (func_graph == nullptr) {
+    return;
+  }
+
+  auto mark_when_has_hook = [&func_graph, &obj](const char *py_attr_name) {
+    auto attr = py::getattr(obj, py_attr_name, py::none());
+    if (!attr.is_none()) {
+      func_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+      return;
+    }
+
+    py::module mod = python_adapter::GetPyModule(parse::PYTHON_MOD_PARSE_MODULE);
+    auto construct_obj = python_adapter::CallPyModFn(mod, parse::PYTHON_MOD_GET_ORIGINAL_CELL_CONSTRUCT, obj);
+    if (construct_obj.is_none()) {
+      return;
+    }
+    attr = py::getattr(construct_obj, py_attr_name, py::none());
+    if (attr.is_none()) {
+      return;
+    }
+    func_graph->set_flag(FUNC_GRAPH_FLAG_DEFER_INLINE, true);
+  };
+
+  mark_when_has_hook(FUNC_GRAPH_FLAG_PACK_HOOK);
+  mark_when_has_hook(FUNC_GRAPH_FLAG_UNPACK_HOOK);
+}
+
 AnfNodePtr Resolver::ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space,
                                    const SymbolPtr &symbol, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
@@ -853,6 +893,8 @@ AnfNodePtr Resolver::ResolveSymbol(const FuncGraphManagerPtr &manager, const Nam
   if (name_space->module() != RESOLVE_NAMESPACE_NAME_ENTRY || py::hasattr(obj, compile_cell_hook)) {
     ApplyCellHooks(resolved_node, obj, manager);
   }
+
+  MarkDeferInlineForSavedTensorsHooks(resolved_node, obj);
 
   return resolved_node;
 }

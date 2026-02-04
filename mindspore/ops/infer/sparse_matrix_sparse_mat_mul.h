@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 #include "mindapi/base/types.h"
-#include "mindspore/ops/op_def/sparse_ops.h"
+#include "primitive/sparse_ops.h"
 #include "ops/base_operator.h"
 #include "mindspore/ops/ops_utils/op_utils.h"
 

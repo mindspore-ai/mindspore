@@ -18,6 +18,7 @@ from __future__ import absolute_import
 import os
 import sys
 import json
+import functools
 from collections.abc import Iterable
 
 import time
@@ -31,7 +32,7 @@ from mindspore.common import dtype as mstype
 from mindspore import context
 from mindspore import log as logger
 from mindspore import _checkparam as Validator
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore.communication.management import get_rank, get_group_size
 from mindspore.train.mind_ir_pb2 import ModelProto as mindir_model
 from mindspore.train.checkpoint_pb2 import Checkpoint
@@ -344,15 +345,7 @@ def _get_layout_opt_shard(layout_obj, param_redundancy_dict):
     """Layout ckpt append opt shard."""
     for key, value in layout_obj.items():
         if value[5]:
-            world_groups = ("hccl_world_group", "nccl_world_group", "mccl_world_group")
-            if value[5] in world_groups:
-                opt_para_num = get_group_size()
-            elif "-" in value[5]:
-                opt_para_str = value[5].split("-")[0]
-                opt_para_num = int(opt_para_str)
-            else:
-                raise ValueError(f"For get_parameter_redundancy, the format of the parallel communication domain for "
-                                 f"the optimizer is incorrect.")
+            opt_para_num = get_group_size(value[5])
             param_redundancy_ranks = param_redundancy_dict.get(key)
             res = []
             for param_ranks in param_redundancy_ranks:
@@ -591,3 +584,23 @@ def _load_and_transform(path, name_map, load_func):
         new_name = name_map.get(k, k) if name_map is not None else k
         transform_dict[new_name] = v
     return transform_dict
+
+
+def _mstx_range_decorator(message, stream=None, domain="default"):
+    """
+    Return a decorator that wraps the function execution inside an MSTX range.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            from mindspore.profiler import mstx as _mstx_module
+            rid = _mstx_module.range_start(message, stream, domain)
+            try:
+                return func(*args, **kwargs)
+            finally:
+                _mstx_module.range_end(rid, domain)
+
+        return wrapper
+
+    return decorator

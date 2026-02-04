@@ -42,7 +42,8 @@ def get_output(i0, i1, enable_graph_kernel=False):
     return output
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=30.0)
 def test_online_tuning():
     """
     Feature: test online tuning matmul case for graph_kernel in Ascend.

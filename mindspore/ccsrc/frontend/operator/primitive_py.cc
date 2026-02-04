@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-#include "frontend/operator/primitive_py.h"
+#include "include/frontend/operator/primitive_py.h"
 
 #include <map>
 #include "ir/signature.h"
-#include "frontend/jit/ps/parse/data_converter.h"
-#include "include/common/utils/python_adapter.h"
-#include "pybind11/pytypes.h"
-#include "include/common/pybind_api/api_register.h"
 #include "frontend/jit/ps/parse/parse_flags.h"
+#include "frontend/jit/ps/parse/data_converter.h"
+#include "frontend/operator/primitive_py_utils.h"
+#include "include/utils/python_adapter.h"
+#include "pybind11/pytypes.h"
 #include "mindspore/ccsrc/utils/base_ref_py.h"
-#include "include/common/utils/convert_utils_py.h"
+#include "include/utils/convert_utils_py.h"
 #include "utils/ms_context.h"
-#include "include/common/utils/primitive_utils.h"
+#include "include/utils/operator/primitive_utils.h"
 #include "utils/check_convert_utils.h"
 #include "tools/profiler/profiler.h"
-#include "mindspore/ops/op_def/other_op_name.h"
-#include "include/common/utils/tensor_py.h"
+#include "primitive/other_op_name.h"
+#include "include/utils/tensor_py.h"
 #include "utils/flags.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 namespace mindspore {
 namespace {
 
@@ -119,7 +119,7 @@ py::function PrimitivePy::GetVmapRuleFunction(const bool, int axis_size) {
   if (py::hasattr(python_obj_, get_vmap_rule_func_name)) {
     return python_obj_.attr(get_vmap_rule_func_name)().cast<py::function>();
   }
-  return GetVmapRuleFunctionByObj(python_obj_, axis_size);
+  return prim::GetVmapRuleFunctionByObj(python_obj_, axis_size);
 }
 
 py::function PrimitivePy::GetBpropFunction() {
@@ -139,7 +139,7 @@ py::function PrimitivePy::GetTaylorRuleFunction() {
     py::function fn = python_obj_.attr(get_taylor_rule_func_name)().cast<py::function>();
     return fn;
   }
-  auto fn = GetTaylorRuleFunctionByObj(python_obj_);
+  auto fn = prim::GetTaylorRuleFunctionByObj(python_obj_);
   return fn;
 }
 
@@ -523,7 +523,7 @@ py::object PrimitivePyAdapter::GetUserData(const py::str &key) const {
     MS_EXCEPTION_IF_NULL(primitive_data);
     return primitive_data->obj;
   }
-  // Get from primtive adapter.
+  // Get from primitive adapter.
   const auto primitive_data = user_data<PrimitiveUserData>(name);
   MS_EXCEPTION_IF_NULL(primitive_data);
   return primitive_data->obj;

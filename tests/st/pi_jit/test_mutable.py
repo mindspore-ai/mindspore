@@ -32,7 +32,7 @@ def not_mutable():
 
 
 @pytest.mark.skip(reason="pynative mode and graph mode, results is not equal")
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('fun', [is_mutable])
 def test_mutable_case1(fun):
     """
@@ -46,7 +46,7 @@ def test_mutable_case1(fun):
     assert unknown_shape
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('fun', [not_mutable])
 def test_mutable_case2(fun):
     """

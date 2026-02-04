@@ -26,10 +26,4 @@ TensorStorageInfoPtrList NarrowViewBasicTypeCalc(const mindspore::tensor::Tensor
                                                  const int64_t &start, const int64_t &length) {
   return NarrowBasicTypeCalc(input_tensor, dim, start, length);
 }
-
-TensorStorageInfoPtrList NarrowViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  return NarrowCalc(prim, inputs);
-}
-
-REG_VIEW_STRIDES_CALC_FUN(NarrowView, NarrowViewCalc);
 }  // namespace mindspore::ops

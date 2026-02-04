@@ -22,18 +22,26 @@
 #include <map>
 #include <climits>
 
-#include "op_def/structure_op_name.h"
-#include "include/common/utils/utils.h"
+#include "primitive/structure_op_name.h"
+#include "include/utils/utils.h"
 #include "kernel/ascend/aicpu/aicpu_kernel_mod.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 #include "kernel/ascend/aicpu/aicpu_util.h"
 #include "kernel/ascend/aicpu/aicpu_kernel_load.h"
-#include "include/common/kernel_base/common_utils.h"
+#include "include/utils/kernel_base/common_utils.h"
+#if __has_include("aicpu/fwk_adpt_struct.h")
+#include "aicpu/fwk_adpt_struct.h"
+#else
 #include "cce/fwk_adpt_struct.h"
+#endif
 #include "external/graph/types.h"
+#if __has_include("aicpu/aicpu_engine_struct.h")
+#include "aicpu/aicpu_engine_struct.h"
+#else
 #include "cce/aicpu_engine_struct.h"
-#include "kernel/framework_utils.h"
+#endif
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/framework_utils.h"
 
 namespace mindspore {
 namespace kernel {

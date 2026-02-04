@@ -49,7 +49,8 @@ def scattre_add_forward(nptype):
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_scattre_add_forward_float16():
     """
     Feature: test scattre_add forward.
@@ -62,7 +63,7 @@ def test_scattre_add_forward_float16():
     scattre_add_forward(np.float16)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scattre_add_forward_float32():
     """
     Feature: test scattre_add forward.
@@ -89,7 +90,8 @@ def scattre_add_dynamic_indices():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_scattre_add_dynamic_indices():
     """
     Feature: test scattre_add dynamic shape.
@@ -115,7 +117,7 @@ def scattre_add_dynamic_updates():
     np.testing.assert_array_almost_equal(output.asnumpy(), expected)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_scattre_add_dynamic_updates():
     """
     Feature: test scattre_add dynamic shape.

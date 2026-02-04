@@ -79,6 +79,7 @@ std::vector<std::pair<KernelAttr, ZerosCpuKernelMod::ZerosFunc>> ZerosCpuKernelM
   {ZEROS_CPU_REG(kNumberTypeInt64, kNumberTypeBool, bool)},
   {ZEROS_CPU_REG(kNumberTypeInt64, kNumberTypeComplex64, complex64)},
   {ZEROS_CPU_REG(kNumberTypeInt64, kNumberTypeComplex128, complex128)},
+  {ZEROS_CPU_REG(kNumberTypeInt64, kNumberTypeBFloat16, bfloat16)},
   {ZEROS_CPU_REG(kNumberTypeInt32, kNumberTypeFloat16, float16)},
   {ZEROS_CPU_REG(kNumberTypeInt32, kNumberTypeFloat32, float)},
   {ZEROS_CPU_REG(kNumberTypeInt32, kNumberTypeFloat64, double)},
@@ -92,7 +93,8 @@ std::vector<std::pair<KernelAttr, ZerosCpuKernelMod::ZerosFunc>> ZerosCpuKernelM
   {ZEROS_CPU_REG(kNumberTypeInt32, kNumberTypeUInt64, uint64_t)},
   {ZEROS_CPU_REG(kNumberTypeInt32, kNumberTypeBool, bool)},
   {ZEROS_CPU_REG(kNumberTypeInt32, kNumberTypeComplex64, complex64)},
-  {ZEROS_CPU_REG(kNumberTypeInt32, kNumberTypeComplex128, complex128)}};
+  {ZEROS_CPU_REG(kNumberTypeInt32, kNumberTypeComplex128, complex128)},
+  {ZEROS_CPU_REG(kNumberTypeInt32, kNumberTypeBFloat16, bfloat16)}};
 
 std::vector<KernelAttr> ZerosCpuKernelMod::GetOpSupport() {
   std::vector<KernelAttr> support_list;

@@ -34,7 +34,8 @@ def moe_compute_expert_tokens(sorted_experts, num_expert):
 
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=36.0)
 @pytest.mark.parametrize('mode', ['GE', 'KBK', 'pynative'])
 def test_moe_compute_expert_tokens_case0(mode):
     """

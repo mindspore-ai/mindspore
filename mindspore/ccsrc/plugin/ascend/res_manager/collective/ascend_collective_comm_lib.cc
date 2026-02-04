@@ -15,14 +15,14 @@
  */
 
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/hcom_util.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "utils/convert_utils_base.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
-#include "plugin/ascend/res_manager/error_manager/collective_comm_monitor.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
 
 constexpr size_t kPathMax = 4096;
 namespace mindspore {
@@ -229,8 +229,6 @@ bool AscendCollectiveCommLib::DestroyHcclComm() {
 
 bool AscendCollectiveCommLib::DestroyDeviceCommunicationGroup(const std::string &group_name) {
   HCCL_GROUP_CHECK_EMPTY(group_name);
-  HCCL_RUN_CHECK(std::string("destroy communicate group"), group_name,
-                 hccl::HcclAdapter::GetInstance().HcclDestroyGroup(group_name));
   return true;
 }
 
@@ -257,12 +255,6 @@ bool AscendCollectiveCommLib::DestroyCommunicationGroup(const std::string &group
 bool AscendCollectiveCommLib::CreateDeviceCommunicationGroup(const std::string &group_name,
                                                              const std::vector<uint32_t> &group_ranks) {
   HCCL_GROUP_CHECK_EMPTY(group_name);
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto rank_size = group_ranks.size();
-  HCCL_RUN_CHECK(std::string("create communicate group"), group_name,
-                 hccl::HcclAdapter::GetInstance().HcclCreateGroup(group_name, UlongToUint(rank_size),
-                                                                  std::vector<unsigned int>(group_ranks).data()));
   return true;
 }
 
@@ -306,6 +298,7 @@ HcclComm AscendCollectiveCommLib::HcclCommunicator(const std::string &group_name
 HcclComm AscendCollectiveCommLib::GetHcomByGroup(const std::string &group_name) {
   auto iter = group_hccl_comm_map_.find(group_name);
   if (iter == group_hccl_comm_map_.end()) {
+    distributed::collective::CollectiveManager::instance()->WaitCommInitDone(group_name);
     auto comm = HcclCommunicator(group_name);
     group_hccl_comm_map_[group_name] = comm;
     return comm;
@@ -340,34 +333,19 @@ uint32_t AscendCollectiveCommLib::GetGroupSize(const std::string &group_name) {
 }
 
 uint32_t AscendCollectiveCommLib::GetLocalRankId(const std::string &group_name) {
-  uint32_t rank_id = 0;
-  EXCEPTION_IF_HCCL_RUN_CHECK_FAIL(std::string("get rank_id"), group_name,
-                                   hccl::HcclAdapter::GetInstance().HcclGetLocalRankId(group_name, &rank_id));
-  return rank_id;
+  MS_LOG(EXCEPTION) << "MindSpore does not support ranktable startup, please use msrun to start it.";
 }
 
 uint32_t AscendCollectiveCommLib::GetLocalGroupSize(const std::string &group_name) {
-  EXCEPTION_IF_HCCL_GROUP_CHECK_EMPTY(group_name);
-  uint32_t rank_size = 0;
-  EXCEPTION_IF_HCCL_RUN_CHECK_FAIL(std::string("get rank size"), group_name,
-                                   hccl::HcclAdapter::GetInstance().HcclGetLocalRankSize(group_name, &rank_size));
-  return rank_size;
+  MS_LOG(EXCEPTION) << "MindSpore does not support ranktable startup, please use msrun to start it.";
 }
 
 uint32_t AscendCollectiveCommLib::GetWorldRankFromGroupRank(const std::string &group_name, uint32_t local_rank) {
-  uint32_t world_rank_id = 0;
-  EXCEPTION_IF_HCCL_RUN_CHECK_FAIL(
-    std::string("get world rank id"), group_name,
-    hccl::HcclAdapter::GetInstance().HcclGetWorldRankFromGroupRank(group_name, local_rank, &world_rank_id));
-  return world_rank_id;
+  MS_LOG(EXCEPTION) << "MindSpore does not support ranktable startup, please use msrun to start it.";
 }
 
 uint32_t AscendCollectiveCommLib::GetGroupRankFromWorldRank(uint32_t world_rank, const std::string &group_name) {
-  uint32_t local_rank_id = 0;
-  EXCEPTION_IF_HCCL_RUN_CHECK_FAIL(
-    std::string("get local rank id"), group_name,
-    hccl::HcclAdapter::GetInstance().HcclGetGroupRankFromWorldRank(world_rank, group_name, &local_rank_id));
-  return local_rank_id;
+  MS_LOG(EXCEPTION) << "MindSpore does not support ranktable startup, please use msrun to start it.";
 }
 
 bool AscendCollectiveCommLib::CommSwitchNic(const std::vector<uint32_t> &global_ranks,

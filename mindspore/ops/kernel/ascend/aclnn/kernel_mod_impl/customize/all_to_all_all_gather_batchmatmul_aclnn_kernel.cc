@@ -16,7 +16,7 @@
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/all_to_all_all_gather_batchmatmul_aclnn_kernel.h"
 #include <cstdint>
 #include <string>
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "mindspore/ops/ops_utils/op_constants.h"
 #include "ir/tensor.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"

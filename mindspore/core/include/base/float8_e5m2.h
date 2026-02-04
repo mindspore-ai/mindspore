@@ -24,10 +24,11 @@
 #include <ostream>
 #include <limits>
 #include <functional>
+#include "mindapi/base/macros.h"
 
 // Implement float8_e5m2 for mindspore
 namespace mindspore {
-class Float8_e5m2 {
+class MS_CORE_API Float8_e5m2 {
  public:
   static constexpr uint8_t inf_value = 0x7C;
   static constexpr uint8_t nan_value = 0x7F;

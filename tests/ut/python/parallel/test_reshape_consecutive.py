@@ -18,7 +18,7 @@ import mindspore as ms
 from mindspore import context, Tensor
 from mindspore import nn
 from mindspore.ops import operations as P
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from parallel.utils.utils import compile_net
 
 

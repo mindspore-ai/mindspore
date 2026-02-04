@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2024 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 #include "common/common.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "include/api/types.h"
+#include "include/dataset/ms_tensor.h"
 #include "minddata/dataset/core/de_tensor.h"
 #include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/execute.h"
@@ -26,6 +25,7 @@
 #include "minddata/dataset/text/fast_text.h"
 #include "minddata/dataset/text/glove.h"
 #include "minddata/dataset/text/vectors.h"
+#include "mindspore/ops/op_def/framework_ops.h"
 #include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
@@ -1810,7 +1810,7 @@ TEST_F(MindDataTestExecute, TestDetectPitchFrequencyWithEager) {
   std::shared_ptr<TensorTransform> detect_pitch_frequency_01 =
     std::make_shared<audio::DetectPitchFrequency>(30, 0.1, 3, 5, 25);
   mindspore::dataset::Execute Transform01({detect_pitch_frequency_01});
-  // Detect pitch frequence
+  // Detect pitch frequency
   Status s01 = Transform01(input_02, &input_02);
   EXPECT_TRUE(s01.IsOk());
 }

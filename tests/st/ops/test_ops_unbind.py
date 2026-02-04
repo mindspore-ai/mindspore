@@ -85,7 +85,7 @@ def ops_unbind_float32_dim_neg_case():
     output_tuple = unbind_forward_func(input_x, dim)
     ops_unbind_compare(output_tuple, expect_tuple)
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize('mode', ['pynative']) # Only support pynative mode
 def test_ops_unbind_forward(mode):
     """
@@ -103,7 +103,7 @@ def test_ops_unbind_forward(mode):
     ops_unbind_int64_8d_case()
     ops_unbind_float32_dim_neg_case()
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 @pytest.mark.parametrize('mode', ['pynative']) # Only support pynative mode
 def test_ops_unbind_backward(mode):
     """
@@ -129,7 +129,7 @@ def test_ops_unbind_backward(mode):
         np.testing.assert_allclose(output.asnumpy(), expect, rtol=1e-4)
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2.0)
 def test_ops_unbind_dynamic():
     """
     Feature: mint.unbind

@@ -92,6 +92,13 @@ using ParamInfoPtr = std::shared_ptr<ParamInfo>;
 
 class Scope;
 using ScopePtr = std::shared_ptr<Scope>;
+using CustomInferFunction =
+  std::function<ValuePtr(const AbstractBasePtrList &inputs_abstract, const CNodePtr &input_node)>;
+using CustomInferFunctionPtr = std::shared_ptr<CustomInferFunction>;
+
+using NodeExpandFunction =
+  std::function<AnfNodePtr(const AbstractBasePtrList &inputs_abstract, const CNodePtr &input_node)>;
+using NodeExpandFunctionPtr = std::shared_ptr<NodeExpandFunction>;
 
 // AnfNode is the basic class of the IR definition derived from Base.
 // Only two types of nodes are derived: CNode and ANode.
@@ -627,6 +634,21 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   /// \return New debugging information.
   void set_debug_info(const NodeDebugInfoPtr &debug_info) override;
 
+  /// \brief Set custom infer hook of this AnfNode.
+  ///
+  /// \param[in] Name of infer function and infer function.
+  void set_custom_infer_hook(const std::string &custom_infer_name, CustomInferFunction custom_infer_rule);
+
+  void set_node_expand_hook(NodeExpandFunction node_expand_hook);
+
+  std::pair<std::string, CustomInferFunctionPtr> get_custom_infer_hook() const;
+
+  NodeExpandFunctionPtr get_node_expand_hook() const;
+
+  void clear_custom_infer_hook();
+
+  void clear_node_expand_hook();
+
  private:
   void Init();
   void CheckCNodeWeakInput();
@@ -652,6 +674,8 @@ class MS_CORE_API CNode final : public AnfNode, public EffectInfoHolder {
   mindspore::HashMap<std::string, ValuePtr> primal_attrs_;
   NodeDebugInfoSet primal_debug_infos_;
   NodeDebugInfoSet fused_debug_infos_;
+  std::pair<std::string, CustomInferFunctionPtr> custom_infer_hook_ = std::pair("", nullptr);
+  NodeExpandFunctionPtr node_expand_hook_ = nullptr;
 
   // If the inputs or their inputs contain Depend CNode with isolated side-effect node.
   bool has_side_effect_node_{false};
@@ -1085,9 +1109,6 @@ MS_CORE_API bool IsOneOfPrimitiveCNode(const AnfNodePtr &node, const PrimitiveSe
 // Check whether two primitives are same.
 MS_CORE_API bool IsPrimitiveEquals(const PrimitivePtr &prim1, const PrimitivePtr &prim2);
 
-// Get number of AbstractMonad
-MS_CORE_API size_t GetAbstractMonadNum(const AbstractBasePtrList &args);
-
 // Check whether the given node has monad abstract.
 MS_CORE_API bool HasAbstractMonad(const AnfNodePtr &node);
 
@@ -1105,9 +1126,6 @@ MS_CORE_API bool GetPrimitiveFlag(const PrimitivePtr &prim, const std::string &a
 
 // Gets effect info from a primitive by its attributes.
 MS_CORE_API EffectInfo GetPrimEffectInfo(const PrimitivePtr &prim);
-
-// Check if monad state is equivalent for the connected two nodes, not strict but more faster.
-MS_CORE_API bool IsStateEquivalent(const AnfNodePtr &outer, const AnfNodePtr &inner);
 
 // Check if the node is DeadNode.
 MS_CORE_API bool IsDeadNode(const AnfNodePtr &node);
@@ -1164,7 +1182,6 @@ MS_CORE_API void reset_id_with_offset();
 using TaggedNodeMap = mindspore::HashMap<AnfNodePtr, size_t>;
 using TaggedGraph = std::pair<FuncGraphPtr, TaggedNodeMap>;
 MS_CORE_API std::string GetCNodeTarget(const AnfNodePtr &node);
-std::string GetOriginNodeTarget(const AnfNodePtr &node);
 MS_CORE_API bool ContainMultiTarget(const AnfNodePtrList &nodes);
 struct GraphSegment {
   GraphSegment(const AnfNodePtrList &nodes, bool is_cut) : nodes_(nodes), is_cut_(is_cut) {}

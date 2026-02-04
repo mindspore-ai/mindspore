@@ -26,7 +26,8 @@ def forward_func(x):
     return ops.matrix_band_part(x, 2, 1)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential',
+        mem_peak=1024.50)
 @pytest.mark.parametrize("context_mode", [context.GRAPH_MODE, context.PYNATIVE_MODE])
 def test_matrixbandpart_float32(context_mode):
     """

@@ -19,10 +19,12 @@
 #include <map>
 #include <string>
 #include <memory>
-#include "include/backend/visible.h"
+#include "tools/visible.h"
 #include "nlohmann/json.hpp"
 #include "utils/log_adapter.h"
-#include "include/common/pybind_api/api_register.h"
+#include "pybind11/pybind11.h"
+
+namespace py = pybind11;
 
 namespace mindspore {
 constexpr auto kStatusRecord = "HCCL_STATUS_SAVE";
@@ -30,7 +32,7 @@ constexpr auto kStatusSavePath = "CCAE_HCCL_STATUS_SAVE_PATH";
 constexpr auto kStatusSaveInterval = "CCAE_HCCL_STATUS_SAVE_INTERVAL";
 constexpr auto kWatchdog = "HCCL_WATCHDOG";
 namespace tools {
-class BACKEND_COMMON_EXPORT TftConfig {
+class TOOLS_EXPORT TftConfig {
  public:
   TftConfig() = default;
   ~TftConfig() = default;
@@ -56,14 +58,22 @@ class BACKEND_COMMON_EXPORT TftConfig {
     }
     return default_value;
   }
+
   static bool IsEnableTRE();
   static bool IsEnableStepTRE();
   static int GetSnapShotSteps();
 
+  bool IsEnableUCE();
+  bool IsEnableHCCE();
+  bool IsEnableARF();
+  bool IsEnableRsc();
+
  private:
   nlohmann::json config_json_;
   std::map<std::string, bool> mark_check_;
+
   static std::map<std::string, std::string> &GetConfigMap();
+  static bool IsEnableFeature(const std::string &feature_name);
 };
 }  // namespace tools
 }  // namespace mindspore

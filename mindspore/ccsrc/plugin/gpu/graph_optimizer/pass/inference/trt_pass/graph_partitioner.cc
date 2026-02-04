@@ -24,19 +24,18 @@
 #include <utility>
 #include <string>
 
-#include "mindspore/ops/op_def/conv_pool_op_name.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
+#include "primitive/conv_pool_op_name.h"
+#include "primitive/nn_op_name.h"
+#include "primitive/framework_op_name.h"
+#include "primitive/sequence_ops.h"
 #include "utils/hash_map.h"
 #include "utils/ms_context.h"
 #include "utils/trace_base.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 #include "plugin/gpu/graph_optimizer/pass/inference/trt_pass/trt_op_factory.h"
-#include "backend/ms_backend/segment_runner.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {

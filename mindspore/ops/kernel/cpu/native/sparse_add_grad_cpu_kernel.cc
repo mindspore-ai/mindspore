@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "kernel/cpu/native/sparse_add_grad_cpu_kernel.h"
 #include <algorithm>
 #include <utility>
 #include <complex>
@@ -22,7 +23,6 @@
 #include <numeric>
 #include <iterator>
 #include <unordered_map>
-#include "kernel/cpu/native/sparse_add_grad_cpu_kernel.h"
 #include "mindspore/ops/infer/grad/sparse_add_grad.h"
 
 namespace mindspore {

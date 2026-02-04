@@ -15,13 +15,13 @@
  */
 
 #include "kernel/cpu/eigen/svd_cpu_kernel.h"
-#include "kernel/cpu/eigen/svd_cpu_kernel_function.h"
 #include <algorithm>
 #include <memory>
 #include <map>
+#include "kernel/cpu/eigen/svd_cpu_kernel_function.h"
 #include "kernel/cpu/eigen/eigen_common_utils.h"
 
-#include "include/common/thread_pool.h"
+#include "include/utils/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -137,6 +137,8 @@ bool SvdCpuKernelMod::LaunchKernelFloat(const std::vector<KernelTensor *> &input
 
   // Set 0 for u and v if not compute u and v.
   if (!compute_uv_) {
+    MS_EXCEPTION_IF_NULL(output_u);
+    MS_EXCEPTION_IF_NULL(output_v);
     output_u[0] = static_cast<T>(0);
     output_v[0] = static_cast<T>(0);
   }
@@ -197,6 +199,8 @@ bool SvdCpuKernelMod::LaunchKernelComplex(const std::vector<KernelTensor *> &inp
 
   // Set 0 for u and v if not compute u and v.
   if (!compute_uv_) {
+    MS_EXCEPTION_IF_NULL(output_u);
+    MS_EXCEPTION_IF_NULL(output_v);
     output_u[0] = static_cast<T>(0);
     output_v[0] = static_cast<T>(0);
   }

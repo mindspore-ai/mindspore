@@ -16,7 +16,7 @@
 
 #include "include/runtime/hardware_abstract/data_queue/data_queue.h"
 #include "utils/ms_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace device {

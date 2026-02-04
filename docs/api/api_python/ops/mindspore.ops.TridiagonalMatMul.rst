@@ -28,6 +28,6 @@ mindspore.ops.TridiagonalMatMul
         - **TypeError** - 如果 `superdiag` 、 `maindiag` 、 `subdiag` 和 `rhs` 的数据类型不是float16、float32、double、complex64或complex128。
         - **ValueError** - 如果 `superdiag` 、 `maindiag` 、 `subdiag` 的列数不等于 `rhs` 的行数。
         - **ValueError** - 如果 `superdiag` 、 `maindiag` 、 `subdiag` 的行数不等于1。
-        - **ValueError** - 如果 `superdiag` 、 `maindiag` 、 `subdiag` 的秩以及 `rhs` 行秩小于2。
+        - **ValueError** - 如果 `superdiag` 、 `maindiag` 、 `subdiag` 的秩以及 `rhs` 的秩小于2。
         - **ValueError** - 如果 `superdiag` 、 `maindiag` 、 `subdiag` 的shape不相同。
         - **ValueError** - 如果 `superdiag` 、 `maindiag` 、 `subdiag` 和 `rhs` 各自忽略掉最后两个元素之后的shape不一致。

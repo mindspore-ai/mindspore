@@ -27,9 +27,10 @@ class ROC(Metric):
     In the case of multiclass, the values will be calculated based on a one-vs-the-rest approach.
 
     Args:
-        class_num (int): The number of classes. It is not necessary to provide this argument under the binary
+        class_num (int, optional): The number of classes. It is not necessary to provide this argument under the binary
                             classification scenario. Default: ``None`` .
-        pos_label (int): Determine the integer of positive class. For binary problems, it is translated to 1 by default.
+        pos_label (int, optional): Determine the integer of positive class.
+                            For binary problems, it is translated to 1 by default.
                             For multiclass problems, this argument should not be set, as it will
                             iteratively changed in the range [0, num_classes-1]. Default: ``None`` .
 
@@ -149,14 +150,17 @@ class ROC(Metric):
             y_pred (Union[Tensor, list, np.ndarray]): In most cases (not strictly), y_pred is a list of floating numbers
                 in range :math:`[0, 1]` and the shape is :math:`(N, C)`, where :math:`N` is the number of cases
                 and :math:`C` is the number of categories.
-            y (Union[Tensor, list, np.ndarray]): values of integers.
-            class_num (int): Integer with the number of classes. For the problem of binary classification, it is not
+            y (Union[Tensor, list, np.ndarray]): Values of integers.
+            class_num (int, optional): Integer with the number of classes.
+                For the problem of binary classification, it is not
                 necessary to provide this argument. Default: ``None``.
-            pos_label (int): Determine the integer of positive class. Default: ``None``. For binary problems, it is
+            pos_label (int, optional): Determine the integer of positive class. Default: ``None``.
+                For binary problems, it is
                 translated to 1. For multiclass problems, this argument should not be set, as it is iteratively changed
-                in the range [0,num_classes-1]. Default: ``None``.
-            sample_weights (Union[None, np.ndarray]): If sample_weights is None, the weight value is 1.
-                If sample_weights is ndarray, the weight value is the ndarray value.
+                in the range [0, num_classes-1].
+            sample_weights (Union[None, np.ndarray], optional): If sample_weights is None, the weight value is 1.
+                If sample_weights is ndarray,
+                the weight value is the ndarray value. Default: ``None``.
         """
         y_pred, y, class_num, pos_label = _precision_recall_curve_update(y_pred, y, class_num, pos_label)
 
@@ -172,7 +176,7 @@ class ROC(Metric):
             - **fpr** (np.array) - False positive rate. In binary classification case, a fpr numpy array under different
               thresholds will be returned, otherwise in multiclass case, a list of
               fpr numpy arrays will be returned and each element represents one category.
-            - **tpr** (np.array) - True positive rates. n binary classification case, a tpr numpy array under different
+            - **tpr** (np.array) - True positive rates. In binary classification case, a tpr numpy array under different
               thresholds will be returned, otherwise in multiclass case, a list of tpr numpy arrays
               will be returned and each element represents one category.
             - **thresholds** (np.array) - Thresholds used for computing fpr and tpr.

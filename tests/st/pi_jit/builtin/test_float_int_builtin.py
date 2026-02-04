@@ -43,7 +43,7 @@ def ms_fallback_float_and_int_empty():
     return float(), int()
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', [fallback_float_and_int])
 @pytest.mark.parametrize('ms_func', [ms_fallback_float_and_int])
 def test_int_float_conversion_with_args(func, ms_func):
@@ -59,7 +59,7 @@ def test_int_float_conversion_with_args(func, ms_func):
     match_array(res, ms_res, error=0, err_msg=str(ms_res))
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func', [fallback_float_and_int_empty])
 @pytest.mark.parametrize('ms_func', [ms_fallback_float_and_int_empty])
 def test_int_float_conversion_no_args(func, ms_func):

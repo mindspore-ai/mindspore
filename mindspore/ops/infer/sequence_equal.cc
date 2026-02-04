@@ -23,8 +23,8 @@
 #include "infer/tuple_equal.h"
 #include "utils/check_convert_utils.h"
 #include "ir/tensor.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace ops {

@@ -30,6 +30,10 @@ TensorStorageInfoPtrList SliceExtStridesCalc(const std::vector<int64_t> &old_sha
                                              const std::vector<int64_t> &old_strides,
                                              const TensorStorageInfoPtr &old_storage_info, const int64_t ori_dim,
                                              const int64_t ori_start, const int64_t ori_end, const int64_t step) {
+  MS_LOG(DEBUG) << "SliceExt: input shape " << old_shape << ", input stride " << old_strides << ", storage_info "
+                << (old_storage_info != nullptr ? old_storage_info->ToString() : "null") << ", dim " << ori_dim
+                << ", start " << ori_start << ", end " << ori_end << ", step " << step;
+
   int dim_size = SizeToLong(old_shape.size());
   MS_CHECK_VALUE(dim_size > 0, "slice can not be applied to a 0-dim tensor.");
   MS_CHECK_VALUE(step > 0, "slice step must be positive");
@@ -67,27 +71,14 @@ TensorStorageInfoPtrList SliceExtStridesCalc(const std::vector<int64_t> &old_sha
   auto new_storage_info =
     std::make_shared<TensorStorageInfo>(std::move(new_shape), std::move(new_strides), new_storage_offset,
                                         std::move(ori_shape), std::move(ori_strides), is_contiguous);
-
+  MS_LOG(DEBUG) << "SliceExt: output storage_info " << new_storage_info->ToString();
   return {std::move(new_storage_info)};
 }
 
 TensorStorageInfoPtrList SliceExtBasicTypeCalc(const mindspore::tensor::TensorPtr &input_tensor, const int64_t &dim,
                                                const int64_t &start, const int64_t &end, const int64_t &step) {
+  MS_EXCEPTION_IF_NULL(input_tensor);
   return SliceExtStridesCalc(input_tensor->shape(), input_tensor->stride(), input_tensor->storage_info(), dim, start,
                              end, step);
 }
-
-TensorStorageInfoPtrList SliceExtCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_tensor);
-
-  auto dim = GetValue<int64_t>(inputs[kInputIndex1]);
-  auto start = GetValue<int64_t>(inputs[kInputIndex2]);
-  auto end = GetValue<int64_t>(inputs[kInputIndex3]);
-  auto step = GetValue<int64_t>(inputs[kInputIndex4]);
-
-  return SliceExtBasicTypeCalc(input_tensor, dim, start, end, step);
-}
-
-REG_VIEW_STRIDES_CALC_FUN(SliceExt, SliceExtCalc);
 }  // namespace mindspore::ops

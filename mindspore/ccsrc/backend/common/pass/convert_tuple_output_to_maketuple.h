@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_CONVERT_TUPLE_OUTPUT_TO_MAKETUPLE_H
 #define MINDSPORE_CONVERT_TUPLE_OUTPUT_TO_MAKETUPLE_H
 #include <string>
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {

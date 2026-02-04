@@ -13,15 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Store and get tensor method"""
-from mindspore import Tensor
-from mindspore._c_expression import function_id
 
-tensor_method_id_to_name = {}
-for method_name in dir(Tensor):
-    method_id = function_id(getattr(Tensor, method_name))
-    tensor_method_id_to_name[method_id] = method_name
+from mindspore.graph._mark_deprecated import mark_deprecated
 
-
-def get_tensor_method_name(id):
-    """Get method name by function id"""
-    return tensor_method_id_to_name.get(id, None)
+mark_deprecated(__name__, 'mindspore.graph._pijit.tensor_func_list')

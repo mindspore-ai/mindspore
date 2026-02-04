@@ -22,7 +22,7 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
 from mindspore.train import Model
 from mindspore.nn import PipelineCell
-import mindspore.common.lazy_inline as lazy_inline
+from mindspore.graph.lazy_inline import lazy_inline
 from .test_pipeline_interleave import DatasetLenet
 
 

@@ -29,8 +29,6 @@ Descriptions of common data processing terms are as follows:
 - PyTensorOperation, the base class of all data processing operations implemented in Python.
 """
 from .. import vision
-from . import c_transforms
-from . import py_transforms
 from . import transforms
 from .transforms import Compose, Concatenate, Duplicate, Fill, Mask, OneHot, PadEnd, Plugin, RandomApply, \
     RandomChoice, RandomOrder, Relational, Slice, TypeCast, Unique, not_random

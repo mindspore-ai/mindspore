@@ -9,12 +9,12 @@ mindspore.dataset.DBpediaDataset
 
     参数：
         - **dataset_dir** (str) - 包含数据集文件的根目录路径。
-        - **usage** (str, 可选) - 指定数据集的子集，可取值为 ``'train'`` ， ``'test'`` 或 ``'all'`` 。
-          ``'train'`` 将读取560,000个训练样本， ``'test'`` 将读取70,000个测试样本中， ``'all'`` 将读取所有630,000个样本。默认值： ``None`` ，读取全部样本。
+        - **usage** (str, 可选) - 指定数据集的子集，可取值为 ``'train'`` 、 ``'test'`` 或 ``'all'`` 。
+          ``'train'`` 将读取560,000个训练样本， ``'test'`` 将读取70,000个测试样本， ``'all'`` 将读取所有630,000个样本。默认值： ``None`` ，读取全部样本。
         - **num_samples** (int, 可选) - 指定从数据集中读取的样本数。默认值： ``None`` ，读取所有样本。
-        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数(8)，也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
-        - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型与枚举类型进行指定。默认值： ``Shuffle.GLOBAL`` 。
-          如果 `shuffle` 为 ``False`` ，则不混洗，如果 `shuffle` 为 ``True`` ，等同于将 `shuffle` 设置为 ``mindspore.dataset.Shuffle.GLOBAL`` 。
+        - **num_parallel_workers** (int, 可选) - 指定读取数据的工作线程数。默认值： ``None`` ，使用全局默认线程数（8），也可以通过 :func:`mindspore.dataset.config.set_num_parallel_workers` 配置全局线程数。
+        - **shuffle** (Union[bool, :class:`~.dataset.Shuffle`], 可选) - 每个epoch中数据混洗的模式，支持传入bool类型或枚举类型进行指定。默认值： ``Shuffle.GLOBAL`` 。
+          如果 `shuffle` 为 ``False`` ，则不混洗；如果 `shuffle` 为 ``True`` ，等同于将 `shuffle` 设置为 ``Shuffle.GLOBAL`` 。
           通过传入枚举变量设置数据混洗的模式：
 
           - ``Shuffle.GLOBAL`` ：混洗文件和样本。
@@ -38,10 +38,10 @@ mindspore.dataset.DBpediaDataset
     **关于DBpedia数据集：**
 
     DBpedia数据集包括14个类，超过63万个文本样本，train.csv中有56万样本，test.csv中有7万测试样本。
-    14个不同的类别分别是：公司、教育学院、艺术家、运动员、文员，交通，建筑，自然场所，村庄，动物，植物，专辑，电影，书面工作。
+    14个不同的类别分别是：公司、教育学院、艺术家、运动员、文员、交通、建筑、自然场所、村庄、动物、植物、专辑、电影、书面工作。
 
     以下是原始DBpedia数据集结构。
-    可以将数据集文件解压缩到此目录结构中，并通过Mindspore的API读取。
+    可以将数据集文件解压缩到此目录结构中，并通过MindSpore的API读取。
 
     .. code-block::
 

@@ -19,7 +19,7 @@
 #include <regex>
 #include <set>
 
-#include "include/common/debug/common.h"
+#include "include/utils/common.h"
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/tensor_shape.h"
 #include "minddata/dataset/data_source/sampler/sequential_sampler.h"

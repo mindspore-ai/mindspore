@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import composite as C
 from mindspore import dtype as mstype
 from mindspore.ops.operations import _inner_ops as inner
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.device_context.gpu.op_precision import matmul_allow_tf32
 from tests.mark_utils import arg_mark
 from tests.device_utils import set_device

@@ -1,0 +1,7 @@
+sigmoid_:
+  op_yaml: inplace_sigmoid_op.yaml
+  py_method: tensor_sigmoid_ # callback to python function "def tensor_sigmoid_"
+  Ascend: pyboost
+  CPU: pyboost
+  GPU: pyboost
+  interface: tensor

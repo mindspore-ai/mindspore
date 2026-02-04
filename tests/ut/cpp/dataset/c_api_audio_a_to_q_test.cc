@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2022 Huawei Technologies Co., Ltd
+ * Copyright 2021-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 #include "common/common.h"
-#include "include/api/types.h"
-#include "utils/log_adapter.h"
-
+#include "include/dataset/ms_tensor.h"
 #include "minddata/dataset/include/dataset/audio.h"
 #include "minddata/dataset/include/dataset/datasets.h"
 #include "minddata/dataset/include/dataset/transforms.h"
+#include "utils/log_adapter.h"
 
 using namespace mindspore::dataset;
 using namespace std;
@@ -3250,13 +3249,13 @@ TEST_F(MindDataTestPipeline, TestInverseSpectrogramPipeline) {
   ds4 = ds4->SetNumWorkers(4);
   EXPECT_NE(ds4, nullptr);
 
-  auto inverse_spectrogram_op4 = audio::InverseSpectrogram(1, 16, 16, 8, 0, WindowType::kHann, false,
-                                                           true, BorderType::kReflect, true);
+  auto inverse_spectrogram_op4 =
+    audio::InverseSpectrogram(1, 16, 16, 8, 0, WindowType::kHann, false, true, BorderType::kReflect, true);
   ds4 = ds4->Map({inverse_spectrogram_op4});
   EXPECT_NE(ds4, nullptr);
   std::shared_ptr<Iterator> iter4 = ds4->CreateIterator();
   EXPECT_NE(ds4, nullptr);
-  std::unordered_map<std::string, mindspore::MSTensor> row4; 
+  std::unordered_map<std::string, mindspore::MSTensor> row4;
   ASSERT_OK(iter4->GetNextRow(&row4));
   std::vector<int64_t> expected4 = {1, 1};
   int i = 0;

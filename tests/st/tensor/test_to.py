@@ -12,12 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+test tensor to
+"""
+import os
 import time
 import pytest
 import numpy as np
 from tests.mark_utils import arg_mark
 import mindspore as ms
-import mindspore.nn as nn
+from mindspore import nn
 from mindspore import Tensor, value_and_grad, jit
 from mindspore.ops.auto_generate.gen_ops_prim import to_device_op, to_dtype_op
 
@@ -93,26 +97,37 @@ def test_to_jit():
     Expectation: success
     """
 
-    @jit
+    @jit(backend="ms_backend")
     def tensor_to_1(x, device, non_blocking):
         return x.to(device, non_blocking=non_blocking)
 
-    @jit
+    @jit(backend="ms_backend")
     def tensor_to_2(x, dtype):
         return x.to(dtype)
 
-    @jit
+    @jit(backend="ms_backend")
     def tensor_to_3(x, device, dtype, non_blocking, copy):
         return x.to(device, dtype, non_blocking, copy)
 
-    @jit
+    @jit(backend="ms_backend")
     def tensor_to_4(x, dtype, non_blocking, copy):
         return x.to(dtype, non_blocking, copy)
 
-    @jit
+    @jit(backend="ms_backend")
     def tensor_to_5(x, other, non_blocking, copy):
         return x.to(other, non_blocking, copy)
 
+    @jit(backend="ms_backend")
+    def tensor_to_6(device, non_blocking):
+        x = Tensor(1.0, ms.float32).to("CPU")
+        return x.to(device, non_blocking=non_blocking)
+
+    @jit(backend="ms_backend")
+    def tensor_to_7(device, dtype):
+        x = Tensor(1.0, ms.float32).to("CPU")
+        return x.to(device, dtype)
+
+    os.environ["MS_DEV_HYPER_OFFLOAD"] = "1"
     dtypes = [ms.float16, ms.float32, ms.float64, ms.int32, ms.int64]
     devices = ["Ascend", "CPU"]
 
@@ -120,7 +135,17 @@ def test_to_jit():
         x = Tensor(1.0, ms.float32)
         for non_blocking in [True, False]:
             y = tensor_to_1(x, device_type, non_blocking)
+            assert device_type in y.device
             assert y.asnumpy() == 1.0
+
+    for non_blocking in [True, False]:
+        y = tensor_to_6("Ascend", non_blocking)
+        assert "Ascend" in y.device
+        assert y.asnumpy() == 1.0
+
+        y = tensor_to_6("CPU", non_blocking)
+        assert "CPU" in y.device
+        assert y.asnumpy() == 1.0
 
     for dtype in dtypes:
         x = Tensor(1.0, ms.float32)
@@ -133,6 +158,7 @@ def test_to_jit():
             x = Tensor(1.0, ms.float32)
             y = tensor_to_3(x, device_type, dtype, False, False)
             assert dtype == y.dtype
+            assert device_type in y.device
             assert y.asnumpy() == 1.0
 
     for dtype in dtypes:
@@ -148,6 +174,19 @@ def test_to_jit():
             z = tensor_to_5(x, y, False, False)
             assert dtype == y.dtype
             assert z.asnumpy() == 1.0
+
+    y = tensor_to_7("Ascend", ms.float32)
+    assert "Ascend" in y.device
+    assert y.asnumpy() == 1.0
+
+    with pytest.raises(RuntimeError) as err:
+        y = tensor_to_7("Ascend", ms.float16)
+        assert y.dtype == ms.float16
+        assert "Ascend" in y.device
+        assert y.asnumpy() == 1.0
+    assert "Invalid input device tensor type for kernel" in str(err.value)
+
+    os.environ["MS_DEV_HYPER_OFFLOAD"] = "0"
 
 
 def test_to_device_grad():
@@ -292,10 +331,57 @@ def test_tensor_to_with_numpy_perf():
     assert non_blocking_perf() < blocking_perf()
 
 
-@arg_mark(plat_marks=['platform_ascend'],
+def test_tensor_to_device_for_graph():
+    """
+    Feature: tensor.to
+    Description: Test tensor.to(Device) for Jit or GRAPH_MODE.
+    Expectation: success
+    """
+
+    class Net1(nn.Cell):
+        def construct(self, x):
+            return x.to("CPU")
+
+    class Net2(nn.Cell):
+        def construct(self, x):
+            y = x.to("CPU")
+            y = y.to("Ascend")
+            return y + y
+
+    class Net3(nn.Cell):
+        def construct(self, x):
+            y = x.to("CPU")
+            return y + x  # x on "Ascend", but y on "CPU"
+
+    os.environ["MS_DEV_HYPER_OFFLOAD"] = "1"
+    input_np = np.ones((1024, 2048), dtype=np.float32)
+    input1 = Tensor(input_np)
+    net1 = Net1()
+    net1.construct = ms.jit(net1.construct, backend="ms_backend")
+    output = net1(input1)
+    assert "CPU" in output.device
+    assert np.allclose(output.asnumpy(), input_np)
+
+    input2 = Tensor(input_np)
+    net2 = Net2()
+    net2.construct = ms.jit(net2.construct, backend="ms_backend")
+    output = net2(input2)
+    assert "Ascend" in output.device
+    assert np.allclose(output.asnumpy(), input_np * 2)
+
+    with pytest.raises(RuntimeError) as err:
+        input3 = Tensor(input_np)
+        net3 = Net3()
+        net3.construct = ms.jit(net3.construct, backend="ms_backend")
+        output = net3(input3)  # pylint: disable=W0612
+    assert "Invalid input device tensor type for kernel" in str(err.value)
+    os.environ["MS_DEV_HYPER_OFFLOAD"] = "0"
+
+
+@arg_mark(plat_marks=['platform_ascend910b'],
           level_mark='level0',
           card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=30.01)
 @pytest.mark.parametrize('mode', [ms.PYNATIVE_MODE, ms.GRAPH_MODE])
 def test_tensor_to(mode):
     """
@@ -316,5 +402,5 @@ def test_tensor_to(mode):
     test_tensor_api_to_dtype_grad()
 
     test_tensor_numpy_non_blocking()
-
     test_tensor_to_with_numpy_perf()
+    test_tensor_to_device_for_graph()

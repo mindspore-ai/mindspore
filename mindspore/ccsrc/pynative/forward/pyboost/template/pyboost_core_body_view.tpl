@@ -1,4 +1,4 @@
-PYNATIVE_EXPORT PyObject* ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_DTYPE>& source_type, ${input_args}) {
+PyObject* ${func_name}_OP(const PrimitivePtr &prim, const std::vector<ops::OP_DTYPE>& source_type, ${input_args}) {
   MS_LOG(DEBUG) << "Run ${func_name} start";
 
   auto py_output = tensor::MakeTuple<tensor::TensorWrapper, ${output_num}, true>();
@@ -7,20 +7,17 @@ PYNATIVE_EXPORT PyObject* ${func_name}_OP(const PrimitivePtr &prim, const std::v
   // AsyncStatus
   const auto &pynative_executor = pynative::PyNativeAlgo::Common::GetPyNativeExecutor();
   const auto& forward_executor = pynative_executor->forward_executor();
-  bool is_jit_compiling = forward_executor->is_jit_compiling();
   const auto &device_target = forward_executor->GetCurrentDeviceTarget(prim);
-
-  size_t custom_bprop_cell_count = pynative_executor->grad_executor()->custom_bprop_cell_count();
   bool requires_grad = pynative::GradState::Get().RequiresGrad();
 
   DispatchOp(
     std::make_shared<ViewPyboostPromiseTask>(
-      [${op_args}, promises, is_jit_compiling, requires_grad, device_target, custom_bprop_cell_count]() {
+      [${op_args}, promises, requires_grad, device_target]() {
 
         // stub tensor to tensor.
         ${convert_stub}
         kernel::pyboost::OpRunStatus::Get().set_run_info(
-          kernel::pyboost::OpStatus(true, is_jit_compiling, custom_bprop_cell_count, device_target));
+          kernel::pyboost::OpStatus(true, device_target));
         kernel::pyboost::RequireGradGuard require_grad_guard(requires_grad);
 
         auto outputs = kernel::pyboost::${operator_name}(${call_args});

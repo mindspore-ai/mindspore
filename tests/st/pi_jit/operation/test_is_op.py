@@ -18,7 +18,7 @@ def jit_add(a, b):
     return a + b
 
 
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func, ms_func', [(add, jit_add)])
 @pytest.mark.parametrize('a, b', [(1, 1), (1, 2)])
 def test_int_add(func, ms_func, a, b):
@@ -35,7 +35,7 @@ def test_int_add(func, ms_func, a, b):
 
 
 @pytest.mark.skip
-@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
 @pytest.mark.parametrize('func, ms_func', [(add, jit_add)])
 @pytest.mark.parametrize('a, b',
                          [(Tensor(np.ones((2, 3)).astype(np.float32)), Tensor(np.ones((2, 3)).astype(np.float32)))])

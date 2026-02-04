@@ -22,7 +22,7 @@
 #include <vector>
 #include <cmath>
 
-#include "mindspore/ccsrc/include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/dynamic_creator.h"
 #include "frontend/parallel/strategy.h"

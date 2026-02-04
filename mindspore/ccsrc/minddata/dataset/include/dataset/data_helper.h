@@ -1,5 +1,5 @@
 /**
- * Copyright 2021-2023 Huawei Technologies Co., Ltd
+ * Copyright 2021-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,15 @@
 #endif
 
 #include <fstream>
-#include <iostream>
-#include <map>
 #include <memory>
-#include <sstream>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
-#include "include/api/dual_abi_helper.h"
-#include "include/api/status.h"
+#include "utils/dual_abi_helper.h"
+#include "utils/status.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 /// \brief Simple class to do data manipulation, contains helper function to update json files in dataset
 class DATASET_API DataHelper {
  public:
@@ -336,6 +332,10 @@ class DATASET_API DataHelper {
       ofs.close();
       return Status(kMDUnexpectedError, "Input data is empty.");
     }
+    if (SIZE_MAX / sizeof(T) < length) {
+      ofs.close();
+      return Status(kMDUnexpectedError, "Input data is too long to write bin file.");
+    }
     (void)ofs.write(reinterpret_cast<const char *>(&data[0]), static_cast<std::streamsize>(length * sizeof(T)));
     if (!ofs.good()) {
       ofs.close();
@@ -372,6 +372,10 @@ class DATASET_API DataHelper {
     std::ofstream ofs(in_file, std::ios::binary | std::ios::out);
     if (!ofs.is_open()) {
       return Status(kMDUnexpectedError, "Failed to open file: " + in_file);
+    }
+    if (SIZE_MAX / sizeof(T) < length) {
+      ofs.close();
+      return Status(kMDUnexpectedError, "Input data is too long to write bin file.");
     }
     (void)ofs.write(reinterpret_cast<const char *>(data), static_cast<std::streamsize>(length * sizeof(T)));
     if (!ofs.good()) {
@@ -482,6 +486,5 @@ class DATASET_API DataHelper {
                        const std::vector<char> &out_file);
   Status RemoveKeyIF(const std::vector<char> &in_file, const std::vector<char> &key, const std::vector<char> &out_file);
 };
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_DATA_HELPER_H_

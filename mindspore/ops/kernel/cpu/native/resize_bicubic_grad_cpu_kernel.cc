@@ -87,33 +87,34 @@ class ResizeBicubicGradWeightsInfo {
 
   inline void SetWeightsAndIndices(const int64_t in_loc, const int64_t limit, const int64_t offset,
                                    const std::vector<float> &coeffs_table, const bool use_keys_cubic) {
-    auto clamp = [&](int64_t v) -> int64_t { return std::min(limit - 1, std::max<int64_t>(0, v)); };
+    auto clamp = [limit](int64_t v) -> int64_t { return std::min(limit - 1, std::max<int64_t>(0, v)); };
     if (use_keys_cubic) {
-      indices[0] = clamp(in_loc - 1);
-      indices[1] = clamp(in_loc);
-      indices[2] = clamp(in_loc + 1);
-      indices[3] = clamp(in_loc + kCalnum2);
-      weights[0] = (indices[0] == in_loc - 1 ? coeffs_table[offset * kCalnum2 + 1] : 0.0f);
-      weights[1] = (indices[1] == in_loc ? coeffs_table[offset * kCalnum2] : 0.0f);
-      weights[2] = (indices[2] == in_loc + 1 ? coeffs_table[(kTableSize - offset) * kCalnum2] : 0.0f);
-      weights[3] = (indices[3] == in_loc + kCalnum2 ? coeffs_table[(kTableSize - offset) * kCalnum2 + 1] : 0.0f);
+      indices[kIndex0] = clamp(in_loc - 1);
+      indices[kIndex1] = clamp(in_loc);
+      indices[kIndex2] = clamp(in_loc + 1);
+      indices[kIndex3] = clamp(in_loc + kCalnum2);
+      weights[kIndex0] = (indices[kIndex0] == in_loc - 1 ? coeffs_table[offset * kCalnum2 + 1] : 0.0f);
+      weights[kIndex1] = (indices[kIndex1] == in_loc ? coeffs_table[offset * kCalnum2] : 0.0f);
+      weights[kIndex2] = (indices[kIndex2] == in_loc + 1 ? coeffs_table[(kTableSize - offset) * kCalnum2] : 0.0f);
+      weights[kIndex3] =
+        (indices[kIndex3] == in_loc + kCalnum2 ? coeffs_table[(kTableSize - offset) * kCalnum2 + 1] : 0.0f);
       NormalizeWeightsIfNeeded();
     } else {
-      weights[0] = coeffs_table[offset * kCalnum2 + 1];
-      weights[1] = coeffs_table[offset * kCalnum2];
-      weights[2] = coeffs_table[(kTableSize - offset) * kCalnum2];
-      weights[3] = coeffs_table[(kTableSize - offset) * kCalnum2 + 1];
-      indices[0] = clamp(in_loc - 1);
-      indices[1] = clamp(in_loc);
-      indices[2] = clamp(in_loc + 1);
-      indices[3] = clamp(in_loc + kCalnum2);
+      weights[kIndex0] = coeffs_table[offset * kCalnum2 + 1];
+      weights[kIndex1] = coeffs_table[offset * kCalnum2];
+      weights[kIndex2] = coeffs_table[(kTableSize - offset) * kCalnum2];
+      weights[kIndex3] = coeffs_table[(kTableSize - offset) * kCalnum2 + 1];
+      indices[kIndex0] = clamp(in_loc - 1);
+      indices[kIndex1] = clamp(in_loc);
+      indices[kIndex2] = clamp(in_loc + 1);
+      indices[kIndex3] = clamp(in_loc + kCalnum2);
     }
   }
 
   inline void SetAdvance(const size_t v) { advance = v; }
 
   inline void NormalizeWeightsIfNeeded() {
-    const float weight_sum = weights[0] + weights[1] + weights[2] + weights[3];
+    const float weight_sum = weights[kIndex0] + weights[kIndex1] + weights[kIndex2] + weights[kIndex3];
     if (std::abs(weight_sum) >= 1000.0f * std::numeric_limits<float>::min()) {
       const float one_over_weight_sum = 1.0f / weight_sum;
       std::transform(weights.begin(), weights.end(), weights.begin(),

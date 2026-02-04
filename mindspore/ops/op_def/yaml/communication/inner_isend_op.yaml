@@ -1,0 +1,23 @@
+#operator inner isend
+inner_comm_isend:
+    args:
+        input:
+            dtype: tensor
+        dst:
+            dtype: int
+        group:
+            dtype: str
+        tag:
+            dtype: int
+    returns:
+        output:
+            dtype: tensor
+    labels:
+        side_effect_mem: True
+    function:
+        disable: True
+    dispatch:
+        enable: True
+        is_comm_op: True
+        Ascend: InnerCommIsendAscend
+        GPU: InnerCommIsendGPU

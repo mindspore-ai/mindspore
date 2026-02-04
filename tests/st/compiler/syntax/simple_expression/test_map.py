@@ -25,7 +25,7 @@ context.set_context(mode=context.GRAPH_MODE)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_map_args_size():
     """
     Feature: Check the size of inputs of map.
@@ -83,7 +83,7 @@ def test_map_args_type():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_map_args_full_make_list():
     """
     Feature: Check the types of all inputs in Map.
@@ -109,7 +109,7 @@ def test_map_args_full_make_list():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_map_args_full_make_list_same_length():
     """
     Feature: Check the length of list input Map.

@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_PYBIND_API_HAL_STREAM_PY_H
 #include <string>
 #include <memory>
-#include "runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
 
 namespace mindspore {
 namespace hal {

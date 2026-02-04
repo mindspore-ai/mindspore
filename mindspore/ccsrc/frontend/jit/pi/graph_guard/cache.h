@@ -171,7 +171,7 @@ class CodeCache {
 
   void set_code(const OptCodePtr &ptr) { code_ = ptr; }
   FailInfo FindFailInfo(const TracePtr &p, GIType item_type) const;
-  void CollectFailGuard();
+  void CollectFailGuard(const PyFrameWrapper &f);
   void Clear();
 
  private:

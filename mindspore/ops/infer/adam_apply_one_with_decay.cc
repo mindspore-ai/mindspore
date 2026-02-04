@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <vector>
+#include <utility>
 
 #include "abstract/abstract_value.h"
 #include "abstract/dshape.h"
@@ -31,9 +32,10 @@
 #include "infer/ops_func_impl/add.h"
 #include "infer/ops_func_impl/sub.h"
 #include "infer/ops_func_impl/sqrt.h"
-#include "mindspore/ops/op_def/nn_optimizer_ops.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/nn_optimizer_ops.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "ops/infer_info/abstract_infer_info_adapter.h"
 
 namespace mindspore {
 namespace ops {
@@ -61,7 +63,15 @@ auto AdamDecaySqrtInfer = [](const abstract::AnalysisEnginePtr &, const Primitiv
 abstract::AbstractBasePtr AdamDecayMulInfer(const PrimitivePtr &primitive, const abstract::AbstractBasePtr &x,
                                             const abstract::AbstractBasePtr &y) {
   auto mul_infer_impl = std::make_shared<ops::MulFuncImpl>();
-  return MakeAbstract(mul_infer_impl->InferShape(primitive, {x, y}), mul_infer_impl->InferType(primitive, {x, y}));
+  auto x_info = std::make_unique<AbstractInferInfoAdapter>(x, "Mul", "x");
+  auto y_info = std::make_unique<AbstractInferInfoAdapter>(y, "Mul", "y");
+  InferInfoPtrList input_infos;
+  input_infos.push_back(std::move(x_info));
+  input_infos.push_back(std::move(y_info));
+  auto shape_array = mul_infer_impl->InferShape(primitive, input_infos);
+  auto type_array = mul_infer_impl->InferType(primitive, input_infos);
+  return MakeAbstract(std::make_shared<abstract::Shape>(shape_array[0]),
+                      std::make_shared<TensorType>(TypeIdToType(type_array[0])));
 }
 
 std::vector<AbstractBasePtr> AdamDecayInferOutputs(const PrimitivePtr &primitive,

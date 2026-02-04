@@ -54,7 +54,8 @@ def case_input_dyn(mode, device_target, dtype="float32"):
     assert np.allclose(output.asnumpy(), expected, 1e-3, 1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.25)
 def test_resize_bilinear_ascend():
     """
     Feature: Test resize_bilinear on ascend.
@@ -65,7 +66,7 @@ def test_resize_bilinear_ascend():
     case_input_dyn(context.PYNATIVE_MODE, "Ascend")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_resize_bilinear_gpu():
     """
     Feature: Test resize_bilinear on GPU.

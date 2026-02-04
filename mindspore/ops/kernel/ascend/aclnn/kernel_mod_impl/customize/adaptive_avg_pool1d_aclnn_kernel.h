@@ -1,5 +1,5 @@
 /**
- * Copyright 2024 Huawei Technologies Co., Ltd
+ * Copyright 2024-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,12 +31,12 @@ class AdaptivePool1DAscend : public AclnnKernelMod {
   explicit AdaptivePool1DAscend(std::string &&op_type) : AclnnKernelMod(std::move(op_type)) {}
   ~AdaptivePool1DAscend() = default;
   void SetParaForPool2D(const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs);
-  void RestoreOutputShape(const std::vector<KernelTensor *> &outputs);
 
  protected:
   std::vector<int64_t> output_size_for_2d_;
   ShapeVector out_shape_ori;
   std::shared_ptr<KernelTensor> input_kernel_tensor_;
+  std::vector<std::shared_ptr<KernelTensor>> output_kernel_tensors_;
   DEFINE_GET_WORKSPACE_FOR_RESIZE()
 };
 

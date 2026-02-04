@@ -10,6 +10,6 @@ mindspore.parallel.nn.GradAccumulation
         - **micro_size** (int) - MicroBatchSize。
 
     异常：
-        - **TypeError** - `network` 不是cell类型输入。
+        - **TypeError** - `network` 不是Cell类型输入。
         - **TypeError** - `micro_size` 不是整数类型。
         - **ValueError** - `micro_size` 值异常，为0或者负数。

@@ -49,8 +49,8 @@ install(
 install(
     TARGETS mindspore_core mindspore_ops mindspore_common mindspore_ms_backend mindspore_pyboost mindspore_pynative
         mindspore_backend_manager mindspore_hardware_abstract mindspore_frontend mindspore_profiler
-        mindspore_memory_pool mindspore_runtime_pipeline mindspore_dump mindspore_backend_common
-        mindspore_extension mindspore_runtime_utils
+        mindspore_memory_pool mindspore_runtime_pipeline mindspore_backend_common
+        mindspore_runtime_utils mindspore_cluster mindspore_tools mindspore_pynative_utils mindspore_ops_host
     DESTINATION ${INSTALL_LIB_DIR}
     COMPONENT mindspore
 )
@@ -91,8 +91,8 @@ if(ENABLE_GPU)
 endif()
 
 if(USE_GLOG)
-    install(FILES ${glog_LIBPATH}/libmindspore_glog.so.0.4.0
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libmindspore_glog.so.0 COMPONENT mindspore)
+    install(FILES ${glog_LIBPATH}/libglog.so.0.7.1
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libglog.so.2 COMPONENT mindspore)
 endif()
 
 if(ENABLE_MINDDATA)
@@ -127,12 +127,12 @@ if(ENABLE_MINDDATA)
           DESTINATION ${INSTALL_LIB_DIR} RENAME libswscale.so.6 COMPONENT mindspore)
     endif()
 
-    install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.5.2
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_core.so.4.5 COMPONENT mindspore)
-    install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.5.2
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgcodecs.so.4.5 COMPONENT mindspore)
-    install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.5.2
-      DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgproc.so.4.5 COMPONENT mindspore)
+    install(FILES ${opencv_LIBPATH}/libopencv_core.so.4.11.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_core.so.411 COMPONENT mindspore)
+    install(FILES ${opencv_LIBPATH}/libopencv_imgcodecs.so.4.11.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgcodecs.so.411 COMPONENT mindspore)
+    install(FILES ${opencv_LIBPATH}/libopencv_imgproc.so.4.11.0
+      DESTINATION ${INSTALL_LIB_DIR} RENAME libopencv_imgproc.so.411 COMPONENT mindspore)
     install(FILES ${tinyxml2_LIBPATH}/libtinyxml2.so.10.0.0
       DESTINATION ${INSTALL_LIB_DIR} RENAME libtinyxml2.so.10 COMPONENT mindspore)
 
@@ -251,6 +251,14 @@ if(ENABLE_D)
                     COMPONENT mindspore
             )
         endif()
+        if(DEFINED ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME})
+            install(
+                    TARGETS mindspore_symmetric_memory_kernels LIBRARY
+                    DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
+                    COMPONENT mindspore
+                    NAMELINK_SKIP
+            )
+        endif()
     endif()
 endif()
 
@@ -340,10 +348,12 @@ install(
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/safeguard
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/run_check
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/experimental
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/graph
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/mint
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/multiprocessing
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/hal
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/utils
+        ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/tools
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/device_context
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/runtime
         ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/device_context
@@ -352,21 +362,21 @@ install(
     COMPONENT mindspore
 )
 
-if(ENABLE_AKG AND CMAKE_SYSTEM_NAME MATCHES "Linux")
+if(ENABLE_AKG AND CMAKE_SYSTEM_NAME MATCHES "Linux" AND NOT ENABLE_D)
     set (AKG_PATH ${BUILD_PATH}/mindspore/akg)
     file(REMOVE_RECURSE ${AKG_PATH}/_akg)
     file(MAKE_DIRECTORY ${AKG_PATH}/_akg)
     file(TOUCH ${AKG_PATH}/_akg/__init__.py)
-    install(DIRECTORY "${AKG_PATH}/akg" DESTINATION "${AKG_PATH}/_akg")
+    install(DIRECTORY "${akg_LIBPATH}/akg" DESTINATION "${AKG_PATH}/_akg")
     install(
         DIRECTORY
             ${AKG_PATH}/_akg
         DESTINATION ${INSTALL_PY_DIR}/
         COMPONENT mindspore
     )
-    if(ENABLE_CPU AND NOT ENABLE_GPU AND NOT ENABLE_D)
+    if(ENABLE_CPU AND NOT ENABLE_GPU)
         install(
-                TARGETS akg
+                FILES ${akg_LIBPATH}/libakg.so
                 DESTINATION ${INSTALL_PLUGIN_DIR}/cpu
                 COMPONENT mindspore
         )
@@ -374,16 +384,8 @@ if(ENABLE_AKG AND CMAKE_SYSTEM_NAME MATCHES "Linux")
 
     if(ENABLE_GPU)
         install(
-                TARGETS akg
+                FILES ${akg_LIBPATH}/libakg.so
                 DESTINATION ${INSTALL_PLUGIN_DIR}/gpu${CUDA_VERSION}
-                COMPONENT mindspore
-        )
-    endif()
-
-    if(ENABLE_D)
-        install(
-                TARGETS akg
-                DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
                 COMPONENT mindspore
         )
     endif()
@@ -398,6 +400,14 @@ if(ENABLE_D)
             COMPONENT mindspore
         )
     endif()
+    if(DEFINED ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME})
+        set(_MS_SYMMETRIC_MEMORY_KERNEL_HOME $ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME})
+        install(
+            DIRECTORY ${_MS_SYMMETRIC_MEMORY_KERNEL_HOME}
+            DESTINATION ${INSTALL_PLUGIN_DIR}/ascend
+            COMPONENT mindspore
+        )
+    endif()
 endif()
 
 if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/dataset)
@@ -407,14 +417,6 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/mindspore/python/mindspore/dataset)
         COMPONENT mindspore
     )
 endif()
-
-## Public header files
-install(
-    DIRECTORY ${CMAKE_SOURCE_DIR}/include
-    DESTINATION ${INSTALL_BASE_DIR}
-    COMPONENT mindspore
-    PATTERN "OWNERS" EXCLUDE
-)
 
 ## Public header files for minddata
 install(
@@ -461,17 +463,32 @@ install(
     COMPONENT mindspore
     FILES_MATCHING PATTERN "*.h"
 )
+install(
+        DIRECTORY ${CMAKE_SOURCE_DIR}/mindspore/include
+        DESTINATION ${INSTALL_BASE_DIR}/include/mindspore
+        COMPONENT mindspore
+        FILES_MATCHING PATTERN "*.h"
+)
 install(DIRECTORY ${securec_INC}
     DESTINATION ${INSTALL_BASE_DIR}/include/third_party
     COMPONENT mindspore
     FILES_MATCHING PATTERN "*.h")
 
 ## msextension for custom ops
-install(FILES ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/ms_extension/all.h
-    DESTINATION ${INSTALL_BASE_DIR}/include
-    RENAME ms_extension.h
+install(FILES ${CMAKE_SOURCE_DIR}/mindspore/include/custom_op_api.h
+    DESTINATION ${INSTALL_BASE_DIR}/include/mindspore/ccsrc/ms_extension
+    RENAME all.h
     COMPONENT mindspore)
 
+install(FILES ${CMAKE_SOURCE_DIR}/mindspore/include/custom_op_api.h
+        DESTINATION ${INSTALL_BASE_DIR}/include/mindspore/ccsrc/ms_extension
+        RENAME api.h
+        COMPONENT mindspore)
+
+install(FILES ${CMAKE_SOURCE_DIR}/mindspore/include/custom_op_api.h
+        DESTINATION ${INSTALL_BASE_DIR}/include/mindspore/ccsrc/include
+        RENAME ms_extension.h
+        COMPONENT mindspore)
 ## third-party header files
 install(DIRECTORY ${pybind11_INC}/pybind11
     DESTINATION ${INSTALL_BASE_DIR}/include/third_party

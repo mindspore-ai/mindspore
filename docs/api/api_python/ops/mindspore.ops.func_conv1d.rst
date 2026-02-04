@@ -25,7 +25,7 @@ mindspore.ops.conv1d
     卷积核在第 :math:`k` 个输入通道的卷积核切片， :math:`{X}(N_i, k)` 为特征图第 :math:`i` 个batch第 :math:`k` 个输入通道的切片。
     卷积核shape为 :math:`(\text{kernel_size})` ，其中 :math:`\text{kernel_size}` 是卷积核的宽度。若考虑到输入输出通道以及groups，则完整卷积核的shape为
     :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size})` ，
-    其中 `groups` 是分组卷积时在通道上分割输入 `x` 的组数。
+    其中 `groups` 是分组卷积时在通道上分割输入 `input` 的组数。
 
     想更深入了解卷积层，请参考论文 `Gradient Based Learning Applied to Document Recognition <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_ 和 `ConvNets <http://cs231n.github.io/convolutional-networks/>`_ 。
 
@@ -57,7 +57,7 @@ mindspore.ops.conv1d
         - **TypeError** -  `groups` 不是int。
         - **TypeError** -  `bias` 不是Tensor。
         - **ValueError** - `bias` 的shape不是 :math:`(C_{out})` 。
-        - **ValueError** - `stride` 或 `diation` 小于1。
+        - **ValueError** - `stride` 或 `dilation` 小于1。
         - **ValueError** - `pad_mode` 不是"same"、"valid"或"pad"。
         - **ValueError** - `padding` 是一个长度不等于1的tuple。
         - **ValueError** - `pad_mode` 不等于"pad"时，`padding` 大于0。

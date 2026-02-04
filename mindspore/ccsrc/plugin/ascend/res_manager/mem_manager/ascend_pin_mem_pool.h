@@ -16,13 +16,13 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_PIN_MEM_POOL_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_ASCEND_PIN_MEM_POOL_H_
 
-#include "runtime/hardware_abstract/memory_manager/pin_mem_pool.h"
+#include "include/runtime/hardware_abstract/memory_manager/pin_mem_pool.h"
 #include "plugin/ascend/res_manager/visible.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
-class ASCEND_RES_MANAGER_EXPORT AscendPinMemPool : public PinMemPool {
+class AscendPinMemPool : public PinMemPool {
  public:
   ~AscendPinMemPool() = default;
   static AscendPinMemPool &GetInstance();

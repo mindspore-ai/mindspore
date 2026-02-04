@@ -20,7 +20,7 @@ import numpy as np
 
 from mindspore._c_expression import typing
 from ..core.validator_helpers import parse_user_args, type_check, check_pos_int64, check_value, check_positive, \
-    check_tensor_op, type_check_list, deprecator_factory
+    check_tensor_op, type_check_list
 
 # POS_INT_MIN is used to limit values from starting from 0
 POS_INT_MIN = 1
@@ -138,23 +138,6 @@ def check_slice_op(method):
     return new_method
 
 
-def check_mask_op(method):
-    """Wrapper method to check the parameters of mask."""
-
-    @wraps(method)
-    def new_method(self, *args, **kwargs):
-        [operator, constant, dtype], _ = parse_user_args(method, *args, **kwargs)
-
-        from .c_transforms import Relational
-        type_check(operator, (Relational,), "operator")
-        type_check(constant, (str, float, bool, int, bytes), "constant")
-        type_check(dtype, (typing.Type,), "dtype")
-
-        return method(self, *args, **kwargs)
-
-    return new_method
-
-
 def check_mask_op_new(method):
     """Wrapper method to check the parameters of mask."""
 
@@ -246,8 +229,6 @@ def check_random_transform_ops(method):
 
 def check_transform_op_type(ind, op):
     """Check the operation."""
-    # c_vision.HWC2CHW error
-    # py_vision.HWC2CHW error
     if type(op) == type:  # pylint: disable=unidiomatic-typecheck
         raise ValueError("op_list[{}] should be a dataset processing operation instance, "
                          "but got: {}. It may be missing parentheses for instantiation.".format(ind, op))
@@ -297,10 +278,6 @@ def check_random_apply(method):
         type_check(transforms, (list,), "transforms")
 
         for i, transform in enumerate(transforms):
-            if str(transform).find("c_transform") >= 0:
-                raise ValueError(
-                    "transforms[{}] is not a py transforms. Should not use a c transform in py transform" \
-                        .format(i))
             check_transform_op_type(i, transform)
 
         if prob is not None:
@@ -321,10 +298,6 @@ def check_transforms_list(method):
 
         type_check(transforms, (list,), "transforms")
         for i, transform in enumerate(transforms):
-            if str(transform).find("c_transform") >= 0:
-                raise ValueError(
-                    "transforms[{}] is not a py transforms. Should not use a c transform in py transform" \
-                        .format(i))
             check_transform_op_type(i, transform)
         return method(self, *args, **kwargs)
 
@@ -386,25 +359,3 @@ def check_type_cast(method):
         return method(self, *args, **kwargs)
 
     return new_method
-
-
-def deprecated_c_transforms(substitute_name=None, substitute_module=None):
-    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.transforms.c_transforms operation.
-
-    Args:
-        substitute_name (str, optional): The substitute name for deprecated operation.
-        substitute_module (str, optional): The substitute module for deprecated operation.
-    """
-    return deprecator_factory("1.8", "mindspore.dataset.transforms.c_transforms", "mindspore.dataset.transforms",
-                              substitute_name, substitute_module)
-
-
-def deprecated_py_transforms(substitute_name=None, substitute_module=None):
-    """Decorator for version 1.8 deprecation warning for legacy mindspore.dataset.transforms.py_transforms operation.
-
-    Args:
-        substitute_name (str, optional): The substitute name for deprecated operation.
-        substitute_module (str, optional): The substitute module for deprecated operation.
-    """
-    return deprecator_factory("1.8", "mindspore.dataset.transforms.py_transforms", "mindspore.dataset.transforms",
-                              substitute_name, substitute_module)

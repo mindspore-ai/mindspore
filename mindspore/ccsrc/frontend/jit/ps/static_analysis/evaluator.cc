@@ -20,36 +20,35 @@
 #include <ostream>
 #include <utility>
 
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/structure_ops.h"
 #include "utils/tensor_hook_map.h"
 #include "ir/func_graph_cloner.h"
 #include "abstract/utils.h"
-#include "include/common/fallback.h"
+#include "include/utils/pipeline/fallback.h"
 #include "frontend/jit/ps/debug/trace.h"
-#include "include/common/utils/recompute_helper.h"
 #include "utils/ms_context.h"
 #include "utils/compile_config.h"
 #include "utils/trace_info.h"
 #include "frontend/jit/ps/static_analysis/stack_frame.h"
 #include "frontend/jit/ps/static_analysis/async_eval_result.h"
-#include "frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/frontend/jit/ps/executor/graph_executor_py.h"
 #include "frontend/jit/ps/pipeline.h"
 #include "frontend/expander/bprop/bprop_meta_func_graph.h"
 #include "frontend/operator/composite/unpack_call.h"
 #include "frontend/optimizer/fallback_rewriter.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/operator/composite/composite.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_i.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_l.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_i.h"
+#include "primitive/auto_generate/gen_ops_primitive_l.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -605,9 +604,6 @@ FuncGraphPtr MetaFuncGraphEvaluator::GetFuncGraph(AnalysisEnginePtr engine, cons
     meta_func_graph_->set_scope_name(scope_->name());
   }
   if (this->bound_node() != nullptr) {
-    if (meta_func_graph_->isa<prim::RecomputeBlock>() && WithRecomputedScope(bound_node())) {
-      MS_LOG(EXCEPTION) << "The cell passed into the recompute api should be set recomputed only once.";
-    }
     auto node_debug_info = bound_node()->debug_info();
     TraceGuard trace_guard(MakeTraceInfo<TraceGenMetaFuncGraph>(node_debug_info));  // Allow null debug info.
     if (node_debug_info != nullptr) {

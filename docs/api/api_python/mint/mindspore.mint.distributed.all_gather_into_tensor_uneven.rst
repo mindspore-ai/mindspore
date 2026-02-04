@@ -8,6 +8,7 @@ mindspore.mint.distributed.all_gather_into_tensor_uneven
     .. note::
         - 各设备的输入张量除第一个维度外必须具有相同shape。
         - 输出张量的第一个维度是所有设备输入张量第一个维度之和。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **output** (Tensor) - 拼接后的输出张量，shape为 :math:`(\sum_{i=0}^{N-1} x_{i1}, x_2, ..., x_R)`，其中N为通信组中的设备数量。

@@ -17,6 +17,3 @@ unstack_ext_view:
         side_effect_mem: True
     dispatch:
         enable: True
-        Ascend: UnstackExtViewAscend
-        CPU: None
-        GPU: None

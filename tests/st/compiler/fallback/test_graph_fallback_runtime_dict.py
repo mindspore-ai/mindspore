@@ -38,7 +38,7 @@ def test_dict_return_1():
     def dict_net_1():
         x = {'a': 'a', 'b': 'b'}
         y = x.get('a')
-        z = dict(y=y)
+        z = {y: y}
         return z
 
     out = dict_net_1()
@@ -76,7 +76,7 @@ def test_dict_return_2():
         x = {'a': 1, 'b': 2}
         y = x.get('a')
         y_tensor = ms.Tensor([y])
-        z = dict(a=y_tensor)
+        z = {"a": y_tensor}
         return z
 
     out = dict_net_2()
@@ -97,7 +97,7 @@ def test_dict_get_2():
         x = {'a': 1, 'b': 2}
         y = x.get('a')
         y_tensor = ms.Tensor([y])
-        z = dict(a=y_tensor, b='hello', c='world')
+        z = {"a": y_tensor, "b": 'hello', "c": 'world'}
         return z
 
     out = dict_net_2()
@@ -105,7 +105,7 @@ def test_dict_get_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.0)
 def test_dict_get_3():
     """
     Feature: Return dict.
@@ -118,7 +118,7 @@ def test_dict_get_3():
         x = {'a': 1, 'b': 2}
         y = x.get('a')
         y_tensor = ms.Tensor([y])
-        z = dict(y=y_tensor, a='a', b='c')
+        z = {"y": y_tensor, "a": 'a', "b": 'c'}
         return z
 
     out = dict_net_3()
@@ -139,7 +139,7 @@ def test_multiple_return_contains_dict():
         x = {'a': 1, 'b': 2}
         y = x.get('a')
         y_tensor = ms.Tensor([y])
-        z = dict(a=y_tensor)
+        z = {"a": y_tensor}
         return y, z, (1, 2)
 
     out = dict_net_2()
@@ -228,7 +228,7 @@ def fc_with_initialize(input_channels, out_channels):
 
 @pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_net_dict_1():
     """
     Feature: Return dict.
@@ -264,7 +264,7 @@ def test_net_dict_1():
             x = self.relu(x)
             x = self.fc3(x)
             fc_x = x
-            outputs = dict(conv1=conv1_x, conv2=conv2_x, fc=fc_x)  # @jit.typing: () -> tensor_type[float32]
+            outputs = {"conv1": conv1_x, "conv2": conv2_x, "fc": fc_x}  # @jit.typing: () -> tensor_type[float32]
             return outputs
 
     net = DictLeNetNet()
@@ -277,7 +277,7 @@ def test_net_dict_1():
 
 @pytest.mark.skip(reason="Pyexecute output is not any and type is wrong.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_net_dict_1_grad():
     """
     Feature: Return dict.
@@ -313,7 +313,7 @@ def test_net_dict_1_grad():
             x = self.relu(x)
             x = self.fc3(x)
             fc_x = x
-            outputs = dict(conv1=conv1_x, conv2=conv2_x, fc=fc_x)  # @jit.typing: () -> tensor_type[float32]
+            outputs = {"conv1": conv1_x, "conv2": conv2_x, "fc": fc_x}  # @jit.typing: () -> tensor_type[float32]
             return outputs
 
     net = DictLeNetNet()
@@ -323,7 +323,7 @@ def test_net_dict_1_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_net_dict_2():
     """
     Feature: Return dict.
@@ -344,7 +344,7 @@ def test_net_dict_2():
             self.flatten = ms.nn.Flatten()
 
         def construct(self, x):
-            outputs = dict()
+            outputs = {} 
             x = self.conv1(x)
             outputs['conv1'] = x
             x = self.relu(x)
@@ -371,7 +371,7 @@ def test_net_dict_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_net_dict_2_grad():
     """
     Feature: Return dict.
@@ -422,7 +422,7 @@ def test_net_dict_2_grad():
             self.flatten = ms.nn.Flatten()
 
         def construct(self, x):
-            outputs = dict()
+            outputs = {} 
             x = self.conv1(x)
             outputs['conv1'] = x
             x = self.relu(x)
@@ -472,7 +472,7 @@ def test_return_nested_dict1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_return_nested_dict2():
     """
     Feature: Return nested output of dict.
@@ -495,7 +495,7 @@ def test_return_nested_dict2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_return_nested_dict3():
     """
     Feature: Return nested output of dict.
@@ -518,7 +518,7 @@ def test_return_nested_dict3():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_return_nested_dict_with_inputs():
     """
     Feature: Return nested output of dict.
@@ -537,7 +537,7 @@ def test_return_nested_dict_with_inputs():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_nested_dict_with_parameter():
     """
     Feature: Support dict.
@@ -613,7 +613,7 @@ def test_return_nested_dict_with_parameter2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.01)
 def test_nested_dict_with_parameter_constant1():
     """
     Feature: Support dict.
@@ -640,7 +640,7 @@ def test_nested_dict_with_parameter_constant1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_nested_dict_with_parameter_constant2():
     """
     Feature: Support dict.
@@ -667,7 +667,7 @@ def test_nested_dict_with_parameter_constant2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_return_nested_dict_with_parameter_constant1():
     """
     Feature: Return nested output of dict with parameter constant.
@@ -691,7 +691,7 @@ def test_return_nested_dict_with_parameter_constant1():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=4.00)
 def test_return_nested_dict_with_parameter_constant2():
     """
     Feature: Return nested output of dict with parameter constant.
@@ -716,7 +716,7 @@ def test_return_nested_dict_with_parameter_constant2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_return_nested_dict_with_parameter_constant3():
     """
     Feature: Return nested output of dict with parameter constant.
@@ -740,7 +740,7 @@ def test_return_nested_dict_with_parameter_constant3():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_return_nested_dict_with_parameter_constant4():
     """
     Feature: Return nested output of dict with parameter constant.
@@ -809,7 +809,7 @@ def test_return_dict_with_dict_items():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_return_dict_with_empty_shape_tensor():
     """
     Feature: Return dict which contains tensor with empty shape.
@@ -826,7 +826,7 @@ def test_return_dict_with_empty_shape_tensor():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.0)
 def test_return_dict_in_if_else():
     """
     Feature: Support dict return.
@@ -848,7 +848,7 @@ def test_return_dict_in_if_else():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_return_different_size_dict_in_if_else():
     """
     Feature: Support dict return.
@@ -872,7 +872,7 @@ def test_return_different_size_dict_in_if_else():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_get_item_with_string_input():
     """
     Feature: Support string as the input of top network.
@@ -891,7 +891,7 @@ def test_get_item_with_string_input():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.00)
 def test_get_item_with_string_input_grad():
     """
     Feature: Support string as the input of top network.
@@ -910,7 +910,7 @@ def test_get_item_with_string_input_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.0)
 def test_return_dict_with_string_input():
     """
     Feature: Support string as the input of top network.
@@ -928,7 +928,7 @@ def test_return_dict_with_string_input():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.0)
 def test_return_dict_with_string_input_grad():
     """
     Feature: Support string as the input of top network.
@@ -946,7 +946,7 @@ def test_return_dict_with_string_input_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_return_dict_with_different_size_branch():
     """
     Feature: Support dict return.
@@ -966,10 +966,10 @@ def test_return_dict_with_different_size_branch():
             x = [1, 2, 3]
             y = [4, 5, 6]
             if z >= 0:
-                ret = {k: v for k, v in zip(x, y)}
+                ret = dict(zip(x, y))
             else:
                 d = [[i, sum(self.obj(x, y)[i])] for i in range(2)]
-                ret = {k: v for k, v in d}
+                ret = dict(d)
             return ret
 
     ms_net = DictNet()
@@ -983,7 +983,7 @@ def test_return_dict_with_different_size_branch():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_dict_inner_method_overrrided_1():
     """
     Feature: Support overriding dict getitem.
@@ -1023,7 +1023,7 @@ def test_dict_inner_method_overrrided_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_dict_inner_method_overrrided_3():
     """
     Feature: Support getattr from overridden dict.
@@ -1049,7 +1049,7 @@ def test_dict_inner_method_overrrided_3():
 
 @pytest.mark.skip(reason="Jit will run strict mode in the future")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=0.01)
 def test_pynative_jit_dict_grad():
     """
     Feature: Return dict in forward graph.
@@ -1069,7 +1069,7 @@ def test_pynative_jit_dict_grad():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_pynative_jit_dict_grad_2():
     """
     Feature: Return dict in forward graph.
@@ -1090,7 +1090,7 @@ def test_pynative_jit_dict_grad_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_jitclass_grad():
     """
     Feature: Support grad with custom class in jit in pynative mode.

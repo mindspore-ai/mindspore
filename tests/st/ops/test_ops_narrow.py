@@ -44,7 +44,7 @@ def narrow_backward_func(x, dim, start, length):
     return ops.grad(narrow_forward_func, (0))(x, dim, start, length)  # pylint: disable=not-callable
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential', mem_peak=1024.01)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_ops_narrow_forward(context_mode):
     """
@@ -74,7 +74,8 @@ def test_ops_narrow_forward(context_mode):
     np.testing.assert_allclose(output_grad.asnumpy(), expect_grad, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.0)
 @pytest.mark.parametrize('context_mode', ['pynative', 'KBK'])
 def test_ops_narrow_forward_case01(context_mode):
     """
@@ -104,7 +105,8 @@ def test_ops_narrow_forward_case01(context_mode):
     np.testing.assert_allclose(output_grad.asnumpy(), expect_grad, rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=2048.01)
 def test_ops_narrow_backward_dynamic_shape():
     """
     Feature: pyboost function.

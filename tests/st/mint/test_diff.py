@@ -68,7 +68,7 @@ def test_ops_diff_binary_cases(context_mode):
     mint_diff_binary_case2()
 
 @arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
-          card_mark='onecard', essential_mark='essential')
+          card_mark='onecard', essential_mark='essential', mem_peak=4.0)
 def test_ops_normalize_dynamic_shape():
     """
     Feature: Ops

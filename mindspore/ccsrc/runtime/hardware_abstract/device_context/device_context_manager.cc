@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #if defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif
@@ -29,8 +29,8 @@
 #include "utils/ms_context.h"
 #include "utils/dlopen_macro.h"
 #include "utils/os.h"
-#include "include/common/utils/anfalgo.h"
-#include "runtime/hardware_abstract/stream/multi_stream_controller.h"
+#include "include/utils/anfalgo.h"
+#include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
 #include "utils/ms_exception.h"
 
 namespace mindspore {
@@ -532,13 +532,6 @@ void DeviceContextManager::SyncAllStreams() const {
   for (const auto &item : device_contexts_) {
     auto device_context = item.second;
     if (device_context != nullptr && !device_context->device_res_manager_->SyncAllStreams()) {
-      MS_LOG(WARNING) << "Uce flag: " << UCEException::GetInstance().get_uce_flag()
-                      << ", force stop flag: " << UCEException::GetInstance().get_force_stop_flag();
-      if (UCEException::GetInstance().get_uce_flag()) {
-        MS_LOG(EXCEPTION) << "UCEError occurs when execute.";
-      } else if (UCEException::GetInstance().get_force_stop_flag()) {
-        MS_LOG(EXCEPTION) << "ForceStopError occurs when execute.";
-      }
       MS_LOG(EXCEPTION) << "SyncStream failed, device info: " << device_context->device_context_key().ToString();
     }
   }

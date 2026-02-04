@@ -15,7 +15,7 @@
 """ut for stress detect"""
 import pytest
 import mindspore as ms
-from mindspore.utils import stress_detect
+from mindspore.tools import stress_detect
 
 def test_stress_detect_aic_cpu():
     """

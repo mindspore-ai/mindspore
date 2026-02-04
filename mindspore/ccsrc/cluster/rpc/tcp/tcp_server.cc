@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
-#include "include/backend/distributed/rpc/tcp/tcp_server.h"
+#include "include/cluster/rpc/tcp_server.h"
+#include <memory>
+#include <string>
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
+#include "cluster/rpc/tcp/tcp_comm.h"
 
 namespace mindspore {
 namespace distributed {

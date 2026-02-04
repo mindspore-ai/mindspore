@@ -141,7 +141,8 @@ uint32_t SliceGradKernel::SliceGradTask() {
 
   // Calc process
   // 1. fill output address with 0
-  int64_t output_num = std::accumulate(output_shape_.begin(), output_shape_.end(), 1, std::multiplies<int64_t>());
+  int64_t output_num =
+    std::accumulate(output_shape_.begin(), output_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>());
   size_t output_byte = LongToSize(output_num) * sizeof(S);
   if (memset_s(out_addr, output_byte, 0, output_byte) != EOK) {
     CUST_AICPU_LOGE(workspace_info_, "For 'SliceGrad', memset_s on output tensor address failed!");

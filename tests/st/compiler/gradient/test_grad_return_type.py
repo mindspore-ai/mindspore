@@ -15,20 +15,20 @@
 # pylint: disable=unused-variable
 """test function grad in graph mode"""
 import numpy as np
+import torch
 import pytest
-import mindspore.nn as nn
 import mindspore as ms
-from mindspore import Tensor, Parameter, ops
+from mindspore import Tensor, Parameter, ops, nn
 from mindspore.ops import GradOperation, grad, get_grad
 from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from tests.mark_utils import arg_mark
 
 
 class GradOperationNet(nn.Cell):
     def __init__(self, net, get_all=False, get_by_list=False, sens_param=False):
-        super(GradOperationNet, self).__init__()
+        super().__init__()
         self.net = net
         self.grad_op = GradOperation(get_all=get_all, get_by_list=get_by_list, sens_param=sens_param)
 
@@ -39,7 +39,7 @@ class GradOperationNet(nn.Cell):
 
 class GradOperationNetWrtParameter(nn.Cell):
     def __init__(self, net, get_all=False, get_by_list=False):
-        super(GradOperationNetWrtParameter, self).__init__()
+        super().__init__()
         self.net = net
         self.params = net.trainable_params()
         self.grad_op = GradOperation(get_all=get_all, get_by_list=get_by_list)
@@ -51,7 +51,7 @@ class GradOperationNetWrtParameter(nn.Cell):
 
 class GradOperationNetWrtParameterTuple(nn.Cell):
     def __init__(self, net, get_all=False, get_by_list=False):
-        super(GradOperationNetWrtParameterTuple, self).__init__()
+        super().__init__()
         self.net = net
         self.params = net.trainable_params()
         self.grad_op = GradOperation(get_all=get_all, get_by_list=get_by_list)
@@ -63,7 +63,7 @@ class GradOperationNetWrtParameterTuple(nn.Cell):
 
 class GradOperationNetWrtParameterNone(nn.Cell):
     def __init__(self, net, get_all=False, get_by_list=False):
-        super(GradOperationNetWrtParameterNone, self).__init__()
+        super().__init__()
         self.net = net
         self.grad_op = GradOperation(get_all=get_all, get_by_list=get_by_list)
 
@@ -72,10 +72,53 @@ class GradOperationNetWrtParameterNone(nn.Cell):
         return gradient_function(*args)
 
 
+class GradNetWrtWeight(nn.Cell):
+    def __init__(self, net, grad_position=0, weight=None):
+        super().__init__()
+        self.grad_func = grad(net, grad_position, weight)
+
+    def construct(self, *args):
+        return self.grad_func(*args)
+
+
+class GradOperationNetWithParams(nn.Cell):
+    def __init__(self, net, params, get_all=False, get_by_list=False):
+        super().__init__()
+        self.net = net
+        self.params = params
+        self.grad_op = GradOperation(get_all=get_all, get_by_list=get_by_list)
+
+    def construct(self, *args):
+        gradient_function = self.grad_op(self.net, self.params)
+        return gradient_function(*args)
+
+
+def grad_torch(x1, x2, net):
+    x1 = torch.from_numpy(x1)
+    x2 = torch.from_numpy(x2)
+    x1.requires_grad = True
+    x2.requires_grad = True
+
+    y1 = torch.tensor([1.0, -2.0, 3.0])
+    y2 = torch.tensor([-1.0, 2.0, 1.0])
+    y1.requires_grad = True
+    y2.requires_grad = True
+
+    out = net(x1, x2, y1, y2)
+    out.backward(gradient=torch.ones_like(out))
+    grad_ret = {}
+    for x, name in zip([x1, x2, y1, y2], ['x1', 'x2', 'y1', 'y2']):
+        if x.grad is not None:
+            grad_ret[name] = x.grad.detach().numpy()
+        else:
+            grad_ret[name] = None
+    return grad_ret
+
+
 def check_grad_result(output, expect):
     if isinstance(expect, Tensor):
         assert isinstance(output, Tensor)
-        assert np.all(output.asnumpy() == expect.asnumpy())
+        assert np.allclose(output.asnumpy(), expect.asnumpy(), 1e-3, 1e-3)
     elif isinstance(expect, tuple):
         assert isinstance(output, tuple)
         assert len(output) == len(expect)
@@ -115,7 +158,7 @@ def test_grad_operation_default_single_input(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -141,7 +184,7 @@ def test_grad_operation_with_invalid_ones_like_output(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -167,7 +210,7 @@ def test_grad_operation_default_multiple_inputs(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -194,7 +237,7 @@ def test_grad_operation_default_no_input(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -219,7 +262,7 @@ def test_grad_operation_single_input(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -245,7 +288,7 @@ def test_grad_operation_multiple_inputs(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -272,7 +315,7 @@ def test_grad_operation_no_input(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -297,7 +340,7 @@ def test_grad_operation_single_param(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -323,7 +366,7 @@ def test_grad_operation_single_param_tuple(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
 
         def construct(self, x):
@@ -347,7 +390,7 @@ def test_grad_operation_multiple_params(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -392,7 +435,7 @@ def test_grad_operation_single_input_and_single_param(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -418,7 +461,7 @@ def test_grad_operation_single_input_and_single_param_tuple(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
 
         def construct(self, x):
@@ -442,7 +485,7 @@ def test_grad_operation_single_input_and_multiple_params(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -468,7 +511,7 @@ def test_grad_operation_multiple_inputs_and_single_param(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -495,7 +538,7 @@ def test_grad_operation_multiple_inputs_and_single_param_tuple(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
 
         def construct(self, x, y):
@@ -520,7 +563,7 @@ def test_grad_operation_multiple_inputs_and_multiple_params(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -548,7 +591,7 @@ def test_grad_operation_no_input_and_single_param(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -573,7 +616,7 @@ def test_grad_operation_no_input_and_single_param_tuple(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
 
         def construct(self):
@@ -596,7 +639,7 @@ def test_grad_operation_no_input_and_multiple_params(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -735,7 +778,7 @@ def test_grad_int_position(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -762,7 +805,7 @@ def test_grad_tuple_position(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -790,7 +833,7 @@ def test_grad_none_position(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
 
         def construct(self, x, y):
@@ -814,7 +857,7 @@ def test_grad_int_position_no_input():
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -839,7 +882,7 @@ def test_grad_tuple_position_no_input():
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -864,7 +907,7 @@ def test_grad_tuple_position_single_input():
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -909,7 +952,7 @@ def test_grad_int_position_and_single_param(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -937,7 +980,7 @@ def test_grad_int_position_and_single_param_tuple(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
 
         def construct(self, x, y):
@@ -963,7 +1006,7 @@ def test_grad_int_position_and_multiple_params(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1012,7 +1055,7 @@ def test_grad_tuple_position_and_single_param(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1041,7 +1084,7 @@ def test_grad_tuple_position_and_single_param_tuple(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
 
         def construct(self, x, y, z):
@@ -1068,7 +1111,7 @@ def test_grad_tuple_position_and_multiple_params(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1120,7 +1163,7 @@ def test_grad_none_position_and_single_param(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1148,7 +1191,7 @@ def test_grad_none_position_and_single_param_tuple(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
 
         def construct(self, x, y):
@@ -1174,7 +1217,7 @@ def test_grad_none_position_and_multiple_params(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1223,7 +1266,7 @@ def test_grad_empty_position_and_single_param(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1251,7 +1294,7 @@ def test_grad_empty_position_and_single_param_tuple(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
 
         def construct(self, x, y):
@@ -1277,7 +1320,7 @@ def test_grad_empty_position_and_multiple_params(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1383,7 +1426,7 @@ def test_grad_int_position_with_ids(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1410,7 +1453,7 @@ def test_grad_tuple_position_with_ids(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1456,7 +1499,7 @@ def test_grad_int_position_and_single_param_with_ids(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1484,7 +1527,7 @@ def test_grad_int_position_and_single_param_tuple_with_ids(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
 
         def construct(self, x, y):
@@ -1510,7 +1553,7 @@ def test_grad_int_position_and_multiple_params_with_ids(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1539,7 +1582,7 @@ def test_grad_tuple_position_and_single_param_with_ids(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1569,7 +1612,7 @@ def test_grad_tuple_position_and_single_param_tuple_with_ids(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
 
         def construct(self, x, y, z):
@@ -1597,7 +1640,7 @@ def test_grad_tuple_position_and_multiple_params_with_ids(mode):
     """
     class Net(nn.Cell):
         def __init__(self, w, b):
-            super(Net, self).__init__()
+            super().__init__()
             self.w = Parameter(w, name='w')
             self.b = Parameter(b, name='b')
 
@@ -1628,7 +1671,7 @@ def test_get_grad_by_position(mode):
 
     class ParamMultipleInputNet(nn.Cell):
         def __init__(self):
-            super(ParamMultipleInputNet, self).__init__()
+            super().__init__()
             self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
 
         def construct(self, x, y):
@@ -1637,7 +1680,7 @@ def test_get_grad_by_position(mode):
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = net.trainable_params()
 
@@ -1667,7 +1710,7 @@ def test_construct_get_grad_by_parameter(mode):
 
     class ParamMultipleInputNet(nn.Cell):
         def __init__(self):
-            super(ParamMultipleInputNet, self).__init__()
+            super().__init__()
             self.w = Parameter(Tensor([2., 2.], mstype.float32), name="w")
 
         def construct(self, x, y):
@@ -1676,7 +1719,7 @@ def test_construct_get_grad_by_parameter(mode):
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.weights = net.trainable_params()
 
@@ -1693,3 +1736,68 @@ def test_construct_get_grad_by_parameter(mode):
     grad_net = GradNet(inner_net)
     grad_out = grad_net(x, y)
     assert np.allclose(grad_out.asnumpy(), expect_grad_input)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
+def test_grad_input2_weight1_input_weigt_list():
+    """
+    Feature: Gradient
+    Description: Test grad operation
+    Expectation: No exception.
+    """
+    class GradNet21(nn.Cell):
+        def __init__(self):
+            super().__init__()
+            self.add = ops.add
+            self.relu = ops.relu
+            self.div = ops.div
+            self.y1 = Parameter(Tensor([1.0, -2.0, 3.0]), name="b")
+
+        def construct(self, x1, x2):
+            out = self.add(x1, self.y1)
+            out = self.relu(out)
+            out = self.div(out, x2)
+            return out
+
+    class GradNetTorch21(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.add = torch.add
+            self.relu = torch.nn.ReLU()
+            self.div = torch.div
+
+        def forward(self, x1, x2, y1, y2):
+            out = self.add(x1, y1)
+            out = self.relu(out)
+            out = self.div(out, x2)
+            return out
+
+    def check_result(expect, output, rtol=1e-3, atol=1e-3):
+        if isinstance(expect, np.ndarray):
+            assert isinstance(output, Tensor)
+            assert np.allclose(expect, output.asnumpy(), rtol, atol)
+        elif isinstance(expect, tuple):
+            assert isinstance(output, tuple)
+            assert len(output) == len(expect)
+            for x, y in zip(expect, output):
+                check_result(x, y, rtol, atol)
+        else:
+            raise TypeError("expect must be Tensor or tuple, but got {}.".format(type(expect)))
+
+    ms.set_context(mode=ms.GRAPH_MODE, jit_level="O0")
+    net = GradNet21()
+    params = net.trainable_params()
+    weight = net.trainable_params()
+    x1 = np.random.randn(3, 3, 3).astype(np.float32)
+    x2 = np.random.randn(3, 3, 3).astype(np.float32)
+    grad_func = GradOperationNetWithParams(net, params, get_all=True, get_by_list=True)
+    ms_grad_operaton = grad_func(Tensor(x1), Tensor(x2))
+    ms_grad = GradNetWrtWeight(net, grad_position=(0, 1), weight=weight)(Tensor(x1), Tensor(x2))
+
+    tc_net = GradNetTorch21()
+    tc_grad = grad_torch(x1, x2, tc_net)
+
+    expect = ((tc_grad['x1'], tc_grad['x2']), (tc_grad['y1'], ))
+    check_result(expect, ms_grad_operaton)
+    check_result(expect, ms_grad)

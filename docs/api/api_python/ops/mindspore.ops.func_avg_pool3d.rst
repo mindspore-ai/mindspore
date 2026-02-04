@@ -22,7 +22,7 @@ mindspore.ops.avg_pool3d
     参数：
         - **input_x** (Tensor) - 输入shape为 :math:`(N, C, D_{in}, H_{in}, W_{in})` 的Tensor，数据类型为float16和float32。
         - **kernel_size** (Union[int, tuple[int]], 可选) - 指定池化核尺寸大小，可以是单个整数表示池化核深度、高度、宽度，或者整数tuple分别表示池化核深度、高度、宽度。默认 ``1`` 。
-        - **stride** (Union[int, tuple[int]], 可选) - 池化操作的移动步长，可以是单个整数表示深度、高度、宽度方向的移动步长，或者整数tuple分别表示深度、高度、深度方向的移动步长。默认 ``1`` 。
+        - **stride** (Union[int, tuple[int]], 可选) - 池化操作的移动步长，可以是单个整数表示深度、高度、宽度方向的移动步长，或者整数tuple分别表示深度、高度、宽度方向的移动步长。默认 ``1`` 。
         - **padding** (Union(int, tuple[int]), 可选) - 池化填充长度。可以是一个整数表示在头尾上下左右方向的填充长度，或者包含六个整数的tuple，分别表示在头尾上下左右方向的填充长度。默认 ``0`` 。
         - **ceil_mode** (bool, 可选) - 如果为 ``True`` ，用ceil代替floor来计算输出的shape。默认 ``False`` 。
         - **count_include_pad** (bool, 可选) - 如果为 ``True`` ，平均计算将包括零填充。默认 ``True`` 。

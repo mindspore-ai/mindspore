@@ -50,7 +50,8 @@ def expect_backward_func(x, min_, max_):
     return grad(generate_expect_forward_output)(x, min_, max_)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize("context_mode", [ms.PYNATIVE_MODE])
 def test_mint_clamp_normal0(context_mode):
     """
@@ -69,7 +70,8 @@ def test_mint_clamp_normal0(context_mode):
     assert np.allclose(x.asnumpy(), expect.asnumpy(), rtol=1e-3)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=2048.00)
 @pytest.mark.parametrize("context_mode", ['pynative', 'KBK'])
 def test_mint_clamp_normal1(context_mode):
     """
@@ -92,7 +94,8 @@ def test_mint_clamp_normal1(context_mode):
     np.allclose(expect_grad, grad[0].asnumpy(), rtol=1e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=1024.01)
 @pytest.mark.parametrize("context_mode", ['pynative', 'KBK'])
 def test_mint_clamp_normal2(context_mode):
     """
@@ -119,7 +122,8 @@ def test_mint_clamp_normal2(context_mode):
     np.allclose(expect_max, grad_max.asnumpy(), rtol=1e-5)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.01)
 def test_mint_clamp_min_max_tensor_dynamic_shape():
     """
     Feature: pyboost function.
@@ -140,7 +144,8 @@ def test_mint_clamp_min_max_tensor_dynamic_shape():
             case_config={'all_dim_zero': True})
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.0)
 def test_mint_clamp_min_max_scalar_dynamic_shape():
     """
     Feature: pyboost function.

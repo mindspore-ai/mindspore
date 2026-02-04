@@ -207,45 +207,6 @@ void SSLWrapper::CleanSSL() {
   StopCheckCertTime();
 }
 
-time_t SSLWrapper::ConvertAsn1Time(const ASN1_TIME *const time) const {
-  MS_EXCEPTION_IF_NULL(time);
-  struct tm t;
-  const char *str = (const char *)time->data;
-  MS_EXCEPTION_IF_NULL(str);
-  size_t i = 0;
-
-  if (memset_s(&t, sizeof(t), 0, sizeof(t)) != EOK) {
-    MS_LOG(EXCEPTION) << "Memset Failed!";
-  }
-
-  if (time->type == V_ASN1_UTCTIME) {
-    t.tm_year = (str[i++] - '0') * kBase;
-    t.tm_year += (str[i++] - '0');
-    if (t.tm_year < kSeventyYear) {
-      t.tm_year += kHundredYear;
-    }
-  } else if (time->type == V_ASN1_GENERALIZEDTIME) {
-    t.tm_year = (str[i++] - '0') * kThousandYear;
-    t.tm_year += (str[i++] - '0') * kHundredYear;
-    t.tm_year += (str[i++] - '0') * kBase;
-    t.tm_year += (str[i++] - '0');
-    t.tm_year -= kBaseYear;
-  }
-  t.tm_mon = (str[i++] - '0') * kBase;
-  // -1 since January is 0 not 1.
-  t.tm_mon += (str[i++] - '0') - kJanuary;
-  t.tm_mday = (str[i++] - '0') * kBase;
-  t.tm_mday += (str[i++] - '0');
-  t.tm_hour = (str[i++] - '0') * kBase;
-  t.tm_hour += (str[i++] - '0');
-  t.tm_min = (str[i++] - '0') * kBase;
-  t.tm_min += (str[i++] - '0');
-  t.tm_sec = (str[i++] - '0') * kBase;
-  t.tm_sec += (str[i++] - '0');
-
-  return mktime(&t);
-}
-
 void SSLWrapper::StartCheckCertTime(const Configuration &config, const X509 *cert, const std::string &ca_path) {
   MS_EXCEPTION_IF_NULL(cert);
   MS_LOG(INFO) << "The server start check cert.";

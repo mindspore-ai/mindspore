@@ -18,7 +18,7 @@
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CONTROL_SEND_GPU_KERNEL_H_
 
 #include <vector>
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "mindspore/ops/infer/stream_send.h"
 #include "kernel/gpu/gpu_kernel.h"
 #include "kernel/gpu/gpu_kernel_factory.h"

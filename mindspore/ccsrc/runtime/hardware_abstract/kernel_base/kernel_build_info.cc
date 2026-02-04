@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include "utils/log_adapter.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_dump_utils.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {

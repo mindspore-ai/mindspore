@@ -39,7 +39,7 @@
         },
         "ASCEND_CANN_PACKAGE_PATH": {
           "type": "PATH",
-          "value": "/usr/local/Ascend/ascend-toolkit/latest"
+          "value": "/usr/local/Ascend/cann"
         },
         "ASCEND_PYTHON_EXECUTABLE": {
           "type": "STRING",

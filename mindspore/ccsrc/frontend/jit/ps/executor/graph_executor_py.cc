@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-#include "frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/frontend/jit/ps/executor/graph_executor_py.h"
 
 #include <memory>
 #include <map>
@@ -26,8 +26,8 @@
 #include <unordered_map>
 #include <functional>
 
-#include "backend/backend_manager/backend_base.h"
-#include "backend/backend_manager/backend_manager.h"
+#include "include/backend/backend_manager/backend_base.h"
+#include "include/backend/backend_manager/backend_manager.h"
 
 #include "tools/profiler/profiling.h"
 
@@ -44,15 +44,19 @@
 
 #include "mindspore/ccsrc/utils/ir_dump/dump_proto.h"
 #include "mindspore/ccsrc/utils/symbol_engine/utils.h"
-#include "include/common/utils/compile_cache_context.h"
-#include "include/common/utils/tensor_py.h"
-#include "include/common/utils/tensor_py_wrapper.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/utils/config_manager.h"
-
+#include "include/utils/compile_cache_context.h"
+#include "include/utils/tensor_py.h"
+#include "include/utils/tensor_py_wrapper.h"
+#include "include/utils/parallel_context.h"
+#include "utils/config_manager.h"
+#include "include/utils/pipeline/pipeline_utils.h"
 #include "frontend/jit/ps/event_message_print.h"
 #include "frontend/jit/ps/pass_config.h"
 #include "frontend/jit/ps/pipeline.h"
+#include "include/frontend/jit/ps/pass_interface.h"
+#include "include/frontend/jit/ps/pipeline_interface.h"
+#include "include/frontend/jit/ps/parse/py_data_convert.h"
+#include "include/frontend/optimizer/ad/grad_interface.h"
 
 #include "pybind_api/pybind_patch.h"
 #include "pybind11/pybind11.h"
@@ -268,8 +272,8 @@ void GraphExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   uint64_t start_time = profiler::GetClockSyscnt();
   abstract::AnalysisContext::ClearContext();
   ClearCompileArgumentsResource();
-  ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
-  ad::g_k_prims.clear();
+  ad::ClearPrimBpropOptimizer();
+  ad::ClearKPrim();
   ad::DFunctor::Clear();
   ReclaimOptimizer();
   resource->Clean();
@@ -327,9 +331,13 @@ bool GraphExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &a
                            parallel::ParallelContext::GetInstance()->parallel_mode() == parallel::kAutoParallel);
   ConvertArgs(args, kwargs, resource, is_auto_parallel, &args_abs, &arguments);
   ConvertSymbolicShape(args, &args_abs);
-  AddManagerForFuncGraphArgs(resource, arguments);
+  bool init_null = resource->func_graph() == nullptr;
+  if (!resource->EnableCompileCache() || init_null) {
+    AddManagerForFuncGraphArgs(resource, arguments);
+  }
   resource->set_arguments(arguments);
   resource->set_args_abs(args_abs);
+  resource->set_real_arguments(real_arguments());
   executor_info->arg_list_size = args.size() + kwargs.size();
   executor_info->resource = resource;
   info_[phase] = executor_info;
@@ -406,6 +414,7 @@ bool GraphExecutorPy::CompileInner(const py::object &source, const py::tuple &ar
   AddManagerForFuncGraphArgs(resource, arguments);
   resource->set_arguments(arguments);
   resource->set_args_abs(args_abs);
+  resource->set_real_arguments(real_arguments());
   executor_info->arg_list_size = args.size() + kwargs.size();
   executor_info->resource = resource;
   info_[phase_] = executor_info;
@@ -492,25 +501,12 @@ void GraphExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs,
   }
 }
 
-#ifdef ENABLE_DEBUGGER
-void GraphExecutorPy::TerminateDebugger() {
-  if (Common::GetDebugTerminate()) {
-    MS_LOG(INFO) << "Terminate debugger and clear resources!";
-    exit(static_cast<int>(!Common::GetDebugExitSuccess()));
-  }
-}
-#endif
-
 py::object GraphExecutorPy::RunInner(const py::tuple &args, const py::object &phase_obj) {
   JitRunningScope jit_running_scope;
   if (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileGraph) {
     py::int_ ret = 0;
     return ret;
   }
-  // Mindspore debugger notify main thread to exit after one step, and will not run next step
-#ifdef ENABLE_DEBUGGER
-  TerminateDebugger();
-#endif
   if (!py::isinstance<py::str>(phase_obj)) {
     MS_LOG(INTERNAL_EXCEPTION) << "Run failed, phase input is not a str";
   }

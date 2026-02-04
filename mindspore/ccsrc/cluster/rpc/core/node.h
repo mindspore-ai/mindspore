@@ -33,12 +33,12 @@
 
 #include "cluster/rpc/core/cluster_metadata.h"
 #include "cluster/rpc/core/cluster_config.h"
-#include "include/backend/distributed/ps/ps_context.h"
+#include "include/cluster/topology/ps_context.h"
 #include "cluster/rpc/core/node_info.h"
-#include "cluster/rpc/core/communicator/tcp_client.h"
-#include "cluster/rpc/core/communicator/tcp_server.h"
-#include "cluster/rpc/core/file_configuration.h"
-#include "include/backend/visible.h"
+#include "include/cluster/rpc/libevent_tcp_client.h"
+#include "include/cluster/rpc/libevent_tcp_server.h"
+#include "include/cluster/rpc/file_configuration.h"
+#include "include/cluster/visible.h"
 
 namespace mindspore {
 namespace ps {
@@ -46,7 +46,7 @@ namespace core {
 constexpr int kTimeoutInSeconds = 30;
 constexpr int kCommTimeoutInSeconds = 10;
 constexpr int kCommTimeoutInThreeSeconds = 3;
-class BACKEND_COMMON_EXPORT Node {
+class Node {
  public:
   Node()
       : is_ready_(false),
@@ -69,22 +69,7 @@ class BACKEND_COMMON_EXPORT Node {
 
   bool Wait(uint64_t request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
-  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &, const Protos &,
-                       const void *, size_t size, const uint32_t &timeout = kCommTimeoutInSeconds);
-
-  // Whether to enable disaster recovery.
-  bool EnableRecovery() const;
-
  protected:
-  bool WaitForStart(const uint32_t &timeout);
-
-  // Send data synchronously
-  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommMessage &message,
-                       const uint32_t &timeout = kCommTimeoutInSeconds);
-  // Send data asynchronously
-  bool SendMessageAsync(const std::shared_ptr<TcpClient> &client, const std::shared_ptr<MessageMeta> &meta,
-                        const Protos &protos, const void *data, size_t size);
-
   uint64_t AddMessageTrack(const uint32_t &expected_response);
   bool CheckMessageTrack(const uint64_t &request_id);
   void NotifyMessageArrival(const std::shared_ptr<MessageMeta> &meta);

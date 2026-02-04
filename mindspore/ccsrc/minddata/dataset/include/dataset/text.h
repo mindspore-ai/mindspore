@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2023 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,13 +24,15 @@
 #include <utility>
 #include <vector>
 
-#include "include/api/dual_abi_helper.h"
-#include "include/api/status.h"
+#include <nlohmann/json.hpp>
+
+#include "utils/dual_abi_helper.h"
+#include "utils/status.h"
 #include "include/dataset/constants.h"
 #include "include/dataset/transforms.h"
+#include "minddata/dataset/util/visible.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 class TensorOperation;
 class Vectors;
 
@@ -160,6 +162,10 @@ class Vocab {
 
   /// \brief Destructor.
   ~Vocab() = default;
+
+  Status ToJSON(nlohmann::json *json);
+
+  static Status FromJSON(const nlohmann::json &json, std::shared_ptr<Vocab> *vocab);
 
   static const WordIdType kNoTokenExists;
   static const WordType kNoIdExists;
@@ -1087,6 +1093,5 @@ class DATASET_API WhitespaceTokenizer final : public TensorTransform {
 };
 #endif
 }  // namespace text
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASET_TEXT_H_

@@ -12,7 +12,7 @@ empty:
     Keyword Args:
         dtype (:class:`mindspore.dtype`, optional): The specified type of output tensor. If `dtype` is ``None`` ,
             `mindspore.float32` will be used. Default: ``None`` .
-        device (string, optional): The specified device of the output tensor. In PyNative mode, ``"Ascend"``, ``"npu"``,
+        device (str, optional): The specified device of the output tensor. In PyNative mode, ``"Ascend"``, ``"npu"``,
             ``"cpu"`` and ``"CPU"`` are supported. In graph mode O0, ``"Ascend"`` and ``"npu"`` are supported. If `device = None`,
             `mindspore.context.device_target` will be used. Default ``None``.
         pin_memory (bool, optional): If set `pin_memory` to True, the tensor will be allocated in pinned memory, and `device`

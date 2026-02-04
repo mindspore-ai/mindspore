@@ -14,10 +14,8 @@ mindspore.ops.nextafter
 
     其中eps为输入tensor数据类型最小可表示增量值。
 
-    更多详细信息请参见 `A Self Regularized Non-Monotonic Neural Activation Function <https://arxiv.org/abs/1908.08681>`_ 。
-
     参数：
-        - **input** (Tensor) - 第一个输入tensor
+        - **input** (Tensor) - 第一个输入tensor。
         - **other** (Tensor) - 第二个输入tensor。
 
     返回：

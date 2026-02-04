@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "mindspore/ops/infer/symbol_ops_impl/common.h"
-#include "symbolic_shape/utils.h"
+#include "abstract/symbolic_shape/utils.h"
 #include "ops_utils/op_constants.h"
 
 namespace mindspore {

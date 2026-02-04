@@ -10,7 +10,7 @@
 
     参数：
         - **axis** (int，可选) - 指定排序的轴。默认值： ``-1`` ，表示指定最后一维。当前Ascend后端只支持对最后一维进行排序。
-        - **descending** (bool，可选) - 指定排序方式。如果 `descending` 为 ``True`` ，则根据value对元素进行降序排序。默认值： ``False`` 。
+        - **descending** (bool，可选) - 指定排序方式。如果 `descending` 为 ``True`` ，则根据值对元素进行降序排序。默认值： ``False`` 。
 
     输入：
         - **x** (Tensor) - 输入Tensor。

@@ -75,7 +75,7 @@ if [ "${PIPELINE_TYPE}" = "gate" ]; then
 
     # Reserved directory(.jenkins) for code check
     if [ -d "${REPO_HOME}/.jenkins" ]; then
-        cp -a "${REPO_HOME}/.jenkins" "${CODE_PATH}"/${REPOSITORY_NAME}/.jenkins >/dev/null 2>&1
+        cp -a "${REPO_HOME}/.jenkins" "${CODE_PATH}"/${REPOSITORY_NAME} >/dev/null 2>&1
     fi
 fi
 
@@ -612,7 +612,7 @@ function shellcheck_check() {
     : >"${shellcheck_path}"/shellcheck_result.log
 
     # Filter
-    # Reference: https://github.com/pytorch/pytorch/blob/master/.jenkins/pytorch/.shellcheckrc
+    # Reference: https://github.com/pytorch/pytorch/blob/main/.ci/pytorch/.shellcheckrc
     # SC2086: Double quote to prevent globbing and word splitting.
     # SC1090: Can't follow non-constant source. Use a directive to specify location.
     # SC1091: Not following: (error message here)

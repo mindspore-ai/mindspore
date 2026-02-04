@@ -1,0 +1,23 @@
+#operator cosine_embedding_loss
+cosine_embedding_loss:
+  args:
+    input1:
+      dtype: tensor
+    input2:
+      dtype: tensor
+    target:
+      dtype: tensor
+    margin:
+      dtype: float
+      default: 0.0
+    reduction:
+      dtype: int
+      default: "'mean'"
+      arg_handler: str_to_enum
+  returns:
+    output:
+      dtype: tensor
+  bprop_expander: False
+  dispatch:
+    enable: True
+    Ascend: CosineEmbeddingLossAscend
