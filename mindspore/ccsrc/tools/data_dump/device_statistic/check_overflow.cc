@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 #include "tools/data_dump/device_statistic/check_overflow.h"
+
+#include <map>
 #include <memory>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
-#include <map>
-#include <set>
+
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/stream/multi_stream_controller.h"
+#include "include/utils/common.h"
 #include "tools/data_dump/debugger/debugger_utils.h"
-#include "include/common/debug/common.h"
 #include "tools/data_dump/device_statistic/kernel_factory.h"
+#include "tools/data_dump/device_statistic/mem_manager.h"
 
 namespace mindspore {
 namespace datadump {
@@ -48,6 +54,26 @@ std::vector<KernelTensor *> CheckOverflowKernel::CheckInputs(std::vector<KernelT
   return check_kernel_tensors;
 }
 
+std::vector<KernelTensorPtr> CheckOverflowKernel::GetWorkSpaceDeviceAddressList(
+  const std::vector<KernelTensor *> &inputs, const std::vector<KernelTensor *> &outputs) {
+  auto ret = kernel_mod_->Resize(inputs, outputs);
+  if (ret) {
+    MS_LOG(EXCEPTION) << "Call Resize error, error id is " << ret;
+  }
+  auto work_space = kernel_mod_->GetWorkspaceSizeList();
+  std::vector<KernelTensorPtr> workspace_list(inputs.size(), nullptr);
+  for (size_t i = 0; i < work_space.size(); i++) {
+    if (!work_space.empty() && work_space[i] != 0) {
+      MS_VLOG(VL_DUMP) << "Statistic kernel name is " << kernel_name_ << ", workspace size is " << work_space[i]
+                       << "input index is " << i << ", input shape is " << inputs[i]->GetShapeVector() << ", dtype is "
+                       << TypeIdToString(inputs[i]->dtype_id()) << " , StreamId is " << stream_id_;
+      MS_EXCEPTION_IF_NULL(device_context_);
+      workspace_list[i] = DumpMemManager::GetInstance().GetWorkSpaceTensor(device_context_, stream_id_, work_space[i]);
+    }
+  }
+  return workspace_list;
+}
+
 KernelTensorPtr CheckOverflowKernel::LaunchKernelAsync(std::vector<KernelTensor *> inputs,
                                                        const std::uint32_t stream_id) {
   stream_id_ = stream_id;
@@ -56,14 +82,27 @@ KernelTensorPtr CheckOverflowKernel::LaunchKernelAsync(std::vector<KernelTensor 
     return nullptr;
   }
 
+  // Output memory reuse
   auto output_kernel_tensor = GetOutputDeviceAddress(kNumberTypeBool);
   std::vector<KernelTensor *> outputs{output_kernel_tensor.get()};
+
+  // Get workspace
+  auto workspace_list = GetWorkSpaceDeviceAddressList(selected_inputs, outputs);
+  std::vector<KernelTensor *> workspaces;
+  if (!workspace_list.empty()) {
+    for (size_t i = 0; i < workspace_list.size(); i++) {
+      workspaces.emplace_back(workspace_list[i].get());
+    }
+  }
+
+  MS_VLOG(VL_DUMP) << "The workspaces size is" << workspaces.size();
 
   MS_EXCEPTION_IF_NULL(kernel_mod_);
 
   void *stream_ptr = device_context_->device_res_manager_->GetStream(stream_id_);
   MS_EXCEPTION_IF_NULL(stream_ptr);
-  bool ret = kernel_mod_->Launch(selected_inputs, {}, outputs, stream_ptr);
+
+  bool ret = kernel_mod_->Launch(selected_inputs, workspaces, outputs, stream_ptr);
   if (!ret) {
     MS_LOG(EXCEPTION) << "Device cal overflow check, launch " << kernel_name_ << "error";
   }

@@ -5,7 +5,7 @@ mindspore.dataset.audio.ComputeDeltas
 
     计算频谱的delta系数，也叫差分系数。
 
-    delta系数能够帮助理解功率谱中的动态信息。能够通过下列公式进行计算。
+    delta系数能够帮助理解功率谱中的动态信息，可通过下列公式进行计算：
 
     .. math::
         d_{t}=\frac{{\textstyle\sum_{n=1}^{N}}n(c_{t+n}-c_{t-n})}{2{\textstyle\sum_{n=1}^{N}}n^{2}}

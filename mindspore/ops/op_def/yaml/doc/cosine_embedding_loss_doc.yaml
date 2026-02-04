@@ -1,0 +1,48 @@
+cosine_embedding_loss:
+    description: |
+        Creates a criterion to measure the similarity between two tensors using cosine distance.
+
+        Given two Tensors :math:`x1`, :math:`x2`, and a Tensor label :math:`y` (positive samples use 1 and negative samples use -1),
+        the formula is as follows:
+
+        .. math::
+            loss(x_1, x_2, y) = \begin{cases}
+            1-cos(x_1, x_2), & \text{if } y = 1\\
+            \max(0, cos(x_1, x_2)-margin), & \text{if } y = -1\\
+            \end{cases}
+
+
+        Args:
+            input1 (Tensor): Input Tensor of shape :math:`(N, D)` or :math:`(D)` , where :math:`N` is the batch size and :math:`D` is the embedding dimension.
+            input2 (Tensor): Input Tensor of shape :math:`(N, D)` or :math:`(D)` , which has same dtype as `input1`, and its shape should be the same as `input1` or broadcastable to the shape of `input1`.
+            target (Tensor): Target Tensor of shape :math:`(N)` or :math:`()` , contains value 1 or -1.
+            margin (float, optional): A tuning factor used in the negative-sample branch, which should be in [-1.0, 1.0], values outside this range will not raise an error,
+                but have no practical meaning. Default: ``0.0`` .
+            reduction (str, optional): Apply specific reduction method to the output: ``'none'`` , ``'mean'`` ,
+                ``'sum'`` . Default: ``'mean'`` .
+
+                - ``'none'`` : no reduction will be applied.
+                - ``'mean'`` : compute and return the mean of elements in the output.
+                - ``'sum'`` : the output elements will be summed.  
+
+        Returns:
+            Tensor or Scalar, if `reduction` is ``"none"``, a Tensor with the same shape as `target` will be returned. Otherwise, a Scalar value will be returned.
+
+        Raises:
+            ValueError: If `reduction` is not ``"none"``, ``"mean"`` or ``"sum"``.
+            ValueError: If the shapes of `input1` and `input2` do not match.
+            ValueError: If the shape of `target` does not match the shapes of `input1` and `input2`.
+        
+        Supported Platforms:
+            ``Ascend``
+
+        Examples:
+            >>> import mindspore
+            >>> import numpy as np
+            >>> from mindspore import Tensor, ops
+            >>> input1 = Tensor(np.array([[0.3, 0.8], [0.4, 0.3]]), mindspore.float32)
+            >>> input2 = Tensor(np.array([[0.4, 1.2], [-0.4, -0.9]]), mindspore.float32)
+            >>> target = Tensor(np.array([1, -1]), mindspore.int32)
+            >>> output = ops.cosine_embedding_loss(input1, input2, target)
+            >>> print(output)
+            0.0003425479

@@ -5,6 +5,7 @@ pow_tensor_scalar:
             dtype: tensor
         exponent:
             dtype: number
+            disable_tensor_to_scalar: True
     returns:
         y:
             dtype: tensor

@@ -18,11 +18,11 @@
 #include <memory>
 #include <string>
 #include <unordered_set>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
+#include "primitive/array_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/nn_op_name.h"
+#include "primitive/nn_op_name.h"
 
 namespace mindspore {
 namespace opt {
@@ -83,9 +83,11 @@ void SetBuildInfo(const AnfNodePtr &cnode, const CNodePtr &new_node, const size_
   builder.SetOutputsKernelObjectType({kernel::KernelObjectType::TENSOR});
   AnfAlgo::SetSelectKernelBuildInfo(builder.Build(), new_node.get());
 }
+}  // namespace
 
-CNodePtr InsertTransIdentityForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                     const std::vector<size_t> &trans_input, std::unordered_set<size_t> *cast_input) {
+CNodePtr InsertIdentity::InsertTransIdentityForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                     const std::vector<size_t> &trans_input,
+                                                     std::unordered_set<size_t> *cast_input) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
@@ -94,12 +96,12 @@ CNodePtr InsertTransIdentityForInput(const FuncGraphPtr &func_graph, const CNode
     auto index = trans_input[i];
     auto input_kernel = common::AnfAlgo::GetInputNode(cnode, index);
     auto identity_node =
-      kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), input_kernel});
+      NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), input_kernel}, kernel_graph);
     auto context_ptr = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context_ptr);
     if (context_ptr->IsEnableInferBoost() && context_ptr->ascend_soc_version() == "ascend310p") {
       identity_node =
-        kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kTransDataOpName)), input_kernel});
+        NewCNode({NewValueNode(std::make_shared<Primitive>(kTransDataOpName)), input_kernel}, kernel_graph);
     }
 
     identity_node->set_scope(cnode->scope());
@@ -125,8 +127,8 @@ CNodePtr InsertTransIdentityForInput(const FuncGraphPtr &func_graph, const CNode
   return cnode;
 }
 
-CNodePtr InsertCastIdentityForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                    const std::unordered_set<size_t> &cast_input) {
+CNodePtr InsertIdentity::InsertCastIdentityForInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                    const std::unordered_set<size_t> &cast_input) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
@@ -134,7 +136,7 @@ CNodePtr InsertCastIdentityForInput(const FuncGraphPtr &func_graph, const CNodeP
   for (auto index : cast_input) {
     auto input_kernel = common::AnfAlgo::GetInputNode(cnode, index);
     auto identity_node =
-      kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), input_kernel});
+      NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), input_kernel}, kernel_graph);
     identity_node->set_scope(cnode->scope());
     auto kernel_with_index = common::AnfAlgo::GetPrevNodeOutput(cnode, index, false);
     SetBuildInfo(kernel_with_index.first, identity_node, kernel_with_index.second, false, true);
@@ -143,7 +145,7 @@ CNodePtr InsertCastIdentityForInput(const FuncGraphPtr &func_graph, const CNodeP
   return cnode;
 }
 
-CNodePtr InsertIdentityForOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+CNodePtr InsertIdentity::InsertIdentityForOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(cnode);
   if (AnfAlgo::GetOutputTensorNum(cnode) != 1) {
@@ -151,18 +153,17 @@ CNodePtr InsertIdentityForOutput(const FuncGraphPtr &func_graph, const CNodePtr 
   }
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  CNodePtr new_node = kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), cnode});
+  CNodePtr new_node = NewCNode({NewValueNode(std::make_shared<Primitive>(kIdentityOpName)), cnode}, kernel_graph);
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->IsEnableInferBoost() && context_ptr->ascend_soc_version() == "ascend310p") {
-    new_node = kernel_graph->NewCNode({NewValueNode(std::make_shared<Primitive>(kTransDataOpName)), cnode});
+    new_node = NewCNode({NewValueNode(std::make_shared<Primitive>(kTransDataOpName)), cnode}, kernel_graph);
   }
   MS_EXCEPTION_IF_NULL(new_node);
   new_node->set_scope(cnode->scope());
   SetBuildInfo(cnode, new_node, 0);
   return new_node;
 }
-}  // namespace
 
 const BaseRef InsertIdentity::DefinePattern() const {
   VarPtr V = std::make_shared<CondVar>(NeedInsertIdentity);

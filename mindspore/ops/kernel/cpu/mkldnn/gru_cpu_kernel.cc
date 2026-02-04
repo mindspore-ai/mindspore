@@ -17,7 +17,7 @@
 #include "kernel/cpu/mkldnn/gru_cpu_kernel.h"
 #include <string>
 
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "mindspore/ops/infer/gru_v2.h"
 namespace mindspore {
 namespace kernel {

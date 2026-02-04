@@ -28,30 +28,31 @@
 #include "mindspore/ccsrc/utils/ir_dump/draw.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "ir/core_ops_primitive.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/framework_ops.h"
+#include "primitive/structure_ops.h"
 #include "ir/anf.h"
 #include "ir/func_graph_cloner.h"
 #include "ir/param_info.h"
 #include "ir/cell.h"
-#include "ir/device_address.h"
-#include "include/common/pynative/grad_state.h"
-#include "include/backend/py_execute_utils.h"
-#include "include/common/utils/python_adapter.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
-#include "include/common/utils/tensor_py_wrapper.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/fallback.h"
+#include "device_address/device_address.h"
+#include "include/frontend/jit/ps/action_interface.h"
+#include "include/utils/pynative/grad_state.h"
+#include "include/backend/common/kernel_graph/py_execute_utils.h"
+#include "include/utils/python_adapter.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
+#include "include/utils/tensor_py_wrapper.h"
+#include "include/utils/parallel_context.h"
+#include "include/utils/pipeline/fallback.h"
 #include "include/runtime/utils/runtime_conf/runtime_env.h"
 #include "abstract/abstract_value.h"
 #include "frontend/operator/composite/composite.h"
 #include "frontend/parallel/step_auto_parallel.h"
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/parallel/shard/shard.h"
-#include "frontend/jit/ps/executor/graph_executor_py.h"
-#include "frontend/jit/ps/executor/jit_executor_py.h"
+#include "include/frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/frontend/jit/ps/executor/jit_executor_py.h"
 #include "frontend/jit/ps/parse/parse_base.h"
 #include "frontend/jit/ps/parse/data_converter.h"
 #include "frontend/jit/ps/static_analysis/auto_monad.h"
@@ -59,11 +60,11 @@
 #include "frontend/jit/ps/static_analysis/static_analysis.h"
 #include "frontend/jit/ps/static_analysis/async_eval_result.h"
 #include "frontend/jit/ps/static_analysis/program_specialize.h"
+#include "frontend/jit/ps/static_analysis/event_method.h"
 #include "frontend/jit/ps/resource.h"
 #include "frontend/jit/ps/remove_value_node_dup.h"
 #include "frontend/jit/ps/event_message_print.h"
-#include "frontend/jit/ps/silent_check.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/ad/grad.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
@@ -72,28 +73,28 @@
 #include "utils/phase.h"
 #include "utils/compile_config.h"
 #include "load_mindir/infer_mindir.h"
-#include "backend/common/graph_kernel/graph_kernel_flags.h"
+#include "include/runtime/hardware_abstract/kernel_base/graph_fusion/graph_kernel_flags.h"
 #include "tools/profiler/profiling.h"
+#include "tools/profiler/mstx/mstx_impl.h"
 #include "frontend/optimizer/fallback_rewriter.h"
 #include "frontend/jit/ps/load_mindir.h"
 #include "frontend/jit/ps/pass_config.h"
 
 #if defined(__linux__) && defined(WITH_BACKEND)
-#include "include/backend/distributed/cluster/cluster_context.h"
+#include "include/cluster/topology/cluster_context.h"
 #else
-#include "include/backend/distributed/cluster/dummy_cluster_context.h"
+#include "include/cluster/topology/dummy_cluster_context.h"
 #endif
 #include "tools/profiler/profiling_framework_data.h"
 #include "tools/profiler/profiler.h"
-#include "availability/silent_check/silent_check.h"
-#include "backend/backend_manager/backend_manager.h"
-#include "include/common/pynative/adapter.h"
-#include "backend/backend_manager/backend_jit_config.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
+#include "include/backend/backend_manager/backend_manager.h"
+#include "include/utils/pynative/adapter.h"
+#include "include/backend/backend_manager/backend_jit_config.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
 #include "ir/func_graph_flag.h"
 
 namespace mindspore {
@@ -141,7 +142,28 @@ bool ContainsAbstractFunction(const abstract::AbstractBasePtr &abs) {
   return false;
 }
 
-void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<ValuePtr> &arguments) {
+void SetParamFormatFromTensor(const ParameterPtr &param_node, const ValuePtr &param_value) {
+  MS_EXCEPTION_IF_NULL(param_value);
+  if (param_value->isa<tensor::Tensor>()) {
+    auto param_tensor = param_value->cast<tensor::TensorPtr>();
+    if (param_tensor->device_address()) {
+      auto param_deviceaddress = std::dynamic_pointer_cast<device::DeviceAddress>(param_tensor->device_address());
+      MS_EXCEPTION_IF_NULL(param_deviceaddress);
+      MS_LOG(DEBUG) << "Update param format from tensor format: " << param_tensor->format()
+                    << ", param: " << param_node->DebugString();
+      param_node->set_format(kernel::GetFormatFromEnumToStr(param_tensor->format()));
+    }
+  } else if (param_value->isa<ValueSequence>()) {
+    // For kv-cache scene, suppose all tensors in kv-cache is same format.
+    auto param_tuple = param_value->cast<ValueSequencePtr>();
+    if (param_tuple->size() != 0) {
+      SetParamFormatFromTensor(param_node, (*param_tuple)[0]);
+    }
+  }
+}
+
+void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<ValuePtr> &arguments,
+                              const std::vector<ValuePtr> &real_arguments) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::vector<AnfNodePtr> new_paras;
   for (size_t i = 0; i < func_graph->parameters().size(); ++i) {
@@ -153,12 +175,7 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
       new_paras.push_back(param_node);
       auto default_param = param_node->default_param();
       MS_EXCEPTION_IF_NULL(default_param);
-      auto param_tensor = default_param->cast<tensor::TensorPtr>();
-      if (param_tensor && param_tensor->device_address()) {
-        auto param_deviceaddress = std::dynamic_pointer_cast<device::DeviceAddress>(param_tensor->device_address());
-        MS_EXCEPTION_IF_NULL(param_deviceaddress);
-        param_node->set_format(param_deviceaddress->format());
-      }
+      SetParamFormatFromTensor(param_node, default_param);
       continue;
     }
 
@@ -168,19 +185,17 @@ void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph, const std::vector<
       if (param_value != nullptr && param_value->is_parameter()) {
         param_node->set_default_param(arguments[i]);
       }
-      auto argument_tensor = arguments[i]->cast<tensor::TensorPtr>();
-      if (argument_tensor && argument_tensor->device_address()) {
-        auto argument_deviceaddress =
-          std::dynamic_pointer_cast<device::DeviceAddress>(argument_tensor->device_address());
-        MS_EXCEPTION_IF_NULL(argument_deviceaddress);
-        param_node->set_format(argument_deviceaddress->format());
-      }
+    }
+    // Set param's format from real arguments, since cannot get format from arguments in dynamic-shape scene.
+    if (i < real_arguments.size()) {
+      SetParamFormatFromTensor(param_node, real_arguments[i]);
     }
 
     AbstractBasePtr param_abs = param_node->abstract();
     MS_EXCEPTION_IF_NULL(param_abs);
     if ((param_abs->BuildValue() == kValueAny && !ContainsAbstractFunction(param_abs)) ||
-        EnableGradForScalar(param_abs) || EnableSequenceBroaden(param_abs)) {
+        EnableGradForScalar(param_abs) || EnableSequenceBroaden(param_abs) ||
+        param_abs->isa<abstract::AbstractEvent>()) {
       new_paras.push_back(param_node);
     } else {
       MS_LOG(INFO) << "Remove the " << i << "th parameter, since it's passed a constant argument.";
@@ -340,10 +355,12 @@ abstract::AnalysisResult AbstractAnalyze(const abstract::AnalysisEnginePtr &engi
 abstract::AnalysisResult AbstractAnalyze(const ValuePtr &func, const abstract::AbstractBasePtrList &args_abs,
                                          bool clear) {
   MS_EXCEPTION_IF_NULL(func);
+  MS_LOG(DEBUG) << "Start AbstractAnalyze for callable: " << func->ToString();
   auto infer_graph = func->isa<FuncGraph>() ? func->cast<FuncGraphPtr>() : ConstructGraphForEval(func, args_abs);
 
   auto top_graph = parse::Parser::GetTopFuncGraph();
-  auto manager = top_graph == nullptr ? Manage(infer_graph, true) : top_graph->manager();
+  auto manager =
+    top_graph == nullptr || top_graph->manager() == nullptr ? Manage(infer_graph, true) : top_graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   manager->AddFuncGraph(infer_graph);
 
@@ -1100,6 +1117,19 @@ bool SetMixedPrecisionAction(const ResourcePtr &resource) {
   return true;
 }
 
+bool EventMethodAction(const ResourcePtr &resource) {
+  MS_EXCEPTION_IF_NULL(resource);
+  if (resource->manager() == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Event Method failed, manager is null";
+  }
+  auto func_graph = resource->func_graph();
+  if (func_graph == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Event Method failed, graph is null";
+  }
+  pipeline::EventMethod(func_graph);
+  return true;
+}
+
 bool AutoMonadAction(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
   if (resource->manager() == nullptr) {
@@ -1302,6 +1332,34 @@ void SetViewInplaceGradFlag(const ResourcePtr &resource) {
 }
 }  // namespace
 
+AnfNodePtrList AllForwardNodes(const ResourcePtr &resource) {
+  AnfNodePtrList all_forward_nodes;
+  AnfNodePtrList j_nodes;
+  for (const auto &node : resource->manager()->all_nodes()) {
+    if (IsPrimitiveCNode(node, prim::kPrimJ)) {
+      j_nodes.push_back(node);
+    }
+  }
+  if (j_nodes.empty()) {
+    MS_LOG(DEBUG) << "No J node is found";
+    return all_forward_nodes;
+  }
+  for (const auto &j_node : j_nodes) {
+    FuncGraphPtr forward_graph = GetForwardGraphFromJNode(j_node);
+    if (forward_graph == nullptr) {
+      MS_LOG(DEBUG) << "Cannot find forward graph from j node: " << j_node->DebugString();
+      continue;
+    }
+    if (forward_graph->get_return() == nullptr) {
+      MS_LOG(DEBUG) << "The return node of FuncGraph is NULL! fg: " << forward_graph->ToString();
+      continue;
+    }
+    const AnfNodePtrList &all_nodes_from_one_jnode = mindspore::TopoSort(forward_graph->get_return(), SuccDeeperSimple);
+    all_forward_nodes.insert(all_forward_nodes.end(), all_nodes_from_one_jnode.begin(), all_nodes_from_one_jnode.end());
+  }
+  return all_forward_nodes;
+}
+
 bool TypeInferenceAction(const ResourcePtr &resource) {
   EventMessage::PrintCompileStatusMessage("Start performing static analysis and type inference.");
   MS_EXCEPTION_IF_NULL(resource);
@@ -1349,7 +1407,7 @@ bool TypeInferenceAction(const ResourcePtr &resource) {
     }
   }
 
-  UpdateFuncGraphParameter(new_fg, resource->arguments());
+  UpdateFuncGraphParameter(new_fg, resource->arguments(), resource->real_arguments());
   CheckDuplicatedParameterName(new_fg->parameters());
   SetMindIRLoadFlag(resource);
   SetViewInplaceGradFlag(resource);
@@ -1363,6 +1421,7 @@ bool OptimizeAction(const ResourcePtr &resource, const std::vector<PassItem> &pa
   size_t counter = 0;
   for (auto &pass : passes) {
     std::string pass_name = pass.first;
+    MSTX_RANGE_GUARD(pass_name.c_str(), nullptr, profiler::MSTX_DOMAIN_MODEL_PREPARATION);
     MsProfileStatGuard stat_guard(std::move(pass_name), "compile_irpass", true);
     ProcessStatus::GetInstance().RecordStart(pass.first);
     uint64_t start_time = profiler::GetClockSyscnt();
@@ -1842,6 +1901,10 @@ bool TaskEmitAction(const ResourcePtr &resource) {
   if (func_graph == nullptr) {
     MS_LOG(INTERNAL_EXCEPTION) << "TaskEmit args error";
   }
+  if (func_graph->has_user_data("jit_config")) {
+    PhaseManager::GetInstance().set_jit_config(
+      *(func_graph->user_data<std::map<std::string, std::string>>("jit_config")));
+  }
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   context_ptr->Refresh();
@@ -1973,8 +2036,6 @@ bool PipelineSchedulerAction(const ResourcePtr &resource) { return PipelineParal
 
 bool AutoParallelAction(const ResourcePtr &resource) { return AutoParallelPass(resource); }
 
-bool SilentCheckAction(const ResourcePtr &resource) { return SilentCheckPass(resource); }
-
 bool ValidateAction(const ResourcePtr &resource) {
   auto res = ValidatePass(resource);
 #ifdef DEBUG
@@ -2089,6 +2150,8 @@ static std::vector<ActionItem> CommonPipeline(bool trace_flag) {
   // Evaluate type and shape, and specialize.
   (void)actions.emplace_back(std::make_pair(kTypeInference, TypeInferenceAction));
 
+  (void)actions.emplace_back(std::make_pair(kEventMethod, EventMethodAction));
+
   // Auto-monad for side-effects handling.
   (void)actions.emplace_back(std::make_pair(kAutoMonad, AutoMonadAction));
 
@@ -2152,15 +2215,14 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag,
     // Eliminate the virtual mirror node
     (void)actions.emplace_back(std::make_pair(kOptAfterJitGrad, OptAfterJitGrad));
 
-#if defined(__linux__) && defined(WITH_BACKEND)
-    if (IsEnableSilentCheck()) {
-      // silent check pass, mark nodes which are need for silent check
-      (void)actions.emplace_back(std::make_pair(kSilentCheck, SilentCheckAction));
+    if ((common::GetEnv("MS_DEV_HYPER_OFFLOAD") == "1")) {
+      (void)actions.emplace_back(std::make_pair(kOffloadAnnotation, ProcessOffloadAnnotationPass));
     }
-#endif
 
     // Mind Compiler finish.
     (void)actions.emplace_back(std::make_pair(kValidate, ValidateAction));
+
+    (void)actions.emplace_back(std::make_pair(kBackendPass, BackendPass));
   }
 
   if (erase_parse) {
@@ -2177,8 +2239,6 @@ std::vector<ActionItem> VmPipeline(const ResourcePtr &resource, bool trace_flag,
   if (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileGraph) {
     return actions;
   }
-
-  (void)actions.emplace_back(std::make_pair(kBackendPass, BackendPass));
 
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
@@ -2211,75 +2271,109 @@ std::vector<ActionItem> MindIRPipeline() {
 }
 
 std::vector<PassItem> JitPipeline(const ResourcePtr &resource, bool build_top_graph) {
-  std::vector<PassItem> jit_passes;
-  if (!resource->EnableCompileCache() || resource->func_graph() == nullptr) {
+  OrderedMap<std::string, std::function<bool(ResourcePtr)>> jit_passes;
+  std::vector<PassItem> full_jit_passes;
+  bool init_null = resource->func_graph() == nullptr;
+  if (!resource->EnableCompileCache() || init_null) {
     // Compile the frontend graph.
     if (build_top_graph) {
-      (void)jit_passes.emplace_back(kBootstrap, BootstrapAction);
+      (void)jit_passes.emplace(kBootstrap, BootstrapAction);
     }
-    (void)jit_passes.emplace_back(kTypeInference, TypeInferenceAction);
-    (void)jit_passes.emplace_back(kAutoMonad, AutoMonadAction);
-    (void)jit_passes.emplace_back(kGraphReusing, GraphReusingAction);
-    (void)jit_passes.emplace_back(kPreAutoParallel, SetTrainingFlagPass);
-    (void)jit_passes.emplace_back(kPyInterpretToExecute, PyInterpretToExecutePass);
-    (void)jit_passes.emplace_back(kRewriterBeforeOptA, RewriterBeforeOptAPass);
-    (void)jit_passes.emplace_back(kExpandDumpFlag, ExpandDumpFlagPass);
-    (void)jit_passes.emplace_back(kJitOptA, JitOptPassAGroup);
-    (void)jit_passes.emplace_back(kPyInterpretToExecuteAfterOptA, PyInterpretToExecutePass);
-    (void)jit_passes.emplace_back(kRewriterAfterOptA, RewriterAfterOptAPass);
-    (void)jit_passes.emplace_back(kConvertAfterRewriter, ConvertAfterRewriterPass);
-    (void)jit_passes.emplace_back(kOrderPyExecuteAfterRewriter, OrderPyExecuteAfterRewriterPass);
-    (void)jit_passes.emplace_back(kJitOptB, JitOptPassBGroup);
-    (void)jit_passes.emplace_back(kCconv, CconvPass);
-    (void)jit_passes.emplace_back(kLoopUnroll, LoopUnrollPass);
-    (void)jit_passes.emplace_back(kJitOptPassAfterCconv, JitOptPassAfterCconvGroup);
-    (void)jit_passes.emplace_back(kRemoveDupValue, RemoveValueNodeDuplicationsPassForJit);
-    (void)jit_passes.emplace_back(kPartialUnusedArgsEliminate, PartialUnusedArgsEliminatePass);
+    (void)jit_passes.emplace(kTypeInference, TypeInferenceAction);
+    (void)jit_passes.emplace(kEventMethod, EventMethodAction);
+    (void)jit_passes.emplace(kAutoMonad, AutoMonadAction);
+    (void)jit_passes.emplace(kGraphReusing, GraphReusingAction);
+    (void)jit_passes.emplace(kPreAutoParallel, SetTrainingFlagPass);
+    (void)jit_passes.emplace(kPyInterpretToExecute, PyInterpretToExecutePass);
+    (void)jit_passes.emplace(kRewriterBeforeOptA, RewriterBeforeOptAPass);
+    (void)jit_passes.emplace(kExpandDumpFlag, ExpandDumpFlagPass);
+    (void)jit_passes.emplace(kJitOptA, JitOptPassAGroup);
+    (void)jit_passes.emplace(kPyInterpretToExecuteAfterOptA, PyInterpretToExecutePass);
+    (void)jit_passes.emplace(kRewriterAfterOptA, RewriterAfterOptAPass);
+    (void)jit_passes.emplace(kConvertAfterRewriter, ConvertAfterRewriterPass);
+    (void)jit_passes.emplace(kOrderPyExecuteAfterRewriter, OrderPyExecuteAfterRewriterPass);
+    (void)jit_passes.emplace(kMutableEliminate, MutableEliminatePass);
+    (void)jit_passes.emplace(kJitOptB, JitOptPassBGroup);
+    (void)jit_passes.emplace(kCconv, CconvPass);
+    (void)jit_passes.emplace(kLoopUnroll, LoopUnrollPass);
+    (void)jit_passes.emplace(kJitOptPassAfterCconv, JitOptPassAfterCconvGroup);
+    (void)jit_passes.emplace(kRemoveDupValue, RemoveValueNodeDuplicationsPassForJit);
+    (void)jit_passes.emplace(kPartialUnusedArgsEliminate, PartialUnusedArgsEliminatePass);
     if (common::GetCompileConfig("ENABLE_ELIMINATE_UNUSED_PARAMS") == "1") {
-      (void)jit_passes.emplace_back(kUnusedParamsEliminate, EliminateUnusedParamsPass);
+      (void)jit_passes.emplace(kUnusedParamsEliminate, EliminateUnusedParamsPass);
     }
-    (void)jit_passes.emplace_back(kEnvironConv, EnvironConversionPass);
-    (void)jit_passes.emplace_back(kAddRecomputation, AddRecomputationPass);
-    (void)jit_passes.emplace_back(kCseAfterRecomputation, OptAfterRecomputeGroup);
-    (void)jit_passes.emplace_back(kAutoMonadReorder, OrderEnforceAction);
-    (void)jit_passes.emplace_back(kGetJitBpropGraph, GetJitBpropGraph);
-    (void)jit_passes.emplace_back(kRewriterAfterJitBprop, RewriterAfterOptAPassAfterJitBprop);
-    (void)jit_passes.emplace_back(kOptAfterJitGrad, OptAfterJitGrad);
-    if (IsEnableSilentCheck()) {
-      (void)jit_passes.emplace_back(kSilentCheck, SilentCheckPass);
+    (void)jit_passes.emplace(kEnvironConv, EnvironConversionPass);
+    (void)jit_passes.emplace(kAddRecomputation, AddRecomputationPass);
+    (void)jit_passes.emplace(kCseAfterRecomputation, OptAfterRecomputeGroup);
+    (void)jit_passes.emplace(kAutoMonadReorder, OrderEnforceAction);
+    (void)jit_passes.emplace(kGetJitBpropGraph, GetJitBpropGraph);
+    (void)jit_passes.emplace(kRewriterAfterJitBprop, RewriterAfterOptAPassAfterJitBprop);
+    (void)jit_passes.emplace(kOptAfterJitGrad, OptAfterJitGrad);
+    (void)jit_passes.emplace(kSymbolEngineOpt, SymbolEngineOptGroup);
+    if ((common::GetEnv("MS_DEV_HYPER_OFFLOAD") == "1")) {
+      (void)jit_passes.emplace(kOffloadAnnotation, ProcessOffloadAnnotationPass);
     }
-    (void)jit_passes.emplace_back(kSymbolEngineOpt, SymbolEngineOptGroup);
-    (void)jit_passes.emplace_back(kValidate, ValidatePass);
+    (void)jit_passes.emplace(kValidate, ValidatePass);
+    (void)jit_passes.emplace(kBackendPass, BackendPass);
+    for (const auto &action : jit_passes) {
+      const auto &jit_action_positions = ActionConfigure::Instance().jit_action_positions();
+      auto iter = jit_action_positions.find(action.first);
+      if (iter != jit_action_positions.end()) {
+        auto inserted_actions = iter->second;
+        std::transform(inserted_actions.begin(), inserted_actions.end(), std::back_inserter(full_jit_passes),
+                       [&](const auto &inserted_action) {
+                         const auto &jit_actions = ActionConfigure::Instance().jit_actions();
+                         auto iter_action = jit_actions.find(inserted_action);
+                         return std::make_pair(inserted_action, iter_action->second);
+                       });
+      }
+      (void)full_jit_passes.emplace_back(action);
+    }
   }
 
   auto is_precompile_only = MsContext::GetInstance()->get_param<bool>(MS_CTX_PRECOMPILE_ONLY) ||
                             common::GetEnv("MS_DEV_PRECOMPILE_ONLY") == "1";
   if (is_precompile_only) {
     MS_LOG(INFO) << "PrecompileOnly, stop run graph";
-    return jit_passes;
+    return full_jit_passes;
+  }
+
+  bool is_jit_grad = pynative::GradState::Get().RequiresGrad();
+  if (resource->EnableCompileCache() && !init_null && is_jit_grad) {
+    // Store forward graph for jit grad when using compile cache.
+    (void)full_jit_passes.emplace_back(kGetJitBpropGraph, GetJitBpropGraph);
+    return full_jit_passes;
   }
 
   if (common::GetEnv(kSimulationLevel) == kSimulationLevelCompileGraph) {
-    return jit_passes;
+    return full_jit_passes;
   }
-
-  (void)jit_passes.emplace_back(std::make_pair(kBackendPass, BackendPass));
 
 #ifndef WITH_BACKEND
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->backend_policy() != "ge") {
 #endif
+    // Phase with "export" prefix need to skip backend compilation.
+    const std::string &phase = PhaseManager::GetInstance().phase();
+    if (pipeline::IsPhaseExport(phase)) {
+      return full_jit_passes;
+    }
     // Compile the backend graph.
-    (void)jit_passes.emplace_back(kTaskEmit, TaskEmitAction);
+    (void)full_jit_passes.emplace_back(kTaskEmit, TaskEmitAction);
 
     // Execute the graph.
-    (void)jit_passes.emplace_back(kExecute, ExecuteAction);
+    (void)full_jit_passes.emplace_back(kExecute, ExecuteAction);
 #ifndef WITH_BACKEND
   }
 #endif
 
-  return jit_passes;
+  return full_jit_passes;
+}
+
+ActionConfigure &ActionConfigure::Instance() {
+  static ActionConfigure instance;
+  return instance;
 }
 }  // namespace pipeline
 }  // namespace mindspore

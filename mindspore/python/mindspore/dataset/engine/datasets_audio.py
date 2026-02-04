@@ -288,7 +288,7 @@ class LibriTTSDataset(MappableDataset, AudioBaseDataset):
         usage (str, optional): Part of this dataset, can be ``'dev-clean'``, ``'dev-other'``, ``'test-clean'``,
             ``'test-other'``, ``'train-clean-100'``, ``'train-clean-360'``, ``'train-other-500'``, or ``'all'``.
             Default: ``None`` , means ``'all'``.
-        num_samples (int, optional): The number of images to be included in the dataset.
+        num_samples (int, optional): The number of audio to be included in the dataset.
             Default: ``None`` , will read all audio.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: ``None`` , will use global default workers(8), it can be set
@@ -416,8 +416,8 @@ class LJSpeechDataset(MappableDataset, AudioBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        num_samples (int, optional): The number of audios to be included in the dataset.
-            Default: ``None`` , all audios.
+        num_samples (int, optional): The number of audio to be included in the dataset.
+            Default: ``None`` , will read all audio.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
@@ -540,7 +540,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
         dataset_dir (str): Path to the root directory that contains the dataset.
         usage (str, optional): Usage of this dataset, can be ``'train'``, ``'test'``, ``'valid'`` or ``'all'``.
             ``'train'`` will read from 84,843 samples, ``'test'`` will read from 11,005 samples, ``'valid'``
-            will read from 9,981 test samples and ``'all'`` will read from all 105,829 samples.
+            will read from 9,981 valid samples and ``'all'`` will read from all 105,829 samples.
             Default: ``None`` , will read all samples.
         num_samples (int, optional): The number of samples to be included in the dataset.
             Default: ``None`` , will read all samples.
@@ -589,7 +589,7 @@ class SpeechCommandsDataset(MappableDataset, AudioBaseDataset):
 
     About SpeechCommands dataset:
 
-    The SpeechCommands is database for limited_vocabulary speech recognition, containing 105,829 audio samples of
+    The SpeechCommands is a database for limited_vocabulary speech recognition, containing 105,829 audio samples of
     '.wav' format.
 
     Here is the original SpeechCommands dataset structure.
@@ -653,11 +653,12 @@ class TedliumDataset(MappableDataset, AudioBaseDataset):
             ``'test'`` will read from test samples,
             ``'dev'`` will read from dev samples,
             ``'all'`` will read from all samples.
-            For `release3`, can only be ``'all'``, it will read from data samples. Default: ``None`` , all samples.
+            For `release3`, can only be ``'all'``, it will read from data samples. Default: ``None`` ,
+            will read all samples.
         extensions (str, optional): Extensions of the SPH files, only ``'.sph'`` is valid.
             Default: ``None`` , set to ``".sph"``.
         num_samples (int, optional): The number of audio samples to be included in the dataset.
-            Default: ``None`` , all samples.
+            Default: ``None`` , will read all samples.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
@@ -839,8 +840,8 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
 
     Args:
         dataset_dir (str): Path to the root directory that contains the dataset.
-        num_samples (int, optional): The number of images to be included in the dataset.
-            Default: ``None`` , will read all images.
+        num_samples (int, optional): The number of audio to be included in the dataset.
+            Default: ``None`` , will read all audio.
         num_parallel_workers (int, optional): Number of worker threads to read the data.
             Default: ``None`` , will use global default workers(8), it can be set
             by :func:`mindspore.dataset.config.set_num_parallel_workers` .
@@ -884,7 +885,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
         >>> # Read 3 samples from YesNo dataset
         >>> dataset = ds.YesNoDataset(dataset_dir=yes_no_dataset_dir, num_samples=3)
         >>>
-        >>> # Note: In YesNo dataset, each dictionary has keys "waveform", "sample_rate", "label"
+        >>> # Note: In YesNo dataset, each dictionary has keys "waveform", "sample_rate", "labels"
 
     About YesNo dataset:
 
@@ -909,7 +910,7 @@ class YesNoDataset(MappableDataset, AudioBaseDataset):
 
         @NetworkResource{Kaldi_audio_project,
         author    = {anonymous},
-        url       = "http://wwww.openslr.org/1/"
+        url       = "http://www.openslr.org/1/"
         }
     """
 

@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+#include "view/slice_strides_calc.h"
 #include <memory>
+#include <vector>
 #include "ops_utils/op_utils.h"
 #include "utils/check_convert_utils.h"
-#include "view/slice_strides_calc.h"
 
 namespace {
 constexpr size_t kSliceInputsNum = 3;
@@ -31,9 +32,6 @@ void SliceInputsCheck(const std::vector<int64_t> &tensor_shape, const std::vecto
   if (tensor_shape.size() != begin.size() || tensor_shape.size() != size.size()) {
     MS_EXCEPTION(ValueError) << "For Slice, the shape of input|begin|size must be equal.";
   }
-
-  (void)CheckAndConvertUtils::CheckInteger("rank of input_x", SizeToLong(tensor_shape.size()), kGreaterThan, 0,
-                                           "Slice");
 
   for (size_t idx = 0; idx < tensor_shape.size(); idx++) {
     if (begin[idx] < 0 || begin[idx] > tensor_shape[idx]) {
@@ -79,22 +77,4 @@ TensorStorageInfoPtrList SliceBasicTypeCalc(const mindspore::tensor::TensorPtr &
                                         old_tensor_info->ori_strides, IsContiguous(new_shape, new_strides));
   return {new_storage_info};
 }
-
-TensorStorageInfoPtrList SliceCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  if (CheckInputsNull(inputs, kSliceInputsNum) || !inputs[kInputIndex0]->isa<tensor::Tensor>()) {
-    MS_LOG(EXCEPTION) << "inputs num is invalid, num:" << inputs.size();
-  }
-
-  if (!inputs[kInputIndex1]->isa<ValueSequence>() || !inputs[kInputIndex2]->isa<ValueSequence>()) {
-    return {};
-  }
-
-  auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  auto begin = GetValue<std::vector<int64_t>>(inputs[kInputIndex1]);
-  auto size = GetValue<std::vector<int64_t>>(inputs[kInputIndex2]);
-  return SliceBasicTypeCalc(input_tensor, begin, size);
-}
-
-REG_VIEW_STRIDES_CALC_FUN(Slice, SliceCalc);
 }  // namespace mindspore::ops

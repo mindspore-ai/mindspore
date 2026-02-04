@@ -15,7 +15,7 @@
  */
 
 #include "mindspore/ccsrc/frontend/operator/meta_dsl/func_op/any.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
 #include "mindspore/ops/ops_utils/op_constants.h"
 
 namespace mindspore::prim {

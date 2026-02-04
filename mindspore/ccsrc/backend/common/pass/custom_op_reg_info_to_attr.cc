@@ -20,11 +20,11 @@
 #include <vector>
 #include <unordered_set>
 
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_ops.h"
 #include "include/runtime/hardware_abstract/kernel_base/oplib/opinfo.h"
 #include "include/runtime/hardware_abstract/kernel_base/oplib/oplib.h"
-#include "include/common/utils/anfalgo.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "include/utils/anfalgo.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace opt {

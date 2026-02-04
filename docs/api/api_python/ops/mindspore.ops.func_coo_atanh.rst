@@ -1,7 +1,7 @@
 mindspore.ops.coo_atanh
 ========================
 
-.. py:function:: mindspore.ops.coo_atanh(x: COOTensor)
+.. py:function:: mindspore.ops.coo_atanh(x)
 
     逐元素计算输入COOTensor的反双曲正切值。
 

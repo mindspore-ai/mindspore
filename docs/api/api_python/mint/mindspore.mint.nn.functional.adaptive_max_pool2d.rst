@@ -18,7 +18,8 @@ mindspore.mint.nn.functional.adaptive_max_pool2d
         \end{align}
 
     .. note::
-        KBK模式下， `output_size` 不支持mutable类型。
+        - KBK模式下， `output_size` 不支持mutable类型。
+        - Atlas训练系列产品不支持反向传播。
 
     参数：
         - **input** (Tensor) - adaptive_max_pool2d的输入，为三维或四维的Tensor，数据类型为float16、float32或者float64。

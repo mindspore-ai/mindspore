@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_OPS_COMMON_COMMON_UTILS_H_
-#define MINDSPORE_OPS_COMMON_COMMON_UTILS_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_RUNTIMR_HARDWARE_ABSTRACT_KERNEL_BASE_COMMON_UTILS_H_
+#define MINDSPORE_CCSRC_INCLUDE_RUNTIMR_HARDWARE_ABSTRACT_KERNEL_BASE_COMMON_UTILS_H_
 
 #include <dirent.h>
 #include <sstream>
@@ -30,7 +30,7 @@
 #include <vector>
 #include <utility>
 #include <tuple>
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
 #include "runtime/hardware_abstract/visible.h"
@@ -50,72 +50,9 @@ namespace MatrixDiag {
 enum Alignment { RIGHT = 0, LEFT = 1 };
 }  // namespace MatrixDiag
 
-struct KernelMetaInfo {
-  uintptr_t func_stub_;
-  uint32_t block_dim_;
-};
-using KernelMetaPtr = std::shared_ptr<KernelMetaInfo>;
-
-class RUNTIME_HARDWARE_EXPORT MatrixInfo {
- public:
-  explicit MatrixInfo(size_t max_index, const ShapeVector &matrix_shapes)
-      : max_index_(max_index), shapes_(matrix_shapes) {
-    current_indexes_.resize(shapes_.size(), 0);
-  }
-  ~MatrixInfo() = default;
-  bool SetIndex(size_t start, size_t end) {
-    // Check data from start to end whether valid.
-    if (start < min_index || end > max_index_ || start >= end) {
-      return false;
-    }
-    // Initial current indexes.
-    int last_rank = SizeToInt(current_indexes_.size()) - 1;
-    for (int i = last_rank; i >= 0; --i) {
-      size_t position = IntToSize(i);
-      current_indexes_[position] = start % LongToSize(shapes_.at(position));
-      start = start / LongToSize(shapes_.at(position));
-      if (start == 0) {
-        break;
-      }
-    }
-    return true;
-  }
-  std::vector<size_t> IndexIterator() {
-    if (is_first_iterator_) {
-      is_first_iterator_ = false;
-      return current_indexes_;
-    }
-    size_t last_rank = current_indexes_.size() - 1;
-    current_indexes_[last_rank]++;
-    for (size_t i = last_rank; current_indexes_.at(i) >= LongToSize(shapes_.at(i)) && i > 0; --i) {
-      current_indexes_[i] = 0;
-      current_indexes_[i - 1] += 1;
-    }
-    is_first_iterator_ = false;
-    return current_indexes_;
-  }
-
- private:
-  bool is_first_iterator_{true};
-  size_t min_index{0};
-  size_t max_index_{1};
-  ShapeVector shapes_;
-  std::vector<size_t> current_indexes_;
-};
-using MatrixInfoPtr = std::shared_ptr<MatrixInfo>;
-RUNTIME_HARDWARE_EXPORT int CalDiagOffset(int diag_index, int max_diag_len, int inner_rows, int inner_cols,
-                                          const std::pair<MatrixDiag::Alignment, MatrixDiag::Alignment> &alignment);
 RUNTIME_HARDWARE_EXPORT TypeId DtypeToTypeId(const std::string &dtypes);
-RUNTIME_HARDWARE_EXPORT std::string Dtype2ShortType(const std::string &dtype);
-RUNTIME_HARDWARE_EXPORT size_t GetDtypeNbyte(const std::string &dtype);
 RUNTIME_HARDWARE_EXPORT bool IsSameShape(const ShapeVector &shape_a, const ShapeVector &shape_b);
 RUNTIME_HARDWARE_EXPORT bool CheckShapesSame(const ShapeArray &shape_array);
-template <typename T>
-struct AsymmetricFunc {
-  T operator()(const T &new_x, const int &old_length, const int &new_length) const {
-    return new_length != 0 ? new_x * old_length / new_length : 0;
-  }
-};
 
 template <template <typename, typename, typename...> typename M, typename T>
 inline std::string Map2Str(const M<std::string, T> value) {
@@ -215,14 +152,10 @@ RUNTIME_HARDWARE_EXPORT std::pair<bool, size_t> MatchKernelAttr(const KernelAttr
 RUNTIME_HARDWARE_EXPORT std::pair<bool, size_t> MatchKernelAttrStrict(const KernelAttr &kernel_attr,
                                                                       const std::vector<KernelAttr> &kernel_attr_list);
 RUNTIME_HARDWARE_EXPORT KernelAttr GetKernelAttrFromBuildInfo(const KernelBuildInfoPtr &build_info);
-RUNTIME_HARDWARE_EXPORT bool IsFoldKernelBuildInfo(const KernelBuildInfoPtr &kernel_build_info);
 RUNTIME_HARDWARE_EXPORT KernelAttr GetKernelAttrFromTensors(const std::vector<KernelTensor *> &inputs,
                                                             const std::vector<KernelTensor *> &outputs);
 // Synchronize the output and input reference map between two kernel attrs.
-RUNTIME_HARDWARE_EXPORT void SyncOutInRef(const KernelAttr &from_kernel_attr, KernelAttr *to_kernel_attr);
 RUNTIME_HARDWARE_EXPORT std::string FetchPrintInfoByKernelAttr(KernelAttr selected_kernel_attr);
-RUNTIME_HARDWARE_EXPORT std::vector<TypeId> GetInputObjectTypeListFromKernelAttr(const KernelAttr &kernel_attr);
-RUNTIME_HARDWARE_EXPORT std::vector<TypeId> GetOutputObjectTypeListFromKernelAttr(const KernelAttr &kernel_attr);
 RUNTIME_HARDWARE_EXPORT std::pair<std::vector<DataType>, std::vector<DataType>> GetInOutDataTypesFromKernelAttr(
   const KernelAttr &kernel_attr);
 // Tuple --> Tuple.
@@ -237,12 +170,6 @@ RUNTIME_HARDWARE_EXPORT TypeId KernelObjectTypeToTypeId(const KernelObjectType &
 RUNTIME_HARDWARE_EXPORT bool CheckAttrForAllSameInput(const size_t input_num,
                                                       const std::vector<mindspore::TypeId> &input_types,
                                                       const KernelAttr &cur_kernel_attr);
-
-RUNTIME_HARDWARE_EXPORT std::vector<KernelObjectType> CalOutputElementObjectTypes(
-  const AnfNodePtr &kernel_node, const KernelAttr &selected_kernel_attr);
-RUNTIME_HARDWARE_EXPORT std::vector<KernelObjectType> CalKernelObjectTypes(
-  const std::vector<TypeId> &object_types, const std::vector<TypeId> &selected_object_types, bool all_same,
-  bool skip_check);
 
 template <typename Derived>
 class MatchKernelHelper {
@@ -279,18 +206,6 @@ class MatchKernelHelper {
   KernelRunFunc kernel_func_;
 };
 
-namespace math {
-void SinCosf(float x, float *sinv, float *cosv);
-}
-
-inline void GetRawAddress(const std::vector<AddressPtr> &addrs, std::vector<void *> *raw_addrs) {
-  (void)std::transform(std::begin(addrs), std::end(addrs), std::back_inserter(*raw_addrs),
-                       [](const AddressPtr &address) -> void * {
-                         MS_EXCEPTION_IF_NULL(address);
-                         return address->addr;
-                       });
-}
-
 #define CHECK_KERNEL_INPUTS_NUM(actual_inputs_num, expect_inputs_num, kernel_name)                     \
   do {                                                                                                 \
     if ((actual_inputs_num) != (expect_inputs_num)) {                                                  \
@@ -309,4 +224,4 @@ inline void GetRawAddress(const std::vector<AddressPtr> &addrs, std::vector<void
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_OPS_COMMON_COMMON_UTILS_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_RUNTIMR_HARDWARE_ABSTRACT_KERNEL_BASE_COMMON_UTILS_H_

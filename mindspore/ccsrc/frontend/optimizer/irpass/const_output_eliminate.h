@@ -21,11 +21,11 @@
 #include <vector>
 #include "ir/anf.h"
 #include "ir/tensor_new.h"
-#include "frontend/optimizer/optimizer.h"
+#include "include/frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/anf_visitor.h"
 #include "frontend/optimizer/irpass.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "include/common/utils/anfalgo.h"
+#include "primitive/array_ops.h"
+#include "include/utils/anfalgo.h"
 #include "utils/ordered_map.h"
 
 namespace mindspore::opt::irpass {
@@ -144,7 +144,6 @@ class ConstOutputEliminater : public AnfVisitor {
         if (!dim_zero) {
           return false;
         }
-
         continue;
       }
 
@@ -173,7 +172,14 @@ class ConstOutputEliminater : public AnfVisitor {
       }
     }
 
-    return true;
+    // If only one zero, no need to eliminate
+    constexpr size_t kTwoElements = 2;
+    constexpr size_t kOneElement = 1;
+    if (grad_mode_) {
+      return tuple->elements().size() > kTwoElements;
+    } else {
+      return tuple->elements().size() > kOneElement;
+    }
   }
 
   bool IsEliminate(const AnfNodePtr &node) {
@@ -208,6 +214,9 @@ class ConstOutputEliminater : public AnfVisitor {
         return false;
       }
       auto use_node_graph = use_node->func_graph();
+      if (use_node_graph->output() != use_node) {
+        return false;
+      }
       auto &fg_use_map_sub = use_node_graph->func_graph_cnodes_index();
       auto mng_sub = use_node_graph->manager();
       for (auto &fg_use_sub : fg_use_map_sub) {

@@ -21,7 +21,7 @@ from mindspore import nn
 
 class LossScaleManager:
     """
-    Loss scale (Magnification factor of gradients when mix precision is used) manager abstract class when using
+    Loss scale (magnification factor of gradients when mixed precision is used) manager abstract class when using
     mixed precision.
 
     Derived class needs to implement all of its methods. `get_loss_scale` is used to get current loss scale value.
@@ -47,7 +47,7 @@ class LossScaleManager:
 
 class FixedLossScaleManager(LossScaleManager):
     """
-    Loss scale (Magnification factor of gradients when mix precision is used) manager with a fixed loss scale value,
+    Loss scale (magnification factor of gradients when mixed precision is used) manager with a fixed loss scale value,
     inherits from :class:`mindspore.amp.LossScaleManager`.
 
     Args:
@@ -56,14 +56,14 @@ class FixedLossScaleManager(LossScaleManager):
             the value of `loss_scale` in optimizer should be set to the same as here. Default: ``128.0`` .
         drop_overflow_update (bool, optional): Whether to execute optimizer if there is an overflow.
             If ``True`` , the optimizer will
-            not executed when overflow occurs. Default: ``True`` .
+            not be executed when overflow occurs. Default: ``True`` .
 
     Examples:
         >>> import mindspore as ms
         >>> from mindspore import amp, nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_scale = 1024.0
         >>> loss_scale_manager = amp.FixedLossScaleManager(loss_scale, False)
@@ -82,7 +82,7 @@ class FixedLossScaleManager(LossScaleManager):
         Get loss scale value.
 
         Returns:
-            bool, `loss_scale` value.
+            float, `loss_scale` value.
         """
         return self._loss_scale
 
@@ -105,7 +105,7 @@ class FixedLossScaleManager(LossScaleManager):
 
     def get_update_cell(self):
         """
-        Returns the instance of :class:`mindspore.nn.Cell` that used to update the loss scale which will be called at
+        Returns the instance of :class:`mindspore.nn.Cell` that is used to update the loss scale which will be called at
         :class:`mindspore.nn.TrainOneStepWithLossScaleCell`. As the loss scale is fixed in this class, the instance
         will do nothing.
 
@@ -121,7 +121,7 @@ class FixedLossScaleManager(LossScaleManager):
 
 class DynamicLossScaleManager(LossScaleManager):
     """
-    Loss scale(Magnification factor of gradients when mix precision is used) manager with loss scale dynamically
+    Loss scale (magnification factor of gradients when mixed precision is used) manager with loss scale dynamically
     adjusted, inherits from :class:`mindspore.amp.LossScaleManager`.
 
     Args:
@@ -137,7 +137,7 @@ class DynamicLossScaleManager(LossScaleManager):
         >>> from mindspore import amp, nn
         >>>
         >>> # Define the network structure of LeNet5. Refer to
-        >>> # https://gitee.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
+        >>> # https://atomgit.com/mindspore/docs/blob/master/docs/mindspore/code/lenet.py
         >>> net = LeNet5()
         >>> loss_scale_manager = amp.DynamicLossScaleManager()
         >>> optim = nn.Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)

@@ -15,8 +15,9 @@
  */
 #include "pybind11/pybind11.h"
 #include "pybind_api/gil_scoped_long_running.h"
-#include "mindspore/ccsrc/include/common/utils/tensor_py.h"
+#include "include/utils/tensor_py.h"
 #include "mindspore/ccsrc/pynative/backward/op_grad/func_grad.h"
+#include "mindspore/ccsrc/pybind_api/pynative/pynative_api.h"
 
 namespace mindspore {
 namespace pynative {
@@ -37,7 +38,8 @@ std::vector<ValuePtr> ConvertPyTupleToTensorList(const py::tuple &tuple_args) {
 
 py::object RunBackward(const py::object &tensors, const py::object &grad_tensors, bool keep_graph, bool high_order,
                        const py::object &inputs, bool allow_unreachable, bool accumulate_grad) {
-  runtime::Pipeline::Get().WaitAll();
+  runtime::Pipeline::Get().WaitFrontend();
+  runtime::Pipeline::Get().WaitBpropStage();
   if (!py::isinstance<py::tuple>(tensors)) {
     MS_LOG(EXCEPTION) << "Output tensors should be tuple! but got " << py::str(tensors);
   }
@@ -67,6 +69,7 @@ py::object RunBackward(const py::object &tensors, const py::object &grad_tensors
   auto engine = std::make_shared<autograd::AutoDiff>(output, keep_graph, high_order, false);
   autograd::AutoDiffGuard auto_diff_guard(engine);
   auto grads = engine->RunBackward(input_tensors, sens_gradients, accumulate_grad);
+  engine->RunFinalCallback();
   engine->Clear();
   if (accumulate_grad) {
     return py::none();
@@ -84,7 +87,7 @@ py::object RunBackward(const py::object &tensors, const py::object &grad_tensors
       MS_LOG(EXCEPTION)
         << "One of the input Tensor's grad is None. Set allow_unused=True if this behavior meets expectations.";
     }
-    py_grads[i] = tensor::PackTensor(tensor);
+    py_grads[i] = tensor::PackTensorToPyObject(tensor);
   }
   return std::move(py_grads);
 }

@@ -22,7 +22,7 @@ from mindspore.ops import functional as F
 import mindspore.ops.operations.spectral_ops as P
 from mindspore import Tensor
 from mindspore.common import dtype as mstype
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 
 class BlackmanWindowNet(nn.Cell):

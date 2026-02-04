@@ -20,7 +20,7 @@
 #include <memory>
 #include "ops/ops_frontend_func_impl.h"
 #include "ops_utils/op_utils.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ir/dtype.h"
 #include "ir/tensor_new.h"
 #include "utils/check_convert_utils.h"
@@ -57,6 +57,10 @@ tensor::TensorPtr ScalarToTensorByType(const ScalarPtr &scalar, const TypePtr &s
       return tensor::from_scalar(GetValue<float>(scalar), data_type);
     case kNumberTypeFloat64:
       return tensor::from_scalar(GetValue<double>(scalar), data_type);
+    case kNumberTypeFloat16:
+      return tensor::from_scalar(GetValue<float16>(scalar), data_type);
+    case kNumberTypeBFloat16:
+      return tensor::from_scalar(GetValue<bfloat16>(scalar), data_type);
     default:
       MS_LOG(EXCEPTION) << "When convert scalar to tensor, the scalar type: " << data_type << " is invalid.";
   }

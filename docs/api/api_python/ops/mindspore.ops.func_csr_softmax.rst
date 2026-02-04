@@ -1,7 +1,7 @@
 mindspore.ops.csr_softmax
 =================================
 
-.. py:function:: mindspore.ops.csr_softmax(logits: CSRTensor, dtype: mstype)
+.. py:function:: mindspore.ops.csr_softmax(logits, dtype)
 
     计算 CSRTensorMatrix 的 softmax 。
 

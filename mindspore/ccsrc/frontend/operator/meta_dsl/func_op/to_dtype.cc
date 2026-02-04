@@ -15,8 +15,8 @@
  */
 
 #include "mindspore/ccsrc/frontend/operator/meta_dsl/func_op/to_dtype.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore::prim {
 BeginFunction(ToDtype, x, dtype, non_blocking, copy) {

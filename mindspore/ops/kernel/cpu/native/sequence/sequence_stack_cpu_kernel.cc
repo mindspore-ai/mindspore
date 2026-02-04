@@ -80,8 +80,8 @@ bool SequenceStackFwdCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   auto output_addr = GetDeviceAddress<T>(outputs, 0);
 
-  size_t element_index_size =
-    static_cast<size_t>(std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), 1, std::multiplies<int64_t>()));
+  size_t element_index_size = static_cast<size_t>(
+    std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
 
   // multi-threading
   size_t input_size = output_size_;
@@ -104,11 +104,9 @@ bool SequenceStackFwdCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *
   return true;
 }
 
-#define SEQUENCE_STACK_REG(ms_type, builtin_type)                                \
-  {                                                                              \
-    KernelAttr().AddInputAttr(kObjectTypeTuple, ms_type).AddOutputAttr(ms_type), \
-      &SequenceStackFwdCpuKernelMod::LaunchKernel<builtin_type>                  \
-  }
+#define SEQUENCE_STACK_REG(ms_type, builtin_type)                               \
+  {KernelAttr().AddInputAttr(kObjectTypeTuple, ms_type).AddOutputAttr(ms_type), \
+   &SequenceStackFwdCpuKernelMod::LaunchKernel<builtin_type>}
 
 const SequenceStackFwdCpuKernelMod::FuncList &SequenceStackFwdCpuKernelMod::GetFuncList() const {
   static const FuncList func_list = {

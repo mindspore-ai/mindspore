@@ -18,11 +18,11 @@
 #define MINDSPORE_CCSRC_BACKEND_GE_BACKEND_DUMP_HOOK_DEBUGGER_H_
 
 #include <vector>
-#include "include/backend/kernel_graph.h"
+#include "include/backend/common/kernel_graph/kernel_graph.h"
 
 namespace mindspore {
 namespace dump {
-class BACKEND_EXPORT HookDebugger {
+class HookDebugger {
  public:
   HookDebugger() : is_enabled_(IsHookerEnabled()) {
     if (is_enabled_) {

@@ -3,16 +3,13 @@ mindspore.mint.isneginf
 
 .. py:function:: mindspore.mint.isneginf(input)
 
-    确定输入Tensor每个位置上的元素是否为负无穷。
+    逐元素返回输入tensor中元素是否是负无穷数。
 
     .. warning::
         - 该API目前只支持在Atlas A2训练系列产品上使用。
 
     参数：
-        - **input** (Tensor) - 输入Tensor。
+        - **input** (Tensor) - 输入tensor。
 
     返回：
-        Tensor，与输入具有相同形状，其中元素在对应输入为负无穷大时为 ``True``，否则为 ``False``。
-
-    异常：
-        - **TypeError** - 如果 `input` 不是Tensor。
+        Tensor

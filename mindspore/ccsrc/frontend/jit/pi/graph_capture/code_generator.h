@@ -210,19 +210,9 @@ class LoopBodyReCaptureCodeGenerator {
  protected:
   std::vector<std::string> GetClosureNames() const;
 
-  std::string makeLoopBodyFuncName(int loopBodyStartBci, int loopBodyEndBci) const {
-    const std::string &co_name = PyUnicode_AsUTF8(co_->co_name);
-    auto name =
-      co_name + ".wrapped_loop_body_func." + std::to_string(loopBodyStartBci) + "." + std::to_string(loopBodyEndBci);
-    return name;
-  }
+  std::string makeLoopBodyFuncName(int loopBodyStartBci, int loopBodyEndBci) const;
 
-  std::string makeFuncName(int loopBodyStartBci, int loopBodyEndBci) const {
-    const std::string &co_name = PyUnicode_AsUTF8(co_->co_name);
-    auto name =
-      co_name + ".loop_body_recaptured." + std::to_string(loopBodyStartBci) + "." + std::to_string(loopBodyEndBci);
-    return name;
-  }
+  std::string makeFuncName(int loopBodyStartBci, int loopBodyEndBci) const;
 
   py::object MakeLoopBodyCode(int loopBodyStartBci, int loopBodyEndBci, const std::vector<int> &inputLocals,
                               const std::vector<int> &outputLocals, bool ifForLoop) const;
@@ -261,7 +251,7 @@ class CodeBreakGenerator {
 
   // for python3.11+ copy origin instruction need pop the null pointer (which is only consume by call instruction)
   // from stack. here generate code from node avoid pop null
-  bool IsCopyCapturedInstructions() const { return !IS_PYTHON_3_11_PLUS && no_graph_ && !NeedHandleBreakAtCall(); }
+  bool IsCopyCapturedInstructions() const;
 
   void ExtendCodeInfo(CodeGenerator *cg, bool merge_kw_only) const;
 

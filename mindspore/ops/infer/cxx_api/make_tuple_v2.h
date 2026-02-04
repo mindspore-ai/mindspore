@@ -16,7 +16,7 @@
 
 #ifndef MINDSPORE_CORE_OPS_FUSION_MAKETUPLE_V2_H_
 #define MINDSPORE_CORE_OPS_FUSION_MAKETUPLE_V2_H_
-#include "mindspore/ops/op_def/lite_ops.h"
+#include "primitive/lite_ops.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {

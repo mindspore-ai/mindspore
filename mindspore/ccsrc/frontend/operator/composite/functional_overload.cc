@@ -23,30 +23,48 @@
 #include <memory>
 #include <utility>
 #include <algorithm>
-#include "include/common/pybind_api/api_register.h"
-#include "mindspore/ops/op_def/structure_ops.h"
+#include "include/utils/operator/primitive_utils.h"
+#include "primitive/structure_ops.h"
 #include "ir/core_ops_primitive.h"
 #include "ir/dtype/tensor_type.h"
 #include "frontend/operator/ops.h"
 #include "abstract/abstract_value.h"
-#include "include/common/utils/primfunc_utils.h"
 #include "frontend/jit/ps/resource.h"
 #include "frontend/jit/ps/fallback.h"
 #include "frontend/jit/ps/parse/parse_base.h"
 #include "frontend/jit/ps/static_analysis/prim.h"
 #include "frontend/jit/ps/static_analysis/prim_utils.h"
 #include "frontend/operator/composite/auto_generate/functional_map.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
-void RegFunctional(const py::module *m) {
-  (void)py::class_<Functional, std::shared_ptr<Functional>>(*m, "Functional_")
-    .def(py::init<py::str &>())
-    .def_property_readonly("name", &Functional::name, "Get functional name.");
-}
-
 namespace prim {
 namespace {
+using OP_DTYPE = mindspore::ops::OP_DTYPE;
+
+std::vector<OP_DTYPE> GetSourceDtypeByArgHandler(const std::string &arg_handler_func) {
+  static std::map<std::string, std::vector<OP_DTYPE>> arg_handler_map = {
+    {"to_pair", {OP_DTYPE::DT_INT, OP_DTYPE::DT_FLOAT, OP_DTYPE::DT_TUPLE_ANY, OP_DTYPE::DT_LIST_ANY}},
+    {"to_kernel_size", {OP_DTYPE::DT_INT, OP_DTYPE::DT_TUPLE_ANY, OP_DTYPE::DT_LIST_ANY}},
+    {"to_strides", {OP_DTYPE::DT_INT, OP_DTYPE::DT_TUPLE_ANY, OP_DTYPE::DT_LIST_ANY}},
+    {"to_rates", {OP_DTYPE::DT_INT, OP_DTYPE::DT_TUPLE_ANY, OP_DTYPE::DT_LIST_ANY}},
+    {"to_dilations", {OP_DTYPE::DT_INT, OP_DTYPE::DT_TUPLE_ANY, OP_DTYPE::DT_LIST_ANY}},
+    {"to_output_padding", {OP_DTYPE::DT_INT, OP_DTYPE::DT_TUPLE_ANY, OP_DTYPE::DT_LIST_ANY}},
+    {"to_2d_paddings", {OP_DTYPE::DT_INT, OP_DTYPE::DT_TUPLE_ANY, OP_DTYPE::DT_LIST_ANY}},
+    {"dtype_to_type_id", {OP_DTYPE::DT_TYPE}},
+    {"str_to_enum", {OP_DTYPE::DT_STR}},
+    {"_scalar_tensor_to_scalar", {OP_DTYPE::DT_NUMBER, OP_DTYPE::DT_TENSOR}},
+    {"_scalar_tensor_to_int", {OP_DTYPE::DT_INT, OP_DTYPE::DT_TENSOR}},
+    {"_scalar_tensor_to_float", {OP_DTYPE::DT_FLOAT, OP_DTYPE::DT_TENSOR}},
+    {"_normalize_int_sequence", {OP_DTYPE::DT_INT, OP_DTYPE::DT_TUPLE_ANY, OP_DTYPE::DT_LIST_ANY, OP_DTYPE::DT_TENSOR}},
+  };
+  auto iter = arg_handler_map.find(arg_handler_func);
+  if (iter == arg_handler_map.end()) {
+    MS_LOG(INTERNAL_EXCEPTION) << "Miss definition of arg_handler '" << arg_handler_func << "' here.";
+  }
+  return iter->second;
+}
+
 size_t GetHashIdForFunctionalCache(const std::string &functional_name, const AbstractBasePtrList &args_abs_list,
                                    bool is_method) {
   return hash_combine(
@@ -54,8 +72,8 @@ size_t GetHashIdForFunctionalCache(const std::string &functional_name, const Abs
 }
 
 bool MatchExpectedDtype(const ops::OP_DTYPE &input_dtype, const ops::OP_DTYPE &expected_dtype) {
-  MS_LOG(DEBUG) << "Input dtype is: '" << ops::EnumToString(input_dtype) << "' and expected dtype is '"
-                << ops::EnumToString(expected_dtype) << "'.";
+  MS_LOG(DEBUG) << "Input dtype is: '" << prim::OpDTypeToString(input_dtype) << "' and expected dtype is '"
+                << prim::OpDTypeToString(expected_dtype) << "'.";
   // Check if the types match.
   if (input_dtype == expected_dtype || expected_dtype == ops::OP_DTYPE::DT_ANY) {
     return true;
@@ -88,7 +106,7 @@ bool MatchExpectedDtype(const ops::OP_DTYPE &input_dtype, const ops::OP_DTYPE &e
 bool MatchPrimitiveArgDtype(const std::string &prim_name, const ops::OpInputArg &op_arg,
                             const ops::OP_DTYPE &input_dtype) {
   MS_LOG(DEBUG) << "Matching arg '" << op_arg.arg_name_ << "' for Primitive[" << prim_name << "] with dtype "
-                << ops::EnumToString(input_dtype) << ".";
+                << prim::OpDTypeToString(input_dtype) << ".";
   if (MatchExpectedDtype(input_dtype, op_arg.arg_dtype_) ||
       (op_arg.is_optional_ && input_dtype == ops::OP_DTYPE::DT_NONE)) {
     return true;
@@ -98,7 +116,7 @@ bool MatchPrimitiveArgDtype(const std::string &prim_name, const ops::OpInputArg 
                        [&input_dtype](const ops::OP_DTYPE &dtype) { return MatchExpectedDtype(input_dtype, dtype); });
   }
   if (!op_arg.arg_handler_.empty()) {
-    auto src_dtypes = ops::GetSourceDtypeByArgHandler(op_arg.arg_handler_);
+    auto src_dtypes = GetSourceDtypeByArgHandler(op_arg.arg_handler_);
     return std::any_of(src_dtypes.cbegin(), src_dtypes.cend(),
                        [&input_dtype](const ops::OP_DTYPE &dtype) { return MatchExpectedDtype(input_dtype, dtype); });
   }
@@ -270,7 +288,7 @@ bool PrimitiveConverter::CheckKwargs(PrimitiveAttr *cur_prim) {
     auto op_arg = expect_op_args[index_key];
     if (!MatchPrimitiveArgDtype(cur_prim->prim_name, op_arg, value)) {
       error_msgs_.push_back(functional_name_ + "(): argument '" + key + "' must be " +
-                            ops::EnumToString(op_arg.arg_dtype_) + " but got " + ops::EnumToString(value));
+                            prim::OpDTypeToString(op_arg.arg_dtype_) + " but got " + prim::OpDTypeToString(value));
       return false;
     }
   }
@@ -308,8 +326,8 @@ bool PrimitiveConverter::CheckImplicitTuple(PrimitiveAttr *cur_prim,
     // Variable parameters support only the integer type.
     if (!MatchExpectedDtype(ops::OP_DTYPE::DT_INT, input_position_args_dtype_[i])) {
       error_msgs_.push_back(functional_name_ + "(): argument '" + arg_name + "' (position " + std::to_string(i) +
-                            ") must be " + ops::EnumToString(expect_op_args[cur_prim->varargs_index].arg_dtype_) +
-                            ", not " + ops::EnumToString(input_position_args_dtype_[i]) + ".");
+                            ") must be " + prim::OpDTypeToString(expect_op_args[cur_prim->varargs_index].arg_dtype_) +
+                            ", not " + prim::OpDTypeToString(input_position_args_dtype_[i]) + ".");
       return false;
     }
   }
@@ -347,8 +365,8 @@ bool PrimitiveConverter::CheckPositionArgs(PrimitiveAttr *cur_prim) {
     }
     if (!MatchPrimitiveArgDtype(cur_prim->prim_name, expect_op_args[i], input_position_args_dtype_[i])) {
       error_msgs_.push_back(functional_name_ + "(): argument '" + arg_name + "' (position " + std::to_string(i) +
-                            ") must be " + ops::EnumToString(expect_op_args[i].arg_dtype_) + ", not " +
-                            ops::EnumToString(input_position_args_dtype_[i]) + ".");
+                            ") must be " + prim::OpDTypeToString(expect_op_args[i].arg_dtype_) + ", not " +
+                            prim::OpDTypeToString(input_position_args_dtype_[i]) + ".");
       first_failed_position_ = i;
       return false;
     }
@@ -428,16 +446,6 @@ std::string BuildArgsTypeString(const TypePtr &arg_type) {
   return BuildOtherTypeString(arg_type);
 }
 
-std::stringstream BuildApiInputInfo(const std::string &function_name, const std::vector<std::string> &arg_info_list) {
-  std::stringstream ss;
-  std::string result = std::accumulate(
-    arg_info_list.begin(), arg_info_list.end(), std::string(),
-    [](const std::string &a, const std::string &b) -> std::string { return a.empty() ? b : a + ", " + b; });
-  ss << "Failed calling " << function_name << " with \"" << function_name << "(" << result << ")\".\n";
-  ss << "The valid calling should be:\n";
-  return ss;
-}
-
 std::string PrimitiveConverter::BuildMatchInfo(const std::vector<std::string> &arg_info_list) const {
   MS_LOG(DEBUG) << "first_failed_position_ = " << first_failed_position_;
   std::stringstream ss;
@@ -460,8 +468,7 @@ std::string PrimitiveConverter::BuildMatchInfo(const std::vector<std::string> &a
 }
 
 std::string PrimitiveConverter::BuildDetailedErrorMsg(const std::vector<std::string> &arg_info_list) const {
-  const auto &signature_map =
-    is_method_ ? ops::tensor_method_overload_signature_map : ops::function_overload_signature_map;
+  const auto &signature_map = GetFunctionalSignatureMap(is_method_);
   auto it = signature_map.find(functional_name_);
   std::stringstream ss;
   if (it != signature_map.end()) {
@@ -496,32 +503,14 @@ std::string PrimitiveConverter::BuildDetailedErrorMsg(const std::vector<std::str
   return ss.str();
 }
 
-std::string BuildFunctionalErrorMsg(const std::string &function_name, const std::vector<std::string> &arg_info_list,
-                                    bool is_method) {
-  std::stringstream ss = BuildApiInputInfo(function_name, arg_info_list);
-  const auto &signature_map =
-    is_method ? ops::tensor_method_overload_signature_map : ops::function_overload_signature_map;
-  auto it = signature_map.find(function_name);
-  if (it != signature_map.end()) {
-    const std::vector<std::string> &valid_arg_options = it->second;
-    for (const std::string &arg_option : valid_arg_options) {
-      ss << "\"" << arg_option << "\"\n";
-    }
-    ss << std::endl;
-  } else {
-    MS_LOG(EXCEPTION) << "Valid arg options are not correctly generated." << std::endl;
-  }
-  return ss.str();
-}
-
 FuncGraphPtr DeprecatedTensorMethod::GenerateFuncGraph(const abstract::AbstractBasePtrList &) {
-  static const std::string module_path = "mindspore._extends.parse.deprecated.deprecated_tensor_method";
+  static const std::string module_path = "mindspore.graph._parse.deprecated.deprecated_tensor_method";
   static const std::string method_map = "deprecated_tensor_method_map";
   py::dict map_obj = python_adapter::GetPyFn(module_path, method_map);
   const auto &method_name = method();
   if (!map_obj.contains(py::str(method_name))) {
     MS_LOG(INTERNAL_EXCEPTION) << "As a deprecated Tensor method, '" << method_name
-                               << "' should be registered in _extends/parse/deprecated/deprecated_tensor_method.py::"
+                               << "' should be registered in graph/_parse/deprecated/deprecated_tensor_method.py::"
                                << method_map;
   }
   const std::string &function_name = map_obj[py::str(method_name)].cast<std::string>();
@@ -761,9 +750,10 @@ AnfNodePtr ConvertFunctionalToPrimitive(const std::string &functional_name, cons
   return prim_node;
 }
 
-AnfNodePtr ConvertFunctionalToPyExecute(const std::string &functional_name, const AnfNodePtrList &inputs_list,
+AnfNodePtr ConvertFunctionalToPyExecute(const FunctionalPtr &functional, const AnfNodePtrList &inputs_list,
                                         const AbstractBasePtrList &args_abs_list, const CNodePtr &cnode,
                                         bool is_method) {
+  auto functional_name = functional->name();
   MS_LOG(DEBUG) << "Functional[" << functional_name << "] receives arguments that contain Any.";
   std::stringstream script_buffer;
   constexpr auto index_fn = 0;
@@ -776,15 +766,11 @@ AnfNodePtr ConvertFunctionalToPyExecute(const std::string &functional_name, cons
     // Convert Functional node to PyExectue("x.method_name(arg1, arg2)", local_keys, local_values)
     script_buffer << data_str << "." << functional_name + "(";
   } else {
-    // Convert Functional node to PyExectue("mint.xxx(x, arg1, arg2)", local_keys, local_values)
-    script_buffer << functional_name << "(" << data_str << ", ";
-    py::object py_functional = python_adapter::GetPyFn("mindspore.mint", functional_name);
-    if (py::isinstance<py::none>(py_functional)) {
-      MS_LOG(INTERNAL_EXCEPTION) << functional_name << " is not a function of mindspore.mint";
-    }
-    auto functional_node = NewValueNode(std::make_shared<parse::InterpretedObject>(py_functional));
-    (void)keys_inputs.emplace_back(NewValueNode(std::make_shared<StringImm>(functional_name)));
-    (void)values_inputs.emplace_back(functional_node);
+    // Convert Functional node to PyExectue("mint_function_str(x, arg1, arg2)", local_keys, local_values)
+    std::string mint_function_str = "__mint_" + functional_name + "__";
+    script_buffer << mint_function_str << "(" << data_str << ", ";
+    (void)keys_inputs.emplace_back(NewValueNode(std::make_shared<StringImm>(mint_function_str)));
+    (void)values_inputs.emplace_back(NewValueNode(std::make_shared<parse::InterpretedObject>(py::cast(functional))));
   }
   for (size_t index = 1; index < inputs_list.size(); ++index) {
     auto internal_arg = fallback::ConvertRealStrToUnicodeStr(functional_name, index);

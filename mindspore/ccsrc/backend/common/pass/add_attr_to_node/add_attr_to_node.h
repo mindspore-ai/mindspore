@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_COMMON_PASS_ADD_ATTR_TO_NODE_ADD_ATTR_TO_NODE_H_
 #define MINDSPORE_CCSRC_BACKEND_COMMON_PASS_ADD_ATTR_TO_NODE_ADD_ATTR_TO_NODE_H_
 
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 namespace mindspore {
 namespace opt {

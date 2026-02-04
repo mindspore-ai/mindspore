@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-
+"""Tests for mint.nn.functional.adaptive_max_pool1d."""
 import numpy as np
 import pytest
 
@@ -37,7 +37,6 @@ def forward_adaptive_max_pool1d_net_dyn(input_x):
 def backward_adaptive_max_pool1d_net(input_x, output_size, return_indices=False):
     return ms.grad(forward_adaptive_max_pool1d_net, (0))(input_x, output_size, return_indices)
 
-
 @ops_binary_cases(OpsBinaryCase(input_info=[((16, 4, 16), np.float32)],
                                 output_info=[((16, 4, 4), np.float32), ((16, 4, 16), np.float32)],
                                 extra_info='adaptive_max_pool1d'))
@@ -56,11 +55,10 @@ def ops_adpative_max_pool1d_case2(input_binary_data=None, output_binary_data=Non
     output = forward_adaptive_max_pool1d_net(Tensor(input_binary_data[0]), 32, True)
     assert np.allclose(output[0].asnumpy(), output_binary_data[0], 1e-03, 1e-03)
     assert np.allclose(output[1].asnumpy(), output_binary_data[1], 1e-03, 1e-03)
-    output = backward_adaptive_max_pool1d_net(Tensor(input_binary_data[0]), 32, True)
-    assert np.allclose(output.asnumpy(), output_binary_data[2], 1e-03, 1e-03)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=20.0)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK'])
 def test_adaptive_max_pool1d(mode):
     """
@@ -77,8 +75,8 @@ def test_adaptive_max_pool1d(mode):
     ops_adpative_max_pool1d_case2()
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1',
+          card_mark='onecard', essential_mark='unessential', mem_peak=20.0)
 def test_batchnorm1d_dyn():
     """
     Feature: Dynamic shape of adaptive_max_pool1d

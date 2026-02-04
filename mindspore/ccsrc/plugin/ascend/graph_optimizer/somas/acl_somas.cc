@@ -20,10 +20,10 @@
 #include <utility>
 #include <vector>
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/framework_op_name.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "primitive/framework_op_name.h"
+#include "primitive/framework_ops.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
 
 namespace mindspore {
 namespace device {

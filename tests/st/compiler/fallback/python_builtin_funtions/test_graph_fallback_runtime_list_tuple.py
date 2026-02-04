@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import pytest
+""" test_graph_fallback_runtime_list_tuple.py """
 import numpy as np
 from mindspore import Tensor, jit, context
 from tests.mark_utils import arg_mark
@@ -20,7 +20,8 @@ from tests.mark_utils import arg_mark
 context.set_context(mode=context.GRAPH_MODE)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_fallback_list_tuple_asnumpy():
     """
     Feature: JIT Fallback

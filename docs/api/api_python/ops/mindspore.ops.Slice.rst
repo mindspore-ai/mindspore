@@ -13,4 +13,4 @@ mindspore.ops.Slice
         - **size** (Union[tuple, list]) - 切片的大小。只支持常量值。
 
     输出：
-        Tensor，shape与输入 `size` 相同，数据类型与输入 `input_x` 的相同。
+        Tensor，shape与输入 `size` 相同，数据类型与输入 `input_x` 相同。

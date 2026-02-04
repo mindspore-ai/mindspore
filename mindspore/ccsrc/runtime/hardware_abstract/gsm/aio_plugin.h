@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_GSM_FILE_AIO_PLUGIN_H_
-#define MINDSPORE_CCSRC_RUNTIME_DEVICE_GSM_FILE_AIO_PLUGIN_H_
+#ifndef MINDSPORE_CCSRC_RUNTIMR_HARDWARE_ABSTRACT_GSM_AIO_PLUGIN_H_
+#define MINDSPORE_CCSRC_RUNTIMR_HARDWARE_ABSTRACT_GSM_AIO_PLUGIN_H_
 
 #include <libaio.h>
 #include <list>
@@ -73,7 +73,7 @@ class IocbHelper {
 
 using AsyncIOToken = size_t;
 
-class AIO_EXPORT AioPlugin : public AsyncIO {
+class AioPlugin : public AsyncIO {
  public:
   AioPlugin() = default;
   ~AioPlugin() override;
@@ -106,8 +106,8 @@ class AIO_EXPORT AioPlugin : public AsyncIO {
   size_t *pending_events_;
 };
 
-extern "C" AIO_EXPORT AsyncIO *get_aio_instance();
+extern "C" AsyncIO *get_aio_instance();
 }  // namespace device
 }  // namespace mindspore
 #undef LinuxAIO
-#endif  // MINDSPORE_CCSRC_RUNTIME_DEVICE_GSM_FILE_AIO_PLUGIN_H_
+#endif  // MINDSPORE_CCSRC_RUNTIMR_HARDWARE_ABSTRACT_GSM_AIO_PLUGIN_H_

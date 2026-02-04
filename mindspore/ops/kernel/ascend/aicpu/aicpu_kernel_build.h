@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_KERNEL_BUILD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_AICPU_AICPU_KERNEL_BUILD_H_
 #include <memory>
-#include "include/common/kernel_base/kernel.h"
+#include "include/utils/kernel_base/kernel.h"
 
 namespace mindspore {
 namespace kernel {

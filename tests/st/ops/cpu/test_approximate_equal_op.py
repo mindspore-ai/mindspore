@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 from mindspore import dtype as mstype
 from mindspore.ops import functional as F
 from mindspore.ops.function.math_func import approximate_equal
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 X = np.random.rand(3, 3).astype(np.float32)

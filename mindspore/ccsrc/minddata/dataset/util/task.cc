@@ -17,7 +17,7 @@
 #include "utils/os.h"
 #include "minddata/dataset/util/log_adapter.h"
 #include "minddata/dataset/util/task_manager.h"
-#include "minddata/utils.h"
+#include "minddata/dataset/util/thread_bind_core_utils.h"
 #ifdef WITH_BACKEND
 #include "utils/ms_context.h"
 #include "include/runtime/hardware_abstract/data_queue/data_queue_mgr.h"

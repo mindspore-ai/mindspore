@@ -1,7 +1,7 @@
 mindspore.ops.coo_floor
 ========================
 
-.. py:function:: mindspore.ops.coo_floor(x: COOTensor)
+.. py:function:: mindspore.ops.coo_floor(x)
 
     COOTensor逐元素向下取整函数。
 

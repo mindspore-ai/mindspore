@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ import numpy as np
 from tests.mark_utils import arg_mark
 from mindspore.common import dtype as mstype
 from mindspore import nn
-from mindspore import Tensor
+from mindspore import Tensor, Parameter, ops, jit
 from mindspore.ops import composite as C
 from mindspore import context
 
@@ -57,7 +57,7 @@ class BackwardNet(nn.Cell):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_forward():
     """
     Feature: Control flow
@@ -74,7 +74,7 @@ def test_forward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu',], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.00)
 def test_backward():
     """
     Feature: Control flow
@@ -89,3 +89,43 @@ def test_backward():
     graph_grads = backward_net(x, y)
 
     assert graph_grads == Tensor(np.array(18), mstype.int32)
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+def test_if_by_while_in_while():
+    """
+    Feature: Control flow
+    Description: Test control flow in graph mode.
+    Expectation: No exception.
+    """
+    class Net(nn.Cell):
+        def __init__(self, t):
+            super(Net, self).__init__()
+            self.add = ops.Add()
+            self.mul = ops.Mul()
+            self.assginadd = ops.AssignAdd()
+            self.param = Parameter(t, name='t')
+
+        @jit
+        def construct(self, x, y):
+            out = ops.add(y, y)
+            while x < 2:
+                self.assginadd(self.param, y)
+                x = x + 1
+                if x < 4:
+                    out = self.add(out, self.param)
+                    break
+                while x + 1 > 1:
+                    x = x - 1
+                    if x < 7:
+                        out = self.mul(out, self.param)
+                        continue
+                    out = self.add(out, y)
+            return out
+
+    x = Tensor(1, mstype.int32)
+    np_data = np.array([[1, 2], [3, 4], [5, 6]]).astype(np.int32)
+    y = Tensor(np_data)
+    t = Tensor(np_data)
+    out = Net(t)(x, y)
+    assert np.all(out.asnumpy() == np.array([[4, 8], [12, 16], [20, 24]]))

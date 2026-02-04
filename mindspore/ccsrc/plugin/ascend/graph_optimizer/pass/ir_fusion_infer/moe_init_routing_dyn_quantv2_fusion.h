@@ -18,7 +18,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include "include/backend/optimizer/optimizer.h"
+#include "include/backend/common/pass_manager/optimizer.h"
 
 auto constexpr kExpandRowIdx = 1;
 auto constexpr kCumsumOutIdx = 2;

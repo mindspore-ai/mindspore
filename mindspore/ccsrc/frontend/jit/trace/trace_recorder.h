@@ -26,27 +26,16 @@
 #include <utility>
 
 #include "pybind11/pybind11.h"
-#include "frontend/operator/primitive_py.h"
-#include "include/common/visible.h"
+#include "include/frontend/operator/primitive_py.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
 #include "frontend/jit/ps/parse/resolve.h"
 
 namespace mindspore {
 namespace trace {
-FRONTEND_EXPORT void Capture(const py::args &args, py::object *res);
-FRONTEND_EXPORT void Capture(const py::list &args, const PrimitivePtr &prim, py::object *res);
-FRONTEND_EXPORT void Capture(const std::vector<py::object> &args_vec, const PrimitivePtr &prim, py::object *res);
-FRONTEND_EXPORT void CapturePy(PyObject *args, PyObject **res);
-FRONTEND_EXPORT void CapturePy(PyObject *args, const PrimitivePtr &prim, PyObject **res);
-FRONTEND_EXPORT void CapturePy(const std::vector<PyObject *> &args_vec, const PrimitivePtr &prim, PyObject **res);
-
-FRONTEND_EXPORT void CaptureResolveOperation(const py::tuple &args, const std::string &named_primitive,
-                                             py::object *res);
 py::object CaptureRun(const py::args &args, const py::object &res, const py::object &prim_py);
-FRONTEND_EXPORT bool IsTracing();
-FRONTEND_EXPORT py::object DefaultOutput();
-FRONTEND_EXPORT bool Compiled();
+py::object DefaultOutput();
+bool Compiled();
 
 class TraceRecorder {
  public:
@@ -82,6 +71,7 @@ class TraceRecorder {
   FuncGraphPtr BuildEndGraph(const py::list &file_names, const py::list &linenos, const py::args &output_args,
                              bool nested = false);
   py::object InitTraceGraphInputs(const AbstractBasePtr &abs, const AnfNodePtr &param);
+  void PassNode(const py::object &origin_obj, const py::object &new_obj);
 
  private:
   AnfNodePtr GetNode(const py::object &obj, const DebugInfoPtr &debug_info, bool set_abstract = false);
@@ -110,8 +100,6 @@ class TraceRecorder {
   std::stack<FuncGraphPtr> graph_stack_;
   std::unordered_map<std::string, AnfNodePtr> py_obj_node_map_;  // The map from py::object id() to AnfNode.
 };
-
-FRONTEND_EXPORT void RegTraceRecorderPy(const py::module *m);
 }  // namespace trace
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_JIT_TRACE_RECORDER_H_

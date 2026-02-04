@@ -96,8 +96,8 @@ bool SequenceConcatCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> 
   const auto input_addr = GetDeviceAddress<T>(inputs, 0);
   auto *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-  size_t element_index_size =
-    LongToSize(std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), 1, std::multiplies<int64_t>()));
+  size_t element_index_size = LongToSize(
+    std::accumulate(tuple_shape_.begin() + 1, tuple_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
 
   std::vector<T *> input_addr_list;
   for (size_t j = 0; j < input_num_; ++j) {
@@ -131,14 +131,12 @@ bool SequenceConcatCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> 
   return true;
 }
 
-#define SEQUENCE_CONCAT_REG(ms_type, builtin_type)            \
-  {                                                           \
-    KernelAttr()                                              \
-      .AddInputAttr(kObjectTypeTuple, ms_type)                \
-      .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64)      \
-      .AddOutputAttr(ms_type),                                \
-      &SequenceConcatCpuKernelMod::LaunchKernel<builtin_type> \
-  }
+#define SEQUENCE_CONCAT_REG(ms_type, builtin_type)      \
+  {KernelAttr()                                         \
+     .AddInputAttr(kObjectTypeTuple, ms_type)           \
+     .AddInputAttr(kObjectTypeNumber, kNumberTypeInt64) \
+     .AddOutputAttr(ms_type),                           \
+   &SequenceConcatCpuKernelMod::LaunchKernel<builtin_type>}
 
 const SequenceConcatCpuKernelMod::FuncList &SequenceConcatCpuKernelMod::GetFuncList() const {
   static const FuncList func_list = {

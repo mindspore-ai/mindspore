@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "runtime/pipeline/task/batch_launch_kernel_task.h"
+#include "include/runtime/pipeline/task/batch_launch_kernel_task.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {

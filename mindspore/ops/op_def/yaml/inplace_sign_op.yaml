@@ -1,0 +1,18 @@
+#operator inplace_sign
+inplace_sign:
+  args:
+    input:
+      dtype: tensor
+  args_signature:
+      rw_write: input
+  returns:
+    output:
+      dtype: tensor
+      inplace: input
+  labels:
+      side_effect_mem: True
+  class:
+      name: InplaceSign
+  dispatch:
+    enable: True
+    Ascend: InplaceSignAscend

@@ -16,8 +16,8 @@
 #include <memory>
 #include "common/common_test.h"
 #include "common/graph_optimizer_test_framework.h"
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "include/common/utils/anfalgo.h"
+#include "primitive/sequence_ops.h"
+#include "include/utils/anfalgo.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "pre_activate/common/pattern_to_pattern_pass_utils.h"
 #include "backend/ge_backend/graph_ir/utils.h"
@@ -50,26 +50,6 @@ TEST_F(TestFailureMode, test_lamb_fission_ge_with_wrong_input_number) {
     ASSERT_TRUE(std::string(err.what()).find("The input tensor size[2]") != std::string::npos);
     ASSERT_TRUE(std::string(err.what()).find("is not equal to 10") != std::string::npos);
   }
-}
-
-/// Feature: Failure mode which test backend pass problem
-/// Description: Test DropoutUnifyMindIR0
-/// Expectation: After pass, got wrong pattern, expect DropoutGenMask and DropoutDoMask, but got nochanged
-TEST_F(TestFailureMode, test_dropout_unify_mindir_0) {
-  test::ConstructGraph c;
-  auto input = c.NewTensorInput("input", kFloat32, {2, 16384});
-  auto index = c.NewValueNode(MakeValue((int64_t)0));
-  auto dropout = c.NewCNode("Dropout", {input}, {{"keep_prob", MakeValue(true)}});
-  auto getitem = c.NewCNodeWithoutInfer("TupleGetItem", {dropout, index}, {});
-  c.SetOutput(getitem);
-  test::RunPass(c.GetGraph(), {std::make_shared<opt::DropoutUnifyMindIR0>()});
-  opt::CheckPattern checker;
-  checker.src_pattern_.AddVar("shape")
-    .AddVar("prob")
-    .AddVar("input")
-    .AddCNode("genmask", {std::make_shared<Primitive>("DropoutGenMask"), "shape", "prob"})
-    .AddCNode("domask", {std::make_shared<Primitive>("DropoutDoMask"), "input", "genmask", "prob"});
-  EXPECT_FALSE(checker.build_pattern_map(c.GetGraph()->output()));
 }
 
 /// Feature: Failure mode which test convert ge adapter

@@ -8,9 +8,12 @@ if(DEFINED ENV{MS_INTERNAL_KERNEL_HOME})
     include_directories($ENV{MS_INTERNAL_KERNEL_HOME}/asdops/include/lcal)
 endif()
 
+if(DEFINED ENV{MS_SYMMETRIC_MEMORY_KERNEL_HOME})
+    add_compile_definitions(ENABLE_SYMMETRIC_MEMORY_KERNELS)
+endif()
+
 set(ASCEND_KERNEL_COMP
-        availability
-        acl
+        aclop
         acl_ir
         aclnn
         akg
@@ -46,12 +49,14 @@ foreach(_comp ${ASCEND_KERNEL_COMP})
     endif()
 endforeach()
 
-list(APPEND ASCEND_KERNEL_SRC "atb/atb_kernel_build.cc")
+list(APPEND ASCEND_KERNEL_SRC "atb/kernel_mod_impl/atb_kernel_build.cc")
 list(APPEND ASCEND_KERNEL_SRC "internal/internal_kernel_build.cc")
 list(APPEND ASCEND_KERNEL_SRC "internal/internal_ascend_adapter.cc")
+list(APPEND ASCEND_KERNEL_SRC "symmetric_memory/symmetric_memory_kernel_build.cc")
 
 add_subdirectory(atb)
 add_subdirectory(internal)
+add_subdirectory(symmetric_memory)
 
 set_property(SOURCE ${ASCEND_KERNEL_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_KERNEL)
 add_library(mindspore_ops_ascend SHARED ${ASCEND_KERNEL_SRC})

@@ -19,21 +19,20 @@
 #include <vector>
 #include <set>
 
-#include "backend/common/pass/common/gllo_utils.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
+#include "primitive/nn_ops.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "plugin/ascend/graph_optimizer/pass/ir_fusion_infer/inference_weight_preprocess_utils.h"
 #include "utils/shape_utils.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_q.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_q.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
 
 namespace mindspore {
 namespace opt {
@@ -160,7 +159,8 @@ CNodePtr MoeInitRoutingDynQuantV2Fusion::CreateMoeInitRoutingDynQuantV2Node(cons
   kernel_graph->AddValueNodeToGraph(offset_none);
 
   auto moe_init_routing_dyn_quantv2_prim = std::make_shared<Primitive>("MoeInitRoutingQuantV2");
-  std::vector<AnfNodePtr> quant_inputs = {x,
+  std::vector<AnfNodePtr> quant_inputs = {std::make_shared<ValueNode>(moe_init_routing_dyn_quantv2_prim),
+                                          x,
                                           expert_idx,
                                           active_num,
                                           expert_capacity,
@@ -171,7 +171,7 @@ CNodePtr MoeInitRoutingDynQuantV2Fusion::CreateMoeInitRoutingDynQuantV2Node(cons
                                           quant_mode,
                                           scale,
                                           offset_none};
-  auto moe_init_routing_dyn_quantv2_node = func_graph->NewCNode(moe_init_routing_dyn_quantv2_prim, quant_inputs);
+  auto moe_init_routing_dyn_quantv2_node = NewCNode(quant_inputs, func_graph);
   MS_EXCEPTION_IF_NULL(moe_init_routing_dyn_quantv2_node);
 
   std::vector<TypeId> moe_init_routing_dyn_quantv2_types;

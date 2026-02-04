@@ -20,18 +20,18 @@
 
 #include "ir/tensor_new.h"
 #include "plugin/ascend/res_manager/collective/multi_ascend_collective_comm_lib.h"
-#include "include/backend/distributed/collective/collective_manager.h"
-#include "mindspore/ops/op_def/other_ops.h"
+#include "include/runtime/hardware_abstract/collective/collective_manager.h"
+#include "primitive/other_ops.h"
 #include "backend/common/pass/common/gllo_utils.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/backend/optimizer/helper.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/utils/anfalgo.h"
+#include "include/backend/common/pass_manager/helper.h"
 #include "utils/ms_context.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 namespace mindspore {
 namespace opt {
@@ -129,13 +129,14 @@ std::vector<std::string> MatMulAllReduceAddRmsNormFusion::MustExistPrimitiveName
   return ret;
 }
 
-AnfNodePtr NewTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x2, const AnfNodePtr &node,
-                            const TypeId &add_result_type) {
+AnfNodePtr MatMulAllReduceAddRmsNormFusion::NewTransposeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &x2,
+                                                             const AnfNodePtr &node,
+                                                             const TypeId &add_result_type) const {
   MS_LOG(INFO) << "start to create Transpose node.";
   auto prim = std::make_shared<Primitive>(ops::kNameTranspose);
   ShapeVector perm_vec{1, 0};
   std::vector<AnfNodePtr> inputs = {NewValueNode(prim), x2, CreateShapeValueNode(func_graph, perm_vec, false)};
-  auto transpose_cnode = func_graph->NewCNode(inputs);
+  auto transpose_cnode = NewCNode(inputs, func_graph);
   MS_EXCEPTION_IF_NULL(transpose_cnode);
 
   std::vector<TypeId> transpose_types;
@@ -229,7 +230,7 @@ CNodePtr MatMulAllReduceAddRmsNormFusion::CreateMatMulAllReduceAddRmsNormNode(co
   std::vector<AnfNodePtr> inputs;
   inputs = {NewValueNode(prim), x1,        transposed_x2, bias, residual, gamma, eps, group,
             reduce_op,          comm_turn, stream_mode};
-  auto matmul_allreduce_addrmsnorm_cnode = func_graph->NewCNode(inputs);
+  auto matmul_allreduce_addrmsnorm_cnode = NewCNode(inputs, func_graph);
   MS_EXCEPTION_IF_NULL(matmul_allreduce_addrmsnorm_cnode);
   MS_LOG(INFO) << "create MatMulAllReduceAddRmsNorm node success.";
 
@@ -273,7 +274,7 @@ const AnfNodePtr MatMulAllReduceAddRmsNormFusion::Process(const FuncGraphPtr &gr
   auto prim_getitem1 = std::make_shared<Primitive>(kTupleGetItemOpName);
   std::vector<AnfNodePtr> add_result_inputs = {NewValueNode(prim_getitem1), matmul_allreduce_addrmsnorm_cnode,
                                                NewValueNode(static_cast<int64_t>(0))};
-  auto add_result = graph->NewCNode(add_result_inputs);
+  auto add_result = NewCNode(add_result_inputs, graph);
   common::AnfAlgo::SetOutputTypeAndDetailShape(add_result_types, add_result_shapes, add_result.get());
   add_result->set_scope(add->scope());
   build_info = GenerateKernelBuildInfo(add_result);
@@ -282,7 +283,7 @@ const AnfNodePtr MatMulAllReduceAddRmsNormFusion::Process(const FuncGraphPtr &gr
   auto prim_getitem2 = std::make_shared<Primitive>(kTupleGetItemOpName);
   std::vector<AnfNodePtr> rms_norm_result_inputs = {NewValueNode(prim_getitem2), matmul_allreduce_addrmsnorm_cnode,
                                                     NewValueNode(static_cast<int64_t>(1))};
-  auto rms_norm_result = graph->NewCNode(rms_norm_result_inputs);
+  auto rms_norm_result = NewCNode(rms_norm_result_inputs, graph);
   common::AnfAlgo::SetOutputTypeAndDetailShape(add_result_types, add_result_shapes, rms_norm_result.get());
   rms_norm_result->set_scope(rms_norm->scope());
   build_info = GenerateKernelBuildInfo(rms_norm_result);

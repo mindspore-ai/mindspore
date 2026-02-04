@@ -124,7 +124,8 @@ def one_hot_static_shape_all_types():
     one_hot_static_shape_test_case(np.int32, mstype.float32, np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=1024.06)
 def test_ascend_graph_mode():
     """
     Feature: test one_hot static shape on Ascend in graph mode
@@ -136,7 +137,8 @@ def test_ascend_graph_mode():
     one_hot_dynamic_shape_test_case(np.int32, mstype.float32, np.float32)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=3072.00)
 def test_ascend_pynative_mode():
     """
     Feature: test one_hot static shape on Ascend in pynative mode

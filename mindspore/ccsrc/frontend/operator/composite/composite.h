@@ -116,31 +116,6 @@ using HyperMapPyPtr = std::shared_ptr<HyperMapPy>;
 
 extern ValuePtr kCompositeHyperMap;
 
-enum TailType { kGradAll, kGradFirst, kGradByPosition, kNotGrad };
-
-class Tail : public MetaFuncGraph {
- public:
-  explicit Tail(const std::string &name, TailType tail_type = kNotGrad, bool return_ids = false)
-      : MetaFuncGraph(name), tail_type_(tail_type), enable_tuple_grad_first_(false), return_ids_(return_ids) {}
-  ~Tail() override = default;
-  MS_DECLARE_PARENT(Tail, MetaFuncGraph)
-
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
-
-  friend bool operator==(const Tail &lhs, const Tail &rhs) { return lhs.name_ == rhs.name_; }
-  void set_enable_tuple_grad_first(bool enable_tuple_grad_first) { enable_tuple_grad_first_ = enable_tuple_grad_first; }
-
- private:
-  FuncGraphPtr GenerateTailFuncGraph(const abstract::AbstractSequencePtr &sequence_arg) const;
-  FuncGraphPtr GenerateGradFuncGraph(const abstract::AbstractTuplePtr &tuple_arg,
-                                     const abstract::AbstractTuplePtr &position = nullptr) const;
-
-  TailType tail_type_;
-  bool enable_tuple_grad_first_;
-  bool return_ids_;
-};
-using TailPtr = std::shared_ptr<Tail>;
-
 class MakeTupleGradient : public MetaFuncGraph {
  public:
   explicit MakeTupleGradient(const std::string &name) : MetaFuncGraph(name) {}
@@ -190,40 +165,6 @@ class MutableGradient : public MetaFuncGraph {
   friend bool operator==(const MutableGradient &lhs, const MutableGradient &rhs) { return lhs.name_ == rhs.name_; }
 };
 using MutableGradientPtr = std::shared_ptr<MutableGradient>;
-
-class FRONTEND_EXPORT GradOperation : public MetaFuncGraph {
- public:
-  explicit GradOperation(const std::string &name, bool get_all = false, bool get_by_list = false,
-                         bool sens_param = false, bool get_by_position = false, bool has_aux = false,
-                         bool get_value = false, bool return_ids = false, bool merge_forward = false);
-  ~GradOperation() override = default;
-  MS_DECLARE_PARENT(GradOperation, MetaFuncGraph)
-
-  FuncGraphPtr GetGrad(const AnfNodePtr &j, const AnfNodePtr &weights, const AnfNodePtr &position,
-                       const FuncGraphPtr &forward_graph, bool is_weights_none) const;
-
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
-
-  bool sens_param() const { return sens_param_; }
-
-  bool get_all_;
-  bool get_by_list_;
-  bool sens_param_;
-  bool get_by_position_;
-  bool has_aux_;
-  bool get_value_;
-  bool return_ids_;
-  bool merge_forward_;
-
- private:
-  void GradByParameter(const FuncGraphPtr &k_child, const AnfNodePtr &f_app, const AnfNodePtr &bprop,
-                       const AnfNodePtr &weights, const AnfNodePtr &position, const FuncGraphPtr &forward_graph,
-                       bool is_weights_none) const;
-  CNodePtr SetNodeByParameter(const CNodePtr &grad, const FuncGraphPtr &fg) const;
-
-  AbstractBasePtr weight_value_;
-};
-using GradOperationPtr = std::shared_ptr<GradOperation>;
 
 class GradAux : public MetaFuncGraph {
  public:
@@ -460,69 +401,6 @@ class ForHalfUnrollLess : public MetaFuncGraph {
   MS_DECLARE_PARENT(ForHalfUnrollLess, MetaFuncGraph)
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
   friend bool operator==(const ForHalfUnrollLess &lhs, const ForHalfUnrollLess &rhs) { return lhs.name_ == rhs.name_; }
-};
-
-class AccumulateDout : public MetaFuncGraph {
- public:
-  explicit AccumulateDout(const std::string &name) : MetaFuncGraph(name) {}
-  ~AccumulateDout() override = default;
-  MS_DECLARE_PARENT(AccumulateDout, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
-  friend bool operator==(const AccumulateDout &lhs, const AccumulateDout &rhs) { return lhs.name_ == rhs.name_; }
-
- private:
-  void CheckAccumulateDoutInputAbstract(const AbstractBasePtrList &args_abs_list);
-  bool IsAddDout();
-  bool IsBuildSwitchNode();
-  FuncGraphPtr BuildAddOutputFG(const std::string &name, const AbstractBasePtrList &args_abs_list);
-  FuncGraphPtr BuildAccumulateInplaceOutputFG(const std::string &name);
-  FuncGraphPtr BuildSelectOutputFG(const std::string &name);
-  FuncGraphPtr BuildChooseOutputFG(const std::string &name);
-  std::map<std::string, int64_t> types_;
-};
-
-class GenerateMask : public MetaFuncGraph {
- public:
-  explicit GenerateMask(const std::string &name) : MetaFuncGraph(name) {}
-  ~GenerateMask() override = default;
-  MS_DECLARE_PARENT(GenerateMask, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
-  friend bool operator==(const GenerateMask &lhs, const GenerateMask &rhs) { return lhs.name_ == rhs.name_; }
-};
-
-class GenerateBpropOutTuple : public MetaFuncGraph {
- public:
-  explicit GenerateBpropOutTuple(const std::string &name) : MetaFuncGraph(name) {}
-  ~GenerateBpropOutTuple() override = default;
-  MS_DECLARE_PARENT(GenerateBpropOutTuple, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
-  friend bool operator==(const GenerateBpropOutTuple &lhs, const GenerateBpropOutTuple &rhs) {
-    return lhs.name_ == rhs.name_;
-  }
-  void set_ops_type(int64_t ops_type) { ops_type_ = ops_type; }
-
- private:
-  int64_t ops_type_ = OpsType::Type_Normal;
-};
-
-class GetRealBpropOut : public MetaFuncGraph {
- public:
-  explicit GetRealBpropOut(const std::string &name) : MetaFuncGraph(name) {}
-  ~GetRealBpropOut() override = default;
-  MS_DECLARE_PARENT(GetRealBpropOut, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
-  friend bool operator==(const GetRealBpropOut &lhs, const GetRealBpropOut &rhs) { return lhs.name_ == rhs.name_; }
-};
-
-class GetDependDoutTuple : public MetaFuncGraph {
- public:
-  explicit GetDependDoutTuple(const std::string &name) : MetaFuncGraph(name) {}
-  ~GetDependDoutTuple() override = default;
-  MS_DECLARE_PARENT(GetDependDoutTuple, MetaFuncGraph)
-  FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_abs_list) override;
-  friend bool operator==(const GetDependDoutTuple &lhs, const GetDependDoutTuple &rhs) {
-    return lhs.name_ == rhs.name_;
-  }
 };
 
 class RecomputeBlock : public MetaFuncGraph {

@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
+"""
+Test GeLUGrad op in CPU.
+"""
 from tests.mark_utils import arg_mark
 
 import numpy as np
-import pytest
 
 import mindspore
-import mindspore.context as context
-import mindspore.nn as nn
+from mindspore import context
+from mindspore import nn
 from mindspore import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
@@ -29,7 +31,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 class GeluNet(nn.Cell):
     def __init__(self):
-        super(GeluNet, self).__init__()
+        super().__init__()
         self.gelu = P.GeLU()
 
     def construct(self, x):
@@ -38,7 +40,7 @@ class GeluNet(nn.Cell):
 
 class Grad(nn.Cell):
     def __init__(self, network):
-        super(Grad, self).__init__()
+        super().__init__()
         self.grad = C.GradOperation(get_all=True)
         self.network = network
 
@@ -58,10 +60,10 @@ def test_gelugrad():
     net = GeluNet()
     grad = Grad(net)
 
-    output = grad(x_ms) * dy_ms
+    output = grad(x_ms)[0] * dy_ms
     expect = [0.50963277, 0.9414753, 0.2667653, 0.21358444, 0.25243032, 0.0352667,
               0.34266686, 0.57757664, 0.04707306, 0.51536125]
-    assert np.allclose(output[0].asnumpy(), expect)
+    assert np.allclose(output.asnumpy(), expect)
 
 
 @arg_mark(plat_marks=['cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1', card_mark='onecard',

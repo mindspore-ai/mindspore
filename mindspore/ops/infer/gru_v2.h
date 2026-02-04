@@ -21,7 +21,7 @@
 #include <vector>
 #include "abstract/abstract_value.h"
 #include "mindapi/base/types.h"
-#include "mindspore/ops/op_def/op_name.h"
+#include "primitive/op_name.h"
 #include "ops/base_operator.h"
 
 namespace mindspore {

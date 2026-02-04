@@ -51,7 +51,9 @@ std::string Instr::ToString() const {
   if (extra_jump()) {
     s << " -> " << extra_jump()->bci();
   }
+#if IS_PYTHON_3_11_PLUS
   s << " " << loc_;
+#endif
   return s.str();
 }
 

@@ -35,7 +35,7 @@
 #include "ir/tensor.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_tdt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "plugin/ascend/res_manager/visible.h"
 
 #ifndef SECUREC_MEM_MAX_LEN
@@ -45,8 +45,9 @@
 namespace mindspore::device::ascend {
 
 class ScopeAclTdtDataset;
+using DataItem = std::variant<std::string, mindspore::tensor::TensorPtr>;
 
-using MbufFuncType = std::function<void(ScopeAclTdtDataset &)>;
+using MbufFuncType = std::function<void(const std::string &, const std::vector<DataItem> &)>;
 
 const std::map<aclDataType, TypeId> kAclDataTypeMap = {{ACL_INT8, TypeId::kNumberTypeInt8},
                                                        {ACL_UINT8, TypeId::kNumberTypeUInt8},
@@ -86,8 +87,6 @@ struct SlicedTensor {
   // buffer for storing contents of sliced tensor
   std::ostringstream buffer_;
 };
-
-using DataItem = std::variant<std::string, mindspore::tensor::TensorPtr>;
 
 class ScopeAclTdtDataset {
  public:

@@ -13,17 +13,15 @@
 # limitations under the License.
 # ============================================================================
 """Stress detect."""
-from mindspore import _c_expression
-from mindspore import log as logger
-from mindspore.communication import init, create_group, get_rank
-from mindspore.communication import get_local_rank_size
+import mindspore.tools
+from mindspore.common._decorator import deprecated
 
 
+@deprecated("2.7.1", "mindspore.tools.stress_detect", module_prefix="mindspore.utils.")
 def stress_detect(detect_type="aic"):
     """
-    Used to detect whether there are faults in hardware accuracy or communication between links.
-    The common usage scenario is to initiate a new thread or call this interface through a Callback function
-    at each step or when saving checkpoints, to check whether hardware malfunctions could affect accuracy.
+    This api will be deprecated and removed in future versions, please use the api
+    :func:`mindspore.tools.stress_detect` instead.
 
     Args:
         detect_type (str, optional): The type of stress test to perform. There are two options available: ``'aic'`` and
@@ -42,22 +40,4 @@ def stress_detect(detect_type="aic"):
         >>> print(ret)
         0
     """
-    if detect_type not in ["aic", "hccs"]:
-        logger.error(f"For stress detect, detection type must be 'aic' or 'hccs'."
-                     f"But got {detect_type}. Exiting stress detect.")
-        return 1
-
-    if detect_type == "aic":
-        return _c_expression.stress_detect("aic")
-
-    init()
-    local_ranks = []
-    local_rank_size = get_local_rank_size()
-    node_num = get_rank() // local_rank_size
-    for i in range(local_rank_size):
-        local_ranks.append(local_rank_size * node_num + i)
-    if get_rank() in local_ranks:
-        group = f"new_group_{node_num}"
-        create_group(group, local_ranks)
-
-    return _c_expression.stress_detect(group)
+    return mindspore.tools.stress_detect(detect_type)

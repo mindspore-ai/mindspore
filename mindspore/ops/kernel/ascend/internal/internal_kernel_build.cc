@@ -24,8 +24,8 @@
 #include <unordered_map>
 
 #include "kernel/ascend/kernel_plugin.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
-#include "include/common/utils/anfalgo.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/utils/anfalgo.h"
 
 namespace mindspore {
 namespace kernel {
@@ -92,13 +92,7 @@ bool IsEnableInternalNode(const AnfNodePtr &node) {
   }
 
   std::string op_name = common::AnfAlgo::GetCNodeName(node);
-  if (op_name == "QuantBatchMatmul") {
-    auto cnode = node->cast<CNodePtr>();
-    MS_EXCEPTION_IF_NULL(cnode);
-    if (!IsValueNode<None>(cnode->input(kIndex6))) {
-      return false;
-    }
-  } else if (op_name == "SplitWithSize") {
+  if (op_name == "SplitWithSize") {
     static const auto kSplitOutNum2 = 2;
     static const auto kSplitOutNum3 = 3;
     auto out_num = AnfUtils::GetOutputTensorNum(node);

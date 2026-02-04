@@ -23,14 +23,13 @@ narrow_view:
         Examples:
             >>> import mindspore
             >>> from mindspore import ops
-            >>> from mindspore.ops.auto_generate import NarrowView
             >>> from mindspore import Tensor
             >>> x = Tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], mindspore.int32)
-            >>> output = NarrowView()(x, 0, 0, 2)
+            >>> output = ops.auto_generate.narrow_view(x, 0, 0, 2)
             >>> print(output)
             [[ 1 2 3]
              [ 4 5 6]]
-            >>> output = NarrowView()(x, 1, 1, 2)
+            >>> output = ops.auto_generate.narrow_view(x, 1, 1, 2)
             >>> print(output)
             [[ 2 3]
              [ 5 6]

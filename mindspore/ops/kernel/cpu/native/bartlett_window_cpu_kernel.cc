@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+#include "kernel/cpu/native/bartlett_window_cpu_kernel.h"
 #include <cmath>
 #include <string>
 #include <algorithm>
-#include "kernel/cpu/native/bartlett_window_cpu_kernel.h"
 #include "mindspore/ops/infer/bartlett_window.h"
 
 namespace mindspore {

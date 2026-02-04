@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,15 +55,7 @@ class Parameter : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetNodeId(size_t *id) override {
-    if (value_ != nullptr) {
-      value_->SetNodeId(id);
-    }
-    if (default_value_ != nullptr) {
-      default_value_->SetNodeId(id);
-    }
-    Node::SetNodeId(id);
-  }
+  void SetNodeId(size_t *id) override;
 
   /**
    * \brief Get the index of parameter.
@@ -132,16 +124,7 @@ class Parameter : public Node {
    * \brief Get the description of this parameter.
    * \return The description.
    */
-  std::string ToString() const override {
-    std::string str = (value_ == nullptr ? "" : value_->ToString()) + "\n";
-    str += (default_value_ == nullptr ? "" : default_value_->ToString()) + "\n";
-    str += "%" + std::to_string(GetNodeId()) + " = Parameter[" + GetType()->GetName() + "](Name : " + name_;
-    str += " Value : " + (value_ == nullptr ? "Null" : "%" + std::to_string(value_->GetNodeId()));
-    str +=
-      " Default Value : " + (default_value_ == nullptr ? "Null" : "%" + std::to_string(default_value_->GetNodeId())) +
-      ")";
-    return str;
-  }
+  std::string ToString() const override;
 
  private:
   /// \brief The index of parameter.
@@ -194,15 +177,7 @@ class FunctionNode : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetNodeId(size_t *id) override {
-    for (const auto &parameter : parameters_) {
-      parameter->SetNodeId(id);
-    }
-    for (const auto &node : nodes_) {
-      node->SetNodeId(id);
-    }
-    Node::SetNodeId(id);
-  }
+  void SetNodeId(size_t *id) override;
 
   /**
    * \brief Set the offset of this node.
@@ -210,13 +185,7 @@ class FunctionNode : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetOffset(size_t *offset) override {
-    /// Inputs must be valueNodes, no need to set offset
-    /// Only the operation need to be set offset
-    for (const auto &node : nodes_) {
-      node->SetOffset(offset);
-    }
-  }
+  void SetOffset(size_t *offset) override;
 
   /**
    * \brief Get the name of function.
@@ -272,28 +241,28 @@ class FunctionNode : public Node {
    *
    * \return The result of the judgment.
    */
-  bool HasVarArg() const { return (flags_ & 0x0004) != 0x0; }
+  bool HasVarArg() const;
 
   /**
    * \brief Set whether has var args.
    *
    * \param[in] has_var_arg the result of whether has var args.
    */
-  void SetHasVarArg(bool has_var_arg) { flags_ = has_var_arg ? flags_ | 0x0004 : flags_ & 0xFFFB; }
+  void SetHasVarArg(bool has_var_arg);
 
   /**
    * \brief Judgment whether has kw args.
    *
    * \return The result of the judgment.
    */
-  bool HasKwArg() const { return (flags_ & 0x0008) != 0x0; }
+  bool HasKwArg() const;
 
   /**
    * \brief Set whether has kw args.
    *
    * \param[in] has_kw_arg the result of whether has kw args.
    */
-  void SetHasKwArg(bool has_kw_arg) { flags_ = has_kw_arg ? flags_ | 0x0008 : flags_ & 0xFFF7; }
+  void SetHasKwArg(bool has_kw_arg);
 
   /**
    * \brief Judgment whether has the attr whose name is key.
@@ -396,11 +365,7 @@ class FunctionNode : public Node {
    *
    * \note The node after the return will be ignored.
    */
-  void AddNode(const NodePtr &node) {
-    if (nodes_.empty() || !nodes_.back()->isa<ReturnNode>()) {
-      nodes_.push_back(node);
-    }
-  }
+  void AddNode(const NodePtr &node);
 
   /**
    * \brief Get the global will be used in code generator.
@@ -469,22 +434,7 @@ class FunctionNode : public Node {
    * \brief Get the description of this function.
    * \return The description.
    */
-  std::string ToString() const override {
-    std::string str;
-    for (const auto &parameter : parameters_) {
-      str += parameter->ToString() + "\n";
-    }
-    str += "%" + std::to_string(GetNodeId()) + " = FunctionNode " + name_ + "(";
-    for (const auto &parameter : parameters_) {
-      str += "%" + std::to_string(parameter->GetNodeId()) + ", ";
-    }
-    str += ") {\n";
-    for (const auto &node : nodes_) {
-      str += node->ToString() + "\n";
-    }
-    str += "}\n";
-    return str;
-  }
+  std::string ToString() const override;
 
  private:
   /// \brief The name of function.
@@ -539,16 +489,7 @@ class IfNode : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetNodeId(size_t *id) override {
-    condition_jump_->SetNodeId(id);
-    for (const auto &node : then_) {
-      node->SetNodeId(id);
-    }
-    for (const auto &node : else_) {
-      node->SetNodeId(id);
-    }
-    Node::SetNodeId(id);
-  }
+  void SetNodeId(size_t *id) override;
 
   /**
    * \brief Set the offset of this node.
@@ -556,16 +497,7 @@ class IfNode : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetOffset(size_t *offset) override {
-    /// Only the operation need to be set offset
-    condition_jump_->SetOffset(offset);
-    for (const auto &node : then_) {
-      node->SetOffset(offset);
-    }
-    for (const auto &node : else_) {
-      node->SetOffset(offset);
-    }
-  }
+  void SetOffset(size_t *offset) override;
 
   /**
    * \brief Get the condition of if node.
@@ -602,11 +534,7 @@ class IfNode : public Node {
    *
    * \note The node after the return will be ignored.
    */
-  void AddThen(const NodePtr &node) {
-    if (then_.empty() || !then_.back()->isa<ReturnNode>()) {
-      then_.push_back(node);
-    }
-  }
+  void AddThen(const NodePtr &node);
 
   /**
    * \brief Get the else body of if node.
@@ -629,29 +557,13 @@ class IfNode : public Node {
    *
    * \note The node after the return will be ignored.
    */
-  void AddElse(const NodePtr &node) {
-    if (else_.empty() || !else_.back()->isa<ReturnNode>()) {
-      else_.push_back(node);
-    }
-  }
+  void AddElse(const NodePtr &node);
 
   /**
    * \brief Get the description of this If node.
    * \return The description.
    */
-  std::string ToString() const override {
-    std::string str = condition_jump_->ToString();
-    str += "%" + std::to_string(GetNodeId()) + " = If (%" + std::to_string(condition_jump_->GetNodeId()) + ") {\n";
-    for (const auto &node : then_) {
-      str += node->ToString();
-    }
-    str += "} else {\n";
-    for (const auto &node : else_) {
-      str += node->ToString();
-    }
-    str += "}\n";
-    return str;
-  }
+  std::string ToString() const override;
 
  private:
   /// \brief The condition of if, it must be a jump.
@@ -686,13 +598,7 @@ class WhileNode : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetNodeId(size_t *id) override {
-    condition_jump_->SetNodeId(id);
-    for (const auto &node : body_) {
-      node->SetNodeId(id);
-    }
-    Node::SetNodeId(id);
-  }
+  void SetNodeId(size_t *id) override;
 
   /**
    * \brief Set the offset of this node.
@@ -700,13 +606,7 @@ class WhileNode : public Node {
    * \note This method should not be actively called by the program writer, it should only be called by the method
    * Sort()
    */
-  void SetOffset(size_t *offset) override {
-    /// Only the operation need to be set offset
-    condition_jump_->SetOffset(offset);
-    for (const auto &node : body_) {
-      node->SetOffset(offset);
-    }
-  }
+  void SetOffset(size_t *offset) override;
 
   /**
    * \brief Get the condition of while node.
@@ -754,15 +654,7 @@ class WhileNode : public Node {
    * \brief Get the description of this While node.
    * \return The description.
    */
-  std::string ToString() const override {
-    std::string str = condition_jump_->ToString();
-    str += "%" + std::to_string(GetNodeId()) + " = While (%" + std::to_string(condition_jump_->GetNodeId()) + ") {";
-    for (const auto &node : body_) {
-      str += node->ToString();
-    }
-    str += "}\n";
-    return str;
-  }
+  std::string ToString() const override;
 
  private:
   /// \brief The condition of while, it must be a jump.

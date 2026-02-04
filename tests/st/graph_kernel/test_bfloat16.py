@@ -13,10 +13,14 @@
 # limitations under the License.
 # ============================================================================
 
+"""
+bfloat16 data type fuse op test case
+"""
+
 import numpy as np
 import mindspore
-import mindspore.ops as ops
-import mindspore.context as context
+from mindspore import ops
+from mindspore import context
 from mindspore import Tensor, Parameter
 from mindspore.nn import Cell
 from tests.st.graph_kernel.gk_utils import AssertGKEnable
@@ -25,7 +29,7 @@ from tests.mark_utils import arg_mark
 
 class Net(Cell):
     def __init__(self, shape):
-        super(Net, self).__init__()
+        super().__init__()
         self.param = Parameter(Tensor(np.ones(shape), dtype=mindspore.bfloat16), "param")
 
     def construct(self, x0, x1):
@@ -66,7 +70,12 @@ def case1():
 
 
 class Net2(Cell):
+    def __init__(self):
+        super().__init__()
+        self.const = Tensor(np.ones((1,)), dtype=mindspore.bfloat16)
+
     def construct(self, x0, x1):
+        x0 = ops.Add()(x0, self.const)
         y0 = ops.Add()(x0, x1)
         y1 = ops.Cast()(y0, mindspore.float32)
         return y0, y1
@@ -87,7 +96,8 @@ def case2():
     assert np.allclose(y0, y1, 0.0, 0.0)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.0)
 def test_convert_bfloat16():
     """
     Feature: test graph kernel bfloat16 data type

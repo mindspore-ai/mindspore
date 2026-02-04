@@ -30,7 +30,7 @@ mindspore.train.TopKCategoricalAccuracy
         参数：
             - **inputs** - 输入 `y_pred` 和 `y`。`y_pred` 和 `y` 支持Tensor、list或numpy.ndarray类型。
               `y_pred` 在大多数情况下由范围 :math:`[0, 1]` 中的浮点数组成，shape为 :math:`(N, C)` ，其中 :math:`N` 是样本数， :math:`C` 是类别数。
-              `y` 由整数值组成。如果使用one-hot编码，则shape为 :math:`(N, C)` ；如果使用类别索引，shape是 :math:`(N,)` 。
+              `y` 由整数值组成。如果使用one-hot编码，shape为 :math:`(N, C)` ；如果使用类别索引，shape是 :math:`(N,)` 。
 
         .. note::
             `update` 方法需要接收满足 :math:`(y\_pred, y)` 格式的输入。如果某些样本具有相同的正确率，则将选择第一个样本。

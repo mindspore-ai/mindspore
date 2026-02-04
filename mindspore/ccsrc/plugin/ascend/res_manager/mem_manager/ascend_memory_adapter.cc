@@ -142,12 +142,24 @@ bool AscendMemAdapter::Initialize() {
     reserved_mem_size_for_others = device_hbm_free_size_ - SizeToLong(ms_used_hbm_size_);
   } else {
     if (user_define_ms_size >= device_hbm_free_size_) {
-      MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#The Free Device Memory Size is "
+      static auto tft_env_value = common::GetEnv("MS_ENABLE_TFT");
+      constexpr auto optARF = "ARF:1";
+      constexpr auto optRSC = "RSC:1";
+      if (tft_env_value.find(optARF) != std::string::npos || tft_env_value.find(optRSC) != std::string::npos) {
+        MS_LOG(WARNING) << "#umsg#Framework Error Message:#umsg#The Free Device Memory Size is "
                         << (SizeToFloat(device_hbm_free_size_) / kGBToByte)
                         << " GB, max_device_memory should be in range (0-"
                         << (SizeToFloat(device_hbm_free_size_) / kMBToByte) << "]MB, but got "
                         << (SizeToFloat(user_define_ms_size) / kMBToByte)
                         << "MB, please set the context key max_device_memory in valid range.";
+      } else {
+        MS_LOG(EXCEPTION) << "#umsg#Framework Error Message:#umsg#The Free Device Memory Size is "
+                          << (SizeToFloat(device_hbm_free_size_) / kGBToByte)
+                          << " GB, max_device_memory should be in range (0-"
+                          << (SizeToFloat(device_hbm_free_size_) / kMBToByte) << "]MB, but got "
+                          << (SizeToFloat(user_define_ms_size) / kMBToByte)
+                          << "MB, please set the context key max_device_memory in valid range.";
+      }
     }
     ms_used_hbm_size_ = SizeToLong(user_define_ms_size);
 
@@ -160,7 +172,7 @@ bool AscendMemAdapter::Initialize() {
     }
   }
 
-  if (AscendVmmAdapter::GetInstance().IsEnabled()) {
+  if (AscendVmmAdapter::IsEnabled()) {
     ms_used_hbm_size_ = SizeToLong(AscendVmmAdapter::GetInstance().GetRoundDownAlignSize(ms_used_hbm_size_));
   } else if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {
     ms_used_hbm_size_ = SizeToLong(AscendGmemAdapter::GetInstance().GetRoundDownAlignSize(ms_used_hbm_size_));
@@ -290,7 +302,7 @@ struct HugeMemReserver {
 
 uint8_t *AscendMemAdapter::MallocFromRts(size_t size) const {
   uint8_t *ptr = nullptr;
-  if (AscendVmmAdapter::GetInstance().IsEnabled()) {
+  if (AscendVmmAdapter::IsEnabled()) {
     return nullptr;
   }
   if (AscendGmemAdapter::GetInstance().is_eager_free_enabled()) {

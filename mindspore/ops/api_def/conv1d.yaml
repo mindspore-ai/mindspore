@@ -1,0 +1,13 @@
+conv1d:
+  - op_yaml: conv1d_ext_op.yaml
+    py_method: conv1d
+    Ascend: pyboost
+    CPU: py_method
+    GPU: py_method
+    interface: function
+  - op_yaml: conv1d_padding_op.yaml
+    py_method: conv1d
+    Ascend: pyboost
+    CPU: py_method
+    GPU: py_method
+    interface: function

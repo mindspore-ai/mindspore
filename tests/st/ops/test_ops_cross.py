@@ -34,7 +34,8 @@ def cross_backward_func(input1, other, dim=None):
     return ms.grad(cross_forward_func, (0, 1))(input1, other, dim)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=18.00)
 @pytest.mark.parametrize('mode', ['pynative', 'KBK', "graph"])
 @pytest.mark.parametrize("dtype", [np.int8, np.int16, np.int32, np.int64, np.uint8, np.float64,
                                    np.float32, np.float16, np.complex128])

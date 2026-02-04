@@ -20,20 +20,22 @@
 #include <unordered_map>
 #include <memory>
 #include <set>
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
+#include <string>
+#include <utility>
+#include "primitive/array_ops.h"
+#include "primitive/nn_ops.h"
 #include "kernel/ascend/hccl/hccl_kernel_metadata.h"
-#include "include/backend/debug/data_dump/dump_json_parser.h"
-#include "include/backend/optimizer/helper.h"
-#include "mindspore/ops/op_def/framework_ops.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "primitive/framework_ops.h"
 #include "kernel/ascend/aclnn/kernel_mod_impl/aclnn_kernel_build.h"
-#include "kernel/ascend/acl/acl_kernel_build.h"
-#include "kernel/ascend/atb/atb_kernel_build.h"
-#include "plugin/ascend/kernel_executor/host/host_kernel_build.h"
+#include "kernel/ascend/aclop/kernel_mod_impl/acl_kernel_build.h"
+#include "kernel/ascend/atb/kernel_mod_impl/atb_kernel_build.h"
+#include "mindspore/ops/kernel/host/host_kernel_build.h"
 #include "plugin/ascend/kernel_executor/host/host_kernel_metadata.h"
 #include "kernel/ascend/internal/internal_kernel_build.h"
-#include "kernel/ascend/custom/custom_kernel_build.h"
-#include "kernel/ascend/custom/custom_kernel_factory.h"
+#include "kernel/ascend/symmetric_memory/symmetric_memory_kernel_build.h"
+#include "kernel/ascend/custom/kernel_mod_impl/custom_kernel_build.h"
+#include "kernel/ascend/custom/kernel_mod_impl/custom_kernel_factory.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
 #include "plugin/ascend/res_manager/collective/multi_ascend_collective_comm_lib.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
@@ -44,20 +46,21 @@
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
 #include "tools/profiler/profiling.h"
 #include "backend/common/pass/insert_type_transform_op.h"
-#include "include/common/utils/ms_device_shape_transfer.h"
 #include "plugin/cpu/kernel_executor/kernel_select/kernel_select_cpu.h"
 #include "utils/anf_utils.h"
 #include "kernel/ascend/aclnn/kernel_mod_impl/customize/custom_aclnn_utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_e.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_g.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_p.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/other_op_name.h"
-#include "mindspore/ops/op_def/math_op_name.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_e.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_g.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_p.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_u.h"
+#include "primitive/other_op_name.h"
+#include "primitive/math_op_name.h"
 
 namespace mindspore {
 namespace device {
@@ -67,6 +70,14 @@ constexpr uint32_t kFirstItem = 0;
 constexpr size_t kOpTypeNumber = static_cast<size_t>(SelectedKernelType::NUM_KERNLE_TYPE);
 constexpr const char *kOpSelectedType[] = {"internal kernel", "aclnn kernel", "aclop kernel", "atb kernel",
                                            "hccl kernel",     "host kernel",  "custom kernel"};
+
+/**
+ * If you want extend format, make sure it has a data trans function at host in class
+ * 'FormatTransfer.format_trans_fp_map'
+ * */
+static const std::set<std::string> kFormatWithTransFunc = {
+  kOpFormat_HWCN,     kOpFormat_NHWC,      kOpFormat_FRAC_Z,      kOpFormat_FRAC_NZ,      kOpFormat_NC1HWC0,
+  kOpFormat_NDC1HWC0, kOpFormat_C1HWNCoC0, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_3D, kOpFormat_FRACTAL_Z_C04};
 
 std::string KernelSelectDebugString(const kernel::KernelBuildInfo *build_info,
                                     const std::vector<std::shared_ptr<kernel::KernelBuildInfo>> &kernel_info_list) {
@@ -101,7 +112,7 @@ void SetWeightFormat(const AnfNodePtr &real_input_node, std::vector<string> outp
   // and there will be no HostToDeviceCopy in the follow-up. If host format conversion is disabled,
   // the TransData operator will be executed in each subsequent step, resulting in poor performance.
   if (disable_convert) {
-    disable_convert = trans::kFormatWithTransFunc.find(output_format[0]) == trans::kFormatWithTransFunc.end();
+    disable_convert = kFormatWithTransFunc.find(output_format[0]) == kFormatWithTransFunc.end();
   }
   // if not find in host convert format map means the host has not registered the convert function of this format
   if (output_format[0] != kOpFormat_DEFAULT && disable_convert) {
@@ -150,7 +161,7 @@ bool RefreshCastAndParamWeightFormat(const AnfNodePtr &input_node, const string 
   if (common::AnfAlgo::GetCNodeName(cast_node) != prim::kPrimCast->name()) {
     return true;
   }
-  if (AnfAlgo::IsFeatureMapOutput(cast_node)) {
+  if (common::AnfAlgo::IsFeatureMapOutput(cast_node)) {
     return true;
   }
   if (format == kOpFormat_FRACTAL_ZN_RNN || format == kOpFormat_ND_RNN_BIAS) {
@@ -365,9 +376,8 @@ bool IsSupportLcoc(const std::string &group_name, const std::string &op_name) {
   if (!disable_lccl_op_env.empty()) {
     std::set<std::string> disable_lccl_op_list;
     common::SplitString(disable_lccl_op_env, ',', &disable_lccl_op_list);
-    bool disable_internal_op =
-      (std::find(disable_lccl_op_list.begin(), disable_lccl_op_list.end(), op_name) != disable_lccl_op_list.end());
-    if (disable_internal_op) {
+    bool disable_lccl_op = disable_lccl_op_list.find(op_name) != disable_lccl_op_list.end();
+    if (disable_lccl_op) {
       return false;
     }
   }
@@ -486,7 +496,8 @@ inline bool NeedTransDataWhenInferBoost(const CNodePtr &kernel, const KernelType
   const auto soc_version = context_ptr->ascend_soc_version();
   if (soc_version == kAscendVersion310p) {
     return kernel_type == KernelType::INTERNAL_KERNEL ||
-           IsOneOfPrimitiveCNode(kernel, {prim::kPrimReshapeExt, prim::kPrimReshape, prim::kPrimGroupedMatmul});
+           IsOneOfPrimitiveCNode(
+             kernel, {prim::kPrimReshapeExt, prim::kPrimReshape, prim::kPrimGroupedMatmul, prim::kPrimGroupedMatmulV4});
   } else if (soc_version == kAscendVersion910b || soc_version == kAscendVersion910_93) {
     return kernel_type != KernelType::CUSTOM_KERNEL;
   }
@@ -518,16 +529,18 @@ auto CreateProcessTupleOutputLambda(size_t *output_num, kernel::KernelObjectType
   };
 }
 
-void GetFormatInfoByKernelType(const CNodePtr &kernel, const KernelType &kernel_type, size_t input_num,
-                               size_t output_num, std::vector<std::string> *input_formats,
-                               std::vector<std::string> *output_formats, std::vector<std::string> *input_reshape_types,
-                               std::vector<std::string> *output_reshape_types,
-                               kernel::KernelObjectType *output_object_type) {
+std::tuple<bool, size_t> GetFormatInfoByKernelType(const CNodePtr &kernel, const KernelType &kernel_type,
+                                                   size_t input_num, size_t output_num,
+                                                   std::vector<std::string> *input_formats,
+                                                   std::vector<std::string> *output_formats,
+                                                   std::vector<std::string> *input_reshape_types,
+                                                   std::vector<std::string> *output_reshape_types,
+                                                   kernel::KernelObjectType *output_object_type) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
 
-  auto process_tuple_output =
-    CreateProcessTupleOutputLambda(&output_num, output_object_type, output_formats, output_reshape_types);
+  bool is_acl = false;
+  size_t cur_output_number = output_num;
 
   if (kernel_type == KernelType::ACL_KERNEL) {
     device::ascend::AclHelper::GetValidKernelBuildInfo(kernel, input_formats, output_formats, input_reshape_types,
@@ -539,7 +552,8 @@ void GetFormatInfoByKernelType(const CNodePtr &kernel, const KernelType &kernel_
     std::string name = GetCNodeFuncName(kernel);
     const auto &info = device::ascend::GeAdapterManager::GetInstance().GetInfo(name, true);
     auto adapter_output_num = info->GetNumStaticOutputsOfMsOpProto();
-    process_tuple_output(kernel, true, adapter_output_num);
+    is_acl = true;
+    cur_output_number = adapter_output_num;
   } else if (context_ptr->IsEnableInferBoost() && NeedTransDataWhenInferBoost(kernel, kernel_type)) {
     input_formats->clear();
     output_formats->clear();
@@ -551,6 +565,16 @@ void GetFormatInfoByKernelType(const CNodePtr &kernel, const KernelType &kernel_
     output_reshape_types->assign(output_num, "");
 
     kernel::GetValidKernelBuildInfoWithInternalFormat(kernel, input_formats, output_formats);
+  } else if (kernel_type == KernelType::SYMMETRIC_MEMORY_KERNEL) {
+    input_formats->clear();
+    output_formats->clear();
+    input_reshape_types->clear();
+    output_reshape_types->clear();
+    input_formats->assign(input_num, kOpFormat_DEFAULT);
+    output_formats->assign(output_num, kOpFormat_DEFAULT);
+    input_reshape_types->assign(input_num, "");
+    output_reshape_types->assign(output_num, "");
+    kernel::GetValidKernelBuildInfoWithSymmetricMemoryFormat(kernel, input_formats, output_formats);
   } else if (kernel_type == KernelType::CUSTOM_KERNEL) {
     input_formats->clear();
     output_formats->clear();
@@ -563,8 +587,10 @@ void GetFormatInfoByKernelType(const CNodePtr &kernel, const KernelType &kernel_
   } else {
     device::ascend::OpApiUtil::GetValidKernelBuildInfo(kernel, input_formats, output_formats, input_reshape_types,
                                                        output_reshape_types, kernel_type);
-    process_tuple_output(kernel, false, 1);
+    cur_output_number = 1;
   }
+
+  return std::make_tuple(is_acl, cur_output_number);
 }
 
 void BuildTypeInfo(const CNodePtr &kernel, const KernelType &kernel_type, size_t input_num, size_t output_num,
@@ -638,8 +664,14 @@ void GenerateKernelBuildInfo(const CNodePtr &kernel, const KernelType &kernel_ty
   MS_LOG(INFO) << kernel->fullname_with_scope() << " input_num: " << input_num << ", output_num: " << output_num;
   auto output_object_type = kernel::KernelObjectType::TENSOR;
 
-  GetFormatInfoByKernelType(kernel, kernel_type, input_num, output_num, &input_formats, &output_formats,
-                            &input_reshape_types, &output_reshape_types, &output_object_type);
+  auto [is_acl, cur_output_number] =
+    GetFormatInfoByKernelType(kernel, kernel_type, input_num, output_num, &input_formats, &output_formats,
+                              &input_reshape_types, &output_reshape_types, &output_object_type);
+
+  // Process tuple output
+  auto process_tuple_output =
+    CreateProcessTupleOutputLambda(&output_num, &output_object_type, &output_formats, &output_reshape_types);
+  process_tuple_output(kernel, is_acl, cur_output_number);
 
   std::vector<TypeId> input_types;
   std::vector<TypeId> output_types;
@@ -703,7 +735,7 @@ void HandleKernelSelectFailure(const KernelGraphPtr &graph, const CNodePtr &node
                                const std::pair<std::string, ExceptionType> &failure_info) {
   auto msg = TryBackoffCpu(graph, node, failure_info);
   if (!msg.empty()) {
-    MS_EXCEPTION(failure_info.second) << msg;
+    MS_EXCEPTION_WITH_NODE(failure_info.second, node) << msg;
   }
 }
 
@@ -757,22 +789,30 @@ std::tuple<bool, std::string, ExceptionType, bool> SelectKernelInfoWithMsg(const
     return result;
   }
 
+  if (ops::IsEnableHostNode(node)) {
+    GenerateKernelBuildInfo(node, KernelType::HOST_KERNEL);
+    CollectOpSelectedType(op_name, SelectedKernelType::HOST_KERNEL, op_selected_num, &op_selected_type);
+    return result;
+  }
+
   if (IsEnableAclnn(graph, node)) {
     GenerateKernelBuildInfo(node, KernelType::OPAPI_KERNEL);
     CollectOpSelectedType(op_name, SelectedKernelType::ACLNN_KERNEL, op_selected_num, &op_selected_type);
     return result;
   }
-
+  static const PrimitiveSet rt_kernel_ops = {
+    prim::kPrimCallInline,      prim::kPrimSwitch,         prim::kPrimPartialInline, prim::kPrimConditionSwitch,
+    prim::kPrimConditionGather, prim::kPrimReshapeExt,     prim::kPrimReshape,       prim::kPrimMoveTo,
+    prim::kPrimMoveAssign,      prim::kPrimStreamSend,     prim::kPrimStreamRecv,    prim::kPrimExpandDims,
+    prim::kPrimSqueeze,         prim::kPrimFlatten,        prim::kPrimFlattenGrad,   prim::kPrimReformat,
+    prim::kPrimResLimit,        prim::kPrimFree,           prim::kPrimCopyToDevice,  prim::kPrimCopyToHost,
+    prim::kPrimUpdateToRemote,  prim::kPrimUpdateToDevice, prim::kPrimDetach,        prim::kPrimSetData,
+    prim::kPrimCopyToHostExt};
   // for backend inline
-  if (IsOneOfPrimitiveCNode(
-        node, {prim::kPrimCallInline, prim::kPrimSwitch, prim::kPrimPartialInline, prim::kPrimConditionSwitch,
-               prim::kPrimConditionGather, prim::kPrimReshapeExt, prim::kPrimReshape, prim::kPrimMoveTo,
-               prim::kPrimMoveAssign, prim::kPrimStreamSend, prim::kPrimStreamRecv, prim::kPrimExpandDims,
-               prim::kPrimSqueeze, prim::kPrimFlatten, prim::kPrimFlattenGrad, prim::kPrimReformat})) {
+  if (IsOneOfPrimitiveCNode(node, rt_kernel_ops)) {
     GenerateKernelBuildInfo(node, KernelType::RT_KERNEL);
     return result;
   }
-
   if (common::AnfAlgo::HasNodeAttr(kAttrKernelPacketNode, node)) {
     GenerateKernelPacketBuildInfo(node);
     return result;
@@ -794,6 +834,12 @@ std::tuple<bool, std::string, ExceptionType, bool> SelectKernelInfoWithMsg(const
     return result;
   }
 
+  if (kernel::IsEnableSymmetricMemoryNode(node)) {
+    GenerateKernelBuildInfo(node, KernelType::SYMMETRIC_MEMORY_KERNEL);
+    CollectOpSelectedType(op_name, SelectedKernelType::SYMMETRIC_MEMORY_KERNEL, op_selected_num, &op_selected_type);
+    return result;
+  }
+
   std::vector<std::shared_ptr<kernel::KernelBuildInfo>> host_kernel_info_list{};
   kernel::HostMetadataInfo(node, &host_kernel_info_list);
   auto match_res = SetMatchKernelInfo(node, host_kernel_info_list, KernelType::HOST_KERNEL, &acl_err_type);
@@ -809,7 +855,10 @@ std::tuple<bool, std::string, ExceptionType, bool> SelectKernelInfoWithMsg(const
 bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   MS_EXCEPTION_IF_NULL(node);
-
+  if (common::AnfAlgo::IsNaiveCommunicationOp(node)) {
+    MS_LOG(DEBUG) << "Kernel " << node->fullname_with_scope() << " is comm op.";
+    return false;
+  }
   auto primitive = GetCNodePrimitive(node);
   MS_EXCEPTION_IF_NULL(primitive);
   if (IsPrimitiveCNode(node, prim::kPrimCustom)) {
@@ -839,17 +888,17 @@ bool IsEnableAclnn(const KernelGraphPtr &kernel_graph, const CNodePtr &node) {
     return iter->second;
   }
 
+  std::string group = "";
+  if (primitive->HasAttr(kAttrGroup)) {
+    auto group_attr = primitive->GetAttr(kAttrGroup);
+    if (group_attr != nullptr && group_attr->isa<StringImm>()) {
+      group = GetValue<std::string>(group_attr);
+    }
+  }
+  if (IsSupportLcoc(group, op_name)) {
+    return false;
+  }
   if (kernel::IsEnabledAclnnDispatch(op_name)) {
-    std::string group = "";
-    if (primitive->HasAttr(kAttrGroup)) {
-      auto group_attr = primitive->GetAttr(kAttrGroup);
-      if (group_attr != nullptr && group_attr->isa<StringImm>()) {
-        group = GetValue<std::string>(group_attr);
-      }
-    }
-    if (IsSupportLcoc(group, op_name)) {
-      return false;
-    }
     if (!kernel::IsRegisteredAclnnOp(op_name)) {
       if (kernel::IsViewOp(op_name)) {
         MS_LOG(INFO) << "Kernel " << node->fullname_with_scope() << " is view op and not support aclnn";

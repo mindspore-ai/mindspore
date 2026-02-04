@@ -20,15 +20,15 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "mindspore/ops/op_def/sequence_ops.h"
-#include "mindspore/ops/op_def/nn_ops.h"
-#include "mindspore/ops/op_def/array_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/array_ops.h"
 #include "include/runtime/hardware_abstract/kernel_base/kernel_build_info.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/utils.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/utils.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 #include "ir/graph_utils.h"
 
 namespace mindspore {

@@ -16,7 +16,7 @@
 import mindspore.ops.composite as C
 import mindspore.ops.functional as F
 from mindspore import context
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 
 def setup_module(module):

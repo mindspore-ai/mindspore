@@ -1,0 +1,8 @@
+nsa_compress:
+  - op_yaml: nsa_compress_op.yaml
+    py_method: _tensor_nsa_compress
+    kwonlyargs: actual_seq_len
+    Ascend: pyboost
+    CPU: py_method
+    GPU: py_method
+    interface: function

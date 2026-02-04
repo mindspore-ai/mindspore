@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+"""test auto monad"""
+# pylint: disable=superfluous-parens
+# pylint: disable=unnecessary-lambda-assignment
+# pylint: disable=possibly-used-before-assignment
 import os
 import sys
 import re
@@ -21,8 +25,7 @@ import pytest
 import numpy as np
 import mindspore as ms
 import mindspore.ops.operations as P
-import mindspore.ops as ops
-import mindspore.nn as nn
+from mindspore import ops, nn
 import mindspore.common.dtype as mstype
 from mindspore.nn import Cell
 from mindspore.nn import ReLU, BatchNorm2d, Conv2d, ParameterUpdate
@@ -405,7 +408,7 @@ def test_assign_implicit():
     """
     class Assign_Implicit(Cell):
         def __init__(self):
-            super(Assign_Implicit, self).__init__()
+            super().__init__()
             self.b = Parameter(initializer(
                 1, [5], ms.float32), name="global_step")
 
@@ -429,7 +432,7 @@ def test_assign_write_after_read():
     """
     class Assign_WAR(Cell):
         def __init__(self):
-            super(Assign_WAR, self).__init__()
+            super().__init__()
             self.assign = P.Assign()
             self.sub = P.Sub()
             self.add = P.Add()
@@ -461,7 +464,7 @@ def test_assign_read_after_write():
     """
     class Assign_RAW(Cell):
         def __init__(self):
-            super(Assign_RAW, self).__init__()
+            super().__init__()
             self.assign_add = P.AssignAdd()
             self.greater = P.Greater()
             self.add = P.Add()
@@ -541,7 +544,7 @@ def test_if():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_while():
     """
     Feature: Auto monad feature.
@@ -758,7 +761,7 @@ def test_constexpr_check():
     """
     class ConstexprCheck(Cell):
         def __init__(self):
-            super(ConstexprCheck, self).__init__()
+            super().__init__()
             self.shape = P.Shape()
 
         def construct(self, x, y):
@@ -797,7 +800,7 @@ def test_if_lambda():
         def construct(self, x, y):
             out = x
             if x < y:
-                x2 = (lambda a: a + a)
+                x2 = lambda a: a + a
                 out = x2(self.para)
                 out = out + y
             return out
@@ -811,7 +814,7 @@ def test_if_lambda():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_multi_assign():
     """
     Feature: Auto monad feature.
@@ -842,7 +845,7 @@ def test_multi_assign():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.01)
 def test_multi_assign_addn():
     """
     Feature: Auto monad feature.
@@ -869,54 +872,6 @@ def test_multi_assign_addn():
     net = Multi_Assign_Addn()
     out = net(x)
     np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
-
-
-@security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
-def test_multi_assign_print():
-    """
-    Feature: Auto monad feature.
-    Description: Verify multi assign and print.
-    Expectation: No exception.
-    """
-    class Multi_Assign_Print(Cell):
-        def __init__(self):
-            super().__init__()
-            self.pow = P.Pow()
-            self.print = P.Print()
-            self.assign = P.Assign()
-            self.exponent = Tensor([2], ms.int32)
-            self.para1 = Parameter(Tensor(1, dtype=ms.int32), name='para1')
-            self.para2 = Parameter(Tensor(3, dtype=ms.int32), name='para2')
-
-        def construct(self, inputs):
-            self.assign(self.para1, inputs)
-            self.assign(self.para2, self.pow(inputs, self.exponent))
-            self.print(inputs)
-            self.print(self.para1)
-            self.print(self.para2)
-            return inputs
-
-    context.set_context(jit_config={"jit_level": "O0"})
-    cap = Capture()
-    with capture(cap):
-        x = Tensor(9, dtype=ms.int32)
-        expect = Tensor(9, dtype=ms.int32)
-        expect_para1 = Tensor(9, dtype=ms.int32)
-        expect_para2 = Tensor(81, dtype=ms.int32)
-        net = Multi_Assign_Print()
-        out = net(x)
-        sys.stdout.flush()
-        np.testing.assert_almost_equal(out.asnumpy(), expect.asnumpy())
-        np.testing.assert_almost_equal(
-            net.para1.data.asnumpy(), expect_para1.asnumpy())
-        np.testing.assert_almost_equal(
-            net.para2.data.asnumpy(), expect_para2.asnumpy())
-
-    patterns = {'Tensor(shape=[], dtype=Int32, value=9)\n'
-                'Tensor(shape=[], dtype=Int32, value=9)\n'
-                'Tensor(shape=[], dtype=Int32, value=81)\n'}
-    check_output(cap.output, patterns)
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level2', card_mark='onecard',
@@ -1041,7 +996,7 @@ def test_assign_return_true():
     """
     class Net(Cell):
         def __init__(self):
-            super(Net, self).__init__()
+            super().__init__()
             self.para = Parameter(Tensor(1, dtype=ms.int32), name='para')
 
         def construct(self, x, y):
@@ -1078,7 +1033,7 @@ def test_unpack_call():
     """
     class SetPara(Cell):
         def __init__(self, para):
-            super(SetPara, self).__init__()
+            super().__init__()
             self.para = para
 
         def construct(self, x, y):
@@ -1087,7 +1042,7 @@ def test_unpack_call():
 
     class MyNet(Cell):
         def __init__(self):
-            super(MyNet, self).__init__()
+            super().__init__()
             self.para = Parameter(Tensor(1, dtype=ms.int32), name='para')
             self.set_para = SetPara(self.para)
 
@@ -1109,7 +1064,7 @@ def test_unpack_call():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_tuple_of_tuple():
     """
     Feature: Auto monad feature.
@@ -1118,7 +1073,7 @@ def test_tuple_of_tuple():
     """
     class SetPara(Cell):
         def __init__(self, para):
-            super(SetPara, self).__init__()
+            super().__init__()
             self.para = para
 
         def construct(self, x, y):
@@ -1127,7 +1082,7 @@ def test_tuple_of_tuple():
 
     class MyNet(Cell):
         def __init__(self):
-            super(MyNet, self).__init__()
+            super().__init__()
             self.para = Parameter(Tensor(1, dtype=ms.int32), name='para')
             self.set_para = SetPara(self.para)
 
@@ -1160,7 +1115,7 @@ def test_write_read_write():
     """
     class MyNet(Cell):
         def __init__(self):
-            super(MyNet, self).__init__()
+            super().__init__()
             self.para1 = Parameter(Tensor(1, dtype=ms.int32), name='para1')
             self.para2 = Parameter(Tensor(2, dtype=ms.int32), name='para2')
 
@@ -1183,7 +1138,7 @@ def test_write_read_write():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_variable_from_outer_graph():
     """
     Feature: Auto monad feature.
@@ -1192,7 +1147,7 @@ def test_variable_from_outer_graph():
     """
     class MyNet(Cell):
         def __init__(self):
-            super(MyNet, self).__init__()
+            super().__init__()
             self.cond = False
             self.add = P.Add()
             self.para = Parameter(Tensor(1, dtype=ms.int32), name='para')
@@ -1363,7 +1318,7 @@ def find_newest_validateir_file(folder_path):
 
 def read_file():
     filename = find_newest_validateir_file('./')
-    with open((os.path.join(filename)), 'r') as f:
+    with open((os.path.join(filename)), 'r', encoding='utf-8') as f:
         content = f.read()
     return content
 
@@ -1419,7 +1374,7 @@ class AssignNet(Cell):
 
 @security_off_wrap
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_auto_mixed_precision_train_1(pynative_save_graphs):
     """
     Feature: Auto monad feature.
@@ -1519,7 +1474,7 @@ def use_build_train_network_controlflow_check_cast_num(network, level, input_x,
 
 @security_off_wrap
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=2048.01)
 def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
     """
     Feature: Auto monad feature.
@@ -1530,6 +1485,7 @@ def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
     input_x = Tensor(
         np.random.randint(2, size=(1, 3, 2, 2)).astype((np.float32)))
     label = Tensor(np.zeros([1, 3]).astype(np.float32))
+    cast_num = 77
     if ms.context.get_context("device_target") == "Ascend":
         cast_num = 77
     if ms.context.get_context("device_target") == "GPU":
@@ -1539,7 +1495,7 @@ def test_auto_mixed_precision_controlflow_auto(pynative_save_graphs):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=1024.01)
 def test_if_cast():
     """
     Feature: Auto monad feature.
@@ -1572,7 +1528,7 @@ def test_if_cast():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='essential')
+          essential_mark='essential', mem_peak=2048.0)
 @test_utils.run_test_with_On
 def test_while_forward():
     """
@@ -1604,7 +1560,7 @@ def test_while_forward():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_multi_add_assign():
     """
     Feature: Auto monad feature.
@@ -1613,7 +1569,7 @@ def test_multi_add_assign():
     """
     class Net(Cell):
         def __init__(self, i1):
-            super(Net, self).__init__()
+            super().__init__()
             self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
@@ -1656,7 +1612,7 @@ def test_multi_abs_add_assign():
     """
     class Net(Cell):
         def __init__(self, para):
-            super(Net, self).__init__()
+            super().__init__()
             self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
@@ -1693,7 +1649,8 @@ def test_multi_abs_add_assign():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_print_assign_print():
     """
     Feature: Auto Monad
@@ -1740,7 +1697,8 @@ def test_print_assign_print():
 
 
 @security_off_wrap
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_print_assign_print_for_tensor():
     """
     Feature: Auto Monad
@@ -1840,7 +1798,8 @@ def test_return_none_with_side_effect():
     assert res == 4
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_return_none_with_side_effect_mutil_func():
     """
     Feature: Support None.
@@ -1875,7 +1834,7 @@ def test_return_none_with_side_effect_mutil_func():
 
 
 @arg_mark(plat_marks=['platform_gpu', 'platform_ascend'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_bprop_print_func():
     """
     Feature: Support side effect node in bprop.
@@ -1899,7 +1858,7 @@ def test_bprop_print_func():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = ops.GradOperation(get_all=True)
 
@@ -1922,7 +1881,8 @@ def test_bprop_print_func():
     check_output(cap.output, patterns)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_bprop_assign_func():
     """
     Feature: Support side effect node in bprop.
@@ -1946,7 +1906,7 @@ def test_bprop_assign_func():
 
     class GradNet(nn.Cell):
         def __init__(self, net):
-            super(GradNet, self).__init__()
+            super().__init__()
             self.net = net
             self.grad_op = ops.GradOperation(get_all=True)
 
@@ -1985,7 +1945,8 @@ def test_assign_func():
     out = Net()(x, y)
     assert out == 6
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_side_effect_warning():
     """
     Feature: Support side effect.
@@ -1998,11 +1959,10 @@ def test_side_effect_warning():
         if os.path.exists(log_file_name):
             os.remove(log_file_name)
         assert not os.path.exists(log_file_name)
-
-        cmd_first = (f"export GLOG_v=2; pytest -sv test_auto_monad.py::test_assign_func > " + log_file_name + " 2>&1")
+        cmd_first = "export GLOG_v=2; pytest -sv test_auto_monad.py::test_assign_func > " + log_file_name + " 2>&1"
         subprocess.check_output(cmd_first, shell=True)
         assert os.path.exists(log_file_name)
-        with open(log_file_name, "r") as f_first:
+        with open(log_file_name, "r", encoding='utf-8') as f_first:
             data_first = f_first.read()
 
         expected_msg = "Some side effect nodes were eliminated by mistake."

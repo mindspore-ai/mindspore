@@ -11,7 +11,7 @@ mindspore.amp.DynamicLossScaler
         这是一个实验性API，后续可能修改或删除。
 
     参数：
-        - **scale_value** (Union(float, int)) - 初始梯度放大系数。
+        - **scale_value** (Union(float, int)) - 初始损失缩放系数。
         - **scale_factor** (int) - 放大/缩小倍数。
         - **scale_window** (int) - 无溢出时的连续正常step的最大数量。
 
@@ -24,20 +24,20 @@ mindspore.amp.DynamicLossScaler
 
     .. py:method:: scale(inputs)
 
-        根据 `scale_value` 放大inputs。
+        根据 `scale_value` 缩放inputs。
 
         参数：
             - **inputs** (Union(Tensor, tuple(Tensor))) - 损失值或梯度。
 
         返回：
-            Union(Tensor, tuple(Tensor))，scale后的值。
+            Union(Tensor, tuple(Tensor))，缩放后的值。
 
     .. py:method:: unscale(inputs)
 
-        对inputs进行unscale，`inputs /= scale_value`。
+        对inputs进行反缩放，`inputs /= scale_value`。
 
         参数：
             - **inputs** (Union(Tensor, tuple(Tensor))) - 损失值或梯度。
 
         返回：
-            Union(Tensor, tuple(Tensor))，unscale后的值。
+            Union(Tensor, tuple(Tensor))，反缩放后的值。

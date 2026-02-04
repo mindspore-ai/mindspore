@@ -30,7 +30,7 @@ global_list_1 = [1, 2, 3, 4]
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_global_list_used_in_graph():
     """
     Feature: Enable list inplace operation
@@ -257,7 +257,7 @@ def test_return_local_list_4():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.25)
 def test_return_local_list_5():
     """
     Feature: Enable list inplace operation
@@ -280,7 +280,7 @@ def test_return_local_list_5():
 
 @pytest.mark.skip(reason="No need to convert to PyExecute node. SequenceMul execute fail in Ascend.")
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=0.01)
 def test_local_sequence_used_in_graph_with_operator():
     """
     Feature: Enable list inplace operation

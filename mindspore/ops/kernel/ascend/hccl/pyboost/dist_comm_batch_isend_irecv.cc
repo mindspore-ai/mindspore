@@ -18,7 +18,7 @@
 
 #include <memory>
 #include <string>
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/hccl/hcom_util.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "kernel/ascend/hccl/pyboost/comm_common.h"
@@ -37,7 +37,7 @@ void DistCommBatchIsendIrecvAscendCustomize(const std::shared_ptr<OpRunner> &op,
 
   auto run_func = [op, input_tensors, group, op_types_list, remotes_rank_list]() {
     auto item_num = static_cast<uint32_t>(op_types_list.size());
-    PyBoostUtils::MallocOpInputs(op->device_context(), input_tensors);
+    PyBoostUtils::MallocOpInputsWithStream(op->device_context(), kDefaultStreamIndex, input_tensors);
 
     auto launch_func = [op, input_tensors, remotes_rank_list, op_types_list, item_num](const HcclComm &hccl_comm,
                                                                                        void *comm_stream_ptr) {

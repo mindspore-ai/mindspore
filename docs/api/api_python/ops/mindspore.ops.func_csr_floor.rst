@@ -1,7 +1,7 @@
 mindspore.ops.csr_floor
 ========================
 
-.. py:function:: mindspore.ops.csr_floor(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_floor(x)
 
     CSRTensor逐元素向下取整函数。
 

@@ -1,0 +1,84 @@
+/**
+ * Copyright 2025-2026 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_H_
+#define MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_H_
+
+#include <vector>
+
+#include "ir/anf.h"
+#include "include/utils/visible.h"
+#include "utils/hyper_offload/hyper_offload_strategy.h"
+#include "utils/hyper_offload/hyper_offload_operation.h"
+#include "utils/hyper_offload/hyper_offload_utils.h"
+
+namespace mindspore {
+namespace utils {
+namespace hyper_offload {
+struct HyperOffloadInput {
+  FuncGraphPtr graph;
+  CNodePtrList exec_order;
+  bool enable_offload_parameter = false;
+  bool enable_offload_activation = false;
+  HandleNewNodeCallback callback;
+};
+
+struct HyperOffloadPlan {
+  FuncGraphPtr graph;
+  CNodePtrList exec_order;
+  HyperOffloadOperations hyper_offload_operations;
+};
+
+class COMMON_EXPORT HyperOffloadOptimizer {
+ public:
+  explicit HyperOffloadOptimizer(const HyperOffloadInput &input);
+  ~HyperOffloadOptimizer() = default;
+
+  // Run the hyper offload optimizer.
+  HyperOffloadPlan Run();
+
+  // Assign unique IDs to offload nodes.
+  static void AssignHyperOffloadIds(const CNodePtrList &exec_order);
+
+ private:
+  // Generate offload operations for parameters.
+  void GenerateParameterOperations();
+  // Generate offload operations for activations.
+  void GenerateActivationOperations();
+  // Build the new execution order with offload operations inserted.
+  CNodePtrList BuildExecutionOrder();
+  // Adjust the position of hyper offload nodes.
+  void AdjustHyperOffloadNodePosition();
+  // Check whether need to skip hyper offload optimizer according to config and input.
+  bool SkipHyperOffloadOptimizer();
+
+  // Helper functions
+  void AddSingleParameterOperations(const CNodePtr &node);
+  void AddSingleActivationOperations(const OffloadInfo &offload_info, const std::vector<KernelWithIndex> &outputs);
+  void AddEventNodes();
+
+  FuncGraphPtr graph_;
+  CNodePtrList exec_order_;
+  HandleNewNodeCallback callback_;
+  bool enable_offload_parameter_;
+  bool enable_offload_activation_;
+  HyperOffloadOperations operations_;
+};
+}  // namespace hyper_offload
+}  // namespace utils
+}  // namespace mindspore
+
+#endif  // MINDSPORE_CCSRC_UTILS_HYPER_OFFLOAD_HYPER_OFFLOAD_H_

@@ -47,7 +47,8 @@ class Net(nn.Cell):
         return res
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential',
+        mem_peak=0.03)
 def test_shape():
     """
     Feature: dynamic shape

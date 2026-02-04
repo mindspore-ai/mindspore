@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
-#include "include/common/utils/tensor_utils.h"
+#include "include/utils/tensor_utils.h"
+#include <tuple>
+#include <vector>
+#include <algorithm>
 
 namespace mindspore {
 namespace tensor {
@@ -36,6 +39,34 @@ void FlattenOutputs(const ValuePtr &value, std::vector<TensorPtr> *outputs) {
   } else {
     MS_LOG(EXCEPTION) << "Not support type " << value->ToString();
   }
+}
+
+PyObject *TransformVectorOutput(const std::vector<TensorWrapper> &py_output) {
+  PyObject *py_tuple = PyTuple_New(py_output.size());
+  for (size_t i = 0; i < py_output.size(); i++) {
+    PyTuple_SET_ITEM(py_tuple, i, py_output[i].value());
+  }
+  return py_tuple;
+}
+
+std::vector<stub::StubNodePtr> TransformVectorPromise(const std::vector<TensorWrapper> &py_output) {
+  std::vector<stub::StubNodePtr> stubs;
+  stubs.reserve(py_output.size());
+  (void)std::transform(py_output.begin(), py_output.end(), std::back_inserter(stubs),
+                       [](const TensorWrapper &wrapper) { return wrapper.MakeFuture(); });
+  return stubs;
+}
+
+void SetPromise(const std::vector<stub::StubNodePtr> &t1, const std::vector<TensorPtr> &t2) {
+  MS_ASSERT(t1.size() == t2.size());
+  for (size_t i = 0; i < t1.size(); ++i) {
+    t1[i]->SetValue(t2[i]);
+  }
+}
+
+void SetException(const std::vector<stub::StubNodePtr> &t1) {
+  (void)std::for_each(t1.begin(), t1.end(),
+                      [](const stub::StubNodePtr &stub) { stub->SetException(std::current_exception()); });
 }
 }  // namespace tensor
 }  // namespace mindspore

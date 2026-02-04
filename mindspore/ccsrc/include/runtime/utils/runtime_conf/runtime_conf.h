@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_INCLUDE_COMMON_RUNTIME_CONF_RUNTIME_CONF_H_
-#define MINDSPORE_CCSRC_INCLUDE_COMMON_RUNTIME_CONF_RUNTIME_CONF_H_
+#ifndef MINDSPORE_CCSRC_INCLUDE_RUNTIME_UTILS_RUNTIME_CONF_RUNTIME_CONF_H_
+#define MINDSPORE_CCSRC_INCLUDE_RUNTIME_UTILS_RUNTIME_CONF_RUNTIME_CONF_H_
 
 #include <memory>
 #include <string>
@@ -124,6 +124,9 @@ class RUNTIME_UTILS_EXPORT RuntimeConf {
   // Methods for Thread bind core
   bool IsThreadBindCoreConfigured() { return conf_status_.count(kThreadBindCore); }
 
+  void EnableResLimit() { enable_res_limit_ = true; }
+  bool IsEnableResLimit() { return enable_res_limit_; }
+
   void SetThreadBindCoreConfigured() { conf_status_[kThreadBindCore] = true; }
 
   void BindThreadCore(const ModuleBindCorePolicy &module_bind_core_strategy) {
@@ -156,6 +159,7 @@ class RUNTIME_UTILS_EXPORT RuntimeConf {
   int mem_optimize_level_;
   float mem_huge_page_reserve_size_;
   bool enable_capture_graph_;
+  bool enable_res_limit_{false};
   std::vector<std::string> op_capture_skip_{};
   std::map<std::string, bool> conf_status_;
 };
@@ -164,4 +168,4 @@ RUNTIME_UTILS_EXPORT void ComputeThreadNums(size_t *actor_thread_num, size_t *ac
 }  // namespace runtime
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_INCLUDE_COMMON_RUNTIME_CONF_RUNTIME_CONF_H_
+#endif  // MINDSPORE_CCSRC_INCLUDE_RUNTIME_UTILS_RUNTIME_CONF_RUNTIME_CONF_H_

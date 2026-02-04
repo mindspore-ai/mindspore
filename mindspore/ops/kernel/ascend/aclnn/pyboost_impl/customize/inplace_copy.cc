@@ -19,13 +19,13 @@
 #include <memory>
 #include <string>
 #include "plugin/ascend/res_manager/stream_manager/ascend_stream_manager.h"
-#include "mindspore/ccsrc/pyboost/op_register.h"
-#include "mindspore/ccsrc/pyboost/pyboost_utils.h"
+#include "include/pynative/utils/pyboost/op_register.h"
+#include "include/pynative/utils/pyboost/pyboost_utils.h"
 #include "kernel/ascend/aclnn/pyboost_impl/aclnn_utils.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/inplace_copy.h"
+#include "include/pynative/utils/pyboost/auto_generate/inplace_copy.h"
 #include "runtime/hardware_abstract/utils.h"
-#include "include/common/convert_tensor_utils.h"
-#include "runtime/pipeline/pipeline.h"
+#include "include/runtime/pipeline/pipeline.h"
+#include "mindspore/ops/ops_utils/memory_overlap.h"
 
 namespace mindspore {
 namespace kernel {
@@ -74,7 +74,8 @@ tensor::TensorPtr InplaceCopyD2D(const std::shared_ptr<OpRunner> &op, const Tens
     auto device_context = op->device_context();
     // Malloc for input tensors
     PyBoostUtils::MallocOpInputs(device_context, dst, src);
-
+    // Check Memory Partial Overlap
+    CheckMemory({src}, {dst});
     // Inplace output need be front
     LAUNCH_ACLNN(aclnnInplaceCopy, device_context, op->stream_id(), dst, src);
     MS_LOG(DEBUG) << "Launch InplaceCopy D2D end";
@@ -147,7 +148,6 @@ tensor::TensorPtr InplaceCopyH2D(const std::shared_ptr<OpRunner> &op, const Tens
             MS_LOG(DEBUG) << "InplaceCopyH2D Callback_func exec, src device sync:" << src_device_address
                           << " use count:" << src_device_address.use_count() << " stream id:" << stream_id;
           };
-
           if (!device_context->device_res_manager_->LaunchCallback(callback_func, stream_id)) {
             MS_LOG(EXCEPTION) << "InplaceCopyH2D LaunchCallback failed, stream id:" << stream_id;
           }

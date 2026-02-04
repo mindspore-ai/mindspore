@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "frontend/jit/pi/graph_capture/node.h"
 #include <iterator>
 #include <string>
 #include <vector>
 #include "frontend/jit/pi/graph_capture/abstract_object.h"
-#include "frontend/jit/pi/graph_capture/node.h"
 #include "frontend/jit/pi/graph_capture/cfg.h"
 #include "frontend/jit/pi/graph_capture/graph.h"
 #include "frontend/jit/pi/graph_guard/infer.h"
@@ -42,7 +42,6 @@ void ValueNode::SetVobj(AObject *object_info) {
     return;
   }
   if (this->vobj_ != nullptr && this->vobj_->GetType() != AObject::kTypeAnyValue && object_info != nullptr) {
-    MS_LOG(INFO) << "Try to overwrite vobj with a new one, detail refer to the info log.";
     MS_LOG(INFO) << "Try to overwrite " << this->vobj_->ToString() << " with " << object_info->ToString() << " for "
                  << ToString();
   }
@@ -65,13 +64,6 @@ AObject *ValueNode::get_attr(const std::string &nam) {
     return AObject::MakeAObject(AObject::kTypeAnyValue);
   }
   return GetVobj()->GetAttr(nam);
-}
-
-AObject *ValueNode::binary_subscr(ValueNode *sub) {
-  if (vobj_ == nullptr) {
-    return AObject::MakeAObject(AObject::kTypeAnyValue);
-  }
-  return GetVobj()->GetItem(sub->GetVobj());
 }
 
 bool ValueNode::IsConstantValue() const {
@@ -107,7 +99,21 @@ std::string CallNode::ToString() const {
   s << this->ValueNode::ToString()
     << (kw_names().ptr() != nullptr ? ("kw:" + std::string(py::str(kw_names().ptr()))) : std::string())
     << " sub-graph=" << sub_graph_;
+  if (!inputs().empty()) {
+    ValueNode *func_node = input(0);
+    MS_EXCEPTION_IF_NULL(func_node);
+    if (func_node->GetVobj() != nullptr && func_node->GetVobj()->GetPyObject().ptr() != nullptr) {
+      s << ", function=" << py::str(func_node->GetVobj()->GetPyObject());
+    }
+  }
   return s.str();
+}
+
+std::vector<py::object> CallNode::GetArgs() {
+  std::vector<py::object> args;
+  std::transform(inputs().begin() + 1, inputs().end(), std::back_inserter(args),
+                 [](ValueNode *n) { return n->GetVobj() ? n->GetVobj()->GetPyObject() : py::object(); });
+  return args;
 }
 
 ValueNode *CallNode::GetSelf() const {
@@ -142,16 +148,18 @@ ValueNode *CallNode::GetSelf() const {
 }
 
 void CallNode::UpdateVobj() {
-  auto inputs = getInputs();
-  const auto &func = inputs[0]->GetOwnVobj()->GetPyObject();
+  MS_EXCEPTION_IF_CHECK_FAIL(!inputs().empty(), "inputs should not be empty!");
+  MS_EXCEPTION_IF_CHECK_FAIL(input(0) != nullptr && input(0)->GetOwnVobj() != nullptr, "input(0) has nullptr!");
+  const auto &func = input(0)->GetOwnVobj()->GetPyObject();
   std::vector<AObject *> args;
   auto self = GetSelf();
   if (self != nullptr) {
     args.push_back(self->GetOwnVobj());
   }
-  std::transform(inputs.begin() + 1, inputs.end(), std::back_inserter(args),
+  std::transform(inputs().begin() + 1, inputs().end(), std::back_inserter(args),
                  [](auto &input) { return input->GetOwnVobj(); });
   auto vobj = AObject::FuncAObjectUpdater(func, args);
+  MS_EXCEPTION_IF_NULL(vobj);
   if (vobj->GetType() != AObject::kTypeAnyValue) {
     SetVobj(vobj);
   }
@@ -179,6 +187,9 @@ std::string ValueNode::ToString() const {
   if (constant_info_ != nullptr) {
     s << " constant: " << constant_info_->ToString();
   }
+  if (GetGraph() != nullptr) {
+    s << " at \"" << pijit::GetFileName(GetGraph()) << ":" << GetLineNo() << "\"";
+  }
   return s.str();
 }
 
@@ -203,8 +214,6 @@ std::string AbstractNode::ToString() const {
   s << "Node(" << this << ")";
   return s.str();
 }
-
-void ValueNode::SetParent(ValueNode *parent) { parent_ = std::make_optional<ValueNode *>(parent); }
 
 void CallNode::SetSubGraph(Graph *n) {
   sub_graph_ = n;

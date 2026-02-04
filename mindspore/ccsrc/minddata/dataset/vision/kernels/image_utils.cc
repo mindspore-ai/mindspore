@@ -1557,10 +1557,11 @@ Status ValidateCutOutImage(const std::shared_ptr<Tensor> &input, bool is_hwc, in
   uint32_t height_index = is_hwc ? 0 : 1;
   uint32_t width_index = is_hwc ? 1 : 2;
   std::string right_shape = is_hwc ? "<H,W,C>" : "<C,H,W>";
-  int64_t image_h = input->shape()[height_index];
-  int64_t image_w = input->shape()[width_index];
 
   CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() > channel_index, "CutOut: shape is invalid.");
+
+  int64_t image_h = input->shape()[height_index];
+  int64_t image_w = input->shape()[width_index];
 
   if (input->Rank() != kDefaultImageRank) {
     RETURN_STATUS_UNEXPECTED("CutOut: image shape is not " + right_shape +
@@ -1832,7 +1833,7 @@ Status RandomLighting(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     if (input_cv->Rank() != kDefaultImageRank || input_cv->shape()[kChannelIndexHWC] != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED(
         "RandomLighting: input tensor is not in shape of <H,W,C> or channel is not 3, got rank: " +
-        std::to_string(input_cv->Rank()) + ", and channel: " + std::to_string(input_cv->shape()[kChannelIndexHWC]));
+        std::to_string(input_cv->Rank()) + ", and shape: " + input_cv->shape().ToString());
     }
     auto input_type = input->type();
     CHECK_FAIL_RETURN_UNEXPECTED(input_type != DataType::DE_UINT32 && input_type != DataType::DE_UINT64 &&
@@ -1918,8 +1919,7 @@ Status RgbToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     }
     if (input_cv->Rank() != kDefaultImageRank || input_cv->shape()[kChannelIndexHWC] != kDefaultImageChannel) {
       RETURN_STATUS_UNEXPECTED("RgbToBgr: input tensor is not in shape of <H,W,C> or channel is not 3, got rank: " +
-                               std::to_string(input_cv->Rank()) +
-                               ", and channel: " + std::to_string(input_cv->shape()[2]));
+                               std::to_string(input_cv->Rank()) + ", and shape: " + input_cv->shape().ToString());
     }
 
     cv::Mat image = input_cv->mat().clone();
@@ -2239,6 +2239,7 @@ Status Solarize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
 Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const DataType &data_type) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+    RETURN_UNEXPECTED_IF_NULL(input_cv);
     if (!input_cv->mat().data) {
       RETURN_STATUS_UNEXPECTED("[Internal ERROR] ToTensor: load image failed.");
     }
@@ -2250,7 +2251,6 @@ Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       input_cv->shape().Size() > kChannelIndexHWC,
       "ToTensor: rank of input data should be greater than: " + std::to_string(kChannelIndexHWC) +
         ", but got:" + std::to_string(input_cv->shape().Size()));
-    int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
     if (input_cv->shape().Size() != kDefaultImageRank) {
       RETURN_STATUS_UNEXPECTED("ToTensor: image shape should be <H,W,C>, but got rank: " +
                                std::to_string(input_cv->shape().Size()));
@@ -2264,9 +2264,11 @@ Status ToTensor(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     if (input_cv->type() == DataType(DataType::DE_FLOAT16)) {
       RETURN_IF_NOT_OK(TypeCast(input_cv, output, DataType(DataType::DE_FLOAT32)));
       input_cv = CVTensor::AsCVTensor(*output);
+      RETURN_UNEXPECTED_IF_NULL(input_cv);
     }
 
     std::shared_ptr<CVTensor> output_cv;
+    int num_channels = static_cast<int>(input_cv->shape()[kChannelIndexHWC]);
     // Reshape from HCW to CHW
     RETURN_IF_NOT_OK(
       CVTensor::CreateEmpty(TensorShape{num_channels, height, width}, DataType(DataType::DE_FLOAT32), &output_cv));

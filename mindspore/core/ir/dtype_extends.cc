@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2022 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,8 @@ TypePtr TypeIdToType(TypeId id) {
                                                                 {kObjectTypeCSRTensorType, kCSRTensorType},
                                                                 {kObjectTypeCOOTensorType, kCOOTensorType},
                                                                 {kObjectTypeRowTensorType, kRowTensorType},
-                                                                {kObjectTypeMapTensorType, kMapTensorType}};
+                                                                {kObjectTypeMapTensorType, kMapTensorType},
+                                                                {kObjectTypeEventType, kEventType}};
   const auto &it = type_id_to_type.find(id);
   if (it == type_id_to_type.end()) {
     MS_LOG(EXCEPTION) << "Not support the type: " << GetExcptionTypeString(id);

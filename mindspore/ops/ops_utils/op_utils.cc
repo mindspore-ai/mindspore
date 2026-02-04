@@ -19,12 +19,14 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
 #include <limits>
 #include <functional>
+#include <unordered_set>
 
 #include "abstract/dshape.h"
 #include "abstract/ops/primitive_infer_map.h"
@@ -37,9 +39,10 @@
 #include "ir/value.h"
 #include "ir/kernel_tensor_value.h"
 #include "mindapi/base/type_id.h"
+#include "mindspore/core/include/utils/anf_utils.h"
 #include "mindapi/helper.h"
-#include "mindspore/ops/op_def/op_name.h"
-#include "ops/op_def.h"
+#include "primitive/op_name.h"
+#include "include/op_def.h"
 #include "utils/check_convert_utils.h"
 #include "utils/convert_utils_base.h"
 #include "utils/log_adapter.h"
@@ -47,6 +50,10 @@
 #include "ir/func_graph.h"
 #include "ops/ops_func_impl/simple_infer.h"
 #include "utils/ms_context.h"
+#include "ops_utils/dl_utils.h"
+#include "ops_utils/callback.h"
+#include "utils/file_utils.h"
+#include "utils/ms_utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -597,7 +604,8 @@ void BlockInvalid(const PrimitivePtr &primitive, const std::vector<AbstractBaseP
   auto x_type_id = x_type->element()->type_id();
   auto need_block = type_to_blocksize_map.find(x_type_id) != type_to_blocksize_map.end();
   if (need_block && !IsDynamic(out_shape)) {
-    auto output_size = std::accumulate(out_shape.cbegin(), out_shape.cend(), 1, std::multiplies<int64_t>());
+    auto output_size =
+      std::accumulate(out_shape.cbegin(), out_shape.cend(), static_cast<int64_t>(1), std::multiplies<int64_t>());
     auto valid_min_size = type_to_blocksize_map[x_type_id] * kKernelSize;
     if (output_size < valid_min_size) {
       MS_EXCEPTION(ValueError)
@@ -1152,10 +1160,129 @@ TypeId ConvertTypeBetweenTensorAndScalar(const TypeId &tensor_type_id, const Typ
   if (iter != scalar_tensor_convert_map.end()) {
     return iter->second;
   }
-  MS_EXCEPTION(TypeError) << "Type implicit conversion between Tensor[" << TypeIdToString(tensor_type_id) << "] and "
-                          << TypeIdToString(scalar_type_id) << " is not supported.";
+  MS_LOG(INFO) << "Type implicit conversion between Tensor[" << TypeIdToString(tensor_type_id) << "] and "
+               << TypeIdToString(scalar_type_id) << " is not supported.";
+  return kTypeUnknown;
 }
 
 size_t GetHashId(int a, int b) { return a < b ? hash_combine(a, b) : hash_combine(b, a); }
+
+bool IsEnableHostNode(const AnfNodePtr &node) {
+  OpDefPtr op_def = GetOpDef(AnfUtils::GetCNodeName(node));
+  bool is_view = op_def != nullptr ? op_def->is_graph_view_ : false;
+  return is_view;
+}
+
+constexpr char kOpPluginLoadPathEnv[] = "MS_OP_PLUGIN_PATH";
+
+void *GetOpPluginHandle() {
+  static std::once_flag init_flag;
+  static void *handle = nullptr;
+  std::call_once(init_flag, []() {
+    const char *op_plugin_path = common::EnvHelper::GetInstance()->GetEnv(kOpPluginLoadPathEnv);
+
+    if (op_plugin_path == nullptr) {
+      MS_LOG(INFO) << kOpPluginLoadPathEnv << " is not set. Op plugin will not be loaded.";
+      return;
+    }
+
+    auto real_path = FileUtils::GetRealPath(op_plugin_path).value_or("");
+    if (real_path.empty()) {
+      MS_LOG(ERROR) << "Failed to resolve the real path for " << kOpPluginLoadPathEnv << ": " << op_plugin_path;
+      return;
+    }
+    (void)DL_ERROR();
+#ifdef _WIN32
+    SetLastError(0);
+#endif
+    handle = DL_OPEN(real_path);
+    if (handle == nullptr) {
+      MS_LOG(ERROR) << "Failed to open op plugin file: " << real_path << " Error code: " << DL_ERROR();
+      return;
+    }
+    MS_LOG(INFO) << "Op plugin loaded successfully from path: " << real_path;
+
+    GET_OPS_CALLBACK(SetupOpPluginConfig, void, void *)(handle);
+  });
+  return handle;
+}
+
+bool IsOpPluginKernel(const std::string &op_name) {
+  static const std::unordered_set<std::string> *op_names_cache = nullptr;
+  static std::once_flag cache_flag;
+  std::call_once(cache_flag, []() { op_names_cache = &GetAllOpPluginKernelNames(); });
+  // Early return if no plugins are loaded (empty set)
+  if (op_names_cache->empty()) {
+    return false;
+  }
+  return op_names_cache->find(op_name) != op_names_cache->end();
+}
+
+const std::unordered_set<std::string> &GetAllOpPluginKernelNames() {
+  static std::once_flag init_flag;
+  static int (*get_op_count)() = nullptr;
+  static char **(*get_all_ops)() = nullptr;
+  static std::unordered_set<std::string> op_names;
+  std::call_once(init_flag, []() {
+    void *handle = GetOpPluginHandle();
+    if (handle == nullptr) {
+      return;
+    }
+    constexpr auto get_op_count_func_name = "GetRegisteredOpCount";
+    constexpr auto get_all_ops_func_name = "GetAllRegisteredOps";
+    get_op_count = reinterpret_cast<std::add_pointer<int()>::type>(DL_SYM(handle, get_op_count_func_name));
+    get_all_ops = reinterpret_cast<std::add_pointer<char **()>::type>(DL_SYM(handle, get_all_ops_func_name));
+    if (get_op_count == nullptr || get_all_ops == nullptr) {
+      MS_LOG(ERROR) << "Error occurs when fetching function '" << get_op_count_func_name << "' or '"
+                    << get_all_ops_func_name << "' from op plugin library. Error code: " << DL_ERROR();
+      return;
+    }
+    int op_count = get_op_count();
+    char **op_names_ptr = get_all_ops();
+    for (int i = 0; i < op_count; ++i) {
+      op_names.insert(std::string(op_names_ptr[i]));
+    }
+  });
+  return op_names;
+}
+
+const std::unordered_set<std::string> &GetAllOpPluginComputeDependOps() {
+  static std::once_flag init_flag;
+  static int (*get_op_count)() = nullptr;
+  static char **(*get_all_ops)() = nullptr;
+  static std::unordered_set<std::string> op_names;
+  std::call_once(init_flag, []() {
+    void *handle = GetOpPluginHandle();
+    if (handle == nullptr) {
+      return;
+    }
+    constexpr auto get_op_count_func_name = "GetComputeDependOpCount";
+    constexpr auto get_all_ops_func_name = "GetAllOpPluginComputeDependOps";
+    get_op_count = reinterpret_cast<std::add_pointer<int()>::type>(DL_SYM(handle, get_op_count_func_name));
+    get_all_ops = reinterpret_cast<std::add_pointer<char **()>::type>(DL_SYM(handle, get_all_ops_func_name));
+    if (get_op_count == nullptr || get_all_ops == nullptr) {
+      // Not an error - older plugins may not have this function
+      MS_LOG(INFO) << "Compute depend ops functions not found in op plugin library. "
+                   << "This is expected for older plugin versions.";
+      return;
+    }
+    int op_count = get_op_count();
+    char **op_names_ptr = get_all_ops();
+    for (int i = 0; i < op_count; ++i) {
+      op_names.insert(std::string(op_names_ptr[i]));
+    }
+  });
+  return op_names;
+}
+
+bool IsOpPluginComputeDependOp(const std::string &op_name) {
+  static const std::unordered_set<std::string> *op_names_cache = nullptr;
+  static std::once_flag cache_flag;
+  std::call_once(cache_flag, []() { op_names_cache = &GetAllOpPluginComputeDependOps(); });
+  if (op_names_cache->empty()) {
+    return false;
+  }
+  return op_names_cache->find(op_name) != op_names_cache->end();
+}
 }  // namespace ops
 }  // namespace mindspore

@@ -66,7 +66,7 @@ TEST_F(TestLogAdapter, TestInternalException) {
   const std::string title = "Framework Unexpected Exception Raised:";
   const std::string content =
     "This exception is caused by framework's unexpected error. Please create an issue at "
-    "https://gitee.com/mindspore/mindspore/issues to get help.";
+    "https://atomgit.com/mindspore/mindspore/issues to get help.";
 
   // Test MS_INTERNAL_EXCEPTION(type)
   try {

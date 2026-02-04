@@ -19,35 +19,41 @@
 #include <algorithm>
 #include <unordered_set>
 #include <vector>
+#include <utility>
+#include <string>
+#include <stack>
+#include <memory>
 #include "ir/tensor_new.h"
-#include "mindspore/ops/op_def/structure_op_name.h"
-#include "mindspore/ops/op_def/array_ops.h"
-#include "mindspore/ops/op_def/framework_ops.h"
-#include "pynative/utils/pynative_utils.h"
+#include "primitive/structure_op_name.h"
+#include "primitive/array_ops.h"
+#include "primitive/framework_ops.h"
+#include "include/pynative/utils/pynative_utils.h"
 #include "pybind_api/gil_scoped_long_running.h"
-#include "include/common/amp/amp.h"
-#include "include/common/utils/python_fallback_running.h"
-#include "symbolic_shape/symbol.h"
+#include "include/utils/amp.h"
+#include "include/utils/pipeline/python_fallback_running.h"
 #include "utils/ms_context.h"
-#include "pynative/forward/pyboost/forward_task.h"
+#include "include/pynative/forward/pyboost/forward_task.h"
 #include "pynative/utils/predict_out_type_map.h"
-#include "include/common/utils/stub_tensor.h"
-#include "runtime/pynative/op_executor.h"
+#include "include/utils/stub_tensor.h"
+#include "include/pynative/utils/runtime/op_executor.h"
 #include "tools/profiler/profiling.h"
 using mindspore::profiler::ProfilerManager;
-#include "frontend/operator/ops_front_infer_function.h"
-#include "runtime/pipeline/pipeline.h"
-#include "backend/common/device_address_utils.h"
-#include "backend/common/kernel_graph/session_basic.h"
+#include "include/frontend/expander/bprop_interface.h"
+#include "include/frontend/jit/ps/parse/py_data_convert.h"
+#include "include/frontend/operator/frontend_primitive_infer.h"
+#include "include/runtime/pipeline/pipeline.h"
+#include "include/backend/common/device_address_utils.h"
+#include "include/backend/common/kernel_graph/session_basic.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "pynative/backward/grad_utils.h"
-#include "mindspore/ccsrc/pyboost/functions/auto_grad_reg.h"
-#include "mindspore/ccsrc/pyboost/auto_generate/contiguous.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "include/common/utils/tensor_py.h"
-#include "mindspore/ccsrc/frontend/expander/bprop/bprop.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_reg.h"
+#include "include/pynative/utils/pyboost/auto_generate/contiguous.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "include/utils/tensor_py.h"
 #include "utils/stream_guard.h"
-#include "pyboost/functions/auto_grad_guard.h"
+#include "include/pynative/utils/pyboost/functions/auto_grad_guard.h"
+#include "include/runtime/utils/dispatch/dispatch_env.h"
+#include "include/pynative/utils/pyboost/functions/dispatch.h"
 
 namespace mindspore {
 namespace pynative {
@@ -79,15 +85,14 @@ void CreateDeviceAddressForTensor(const FrontendOpRunInfoPtr &op_run_info, const
   runtime::Pipeline::Get().launch_stage()->Wait();
 
   device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddTask, "PyNative", op_run_info->base_op_run_info.op_name, "");
-  kernel::pyboost::PyBoostUtils::MallocForInput(device_context, tensor, false);
+  kernel::pyboost::PyBoostUtils::MallocForInput(device_context, tensor);
   static bool enable_tracker = device::tracker::MemTrackerManager::GetInstance().IsEnabled();
   if (MS_UNLIKELY(enable_tracker)) {
     auto device_address = tensor->device_address();
     MS_EXCEPTION_IF_NULL(device_address);
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(
       MarkTensorAsInput, "PyNative", device::GetDeviceNameByType(device_address->GetDeviceType()),
-      device_address->GetPtr(), device_address->type_id(), device_address->GetShapeVector(),
-      device_address->GetTensorStorageInfo());
+      device_address->GetPtr(), tensor->data_type(), tensor->shape(), tensor->storage_info());
   }
 }
 #endif
@@ -107,6 +112,8 @@ ValuePtr CopyTensorValueWithNewId(const FrontendOpRunInfoPtr &op_run_info, const
     // todo: check tensor->data need ?
     new_tensor->set_need_pipeline_sync(true);
     new_tensor->set_device_address(tensor->device_address());
+    new_tensor->set_format(tensor->format());
+    new_tensor->set_storage_info(tensor->storage_info());
     new_tensor->set_contiguous_callback(tensor->contiguous_callback());
     new_tensor->set_sync_status(tensor->sync_status());
     return new_tensor;
@@ -332,6 +339,51 @@ void ContiguousInputByRunInfo(const BackendOpRunInfoPtr &op_run_info) {
     inputs[i] = contiguous_tensor;
   }
 }
+
+bool HasBpropExpander(const std::string &prim_name) {
+  auto handle = expander::bprop::GetBpropIRBuilder(prim_name);
+  return handle != nullptr;
+}
+
+void UpdateDeviceByInputs(const FrontendOpRunInfoPtr &op_run_info) {
+  if (EnableDispatch()) {
+    kernel::pyboost::OpRunStatus::Get().set_run_info(kernel::pyboost::OpStatus(
+      op_run_info->async_status.disable_mix_precision, op_run_info->base_op_run_info.device_target));
+
+    auto device = get_device(op_run_info->op_grad_info->input_value);
+    op_run_info->base_op_run_info.device_target = device;
+  }
+}
+
+void CheckViewInplaceInput(const FrontendOpRunInfoPtr &op_run_info) {
+  auto op_def = mindspore::ops::GetOpDef(op_run_info->base_op_run_info.op_name);
+  if (op_def == nullptr) {
+    return;
+  }
+
+  const auto &outputs = op_def->returns_;
+  for (const auto &output : outputs) {
+    if (output.inplace_input_index_ < 0) {
+      continue;
+    }
+
+    if (static_cast<size_t>(output.inplace_input_index_) >= op_run_info->op_grad_info->input_value.size()) {
+      MS_LOG(EXCEPTION) << "Index " << output.inplace_input_index_ << " out of bound "
+                        << op_run_info->op_grad_info->input_value.size();
+    }
+    const auto &input = op_run_info->op_grad_info->input_value[output.inplace_input_index_];
+    MS_EXCEPTION_IF_NULL(input);
+    if (input->isa<Tensor>()) {
+      auto tensor = input->cast<TensorPtr>();
+      if (tensor->storage_info() != nullptr) {
+        MS_LOG(EXCEPTION) << "Check view and inplace failed! Not support view input for inplace op " << op_def->name_
+                          << ". Got input with storage_info:" << tensor->storage_info()->ToString();
+      }
+    } else {
+      MS_LOG(EXCEPTION) << "The op " << op_def->name_ << " inplace input is not a Tensor!";
+    }
+  }
+}
 }  // namespace
 
 void ForwardExecutor::WaitForwardTask() {
@@ -418,10 +470,7 @@ void ForwardExecutor::DispatchFrontendTask(const FrontendOpRunInfoPtr &op_run_in
 }
 
 void ForwardExecutor::ForwardOpGradImpl(const OpGradInfoPtr &grad_info, const AsyncStatus &async_status) const {
-  MS_LOG(DEBUG) << "Current custom bprop cell count " << async_status.custom_bprop_cell_count;
-  if (!async_status.is_jit_compiling && async_status.custom_bprop_cell_count <= 0) {
-    grad()->ProcessOpGradInfo(grad_info);
-  }
+  grad()->ProcessOpGradInfo(grad_info);
 }
 
 void ForwardExecutor::ForwardRunViewKernelTask(const FrontendOpRunInfoPtr &op_run_info,
@@ -598,6 +647,9 @@ ValuePtr ForwardExecutor::RunSliceOpFrontend(const std::vector<ValuePtr> &input_
 void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(op_run_info);
   MS_LOG(DEBUG) << "RunOp name: " << op_run_info->base_op_run_info.op_name;
+  // Convert StubNode to Tensor and no need to concern about input StubNode anymore in this thread.
+  PyNativeAlgo::Common::StubNodeToValue(op_run_info);
+  UpdateDeviceByInputs(op_run_info);
   kernel::pyboost::OpRunStatus::Get().HeterBarrier(op_run_info->base_op_run_info.device_target);
 #ifndef ENABLE_TEST
   auto strides_calc_info =
@@ -606,8 +658,8 @@ void ForwardExecutor::RunOpFrontend(const FrontendOpRunInfoPtr &op_run_info) {
     strides_calc_info.first.has_value() ? OperatorType::kViewOp : OperatorType::kDefault;
 #endif
 
-  // Convert StubNode to Tensor and no need to concern about input StubNode anymore in this thread.
-  PyNativeAlgo::Common::StubNodeToValue(op_run_info);
+  CheckViewInplaceInput(op_run_info);
+
   // 1.Set cast for inputs
   SetCastForInputs(op_run_info);
 
@@ -658,7 +710,7 @@ void ForwardExecutor::RunOpBackendSync(const FrontendOpRunInfoPtr &op_run_info) 
 void ForwardExecutor::OpRunInfoUsePrimC(const FrontendOpRunInfoPtr &op_run_info) const {
   auto prim = op_run_info->op_grad_info->op_prim;
   auto op_name = prim->name();
-  if (EnablePipeline(op_name) && expander::bprop::HasBpropExpander(op_name) &&
+  if (EnablePipeline(op_name) && HasBpropExpander(op_name) &&
       abstract::GetFrontendPrimitiveInferImpl(prim).has_value()) {
     auto new_prim = std::make_shared<Primitive>(*prim);
     new_prim->EnableSharedMutex();
@@ -922,8 +974,7 @@ ValuePtr ForwardExecutor::RunOpInMs(const FrontendOpRunInfoPtr &op_run_info,
 void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input_tensor,
                                                   const FrontendOpRunInfoPtr &op_run_info) {
   MS_EXCEPTION_IF_NULL(input_tensor);
-  auto device_address = input_tensor->device_address();
-
+  const auto &device_address = input_tensor->device_address();
   const auto &device_context = runtime::OpRunner::GetDeviceContext(op_run_info->base_op_run_info.device_target);
   MS_EXCEPTION_IF_NULL(device_context);
   MS_EXCEPTION_IF_NULL(device_address);
@@ -944,25 +995,26 @@ void ForwardExecutor::CreateInputAddressForViewOp(const tensor::TensorPtr &input
   kernel_tensor->SetShape(std::make_shared<abstract::TensorShape>(input_tensor->shape()));
   kernel_tensor->set_stream_id(op_run_info->base_op_run_info.stream_id);
 
-  auto new_device_address = kernel_tensor->device_address();
-  input_tensor->set_device_address(new_device_address);
-  input_tensor->set_need_pipeline_sync(true);
   input_tensor->set_implicit_copy_address(device_address);
+  input_tensor->set_implicit_copy_storage_info(input_tensor->storage_info());
+  input_tensor->set_implicit_copy_format(input_tensor->format());
+  input_tensor->set_device_address(kernel_tensor->device_address());
+  input_tensor->set_format(kernel_tensor->format());
+  input_tensor->set_storage_info(kernel_tensor->tensor_storage_info());
+  input_tensor->set_need_pipeline_sync(true);
   op_backend_->RunAllocMemTask(device_context, input_tensor, EnablePipeline(""));
 }
 
-DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const DeviceAddressPtr &device_address,
-                                                           const TensorStorageInfoPtr &storage_info) {
-  MS_EXCEPTION_IF_NULL(device_address);
+DeviceAddressPtr ForwardExecutor::TensorContiguousCallback(const tensor::TensorPtr &input_tensor) {
   // Gil might be release  by ACL, so release here to reduce conflict
-  auto device_addr = device_address;
+  const auto &storage_info = input_tensor->storage_info();
+  const auto &device_addr = input_tensor->device_address();
   MS_EXCEPTION_IF_NULL(device_addr);
   if (storage_info == nullptr) {
     return device_addr;
   }
-
   // as_numpy sync promise contiguous run_sync
-  return runtime::DeviceAddressUtils::ConvertContiguousDeviceAddress(nullptr, device_addr);
+  return runtime::DeviceAddressUtils::ConvertContiguousDeviceAddress(nullptr, input_tensor);
 }
 
 void ForwardExecutor::PrepareOpInputs(const FrontendOpRunInfoPtr &op_run_info) {
@@ -983,14 +1035,13 @@ void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_
   MS_EXCEPTION_IF_NULL(storage_info);
   auto output_tensor = tensor::from_spec(input_tensor->data_type(), storage_info->shape, device::DeviceType::kNone);
   output_tensor->set_need_pipeline_sync(true);
-  output_tensor->set_contiguous_callback([this](const DeviceAddressPtr &device_address) -> DeviceAddressPtr {
-    return TensorContiguousCallback(device_address, device_address->GetTensorStorageInfo());
-  });
+  output_tensor->set_contiguous_callback(
+    [this](const tensor::TensorPtr &self) -> DeviceAddressPtr { return TensorContiguousCallback(self); });
 
   auto input_device_address = input_tensor->device_address();
   MS_EXCEPTION_IF_NULL(input_device_address);
   if (task_type == runtime::KernelTaskType::kCOPY_TASK) {
-    input_device_address->set_tensor_storage_info(storage_info);
+    input_tensor->set_storage_info(storage_info);
   }
 
   // Create view output address
@@ -1013,6 +1064,8 @@ void ForwardExecutor::CreateViewOutputTensor(const FrontendOpRunInfoPtr &op_run_
 
   output_device_address->set_device_pointer(input_device_address->device_pointer());
   output_tensor->set_device_address(output_device_address);
+  output_tensor->set_format(kernel_tensor->format());
+  output_tensor->set_storage_info(kernel_tensor->tensor_storage_info());
   autograd::CreationType creationType =
     is_multi_output
       ? autograd::CreationType::kMultiOutput
@@ -1041,7 +1094,6 @@ void ForwardExecutor::ClearRes() {
 
   init_ = false;
   enable_async_ = false;
-  is_jit_compiling_ = false;
   last_target_ = "Unknown";
   std::stack<MixedPrecisionType>().swap(mix_precision_type_stack_);
   cast_operation()->ClearRes();

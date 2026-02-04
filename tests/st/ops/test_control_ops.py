@@ -23,7 +23,7 @@ from mindspore import nn, context
 from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.common.parameter import Parameter, ParameterTuple
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 
 grad_by_list = C.GradOperation(get_by_list=True)
 grad_all = C.GradOperation(get_all=True)

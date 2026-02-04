@@ -19,8 +19,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "include/backend/optimizer/optimizer.h"
-#include "mindspore/ops/op_def/ascend_op_name.h"
+#include "include/backend/common/pass_manager/optimizer.h"
+#include "primitive/ascend_op_name.h"
 
 namespace mindspore {
 namespace opt {
@@ -32,7 +32,6 @@ class CombineOptimizerFusion : public Pass {
 
  private:
   void InitCombineOptimizer();
-  bool CheckCondition();
   bool CheckFuncGraph(const FuncGraphPtr &graph);
   bool TransformOptimizerList(const std::vector<AnfNodePtr> &node_list,
                               std::vector<std::vector<AnfNodePtr>> *deal_list);

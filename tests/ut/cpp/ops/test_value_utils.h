@@ -22,7 +22,7 @@
 #include "ir/tensor_new.h"
 #include "abstract/abstract_value.h"
 #include "mindapi/base/format.h"
-#include "mindspore/ccsrc/include/common/utils/utils.h"
+#include "include/utils/utils.h"
 
 namespace mindspore {
 namespace ops {
@@ -68,13 +68,17 @@ static inline ValuePtr CreateTuple(const std::vector<NumberContainer> &values) {
   return std::make_shared<ValueTuple>(value_vec);
 }
 
-template<typename T>
+template <typename T>
 ValuePtrList CreateScalarList(const std::vector<T> &values) {
   ValuePtrList value_list;
-  std::transform(values.cbegin(), values.cend(), std::back_inserter(value_list), [](const T &v) {
-    return CreateScalar<T>(v);
-  });
+  std::transform(values.cbegin(), values.cend(), std::back_inserter(value_list),
+                 [](const T &v) { return CreateScalar<T>(v); });
   return value_list;
+}
+
+template <typename T>
+ValuePtr CreateScalarTuple(const std::vector<T> &values) {
+  return std::make_shared<ValueTuple>(CreateScalarList<T>(values));
 }
 
 static inline ValuePtr CreateList(const std::vector<NumberContainer> &values) {
@@ -91,9 +95,8 @@ ValuePtr CreatePyIntList(const std::vector<NumberContainer> &values);
 ValuePtr CreatePyIntTuple(const std::vector<NumberContainer> &values);
 
 static inline Format FormatStringToEnum(const std::string &format) {
-  std::unordered_map<std::string, mindspore::Format> kStringToEnumMap = {{kOpFormat_NHWC, Format::NHWC},
-                                                                         {kOpFormat_NCHW, Format::NCHW},
-                                                                         {kOpFormat_NCDHW, Format::NCDHW}};
+  std::unordered_map<std::string, mindspore::Format> kStringToEnumMap = {
+    {kOpFormat_NHWC, Format::NHWC}, {kOpFormat_NCHW, Format::NCHW}, {kOpFormat_NCDHW, Format::NCDHW}};
   auto iter = kStringToEnumMap.find(format);
   if (iter == kStringToEnumMap.end()) {
     MS_LOG(WARNING) << "Unsupported format [" << format << "].";

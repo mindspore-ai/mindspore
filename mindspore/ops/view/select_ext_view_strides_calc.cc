@@ -53,21 +53,7 @@ TensorStorageInfoPtrList SelectExtStridesCalc(const std::vector<int64_t> &old_sh
 
 TensorStorageInfoPtrList SelectExtViewBasicTypeCalc(const mindspore::tensor::TensorPtr &input_tensor,
                                                     const int64_t &dim, const int64_t &index) {
+  MS_EXCEPTION_IF_NULL(input_tensor);
   return SelectExtStridesCalc(input_tensor->shape(), input_tensor->stride(), input_tensor->storage_info(), dim, index);
 }
-
-TensorStorageInfoPtrList SelectExtViewCalc(const PrimitivePtr &prim, const std::vector<ValuePtr> &inputs) {
-  constexpr size_t kSelectExtInputsNum = 3;
-  if (CheckInputsNull(inputs, kSelectExtInputsNum) || !inputs[kInputIndex0]->isa<tensor::Tensor>()) {
-    MS_LOG(EXCEPTION) << "inputs num is invalid, num:" << inputs.size();
-  }
-
-  auto input_tensor = inputs[kInputIndex0]->cast<tensor::TensorPtr>();
-  MS_EXCEPTION_IF_NULL(input_tensor);
-  auto dim = GetValue<int64_t>(inputs[kInputIndex1]);
-  auto index = GetValue<int64_t>(inputs[kInputIndex2]);
-  return SelectExtViewBasicTypeCalc(input_tensor, dim, index);
-}
-
-REG_VIEW_STRIDES_CALC_FUN(SelectExtView, SelectExtViewCalc);
 }  // namespace mindspore::ops

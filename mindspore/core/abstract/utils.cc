@@ -25,16 +25,6 @@
 
 namespace mindspore {
 namespace abstract {
-
-ValuePtr ValueJoin(const ValuePtr &value1, const ValuePtr &value2) {
-  MS_EXCEPTION_IF_NULL(value1);
-  MS_EXCEPTION_IF_NULL(value2);
-  if (*value1 == *value2) {
-    return value1;
-  }
-  return kValueAny;
-}
-
 TypePtr TypeJoin(const TypePtr &type1, const TypePtr &type2) {
   MS_EXCEPTION_IF_NULL(type1);
   MS_EXCEPTION_IF_NULL(type2);
@@ -42,60 +32,6 @@ TypePtr TypeJoin(const TypePtr &type1, const TypePtr &type2) {
     return type1;
   }
   return kTypeAny;
-}
-
-bool IsShapesDynamicRank(const std::vector<ShapeVector> &shapes) {
-  return std::any_of(shapes.begin(), shapes.end(), [](const ShapeVector &shape) {
-    return std::any_of(shape.begin(), shape.end(), [](int64_t dim) { return dim == Shape::kShapeRankAny; });
-  });
-}
-
-ShapePtr SingleElementShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
-  // special case: shape(1), shape() -> shape(1)
-  if (shape1->shape().size() == 1 && shape1->shape()[0] == 1 && shape2->shape().empty()) {
-    return shape1;
-  }
-  if (shape2->shape().size() == 1 && shape2->shape()[0] == 1 && shape1->shape().empty()) {
-    return shape2;
-  }
-  return nullptr;
-}
-
-ShapeValueDType SingleShapeValueJoin(const ShapeValueDType &shape_value1, const ShapeValueDType &shape_value2) {
-  if (shape_value1 == shape_value2) {
-    return shape_value1;
-  }
-  return Shape::kShapeDimAny;
-}
-
-ShapePtr ShapeJoin(const ShapePtr &shape1, const ShapePtr &shape2) {
-  MS_EXCEPTION_IF_NULL(shape1);
-  MS_EXCEPTION_IF_NULL(shape2);
-  if (*shape1 == *shape2) {
-    return shape1;
-  }
-
-  bool has_dynamic_rank = IsShapesDynamicRank({shape1->shape(), shape2->shape()});
-  if (has_dynamic_rank) {
-    return std::make_shared<Shape>(ShapeVector{Shape::kShapeRankAny});
-  }
-  // lengths of two shapes are not same, join failed
-  if (shape1->shape().size() != shape2->shape().size()) {
-    auto joined_shape = SingleElementShapeJoin(shape1, shape2);
-    if (joined_shape != nullptr) {
-      return joined_shape;
-    }
-    return std::make_shared<Shape>(ShapeVector({Shape::kShapeRankAny}));
-  }
-  ShapeVector dims(shape1->shape().size());
-  for (std::size_t i = 0; i < shape1->shape().size(); i++) {
-    auto joined_shape_value = SingleShapeValueJoin(shape1->shape()[i], shape2->shape()[i]);
-    if (joined_shape_value == Shape::kShapeError) {
-      return nullptr;
-    }
-    dims[i] = joined_shape_value;
-  }
-  return std::make_shared<Shape>(dims);
 }
 
 AbstractBasePtr AbstractJoin(const AbstractBasePtrList &args_abs_list) {
@@ -177,14 +113,6 @@ AbstractBasePtr AbstractBroaden(const AbstractBasePtr &abs) {
     }
   }
   return abs->Broaden();
-}
-
-AbstractBasePtr SensitivityTransform(const AbstractBasePtr &spec) {
-  auto f_spec = dyn_cast_ptr<AbstractFunction>(spec);
-  if (f_spec != nullptr) {
-    return std::make_shared<AbstractScalar>(kValueAny, std::make_shared<EnvType>());
-  }
-  return spec->Clone();
 }
 
 ShapeVector BroadcastShape(ShapeVector shpx, ShapeVector shpy) {

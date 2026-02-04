@@ -6,6 +6,7 @@ sub_scalar:
       type_cast: number
     other:
       dtype: number
+      disable_tensor_to_scalar: True
     alpha:
       dtype: number
       default: 1

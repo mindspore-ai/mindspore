@@ -23,7 +23,7 @@ import mindspore.ops as P
 from mindspore import Tensor
 from mindspore.ops import functional as F
 from mindspore.ops.functional import vmap
-from mindspore.common.api import jit
+from mindspore.graph.api import jit
 
 
 class NetDiag(nn.Cell):

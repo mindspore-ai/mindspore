@@ -93,7 +93,7 @@ def roi_align_case(data_type=np.float16, is_dyn_shape=False, is_dyn_rank=False):
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.001)
 def test_roi_align_float16():
     """
     Feature: Test the operator ROIAlign
@@ -107,7 +107,7 @@ def test_roi_align_float16():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu', 'cpu_linux', 'cpu_windows', 'cpu_macos'], level_mark='level1',
-          card_mark='onecard', essential_mark='unessential')
+          card_mark='onecard', essential_mark='unessential', mem_peak=2048.001)
 def test_roi_align_float32():
     """
     Feature: Test the operator ROIAlign

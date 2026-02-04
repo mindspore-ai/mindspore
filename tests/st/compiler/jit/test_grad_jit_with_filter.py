@@ -18,8 +18,8 @@ import shutil
 import subprocess
 import numpy as np
 from mindspore import Tensor, Parameter, ParameterTuple, jit, ops, context
-from mindspore._extends.parse import compile_config
-import mindspore.nn as nn
+from mindspore.graph._parse import compile_config
+from mindspore import nn
 from mindspore.ops.auto_generate import TransposeView
 from tests.mark_utils import arg_mark
 
@@ -59,7 +59,7 @@ def test_filter_grad_jit_psjit():
     compile_config.GRAD_JIT_FILTER = "1"
     context.set_context(mode=context.PYNATIVE_MODE)
     try:
-        save_graphs_path = "./test_jit_grad_with_filter"
+        save_graphs_path = "./test_jit_grad_with_filter1"
         os.environ["MS_DEV_SAVE_GRAPHS"] = "1"
         os.environ["MS_DEV_SAVE_GRAPHS_PATH"] = save_graphs_path
         if os.path.exists(save_graphs_path):
@@ -162,7 +162,7 @@ def test_filter_grad_jit_psjit_with_multiple_position_2():
     compile_config.GRAD_JIT_FILTER = "1"
     context.set_context(mode=context.PYNATIVE_MODE)
     try:
-        save_graphs_path = "./test_jit_grad_with_filter"
+        save_graphs_path = "./test_jit_grad_with_filter2"
         os.environ["MS_DEV_SAVE_GRAPHS"] = "1"
         os.environ["MS_DEV_SAVE_GRAPHS_PATH"] = save_graphs_path
         if os.path.exists(save_graphs_path):
@@ -223,7 +223,8 @@ def test_filter_grad_jit_psjit_with_different_position():
     compile_config.GRAD_JIT_FILTER = ""
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_filter_grad_jit_pijit():
     """
     Feature: Test filter grad jit graph.
@@ -250,7 +251,8 @@ def test_filter_grad_jit_pijit():
     compile_config.GRAD_JIT_FILTER = ""
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_filter_grad_jit_pijit_2():
     """
     Feature: Test filter grad jit graph.
@@ -277,7 +279,8 @@ def test_filter_grad_jit_pijit_2():
     compile_config.GRAD_JIT_FILTER = ""
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_filter_grad_jit_pijit_with_multiple_position():
     """
     Feature: Test filter grad jit graph.
@@ -310,7 +313,8 @@ def test_filter_grad_jit_pijit_with_multiple_position():
     compile_config.GRAD_JIT_FILTER = ""
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_filter_grad_jit_pijit_with_multiple_position_2():
     """
     Feature: Test filter grad jit graph.
@@ -343,7 +347,8 @@ def test_filter_grad_jit_pijit_with_multiple_position_2():
     compile_config.GRAD_JIT_FILTER = ""
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_filter_grad_jit_pijit_with_different_position():
     """
     Feature: Test filter grad jit graph.
@@ -392,7 +397,7 @@ def test_jit_grad_with_weights():
     """
     x = Tensor(np.array([1, 2]).astype(np.float32))
     try:
-        save_graphs_path = "./test_jit_grad_with_filter"
+        save_graphs_path = "./test_jit_grad_with_filter3"
         os.environ["MS_DEV_SAVE_GRAPHS"] = "1"
         os.environ["MS_DEV_SAVE_GRAPHS_PATH"] = save_graphs_path
         if os.path.exists(save_graphs_path):
@@ -402,7 +407,7 @@ def test_jit_grad_with_weights():
         expect1 = np.array([2, 2]).astype(np.float32)
         out1 = ops.grad(net, weights=weights1)(x)  # pylint: disable=not-callable
         assert np.allclose(out1[0].asnumpy(), expect1)
-        para = '= PrimFunc_Mul('
+        para = '= PrimFunc_Muls('
         out_before = get_from_ir_before_filter(para, save_graphs_path)
         assert out_before == "3"
         out_after = get_from_ir_after_filter(para, save_graphs_path)
@@ -415,7 +420,8 @@ def test_jit_grad_with_weights():
             shutil.rmtree(save_graphs_path)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_filter_grad_jit_with_view_inplace():
     """
     Feature: Test filter grad jit graph.
@@ -449,3 +455,29 @@ def test_filter_grad_jit_with_view_inplace():
     out_back_jit_1 = ops.grad(net, 1)(input_x, input_y)  # pylint: disable=not-callable
     assert np.allclose(out_back_expect.asnumpy(), out_back_jit.asnumpy())
     assert np.allclose(out_back_expect_1.asnumpy(), out_back_jit_1.asnumpy())
+
+
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
+def test_filter_grad_jit_with_list_getitem():
+    """
+    Feature: Test filter grad jit graph with list getitem.
+    Description: Test filter grad jit graph with list getitem.
+    Expectation: No exception.
+    """
+    @jit
+    def inner(x, y):
+        x = ops.ReduceSum()(x[0])
+        return 2 * x + y
+
+    def foo(x, y):
+        x = ops.Add()(x, y)
+        ipt = [x, x]
+        return inner(ipt, y)
+
+    context.set_context(mode=context.PYNATIVE_MODE)
+    input_np = np.ones((2, 2)).astype(np.float32)
+    input_x = Tensor(input_np)
+    input_y = Tensor(input_np)
+    ret = ops.GradOperation()(foo)(input_x, input_y)  # pylint: disable=not-callable
+    assert np.allclose(ret.asnumpy(), 8 * input_np)

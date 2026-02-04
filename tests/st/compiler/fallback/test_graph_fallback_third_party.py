@@ -65,7 +65,7 @@ def test_relative_import():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.75)
 def test_operator_add():
     """
     Feature: JIT Fallback
@@ -139,8 +139,8 @@ def test_np_logspace_func():
     assert np.allclose(out, expect)
 
 
-@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level0', card_mark='onecard',
-          essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
+          essential_mark='unessential', mem_peak=0.01)
 def test_numpy_concatenate():
     """
     Feature: JIT Fallback

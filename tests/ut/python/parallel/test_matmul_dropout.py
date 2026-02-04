@@ -20,7 +20,7 @@ from mindspore import Tensor
 from mindspore import context
 import mindspore.common.dtype as mstype
 from mindspore.common.seed import _get_graph_seed
-from mindspore.common.api import _cell_graph_executor
+from mindspore.graph.api import _cell_graph_executor
 from mindspore import _checkparam as Validator
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import composite as C

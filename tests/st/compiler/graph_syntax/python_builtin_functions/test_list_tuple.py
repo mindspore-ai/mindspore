@@ -78,7 +78,7 @@ def test_fallback_list_with_input_constant_tensor_2():
 
 
 @arg_mark(plat_marks=['platform_ascend', 'platform_gpu'], level_mark='level1', card_mark='onecard',
-          essential_mark='unessential')
+          essential_mark='unessential', mem_peak=1024.25)
 def test_builtin_function_list_with_non_constant_tensor():
     """
     Feature: Graph list function.
@@ -163,7 +163,8 @@ def test_fallback_list_with_input_numpy_array():
     assert np.allclose(np.array([1, 2, 3, 4]), out.asnumpy())
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_list_append_in_tensor_index():
     """
     Feature: list().
@@ -198,7 +199,8 @@ def test_list_append_in_tensor_index():
         del os.environ["MS_DEV_TENSOR_INDEX_BOOST"]
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=4.00)
 def test_tuple_in_tensor_index():
     """
     Feature: tuple().

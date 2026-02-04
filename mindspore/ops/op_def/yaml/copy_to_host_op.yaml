@@ -1,0 +1,13 @@
+#operator copy_to_host
+copy_to_host:
+  args:
+    x:
+      dtype: tensor
+    sync:
+      dtype: bool
+      default: False
+  labels:
+    side_effect_mem: True
+  returns:
+    output:
+      dtype: tensor

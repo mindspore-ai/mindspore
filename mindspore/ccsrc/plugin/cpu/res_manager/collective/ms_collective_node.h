@@ -18,14 +18,13 @@
 #define MINDSPORE_CCSRC_RUNTIME_HARDWARE_CPU_MS_COLLECTIVE_NODE_H_
 
 #include <memory>
-#include "cluster/rpc/core/ps_worker_node.h"
-#include "include/backend/distributed/cluster/topology/compute_graph_node.h"
-#include "plugin/cpu/visible.h"
+#include "include/cluster/rpc/abstract_node.h"
+#include "include/cluster/topology/compute_graph_node.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
-class CPU_EXPORT CollectiveNode : public PSWorkerNode {
+class CollectiveNode : public AbstractNode {
  public:
   explicit CollectiveNode(const std::shared_ptr<distributed::cluster::topology::TcpNodeBase> &client_node)
       : client_node_(client_node) {}
@@ -33,6 +32,7 @@ class CPU_EXPORT CollectiveNode : public PSWorkerNode {
 
   bool Start(const uint32_t &timeout = PSContext::instance()->cluster_config().cluster_available_timeout) override;
   bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
+  bool Stop() override;
 
   // Register the address of this collective node and then lookup the addresses of all the other nodes.
   void SynchronizeAddresses();

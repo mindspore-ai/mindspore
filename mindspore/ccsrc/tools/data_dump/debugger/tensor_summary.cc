@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 #include "tools/data_dump/debugger/tensor_summary.h"
-#include <cmath>
+
 #include <algorithm>
+#include <bitset>
+#include <cmath>
 #include <future>
 #include <limits>
 #include <memory>
-#include <bitset>
 #include <tuple>
-#include <utility>
 #include <type_traits>
 #include <unordered_map>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "base/float16.h"
-#include "openssl/sha.h"
 #include "openssl/md5.h"
+#include "openssl/sha.h"
 
 namespace mindspore {
 

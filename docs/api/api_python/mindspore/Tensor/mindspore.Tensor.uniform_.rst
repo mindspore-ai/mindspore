@@ -6,7 +6,7 @@ mindspore.Tensor.uniform\_
     通过在半开区间 :math:`[from\_, to)` 内生成服从均匀分布的随机数来原地更新输入Tensor。
 
     .. math::
-        P(x)= \frac{1}{to - from\_}
+        P(x) = \frac{1}{to - from\_}
 
     .. warning::
         这是一个实验性API，后续可能修改或删除。

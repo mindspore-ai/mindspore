@@ -5,8 +5,8 @@ mindspore.ops.bincount
 
     统计一个输入tensor中每个非负整数出现的次数。
 
-    如果不指定 `minlength` ，输出tensor的长度为max( `input` )+1。
-    如果指定 `minlength`，则输出tensor的长度max([max( `input` )+1, `minlength`])。
+    - 如果不指定 `minlength` ，输出tensor的长度为max( `input` )+1。
+    - 如果指定 `minlength`，则输出tensor的长度为max([max( `input` )+1, `minlength`])。
 
     如果指定了 `weights`，对输出的结果进行加权处理，如果 `n` 是输入tensor中索引 `i` 处的值，即 `out[n]+=weight[i]` 而不是 `out[n]+=1`。
 

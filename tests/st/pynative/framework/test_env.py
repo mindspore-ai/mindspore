@@ -13,9 +13,13 @@
 # limitations under the License.
 # ============================================================================
 
+"""Test PyNative Envs"""
+
 import os
+import numpy as np
 import pytest
-from mindspore import Tensor, ops, context
+import mindspore as ms
+from mindspore import Tensor, ops, context, nn
 from tests.mark_utils import arg_mark
 
 class EnvContext:
@@ -30,10 +34,6 @@ class EnvContext:
         self.exit_callback()
 
 
-@arg_mark(plat_marks=['platform_ascend910b'],
-          level_mark='level0',
-          card_mark='onecard',
-          essential_mark='essential')
 def test_pynative_disable_auto_h2d():
     """
     Feature: Pynative disable auto h2d copy.
@@ -70,3 +70,33 @@ def test_pynative_disable_auto_h2d():
         x = x.move_to("Ascend")
         y = x * 2
         assert y == 4
+
+
+@arg_mark(plat_marks=['cpu_linux'],
+          level_mark='level0',
+          card_mark='onecard',
+          essential_mark='essential')
+def test_pynative_synchronize():
+    """
+    Feature: Test pynative synchronize
+    Description: Test the code for the synchronous branch.
+    Expectation: success
+    """
+    try:
+        context.set_context(pynative_synchronize=True)
+
+        # Cell object to be differentiated
+        class MulNet(nn.Cell):
+            def construct(self, x, y, z):
+                return x * y * z
+
+        x = Tensor([1, 2], ms.float32)
+        y = Tensor([-2, 3], ms.float32)
+        z = Tensor([0, 3], ms.float32)
+        net = MulNet()
+        net.set_inputs(Tensor(shape=[None], dtype=ms.float32), y, z)
+        output = ms.grad(net, grad_position=(1, 2))(x, y, z)
+        assert (output[0].asnumpy() == np.array([0, 6], dtype=np.float32)).all()
+        assert (output[1].asnumpy() == np.array([-2, 6], dtype=np.float32)).all()
+    finally:
+        context.set_context(pynative_synchronize=False)

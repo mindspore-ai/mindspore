@@ -17,7 +17,7 @@ from mindspore import context
 from mindspore import ops
 from mindspore import jit
 from mindspore import Tensor
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 from tests.mark_utils import arg_mark
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')

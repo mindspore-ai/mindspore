@@ -21,6 +21,7 @@
 #include <vector>
 #include <utility>
 #include "kernel/ascend/acl_ir/op_api_convert.h"
+#include "include/runtime/utils/runtime_conf/runtime_conf.h"
 
 namespace mindspore::device::ascend {
 typedef aclOpExecutor *(*GetExecCache)(uint64_t, uint64_t *);
@@ -29,7 +30,7 @@ typedef void (*UnInitCacheThreadLocal)();
 typedef void (*SetHashKey)(uint64_t);
 typedef bool (*CanUseCache)(const char *);
 
-constexpr int g_hash_buf_size = 8192;
+constexpr int g_hash_buf_size = 16384;
 constexpr int g_hash_buf_max_size = g_hash_buf_size + 1024;
 extern BACKEND_EXPORT thread_local char g_hash_buf[g_hash_buf_size];
 extern BACKEND_EXPORT thread_local int g_hash_offset;
@@ -83,14 +84,14 @@ inline void MemcpyToBuf(const void *data_expression, size_t size_expression) {
   g_hash_offset += size_expression;
 }
 
+// Add core num to hash
+BACKEND_EXPORT void GatherCoreNumHash();
+
 // Old cache hash for kbk only when cache is disabled.
 BACKEND_EXPORT void GatherInfo(mindspore::kernel::KernelTensor *);
 BACKEND_EXPORT void GatherInfo(const std::pair<mindspore::kernel::KernelTensor *, bool> &);
 BACKEND_EXPORT void GatherInfo(const std::vector<mindspore::kernel::KernelTensor *> &);
-BACKEND_EXPORT void GatherInfo(const device::DeviceAddressPtr &);
-BACKEND_EXPORT void GatherInfo(device::DeviceAddress *);
 
-BACKEND_EXPORT void GatherInfo(const device::DeviceAddressPtr &);
 BACKEND_EXPORT void GatherInfo(const mindspore::tensor::TensorPtr &);
 BACKEND_EXPORT void GatherInfo(const std::optional<tensor::TensorPtr> &);
 BACKEND_EXPORT void GatherInfo(const std::vector<tensor::TensorPtr> &);
@@ -129,7 +130,10 @@ BACKEND_EXPORT inline void GatherInfo(TypeId type_id) { MemcpyToBuf(&type_id, si
 BACKEND_EXPORT void GatherInfo();
 
 template <typename T, typename... Args>
-void GatherInfo(const T &arg, const Args &... args) {
+void GatherInfo(const T &arg, const Args &...args) {
+  if (runtime::RuntimeConf::GetInstance()->IsEnableResLimit()) {
+    GatherCoreNumHash();
+  }
   GatherInfo(arg);
   GatherInfo(args...);
 }
@@ -140,7 +144,6 @@ inline void RefreshAddr(const std::pair<mindspore::kernel::KernelTensor *, bool>
 }
 
 BACKEND_EXPORT void RefreshAddr(const std::pair<mindspore::kernel::KernelTensor *, bool> &);
-BACKEND_EXPORT void RefreshAddr(device::DeviceAddress *device_address);
 
 inline void RefreshAddr(const std::vector<mindspore::kernel::KernelTensor *> &tensor_list) {
   for (auto tensor : tensor_list) {
@@ -148,7 +151,6 @@ inline void RefreshAddr(const std::vector<mindspore::kernel::KernelTensor *> &te
   }
 }
 
-BACKEND_EXPORT void RefreshAddr(const device::DeviceAddressPtr &device_address);
 BACKEND_EXPORT void RefreshAddr(const mindspore::tensor::TensorPtr &tensor);
 
 template <typename Args>
@@ -157,7 +159,7 @@ void RefreshAddr(const Args &values) {}
 inline void RefreshAddr() {}
 
 template <typename T, typename... Args>
-void RefreshAddr(const T &arg, const Args &... args) {
+void RefreshAddr(const T &arg, const Args &...args) {
   RefreshAddr(arg);
   RefreshAddr(args...);
 }
@@ -166,7 +168,7 @@ BACKEND_EXPORT uint64_t calc_hash_id();
 BACKEND_EXPORT uint64_t gen_hash(const void *key, const int len, const uint32_t seed = 0xdeadb0d7);
 
 template <typename... Args>
-bool HitCache(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspace_size, const Args &... args) {
+bool HitCache(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspace_size, const Args &...args) {
   static const auto get_exec_cache = device::ascend::GetOpApiFunc("PTAGetExecCache");
   static const auto init_cache_thread_local = device::ascend::GetOpApiFunc("InitPTACacheThreadLocal");
   static const auto set_hash_key = device::ascend::GetOpApiFunc("SetPTAHashKey");
@@ -196,7 +198,7 @@ bool HitCache(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspa
 
 template <typename... Args>
 bool HitCacheSingle(const char *aclnn_api, aclOpExecutor **executor, uint64_t *workspace_size, uint64_t *hash_id,
-                    const Args &... args) {
+                    const Args &...args) {
   static const auto get_exec_cache = device::ascend::GetOpApiFunc("PTAGetExecCache");
   static const auto init_cache_thread_local = device::ascend::GetOpApiFunc("InitPTACacheThreadLocal");
   static const auto set_hash_key = device::ascend::GetOpApiFunc("SetPTAHashKey");
@@ -235,8 +237,6 @@ bool HitCacheSingle(const char *aclnn_api, aclOpExecutor **executor, uint64_t *w
 BACKEND_EXPORT void GatherHash(mindspore::kernel::KernelTensor *);
 BACKEND_EXPORT void GatherHash(const std::pair<mindspore::kernel::KernelTensor *, bool> &);
 BACKEND_EXPORT void GatherHash(const std::vector<mindspore::kernel::KernelTensor *> &);
-BACKEND_EXPORT void GatherHash(device::DeviceAddress *);
-BACKEND_EXPORT void GatherHash(const device::DeviceAddressPtr &);
 BACKEND_EXPORT void GatherHash(const mindspore::tensor::TensorPtr &);
 BACKEND_EXPORT void GatherHash(const std::optional<tensor::TensorPtr> &);
 BACKEND_EXPORT void GatherHash(const std::vector<tensor::TensorPtr> &);
@@ -252,14 +252,17 @@ BACKEND_EXPORT void GatherHash(const T &value) {
 BACKEND_EXPORT void GatherHash();
 
 template <typename T, typename... Args>
-void GatherHash(const T &arg, const Args &... args) {
+void GatherHash(const T &arg, const Args &...args) {
   GatherHash(arg);
   GatherHash(args...);
 }
 
 template <typename... Args>
-uint64_t AclnnHash(const std::string &arg, const Args &... args) {
+uint64_t AclnnHash(const std::string &arg, const Args &...args) {
   g_hash_offset = 0;
+  if (runtime::RuntimeConf::GetInstance()->IsEnableResLimit()) {
+    GatherCoreNumHash();
+  }
   GatherHash(arg, args...);
   return calc_hash_id();
 }

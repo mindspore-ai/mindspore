@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 Huawei Technologies Co., Ltd
+ * Copyright 2023-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,16 +21,15 @@
 #include <utility>
 #include <vector>
 
-#include "include/api/status.h"
+#include "utils/status.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/core/tensor.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
 
-namespace mindspore {
-namespace dataset {
+namespace mindspore::dataset {
 class Tensor;
-class DATASET_API DeviceTensorAscend910B {
+class DeviceTensorAscend910B {
  public:
   DeviceTensorAscend910B(const TensorShape &shape, const DataType &type, device::DeviceContext *device_context,
                          const size_t &stream_id, bool is_hwc = true);
@@ -87,7 +86,5 @@ class DATASET_API DeviceTensorAscend910B {
   DataType data_type_;
   bool is_hwc_;
 };
-
-}  // namespace dataset
-}  // namespace mindspore
+}  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DEVICE_TENSOR_ASCEND910B_H_

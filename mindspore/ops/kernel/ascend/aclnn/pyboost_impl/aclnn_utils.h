@@ -25,8 +25,8 @@
 #include <list>
 #include <unordered_map>
 #include <memory>
-#include "backend/common/device_address_utils.h"
-#include "runtime/pipeline/pipeline.h"
+#include "include/backend/common/device_address_utils.h"
+#include "include/runtime/pipeline/pipeline.h"
 #include "include/runtime/utils/runtime_conf/runtime_conf.h"
 #include "kernel/ascend/acl_ir/op_api_exec.h"
 #include "kernel/ascend/acl_ir/op_api_convert.h"
@@ -36,10 +36,11 @@ using CacheTuple = std::tuple<uint64_t, mindspore::device::ascend::aclOpExecutor
 
 #define DISPATCH_LAUNCH_KERNEL(device_context, aclnn_name, ws_ptr, ws_size, executor, stream, release_func,  \
                                update_func)                                                                  \
-  runtime::OpExecutor::DispatchLaunchTask(                                                                   \
+  mindspore::runtime::OpExecutor::DispatchLaunchTask(                                                        \
     [dev_ctx = device_context, workspace = ws_ptr, ws_size, executor, stream, release_func, update_func]() { \
-      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,                                 \
-                                         runtime::ProfilerEvent::kPyNativeLaunchTask, aclnn_name, false);    \
+      mindspore::runtime::ProfilerRecorder profiler(mindspore::runtime::ProfilerModule::kPynative,           \
+                                                    mindspore::runtime::ProfilerEvent::kPyNativeLaunchTask,  \
+                                                    aclnn_name, false);                                      \
       MS_LOG(DEBUG) << "launch task start, " << aclnn_name;                                                  \
       dev_ctx->device_res_manager_->BindDeviceToCurrentThread(false);                                        \
       if (update_func != nullptr) {                                                                          \
@@ -49,18 +50,20 @@ using CacheTuple = std::tuple<uint64_t, mindspore::device::ascend::aclOpExecutor
       MS_LOG(DEBUG) << "launch task end, " << aclnn_name;                                                    \
     });
 
-#define DISPATCH_LAUNCH_KERNEL_NO_WS(device_context, aclnn_name, executor, stream, release_func, update_func)         \
-  runtime::OpExecutor::DispatchLaunchTask([dev_ctx = device_context, executor, stream, release_func, update_func]() { \
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,                                            \
-                                       runtime::ProfilerEvent::kPyNativeLaunchTask, aclnn_name, false);               \
-    MS_LOG(DEBUG) << "launch task start, " << aclnn_name;                                                             \
-    dev_ctx->device_res_manager_->BindDeviceToCurrentThread(false);                                                   \
-    if (update_func != nullptr) {                                                                                     \
-      update_func();                                                                                                  \
-    }                                                                                                                 \
-    RUN_OP_API_ASYNC(aclnn_name, nullptr, 0, executor, stream, release_func);                                         \
-    MS_LOG(DEBUG) << "launch task end, " << aclnn_name;                                                               \
-  });
+#define DISPATCH_LAUNCH_KERNEL_NO_WS(device_context, aclnn_name, executor, stream, release_func, update_func) \
+  mindspore::runtime::OpExecutor::DispatchLaunchTask(                                                         \
+    [dev_ctx = device_context, executor, stream, release_func, update_func]() {                               \
+      mindspore::runtime::ProfilerRecorder profiler(mindspore::runtime::ProfilerModule::kPynative,            \
+                                                    mindspore::runtime::ProfilerEvent::kPyNativeLaunchTask,   \
+                                                    aclnn_name, false);                                       \
+      MS_LOG(DEBUG) << "launch task start, " << aclnn_name;                                                   \
+      dev_ctx->device_res_manager_->BindDeviceToCurrentThread(false);                                         \
+      if (update_func != nullptr) {                                                                           \
+        update_func();                                                                                        \
+      }                                                                                                       \
+      RUN_OP_API_ASYNC(aclnn_name, nullptr, 0, executor, stream, release_func);                               \
+      MS_LOG(DEBUG) << "launch task end, " << aclnn_name;                                                     \
+    });
 
 #define DISPATCH_LAUNCH_CUSTOM_KERNEL(device_context, aclnn_name, ws_ptr, ws_size, executor, stream, release_func, \
                                       update_func)                                                                 \
@@ -76,58 +79,66 @@ using CacheTuple = std::tuple<uint64_t, mindspore::device::ascend::aclOpExecutor
     MS_LOG(DEBUG) << "launch task end, " << aclnn_name;                                                            \
   })
 
-#define GET_EXECUTOR_FOR_PYBOOST(aclnn_api, ...)                                                       \
-  [](const std::string &api_str, const auto &... args) -> auto {                                       \
-    std::unique_lock<std::mutex> lock(mutex_);                                                         \
-    if (capacity_ == 0) {                                                                              \
-      auto [ws_size, executor, cache, release_func] = GEN_EXECUTOR(api_str, args...);                  \
-      std::function<void()> update_func = nullptr;                                                     \
-      return std::make_tuple(ws_size, executor, cache, release_func, update_func);                     \
-    }                                                                                                  \
-    uint64_t hash_id = mindspore::device::ascend::AclnnHash(api_str, args...);                         \
-    auto iter = hash_map_.find(hash_id);                                                               \
-    if (hash_id != 0 && iter != hash_map_.end()) {                                                     \
-      hash_cache_.splice(hash_cache_.begin(), hash_cache_, iter->second);                              \
-      auto cur_run = hash_cache_.front();                                                              \
-      const auto &ws_size = std::get<3>(cur_run);                                                      \
-      const auto &executor = std::get<1>(cur_run);                                                     \
-      const auto &cache = std::get<2>(cur_run);                                                        \
-      auto address_list = mindspore::device::ascend::GetTensorAddress(args...);                        \
-      std::function<void()> update_func = [cache, address_list]() -> void {                            \
-        cache(device::ascend::ProcessCacheType::kUpdateTensorAddress, address_list);                   \
-      };                                                                                               \
-      auto release_func = std::function<void()>(nullptr);                                              \
-      return std::make_tuple(ws_size, executor, cache, release_func, update_func);                     \
-    } else {                                                                                           \
-      MS_LOG(INFO) << "Api " << api_str << " miss cache, with hash id:" << hash_id;                    \
-      MS_VLOG(VL_ACLNN_OP) << "Api " << api_str << " miss cache, with hash id:" << hash_id;            \
-      auto [ws_size, executor, cache, fail_cache] = GEN_EXECUTOR_FOR_RESIZE(api_str, args...);         \
-      auto update_func = std::function<void()>(nullptr);                                               \
-      if (hash_id != 0 && !fail_cache) {                                                               \
-        hash_cache_.emplace_front(hash_id, executor, cache, ws_size);                                  \
-        hash_map_[hash_id] = hash_cache_.begin();                                                      \
-        if (hash_cache_.size() > capacity_) {                                                          \
-          hash_map_.erase(std::get<0>(hash_cache_.back()));                                            \
-          auto release_func = std::get<2>(hash_cache_.back());                                         \
-          runtime::Pipeline::Get().launch_stage()->Wait();                                             \
-          release_func(device::ascend::ProcessCacheType::kReleaseParamsAndExecutor, {});               \
-          hash_cache_.pop_back();                                                                      \
-        }                                                                                              \
-        auto release_func = std::function<void()>(nullptr);                                            \
-        return std::make_tuple(ws_size, executor, cache, release_func, update_func);                   \
-      } else {                                                                                         \
-        std::function<void()> release_func = [cache]() -> void {                                       \
-          cache(device::ascend::ProcessCacheType::kReleaseParams, std::vector<std::vector<void *>>{}); \
-        };                                                                                             \
-        return std::make_tuple(ws_size, executor, cache, release_func, update_func);                   \
-      }                                                                                                \
-    }                                                                                                  \
-  }                                                                                                    \
-  (aclnn_api, __VA_ARGS__)
+#define GET_EXECUTOR_FOR_PYBOOST(aclnn_api, ...)                                                                  \
+  [](const std::string &api_str, const auto &...args) -> auto {                                                   \
+    std::unique_lock<std::mutex> lock(mutex_);                                                                    \
+    if (MS_UNLIKELY(capacity_ == 0)) {                                                                            \
+      auto [ws_size, executor, cache, release_func] = GEN_EXECUTOR(api_str, args...);                             \
+      std::function<void()> update_func = nullptr;                                                                \
+      return std::make_tuple(ws_size, executor, cache, release_func, update_func);                                \
+    }                                                                                                             \
+    uint64_t hash_id = mindspore::device::ascend::AclnnHash(api_str, args...);                                    \
+    auto iter = hash_map_.find(hash_id);                                                                          \
+    if (hash_id != 0 && iter != hash_map_.end()) {                                                                \
+      hash_cache_.splice(hash_cache_.begin(), hash_cache_, iter->second);                                         \
+      auto cur_run = hash_cache_.front();                                                                         \
+      const auto &ws_size = std::get<3>(cur_run);                                                                 \
+      const auto &executor = std::get<1>(cur_run);                                                                \
+      const auto &cache = std::get<2>(cur_run);                                                                   \
+      auto address_list = mindspore::device::ascend::GetTensorAddress(args...);                                   \
+      std::function<void()> update_func = [cache, address_list]() -> void {                                       \
+        cache(mindspore::device::ascend::ProcessCacheType::kUpdateTensorAddress, address_list);                   \
+      };                                                                                                          \
+      auto release_func = std::function<void()>(nullptr);                                                         \
+      return std::make_tuple(ws_size, executor, cache, release_func, update_func);                                \
+    } else {                                                                                                      \
+      MS_LOG(INFO) << "Api " << api_str << " miss cache, with hash id:" << hash_id;                               \
+      MS_VLOG(mindspore::VLogLevel::VL_ACLNN_OP) << "Api " << api_str << " miss cache, with hash id:" << hash_id; \
+      auto [ws_size, executor, cache, fail_cache] = GEN_EXECUTOR_FOR_RESIZE(api_str, args...);                    \
+      auto update_func = std::function<void()>(nullptr);                                                          \
+      if (MS_LIKELY(hash_id != 0 && !fail_cache)) {                                                               \
+        hash_cache_.emplace_front(hash_id, executor, cache, ws_size);                                             \
+        hash_map_[hash_id] = hash_cache_.begin();                                                                 \
+        if (hash_cache_.size() > capacity_) {                                                                     \
+          hash_map_.erase(std::get<0>(hash_cache_.back()));                                                       \
+          auto release_func = std::get<2>(hash_cache_.back());                                                    \
+          mindspore::runtime::Pipeline::Get().launch_stage()->Wait();                                             \
+          release_func(mindspore::device::ascend::ProcessCacheType::kReleaseParamsAndExecutor, {});               \
+          hash_cache_.pop_back();                                                                                 \
+        }                                                                                                         \
+        auto release_func = std::function<void()>(nullptr);                                                       \
+        return std::make_tuple(ws_size, executor, cache, release_func, update_func);                              \
+      } else if (MS_UNLIKELY(fail_cache)) {                                                                       \
+        std::function<void()> release_func = [cache]() -> void {                                                  \
+          cache(mindspore::device::ascend::ProcessCacheType::kReleaseParams, std::vector<std::vector<void *>>{}); \
+        };                                                                                                        \
+        return std::make_tuple(ws_size, executor, cache, release_func, update_func);                              \
+      } else {                                                                                                    \
+        MS_LOG(WARNING) << api_str << " cache is available, but hash id is 0, do not use cache.";                 \
+        MS_VLOG(mindspore::VLogLevel::VL_ACLNN_OP)                                                                \
+          << api_str << " cache is available, but hash id is 0, do not use cache.";                               \
+        std::function<void()> release_func = [cache]() -> void {                                                  \
+          cache(mindspore::device::ascend::ProcessCacheType::kReleaseParamsAndExecutor,                           \
+                std::vector<std::vector<void *>>{});                                                              \
+        };                                                                                                        \
+        return std::make_tuple(ws_size, executor, cache, release_func, update_func);                              \
+      }                                                                                                           \
+    }                                                                                                             \
+  }(aclnn_api, __VA_ARGS__)
 
 #define LAUNCH_ACLNN(aclnn_api, device_context, stream_id, ...)                                                   \
   do {                                                                                                            \
-    static auto simu = common::IsCompileSimulation();                                                             \
+    static auto simu = mindspore::common::IsCompileSimulation();                                                  \
     if (simu) {                                                                                                   \
       break;                                                                                                      \
     }                                                                                                             \
@@ -136,16 +147,18 @@ using CacheTuple = std::tuple<uint64_t, mindspore::device::ascend::aclOpExecutor
     static std::list<CacheTuple> hash_cache_;                                                                     \
     static size_t capacity_{1024};                                                                                \
     static std::mutex mutex_;                                                                                     \
-    static int64_t capaticy_from_user = device::ascend::GetCacheCapaticy();                                       \
+    static int64_t capaticy_from_user = mindspore::device::ascend::GetCacheCapaticy();                            \
     static bool not_set_capaticy = true;                                                                          \
     if (capaticy_from_user >= 0 && not_set_capaticy) {                                                            \
-      capacity_ = LongToSize(capaticy_from_user);                                                                 \
+      capacity_ = mindspore::LongToSize(capaticy_from_user);                                                      \
       not_set_capaticy = false;                                                                                   \
       MS_LOG(INFO) << "Set aclnn cache queue length of pyboost to " << capacity_;                                 \
-      MS_VLOG(VL_ACLNN_OP) << "Set aclnn cache queue length of pyboost to " << capacity_;                         \
+      MS_VLOG(mindspore::VLogLevel::VL_ACLNN_OP) << "Set aclnn cache queue length of pyboost to " << capacity_;   \
     }                                                                                                             \
-    runtime::ProfilerRecorder aclnn_profiler(runtime::ProfilerModule::kPynative,                                  \
-                                             runtime::ProfilerEvent::kPyBoostLaunchAclnn, aclnn_name, false);     \
+    device_context->device_res_manager_->UseStreamResInCurrentThread(stream_id);                                  \
+    mindspore::runtime::ProfilerRecorder aclnn_profiler(mindspore::runtime::ProfilerModule::kPynative,            \
+                                                        mindspore::runtime::ProfilerEvent::kPyBoostLaunchAclnn,   \
+                                                        aclnn_name, false);                                       \
     auto stream_ptr = device_context->device_res_manager_->GetStream(stream_id);                                  \
     auto return_values = GET_EXECUTOR_FOR_PYBOOST(aclnn_name, __VA_ARGS__);                                       \
     auto ws_size = std::get<0>(return_values);                                                                    \
@@ -156,48 +169,51 @@ using CacheTuple = std::tuple<uint64_t, mindspore::device::ascend::aclOpExecutor
       DISPATCH_LAUNCH_KERNEL_NO_WS(device_context, aclnn_name, executor_handle, stream_ptr, release_function,     \
                                    update_function);                                                              \
     } else {                                                                                                      \
-      auto work_ptr = std::make_shared<kernel::pyboost::MemBlock>(device_context, ws_size, stream_id);            \
+      auto work_ptr = std::make_shared<mindspore::kernel::pyboost::MemBlock>(device_context, ws_size, stream_id); \
       DISPATCH_LAUNCH_KERNEL(device_context, aclnn_name, work_ptr->ptr_, ws_size, executor_handle, stream_ptr,    \
                              release_function, update_function);                                                  \
     }                                                                                                             \
-    auto sync = runtime::RuntimeConf::GetInstance()->launch_blocking();                                           \
+    auto sync = mindspore::runtime::RuntimeConf::GetInstance()->launch_blocking();                                \
     if (sync) {                                                                                                   \
-      if (!device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                                     \
+      if (!mindspore::device::ascend::AscendStreamMng::GetInstance().SyncAllStreams()) {                          \
         MS_LOG(EXCEPTION) << "SyncStream failed for op " << aclnn_name;                                           \
       }                                                                                                           \
     } else {                                                                                                      \
-      runtime::DeviceAddressUtils::ProcessCrossStreamAddress(aclnn_name, device_context, stream_id, __VA_ARGS__); \
+      mindspore::runtime::DeviceAddressUtils::ProcessCrossStreamAddress(aclnn_name, device_context, stream_id,    \
+                                                                        __VA_ARGS__);                             \
     }                                                                                                             \
   } while (false)
 
-#define LAUNCH_KERNEL(name, ws_ptr, ws_size, executor, stream, update_func)                               \
-  runtime::OpExecutor::DispatchLaunchTask(                                                                \
-    [aclnn_name = name, workspace = ws_ptr, ws_size, executor, stream, update_func]() {                   \
-      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,                              \
-                                         runtime::ProfilerEvent::kPyNativeLaunchTask, aclnn_name, false); \
-      if (update_func != nullptr) {                                                                       \
-        update_func();                                                                                    \
-      }                                                                                                   \
-      MS_LOG(DEBUG) << "launch task start, " << aclnn_name;                                               \
-      RUN_OP_API_SYNC(aclnn_name, workspace, ws_size, executor, stream);                                  \
-      MS_LOG(DEBUG) << "launch task end, " << aclnn_name;                                                 \
+#define LAUNCH_KERNEL(device_context, name, ws_ptr, ws_size, executor, stream, update_func)                       \
+  runtime::OpExecutor::DispatchLaunchTask(                                                                        \
+    [dev_ctx = device_context, aclnn_name = name, workspace = ws_ptr, ws_size, executor, stream, update_func]() { \
+      runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,                                      \
+                                         runtime::ProfilerEvent::kPyNativeLaunchTask, aclnn_name, false);         \
+      dev_ctx->device_res_manager_->BindDeviceToCurrentThread(false);                                             \
+      if (update_func != nullptr) {                                                                               \
+        update_func();                                                                                            \
+      }                                                                                                           \
+      MS_LOG(DEBUG) << "launch task start, " << aclnn_name;                                                       \
+      RUN_OP_API_SYNC(aclnn_name, workspace, ws_size, executor, stream);                                          \
+      MS_LOG(DEBUG) << "launch task end, " << aclnn_name;                                                         \
     })
 
-#define LAUNCH_KERNEL_NO_WS(aclnn_name, executor, stream, update_func)                                  \
-  runtime::OpExecutor::DispatchLaunchTask([aclnn_name, executor, stream, update_func]() {               \
-    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,                              \
-                                       runtime::ProfilerEvent::kPyNativeLaunchTask, aclnn_name, false); \
-    if (update_func != nullptr) {                                                                       \
-      update_func();                                                                                    \
-    }                                                                                                   \
-    MS_LOG(DEBUG) << "launch task start, " << aclnn_name;                                               \
-    RUN_OP_API_SYNC(aclnn_name, nullptr, 0, executor, stream);                                          \
-    MS_LOG(DEBUG) << "launch task end, " << aclnn_name;                                                 \
+#define LAUNCH_KERNEL_NO_WS(device_context, aclnn_name, executor, stream, update_func)                              \
+  runtime::OpExecutor::DispatchLaunchTask([dev_ctx = device_context, aclnn_name, executor, stream, update_func]() { \
+    runtime::ProfilerRecorder profiler(runtime::ProfilerModule::kPynative,                                          \
+                                       runtime::ProfilerEvent::kPyNativeLaunchTask, aclnn_name, false);             \
+    dev_ctx->device_res_manager_->BindDeviceToCurrentThread(false);                                                 \
+    if (update_func != nullptr) {                                                                                   \
+      update_func();                                                                                                \
+    }                                                                                                               \
+    MS_LOG(DEBUG) << "launch task start, " << aclnn_name;                                                           \
+    RUN_OP_API_SYNC(aclnn_name, nullptr, 0, executor, stream);                                                      \
+    MS_LOG(DEBUG) << "launch task end, " << aclnn_name;                                                             \
   })
 
 #define LAUNCH_ACLNN_SYNC(aclnn_api, device_context, stream_id, ...)                                          \
   [](const std::string &aclnn_name, const device::DeviceContext *device_context, size_t real_stream_id,       \
-     auto &... args) -> auto {                                                                                \
+     auto &...args) -> auto {                                                                                 \
     static auto simu = common::IsCompileSimulation();                                                         \
     if (simu) {                                                                                               \
       MS_LOG(EXCEPTION) << "For " << aclnn_name << ", the output shape depends on the actual execution,"      \
@@ -216,6 +232,7 @@ using CacheTuple = std::tuple<uint64_t, mindspore::device::ascend::aclOpExecutor
       MS_LOG(INFO) << "Set aclnn cache queue length of pyboost to " << capacity_;                             \
       MS_VLOG(VL_ACLNN_OP) << "Set aclnn cache queue length of pyboost to " << capacity_;                     \
     }                                                                                                         \
+    device_context->device_res_manager_->UseStreamResInCurrentThread(real_stream_id);                         \
     runtime::ProfilerRecorder aclnn_profiler(runtime::ProfilerModule::kPynative,                              \
                                              runtime::ProfilerEvent::kPyBoostLaunchAclnn, aclnn_name, false); \
     auto stream_ptr = device_context->device_res_manager_->GetStream(real_stream_id);                         \
@@ -224,10 +241,11 @@ using CacheTuple = std::tuple<uint64_t, mindspore::device::ascend::aclOpExecutor
     auto executor_handle = std::get<1>(return_values);                                                        \
     auto update_function = std::get<4>(return_values);                                                        \
     if (ws_size == 0) {                                                                                       \
-      LAUNCH_KERNEL_NO_WS(aclnn_name, executor_handle, stream_ptr, update_function);                          \
+      LAUNCH_KERNEL_NO_WS(device_context, aclnn_name, executor_handle, stream_ptr, update_function);          \
     } else {                                                                                                  \
       auto work_ptr = std::make_shared<kernel::pyboost::MemBlock>(device_context, ws_size, real_stream_id);   \
-      LAUNCH_KERNEL(aclnn_name, work_ptr->ptr_, ws_size, executor_handle, stream_ptr, update_function);       \
+      LAUNCH_KERNEL(device_context, aclnn_name, work_ptr->ptr_, ws_size, executor_handle, stream_ptr,         \
+                    update_function);                                                                         \
     }                                                                                                         \
     runtime::Pipeline::Get().launch_stage()->Wait();                                                          \
     if (!device::ascend::AscendStreamMng::GetInstance().SyncStream(stream_ptr)) {                             \
@@ -240,8 +258,7 @@ using CacheTuple = std::tuple<uint64_t, mindspore::device::ascend::aclOpExecutor
       release_func();                                                                                         \
     }                                                                                                         \
     return all_acl_tensor;                                                                                    \
-  }                                                                                                           \
-  (#aclnn_api, device_context, stream_id, __VA_ARGS__)
+  }(#aclnn_api, device_context, stream_id, __VA_ARGS__)
 
 namespace mindspore {
 namespace kernel {
@@ -263,10 +280,7 @@ using MemBlockPtr = std::shared_ptr<MemBlock>;
 int8_t GetCubeMathType(bool use_hf32 = false);
 bool IsAllowMatmulHF32();
 bool IsAllowConvHF32();
-
-std::pair<int64_t, int64_t> UpdateGeneratorState(const tensor::TensorPtr &seed, const tensor::TensorPtr &offset,
-                                                 int64_t step = 12);
-
+std::pair<int64_t, int64_t> GetGeneratorState(const tensor::TensorPtr &seed, const tensor::TensorPtr &offset);
 }  // namespace pyboost
 }  // namespace kernel
 }  // namespace mindspore

@@ -8,12 +8,13 @@ NodePtr NativeFunc::${func_name}(${call_args_with_type}) {
 #ifndef ENABLE_TEST
   static bool is_kernel_register =
     (kernel::pyboost::PyBoostUtils::IsKernelModRegistered(device_target_, "${func_name}") ||
-    kernel::pyboost::PyBoostUtils::IsPyBoostCustomRegistered(device_target_, "${func_name}"));
+    kernel::pyboost::PyBoostUtils::IsPyBoostCustomRegistered(device_target_, "${func_name}")) ||
+    (ops::IsOpPluginKernel("${func_name}") && device_target_ == device::DeviceType::kCPU);
   if (is_kernel_register) {
     // Run op
     ${convert_body}
     kernel::pyboost::OpRunStatus::Get().set_run_info(
-      kernel::pyboost::OpStatus(true, false, 0, device_target_));
+      kernel::pyboost::OpStatus(true, device_target_));
     auto outputs = kernel::pyboost::${operator_name}(${call_args});
     auto op = kernel::pyboost::OpRunStatus::Get().GetLastOp();
     abstract::AbstractBasePtr output_abs;

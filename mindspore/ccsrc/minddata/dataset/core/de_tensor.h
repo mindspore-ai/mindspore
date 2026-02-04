@@ -1,5 +1,5 @@
 /**
- * Copyright 2020-2024 Huawei Technologies Co., Ltd
+ * Copyright 2020-2025 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,56 +14,44 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DETENSOR_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DETENSOR_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DE_TENSOR_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DE_TENSOR_H_
+
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <functional>
-#include "include/api/status.h"
-#include "include/api/visible.h"
-#include "ir/api_tensor_impl.h"
 
-namespace mindspore {
-namespace dataset {
+#include "utils/status.h"
+#include "include/dataset/ms_tensor.h"
+
+namespace mindspore::dataset {
 class Tensor;
 class DeviceTensor;
 
 class DETensor : public mindspore::MSTensor::Impl {
  public:
-  DETensor() = default;
   ~DETensor() = default;
+
   explicit DETensor(std::shared_ptr<dataset::Tensor> tensor_impl);
 
   DETensor(std::shared_ptr<dataset::DeviceTensor> device_tensor_impl, bool is_device);
-
-  const std::string &Name() const override;
 
   enum mindspore::DataType DataType() const override;
 
   size_t DataSize() const override;
 
   const std::vector<int64_t> &Shape() const override;
-  void SetShape(const std::vector<int64_t> &shape) override { shape_ = shape; };
-
-  int64_t ElementNum() const;
 
   std::shared_ptr<const void> Data() const override;
 
   void *MutableData() override;
-
-  bool IsDevice() const override;
-
-  std::shared_ptr<mindspore::MSTensor::Impl> Clone() const override;
 
  private:
   std::shared_ptr<dataset::Tensor> tensor_impl_;
   std::shared_ptr<dataset::DeviceTensor> device_tensor_impl_;
   bool is_device_;
   std::string name_;
-  enum mindspore::DataType type_;
   std::vector<int64_t> shape_;
 };
-}  // namespace dataset
-}  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DETENSOR_H_
+}  // namespace mindspore::dataset
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_CORE_DE_TENSOR_H_

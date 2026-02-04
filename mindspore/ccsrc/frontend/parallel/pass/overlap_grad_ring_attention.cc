@@ -23,12 +23,12 @@
 #include <queue>
 #include <utility>
 #include "frontend/parallel/pass/overlap_grad_ring_attention.h"
-#include "op_def/sequence_ops.h"
-#include "op_def/other_ops.h"
-#include "op_def/array_ops.h"
-#include "op_def/nn_ops.h"
-#include "op_def/math_ops.h"
-#include "op_def/framework_ops.h"
+#include "primitive/sequence_ops.h"
+#include "primitive/other_ops.h"
+#include "primitive/array_ops.h"
+#include "primitive/nn_ops.h"
+#include "primitive/math_ops.h"
+#include "primitive/framework_ops.h"
 #include "infer/make_tuple.h"
 #include "ir/tensor.h"
 #include "utils/trace_base.h"
@@ -36,12 +36,12 @@
 #include "ir/func_graph.h"
 #include "ir/graph_utils.h"
 #include "mindspore/ccsrc/utils/ir_dump/anf_ir_dump.h"
-#include "include/common/utils/utils.h"
-#include "include/common/utils/anfalgo.h"
-#include "include/common/utils/parallel_context.h"
-#include "include/common/utils/comm_manager.h"
-#include "include/backend/optimizer/helper.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "include/utils/utils.h"
+#include "include/utils/anfalgo.h"
+#include "include/utils/parallel_context.h"
+#include "include/utils/comm_manager.h"
+#include "include/backend/common/pass_manager/helper.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/ops_info/ops_utils.h"
@@ -52,21 +52,21 @@
 #include "frontend/parallel/step_parallel_utils.h"
 #include "frontend/jit/ps/action.h"
 #include "mindspore/ccsrc/frontend/parallel/graph_util/generate_graph.h"
-#include "mindspore/ops/op_def/op_enum.h"
+#include "include/op_enum.h"
 #include "mindspore/ops/infer/ops_func_impl/flash_attention_score.h"
 #include "mindspore/ops/infer/ops_func_impl/flash_attention_score_grad.h"
 #include "mindspore/ccsrc/frontend/parallel/ops_info/flash_attention_score_info.h"
 #include "frontend/parallel/pass/flash_sp.h"
 #include "frontend/parallel/parameter_manager.h"
 #include "frontend/parallel/dynamic_shape/dynamic_shape.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_a.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_c.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_d.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_f.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_m.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_r.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_s.h"
-#include "mindspore/ops/op_def/auto_generate/gen_ops_primitive_t.h"
+#include "primitive/auto_generate/gen_ops_primitive_a.h"
+#include "primitive/auto_generate/gen_ops_primitive_c.h"
+#include "primitive/auto_generate/gen_ops_primitive_d.h"
+#include "primitive/auto_generate/gen_ops_primitive_f.h"
+#include "primitive/auto_generate/gen_ops_primitive_m.h"
+#include "primitive/auto_generate/gen_ops_primitive_r.h"
+#include "primitive/auto_generate/gen_ops_primitive_s.h"
+#include "primitive/auto_generate/gen_ops_primitive_t.h"
 
 struct FaGradCompareMethod {
   bool operator()(const std::string &a, const std::string &b) const {
@@ -869,7 +869,7 @@ void PrepareFAGradInput(const FuncGraphPtr &graph,
       MS_EXCEPTION_IF_NULL(dout_node);
       auto filter_func = [&](const CNodePtr &cnode) {
         bool filter = IsPrimitiveCNode(cnode, prim::kPrimSplit) || IsPrimitiveCNode(cnode, prim::kPrimTupleGetItem) ||
-                      IsPrimitiveCNode(cnode, prim::kPrimDepend);
+                      IsPrimitiveCNode(cnode, prim::kPrimDepend) || IsPrimitiveCNode(cnode, prim::kPrimSplitWithSize);
         return std::make_pair(filter, 1);
       };
       full_info.dout = GetInputNodeWithFilter(dout_node, filter_func);

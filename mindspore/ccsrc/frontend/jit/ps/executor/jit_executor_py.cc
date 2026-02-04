@@ -14,22 +14,28 @@
  * limitations under the License.
  */
 
-#include "frontend/jit/ps/executor/jit_executor_py.h"
+#include "include/frontend/jit/ps/executor/jit_executor_py.h"
 
 #include <vector>
 #include <utility>
 
-#include "frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/frontend/jit/ps/pass_interface.h"
+#include "include/frontend/jit/ps/pipeline_interface.h"
+#include "include/frontend/jit/ps/parse/py_data_convert.h"
+#include "include/frontend/jit/ps/executor/graph_executor_py.h"
+#include "include/frontend/optimizer/ad/grad_interface.h"
 #include "frontend/jit/ps/pass.h"
 #include "frontend/jit/ps/pipeline.h"
-#include "frontend/jit/ps/silent_check.h"
 #include "frontend/jit/ps/event_message_print.h"
 #include "frontend/jit/ps/validator.h"
 #include "frontend/optimizer/ad/dfunctor.h"
 #include "frontend/optimizer/ad/prim_bprop_optimizer.h"
 #include "utils/phase.h"
-#include "include/common/fallback.h"
-#include "include/common/utils/compile_cache_context.h"
+#include "include/utils/pipeline/fallback.h"
+#include "include/utils/compile_cache_context.h"
+#include "include/backend/backend_manager/backend_manager.h"
+#include "include/utils/pynative/grad_state.h"
+#include "tools/profiler/mstx/mstx_impl.h"
 
 namespace mindspore {
 namespace pipeline {
@@ -48,15 +54,34 @@ void CacheFuncGraph(const ResourcePtr &resource) {
   }
 }
 
+void PostPassProcess(const ResourcePtr &resource, const std::string &current_pass) {
+  static const std::string last_compile_action = kValidate;
+  const std::string last_compile_action_for_compile_cache = kBackendPass;
+  static const std::string jit_grad_last_compile_action = kGetJitBpropGraph;
+  bool is_jit_grad = pynative::GradState::Get().RequiresGrad();
+  bool jit_grad_cache_check = (current_pass == jit_grad_last_compile_action && is_jit_grad && !resource->is_load());
+  bool forward_cache_check = (current_pass == last_compile_action_for_compile_cache && !is_jit_grad);
+  if (current_pass == kTaskEmit) {
+    SetLoopCount(resource);
+  } else if (current_pass == last_compile_action) {
+    CheckInterpretNodeLineInfos();
+    ResetId(resource);
+  } else if (current_pass == kAutoMonadReorder) {
+    resource->set_optimize_graph(resource->func_graph());
+  } else if (jit_grad_cache_check || forward_cache_check) {
+    CacheFuncGraph(resource);
+  }
+}
+
 void Optimize(const ResourcePtr &resource, const std::vector<PassItem> &passes) {
   MS_EXCEPTION_IF_NULL(resource);
   bool already_print_profile = false;
   ProfileExecute(MsProfile::GetProfile(), [&resource, &passes, &already_print_profile]() {
-    static const std::string last_compile_action = kValidate;
     static const auto compile_profile_finish_action = common::GetCompileConfig("COMPILE_PROFILE_FINISH_ACTION");
     size_t counter = 0;
     for (auto &pass : passes) {
       std::string pass_name = pass.first;
+      MSTX_RANGE_GUARD(pass_name.c_str(), nullptr, profiler::MSTX_DOMAIN_MODEL_PREPARATION);
       MsProfileStatGuard stat_guard(std::move(pass_name), "compile_irpass", true);
       ProcessStatus::GetInstance().RecordStart(pass.first);
       auto profile_context = MsProfile::GetProfile()->Step(pass.first);
@@ -88,15 +113,7 @@ void Optimize(const ResourcePtr &resource, const std::vector<PassItem> &passes) 
       };
       ProfileExecute(profile_context, pass_func);
       ProcessStatus::GetInstance().RecordEnd();
-      if (pass.first == kTaskEmit) {
-        SetLoopCount(resource);
-      } else if (pass.first == last_compile_action) {
-        CheckInterpretNodeLineInfos();
-        CacheFuncGraph(resource);
-        ResetId(resource);
-      } else if (pass.first == kAutoMonadReorder) {
-        resource->set_optimize_graph(resource->func_graph());
-      }
+      PostPassProcess(resource, pass.first);
 
       if (EnabledProfile() && compile_profile_finish_action == pass.first) {
         ProfileExecuteBreak(MsProfile::GetProfile());
@@ -123,6 +140,25 @@ void DoOptimize(const ResourcePtr &resource, bool build_top_graph = true) {
   Optimize(resource, jit_passes);
 }
 }  // namespace
+
+py::tuple JitExecutorPy::SplitGraph(const py::object &func_graph_obj) {
+  auto func_graph = func_graph_obj.cast<FuncGraphPtr>();
+  if (func_graph == nullptr) {
+    MS_LOG(INTERNAL_EXCEPTION) << "SplitGraph args error";
+  }
+  const auto &backend_jit_config = backend::BackendJitConfig::ParseBackendJitConfig();
+  auto py_to_value_converter = [](const py::object &obj, ValuePtr *value) { return parse::ConvertData(obj, value); };
+  auto value_to_py_converter = [](const BaseRef &value) { return BaseRefToPyDataWithUserData(value, nullptr); };
+  auto fragments = backend::BackendManager::GetInstance().Split(func_graph, backend_jit_config.backend);
+  auto py_ret = py::tuple(fragments.size());
+  for (size_t i = 0; i < fragments.size(); ++i) {
+    MS_EXCEPTION_IF_NULL(fragments[i]);
+    fragments[i]->py_to_value_converter_ = py_to_value_converter;
+    fragments[i]->value_to_py_converter_ = value_to_py_converter;
+    py_ret[i] = *(fragments[i]);
+  }
+  return py_ret;
+}
 
 bool JitExecutorPy::SetSource(const py::object &source) {
   // Check if the function or net is valid.
@@ -170,6 +206,7 @@ bool JitExecutorPy::CompileInner(const py::object &source, const py::tuple &args
   auto args_abs = resource->args_abs();
   ConvertSymbolicShape(args, &args_abs);
   resource->set_args_abs(args_abs);
+  resource->set_real_arguments(real_arguments());
   info_[phase_] = executor_info;
   DoOptimize(resource);
   // Save the compiled graph to MsPipeLine.
@@ -202,6 +239,7 @@ bool JitExecutorPy::CompileInner(const FuncGraphPtr &graph, const py::tuple &arg
   auto args_abs = resource->args_abs();
   ConvertSymbolicShape(args, &args_abs);
   resource->set_args_abs(args_abs);
+  resource->set_real_arguments(real_arguments());
   info_[phase] = executor_info;
   DoOptimize(resource, false);
   // Save the compiled graph to MsPipeLine.
@@ -283,7 +321,10 @@ void JitExecutorPy::ConvertArgs(const py::tuple &args, const py::dict &kwargs, c
     (void)args_abs.emplace_back(keyword_arg_abs);
     SetHookForArgAbstract(resource, py::cast<py::object>(item.second), value_abs);
   }
-  AddManagerForFuncGraphArgs(resource, arguments);
+  bool init_null = resource->func_graph() == nullptr;
+  if (!resource->EnableCompileCache() || init_null) {
+    AddManagerForFuncGraphArgs(resource, arguments);
+  }
   resource->set_arguments(arguments);
   resource->set_args_abs(args_abs);
   executor_info->arg_list_size = args.size() + kwargs.size();
@@ -373,8 +414,8 @@ void JitExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   MS_LOG(INFO) << "Clean compile resource start";
   abstract::AnalysisContext::ClearContext();
   ClearCompileArgumentsResource();
-  ad::PrimBpropOptimizer::GetPrimBpropOptimizerInst().Clear();
-  ad::g_k_prims.clear();
+  ad::ClearPrimBpropOptimizer();
+  ad::ClearKPrim();
   ad::DFunctor::Clear();
   ReclaimOptimizer();
   resource->Clean();
@@ -382,16 +423,6 @@ void JitExecutorPy::CleanCompileRes(const ResourcePtr &resource) {
   CompileCacheContext::GetInstance().Clear();
   parse::Parser::CleanParserResource();
   MS_LOG(INFO) << "Clean compile resource end";
-}
-
-pipeline::ExecutorPyPtr GetExecutor(const std::string &phase) {
-  if (common::GetEnv("MS_DEV_JIT_PIPELINE") == "0") {
-    return pipeline::GraphExecutorPy::GetInstance();
-  }
-  if (phase.empty() || pipeline::JitExecutorPy::GetInstance()->HasCompiled(phase)) {
-    return pipeline::JitExecutorPy::GetInstance();
-  }
-  return pipeline::GraphExecutorPy::GetInstance();
 }
 }  // namespace pipeline
 }  // namespace mindspore

@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Huawei Technologies Co., Ltd
+# Copyright 2020-2025 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,13 +32,13 @@ from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor, _TensorMeta
 from mindspore.common.hook_handle import _update_hook_version
 from mindspore import _checkparam as Validator
-from mindspore._check_jit_forbidden_api import jit_forbidden_register
+from mindspore.graph._utils.check_jit_forbidden_api import jit_forbidden_register
 from mindspore._c_expression import TensorPy as Tensor_
 from mindspore.parallel._tensor import _get_slice_index
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.communication._comm_helper import _is_initialized
 from mindspore.communication import get_group_size, get_rank
-import mindspore.common._monad as monad
+import mindspore.graph._utils.monad as monad
 
 __all__ = ['Parameter', 'ParameterTuple']
 
@@ -208,7 +208,10 @@ class Parameter(Tensor_):
                 self.param_a = Parameter(Tensor([1], ms.float32), name="name_a")
                 self.param_tuple = (self.param_a, self.param_a)
 
-        requires_grad (bool): True if the parameter requires gradient. Default: ``True`` .
+        requires_grad (bool): It is Used to filter parameters in :func:`mindspore.nn.Cell.trainable_params()`.
+            If it is ``False``, the filter parameters will not be returned in
+            :func:`mindspore.nn.Cell.trainable_params()`.
+            Default: ``True`` .
         layerwise_parallel (bool): When `layerwise_parallel` is true in data/hybrid parallel mode,
             broadcast and gradients communication would not be applied to the `Parameter`. Default: ``False`` .
         parallel_optimizer (bool): It is used to filter the weight shard operation in parallel mode. It works only when
@@ -216,11 +219,13 @@ class Parameter(Tensor_):
         storage_format (str): Only Ascend device target is supported. It is used to specify the format of the weight
             loaded to the device. By default, the format is not changed. The optional values are ``"FRACTAL_NZ"`` ,
             ``"NC1HWC0"`` , ``"FRACTAL_Z"`` , etc. Default: ``""`` .
-        device(str): Only Ascend device target is supported. It is used to specify the device which the parameter is
-            stored. By default, the parameter will be stored on NPU while computing. When the device is specified as
-            ``"CPU"``, the parameter will be loaded into the device when it needs to be used, and unloaded to the CPU
-            after use. It takes effext only when `jit_level` is not ``"O2"`` and `memory_optimize_level` is ``O0``
-            in :func:`mindspore.set_context`. Less device memory is needed when device is specified as ``"CPU"``.
+        device (str): Only Ascend device target is supported. It is used to specify the device which the parameter
+            is stored. The optional values are ``"CPU"`` and ``"Remote"``. By default, the parameter will be stored
+            on NPU while computing. When the device is specified as ``"CPU"``, the parameter will be loaded into the
+            device when it needs to be used, and unloaded to the CPU after use. It will not take effect when 
+            :func:`mindspore.runtime.set_memory()` set ``'optimize_level'`` to ``'O1'``. Less device memory is needed
+            when device is specified as ``"CPU"``. The parameter with ``"Remote"`` device type will be stored in remote 
+            and loaded to device when needed. The ``"Remote"`` device type is an experimental option.
 
     Examples:
         >>> import numpy as np
@@ -250,11 +255,22 @@ class Parameter(Tensor_):
         init_data_flag = bool(isinstance(default_input, Tensor) and default_input.has_init)
         rc = sys.getrefcount(default_input)
         init_param = getattr(cls, "init_param", True)
+        # pylint: disable-msg=C0123
+        if isinstance(default_input, Tensor) and not isinstance(default_input, Parameter) \
+                and type(default_input) != Tensor:
+            input_class = type(default_input)
+            new_type = Parameter._get_combined_class(input_class)
+            obj = input_class.__new__(new_type, default_input)
+            obj.init_mode = None
+            obj.is_default_input_init = init_data_flag
+            if obj.has_init:
+                obj.init_mode = default_input
+            return obj
+
         input_class, *class_init_args = Parameter._get_parameter_new_args(default_input, rc, init_param)
         new_type = Parameter._get_base_class(input_class)
         obj = input_class.__new__(new_type)
         input_class.__init__(obj, *class_init_args)
-        # it's better to make the Initializer a kind of tensor.
         obj.init_mode = None
         obj.is_default_input_init = init_data_flag
         if obj.has_init:
@@ -290,7 +306,7 @@ class Parameter(Tensor_):
         self.is_in_parallel = _is_in_auto_parallel_mode()
         self._pipeline_stage_list = []
         if -1 in self.shape:
-            raise ValueError(f"All shape elements of the Parameter must be positive. But got None.")
+            raise ValueError("All shape elements of the Parameter must be positive. But got None.")
         if isinstance(default_input, (Tensor_, Tensor)):
             Tensor_.__init__(self, dtype=default_input.dtype, shape=default_input.shape)
         elif isinstance(default_input, int):
@@ -305,11 +321,12 @@ class Parameter(Tensor_):
         self.param_info.parameter_shape = self.shape
         self.param_info.storage_format = storage_format
         if device is not None:
-            if device != "CPU":
-                raise ValueError(f"Only 'CPU' is supported for device, but got ${device}.")
-            self._set_user_data("parameter_device", device)
+            if device in ("CPU", "Remote"):
+                self._set_user_data("parameter_device", device)
+            else:
+                raise ValueError(f"Only 'CPU' and 'Remote' is supported for device, but got ${device}.")
 
-        import mindspore.ops.operations.other_ops as other_ops
+        from mindspore.ops.operations import other_ops
         self.load = other_ops.Load()
 
     def __deepcopy__(self, memodict):
@@ -336,6 +353,21 @@ class Parameter(Tensor_):
         else:
             new_type = type(input_class_name, (Parameter, input_class), {})
             Parameter._base_type[input_class_name] = new_type
+        return new_type
+
+    @staticmethod
+    def _get_combined_class(tensor_subclass):
+        """Create sub class of Parameter and tensor_subclass"""
+        class_name = f"Parameter{tensor_subclass.__name__}"
+
+        if class_name in Parameter._base_type:
+            return Parameter._base_type[class_name]
+        def new_init(self, default_input, *args, **kwargs):
+            Parameter.__init__(self, default_input, *args, **kwargs)
+            default_input.local_param_info = self.param_info
+
+        new_type = type(class_name, (tensor_subclass, Parameter), {'__init__':new_init})
+        Parameter._base_type[class_name] = new_type
         return new_type
 
     @staticmethod
@@ -580,7 +612,7 @@ class Parameter(Tensor_):
         if self.cache_shape:
             x.cache_shape = self.cache_shape
         if init != 'same':
-            shape = self.shape
+            shape = self._shape
             dtype = self.dtype
             tensor = initializer(init, shape=shape, dtype=dtype)
             x.set_data(tensor)
@@ -727,20 +759,6 @@ class Parameter(Tensor_):
         self.param_info.requires_grad = value
         self._requires_grad = value
 
-    @property
-    def data(self):
-        """
-        Return the parameter object.
-
-        Examples:
-            >>> from mindspore import Tensor, Parameter
-            >>> import numpy as np
-            >>> x = Parameter(Tensor(np.array([[1, 2], [3, 4]], dtype=np.float32)), name="param")
-            >>> x.data
-            Parameter (name=param, shape=(2, 2), dtype=Float32, requires_grad=True)
-        """
-        return self
-
     def value(self):
         """
         Return the value of parameter object.
@@ -776,7 +794,7 @@ class Parameter(Tensor_):
         Raise:
             TypeError: If `stage` is not a positive number or not int type.
         """
-        logger.warning(f"This interface may be deleted in the future.")
+        logger.warning("This interface may be deleted in the future.")
         if not isinstance(stage, int) or stage < 0:
             raise TypeError("`stage` must be a positive number of int type")
         self._pipeline_stage_list.append(stage)
@@ -861,14 +879,14 @@ class Parameter(Tensor_):
 
         Args:
             layout (Union[None, tuple]): The parameter's layout info.
-                layout [dev_mat, tensor_map, slice_shape, filed_size, uniform_split, opt_shard_group].
+                layout [dev_mat, tensor_map, slice_shape, field_size, uniform_split, opt_shard_group].
                 Default: ``None``.
                 It's not None only when using `AutoParallel(cell)` to enable parallel mode.
 
                 - dev_mat (list(int)): The parameter's device matrix.
                 - tensor_map (list(int)): The parameter's tensor map.
                 - slice_shape (list(int)): The parameter's slice shape.
-                - filed_size (int): The parameter's filed size.
+                - field_size (int): The parameter's field size.
                 - uniform_split (bool): Whether the parameter is split evenly.
                 - opt_shard_group (str): The group of the parameter while running optimizer parallel.
 

@@ -96,6 +96,7 @@ def mint_outer_binary_case1(input_binary_data=None, output_binary_data=None, los
     level_mark="level0",
     card_mark="onecard",
     essential_mark="essential",
+    mem_peak=2.00
 )
 @pytest.mark.parametrize("mode", ["pynative", "KBK"])
 def test_mint_outer_binary_cases(mode):
@@ -111,7 +112,7 @@ def test_mint_outer_binary_cases(mode):
     plat_marks=["platform_ascend", "platform_ascend910b"],
     level_mark="level1",
     card_mark="onecard",
-    essential_mark="unessential",
+    essential_mark="unessential", mem_peak=4.01
 )
 def test_mint_outer_dynamic():
     """

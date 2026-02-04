@@ -282,7 +282,7 @@
         }
       ],
       "pattern": "ElemWise",
-      "py_module_path": "/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe",
+      "py_module_path": "/usr/local/Ascend/cann/opp/built-in/op_impl/ai_core/tbe",
       "type": "Add",
       "unknown_shape": false
     },
@@ -505,7 +505,7 @@
         }
       ],
       "pattern": "ElemWise",
-      "py_module_path": "/usr/local/Ascend/latest/opp/built-in/op_impl/ai_core/tbe",
+      "py_module_path": "/usr/local/Ascend/cann/opp/built-in/op_impl/ai_core/tbe",
       "type": "Conv2D",
       "unknown_shape": false
     }

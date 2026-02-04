@@ -1,7 +1,7 @@
 mindspore.ops.csr_isnan
 ========================
 
-.. py:function:: mindspore.ops.csr_isnan(x: CSRTensor)
+.. py:function:: mindspore.ops.csr_isnan(x)
 
     判断CSRTensor输入数据每个位置上的值是否是NaN。
 

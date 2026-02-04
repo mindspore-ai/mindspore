@@ -75,7 +75,8 @@ def lamb_apply_optimizer_assign():
     assert np.allclose(o3, e3)
 
 
-@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend910b'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=4.0)
 def test_lamb_apply_optimizer_assign_ascend():
     """
     Feature: test graph kernel LambApplyOptimizerAssign expander

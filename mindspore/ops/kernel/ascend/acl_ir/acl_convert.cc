@@ -24,8 +24,8 @@
 #include "kernel/ascend/acl_ir/acl_adapter_info.h"
 #include "kernel/ascend/acl_ir/acl_helper.h"
 #include "ops_utils/op_utils.h"
-#include "ir/device_address.h"
-#include "include/backend/anf_runtime_algorithm.h"
+#include "device_address/device_address.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "kernel/ascend/acl_ir/op_api_util.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_base_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
@@ -963,11 +963,11 @@ void AclConverter::GenerateRealGeIdx() {
     MS_LOG(DEBUG) << "Dynamic info:[ms_adapter_idx] " << adapter_idx.first << ",[ge_adapter_idx] " << adapter_idx.second
                   << ",[ms_real_idx] " << mapping_info.first << ",[ge_real_idx] " << mapping_info.second;
   }
-  std::transform(
-    ms_and_ge_inputs_sort_info_.begin(), ms_and_ge_inputs_sort_info_.end(),
-    std::inserter(ms_and_ge_inputs_idx_info_, ms_and_ge_inputs_idx_info_.begin()), [](const auto &pair) {
-      return std::make_pair(pair.first.first, MsInputIdxToGe{pair.first.second, pair.second.first, pair.second.second});
-    });
+  std::transform(ms_and_ge_inputs_sort_info_.begin(), ms_and_ge_inputs_sort_info_.end(),
+                 std::inserter(ms_and_ge_inputs_idx_info_, ms_and_ge_inputs_idx_info_.begin()), [](const auto &pair) {
+                   return std::make_pair(pair.first.first,
+                                         MsInputIdxToGe{pair.first.second, pair.second.first, pair.second.second});
+                 });
 
   if (device::ascend::AclHelper::IsPrintDebugString()) {
     input_str_.clear();

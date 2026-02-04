@@ -22,7 +22,7 @@
 #include <mutex>
 #include <string>
 #include "Eigen/Core"
-#include "runtime/hardware_abstract/kernel_base/philox_random.h"
+#include "include/runtime/hardware_abstract/kernel_base/philox_random.h"
 
 using mutex = std::mutex;
 using mutex_lock = std::lock_guard<std::mutex>;

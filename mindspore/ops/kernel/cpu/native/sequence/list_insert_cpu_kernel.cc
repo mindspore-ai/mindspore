@@ -67,8 +67,8 @@ bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inp
     index = len_list;
   }
   index = index < 0 ? index + len_list : index;
-  size_t element_index_size =
-    static_cast<size_t>(std::accumulate(element_shape_.begin(), element_shape_.end(), 1, std::multiplies<int64_t>()));
+  size_t element_index_size = static_cast<size_t>(
+    std::accumulate(element_shape_.begin(), element_shape_.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   size_t output_offset = element_index_size * static_cast<size_t>(index);
   size_t input_tail = element_index_size * static_cast<size_t>(len_list - index);
 
@@ -109,25 +109,21 @@ bool ListInsertCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inp
   return true;
 }
 
-#define ADD_KERNEL(x_dtype, idx_dtype, x_type, idx_type)      \
-  {                                                           \
-    KernelAttr()                                              \
-      .AddInputAttr(kObjectTypeTuple, x_dtype)                \
-      .AddInputAttr(kObjectTypeNumber, idx_dtype)             \
-      .AddInputAttr(x_dtype)                                  \
-      .AddOutputAttr(kObjectTypeTuple, x_dtype),              \
-      &ListInsertCpuKernelMod::LaunchKernel<x_type, idx_type> \
-  }
+#define ADD_KERNEL(x_dtype, idx_dtype, x_type, idx_type) \
+  {KernelAttr()                                          \
+     .AddInputAttr(kObjectTypeTuple, x_dtype)            \
+     .AddInputAttr(kObjectTypeNumber, idx_dtype)         \
+     .AddInputAttr(x_dtype)                              \
+     .AddOutputAttr(kObjectTypeTuple, x_dtype),          \
+   &ListInsertCpuKernelMod::LaunchKernel<x_type, idx_type>}
 
-#define ADD_KERNEL0(x_dtype, idx_dtype, x_type, idx_type)     \
-  {                                                           \
-    KernelAttr()                                              \
-      .AddInputAttr(kObjectTypeTuple, x_dtype)                \
-      .AddInputAttr(kObjectTypeNumber, idx_dtype)             \
-      .AddInputAttr(kObjectTypeNumber, x_dtype)               \
-      .AddOutputAttr(kObjectTypeTuple, x_dtype),              \
-      &ListInsertCpuKernelMod::LaunchKernel<x_type, idx_type> \
-  }
+#define ADD_KERNEL0(x_dtype, idx_dtype, x_type, idx_type) \
+  {KernelAttr()                                           \
+     .AddInputAttr(kObjectTypeTuple, x_dtype)             \
+     .AddInputAttr(kObjectTypeNumber, idx_dtype)          \
+     .AddInputAttr(kObjectTypeNumber, x_dtype)            \
+     .AddOutputAttr(kObjectTypeTuple, x_dtype),           \
+   &ListInsertCpuKernelMod::LaunchKernel<x_type, idx_type>}
 
 const std::vector<std::pair<KernelAttr, ListInsertCpuKernelMod::KernelRunFunc>> &ListInsertCpuKernelMod::GetFuncList()
   const {

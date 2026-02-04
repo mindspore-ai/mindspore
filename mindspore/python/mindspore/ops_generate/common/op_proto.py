@@ -16,7 +16,7 @@
 """Op Proto module for defining operator prototypes and their arguments."""
 
 import os
-from typing import Dict
+from typing import Dict, List
 
 from resources.resource_loader import ResourceLoader
 from resources.resource_list import ResourceType
@@ -32,7 +32,7 @@ class OpArg:
     Attributes:
         arg_name (str): The name of the argument.
         arg_dtype (str): The data type of the argument.
-        type_cast (list): A list of type casts applicable to the argument.
+        type_cast (set): A set of type casts applicable to the argument.
         is_type_id (bool): Indicates if the argument is a type identifier.
         as_init_arg (bool): Indicates if the argument is an initialization argument.
         default: The default value of the argument.
@@ -141,20 +141,21 @@ class OpProto:
     """
 
     def __init__(self,
-                 op_name,
-                 op_args,
-                 op_function,
-                 op_class,
-                 op_dispatch,
-                 op_args_signature,
-                 op_returns,
-                 op_view=False,
+                 op_name: str,
+                 op_args: List[OpArg],
+                 op_function: OpFunction,
+                 op_class: OpClass,
+                 op_dispatch: OpDispatch,
+                 op_args_signature: OpArgsSignature,
+                 op_returns: List[OpArg],
+                 op_view: bool = False,
                  op_graph_view=False,
                  op_inplace=False,
                  op_labels=None,
                  op_deprecated=None,
                  bprop_expander=True,
-                 non_differentiable=False):
+                 non_differentiable=False,
+                 composite=False):
         self.op_name = op_name
         self.op_args = op_args
         self.op_function = op_function
@@ -169,6 +170,7 @@ class OpProto:
         self.op_deprecated = op_deprecated
         self.bprop_expander = bprop_expander
         self.non_differentiable = non_differentiable
+        self.composite = composite
 
     @staticmethod
     def load_from_yaml(op_name, op_data):
@@ -212,12 +214,13 @@ class OpProto:
         # get op deprecated
         op_deprecated = op_data.get('deprecated', None)
         bprop_expander = op_data.get('bprop_expander', True)
+        composite = op_data.get('composite', False)
         non_differentiable = op_data.get('non-differentiable', False)
         op_proto = OpProto(op_name=op_name, op_args=op_args, op_returns=op_returns, op_function=op_function,
                            op_class=op_class, op_dispatch=op_dispatch, op_args_signature=op_args_signature,
                            op_view=op_view, op_graph_view=op_graph_view, op_inplace=op_inplace, op_labels=op_labels,
                            op_deprecated=op_deprecated, bprop_expander=bprop_expander,
-                           non_differentiable=non_differentiable)
+                           non_differentiable=non_differentiable, composite=composite)
         return op_proto
 
 
@@ -229,7 +232,8 @@ class OpProtoLoader(ResourceLoader):
     def __init__(self):
         ops_yaml_path = os.path.join(K.WORK_DIR, K.MS_OP_DEF_YAML_PATH)
         infer_ops_yaml_path = os.path.join(ops_yaml_path, 'infer')
-        self.yaml_paths = [ops_yaml_path, infer_ops_yaml_path]
+        comm_ops_yaml_path = os.path.join(ops_yaml_path, 'communication')
+        self.yaml_paths = [ops_yaml_path, infer_ops_yaml_path, comm_ops_yaml_path]
         self.type = ResourceType.OP_PROTO
         self.is_deprecated = False
         self.func_op = False
@@ -335,7 +339,7 @@ def check_validation(op_name: str, op_data: dict):
         raise TypeError(f"Op define miss key 'returns', op name is {op_name}")
 
 
-def get_op_args(op_name, op_data):
+def get_op_args(op_name: str, op_data: dict) -> List[OpArg]:
     """
     Retrieves the arguments for the operator from the operation data.
 
@@ -357,7 +361,7 @@ def get_op_args(op_name, op_data):
         as_init_arg = False
         is_type_id = False
         prim_init = False
-        type_cast = []
+        type_cast = set()
         if 'default' in args_dict[arg_name]:
             default = args_dict[arg_name]['default']
             as_init_arg = True
@@ -365,11 +369,26 @@ def get_op_args(op_name, op_data):
         if 'prim_init' in args_dict[arg_name] and args_dict[arg_name]['prim_init'] is True:
             prim_init = True
         if 'type_cast' in args_dict[arg_name]:
-            type_cast = [cast_type.strip() for cast_type in args_dict[arg_name]['type_cast'].split(',')]
+            type_cast = set(cast_type.strip() for cast_type in args_dict[arg_name]['type_cast'].split(','))
         arg_handler_key = 'arg_handler'
         arg_handler = args_dict[arg_name].get(arg_handler_key, '')
         if arg_handler_key in args_dict[arg_name] and args_dict[arg_name][arg_handler_key] == 'dtype_to_type_id':
             is_type_id = True
+
+        disable_tensor_to_scalar = args_dict[arg_name].get('disable_tensor_to_scalar', False)
+        # add default support of tensor to scalar
+        if arg_dtype in ("tuple[int]", "list[int]") and not arg_handler:
+            arg_handler = '_normalize_int_sequence'
+        elif 'tensor' not in type_cast and not arg_handler and not disable_tensor_to_scalar:
+            # when type_cast: tensor is specified, single-element tensor cast to scalar is supported
+            # by default, only 0-dim tensor is supported to cast to scalar
+            if arg_dtype == 'int':
+                arg_handler = '_scalar_tensor_to_int'
+            elif arg_dtype == 'float':
+                arg_handler = '_scalar_tensor_to_float'
+            elif arg_dtype == 'number':
+                arg_handler = '_scalar_tensor_to_scalar'
+
         op_arg = OpArg(arg_name, arg_dtype, type_cast, is_type_id, as_init_arg, default,
                        is_prim_init=prim_init, arg_handler=arg_handler)
         op_args.append(op_arg)
@@ -397,7 +416,7 @@ def get_op_returns(op_name, op_data):
         if 'dtype' not in return_dict[return_name]:
             raise TypeError("op return args need key 'dtype'")
         dtype = return_dict[return_name]['dtype']
-        arg = OpArg(return_name, dtype, type_cast=[], inplace=inplace)
+        arg = OpArg(return_name, dtype, type_cast=set(), inplace=inplace)
         op_return_args.append(arg)
     return op_return_args
 

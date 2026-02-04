@@ -20,7 +20,7 @@
 #include <optional>
 #include "ir/tensor.h"
 #include "include/backend/visible.h"
-#include "mindspore/ccsrc/pyboost/comm_handle.h"
+#include "include/pynative/utils/pyboost/comm_handle.h"
 
 namespace mindspore {
 namespace kernel {
@@ -31,7 +31,7 @@ using OpPtr = std::shared_ptr<OpRunner>;
 using CloneFunc = void (*)(const OpPtr &inplace_op, const PrimitivePtr &prim, device::DeviceType device_target,
                            ValuePtrList &&inputs);
 
-void PYNATIVE_EXPORT RegisterCloneFunc(const CloneFunc &clone_func);
+PYBOOST_API void RegisterCloneFunc(const CloneFunc &clone_func);
 const CloneFunc& GetCloneFunc();
 
 ${op_call_with_grad}

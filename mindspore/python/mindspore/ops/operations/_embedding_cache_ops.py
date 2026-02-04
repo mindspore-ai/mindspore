@@ -19,10 +19,14 @@ from mindspore import _checkparam as validator
 from mindspore.common import dtype as mstype
 from mindspore.ops.primitive import prim_attr_register, PrimitiveWithCheck
 from mindspore.ops import signature as sig
+from mindspore.common._decorator import deprecated
 
 
 class UpdateCache(PrimitiveWithCheck):
     """
+    `ops.UpdateCache` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     Update the value fo input_x, similar to ScatterNdUpdate.
     The difference is that UpdateCache will not update when indices < 0 or indices >= max_num.
 
@@ -33,6 +37,9 @@ class UpdateCache(PrimitiveWithCheck):
 
     Outputs:
         - **out** (Tensor) - Returns a [1] Tensor, which is not useful.
+
+    Supported Platforms:
+        Deprecated
     """
     __mindspore_signature__ = (
         sig.make_sig('input_x', sig.sig_rw.RW_WRITE,
@@ -42,6 +49,7 @@ class UpdateCache(PrimitiveWithCheck):
         sig.make_sig('max_num', dtype=sig.sig_dtype.T1)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """init UpdateCache"""
@@ -60,6 +68,9 @@ class UpdateCache(PrimitiveWithCheck):
 
 class SubAndFilter(PrimitiveWithCheck):
     """
+    `ops.SubAndFilter` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     Dynamic kernel, sub an offset and
     return the elements which in range [0, max_num).
 
@@ -76,7 +87,7 @@ class SubAndFilter(PrimitiveWithCheck):
           coressponding to the output tensor.
 
     Supported Platforms:
-        `CPU`
+        Deprecated
 
     Examples:
         >>> x = Tensor(np.array([1, 3, 5, 8, 9, 16]), mindspore.int32)
@@ -87,6 +98,8 @@ class SubAndFilter(PrimitiveWithCheck):
         (Tensor(shape=[3], dtype=Int32, value= [0, 3, 4]),
          Tensor(shape=[3], dtype=Int32, value= [2, 3, 4]))
     """
+
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """init SubAndFilter"""
@@ -105,6 +118,9 @@ class SubAndFilter(PrimitiveWithCheck):
 
 class MapUniform(PrimitiveWithCheck):
     """
+    `ops.MapUniform` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     Map a tensor by using formula : value = key % `group_num` * `per_group_size` + key // `group_num`.
 
     Inputs:
@@ -116,7 +132,7 @@ class MapUniform(PrimitiveWithCheck):
         Tensor, has the same dtype and shape as the `input`.
 
     Supported Platforms:
-        `CPU`
+        Deprecated
 
     Examples:
         >>> input_x = Tensor(np.array([0, 1, 2, 3, 4, 5, 6, 7]))
@@ -128,6 +144,7 @@ class MapUniform(PrimitiveWithCheck):
         [0, 4, 1, 5, 2, 6, 3, 7]
     """
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """init MapUniform"""
@@ -145,6 +162,9 @@ class MapUniform(PrimitiveWithCheck):
 
 class CacheSwapTable(PrimitiveWithCheck):
     """
+    `ops.CacheSwapTable` is deprecated from version 2.8.0 and will be removed
+    in a future version.
+
     Delete a hashmap entry,and insert a new key to hashmap, return the key and value of delete entry.
 
     Inputs:
@@ -154,6 +174,9 @@ class CacheSwapTable(PrimitiveWithCheck):
 
     Outputs:
         - **old_value** (Tensor) - The values which are swapped out.
+
+    Supported Platforms:
+        Deprecated
     """
     __mindspore_signature__ = (
         sig.make_sig('cache_table', sig.sig_rw.RW_WRITE,
@@ -162,6 +185,7 @@ class CacheSwapTable(PrimitiveWithCheck):
         sig.make_sig('miss_value', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """init CacheSwapTable"""
@@ -184,8 +208,14 @@ class CacheSwapTable(PrimitiveWithCheck):
 
 class MapCacheIdx(PrimitiveWithCheck):
     """
+    `ops.MapCacheIdx` is deprecated from version 2.8.0 and will be removed in
+    a future version.
+
     MapCacheIdx merge SearchCacheIdx, CacheSwapHashmap, UpdateCache together.
     When input an indices tensor, it will output the cache indices which search in hashmap.
+
+    Supported Platforms:
+        Deprecated
     """
     __mindspore_signature__ = (
         sig.make_sig('hashmap', sig.sig_rw.RW_WRITE,
@@ -196,6 +226,7 @@ class MapCacheIdx(PrimitiveWithCheck):
         sig.make_sig('cache_max_num', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.8.0", None, False)
     @prim_attr_register
     def __init__(self):
         """init MapCacheIdx"""
@@ -227,6 +258,9 @@ class MapCacheIdx(PrimitiveWithCheck):
 
 class DynamicAssign(PrimitiveWithCheck):
     """
+    `ops.DynamicAssign` is deprecated from version 2.8.0 and will be removed
+    in a future version, please use :func:`mindspore.ops.assign` instead.
+
     Assigns `Parameter` or `Tensor` with a value, the `value` can have a dynamic shape.
 
     Inputs:
@@ -237,13 +271,14 @@ class DynamicAssign(PrimitiveWithCheck):
         Tensor, has the same type as original `variable`.
 
     Supported Platforms:
-        `CPU`
+        Deprecated
     """
     __mindspore_signature__ = (
         sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
         sig.make_sig('value', dtype=sig.sig_dtype.T)
     )
 
+    @deprecated("2.8.0", "ops.assign", False)
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
@@ -258,6 +293,9 @@ class DynamicAssign(PrimitiveWithCheck):
 
 class PadAndShift(PrimitiveWithCheck):
     """
+    `ops.PadAndShift` is deprecated from version 2.8.0 and will be removed in
+    a future version, please use :func:`mindspore.ops.pad` and :func:`mindspore.ops.roll` instead.
+
     Initialize a tensor with -1, and copy a slice from `input_x` to the padded Tensor.
 
     Note:
@@ -284,7 +322,7 @@ class PadAndShift(PrimitiveWithCheck):
         ValueError: Value of `shift_idx` is larger than or equal to the length of `cum_sum_arr` .
 
     Supported Platforms:
-        `CPU`
+        Deprecated
 
     Examples:
         >>> input_x = Tensor(np.array([9, 13, -1, -1, -1, -1, -1, -1]), mstype.int32)
@@ -295,6 +333,7 @@ class PadAndShift(PrimitiveWithCheck):
         >>> print(output)
         [-1, -1, -1, 9, 13]
     """
+    @deprecated("2.8.0", "ops.pad and ops.roll", False)
     @prim_attr_register
     def __init__(self):
         self.init_prim_io_names(

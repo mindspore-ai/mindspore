@@ -21,7 +21,7 @@ mindspore.ops.SplitV
 
     参数：
         - **size_splits** (Union[tuple, list]) - 包含沿拆分维度的每个输出Tensor大小的list。
-          list内所有元素的和必须与输入的 `split_dim` 维的shape相等。可以包含一个-1，以表示要推断维度。
+          list内所有元素的和必须与输入Tensor在 `split_dim` 维的shape相等。可以包含一个-1，以表示要推断维度。
         - **split_dim** (int) - 沿着该维度进行拆分，必须在[-len(input_x.shape), len(input_x.shape))范围内。
         - **num_split** (int) - 输出Tensor的数量，必须是正整数。
 

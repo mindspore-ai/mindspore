@@ -5,7 +5,7 @@ argmax_ext:
         Return the indices of the maximum values of a tensor.
 
         Args:
-            input (Tensor): Input tensor.
+            input (Tensor): The input tensor.
 
         Returns:
             Tensor.
@@ -15,10 +15,9 @@ argmax_ext:
 
         Examples:
             >>> import numpy as np
-            >>> from mindspore import Tensor
-            >>> from mindspore import ops
-            >>> x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
-            >>> output = ops.auto_generate.argmax_ext(x)
+            >>> import mindspore
+            >>> x = mindspore.tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
+            >>> output = mindspore.ops.auto_generate.argmax_ext(x)
             >>> print(output)
             6
 
@@ -28,16 +27,15 @@ argmax_ext:
         Return the indices of the maximum values of a tensor across a dimension.
 
         Args:
-            input (Tensor): Input tensor.
+            input (Tensor): The input tensor.
             dim (int): The dimension to reduce. 
             keepdim (bool, optional): Whether the output tensor retains the specified
-                dimension. Default: ``False`` .
+                dimension. Default ``False`` .
 
         Returns:
             Tensor, indices of the maximum values across a dimension.
 
         Raises:
-            TypeError: If `keepdim` is not bool.
             ValueError: If `dim` is out of range.
 
         Supported Platforms:
@@ -45,9 +43,8 @@ argmax_ext:
 
         Examples:
             >>> import numpy as np
-            >>> from mindspore import Tensor
-            >>> from mindspore import ops
-            >>> x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
-            >>> output = ops.auto_generate.argmax_ext(x, dim=-1)
+            >>> import mindspore
+            >>> x = mindspore.tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
+            >>> output = mindspore.ops.auto_generate.argmax_ext(x, dim=-1)
             >>> print(output)
             [1 0 0]

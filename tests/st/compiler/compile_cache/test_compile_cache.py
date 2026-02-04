@@ -19,7 +19,7 @@ import subprocess
 import pytest
 import numpy as np
 from mindspore import mutable, Tensor, nn, jit, ops
-from mindspore.common.api import ms_compile_cache
+from mindspore.graph.api import ms_compile_cache
 from mindspore import dtype as mstype
 from tests.st.networks import utils
 from tests.st.utils import test_utils
@@ -32,7 +32,8 @@ match_num = re.compile(r'\d+\.?\d*', re.S)
 def exec_insert_command(regex, context, file_name):
     ret = os.system('sed -i "/{0}/{1}" {2}'.format(regex, context, file_name))
     if ret != 0:
-        raise ValueError('exec `sed -i "/{0}/{1}" {2}` failed.'.format(regex, context, file_name))
+        raise ValueError(
+            'exec `sed -i "/{0}/{1}" {2}` failed.'.format(regex, context, file_name))
     return ret
 
 
@@ -51,13 +52,13 @@ def exec_cp_command(src, dst):
 
 
 def exec_model_and_check_result(cur_model_path, dataset_path, config_path, cache_path, check_context):
-    exec_shell = f"export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; " \
+    exec_shell = "export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; " \
                  + "export MS_COMPILER_CACHE_PATH={}; cd resnet/scripts; bash run_distribute_train.sh {} {} {}" \
-                     .format(cache_path, utils.rank_table_path, dataset_path, config_path)
+        .format(cache_path, utils.rank_table_path, dataset_path, config_path)
     os.system(exec_shell)
     cmd = "ps -ef | grep python | grep train.py | grep -v grep"
     ret = utils.process_check(100, cmd)
-    exec_shell = f"unset MS_COMPILER_CACHE_ENABLE; unset MS_COMPILER_CACHE_PATH"
+    exec_shell = "unset MS_COMPILER_CACHE_ENABLE; unset MS_COMPILER_CACHE_PATH"
     os.system(exec_shell)
     assert ret
     log_file = os.path.join(cur_model_path, "scripts/train_parallel{}/log")
@@ -68,7 +69,7 @@ def exec_model_and_check_result(cur_model_path, dataset_path, config_path, cache
     for i in range(8):
         loss = utils.get_loss_data_list(log_file.format(i))
         loss_list.append(loss[-1])
-        with open(log_file.format(i), "r") as f:
+        with open(log_file.format(i), "r", encoding='utf-8') as f:
             data = f.read()
         assert check_context in data
         os.remove(log_file.format(i))
@@ -76,7 +77,8 @@ def exec_model_and_check_result(cur_model_path, dataset_path, config_path, cache
     return loss
 
 
-def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_file_name_second, is_debug=False):
+def run_twice_with_same_network(file_name, cache_path, log_file_name_first,
+                                log_file_name_second, is_debug=False, run_time=1):
     # Clear compile cache folder and log files
     if os.path.exists(cache_path):
         shutil.rmtree(cache_path)
@@ -90,17 +92,17 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
 
     # First run without compile cache
     if not is_debug:
-        cmd_first = f"export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; " \
+        cmd_first = "export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; " \
                     + "export MS_COMPILER_CACHE_PATH={}; python {} > {} 2>&1".format(cache_path, file_name,
                                                                                      log_file_name_first)
     else:
-        cmd_first = f"export GLOG_v=0; export MS_COMPILER_CACHE_ENABLE=1; " \
+        cmd_first = "export GLOG_v=0; export MS_COMPILER_CACHE_ENABLE=1; " \
                     + "export MS_COMPILER_CACHE_PATH={}; python {} > {} 2>&1".format(cache_path, file_name,
                                                                                      log_file_name_first)
     subprocess.check_output(cmd_first, shell=True)
     assert os.path.exists(log_file_name_first)
     assert os.path.exists(cache_path)
-    with open(log_file_name_first, "r") as f_first:
+    with open(log_file_name_first, "r", encoding='utf-8') as f_first:
         data_first = f_first.read()
     if is_debug:
         print("\nmatch_output:\n", match_output, flush=True)
@@ -109,24 +111,27 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
 
     # Take out the result of the first run
     match_output_first = re.findall(match_output, data_first)
-    assert len(match_output_first) == 2
-    nums_first = re.findall(match_num, match_output_first[0])
-    array_first = np.array([float(x) for x in nums_first])
-    shape_first = re.findall(match_num, match_output_first[1])
-    array_shape_first = np.array([int(x) for x in shape_first])
+    assert len(match_output_first) == 2 * run_time
+    array_first = []
+    array_shape_first = []
+    for i in range(run_time):
+        nums_first = re.findall(match_num, match_output_first[2 * i])
+        array_first.append(np.array([float(x) for x in nums_first]))
+        shape_first = re.findall(match_num, match_output_first[2 * i + 1])
+        array_shape_first.append(np.array([int(x) for x in shape_first]))
 
     # Second run with compile cache
     if not is_debug:
-        cmd_second = f"export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; " \
-                    + "export MS_COMPILER_CACHE_PATH={}; python {} > {} 2>&1".format(cache_path, file_name,
-                                                                                     log_file_name_second)
+        cmd_second = "export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; " \
+            + "export MS_COMPILER_CACHE_PATH={}; python {} > {} 2>&1".format(cache_path, file_name,
+                                                                             log_file_name_second)
     else:
-        cmd_second = f"export GLOG_v=0; export MS_COMPILER_CACHE_ENABLE=1; " \
-                    + "export MS_COMPILER_CACHE_PATH={}; python {} > {} 2>&1".format(cache_path, file_name,
-                                                                                     log_file_name_second)
+        cmd_second = "export GLOG_v=0; export MS_COMPILER_CACHE_ENABLE=1; " \
+            + "export MS_COMPILER_CACHE_PATH={}; python {} > {} 2>&1".format(cache_path, file_name,
+                                                                             log_file_name_second)
     subprocess.check_output(cmd_second, shell=True)
     assert os.path.exists(log_file_name_second)
-    with open(log_file_name_second, "r") as f_second:
+    with open(log_file_name_second, "r", encoding='utf-8') as f_second:
         data_second = f_second.read()
     if is_debug:
         print("\ndata_second:\n", data_second, flush=True)
@@ -139,14 +144,18 @@ def run_twice_with_same_network(file_name, cache_path, log_file_name_first, log_
 
     # Take out the result of the second run
     match_output_second = re.findall(match_output, data_second)
-    assert len(match_output_second) == 2
-    nums_second = re.findall(match_num, match_output_second[0])
-    array_second = np.array([float(x) for x in nums_second])
-    shape_second = re.findall(match_num, match_output_second[1])
-    array_shape_second = np.array([int(x) for x in shape_second])
+    assert len(match_output_second) == 2 * run_time
+    array_second = []
+    array_shape_second = []
+    for i in range(run_time):
+        nums_second = re.findall(match_num, match_output_second[2 * i])
+        array_second.append(np.array([float(x) for x in nums_second]))
+        shape_second = re.findall(match_num, match_output_second[2 * i + 1])
+        array_shape_second.append(np.array([int(x) for x in shape_second]))
 
-    assert np.allclose(array_first, array_second, 0.0001, 0.0001)
-    assert (array_shape_first == array_shape_second).all()
+    for i in range(run_time):
+        assert np.allclose(array_first[i], array_second[i], 0.0001, 0.0001)
+        assert (array_shape_first[i] == array_shape_second[i]).all()
 
     # Clean files
     os.remove(log_file_name_first)
@@ -162,13 +171,13 @@ def run_twice_with_different_networks(file_name_first, file_name_second, cache_p
     assert not os.path.exists(cache_path)
 
     # First run without compile cache
-    cmd_first = f"export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; " \
+    cmd_first = "export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; " \
                 + "export MS_COMPILER_CACHE_PATH={}; python {} > {} 2>&1".format(cache_path, file_name_first,
                                                                                  log_file_name_first)
     subprocess.check_output(cmd_first, shell=True)
     assert os.path.exists(log_file_name_first)
     assert os.path.exists(cache_path)
-    with open(log_file_name_first, "r") as f_first:
+    with open(log_file_name_first, "r", encoding='utf-8') as f_first:
         data_first = f_first.read()
     assert "Check the consistency of dependency files hash failed. Execute all the compilation actions." in data_first
 
@@ -176,12 +185,12 @@ def run_twice_with_different_networks(file_name_first, file_name_second, cache_p
     shutil.rmtree(ge_cache)
 
     # Second run with compile cache
-    cmd_second = f"export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; " \
+    cmd_second = "export GLOG_v=2; export MS_COMPILER_CACHE_ENABLE=1; " \
                  + "export MS_COMPILER_CACHE_PATH={}; python {} > {} 2>&1".format(cache_path, file_name_second,
                                                                                   log_file_name_second)
     subprocess.check_output(cmd_second, shell=True)
     assert os.path.exists(log_file_name_second)
-    with open(log_file_name_second, "r") as f_second:
+    with open(log_file_name_second, "r", encoding='utf-8') as f_second:
         data_second = f_second.read()
     assert "Check the consistency of dependency files hash failed. Execute all the compilation actions." in data_second
 
@@ -198,12 +207,12 @@ def run_two_cells_networks_once(file_name, cache_path, log_file_name):
     assert not os.path.exists(cache_path)
 
     # First run without compile cache
-    cmd = f"GLOG_v=2 MS_COMPILER_CACHE_ENABLE=1 MS_COMPILER_CACHE_PATH=" + cache_path + " python " + file_name \
+    cmd = "GLOG_v=2 MS_COMPILER_CACHE_ENABLE=1 MS_COMPILER_CACHE_PATH=" + cache_path + " python " + file_name \
           + " > " + log_file_name + " 2>&1"
     subprocess.check_output(cmd, shell=True)
     assert os.path.exists(log_file_name)
     assert os.path.exists(cache_path)
-    with open(log_file_name, "r") as f:
+    with open(log_file_name, "r", encoding='utf-8') as f:
         data = f.read()
     assert data.count(
         "Check the consistency of dependency files hash failed. Execute all the compilation actions.") == 2
@@ -215,7 +224,7 @@ def run_two_cells_networks_once(file_name, cache_path, log_file_name):
 
 def check_log(role, log_name, str_to_check):
     assert os.path.exists(role + "/" + log_name)
-    with open(role + "/" + log_name, "r") as f:
+    with open(role + "/" + log_name, "r", encoding='utf-8') as f:
         data = f.read()
     assert str_to_check in data
 
@@ -229,8 +238,10 @@ def clear_and_make_run_dir(dir_path):
 
 def check_compile_cache_files(cache_path, role):
     assert os.path.exists(cache_path)
-    assert os.path.exists(cache_path + "/rank_0/graph_cache/" + role + "compile_cache_0.mindir")
-    assert os.path.exists(cache_path + "/rank_0/graph_cache/" + role + "compile_dependency.hash")
+    assert os.path.exists(
+        cache_path + "/rank_0/graph_cache/" + role + "compile_cache_0.mindir")
+    assert os.path.exists(
+        cache_path + "/rank_0/graph_cache/" + role + "compile_dependency.hash")
 
 
 def run_network_once_with_force_use_compile_cache(file_name, cache_path, log_file_name_first):
@@ -243,18 +254,18 @@ def run_network_once_with_force_use_compile_cache(file_name, cache_path, log_fil
     assert not os.path.exists(log_file_name_first)
 
     # First run without compile cache
-    cmd_first = f"export GLOG_v=2; export MS_DEV_FORCE_USE_COMPILE_CACHE=1; export MS_COMPILER_CACHE_ENABLE=1; " \
+    cmd_first = "export GLOG_v=2; export MS_DEV_FORCE_USE_COMPILE_CACHE=1; export MS_COMPILER_CACHE_ENABLE=1; " \
                 + "export MS_COMPILER_CACHE_PATH={}; python {} > {} 2>&1".format(cache_path, file_name,
                                                                                  log_file_name_first)
     subprocess.check_output(cmd_first, shell=True)
     assert os.path.exists(log_file_name_first)
     assert os.path.exists(cache_path)
-    with open(log_file_name_first, "r") as f_first:
+    with open(log_file_name_first, "r", encoding='utf-8') as f_first:
         data_first = f_first.read()
     assert "The env MS_DEV_FORCE_USE_COMPILE_CACHE has been set. It will force to use the compile cache" in data_first
     assert "Failed to load the compilation cache file. Execute all the compilation actions." in data_first
 
-    exec_shell = f"unset MS_ENABLE_GE; unset MS_DEV_FORCE_USE_COMPILE_CACHE"
+    exec_shell = "unset MS_ENABLE_GE; unset MS_DEV_FORCE_USE_COMPILE_CACHE"
     os.system(exec_shell)
 
     # Clean files
@@ -262,24 +273,28 @@ def run_network_once_with_force_use_compile_cache(file_name, cache_path, log_fil
     shutil.rmtree(cache_path)
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard',
+        essential_mark='unessential', mem_peak=0.01)
 def test_compile_cache_load_weights():
     """
     Feature: Compile cache.
     Description: Test whether the compile cache can load the value of parameters successfully.
     Expectation: success.
     """
-    run_twice_with_same_network("run_network_with_weights.py", "./weight", "weight_first.txt", "weight_second.txt")
+    run_twice_with_same_network(
+        "run_network_with_weights.py", "./weight", "weight_first.txt", "weight_second.txt")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='unessential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
 def test_compile_cache_lenet():
     """
     Feature: Compile cache.
     Description: Test whether the regular compile cache function can run successfully.
     Expectation: success.
     """
-    run_twice_with_same_network("run_lenet.py", "./lenet", "lenet_first.txt", "lenet_second.txt", True)
+    run_twice_with_same_network(
+        "run_lenet.py", "./lenet", "lenet_first.txt", "lenet_second.txt", True)
 
 
 @arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
@@ -306,7 +321,8 @@ def test_compile_cache_net_with_control_flow():
                                 "control_net_second.txt")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level1', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_auto_detect():
     """
     Feature: Compile cache.
@@ -318,7 +334,8 @@ def test_compile_cache_auto_detect():
 
 
 @pytest.mark.skip
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_compile_cache_lenet_change_dir():
     """
     Feature: Compile cache.
@@ -337,7 +354,8 @@ def test_compile_cache_lenet_change_dir():
     shutil.rmtree(new_path, ignore_errors=True)
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_compile_cache_ms_function():
     """
     Feature: Compile cache.
@@ -348,17 +366,20 @@ def test_compile_cache_ms_function():
                                 "lenet_ms_function_second.txt")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_compile_cache_run_two_cells_once():
     """
     Feature: Compile cache.
     Description: Test whether all the cells don't read the cached graph when run multiple cells once.
     Expectation: success.
     """
-    run_two_cells_networks_once("run_lenet_two_cells.py", "./lenet_two_cells", "lenet_two_cells.txt")
+    run_two_cells_networks_once(
+        "run_lenet_two_cells.py", "./lenet_two_cells", "lenet_two_cells.txt")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential')
 def test_resnet_infer_compile_cache():
     """
     Feature: Support compile cache in inference scenarios.
@@ -369,7 +390,8 @@ def test_resnet_infer_compile_cache():
                                 "resnet_infer_second.txt")
 
 
-@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
 def test_compile_cache_control_flow_partial_without_inputs():
     """
     Feature: Compile cache.
@@ -382,7 +404,8 @@ def test_compile_cache_control_flow_partial_without_inputs():
                                 "control_flow_partial_without_inputs_second.txt")
 
 
-@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+@arg_mark(plat_marks=['platform_gpu'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=2.00)
 def test_compile_cache_with_inplace_tensor():
     """
     Feature: Compile cache.
@@ -399,7 +422,6 @@ def test_compile_cache_with_inplace_tensor():
             k, v = kv_caches
             self.assignadd(k, ops.ones_like(k))
             self.assignadd(v, ops.ones_like(v))
-
 
     kv_cache_shape = (None, 1)
     kv_cache_dtype = mstype.int32
@@ -423,3 +445,75 @@ def test_compile_cache_with_inplace_tensor():
     assert len(ms_compile_cache) == 1
     assert kv_cache[0][0][0] == 3
     assert kv_cache[1][0][0] == 3
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_compile_cache_grad_jit():
+    """
+    Feature: Compile cache.
+    Description: Test compile cache with grad jit.
+    Expectation: success.
+    """
+    run_twice_with_same_network("run_compile_cache_grad_jit.py", "./compile_cache_grad_jit",
+                                "compile_cache_grad_jit_first.txt", "compile_cache_grad_jit_second.txt")
+
+
+@arg_mark(plat_marks=['cpu_linux'], level_mark='level0', card_mark='onecard', essential_mark='essential')
+def test_compile_cache_grad_jit_with_custom_bprop():
+    """
+    Feature: Compile cache.
+    Description: Test compile cache with grad jit.
+    Expectation: success.
+    """
+    run_twice_with_same_network("run_compile_cache_custom_bprop.py", "./compile_cache_custom_bprop",
+                                "compile_cache_custom_bprop_first.txt", "compile_cache_custom_bprop.txt")
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level1',
+        card_mark='onecard', essential_mark='unessential', mem_peak=0.01)
+def test_compile_cache_lenet_with_jit():
+    """
+    Feature: Compile cache.
+    Description: Test whether the regular compile cache function with jit can run successfully.
+    Expectation: success.
+    """
+    run_twice_with_same_network(
+        "run_lenet_with_jit.py", "./lenet_with_jit", "lenet_with_jit_first.txt", "lenet_with_jit_second.txt", False, 2)
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
+def test_compile_cache_high_grad_jit():
+    """
+    Feature: Compile cache.
+    Description: Test compile cache with grad jit.
+    Expectation: success.
+    """
+    run_twice_with_same_network("run_high_grad_jit.py", "./compile_cache_high_grad_jit",
+                                "compile_cache_high_grad_jit_first.txt", "compile_cache_high_grad_jit_second.txt")
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
+def test_compile_cache_jit_with_weight():
+    """
+    Feature: Compile cache.
+    Description: Test compile cache with grad jit on net with weight.
+    Expectation: success.
+    """
+    run_twice_with_same_network("run_jit_net_with_weight.py", "./compile_cache_jit_net_with_weight",
+                                "compile_cache_jit_net_with_weight_first.txt",
+                                "compile_cache_jit_net_with_weight_second.txt")
+
+
+@arg_mark(plat_marks=['platform_ascend'], level_mark='level0', card_mark='onecard',
+        essential_mark='essential', mem_peak=0.01)
+def test_compile_cache_jit_with_control_flow():
+    """
+    Feature: Compile cache.
+    Description: Test compile cache with grad jit on net with control flow.
+    Expectation: success.
+    """
+    run_twice_with_same_network("run_jit_with_control_flow.py", "./compile_cache_jit_with_control_flow",
+                                "compile_cache_jit_with_control_flow_first.txt",
+                                "compile_cache_jit_with_control_flow_second.txt")

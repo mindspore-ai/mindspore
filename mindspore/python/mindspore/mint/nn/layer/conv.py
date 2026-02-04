@@ -37,6 +37,70 @@ class _Conv(Cell):
     """
     Applies a N-D convolution over an input signal composed of several input planes.
     """
+    @staticmethod
+    def _check_channels(in_channels, out_channels, groups):
+        in_channels = Validator.check_non_negative_int(in_channels)
+        out_channels = Validator.check_non_negative_int(out_channels)
+        groups = Validator.check_positive_int(groups)
+        if in_channels % groups != 0:
+            raise ValueError('in_channels must be divisible by groups.')
+        if out_channels % groups != 0:
+            raise ValueError('out_channels must be divisible by groups.')
+        return in_channels, out_channels, groups
+
+    @staticmethod
+    def _check_padding(padding, stride):
+        valid_padding_strings = {'same', 'valid'}
+        if isinstance(padding, str):
+            if padding not in valid_padding_strings:
+                raise ValueError(f"The value of 'padding' must be one of '{valid_padding_strings}', "
+                                 f"but got {padding}.")
+            if padding == 'same' and any(s != 1 for s in stride):
+                raise ValueError("padding='same' is not supported for strided convolutions")
+
+    @staticmethod
+    def _check_padding_mode(padding_mode):
+        valid_padding_modes = {'zeros', 'reflect', 'replicate', 'circular'}
+        if padding_mode not in valid_padding_modes:
+            raise ValueError(f"The value of 'padding_mode' must be one of '{valid_padding_modes}', "
+                             f"but got {padding_mode}.")
+
+    @staticmethod
+    def _check_positive_sequence(name, seq, cls_name):
+        for elem in seq:
+            Validator.check_positive_int(elem, f'{name} item', cls_name)
+
+    @staticmethod
+    def _calc_reversed_padding(padding, dilation, kernel_size):
+        if isinstance(padding, str):
+            reversed_padding = [0, 0] * len(kernel_size)
+            if padding == 'same':
+                for d, k, i in zip(dilation, kernel_size, range(len(kernel_size) - 1, -1, -1)):
+                    total_padding = d * (k - 1)
+                    left_pad = total_padding // 2
+                    reversed_padding[2 * i] = left_pad
+                    reversed_padding[2 * i + 1] = total_padding - left_pad
+            return reversed_padding
+        return tuple(x for x in reversed(padding) for _ in range(2))
+
+    @staticmethod
+    def _get_weight_shape(in_channels, out_channels, groups, kernel_size, transposed):
+        if transposed:
+            return [in_channels, out_channels // groups, *kernel_size]
+        return [out_channels, in_channels // groups, *kernel_size]
+
+    @staticmethod
+    def _create_bias(bias, shape, out_channels, dtype, cls_name):
+        if not Validator.check_bool(bias, "bias", cls_name):
+            return None
+        fan_in, _ = _calculate_fan_in_and_fan_out(shape)
+        if fan_in != 0:
+            bound = 1 / math.sqrt(fan_in)
+            bias_init = Uniform(bound)
+        else:
+            bias_init = 'zeros'
+        return Parameter(initializer(bias_init, [out_channels], dtype=dtype), name='bias')
+
     def __init__(self,
                  in_channels,
                  out_channels,
@@ -52,67 +116,27 @@ class _Conv(Cell):
                  dtype=mstype.float32):
         """Initialize _Conv."""
         super(_Conv, self).__init__()
-        self.groups = Validator.check_positive_int(groups)
-        self.in_channels = Validator.check_non_negative_int(in_channels)
-        self.out_channels = Validator.check_non_negative_int(out_channels)
-        if self.in_channels % groups != 0:
-            raise ValueError('in_channels must be divisible by groups.')
-        if self.out_channels % groups != 0:
-            raise ValueError('out_channels must be divisible by groups.')
-        valid_padding_strings = {'same', 'valid'}
         self.padding = padding
         self.stride = stride
-        if isinstance(self.padding, str):
-            if self.padding not in valid_padding_strings:
-                raise ValueError(f"The value of 'padding' must be one of '{valid_padding_strings}', "
-                                 f"but got {self.padding}.")
-            if self.padding == 'same' and any(s != 1 for s in self.stride):
-                raise ValueError("padding='same' is not supported for strided convolutions")
-
-        valid_padding_modes = {'zeros', 'reflect', 'replicate', 'circular'}
-        if padding_mode not in valid_padding_modes:
-            raise ValueError(f"The value of 'padding_mode' must be one of '{valid_padding_modes}', "
-                             f"but got {padding_mode}.")
         self.transposed = transposed
         self.output_padding = output_padding
         self.padding_mode = padding_mode
         self.kernel_size = kernel_size
-        for kernel_size_elem in kernel_size:
-            Validator.check_positive_int(kernel_size_elem, 'kernel_size item', self.cls_name)
-        for stride_elem in stride:
-            Validator.check_positive_int(stride_elem, 'stride item', self.cls_name)
         self.dilation = dilation
-        for dilation_elem in dilation:
-            Validator.check_positive_int(dilation_elem, 'dilation item', self.cls_name)
-        if isinstance(self.padding, str):
-            self._reversed_padding = [0, 0] * len(kernel_size)
-            if padding == 'same':
-                for d, k, i in zip(dilation, kernel_size,
-                                   range(len(kernel_size) - 1, -1, -1)):
-                    total_padding = d * (k - 1)
-                    left_pad = total_padding // 2
-                    self._reversed_padding[2 * i] = left_pad
-                    self._reversed_padding[2 * i + 1] = (
-                        total_padding - left_pad)
-        else:
-            self._reversed_padding = tuple(x for x in reversed(self.padding) for _ in range(2))
-        if transposed:
-            shape = [in_channels, out_channels // groups, *kernel_size]
-        else:
-            shape = [out_channels, in_channels // groups, *kernel_size]
+
+        self.in_channels, self.out_channels, self.groups = self._check_channels(in_channels, out_channels, groups)
+        self._check_padding(self.padding, self.stride)
+        self._check_padding_mode(self.padding_mode)
+        self._check_positive_sequence('kernel_size', self.kernel_size, self.cls_name)
+        self._check_positive_sequence('stride', self.stride, self.cls_name)
+        self._check_positive_sequence('dilation', self.dilation, self.cls_name)
+
+        self._reversed_padding = self._calc_reversed_padding(self.padding, self.dilation, self.kernel_size)
+        shape = self._get_weight_shape(self.in_channels, self.out_channels, self.groups, self.kernel_size,
+                                       self.transposed)
         weight_init = HeUniform(math.sqrt(5))
         self.weight = Parameter(initializer(weight_init, shape, dtype=dtype), name='weight')
-
-        if Validator.check_bool(bias, "bias", self.cls_name):
-            fan_in, _ = _calculate_fan_in_and_fan_out(shape)
-            if fan_in != 0:
-                bound = 1 / math.sqrt(fan_in)
-                bias_init = Uniform(bound)
-            else:
-                bias_init = 'zeros'
-            self.bias = Parameter(initializer(bias_init, [out_channels], dtype=dtype), name='bias')
-        else:
-            self.bias = None
+        self.bias = self._create_bias(bias, shape, self.out_channels, dtype, self.cls_name)
 
     def construct(self, *inputs):
         """Must be overridden by all subclasses."""
@@ -324,10 +348,11 @@ class Conv2d(_Conv):
     r"""
     2D convolution layer.
 
-    Applies a 2D convolution over an input tensor which is typically of shape :math:`(N, C_{in}, H_{in}, W_{in})`,
+    Applies a 2D convolution over an input signal composed of several input planes which is typically of shape
+    :math:`(N, C_{in}, H_{in}, W_{in})`,
     where :math:`N` is batch size, :math:`C` is channel number, :math:`H` is feature height, :math:`W` is feature width.
 
-    The output is calculated based on formula:
+    Calculate according to the following formula:
 
     .. math::
 
@@ -338,16 +363,13 @@ class Conv2d(_Conv):
     the `cross-correlation <https://en.wikipedia.org/wiki/Cross-correlation>`_,
     :math:`weight` is the convolution kernel value and :math:`Input` represents the input feature map.
 
-    - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`,
-      where :math:`N` is the batch size of the input.
+    - :math:`i` corresponds to the batch number, the range is :math:`[0, N-1]`.
 
     - :math:`j` corresponds to the output channel, the range is :math:`[0, C_{out}-1]`,
-      where :math:`C_{out}` is the number of
-      output channels, which is also equal to the number of kernels.
+      where :math:`C_{out}` is equal to the number of kernels.
 
     - :math:`k` corresponds to the input channel, the range is :math:`[0, C_{in}-1]`,
-      where :math:`C_{in}` is the number of
-      input channels, which is also equal to the number of channels in the convolutional kernels.
+      where :math:`C_{in}` is equal to the number of channels in the convolutional kernels.
 
     Therefore, in the above formula, :math:`{bias}(C_{\text{out}_j})` represents the bias of the :math:`j`-th
     output channel, :math:`{weight}(C_{\text{out}_j}, k)` represents the slice of the :math:`j`-th convolutional
@@ -365,15 +387,15 @@ class Conv2d(_Conv):
     <http://vision.stanford.edu/cs598_spring07/papers/Lecun98.pdf>`_.
 
     Args:
-        in_channels (int): The channel number of the input tensor of the Conv2d layer.
-        out_channels (int): The channel number of the output tensor of the Conv2d layer.
+        in_channels (int): Number of channels in the input image.
+        out_channels (int): Number of channels produced by the convolution.
         kernel_size (Union[int, tuple[int], list[int]]): Specifies the height and width of the 2D convolution kernel.
-            The data type is an integer or a tuple/list of two integers. An integer represents the height
-            and width of the convolution kernel. A tuple/list of two integers represents the height
+            The data type is an integer or a tuple/list of two integers. An integer represents a square convolution 
+            kernel. A tuple/list of two integers represents the height
             and width of the convolution kernel respectively.
         stride (Union[int, tuple[int], list[int]], optional): The movement stride of the 2D convolution kernel.
             The data type is an integer or a tuple/list of two integers. An integer represents the movement step size
-            in both height and width directions. A tuple/list of two integers represents the movement step size in the height
+            in any directions. A tuple/list of two integers represents the movement step size in the height
             and width directions respectively. Default: ``1`` .
         padding (Union[int, tuple[int], list[int], str], optional): The number of padding
             on the height and width directions of the input.
@@ -424,47 +446,45 @@ class Conv2d(_Conv):
           :math:`(C_{out})`. If bias is False, this will be None.
 
     Inputs:
-        - **Input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})`.
+        - **Input** (Tensor) - :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})`.
           When it's an empty Tesnor, backpropagation is currently not supported.
 
     Outputs:
-        Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})` or :math:`(C_{out}, H_{out}, W_{out})`.
+        - **Output** (Tensor) - :math:`(N, C_{out}, H_{out}, W_{out})` or :math:`(C_{out}, H_{out}, W_{out})`.
   
-        padding is ``'same'``:
-  
-        .. math::
-            \begin{array}{ll} \\
-              H_{out} = \left \lceil{\frac{H_{in}}{\text{stride[0]}}} \right \rceil \\
-              W_{out} = \left \lceil{\frac{W_{in}}{\text{stride[1]}}} \right \rceil \\
-            \end{array}
-  
-        padding is ``'valid'``:
-  
-        .. math::
-            \begin{array}{ll} \\
-              H_{out} = \left \lfloor{\frac{H_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) - 1}
-              {\text{stride[0]}}} \right \rfloor + 1 \\
-              W_{out} = \left \lfloor{\frac{W_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) - 1}
-              {\text{stride[1]}}} \right \rfloor + 1 \\
-            \end{array}
-  
-        padding is int or tuple/list:
-  
-        .. math::
-            \begin{array}{ll} \\
-                H_{out} = \left \lfloor{\frac{H_{in} + 2 \times padding[0] - \text{dilation[0]} \times
-                (\text{kernel_size[0]} - 1) - 1}{\text{stride[0]}}} \right \rfloor + 1 \\
-                W_{out} = \left \lfloor{\frac{W_{in} + 2 \times padding[1] - \text{dilation[1]} \times
-                (\text{kernel_size[1]} - 1) - 1}{\text{stride[1]}}} \right \rfloor + 1 \\
-            \end{array}
+          - padding is ``'same'``:
+    
+            .. math::
+                \begin{array}{ll} \\
+                    H_{out} = \left \lceil{\frac{H_{in}}{\text{stride[0]}}} \right \rceil \\
+                    W_{out} = \left \lceil{\frac{W_{in}}{\text{stride[1]}}} \right \rceil \\
+                \end{array}
+    
+          - padding is ``'valid'``:
+    
+            .. math::
+                \begin{array}{ll} \\
+                    H_{out} = \left \lfloor{\frac{H_{in} - \text{dilation[0]} \times (\text{kernel_size[0]} - 1) - 1}
+                    {\text{stride[0]}}} \right \rfloor + 1 \\
+                    W_{out} = \left \lfloor{\frac{W_{in} - \text{dilation[1]} \times (\text{kernel_size[1]} - 1) - 1}
+                    {\text{stride[1]}}} \right \rfloor + 1 \\
+                \end{array}
+    
+          - padding is int or tuple/list:
+    
+            .. math::
+                \begin{array}{ll} \\
+                    H_{out} = \left \lfloor{\frac{H_{in} + 2 \times padding[0] - \text{dilation[0]} \times
+                    (\text{kernel_size[0]} - 1) - 1}{\text{stride[0]}}} \right \rfloor + 1 \\
+                    W_{out} = \left \lfloor{\frac{W_{in} + 2 \times padding[1] - \text{dilation[1]} \times
+                    (\text{kernel_size[1]} - 1) - 1}{\text{stride[1]}}} \right \rfloor + 1 \\
+                \end{array}
 
     Raises:
         ValueError: Args and size of the input feature map should satisfy the output formula to ensure that the size of
             the output feature map is positive; otherwise, an error will be reported.
         RuntimeError: On Ascend, due to the limitation of the L1 cache size of different NPU chip, if input size or
             kernel size is too large, it may trigger an error.
-        TypeError: If `in_channels`, `out_channels` or `groups` is not an int.
-        TypeError: If `kernel_size`, `stride` or `dilation` is neither an int nor a tuple/list.
         ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
         ValueError: If `padding` is `same` , `stride` is not equal to 1.
@@ -477,10 +497,9 @@ class Conv2d(_Conv):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
         >>> import numpy as np
-        >>> net = mint.nn.Conv2d(120, 240, 4, bias=False)
-        >>> x = Tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
+        >>> net = mindspore.mint.nn.Conv2d(120, 240, 4, bias=False)
+        >>> x = mindspore.tensor(np.ones([1, 120, 1024, 640]), mindspore.float32)
         >>> output = net(x).shape
         >>> print(output)
         (1, 240, 1021, 637)
@@ -584,8 +603,8 @@ class Conv3d(_Conv):
             and width of the convolution kernel respectively.
         stride (Union[int, tuple[int], list[int]], optional): The movement stride of the 3D convolution kernel.
             The data type is an integer or a tuple/list of three integers. An integer represents the movement step size
-            in both height and width directions. A tuple/list of three integers represents the movement step size in the
-            depth, height and width directions respectively. Default: ``1`` .
+            in depth, height and width directions. A tuple/list of three integers represents the movement step size
+            in the depth, height and width directions respectively. Default: ``1`` .
         padding (Union[int, tuple[int], list[int], str], optional): The number of padding
             on the depth, height and width directions of the input.
             The data type is an integer or string {``"valid"``, ``"same"``} or a tuple/list of three integers.
@@ -593,14 +612,14 @@ class Conv3d(_Conv):
 
             - ``"same"``: Pad the input around its edges so that the shape of input and output
               are the same when `stride` is set to ``1``.
-              The amount of padding to is calculated by the operator internally, If the amount is even, it is
+              The amount of padding is calculated by the operator internally. If the amount is even, it is
               uniformly distributed around the input, if it is odd, the excess amount goes to the right/bottom side.
 
             - ``"valid"``: No padding is applied to the input, and the output returns the maximum
-              possible height and width. Extra pixels that could not complete a full stride will
+              possible depth, height and width. Extra pixels that could not complete a full stride will
               be discarded.
 
-        dilation (Union[int, tuple[int], list[int]], optional): Controlling the space between the kernel points.
+        dilation (Union[int, tuple[int], list[int]], optional): Controlling the spacing between the kernel elements.
             Default: ``1`` .
         groups (int, optional): Splits filter into groups, `in_channels` and `out_channels` must be
             divisible by `groups`. If the groups is equal to `in_channels` and `out_channels`,
@@ -613,7 +632,7 @@ class Conv3d(_Conv):
             - :math:`(\text{weight[1]} = C_{in} / \text{groups})`
 
         bias (bool, optional): Whether the Conv3d layer has a bias parameter. Default: ``True`` .
-        padding_mode (str, optional): Specifies the padding mode with a padding value of 0. It can be set to:
+        padding_mode (str, optional): Specifies the padding mode, the padding value is 0. It can be set to:
             ``"zeros"`` , ``"reflect"`` or ``"replicate"`` . Default: ``"zeros"`` .
         dtype (:class:`mindspore.dtype`, optional): Dtype of Parameters. Default: ``None``, using ``mstype.float32``.
 
@@ -622,7 +641,7 @@ class Conv3d(_Conv):
           :math:`(C_{out}, C_{in} / \text{groups}, \text{kernel_size[0]},
           \text{kernel_size[1]}, \text{kernel_size[2]})`.
         - **bias** (Tensor) - The bias of the convolution layer, with shape
-          :math:`(C_{out})`. If bias is False, this will be None.
+          :math:`(C_{out})`. If `bias` is ``False``, this will be ``None``.
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` \
@@ -666,8 +685,6 @@ class Conv3d(_Conv):
             \end{array}
 
     Raises:
-        TypeError: If `in_channels`, `out_channels` or `groups` is not an int.
-        TypeError: If `kernel_size`, `stride` or `dilation` is neither an int nor a tuple/list.
         ValueError: If `in_channels`, `out_channels`, `kernel_size`, `stride` or `dilation` is less than 1.
         ValueError: If `padding` is less than 0.
 
@@ -676,10 +693,9 @@ class Conv3d(_Conv):
 
     Examples:
         >>> import mindspore
-        >>> from mindspore import Tensor, mint
         >>> import numpy as np
-        >>> net = mint.nn.Conv3d(120, 10, 4)
-        >>> x = Tensor(np.ones([1, 120, 10, 23, 34]), mindspore.float32)
+        >>> net = mindspore.mint.nn.Conv3d(120, 10, 4)
+        >>> x = mindspore.Tensor(np.ones([1, 120, 10, 23, 34]), mindspore.float32)
         >>> output = net(x).shape
         >>> print(output)
         (1, 10, 7, 20, 31)
@@ -842,60 +858,61 @@ class ConvTranspose2d(_ConvTranspose):
         in_channels (int): Number of channels in the input image.
         out_channels (int): Number of channels produced by the convolution.
         kernel_size (Union[int, tuple(int)]): Size of the convolving kernel.
-        stride (Union[int, tuple(int)], optional): Stride of the convolution. Default: ``1`` .
+        stride (Union[int, tuple(int)], optional): Stride of the convolution. Default ``1``.
         padding (Union[int, tuple(int)], optional): :math:`dilation * (kernel\_size - 1) - padding` zero-padding
-            will be added to both sides of each dimension in the input. Default: ``0`` .
+            will be added to both sides of each dimension in the input. Default ``0``.
         output_padding (Union[int, tuple(int)], optional): Additional size added to one side of each dimension
-            in the output shape. The value of `output_padding` must be less than `stride` or `dilation` .
-            Default: ``0`` .
-        groups (int, optional): Number of blocked connections from input channels to output channels. Default: ``1``
-        bias (bool, optional): If ``True``, adds a learnable bias to the output. Default: ``True`` .
-        dilation (Union[int, tuple(int)], optional): Spacing between kernel elements. Default: ``1`` .
-        padding_mode (str, optional): Specifies the padding mode with a padding value. For now, it can only be
-            set to: ``"zeros"``. Default: ``"zeros"`` .
-        dtype (mindspore.dtype, optional): Dtype of Parameters. Default: ``None`` , when it's ``None`` ,
+            in the output shape. The value of `output_padding` must be less than `stride` or `dilation`.
+            Default ``0``.
+        groups (int, optional): Number of blocked connections from input channels to output channels. Default ``1``
+        bias (bool, optional): If ``True``, adds a learnable bias to the output. Default ``True``.
+        dilation (Union[int, tuple(int)], optional): Spacing between kernel elements. Default ``1``.
+        padding_mode (str, optional): Specifies the padding mode. For now, it can only be set to: ``"zeros"``. 
+            Default ``"zeros"``.
+        dtype (mindspore.dtype, optional): Dtype of Parameters. Default ``None``. when it's ``None``,
             the dtype of Parameters would be mstype.float32.
 
     Variables:
-        - **weigh** (Parameter) - the learnable weights of the module of shape
+        - **weight** (Parameter) - the learnable weights of the module of shape
           :math:`(\text{in_channels}, \frac{\text{out_channels}}{\text{groups}},
-          \text{kernel_size[0]}, \text{kernel_size[1]})` . The values of these weights are sampled from
-          :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
-          :math:`k = \frac{groups}{C_\text{out} * \prod_{i=0}^{1}\text{kernel_size}[i]}`
-        - **bias** (Parameter) - the learnable bias of the module of shape :math:`(\text{out_channels},)` .
-          If :attr:`bias` is ``True``, then the values of these weights are sampled from
+          \text{kernel_size[0]}, \text{kernel_size[1]})`. The values of these weights are sampled from
           :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
           :math:`k = \frac{groups}{C_\text{out} * \prod_{i=0}^{1}\text{kernel_size}[i]}` .
+        - **bias** (Parameter) - the learnable bias of the module of shape :math:`(\text{out_channels},)`.
+          If :attr:`bias` is ``True``, then the values of these weights are sampled from
+          :math:`\mathcal{U}(-\sqrt{k}, \sqrt{k})` where
+          :math:`k = \frac{groups}{C_\text{out} * \prod_{i=0}^{1}\text{kernel_size}[i]}`.
 
     Inputs:
-        - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` or :math:`(C_{in}, H_{in}, W_{in})` .
+        - **input** (Tensor) - The input tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})`
+          or :math:`(C_{in}, H_{in}, W_{in})` .
 
     Outputs:
-        Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})` or :math:`(C_{out}, H_{out}, W_{out})`, where
+        - **output** (Tensor) - The output tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})`
+          or :math:`(C_{out}, H_{out}, W_{out})`, where
 
-        .. math::
-              H_{out} = (H_{in} - 1) \times \text{stride}[0] - 2 \times \text{padding}[0] + \text{dilation}[0]
-                        \times (\text{kernel_size}[0] - 1) + \text{output_padding}[0] + 1
-        .. math::
-              W_{out} = (W_{in} - 1) \times \text{stride}[1] - 2 \times \text{padding}[1] + \text{dilation}[1]
-                        \times (\text{kernel_size}[1] - 1) + \text{output_padding}[1] + 1
+          .. math::
+                H_{out} = (H_{in} - 1) \times \text{stride}[0] - 2 \times \text{padding}[0] + \text{dilation}[0]
+                          \times (\text{kernel_size}[0] - 1) + \text{output_padding}[0] + 1
+          .. math::
+                W_{out} = (W_{in} - 1) \times \text{stride}[1] - 2 \times \text{padding}[1] + \text{dilation}[1]
+                          \times (\text{kernel_size}[1] - 1) + \text{output_padding}[1] + 1
 
     Supported Platforms:
         ``Ascend``
 
     Examples:
-        >>> import mindspore as ms
-        >>> from mindspore import mint
+        >>> import mindspore
         >>> # With square kernels and equal stride
-        >>> m = mint.nn.ConvTranspose2d(16, 33, 3, stride=2)
+        >>> m = mindspore.mint.nn.ConvTranspose2d(16, 33, 3, stride=2)
         >>> # non-square kernels and unequal stride and with padding
-        >>> m = mint.nn.ConvTranspose2d(16, 33, (3, 5), stride=(2, 1), padding=(4, 2))
-        >>> input = mint.randn(20, 16, 50, 100)
+        >>> m = mindspore.mint.nn.ConvTranspose2d(16, 33, (3, 5), stride=(2, 1), padding=(4, 2))
+        >>> input = mindspore.mint.randn(20, 16, 50, 100)
         >>> output = m(input)
         >>> # exact output size can be also specified as an argument
-        >>> input = mint.randn(1, 16, 12, 12)
-        >>> downsample = mint.nn.Conv2d(16, 16, 3, stride=2, padding=1)
-        >>> upsample = mint.nn.ConvTranspose2d(16, 16, 3, stride=2, padding=1)
+        >>> input = mindspore.mint.randn(1, 16, 12, 12)
+        >>> downsample = mindspore.mint.nn.Conv2d(16, 16, 3, stride=2, padding=1)
+        >>> upsample = mindspore.mint.nn.ConvTranspose2d(16, 16, 3, stride=2, padding=1)
         >>> h = downsample(input)
         >>> h.shape
         (1, 16, 6, 6)

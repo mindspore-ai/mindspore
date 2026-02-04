@@ -12,7 +12,7 @@ mindspore.ops.CTCLossV2
 
     参数：
         - **blank** (int，可选) - 空白标签。默认值： ``0`` 。
-        - **reduction** (str，可选) - 指定应用于输出结果的规约计算方式。目前仅支持 ``'none'`` ，默认值： ``'none'`` 。
+        - **reduction** (str，可选) - 指定应用于输出结果的归约计算方式。目前仅支持 ``'none'`` ，默认值： ``'none'`` 。
         - **zero_infinity** (bool，可选) - 在损失无限大的时候，是否将无限损失和相关梯度置为零。默认值： ``False`` 。
 
     输入：

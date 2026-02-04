@@ -115,10 +115,7 @@ class Value : public Node {
    * \brief Get the description of this value.
    * \return The description.
    */
-  std::string ToString() const override {
-    return "%" + std::to_string(GetNodeId()) + " = Value[" + GetType()->GetName() + "](Name : " + name_ +
-           " Value : " + py::str(value_).cast<std::string>() + ")";
-  }
+  std::string ToString() const override;
 
  private:
   /// \brief The python object.

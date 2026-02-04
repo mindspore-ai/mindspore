@@ -21,15 +21,14 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include "include/backend/visible.h"
-#include "ir/device_type.h"
+#include "device_address/device_type.h"
 
 namespace mindspore {
 namespace dump {
 constexpr auto kMSHookEnable = "MS_HOOK_ENABLE";
 constexpr auto kEnable = "on";
 
-class BACKEND_EXPORT Adapter {
+class Adapter {
  public:
   Adapter() = default;
 
@@ -43,7 +42,7 @@ class BACKEND_EXPORT Adapter {
   virtual void Load() = 0;
 };
 
-class BACKEND_EXPORT AdapterManager {
+class AdapterManager {
  public:
   static AdapterManager &Instance();
 

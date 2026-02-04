@@ -1,7 +1,7 @@
 mindspore.ops.coo_sigmoid
 ==========================
 
-.. py:function:: mindspore.ops.coo_sigmoid(x: COOTensor)
+.. py:function:: mindspore.ops.coo_sigmoid(x)
 
     Sigmoid激活函数，对COOTensor逐元素计算Sigmoid激活函数。Sigmoid函数定义为：
 

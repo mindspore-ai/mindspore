@@ -27,7 +27,7 @@ from mindspore.ops import ReduceOp, cat
 from mindspore.common.tensor import Tensor
 from mindspore._c_expression import TensorPy as Tensor_
 from mindspore.ops.primitive import _primexpr
-from mindspore.common.api import _pynative_executor
+from mindspore.graph.api import _pynative_executor
 from mindspore.communication._comm_helper import (
     _destroy_group_helper,
     _get_rank_helper,
@@ -96,7 +96,7 @@ safe_builtins = {
 
 def get_cache_group_size(group=GlobalComm.WORLD_COMM_GROUP):
     """get cache group size."""
-    global _GROPU_SIZE_CACHE
+    global _GROPU_SIZE_CACHE # pylint: disable=global-variable-not-assigned
     if group not in _GROPU_SIZE_CACHE:
         _GROPU_SIZE_CACHE[group] = _get_size_helper(group)
     group_size = _GROPU_SIZE_CACHE[group]
@@ -105,7 +105,7 @@ def get_cache_group_size(group=GlobalComm.WORLD_COMM_GROUP):
 
 def get_cache_group_rank(group=GlobalComm.WORLD_COMM_GROUP):
     """get cache rank id."""
-    global _GROPU_RANK_CACHE
+    global _GROPU_RANK_CACHE # pylint: disable=global-variable-not-assigned
     if group not in _GROPU_RANK_CACHE:
         _GROPU_RANK_CACHE[group] = _get_rank_helper(group)
     group_rank = _GROPU_RANK_CACHE[group]
@@ -155,6 +155,7 @@ class TCPStore:
           which are reserved parameters and invalid settings.
         - The current TCPStore function is limited and only supports scenarios where the key is
           less than 4k and the value is less than 1G. Complex scenarios are to be supported.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         host_name (str): The hostname or IP Address the server store should run on.
@@ -185,17 +186,8 @@ class TCPStore:
         ``Ascend``
 
     Examples:
-        .. note::
-            Before running the following examples, you need to configure the communication environment variables.
-
-            For Ascend devices, it is recommended to use the msrun startup method
-            without any third-party or configuration file dependencies.
-            Please see the `msrun start up
-            <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
-            for more details.
-
         >>> from mindspore.mint.distributed import TCPStore
-        >>> store = TCPStore("127.0.0.1", 1234)
+        >>> store = TCPStore("127.0.0.1", 1234, is_master=True)
     """
 
     def __init__(self, host_name, port, world_size=None, is_master=False, timeout=timedelta(seconds=300),
@@ -271,17 +263,8 @@ class TCPStore:
             ``Ascend``
 
         Examples:
-            .. note::
-                Before running the following examples, you need to configure the communication environment variables.
-
-                For Ascend devices, it is recommended to use the msrun startup method
-                without any third-party or configuration file dependencies.
-                Please see the `msrun start up
-                <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
-                for more details.
-
             >>> from mindspore.mint.distributed import TCPStore
-            >>> store = TCPStore("127.0.0.1", 1234)
+            >>> store = TCPStore("127.0.0.1", 1234, is_master=True)
             >>> store.add("first_key", 1)
         """
         if not isinstance(key, str):
@@ -315,17 +298,8 @@ class TCPStore:
             ``Ascend``
 
         Examples:
-            .. note::
-                Before running the following examples, you need to configure the communication environment variables.
-
-                For Ascend devices, it is recommended to use the msrun startup method
-                without any third-party or configuration file dependencies.
-                Please see the `msrun start up
-                <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
-                for more details.
-
             >>> from mindspore.mint.distributed import TCPStore
-            >>> store = TCPStore("127.0.0.1", 1234)
+            >>> store = TCPStore("127.0.0.1", 1234, is_master=True)
             >>> store.set("first_key", "first_value")
         """
         if not isinstance(key, str):
@@ -361,17 +335,8 @@ class TCPStore:
             ``Ascend``
 
         Examples:
-            .. note::
-                Before running the following examples, you need to configure the communication environment variables.
-
-                For Ascend devices, it is recommended to use the msrun startup method
-                without any third-party or configuration file dependencies.
-                Please see the `msrun start up
-                <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
-                for more details.
-
             >>> from mindspore.mint.distributed import TCPStore
-            >>> store = TCPStore("127.0.0.1", 1234)
+            >>> store = TCPStore("127.0.0.1", 1234, is_master=True)
             >>> store.set("first_key", "first_value")
             >>> data = store.get("first_key")
             >>> print(data)
@@ -402,17 +367,8 @@ class TCPStore:
             ``Ascend``
 
         Examples:
-            .. note::
-                Before running the following examples, you need to configure the communication environment variables.
-
-                For Ascend devices, it is recommended to use the msrun startup method
-                without any third-party or configuration file dependencies.
-                Please see the `msrun start up
-                <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
-                for more details.
-
             >>> from mindspore.mint.distributed import TCPStore
-            >>> store = TCPStore("127.0.0.1", 1234)
+            >>> store = TCPStore("127.0.0.1", 1234, is_master=True)
             >>> store.set("first_key", "first_value")
             >>> # This should return true
             >>> store.delete_key("first_key")
@@ -430,7 +386,8 @@ def is_available():
     Checks if distributed module is available.
 
     Note:
-        Always returns `True` because MindSpore always has distributed ability on all platforms.
+        - Always returns `True` because MindSpore always has distributed ability on all platforms.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Returns:
         bool, whether this distributed module is available.
@@ -444,7 +401,7 @@ def is_available():
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -461,6 +418,9 @@ def is_initialized():
     """
     Checks if default process group has been initialized.
 
+    Note:
+        Only support PyNative mode, Graph mode is not currently supported.
+
     Returns:
         bool, whether the default process group has been initialized.
 
@@ -473,7 +433,7 @@ def is_initialized():
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -500,9 +460,10 @@ def init_process_group(backend="hccl",
     Init collective communication lib. And create a default collective communication group.
 
     Note:
-        This method isn't supported in GPU and CPU versions of MindSpore.
-        In Ascend hardware platforms, this API should be set before the definition of any Tensor and Parameter,
-        and the instantiation and execution of any operation and net.
+        - This method isn't supported in GPU and CPU versions of MindSpore.
+        - In Ascend hardware platforms, this API should be set before the definition of any Tensor and Parameter,
+          and the instantiation and execution of any operation and net.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         backend (str, optional): The backend to ues. Default is ``"hccl"`` and now only support hccl.
@@ -541,7 +502,7 @@ def init_process_group(backend="hccl",
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -595,6 +556,7 @@ def destroy_process_group(group=None):
     Note:
         - This method isn't supported in GPU and CPU versions of MindSpore.
         - This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         group (str, optional): The communication group to work on. Normally, the group should be created by
@@ -614,7 +576,7 @@ def destroy_process_group(group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -644,7 +606,8 @@ def get_rank(group=None):
     Get the rank ID for the current device in the specified collective communication group.
 
     Note:
-        This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
+        - This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         group (str, optional): The communication group to work on. Normally, the group should be created by
@@ -667,7 +630,7 @@ def get_rank(group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -701,7 +664,8 @@ def get_world_size(group=None):
     Get the rank size of the specified collective communication group.
 
     Note:
-        This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
+        - This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         group (str, optional): The communication group to work on. Normally, the group should be created by
@@ -724,7 +688,7 @@ def get_world_size(group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -764,7 +728,8 @@ def new_group(ranks=None,
     Create a new distributed group.
 
     Note:
-        This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
+        - This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         ranks (list[int], optional): List of ranks of group members. If ``None``,
@@ -810,7 +775,7 @@ def new_group(ranks=None,
             Before running the following examples, you need to configure the communication environment variables.
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -849,8 +814,9 @@ def get_backend(group=None):
     Get the backend of communication process groups.
 
     Note:
-        Only one communication backend is supported by MindSpore for each process.
-        It should be one of `hccl`/`nccl`/`mccl`. Currently only support hccl and mccl.
+        - The backend types include ``"hccl"``, ``"nccl"``, and ``"mccl"``.
+          Currently only support ``"hccl"`` and ``"mccl"``.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         group (str, optional): The communication group to work on.
@@ -871,7 +837,7 @@ def get_backend(group=None):
             Before running the following examples, you need to configure the communication environment variables.
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -903,7 +869,8 @@ def get_global_rank(group, group_rank):
     rank which id is 'group_rank' in the user group.
 
     Note:
-        This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
+        - This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         group (str): The communication group to work on. Normally, the group should
@@ -929,7 +896,7 @@ def get_global_rank(group, group_rank):
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -970,7 +937,8 @@ def get_group_rank(group, global_rank):
     the rank ID in the world communication group.
 
     Note:
-        This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
+        - This method should be used after :func:`mindspore.mint.distributed.init_process_group`.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         group (str): The communication group to work on. Normally, the group should be
@@ -994,7 +962,7 @@ def get_group_rank(group, global_rank):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1033,6 +1001,9 @@ def get_process_group_ranks(group=None):
     """
     Gets the ranks of the specific group and returns the process ranks in the communication group as a list.
 
+    Note:
+        Only support PyNative mode, Graph mode is not currently supported.
+
     Args:
         group (str, optional): The communication group to work on. Normally, the group should be created by
             :func:`mindspore.mint.distributed.new_group`. If ``None``, which means ``"hccl_world_group"`` in Ascend.
@@ -1055,7 +1026,7 @@ def get_process_group_ranks(group=None):
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1133,7 +1104,8 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
     returns the tensor which is all reduced.
 
     Note:
-        The tensors must have the same shape and format in all processes of the collection.
+        - The tensors must have the same shape and format in all processes of the collection.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         tensor (Tensor): The input and output tensor of collective. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -1162,7 +1134,7 @@ def all_reduce(tensor, op=ReduceOp.SUM, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1213,7 +1185,8 @@ def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=Fal
     Gathers tensors from the specified communication group and returns the tensor which is all gathered.
 
     Note:
-        The tensors must have the same shape and format in all processes of the collection.
+        - The tensors must have the same shape and format in all processes of the collection.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         output_tensor (Tensor): The output tensor to be all gathered into tensor.If the number of devices
@@ -1242,7 +1215,7 @@ def all_gather_into_tensor(output_tensor, input_tensor, group=None, async_op=Fal
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1298,6 +1271,7 @@ def all_gather_into_tensor_uneven(output, input, output_split_sizes=None, group=
     Note:
         - Input tensors must have identical shapes except for the first dimension.
         - Output tensor's first dimension should equal to the sum of all devices' input first dimensions.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         output (Tensor): Concatenated output tensor with shape :math:`(\sum_{i=0}^{N-1} x_{i1}, x_2, ..., x_R)`,
@@ -1327,7 +1301,7 @@ def all_gather_into_tensor_uneven(output, input, output_split_sizes=None, group=
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1343,9 +1317,9 @@ def all_gather_into_tensor_uneven(output, input, output_split_sizes=None, group=
         >>> ms.set_device(device_target="Ascend")
         >>> init_process_group()
         >>> if get_rank() == 0:
-        >>>     input_tensor = Tensor(np.ones([3, 4]).astype(np.float32))
-        >>> else:
-        >>>     input_tensor = Tensor(np.ones([2, 4]).astype(np.float32))
+        ...     input_tensor = Tensor(np.ones([3, 4]).astype(np.float32))
+        ... else:
+        ...     input_tensor = Tensor(np.ones([2, 4]).astype(np.float32))
         >>> out_tensor = Tensor(np.zeros([5, 4]).astype(np.float32))
         >>> output_split_sizes = [3, 2]
         >>> output = all_gather_into_tensor_uneven(out_tensor, input_tensor, output_split_sizes)
@@ -1382,7 +1356,8 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
     returns the tensor which is reduced and scattered.
 
     Note:
-        The tensors must have the same shape and format in all processes of the collection.
+        - The tensors must have the same shape and format in all processes of the collection.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         output(Tensor): the output tensor has the same dtype as `input_x` with a shape of :math:`(N/rank\_size, *)`
@@ -1414,7 +1389,7 @@ def reduce_scatter_tensor(output, input, op=ReduceOp.SUM, group=None, async_op=F
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1474,6 +1449,7 @@ def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=Reduc
     Note:
         - The input tensor must have identical shape and format across all processes.
         - The first dimension of input tensor should equal to the sum of `input_split_sizes`.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         output(Tensor): the output tensor has the same dtype as `input` with a shape of
@@ -1505,7 +1481,7 @@ def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=Reduc
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1521,9 +1497,9 @@ def reduce_scatter_tensor_uneven(output, input, input_split_sizes=None, op=Reduc
         >>> init_process_group()
         >>> input_tensor = Tensor(np.ones([5, 8]).astype(np.float32))
         >>> if get_rank() == 0:
-        >>>     output_tensor = Tensor(np.ones([2, 8]).astype(np.float32))
-        >>> else:
-        >>>     output_tensor = Tensor(np.ones([3, 8]).astype(np.float32))
+        ...     output_tensor = Tensor(np.ones([2, 8]).astype(np.float32))
+        ... else:
+        ...     output_tensor = Tensor(np.ones([3, 8]).astype(np.float32))
         >>> input_split_sizes = [2, 3]
         >>> output = reduce_scatter_tensor_uneven(output_tensor, input_tensor, input_split_sizes)
         >>> print(output_tensor)
@@ -1599,7 +1575,7 @@ def reduce(tensor, dst, op=ReduceOp.SUM, group=None, async_op=False):
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
 
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1653,7 +1629,8 @@ class P2POp:
     Object for `batch_isend_irecv` input, to store information of ``"isend"`` and ``"irecv"``.
 
     Note:
-        `tensor` will be modified in-place by final result when `op` is ``"irecv"``.
+        - `tensor` will be modified in-place by final result when `op` is ``"irecv"``.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         op(Union[str, function]): Only string of ``"isend"`` and ``"irecv"`` are allowed.
@@ -1757,7 +1734,7 @@ def batch_isend_irecv(p2p_op_list):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1794,7 +1771,7 @@ def batch_isend_irecv(p2p_op_list):
     remotes_ranks = []
     tags = []
     if not p2p_op_list:
-        raise TypeError(f"p2p_op_list can not be empty list.")
+        raise TypeError("p2p_op_list can not be empty list.")
     for _, p2p_op in enumerate(p2p_op_list):
         if not isinstance(p2p_op, P2POp):
             raise TypeError("The elements in p2p_op_list must be type of P2POp.")
@@ -1870,7 +1847,7 @@ def scatter_tensor(output_tensor, input_tensor, src=0, group=None, async_op=Fals
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1878,7 +1855,7 @@ def scatter_tensor(output_tensor, input_tensor, src=0, group=None, async_op=Fals
 
         >>> import mindspore as ms
         >>> from mindspore.mint.distributed import init_process_group
-        >>> from mindspore.communication.comm_func import scatter_tensor
+        >>> from mindspore.mint.distributed import scatter_tensor
         >>> import numpy as np
         >>> # Launch 2 processes.
         >>>
@@ -1959,7 +1936,7 @@ def gather_into_tensor(output_tensor, input_tensor, dst=0, group=None, async_op=
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -1970,7 +1947,7 @@ def gather_into_tensor(output_tensor, input_tensor, dst=0, group=None, async_op=
         >>> import mindspore.nn as nn
         >>> from mindspore.mint.distributed import init_process_group
         >>> from mindspore import Tensor
-        >>> from mindspore.communication.comm_func import gather_into_tensor
+        >>> from mindspore.mint.distributed import gather_into_tensor
         >>> # Launch 2 processes.
         >>>
         >>> init_process_group()
@@ -2049,7 +2026,7 @@ def broadcast(tensor, src, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2095,6 +2072,9 @@ def barrier(group=None, async_op=False, device_ids=None):
     all processes call this operation. After all processes finish calling the operations, the blocked processes
     will be woken and continue their task.
 
+    Note:
+        Only support PyNative mode, Graph mode is not currently supported.
+
     Args:
         group (str, optional): The communication group to work on. If ``None``, which means ``"hccl_world_group"`` in
             Ascend. Default: ``None``.
@@ -2118,14 +2098,14 @@ def barrier(group=None, async_op=False, device_ids=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
             This example should be run with 2 devices.
 
         >>> from mindspore.mint.distributed import init_process_group
-        >>> from mindspore.communication.comm_func import barrier
+        >>> from mindspore.mint.distributed import barrier
         >>> # Launch 2 processes.
         >>> init_process_group()
         >>> barrier()
@@ -2176,7 +2156,7 @@ def send(tensor, dst=0, group=None, tag=0):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2254,7 +2234,7 @@ def recv(tensor, src=0, group=None, tag=0):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2328,7 +2308,7 @@ def isend(tensor, dst=0, group=None, tag=0):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2409,7 +2389,7 @@ def irecv(tensor, src=0, group=None, tag=0):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2486,7 +2466,7 @@ def all_to_all(output_tensor_list, input_tensor_list, group=None, async_op=False
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2605,7 +2585,7 @@ def all_to_all_single(output,
     scatter and gather input with split size to/from all rank, and return result in a single tensor.
 
     Note:
-        - Only support PyNative mode, Graph mode is not currently supported.
+        Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         output (Tensor): the output tensor is gathered concatenated from remote ranks.
@@ -2636,7 +2616,7 @@ def all_to_all_single(output,
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2726,6 +2706,9 @@ def all_gather(tensor_list, tensor, group=None, async_op=False):
     """
     Gathers tensors from the specified communication group and returns the tensor list which is all gathered.
 
+    Note:
+        Only support PyNative mode, Graph mode is not currently supported.
+
     Args:
         tensor_list (list[Tensor]): Output list.
         tensor (Tensor): The input tensor to be all gathered into tensor.
@@ -2753,7 +2736,7 @@ def all_gather(tensor_list, tensor, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2809,6 +2792,9 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
     Reduces and scatters tensors from the specified communication group and
     returns the tensor which is reduced and scattered.
 
+    Note:
+        Only support PyNative mode, Graph mode is not currently supported.
+
     Args:
         output (Tensor): the output tensor.
         input_list (list[Tensor]): List of tensors to reduce and scatter.
@@ -2838,7 +2824,7 @@ def reduce_scatter(output, input_list, op=ReduceOp.SUM, group=None, async_op=Fal
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -2932,7 +2918,7 @@ def scatter(tensor, scatter_list, src=0, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3022,7 +3008,7 @@ def gather(tensor, gather_list, dst=0, group=None, async_op=False):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3116,7 +3102,7 @@ def scatter_object_list(scatter_object_output_list, scatter_object_input_list, s
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3141,7 +3127,7 @@ def scatter_object_list(scatter_object_output_list, scatter_object_input_list, s
             "but got 'group' type : {}.".format(type(group))
         )
     if not isinstance(scatter_object_output_list, list) or not scatter_object_output_list:
-        raise TypeError(f"The scatter_object_output_list can not be empty.")
+        raise TypeError("The scatter_object_output_list can not be empty.")
     if not isinstance(src, int):
         raise TypeError("For scatter_object_list, the src must be int")
     group_size = get_cache_group_size(group)
@@ -3208,7 +3194,7 @@ def gather_object(obj, object_gather_list=None, dst=0, group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3287,7 +3273,7 @@ def broadcast_object_list(object_list, src=0, group=None, device=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 
@@ -3313,12 +3299,13 @@ def broadcast_object_list(object_list, src=0, group=None, device=None):
     if not isinstance(src, int):
         raise TypeError("For broadcast_object_list, the src must be int")
     if not isinstance(object_list, list) or not object_list:
-        raise TypeError(f"The object_list can not be empty.")
+        raise TypeError("The object_list can not be empty.")
     rank_id = get_cache_group_rank()
     tensor_sizes = []
     tensor_list = []
     size = 0
     object_size_list = [Tensor([0], dtype=mstype.int32) for i in range(len(object_list))]
+    object_tensor = None
     if rank_id == src:
         tensor_list, tensor_sizes = zip(
             *[_object_to_tensor(obj) for obj in object_list]
@@ -3346,7 +3333,8 @@ def all_gather_object(object_list, obj, group=None):
     Aggregates Python objects in a specified communication group.
 
     Note:
-        Similar to :func:`mindspore.mint.distributed.all_gather`, but Python objects can be passed in.
+        - Similar to :func:`mindspore.mint.distributed.all_gather`, but Python objects can be passed in.
+        - Only support PyNative mode, Graph mode is not currently supported.
 
     Args:
         object_list (list[Any]): Output Python object list.
@@ -3368,7 +3356,7 @@ def all_gather_object(object_list, obj, group=None):
 
             For Ascend devices, it is recommended to use the msrun startup method
             without any third-party or configuration file dependencies.
-            Please see the `msrun start up
+            Please see the `msrun startup
             <https://www.mindspore.cn/tutorials/en/master/parallel/msrun_launcher.html>`_
             for more details.
 

@@ -874,7 +874,7 @@ def lstsq(A, B, rcond=None, driver=None):
         A (Tensor): LHS input tensor of shape :math:`(*, M, N)`, where :math:`*` is zero or more batch dimensions.
         B (Tensor): RHS input tensor of shape :math:`(*, M, K)`, where :math:`*` is zero or more batch dimensions.
         rcond (number.Number, optional): Not implemented now, Default is ``None``.
-        driver (string, optional): Which LAPACK driver is used to solve the least-squares problem.
+        driver (str, optional): Which LAPACK driver is used to solve the least-squares problem.
           Options are ``"gels"``, ``"gelsy"``, ``"gelss"``, ``"gelsd"``. Default is ``None`` (``"gelsy"``).
           if `A` is well-conditioned, ``"gels"`` is a good choice for full-rank matrix, and ``"gelsy"``
           for a general matrix. if `A` is not well-conditioned, ``"gelsd"`` works good, ``"gelss"``

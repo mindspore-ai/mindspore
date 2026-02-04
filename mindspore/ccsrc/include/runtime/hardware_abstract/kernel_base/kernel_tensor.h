@@ -31,14 +31,13 @@
 #include <functional>
 #include "abstract/abstract_value.h"
 #include "mindapi/base/format.h"
-#include "include/api/format.h"
 #include "include/backend/visible.h"
-#include "include/common/utils/utils.h"
+#include "include/utils/utils.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
 #include "ir/kernel_tensor_value.h"
 #include "runtime/hardware_abstract/visible.h"
-#include "ir/device_address.h"
+#include "device_address/device_address.h"
 
 namespace mindspore {
 namespace kernel {
@@ -142,40 +141,28 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
   KernelTensor(const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value);
 
   // Constructor of KernelTensor by device info.
-  KernelTensor(const DeviceAddressPtr &device_address, TypeId dtype_id, const ShapeVector &host_shape,
-               const UserDataPtr &user_data = nullptr);
+  KernelTensor(const DeviceAddressPtr &device_address, const TensorStorageInfoPtr &storage_info, TypeId dtype_id,
+               const ShapeVector &host_shape, const UserDataPtr &user_data = nullptr);
 
   // Constructor of KernelTensor by shape, type, value and device info.
-  KernelTensor(const DeviceAddressPtr &device_address, const abstract::BaseShapePtr &shape, const TypePtr &type,
-               const ValuePtr &value, void *device_ptr, size_t size, const std::string &format, TypeId dtype_id,
-               const ShapeVector &host_shape, const string &device_name, const UserDataPtr &user_data = nullptr);
+  KernelTensor(const DeviceAddressPtr &device_address, const TensorStorageInfoPtr &storage_info,
+               const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value, void *device_ptr,
+               size_t size, const std::string &format, TypeId dtype_id, const ShapeVector &host_shape,
+               const string &device_name, const UserDataPtr &user_data = nullptr);
 
-  // Constructor of KernelTensor by shape, type, value and device info.
-  KernelTensor(const DeviceAddressPtr &device_address, const abstract::BaseShapePtr &shape, const TypePtr &type,
-               const ValuePtr &value);
+  // Constructor of KernelTensor by shape, type, value storage info and device info.
+  KernelTensor(const DeviceAddressPtr &device_address, const TensorStorageInfoPtr &storage_info,
+               const abstract::BaseShapePtr &shape, const TypePtr &type, const ValuePtr &value);
 
-  explicit KernelTensor(const DeviceAddressPtr &device_address)
-      : KernelTensor(device_address, nullptr, nullptr, nullptr) {}
+  explicit KernelTensor(const DeviceAddressPtr &device_address, const TensorStorageInfoPtr &storage_info = nullptr)
+      : KernelTensor(device_address, storage_info, nullptr, nullptr, nullptr) {}
 
   KernelTensor(const KernelTensor &other);
   KernelTensor &operator=(const KernelTensor &) = delete;
 
   MS_DECLARE_PARENT(KernelTensor, AbstractBase);
 
-  std::string ToString() const {
-    std::stringstream ofs;
-    ofs << this << " shape:" << (GetShape() == nullptr ? "null" : GetShape()->ToString())
-        << " type:" << (GetType() == nullptr ? "null" : GetType()->ToString())
-        << " value:" << (value_ == nullptr ? "null" : value_->ToString());
-    ofs << " flag:" << flag_ << " user data:" << (user_data_ != nullptr)
-        << " need sync user data:" << need_sync_user_data_ << " managed by somas:" << managed_by_somas_;
-    ofs << "ref count:" << ref_cnt_->ToString();
-    if (device_address_ != nullptr) {
-      return ofs.str() + " device address:" + device_address_->ToString();
-    }
-    return ofs.str() + "device address:0";
-  }
-
+  std::string ToString() const;
   // Get the base shape for Tensor/Sequence/Scalar.
   abstract::BaseShapePtr GetShape() const override { return shape_; }
 
@@ -184,7 +171,7 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
   void SetShape(const abstract::BaseShapePtr &shape);
 
   // Get the shape vector for Tensor/Sequence/Scalar.
-  const ShapeVector &GetShapeVector() const { return device_address_->GetShapeVector(); }
+  const ShapeVector &GetShapeVector() const { return shape_vector_; }
 
   // Set the shape vector for Tensor/Sequence/Scalar.
   void SetShapeVector(const ShapeVector &shape_vector);
@@ -214,10 +201,10 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
   }
 
   // Get the data enum type id of the KernelTensor.
-  TypeId dtype_id() const { return device_address_->type_id(); }
+  TypeId dtype_id() const { return dtype_id_; }
 
   // Set the data enum type id of the KernelTensor.
-  void set_dtype_id(TypeId dtype_id) { device_address_->set_type_id(dtype_id); }
+  void set_dtype_id(TypeId dtype_id) { dtype_id_ = dtype_id; }
 
   // Set the value for the KernelTensor.
   void SetValue(const ValuePtr &value) { value_ = value; }
@@ -253,7 +240,7 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(host_info_->value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (device_address_->type_id() == kMetaTypeNone) {
+    if (dtype_id_ == kMetaTypeNone) {
       MS_LOG(DEBUG) << "None type has no valid scalar value.";
       return std::nullopt;
     }
@@ -283,7 +270,7 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
     std::lock_guard<std::mutex> lock(host_info_->value_mutex_);
 
     // There is a origin value in KernelTensor(maybe come from a ValueNode).
-    if (device_address_->type_id() == kMetaTypeNone) {
+    if (dtype_id_ == kMetaTypeNone) {
       MS_LOG(DEBUG) << "None type has no valid value for vector or string.";
       return std::nullopt;
     }
@@ -308,7 +295,7 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
   template <typename T, typename std::enable_if<!IsValidContainer<T>::value && !std::is_pointer_v<T> &&
                                                 !std::is_scalar<std::decay_t<T>>::value>::type * = nullptr>
   std::optional<T> GetValue() {
-    if (device_address_->type_id() == kMetaTypeNone) {
+    if (dtype_id_ == kMetaTypeNone) {
       MS_LOG(DEBUG) << "None type has no valid value.";
       return std::nullopt;
     }
@@ -376,6 +363,12 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
 
   // Set logical stream id.
   void set_stream_id(uint32_t stream_id) { device_address_->set_stream_id(stream_id); }
+
+  // Get logical stream id for memory alloc.
+  uint32_t alloc_stream_id() const { return alloc_stream_id_; }
+
+  // Set logical stream id for memory alloc.
+  void set_alloc_stream_id(uint32_t stream_id) { alloc_stream_id_ = stream_id; }
 
   // Get task id on stream.
   std::shared_ptr<int64_t> task_id_on_stream() const { return task_id_on_stream_; }
@@ -445,16 +438,8 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
   // max shape is only used in compute-depended ops
   ShapeVector GetMaxShape() const;
 
-  const TensorStorageInfoPtr tensor_storage_info() const { return device_address_->GetTensorStorageInfo(); }
-  void set_tensor_storage_info(const TensorStorageInfoPtr &storage_info) {
-    if (storage_info) {
-      auto ori_shape = storage_info->ori_shape;
-      auto type_size = GetTypeByte(TypeIdToType(dtype_id()));
-      storage_info->ori_size =
-        std::accumulate(ori_shape.begin(), ori_shape.end(), type_size, std::multiplies<size_t>());
-    }
-    device_address_->set_tensor_storage_info(storage_info);
-  }
+  const TensorStorageInfoPtr tensor_storage_info() const { return tensor_storage_info_; }
+  void set_tensor_storage_info(const TensorStorageInfoPtr &storage_info) { tensor_storage_info_ = storage_info; }
 
   size_t GetSize() const {
     MS_EXCEPTION_IF_NULL(device_address_);
@@ -577,6 +562,19 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
   // The kernel tensor flag.
   size_t flag_{0};
 
+  // The data enum type id of the KernelTensor.
+  TypeId dtype_id_{kTypeUnknown};
+  // The origin flatten shape vector for Tensor/Scalar/Tuple/List.
+  // 1. For Tensor type, means its shape. For example, a Tensor with shape (8, 16), shape_vector_ is {8, 16}.
+  // 2. For Scalar type, shape_vector_ is an empty ShapeVector, i.e. {}.
+  // 3. For Tuple/List (all elements must be Tensor with same shape or Scalar) type, the shape_vector_
+  // consists of the element number and the shape of element in Tuple/List. For example, if a Tuple of the structure
+  // ((8,16), (8,16)) contains two Tensors of shape (8, 16), then shape_vector_ is {2, 8, 16}, 2 means elements
+  // number in Tuple/List. A Tuple with a structure such as ((), ()) that contains two Scalar, the shape_vector_ of
+  // this Tuple is {2}.
+  ShapeVector shape_vector_{};
+  Format format_{Format::DEFAULT_FORMAT};
+
   UserDataPtr user_data_{nullptr};
   // Handler for sync data from user data.
   bool need_sync_user_data_{false};
@@ -584,11 +582,33 @@ class RUNTIME_HARDWARE_EXPORT KernelTensor : public AbstractBase {
   mutable std::mutex ptr_mutex_;
   bool managed_by_somas_{false};
   RefCountPtr ref_cnt_;
+  // stream id for memory alloc
+  uint32_t alloc_stream_id_{0};
+
+  // tensor storage info
+  TensorStorageInfoPtr tensor_storage_info_{nullptr};
 };
+
 using KernelTensorPtr = std::shared_ptr<KernelTensor>;
 using ContinuousKernelTensorsPtr = std::shared_ptr<std::vector<std::weak_ptr<KernelTensor>>>;
 
 }  // namespace kernel
+
+RUNTIME_HARDWARE_EXPORT bool SyncCopy(kernel::KernelTensor *const dst_kernel_tensor,
+                                      kernel::KernelTensor *const src_kernel_tensor, size_t stream_id);
+RUNTIME_HARDWARE_EXPORT bool SyncCopy(const tensor::TensorPtr &dst_tensor,
+                                      kernel::KernelTensor *const src_kernel_tensor, size_t stream_id);
+RUNTIME_HARDWARE_EXPORT bool SyncCopy(kernel::KernelTensor *const dst_kernel_tensor, tensor::Tensor *const src_tensor,
+                                      size_t stream_id);
+
+RUNTIME_HARDWARE_EXPORT bool AsyncCopy(kernel::KernelTensor *const dst_kernel_tensor,
+                                       kernel::KernelTensor *const src_kernel_tensor, size_t stream_id,
+                                       bool keep_src = true);
+RUNTIME_HARDWARE_EXPORT bool AsyncCopy(kernel::KernelTensor *const dst_kernel_tensor, tensor::Tensor *const src_tensor,
+                                       size_t stream_id, bool keep_src = true);
+RUNTIME_HARDWARE_EXPORT bool AsyncCopy(const tensor::TensorPtr &dst_tensor,
+                                       kernel::KernelTensor *const src_kernel_tensor, size_t stream_id,
+                                       bool keep_src = true);
 }  // namespace mindspore
 
 #endif  // MINDSPORE_OPS_KERNEL_KERNEL_TENSOR_H_

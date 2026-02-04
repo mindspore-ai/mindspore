@@ -25,25 +25,29 @@
 #include <algorithm>
 #include <numeric>
 #include <set>
+#include <unordered_map>
+#include <memory>
+#include <map>
+#include <string>
 
 #include "ir/tensor_new.h"
 #include "hccl/hccl.h"
-#include "utils/dlopen_macro.h"
-#include "runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
-#include "plugin/ascend/res_manager/mem_manager/ascend_memory_manager.h"
+#include "include/runtime/hardware_abstract/collective/collective_comm_lib_loader.h"
+#include "include/runtime/utils/runtime_conf/runtime_conf.h"
+#include "plugin/ascend/res_manager/mem_manager/ascend_memory_adapter.h"
 #include "plugin/ascend/res_manager/mem_manager/ascend_vmm_adapter.h"
 #include "plugin/ascend/res_manager/mbuf_manager/tensorreport_utils.h"
 #include "plugin/ascend/res_manager/device_context_conf/op_debug_conf.h"
 #include "plugin/ascend/res_manager/event/ascend_event.h"
 #include "plugin/ascend/res_manager/hccl_adapter/hccl_adapter.h"
 #include "plugin/ascend/res_manager/capture_graph/ascend_capture_graph.h"
+#include "plugin/ascend/res_manager/mem_manager/ascend_memory_pool.h"
 #include "plugin/ascend/res_manager/mem_manager/ascend_pin_mem_pool.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_compiler_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/acl_rt_symbol.h"
 #include "plugin/ascend/res_manager/symbol_interface/symbol_utils.h"
 #include "include/runtime/memory/mem_pool/mem_tracker.h"
-#include "include/backend/anf_runtime_algorithm.h"
-#include "tools/error_handler/error_config.h"
+#include "include/backend/common/kernel_graph/anf_runtime_algorithm.h"
 #include "utils/file_utils.h"
 #include "utils/distributed_meta.h"
 #include "graph/def_types.h"
@@ -52,25 +56,27 @@
 #include "plugin/ascend/res_manager/collective/multi_ascend_collective_comm_lib.h"
 #include "plugin/ascend/res_manager/collective/ascend_collective_comm_lib.h"
 #include "plugin/ascend/res_manager/collective/dummy_ascend_collective_comm_lib.h"
-#include "plugin/ascend/res_manager/error_manager/collective_comm_monitor.h"
 #ifdef ENABLE_INTERNAL_KERNELS
 #include "plugin/ascend/res_manager/collective/lowlatency_collective_comm_lib.h"
 #endif
 #include "plugin/ascend/res_manager/hal_manager/ascend_hal_manager.h"
 #include "pybind_api/gil_scoped_long_running.h"
-#include "include/common/convert_tensor_utils.h"
-#include "runtime/hardware_abstract/memory_manager/swap_manager.h"
+#include "mindspore/core/include/device_address/convert_tensor_utils.h"
+#include "include/backend/common/ms_device_shape_transfer.h"
+#include "include/runtime/hardware_abstract/memory_manager/swap_manager.h"
 #include "runtime/hardware_abstract/utils.h"
-#include "include/runtime/hardware_abstract/kernel_base/kernel_callback.h"
+#include "include/utils/callback.h"
 #include "plugin/ascend/res_manager/hal_manager/ascend_err_manager.h"
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
 namespace {
-constexpr uint32_t kDefaultHcclExecTimeout = 1800;
+// The default HCCL_EXEC_TIMEOUT value in CANN is 1836 seconds.
+constexpr uint32_t kDefaultHcclExecTimeout = 1836;
+constexpr size_t kAlignBytes = 32;
 
 // Register callbacks for collective methods.
 // These code should be deleted after collective so is extracted.
@@ -80,61 +86,14 @@ std::string GetCommName(const std::string &group) {
   }
   return AscendCollectiveCommLib::GetInstance().CommName(group);
 }
-REGISTER_KERNEL_CALLBACK(GetCommName);
+REGISTER_COMMON_CALLBACK(GetCommName);
 
 using Callback = std::function<void(void)>;
 typedef HcclResult (*HcclSetConfigFunc)(HcclConfig, HcclConfigValue);
 std::mutex set_opt_mutex;
-std::string GetAscendPath() {
-  Dl_info info;
-  if (dladdr(reinterpret_cast<void *>(aclrtMalloc), &info) == 0) {
-    MS_LOG(ERROR) << "Get dladdr failed.";
-    return "";
-  }
-  auto path_tmp = std::string(info.dli_fname);
-  const std::string kLatest = "latest";
-  auto pos = path_tmp.find(kLatest);
-  if (pos == std::string::npos) {
-    MS_EXCEPTION(ValueError)
-      << "Get ascend path failed, please check whether CANN packages are installed correctly, \n"
-         "and environment variables are set by source ${LOCAL_ASCEND}/ascend-toolkit/set_env.sh.";
-  }
-  return path_tmp.substr(0, pos) + kLatest + "/";
-}
-
-std::string GetCurrentDir() {
-#ifndef _WIN32
-  Dl_info dl_info;
-  if (dladdr(reinterpret_cast<void *>(GetCurrentDir), &dl_info) == 0) {
-    MS_LOG(WARNING) << "Get dladdr error";
-    return "";
-  }
-  std::string curr_so_path = dl_info.dli_fname;
-  return dirname(curr_so_path.data());
-#else
-  HMODULE hModule = nullptr;
-  if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-                        (LPCSTR)GetCurrentDir, &hModule) == 0) {
-    MS_LOG(WARNING) << "Get GetModuleHandleEx failed.";
-    return "";
-  }
-  char szPath[MAX_PATH];
-  if (GetModuleFileName(hModule, szPath, sizeof(szPath)) == 0) {
-    MS_LOG(WARNING) << "Get GetModuleFileName failed.";
-    return "";
-  }
-  std::string cur_so_path = std::string(szPath);
-  auto pos = cur_so_path.find_last_of("\\");
-  if (cur_so_path.empty() || pos == std::string::npos) {
-    MS_LOG(ERROR) << "Current so path empty or the path [" << cur_so_path << "] is invalid.";
-    return "";
-  }
-  return cur_so_path.substr(0, pos);
-#endif
-}
 
 void *GetAclFunc(const std::string &lib_path, const std::string &func_name) {
-  static auto ascend_path = GetAscendPath();
+  static auto ascend_path = device::ascend::GetAscendPath();
   auto load_path = ascend_path + "/lib64/" + lib_path;
 
   auto handler = dlopen(load_path.c_str(), RTLD_LAZY);
@@ -148,24 +107,6 @@ void *GetAclFunc(const std::string &lib_path, const std::string &func_name) {
     MS_LOG(INFO) << "Dlsym " << func_name << " from " << load_path << " failed!" << dlerror();
   }
   return func;
-}
-
-Format GetFormat(const tensor::TensorPtr &tensor) {
-  MS_EXCEPTION_IF_NULL(tensor);
-  auto format = Format::DEFAULT_FORMAT;
-  if (tensor->device_address() != nullptr) {
-    const auto temp_device_address = tensor->device_address();
-    auto const device_address = std::dynamic_pointer_cast<const DeviceAddress>(temp_device_address);
-    MS_EXCEPTION_IF_NULL(device_address);
-    if (device_address->GetDeviceType() != device::DeviceType::kCPU) {
-      auto const src_device_address = device_address;
-      format = FromStrToEnum(src_device_address->format());
-    } else {
-      auto cpu_tensor = tensor->cpu();
-      tensor->set_device_address(cpu_tensor->device_address());
-    }
-  }
-  return format;
 }
 
 void AclrtLaunchCallback(void *user_data) {
@@ -322,6 +263,22 @@ void SetPassthroughGeOptions(std::string option_level, OptionMap *options) {
     MS_LOG(INFO) << "Set ge " << option_level << " option: {" << key << ", " << value << "}";
   }
 }
+
+size_t GetCommonAlignSize(size_t input_size) {
+  return ((input_size + kMemAlignSize + kAlignBytes - 1) / kMemAlignSize) * kMemAlignSize;
+}
+
+size_t GetCommunicationAlignSize(size_t input_size) {
+  return ((input_size + kMemAlignSize - 1) / kMemAlignSize) * kMemAlignSize + kTwiceMemAlignSize;
+}
+
+bool IsContiguous(const DeviceAddressExtPtr &device_ext) {
+  if (device_ext == nullptr || device_ext->tensor_storage_info_ == nullptr) {
+    return true;
+  }
+  const auto &storage_info = device_ext->tensor_storage_info_;
+  return storage_info->is_contiguous && SizeOf(storage_info->shape) == SizeOf(storage_info->ori_shape);
+}
 }  // namespace
 
 std::function<CollectiveCommunicationLib *(void)> gLoadCollectiveCommLibCallback;
@@ -329,9 +286,9 @@ void RegisterLoadCollectiveCallback(const std::function<CollectiveCommunicationL
   gLoadCollectiveCommLibCallback = func;
 }
 
-void *PinMemoryAllocator::Alloc(size_t size, uint32_t) {
+void *PinMemoryAllocator::Alloc(size_t size, uint32_t stream_id) {
   MS_EXCEPTION_IF_NULL(swap_manager_);
-  auto host_ptr = swap_manager_->AllocHostMemory(size);
+  auto host_ptr = swap_manager_->AllocHostMemory(size, stream_id);
   if (host_ptr == nullptr) {
     MS_LOG(ERROR) << "Allocate pin memory failed, size: " << size;
   }
@@ -364,13 +321,7 @@ void AscendResManager::Initialize() {
   AscendHalManager::GetInstance().InitDevice(device_id_);
   AscendStreamMng::GetInstance().CreateDefaultStream();
 
-  if (!(IS_VLOG_ON(VL_RUNTIME_FRAMEWORK_MEMORY_ALLOCATE_CHECK))) {
-    mem_manager_ = std::make_shared<AscendMemoryManager>();
-  } else {
-    mem_manager_ = std::make_shared<EnhancedAscendMemoryManager>();
-  }
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->Initialize();
+  (void)AscendMemAdapter::GetInstance()->Initialize();
   swap_manager_ = std::make_shared<SwapManager>(kDefaultStreamIndex, &AscendMemoryPool::GetInstance(),
                                                 &AscendPinMemPool::GetInstance());
   // set timeout
@@ -398,7 +349,13 @@ void AscendResManager::Initialize() {
   // 310P does not contain the following interfaces
   if (ms_context->ascend_soc_version() != "ascend310p" && ms_context->ascend_soc_version() != "ascend310b") {
     const uint32_t reserve_time = 180;
-    uint32_t op_wait_timeout = notify_wait_timeout + reserve_time;
+    uint32_t op_wait_timeout;
+    if (notify_wait_timeout == 0) {
+      // If notify_wait_timeout is 0, op_wait_timeout should also be 0 to indicate no timeout.
+      op_wait_timeout = 0;
+    } else {
+      op_wait_timeout = notify_wait_timeout + reserve_time;
+    }
     device::ascend::AscendHalManager::GetInstance().SetOpWaitTimeout(op_wait_timeout);
     device::ascend::AscendHalManager::GetInstance().SetOpExecuteTimeOut(op_execute_timeout);
   }
@@ -406,6 +363,7 @@ void AscendResManager::Initialize() {
   enable_memory_tracker_ = device::tracker::MemTrackerManager::GetInstance().IsEnabled();
   pin_mem_allocator_ = std::make_shared<PinMemoryAllocator>(swap_manager_);
   shared_mem_allocator_ = SharedMemoryAllocator::getInstance();
+  symmetric_memory_allocator_ = SymmetricMemoryAllocator::GetInstance();
   initialized_ = true;
 }
 
@@ -439,9 +397,9 @@ void AscendResManager::Destroy() {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   // destroy hccl things
-  if (tools::TftConfig::GetInstance() != nullptr && (tools::TftConfig::GetInstance()->IsEnableWatchdog() ||
-                                                     tools::TftConfig::GetInstance()->IsEnableSaveHcclOpStatus())) {
-    device::ascend::HcclWatchDogManager::GetInstance().DestroyHandler();
+  static auto destroy_hccl_watchdog_all_handlers_cb = GET_COMMON_CALLBACK(DestroyWatchDogAllHandlers, void);
+  if (destroy_hccl_watchdog_all_handlers_cb != nullptr) {
+    destroy_hccl_watchdog_all_handlers_cb();
   }
 
   // DestroyHccl must be called before FreeDeviceMemory, watch_hccl_dog and hccl_adapter are in this function
@@ -452,12 +410,12 @@ void AscendResManager::Destroy() {
     MS_LOG(EXCEPTION) << "Fail to destroy all streams when reset device.";
   }
   // Release memory.
-  if (mem_manager_ != nullptr) {
-    mem_manager_->Finalize();
-    mem_manager_ = nullptr;
-  }
-
+  AscendMemoryPool::GetInstance().ReleaseDeviceRes();
+  (void)AscendMemAdapter::GetInstance()->DeInitialize();
   (void)ErrorManagerAdapter::Finalize();
+
+  // Finalize symmetric memory manager.
+  symmetric_memory_allocator_->FinalizeSymmetricMemoryManager();
 
   // All unmap/free operations will fail after calling aclrtResetDevice in ResetDevice,
   // so it must be called before that.
@@ -466,12 +424,12 @@ void AscendResManager::Destroy() {
 
   initialized_ = false;
 }
+void AscendResManager::ResetDynamicMemory() { AscendMemAdapter::GetInstance()->ResetDynamicMemory(); }
 
-bool AscendResManager::IsEnableVmm() const { return AscendVmmAdapter::GetInstance().IsEnabled(); }
+bool AscendResManager::IsEnableVmm() const { return AscendVmmAdapter::IsEnabled(); }
 
 bool AscendResManager::AllocateMemory(DeviceAddress *const &address, uint32_t stream_id) const {
   MS_EXCEPTION_IF_NULL(address);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
 
   if (address->device_pointer()->ptr() != nullptr) {
     MS_LOG(ERROR) << "Memory leak detected in device address:" << address->ToString();
@@ -487,8 +445,9 @@ bool AscendResManager::AllocateMemory(DeviceAddress *const &address, uint32_t st
   if (MS_UNLIKELY(allocator != nullptr)) {
     device_ptr = allocator->Alloc(address->GetSize(), stream_id);
   } else {
-    device_ptr = mem_manager_->MallocMemFromMemPool(address->GetSize(), address->from_persistent_mem(),
-                                                    address->need_recycle(), stream_id);
+    auto align_size = GetCommonAlignSize(address->GetSize());
+    device_ptr = AscendMemoryPool::GetInstance().AllocTensorMem(align_size, address->from_persistent_mem(),
+                                                                address->need_recycle(), stream_id);
   }
 
   if (!device_ptr) {
@@ -504,21 +463,17 @@ bool AscendResManager::AllocateMemory(DeviceAddress *const &address, uint32_t st
 }
 void *AscendResManager::AllocateMemory(size_t size, uint32_t stream_id) const {
   AscendHalManager::GetInstance().SetContext(device_id_);
-
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->MallocMemFromMemPool(size, false, false, stream_id);
+  auto align_size = GetCommonAlignSize(size);
+  return AscendMemoryPool::GetInstance().AllocTensorMem(align_size, false, false, stream_id);
 }
 
-void *AscendResManager::AllocateStaticMemory(size_t size, uint32_t stream_id) const {
+void *AscendResManager::AllocateMemory(size_t size, bool from_persistent_mem, bool need_recycle, uint32_t stream_id) {
   AscendHalManager::GetInstance().SetContext(device_id_);
-
-  return mem_manager_->MallocMemFromMemPool(size, true, false, stream_id);
+  auto align_size = GetCommonAlignSize(size);
+  return AscendMemoryPool::GetInstance().AllocTensorMem(align_size, from_persistent_mem, need_recycle, stream_id);
 }
 
-size_t AscendResManager::GetMaxUsedMemorySize() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetMaxUsedMemorySize();
-}
+size_t AscendResManager::GetMaxUsedMemorySize() const { return AscendMemoryPool::GetInstance().GetMaxUsedMemSize(); }
 
 void AscendResManager::FreeMemory(DeviceAddress *const &address) const {
   MS_EXCEPTION_IF_NULL(address);
@@ -543,10 +498,19 @@ void AscendResManager::FreeMemory(DeviceAddress *const &address) const {
   address->set_ptr(nullptr);
 }
 
+bool AscendResManager::IsNotEventUsedMemory(DeviceAddress *const &address) const {
+  MS_EXCEPTION_IF_NULL(address);
+  void *device_ptr = address->GetMutablePtr();
+  auto allocator = address->allocator();
+  if (MS_UNLIKELY(allocator != nullptr)) {
+    return true;
+  }
+  return AscendMemoryPool::GetInstance().IsNotEventUsedTensorMem(device_ptr);
+}
+
 void AscendResManager::FreeMemory(void *ptr) const {
   MS_EXCEPTION_IF_NULL(ptr);
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  mem_manager_->FreeMemFromMemPool(ptr);
+  AscendMemoryPool::GetInstance().FreeTensorMem(ptr);
 }
 
 void AscendResManager::FreePartMemorys(const std::vector<void *> &free_addrs, const std::vector<void *> &keep_addrs,
@@ -557,138 +521,146 @@ void AscendResManager::FreePartMemorys(const std::vector<void *> &free_addrs, co
 void AscendResManager::DefragMemory() { AscendMemoryPool::GetInstance().DefragMemory(); }
 
 // Relevant function to manage memory statistics
-size_t AscendResManager::GetTotalMemStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetTotalMemStatistics();
-}
+size_t AscendResManager::GetTotalMemStatistics() const { return AscendMemoryPool::GetInstance().TotalMemStatistics(); }
 
 size_t AscendResManager::GetTotalUsedMemStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetTotalUsedMemStatistics();
+  return AscendMemoryPool::GetInstance().TotalUsedMemStatistics();
 }
 
 size_t AscendResManager::GetTotalIdleMemStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetTotalIdleMemStatistics();
+  return AscendMemoryPool::GetInstance().TotalIdleMemStatistics();
 }
 
 size_t AscendResManager::GetTotalEagerFreeMemStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetTotalEagerFreeMemStatistics();
+  return AscendMemoryPool::GetInstance().TotalEagerFreeMemStatistics();
 }
 
 size_t AscendResManager::GetUsedMemPeakStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetUsedMemPeakStatistics();
+  return AscendMemoryPool::GetInstance().MaxMemAllocatedStatistics();
 }
 
 size_t AscendResManager::GetReservedMemPeakStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetReservedMemPeakStatistics();
+  return AscendMemoryPool::GetInstance().MaxMemReservedStatistics();
 }
 
 std::unordered_map<std::string, std::size_t> AscendResManager::GetBlockCountsStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetBlockCountsStatistics();
+  return AscendMemoryPool::GetInstance().BlockCountsStatistics();
 }
 
 std::unordered_map<std::string, std::size_t> AscendResManager::GetBlockUnitSizeStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetBlockUnitSizeStatistics();
+  return AscendMemoryPool::GetInstance().BlockUnitSizeStatistics();
 }
 
 DeviceMemInfo AscendResManager::GetCommonMemBlocksInfoStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetCommonMemBlocksInfoStatistics();
+  return AscendMemoryPool::GetInstance().CommonMemBlocksInfoStatistics();
 }
 
 DeviceMemInfo AscendResManager::GetPersistentMemBlocksInfoStatistics() const {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  return mem_manager_->GetPersistentMemBlocksInfoStatistics();
+  return AscendMemoryPool::GetInstance().PersistentMemBlocksInfoStatistics();
 }
 
 void AscendResManager::ResetMaxMemoryReserved() {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  auto memory_pool = mem_manager_->GetMemoryPool();
+  auto memory_pool = GetMemoryPool();
   MS_EXCEPTION_IF_NULL(memory_pool);
   memory_pool->ResetMaxMemReserved();
 }
 
 void AscendResManager::ResetMaxMemoryAllocated() {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  auto memory_pool = mem_manager_->GetMemoryPool();
+  auto memory_pool = GetMemoryPool();
   MS_EXCEPTION_IF_NULL(memory_pool);
   memory_pool->ResetMaxMemAllocated();
 }
 
 size_t AscendResManager::EmptyCache() {
-  MS_EXCEPTION_IF_NULL(mem_manager_);
-  auto memory_pool = mem_manager_->GetMemoryPool();
+  auto memory_pool = GetMemoryPool();
   MS_EXCEPTION_IF_NULL(memory_pool);
   return memory_pool->EmptyCache();
 }
 
 void AscendResManager::SwapIn(const void *host_ptr, void *device_ptr, size_t mem_size, void *stream) {
-  (void)mem_manager_->SwapIn(host_ptr, device_ptr, mem_size, stream);
+  if (stream == nullptr) {
+    auto ret_rt_memcpy =
+      CALL_ASCEND_API(aclrtMemcpy, device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE);
+    if (ret_rt_memcpy != ACL_SUCCESS) {
+      MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpy failed.";
+    }
+  } else {
+    auto ret_rt_memcpy =
+      CALL_ASCEND_API(aclrtMemcpyAsync, device_ptr, mem_size, host_ptr, mem_size, ACL_MEMCPY_HOST_TO_DEVICE, stream);
+    if (ret_rt_memcpy != ACL_SUCCESS) {
+      MS_EXCEPTION(DeviceProcessError) << "SwapIn aclrtMemcpyAsync failed.";
+    }
+    if (CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream, -1) != ACL_SUCCESS) {
+      MS_EXCEPTION(DeviceProcessError) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
+    }
+  }
 }
 
 void AscendResManager::SwapOut(const void *device_ptr, void *host_ptr, size_t mem_size, void *stream) {
-  (void)mem_manager_->SwapOut(device_ptr, host_ptr, mem_size, stream);
+  if (stream == nullptr) {
+    auto ret_rt_memcpy =
+      CALL_ASCEND_API(aclrtMemcpy, host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST);
+    if (ret_rt_memcpy != ACL_SUCCESS) {
+      MS_EXCEPTION(DeviceProcessError) << "SwapOut aclrtMemcpy failed.";
+    }
+  } else {
+    auto ret_rt_memcpy =
+      CALL_ASCEND_API(aclrtMemcpyAsync, host_ptr, mem_size, device_ptr, mem_size, ACL_MEMCPY_DEVICE_TO_HOST, stream);
+    if (ret_rt_memcpy != ACL_SUCCESS) {
+      MS_EXCEPTION(DeviceProcessError) << "SwapOut aclrtMemcpyAsync failed.";
+    }
+    if (CALL_ASCEND_API(aclrtSynchronizeStreamWithTimeout, stream, -1) != ACL_SUCCESS) {
+      MS_EXCEPTION(DeviceProcessError) << "Call runtime aclrtSynchronizeStreamWithTimeout error.";
+    }
+  }
 }
 
 std::vector<void *> AscendResManager::AllocateContinuousMemory(const std::vector<size_t> &size_list,
                                                                uint32_t stream_id) const {
   AscendHalManager::GetInstance().SetContext(device_id_);
 
-  MS_EXCEPTION_IF_NULL(mem_manager_);
   std::vector<size_t> aligned_size_list;
   for (auto size : size_list) {
-    auto align_size = device::MemoryManager::GetCommonAlignSize(size);
+    auto align_size = GetCommonAlignSize(size);
     aligned_size_list.emplace_back(align_size);
   }
-  return mem_manager_->MallocContinuousMemFromMemPool(aligned_size_list, stream_id);
-}
-
-DeviceAddressPtr AscendResManager::CreateDeviceAddress() const {
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  auto device_address = std::make_shared<DeviceAddress>(nullptr, 0, kAscendDevice);
-  device_address->SetDeviceType(device::GetDeviceTypeByName(ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET)));
-  return device_address;
-}
-
-DeviceAddressPtr AscendResManager::CreateDeviceAddress(void *ptr, size_t size, const ShapeVector &shape_vector,
-                                                       const Format &format, TypeId type_id,
-                                                       const std::string &device_name, uint32_t stream_id) const {
-  auto device_address =
-    std::make_shared<DeviceAddress>(ptr, size, shape_vector, format, type_id, kAscendDevice, stream_id);
-  return device_address;
+  return AscendMemoryPool::GetInstance().AllocContinuousTensorMem(aligned_size_list, stream_id);
 }
 
 bool AscendResManager::SyncCopy(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync,
-                                size_t stream_id) const {
+                                size_t stream_id, const DeviceAddressExtPtr &src_ext,
+                                const DeviceAddressExtPtr &dst_ext) const {
   MS_EXCEPTION_IF_NULL(dst_device_sync);
   MS_EXCEPTION_IF_NULL(src_device_sync);
+  MS_LOG(DEBUG) << "Sync copy from device address:" << src_device_sync->ToString()
+                << " src ext:" << (src_ext == nullptr ? " null" : src_ext->ToString())
+                << " to:" << dst_device_sync->ToString()
+                << " dst ext:" << (dst_ext == nullptr ? " null" : dst_ext->ToString()) << " stream id:" << stream_id;
   if (dst_device_sync->GetDeviceType() == DeviceType::kAscend && src_device_sync->GetDeviceType() == DeviceType::kCPU) {
-    return SyncHostToDevice(dst_device_sync, src_device_sync, stream_id);
+    return SyncHostToDevice(dst_device_sync, src_device_sync, stream_id, src_ext, dst_ext);
   }
   if (dst_device_sync->GetDeviceType() == DeviceType::kCPU && src_device_sync->GetDeviceType() == DeviceType::kAscend) {
-    return SyncDeviceToHost(dst_device_sync, src_device_sync, stream_id);
+    return SyncDeviceToHost(dst_device_sync, src_device_sync, stream_id, src_ext, dst_ext);
   }
-  return SyncDeviceToDevice(dst_device_sync, src_device_sync, stream_id);
+  return SyncDeviceToDevice(dst_device_sync, src_device_sync, stream_id, src_ext, dst_ext);
 }
 
 bool AscendResManager::AsyncCopy(const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync,
-                                 size_t stream_id, bool keep_src) const {
+                                 size_t stream_id, bool keep_src, const DeviceAddressExtPtr &src_ext,
+                                 const DeviceAddressExtPtr &dst_ext) const {
   MS_EXCEPTION_IF_NULL(dst_device_sync);
   MS_EXCEPTION_IF_NULL(src_device_sync);
+  MS_LOG(DEBUG) << "Sync copy from device address:" << src_device_sync->ToString()
+                << " src ext:" << (src_ext == nullptr ? " null" : src_ext->ToString())
+                << " to:" << dst_device_sync->ToString()
+                << " dst ext:" << (dst_ext == nullptr ? " null" : dst_ext->ToString()) << " stream id:" << stream_id;
   if (dst_device_sync->GetDeviceType() == DeviceType::kAscend && src_device_sync->GetDeviceType() == DeviceType::kCPU) {
-    return AsyncHostToDevice(dst_device_sync, src_device_sync, stream_id, keep_src);
+    return AsyncHostToDevice(dst_device_sync, src_device_sync, stream_id, keep_src, src_ext, dst_ext);
   }
   if (dst_device_sync->GetDeviceType() == DeviceType::kCPU && src_device_sync->GetDeviceType() == DeviceType::kAscend) {
-    return AsyncDeviceToHost(dst_device_sync, src_device_sync, stream_id);
+    return AsyncDeviceToHost(dst_device_sync, src_device_sync, stream_id, src_ext, dst_ext);
   }
-  return AsyncDeviceToDevice(dst_device_sync, src_device_sync, stream_id);
+  return AsyncDeviceToDevice(dst_device_sync, src_device_sync, stream_id, src_ext, dst_ext);
 }
 
 namespace {
@@ -696,12 +668,9 @@ bool SyncStreamForCopy(const AscendResManager *const res_manager, size_t stream_
   MS_EXCEPTION_IF_NULL(res_manager);
   bool ret = res_manager->SyncStream(stream_id);
   if (!ret) {
-    MS_LOG(WARNING) << "Uce flag: " << UCEException::GetInstance().get_uce_flag()
-                    << ", force stop flag: " << UCEException::GetInstance().get_force_stop_flag();
-    if (UCEException::GetInstance().get_uce_flag()) {
-      MS_LOG(EXCEPTION) << "UCEError occurs when execute.";
-    } else if (UCEException::GetInstance().get_force_stop_flag()) {
-      MS_LOG(EXCEPTION) << "ForceStopError occurs when execute.";
+    auto sync_copy_fail_cb = GET_COMMON_CALLBACK(SyncCopyFailCallback, void);
+    if (sync_copy_fail_cb != nullptr) {
+      sync_copy_fail_cb();
     }
     MS_LOG(EXCEPTION) << "Sync stream error!";
   }
@@ -710,25 +679,51 @@ bool SyncStreamForCopy(const AscendResManager *const res_manager, size_t stream_
 }
 }  // namespace
 
+DynamicMemPool *AscendResManager::GetMemoryPool() {
+  if (MS_UNLIKELY(memory_pool_ == nullptr)) {
+    memory_pool_ = &AscendMemoryPool::GetInstance();
+  }
+  return memory_pool_;
+}
+
+uint8_t *AscendResManager::MallocDynamicMem(size_t size, bool communication_mem) {
+  size_t align_size = 0;
+  if (communication_mem) {
+    align_size = GetCommunicationAlignSize(size);
+  } else {
+    align_size = GetCommonAlignSize(size);
+  }
+  MS_LOG(INFO) << "Malloc Memory for Dynamic: size[" << align_size << "] communication_mem: " << communication_mem;
+
+  uint8_t *alloc_address = AscendMemAdapter::GetInstance()->MallocDynamicDevMem(align_size);
+  MS_EXCEPTION_IF_NULL(alloc_address);
+  // create protect area [kMemAlignSize -- data -- kMemAlignSize] for communication node memory
+  return communication_mem ? alloc_address + kMemAlignSize : alloc_address;
+}
+
 bool AscendResManager::SyncDeviceToHost(const DeviceAddressPtr &dst_device_sync,
-                                        const DeviceAddressPtr &src_device_sync, size_t stream_id) const {
-  if (!AsyncDeviceToHost(dst_device_sync, src_device_sync, stream_id)) {
+                                        const DeviceAddressPtr &src_device_sync, size_t stream_id,
+                                        const DeviceAddressExtPtr &src_ext, const DeviceAddressExtPtr &dst_ext) const {
+  if (!AsyncDeviceToHost(dst_device_sync, src_device_sync, stream_id, src_ext, dst_ext)) {
     return false;
   }
   return SyncStreamForCopy(this, stream_id);
 }
 
 bool AscendResManager::SyncHostToDevice(const DeviceAddressPtr &dst_device_sync,
-                                        const DeviceAddressPtr &src_device_sync, size_t stream_id) const {
-  if (!AsyncHostToDevice(dst_device_sync, src_device_sync, stream_id, false)) {
+                                        const DeviceAddressPtr &src_device_sync, size_t stream_id,
+                                        const DeviceAddressExtPtr &src_ext, const DeviceAddressExtPtr &dst_ext) const {
+  if (!AsyncHostToDevice(dst_device_sync, src_device_sync, stream_id, false, src_ext, dst_ext)) {
     return false;
   }
   return SyncStreamForCopy(this, stream_id);
 }
 
 bool AscendResManager::SyncDeviceToDevice(const DeviceAddressPtr &dst_device_sync,
-                                          const DeviceAddressPtr &src_device_sync, size_t stream_id) const {
-  if (!AsyncDeviceToDevice(dst_device_sync, src_device_sync, stream_id)) {
+                                          const DeviceAddressPtr &src_device_sync, size_t stream_id,
+                                          const DeviceAddressExtPtr &src_ext,
+                                          const DeviceAddressExtPtr &dst_ext) const {
+  if (!AsyncDeviceToDevice(dst_device_sync, src_device_sync, stream_id, src_ext, dst_ext)) {
     return false;
   }
   return SyncStreamForCopy(this, stream_id);
@@ -785,25 +780,26 @@ std::lock_guard<std::mutex> LockRuntime(const void *stream) {
   return std::lock_guard<std::mutex>(*stream_mtx);
 }
 
-const std::set<std::string> op_need_trans_format = {
-  kOpFormat_NHWC,    kOpFormat_HWCN,        kOpFormat_NC1HWC0,       kOpFormat_FRAC_Z,   kOpFormat_C1HWNCoC0,
-  kOpFormat_FRAC_NZ, kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
+const std::set<Format> op_need_trans_format = {
+  Format::NHWC,       Format::HWCN,        Format::NC1HWC0,       Format::FRACTAL_Z, Format::C1HWNCoC0,
+  Format::FRACTAL_NZ, Format::NC1HWC0_C04, Format::FRACTAL_Z_C04, Format::NDC1HWC0,  Format::FRACTAL_Z_3D};
 
-ShapeVector GetDeviceShape(ShapeVector *host_shape, const DeviceAddress *src_device_address) {
+ShapeVector GetDeviceShape(ShapeVector *host_shape, const DeviceAddress *src_device_address,
+                           const DeviceAddressExtPtr &src_ext) {
   MS_EXCEPTION_IF_NULL(host_shape);
   ShapeVector device_shape;
   auto node_index = src_device_address->GetNodeIndex();
-  if (src_device_address->format() == kOpFormat_FRAC_NZ || src_device_address->format() == kOpFormat_NCDHW) {
-    device_shape = trans::TransShapeToDevice(*host_shape, src_device_address->format(), node_index.first,
-                                             node_index.second, src_device_address->type_id());
+  if (src_ext->format_ == Format::FRACTAL_NZ || src_ext->format_ == Format::NCDHW) {
+    device_shape = trans::TransShapeToDevice(*host_shape, kernel::GetFormatFromEnumToStr(src_ext->format_),
+                                             node_index.first, node_index.second, src_ext->dtype_id_);
   } else {
-    if (!src_device_address->GetShapeVector().empty()) {
+    if (!src_ext->shape_vector_.empty()) {
       host_shape->clear();
-      *host_shape = src_device_address->GetShapeVector();
+      *host_shape = src_ext->shape_vector_;
     }
-    *host_shape = trans::PaddingShape(*host_shape, src_device_address->format());
-    device_shape = trans::TransShapeToDevice(*host_shape, src_device_address->format(), node_index.first,
-                                             node_index.second, src_device_address->type_id());
+    *host_shape = trans::PaddingShape(*host_shape, kernel::GetFormatFromEnumToStr(src_ext->format_));
+    device_shape = trans::TransShapeToDevice(*host_shape, kernel::GetFormatFromEnumToStr(src_ext->format_),
+                                             node_index.first, node_index.second, src_ext->dtype_id_);
   }
   return device_shape;
 }
@@ -842,6 +838,8 @@ bool AscendResManager::CopyDirectly(void *dst, size_t dst_size, const void *src,
 
 bool AscendResManager::BaseCopy(void *dst, const void *src, uint64_t size, aclrtMemcpyKind kind, size_t stream_id,
                                 const DeviceAddressPtr src_device_sync) const {
+  MS_LOG(DEBUG) << "Copy from:" << src << " to:" << dst << " size:" << size << " kind:" << kind
+                << " stream id:" << stream_id << " src device sync:" << src_device_sync;
   if (size == 0 || common::IsCompileSimulation()) {
     return true;
   }
@@ -858,7 +856,7 @@ bool AscendResManager::BaseCopy(void *dst, const void *src, uint64_t size, aclrt
   auto ret_rt_memcpy = CALL_ASCEND_API(aclrtMemcpyAsync, dst, size, src, size, kind, stream);
   if (ret_rt_memcpy != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Call runtime rtMemcpyAsync error, src ptr:" << src << " dst ptr:" << dst << " size:" << size
-                  << " stream id:" << stream_id;
+                  << " kind:" << kind << " stream id:" << stream_id << " ret:" << ret_rt_memcpy;
     return false;
   }
 
@@ -879,10 +877,12 @@ bool AscendResManager::BaseCopy(void *dst, const void *src, uint64_t size, aclrt
 }
 
 bool AscendResManager::CopyDeviceToHostForDiffFormat(const DeviceAddress *dst_device_address,
-                                                     const DeviceAddress *src_device_address, size_t stream_id) const {
+                                                     const DeviceAddress *src_device_address, size_t stream_id,
+                                                     const DeviceAddressExtPtr &src_ext,
+                                                     const DeviceAddressExtPtr &dst_ext) const {
   MS_LOG(DEBUG) << "Copy device to host for different format, src device address:" << src_device_address->ToString()
                 << " dst device address:" << dst_device_address->ToString() << " stream id:" << stream_id;
-  const auto &src_format = src_device_address->format();
+  const auto &src_format = src_ext->format_;
   if (op_need_trans_format.find(src_format) == op_need_trans_format.end()) {
     MS_LOG(ERROR) << "Can not find format transfer function for format:" << src_format
                   << " in device address:" << src_device_address->ToString();
@@ -901,18 +901,18 @@ bool AscendResManager::CopyDeviceToHostForDiffFormat(const DeviceAddress *dst_de
     return false;
   }
   // Trans shape.
-  ShapeVector host_shape = dst_device_address->GetShapeVector();
+  ShapeVector host_shape = dst_ext->shape_vector_;
   if (host_shape.empty()) {
     (void)host_shape.emplace_back(1);
   }
-  auto device_shape = GetDeviceShape(&host_shape, src_device_address);
-  MS_LOG(DEBUG) << "Host shape:" << host_shape << " device shape:" << device_shape
-                << " format:" << src_device_address->format();
+  auto device_shape = GetDeviceShape(&host_shape, src_device_address, src_ext);
+  MS_LOG(DEBUG) << "Host shape:" << host_shape << " device shape:" << device_shape << " format:" << src_ext->format_;
   auto node_index = src_device_address->GetNodeIndex();
-  if (src_device_address->type_id() == dst_device_address->type_id()) {
-    const trans::FormatArgs format_args{
-      host_tmp.data(), src_device_address->GetSize(), kOpFormat_NCHW, src_device_address->format(), host_shape,
-      device_shape,    src_device_address->type_id()};
+  if (src_ext->dtype_id_ == dst_ext->dtype_id_) {
+    const trans::FormatArgs format_args{host_tmp.data(),   src_device_address->GetSize(),
+                                        kOpFormat_NCHW,    kernel::GetFormatFromEnumToStr(src_ext->format_),
+                                        host_shape,        device_shape,
+                                        src_ext->dtype_id_};
     if (!trans::TransFormatFromDeviceToHost(format_args, dst_device_address->GetDevicePtr(), node_index.first,
                                             node_index.second)) {
       MS_LOG(ERROR) << "Trans format failed for dst device tensor:" << dst_device_address->ToString();
@@ -920,17 +920,18 @@ bool AscendResManager::CopyDeviceToHostForDiffFormat(const DeviceAddress *dst_de
     }
     return true;
   }
-  const trans::FormatArgs format_args{
-    host_tmp.data(), src_device_address->GetSize(), kOpFormat_NCHW, src_device_address->format(), host_shape,
-    device_shape,    src_device_address->type_id()};
+  const trans::FormatArgs format_args{host_tmp.data(),   src_device_address->GetSize(),
+                                      kOpFormat_NCHW,    kernel::GetFormatFromEnumToStr(src_format),
+                                      host_shape,        device_shape,
+                                      src_ext->dtype_id_};
   auto trans_format_host = std::vector<uint8_t>(src_device_address->GetSize());
   if (!trans::TransFormatFromDeviceToHost(format_args, trans_format_host.data(), node_index.first, node_index.second)) {
     MS_LOG(ERROR) << "Trans format failed for dst device tensor:" << dst_device_address->ToString();
     return false;
   }
   auto shape_size = abstract::ShapeSize(host_shape);
-  const trans::TypeIdArgs type_args{trans_format_host.data(), shape_size, src_device_address->type_id(),
-                                    dst_device_address->type_id(), dst_device_address->GetSize()};
+  const trans::TypeIdArgs type_args{trans_format_host.data(), shape_size, src_ext->dtype_id_, dst_ext->dtype_id_,
+                                    dst_device_address->GetSize()};
   if (!trans::TransDataType(type_args, dst_device_address->GetDevicePtr())) {
     MS_LOG(ERROR) << "Trans data type failed for dst device tensor:" << dst_device_address->ToString();
     return false;
@@ -939,7 +940,9 @@ bool AscendResManager::CopyDeviceToHostForDiffFormat(const DeviceAddress *dst_de
 }
 
 bool AscendResManager::CopyDeviceToHostForDiffType(const DeviceAddress *dst_device_address,
-                                                   const DeviceAddress *src_device_address, size_t stream_id) const {
+                                                   const DeviceAddress *src_device_address, size_t stream_id,
+                                                   const DeviceAddressExtPtr &src_ext,
+                                                   const DeviceAddressExtPtr &dst_ext) const {
   MS_LOG(DEBUG) << "Copy device to host for different type, src device address:" << src_device_address->ToString()
                 << " dst device address:" << dst_device_address->ToString() << " stream id:" << stream_id;
   // Sync device to host.
@@ -953,7 +956,7 @@ bool AscendResManager::CopyDeviceToHostForDiffType(const DeviceAddress *dst_devi
     MS_LOG(ERROR) << "Failed sync stream : " << stream_id;
     return false;
   }
-  if (src_device_address->type_id() == kNumberTypeFloat32 && dst_device_address->type_id() == kNumberTypeFloat64) {
+  if (src_ext->dtype_id_ == kNumberTypeFloat32 && dst_ext->dtype_id_ == kNumberTypeFloat64) {
     if (src_device_address->GetSize() / sizeof(float) != dst_device_address->GetSize() / sizeof(double)) {
       MS_LOG(ERROR) << "Invalid src_size for device address" << src_device_address->ToString()
                     << ", dst_size for device address" << dst_device_address->ToString();
@@ -962,10 +965,10 @@ bool AscendResManager::CopyDeviceToHostForDiffType(const DeviceAddress *dst_devi
     FloatToDouble(dst_device_address->GetDevicePtr(), host_tmp.data(), src_device_address->GetSize() / sizeof(float));
     return true;
   }
-  auto host_shape = dst_device_address->GetShapeVector();
+  auto host_shape = dst_ext->shape_vector_;
   auto shape_size = abstract::ShapeSize(host_shape);
-  const trans::TypeIdArgs type_args{host_tmp.data(), shape_size, src_device_address->type_id(),
-                                    dst_device_address->type_id(), src_device_address->GetSize()};
+  const trans::TypeIdArgs type_args{host_tmp.data(), shape_size, src_ext->dtype_id_, dst_ext->dtype_id_,
+                                    src_device_address->GetSize()};
 
   if (!trans::TransDataType(type_args, dst_device_address->GetDevicePtr())) {
     MS_LOG(ERROR) << "Trans data type failed for dst device address:" << dst_device_address->ToString();
@@ -975,26 +978,39 @@ bool AscendResManager::CopyDeviceToHostForDiffType(const DeviceAddress *dst_devi
 }
 
 bool AscendResManager::AsyncDeviceToHost(const DeviceAddressPtr &dst_device_sync,
-                                         const DeviceAddressPtr &src_device_sync, size_t stream_id) const {
+                                         const DeviceAddressPtr &src_device_sync, size_t stream_id,
+                                         const DeviceAddressExtPtr &src_ext, const DeviceAddressExtPtr &dst_ext) const {
   const auto &dst_device_address = dynamic_cast<const DeviceAddress *>(dst_device_sync.get());
   const auto &src_device_address = dynamic_cast<const DeviceAddress *>(src_device_sync.get());
   MS_EXCEPTION_IF_NULL(dst_device_address);
   MS_EXCEPTION_IF_NULL(src_device_address);
-  if (src_device_address->GetTensorStorageInfo() != nullptr || dst_device_address->GetTensorStorageInfo() != nullptr) {
-    MS_LOG(WARNING) << "Invalid sync device to host for tensor storage info in device address:"
-                    << src_device_address->ToString() << " and:" << dst_device_address->ToString();
+  if (!IsContiguous(src_ext) || !IsContiguous(dst_ext)) {
+    MS_LOG(WARNING) << "Invalid sync device to host for device address:" << src_device_address->ToString()
+                    << " with tensor info " << (src_ext != nullptr ? src_ext->ToString() : "null") << " and "
+                    << dst_device_address->ToString() << " with tensor info "
+                    << (dst_ext != nullptr ? dst_ext->ToString() : "null");
   }
   BindDeviceToCurrentThread(false);
+  if (src_ext == nullptr || dst_ext == nullptr) {
+    return BaseCopy(dst_device_address->GetDevicePtr(), src_device_address->GetDevicePtr(),
+                    dst_device_address->GetSize(), ACL_MEMCPY_DEVICE_TO_HOST, stream_id);
+  }
 
   // Check format.
-  static const std::set<std::string> basic_format = {kOpFormat_NCHW, kOpFormat_DEFAULT, kOpFormat_NCDHW, kOpFormat_ND};
-  if (basic_format.find(src_device_address->format()) == basic_format.end()) {
-    return CopyDeviceToHostForDiffFormat(dst_device_address, src_device_address, stream_id);
+  static const std::set<Format> basic_format = {Format::NCHW, Format::DEFAULT_FORMAT, Format::NCDHW, Format::ND};
+  if (basic_format.find(src_ext->format_) == basic_format.end()) {
+    MS_LOG(DEBUG) << "Can not copy from device to host directly, format is different, src:"
+                  << src_device_address->ToString() << " metadata:" << src_ext->ToString()
+                  << " dst:" << dst_device_address->ToString() << " metadata:" << dst_ext->ToString();
+    return CopyDeviceToHostForDiffFormat(dst_device_address, src_device_address, stream_id, src_ext, dst_ext);
   }
 
   // Check type.
-  if (src_device_address->type_id() != dst_device_address->type_id()) {
-    return CopyDeviceToHostForDiffType(dst_device_address, src_device_address, stream_id);
+  if (src_ext->dtype_id_ != dst_ext->dtype_id_) {
+    MS_LOG(DEBUG) << "Can not copy from device to host directly, type is different, src:"
+                  << src_device_address->ToString() << " metadata:" << src_ext->ToString()
+                  << " dst:" << dst_device_address->ToString() << " metadata:" << dst_ext->ToString();
+    return CopyDeviceToHostForDiffType(dst_device_address, src_device_address, stream_id, src_ext, dst_ext);
   }
 
   MS_LOG(DEBUG) << "Copy device to host, src device address:" << src_device_address->ToString()
@@ -1004,10 +1020,11 @@ bool AscendResManager::AsyncDeviceToHost(const DeviceAddressPtr &dst_device_sync
 }
 
 bool AscendResManager::CopyHostToDevice(const DeviceAddress *dst_device_address,
-                                        const DeviceAddress *src_device_address, const void *src, uint64_t size,
+                                        const DeviceAddress *src_device_address, const DeviceAddressExtPtr &src_ext,
+                                        const DeviceAddressExtPtr &dst_ext, const void *src, uint64_t size,
                                         aclrtMemcpyKind kind, size_t stream_id,
                                         const DeviceAddressPtr src_device_sync) const {
-  if (dst_device_address->type_id() != kObjectTypeString) {
+  if (dst_ext != nullptr && dst_ext->dtype_id_ != kObjectTypeString) {
     return BaseCopy(dst_device_address->GetDevicePtr(), src, size, kind, stream_id, src_device_sync);
   }
   // NOTE: For string type, ge::StringHead.len does not include '\0', since kernel_tensor allocated size including
@@ -1045,38 +1062,42 @@ bool AscendResManager::CopyHostToDevice(const DeviceAddress *dst_device_address,
 }
 
 bool AscendResManager::CopyHostToDeviceForDiffFormat(const DeviceAddress *dst_device_address,
-                                                     const DeviceAddress *src_device_address, size_t stream_id) const {
+                                                     const DeviceAddress *src_device_address, size_t stream_id,
+                                                     const DeviceAddressExtPtr &src_ext,
+                                                     const DeviceAddressExtPtr &dst_ext) const {
   MS_LOG(DEBUG) << "Copy host to device for different format, src device address:" << src_device_address->ToString()
                 << " dst device address:" << dst_device_address->ToString() << " stream id:" << stream_id;
-  const auto &dst_format = dst_device_address->format();
+  const auto &dst_format = dst_ext->format_;
   if (op_need_trans_format.find(dst_format) == op_need_trans_format.end()) {
     MS_LOG(ERROR) << "Can not find format transfer function for format:" << dst_format
                   << " dst device address:" << dst_device_address->ToString();
     return false;
   }
 
-  ShapeVector host_shape = src_device_address->GetShapeVector();
+  ShapeVector host_shape = src_ext->shape_vector_;
   if (host_shape.empty()) {
     (void)host_shape.emplace_back(1);
   }
   auto node_index = dst_device_address->GetNodeIndex();
   std::vector<int64_t> device_shape;
-  if (dst_format != kOpFormat_FRAC_NZ) {
-    host_shape = trans::PaddingShape(host_shape, dst_format);
-    MS_LOG(DEBUG) << "Padding shape from:" << src_device_address->GetShapeVector() << " to:" << host_shape
+  if (dst_format != Format::FRACTAL_NZ) {
+    host_shape = trans::PaddingShape(host_shape, kernel::GetFormatFromEnumToStr(dst_format));
+    MS_LOG(DEBUG) << "Padding shape from:" << src_ext->shape_vector_ << " to:" << host_shape
                   << " for device address:" << src_device_address->ToString();
   }
-  device_shape = trans::TransShapeToDevice(host_shape, dst_format, node_index.first, node_index.second,
-                                           dst_device_address->type_id());
+  device_shape = trans::TransShapeToDevice(host_shape, kernel::GetFormatFromEnumToStr(dst_format), node_index.first,
+                                           node_index.second, dst_ext->dtype_id_);
   MS_LOG(DEBUG) << "Host shape:" << host_shape << " device shape:" << device_shape
                 << " for device address:" << dst_device_address->ToString();
   // Trans type.
   std::vector<uint8_t> tmp_host_for_type_trans;
   void *tmp_host_ptr = src_device_address->GetDevicePtr();
-  if (src_device_address->type_id() != dst_device_address->type_id()) {
+  if (src_ext->dtype_id_ != dst_ext->dtype_id_) {
+    MS_LOG(DEBUG) << "Convert type src:" << src_device_address->ToString() << " metadata:" << src_ext->ToString()
+                  << " dst:" << dst_device_address->ToString() << " metadata:" << dst_ext->ToString();
     auto shape_size = abstract::ShapeSize(host_shape);
-    const trans::TypeIdArgs type_args{src_device_address->GetMutablePtr(), shape_size, src_device_address->type_id(),
-                                      dst_device_address->type_id(), src_device_address->GetSize()};
+    const trans::TypeIdArgs type_args{src_device_address->GetMutablePtr(), shape_size, src_ext->dtype_id_,
+                                      dst_ext->dtype_id_, src_device_address->GetSize()};
     tmp_host_for_type_trans = std::vector<uint8_t>(dst_device_address->GetSize());
     tmp_host_ptr = tmp_host_for_type_trans.data();
     auto ret = trans::TransDataType(type_args, tmp_host_ptr);
@@ -1087,17 +1108,18 @@ bool AscendResManager::CopyHostToDeviceForDiffFormat(const DeviceAddress *dst_de
   }
 
   // Trans format.
-  const trans::FormatArgs format_args{
-    tmp_host_ptr, dst_device_address->GetSize(), kOpFormat_NCHW, dst_format, host_shape,
-    device_shape, dst_device_address->type_id()};
+  const trans::FormatArgs format_args{tmp_host_ptr,      dst_device_address->GetSize(),
+                                      kOpFormat_NCHW,    kernel::GetFormatFromEnumToStr(dst_format),
+                                      host_shape,        device_shape,
+                                      dst_ext->dtype_id_};
   auto host_tmp = std::vector<uint8_t>(dst_device_address->GetSize());
   if (!trans::TransFormat(format_args, host_tmp.data(), node_index.first, node_index.second)) {
     MS_LOG(ERROR) << "Trans format failed.";
     return false;
   }
 
-  bool ret = CopyHostToDevice(dst_device_address, src_device_address, host_tmp.data(), dst_device_address->GetSize(),
-                              ACL_MEMCPY_HOST_TO_DEVICE, stream_id);
+  bool ret = CopyHostToDevice(dst_device_address, src_device_address, src_ext, dst_ext, host_tmp.data(),
+                              dst_device_address->GetSize(), ACL_MEMCPY_HOST_TO_DEVICE, stream_id);
   if (!ret) {
     MS_LOG(ERROR) << "Failed async copy";
     return false;
@@ -1111,32 +1133,35 @@ bool AscendResManager::CopyHostToDeviceForDiffFormat(const DeviceAddress *dst_de
 }
 
 bool AscendResManager::CopyHostToDeviceForDiffType(const DeviceAddress *dst_device_address,
-                                                   const DeviceAddress *src_device_address, size_t stream_id) const {
+                                                   const DeviceAddress *src_device_address, size_t stream_id,
+                                                   const DeviceAddressExtPtr &src_ext,
+                                                   const DeviceAddressExtPtr &dst_ext) const {
   MS_LOG(DEBUG) << "Copy host to device for different type, src device address:" << src_device_address->ToString()
-                << " dst device address:" << dst_device_address->ToString() << " stream id:" << stream_id;
+                << " metadata:" << src_ext->ToString() << " dst device address:" << dst_device_address->ToString()
+                << " metadata:" << dst_ext->ToString() << " stream id:" << stream_id;
   std::vector<uint8_t> host_tmp = std::vector<uint8_t>(dst_device_address->GetSize());
-  if (dst_device_address->type_id() == kNumberTypeFloat32 && src_device_address->type_id() == kNumberTypeFloat64) {
+  if (dst_ext->dtype_id_ == kNumberTypeFloat32 && src_ext->dtype_id_ == kNumberTypeFloat64) {
     if (src_device_address->GetSize() / sizeof(double) != dst_device_address->GetSize() / sizeof(float)) {
       MS_INTERNAL_EXCEPTION(ArgumentError) << "Invalid src_size for device address" << src_device_address->ToString()
                                            << ", dst_size for device address" << dst_device_address->ToString();
     }
     DoubleToFloat(host_tmp.data(), src_device_address->GetDevicePtr(), dst_device_address->GetSize() / sizeof(float));
   } else {
-    ShapeVector host_shape = src_device_address->GetShapeVector();
+    ShapeVector host_shape = src_ext->shape_vector_;
     if (host_shape.empty()) {
       (void)host_shape.emplace_back(1);
     }
     auto shape_size = abstract::ShapeSize(host_shape);
-    const trans::TypeIdArgs type_args{src_device_address->GetDevicePtr(), shape_size, src_device_address->type_id(),
-                                      dst_device_address->type_id(), src_device_address->GetSize()};
+    const trans::TypeIdArgs type_args{src_device_address->GetDevicePtr(), shape_size, src_ext->dtype_id_,
+                                      dst_ext->dtype_id_, src_device_address->GetSize()};
     if (!trans::TransDataType(type_args, host_tmp.data())) {
       MS_LOG(ERROR) << "Trans data type failed for device address:" << dst_device_address->ToString();
       return false;
     }
   }
   // Sync device to host.
-  if (!CopyHostToDevice(dst_device_address, src_device_address, host_tmp.data(), dst_device_address->GetSize(),
-                        ACL_MEMCPY_HOST_TO_DEVICE, stream_id)) {
+  if (!CopyHostToDevice(dst_device_address, src_device_address, src_ext, dst_ext, host_tmp.data(),
+                        dst_device_address->GetSize(), ACL_MEMCPY_HOST_TO_DEVICE, stream_id)) {
     MS_LOG(ERROR) << "Failed async copy for src device address:" << src_device_address->ToString()
                   << " dst device address:" << dst_device_address->ToString();
     return false;
@@ -1149,59 +1174,69 @@ bool AscendResManager::CopyHostToDeviceForDiffType(const DeviceAddress *dst_devi
 }
 
 bool AscendResManager::AsyncHostToDevice(const DeviceAddressPtr &dst_device_sync,
-                                         const DeviceAddressPtr &src_device_sync, size_t stream_id,
-                                         bool keep_src) const {
+                                         const DeviceAddressPtr &src_device_sync, size_t stream_id, bool keep_src,
+                                         const DeviceAddressExtPtr &src_ext, const DeviceAddressExtPtr &dst_ext) const {
   const auto &dst_device_address = dynamic_cast<const DeviceAddress *>(dst_device_sync.get());
   const auto &src_device_address = dynamic_cast<const DeviceAddress *>(src_device_sync.get());
   MS_EXCEPTION_IF_NULL(dst_device_address);
   MS_EXCEPTION_IF_NULL(src_device_address);
-  if (src_device_address->GetTensorStorageInfo() != nullptr || dst_device_address->GetTensorStorageInfo() != nullptr) {
-    MS_LOG(EXCEPTION) << "Invalid sync host to device for tensor storage info in device address:"
-                      << src_device_address->ToString() << " and:" << dst_device_address->ToString();
+
+  if (!IsContiguous(src_ext) || !IsContiguous(dst_ext)) {
+    MS_LOG(EXCEPTION) << "Invalid sync host to device for device address:" << src_device_address->ToString()
+                      << " with tensor info " << (src_ext != nullptr ? src_ext->ToString() : "null") << " and "
+                      << dst_device_address->ToString() << " with tensor info "
+                      << (dst_ext != nullptr ? dst_ext->ToString() : "null");
   }
   BindDeviceToCurrentThread(false);
-  // Check hete info.
+  if (src_ext == nullptr || dst_ext == nullptr) {
+    return BaseCopy(dst_device_address->GetDevicePtr(), src_device_address->GetDevicePtr(),
+                    src_device_address->GetSize(), ACL_MEMCPY_HOST_TO_DEVICE, stream_id, src_device_sync);
+  }
 
   // Check format.
-  static const std::set<std::string> basic_format = {kOpFormat_NCHW, kOpFormat_DEFAULT, kOpFormat_NCDHW, kOpFormat_ND};
-  if (basic_format.find(dst_device_address->format()) == basic_format.end() &&
-      src_device_address->format() != dst_device_address->format()) {
-    return CopyHostToDeviceForDiffFormat(dst_device_address, src_device_address, stream_id);
+  static const std::set<Format> basic_format = {Format::NCHW, Format::DEFAULT_FORMAT, Format::NCDHW, Format::ND};
+  if (basic_format.find(dst_ext->format_) == basic_format.end() && src_ext->format_ != dst_ext->format_) {
+    MS_LOG(DEBUG) << "Can not copy from host to device directly, format is different, src:"
+                  << src_device_address->ToString() << " metadata:" << src_ext->ToString()
+                  << " dst:" << dst_device_address->ToString() << " metadata:" << dst_ext->ToString();
+    return CopyHostToDeviceForDiffFormat(dst_device_address, src_device_address, stream_id, src_ext, dst_ext);
   }
 
   // Check type.
-  if (src_device_address->type_id() != dst_device_address->type_id()) {
-    return CopyHostToDeviceForDiffType(dst_device_address, src_device_address, stream_id);
+  if (src_ext->dtype_id_ != dst_ext->dtype_id_) {
+    MS_LOG(DEBUG) << "Can not copy from host to device directly, type is different, src:"
+                  << src_device_address->ToString() << " metadata:" << src_ext->ToString()
+                  << " dst:" << dst_device_address->ToString() << " metadata:" << dst_ext->ToString();
+    return CopyHostToDeviceForDiffType(dst_device_address, src_device_address, stream_id, src_ext, dst_ext);
   }
-  if (src_device_address->GetSize() != dst_device_address->GetSize() &&
-      dst_device_address->type_id() != kObjectTypeString) {
+  if (src_device_address->GetSize() != dst_device_address->GetSize() && dst_ext->dtype_id_ != kObjectTypeString) {
     MS_LOG(WARNING) << "Invalid size for host to device copy, host device address:" << src_device_address->ToString()
                     << " device address:" << dst_device_address->ToString();
   }
   MS_LOG(DEBUG) << "Copy host to device, src device address:" << src_device_address->ToString()
                 << " dst device address:" << dst_device_address->ToString() << " stream id:" << stream_id;
-  return CopyHostToDevice(dst_device_address, src_device_address, src_device_address->GetDevicePtr(),
+  return CopyHostToDevice(dst_device_address, src_device_address, src_ext, dst_ext, src_device_address->GetDevicePtr(),
                           src_device_address->GetSize(), ACL_MEMCPY_HOST_TO_DEVICE, stream_id,
                           keep_src ? src_device_sync : nullptr);
 }
 
 bool AscendResManager::SyncDeviceToDeviceWithDiffFormatType(const DeviceAddressPtr &dst_device_sync,
-                                                            const DeviceAddressPtr &src_device_sync,
-                                                            size_t stream_id) const {
+                                                            const DeviceAddressPtr &src_device_sync, size_t stream_id,
+                                                            const DeviceAddressExtPtr &src_ext,
+                                                            const DeviceAddressExtPtr &dst_ext) const {
   const auto &dst_device_address = dynamic_cast<const DeviceAddress *>(dst_device_sync.get());
   const auto &src_device_address = dynamic_cast<const DeviceAddress *>(src_device_sync.get());
   MS_EXCEPTION_IF_NULL(dst_device_address);
   MS_EXCEPTION_IF_NULL(src_device_address);
   MS_LOG(DEBUG) << "Copy device to device for different format, src device address:" << src_device_address->ToString()
                 << " dst device address:" << dst_device_address->ToString() << " stream id:" << stream_id;
-  auto host_shape = src_device_address->GetShapeVector();
+  auto host_shape = src_ext->shape_vector_;
   if (host_shape.empty()) {
-    MS_LOG(WARNING) << "Host shape of source device address is empty, emplace back shape [1],  device address size: "
-                    << src_device_address->GetSize()
-                    << ", device address type: " << TypeIdLabel(src_device_address->type_id());
+    MS_LOG(WARNING) << "Host shape of source device address is empty, emplace back shape [1],  device address: "
+                    << src_device_address->ToString();
     (void)host_shape.emplace_back(1);
   }
-  auto host_tensor = std::make_shared<tensor::Tensor>(src_device_address->type_id(), host_shape);
+  auto host_tensor = std::make_shared<tensor::Tensor>(src_ext->dtype_id_, host_shape);
   MS_EXCEPTION_IF_NULL(host_tensor);
   MS_EXCEPTION_IF_NULL(host_tensor->device_address());
   const auto &host_device_address = dynamic_cast<const DeviceAddress *>(host_tensor->device_address().get());
@@ -1211,13 +1246,13 @@ bool AscendResManager::SyncDeviceToDeviceWithDiffFormatType(const DeviceAddressP
     host_tmp = std::vector<uint8_t>(src_device_address->GetSize());
     host_device_address->SetDevicePtr(host_tmp.data());
   }
-  if (!SyncDeviceToHost(host_tensor->device_address(), src_device_sync, stream_id)) {
+  if (!SyncDeviceToHost(host_tensor->device_address(), src_device_sync, stream_id, src_ext, dst_ext)) {
     MS_LOG(ERROR)
       << "Sync device to device failed at the stage of sync device to intermediate Tensor, src device address:"
       << src_device_address->ToString();
     return false;
   }
-  if (!SyncHostToDevice(dst_device_sync, host_tensor->device_address(), stream_id)) {
+  if (!SyncHostToDevice(dst_device_sync, host_tensor->device_address(), stream_id, src_ext, dst_ext)) {
     MS_LOG(ERROR)
       << "Sync device to device failed at the stage of sync intermediate tensor to device, dst device address:"
       << dst_device_address->ToString();
@@ -1227,28 +1262,32 @@ bool AscendResManager::SyncDeviceToDeviceWithDiffFormatType(const DeviceAddressP
 }
 
 bool AscendResManager::AsyncDeviceToDevice(const DeviceAddressPtr &dst_device_sync,
-                                           const DeviceAddressPtr &src_device_sync, size_t stream_id) const {
+                                           const DeviceAddressPtr &src_device_sync, size_t stream_id,
+                                           const DeviceAddressExtPtr &src_ext,
+                                           const DeviceAddressExtPtr &dst_ext) const {
   const auto &dst_device_address = dynamic_cast<const DeviceAddress *>(dst_device_sync.get());
   const auto &src_device_address = dynamic_cast<const DeviceAddress *>(src_device_sync.get());
   MS_EXCEPTION_IF_NULL(dst_device_address);
   MS_EXCEPTION_IF_NULL(src_device_address);
-  BindDeviceToCurrentThread(true);
-  if (dst_device_address->format() != src_device_address->format() ||
-      dst_device_address->type_id() != src_device_address->type_id()) {
-    MS_LOG(INFO) << "Can not copy from device to device directly, format or type is different, src(format:"
-                 << src_device_address->format() << ", type_id:" << TypeIdLabel(src_device_address->type_id())
-                 << "), dst(format:" << dst_device_address->format()
-                 << ", type_id:" << TypeIdLabel(dst_device_address->type_id())
-                 << ", use the intermediate Tensor copy instead.";
-    return SyncDeviceToDeviceWithDiffFormatType(dst_device_sync, src_device_sync, stream_id);
-  }
-  MS_LOG(DEBUG) << "Copy device to device, src device address:" << src_device_address->ToString()
-                << " dst device address:" << dst_device_address->ToString() << " stream id:" << stream_id;
   if (dst_device_address->GetDevicePtr() == src_device_address->GetDevicePtr()) {
     MS_LOG(DEBUG) << "Same addr, no need memcpy data.";
     return true;
   }
-  if (dst_device_address->type_id() > kMonadTypeBegin && dst_device_address->type_id() < kMonadTypeEnd) {
+  BindDeviceToCurrentThread(true);
+  if (src_ext == nullptr || dst_ext == nullptr) {
+    return BaseCopy(dst_device_address->GetDevicePtr(), src_device_address->GetDevicePtr(),
+                    src_device_address->GetSize(), ACL_MEMCPY_DEVICE_TO_DEVICE, stream_id, nullptr);
+  }
+
+  if (dst_ext->format_ != src_ext->format_ || dst_ext->dtype_id_ != src_ext->dtype_id_) {
+    MS_LOG(DEBUG) << "Can not copy from device to device directly, format or type is different, src:"
+                  << src_device_address->ToString() << " metadata:" << src_ext->ToString()
+                  << " dst:" << dst_device_address->ToString() << " metadata:" << dst_ext->ToString();
+    return SyncDeviceToDeviceWithDiffFormatType(dst_device_sync, src_device_sync, stream_id, src_ext, dst_ext);
+  }
+  MS_LOG(DEBUG) << "Copy device to device, src device address:" << src_device_address->ToString()
+                << " dst device address:" << dst_device_address->ToString() << " stream id:" << stream_id;
+  if (dst_ext->dtype_id_ > kMonadTypeBegin && dst_ext->dtype_id_ < kMonadTypeEnd) {
     return true;
   }
   if (dst_device_address->GetSize() < src_device_address->GetSize()) {
@@ -1468,13 +1507,12 @@ size_t AscendResManager::DefaultStream() const {
 std::pair<std::vector<size_t>, std::vector<size_t>> AscendResManager::AllocDeviceMemoryForTensorList(
   const std::vector<tensor::TensorPtr> &tensor_list, bool enable_mem_align) {
   MS_LOG(INFO) << "Start AllocDeviceMemoryForTensorList";
-  MS_EXCEPTION_IF_NULL(mem_manager_);
   std::vector<size_t> before_padding_sizes = GetUniqueTensorListSize(tensor_list);
   if (enable_mem_align == false) {
     size_t total_size = std::accumulate(before_padding_sizes.begin(), before_padding_sizes.end(), IntToSize(0));
     auto stream_id = DefaultStream();
-    auto total_align_size = device::MemoryManager::GetCommonAlignSize(total_size);
-    auto device_ptr = mem_manager_->MallocMemFromMemPool(total_align_size, false, false, stream_id);
+    auto total_align_size = GetCommonAlignSize(total_size);
+    auto device_ptr = AscendMemoryPool::GetInstance().AllocTensorMem(total_align_size, false, false, stream_id);
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddCompileTimeMemInfo, "PyNative", total_align_size, device_ptr,
                                                    memory::mem_pool::MemType::kContinuousMemory);
     if (!device_ptr) {
@@ -1488,9 +1526,8 @@ std::pair<std::vector<size_t>, std::vector<size_t>> AscendResManager::AllocDevic
     char *ptr = reinterpret_cast<char *>(device_ptr);
     for (size_t i = 0; i < tensor_list.size(); ++i) {
       const auto &tensor = tensor_list[i];
-      auto format = GetFormat(tensor);
-      auto device_address = CreateDeviceAddress(reinterpret_cast<void *>(ptr), before_padding_sizes[i], tensor->shape(),
-                                                format, tensor->data_type(), device_name, stream_id);
+      auto device_address = std::make_shared<device::DeviceAddress>(
+        reinterpret_cast<void *>(ptr), before_padding_sizes[i], device::DeviceType::kAscend, stream_id);
       MS_LOG(DEBUG) << "Create DeviceAddress, ptr:" << reinterpret_cast<void *>(ptr)
                     << ", size:" << before_padding_sizes[i] << ", shape:" << tensor->shape()
                     << ", data_type:" << TypeIdToString(tensor->data_type());
@@ -1504,6 +1541,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> AscendResManager::AllocDevic
       host_context->device_res_manager_->SyncAllStreams();
       SyncCopy(device_address, tensor->device_address(), device_address->stream_id());
       tensor->set_device_address(device_address);
+      tensor->set_storage_info(nullptr);
       device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(MarkTensorAsOutput, "PyNative", device_name, device_ptr,
                                                      tensor->data_type(), tensor->shape(), tensor->storage_info());
       ptr += before_padding_sizes[i];
@@ -1516,7 +1554,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> AscendResManager::AllocDevic
 
   std::vector<size_t> after_padding_sizes;
   for (auto &size : before_padding_sizes) {
-    auto align_size = device::MemoryManager::GetCommonAlignSize(size);
+    auto align_size = GetCommonAlignSize(size);
     after_padding_sizes.emplace_back(align_size);
   }
   auto stream_id = DefaultStream();
@@ -1539,9 +1577,8 @@ std::pair<std::vector<size_t>, std::vector<size_t>> AscendResManager::AllocDevic
   for (size_t i = 0; i < tensor_list.size(); ++i) {
     const auto &tensor = tensor_list[i];
     const auto &ptr = device_ptr_list[i];
-    auto format = GetFormat(tensor);
-    auto device_address = CreateDeviceAddress(ptr, before_padding_sizes[i], tensor->shape(), format,
-                                              tensor->data_type(), device_name, stream_id);
+    auto device_address =
+      std::make_shared<device::DeviceAddress>(ptr, before_padding_sizes[i], device::DeviceType::kAscend, stream_id);
     MS_LOG(DEBUG) << "Create DeviceAddress, ptr:" << ptr << ", size:" << before_padding_sizes[i]
                   << ", shape:" << tensor->shape() << ", data_type:" << TypeIdToString(tensor->data_type());
     MS_EXCEPTION_IF_NULL(device_address);
@@ -1554,6 +1591,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> AscendResManager::AllocDevic
     host_context->device_res_manager_->SyncAllStreams();
     SyncCopy(device_address, tensor->device_address(), device_address->stream_id());
     tensor->set_device_address(device_address);
+    tensor->set_storage_info(nullptr);
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(AddCompileTimeMemInfo, "PyNative", before_padding_sizes[i], ptr,
                                                    memory::mem_pool::MemType::kContinuousMemory);
     device::tracker::CALL_MEMORY_TRACKER_WITH_FILE(MarkTensorAsOutput, "PyNative",
@@ -1577,9 +1615,18 @@ int AscendResManager::ResetParams(const std::vector<tensor::TensorPtr> &params) 
                    << " tensor device address is nullptr, skip resetting.";
       continue;
     }
-    MS_LOG(INFO) << "Parameter " << index << "/" << params.size() << " size=" << tensor->Size();
-    auto ret = CALL_ASCEND_API(aclrtMemsetAsync, tensor->device_address()->GetMutablePtr(), tensor->Size(), 0,
-                               tensor->Size(), stream_ptr);
+    MS_LOG(INFO) << "Parameter " << index << "/" << params.size() << " size=" << tensor->Size()
+                 << " ptr: " << tensor->device_address()->GetMutablePtr()
+                 << ", type: " << tensor->device_address()->GetDeviceType();
+    auto ret = ACL_SUCCESS;
+    bool has_pinned_allocator =
+      tensor->device_address()->allocator() != nullptr && tensor->device_address()->allocator()->IsPinned();
+    if (tensor->device_address()->GetDeviceType() == device::DeviceType::kCPU && !has_pinned_allocator) {
+      ret = CALL_ASCEND_API(aclrtMemset, tensor->device_address()->GetMutablePtr(), tensor->Size(), 0, tensor->Size());
+    } else {
+      ret = CALL_ASCEND_API(aclrtMemsetAsync, tensor->device_address()->GetMutablePtr(), tensor->Size(), 0,
+                            tensor->Size(), stream_ptr);
+    }
     if (ret != ACL_SUCCESS) {
       MS_LOG(ERROR) << "Call aclrtMemsetAsync failed with return value " << ret << ".";
       return ret;
@@ -1599,18 +1646,16 @@ tensor::TensorPtr AscendResManager::GetSliceByTensorListIndexHandle(const std::v
   }
   size_t size = std::accumulate(after_padding_size.begin() + start, after_padding_size.begin() + end - 1,
                                 before_padding_size[end - 1]);
-  ShapeVector shape = {int64_t(size / UnitSizeInBytes(tensor_list[start]->data_type()))};
+  ShapeVector shape = {SizeToLong(size / UnitSizeInBytes(tensor_list[start]->data_type()))};
   auto tensor = tensor::from_spec(tensor_list[start]->data_type(), shape, device::DeviceType::kNone);
   MS_EXCEPTION_IF_NULL(tensor_list[start]->device_address());
   auto ptr = tensor_list[start]->device_address()->GetMutablePtr();
 
   auto stream_id = DefaultStream();
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-
-  auto device_address = CreateDeviceAddress(ptr, size, shape, Format::ND, tensor->data_type(), device_name, stream_id);
+  auto device_address = std::make_shared<device::DeviceAddress>(ptr, size, device::DeviceType::kAscend, stream_id);
+  tensor->set_format(Format::ND);
   tensor->set_device_address(device_address);
+  tensor->set_storage_info(nullptr);
   return tensor;
 }
 
@@ -1626,15 +1671,13 @@ TensorPtr AscendResManager::GetSliceByPaddingShapeHandle(const tensor::TensorPtr
   auto offset_size = start * type_size;
 
   auto stream_id = DefaultStream();
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  const auto &device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-
-  auto device_address = CreateDeviceAddress(reinterpret_cast<uint8_t *>(ptr) + offset_size, tensor_size, shape,
-                                            Format::ND, type_id, device_name, stream_id);
+  auto device_address = std::make_shared<device::DeviceAddress>(reinterpret_cast<uint8_t *>(ptr) + offset_size,
+                                                                tensor_size, device::DeviceType::kAscend, stream_id);
   MS_LOG(DEBUG) << "Create DeviceAddress, offset size to ptr0:" << offset_size << ", tensor_size:" << tensor_size
                 << ", shape:" << shape << ", data_type:" << TypeIdToString(type_id);
+  tensor->set_format(Format::ND);
   tensor->set_device_address(device_address);
+  tensor->set_storage_info(nullptr);
   return tensor;
 }
 
@@ -1703,6 +1746,107 @@ bool AscendResManager::DestroyAllEvents() {
   return true;
 }
 
+void AscendResManager::GetDeviceLimit(int32_t device_id, uint32_t *cube_num, uint32_t *vector_num) {
+  MS_EXCEPTION_IF_NULL(cube_num);
+  MS_EXCEPTION_IF_NULL(vector_num);
+  int32_t dev = device_id;
+  if (device_id == -1) {
+    dev = device_id_;
+  }
+  auto ret = CALL_ASCEND_API(aclrtGetDeviceResLimit, dev, aclrtDevResLimitType::ACL_RT_DEV_RES_CUBE_CORE, cube_num);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Call aclrtGetDeviceResLimit failed! Error flag is " << ret;
+  }
+  ret = CALL_ASCEND_API(aclrtGetDeviceResLimit, dev, aclrtDevResLimitType::ACL_RT_DEV_RES_VECTOR_CORE, vector_num);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Call aclrtGetDeviceResLimit failed! Error flag is " << ret;
+  }
+}
+
+void AscendResManager::SetDeviceLimit(int32_t device_id, int32_t cube_num, int32_t vector_num) {
+  enable_res_limit_ = true;
+  int32_t dev = device_id;
+  if (device_id != -1) {
+    dev = device_id_;
+  }
+  runtime::RuntimeConf::GetInstance()->EnableResLimit();
+  if (cube_num > 0) {
+    auto ret = CALL_ASCEND_API(aclrtSetDeviceResLimit, dev, aclrtDevResLimitType::ACL_RT_DEV_RES_CUBE_CORE,
+                               static_cast<uint32_t>(cube_num));
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Call aclrtSetDeviceResLimit failed! Error flag is " << ret;
+    }
+  }
+  if (vector_num > 0) {
+    auto ret = CALL_ASCEND_API(aclrtSetDeviceResLimit, dev, aclrtDevResLimitType::ACL_RT_DEV_RES_VECTOR_CORE,
+                               static_cast<uint32_t>(vector_num));
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Call aclrtSetDeviceResLimit failed! Error flag is " << ret;
+    }
+  }
+}
+
+void AscendResManager::GetStreamLimit(size_t stream_id, uint32_t *cube_num, uint32_t *vector_num) {
+  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  MS_EXCEPTION_IF_NULL(cube_num);
+  MS_EXCEPTION_IF_NULL(vector_num);
+  auto ret = CALL_ASCEND_API(aclrtGetStreamResLimit, stream, aclrtDevResLimitType::ACL_RT_DEV_RES_CUBE_CORE, cube_num);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Call aclrtGetStreamResLimit failed! Error flag is " << ret;
+  }
+  ret = CALL_ASCEND_API(aclrtGetStreamResLimit, stream, aclrtDevResLimitType::ACL_RT_DEV_RES_VECTOR_CORE, vector_num);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Call aclrtGetStreamResLimit failed! Error flag is " << ret;
+  }
+}
+void AscendResManager::SetStreamLimit(size_t stream_id, int32_t cube_num, int32_t vector_num) {
+  enable_res_limit_ = true;
+  runtime::RuntimeConf::GetInstance()->EnableResLimit();
+  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  if (cube_num > 0) {
+    auto ret = CALL_ASCEND_API(aclrtSetStreamResLimit, stream, aclrtDevResLimitType::ACL_RT_DEV_RES_CUBE_CORE,
+                               static_cast<uint32_t>(cube_num));
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Call aclrtSetStreamResLimit failed! Error flag is " << ret;
+    }
+  }
+  if (vector_num > 0) {
+    auto ret = CALL_ASCEND_API(aclrtSetStreamResLimit, stream, aclrtDevResLimitType::ACL_RT_DEV_RES_VECTOR_CORE,
+                               static_cast<uint32_t>(vector_num));
+    if (ret != ACL_SUCCESS) {
+      MS_LOG(EXCEPTION) << "Call aclrtSetStreamResLimit failed! Error flag is " << ret;
+    }
+  }
+}
+
+void AscendResManager::ResetStreamLimit(size_t stream_id) {
+  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  auto ret = CALL_ASCEND_API(aclrtResetStreamResLimit, stream);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Call aclrtResetStreamResLimit failed! Error flag is " << ret;
+  }
+}
+
+void AscendResManager::UseStreamResInCurrentThread(size_t stream_id) {
+  if (!enable_res_limit_) {
+    return;
+  }
+  if (prev_set_stream_id_ == stream_id) {
+    return;
+  }
+  auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
+  auto ret = CALL_ASCEND_API(aclrtUseStreamResInCurrentThread, stream);
+  if (ret != ACL_SUCCESS) {
+    MS_LOG(EXCEPTION) << "Call aclrtUseStreamResInCurrentThread failed! Error flag is " << ret;
+  }
+  prev_set_stream_id_ = stream_id;
+}
+
+void AscendResManager::SetEnableStreamLimit() {
+  MS_LOG(DEBUG) << "Enter SetEnableStreamLimit";
+  enable_res_limit_ = true;
+}
+
 bool AscendResManager::GetMemUceInfo(int32_t device_id) {
   aclrtMemUceInfo info[MAX_MEM_UCE_INFO_ARRAY_SIZE];
   size_t retSize = 0;
@@ -1754,16 +1898,7 @@ void AscendResManager::UceMemRepair(int32_t device_id) {
   mem_uce_info_.retSize = 0;
 }
 
-std::vector<uint64_t> AscendResManager::GetOptimizerTimestamps() {
-  OptimizerEventInfo::GetInstance().GetOptimizerTimestamp(false);
-  auto hbm_error_time = UCEException::GetInstance().get_uce_occur_time();
-  auto opt_start_timestamp = OptimizerEventInfo::GetInstance().get_optimizer_start_timestamp();
-  auto opt_end_timestamp = OptimizerEventInfo::GetInstance().get_optimizer_end_timestamp();
-  return std::vector<uint64_t>{hbm_error_time, opt_start_timestamp, opt_end_timestamp};
-}
-
 void AscendResManager::StopDevice(int32_t device_id) {
-  UCEException::GetInstance().set_force_stop_flag(true);
   // Wait 1 s to avoid stop device and suspension occur at the same time.
   const int64_t kTimeToWait = 1;
   std::this_thread::sleep_for(std::chrono::seconds(kTimeToWait));
@@ -1790,18 +1925,36 @@ void *AscendResManager::GetCopyDataStream() const {
 bool AscendResManager::RecordEvent(int64_t task_id_on_stream, uint32_t user_stream_id,
                                    const std::vector<std::pair<uint32_t, DeviceMemPtr>> &memory_stream_addresses,
                                    const DeviceEventPtr &input_event) {
-  return mem_manager_->RecordEvent(task_id_on_stream, user_stream_id, memory_stream_addresses, input_event);
+  if (GetMemoryPool() == nullptr) {
+    MS_LOG(WARNING) << "memory pool is nullptr.";
+    return false;
+  }
+  return GetMemoryPool()->RecordEvent(task_id_on_stream, user_stream_id, memory_stream_addresses, input_event);
 }
 
 bool AscendResManager::WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id, uint32_t memory_stream_id) {
-  return mem_manager_->WaitEvent(task_id_on_stream, user_stream_id, memory_stream_id);
+  if (GetMemoryPool() == nullptr) {
+    MS_LOG(WARNING) << "memory pool is nullptr.";
+    return false;
+  }
+  return GetMemoryPool()->WaitEvent(task_id_on_stream, user_stream_id, memory_stream_id);
 }
 
 bool AscendResManager::WaitEvent(int64_t task_id_on_stream, uint32_t user_stream_id) {
-  return mem_manager_->WaitEvent(task_id_on_stream, user_stream_id);
+  if (GetMemoryPool() == nullptr) {
+    MS_LOG(WARNING) << "memory pool is nullptr.";
+    return false;
+  }
+  return GetMemoryPool()->WaitEvent(task_id_on_stream, user_stream_id);
 }
 
-bool AscendResManager::SyncAllEvents() { return mem_manager_->SyncAllEvents(); }
+bool AscendResManager::SyncAllEvents() {
+  if (GetMemoryPool() == nullptr) {
+    MS_LOG(WARNING) << "memory pool is nullptr.";
+    return false;
+  }
+  return GetMemoryPool()->SyncAllEvents();
+}
 
 bool AscendResManager::LaunchCallback(std::function<void(void)> callback_func, size_t stream_id, bool is_block) const {
   auto stream = AscendStreamMng::GetInstance().GetStream(stream_id);
@@ -1887,19 +2040,8 @@ size_t AscendResManager::GetCommunicationStreamIDByGroup(const std::string &grou
 
 MS_REGISTER_HAL_COPY_FUNC(
   DeviceType::kAscend,
-  ([](const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id) {
-    auto context = MsContext::GetInstance();
-    MS_EXCEPTION_IF_NULL(context);
-    auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    device::DeviceContextKey host_key = {DeviceType::kAscend, device_id};
-    device::DeviceContext *host_context =
-      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
-    MS_EXCEPTION_IF_NULL(host_context);
-    MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
-    return host_context->device_res_manager_->SyncCopy(dst_device_sync, src_device_sync, stream_id);
-  }),
   ([](const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id,
-      bool keep_src) {
+      const DeviceAddressExtPtr &src_ext, const DeviceAddressExtPtr &dst_ext) {
     auto context = MsContext::GetInstance();
     MS_EXCEPTION_IF_NULL(context);
     auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
@@ -1908,7 +2050,20 @@ MS_REGISTER_HAL_COPY_FUNC(
       device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
     MS_EXCEPTION_IF_NULL(host_context);
     MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
-    return host_context->device_res_manager_->AsyncCopy(dst_device_sync, src_device_sync, stream_id, keep_src);
+    return host_context->device_res_manager_->SyncCopy(dst_device_sync, src_device_sync, stream_id, src_ext, dst_ext);
+  }),
+  ([](const DeviceAddressPtr &dst_device_sync, const DeviceAddressPtr &src_device_sync, size_t stream_id, bool keep_src,
+      const DeviceAddressExtPtr &src_ext, const DeviceAddressExtPtr &dst_ext) {
+    auto context = MsContext::GetInstance();
+    MS_EXCEPTION_IF_NULL(context);
+    auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+    device::DeviceContextKey host_key = {DeviceType::kAscend, device_id};
+    device::DeviceContext *host_context =
+      device::DeviceContextManager::GetInstance().GetOrCreateDeviceContext(host_key);
+    MS_EXCEPTION_IF_NULL(host_context);
+    MS_EXCEPTION_IF_NULL(host_context->device_res_manager_);
+    return host_context->device_res_manager_->AsyncCopy(dst_device_sync, src_device_sync, stream_id, keep_src, src_ext,
+                                                        dst_ext);
   }),
   ([](void *dst, const void *src, uint64_t size, size_t stream_id) {
     auto context = MsContext::GetInstance();

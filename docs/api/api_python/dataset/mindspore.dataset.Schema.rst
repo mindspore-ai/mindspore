@@ -28,7 +28,7 @@ mindspore.dataset.Schema
         从JSON对象获取schema文件。
 
         参数：
-            - **json_obj** (dictionary) - 解析的JSON对象。
+            - **json_obj** (dict) - 解析的JSON对象。
 
         异常：
             - **RuntimeError** - 对象中存在未知的项。
@@ -42,8 +42,8 @@ mindspore.dataset.Schema
         参数：
             - **columns** (Union[dict, list[dict], tuple[dict]]) - 数据集属性信息，从schema文件解码。
 
-              - **list** [dict]： `name` 和 `type` 必须为key值， `shape` 可选。
-              - **dict** ：columns.keys()作为名称，columns.values()是dict，其中包含可选的 `type`， `shape` 。
+              - **list[dict]** ：`name` 和 `type` 必须为key值， `shape` 可选。
+              - **dict** ：columns.keys()作为名称，columns.values()是dict，其中包含可选的 `type`、 `shape` 。
 
         异常：
             - **RuntimeError** - 解析列失败。

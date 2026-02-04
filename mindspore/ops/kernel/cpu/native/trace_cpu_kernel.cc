@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "kernel/cpu/native/trace_cpu_kernel.h"
+#include <type_traits>
 
 #include "include/runtime/hardware_abstract/kernel_base/common_utils.h"
 
@@ -94,11 +95,19 @@ void TraceCpuKernelMod::LaunchKernel(const std::vector<KernelTensor *> &inputs,
   T *input_addr = GetDeviceAddress<T>(inputs, kIndex0);
   T *output_addr = GetDeviceAddress<T>(outputs, kIndex0);
   size_t min_size = std::min(input_shape_[0], input_shape_[1]);
-  if (memset_s(output_addr, outputs[0]->size(), 0, outputs[0]->size()) != EOK) {
-    MS_LOG(EXCEPTION) << "Failed to init output memory.";
-  }
-  for (size_t i = 0; i < min_size; ++i) {
-    *output_addr += *(input_addr + i * input_shape_[1] + i);
+  const size_t stride = input_shape_[1];
+  if constexpr (std::is_same_v<T, float16>) {
+    float sum = 0.0f;
+    for (size_t i = 0; i < min_size; ++i) {
+      sum += static_cast<float>(*(input_addr + i * stride + i));
+    }
+    *output_addr = static_cast<float16>(sum);
+  } else {
+    T sum = static_cast<T>(0);
+    for (size_t i = 0; i < min_size; ++i) {
+      sum += *(input_addr + i * stride + i);
+    }
+    *output_addr = sum;
   }
 }
 

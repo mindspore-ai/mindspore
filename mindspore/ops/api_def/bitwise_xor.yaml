@@ -1,11 +1,11 @@
 bitwise_xor:
-  - op_yaml: bitwise_xor_scalar_op.yaml
+  - op_yaml: bitwise_xor_tensor_op.yaml
     py_method: deprecated_bitwise_xor
     Ascend: pyboost
     CPU: py_method
     GPU: py_method
     interface: tensor
-  - op_yaml: bitwise_xor_tensor_op.yaml
+  - op_yaml: bitwise_xor_scalar_op.yaml
     py_method: deprecated_bitwise_xor
     Ascend: pyboost
     CPU: py_method

@@ -23,8 +23,8 @@
 #include <string>
 #include <utility>
 #include <unordered_map>
-#include "runtime/hardware_abstract/device_context/device_context.h"
-#include "runtime/hardware_abstract/device_context/device_context_manager.h"
+#include "include/runtime/hardware_abstract/device_context/device_context.h"
+#include "include/runtime/hardware_abstract/device_context/device_context_manager.h"
 #include "kernel/gpu/cuda_impl/cuda_ops/cuda_device_info.h"
 #include "plugin/gpu/res_manager/gpu_res_manager.h"
 
@@ -56,13 +56,14 @@ class GPUKernelExecutor : public KernelExecutor {
     return LaunchKernel(kernel, inputs, workspace, outputs, kernel_mod, stream);
   }
 
-  bool ExecuteKernelTask(const runtime::KernelTaskType &task_type, const device::DeviceAddressPtrList &input_addr_list,
-                         const device::DeviceAddressPtrList &output_addr_list, const size_t &stream_id) const override;
+  bool ExecuteKernelTask(const runtime::KernelTaskType &task_type, const tensor::TensorPtrList &input_tensors,
+                         const tensor::TensorPtrList &output_tensors, const size_t &stream_id) const override;
 
   bool ExecuteKernelTask(const runtime::KernelTaskType &task_type,
-                         const std::vector<device::DeviceAddress *> &input_addr_list,
-                         const std::vector<device::DeviceAddress *> &output_addr_list,
+                         const std::vector<KernelTensor *> &input_kernel_tensors,
+                         const std::vector<KernelTensor *> &output_kernel_tensors,
                          const size_t &stream_id) const override;
+
   std::vector<size_t> GetLaunchIgnoredInputAddressIdx(const AnfNodePtr &node) const override;
 
   bool IsLaunchIgnoredInputAddressIdx(const AnfNodePtr &node, size_t input_idx) const override;

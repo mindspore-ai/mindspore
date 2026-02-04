@@ -111,6 +111,12 @@ class PyFuncOp : public TensorOp {
   std::shared_ptr<MessageQueue> msg_queue_;  // MapOp with PyFunc in process mode will use msg_queue to transfer data
   std::shared_ptr<SharedMemoryQueue>
     shm_queue_;  // MapOp with PyFunc in process mode will use shm_queue to transfer data
+
+  // monitor the worker process
+  // the variables are hold in PyFuncOp which is corresponds one-to-one with the map thread
+  std::mutex monitor_mtx_;
+  std::condition_variable monitor_cv_;
+  bool monitor_exit_flag_;
 #endif
 };
 }  // namespace dataset

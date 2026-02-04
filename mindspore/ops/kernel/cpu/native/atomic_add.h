@@ -18,11 +18,22 @@
 #define MINDSPORE_CCSRC_PLUGIN_DEVICE_CPU_KERNEL_ATOMIC_ADD_H_
 
 #include <cstdint>
+#ifdef _MSC_VER
+#include <windows.h>
+#include <intrin.h>
+#include <type_traits>
+#endif
 
 #include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace kernel {
+// Constants for type size checks
+constexpr size_t k8BitSize = 1;
+constexpr size_t k16BitSize = 2;
+constexpr size_t k32BitSize = 4;
+constexpr size_t k64BitSize = 8;
+
 #ifndef _MSC_VER
 template <typename T, typename U>
 void AtomicAddTask(T *const address, const T val) {
@@ -39,9 +50,104 @@ void AtomicAddTask(T *const address, const T val) {
   } while (assumed != old);
 }
 #else
+// For 64-bit integer types, use _InterlockedExchangeAdd64
 template <typename T, typename U>
-void AtomicAddTask(T *const address, const T val) {
-  *address = (*address) + val;
+typename std::enable_if<std::is_integral<T>::value && sizeof(T) == k64BitSize>::type AtomicAddTask(T *const address,
+                                                                                                   const T val) {
+  _InterlockedExchangeAdd64(reinterpret_cast<volatile LONGLONG *>(address), val);
+}
+
+// For 8-bit integer types, use _InterlockedExchangeAdd8
+template <typename T, typename U>
+typename std::enable_if<std::is_integral<T>::value && sizeof(T) == k8BitSize>::type AtomicAddTask(T *const address,
+                                                                                                  const T val) {
+  _InterlockedExchangeAdd8(reinterpret_cast<volatile char *>(address), val);
+}
+
+// For 16-bit integer types, use _InterlockedExchangeAdd16
+template <typename T, typename U>
+typename std::enable_if<std::is_integral<T>::value && sizeof(T) == k16BitSize>::type AtomicAddTask(T *const address,
+                                                                                                   const T val) {
+  _InterlockedExchangeAdd16(reinterpret_cast<volatile SHORT *>(address), val);
+}
+
+// For 32-bit integer types, use _InterlockedExchangeAdd
+template <typename T, typename U>
+typename std::enable_if<std::is_integral<T>::value && sizeof(T) == k32BitSize>::type AtomicAddTask(T *const address,
+                                                                                                   const T val) {
+  _InterlockedExchangeAdd(reinterpret_cast<volatile LONG *>(address), val);
+}
+
+// For 8-bit non-integer types, use CAS loop with _InterlockedCompareExchange8
+template <typename T, typename U>
+typename std::enable_if<!std::is_integral<T>::value && sizeof(T) == k8BitSize>::type AtomicAddTask(T *const address,
+                                                                                                   const T val) {
+  auto *address_as_uint = reinterpret_cast<U *>(address);
+  U old = *address_as_uint;
+  U assumed;
+  T desired;
+  do {
+    assumed = old;
+    T old_value = *reinterpret_cast<T *>(&assumed);
+    desired = old_value + val;
+    U desired_uint = *reinterpret_cast<U *>(&desired);
+    old = _InterlockedCompareExchange8(reinterpret_cast<volatile char *>(address_as_uint),
+                                       static_cast<char>(desired_uint), static_cast<char>(assumed));
+  } while (assumed != old);
+}
+
+// For 16-bit non-integer types, use CAS loop with _InterlockedCompareExchange16
+template <typename T, typename U>
+typename std::enable_if<!std::is_integral<T>::value && sizeof(T) == k16BitSize>::type AtomicAddTask(T *const address,
+                                                                                                    const T val) {
+  auto *address_as_uint = reinterpret_cast<U *>(address);
+  U old = *address_as_uint;
+  U assumed;
+  T desired;
+  do {
+    assumed = old;
+    T old_value = *reinterpret_cast<T *>(&assumed);
+    desired = old_value + val;
+    U desired_uint = *reinterpret_cast<U *>(&desired);
+    old = _InterlockedCompareExchange16(reinterpret_cast<volatile SHORT *>(address_as_uint),
+                                        static_cast<SHORT>(desired_uint), static_cast<SHORT>(assumed));
+  } while (assumed != old);
+}
+
+// For 32-bit non-integer types, use CAS loop with _InterlockedCompareExchange
+template <typename T, typename U>
+typename std::enable_if<!std::is_integral<T>::value && sizeof(T) == k32BitSize>::type AtomicAddTask(T *const address,
+                                                                                                    const T val) {
+  auto *address_as_uint = reinterpret_cast<U *>(address);
+  U old = *address_as_uint;
+  U assumed;
+  T desired;
+  do {
+    assumed = old;
+    T old_value = *reinterpret_cast<T *>(&assumed);
+    desired = old_value + val;
+    U desired_uint = *reinterpret_cast<U *>(&desired);
+    old = _InterlockedCompareExchange(reinterpret_cast<volatile LONG *>(address_as_uint),
+                                      static_cast<LONG>(desired_uint), static_cast<LONG>(assumed));
+  } while (assumed != old);
+}
+
+// For 64-bit non-integer types, use CAS loop with _InterlockedCompareExchange64
+template <typename T, typename U>
+typename std::enable_if<!std::is_integral<T>::value && sizeof(T) == k64BitSize>::type AtomicAddTask(T *const address,
+                                                                                                    const T val) {
+  auto *address_as_uint = reinterpret_cast<U *>(address);
+  U old = *address_as_uint;
+  U assumed;
+  T desired;
+  do {
+    assumed = old;
+    T old_value = *reinterpret_cast<T *>(&assumed);
+    desired = old_value + val;
+    U desired_uint = *reinterpret_cast<U *>(&desired);
+    old = _InterlockedCompareExchange64(reinterpret_cast<volatile LONGLONG *>(address_as_uint),
+                                        static_cast<LONGLONG>(desired_uint), static_cast<LONGLONG>(assumed));
+  } while (assumed != old);
 }
 #endif
 

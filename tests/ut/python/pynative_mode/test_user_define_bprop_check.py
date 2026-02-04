@@ -18,7 +18,7 @@ import pytest
 
 from mindspore import Tensor, nn, context
 from mindspore.ops import composite as C
-from mindspore._extends.parse import compile_config
+from mindspore.graph._parse import compile_config
 
 
 grad_all_with_sens = C.GradOperation(get_all=True, sens_param=True)

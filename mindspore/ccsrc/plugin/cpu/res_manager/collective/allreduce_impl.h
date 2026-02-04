@@ -19,7 +19,7 @@
 
 #include <string>
 #include <memory>
-#include "include/backend/distributed/cluster/cluster_context.h"
+#include "include/cluster/topology/cluster_context.h"
 #include "plugin/cpu/res_manager/collective/ms_collective_node.h"
 
 namespace mindspore {
@@ -35,8 +35,6 @@ class AllReduceLauncher {
   bool Initialize();
   bool Finalize();
 
-  bool Execute(const void *input_data, void *const output_data, size_t data_size) const;
-
   const std::shared_ptr<ps::core::CollectiveNode> &collective_node() const;
 
  private:
@@ -44,9 +42,6 @@ class AllReduceLauncher {
   size_t rank_size_{0};
   std::string node_role_{distributed::kEnvRoleOfWorker};
   std::shared_ptr<ps::core::CollectiveNode> abs_node_{nullptr};
-
-  bool RingAllReduce(const void *input_data, void *const output_data, size_t data_size) const;
-  bool ReduceBroadcastAllReduce(const void *input_data, void *const output_data, size_t data_size) const;
 };
 }  // namespace cpu
 }  // namespace device

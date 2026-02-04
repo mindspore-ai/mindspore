@@ -114,8 +114,8 @@ uint32_t SequenceConcatKernel::SequenceConcatTask() {
     return kAicpuKernelStateInvalid;
   }
 
-  size_t element_index_size =
-    LongToSize(std::accumulate(tuple_shape.begin() + 1, tuple_shape.end(), 1, std::multiplies<int64_t>()));
+  size_t element_index_size = LongToSize(
+    std::accumulate(tuple_shape.begin() + 1, tuple_shape.end(), static_cast<int64_t>(1), std::multiplies<int64_t>()));
   std::vector<T *> input_addr_list;
   for (uint64_t j = 0; j < element_num; ++j) {
     auto *tmp_addr = reinterpret_cast<T *>(inputs_addr + j * element_index_size);

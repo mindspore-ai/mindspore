@@ -6,7 +6,8 @@ mindspore.mint.distributed.all_gather_into_tensor
     汇聚指定的通信组中的Tensor，并返回汇聚后的Tensor。
 
     .. note::
-        集合中所有进程的Tensor必须具有相同的shape和格式。
+        - 集合中所有进程的Tensor必须具有相同的shape和格式。
+        - 当前仅支持PyNative模式，不支持Graph模式。
 
     参数：
         - **output_tensor** (Tensor) - 输出待汇聚操作的Tensor。如果组中的device数量为N，则输出Tensor的shape为 :math:`(N*x_1, x_2, ..., x_R)` 。
