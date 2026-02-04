@@ -628,17 +628,15 @@ class ReplicationPad1d(ReplicationPadNd_):
         This is an experimental API that is subject to change or deletion.
 
     Args:
-        padding (Union[int, tuple, list]): Specifies padding size.
+        padding (Union[int, tuple, list]): Padding size.
+        - If an int, pads all boundaries with the same amount.
+        - If a tuple or list, it should be in the order :math:`(pad_{left}, pad_{right})`.
 
     Inputs:
-        - **input** (Tensor) - The input tensor with shape :math:`(C, W_{in})` or :math:`(N, C, W_{in})`,
-          where `N` is the batch size, `C` is the number of channels, and `W_{in}` is the input width.
+        - **input** (Tensor) - The input tensor, with shape :math:`(C, W_{in})` or :math:`(N, C, W_{in})`.
 
     Outputs:
         Tensor, the tensor after padding.
-
-    Raises:
-        ValueError: If `padding` is a tuple or list, and the length does not match the tensor dimension.
 
     Supported Platforms:
         ``Ascend``
